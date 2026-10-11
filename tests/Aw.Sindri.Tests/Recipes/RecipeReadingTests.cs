@@ -45,4 +45,17 @@ public sealed class RecipeReadingTests
         Assert.Equal(original, commented);
         Assert.NotEqual(original, changed);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_hash_ignores_the_description_and_the_next_step_text()
+    {
+        var worded = TestRecipes.Loop
+            .Replace("version: 1", "version: 1\ndescription: a loop for tests", StringComparison.Ordinal)
+            .Replace("  review: { kind: wait,", "  review: { next: wait for the review, kind: wait,", StringComparison.Ordinal);
+
+        var (_, original) = TestRecipes.Read(TestRecipes.Loop);
+        var (_, reworded) = TestRecipes.Read(worded);
+
+        Assert.Equal(original, reworded);
+    }
 }
