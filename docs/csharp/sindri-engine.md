@@ -44,9 +44,12 @@ hash: <sha256>                               # optional: a frozen recipe's hash 
 | `evidence` | `kind`, `kind@head` or `kind@base`: registered for the instance and bound to the transition's sha (or the start's base sha) |
 | `gates` / `effects` | block ids; every gate must pass; effects become outbox commands in the transition's commit |
 
-The hash is the SHA-256 of the canonical JSON (no `hash` field, states and loops sorted by name, transitions in
-order). An instance is pinned to the hash it started with: a changed recipe never applies to a running instance
-(SND-WF-008).
+The hash is the SHA-256 of the canonical JSON: what the engine runs and nothing else (no `hash` field, no
+`description`, no state `next` text, absent optional fields not written, states and loops sorted by name, transitions in
+order). A golden test pins the built-in recipes' hashes. An instance is pinned to the hash it started with: a changed
+recipe never applies to a running instance (SND-WF-008). Such a **stranded** instance still takes the human's commands
+(cancel, park, takeover, handback, evidence; unpark needs the recipe and is refused), and the next tick escalates it
+once ("recipe changed: …"), so it leaves the due batch and waits for the human to cancel it and start a new attempt.
 
 **Validation** (`RecipeValidator`, every problem names its check and path): `schema`, `shape` (states, transitions,
 loops and the initial state refer to each other), `block` (every id is registered with the kind its place needs),
@@ -75,24 +78,28 @@ only through this contract, which is public API in `Aw.Sindri.Core.Blocks`:
 | `BlockKind` | `Gate`, `Evidence`, `Step`, `Effect` |
 | `PortSpec` | `(string Name, PortType Type)`; `PortType` is `Text`, `Number`, `Flag` (true/false), `Verdict` (pass/fail), `Size` (XS..XL), `Sha` |
 | `GateRung` | `Deterministic` (1), `Judge` (2), `Model` (3, the top rung) |
-| `GateContext` | `(InstanceId Instance, ItemId Item, string State, IReadOnlyDictionary<string,string> Facts, IReadOnlyList<EvidenceRef> Evidence, HeadSha? Sha)` |
+| `GateContext` | `(InstanceId Instance, RecipeId Recipe, ItemId Item, int Attempt, string State, string To, string On, IReadOnlyDictionary<string,string> Facts, IReadOnlyList<EvidenceRef> Evidence, HeadSha? Sha)`: `State` → `To` on `On` is the transition the gate judges |
 | `GateVerdict` | `(bool Passed, string Detail, double? Score = null, double? Threshold = null)` — recorded with the transition (`GateRecord`) |
 | `EffectContext` | `(InstanceId Instance, ItemId Item, RecipeId Recipe, string From, string To, IReadOnlyDictionary<string,string> Facts)` |
-| `EffectCommand` | `(string Kind, string PayloadJson)`; `Kind` must be in `EffectAllowlist.Kinds` (`notify.human`, `pr.draft`) |
+| `EffectCommand` | `(string Kind, string PayloadJson)`; `Kind` must be the block's declared `CommandKind`, else the transition is refused (SND-WF-001) and nothing is recorded |
 | `EvidenceRef` | `(string Kind, HeadSha Sha, string Digest, DateTimeOffset RegisteredAt)` |
 
 **Registration.** A project adds its blocks as `IBlock` singletons in its own `Add…()` method
 (`services.AddSingleton<IBlock>(new MyGate(...))`); `BlockRegistry` collects every `IBlock` in the container. A broken
 registration is a bug and throws when the registry is built: two blocks with one id, a gate that isn't an `IGateBlock`
-or has no rung, a rung on a non-gate, an effect that isn't an `IEffectBlock` or has no command kind, an evidence kind
-whose id isn't `evidence.<kind>`.
+or has no rung, a rung on a non-gate, an effect that isn't an `IEffectBlock` or whose command kind isn't in
+`EffectAllowlist.Kinds` (`notify.human`, `pr.draft`), an evidence kind whose id isn't `evidence.<kind>`.
 
 **Ids and naming.** `step.<name>`, `gate.<name>`, `effect.<name>`, `evidence.<kind>` (dotted lower-case words). A
 step's `Outputs` are the facts a signal for its state may set (anything else is SND-WF-009, a wrong type too); a
 gate's and an effect's `Inputs` are facts that must be produced upstream (the `input` check).
 
-**Rungs.** Order gates deterministic first. A failed gate below the top rung refuses the transition and records nothing
-(SND-WF-006); a failed `Model` gate escalates the instance (invariant 4) in the same commit.
+**The decision ladder.** For each candidate transition the engine first checks the cheap preconditions: the signal's
+outputs (SND-WF-009, before any candidate) and the transition's required evidence (SND-WF-007). Only then do its gates
+run, cheapest rung first (deterministic, judge, model; recipe order within a rung), stopping at the first failure, so a
+judge or model call is never spent on a signal refused for a cheap reason. A failed gate below the top rung refuses the
+transition and records nothing (SND-WF-006); a failed `Model` gate, reached only when every cheaper gate passed,
+escalates the instance (invariant 4) in the same commit. The transition records the gates that ran.
 
 **Capability.** `Capability = true` for a block with tools, outward effects or autonomy: only approved recipes may
 name it.
@@ -109,13 +116,21 @@ is decided by pure functions in Core (`SignalDecisions`, `GateOutcome`, `TimerDe
 `ParentDecisions`, `NoProgress`) and replayable: an instance is the fold of its events (`InstanceFold`).
 
 - **Instance id**: `wf-` + 12 hex of SHA-256 over (tenant, recipe, item, attempt). Starting the same triple again is a
-  no-op that returns the instance (`AlreadyRecorded`).
+  no-op that returns the instance (`AlreadyRecorded`). A child's id is derived from its parent's id, its recipe and the
+  parent's version when it entered the child wait state (that version is also the child's `attempt`), so each run of a
+  wait state, in every parent attempt, gets its own child. Each instance also records its tree's `root`.
 - **Signals**: `on`, optional `expectedVersion` (else SND-WF-003 on a mismatch), `sha`, outputs (`--set name=value`),
-  findings, `emptyDiff`, spend. A loop round with no new findings or an empty diff parks (`no-progress`).
+  findings, `emptyDiff`, spend. A loop round with no new findings or an empty diff parks (`no-progress`). A signal sent
+  again with the `expectedVersion` it was first applied at is a no-op (`AlreadyRecorded`): the engine finds that
+  signal's transition key at that version. A signal sent again **without** `expectedVersion` is a new signal against
+  the current state. Registering evidence that is already registered (same kind, sha and digest) records nothing.
 - **Holds**: park (`rounds`, `budget`, `no-progress`, `timeout`, `needs-answer`, `spec-conflict`) and escalate keep the
-  state; unpark may grant extra budget. Takeover pauses the timer, handback resumes it with the time that was left.
-  Cancel ends the instance and cascades to its children. Park, escalate, cancel and unpark propagate to the parent in
-  the same commit; a completed child sends the parent `child.done`.
+  state; unpark may grant extra budget. Takeover pauses the timer, handback resumes it with the time that was left; an
+  unpark during a takeover restarts the timer paused at the state's full timeout. Cancel ends the instance and its
+  whole subtree in one commit. Park, escalate, cancel and unpark propagate up the tree in the same commit (at most 8
+  levels); a completed child sends the parent `child.done` (its gates apply, and a top-rung failure escalates the
+  parent). A parent that is held or taken over when its child completes applies `child.done` when it is unparked or
+  handed back.
 - **Timers**: the scheduled service `workflow-timers` (profile: `services: { workflow-timers: { every: 5s } }`) ticks
   `Due` instances. After a clock jump (a slot far later than the cadence: `TickPace`) deadlines are extended by the
   jump instead of firing.
@@ -130,12 +145,16 @@ event of a workflow tree shares one correlation id, derived from the root instan
 caused by another (a parent's `child.done`, a propagated park) names it as its causation, and an effect's outbox command
 names the transition event that emitted it.
 
-**Idempotency keys** (§17.20): start `wf:<recipe>:<item>:<attempt>:start`; transition
-`wf:<recipe>:<item>:<attempt>:<from>><to>:<on>@v<version>:<sha|->`; other changes `wf:<recipe>:<item>:<attempt>:<what>@v<version>:-`, so a replayed signal or command writes nothing.
+**Idempotency keys** (§17.20), prefixed by the instance id (which stands for tenant, recipe, item and attempt, or for a
+child its parent and the parent's version): start `wf:<instance>:start`; transition
+`wf:<instance>:<from>><to>:<on>@v<version>:<sha|->`; other changes `wf:<instance>:<what>@v<version>:-`. A replayed
+commit (same first key) writes nothing; a timer or command key never counts as a signal's retry (only a key with
+`<from>><to>` before the signal's suffix does).
 
 **Storage** (migration `0004_workflow.sql`): `events.instance` (null for non-workflow events, indexed with `seq`) and
 `workflow_instances` (`id`, `recipe`, `recipe_hash`, `item`, `attempt`, `parent`, `tenant`, `ring`, `version`, `state`,
-`status`, `deadline`, `started_at`, `updated_at`, `snapshot_json`; unique on tenant, recipe, item, attempt). The row is a
+`status`, `deadline`, `started_at`, `updated_at`, `snapshot_json`; unique on tenant, recipe, item, attempt and
+`COALESCE(parent, '')`, so children are unique per parent). The row is a
 cache of the fold; `snapshot_json` holds the whole instance.
 
 ## API and CLI
@@ -177,7 +196,7 @@ attention needed (parked, escalated, not running), 2 error.
 ## Checks
 
 `tests/Aw.Sindri.Tests/Workflow/EnginePropertyTests.cs` holds the §17.28.5 properties: replaying the event log
-reproduces the instance; the same signal twice is a no-op; a stale epoch or a stale instance version is refused and
+reproduces the instance; the same signal sent again with its `expectedVersion` is a no-op; a stale epoch or a stale instance version is refused and
 writes nothing; a timer firing during a takeover does nothing; a child's park, escalation and completion reach the
 parent in one commit. Engine behavior, decisions, the store and catalog contracts, the validator, the
 recipe reader and the schema golden are beside it; each slice has its folder; `Server/WorkflowApiTests.cs` runs the
