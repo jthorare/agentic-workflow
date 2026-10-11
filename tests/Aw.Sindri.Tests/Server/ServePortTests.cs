@@ -6,6 +6,8 @@ using Aw.Sindri.Host;
 using Aw.Sindri.Host.Registration;
 using Aw.Sindri.Host.Server;
 using Aw.Sindri.Tests.Profile;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Server;
@@ -37,8 +39,29 @@ public sealed class ServePortTests : IDisposable
         Assert.Equal(new Uri($"http://127.0.0.1:{free}"), await Listening(fromEnvironment: free));
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public void Without_an_approval_the_port_is_the_default() => Assert.Equal(7410, ApiSettings.DefaultPort);
+    [Fact, Trait("Lane", "integration")]
+    public async Task Without_an_approval_or_the_variable_serve_listens_on_loopback_7410()
+    {
+        var listened = new List<IPEndPoint?>();
+        await using var app = Build(services => services.Configure<KestrelServerOptions>(k => k.ConfigureEndpointDefaults(o => listened.Add(o.IPEndPoint))));
+        var port = app.Services.GetRequiredService<ServePort>();
+
+        var chosen = await port.Listen(fromEnvironment: null, Token);
+
+        Assert.Equal((ApiSettings.DefaultPort, ApiSettings.DefaultPort), (chosen, port.Chosen));
+        Assert.Equal([new IPEndPoint(IPAddress.Loopback, 7410)], listened);   // the one listener, added without starting the app
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_serve_host_started_before_Listen_refuses_to_start()
+    {
+        await using var app = Build();
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => app.StartAsync(Token));
+
+        Assert.Contains("ServePort.Listen", refused.Message, StringComparison.Ordinal);
+        Assert.Empty(app.Urls);
+    }
 
     private async Task Approve(string api)
     {
@@ -48,14 +71,21 @@ public sealed class ServePortTests : IDisposable
 
     private async Task<Uri> Listening(string? fromEnvironment)
     {
-        await using var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _files.Settings.Home, _ => null }, TimeProvider.System,
-            static services => services.AddSindriServe());
+        await using var app = Build();
         _ = await app.Services.GetRequiredService<ServePort>().Listen(fromEnvironment, Token);
         await app.StartAsync(Token);
         var url = new Uri(app.Urls.First());
         await app.StopAsync(Token);
         return url;
     }
+
+    /// <summary>Serve's host in this test's home (no AW_SINDRI_PORT), plus <paramref name="configure"/>.</summary>
+    private WebApplication Build(Action<IServiceCollection>? configure = null) =>
+        LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _files.Settings.Home, _ => null }, TimeProvider.System, services =>
+        {
+            _ = services.AddSindriServe();
+            configure?.Invoke(services);
+        });
 
     private static string FreePort()
     {

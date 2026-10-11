@@ -45,14 +45,27 @@ public static class ProfileRules
     }
 
     /// <summary>
-    /// Whether the profile needs a (new) approval: nothing is approved, or the live profile reads and its hash differs.
-    /// A live profile that doesn't read leaves the approval standing; its error is reported on its own.
+    /// Whether the profile with hash <paramref name="live"/> is approved: it is the saved approval and the latest recorded
+    /// 'profile.approved' event names it. A saved approval whose event is missing or isn't the latest (its save failed after
+    /// a later approval was recorded) doesn't count, so approving again records it. Every surface uses this one rule.
     /// </summary>
-    /// <param name="approved">The latest approval's hash, or null.</param>
+    /// <param name="saved">The latest saved approval's hash, or null.</param>
+    /// <param name="recorded">The hash the latest recorded approval names, or null.</param>
+    /// <param name="live">The hash judged.</param>
+    /// <returns>True when approved.</returns>
+    public static bool IsApproved(ProfileHash? saved, ProfileHash? recorded, ProfileHash live) => saved == live && recorded == live;
+
+    /// <summary>
+    /// Whether the profile needs a (new) approval: the live profile isn't approved (<see cref="IsApproved"/>). A live profile
+    /// that doesn't read is judged by the saved approval instead (its error is reported on its own), so it needs approval
+    /// only when nothing is saved or the saved approval isn't the latest recorded one.
+    /// </summary>
+    /// <param name="saved">The latest saved approval's hash, or null.</param>
+    /// <param name="recorded">The hash the latest recorded approval names, or null.</param>
     /// <param name="live">The live profile's hash, or null when it doesn't read.</param>
     /// <returns>True when approving is needed.</returns>
-    public static bool NeedsApproval(ProfileHash? approved, ProfileHash? live) =>
-        approved is null || (live is not null && live != approved);
+    public static bool NeedsApproval(ProfileHash? saved, ProfileHash? recorded, ProfileHash? live) =>
+        (live ?? saved) is not { } judged || !IsApproved(saved, recorded, judged);
 
     private static SindriProfile Canonical(SindriProfile profile) => profile with
     {

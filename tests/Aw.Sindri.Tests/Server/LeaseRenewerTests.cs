@@ -123,6 +123,24 @@ public sealed class LeaseRenewerTests : IDisposable
         Assert.Null(_h.Held.Current);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_stop_that_cancels_a_renewal_in_flight_ends_the_renewer_cleanly()
+    {
+        _ = await _h.HoldLease();
+        _lease.BeforeRenew = _ =>
+        {
+            _shutdown.Request();      // the stop, while the renewal waits on the ledger: the read observes its token
+            throw new OperationCanceledException(_shutdown.Stopping);
+        };
+
+        await Run(steps: 1);
+        var executed = _running!.ExecuteTask!;   // why: Run started the renewer, so both are set
+        _ = await Task.WhenAny(executed);        // waits without rethrowing
+
+        Assert.True(executed.IsCompletedSuccessfully, executed.Status.ToString());
+        Assert.Equal(0, _exit.Code);
+    }
+
     private LeaseRenewer Renewer() => new(_lease, _h.Held, _shutdown, _exit, _clock, _log);
 
     private async Task Run(int steps)

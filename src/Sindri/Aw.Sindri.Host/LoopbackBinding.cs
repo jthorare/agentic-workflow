@@ -12,7 +12,7 @@ namespace Aw.Sindri.Host;
 /// arguments and no environment variables reach the web host's configuration, PreferHostingUrls is off, and Kestrel
 /// listens with Listen(IPAddress.Loopback, port) only. The port is AW_SINDRI_PORT (0 picks a free one); serve's host
 /// instead adds its one loopback listener through <see cref="ServePort"/> (the variable, else the approved api.port, else
-/// 7410) before it starts.
+/// 7410) before it starts, and refuses to start when that didn't run (<see cref="ServeListenerCheck"/>).
 /// </summary>
 internal static class LoopbackBinding
 {

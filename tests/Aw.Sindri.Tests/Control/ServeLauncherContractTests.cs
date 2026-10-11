@@ -52,6 +52,19 @@ public sealed class ServeLauncherContractTests : ControlPlaneLauncherContract, I
     }
 
     [Fact]
+    public async Task An_error_line_from_an_earlier_run_is_not_this_childs()
+    {
+        var log = Path.Combine(SindriHome, "logs", "serve.log");
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(log)!);   // why: the log path always has a directory
+        await File.WriteAllTextAsync(log, "SND-LEASE-001 held by host/1 since then (epoch 4)\n", TestContext.Current.CancellationToken);
+
+        using var child = ExitingWith("hello").Launch().Value;
+        await Exited(child);
+
+        Assert.False(child.LastError().StartsWith("SND-", StringComparison.Ordinal), child.LastError());
+    }
+
+    [Fact]
     public void The_child_runs_in_its_own_session()
     {
         Assert.SkipUnless(File.Exists(Perl), "without /usr/bin/perl the child is a plain exec in the caller's session");

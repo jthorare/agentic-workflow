@@ -1,6 +1,12 @@
+using Aw.Kernel.Services;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Features.ApproveProfile;
+using Aw.Sindri.Features.StartProcess;
+using Aw.Sindri.Features.StopProcess;
+using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Tests.Ledger;
-using Aw.Sindri.Tests.Profile;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Commands;
 
@@ -74,11 +80,29 @@ public sealed class CommandTableTests : IDisposable
             TestContext.Current.CancellationToken);
         if (state == "approved")
         {
-            using var files = new ProfileFiles(_home.Path);
-            _ = await files.Approvals.Save((await files.Source.Load(TestContext.Current.CancellationToken)).Value, TestContext.Current.CancellationToken);
+            await Approve();
         }
     }
 
+    /// <summary>Approves the live profile as 'sindri profile approve' does: under the lease, recorded in the ledger and saved.</summary>
+    private async Task Approve()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var provider = Composition.Compose(new ServiceCollection(), Environment, TimeProvider.System).BuildServiceProvider();
+        await using (provider)
+        {
+            await using var scope = provider.CreateAsyncScope();
+            var services = scope.ServiceProvider;
+            _ = await services.GetRequiredService<IService<StartProcessRequest, StartProcessResponse>>().Handle(new StartProcessRequest(), ct);
+            var approve = services.GetRequiredService<IService<ApproveProfileRequest, ApproveProfileResponse>>();
+            var hash = (await approve.Handle(new ApproveProfileRequest(Hash: null, Confirmed: false), ct)).Value.Hash;
+            Assert.True((await approve.Handle(new ApproveProfileRequest(hash, Confirmed: true), ct)).Value.Approved);
+            _ = await services.GetRequiredService<IService<StopProcessRequest, StopProcessResponse>>().Handle(new StopProcessRequest(StopReason.Stop), ct);
+        }
+    }
+
+    private string? Environment(string name) => name switch { "AW_SINDRI_HOME" => _home.Path, _ => null };
+
     private Task<int> Run(params string[] args) =>
-        CommandTable.Run(args, n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System);
+        CommandTable.Run(args, Environment, TimeProvider.System);
 }

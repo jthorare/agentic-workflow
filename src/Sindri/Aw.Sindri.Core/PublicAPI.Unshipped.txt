@@ -1586,7 +1586,8 @@ Aw.Sindri.Core.Events.StopReason.Signal = 1 -> Aw.Sindri.Core.Events.StopReason
 Aw.Sindri.Core.Events.StopReason.Stop = 0 -> Aw.Sindri.Core.Events.StopReason
 Aw.Sindri.Core.Lease.HeldLease.Replace(Aw.Sindri.Core.Lease.LeaseGrant! expected, Aw.Sindri.Core.Lease.LeaseGrant! next) -> bool
 static Aw.Sindri.Core.Events.EventTypes.ServiceRun(Aw.Sindri.Core.Ids.ServiceName service) -> string!
-static Aw.Sindri.Core.Profile.ProfileRules.NeedsApproval(Aw.Sindri.Core.Ids.ProfileHash? approved, Aw.Sindri.Core.Ids.ProfileHash? live) -> bool
+static Aw.Sindri.Core.Profile.ProfileRules.NeedsApproval(Aw.Sindri.Core.Ids.ProfileHash? saved, Aw.Sindri.Core.Ids.ProfileHash? recorded, Aw.Sindri.Core.Ids.ProfileHash? live) -> bool
+static Aw.Sindri.Core.Profile.ProfileRules.IsApproved(Aw.Sindri.Core.Ids.ProfileHash? saved, Aw.Sindri.Core.Ids.ProfileHash? recorded, Aw.Sindri.Core.Ids.ProfileHash live) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ApprovalsUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.InvalidInput -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Workflow.WorkflowInstance.Deconstruct(out Aw.Sindri.Core.Ids.InstanceId Id, out Aw.Sindri.Core.Ids.RecipeId Recipe, out Aw.Sindri.Core.Ids.RecipeHash RecipeHash, out Aw.Sindri.Core.Ids.ItemId Item, out int Attempt, out Aw.Sindri.Core.Ids.InstanceId? Parent, out Aw.Sindri.Core.Ids.InstanceId Root, out string! Tenant, out int Ring, out long Version, out string! State, out Aw.Sindri.Core.Workflow.InstanceHold? Hold, out bool TakenOver, out Aw.Sindri.Core.Workflow.InstanceEnd? Ended, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Facts, out System.Collections.Generic.IReadOnlyDictionary<string!, int>! Loops, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! Findings, out Aw.Sindri.Core.Workflow.Spend! Spent, out Aw.Sindri.Core.Workflow.Spend! StateSpent, out Aw.Sindri.Core.Workflow.Spend! Extra, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Blocks.EvidenceRef!>! Evidence, out System.DateTimeOffset? Deadline, out System.TimeSpan? Paused, out int Retries, out Aw.Sindri.Core.Ids.HeadSha? BaseSha, out System.DateTimeOffset StartedAt, out System.DateTimeOffset EnteredAt, out System.DateTimeOffset UpdatedAt) -> void
@@ -1608,3 +1609,20 @@ Aw.Sindri.Core.Blocks.GateContext.Recipe.get -> Aw.Sindri.Core.Ids.RecipeId
 Aw.Sindri.Core.Blocks.GateContext.Recipe.init -> void
 Aw.Sindri.Core.Blocks.GateContext.To.get -> string!
 Aw.Sindri.Core.Blocks.GateContext.To.init -> void
+static readonly Aw.Sindri.Core.SindriErrors.ApiInternal -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ApiNoCode -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Events.RecordedApproval
+Aw.Sindri.Core.Events.RecordedApproval.<Clone>$() -> Aw.Sindri.Core.Events.RecordedApproval!
+Aw.Sindri.Core.Events.RecordedApproval.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash Hash, out long Sequence) -> void
+Aw.Sindri.Core.Events.RecordedApproval.Equals(Aw.Sindri.Core.Events.RecordedApproval? other) -> bool
+Aw.Sindri.Core.Events.RecordedApproval.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Core.Events.RecordedApproval.Hash.init -> void
+Aw.Sindri.Core.Events.RecordedApproval.RecordedApproval(Aw.Sindri.Core.Ids.ProfileHash Hash, long Sequence) -> void
+Aw.Sindri.Core.Events.RecordedApproval.Sequence.get -> long
+Aw.Sindri.Core.Events.RecordedApproval.Sequence.init -> void
+override Aw.Sindri.Core.Events.RecordedApproval.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.RecordedApproval.GetHashCode() -> int
+override Aw.Sindri.Core.Events.RecordedApproval.ToString() -> string!
+static Aw.Sindri.Core.Events.RecordedApproval.Latest(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Events.RecordedApproval?>
+static Aw.Sindri.Core.Events.RecordedApproval.operator !=(Aw.Sindri.Core.Events.RecordedApproval? left, Aw.Sindri.Core.Events.RecordedApproval? right) -> bool
+static Aw.Sindri.Core.Events.RecordedApproval.operator ==(Aw.Sindri.Core.Events.RecordedApproval? left, Aw.Sindri.Core.Events.RecordedApproval? right) -> bool

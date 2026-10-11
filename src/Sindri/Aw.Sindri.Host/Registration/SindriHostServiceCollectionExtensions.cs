@@ -14,11 +14,15 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<IShutdown>(static sp => sp.GetRequiredService<ProcessShutdown>())
         .AddSingleton<IExitCode, ProcessExitCode>();
 
-    /// <summary>Adds what only 'sindri serve' runs: the scheduler, the lease renewer, and the port it chooses before it binds.</summary>
+    /// <summary>
+    /// Adds what only 'sindri serve' runs: the port it chooses before it binds (and the check that refuses to start without
+    /// it), the scheduler and the lease renewer.
+    /// </summary>
     /// <param name="services">The service collection (already composed).</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddSindriServe(this IServiceCollection services) => services
         .AddSingleton<ServePort>()
+        .AddHostedService<ServeListenerCheck>()
         .AddHostedService<SchedulerHost>()
         .AddHostedService<LeaseRenewer>();
 }

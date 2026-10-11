@@ -102,9 +102,7 @@ public sealed class ApproveProfileTests
             Assert.True((await Service().Handle(new ApproveProfileRequest(profile.Hash, Confirmed: true), Token)).Value.Approved);
 
             var preview = (await Service().Handle(new ApproveProfileRequest(Hash: null, Confirmed: false), Token)).Value;
-            var status = (await new GetStatusService(_h.Held, _h.Profiles, _h.Profiles, _h.Store).Handle(new GetStatusRequest(), Token)).Value;
-            var validated = (await new ValidateProfileService(_h.Profiles, _h.Profiles).Handle(new ValidateProfileRequest(), Token)).Value;
-            Assert.Equal((true, false, true), (preview.Approved, status.Profile.NeedsApproval, validated.Approved));
+            Assert.Equal((true, false, true), await Surfaces());
         }
 
         var events = _h.Store.Events;
@@ -148,6 +146,31 @@ public sealed class ApproveProfileTests
         Assert.False(shown.Approved);
         Assert.True(approved.Approved);
         Assert.Equal($"profile.approved:{live.Hash.Value}:after:0", Assert.Single(_h.Store.Events).IdempotencyKey);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Every_surface_says_not_approved_after_a_failed_save_and_an_edit_back()
+    {
+        var (a, b) = (SliceHarness.Profile("5s"), SliceHarness.Profile("9s"));
+        _ = await _h.HoldLease();
+        _h.Profiles.Live = a;
+        _ = await Service().Handle(new ApproveProfileRequest(a.Hash, Confirmed: true), Token);
+        _h.Profiles.Live = b;
+        var flaky = new ApproveProfileService(_h.Profiles, new SaveFailsOnce(_h.Profiles), _h.Held, _h.Store, _h.Events);
+        Assert.Equal(SindriErrors.ApprovalsUnavailable.Code, (await flaky.Handle(new ApproveProfileRequest(b.Hash, Confirmed: true), Token)).Error.Code);
+
+        _h.Profiles.Live = a;   // edited back: A is still the saved approval, but B's event is the latest recorded one
+
+        Assert.Equal((false, true, false), await Surfaces());
+    }
+
+    /// <summary>What the approve preview, the status and validate each say: (approved, needs approval, approved).</summary>
+    private async Task<(bool Preview, bool StatusNeedsApproval, bool Validated)> Surfaces()
+    {
+        var preview = (await Service().Handle(new ApproveProfileRequest(Hash: null, Confirmed: false), Token)).Value;
+        var status = (await new GetStatusService(_h.Held, _h.Profiles, _h.Profiles, _h.Store, _h.Events).Handle(new GetStatusRequest(), Token)).Value;
+        var validated = (await new ValidateProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events).Handle(new ValidateProfileRequest(), Token)).Value;
+        return (preview.Approved, status.Profile.NeedsApproval, validated.Approved);
     }
 
     /// <summary>Approvals whose first save fails, as a full disk would.</summary>

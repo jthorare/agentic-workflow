@@ -59,8 +59,10 @@ public sealed class ServeTests : IDisposable
         await app.StopAsync(ct);
     }
 
-    [Fact(Timeout = Deadline), Trait("Lane", "integration")]
-    public async Task A_bad_approve_body_is_a_400_problem_with_no_stack_trace()
+    [Theory(Timeout = Deadline), Trait("Lane", "integration")]
+    [InlineData("""{"hash":"nope","confirmed":true}""")]
+    [InlineData("""{"hash":""")]
+    public async Task A_bad_approve_body_is_a_400_problem_with_SND_CLI_003_and_no_stack_trace(string json)
     {
         var ct = TestContext.Current.CancellationToken;
         await using var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System);
@@ -68,11 +70,13 @@ public sealed class ServeTests : IDisposable
         await app.StartAsync(Token);
         using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()), Timeout = TimeSpan.FromSeconds(10) };
 
-        using var body = new StringContent("""{"hash":"nope","confirmed":true}""", System.Text.Encoding.UTF8, "application/json");
+        using var body = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
         var answer = await http.PostAsync(new Uri("/sindri/profile/approve", UriKind.Relative), body, Token);
+        var text = await answer.Content.ReadAsStringAsync(Token);
 
         Assert.Equal(HttpStatusCode.BadRequest, answer.StatusCode);
-        Assert.DoesNotContain("   at ", await answer.Content.ReadAsStringAsync(Token), StringComparison.Ordinal);
+        Assert.Equal("SND-CLI-003", System.Text.Json.JsonDocument.Parse(text).RootElement.GetProperty("title").GetString());
+        Assert.DoesNotContain("   at ", text, StringComparison.Ordinal);
         await app.StopAsync(ct);
     }
 

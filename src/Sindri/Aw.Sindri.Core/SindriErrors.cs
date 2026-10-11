@@ -47,6 +47,12 @@ public static class SindriErrors
     /// <summary>SND-API-003: the API's port is taken by another program.</summary>
     public static readonly ErrorDefinition PortInUse = new("SND-API-003", ErrorKind.Unavailable, "The API port is in use");
 
+    /// <summary>SND-API-004: the API answered an error without a catalogue code (a route or method it doesn't serve, a body it couldn't read).</summary>
+    public static readonly ErrorDefinition ApiNoCode = new("SND-API-004", ErrorKind.Unavailable, "The API answered without an error code");
+
+    /// <summary>SND-API-005: a handler failed with an unexpected exception (a bug); the control plane logged it.</summary>
+    public static readonly ErrorDefinition ApiInternal = new("SND-API-005", ErrorKind.Unavailable, "Internal error in the control plane");
+
     /// <summary>SND-CLI-001: an unknown verb or option.</summary>
     public static readonly ErrorDefinition UnknownVerb = new("SND-CLI-001", ErrorKind.Invalid, "Unknown command");
 
@@ -90,8 +96,8 @@ public static class SindriErrors
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ProfileHashMismatch, ProfileNeedsTerminal,
-        ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, UnknownVerb, StartFailed,
-        InvalidInput, ServiceFailed, RecipeInvalid, RecipeUnknown, InstanceChanged, InstanceUnknown, TransitionNotAllowed, GateRefused,
-        EvidenceMissing, RecipeChanged, OutputInvalid,
+        ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
+        UnknownVerb, StartFailed, InvalidInput, ServiceFailed, RecipeInvalid, RecipeUnknown, InstanceChanged, InstanceUnknown, TransitionNotAllowed,
+        GateRefused, EvidenceMissing, RecipeChanged, OutputInvalid,
     ];
 }

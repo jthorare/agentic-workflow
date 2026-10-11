@@ -56,8 +56,8 @@ internal static class CommandTable
     }
 
     private static Task<int> Start(IServiceProvider services, ControlPlaneClient client, Output output, bool headless) =>
-        new StartCommand(services.GetRequiredService<IControlPlaneProbe>(), services.GetRequiredService<IControlPlaneLauncher>(), client, output)
-            .Run(headless, CancellationToken.None);
+        new StartCommand(services.GetRequiredService<IControlPlaneProbe>(), services.GetRequiredService<IControlPlaneLauncher>(), client, output,
+            services.GetRequiredService<TimeProvider>()).Run(headless, CancellationToken.None);
 
     private static bool? Json(string[] rest) => rest switch
     {

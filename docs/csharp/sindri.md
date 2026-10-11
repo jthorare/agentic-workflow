@@ -15,14 +15,14 @@ One NativeAOT binary, `sindri`, is both the control plane and its CLI.
 
 | Command | What it does | Exit |
 |---|---|---|
-| `sindri` | Prints the banner, starts the control plane if it isn't running (detached in its own session, so a Ctrl-C or a kill of the terminal's process group doesn't reach it; `sindri serve`, output in `<home>/logs/serve.log`), then prints the startup summary. It starts one only when nothing runs (`SND-API-001`); one that answers late (`SND-API-002`) is reported as it is. A started child that exits with `SND-LEASE-001` lost the lease to a concurrent start, so it waits up to 10 s for the winner to answer | 0; 1 when the profile needs approval; 2 when it can't start (`SND-CLI-002`) or the running one answers late |
+| `sindri` | Prints the banner, starts the control plane if it isn't running (detached in its own session, so a Ctrl-C or a kill of the terminal's process group doesn't reach it; `sindri serve`, output in `<home>/logs/serve.log`), then prints the startup summary. It starts one only when nothing runs (`SND-API-001`); one that answers late (`SND-API-002`) is reported as it is. A started child that exits with `SND-LEASE-001` lost the lease to a concurrent start, so it waits up to 10 s for the winner to answer; past that the error ends with the line the child exited with. Only lines the started child wrote count, not an earlier run's | 0; 1 when the profile needs approval; 2 when it can't start (`SND-CLI-002`) or the running one answers late |
 | `sindri --headless` | The same without the UI line (the UI is S1b) | as above |
-| `sindri serve` | Runs the control plane in the foreground: what bare `sindri` starts, and what launchd will keep alive later | 0 on a clean stop; 1 when another process holds the lease (`SND-LEASE-001`) or the lease was lost; 2 when the port is taken or refused, (`SND-API-003`), or `AW_SINDRI_PORT` isn't a port number 0..65535 (`SND-CLI-003`, checked before the lease is taken), or the ledger can't be opened |
-| `sindri status [--json]` | The running control plane's status, through the API | 0; 1 when it isn't running (`SND-API-001`) or the profile needs approval (`profile.needsApproval` in the response); 2 when it didn't answer in time (`SND-API-002`) |
-| `sindri stop` | Stops it: records the stop, releases the lease, shuts down | 0; 1 when it isn't running |
-| `sindri profile validate [--json]` | Checks the live profile file and prints its hash | 0 valid and approved; 1 valid, not approved; 2 invalid (`SND-PROFILE-001/002`) |
+| `sindri serve` | Runs the control plane in the foreground: what bare `sindri` starts, and what launchd will keep alive later | 0 on a clean stop; 1 when another process holds the lease (`SND-LEASE-001`) or the lease was lost; 2 when the port is taken or refused (`SND-API-003`), or `AW_SINDRI_PORT` isn't a port number 0..65535 (`SND-CLI-003`, checked before the lease is taken), or the ledger can't be opened |
+| `sindri status [--json]` | The running control plane's status, through the API | 0; 1 when it isn't running (`SND-API-001`) or the profile needs approval (`profile.needsApproval` in the response); 2 when it didn't answer in time (`SND-API-002`), answered an error without a code (`SND-API-004`) or failed inside (`SND-API-005`) |
+| `sindri stop` | Stops it: records the stop, releases the lease, shuts down | 0; 1 when it isn't running; 2 when it didn't answer in time (`SND-API-002`), answered an error without a code (`SND-API-004`) or failed inside (`SND-API-005`) |
+| `sindri profile validate [--json]` | Checks the live profile file and prints its hash | 0 valid and approved (it is the saved approval and the latest recorded `profile.approved` event names it, the rule every surface uses); 1 valid, not approved; 2 invalid (`SND-PROFILE-001/002`) |
 | `sindri profile approve` | Shows the live hash and the key paths changed since the latest approval; changes nothing | 1 when not approved yet, 0 when it already is |
-| `sindri profile approve <hash>` | Approves: the hash must be the live one, and you type its first 6 characters at an interactive terminal | 0; 2 on a malformed hash (`SND-CLI-003`), a stale hash (`SND-PROFILE-003`), no terminal or a wrong confirmation (`SND-PROFILE-004`), or approvals that can't be written (`SND-PROFILE-006`) |
+| `sindri profile approve <hash>` | Approves: the hash must be the live one, and you type its first 6 characters at an interactive terminal | 0; 2 on a malformed hash (`SND-CLI-003`), a stale hash (`SND-PROFILE-003`), no terminal or a wrong confirmation (`SND-PROFILE-004`), approvals that can't be written (`SND-PROFILE-006`), or an API error without a code (`SND-API-004`) or from inside (`SND-API-005`) |
 | `sindri doctor [--json]` | One line per check, in order: `lease`, `ledger`, `profile`, `api`, each `ok` / `warn` / `fail` with a fix | 0 all ok, 1 any warn, 2 any fail |
 
 Output: state is always a word, never colour; there is no colour at all, so `NO_COLOR` and redirected output need
@@ -38,8 +38,9 @@ the approval is a ledger event fenced by the lease.
 ## Files
 
 `AW_SINDRI_HOME`, default `$AW_STATE_DIR/sindri-app` (`$AW_STATE_DIR` defaults to `~/.agentic-workflow`). It is apart from
-the TS sindri's `$AW_STATE_DIR/sindri` until the switch; no TS state is read. A directory Sindri creates is 0700: the directory itself is made 0700, and parents it creates keep the umask (one
-that already exists keeps the mode its owner gave it); files are 0600.
+the TS sindri's `$AW_STATE_DIR/sindri` until the switch; no TS state is read. Each directory Sindri asks for (the home,
+`approved/…`, `logs`) is made 0700 when Sindri creates it; parents created along the way keep the umask, and an existing
+directory keeps its mode; files are 0600.
 
 | Path | What |
 |---|---|
@@ -130,8 +131,11 @@ foreign browser `Origin` a 403):
 | `POST /sindri/profile/approve` | `ApproveProfile` (`{hash, confirmed}`) |
 | `GET /sindri/events?after=N` | `StreamEvents` as server-sent events: one event per ledger row, `id` = `seq`, `event` = type; resumes from `after` or `Last-Event-ID`; polls the ledger once a second; ends when the client goes away or a stop is requested, so a stop doesn't wait out Kestrel's 30 s graceful shutdown |
 
-A service's error is ProblemDetails with the `SND-*` code as `title`. The loopback guard's 400 and 403, an unknown
-route's 404 and a wrong method's 405 carry no ProblemDetails body. The approve route's `confirmed` is the CLI's claim that the human typed the
+A service's error is ProblemDetails with the `SND-*` code as `title`. The API's own failures carry a code too: an
+unhandled exception in a handler is logged and answered 500 with `SND-API-005`, and a body or query value the request
+binding refuses (JSON that doesn't read as the request, a malformed hash or id) is a 400 with `SND-CLI-003`. Only the
+loopback guard's 400 and 403, an unknown route's 404 and a wrong method's 405 carry no ProblemDetails body; the CLI
+reports an error answer without a code as `SND-API-004`, never as "not running". The approve route's `confirmed` is the CLI's claim that the human typed the
 confirmation; in S1 that terminal check in the CLI is the only gate. There is no API token in S1: the threat model guards honest
 mistakes (`docs/csharp/bugfix.md`), and approval stays terminal-bound in the CLI. Device-bound approvals for the UI
 (passkeys, §17.21 D6) come with the UI's action forms.
@@ -163,6 +167,8 @@ blocks.
 | `SND-API-001` | The control plane isn't running (no endpoint record, or nothing answers at it) |
 | `SND-API-002` | It didn't answer the ping within 2 s, or the call itself within 10 s |
 | `SND-API-003` | The API port is taken by another program |
+| `SND-API-004` | The API answered an error without a catalogue code (HTTP status named) |
+| `SND-API-005` | A handler failed with an unexpected exception; the control plane logged it |
 | `SND-CLI-001` | Unknown command |
 | `SND-CLI-002` | `sindri serve` didn't come up after starting it |
 | `SND-CLI-003` | A command's input is malformed: a profile hash that isn't 64 hex digits, or an `AW_SINDRI_PORT` that isn't 0..65535 |

@@ -52,7 +52,7 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
     /// Appends the approval of <paramref name="asked"/> unless the latest recorded approval already names it (the
     /// event exists and only the save failed), keyed by the event it follows.
     /// </summary>
-    private async ValueTask<Result<Unit>> Record(ProfileHash asked, IReadOnlyList<string> changes, (ProfileHash Hash, long Sequence)? recorded,
+    private async ValueTask<Result<Unit>> Record(ProfileHash asked, IReadOnlyList<string> changes, RecordedApproval? recorded,
         LeaseGrant grant, CancellationToken cancellationToken)
     {
         if (recorded?.Hash == asked)
@@ -67,29 +67,17 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
     }
 
     /// <summary>
-    /// What to show, and the latest recorded approval. Approved means saved and recorded: a saved approval whose event
-    /// is missing from the ledger (or isn't the latest one) is shown as not approved, so approving again records it.
+    /// What to show, and the latest recorded approval. Approved is <see cref="ProfileRules.IsApproved"/>: saved and the
+    /// latest recorded approval, so a saved approval whose event is missing (or isn't the latest) shows as not approved
+    /// and approving again records it.
     /// </summary>
-    private async ValueTask<(ApproveProfileResponse Shown, (ProfileHash Hash, long Sequence)? Recorded)> Show(LoadedProfile loaded, CancellationToken cancellationToken)
+    private async ValueTask<(ApproveProfileResponse Shown, RecordedApproval? Recorded)> Show(LoadedProfile loaded, CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         var previous = latest.IsSuccess ? latest.Value : null;
-        var recorded = await LatestRecorded(cancellationToken).ConfigureAwait(false);
-        var approved = previous?.Hash == loaded.Hash && recorded?.Hash == loaded.Hash;
+        var recorded = await RecordedApproval.Latest(ledger, events, cancellationToken).ConfigureAwait(false);
+        var approved = ProfileRules.IsApproved(previous?.Hash, recorded?.Hash, loaded.Hash);
         return (new ApproveProfileResponse(loaded.Hash, ProfileDiff.Between(previous?.Profile, loaded.Profile), approved), recorded);
-    }
-
-    /// <summary>The hash and position of the latest 'profile.approved' event in the ledger, or null.</summary>
-    private async ValueTask<(ProfileHash Hash, long Sequence)?> LatestRecorded(CancellationToken cancellationToken)
-    {
-        var latest = await ledger.Latest(EventTypes.ProfileApproved, cancellationToken).ConfigureAwait(false);
-        if (latest.IsError || latest.Value is not { } recorded)
-        {
-            return null;
-        }
-
-        var payload = events.Payload<ProfileApproved>(recorded);
-        return payload.IsSuccess ? (payload.Value.Hash, recorded.Sequence) : null;
     }
 
     private static Error? Refusal(ProfileHash asked, LoadedProfile live, bool confirmed) => true switch

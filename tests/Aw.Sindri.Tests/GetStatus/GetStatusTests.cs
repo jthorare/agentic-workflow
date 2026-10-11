@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.RecordHeartbeat;
 
@@ -10,7 +11,7 @@ public sealed class GetStatusTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private GetStatusService Service() => new(_h.Held, _h.Profiles, _h.Profiles, _h.Store);
+    private GetStatusService Service() => new(_h.Held, _h.Profiles, _h.Profiles, _h.Store, _h.Events);
 
     [Fact, Trait("Lane", "unit")]
     public async Task GetStatus_reports_not_running_when_no_lease_is_held()
@@ -29,8 +30,8 @@ public sealed class GetStatusTests
     {
         var approved = SliceHarness.Profile("5s");
         _h.Profiles.Live = approved;
-        _ = await _h.Profiles.Save(approved, Token);
         var grant = await _h.HoldLease();
+        _ = await new ApproveProfileService(_h.Profiles, _h.Profiles, _h.Held, _h.Store, _h.Events).Handle(new ApproveProfileRequest(approved.Hash, Confirmed: true), Token);
         _ = await new RecordHeartbeatService(_h.Store, _h.Events, _h.Clock).Handle(new RecordHeartbeatRequest(new ScheduledRun(grant, _h.Clock.GetUtcNow())), Token);
 
         var status = (await Service().Handle(new GetStatusRequest(), Token)).Value;

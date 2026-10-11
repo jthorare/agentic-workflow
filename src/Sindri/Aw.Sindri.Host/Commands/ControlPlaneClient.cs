@@ -70,6 +70,6 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
         var problem = AwJson.Deserialize<ApiProblem>(bytes, options);
         return problem.IsSuccess && problem.Value.Title is { } code
             ? new Error(code, status >= 500 ? ErrorKind.Unavailable : ErrorKind.Invalid, problem.Value.Detail ?? code)
-            : SindriErrors.NotRunning.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the API answered HTTP {status} without an error code"));
+            : SindriErrors.ApiNoCode.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the API answered HTTP {status} without an error code"));
     }
 }
