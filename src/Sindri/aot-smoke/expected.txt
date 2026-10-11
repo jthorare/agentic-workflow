@@ -35,8 +35,8 @@ exit 2
   ready     running; the profile needs your approval
 exit 1
 ## sindri workflow recipes
-workflow.item    v1  valid  approved  d49789e6  builtin:workflow.item.yaml
-workflow.step    v1  valid  approved  71d07006  builtin:workflow.step.yaml
+workflow.item    v1  valid  approved  091c6086  builtin:workflow.item.yaml
+workflow.step    v1  valid  approved  97fda076  builtin:workflow.step.yaml
 ## sindri workflow start workflow.step SMOKE-1
 wf-e20a884da707  workflow.step  SMOKE-1#1  produce    active  v1
 ## sindri workflow signal wf-e20a884da707 produced
