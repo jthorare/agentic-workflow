@@ -14,9 +14,9 @@ namespace Aw.Sindri.Core.Recipes;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record RecipeState(
     StateKind Kind,
-    BlockId? Step = null,
-    string? Timeout = null,
-    TimeoutAction? OnTimeout = null,
-    BudgetSpec? Budget = null,
-    RecipeId? Child = null,
-    string? Next = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BlockId? Step = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Timeout = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TimeoutAction? OnTimeout = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BudgetSpec? Budget = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] RecipeId? Child = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Next = null);

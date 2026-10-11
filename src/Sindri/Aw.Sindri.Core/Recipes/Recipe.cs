@@ -23,20 +23,25 @@ public sealed record Recipe(
     string Initial,
     IReadOnlyDictionary<string, RecipeState> States,
     IReadOnlyList<RecipeTransition> Transitions,
-    IReadOnlyDictionary<string, LoopSpec>? Loops = null,
-    BudgetSpec? Budget = null,
-    string? Description = null,
-    RecipeHash? Hash = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, LoopSpec>? Loops = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BudgetSpec? Budget = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Description = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] RecipeHash? Hash = null)
 {
     /// <summary>The signal a parent receives when its child workflow completes.</summary>
     public const string ChildDone = "child.done";
 
-    /// <summary>The recipe in canonical form, which the hash covers: no hash field, states and loops sorted by name, transitions in order.</summary>
+    /// <summary>
+    /// The recipe in canonical form, which the hash covers: what the engine runs, nothing else. No hash field, no
+    /// description and no next-step text (display only), states and loops sorted by name, transitions in order; absent
+    /// optional fields aren't written, so adding an optional field to the format doesn't change existing hashes.
+    /// </summary>
     /// <returns>The canonical recipe.</returns>
     public Recipe Canonical() => this with
     {
         Hash = null,
-        States = new SortedDictionary<string, RecipeState>(States.ToDictionary(), StringComparer.Ordinal),
+        Description = null,
+        States = new SortedDictionary<string, RecipeState>(States.ToDictionary(kv => kv.Key, kv => kv.Value with { Next = null }, StringComparer.Ordinal), StringComparer.Ordinal),
         Loops = Loops is null ? null : new SortedDictionary<string, LoopSpec>(Loops.ToDictionary(), StringComparer.Ordinal),
     };
 

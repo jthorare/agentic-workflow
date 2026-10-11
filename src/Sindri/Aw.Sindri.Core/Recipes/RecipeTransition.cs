@@ -19,7 +19,7 @@ public sealed record RecipeTransition(
     string From,
     string To,
     string On,
-    IReadOnlyList<BlockId>? Gates = null,
-    IReadOnlyList<string>? Evidence = null,
-    IReadOnlyList<BlockId>? Effects = null,
-    string? Loop = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<BlockId>? Gates = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Evidence = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<BlockId>? Effects = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Loop = null);

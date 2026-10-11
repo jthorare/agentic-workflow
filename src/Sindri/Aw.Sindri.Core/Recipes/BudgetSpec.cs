@@ -6,4 +6,6 @@ namespace Aw.Sindri.Core.Recipes;
 /// <param name="Tokens">The token cap, or null for none.</param>
 /// <param name="Turns">The turn cap, or null for none.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record BudgetSpec(long? Tokens = null, int? Turns = null);
+public sealed record BudgetSpec(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] long? Tokens = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Turns = null);

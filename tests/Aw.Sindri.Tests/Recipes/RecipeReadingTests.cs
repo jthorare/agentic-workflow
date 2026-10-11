@@ -58,4 +58,12 @@ public sealed class RecipeReadingTests
 
         Assert.Equal(original, reworded);
     }
+
+    // Golden: the built-in recipes' hashes. A change here means every instance started on a built-in is stranded by the
+    // upgrade (SND-WF-008), so it is a reviewed change that says why the recipe's content changed.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("workflow.item", "091c60861918cf4bb6371b7701b29aa60a43eeed57035fc3ad72a43d933d0328")]
+    [InlineData("workflow.step", "97fda076a0570797842fd78bdf26b293ae5195a191e8000ee812f7a62ce87e2a")]
+    public void The_built_in_recipes_keep_their_hashes(string name, string hash) =>
+        Assert.Equal(hash, TestRecipes.Read(Registries.BuiltinYaml(name)).Hash.Value);
 }
