@@ -1,7 +1,12 @@
 # Sindri workflow engine: recipes, blocks, validator and engine
 
-**Status:** design, **revision 8** (2026-10-11): the engine runs on Temporal (§0, §5); revision 7 was the epic
-reconciliation after five /autoplan passes · **Date:** 2026-10-10 · **Builds:** factory addendum §17.28 (one workflow
+**Status:** design, **revision 8** (2026-10-11): the engine runs on Temporal (§0, §5). Revision 7 was the epic
+reconciliation after five /autoplan passes; 7.1 applied the owner's decisions from PR #179's review (absent optional
+fields stay `null` in the hash, §3.1; block ids take an optional area, §3.3; `RCP-NAME-001`, §3.4, §9.1); 7.2 applied
+the owner's decisions from PR #180's review and is folded in here (no progress from identical findings and a repeated
+failure reason until P8, §3.7; an answer's re-run past the loop cap parks `rounds`, §3.8, §5.8; `--reject` on a
+command's escalation, §3.8, §5.8; `--scaffold`'s rule, §6.3; child lines, engine triggers and recorded content in the
+eval format, §9.2) · **Date:** 2026-10-10 · **Builds:** factory addendum §17.28 (one workflow
 state machine) and §17.29.4 step 2 · **Next:** P0 (the Temporal spike), then `/specToProvenPR` takes the Phases at the
 end to PRs.
 
@@ -277,7 +282,10 @@ names come from the trigger's source: a Step, an event, or a child's terminal ou
 ### 3.7 Loops, budgets, `next`
 
 - **Loops:** `{ cap ≥ 1, noProgress }`. `noProgress` defaults to `[findings, emptyDiff, sameFailure]` and can't be
-  empty; the rule is A §17.23.13. Popping a frame never counts a round.
+  empty; the rule is A §17.23.13. Popping a frame never counts a round. **P3–P7 (owner decision, 2026-10-11, rev
+  7.2):** no progress is detected only from identical findings (the digest of the whole findings value) and a repeated
+  failure reason (a `step.failed` or a gate refusal); there is no superset check, and `emptyDiff` never fires. The
+  agent runtime (P8) adds finding keys and a diff signal to Step reports, and the full A §17.23.13 rule lands there.
 - **Budgets:** exhausting one is `→ parked(budget)`.
 - **Recipe `next` variables:** `{item}`, `{instance}`, `{state}`, `{user}`, `{child}`, `{loop.<n>}`,
   `{loop.<n>.cap}`, `{budget.tokens.left}`.
@@ -291,9 +299,9 @@ names come from the trigger's source: a Step, an event, or a child's terminal ou
 
 | State | Entered by | `next` | Ways out (resume action, §5.8) |
 |---|---|---|---|
-| `parked` (`rounds`, `no-progress`) | A loop cap or no progress, either on the transition back into a looped state (kind `loop`) or on a gate refusal at the cap (kind `refusal`); the frame records which | "Parked ({reason}): {question}. Grant more rounds at a terminal, or cancel." | `answer --grant n` (protected): kind `loop` performs the withheld loop transition, and kind `refusal` re-runs the Step. Either way, the round it starts is the first of the n. `answer --text` on `no-progress`: the same, once. `takeover`, `cancel` |
-| `parked` (`budget`) | A budget, or a `gate.budget.*` refusal | "Parked (budget): {question}. Grant tokens at a terminal, or cancel." | `answer --grant-tokens n` (protected): re-runs the Step, or re-evaluates the withheld transition. `takeover`, `cancel` |
-| `parked` (`needs-answer`, Step) | A refusal without a loop, `step.failed` | "Parked (needs-answer): {question}. Answer with --text; the Step runs again with your answer." | `answer --text`: re-runs the Step with `fact:answer`. `takeover`, `cancel` |
+| `parked` (`rounds`, `no-progress`) | A loop cap or no progress, either on the transition back into a looped state (kind `loop`) or on a gate refusal at the cap (kind `refusal`); the frame records which | "Parked ({reason}): {question}. Grant more rounds at a terminal, or cancel." | `answer --grant n` (protected): kind `loop` performs the withheld loop transition, and kind `refusal` re-runs the Step. Either way, the round it starts is the first of the n. `answer --text` on `no-progress`: the same, once per loop (§13). `takeover`, `cancel` |
+| `parked` (`budget`) | A budget, or a `gate.budget.*` refusal | "Parked (budget): {question}. Grant tokens at a terminal, or cancel." | `answer --grant-tokens n` (protected): re-runs the Step, or re-evaluates the withheld transition. A re-run that would pass the loop's cap parks `rounds` (kind `refusal`) instead; `--grant n` is the way on (W7, §5.8, §13). `takeover`, `cancel` |
+| `parked` (`needs-answer`, Step) | A refusal without a loop, `step.failed` | "Parked (needs-answer): {question}. Answer with --text; the Step runs again with your answer." | `answer --text`: re-runs the Step with `fact:answer`. A re-run that would pass the loop's cap parks `rounds` (kind `refusal`) instead; `--grant n` is the way on (W7, §5.8, §13). `takeover`, `cancel` |
 | `parked` (`needs-answer`, wait) | A gate refused the transition out of a wait | "Parked: {gate} refused {from} -> {to} ({reasons}). Fix the cause, then resume to check again, or cancel." | `answer --resume [--text]`: re-checks every gate and evidence at the current head under the answer's key (§5.8). `takeover`, `cancel` |
 | `parked` (`timeout`) | `then: park` | "Parked (timeout): {state} ran past {after}. Resume to give it the full time again, or cancel." | `answer --resume`: back to the frame (the same run token) with a fresh deadline. `takeover`, `cancel` |
 | `parked` (`spec-conflict`: revoked) | `recipe revoke` of this instance's own recipe | "{recipe} was revoked. Cancel, then start a new attempt from an approved version." | `cancel` |
@@ -301,7 +309,7 @@ names come from the trigger's source: a Step, an event, or a child's terminal ou
 | `parked` (`spec-conflict`: drift) | A pinned block changed in this build | "{block} changed since {recipe} was approved. Re-approve it (`sindri recipe approve {recipe}`, shown as `id@hash12`); the approval resumes this instance." | The drift approval resumes every instance it lists, and re-sends any of their commands refused for the drift (§4.1). `cancel` |
 | `parked` (`spec-conflict`: dispatch) | `outbox.refused` with `SND-WF-011` (not allowlisted) | "{effect} isn't on the profile's effect allowlist. Add it and approve the profile, then resume to send it again." | `answer --resume`: re-emits the effect. `cancel` |
 | `parked` (`SND-WF-010`) | A Step or resource with no runtime | "No runtime for {block} in this build. Cancel, or resume in a build that has it." | `answer --resume`: starts the Step again (a new run), or waits for the resource again. `cancel` |
-| `escalated` (gate) | A top-rung gate below threshold or uncertain | "Escalated: {gate} scored {score}, below {threshold}. Accept to override it (the other checks still run before {to}), or reject (the Step re-runs within its loop, otherwise this parks)." | `--accept` (protected) overrides only that gate, then evaluates the remaining gates and evidence at the current head. `--reject` is a refusal. `cancel` |
+| `escalated` (gate) | A top-rung gate below threshold or uncertain | "Escalated: {gate} scored {score}, below {threshold}. Accept to override it (the other checks still run before {to}), or reject (the Step re-runs within its loop, otherwise this parks)." | `--accept` (protected) overrides only that gate, then evaluates the remaining gates and evidence at the current head. `--reject` is a refusal. On a command's escalation, `--reject` (or an `--accept` another check refuses) pops the escalation and the command is refused with `SND-WF-004`. `cancel` |
 | `escalated` (timeout) | `then: escalate` | "Escalated: {state} ran past {after}. Resume to give it the full time again, or cancel." | `--resume`, `cancel` |
 | `escalated` (child) | The child escalated | "Escalated in {child}: {childNext}" | The child's `answer` variants, forwarded (§5.7), and shown as the child's `allowedCommands`. `cancel` and `takeover` act on the parent |
 | `taken-over` | `takeover` (allowed on a parked or escalated instance as well) | "With you since {since}. Run `sindri workflow handback {instance}` when you're done." | `handback` (pops back to whatever it covered), `cancel` |
@@ -532,9 +540,12 @@ Registered events (`EventDescriptor`, §2) reach instances as Temporal **Signals
   cap, parks with `rounds` at the cap, or parks with `needs-answer` with no loop; from a wait the event is stored as the
   withheld trigger and the instance parks with `needs-answer` (wait); a command gets `SND-WF-004`.
 - **Resume actions** (rev 7 §5.8) are unchanged and are tested by name (§10): `transition` for `rounds` and
-  `no-progress`, `rerun` for a Step budget park or `needs-answer` from a Step, `reevaluate` (or `rewait`) for a wait
-  refusal or a budget gate refusal, `rearm` for `timeout` and drift, `restart` for `SND-WF-010`, `reemit` for a
-  dispatch refusal, and `--accept` or `--reject` for an escalated gate. A resume runs its gates afresh.
+  `no-progress`, `rerun` for a Step budget park or `needs-answer` from a Step (a re-run that would pass the loop's cap
+  parks `rounds`, kind `refusal`, instead, and `--grant n` is the way on; rev 7.2), `reevaluate` (or `rewait`) for a
+  wait refusal or a budget gate refusal, `rearm` for `timeout` and drift, `restart` for `SND-WF-010`, `reemit` for a
+  dispatch refusal, and `--accept` or `--reject` for an escalated gate (on a command's escalation, `--reject`, or an
+  `--accept` another check refuses, pops the escalation and the command is refused with `SND-WF-004`; rev 7.2). A
+  resume runs its gates afresh. `answer --text` on a `no-progress` park works once per loop (§13).
 - **A park that arrives while parked or taken over** is recorded as `pendingPark` and takes effect when the current
   suspension pops. A revoke's `spec-conflict` park replaces the suspension, ending any takeover. A drift wake on a
   parked instance is recorded on the suspension and refused (`SND-RECIPE-006`) until re-approved.
@@ -549,7 +560,9 @@ and `workflow_commands` are not built; `workflow_nonces` moves to the API (nonce
 `recipe_approvals` and `workflow_claims` stay in `ledger.db`. Kept in Core from P3: `TransitionDecision`,
 `RefusalRules`, `LoopRules`, `BudgetRules`, `ChildPropagation`, `WorkflowErrors`, the eval format. Dropped from P3:
 `FrameRules` (now `suspension` and `pendingPark` on the interpreter), `TimerDecision`, `EventFold`, the in-memory
-store and `WorkflowStoreContract`, `IWorkflowStore`, `IMonotonicClock`.
+store and `WorkflowStoreContract`, `IWorkflowStore`, `IMonotonicClock`. Rev 7.2's trigger-key table additions
+(resource grants, tracker and parent cancels, `start`) and its ids derived from the trigger key are superseded: a
+child's workflow id is its address (§5.1), activity ids carry the run token (§5.3), and a resource grant is a signal.
 
 ## 6. CLI and API surface
 
@@ -627,7 +640,7 @@ process it found, so a human in an IDE terminal knows why. The table is honest-m
 | Verb | Class | Prints |
 |---|---|---|
 | `recipe validate <file> [--json]` | local | Rule lines, then the hash |
-| `recipe eval <file> [--json]` · `--scaffold <file>` · `--record <address> --out <file>` | local · local · query | Case results · a generated happy-path eval (first matching transitions, first declared outcome) · an instance's history as an eval |
+| `recipe eval <file> [--json]` · `--scaffold <file>` · `--record <address> --out <file>` | local · local · query | Case results · a generated happy-path eval: from the initial state, the first declared outcome whose transition the engine applies into a state not yet visited, until a terminal state or one nothing moves on from (an answer wait is answered with a `text` line) · an instance's history as an eval |
 | `recipe register <file>` | desk | `registered workflow.step@9ab2d40c1e77 (unapproved)` |
 | `recipe show <id@hash>` | query | The preview |
 | `recipe approve <file\|id@hash>` | protected | The preview, the challenge, then `approved …` |
@@ -874,10 +887,26 @@ directory when not (so `workflow.item.yaml` finds `workflow.step.yaml`).
 
 `evals/<recipe id>/<case>.jsonl`:
 - line 1: `{ "start": { "inputs": { … } } }`;
-- each later line: `{ "trigger": { "kind", "outcome"?, "outputs"? }, "gates"?: { "<block>": "pass|fail|uncertain" },
-  "expect": { "state", "park"?, "outcome"? } }`.
+- each later line: `{ "trigger": { "kind", "outcome"?, "outputs"?, "park"?, "variant"?, "amount"? }, "gates"?: { "<block>":
+  "pass|fail|uncertain" }, "expect": { "state", "park"?, "outcome"? } }`.
 
-`recipe eval` folds the decisions over the triggers and reports the first line that diverges. `--scaffold`
+The owner extended the format on 2026-10-11 (rev 7.2):
+- **Child lines.** A child's park, resume and escalation are `{"kind":"child.parked","park":"<reason>"}`,
+  `{"kind":"child.resumed"}` and `{"kind":"child.escalated"}`. The reason is spelled as `expect.park` spells it,
+  because a park reason isn't an outcome (§3.6). A child's end stays `wait.satisfied` with its outcome (§5.8).
+- **Engine triggers.** `variant` says which one a line stands for: an answer's option (`grant`, `grant-tokens`,
+  `accept`, `reject`, `resume`, `text`) with `kind: "answer"`, or `takeover`, `handback`, `cancel`, `deadline` and
+  `command`, which go with the kind of the same name (`command.<verb>` for a command) and may be left out there.
+  `amount` is the n of `--grant n` or `--grant-tokens n`. A `text` answer's text is its `outputs` `fact:answer`. A
+  `deadline` line fires the current state's next running timer (rev 8: on the time-skipping server, a time skip to it).
+  So grants, timeouts and takeovers are written as evals, like any other trigger.
+- **Recorded content.** `--record` takes each line's outputs from the facts its trigger reported, as the interpreter
+  saved them, and their content from the stored facts, never from the events: an event holds references, and its
+  delta leaves out a fact reported again unchanged.
+
+`recipe eval` folds the decisions over the triggers and reports the first line that diverges, with the eval file, the
+line, and what was expected and what happened (`happy fail at evals/workflow.step/happy.jsonl:3: expected checks, got
+verify`). A line the engine rejects, or one out of this format, fails at that line. `--scaffold`
 generates a happy-path case for a new recipe, so the first eval isn't hand-written. It marks line 1 with
 `"scaffold": true`, and the approve preview marks each scaffolded eval, and says `scaffold only` when every eval is one. `--record` writes a live
 instance's history in this format.
@@ -1271,6 +1300,11 @@ reviewed again. Its fixes are listed below for the owner's review.
   - **`MarkRefused` and `outbox.refused`** run in one transaction (arch L11).
   - **A drifted generated recipe** is re-frozen at the desk once a generator exists. None is built in these
     phases.
+- **The eval format** (owner decision, 2026-10-11, rev 7.2): child lines, `variant` and `amount` for the engine
+  triggers, and `--record` reading content from the stored facts (§9.2).
+- **`answer --text` on a `no-progress` park works once per loop** (§3.8; the lane lead's decision, 2026-10-11, not
+  the owner's). `--text` is a desk action and grants are protected (W7), so a `--text` that worked once per park would
+  let a desk caller add rounds without end. After the one `--text`, more rounds need `--grant n` at a terminal.
 - **Crafted bypasses** are outside the threat model (A 17.28.3; `docs/csharp/bugfix.md` "Threat model"):
   - direct SQLite writes;
   - unauthenticated loopback callers and port squatting;
@@ -1483,7 +1517,8 @@ Merged (#179). Unchanged by rev 8.
   result; the factory line runs unattended.
 - **Files:** `RunStep` for agent Steps; tmux ownership in `ILauncher` (API §8.1, rev 8); the `step-report` check with
   the launch secret; activity heartbeats from `session wrap`; `session.launched` and `session.ended`; usage from the
-  target's usage reader; the `workflow.agent.target` profile key; docs.
+  target's usage reader; the `workflow.agent.target` profile key; finding keys and a diff signal in Step reports, and
+  with them the full A §17.23.13 no-progress rule (§3.7, rev 7.2); docs.
 - **Size:** M.
 - **Dependencies:** P7, API P10a (`ILauncher` and §8.1), Judge's provider port (#156). This phase adds Sindri's
   `deps.yaml` edge to Judge with a recorded fan-out exception (Sindri is at 4), reviewed like Context's.
