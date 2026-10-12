@@ -22,6 +22,8 @@ records:
     section: "4b.1"
   - id: engineering.csharp.declared-graph
     section: "4b.1a"
+  - id: engineering.csharp.compose-registration-only
+    section: "4b.1a"
   - id: engineering.csharp.tiers-point-down
     section: "4b.1a"
   - id: engineering.csharp.no-package-cycles

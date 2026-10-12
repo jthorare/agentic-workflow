@@ -1,0 +1,24 @@
+schema: 1
+id: workflow.wire
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    loop: revisions
+    next: "Produce the Step output."
+  checks:
+    kind: active
+    step: step.checks
+    timeout: { after: 30m, then: retry }
+    next: "Run the Step's deterministic checks."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: checks, on: step.completed, when: { outcome: done } }
+  - { from: checks, to: done, on: step.completed, when: { outcome: passed } }
+  - { from: checks, to: produce, on: step.completed, when: { outcome: failed }, produces: [fact:findings] }
+loops: { revisions: { cap: 3 } }

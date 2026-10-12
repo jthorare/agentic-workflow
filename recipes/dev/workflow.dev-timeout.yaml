@@ -1,0 +1,12 @@
+schema: 1
+id: workflow.dev-timeout
+version: 1
+description: "A desk Step with a 1m timeout that parks: the timers signal (engine spec section 12, P5)."
+initial: hold
+states:
+  hold: { kind: active, step: step.produce, timeout: { after: 1m, then: park },
+          next: "Leave this Step open; it parks after 1m. Complete it to finish instead." }
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: hold, to: done, on: step.completed, when: { outcome: done }, produces: [fact:output] }
+evals: [evals/workflow.dev-timeout/happy.jsonl]

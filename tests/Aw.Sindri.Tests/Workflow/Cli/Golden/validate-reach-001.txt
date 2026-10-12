@@ -1,0 +1,6 @@
+$ sindri recipe validate <tmp>/RCP-REACH-001.yaml
+exit 1
+--- stdout
+RCP-REACH-001: state 'orphan' is unreachable from 'produce' at RCP-REACH-001.yaml:14:3 (states.orphan); add a transition into it or remove it
+hash sha256:a8c2b5e8be5a2d5877545ffbb7d8a3f6d82cd2b01254f2825e5b323d62e99f3c
+--- stderr

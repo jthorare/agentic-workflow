@@ -55,8 +55,8 @@ function stampOf(db: IndexDb, layer: Layer): string | null {
   return (db.prepare("SELECT stamp FROM layers WHERE layer = ?").get(layer) as { stamp: string } | undefined)?.stamp ?? null;
 }
 
-// A killed or out-of-disk build leaves `<repo>.db.tmp-*`; the heavy-job lock guarantees
-// no other build is running, so anything older than an hour is garbage.
+// A killed or out-of-disk build leaves `<repo>.db.tmp-*`; the heavy-job lock never runs two
+// builds of one repo at once (same kind, index-build:<repo>), so anything older than an hour is garbage.
 function sweepTmp(deps: Deps, live: string): void {
   const dir = path.dirname(live);
   for (const name of fs.readdirSync(dir)) {

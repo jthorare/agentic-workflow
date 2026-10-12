@@ -1,0 +1,3 @@
+{"start":{"inputs":{}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Hello from workflow.dev-notify."}},"expect":{"state":"sent"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"delivered"},"expect":{"state":"done","outcome":"resolved"}}

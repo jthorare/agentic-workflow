@@ -1,0 +1,112 @@
+{
+  "probes": [
+    {
+      "id": "orientation-cascade",
+      "question": "What else is affected if I change how split orientation works?",
+      "expect": {
+        "nodes": ["feature:layout.split-pane.orientation", "thing:pane-layout", "feature:tabs.tab-manager"],
+        "absentNodes": ["feature:layout.pane-resize"],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000103", "linear:issue/0e5a1b00-0000-4000-8000-000000000104"],
+        "files": ["src/layout/SplitPane.ts", "src/layout/PaneLayout.ts", "src/tabs/TabManager.ts"],
+        "decisions": []
+      }
+    },
+    {
+      "id": "minimum-pane-width",
+      "question": "What was decided about the minimum pane width?",
+      "expect": {
+        "nodes": ["feature:layout.pane-resize"],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000105"],
+        "files": ["src/layout/PaneResize.ts"],
+        "decisions": [
+          {
+            "record": "linear:issue/0e5a1b00-0000-4000-8000-000000000105",
+            "quote": "the minimum pane width is 20 columns",
+            "status": "current",
+            "conflictsWith": "src/layout/PaneResize.ts"
+          },
+          {
+            "record": "linear:issue/0e5a1b00-0000-4000-8000-000000000105",
+            "quote": "the minimum pane width is 10 columns",
+            "status": "superseded",
+            "conflictsWith": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "split-vertical-key",
+      "question": "Which key splits a pane vertically?",
+      "expect": {
+        "nodes": ["surface:keybinding/ctrl+shift+d", "surface:command/split-vertical"],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000102"],
+        "files": ["src/keybindings/defaults.ts", "src/commands/registry.ts"],
+        "decisions": []
+      }
+    },
+    {
+      "id": "prd",
+      "question": "Where is the PRD for split panes, and what are its non-goals?",
+      "expect": {
+        "nodes": [],
+        "absentNodes": [],
+        "records": ["linear:doc/0e5a1b00-0000-4000-8000-000000000020"],
+        "files": [],
+        "decisions": []
+      }
+    },
+    {
+      "id": "tab-restore-origin",
+      "question": "Which change added layout restore when switching tabs, and what does it restore?",
+      "expect": {
+        "nodes": ["feature:tabs.tab-manager", "action:tab-manager.restore-layout"],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000104"],
+        "files": ["src/tabs/TabManager.ts", "src/layout/PaneLayout.ts"],
+        "decisions": []
+      }
+    },
+    {
+      "id": "orientation-focus",
+      "question": "Does toggling orientation move the focus?",
+      "expect": {
+        "nodes": ["feature:layout.split-pane.orientation"],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000103"],
+        "files": ["src/layout/SplitPane.ts", "docs/decisions/0001-orientation-toggle.md"],
+        "decisions": [
+          {
+            "record": "linear:issue/0e5a1b00-0000-4000-8000-000000000103",
+            "quote": "toggling orientation keeps the focused pane first, so the cursor never jumps",
+            "status": "current",
+            "conflictsWith": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "resize-step-setting",
+      "question": "What does the paneResizeStep setting control?",
+      "expect": {
+        "nodes": ["surface:setting/paneResizeStep", "feature:layout.pane-resize"],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000105", "slack:C0FIXTURE01/1784972400.000100"],
+        "files": ["settings/default-settings.json", "src/settings/schema.ts", "src/layout/PaneResize.ts"],
+        "decisions": []
+      }
+    },
+    {
+      "id": "persist-layouts",
+      "question": "Is remembering pane layouts across restarts done?",
+      "expect": {
+        "nodes": [],
+        "absentNodes": [],
+        "records": ["linear:issue/0e5a1b00-0000-4000-8000-000000000106"],
+        "files": [],
+        "decisions": []
+      }
+    }
+  ]
+}

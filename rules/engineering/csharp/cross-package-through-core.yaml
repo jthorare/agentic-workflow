@@ -21,6 +21,7 @@ checks:
     id: "ARCH-DIR-004"
     status: active
     note: "the same rule over the compiled assemblies, including the small shape"
+relatedIds: ["DEPS-COMPOSE-001", "ARCH-COMPOSE-001"]
 gap: partial
 gapNote: "check-deps (project references) and ARCH-DIR-004 (the compiled assemblies, both shapes) prove the Core-only half; the CLI and HTTP contract half is declared as cli edges in deps.yaml but not proven to be the only route."
 source:

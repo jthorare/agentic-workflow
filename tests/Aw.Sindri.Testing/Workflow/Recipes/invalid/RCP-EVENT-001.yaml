@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.event
+version: 1
+initial: triaged
+states:
+  triaged:
+    kind: wait
+    waitFor: { event: item.rooted }
+    timeout: { after: 7d, then: escalate }
+    next: "Waiting for the router to size and route {item}."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: triaged, to: done, on: wait.satisfied, when: { outcome: startable } }

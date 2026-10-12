@@ -25,7 +25,7 @@ Read-only sources: evolve reads Claude Code session transcripts (`sources.transc
 | `evolve compare <id> [--rerun]` | Blind comparison of a prompt variant on the holdout. `lost` means the variant did not clear the bar (not significant, or worse), not that it is proven worse | `insufficient-corpus: n holdout items, need 20` |
 | `evolve adopt <id>`, `revert <prompt-id>` | A person, at a terminal: install or remove a winning prompt. `adopt` needs the latest comparison run (by run number) to be `won`, shows how many runs there were, and refuses while a run is `running` or when the latest run errored | `needs an interactive terminal` |
 | `evolve stage`, `publish [--dry-run] [--no-privacy-terms]` | Private staging (unattended) and explicit publication into the repo | `Nothing to stage.` |
-| `evolve weekly [--dry-run]` | The Monday job: telemetry, reflect on merged PRs, correct, check, stage | `Skipped: a heavy job holds the box-wide lock.` |
+| `evolve weekly [--dry-run]` | The Monday job: telemetry, reflect on merged PRs, correct, check, stage | `Skipped: heavy jobs hold every slot of the box-wide lock.` |
 | `channel status`, `promote <sha>`, `rollback` | Stable and next installs of sindri itself | `No channels recorded.` |
 
 Every command takes `--json`. Every summary ends with `Next: <command>` when there is a next step. Exit codes: 0 ok, 1 needs attention, 2 error.
@@ -131,7 +131,7 @@ To promote: `sindri evolve check package:sindri --at <sha>` runs the suite insid
 
 ## Budgets and locks
 
-Every model loop checks its budget before each call and stops with a partial result marked incomplete. `evolve.maxTokensPerJob` (default 600 000) applies to each telemetry, reflect and correct run (`correct` labels at most `evolve.maxCorrectTurns` turns, default 400, in about 20 calls of 20 turns each, roughly 100 000 to 200 000 tokens at the cap; at the maximum of 2000 it can run out of budget and report a partial result); `evolve.maxTokensPerCompare` (3 000 000) to a comparison. Evolve commands never hold the tick lock while they call a model or run a suite; each ledger write takes it for a moment, so the hourly `observe` isn't blocked. Suites hold only the box-wide heavy lock, one at a time. Evolve's model calls are not written to the ledger's `model_calls` table; the only record of their cost is the budget a run reports.
+Every model loop checks its budget before each call and stops with a partial result marked incomplete. `evolve.maxTokensPerJob` (default 600 000) applies to each telemetry, reflect and correct run (`correct` labels at most `evolve.maxCorrectTurns` turns, default 400, in about 20 calls of 20 turns each, roughly 100 000 to 200 000 tokens at the cap; at the maximum of 2000 it can run out of budget and report a partial result); `evolve.maxTokensPerCompare` (3 000 000) to a comparison. Evolve commands never hold the tick lock while they call a model or run a suite; each ledger write takes it for a moment, so the hourly `observe` isn't blocked. Suites hold only a slot of the box-wide heavy-job lock (at most two heavy jobs at a time, `AW_HEAVY_SLOTS`), and one suite never runs twice at once. Evolve's model calls are not written to the ledger's `model_calls` table; the only record of their cost is the budget a run reports.
 
 Suite output tails, audit details and transcript excerpts are scrubbed with the profile's scrubber, so a `scrub.extraPatterns` match is redacted there too.
 
@@ -140,7 +140,7 @@ Suite output tails, audit details and transcript excerpts are scrubbed with the 
 | You see | What it means | Do |
 |---|---|---|
 | `SND-LOCK-001` | Another sindri job holds the tick lock for a write | Wait a minute and rerun |
-| `SND-INDEX-001` | The heavy-job lock is busy (a suite or an index build) | Wait, or `sindri doctor` to see the holder |
+| `SND-INDEX-001` | Every heavy-job lock slot is busy (suites, index builds, other heavy jobs), or the same suite is already running | Wait, or `sindri doctor` to see each slot's holder |
 | `insufficient-corpus` | Fewer than 20 holdout items | Keep running `sindri scope`; `evolve status` shows progress |
 | `inconclusive` | Fewer than 10 decided pairs (mostly ties) | Rerun later with more items |
 | `leaky-variant` | The variant mentions the evaluation or quotes a holdout brief | Remove it; reject the proposal |

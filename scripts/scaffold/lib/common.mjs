@@ -104,6 +104,10 @@ export class Journal {
     this.created = [];
     this.createdDirs = [];
     this.edited = new Map();
+    /** Called with each existing file before an edit (files this run created are exempt); throws to refuse it. */
+    this.editGuard = null;
+    /** Called with each new file before it is written; throws to refuse it. */
+    this.createGuard = null;
   }
 
   abs(rel) {
@@ -122,6 +126,7 @@ export class Journal {
   create(rel, text) {
     const file = this.abs(rel);
     if (fs.existsSync(file)) throw new Error(`refusing to overwrite ${rel}`);
+    if (this.createGuard) this.createGuard(rel);
     this.mkdirs(path.dirname(rel));
     fs.writeFileSync(file, text);
     this.created.push(rel);
@@ -129,6 +134,7 @@ export class Journal {
 
   /** Rewrites an existing file through fn(text) -> text, keeping the original for revert. */
   edit(rel, fn) {
+    if (this.editGuard && !this.created.includes(rel)) this.editGuard(rel);
     const before = this.read(rel);
     const after = fn(before);
     if (after === before) return;
@@ -141,6 +147,7 @@ export class Journal {
    * hand-edited file can't make the scaffold skip a registration silently.
    */
   insert(rel, anchor, replacement, rule, what) {
+    if (this.editGuard && !this.created.includes(rel)) this.editGuard(rel);
     const text = this.read(rel);
     if (!anchor.test(text)) {
       throw new ScaffoldError(rule, `${rel}: no anchor for ${what} (${anchor})`, "restore the anchor the scaffold writes (see the scaffold spec's templates) or make this edit by hand");
@@ -180,41 +187,54 @@ export class Journal {
   }
 }
 
+/** $AW_HEAVY_SLOTS: a whole number of at least 1; anything else is the default, 2. */
+export function heavySlots(env = process.env) {
+  const raw = (env.AW_HEAVY_SLOTS ?? "").trim();
+  const n = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  return Number.isSafeInteger(n) && n >= 1 ? n : 2;
+}
+
 /**
- * The box-wide heavy-job lock (config/lib/locks.sh's mkdir primitive): builds and test runs take it so only one
- * runs at a time. AW_HEAVY_LOCK_HELD=1 means a caller (the `heavy` wrapper, or new-package calling new-slice)
- * already holds it.
+ * The box-wide heavy-job lock (config/lib/locks.sh's acquire_any_lock): builds and test runs take one of its
+ * AW_HEAVY_SLOTS slots (default 2, so at most two run at a time). Slot 1 is $AW_HEAVY_JOB_LOCK (default
+ * <state>/locks/heavy-job.lock), slot k is that path plus ".k"; each is a mkdir mutex. AW_HEAVY_LOCK_HELD=1 means a
+ * caller (the `heavy` wrapper, or new-package calling new-slice) already holds a slot.
  */
 export async function withHeavyLock(fn, { timeoutS = 5400, log = console.error } = {}) {
   if (process.env.AW_HEAVY_LOCK_HELD === "1") return await fn();
   const state = process.env.AW_STATE_DIR || path.join(os.homedir(), ".agentic-workflow");
-  const lock = path.join(state, "locks", "heavy-job.lock");
+  const lock = process.env.AW_HEAVY_JOB_LOCK || path.join(state, "locks", "heavy-job.lock");
+  const slots = heavySlots();
   fs.mkdirSync(path.dirname(lock), { recursive: true });
   const start = Date.now();
   let told = false;
-  const owner = path.join(lock, "owner");
-  for (;;) {
-    try {
-      fs.mkdirSync(lock);
-      break;
-    } catch (e) {
-      if (e.code !== "EEXIST") throw e;
-      if (!told) {
-        log(`waiting on lock: ${lock}`);
-        told = true;
+  let held = null;
+  while (held === null) {
+    for (let k = 1; k <= slots && held === null; k++) {
+      const dir = k === 1 ? lock : `${lock}.${k}`;
+      try {
+        fs.mkdirSync(dir);
+        held = dir;
+      } catch (e) {
+        if (e.code !== "EEXIST") throw e;
       }
-      checkInterrupted();
-      if (Date.now() - start > timeoutS * 1000) throw new ScaffoldError("SCAFFOLD-LOCK", `the heavy-job lock ${lock} was held for ${timeoutS} s`, "wait for the other build, or remove a stale lock directory");
-      await sleep(1000);   // async, so a signal handler gets to run
     }
+    if (held !== null) break;
+    if (!told) {
+      log(`waiting on lock: ${lock} (all ${slots} slots busy)`);
+      told = true;
+    }
+    checkInterrupted();
+    if (Date.now() - start > timeoutS * 1000) throw new ScaffoldError("SCAFFOLD-LOCK", `every slot of the heavy-job lock ${lock} (${slots}) was held for ${timeoutS} s`, "wait for the other builds, or remove a stale lock directory");
+    await sleep(1000);   // async, so a signal handler gets to run
   }
-  fs.writeFileSync(owner, `${process.pid} ${new Date().toISOString()} ${process.argv.slice(1).join(" ")}\n`);
+  fs.writeFileSync(path.join(held, "owner"), `${process.pid} ${new Date().toISOString()} ${process.argv.slice(1).join(" ")}\n`);
   process.env.AW_HEAVY_LOCK_HELD = "1";
   try {
     return await fn();
   } finally {
     delete process.env.AW_HEAVY_LOCK_HELD;
-    fs.rmSync(lock, { recursive: true, force: true });
+    fs.rmSync(held, { recursive: true, force: true });
   }
 }
 

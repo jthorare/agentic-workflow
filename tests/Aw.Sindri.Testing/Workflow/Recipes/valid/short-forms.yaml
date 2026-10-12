@@ -1,0 +1,32 @@
+# Every short form the reader normalizes (spec §3.1); long-forms.yaml is the same recipe written out.
+schema: 1
+id: workflow.forms
+version: 1
+inputs: [fact:item]
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    loop: revisions
+    budget: { tokens: 200k }
+    timeout: { after: 4h, then: park }
+    next: "Produce the output (round {loop.revisions}/{loop.revisions.cap})."
+  review:
+    kind: active
+    step: { use: step.verify, with: { strict: true, on: on }, inputs: [input.context.retrieve] }
+    timeout: { after: 1h, then: park }
+    next: "Review the output."
+  running:
+    kind: wait
+    waitFor: { child: { recipe: workflow.kid, inputs: { "fact:spec": "write it" }, onParked: propagate } }
+    timeout: { after: 14d, then: park }
+    next: "Waiting for {child}."
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: produce, to: review, on: step.completed, when: { outcome: done }, gates: [gate.budget.available], effects: [effect.notify.desk], produces: [fact:output] }
+  - { from: review, to: running, on: step.completed, when: { outcome: accepted } }
+  - { from: review, to: produce, on: step.completed, when: { outcome: rejected } }
+  - { from: running, to: done, on: wait.satisfied, when: { outcome: resolved } }
+loops: { revisions: { cap: 3 } }
+budget: { tokens: 2M }

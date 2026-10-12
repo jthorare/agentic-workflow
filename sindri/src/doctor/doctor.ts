@@ -7,7 +7,7 @@ import { SindriError } from "../errors.js";
 import { indexPath, layers, meta } from "../index/db.js";
 import { indexBuilt, readIndex } from "../index/health.js";
 import { GRAPH_OVER_CAP } from "../index/graph.js";
-import { heavyLockDir, heavyLockState } from "../index/heavy-lock.js";
+import { MAX_HEAVY_AGE_MS, heavyLockState } from "../index/heavy-lock.js";
 import type { IndexProbes } from "../index/io.js";
 import { GRAPHIFY_PIN } from "../index/pins.js";
 import { hasModel, installedGraphify, sandboxedVersionArgv, tagsUrl } from "../index/setup.js";
@@ -225,14 +225,16 @@ async function indexChecks(deps: Deps, loaded: LoadedProfile, probes: IndexProbe
       );
     }
   }
-  const heavy = heavyLockState(awStateDir(deps), deps.now, deps.env);
-  const who = heavy.holder === null ? "" : ` by ${heavy.holder.kind} (pid ${heavy.holder.pid})`;
-  if (!heavy.held) out.push({ name: "heavy-lock", status: "ok", detail: "free" });
-  else if (heavy.ageMs !== null && heavy.ageMs > 6 * 3_600_000) {
-    // Remove the holder record too: left beside a lock dir, it would name a later locks.sh lock's holder.
-    const dir = heavyLockDir(awStateDir(deps), deps.env);
-    out.push({ name: "heavy-lock", status: "warn", detail: `held for over 6 h${who}`, fix: `if that process is gone: rm -r ${dir} && rm -f ${dir}.holder.json (a crashed takeover can leave a .reclaim-* mark inside)` });
-  } else out.push({ name: "heavy-lock", status: "ok", detail: `held${heavy.holder === null ? " by an unknown job" : ` by ${heavy.holder.kind}`}` });
+  // One line per slot of the box-wide heavy-job lock: slot 1 is the plain lock ("heavy-lock"), slot k is "heavy-lock.k".
+  for (const heavy of heavyLockState(awStateDir(deps), deps.now, deps.env)) {
+    const name = heavy.slot === 1 ? "heavy-lock" : `heavy-lock.${heavy.slot}`;
+    const who = heavy.holder === null ? "" : ` by ${heavy.holder.kind} (pid ${heavy.holder.pid})`;
+    if (!heavy.held) out.push({ name, status: "ok", detail: "free" });
+    else if (heavy.ageMs !== null && heavy.ageMs > MAX_HEAVY_AGE_MS) {
+      // Remove the holder record too: left beside a lock dir, it would name a later locks.sh lock's holder.
+      out.push({ name, status: "warn", detail: `held for over 6 h${who}`, fix: `if that process is gone: rm -r ${heavy.dir} && rm -f ${heavy.dir}.holder.json (a crashed takeover can leave a .reclaim-* mark inside)` });
+    } else out.push({ name, status: "ok", detail: `held${heavy.holder === null ? " by an unknown job" : ` by ${heavy.holder.kind}`}` });
+  }
   return out;
 }
 

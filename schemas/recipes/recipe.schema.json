@@ -1,0 +1,672 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/recipes/recipe.schema.json",
+  "title": "Sindri recipe, schema 1 (long form)",
+  "description": "Generated from the long-form records by RecipeSchemaTests; the reader normalizes short forms to this. Editors: recipe.editor.schema.json.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "integer"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^workflow\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "integer"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "base": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^workflow\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "id",
+        "hash"
+      ],
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "enum": [
+              "text",
+              "file",
+              "item",
+              null
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "initial": {
+      "type": "string"
+    },
+    "states": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "active",
+              "wait",
+              "terminal"
+            ]
+          },
+          "step": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "use": {
+                "type": "string",
+                "pattern": "^(gate|step|effect|evidence|input)(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*){1,2}$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "literal": true,
+                    "fact": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+                    },
+                    "profile": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "literal",
+                    "fact",
+                    "profile"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "use": {
+                      "type": "string",
+                      "pattern": "^(gate|step|effect|evidence|input)(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*){1,2}$"
+                    },
+                    "with": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/properties/states/additionalProperties/properties/step/properties/with/additionalProperties"
+                      }
+                    }
+                  },
+                  "required": [
+                    "use",
+                    "with"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "use",
+              "with",
+              "inputs"
+            ],
+            "additionalProperties": false
+          },
+          "waitFor": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "event": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][A-Za-z0-9]*$"
+              },
+              "answer": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][A-Za-z0-9]*(-[a-z0-9]+)*$"
+                  },
+                  "question": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "question"
+                ],
+                "additionalProperties": false
+              },
+              "resource": {
+                "enum": [
+                  "heavy",
+                  "slot",
+                  null
+                ]
+              },
+              "child": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "recipe": {
+                    "type": "string",
+                    "pattern": "^workflow\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+                  },
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/states/additionalProperties/properties/step/properties/with/additionalProperties"
+                    }
+                  },
+                  "onParked": {
+                    "enum": [
+                      "propagate",
+                      "ignore"
+                    ]
+                  }
+                },
+                "required": [
+                  "recipe",
+                  "inputs",
+                  "onParked"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "event",
+              "answer",
+              "resource",
+              "child"
+            ],
+            "additionalProperties": false
+          },
+          "timeout": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "after": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,5}[mhd]$"
+              },
+              "then": {
+                "enum": [
+                  "park",
+                  "escalate",
+                  "retry"
+                ]
+              }
+            },
+            "required": [
+              "after",
+              "then"
+            ],
+            "additionalProperties": false
+          },
+          "loop": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "budget": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "tokens": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "tokens"
+            ],
+            "additionalProperties": false
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-z][A-Za-z0-9]*$"
+          }
+        },
+        "required": [
+          "kind",
+          "step",
+          "waitFor",
+          "timeout",
+          "loop",
+          "budget",
+          "next",
+          "outcome"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "to": {
+            "type": "string"
+          },
+          "on": {
+            "type": "string"
+          },
+          "when": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "outcome": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[a-z][A-Za-z0-9]*$"
+              },
+              "fact": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+              },
+              "is": {
+                "enum": [
+                  "present",
+                  "absent",
+                  null
+                ]
+              },
+              "loop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "below": {
+                "enum": [
+                  "cap",
+                  null
+                ]
+              },
+              "all": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[a-z][A-Za-z0-9]*$"
+                    },
+                    "fact": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+                    },
+                    "is": {
+                      "enum": [
+                        "present",
+                        "absent",
+                        null
+                      ]
+                    },
+                    "loop": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "below": {
+                      "enum": [
+                        "cap",
+                        null
+                      ]
+                    },
+                    "all": {
+                      "$ref": "#/properties/transitions/items/properties/when/properties/all"
+                    },
+                    "any": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/transitions/items/properties/when/properties/all/items"
+                      }
+                    },
+                    "not": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "outcome": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "pattern": "^[a-z][A-Za-z0-9]*$"
+                        },
+                        "fact": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+                        },
+                        "is": {
+                          "enum": [
+                            "present",
+                            "absent",
+                            null
+                          ]
+                        },
+                        "loop": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "below": {
+                          "enum": [
+                            "cap",
+                            null
+                          ]
+                        },
+                        "all": {
+                          "$ref": "#/properties/transitions/items/properties/when/properties/all"
+                        },
+                        "any": {
+                          "$ref": "#/properties/transitions/items/properties/when/properties/all/items/properties/any"
+                        },
+                        "not": {
+                          "$ref": "#/properties/transitions/items/properties/when/properties/all/items/properties/not"
+                        }
+                      },
+                      "required": [
+                        "outcome",
+                        "fact",
+                        "is",
+                        "loop",
+                        "below",
+                        "all",
+                        "any",
+                        "not"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "fact",
+                    "is",
+                    "loop",
+                    "below",
+                    "all",
+                    "any",
+                    "not"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "any": {
+                "$ref": "#/properties/transitions/items/properties/when/properties/all/items/properties/any"
+              },
+              "not": {
+                "$ref": "#/properties/transitions/items/properties/when/properties/all/items/properties/not"
+              }
+            },
+            "required": [
+              "outcome",
+              "fact",
+              "is",
+              "loop",
+              "below",
+              "all",
+              "any",
+              "not"
+            ],
+            "additionalProperties": false
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "use": {
+                  "type": "string",
+                  "pattern": "^(gate|step|effect|evidence|input)(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*){1,2}$"
+                },
+                "threshold": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "with": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/properties/states/additionalProperties/properties/step/properties/with/additionalProperties"
+                  }
+                }
+              },
+              "required": [
+                "use",
+                "threshold",
+                "with"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "at": {
+                  "enum": [
+                    "base",
+                    "head"
+                  ]
+                },
+                "expect": {
+                  "enum": [
+                    "pass",
+                    "fail"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "at",
+                "expect"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/states/additionalProperties/properties/step/properties/inputs/items"
+            }
+          },
+          "produces": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "on",
+          "when",
+          "gates",
+          "evidence",
+          "effects",
+          "produces"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "loops": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "cap": {
+            "type": "integer"
+          },
+          "noProgress": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "findings",
+                "emptyDiff",
+                "sameFailure"
+              ]
+            }
+          }
+        },
+        "required": [
+          "cap",
+          "noProgress"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "budget": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "tokens": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tokens"
+      ],
+      "additionalProperties": false
+    },
+    "evals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "description",
+    "base",
+    "inputs",
+    "initial",
+    "states",
+    "transitions",
+    "loops",
+    "budget",
+    "evals",
+    "hash"
+  ],
+  "additionalProperties": false
+}

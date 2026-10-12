@@ -1,0 +1,5 @@
+{"start":{"inputs":{"fact:spec":"Add a --version flag that prints the build's version."}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Added --version."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test VersionFlag_prints_the_version fails: printed nothing"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Added --version and wired it into the parser."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test VersionFlag_prints_the_version fails: printed nothing"}},"expect":{"state":"parked","park":"no-progress"}}

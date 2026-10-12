@@ -49,8 +49,9 @@ phase is `fix` or `evaluate` and candidates are recorded, the main checkout may 
 an interrupted evaluation: check `git -C "$REPO" status -sb`, and detach at the commit `next` names
 (or `git -C "$REPO" checkout bugfix/<ticket-slug>`) before running anything.
 
-**One heavy job at a time:** every test run, `ui-evidence` run, or dependency install goes through
-`locked <command…>` — never two at once.
+**One locked run at a time:** every test run, `ui-evidence` run, or dependency install goes through
+`locked <command…>` — never two at once. `locked` holds the QA-stack lock (one holder) and a slot of the
+box-wide heavy-job lock (at most two heavy jobs on the box, `AW_HEAVY_SLOTS`).
 
 **Dispatch briefs:** the brief-scope gate reads each subagent prompt. Every dispatch below must
 contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.

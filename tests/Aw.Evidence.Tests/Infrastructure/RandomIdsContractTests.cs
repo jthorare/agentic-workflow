@@ -1,7 +1,7 @@
 using Aw.Evidence.Infrastructure.Ids;
-using Aw.Evidence.Testing;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
+using IdGeneratorContract = Aw.Evidence.Testing.IdGeneratorContract;
 
 namespace Aw.Evidence.Tests.Infrastructure;
 

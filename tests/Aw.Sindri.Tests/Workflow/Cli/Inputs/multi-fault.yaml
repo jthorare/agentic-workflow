@@ -1,0 +1,24 @@
+schema: 1
+id: workflow.multi-fault
+version: 1
+initial: queued
+states:
+  queued:
+    kind: wait
+    waitFor: { resource: heavy }
+    timeout: { after: 1d, then: park }
+    next: "Waiting for a heavy-job slot."
+  produce:
+    kind: active
+    step: step.prodcue
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output for {ticket}."
+  done:
+    kind: terminal
+    outcome: resolved
+  orphan:
+    kind: terminal
+    outcome: unresolved
+transitions:
+  - { from: queued, to: produce, on: wait.satisfied, effects: [effect.notify.desk] }
+  - { from: produce, to: done, on: step.completed }

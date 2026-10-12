@@ -1,0 +1,1 @@
+{"questions":{"ask-check":{"enabled":false,"threshold":0.6,"providers":["jev"]},"wake-gate":{"enabled":true,"threshold":0.7}},"providers":{"agentClis":["codex-cli"],"jev":false},"promptSort":{"budgetMs":800}}

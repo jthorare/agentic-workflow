@@ -1,0 +1,200 @@
+{
+  "documents": [
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000101",
+        "semantic_identifier": "[SPL-101] Command registry for pane commands",
+        "link": "https://linear.app/fixture-labs/issue/SPL-101",
+        "blurb": "Every action should be a named command in one registry so keys and the palette can find it. Start with new-tab and close-tab; the split work adds its commands h",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-101",
+          "team": "Split Panes",
+          "state": "Done",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-07-06T10:05:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Avery Fixture"
+        ]
+      },
+      "chunks": [
+        "Every action should be a named command in one registry so keys and the palette can find it. Start with new-tab and close-tab; the split work adds its commands here.",
+        "Keybindings should only name command ids, never call layout code. That keeps the registry the one entry point."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000102",
+        "semantic_identifier": "[SPL-102] Split a pane vertically or horizontally",
+        "link": "https://linear.app/fixture-labs/issue/SPL-102",
+        "blurb": "Add split-vertical and split-horizontal commands with default keys (ctrl+shift+d, ctrl+shift+e). The new pane takes focus and the width is shared evenly.",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-102",
+          "team": "Split Panes",
+          "state": "Done",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-07-10T11:05:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Avery Fixture"
+        ]
+      },
+      "chunks": [
+        "Add split-vertical and split-horizontal commands with default keys (ctrl+shift+d, ctrl+shift+e). The new pane takes focus and the width is shared evenly.",
+        "Even split for now; resizing comes in its own issue."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000103",
+        "semantic_identifier": "[SPL-103] Toggle split orientation",
+        "link": "https://linear.app/fixture-labs/issue/SPL-103",
+        "blurb": "A toggle-orientation command (ctrl+shift+o) flips the split between vertical and horizontal.",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-103",
+          "team": "Split Panes",
+          "state": "Done",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-07-23T09:00:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Rowan Sample"
+        ]
+      },
+      "chunks": [
+        "A toggle-orientation command (ctrl+shift+o) flips the split between vertical and horizontal.",
+        "Decision: toggling orientation keeps the focused pane first, so the cursor never jumps. We considered swapping the pane order and rejected it.",
+        "Implemented as setOrientation in SplitPane.ts; it writes the orientation into PaneLayout.",
+        "Checked after SPL-104 merged: a toggled tab comes back toggled when you switch back to it."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000104",
+        "semantic_identifier": "[SPL-104] Restore pane layout when switching tabs",
+        "link": "https://linear.app/fixture-labs/issue/SPL-104",
+        "blurb": "Switching away from a tab and back should bring back its orientation, panes and focus. The tab manager reads the pane layout state when it restores a tab.",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-104",
+          "team": "Split Panes",
+          "state": "Done",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-07-22T10:20:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Avery Fixture"
+        ]
+      },
+      "chunks": [
+        "Switching away from a tab and back should bring back its orientation, panes and focus. The tab manager reads the pane layout state when it restores a tab.",
+        "Restoring a tab brings back orientation and focus; pane sizes reset to an even split for now.",
+        "Note this depends on the orientation work in SPL-103: a toggled tab must come back toggled."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000105",
+        "semantic_identifier": "[SPL-105] Resize panes with the keyboard",
+        "link": "https://linear.app/fixture-labs/issue/SPL-105",
+        "blurb": "resize-pane-left and resize-pane-right (ctrl+alt+left, ctrl+alt+right) move the focused pane's border by the paneResizeStep setting.",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-105",
+          "team": "Split Panes",
+          "state": "Done",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-08-12T15:00:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Avery Fixture"
+        ]
+      },
+      "chunks": [
+        "resize-pane-left and resize-pane-right (ctrl+alt+left, ctrl+alt+right) move the focused pane's border by the paneResizeStep setting.",
+        "Decision: the minimum pane width is 10 columns, so two panes fit in an 80-column terminal with room for borders.",
+        "Resize step defaults to 2 columns (paneResizeStep in the settings file).",
+        "Decision (replaces the 10-column minimum above): the minimum pane width is 20 columns. Ten columns truncated every prompt in user testing."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "0e5a1b00-0000-4000-8000-000000000106",
+        "semantic_identifier": "[SPL-106] Remember pane layouts across restarts",
+        "link": "https://linear.app/fixture-labs/issue/SPL-106",
+        "blurb": "Save each tab's layout to the settings directory on exit and restore it on start.",
+        "source_type": "linear",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "identifier": "SPL-106",
+          "team": "Split Panes",
+          "state": "In Progress",
+          "project": "Split panes"
+        },
+        "updated_at": "2026-08-20T10:00:00+00:00",
+        "primary_owners": [
+          "Avery Fixture"
+        ],
+        "secondary_owners": [
+          "Avery Fixture"
+        ]
+      },
+      "chunks": [
+        "Save each tab's layout to the settings directory on exit and restore it on start.",
+        "Started; this reuses the tab snapshot from SPL-104."
+      ]
+    },
+    {
+      "search_doc": {
+        "document_id": "C0FIXTURE01__1784972400.000100",
+        "semantic_identifier": "#split-panes: resize step",
+        "link": "https://fixture-labs.slack.com/archives/C0FIXTURE01/p1784972400000100",
+        "blurb": "Should the resize step be configurable?",
+        "source_type": "slack",
+        "boost": 0,
+        "hidden": false,
+        "metadata": {
+          "channel": "split-panes"
+        },
+        "updated_at": "2026-07-25T09:40:00+00:00",
+        "primary_owners": [
+          "Rowan Sample"
+        ],
+        "secondary_owners": []
+      },
+      "chunks": [
+        "Should the resize step be configurable? Two columns per keypress feels right on a laptop.",
+        "Agreed. Put it in the settings file as paneResizeStep so people can change it without a release."
+      ]
+    }
+  ]
+}

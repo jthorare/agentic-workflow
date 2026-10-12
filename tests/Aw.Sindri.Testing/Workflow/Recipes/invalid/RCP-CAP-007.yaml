@@ -1,0 +1,23 @@
+schema: 1
+id: workflow.cap-fact-parameter
+version: 1
+inputs: [fact:remote]
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - from: produce
+    to: done
+    on: step.completed
+    when: { outcome: done }
+    effects:
+      - use: effect.repo.push
+        with: { remote: { fact: fact:remote } }
+    produces: [fact:output]

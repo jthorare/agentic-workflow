@@ -48,6 +48,7 @@ cd "$ROOT" || exit 2
 
 # path<TAB>reason. Keep this short: every entry is a suite CI does not run.
 EXCLUDED=(
+  "config/lib/tests/judge-cs-hook-surface.test.sh	needs the .NET SDK to build the C# judge; CI runs it in the dotnet job (step: Hook contract), which changed-areas.sh also selects for a hook, statusline or hook-library change; the local gate runs it directly"
   "config/tests/statusline-judge.test.sh	stale on main: it extracts only judge_segment() from statusline.sh, which now calls judge_health(), so all 3 cases fail; config/lib/tests/statusline.test.sh covers the judge column"
 )
 

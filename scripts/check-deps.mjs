@@ -6,7 +6,9 @@
 // Validates deps.yaml against schemas/deps.schema.json; checks the reference, kind, tier, cycle and
 // fan-out rules; scans the TypeScript packages, hooks and statusline for cli/db/file edges and fails on
 // any undeclared one or any whose status is wrong; and, once src/ or tests/ have C# projects, checks
-// their ProjectReferences, per-project fan-out and project-edge status. --mermaid also prints the graph
+// their ProjectReferences, per-project fan-out and project- and compose-edge status. A compose edge lets a Host
+// reference a lower package's Features and Infrastructure for their Add…() registration methods (DEPS-COMPOSE-001;
+// ARCH-COMPOSE-001 checks the calls in the compiled Host). --mermaid also prints the graph
 // and the edge list (added/removed against --base-file) for a PR summary.
 // Exit codes: 0 ok, 1 a rule failed, 2 a tool error. Node builtins only: no install step, no network.
 
@@ -31,6 +33,7 @@ const rank = (n) => n.tier * 10 + (n.sublevel ?? 0);
 const edgeKey = (e) => `${e.from}|${e.to}|${e.kind}`;
 const edgeText = (e) => `${e.from} -> ${e.to} (${e.kind})`;
 const isHostProject = (name) => /\.Host$/.test(name);
+const linked = (kind) => kind === "project" || kind === "compose"; // C# edges between packages, pointing down the tiers
 
 // What a C# project is: "tests" or "testing" (test code), "analyzer" (a project of an analyzer: true
 // package) or "prod". Test code is every project under tests/, plus any project named *.Tests or
@@ -136,11 +139,15 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
       continue;
     }
     if (x.expires < today) { fail("DEPS-EXC-001", "expired exception", `${x.rule} for ${x.subject} expired ${x.expires} (today ${today})`, "an exception is valid until its expires date", "fix the violation, or renew the exception in a reviewed PR with a new reason and dates"); continue; }
+    const attachLimit = "an exception's edge names a declared project edge from its subject to a package fan-out counts (not test support)";
+    if (x.edge && !seenEdges.has(`${x.subject}|${x.edge}|project`)) { fail("DEPS-EXC-004", "exception attached to an edge that isn't declared", `${x.rule} for ${x.subject}: no ${x.subject} -> ${x.edge} (project) edge`, attachLimit, `declare (from: ${x.subject}, to: ${x.edge}, kind: project), or fix the exception's edge`); continue; }
+    if (x.edge && byId.get(x.edge)?.test) { fail("DEPS-EXC-004", "exception attached to an edge fan-out doesn't count", `${x.rule} for ${x.subject}: ${x.subject} -> ${x.edge} goes into test support`, attachLimit, `delete the exception's edge: fan-out never counts ${x.edge}`); continue; }
     active.push({ ...x, used: false, measured: null });
     info.push(`exception ${x.rule} ${x.subject} (expires ${x.expires}): ${x.reason}`);
   }
-  const excepted = (rule, subject, measured) => {
-    const x = active.find((a) => a.rule === rule && a.subject === subject);
+  // An exception attached to an edge covers that one edge: the targets without it must be within the limit.
+  const excepted = (rule, subject, measured, covers = () => true) => {
+    const x = active.find((a) => a.rule === rule && a.subject === subject && (!a.edge || covers(a.edge)));
     if (!x) return false;
     x.used = true;
     x.measured = measured;
@@ -148,21 +155,29 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
   };
   const measure = (rule, subject, measured) => { for (const x of active) if (x.rule === rule && x.subject === subject && !x.used) x.measured = measured; };
 
-  // ---- kinds and tiers ----
-  for (const e of edges) {
-    const a = byId.get(e.from);
-    const b = byId.get(e.to);
+  // Every kind and tier rule for one edge; true when one failed it.
+  function kindsAndTiers(e, a, b) {
+    let bad = false;
+    const flag = (...args) => { bad = true; fail(...args); };
     if (b.kind !== "package") {
-      fail("DEPS-KIND-002", "edge into a shell or mod node", edgeText(e), `shell and mod nodes only consume packages; nothing depends on them (${e.to} is ${b.kind})`, `move the shared state or contract into a package and point the edge the other way (${e.to} -> <package>)`);
-      continue;
+      flag("DEPS-KIND-002", "edge into a shell or mod node", edgeText(e), `shell and mod nodes only consume packages; nothing depends on them (${e.to} is ${b.kind})`, `move the shared state or contract into a package and point the edge the other way (${e.to} -> <package>)`);
+      return bad;
     }
     if (a.kind !== "package") {
-      if (e.kind === "project") fail("DEPS-KIND-001", "project edge outside the C# packages", edgeText(e), `project edges connect kind: package nodes (${e.from} is ${a.kind})`, `change the edge to kind: cli or file in deps.yaml`);
-      continue;
+      if (linked(e.kind)) flag("DEPS-KIND-001", `${e.kind} edge outside the C# packages`, edgeText(e), `project and compose edges connect kind: package nodes (${e.from} is ${a.kind})`, `change the edge to kind: cli or file in deps.yaml`);
+      return bad;
     }
-    if (e.kind === "project" && b.test && !a.test) fail("DEPS-KIND-003", "project edge from production code into a test-support package", edgeText(e), "only test projects reference test-support packages, and they need no declared edge", `delete the edge from deps.yaml and move the reference into ${e.from}'s *.Tests project`);
-    if (e.kind === "project" && rank(a) <= rank(b)) fail("DEPS-TIER-001", "project edge does not point to a lower tier", `${e.from} (${tierLabel(a)}) -> ${e.to} (${tierLabel(b)})`, "a project edge points strictly down the tiers (§4b.1a)", `change it to kind: cli and call ${e.to}'s CLI, or move the shared code down a tier`);
-    if ((e.kind === "db" || e.kind === "file") && rank(a) < rank(b)) fail("DEPS-TIER-002", `${e.kind} edge points to a higher tier`, `${e.from} (${tierLabel(a)}) -> ${e.to} (${tierLabel(b)})`, "db and file edges point down or across, never up", `replace it with (from: ${e.from}, to: ${e.to}, kind: cli) and ask ${e.to}'s CLI`);
+    if (e.kind === "compose" && b.tier === 0) flag("DEPS-COMPOSE-001", "compose edge into a tier-0 package", edgeText(e), "a tier-0 package has no Features or Infrastructure to compose; its library projects are used whole through a project edge", "delete the compose edge; reference the tier-0 library projects under the project edge");
+    if (linked(e.kind) && b.test && !a.test) flag("DEPS-KIND-003", `${e.kind} edge from production code into a test-support package`, edgeText(e), "only test projects reference test-support packages, and they need no declared edge", `delete the edge from deps.yaml and move the reference into ${e.from}'s *.Tests project`);
+    if (linked(e.kind) && rank(a) <= rank(b)) flag("DEPS-TIER-001", `${e.kind} edge does not point to a lower tier`, `${e.from} (${tierLabel(a)}) -> ${e.to} (${tierLabel(b)})`, `a ${e.kind} edge points strictly down the tiers (§4b.1a)`, `change it to kind: cli and call ${e.to}'s CLI, or move the shared code down a tier`);
+    if ((e.kind === "db" || e.kind === "file") && rank(a) < rank(b)) flag("DEPS-TIER-002", `${e.kind} edge points to a higher tier`, `${e.from} (${tierLabel(a)}) -> ${e.to} (${tierLabel(b)})`, "db and file edges point down or across, never up", `replace it with (from: ${e.from}, to: ${e.to}, kind: cli) and ask ${e.to}'s CLI`);
+    return bad;
+  }
+  // ---- kinds and tiers ----
+  const misplaced = new Set(); // compose edges a kind or tier rule already failed: no DEPS-COMPOSE-001 on top
+  for (const e of edges) if (kindsAndTiers(e, byId.get(e.from), byId.get(e.to)) && e.kind === "compose") misplaced.add(edgeKey(e));
+  for (const e of edges.filter((x) => x.kind === "compose" && !misplaced.has(edgeKey(x)) && !seenEdges.has(`${x.from}|${x.to}|project`))) {
+    fail("DEPS-COMPOSE-001", "compose edge without a project edge", `${edgeText(e)}: no project edge ${e.from} -> ${e.to}`, "a compose edge sits beside a project edge to the same package, which fan-out counts (DEPS-FANOUT-001 counts project edges only)", `declare the project edge too (the Host and Features reference ${e.to}'s Core):\n${yamlEdge(e.from, e.to, "project", e.status)}`);
   }
   for (const c of findCycles(edges)) fail("DEPS-CYCLE-001", "the declared graph has a cycle", c.join(" -> "), "the graph is acyclic across every edge kind (§4b.1a)", "delete one edge of the cycle in deps.yaml, or move the shared part into a lower tier");
 
@@ -172,7 +187,10 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
     const targets = [...new Set(edges.filter((e) => e.from === p.id && e.kind === "project" && !testPkg.has(e.to)).map((e) => e.to))].sort();
     const measured = `${p.id} has ${targets.length} project edges (${targets.join(", ")})`;
     if (targets.length <= doc.limits.packageFanOut) { measure("DEPS-FANOUT-001", p.id, measured); continue; }
-    if (!excepted("DEPS-FANOUT-001", p.id, measured)) fail("DEPS-FANOUT-001", "package fan-out over the limit", measured, `${doc.limits.packageFanOut} packages per package (limits.packageFanOut; test packages exempt)`, `split ${p.id}, or record a DEPS-FANOUT-001 exception with a reason and an expiry`);
+    const covers = (to) => targets.includes(to) && targets.length - 1 <= doc.limits.packageFanOut;
+    if (excepted("DEPS-FANOUT-001", p.id, measured, covers)) continue;
+    measure("DEPS-FANOUT-001", p.id, `${measured}, more than an exception attached to one edge covers`);
+    fail("DEPS-FANOUT-001", "package fan-out over the limit", measured, `${doc.limits.packageFanOut} packages per package (limits.packageFanOut; test packages exempt; an exception attached to an edge covers that one edge)`, `split ${p.id}, or record a DEPS-FANOUT-001 exception with a reason and an expiry`);
   }
 
   // ---- cli/db/file edges in the source ----
@@ -186,7 +204,7 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
       fail("DEPS-EDGE-001", "undeclared edge in source", `${h.from} -> ${h.to} (${h.kind}): ${h.where} ${h.what}`, "every cli, db and file edge is declared in deps.yaml", `remove the call, or add this under edges in deps.yaml (a reviewed change):\n${yamlEdge(h.from, h.to, h.kind, "current")}`);
     } else if (d.status === "planned") fail("DEPS-STALE-002", "planned edge found in source", `${edgeText(d)}: ${h.where} ${h.what}`, "an edge the source has today is status: current", `set status: current on ${edgeText(d)} in deps.yaml`);
   }
-  for (const e of edges.filter((x) => x.status === "current" && x.kind !== "project" && !found.has(edgeKey(x)))) {
+  for (const e of edges.filter((x) => x.status === "current" && !linked(x.kind) && !found.has(edgeKey(x)))) {
     fail("DEPS-STALE-001", "declared current edge not found in source", `${edgeText(e)}: no match under ${byId.get(e.from).scan?.join(", ") ?? "(no scan dirs)"}`, "a status: current edge exists in the source today", "set status: planned in deps.yaml if it is still intended, or delete the edge");
   }
   info.push(`scan: ${found.size} cli/db/file edges found in source, ${undeclared === 0 ? "all declared" : `${undeclared} undeclared (DEPS-EDGE-001 above)`}`);
@@ -226,7 +244,10 @@ function checkProjects(root, doc, byId, declared, edges, { fail, info, excepted,
   // package's Core is held by Features (App in the small shape) or composed by Host.
   const sourceOk = (name, refOwner) => refOwner.tier === 0 || !/\.(Core|Infrastructure)$/.test(name);
   const contractFail = (pj, ref, refOwner) => fail("DEPS-PROJ-007", "reference into another package past its Core", `${pj.name} -> ${ref} (${refOwner.id})`, `another package is used only through its Core project (${refOwner.projectPrefix}.Core) or a tier-0 package (§4b.1a)`, `reference ${refOwner.projectPrefix}.Core instead, moving what you need into ${refOwner.id}'s Core contracts`);
+  // A Host's reference to a lower package's Features or Infrastructure: the compose carve-out of DEPS-PROJ-007.
+  const composeRef = (pj, ref, refOwner, owner) => isHostProject(pj.name) && refOwner.tier !== 0 && rank(owner) > rank(refOwner) && [".Features", ".Infrastructure"].some((s) => ref === `${refOwner.projectPrefix}${s}`);
   const real = new Set(); // "Owner|RefOwner" for production cross-package references
+  const composed = new Set(); // "Owner|RefOwner" for Host references under the compose carve-out
   const owners = new Set(); // packages with at least one production project
   for (const pj of projects) {
     const owner = ownerOf(pj.name, doc.packages);
@@ -253,7 +274,12 @@ function checkProjects(root, doc, byId, declared, edges, { fail, info, excepted,
         continue;
       }
       if (refOwner.id === owner.id) continue;
-      real.add(`${owner.id}|${refOwner.id}`);
+      if (composeRef(pj, ref, refOwner, owner)) {
+        composed.add(`${owner.id}|${refOwner.id}`);
+        if (!declared.has(`${owner.id}|${refOwner.id}|compose`)) fail("DEPS-COMPOSE-001", "Host reference into another package's Features or Infrastructure without a compose edge", `${pj.name} -> ${ref} (${owner.id} -> ${refOwner.id})`, "a Host reaches another package's Features and Infrastructure only for their Add…() registration methods, under a declared compose edge (context spec §4)", `reference ${refOwner.projectPrefix}.Core instead, or declare the compose edge beside the project edge (a reviewed change):\n${yamlEdge(owner.id, refOwner.id, "compose", "current")}`);
+        continue;
+      }
+      real.add(`${owner.id}|${refOwner.id}`); // compose references don't make the project edge current: it needs a Core reference
       if (!contractOk(ref, refOwner)) contractFail(pj, ref, refOwner);
       else if (!sourceOk(pj.name, refOwner)) fail("DEPS-PROJ-008", "Core or Infrastructure references another package", `${pj.name} -> ${ref} (${owner.id} -> ${refOwner.id})`, "another package's Core is referenced from Features (App in the small shape) or Host; Core and Infrastructure use tier-0 packages only (§4b.1)", `move the reference to ${owner.projectPrefix}.Features (or .App), and pass what Core needs in through a port`);
       if (!declared.has(`${owner.id}|${refOwner.id}|project`)) fail("DEPS-PROJ-001", "undeclared ProjectReference", `${pj.name} -> ${ref} (${owner.id} -> ${refOwner.id})`, "every cross-package ProjectReference is a declared project edge", `call ${refOwner.id} through its CLI, or add this under edges in deps.yaml (a reviewed change):\n${yamlEdge(owner.id, refOwner.id, "project", "current")}`);
@@ -270,12 +296,17 @@ function checkProjects(root, doc, byId, declared, edges, { fail, info, excepted,
     if (e.status === "current" && !has) fail("DEPS-STALE-001", "declared current edge not found in source", `${edgeText(e)}: ${owners.has(e.from) ? "no ProjectReference" : `${e.from} has no C# projects yet`}`, "a status: current edge exists in the source today", "set status: planned in deps.yaml if it is still intended, or delete the edge");
     if (e.status === "planned" && has) fail("DEPS-STALE-002", "planned edge found in source", `${edgeText(e)}: a ProjectReference exists`, "an edge the source has today is status: current", `set status: current on ${edgeText(e)} in deps.yaml`);
   }
+  for (const e of edges.filter((x) => x.kind === "compose" && byId.get(x.to).tier !== 0)) { // tier 0: DEPS-COMPOSE-001 already
+    const has = composed.has(`${e.from}|${e.to}`);
+    if (e.status === "current" && !has) fail("DEPS-STALE-001", "declared current edge not found in source", `${edgeText(e)}: no ${e.from} Host ProjectReference into ${e.to}'s Features or Infrastructure`, "a status: current edge exists in the source today", "set status: planned in deps.yaml if it is still intended, or delete the edge");
+    if (e.status === "planned" && has) fail("DEPS-STALE-002", "planned edge found in source", `${edgeText(e)}: a Host ProjectReference into ${e.to}'s Features or Infrastructure exists`, "an edge the source has today is status: current", `set status: current on ${edgeText(e)} in deps.yaml`);
+  }
   info.push(projects.length === 0 ? "project references: no C# projects yet — skipped, ok" : `project references: checked ${projects.length} C# projects`);
 }
 
 // ---------- output ----------
 
-const ARROW = { project: "-->", cli: "-.->", db: "==>", file: "--o" };
+const ARROW = { project: "-->", compose: "-->", cli: "-.->", db: "==>", file: "--o" };
 
 export function mermaid(doc, baseDoc) {
   const out = ["```mermaid", "flowchart TB"];

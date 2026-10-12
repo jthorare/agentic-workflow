@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- NativeAOT canary for Aw.Redaction: run.sh publishes it with PublishAot, fails on any trim/AOT (IL2xxx/IL3xxx)
        warning, runs the native binary and compares its stdout with expected.txt. It covers the regex engine and the
-       folding tables under NativeAOT. With stdin-mode it scrubs standard input (the hand test in the stage proof).
+       folding tables under NativeAOT, and extra patterns from configuration (accepted, refused, timing out). In stdin mode
+       (with extra-pattern and timeout options, see Program.cs) it scrubs standard input (the hand test in the stage proof).
        - Not in AgenticWorkflow.slnx and no lock file, like Aw.Kernel.AotSmoke: PublishAot makes restore resolve the
          host RID's ILCompiler packs, so a lock file would be per-OS. The RID is a project property, so Aw.Redaction is
          restored without one and its lock file is never rewritten. -->

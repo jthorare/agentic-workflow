@@ -1,0 +1,444 @@
+{
+  "data": {
+    "issues": {
+      "nodes": [
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000101",
+          "identifier": "SPL-101",
+          "number": 101,
+          "title": "Command registry for pane commands",
+          "description": "Every action should be a named command in one registry so keys and the palette can find it. Start with new-tab and close-tab; the split work adds its commands here.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-101",
+          "priority": 2,
+          "createdAt": "2026-07-01T10:00:00.000Z",
+          "updatedAt": "2026-07-06T10:05:00.000Z",
+          "completedAt": "2026-07-06T10:05:00.000Z",
+          "state": {
+            "name": "Done",
+            "type": "completed"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001011",
+                "body": "Keybindings should only name command ids, never call layout code. That keeps the registry the one entry point.",
+                "createdAt": "2026-07-02T09:00:00.000Z",
+                "updatedAt": "2026-07-02T09:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000002011",
+                "title": "#1 Command registry for pane commands",
+                "url": "https://github.com/fixture-labs/split-panes/pull/1",
+                "sourceType": "github",
+                "createdAt": "2026-07-03T14:05:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000102",
+          "identifier": "SPL-102",
+          "number": 102,
+          "title": "Split a pane vertically or horizontally",
+          "description": "Add split-vertical and split-horizontal commands with default keys (ctrl+shift+d, ctrl+shift+e). The new pane takes focus and the width is shared evenly.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-102",
+          "priority": 2,
+          "createdAt": "2026-07-02T10:00:00.000Z",
+          "updatedAt": "2026-07-10T11:05:00.000Z",
+          "completedAt": "2026-07-10T11:05:00.000Z",
+          "state": {
+            "name": "Done",
+            "type": "completed"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001021",
+                "body": "Even split for now; resizing comes in its own issue.",
+                "createdAt": "2026-07-09T15:00:00.000Z",
+                "updatedAt": "2026-07-09T15:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000901",
+                  "name": "Avery Fixture"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000002021",
+                "title": "#2 Split a pane vertically or horizontally",
+                "url": "https://github.com/fixture-labs/split-panes/pull/2",
+                "sourceType": "github",
+                "createdAt": "2026-07-09T15:35:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000103",
+          "identifier": "SPL-103",
+          "number": 103,
+          "title": "Toggle split orientation",
+          "description": "A toggle-orientation command (ctrl+shift+o) flips the split between vertical and horizontal.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-103",
+          "priority": 2,
+          "createdAt": "2026-07-02T11:00:00.000Z",
+          "updatedAt": "2026-07-23T09:00:00.000Z",
+          "completedAt": "2026-07-15T09:35:00.000Z",
+          "state": {
+            "name": "Done",
+            "type": "completed"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000902",
+            "name": "Rowan Sample"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001031",
+                "body": "Decision: toggling orientation keeps the focused pane first, so the cursor never jumps. We considered swapping the pane order and rejected it.",
+                "createdAt": "2026-07-08T10:00:00.000Z",
+                "updatedAt": "2026-07-08T10:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              },
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001032",
+                "body": "Implemented as setOrientation in SplitPane.ts; it writes the orientation into PaneLayout.",
+                "createdAt": "2026-07-14T16:10:00.000Z",
+                "updatedAt": "2026-07-14T16:10:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000901",
+                  "name": "Avery Fixture"
+                }
+              },
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001033",
+                "body": "Checked after SPL-104 merged: a toggled tab comes back toggled when you switch back to it.",
+                "createdAt": "2026-07-23T09:00:00.000Z",
+                "updatedAt": "2026-07-23T09:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000002031",
+                "title": "#3 Toggle split orientation",
+                "url": "https://github.com/fixture-labs/split-panes/pull/3",
+                "sourceType": "github",
+                "createdAt": "2026-07-14T16:05:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000104",
+          "identifier": "SPL-104",
+          "number": 104,
+          "title": "Restore pane layout when switching tabs",
+          "description": "Switching away from a tab and back should bring back its orientation, panes and focus. The tab manager reads the pane layout state when it restores a tab.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-104",
+          "priority": 2,
+          "createdAt": "2026-07-11T09:00:00.000Z",
+          "updatedAt": "2026-07-22T10:20:00.000Z",
+          "completedAt": "2026-07-22T10:20:00.000Z",
+          "state": {
+            "name": "Done",
+            "type": "completed"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001041",
+                "body": "Restoring a tab brings back orientation and focus; pane sizes reset to an even split for now.",
+                "createdAt": "2026-07-16T11:00:00.000Z",
+                "updatedAt": "2026-07-16T11:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000901",
+                  "name": "Avery Fixture"
+                }
+              },
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001042",
+                "body": "Note this depends on the orientation work in SPL-103: a toggled tab must come back toggled.",
+                "createdAt": "2026-07-21T13:30:00.000Z",
+                "updatedAt": "2026-07-21T13:30:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000002041",
+                "title": "#4 Restore pane layout when switching tabs",
+                "url": "https://github.com/fixture-labs/split-panes/pull/4",
+                "sourceType": "github",
+                "createdAt": "2026-07-21T13:05:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000105",
+          "identifier": "SPL-105",
+          "number": 105,
+          "title": "Resize panes with the keyboard",
+          "description": "resize-pane-left and resize-pane-right (ctrl+alt+left, ctrl+alt+right) move the focused pane's border by the paneResizeStep setting.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-105",
+          "priority": 2,
+          "createdAt": "2026-07-16T09:00:00.000Z",
+          "updatedAt": "2026-08-12T15:00:00.000Z",
+          "completedAt": "2026-07-29T09:05:00.000Z",
+          "state": {
+            "name": "Done",
+            "type": "completed"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001051",
+                "body": "Decision: the minimum pane width is 10 columns, so two panes fit in an 80-column terminal with room for borders.",
+                "createdAt": "2026-07-24T10:00:00.000Z",
+                "updatedAt": "2026-07-24T10:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              },
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001052",
+                "body": "Resize step defaults to 2 columns (paneResizeStep in the settings file).",
+                "createdAt": "2026-07-28T17:50:00.000Z",
+                "updatedAt": "2026-07-28T17:50:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000901",
+                  "name": "Avery Fixture"
+                }
+              },
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001053",
+                "body": "Decision (replaces the 10-column minimum above): the minimum pane width is 20 columns. Ten columns truncated every prompt in user testing.",
+                "createdAt": "2026-08-12T15:00:00.000Z",
+                "updatedAt": "2026-08-12T15:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000902",
+                  "name": "Rowan Sample"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000002051",
+                "title": "#5 Resize panes with the keyboard",
+                "url": "https://github.com/fixture-labs/split-panes/pull/5",
+                "sourceType": "github",
+                "createdAt": "2026-07-28T17:55:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000106",
+          "identifier": "SPL-106",
+          "number": 106,
+          "title": "Remember pane layouts across restarts",
+          "description": "Save each tab's layout to the settings directory on exit and restore it on start.",
+          "url": "https://linear.app/fixture-labs/issue/SPL-106",
+          "priority": 2,
+          "createdAt": "2026-08-01T09:00:00.000Z",
+          "updatedAt": "2026-08-20T10:00:00.000Z",
+          "completedAt": null,
+          "state": {
+            "name": "In Progress",
+            "type": "started"
+          },
+          "team": {
+            "id": "0e5a1b00-0000-4000-8000-000000000001",
+            "key": "SPL",
+            "name": "Split Panes"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          },
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "assignee": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "labels": {
+            "nodes": [
+              {
+                "name": "layout"
+              }
+            ]
+          },
+          "comments": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000001061",
+                "body": "Started; this reuses the tab snapshot from SPL-104.",
+                "createdAt": "2026-08-20T10:00:00.000Z",
+                "updatedAt": "2026-08-20T10:00:00.000Z",
+                "user": {
+                  "id": "0e5a1b00-0000-4000-8000-000000000901",
+                  "name": "Avery Fixture"
+                }
+              }
+            ]
+          },
+          "attachments": {
+            "nodes": []
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "0e5a1b00-0000-4000-8000-000000000106"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Aw.Kernel.Testing: tier 0 (deps.yaml KernelTesting), referenced by test projects only (spec §4b.1, §4b.5).
-       Deterministic ids, lane traits, the builder base, generic contract-test bases (ReadRepository, UnitOfWork, Outbox) with
+       Deterministic ids, lane traits, the builder base, generic contract-test bases (ReadRepository, UnitOfWork, Outbox, IdGenerator) with
        the Kernel ports' in-memory fakes, the golden-file check and the CTRF per-test lane cap (LaneCap; CLI: tests/Aw.LaneCap.Testing).
        It lives under tests/, so the test-project analyzer policy (tests/.editorconfig) applies, as for every *.Testing.
        Aw.Kernel plus ONE external dependency: xunit.v3.extensibility.core (Fact, Trait, ITraitAttribute, TestContext),

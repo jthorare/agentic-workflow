@@ -10,7 +10,7 @@ import { runChecks } from "../src/doctor/doctor.js";
 import { makeGraphifyProvider } from "../src/index/graph.js";
 import { makeIndexCommand } from "../src/index/commands.js";
 import { indexPath, openIndex } from "../src/index/db.js";
-import { heavyLockDir } from "../src/index/heavy-lock.js";
+import { heavyLockDir, heavyLockDirs } from "../src/index/heavy-lock.js";
 import type { IndexProbes } from "../src/index/io.js";
 import { GRAPHIFY_PIN } from "../src/index/pins.js";
 import { runCli } from "../src/main.js";
@@ -450,6 +450,29 @@ describe("doctor index checks", () => {
       fs.rmdirSync(dir);
     }
     expect(fs.existsSync(heavyLockDir(awStateDir(base), base.env))).toBe(false);
+  });
+
+  it("reports every slot of the heavy-job lock: slot 1 as heavy-lock, slot k as heavy-lock.k", async () => {
+    const base = await approvedIndexDeps(ring0Repo({ "src/a.ts": "export const a = 1;\n" }));
+    const d = { ...base, env: { ...base.env, AW_HEAVY_SLOTS: "3" } };
+    const [one, two, three] = heavyLockDirs(awStateDir(d), d.env);
+    const slots = async () => {
+      const c = await checks(d, offline);
+      return [c["heavy-lock"], c["heavy-lock.2"], c["heavy-lock.3"]].map((x) => x && { status: x.status, detail: x.detail });
+    };
+    expect(await slots()).toEqual([{ status: "ok", detail: "free" }, { status: "ok", detail: "free" }, { status: "ok", detail: "free" }]);
+    fs.mkdirSync(two, { recursive: true });
+    fs.writeFileSync(`${two}.holder.json`, JSON.stringify({ kind: "index-build", pid: 7, host: "other", startedAt: "t" }));
+    fs.mkdirSync(three);
+    const t = new Date(d.now().getTime() - 7 * 3_600_000);
+    fs.utimesSync(three, t, t);
+    expect(await slots()).toEqual([{ status: "ok", detail: "free" }, { status: "ok", detail: "held by index-build" }, { status: "warn", detail: "held for over 6 h" }]);
+    expect((await checks(d, offline))["heavy-lock.3"].fix).toContain(`rm -r ${three} && rm -f ${three}.holder.json`);
+    expect(Object.keys(await checks(base, offline)).filter((k) => k.startsWith("heavy-lock"))).toEqual(["heavy-lock", "heavy-lock.2"]);
+    expect(one).toBe(heavyLockDir(awStateDir(d), d.env));
+    fs.rmSync(`${two}.holder.json`);
+    fs.rmdirSync(two);
+    fs.rmdirSync(three);
   });
 
   it("warns when Node would route loopback embedding traffic through an env proxy", async () => {

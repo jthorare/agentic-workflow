@@ -1,0 +1,5 @@
+{"start":{"inputs":{"fact:item":{"id":"T-3","repo":"agentic-workflow","spec":"Add a --version flag that prints the build version."}}}}
+{"trigger":{"kind":"wait.satisfied","outcome":"startable","outputs":{"fact:stepSpec":"Add a --version flag that prints the build version."}},"gates":{"gate.route.startable":"pass"},"expect":{"state":"startable"}}
+{"trigger":{"kind":"wait.satisfied"},"gates":{"gate.budget.available":"pass"},"expect":{"state":"claimed"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"created"},"expect":{"state":"running"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved"},"expect":{"state":"done","outcome":"resolved"}}

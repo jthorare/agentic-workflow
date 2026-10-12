@@ -1,0 +1,96 @@
+$ sindri recipe validate <tmp>/RCP-REACH-001.yaml --json
+exit 1
+--- stdout
+{
+  "passed": false,
+  "hash": "sha256:a8c2b5e8be5a2d5877545ffbb7d8a3f6d82cd2b01254f2825e5b323d62e99f3c",
+  "findings": [
+    {
+      "code": "RCP-REACH-001",
+      "severity": "error",
+      "message": "state 'orphan' is unreachable from 'produce'",
+      "file": "RCP-REACH-001.yaml",
+      "line": 14,
+      "column": 3,
+      "path": "states.orphan",
+      "fix": "add a transition into it or remove it"
+    }
+  ],
+  "normalized": {
+    "schema": 1,
+    "id": "workflow.reach",
+    "version": 1,
+    "description": null,
+    "base": null,
+    "inputs": [],
+    "initial": "produce",
+    "states": {
+      "produce": {
+        "kind": "active",
+        "step": {
+          "use": "step.produce",
+          "with": {},
+          "inputs": []
+        },
+        "waitFor": null,
+        "timeout": {
+          "after": "4h",
+          "then": "park"
+        },
+        "loop": null,
+        "budget": null,
+        "next": "Produce the Step output.",
+        "outcome": null
+      },
+      "done": {
+        "kind": "terminal",
+        "step": null,
+        "waitFor": null,
+        "timeout": null,
+        "loop": null,
+        "budget": null,
+        "next": null,
+        "outcome": "resolved"
+      },
+      "orphan": {
+        "kind": "terminal",
+        "step": null,
+        "waitFor": null,
+        "timeout": null,
+        "loop": null,
+        "budget": null,
+        "next": null,
+        "outcome": "unresolved"
+      }
+    },
+    "transitions": [
+      {
+        "from": [
+          "produce"
+        ],
+        "to": "done",
+        "on": "step.completed",
+        "when": {
+          "outcome": "done",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": [
+          "fact:output"
+        ]
+      }
+    ],
+    "loops": {},
+    "budget": null,
+    "evals": []
+  }
+}
+--- stderr

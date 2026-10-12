@@ -1,0 +1,220 @@
+$ sindri recipe validate --json <tmp>/workflow.step.yaml
+exit 0
+--- stdout
+{
+  "passed": true,
+  "hash": "sha256:12e030dc92a0f827d4da641c65f023d5e547e15e9c1b29a9a427a603e0f50d40",
+  "findings": [],
+  "normalized": {
+    "schema": 1,
+    "id": "workflow.step",
+    "version": 1,
+    "description": null,
+    "base": null,
+    "inputs": [
+      {
+        "key": "fact:spec",
+        "label": null,
+        "type": null
+      }
+    ],
+    "initial": "produce",
+    "states": {
+      "produce": {
+        "kind": "active",
+        "step": {
+          "use": "step.produce",
+          "with": {},
+          "inputs": []
+        },
+        "waitFor": null,
+        "timeout": {
+          "after": "4h",
+          "then": "park"
+        },
+        "loop": "revisions",
+        "budget": {
+          "tokens": 200000
+        },
+        "next": "Produce the Step output for {item} (round {loop.revisions}/{loop.revisions.cap}).",
+        "outcome": null
+      },
+      "checks": {
+        "kind": "active",
+        "step": {
+          "use": "step.checks",
+          "with": {},
+          "inputs": []
+        },
+        "waitFor": null,
+        "timeout": {
+          "after": "30m",
+          "then": "retry"
+        },
+        "loop": null,
+        "budget": null,
+        "next": "Run the Step's deterministic checks.",
+        "outcome": null
+      },
+      "verify": {
+        "kind": "active",
+        "step": {
+          "use": "step.verify",
+          "with": {},
+          "inputs": []
+        },
+        "waitFor": null,
+        "timeout": {
+          "after": "1h",
+          "then": "park"
+        },
+        "loop": null,
+        "budget": null,
+        "next": "Review the output as the verifier.",
+        "outcome": null
+      },
+      "done": {
+        "kind": "terminal",
+        "step": null,
+        "waitFor": null,
+        "timeout": null,
+        "loop": null,
+        "budget": null,
+        "next": null,
+        "outcome": "resolved"
+      }
+    },
+    "transitions": [
+      {
+        "from": [
+          "produce"
+        ],
+        "to": "checks",
+        "on": "step.completed",
+        "when": {
+          "outcome": "done",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": [
+          "fact:output"
+        ]
+      },
+      {
+        "from": [
+          "checks"
+        ],
+        "to": "verify",
+        "on": "step.completed",
+        "when": {
+          "outcome": "passed",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": []
+      },
+      {
+        "from": [
+          "checks"
+        ],
+        "to": "produce",
+        "on": "step.completed",
+        "when": {
+          "outcome": "failed",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": [
+          "fact:findings"
+        ]
+      },
+      {
+        "from": [
+          "verify"
+        ],
+        "to": "done",
+        "on": "step.completed",
+        "when": {
+          "outcome": "accepted",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": []
+      },
+      {
+        "from": [
+          "verify"
+        ],
+        "to": "produce",
+        "on": "step.completed",
+        "when": {
+          "outcome": "rejected",
+          "fact": null,
+          "is": null,
+          "loop": null,
+          "below": null,
+          "all": null,
+          "any": null,
+          "not": null
+        },
+        "gates": [],
+        "evidence": [],
+        "effects": [],
+        "produces": [
+          "fact:findings"
+        ]
+      }
+    ],
+    "loops": {
+      "revisions": {
+        "cap": 3,
+        "noProgress": [
+          "findings",
+          "emptyDiff",
+          "sameFailure"
+        ]
+      }
+    },
+    "budget": {
+      "tokens": 400000
+    },
+    "evals": [
+      "evals/workflow.step/happy.jsonl",
+      "evals/workflow.step/no-progress.jsonl",
+      "evals/workflow.step/rounds.jsonl"
+    ]
+  }
+}
+--- stderr

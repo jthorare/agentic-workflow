@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.resource
+version: 1
+initial: queued
+states:
+  queued:
+    kind: wait
+    waitFor: { resource: heavy }
+    timeout: { after: 1d, then: park }
+    next: "Waiting for a heavy-job slot."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: queued, to: done, on: wait.satisfied }

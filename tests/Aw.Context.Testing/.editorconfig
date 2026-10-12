@@ -1,0 +1,7 @@
+# Aw.Context.Testing: the fake servers' request boundary (Fakes/LoopbackServer.cs) turns any exception a handler
+# didn't map into a recorded JSON 500 that names it, instead of Kestrel's empty, unrecorded 500. That is the
+# boundary-adapter case the C# rules allow (csharp.md "Types and errors": Host and Infrastructure lower CA1031).
+root = false
+
+[Fakes/LoopbackServer.cs]
+dotnet_diagnostic.CA1031.severity = none

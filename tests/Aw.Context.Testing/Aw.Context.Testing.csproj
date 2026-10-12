@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Context.Testing (stage S-FX): the split-panes fixture app with its recorded Linear and Onyx sources, the
+       builder that makes the app a git repo with merged-PR history, the probe file, and fake Linear (GraphQL) and
+       Onyx (HTTP) servers that replay the recordings on loopback (spec 2026-10-10 §10). Test support: only *.Tests
+       and *.Testing projects reference it. It holds no Aw.Context.Core type: S-1A adds the adapter contract base
+       (ContextSourceContract<TSource>) on top. Everything here is synthetic. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Context.Testing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Kestrel for the fake servers (loopback only). A shared framework, not a NuGet package. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Aw.Kernel/Aw.Kernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The fakes' shared host (LoopbackServer) is internal; its own tests reach it here. -->
+    <InternalsVisibleTo Include="Aw.Context.Testing.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The fixture travels inside the assembly, so a test in any project reads it without file paths. -->
+    <EmbeddedResource Include="Fixtures/split-panes/**/*" LogicalName="split-panes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

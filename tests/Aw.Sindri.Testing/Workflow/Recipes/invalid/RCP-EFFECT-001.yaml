@@ -1,0 +1,16 @@
+# Validated against a profile whose workflow.effects allows only effect.claim.ref.
+schema: 1
+id: workflow.effect
+version: 1
+initial: ask
+states:
+  ask:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Write the line to send to your desk, then complete this Step."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ask, to: done, on: step.completed, when: { outcome: done }, effects: [effect.notify.desk] }

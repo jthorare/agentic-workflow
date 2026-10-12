@@ -35,7 +35,7 @@ Bash suites live in `config/**/tests/`, `scripts/tests/`, and `providers/tests/`
 
 - scorer: 471 tests across 38 test files
 - judge: 625 tests across 49 test files
-- sindri: 1359 tests across 92 test files
+- sindri: 1365 tests across 92 test files
 - skills/ui-evidence: 252 tests across 24 test files (including the real-browser tests under `tests/browser`)
 - skills/bugFixOrchestrator: 70 tests across 4 test files
 

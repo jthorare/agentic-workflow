@@ -1,0 +1,24 @@
+schemaVersion: 1
+id: engineering.csharp.compose-registration-only
+kind: engineering
+section: "4b.1a"
+text: "A Host may reference a lower-tier package's Features and Infrastructure only under a declared compose edge, which sits beside a project edge to the same package, and only to call their public static Add…() registration methods; everything else goes through the package's Core."
+why: "Registering a separable engine (Sindri composing Context) needs its Add…() methods, but a wider opening would let the Host reach the engine's internals past its Core facade."
+select:
+  languages: [csharp]
+  paths: ["deps.yaml", "src/**"]
+checks:
+  - type: check-deps
+    id: "DEPS-COMPOSE-001"
+    status: active
+    note: "the declared graph: a compose edge needs a project edge beside it and never points into tier 0; a Host reference into another package's Features or Infrastructure needs a compose edge (any other project doing it is DEPS-PROJ-007); tier and staleness as for project edges, and only a Core reference makes the project edge current"
+  - type: archunit
+    id: "ARCH-COMPOSE-001"
+    status: active
+    note: "the compiled Host: only public static Add…() methods of a compose target's Features and Infrastructure; anything else there is a violation (without a compose edge it is ARCH-DIR-004)"
+relatedIds: ["DEPS-PROJ-007", "ARCH-DIR-004"]
+gap: closed
+source:
+  type: adr
+  ref: "docs/superpowers/specs/2026-10-10-sindri-context-retrieval-design.md#4-package-shape-and-composition"
+status: active

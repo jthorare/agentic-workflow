@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Judge.Infrastructure (scaffolded by /new-package): the adapters behind Core's ports (SQL repositories,
+       processes, HTTP, files) and this package's settings, read from the environment Composition passes (spec §4b.1,
+       .agents/rules/csharp.md Seams). Its row and DTO types stay internal (ARCH-INFRA-001). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Judge.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.Judge.Core/Aw.Judge.Core.csproj" />
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+    <ProjectReference Include="../../Aw.Kernel.Data/Aw.Kernel.Data.csproj" />
+    <ProjectReference Include="../../Redaction/Aw.Redaction/Aw.Redaction.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The schema migrations, loaded by Aw.Kernel.Data's EmbeddedMigrations under JudgeDatabase.ResourcePrefix. -->
+    <EmbeddedResource Include="Sqlite/Migrations/*.sql" LogicalName="Aw.Judge.Infrastructure.Sqlite.Migrations.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.Judge.Tests" />
+    <InternalsVisibleTo Include="Aw.Judge.Testing" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Judge.Host (scaffolded by /new-package): the composition root and the CLI commands
+       (one per slice). NativeAOT entry point 'judge' (spec §4b.6); the only project that uses Infrastructure, in
+       Composition. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AwAotEntryPoint>true</AwAotEntryPoint>
+    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+    <AssemblyName>judge</AssemblyName>
+    <RootNamespace>Aw.Judge.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.Judge.Core/Aw.Judge.Core.csproj" />
+    <ProjectReference Include="../Aw.Judge.Features/Aw.Judge.Features.csproj" />
+    <ProjectReference Include="../Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj" />
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+    <ProjectReference Include="../../Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.Judge.Tests" />
+  </ItemGroup>
+</Project>

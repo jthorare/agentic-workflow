@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.child-cycle
+version: 1
+initial: running
+states:
+  running:
+    kind: wait
+    waitFor: { child: { recipe: workflow.child-cycle, inputs: {}, onParked: propagate } }
+    timeout: { after: 14d, then: park }
+    next: "Waiting for {child}."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: running, to: done, on: wait.satisfied }

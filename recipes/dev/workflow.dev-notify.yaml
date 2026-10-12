@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.dev-notify
+version: 1
+description: "A desk Step, then a desk notification, then a wait for its delivery: the effects signal (engine spec section 12, P6)."
+initial: ask
+states:
+  ask:  { kind: active, step: step.produce, timeout: { after: 1h, then: park },
+          next: "Write the line to send to your desk, then complete this Step." }
+  sent: { kind: wait, waitFor: { event: notify.delivered }, timeout: { after: 10m, then: park },
+          next: "Waiting for the desk notification to be delivered." }
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: ask,  to: sent, on: step.completed, when: { outcome: done }, produces: [fact:output], effects: [effect.notify.desk] }
+  - { from: sent, to: done, on: wait.satisfied, when: { outcome: delivered } }
+evals: [evals/workflow.dev-notify/happy.jsonl]

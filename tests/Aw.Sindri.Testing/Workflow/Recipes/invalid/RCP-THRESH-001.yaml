@@ -1,0 +1,17 @@
+# gate.review.judge is a test-only judge-question gate (WiringCatalog.WithTestBlocks).
+schema: 1
+id: workflow.threshold-missing
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: done, on: step.completed, when: { outcome: done }, produces: [fact:output],
+      gates: [{ use: gate.review.judge, with: { question: "Is the output done?" } }] }

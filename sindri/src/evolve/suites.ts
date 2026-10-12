@@ -11,8 +11,8 @@ export function cleanEnvArgv(deps: Deps, argv: string[]): string[] {
   return ["env", "-i", `HOME=${deps.home}`, ...kept, ...argv];
 }
 
-// A module's eval suite is its existing tests (spec §7.7 table). Suites are heavy: one at a
-// time, box-wide. They wait for the heavy lock for at most 10 minutes.
+// A module's eval suite is its existing tests (spec §7.7 table). Suites are heavy: each takes a
+// slot of the box-wide heavy-job lock, and one suite never runs twice at once. They wait for a slot for at most 10 minutes.
 export async function runSuite(
   deps: Deps, run: ProcessRunner, base: string, a: { id: string; suite: { argv: string[]; cwd: string } }, scrubber: Scrubber = makeScrubber(),
 ): Promise<{ ok: boolean; exitCode: number; ms: number; tail: string }> {

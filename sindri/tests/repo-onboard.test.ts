@@ -68,7 +68,8 @@ describe("sindri repo onboard", () => {
     await approve(d);
     // Same-process nesting: buildIndex's single try at the lock fails (see heavy-lock.test.ts). If the lock
     // ever treats the same pid as reentrant, hold it from a child process with config/lib/locks.sh instead.
-    const busy = await withHeavyLock(d, "other-job", 0, () => runCli(["repo", "onboard", target, "--name", "web", "--json"], d));
+    // Both slots of the default two are held.
+    const busy = await withHeavyLock(d, "other-job", 0, () => withHeavyLock(d, "another-job", 0, () => runCli(["repo", "onboard", target, "--name", "web", "--json"], d)));
     expect(busy.exitCode).toBe(1);
     expect(steps(busy.stdout)).toEqual({ "repo-add": "ok", approval: "ok", "pre-commit": "done", "index-build": "warn" });
     expect(steps((await runCli(["repo", "onboard", target, "--name", "web", "--no-build", "--json"], d)).stdout)["index-build"]).toBe("skip");

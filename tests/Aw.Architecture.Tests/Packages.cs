@@ -20,6 +20,10 @@ internal static class Packages
         "Aw.Readiness.Core",
         "Aw.Readiness.App",
         "Aw.Redaction",
+        "Aw.Judge.Core",
+        "Aw.Judge.Features",
+        "Aw.Judge.Infrastructure",
+        "Aw.Judge.Host",
         "Aw.Evidence.Core",
         "Aw.Evidence.Features",
         "Aw.Evidence.Infrastructure",
@@ -28,5 +32,9 @@ internal static class Packages
         "Aw.BugFix.Features",
         "Aw.BugFix.Infrastructure",
         "Aw.BugFix.Host",
+        "Aw.Sindri.Core",
+        "Aw.Sindri.Features",
+        "Aw.Sindri.Infrastructure",
+        "Aw.Sindri.Host",
     ];
 }

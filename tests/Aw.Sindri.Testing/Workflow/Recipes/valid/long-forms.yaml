@@ -1,0 +1,49 @@
+# short-forms.yaml written in the long form: it binds to the same record and hashes the same.
+schema: 1
+id: workflow.forms
+version: 1
+description: null
+base: null
+inputs:
+  - { key: fact:item, label: null, type: null }
+initial: produce
+states:
+  produce:
+    kind: active
+    step: { use: step.produce, with: {}, inputs: [] }
+    waitFor: null
+    timeout: { after: 4h, then: park }
+    loop: revisions
+    budget: { tokens: 200000 }
+    next: "Produce the output (round {loop.revisions}/{loop.revisions.cap})."
+    outcome: null
+  review:
+    kind: active
+    step:
+      use: step.verify
+      with: { strict: { literal: true }, on: { literal: "on" } }
+      inputs: [{ use: input.context.retrieve, with: {} }]
+    timeout: { after: 1h, then: park }
+    next: "Review the output."
+  running:
+    kind: wait
+    waitFor:
+      child: { recipe: workflow.kid, inputs: { "fact:spec": { literal: "write it", fact: null, profile: null } }, onParked: propagate }
+    timeout: { after: 14d, then: park }
+    next: "Waiting for {child}."
+  done: { kind: terminal, outcome: resolved, next: null }
+transitions:
+  - from: [produce]
+    to: review
+    on: step.completed
+    when: { outcome: done }
+    gates: [{ use: gate.budget.available, threshold: null, with: {} }]
+    evidence: []
+    effects: [{ use: effect.notify.desk, with: {} }]
+    produces: [fact:output]
+  - { from: [review], to: running, on: step.completed, when: { outcome: accepted }, gates: [], effects: [], produces: [] }
+  - { from: [review], to: produce, on: step.completed, when: { outcome: rejected } }
+  - { from: [running], to: done, on: wait.satisfied, when: { outcome: resolved } }
+loops: { revisions: { cap: 3, noProgress: [findings, emptyDiff, sameFailure] } }
+budget: { tokens: 2000000 }
+evals: []

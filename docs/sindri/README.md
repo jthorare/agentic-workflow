@@ -2,7 +2,7 @@
 
 Sindri is a local, always-on harness that picks up work, sizes it, starts agent sessions with cited context, keeps them on track and ships them. It asks the human only when it has to. Two things carry the name today:
 
-- **The Sindri application**, designed below and built new in C# (not ported from TypeScript). None of it is built or installed yet.
+- **The Sindri application**, designed below and built new in C# (not ported from TypeScript). Its first stage, the app shell (`src/Sindri`: the `sindri` CLI and control plane, host lease, ledger, YAML profile, API, scheduler, doctor), is built and documented in `docs/csharp/sindri.md`, with its own `SND-*` catalogue; nothing of it is installed yet. `errors.md` is the TypeScript sindri's catalogue.
 - **The TypeScript `sindri/` package** ([below](#today-the-typescript-reference-sindri)). It runs at the desk now and is the reference for what each part does. It keeps running until the switch (readiness spec §4a step 3).
 
 Specs: the core design `docs/superpowers/specs/2026-10-07-sindri-design.md`, and the factory addendum `docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md` (A below), whose §17.28 (the workflow engine) and §17.29 (Sindri as an application) define the app. Decisions Q6 and Q7 are in A §17.17.

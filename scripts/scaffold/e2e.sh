@@ -7,8 +7,9 @@
 # NativeAOT-publishes its App for the runner's RID (no IL2xxx/IL3xxx warning) and runs the native binary (usage exit 2
 # and the AW-TELEMETRY-001 line for an unknown AW_LOG_LEVEL); (b) makes its first slice green, adds a second with a new
 # Guid id and a new port (Core's and Features' PublicAPI lines come from the build's RS0016 diagnostics), makes that
-# green and adds a third reusing the port (which must leave the port, its fake and its contract base alone), then runs
-# its integration lane (loopback binding, id route binding, Kernel telemetry as the only logger) green. The worktrees
+# green and adds a third reusing the port (which must leave the port, its fake and its contract base alone), makes that
+# green and adds a fourth with --slice-only (only its own files may change; the generator's checks leave exactly its
+# test red), then runs its integration lane (loopback binding, id route binding, Kernel telemetry as the only logger) green. The worktrees
 # are removed afterwards.
 #
 # Needs the NativeAOT toolchain for the AOT step: the Xcode command-line tools on macOS, clang and zlib on Linux.
@@ -23,15 +24,15 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/aw-scaffold-e2e.XXXXXX")"
-# One heavy job at a time (config/lib/locks.sh): take the box-wide lock for the whole run unless a caller holds it,
-# and tell the generators it is held.
+# At most AW_HEAVY_SLOTS heavy jobs at a time (default 2; config/lib/locks.sh): take a slot of the box-wide lock for
+# the whole run unless a caller holds one, and tell the generators it is held.
 LOCK=""
 if [ "${AW_HEAVY_LOCK_HELD:-}" != "1" ]; then
   # shellcheck source=../../config/lib/locks.sh
   source "$ROOT/config/lib/locks.sh"
-  LOCK="${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks/heavy-job.lock"
-  mkdir -p "$(dirname "$LOCK")"
-  acquire_lock "$LOCK" 5400 || { echo "heavy-job lock busy: $LOCK" >&2; exit 2; }
+  BASE="${AW_HEAVY_JOB_LOCK:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks/heavy-job.lock}"
+  mkdir -p "$(dirname "$BASE")"
+  LOCK="$(acquire_any_lock "$BASE" "${AW_HEAVY_SLOTS:-2}" 5400)" || { echo "heavy-job lock busy (every slot): $BASE" >&2; exit 2; }
   echo "$$ $(date -u +%FT%TZ) scripts/scaffold/e2e.sh" > "$LOCK/owner"
 fi
 export AW_HEAVY_LOCK_HELD=1
@@ -127,7 +128,31 @@ green "$B" "src/$HTTP/Aw.$HTTP.Features" "tests/Aw.$HTTP.Tests" ListItems lists_
   --surface http --route "POST /items/{itemId}/count" --ports IItemStore) || fail "(b) new-slice CountItems"
 reused="$(cd "$B" && git status --porcelain -- "src/$HTTP/Aw.$HTTP.Core/Ports" "tests/Aw.$HTTP.Testing/InMemoryItemStore.cs" "tests/Aw.$HTTP.Testing/ItemStoreContract.cs")"
 [ -z "$reused" ] || fail "(b) CountItems rewrote the existing port or its fake: $reused"
-step "(b) integration lane: loopback binding and id route binding"
+step "(b) make CountItems green, then /new-slice --slice-only GetShelf with a new string route id: only its own files change"
+green "$B" "src/$HTTP/Aw.$HTTP.Features" "tests/Aw.$HTTP.Tests" CountItems counts_nothing
+(cd "$B" && git add -A && git -c user.name=e2e -c user.email=e2e@localhost commit --quiet -m "e2e: CountItems green") || fail "(b) commit"
+(cd "$B" && gen scripts/scaffold/new-slice.mjs --slice-only --package "$HTTP" --slice GetShelf --behavior gets_a_shelf \
+  --surface http --route "GET /shelves/{shelfId}" --ids ShelfId:string) || fail "(b) new-slice --slice-only GetShelf"
+changed="$(cd "$B" && git status --porcelain --untracked-files=all | cut -c4- | sort)"
+expected="$(sort <<EOF
+src/$HTTP/Aw.$HTTP.Core/Ids/ShelfId.cs
+src/$HTTP/Aw.$HTTP.Core/PublicAPI.Unshipped.txt
+src/$HTTP/Aw.$HTTP.Features/GetShelf/GetShelfRequest.cs
+src/$HTTP/Aw.$HTTP.Features/GetShelf/GetShelfResponse.cs
+src/$HTTP/Aw.$HTTP.Features/GetShelf/GetShelfService.cs
+src/$HTTP/Aw.$HTTP.Features/GetShelf/GetShelfValidator.cs
+src/$HTTP/Aw.$HTTP.Features/PublicAPI.Unshipped.txt
+tests/Aw.$HTTP.Testing/A.cs
+tests/Aw.$HTTP.Testing/GetShelfRequestBuilder.cs
+tests/Aw.$HTTP.Tests/GetShelf/GetShelfTests.cs
+tests/Aw.$HTTP.Tests/Ids/IdsJsonContext.cs
+tests/Aw.$HTTP.Tests/Ids/ShelfIdHolder.cs
+tests/Aw.$HTTP.Tests/Ids/ShelfIdRouteBindingTests.cs
+tests/Aw.$HTTP.Tests/Ids/ShelfIdTests.cs
+EOF
+)"
+[ "$changed" = "$expected" ] || fail "(b) --slice-only changed other files: $(diff <(echo "$expected") <(echo "$changed") | tr '\n' ' ')"
+step "(b) integration lane: loopback binding and id route binding (GetShelf's ShelfId included)"
 (cd "$B" && env -u CI dotnet test --project "tests/Aw.$HTTP.Tests" --filter-trait "Lane=integration") || fail "(b) integration lane"
 step "(b) check-deps with the new node"
 (cd "$B" && node scripts/check-deps.mjs) || fail "(b) check-deps"

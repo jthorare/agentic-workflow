@@ -6,6 +6,18 @@
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </Folder>
+  <Folder Name="/src/Sindri/">
+    <Project Path="src/Sindri/Aw.Sindri.Core/Aw.Sindri.Core.csproj" />
+    <Project Path="src/Sindri/Aw.Sindri.Features/Aw.Sindri.Features.csproj" />
+    <Project Path="src/Sindri/Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj" />
+    <Project Path="src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Judge/">
+    <Project Path="src/Judge/Aw.Judge.Core/Aw.Judge.Core.csproj" />
+    <Project Path="src/Judge/Aw.Judge.Features/Aw.Judge.Features.csproj" />
+    <Project Path="src/Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj" />
+    <Project Path="src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj" />
+  </Folder>
   <Folder Name="/src/Evidence/">
     <Project Path="src/Evidence/Aw.Evidence.Core/Aw.Evidence.Core.csproj" />
     <Project Path="src/Evidence/Aw.Evidence.Features/Aw.Evidence.Features.csproj" />
@@ -41,9 +53,15 @@
     <Project Path="tests/Aw.Packets.Testing/Aw.Packets.Testing.csproj" />
     <Project Path="tests/Aw.Readiness.Tests/Aw.Readiness.Tests.csproj" />
     <Project Path="tests/Aw.Readiness.Testing/Aw.Readiness.Testing.csproj" />
+    <Project Path="tests/Aw.Judge.Tests/Aw.Judge.Tests.csproj" />
+    <Project Path="tests/Aw.Judge.Testing/Aw.Judge.Testing.csproj" />
     <Project Path="tests/Aw.Evidence.Tests/Aw.Evidence.Tests.csproj" />
     <Project Path="tests/Aw.Evidence.Testing/Aw.Evidence.Testing.csproj" />
     <Project Path="tests/Aw.BugFix.Tests/Aw.BugFix.Tests.csproj" />
     <Project Path="tests/Aw.BugFix.Testing/Aw.BugFix.Testing.csproj" />
+    <Project Path="tests/Aw.Sindri.Tests/Aw.Sindri.Tests.csproj" />
+    <Project Path="tests/Aw.Sindri.Testing/Aw.Sindri.Testing.csproj" />
+    <Project Path="tests/Aw.Context.Testing/Aw.Context.Testing.csproj" />
+    <Project Path="tests/Aw.Context.Testing.Tests/Aw.Context.Testing.Tests.csproj" />
   </Folder>
 </Solution>

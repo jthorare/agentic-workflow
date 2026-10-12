@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.state-reserved
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  parked:
+    kind: terminal
+    outcome: unresolved
+transitions:
+  - { from: produce, to: parked, on: step.completed, when: { outcome: done }, produces: [fact:output] }

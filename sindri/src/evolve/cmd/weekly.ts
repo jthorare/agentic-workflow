@@ -92,8 +92,8 @@ async function checkStep(ctx: EvolveCtx): Promise<CommandResult> {
 export async function weekly(args: string[], ctx: EvolveCtx): Promise<CommandResult> {
   const { values } = parseFlags(args, { "dry-run": { type: "boolean" }, json: { type: "boolean" } });
   const json = values.json === true;
-  if (heavyLockState(awStateDir(ctx.deps), ctx.deps.now, ctx.deps.env).held) {
-    return success("Skipped: a heavy job holds the box-wide lock. Nothing ran.\nNext: rerun sindri evolve weekly later", { skipped: true }, json, 1);
+  if (heavyLockState(awStateDir(ctx.deps), ctx.deps.now, ctx.deps.env).every((s) => s.held)) {
+    return success("Skipped: heavy jobs hold every slot of the box-wide lock. Nothing ran.\nNext: rerun sindri evolve weekly later", { skipped: true }, json, 1);
   }
   if (values["dry-run"] === true) {
     let reflectPlan: string;

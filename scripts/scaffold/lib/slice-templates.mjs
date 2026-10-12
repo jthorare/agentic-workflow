@@ -38,22 +38,30 @@ export const response = (s) => `namespace ${s.featuresNs};
 ${s.visibility} sealed record ${s.slice}Response();
 `;
 
-export const service = (s) => `${usingsBlock(["Aw.Kernel", "Aw.Kernel.Services"])}
+/**
+ * --slice-only: nothing in the assembly uses the stub and validator until the branch adds the registration by hand,
+ * and MA0182 (an unused internal type) is an error. The suppression goes with that registration.
+ */
+const unregistered = (s) => (s.sliceOnly ? ["System.Diagnostics.CodeAnalysis"] : []);
+const unregisteredMark = (s) =>
+  s.sliceOnly ? `[SuppressMessage("Design", "MA0182:Avoid unused internal types", Justification = "--slice-only: unused until this branch registers the slice; remove with that registration")]\n` : "";
+
+export const service = (s) => `${usingsBlock([...unregistered(s), "Aw.Kernel", "Aw.Kernel.Services"])}
 
 namespace ${s.featuresNs};
 
-internal sealed class ${s.slice}Service : IService<${s.slice}Request, ${s.slice}Response>
+${unregisteredMark(s)}internal sealed class ${s.slice}Service : IService<${s.slice}Request, ${s.slice}Response>
 {
     public ValueTask<Result<${s.slice}Response>> Handle(${s.slice}Request request, CancellationToken cancellationToken)
         => throw new NotSupportedException("${s.slice}: make ${s.slice}Tests pass");
 }
 `;
 
-export const validator = (s) => `${usingsBlock(["Aw.Kernel", "Aw.Kernel.Services"])}
+export const validator = (s) => `${usingsBlock([...unregistered(s), "Aw.Kernel", "Aw.Kernel.Services"])}
 
 namespace ${s.featuresNs};
 
-internal sealed class ${s.slice}Validator : IValidator<${s.slice}Request>
+${unregisteredMark(s)}internal sealed class ${s.slice}Validator : IValidator<${s.slice}Request>
 {
     public Result<Unit> Validate(${s.slice}Request value) => Unit.Value;
 }

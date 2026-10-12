@@ -70,6 +70,17 @@ public sealed class RegistryTests
         Assert.All(TierZero.Prefixes, p => Assert.Contains(p, declared, StringComparer.Ordinal));
     }
 
+    [Fact]
+    public void The_compose_edges_come_from_deps_yaml()
+    {
+        // The reader is line based (one "- " item per edge); every compose edge line must come back as an edge.
+        var declared = File.ReadAllText(Path.Combine(Solution.RepoRoot, "deps.yaml")).Split('\n')
+            .Count(l => l.TrimEnd('\r') == "    kind: compose");
+
+        Assert.Contains(new ComposeEdge("Aw.Sindri", "Aw.Context"), Production.Compose);
+        Assert.Equal(declared, Production.Compose.Count);
+    }
+
     private static IEnumerable<Violation> Missing(IEnumerable<string> projects, IReadOnlyList<string> registered) =>
         projects.Where(p => !registered.Contains(p, StringComparer.Ordinal))
             .Select(p => new Violation(MissingId, $"{p} is in AgenticWorkflow.slnx but not in Packages.cs",

@@ -1,0 +1,7 @@
+$ sindri recipe validate <tmp>/workflow.item.yaml
+exit 0
+--- stdout
+information: RCP-RES-001: resource 'slot' has no allocator in this build at workflow.item.yaml:9:39 (states.startable.waitFor.resource); it parks with SND-WF-010 until the session-slot stub lands (P7)
+skipped: RCP-EFFECT-001: effect 'effect.claim.ref' wasn't checked against an effect allowlist, since the profile has no workflow.effects at workflow.item.yaml:22:101 (transitions[2].effects[0].use); add workflow.effects to the profile; until then the effect is refused at run time
+hash sha256:331dd0a5e0346a70ca455fc1a36923f20d04c2a475836fb20d2aa3f98cd16c7e
+--- stderr

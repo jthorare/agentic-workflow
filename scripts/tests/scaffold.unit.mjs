@@ -255,6 +255,7 @@ t("new-slice: a second cli slice adds one command arm, one registration and one 
   assert.match(table, /CheckRepoCommand\.Name[\s\S]*ListReposCommand\.Name[\s\S]*_ => CommandOutput\.Usage/);
   const reg = read(d, "src/Readiness/Aw.Readiness.App/Features/ReadinessFeaturesServiceCollectionExtensions.cs");
   assert.equal((reg.match(/new ValidatingService</g) ?? []).length, 2);
+  assert.doesNotMatch(read(d, "src/Readiness/Aw.Readiness.App/Features/ListRepos/ListReposService.cs"), /SuppressMessage/, "registered: nothing to suppress");
   assert.match(read(d, "src/Readiness/Aw.Readiness.App/Commands/ListReposCommand.cs"), /RepoId\.TryParse\(args\[0\], CultureInfo\.InvariantCulture, out var repoId\)/);
   assert.match(r.out, /^Commit: test: red ListRepos test \(lists_nothing_for_an_empty_profile\)$/m);
 });
@@ -337,6 +338,264 @@ t("NS-PORTS: a new port whose fake or contract base already exists", () => {
   }
 });
 
+// ---- /new-slice --slice-only (Sindri API spec C7): the slice's own files plus its lines in A.cs, IdsJsonContext and
+// PublicAPI.Unshipped.txt (the build declares those; --files-only skips it). Every other file stays byte-identical.
+function fileHashes(dir) {
+  const out = new Map();
+  for (const rel of fs.readdirSync(dir, { recursive: true })) {
+    const p = path.join(dir, rel);
+    if (fs.statSync(p).isFile()) out.set(rel, crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex"));
+  }
+  return out;
+}
+/** The paths added or changed between two fileHashes maps, sorted; fails on a removed path. */
+function changedFiles(before, after) {
+  for (const rel of before.keys()) assert.ok(after.has(rel), `removed ${rel}`);
+  return [...after].filter(([rel, h]) => before.get(rel) !== h).map(([rel]) => rel).sort();
+}
+/** The text inserted into `before` to make `after`, when that is a single contiguous insertion (else it fails). */
+function insertedOnly(before, after) {
+  let p = 0;
+  while (p < before.length && before[p] === after[p]) p++;
+  let s = 0;
+  while (s < before.length - p && before[before.length - 1 - s] === after[after.length - 1 - s]) s++;
+  assert.equal(p + s, before.length, "the file changed other than by one insertion");
+  return after.slice(p, after.length - s);
+}
+const sliceOnly = (d, extra) => run(NEW_SLICE, d, ["--slice-only", ...Object.entries(extra).flatMap(([k, v]) => [`--${k}`, v])]);
+
+t("--slice-only cli: only the slice's files, its id files and its A.cs factory; the shared lines are printed", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  // the phase's contract unit owns IdsJsonContext.cs; a normal slice with an id stands in for it here
+  assert.equal(slice(d, { package: "Readiness", slice: "ListThings", behavior: "lists_things", surface: "cli", command: "things", ids: "ThingId:string" }).code, 0);
+  const a = "tests/Aw.Readiness.Testing/A.cs";
+  const aBefore = read(d, a);
+  const ctx = "tests/Aw.Readiness.Tests/Ids/IdsJsonContext.cs";
+  const ctxBefore = read(d, ctx);
+  const before = fileHashes(d);
+  const r = sliceOnly(d, { package: "Readiness", slice: "ListRepos", behavior: "lists_nothing_for_an_empty_profile", surface: "cli", command: "list", ids: "RepoId:string" });
+  assert.equal(r.code, 0, r.out);
+  const app = "src/Readiness/Aw.Readiness.App";
+  assert.deepEqual(changedFiles(before, fileHashes(d)), [
+    `${app}/Features/ListRepos/ListReposRequest.cs`,
+    `${app}/Features/ListRepos/ListReposResponse.cs`,
+    `${app}/Features/ListRepos/ListReposService.cs`,
+    `${app}/Features/ListRepos/ListReposValidator.cs`,
+    "src/Readiness/Aw.Readiness.Core/Ids/RepoId.cs",
+    "tests/Aw.Readiness.Testing/A.cs",
+    "tests/Aw.Readiness.Testing/ListReposRequestBuilder.cs",
+    "tests/Aw.Readiness.Tests/Ids/IdsJsonContext.cs",
+    "tests/Aw.Readiness.Tests/Ids/RepoIdHolder.cs",
+    "tests/Aw.Readiness.Tests/Ids/RepoIdTests.cs",
+    "tests/Aw.Readiness.Tests/ListRepos/ListReposTests.cs",
+  ]);
+  const added = insertedOnly(aBefore, read(d, a));
+  assert.match(added, /public static ListReposRequestBuilder ListReposRequest\(\) => new\(\);/);
+  assert.equal(insertedOnly(ctxBefore, read(d, ctx)).trim(), "[JsonSerializable(typeof(RepoIdHolder))]");
+  assert.doesNotMatch(added, /CheckRepo/);
+  assert.ok(!exists(d, `${app}/Commands/ListReposCommand.cs`), "--slice-only wrote the command file");
+  // Nothing in the assembly uses the unregistered stub and validator yet: MA0182 (an error) is suppressed until the branch registers them.
+  for (const f of ["ListReposService", "ListReposValidator"]) {
+    const text = read(d, `${app}/Features/ListRepos/${f}.cs`);
+    assert.match(text, /^using System\.Diagnostics\.CodeAnalysis;$/m, f);
+    assert.match(text, new RegExp(`\\[SuppressMessage\\("Design", "MA0182:Avoid unused internal types", Justification = "[^"]+"\\)\\]\\ninternal sealed class ${f}`), f);
+  }
+  assert.match(r.out, /remove the \[SuppressMessage\] for MA0182 from ListReposService and ListReposValidator/);
+  assert.match(r.out, /^Shared lines to add in your branch/m);
+  assert.match(r.out, /ListReposCommand\.Name => await ListReposCommand\.Run\(rest, scope\.ServiceProvider, json\)/);
+  assert.match(r.out, /new ValidatingService<ListReposRequest, ListReposResponse>\(/);
+  assert.match(r.out, /\[JsonSerializable\(typeof\(ListReposRequest\)\)\]\n\s*\[JsonSerializable\(typeof\(ListReposResponse\)\)\]/);
+  assert.match(r.out, /Commands\/ListReposCommand\.cs/);
+  assert.doesNotMatch(r.out, /For Sindri/, "the Sindri-only note prints only for Sindri");
+  // the file list comes before the block, and the block before the next steps
+  assert.ok(r.out.indexOf("ListReposTests.cs") < r.out.indexOf("Shared lines") && r.out.indexOf("Shared lines") < r.out.indexOf("Next (make"), r.out);
+});
+
+t("--slice-only http: a new string route id adds its files and one IdsJsonContext line; no surface or shared file changes", () => {
+  const d = tree();
+  const r0 = pkg(d, { name: "Demohttp", note: "a scaffold probe", "error-prefix": "DEMOHTTP", shape: "full", host: "http", binary: undefined, "first-slice": "StartItem", behavior: "starts_an_item", route: "POST /items/{itemId}/start", ids: "ItemId:string" });
+  assert.equal(r0.code, 0, r0.out);
+  const ctx = "tests/Aw.Demohttp.Tests/Ids/IdsJsonContext.cs";
+  const ctxBefore = read(d, ctx);
+  const before = fileHashes(d);
+  const r = sliceOnly(d, { package: "Demohttp", slice: "GetJob", behavior: "gets_a_job", surface: "http", route: "GET /jobs/{jobId}", ids: "JobId:string" });
+  assert.equal(r.code, 0, r.out);
+  const f = "src/Demohttp/Aw.Demohttp.Features/GetJob";
+  assert.deepEqual(changedFiles(before, fileHashes(d)), [
+    "src/Demohttp/Aw.Demohttp.Core/Ids/JobId.cs",
+    `${f}/GetJobRequest.cs`,
+    `${f}/GetJobResponse.cs`,
+    `${f}/GetJobService.cs`,
+    `${f}/GetJobValidator.cs`,
+    "tests/Aw.Demohttp.Testing/A.cs",
+    "tests/Aw.Demohttp.Testing/GetJobRequestBuilder.cs",
+    "tests/Aw.Demohttp.Tests/GetJob/GetJobTests.cs",
+    ctx,
+    "tests/Aw.Demohttp.Tests/Ids/JobIdHolder.cs",
+    "tests/Aw.Demohttp.Tests/Ids/JobIdRouteBindingTests.cs",
+    "tests/Aw.Demohttp.Tests/Ids/JobIdTests.cs",
+  ]);
+  assert.equal(insertedOnly(ctxBefore, read(d, ctx)).trim(), "[JsonSerializable(typeof(JobIdHolder))]");
+  assert.ok(!exists(d, "src/Demohttp/Aw.Demohttp.Host/Endpoints/GetJobEndpoint.cs"), "--slice-only wrote the endpoint");
+  assert.match(r.out, /^Shared lines to add in your branch/m);
+  assert.match(r.out, /\.MapGetJob\(\)/);
+  assert.match(r.out, /new ValidatingService<GetJobRequest, GetJobResponse>\(/);
+  assert.match(r.out, /\[JsonSerializable\(typeof\(GetJobRequest\)\)\]\n\s*\[JsonSerializable\(typeof\(GetJobResponse\)\)\]/);
+  assert.doesNotMatch(r.out, /GetJobBody/, "GET has no body");
+  assert.match(r.out, /Endpoints\/GetJobEndpoint\.cs/);
+});
+
+t("--slice-only http POST with a body id: the printed JSON lines include the body record", () => {
+  const d = tree();
+  assert.equal(pkg(d, { name: "Demohttp", note: "x", "error-prefix": "DEMOHTTP", shape: "full", host: "http", binary: undefined, "first-slice": "StartItem", behavior: "starts_an_item", route: "POST /items/{itemId}/start", ids: "ItemId:string" }).code, 0);
+  const r = sliceOnly(d, { package: "Demohttp", slice: "MoveItem", behavior: "moves_an_item", surface: "http", route: "POST /items/{itemId}/move", ids: "ShelfId:string" });
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /\[JsonSerializable\(typeof\(MoveItemBody\)\)\]/);
+  assert.match(r.out, /Endpoints\/MoveItemBody\.cs/);
+  assert.ok(!exists(d, "src/Demohttp/Aw.Demohttp.Host/Endpoints/MoveItemBody.cs"), "--slice-only wrote the body record");
+});
+
+const demohttp = (d) => assert.equal(pkg(d, { name: "Demohttp", note: "x", "error-prefix": "DEMOHTTP", shape: "full", host: "http", binary: undefined, "first-slice": "StartItem", behavior: "starts_an_item", route: "POST /items/{itemId}/start", ids: "ItemId:string" }).code, 0);
+t("--slice-only: a new port gets its interface, fake and contract base past the create guard", () => {
+  const d = tree();
+  demohttp(d);
+  const before = fileHashes(d);
+  const r = sliceOnly(d, { package: "Demohttp", slice: "ListShelves", behavior: "lists_shelves", surface: "http", route: "GET /shelves", ports: "IShelfStore" });
+  assert.equal(r.code, 0, r.out);
+  const f = "src/Demohttp/Aw.Demohttp.Features/ListShelves";
+  assert.deepEqual(changedFiles(before, fileHashes(d)), [
+    "src/Demohttp/Aw.Demohttp.Core/Ports/IShelfStore.cs",
+    `${f}/ListShelvesRequest.cs`,
+    `${f}/ListShelvesResponse.cs`,
+    `${f}/ListShelvesService.cs`,
+    `${f}/ListShelvesValidator.cs`,
+    "tests/Aw.Demohttp.Testing/A.cs",
+    "tests/Aw.Demohttp.Testing/InMemoryShelfStore.cs",
+    "tests/Aw.Demohttp.Testing/ListShelvesRequestBuilder.cs",
+    "tests/Aw.Demohttp.Testing/ShelfStoreContract.cs",
+    "tests/Aw.Demohttp.Tests/ListShelves/ListShelvesTests.cs",
+  ]);
+  assert.ok(!exists(d, "src/Demohttp/Aw.Demohttp.Host/Endpoints/ListShelvesEndpoint.cs"), "--slice-only wrote the endpoint");
+});
+
+t("NS-SLICE-ONLY: a new Guid id when Core lacks the RS0041 NoWarn is refused, nothing written", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  const before = hashTree(d);
+  const r = sliceOnly(d, { package: "Readiness", slice: "ListRuns", behavior: "lists_runs", surface: "cli", ids: "RunId:Guid" });
+  refused(r, "NS-SLICE-ONLY");
+  assert.match(r.out, /RS0041/);
+  assert.match(r.out, /^fix: the NoWarn is in docs\/csharp\/typed-ids\.md; add it in the phase's contract unit, or run without --slice-only$/m);
+  assert.equal(hashTree(d), before, "the tree changed");
+});
+
+t("--slice-only: a new Guid id is fine when Core already has the RS0041 NoWarn", () => {
+  const d = tree();
+  assert.equal(pkg(d, { name: "Demohttp", note: "x", "error-prefix": "DEMOHTTP", shape: "full", host: "http", binary: undefined, "first-slice": "StartItem", behavior: "starts_an_item", route: "POST /items/{itemId}/start", ids: "ItemId:string,OwnerId:Guid" }).code, 0);
+  const csproj = "src/Demohttp/Aw.Demohttp.Core/Aw.Demohttp.Core.csproj";
+  const was = read(d, csproj);
+  const r = sliceOnly(d, { package: "Demohttp", slice: "GetBatch", behavior: "gets_a_batch", surface: "http", route: "GET /batches/{batchId}", ids: "BatchId:Guid" });
+  assert.equal(r.code, 0, r.out);
+  assert.equal(read(d, csproj), was);
+  assert.ok(exists(d, "src/Demohttp/Aw.Demohttp.Core/Ids/BatchId.cs"));
+});
+
+t("--slice-only: a slice-only refusal leaves a normal second run possible (the guard is per run)", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  refused(sliceOnly(d, { package: "Readiness", slice: "ListRuns", behavior: "lists_runs", surface: "cli", ids: "RunId:Guid" }), "NS-SLICE-ONLY");
+  const r = slice(d, { package: "Readiness", slice: "ListRuns", behavior: "lists_runs", surface: "cli", ids: "RunId:Guid" });
+  assert.equal(r.code, 0, r.out);
+  assert.match(read(d, "src/Readiness/Aw.Readiness.Core/Aw.Readiness.Core.csproj"), /RS0041/);
+  assert.doesNotMatch(r.out, /Shared lines to add/);
+});
+
+// Sindri's S1 removed its empty A.cs. The normal mode writes the builder root again; --slice-only creates no shared
+// file, so it refuses and leaves the tree as it was (the phase's contract unit restores A.cs).
+t("new-slice (normal): a package without tests/Aw.<Pkg>.Testing/A.cs gets the builder root with the factory", () => {
+  const d = tree();
+  demohttp(d);
+  fs.rmSync(path.join(d, "tests/Aw.Demohttp.Testing/A.cs"));
+  const r = slice(d, { package: "Demohttp", slice: "GetItem", behavior: "gets_an_item", surface: "http", route: "GET /items/{itemId}" });
+  assert.equal(r.code, 0, r.out);
+  assert.match(read(d, "tests/Aw.Demohttp.Testing/A.cs"), /^namespace Aw\.Demohttp\.Testing;\n[\s\S]*public static class A\n\{\n {4}\/\/\/ <summary>A GetItemRequest builder[\s\S]*public static GetItemRequestBuilder GetItemRequest\(\) => new\(\);\n\}\n$/);
+});
+t("NS-SLICE-ONLY: a package without tests/Aw.<Pkg>.Testing/A.cs is refused, nothing written", () => {
+  const d = tree();
+  demohttp(d);
+  fs.rmSync(path.join(d, "tests/Aw.Demohttp.Testing/A.cs"));
+  const before = hashTree(d);
+  const r = sliceOnly(d, { package: "Demohttp", slice: "GetItem", behavior: "gets_an_item", surface: "http", route: "GET /items/{itemId}" });
+  refused(r, "NS-SLICE-ONLY");
+  assert.match(r.out, /tests\/Aw\.Demohttp\.Testing\/A\.cs/);
+  assert.match(r.out, /^fix: add it in the phase's contract unit, or run without --slice-only$/m);
+  assert.equal(hashTree(d), before, "the tree changed");
+});
+t("NS-SLICE-ONLY: a new id when the tests have no IdsJsonContext.cs is refused, nothing written", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  assert.ok(!exists(d, "tests/Aw.Readiness.Tests/Ids/IdsJsonContext.cs"));
+  const before = hashTree(d);
+  const r = sliceOnly(d, { package: "Readiness", slice: "ListRepos", behavior: "lists_repos", surface: "cli", command: "list", ids: "RepoId:string" });
+  refused(r, "NS-SLICE-ONLY");
+  assert.match(r.out, /tests\/Aw\.Readiness\.Tests\/Ids\/IdsJsonContext\.cs/);
+  assert.match(r.out, /^fix: add it in the phase's contract unit, or run without --slice-only$/m);
+  assert.equal(hashTree(d), before, "the tree changed");
+});
+t("--slice-only: no IdsJsonContext.cs is fine when the slice adds no id", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  const r = sliceOnly(d, { package: "Readiness", slice: "ListRepos", behavior: "lists_repos", surface: "cli", command: "list" });
+  assert.equal(r.code, 0, r.out);
+  assert.ok(!exists(d, "tests/Aw.Readiness.Tests/Ids/IdsJsonContext.cs"));
+});
+
+const commonLib = await import(path.join(REPO, "scripts/scaffold/lib/common.mjs"));
+t("Journal edit guard: an edit the guard refuses throws its ScaffoldError and leaves the file alone", () => {
+  const d = tree();
+  const j = new commonLib.Journal(d);
+  j.editGuard = (rel) => {
+    if (rel !== "deps.yaml") throw new commonLib.ScaffoldError("NS-SLICE-ONLY", `${rel} is shared`, "x");
+  };
+  const was = read(d, "AgenticWorkflow.slnx");
+  assert.throws(() => j.edit("AgenticWorkflow.slnx", (x) => `${x}// more\n`), /^Error: NS-SLICE-ONLY: AgenticWorkflow\.slnx is shared|NS-SLICE-ONLY: AgenticWorkflow\.slnx is shared/);
+  assert.equal(read(d, "AgenticWorkflow.slnx"), was);
+  j.edit("deps.yaml", (x) => `${x}# more\n`);
+  assert.match(read(d, "deps.yaml"), /# more\n$/);
+  j.create("new.txt", "a\n");
+  j.edit("new.txt", () => "b\n");   // a file this run created is its own, never guarded
+  assert.equal(read(d, "new.txt"), "b\n");
+});
+
+t("Journal create guard: a create the guard refuses throws its ScaffoldError and writes nothing", () => {
+  const d = tree();
+  const j = new commonLib.Journal(d);
+  j.createGuard = (rel) => {
+    if (rel !== "mine.txt") throw new commonLib.ScaffoldError("NS-SLICE-ONLY", `${rel} is shared`, "x");
+  };
+  assert.throws(() => j.create("sub/shared.txt", "a\n"), /NS-SLICE-ONLY: sub\/shared\.txt is shared/);
+  assert.ok(!exists(d, "sub/shared.txt"));
+  assert.ok(!exists(d, "sub"), "the guard runs before the directories are made");
+  j.create("mine.txt", "a\n");
+  assert.equal(read(d, "mine.txt"), "a\n");
+});
+t("Journal insert: the edit guard runs before the anchor test, so a guarded file reports the guard's rule", () => {
+  const d = tree();
+  const j = new commonLib.Journal(d);
+  j.editGuard = (rel) => {
+    throw new commonLib.ScaffoldError("NS-SLICE-ONLY", `${rel} is shared`, "x");
+  };
+  assert.throws(() => j.insert("deps.yaml", /no such anchor/, "x", "NS-EDIT", "a line"), /NS-SLICE-ONLY: deps\.yaml is shared/);
+});
+
+const newSliceLib = await import(NEW_SLICE);
+t("sharedLines: the ICommand/IQuery note prints for Sindri only", () => {
+  const s = (pkg) => ({ pkg, slice: "GetJob", surface: "none", featuresNs: `Aw.${pkg}.Features.GetJob`, ports: [], visibility: "public", dirs: { registration: `src/${pkg}/R.cs` } });
+  assert.match(newSliceLib.sharedLines(s("Sindri")), /For Sindri: mark GetJobRequest ICommand<GetJobResponse> or IQuery<GetJobResponse>/);
+  assert.doesNotMatch(newSliceLib.sharedLines(s("Readiness")), /For Sindri/);
+});
+
 const checks = await import(path.join(REPO, "scripts/scaffold/lib/checks.mjs"));
 t("rs0016Symbols: the build's RS0016 symbols for one project, unique and sorted", () => {
   const proj = "/r/src/P/Aw.P.Features/Aw.P.Features.csproj";
@@ -361,10 +620,13 @@ t("SIGINT while waiting on the heavy lock reverts everything and exits 1 (SCAFFO
   assert.equal(pkg(d).code, 0);
   const state = fs.mkdtempSync(path.join(os.tmpdir(), "aw-scaffold-unit-state-"));
   trees.push(state);
-  fs.mkdirSync(path.join(state, "locks", "heavy-job.lock"), { recursive: true });   // someone else's build
+  fs.mkdirSync(path.join(state, "locks", "heavy-job.lock"), { recursive: true });   // someone else's builds, in both slots
+  fs.mkdirSync(path.join(state, "locks", "heavy-job.lock.2"));
   const before = hashTree(d);
   const env = { ...process.env, AW_STATE_DIR: state };
   delete env.AW_HEAVY_LOCK_HELD;
+  delete env.AW_HEAVY_JOB_LOCK;
+  delete env.AW_HEAVY_SLOTS;
   // spawnSync stops collecting a pipe once its timeout fires, so the child writes to a file instead.
   const log = path.join(state, "out.txt");
   const fd = fs.openSync(log, "w");
@@ -407,6 +669,38 @@ const common = await import(path.join(REPO, "scripts/scaffold/lib/common.mjs"));
 const colored = await common.run(REPO, "printf", ["\u001b[31mfailed Aw.X.Tests.T.T_does (1ms)\u001b[m\n  failed: 1\n"], { log: () => {} });
 t("run() strips ANSI colors (CI colors MTP's 'failed' lines, which the red-test check parses)", () => {
   assert.equal(colored.out, "failed Aw.X.Tests.T.T_does (1ms)\n  failed: 1\n");
+});
+
+// The heavy-job lock's slots: slot 1 is <state>/locks/heavy-job.lock, slot 2 that path plus ".2".
+const saved = Object.fromEntries(["AW_STATE_DIR", "AW_HEAVY_LOCK_HELD", "AW_HEAVY_JOB_LOCK", "AW_HEAVY_SLOTS"].map((k) => [k, process.env[k]]));
+const slotState = fs.mkdtempSync(path.join(os.tmpdir(), "aw-scaffold-unit-slots-"));
+trees.push(slotState);
+const slotBase = path.join(slotState, "locks", "heavy-job.lock");
+process.env.AW_STATE_DIR = slotState;
+for (const k of ["AW_HEAVY_LOCK_HELD", "AW_HEAVY_JOB_LOCK", "AW_HEAVY_SLOTS"]) delete process.env[k];
+const quiet = { timeoutS: 0, log: () => {} };
+const both = await common.withHeavyLock(async () => [fs.existsSync(slotBase), fs.existsSync(`${slotBase}.2`), process.env.AW_HEAVY_LOCK_HELD], quiet);
+const leftAfter = fs.readdirSync(path.dirname(slotBase));
+fs.mkdirSync(slotBase);   // another heavy job (a plain locks.sh holder) has slot 1
+const second = await common.withHeavyLock(async () => fs.existsSync(path.join(`${slotBase}.2`, "owner")), quiet);
+fs.mkdirSync(`${slotBase}.2`);
+const full = await common.withHeavyLock(async () => "ran", quiet).catch((e) => e);
+process.env.AW_HEAVY_SLOTS = "3";
+const third = await common.withHeavyLock(async () => fs.existsSync(`${slotBase}.3`), quiet);
+process.env.AW_HEAVY_SLOTS = "1";
+fs.rmdirSync(`${slotBase}.2`);
+const one = await common.withHeavyLock(async () => "ran", quiet).catch((e) => e);
+for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+t("withHeavyLock takes slot 1, then slot 2 beside a plain holder of slot 1, and fails only when every slot is held", () => {
+  assert.deepEqual(both, [true, false, "1"]);
+  assert.deepEqual(leftAfter, []);
+  assert.equal(second, true);
+  assert.equal(full.rule, "SCAFFOLD-LOCK");
+  assert.match(full.message, /every slot of the heavy-job lock .* \(2\)/);
+  assert.equal(third, true);
+  assert.equal(one.rule, "SCAFFOLD-LOCK");
+  assert.deepEqual(common.heavySlots({}), 2);
+  for (const bad of ["0", "x", "1.5"]) assert.equal(common.heavySlots({ AW_HEAVY_SLOTS: bad }), 2);
 });
 
 for (const dir of trees) fs.rmSync(dir, { recursive: true, force: true });

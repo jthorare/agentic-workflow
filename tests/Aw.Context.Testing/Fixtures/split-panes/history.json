@@ -1,0 +1,52 @@
+{
+  "repository": "fixture-labs/split-panes",
+  "author": { "name": "Avery Fixture", "email": "avery@fixture-labs.invalid" },
+  "initial": { "dir": "app/00-initial", "message": "chore: initial scaffold", "at": "2026-07-01T09:00:00Z" },
+  "pullRequests": [
+    {
+      "number": 1,
+      "issueKey": "SPL-101",
+      "branch": "spl-101-command-registry",
+      "title": "Command registry for pane commands",
+      "dir": "app/01-spl-101",
+      "committedAt": "2026-07-03T14:00:00Z",
+      "mergedAt": "2026-07-06T10:00:00Z"
+    },
+    {
+      "number": 2,
+      "issueKey": "SPL-102",
+      "branch": "spl-102-split-pane",
+      "title": "Split a pane vertically or horizontally",
+      "dir": "app/02-spl-102",
+      "committedAt": "2026-07-09T15:30:00Z",
+      "mergedAt": "2026-07-10T11:00:00Z"
+    },
+    {
+      "number": 3,
+      "issueKey": "SPL-103",
+      "branch": "spl-103-toggle-orientation",
+      "title": "Toggle split orientation",
+      "dir": "app/03-spl-103",
+      "committedAt": "2026-07-14T16:00:00Z",
+      "mergedAt": "2026-07-15T09:30:00Z"
+    },
+    {
+      "number": 4,
+      "issueKey": "SPL-104",
+      "branch": "spl-104-restore-layout",
+      "title": "Restore pane layout when switching tabs",
+      "dir": "app/04-spl-104",
+      "committedAt": "2026-07-21T13:00:00Z",
+      "mergedAt": "2026-07-22T10:15:00Z"
+    },
+    {
+      "number": 5,
+      "issueKey": "SPL-105",
+      "branch": "spl-105-pane-resize",
+      "title": "Resize panes with the keyboard",
+      "dir": "app/05-spl-105",
+      "committedAt": "2026-07-28T17:45:00Z",
+      "mergedAt": "2026-07-29T09:00:00Z"
+    }
+  ]
+}

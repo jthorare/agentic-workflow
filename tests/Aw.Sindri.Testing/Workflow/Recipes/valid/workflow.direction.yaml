@@ -1,0 +1,49 @@
+# Validate-only fixture (engine spec section 12): the direction check (core design section 6.1; factory addendum
+# 17.28.2): requested -> position -> challenge(n) -> reply(n) -> verdict -> delivered, with leg timeouts that
+# escalate, a bounded exchange count (direction.maxExchanges, default 2) and the verdict judge question. Its blocks
+# and events are test-only (FixtureBlocks.Direction, FixtureBlocks.DirectionEvents).
+schema: 1
+id: workflow.direction
+version: 1
+description: "Is this the right path? A relayed proposer, challenger and arbiter exchange before more effort is committed."
+initial: position
+states:
+  position:
+    kind: wait
+    waitFor: { event: direction.position }
+    timeout: { after: 10m, then: escalate }
+    next: "Waiting for the session's position on {item}."
+  challenge:
+    kind: active
+    step: step.direction.challenge
+    loop: exchanges
+    timeout: { after: 5m, then: escalate }
+    next: "Challenge the position (exchange {loop.exchanges}/{loop.exchanges.cap})."
+  reply:
+    kind: active
+    step: step.direction.reply
+    timeout: { after: 10m, then: escalate }
+    next: "Reply to the challenge."
+  verdict:
+    kind: active
+    step: step.direction.verdict
+    timeout: { after: 2m, then: escalate }
+    next: "Decide: proceed, revise, or another exchange."
+  delivering:
+    kind: wait
+    waitFor: { event: direction.delivered }
+    timeout: { after: 15m, then: escalate }
+    next: "Waiting for the session to receive the verdict."
+  delivered:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: position,  to: challenge,  on: wait.satisfied, when: { outcome: submitted }, produces: [fact:position] }
+  - { from: challenge, to: reply,      on: step.completed, when: { outcome: challenged }, produces: [fact:challenge] }
+  - { from: challenge, to: verdict,    on: step.completed, when: { outcome: agreed } }
+  - { from: reply,     to: verdict,    on: step.completed, when: { outcome: replied }, produces: [fact:reply] }
+  - { from: verdict,   to: challenge,  on: step.completed, when: { outcome: another } }
+  - { from: verdict,   to: delivering, on: step.completed, when: { any: [{ outcome: proceed }, { outcome: revise }] },
+      gates: [{ use: gate.direction.verdict, threshold: 0.7 }], produces: [fact:verdict] }
+  - { from: delivering, to: delivered, on: wait.satisfied, when: { outcome: acknowledged } }
+loops: { exchanges: { cap: 2 } }

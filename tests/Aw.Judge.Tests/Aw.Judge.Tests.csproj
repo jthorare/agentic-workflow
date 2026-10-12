@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Judge.Tests (scaffolded by /new-package): by feature, one Lane trait per test (spec §4b.5). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.Judge.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Core/Aw.Judge.Core.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Features/Aw.Judge.Features.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj" />
+    <ProjectReference Include="../Aw.Judge.Testing/Aw.Judge.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Golden files (Aw.Kernel.Testing Golden, through CliGolden) live in this project's source tree. -->
+    <AssemblyMetadata Include="AwGoldenSourceRoot" Value="$(MSBuildProjectDirectory)" />
+  </ItemGroup>
+</Project>

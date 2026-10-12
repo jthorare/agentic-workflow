@@ -12,7 +12,7 @@
 
 ## Package Dependencies
 
-Each TypeScript package (`scorer`, `judge`, `sindri`, `skills/ui-evidence`, `skills/bugFixOrchestrator`) declares its own runtime and dev dependencies in its `package.json`. The declared package graph (tiers and every project, CLI, database and file edge) lives in `deps.yaml` and is checked by `node scripts/check-deps.mjs`.
+Each TypeScript package (`scorer`, `judge`, `sindri`, `skills/ui-evidence`, `skills/bugFixOrchestrator`) declares its own runtime and dev dependencies in its `package.json`. The declared package graph (tiers and every project, compose, CLI, database and file edge) lives in `deps.yaml` and is checked by `node scripts/check-deps.mjs`.
 
 ## External System Dependencies
 

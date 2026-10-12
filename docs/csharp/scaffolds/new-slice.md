@@ -28,7 +28,7 @@ dependencies (§4b.2 split signal). The red stub takes none; the limit is checke
 Refusals (exit 1, nothing written): `NS-PACKAGE` (no scaffolded `src/<package>/` declared in `deps.yaml`), `NS-NAME`,
 `NS-BEHAVIOR`, `NS-SURFACE`, `NS-EXISTS`, `NS-COMMAND` (malformed or already in the command table), `NS-ROUTE`,
 `NS-IDS`, `NS-PORTS` (not an `I…` interface name, or a new port whose `InMemory<Port>.cs` or `<Port>Contract.cs`
-already exists in `Aw.<Pkg>.Testing`), `NS-DEPS`.
+already exists in `Aw.<Pkg>.Testing`), `NS-DEPS`, `NS-SLICE-ONLY` (`--slice-only` only, below).
 
 ```bash
 node scripts/scaffold/new-slice.mjs --package Demo --slice StartItem --behavior parks_when_budget_is_exhausted \
@@ -100,7 +100,60 @@ Every edit to an existing file inserts at a fixed anchor (`return services;`, th
 with `NS-EDIT`, never skipped. The first `Guid` or `int` id also adds `<NoWarn>$(NoWarn);RS0041</NoWarn>` to `Core`'s
 csproj (Vogen's `#nullable disable` around that id's generated `ToString(string, IFormatProvider)`; `typed-ids.md`).
 A `GET` or `DELETE` slice has no body, so every id it takes must be a route segment (`NS-ROUTE` otherwise); an id
-listed twice (`NS-IDS`, `NS-PORTS`, `NS-ROUTE`) is refused too.
+listed twice (`NS-IDS`, `NS-PORTS`, `NS-ROUTE`) is refused too. A package with no `A.cs` (Sindri's S1 dropped its
+empty one) gets the builder root written again, holding the new factory.
+
+## `--slice-only`
+
+For slices scaffolded into one package in parallel branches (the Sindri API spec, C7 and §12). The generator writes
+only what belongs to the slice:
+
+- the slice folder, the red test, the request builder;
+- new ids (`Core/Ids/<Id>.cs`, `<Id>Tests.cs`, `<Id>Holder.cs`) and a `<Id>RouteBindingTests.cs` for each route id that
+  lacks one;
+- new ports with their fake and contract base;
+- the slice's own lines in three shared files: `A.cs` (its factory method), `IdsJsonContext.cs` (one line per new id)
+  and each project's `PublicAPI.Unshipped.txt` (from the build's `RS0016` output, as above).
+
+Parallel branches append at the same anchors in those three files, so merging them gives adjacent-line conflicts. The
+integrator resolves them by keeping both sides (the spec's "Parallel delivery"), deduplicating a line both branches
+added: two slices that declare the same new id each add its `[JsonSerializable]` and PublicAPI lines, and a duplicate
+PublicAPI line fails the build. An id more than one slice needs belongs in the contract unit.
+
+It leaves out the registration, the `CommandTable` arm or `EndpointTable` call, the `<Pkg>JsonContext` lines, and
+the surface files (`Endpoints/<Slice>Endpoint.cs`, `Endpoints/<Slice>Body.cs`, `Commands/<Slice>Command.cs`). After
+the file list it prints a "Shared lines to add in your branch" block. It lists the lines the normal mode would have
+inserted at each anchor, with the usings each needs, rather than a byte-exact splice (the `EndpointTable` call goes on
+the `MapGroup` chain, before its `;`). It also lists the surface files to write by hand and, for Sindri only, a
+reminder to mark the request `ICommand<…>` or `IQuery<…>`. The red test still compiles and fails on its own: it creates the stub directly, so it needs no
+registration. Until the registration exists nothing in the assembly uses the stub or the validator, and `MA0182` (an
+unused internal type) is an error, so both carry a `[SuppressMessage]` for it with a justification; the block says to
+remove it with the registration.
+
+`--slice-only` creates no shared file. A missing `A.cs`, or a missing `IdsJsonContext.cs` when the slice adds an id,
+is refused with `NS-SLICE-ONLY`. Journal guards refuse any other edit to an existing file and any new file that isn't
+the slice's own, so a new code path can't slip one in. A new `Guid` or `int` id when `Core`'s csproj lacks the
+`RS0041` NoWarn is refused too. Fix: add it in the phase's contract unit, or run without `--slice-only`. Everything
+written is reverted.
+
+The normal mode writes a missing `A.cs` or `IdsJsonContext.cs`. With `--slice-only`, the phase's contract unit adds
+them instead. It writes `A.cs` from the builder-root template (a `public static class A` with an empty body,
+`internal` in the small shape). For `IdsJsonContext.cs`, a context with no `[JsonSerializable]` line doesn't compile
+(`CS0534`), so it needs a holder: the contract unit writes a `<Id>Holder.cs` for one existing id (the holder template,
+`public sealed record <Id>Holder(<Id> Id);`), an `IdsJsonContext.cs` that lists it, and a test that round-trips the
+holder through the context, as the generator's id tests do. Running one slice with a new id in the normal mode also
+adds both; a slice without a new id adds only `A.cs`.
+
+Without `--files-only` it runs the same checks as the normal mode, under the heavy-job lock. With it, it writes the
+files only (the unit tests).
+
+For example, once the phase's contract unit has added Sindri's `A.cs` and `IdsJsonContext.cs` (until then this is
+refused with `NS-SLICE-ONLY`):
+
+```bash
+node scripts/scaffold/new-slice.mjs --slice-only --package Sindri --slice GetJob --behavior returns_the_job \
+  --surface http --route "GET /jobs/{jobId}" --ids JobId:string
+```
 
 ### Template: `<Slice>Service.cs`
 
@@ -288,7 +341,7 @@ dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-
 dotnet format --verify-no-changes
 ```
 
-Under the heavy-job lock. Commit: `test: red <Slice> test (<behavior>)`.
+Under a slot of the heavy-job lock. Commit: `test: red <Slice> test (<behavior>)`.
 
 ## Done criteria
 
@@ -303,14 +356,16 @@ The generator's own test suite (`scripts/scaffold/e2e.sh`) makes the first slice
 green, scaffolds a second slice with a new id and a new port, and asserts criterion 1 against the real root files, in
 both shapes: in `shape: full` the second slice's records and port need `Features`' and `Core`'s PublicAPI lines. It then
 makes the second slice green and adds a third that reuses the port, which must leave the port, its fake and its
-contract base as they are. `scripts/tests/scaffold.test.sh` covers the port lookup and the `RS0016` parsing without dotnet.
+contract base as they are, and scaffolds a fourth with `--slice-only`, which must change only that slice's files and
+leave exactly its test red. `scripts/tests/scaffold.test.sh` covers the port lookup, the `RS0016` parsing and
+`--slice-only`'s file set without dotnet.
 
 ## Failure behavior
 
 - A check fails other than the expected red test → revert every created or edited file and print the rule id, the
   measured value and the fix.
 - `NS-EXISTS` when the slice folder exists; `NS-SURFACE` when `surface` doesn't match the package's host; `NS-DEPS` as
-  above; `NS-EDIT` when an anchor is missing; `SCAFFOLD-INTERNAL` for a generator bug (also reverted).
+  above; `NS-EDIT` when an anchor is missing; `NS-SLICE-ONLY` when `--slice-only` would edit or create a shared file, or a shared file it adds a line to is missing; `SCAFFOLD-INTERNAL` for a generator bug (also reverted).
 - SIGINT, SIGTERM or SIGHUP at any point of a run (including the heavy-lock wait) is caught: the generator stops the
   running command's whole process group (SIGINT, dotnet's cancel path, then SIGKILL after 10 s), fails that step with `SCAFFOLD-INTERRUPTED` whatever the command exited with, then
   reverts and releases the lock. The lock directory carries an `owner` file (pid, time, command).

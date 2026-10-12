@@ -28,6 +28,10 @@
     <ProjectReference Include="../../src/Readiness/Aw.Readiness.Core/Aw.Readiness.Core.csproj" />
     <ProjectReference Include="../../src/Readiness/Aw.Readiness.App/Aw.Readiness.App.csproj" />
     <ProjectReference Include="../../src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Core/Aw.Judge.Core.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Features/Aw.Judge.Features.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj" />
     <ProjectReference Include="../../src/Evidence/Aw.Evidence.Core/Aw.Evidence.Core.csproj" />
     <ProjectReference Include="../../src/Evidence/Aw.Evidence.Features/Aw.Evidence.Features.csproj" />
     <ProjectReference Include="../../src/Evidence/Aw.Evidence.Infrastructure/Aw.Evidence.Infrastructure.csproj" />
@@ -36,6 +40,10 @@
     <ProjectReference Include="../../src/BugFix/Aw.BugFix.Features/Aw.BugFix.Features.csproj" />
     <ProjectReference Include="../../src/BugFix/Aw.BugFix.Infrastructure/Aw.BugFix.Infrastructure.csproj" />
     <ProjectReference Include="../../src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj" />
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Core/Aw.Sindri.Core.csproj" />
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Features/Aw.Sindri.Features.csproj" />
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

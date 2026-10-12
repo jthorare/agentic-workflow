@@ -26,6 +26,10 @@ checks:
   - type: check-deps
     id: "DEPS-EXC-003"
     status: active
+  - type: check-deps
+    id: "DEPS-EXC-004"
+    status: active
+    note: "a DEPS-FANOUT-001 exception attached to a project edge (edge:) covers that one edge; the edge must be declared and must not point into test support"
   - type: build-setting
     id: "packageFanOut: 4"
     status: active

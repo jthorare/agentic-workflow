@@ -26,7 +26,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-EVOLVE-017` | A private repo has no usable built code index (none, unbuilt or damaged), so publish can't check proposals for its identifiers. | sindri index build --repo &lt;name&gt; (remove a damaged index file first), then rerun sindri evolve publish |
 | `SND-EVOLVE-018` | The English word list publish uses to tell private identifiers from ordinary words is missing. | install a word list at /usr/share/dict/words (or point SINDRI_WORDS at one), then rerun sindri evolve publish |
 | `SND-EVOLVE-019` | Publish couldn't list a private repo's tracked files, so it can't check proposals for their names. | check that the repo file's path is that repo's git checkout on this machine, then rerun sindri evolve publish |
-| `SND-INDEX-001` | The heavy-job lock is busy. | wait for the holder to finish; `sindri doctor` shows it |
+| `SND-INDEX-001` | All heavy-job slots are busy. | wait for the holder to finish; `sindri doctor` shows it |
 | `SND-INDEX-002` | The repo path is not a git repo. | check repos/&lt;name&gt;.yaml path, then sindri profile approve |
 | `SND-INDEX-003` | The index input is larger than index.maxTotalMB. | add generated or vendored paths to index.denyPaths, or raise index.maxTotalMB |
 | `SND-INDEX-005` | The embedding URL is not loopback. | set index.embeddings.url to http://127.0.0.1:11434 (or disable embeddings) |

@@ -3,23 +3,32 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { awStateDir } from "../src/deps.js";
+import { awStateDir, type Deps } from "../src/deps.js";
 import { SindriError } from "../src/errors.js";
-import { heavyLockDir, heavyLockState, withHeavyLock } from "../src/index/heavy-lock.js";
-import { fakeSystem, makeDeps } from "./helpers.js";
+import { heavyLockDir, heavyLockDirs, heavyLockState, heavySlots, withHeavyLock } from "../src/index/heavy-lock.js";
+import { fakeSystem, makeDeps as anySlotDeps } from "./helpers.js";
 
 afterEach(() => vi.restoreAllMocks());
 
 const LOCKS_SH = path.resolve(import.meta.dirname, "../../config/lib/locks.sh");
 const holderPath = (root: string): string => `${heavyLockDir(root, {})}.holder.json`;
 
+// The single-lock tests below run with one slot: each slot of the default two keeps exactly these
+// semantics (holder record, waits, takeovers, release). The two-slot tests are at the end.
+const makeDeps = (o: Partial<Deps> = {}): Deps => {
+  const d = anySlotDeps(o);
+  return { ...d, env: { AW_HEAVY_SLOTS: "1", ...d.env } };
+};
+// Slot 1, the plain lock.
+const slot1 = (root: string, now: () => Date, env: NodeJS.ProcessEnv) => heavyLockState(root, now, env)[0];
+
 describe("heavy-job lock", () => {
   it("holds the lock for the duration of the job and records the holder", async () => {
     const d = makeDeps();
     const root = awStateDir(d);
-    const seen = await withHeavyLock(d, "index-build", 0, async () => heavyLockState(root, d.now, d.env));
+    const seen = await withHeavyLock(d, "index-build", 0, async () => slot1(root, d.now, d.env));
     expect(seen).toMatchObject({ held: true, holder: { kind: "index-build", pid: 4242, host: "test-host", reclaimed: null } });
-    expect(heavyLockState(root, d.now, d.env)).toEqual({ held: false, holder: null, ageMs: null });
+    expect(slot1(root, d.now, d.env)).toMatchObject({ slot: 1, held: false, holder: null, ageMs: null });
   });
 
   it("puts the lock at locks/heavy-job.lock, or at $AW_HEAVY_JOB_LOCK, with the holder beside it", async () => {
@@ -69,7 +78,7 @@ describe("heavy-job lock", () => {
     fs.writeFileSync(holderPath(root), JSON.stringify({ nope: 1 }));
     const err2 = await withHeavyLock(d, "x", 0, async () => 0).catch((e: unknown) => e);
     expect((err2 as SindriError).message).toMatch(/^the heavy-job lock is busy; held /);
-    expect(heavyLockState(root, () => new Date(Date.now() + 60_000), d.env).ageMs).toBeGreaterThan(0);
+    expect(slot1(root, () => new Date(Date.now() + 60_000), d.env).ageMs).toBeGreaterThan(0);
   });
 
   it("reclaims a lock whose holder pid is dead on this host (and says so), but not a live pid or another host's", async () => {
@@ -81,7 +90,7 @@ describe("heavy-job lock", () => {
       fs.writeFileSync(holderPath(root), JSON.stringify(holder));
     };
     plant({ kind: "index-build", pid: 999, host: "test-host", startedAt: "t" });
-    const seen = await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env).holder);
+    const seen = await withHeavyLock(d, "next", 0, async () => slot1(root, d.now, d.env).holder);
     expect(seen).toMatchObject({ kind: "next", reclaimed: "dead pid 999 (index-build)" });
     expect(logs).toEqual(["reclaiming the heavy-job lock left by dead pid 999 (index-build)"]);
     plant({ kind: "index-build", pid: 4242, host: "test-host", startedAt: "t" });
@@ -93,10 +102,10 @@ describe("heavy-job lock", () => {
   it("releases the lock when the job throws, or when the holder record can't be written", async () => {
     const d = makeDeps();
     await expect(withHeavyLock(d, "x", 0, async () => { throw new Error("job failed"); })).rejects.toThrow("job failed");
-    expect(heavyLockState(awStateDir(d), d.now, d.env).held).toBe(false);
+    expect(slot1(awStateDir(d), d.now, d.env).held).toBe(false);
     vi.spyOn(fs, "writeFileSync").mockImplementationOnce(() => { throw new Error("disk full"); });
     await expect(withHeavyLock(d, "x", 0, async () => 1)).rejects.toThrow("disk full");
-    expect(heavyLockState(awStateDir(d), d.now, d.env).held).toBe(false);
+    expect(slot1(awStateDir(d), d.now, d.env).held).toBe(false);
   });
 
   it("rethrows unexpected mkdir errors", async () => {
@@ -126,9 +135,9 @@ describe("heavy-job lock", () => {
       fs.mkdirSync(heavyLockDir(root, d.env), { recursive: true });
       fs.writeFileSync(holderPath(root), JSON.stringify(holder));
     };
-    expect(await withHeavyLock(d, "x", 0, async () => heavyLockState(root, d.now, d.env).holder?.bootId)).toBe("boot-1");
+    expect(await withHeavyLock(d, "x", 0, async () => slot1(root, d.now, d.env).holder?.bootId)).toBe("boot-1");
     plant({ kind: "index-build", pid: 777, host: "test-host", bootId: "boot-0", startedAt: "t" });
-    expect(await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env).holder?.reclaimed)).toBe("dead pid 777 (index-build)");
+    expect(await withHeavyLock(d, "next", 0, async () => slot1(root, d.now, d.env).holder?.reclaimed)).toBe("dead pid 777 (index-build)");
     // Same boot, or a record (or a host) that can't say which boot: the live pid holds it.
     for (const [holder, sys] of [
       [{ kind: "index-build", pid: 777, host: "test-host", bootId: "boot-1", startedAt: "t" }, fakeSystem()],
@@ -156,13 +165,13 @@ describe("heavy-job lock", () => {
     const busy = await withHeavyLock(d, "x", 0, async () => 0).catch((e: unknown) => e);
     expect((busy as SindriError).message).toBe("the heavy-job lock is busy; held 1 h");
     age(7);
-    expect(await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env).holder?.reclaimed)).toBe("a lock held over 6 h with no holder record");
+    expect(await withHeavyLock(d, "next", 0, async () => slot1(root, d.now, d.env).holder?.reclaimed)).toBe("a lock held over 6 h with no holder record");
     fs.mkdirSync(dir);
     fs.writeFileSync(holderPath(root), JSON.stringify({ kind: "index-build", pid: 4242, host: "test-host", startedAt: "t" }));
     const t = new Date(d.now().getTime() - 7 * 3_600_000);
     fs.utimesSync(holderPath(root), t, t);
     age(7);
-    expect(await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env).holder?.reclaimed)).toBe("a lock held over 6 h by index-build (pid 4242)");
+    expect(await withHeavyLock(d, "next", 0, async () => slot1(root, d.now, d.env).holder?.reclaimed)).toBe("a lock held over 6 h by index-build (pid 4242)");
     expect(logs).toEqual([
       "reclaiming the heavy-job lock left by a lock held over 6 h with no holder record",
       "reclaiming the heavy-job lock left by a lock held over 6 h by index-build (pid 4242)",
@@ -180,7 +189,7 @@ describe("heavy-job lock", () => {
     const err = await withHeavyLock(d, "x", 0, async () => 0).catch((e: unknown) => e);
     expect((err as SindriError).message).toMatch(/^the heavy-job lock is busy; held /);
     expect(fs.existsSync(dir)).toBe(true);
-    expect(heavyLockState(root, d.now, d.env).holder).toBeNull();
+    expect(slot1(root, d.now, d.env).holder).toBeNull();
   });
 
   it("lets exactly one of two waiters on the same dead holder take the lock over", async () => {
@@ -208,10 +217,10 @@ describe("heavy-job lock", () => {
     expect((errA as SindriError).code).toBe("SND-INDEX-001");
     expect((errA as SindriError).message).toContain("(b, pid 5151");
     expect(entered).toEqual(["b"]);
-    expect(heavyLockState(root, a.now, a.env).holder).toMatchObject({ kind: "b", pid: 5151, reclaimed: "dead pid 999 (index-build)" });
+    expect(slot1(root, a.now, a.env).holder).toMatchObject({ kind: "b", pid: 5151, reclaimed: "dead pid 999 (index-build)" });
     open();
     await pB;
-    expect(heavyLockState(root, a.now, a.env).held).toBe(false);
+    expect(slot1(root, a.now, a.env).held).toBe(false);
     expect(fs.readdirSync(path.dirname(heavyLockDir(root, a.env)))).toEqual([]);
   });
 
@@ -549,10 +558,110 @@ describe("heavy-job lock", () => {
     await withHeavyLock(d, "x", 0, async () => {
       fs.writeFileSync(holderPath(root), JSON.stringify({ kind: "other", pid: 31, host: "test-host", startedAt: "t2" }));
     });
-    expect(heavyLockState(root, d.now, d.env).holder).toMatchObject({ kind: "other" });
+    expect(slot1(root, d.now, d.env).holder).toMatchObject({ kind: "other" });
     fs.rmSync(holderPath(root));
     fs.rmdirSync(dir);
     expect(await withHeavyLock(d, "x", 0, async () => { fs.rmdirSync(dir); return 7; })).toBe(7);
     expect(logs).toEqual([expect.stringContaining(`could not release the heavy-job lock ${dir}`)]);
+  });
+});
+
+describe("heavy-job lock slots", () => {
+  const LOCKS = (cmd: string): string => execFileSync("bash", ["-c", `source "${LOCKS_SH}"; ${cmd}`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+
+  it("has two slots by default: <lock> and <lock>.2; AW_HEAVY_SLOTS sets the count, a bad value keeps the default", () => {
+    const root = "/state";
+    const base = heavyLockDir(root, {});
+    expect(heavyLockDirs(root, {})).toEqual([base, `${base}.2`]);
+    expect(heavyLockDirs(root, { AW_HEAVY_SLOTS: "3" })).toEqual([base, `${base}.2`, `${base}.3`]);
+    expect(heavyLockDirs(root, { AW_HEAVY_SLOTS: "1" })).toEqual([base]);
+    for (const bad of ["0", "-1", "two", "1.5", ""]) expect(heavySlots({ AW_HEAVY_SLOTS: bad })).toBe(2);
+  });
+
+  it("lets a second job in while one holds slot 1, says busy (SND-INDEX-001) when both are held, and leaves nothing behind", async () => {
+    const logs: string[] = [];
+    const d = anySlotDeps({ log: (l) => logs.push(l) });
+    const root = awStateDir(d);
+    const [one, two] = heavyLockDirs(root, d.env);
+    await withHeavyLock(d, "test-suite", 0, async () => {
+      await withHeavyLock(d, "index-build", 0, async () => {
+        const state = heavyLockState(root, d.now, d.env);
+        expect(state.map((s) => [s.dir, s.held, s.holder?.kind])).toEqual([[one, true, "test-suite"], [two, true, "index-build"]]);
+        const err = await withHeavyLock(d, "third", 2000, async () => 0).catch((e: unknown) => e);
+        expect((err as SindriError).code).toBe("SND-INDEX-001");
+        expect((err as SindriError).message).toMatch(/^the heavy-job lock is busy \(all 2 slots: slot 1 \(test-suite, pid 4242, since [^)]+\); held \d+ min \| slot 2 \(index-build, pid 4242, since [^)]+\); held \d+ min\)$/);
+      });
+      // Slot 2 is free again: the next job takes it.
+      expect(await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env)[1].holder?.kind)).toBe("next");
+    });
+    expect(logs).toEqual(["waiting for a heavy-job lock slot (all 2 busy)"]);
+    expect(fs.readdirSync(path.dirname(one))).toEqual([]);
+  });
+
+  it("counts a locks.sh holder of <lock> as slot 1, and locks.sh's acquire_any_lock sees sindri's slots", async () => {
+    const d = anySlotDeps();
+    const [one, two] = heavyLockDirs(awStateDir(d), d.env);
+    fs.mkdirSync(path.dirname(one), { recursive: true });
+    LOCKS(`acquire_lock "${one}" 0`);
+    expect(await withHeavyLock(d, "index-build", 0, async () => heavyLockState(awStateDir(d), d.now, d.env).map((s) => s.held))).toEqual([true, true]);
+    await withHeavyLock(d, "index-build", 0, async () => {
+      expect(LOCKS(`acquire_any_lock "${one}" 2 0 || echo busy`)).toBe("busy");
+    });
+    LOCKS(`release_lock "${one}"`);
+    await withHeavyLock(d, "index-build", 0, async () => {
+      expect(LOCKS(`acquire_any_lock "${one}" 2 0`)).toBe(two);
+      LOCKS(`release_lock "${two}"`);
+    });
+  });
+
+  it("takes a slot over per slot: a dead holder of slot 2, or slot 2 held over 6 h, while slot 1's live holder is left alone", async () => {
+    const logs: string[] = [];
+    const d = anySlotDeps({ system: fakeSystem({ pidAlive: (p) => p !== 999 }), log: (l) => logs.push(l) });
+    const root = awStateDir(d);
+    const [one, two] = heavyLockDirs(root, d.env);
+    const plant = (dir: string, holder: object | null, hours = 0): void => {
+      fs.mkdirSync(dir, { recursive: true });
+      const t = new Date(d.now().getTime() - hours * 3_600_000);
+      fs.utimesSync(dir, t, t);
+      if (holder !== null) {
+        fs.writeFileSync(`${dir}.holder.json`, JSON.stringify(holder));
+        fs.utimesSync(`${dir}.holder.json`, t, t);
+      }
+    };
+    plant(one, { kind: "live", pid: 4243, host: "test-host", startedAt: "t" });
+    plant(two, { kind: "index-build", pid: 999, host: "test-host", startedAt: "t" });
+    const seen = await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env).map((s) => s.holder));
+    expect(seen[0]).toMatchObject({ kind: "live", reclaimed: null });
+    expect(seen[1]).toMatchObject({ kind: "next", reclaimed: "dead pid 999 (index-build)" });
+    plant(two, null, 7);
+    expect(await withHeavyLock(d, "next", 0, async () => heavyLockState(root, d.now, d.env)[1].holder?.reclaimed)).toBe("a lock held over 6 h with no holder record");
+    expect(logs).toEqual([
+      "reclaiming the heavy-job lock slot 2 left by dead pid 999 (index-build)",
+      "reclaiming the heavy-job lock slot 2 left by a lock held over 6 h with no holder record",
+    ]);
+    expect(heavyLockState(root, d.now, d.env).map((s) => s.held)).toEqual([true, false]);
+    expect(fs.readFileSync(`${one}.holder.json`, "utf8")).toContain('"live"');
+  });
+
+  it("never runs two jobs of the same kind at once: the second waits for the first, not for a slot", async () => {
+    const logs: string[] = [];
+    const d = anySlotDeps({ system: fakeSystem({ pidAlive: (p) => p !== 999 }), log: (l) => logs.push(l) });
+    const root = awStateDir(d);
+    const [one, two] = heavyLockDirs(root, d.env);
+    const other = anySlotDeps({ ...d, system: fakeSystem({ pid: 5151, pidAlive: (p) => p !== 999 }) });
+    await withHeavyLock(other, "index-build:web", 0, async () => {
+      const err = await withHeavyLock(d, "index-build:web", 1000, async () => 0).catch((e: unknown) => e);
+      expect((err as SindriError).code).toBe("SND-INDEX-001");
+      expect((err as SindriError).message).toMatch(/^the heavy-job lock is busy \(index-build:web already runs in another slot, pid 5151, since /);
+      // Its slot went back: nothing of it is left, and another kind still gets in.
+      expect(fs.existsSync(two)).toBe(false);
+      expect(await withHeavyLock(d, "index-build:api", 0, async () => fs.existsSync(two))).toBe(true);
+    });
+    expect(logs).toEqual(["waiting for the other index-build:web to finish"]);
+    // A dead twin doesn't count (its slot is taken over as usual).
+    fs.mkdirSync(one, { recursive: true });
+    fs.writeFileSync(`${one}.holder.json`, JSON.stringify({ kind: "index-build:web", pid: 999, host: "test-host", startedAt: "t" }));
+    expect(await withHeavyLock(d, "index-build:web", 0, async () => heavyLockState(root, d.now, d.env)[0].holder?.reclaimed)).toBe("dead pid 999 (index-build:web)");
+    expect(fs.readdirSync(path.dirname(one))).toEqual([]);
   });
 });

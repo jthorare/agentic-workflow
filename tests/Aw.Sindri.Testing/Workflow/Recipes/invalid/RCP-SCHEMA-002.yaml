@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.schema-type
+version: 1
+initial: produce
+states:
+  produce:
+    kind: running
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: done, on: step.completed, when: { outcome: done }, produces: [fact:output] }

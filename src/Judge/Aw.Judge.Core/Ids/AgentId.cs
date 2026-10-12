@@ -1,0 +1,17 @@
+using System.Text.Json.Serialization;
+using Aw.Kernel.Ids;
+using Aw.Kernel.Json;
+using Vogen;
+
+namespace Aw.Judge.Core.Ids;
+
+/// <summary>AgentId: the provider's id for a running subagent; any string the hook passes, as the TS judge accepts.</summary>
+[ValueObject<string>(comparison: ComparisonGeneration.Omit)]
+[JsonConverter(typeof(StringIdJsonConverter<AgentId>))]
+public readonly partial struct AgentId : ITypedId<AgentId, string>
+{
+    // Any string the hook passes is accepted, blank included, as the TS judge accepts it (frozen hook surface);
+    // the cap only keeps a runaway argument out of the store.
+    private static Validation Validate(string value) =>
+        value.Length <= 4096 ? Validation.Ok : Validation.Invalid("AgentId must be at most 4096 characters");
+}

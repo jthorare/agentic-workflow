@@ -52,3 +52,46 @@ static Aw.Redaction.ScrubResult.operator !=(Aw.Redaction.ScrubResult? left, Aw.R
 static Aw.Redaction.ScrubResult.operator ==(Aw.Redaction.ScrubResult? left, Aw.Redaction.ScrubResult? right) -> bool
 ~override Aw.Redaction.RedactionHit.Equals(object obj) -> bool
 ~override Aw.Redaction.RedactionHit.ToString() -> string
+Aw.Redaction.ExtraPattern
+Aw.Redaction.ExtraPattern.<Clone>$() -> Aw.Redaction.ExtraPattern!
+Aw.Redaction.ExtraPattern.Deconstruct(out string! Id, out string! Pattern) -> void
+Aw.Redaction.ExtraPattern.Equals(Aw.Redaction.ExtraPattern? other) -> bool
+Aw.Redaction.ExtraPattern.ExtraPattern(string! Id, string! Pattern) -> void
+Aw.Redaction.ExtraPattern.Id.get -> string!
+Aw.Redaction.ExtraPattern.Id.init -> void
+Aw.Redaction.ExtraPattern.Pattern.get -> string!
+Aw.Redaction.ExtraPattern.Pattern.init -> void
+Aw.Redaction.ExtraPatternError
+Aw.Redaction.ExtraPatternError.<Clone>$() -> Aw.Redaction.ExtraPatternError!
+Aw.Redaction.ExtraPatternError.Code.get -> string!
+Aw.Redaction.ExtraPatternError.Code.init -> void
+Aw.Redaction.ExtraPatternError.Deconstruct(out int Index, out Aw.Redaction.ExtraPatternField Field, out string! Code, out string! Message) -> void
+Aw.Redaction.ExtraPatternError.Equals(Aw.Redaction.ExtraPatternError? other) -> bool
+Aw.Redaction.ExtraPatternError.ExtraPatternError(int Index, Aw.Redaction.ExtraPatternField Field, string! Code, string! Message) -> void
+Aw.Redaction.ExtraPatternError.Field.get -> Aw.Redaction.ExtraPatternField
+Aw.Redaction.ExtraPatternError.Field.init -> void
+Aw.Redaction.ExtraPatternError.Index.get -> int
+Aw.Redaction.ExtraPatternError.Index.init -> void
+Aw.Redaction.ExtraPatternError.Message.get -> string!
+Aw.Redaction.ExtraPatternError.Message.init -> void
+Aw.Redaction.ExtraPatternField
+Aw.Redaction.ExtraPatternField.Id = 0 -> Aw.Redaction.ExtraPatternField
+Aw.Redaction.ExtraPatternField.Pattern = 1 -> Aw.Redaction.ExtraPatternField
+Aw.Redaction.RedactorResult
+Aw.Redaction.RedactorResult.Errors.get -> System.Collections.Generic.IReadOnlyList<Aw.Redaction.ExtraPatternError!>!
+Aw.Redaction.RedactorResult.IsValid.get -> bool
+Aw.Redaction.RedactorResult.Redactor.get -> Aw.Redaction.Redactor?
+const Aw.Redaction.Redactor.ScanBudgetFactor = 4 -> int
+const Aw.Redaction.RedactionCodes.InvalidPattern = "AW-REDACT-003" -> string!
+const Aw.Redaction.RedactionCodes.InvalidPatternId = "AW-REDACT-002" -> string!
+override Aw.Redaction.ExtraPattern.Equals(object? obj) -> bool
+override Aw.Redaction.ExtraPattern.GetHashCode() -> int
+override Aw.Redaction.ExtraPattern.ToString() -> string!
+override Aw.Redaction.ExtraPatternError.Equals(object? obj) -> bool
+override Aw.Redaction.ExtraPatternError.GetHashCode() -> int
+override Aw.Redaction.ExtraPatternError.ToString() -> string!
+static Aw.Redaction.ExtraPattern.operator !=(Aw.Redaction.ExtraPattern? left, Aw.Redaction.ExtraPattern? right) -> bool
+static Aw.Redaction.ExtraPattern.operator ==(Aw.Redaction.ExtraPattern? left, Aw.Redaction.ExtraPattern? right) -> bool
+static Aw.Redaction.ExtraPatternError.operator !=(Aw.Redaction.ExtraPatternError? left, Aw.Redaction.ExtraPatternError? right) -> bool
+static Aw.Redaction.ExtraPatternError.operator ==(Aw.Redaction.ExtraPatternError? left, Aw.Redaction.ExtraPatternError? right) -> bool
+static Aw.Redaction.Redactor.Create(System.Collections.Generic.IReadOnlyList<Aw.Redaction.ExtraPattern!>! extraPatterns, System.TimeSpan matchTimeout, System.TimeProvider! clock) -> Aw.Redaction.RedactorResult!

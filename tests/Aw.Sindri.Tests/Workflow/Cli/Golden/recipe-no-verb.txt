@@ -1,0 +1,5 @@
+$ sindri recipe
+exit 2
+--- stdout
+--- stderr
+SND-CLI-001 'recipe' is not a sindri command (usage: sindri recipe validate <file> [--json])

@@ -1,0 +1,5 @@
+$ sindri recipe eval <tmp>/workflow.step.yaml
+exit 2
+--- stdout
+--- stderr
+SND-CLI-001 'recipe eval' isn't in this build yet: recipe evals arrive with P3 (fix: check the recipe with sindri recipe validate <file>)

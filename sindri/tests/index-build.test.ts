@@ -234,21 +234,23 @@ describe("buildIndex", () => {
     expect(seen).toEqual([true]);
   });
 
-  it("a quick build tries the heavy-job lock once and skips quietly (exit 0) when it is held; a full build waits", async () => {
+  it("a quick build tries the heavy-job lock once and skips quietly (exit 0) when every slot is held; a full build waits", async () => {
     const d = await approvedIndexDeps(ring0Repo(FILES));
     let slept = 0;
     const lock = path.join(d.env.AW_STATE_DIR as string, "locks", "heavy-job.lock");
     fs.mkdirSync(lock, { recursive: true });
+    fs.mkdirSync(`${lock}.2`);
     const deps = { ...d, sleep: async () => { slept++; } };
     const quick = await makeIndexCommand(fakeIndexIo())(["build", "--quick"], deps);
     expect(quick.exitCode).toBe(0);
-    expect(quick.stdout.trim()).toMatch(new RegExp(`^${ring0Name(d)}: skipped \\(the heavy-job lock is busy; held \\d+ (min|h)\\); the next hourly run retries$`));
+    expect(quick.stdout.trim()).toMatch(new RegExp(`^${ring0Name(d)}: skipped \\(the heavy-job lock is busy \\(all 2 slots: slot 1; held \\d+ (min|h) \\| slot 2; held \\d+ (min|h)\\)\\); the next hourly run retries$`));
     expect(slept).toBe(0);
     expect(fs.existsSync(indexPath(d, ring0Name(d)))).toBe(false);
     const full = await makeIndexCommand(fakeIndexIo())(["build"], deps);
     expect(full.stderr).toContain("SND-INDEX-001");
     expect(slept).toBe(600);
     fs.rmdirSync(lock);
+    fs.rmdirSync(`${lock}.2`);
   });
 
   it("refuses an unknown repo", async () => {

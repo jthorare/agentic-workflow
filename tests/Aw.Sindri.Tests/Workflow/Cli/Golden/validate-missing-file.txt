@@ -1,0 +1,5 @@
+$ sindri recipe validate <tmp>/missing.yaml
+exit 2
+--- stdout
+--- stderr
+SND-RECIPE-010 <tmp>/missing.yaml doesn't exist (fix: check the path)

@@ -1,0 +1,318 @@
+#nullable enable
+Aw.Judge.Features.GetHealth.GetHealthRequest
+Aw.Judge.Features.GetHealth.GetHealthRequest.<Clone>$() -> Aw.Judge.Features.GetHealth.GetHealthRequest!
+Aw.Judge.Features.GetHealth.GetHealthRequest.Equals(Aw.Judge.Features.GetHealth.GetHealthRequest? other) -> bool
+Aw.Judge.Features.GetHealth.GetHealthRequest.GetHealthRequest() -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse
+Aw.Judge.Features.GetHealth.GetHealthResponse.<Clone>$() -> Aw.Judge.Features.GetHealth.GetHealthResponse!
+Aw.Judge.Features.GetHealth.GetHealthResponse.Equals(Aw.Judge.Features.GetHealth.GetHealthResponse? other) -> bool
+Aw.Judge.Features.JudgeFeaturesServiceCollectionExtensions
+override Aw.Judge.Features.GetHealth.GetHealthRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetHealth.GetHealthRequest.GetHashCode() -> int
+override Aw.Judge.Features.GetHealth.GetHealthRequest.ToString() -> string!
+override Aw.Judge.Features.GetHealth.GetHealthResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetHealth.GetHealthResponse.GetHashCode() -> int
+override Aw.Judge.Features.GetHealth.GetHealthResponse.ToString() -> string!
+static Aw.Judge.Features.GetHealth.GetHealthRequest.operator !=(Aw.Judge.Features.GetHealth.GetHealthRequest? left, Aw.Judge.Features.GetHealth.GetHealthRequest? right) -> bool
+static Aw.Judge.Features.GetHealth.GetHealthRequest.operator ==(Aw.Judge.Features.GetHealth.GetHealthRequest? left, Aw.Judge.Features.GetHealth.GetHealthRequest? right) -> bool
+static Aw.Judge.Features.GetHealth.GetHealthResponse.operator !=(Aw.Judge.Features.GetHealth.GetHealthResponse? left, Aw.Judge.Features.GetHealth.GetHealthResponse? right) -> bool
+static Aw.Judge.Features.GetHealth.GetHealthResponse.operator ==(Aw.Judge.Features.GetHealth.GetHealthResponse? left, Aw.Judge.Features.GetHealth.GetHealthResponse? right) -> bool
+static Aw.Judge.Features.JudgeFeaturesServiceCollectionExtensions.AddJudgeFeatures(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Judge.Features.GetHealth.GetHealthResponse.Deconstruct(out Aw.Judge.Core.Health.HealthStatus Status, out int Failures24h) -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.Failures24h.get -> int
+Aw.Judge.Features.GetHealth.GetHealthResponse.Failures24h.init -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.GetHealthResponse(Aw.Judge.Core.Health.HealthStatus Status, int Failures24h) -> void
+Aw.Judge.Features.GetHealth.GetHealthResponse.Status.get -> Aw.Judge.Core.Health.HealthStatus
+Aw.Judge.Features.GetHealth.GetHealthResponse.Status.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.<Clone>$() -> Aw.Judge.Features.SaveBrief.SaveBriefRequest!
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.AcceptanceCriteria.get -> string!
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.AcceptanceCriteria.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.Deconstruct(out Aw.Judge.Core.Ids.ToolUseId ToolUseId, out Aw.Judge.Core.Ids.SessionId SessionId, out Aw.Judge.Core.Ids.PromptId PromptId, out string? DispatchName, out string! SubagentType, out string! Goal, out string! AcceptanceCriteria, out string! ProofCommand) -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.DispatchName.get -> string?
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.DispatchName.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.Equals(Aw.Judge.Features.SaveBrief.SaveBriefRequest? other) -> bool
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.Goal.get -> string!
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.Goal.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.PromptId.get -> Aw.Judge.Core.Ids.PromptId
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.PromptId.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.ProofCommand.get -> string!
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.ProofCommand.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.SaveBriefRequest(Aw.Judge.Core.Ids.ToolUseId ToolUseId, Aw.Judge.Core.Ids.SessionId SessionId, Aw.Judge.Core.Ids.PromptId PromptId, string? DispatchName, string! SubagentType, string! Goal, string! AcceptanceCriteria, string! ProofCommand) -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.SessionId.get -> Aw.Judge.Core.Ids.SessionId
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.SessionId.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.SubagentType.get -> string!
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.SubagentType.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.ToolUseId.get -> Aw.Judge.Core.Ids.ToolUseId
+Aw.Judge.Features.SaveBrief.SaveBriefRequest.ToolUseId.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefResponse
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.<Clone>$() -> Aw.Judge.Features.SaveBrief.SaveBriefResponse!
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.Brief.get -> Aw.Judge.Core.Briefs.Brief!
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.Brief.init -> void
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.Deconstruct(out Aw.Judge.Core.Briefs.Brief! Brief) -> void
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.Equals(Aw.Judge.Features.SaveBrief.SaveBriefResponse? other) -> bool
+Aw.Judge.Features.SaveBrief.SaveBriefResponse.SaveBriefResponse(Aw.Judge.Core.Briefs.Brief! Brief) -> void
+override Aw.Judge.Features.SaveBrief.SaveBriefRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SaveBrief.SaveBriefRequest.GetHashCode() -> int
+override Aw.Judge.Features.SaveBrief.SaveBriefRequest.ToString() -> string!
+override Aw.Judge.Features.SaveBrief.SaveBriefResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SaveBrief.SaveBriefResponse.GetHashCode() -> int
+override Aw.Judge.Features.SaveBrief.SaveBriefResponse.ToString() -> string!
+static Aw.Judge.Features.SaveBrief.SaveBriefRequest.operator !=(Aw.Judge.Features.SaveBrief.SaveBriefRequest? left, Aw.Judge.Features.SaveBrief.SaveBriefRequest? right) -> bool
+static Aw.Judge.Features.SaveBrief.SaveBriefRequest.operator ==(Aw.Judge.Features.SaveBrief.SaveBriefRequest? left, Aw.Judge.Features.SaveBrief.SaveBriefRequest? right) -> bool
+static Aw.Judge.Features.SaveBrief.SaveBriefResponse.operator !=(Aw.Judge.Features.SaveBrief.SaveBriefResponse? left, Aw.Judge.Features.SaveBrief.SaveBriefResponse? right) -> bool
+static Aw.Judge.Features.SaveBrief.SaveBriefResponse.operator ==(Aw.Judge.Features.SaveBrief.SaveBriefResponse? left, Aw.Judge.Features.SaveBrief.SaveBriefResponse? right) -> bool
+Aw.Judge.Features.GetBrief.GetBriefRequest
+Aw.Judge.Features.GetBrief.GetBriefRequest.<Clone>$() -> Aw.Judge.Features.GetBrief.GetBriefRequest!
+Aw.Judge.Features.GetBrief.GetBriefRequest.Deconstruct(out Aw.Judge.Core.Ids.ToolUseId ToolUseId) -> void
+Aw.Judge.Features.GetBrief.GetBriefRequest.Equals(Aw.Judge.Features.GetBrief.GetBriefRequest? other) -> bool
+Aw.Judge.Features.GetBrief.GetBriefRequest.GetBriefRequest(Aw.Judge.Core.Ids.ToolUseId ToolUseId) -> void
+Aw.Judge.Features.GetBrief.GetBriefRequest.ToolUseId.get -> Aw.Judge.Core.Ids.ToolUseId
+Aw.Judge.Features.GetBrief.GetBriefRequest.ToolUseId.init -> void
+Aw.Judge.Features.GetBrief.GetBriefResponse
+Aw.Judge.Features.GetBrief.GetBriefResponse.<Clone>$() -> Aw.Judge.Features.GetBrief.GetBriefResponse!
+Aw.Judge.Features.GetBrief.GetBriefResponse.Brief.get -> Aw.Judge.Core.Briefs.Brief!
+Aw.Judge.Features.GetBrief.GetBriefResponse.Brief.init -> void
+Aw.Judge.Features.GetBrief.GetBriefResponse.Deconstruct(out Aw.Judge.Core.Briefs.Brief! Brief) -> void
+Aw.Judge.Features.GetBrief.GetBriefResponse.Equals(Aw.Judge.Features.GetBrief.GetBriefResponse? other) -> bool
+Aw.Judge.Features.GetBrief.GetBriefResponse.GetBriefResponse(Aw.Judge.Core.Briefs.Brief! Brief) -> void
+override Aw.Judge.Features.GetBrief.GetBriefRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetBrief.GetBriefRequest.GetHashCode() -> int
+override Aw.Judge.Features.GetBrief.GetBriefRequest.ToString() -> string!
+override Aw.Judge.Features.GetBrief.GetBriefResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetBrief.GetBriefResponse.GetHashCode() -> int
+override Aw.Judge.Features.GetBrief.GetBriefResponse.ToString() -> string!
+static Aw.Judge.Features.GetBrief.GetBriefRequest.operator !=(Aw.Judge.Features.GetBrief.GetBriefRequest? left, Aw.Judge.Features.GetBrief.GetBriefRequest? right) -> bool
+static Aw.Judge.Features.GetBrief.GetBriefRequest.operator ==(Aw.Judge.Features.GetBrief.GetBriefRequest? left, Aw.Judge.Features.GetBrief.GetBriefRequest? right) -> bool
+static Aw.Judge.Features.GetBrief.GetBriefResponse.operator !=(Aw.Judge.Features.GetBrief.GetBriefResponse? left, Aw.Judge.Features.GetBrief.GetBriefResponse? right) -> bool
+static Aw.Judge.Features.GetBrief.GetBriefResponse.operator ==(Aw.Judge.Features.GetBrief.GetBriefResponse? left, Aw.Judge.Features.GetBrief.GetBriefResponse? right) -> bool
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.<Clone>$() -> Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest!
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.Deconstruct(out string! DispatchName) -> void
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.DispatchName.get -> string!
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.DispatchName.init -> void
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.Equals(Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest? other) -> bool
+Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.MapBriefByNameRequest(string! DispatchName) -> void
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.<Clone>$() -> Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse!
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.Deconstruct(out Aw.Judge.Core.Ids.ToolUseId? ToolUseId) -> void
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.Equals(Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse? other) -> bool
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.MapBriefByNameResponse(Aw.Judge.Core.Ids.ToolUseId? ToolUseId) -> void
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.ToolUseId.get -> Aw.Judge.Core.Ids.ToolUseId?
+Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.ToolUseId.init -> void
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.GetHashCode() -> int
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.ToString() -> string!
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.GetHashCode() -> int
+override Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.ToString() -> string!
+static Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.operator !=(Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest? left, Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest? right) -> bool
+static Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest.operator ==(Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest? left, Aw.Judge.Features.MapBriefByName.MapBriefByNameRequest? right) -> bool
+static Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.operator !=(Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse? left, Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse? right) -> bool
+static Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse.operator ==(Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse? left, Aw.Judge.Features.MapBriefByName.MapBriefByNameResponse? right) -> bool
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.<Clone>$() -> Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest!
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.Deconstruct(out Aw.Judge.Core.Ids.SessionId SessionId, out Aw.Judge.Core.Ids.PromptId PromptId, out string! SubagentType) -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.Equals(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest? other) -> bool
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.MapBriefByDispatchRequest(Aw.Judge.Core.Ids.SessionId SessionId, Aw.Judge.Core.Ids.PromptId PromptId, string! SubagentType) -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.PromptId.get -> Aw.Judge.Core.Ids.PromptId
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.PromptId.init -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.SessionId.get -> Aw.Judge.Core.Ids.SessionId
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.SessionId.init -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.SubagentType.get -> string!
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.SubagentType.init -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.<Clone>$() -> Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse!
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.Deconstruct(out Aw.Judge.Core.Ids.ToolUseId? ToolUseId) -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.Equals(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse? other) -> bool
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.MapBriefByDispatchResponse(Aw.Judge.Core.Ids.ToolUseId? ToolUseId) -> void
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.ToolUseId.get -> Aw.Judge.Core.Ids.ToolUseId?
+Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.ToolUseId.init -> void
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.GetHashCode() -> int
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.ToString() -> string!
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.GetHashCode() -> int
+override Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.ToString() -> string!
+static Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.operator !=(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest? left, Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest? right) -> bool
+static Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest.operator ==(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest? left, Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchRequest? right) -> bool
+static Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.operator !=(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse? left, Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse? right) -> bool
+static Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse.operator ==(Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse? left, Aw.Judge.Features.MapBriefByDispatch.MapBriefByDispatchResponse? right) -> bool
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.<Clone>$() -> Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest!
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.AgentId.get -> Aw.Judge.Core.Ids.AgentId
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.AgentId.init -> void
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.Deconstruct(out Aw.Judge.Core.Ids.ToolUseId ToolUseId, out Aw.Judge.Core.Ids.AgentId AgentId) -> void
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.Equals(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest? other) -> bool
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.SetBriefAgentIdRequest(Aw.Judge.Core.Ids.ToolUseId ToolUseId, Aw.Judge.Core.Ids.AgentId AgentId) -> void
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.ToolUseId.get -> Aw.Judge.Core.Ids.ToolUseId
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.ToolUseId.init -> void
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.<Clone>$() -> Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse!
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.Equals(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse? other) -> bool
+Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.SetBriefAgentIdResponse() -> void
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.GetHashCode() -> int
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.ToString() -> string!
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.GetHashCode() -> int
+override Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.ToString() -> string!
+static Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.operator !=(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest? left, Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest? right) -> bool
+static Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest.operator ==(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest? left, Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdRequest? right) -> bool
+static Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.operator !=(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse? left, Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse? right) -> bool
+static Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse.operator ==(Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse? left, Aw.Judge.Features.SetBriefAgentId.SetBriefAgentIdResponse? right) -> bool
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.<Clone>$() -> Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest!
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.DecisionId.get -> Aw.Judge.Core.Ids.DecisionId
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.DecisionId.init -> void
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.Deconstruct(out Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.Equals(Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest? other) -> bool
+Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.ExplainDecisionRequest(Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.<Clone>$() -> Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse!
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.Decision.get -> Aw.Judge.Core.Decisions.DecisionRecord!
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.Decision.init -> void
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.Deconstruct(out Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.Equals(Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse? other) -> bool
+Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.ExplainDecisionResponse(Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.GetHashCode() -> int
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.ToString() -> string!
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.GetHashCode() -> int
+override Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.ToString() -> string!
+static Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.operator !=(Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest? left, Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest? right) -> bool
+static Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest.operator ==(Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest? left, Aw.Judge.Features.ExplainDecision.ExplainDecisionRequest? right) -> bool
+static Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.operator !=(Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse? left, Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse? right) -> bool
+static Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse.operator ==(Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse? left, Aw.Judge.Features.ExplainDecision.ExplainDecisionResponse? right) -> bool
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.<Clone>$() -> Aw.Judge.Features.UndoDecision.UndoDecisionRequest!
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.DecisionId.get -> Aw.Judge.Core.Ids.DecisionId
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.DecisionId.init -> void
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.Deconstruct(out Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.Equals(Aw.Judge.Features.UndoDecision.UndoDecisionRequest? other) -> bool
+Aw.Judge.Features.UndoDecision.UndoDecisionRequest.UndoDecisionRequest(Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.<Clone>$() -> Aw.Judge.Features.UndoDecision.UndoDecisionResponse!
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.Decision.get -> Aw.Judge.Core.Decisions.DecisionRecord!
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.Decision.init -> void
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.Deconstruct(out Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.Equals(Aw.Judge.Features.UndoDecision.UndoDecisionResponse? other) -> bool
+Aw.Judge.Features.UndoDecision.UndoDecisionResponse.UndoDecisionResponse(Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+override Aw.Judge.Features.UndoDecision.UndoDecisionRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.UndoDecision.UndoDecisionRequest.GetHashCode() -> int
+override Aw.Judge.Features.UndoDecision.UndoDecisionRequest.ToString() -> string!
+override Aw.Judge.Features.UndoDecision.UndoDecisionResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.UndoDecision.UndoDecisionResponse.GetHashCode() -> int
+override Aw.Judge.Features.UndoDecision.UndoDecisionResponse.ToString() -> string!
+static Aw.Judge.Features.UndoDecision.UndoDecisionRequest.operator !=(Aw.Judge.Features.UndoDecision.UndoDecisionRequest? left, Aw.Judge.Features.UndoDecision.UndoDecisionRequest? right) -> bool
+static Aw.Judge.Features.UndoDecision.UndoDecisionRequest.operator ==(Aw.Judge.Features.UndoDecision.UndoDecisionRequest? left, Aw.Judge.Features.UndoDecision.UndoDecisionRequest? right) -> bool
+static Aw.Judge.Features.UndoDecision.UndoDecisionResponse.operator !=(Aw.Judge.Features.UndoDecision.UndoDecisionResponse? left, Aw.Judge.Features.UndoDecision.UndoDecisionResponse? right) -> bool
+static Aw.Judge.Features.UndoDecision.UndoDecisionResponse.operator ==(Aw.Judge.Features.UndoDecision.UndoDecisionResponse? left, Aw.Judge.Features.UndoDecision.UndoDecisionResponse? right) -> bool
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.<Clone>$() -> Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest!
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.ApproveDecisionRequest(Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.DecisionId.get -> Aw.Judge.Core.Ids.DecisionId
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.DecisionId.init -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.Deconstruct(out Aw.Judge.Core.Ids.DecisionId DecisionId) -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.Equals(Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest? other) -> bool
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.<Clone>$() -> Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse!
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.ApproveDecisionResponse(Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.Decision.get -> Aw.Judge.Core.Decisions.DecisionRecord!
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.Decision.init -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.Deconstruct(out Aw.Judge.Core.Decisions.DecisionRecord! Decision) -> void
+Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.Equals(Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse? other) -> bool
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.GetHashCode() -> int
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.ToString() -> string!
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.GetHashCode() -> int
+override Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.ToString() -> string!
+static Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.operator !=(Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest? left, Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest? right) -> bool
+static Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest.operator ==(Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest? left, Aw.Judge.Features.ApproveDecision.ApproveDecisionRequest? right) -> bool
+static Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.operator !=(Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse? left, Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse? right) -> bool
+static Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse.operator ==(Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse? left, Aw.Judge.Features.ApproveDecision.ApproveDecisionResponse? right) -> bool
+Aw.Judge.Features.GetConfig.GetConfigRequest
+Aw.Judge.Features.GetConfig.GetConfigRequest.<Clone>$() -> Aw.Judge.Features.GetConfig.GetConfigRequest!
+Aw.Judge.Features.GetConfig.GetConfigRequest.Equals(Aw.Judge.Features.GetConfig.GetConfigRequest? other) -> bool
+Aw.Judge.Features.GetConfig.GetConfigRequest.GetConfigRequest() -> void
+Aw.Judge.Features.GetConfig.GetConfigResponse
+Aw.Judge.Features.GetConfig.GetConfigResponse.<Clone>$() -> Aw.Judge.Features.GetConfig.GetConfigResponse!
+Aw.Judge.Features.GetConfig.GetConfigResponse.Config.get -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Features.GetConfig.GetConfigResponse.Config.init -> void
+Aw.Judge.Features.GetConfig.GetConfigResponse.Equals(Aw.Judge.Features.GetConfig.GetConfigResponse? other) -> bool
+override Aw.Judge.Features.GetConfig.GetConfigRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetConfig.GetConfigRequest.GetHashCode() -> int
+override Aw.Judge.Features.GetConfig.GetConfigRequest.ToString() -> string!
+override Aw.Judge.Features.GetConfig.GetConfigResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.GetConfig.GetConfigResponse.GetHashCode() -> int
+override Aw.Judge.Features.GetConfig.GetConfigResponse.ToString() -> string!
+static Aw.Judge.Features.GetConfig.GetConfigRequest.operator !=(Aw.Judge.Features.GetConfig.GetConfigRequest? left, Aw.Judge.Features.GetConfig.GetConfigRequest? right) -> bool
+static Aw.Judge.Features.GetConfig.GetConfigRequest.operator ==(Aw.Judge.Features.GetConfig.GetConfigRequest? left, Aw.Judge.Features.GetConfig.GetConfigRequest? right) -> bool
+static Aw.Judge.Features.GetConfig.GetConfigResponse.operator !=(Aw.Judge.Features.GetConfig.GetConfigResponse? left, Aw.Judge.Features.GetConfig.GetConfigResponse? right) -> bool
+static Aw.Judge.Features.GetConfig.GetConfigResponse.operator ==(Aw.Judge.Features.GetConfig.GetConfigResponse? left, Aw.Judge.Features.GetConfig.GetConfigResponse? right) -> bool
+Aw.Judge.Features.SetConfig.SetConfigRequest
+Aw.Judge.Features.SetConfig.SetConfigRequest.<Clone>$() -> Aw.Judge.Features.SetConfig.SetConfigRequest!
+Aw.Judge.Features.SetConfig.SetConfigRequest.Equals(Aw.Judge.Features.SetConfig.SetConfigRequest? other) -> bool
+Aw.Judge.Features.SetConfig.SetConfigRequest.Question.get -> string!
+Aw.Judge.Features.SetConfig.SetConfigRequest.Question.init -> void
+Aw.Judge.Features.SetConfig.SetConfigResponse
+Aw.Judge.Features.SetConfig.SetConfigResponse.<Clone>$() -> Aw.Judge.Features.SetConfig.SetConfigResponse!
+Aw.Judge.Features.SetConfig.SetConfigResponse.Config.get -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Features.SetConfig.SetConfigResponse.Config.init -> void
+Aw.Judge.Features.SetConfig.SetConfigResponse.Deconstruct(out Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+Aw.Judge.Features.SetConfig.SetConfigResponse.Equals(Aw.Judge.Features.SetConfig.SetConfigResponse? other) -> bool
+Aw.Judge.Features.SetConfig.SetConfigResponse.SetConfigResponse(Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+override Aw.Judge.Features.SetConfig.SetConfigRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetConfig.SetConfigRequest.GetHashCode() -> int
+override Aw.Judge.Features.SetConfig.SetConfigRequest.ToString() -> string!
+override Aw.Judge.Features.SetConfig.SetConfigResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetConfig.SetConfigResponse.GetHashCode() -> int
+override Aw.Judge.Features.SetConfig.SetConfigResponse.ToString() -> string!
+static Aw.Judge.Features.SetConfig.SetConfigRequest.operator !=(Aw.Judge.Features.SetConfig.SetConfigRequest? left, Aw.Judge.Features.SetConfig.SetConfigRequest? right) -> bool
+static Aw.Judge.Features.SetConfig.SetConfigRequest.operator ==(Aw.Judge.Features.SetConfig.SetConfigRequest? left, Aw.Judge.Features.SetConfig.SetConfigRequest? right) -> bool
+static Aw.Judge.Features.SetConfig.SetConfigResponse.operator !=(Aw.Judge.Features.SetConfig.SetConfigResponse? left, Aw.Judge.Features.SetConfig.SetConfigResponse? right) -> bool
+static Aw.Judge.Features.SetConfig.SetConfigResponse.operator ==(Aw.Judge.Features.SetConfig.SetConfigResponse? left, Aw.Judge.Features.SetConfig.SetConfigResponse? right) -> bool
+Aw.Judge.Features.GetConfig.GetConfigResponse.Deconstruct(out Aw.Judge.Core.Config.JudgeConfig! Config, out string? Warning) -> void
+Aw.Judge.Features.GetConfig.GetConfigResponse.GetConfigResponse(Aw.Judge.Core.Config.JudgeConfig! Config, string? Warning) -> void
+Aw.Judge.Features.GetConfig.GetConfigResponse.Warning.get -> string?
+Aw.Judge.Features.GetConfig.GetConfigResponse.Warning.init -> void
+Aw.Judge.Features.SetConfig.SetConfigRequest.Deconstruct(out string! Question, out bool? Enabled, out double? Threshold) -> void
+Aw.Judge.Features.SetConfig.SetConfigRequest.Enabled.get -> bool?
+Aw.Judge.Features.SetConfig.SetConfigRequest.Enabled.init -> void
+Aw.Judge.Features.SetConfig.SetConfigRequest.SetConfigRequest(string! Question, bool? Enabled = null, double? Threshold = null) -> void
+Aw.Judge.Features.SetConfig.SetConfigRequest.Threshold.get -> double?
+Aw.Judge.Features.SetConfig.SetConfigRequest.Threshold.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.<Clone>$() -> Aw.Judge.Features.AskQuestion.AskQuestionRequest!
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.AllowedProviders.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>?
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.AllowedProviders.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.AskQuestionRequest(string! Question, string! Input) -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Deconstruct(out string! Question, out string! Input) -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Equals(Aw.Judge.Features.AskQuestion.AskQuestionRequest? other) -> bool
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Input.get -> string!
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Input.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Question.get -> string!
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.Question.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.SessionId.get -> Aw.Judge.Core.Ids.SessionId?
+Aw.Judge.Features.AskQuestion.AskQuestionRequest.SessionId.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionResponse
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.<Clone>$() -> Aw.Judge.Features.AskQuestion.AskQuestionResponse!
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.AskQuestionResponse(Aw.Judge.Core.Evaluation.EvaluationOutcome! Outcome, string? ConfigWarning) -> void
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.ConfigWarning.get -> string?
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.ConfigWarning.init -> void
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.Deconstruct(out Aw.Judge.Core.Evaluation.EvaluationOutcome! Outcome, out string? ConfigWarning) -> void
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.Equals(Aw.Judge.Features.AskQuestion.AskQuestionResponse? other) -> bool
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.Outcome.get -> Aw.Judge.Core.Evaluation.EvaluationOutcome!
+Aw.Judge.Features.AskQuestion.AskQuestionResponse.Outcome.init -> void
+override Aw.Judge.Features.AskQuestion.AskQuestionRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.AskQuestion.AskQuestionRequest.GetHashCode() -> int
+override Aw.Judge.Features.AskQuestion.AskQuestionRequest.ToString() -> string!
+override Aw.Judge.Features.AskQuestion.AskQuestionResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.AskQuestion.AskQuestionResponse.GetHashCode() -> int
+override Aw.Judge.Features.AskQuestion.AskQuestionResponse.ToString() -> string!
+static Aw.Judge.Features.AskQuestion.AskQuestionRequest.operator !=(Aw.Judge.Features.AskQuestion.AskQuestionRequest? left, Aw.Judge.Features.AskQuestion.AskQuestionRequest? right) -> bool
+static Aw.Judge.Features.AskQuestion.AskQuestionRequest.operator ==(Aw.Judge.Features.AskQuestion.AskQuestionRequest? left, Aw.Judge.Features.AskQuestion.AskQuestionRequest? right) -> bool
+static Aw.Judge.Features.AskQuestion.AskQuestionResponse.operator !=(Aw.Judge.Features.AskQuestion.AskQuestionResponse? left, Aw.Judge.Features.AskQuestion.AskQuestionResponse? right) -> bool
+static Aw.Judge.Features.AskQuestion.AskQuestionResponse.operator ==(Aw.Judge.Features.AskQuestion.AskQuestionResponse? left, Aw.Judge.Features.AskQuestion.AskQuestionResponse? right) -> bool

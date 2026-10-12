@@ -8,9 +8,12 @@ import { ulid } from "../ids.js";
 import { tryRename } from "../lock/lock.js";
 import type { SystemProbe } from "../system.js";
 
-// The box-wide heavy-job lock (global CLAUDE.md: one heavy job at a time). Same
-// primitive as config/lib/locks.sh: mkdir to acquire, rmdir to release. The
-// holder record sits beside the dir (<dir>.holder.json) so the dir stays empty for rmdir.
+// The box-wide heavy-job lock: at most AW_HEAVY_SLOTS heavy jobs at a time (default 2). Same
+// primitive as config/lib/locks.sh (acquire_any_lock): slot 1 is <lock>, slot k is <lock>.k, each
+// a mkdir mutex (mkdir to acquire, rmdir to release). A holder that knows only <lock> holds slot 1,
+// so the holders never outnumber the slots. Each slot has its own holder record beside it
+// (<slot>.holder.json, so the dir stays empty for rmdir) and its own takeover mutex (<slot>.reclaim).
+// Two jobs of the same kind (index-build:<repo>, suite:<id>) never hold slots at once.
 export interface HeavyHolder {
   kind: string;
   pid: number;
@@ -41,6 +44,18 @@ const ageText = (ms: number): string => (ms >= 3_600_000 ? `${Math.floor(ms / 3_
 // $AW_HEAVY_JOB_LOCK, default <state root>/locks/heavy-job.lock (the path locks.sh callers use).
 export const heavyLockDir = (stateRoot: string, env: NodeJS.ProcessEnv): string =>
   env.AW_HEAVY_JOB_LOCK ?? path.join(stateRoot, "locks", "heavy-job.lock");
+export const DEFAULT_HEAVY_SLOTS = 2;
+// $AW_HEAVY_SLOTS: a whole number of at least 1; anything else is the default.
+export const heavySlots = (env: NodeJS.ProcessEnv): number => {
+  const raw = env.AW_HEAVY_SLOTS?.trim() ?? "";
+  const n = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;
+  return Number.isSafeInteger(n) && n >= 1 ? n : DEFAULT_HEAVY_SLOTS;
+};
+// Every slot's dir, slot 1 first.
+export const heavyLockDirs = (stateRoot: string, env: NodeJS.ProcessEnv): string[] => {
+  const base = heavyLockDir(stateRoot, env);
+  return Array.from({ length: heavySlots(env) }, (_, i) => (i === 0 ? base : `${base}.${i + 1}`));
+};
 const holderFile = (dir: string): string => `${dir}.holder.json`;
 const mutexDir = (dir: string): string => `${dir}.reclaim`;
 const mutexRecord = (dir: string): string => path.join(mutexDir(dir), "holder.json");
@@ -200,50 +215,102 @@ function release(deps: Deps, dir: string, me: HeavyHolder): void {
   }
 }
 
+// One slot, tried once: take it when free, or take it over when its holder is dead on this host
+// (killed, crashed, rebooted) or has held it past MAX_HEAVY_AGE_MS, whoever holds it. Returns the
+// holder record to keep (it may name the takeover) or null when the slot stays busy.
+function trySlot(deps: Deps, dir: string, slot: number, me: HeavyHolder): { me: HeavyHolder; written: boolean } | null {
+  if (tryMkdir(dir)) return { me, written: false };
+  const h = readHolder(dir);
+  const st = fs.statSync(dir, { throwIfNoEntry: false });
+  const aged = (s: fs.Stats): boolean => deps.now().getTime() - s.mtimeMs > MAX_HEAVY_AGE_MS;
+  const isDead = h !== null && dead(h, deps.system);
+  const why = isDead ? `dead pid ${h.pid} (${h.kind})` : st !== undefined && aged(st) ? `a lock held over 6 h${h === null ? " with no holder record" : ` by ${h.kind} (pid ${h.pid})`}` : null;
+  if (why === null) return null;
+  const taken: HeavyHolder = { ...me, reclaimed: why };
+  if (!reclaim(deps, dir, h, taken, isDead ? () => true : aged)) return null;
+  deps.log(`reclaiming the heavy-job lock${slot === 1 ? "" : ` slot ${slot}`} left by ${why}`);
+  return { me: taken, written: true };
+}
+
+// Who holds a busy slot, for the wait and busy messages.
+function busyText(deps: Deps, dir: string): { who: string; held: string } {
+  const cur = readHolder(dir);
+  const st = fs.statSync(dir, { throwIfNoEntry: false });
+  return {
+    who: cur === null ? "" : ` (${cur.kind}, pid ${cur.pid}, since ${cur.startedAt})`,
+    held: st === undefined ? "" : `; held ${ageText(deps.now().getTime() - st.mtimeMs)}`,
+  };
+}
+
+// A live holder of another slot running the same kind of job (two index builds of one repo, one
+// suite twice): they would share files, so the later one gives its slot back and waits.
+function twinOf(deps: Deps, dirs: string[], mine: string, me: HeavyHolder): HeavyHolder | null {
+  for (const d of dirs) {
+    if (d === mine) continue;
+    const h = readHolder(d);
+    if (h !== null && h.kind === me.kind && !sameHolder(h, me) && !dead(h, deps.system)) return h;
+  }
+  return null;
+}
+
 export async function withHeavyLock<T>(deps: Deps, kind: string, timeoutMs: number, fn: () => Promise<T>): Promise<T> {
-  const dir = heavyLockDir(awStateDir(deps), deps.env);
-  fs.mkdirSync(path.dirname(dir), { recursive: true });
+  const dirs = heavyLockDirs(awStateDir(deps), deps.env);
+  fs.mkdirSync(path.dirname(dirs[0]), { recursive: true });
   const sys = deps.system;
-  let me: HeavyHolder = { kind, pid: sys.pid, host: sys.hostname(), bootId: sys.bootId(), startedAt: deps.now().toISOString(), reclaimed: null };
-  let written = false;
+  const fresh: HeavyHolder = { kind, pid: sys.pid, host: sys.hostname(), bootId: sys.bootId(), startedAt: deps.now().toISOString(), reclaimed: null };
+  let got: { dir: string; me: HeavyHolder } | null = null;
   // Bounded by attempts, not wall time, so a fake clock can't loop forever.
   const attempts = Math.ceil(timeoutMs / 1000) + 1;
-  for (let i = 1; ; i++) {
-    if (tryMkdir(dir)) break;
-    const h = readHolder(dir);
-    const st = fs.statSync(dir, { throwIfNoEntry: false });
-    const aged = (s: fs.Stats): boolean => deps.now().getTime() - s.mtimeMs > MAX_HEAVY_AGE_MS;
-    // A holder that is dead on this host (killed, crashed, rebooted) never releases: take the
-    // lock over. So is one held past MAX_HEAVY_AGE_MS, whoever holds it.
-    const isDead = h !== null && dead(h, sys);
-    const why = isDead ? `dead pid ${h.pid} (${h.kind})` : st !== undefined && aged(st) ? `a lock held over 6 h${h === null ? " with no holder record" : ` by ${h.kind} (pid ${h.pid})`}` : null;
-    if (why !== null) {
-      const taken: HeavyHolder = { ...me, reclaimed: why };
-      if (reclaim(deps, dir, h, taken, isDead ? () => true : aged)) {
-        deps.log(`reclaiming the heavy-job lock left by ${taken.reclaimed}`);
-        me = taken;
-        written = true;
-        break;
+  for (let i = 1; got === null; i++) {
+    let twin: HeavyHolder | null = null;
+    for (const [k, dir] of dirs.entries()) {
+      const r = trySlot(deps, dir, k + 1, fresh);
+      if (r === null) continue;
+      try {
+        if (!r.written) writeHolder(holderFile(dir), r.me);
+      } catch (e) {
+        release(deps, dir, r.me);
+        throw e;
       }
+      // Our record is written before we look, so of two same-kind jobs starting together at least one sees the other.
+      twin = dirs.length === 1 ? null : twinOf(deps, dirs, dir, r.me);
+      if (twin === null) got = { dir, me: r.me };
+      else release(deps, dir, r.me);
+      break;
     }
-    const cur = readHolder(dir) ?? h;
-    const who = cur === null ? "" : ` (${cur.kind}, pid ${cur.pid}, since ${cur.startedAt})`;
-    const held = st === undefined ? "" : `; held ${ageText(deps.now().getTime() - st.mtimeMs)}`;
-    if (i >= attempts) throw new SindriError("SND-INDEX-001", `the heavy-job lock is busy${who}${held}`);
-    if (i === 1) deps.log(`waiting for the heavy-job lock${who}`);
+    if (got !== null) break;
+    // One slot reads exactly as the single lock did; several name each slot's holder.
+    const texts = dirs.map((d) => busyText(deps, d));
+    const busy =
+      twin !== null
+        ? ` (${kind} already runs in another slot, pid ${twin.pid}, since ${twin.startedAt})`
+        : dirs.length === 1
+          ? `${texts[0].who}${texts[0].held}`
+          : ` (all ${dirs.length} slots: ${texts.map((t, k) => `slot ${k + 1}${t.who}${t.held}`).join(" | ")})`;
+    if (i >= attempts) throw new SindriError("SND-INDEX-001", `the heavy-job lock is busy${busy}`);
+    if (i === 1) deps.log(twin !== null ? `waiting for the other ${kind} to finish` : dirs.length === 1 ? `waiting for the heavy-job lock${texts[0].who}` : `waiting for a heavy-job lock slot (all ${dirs.length} busy)`);
     await deps.sleep(1000);
   }
   try {
-    if (!written) writeHolder(holderFile(dir), me);
     return await fn();
   } finally {
-    release(deps, dir, me);
+    release(deps, got.dir, got.me);
   }
 }
 
-export function heavyLockState(stateRoot: string, now: () => Date, env: NodeJS.ProcessEnv): { held: boolean; holder: HeavyHolder | null; ageMs: number | null } {
-  const dir = heavyLockDir(stateRoot, env);
-  const st = fs.statSync(dir, { throwIfNoEntry: false });
-  if (st === undefined) return { held: false, holder: null, ageMs: null };
-  return { held: true, holder: readHolder(dir), ageMs: now().getTime() - st.mtimeMs };
+export interface HeavySlotState {
+  slot: number;
+  dir: string;
+  held: boolean;
+  holder: HeavyHolder | null;
+  ageMs: number | null;
+}
+
+// Every slot, slot 1 first.
+export function heavyLockState(stateRoot: string, now: () => Date, env: NodeJS.ProcessEnv): HeavySlotState[] {
+  return heavyLockDirs(stateRoot, env).map((dir, i) => {
+    const st = fs.statSync(dir, { throwIfNoEntry: false });
+    if (st === undefined) return { slot: i + 1, dir, held: false, holder: null, ageMs: null };
+    return { slot: i + 1, dir, held: true, holder: readHolder(dir), ageMs: now().getTime() - st.mtimeMs };
+  });
 }

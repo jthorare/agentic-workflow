@@ -1,0 +1,31 @@
+## health
+{"status":"ok","failures24h":0}
+## brief save
+## brief get
+{"toolUseId":"toolu_1","agentId":null,"sessionId":"s1","promptId":"p1","dispatchName":"builder-a","subagentType":"general-purpose","goal":"g","acceptanceCriteria":"the tests pass","proofCommand":"make test","savedAt":"<time>"}
+## brief get (none)
+no brief for tool_use_id: toolu_2
+exit 1
+## brief map-by-name
+toolu_1
+## wake-gate (pre-rule)
+{"decision":"drop","confidence":1,"model":"rules","reasonCode":"pre-rule","id":"<id>"}
+## ask-check (pre-rule)
+{"decision":"ask","confidence":1,"model":"rules","reasonCode":"pre-rule","id":"<id>"}
+## wake-gate (nothing decides)
+{"escalated":true,"reasonCode":"no-provider-decided"}
+exit 2
+## config get
+{"questions":{"wake-gate":{"enabled":true,"threshold":0.7}}}
+## usage error
+usage: judge why <decision-id>
+exit 64
+## bad allowlist
+usage: judge <command> [args] | judge <question> < input.json (unknown provider(s): bogus)
+exit 64
+## bad AW_JUDGE_PROVIDERS under health
+{"status":"ok","failures24h":0}
+## health after
+{"status":"ok","failures24h":0}
+## state files
+./judge/decisions.sqlite

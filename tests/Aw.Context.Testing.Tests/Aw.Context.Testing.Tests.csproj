@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests for Aw.Context.Testing (stage S-FX): the fixture builder, the recordings' consistency, the probe file and
+       both fake servers. Named apart from S-1A's Aw.Context.Tests, like Aw.Kernel.Testing.Tests. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.Context.Testing.Tests</RootNamespace>
+    <!-- IDE0005 (unused usings) only runs with a documentation file; tests/.editorconfig turns off CS1591. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.Context.Testing/Aw.Context.Testing.csproj" />
+    <ProjectReference Include="../Aw.Kernel.Testing/Aw.Kernel.Testing.csproj" />
+  </ItemGroup>
+</Project>

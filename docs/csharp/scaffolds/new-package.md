@@ -489,7 +489,7 @@ dotnet format --verify-no-changes
 node scripts/check-deps.mjs                             # the package and edges are declared
 ```
 
-All of them run under the heavy-job lock (the generator takes it, or runs inside a caller's with `AW_HEAVY_LOCK_HELD=1`).
+All of them run under a slot of the heavy-job lock (at most two heavy jobs at a time, `AW_HEAVY_SLOTS`; the generator takes one, or runs inside a caller's with `AW_HEAVY_LOCK_HELD=1`).
 They run with the developer's environment: under `CI=true` (locked restore, the `AW0001` lock-file guard) restoring a
 new project is refused by design, so `scripts/scaffold/e2e.sh` runs the generators with `CI` unset.
 

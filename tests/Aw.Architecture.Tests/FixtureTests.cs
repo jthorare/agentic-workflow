@@ -8,6 +8,9 @@ namespace Aw.Architecture.Tests;
 public sealed class FixtureTests
 {
     private static readonly string[] _compliant = ["Good", "SmallGood"];
+    private static readonly string[] _composing = ["ComposeHost", "ComposeTarget"];
+    private static readonly ComposeEdge[] _compose =
+        [new("Aw.Architecture.Tests.Fixtures.ComposeHost", "Aw.Architecture.Tests.Fixtures.ComposeTarget")];
 
     [Fact]
     public void The_compliant_fixtures_pass_every_rule()
@@ -41,6 +44,56 @@ public sealed class FixtureTests
     [Fact]
     public void Another_package_past_its_core_is_reported() =>
         Verify.Exactly(DirectionRules.Check(FixtureSet.Edges("CrossA", "CrossB")), DirectionRules.CrossPackageId, "CrossB.Infrastructure.LedgerStore");
+
+    [Fact]
+    public void A_host_may_call_a_compose_targets_registration_methods_but_nothing_else_from_its_features_or_infrastructure() =>
+        Verify.Exactly(ComposeRules.Check(FixtureSet.Edges(_composing), _compose), ComposeRules.Id,
+            "ShowCommand -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions: calls Describe",
+            "Composition -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions: calls Label",
+            "ShowCommand -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.Make.MakeRequest");
+
+    [Fact]
+    public void A_compose_edge_carves_the_host_out_of_the_core_only_rule_and_nothing_else() =>
+        Verify.Exactly(DirectionRules.Check(FixtureSet.Edges(_composing), _compose), DirectionRules.CrossPackageId,
+            "Wire.WireService -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions");
+
+    [Fact]
+    public void Without_a_compose_edge_a_host_reaching_features_or_infrastructure_is_past_the_core() =>
+        Verify.Exactly(DirectionRules.Check(FixtureSet.Edges(_composing)), DirectionRules.CrossPackageId,
+            "Composition -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions",
+            "Composition -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Infrastructure.ThingInfrastructureServiceCollectionExtensions",
+            "ShowCommand -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions",
+            "ShowCommand -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.Make.MakeRequest",
+            "WireService -> Aw.Architecture.Tests.Fixtures.ComposeTarget.Features.ThingFeaturesServiceCollectionExtensions");
+
+    [Fact]
+    public void Compose_edges_are_read_from_deps_yaml_by_project_prefix() =>
+        Assert.Equal([new ComposeEdge("Aw.Hi", "Aw.Lo")], ComposeEdge.Parse(string.Join('\n', [
+            "packages:",
+            "  - id: Hi",
+            "    kind: package",
+            "    projectPrefix: Aw.Hi",
+            "  - id: Lo",
+            "    kind: package",
+            "    projectPrefix: Aw.Lo",
+            "  - id: Shell",
+            "    kind: shell",
+            "edges:",
+            "  - from: Hi",
+            "    to: Lo",
+            "    kind: project",
+            "    status: planned",
+            "  - from: Hi",
+            "    to: Lo",
+            "    kind: compose",
+            "    status: planned",
+            "    note: \"kind: compose in a note is not an edge\"",
+            "  - from: Shell",
+            "    to: Lo",
+            "    kind: cli",
+            "    status: current",
+            "exceptions: []",
+        ])));
 
     [Fact]
     public void A_slice_using_another_slice_is_reported_in_both_shapes() =>

@@ -1,0 +1,3 @@
+#nullable enable
+Aw.Judge.Infrastructure.JudgeInfrastructureServiceCollectionExtensions
+static Aw.Judge.Infrastructure.JudgeInfrastructureServiceCollectionExtensions.AddJudgeInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

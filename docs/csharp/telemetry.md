@@ -90,6 +90,11 @@ nothing parses them as a contract. Golden tests and smokes that capture standard
 lines, because every line carries a wall-clock timestamp (the AOT smokes set `AW_LOG_LEVEL=none`; the unknown-level
 warning is checked by the scaffold e2e's native run instead).
 
+`judge` is the exception on both points (`docs/csharp/judge.md`, Exit codes and streams). Its AOT smoke leaves
+`AW_LOG_LEVEL` unset, to pin that the default level writes nothing to standard error. And its hook contract (spec §4c)
+has one standard-error point a hook parses: `done-gate.sh` matches a line starting `no brief for` (`brief get`, exit 1).
+The hook matches by line (`grep '^no brief for'`), so a JSON log line beside it can't break the match.
+
 ## Framework logs in http hosts
 
 An http host clears ASP.NET's logging providers (`/new-package`'s `LoopbackBinding`), so Kernel's factory is the only

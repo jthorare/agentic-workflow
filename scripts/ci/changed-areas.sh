@@ -59,6 +59,12 @@ classify_changes() {
         dotnet=true ;;
     esac
     case "$file" in
+      # The dotnet job's hook-contract step runs these hooks against the C# judge
+      # (config/lib/tests/judge-cs-hook-surface.test.sh); bash-tests.sh leaves that test to it.
+      config/hooks/*|config/statusline.sh|config/lib/failopen.sh|config/lib/locks.sh|config/lib/tests/judge-cs-hook-surface.test.sh)
+        dotnet=true ;;
+    esac
+    case "$file" in
       # scripts/ci/lane-budgets.mjs groups test projects by deps.yaml package; check-deps and check-rules read it too
       deps.yaml) dotnet=true; bash=true ;;
       # lane-budgets.mjs reads deps.yaml through this parser (scripts/* already runs the bash tests)

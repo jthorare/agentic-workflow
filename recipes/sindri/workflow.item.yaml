@@ -1,0 +1,27 @@
+schema: 1
+id: workflow.item
+version: 1
+inputs: [fact:item]
+initial: triaged
+states:
+  triaged:   { kind: wait, waitFor: { event: item.routed }, timeout: { after: 7d, then: escalate },
+               next: "Waiting for the router to size and route {item}." }
+  startable: { kind: wait, waitFor: { resource: slot }, timeout: { after: 3d, then: escalate },
+               next: "Waiting for a session slot for {item}." }
+  claimed:   { kind: wait, waitFor: { event: claim.created }, timeout: { after: 10m, then: retry },
+               next: "Waiting for the claim ref sindri/{user}/{item}." }
+  running:   { kind: wait, timeout: { after: 14d, then: park },
+               waitFor: { child: { recipe: workflow.step, inputs: { "fact:spec": { fact: fact:stepSpec } }, onParked: propagate } },
+               next: "Waiting for {child}." }
+  done:      { kind: terminal, outcome: resolved }
+  dropped:   { kind: terminal, outcome: unresolved }
+transitions:
+  - { from: triaged,   to: startable, on: wait.satisfied, when: { outcome: startable },
+      gates: [gate.route.startable], produces: [fact:stepSpec] }
+  - { from: triaged,   to: dropped,   on: wait.satisfied, when: { outcome: notStartable } }
+  - { from: startable, to: claimed,   on: wait.satisfied, gates: [gate.budget.available], effects: [effect.claim.ref] }
+  - { from: claimed,   to: running,   on: wait.satisfied, when: { outcome: created } }
+  - { from: claimed,   to: dropped,   on: wait.satisfied, when: { outcome: claimExists } }
+  - { from: running,   to: done,      on: wait.satisfied, when: { outcome: resolved } }
+  - { from: running,   to: dropped,   on: wait.satisfied, when: { outcome: cancelled } }
+evals: [evals/workflow.item/happy.jsonl, evals/workflow.item/child-parks.jsonl, evals/workflow.item/claim-exists.jsonl]

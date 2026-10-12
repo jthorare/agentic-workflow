@@ -8,7 +8,7 @@ import { init } from "../src/evolve/cmd/registry.js";
 import { weekly } from "../src/evolve/cmd/weekly.js";
 import { GENERALIZE_ROLES } from "../src/evolve/generalize.js";
 import { ProposalSchema, saveProposal } from "../src/evolve/proposals.js";
-import { heavyLockDir } from "../src/index/heavy-lock.js";
+import { heavyLockDirs } from "../src/index/heavy-lock.js";
 import type { ModelCall } from "../src/scope/model.js";
 import { evolveFixture, fakeProc, generalizingScript, git, scriptedEvolveIo, withDeps } from "./evolve-fixtures.js";
 
@@ -151,14 +151,18 @@ describe("sindri evolve weekly", () => {
     fx.close();
   });
 
-  it("skips everything while a heavy job holds the box-wide lock", async () => {
+  it("skips everything while heavy jobs hold every slot of the box-wide lock, and runs with one slot free", async () => {
     const { fx, proc } = await ready();
-    fs.mkdirSync(heavyLockDir(awStateDir(fx.deps), fx.deps.env), { recursive: true });
+    const dirs = heavyLockDirs(awStateDir(fx.deps), fx.deps.env);
+    for (const dir of dirs) fs.mkdirSync(dir, { recursive: true });
     const before = proc.calls.length;
     const r = await weekly([], fx.ctx);
     expect(r.exitCode).toBe(1);
-    expect(r.stdout).toBe("Skipped: a heavy job holds the box-wide lock. Nothing ran.\nNext: rerun sindri evolve weekly later\n");
+    expect(r.stdout).toBe("Skipped: heavy jobs hold every slot of the box-wide lock. Nothing ran.\nNext: rerun sindri evolve weekly later\n");
     expect(proc.calls).toHaveLength(before);
+    // One heavy job on the box leaves a slot: weekly goes ahead (its dry run gets past the lock check).
+    fs.rmdirSync(dirs[1]);
+    expect((await weekly(["--dry-run"], fx.ctx)).stdout).toMatch(/^Weekly plan \(dry run\)/);
     fx.close();
   });
 

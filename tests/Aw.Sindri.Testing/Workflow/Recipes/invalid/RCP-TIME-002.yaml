@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.time-retry
+version: 1
+initial: running
+states:
+  running:
+    kind: wait
+    waitFor: { child: { recipe: workflow.step, inputs: {}, onParked: propagate } }
+    timeout: { after: 14d, then: retry }
+    next: "Waiting for {child}."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: running, to: done, on: wait.satisfied }

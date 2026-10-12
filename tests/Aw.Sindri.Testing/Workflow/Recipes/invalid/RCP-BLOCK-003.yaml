@@ -1,0 +1,16 @@
+schema: 1
+id: workflow.block-parameter
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: done, on: step.completed, when: { outcome: done },
+      gates: [{ use: gate.budget.available, with: { limit: 5 } }] }

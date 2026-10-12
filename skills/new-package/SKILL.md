@@ -44,7 +44,7 @@ node scripts/scaffold/new-package.mjs --name <Name> --tier <n> --error-prefix <P
   [--depends A,B] [--command <cmd> | --route "<METHOD> /path/{fooId}"] [--ids FooId:string] [--ports IFooStore]
 ```
 
-It takes the heavy-job lock itself (or runs inside one, under `AW_HEAVY_LOCK_HELD=1`), writes the files, then runs the
+It takes a slot of the heavy-job lock itself (or runs inside one, under `AW_HEAVY_LOCK_HELD=1`), writes the files, then runs the
 spec's commands in order: restore of the new projects and the architecture tests, the locked whole-solution restore,
 the public API lines from each library project's build (`RS0016`), `dotnet build -warnaserror`, the unit lane (exactly one failure: the
 slice's red test), `dotnet format --verify-no-changes` and `node scripts/check-deps.mjs`. Any other failure reverts

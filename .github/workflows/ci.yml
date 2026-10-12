@@ -321,6 +321,15 @@ jobs:
         if: steps.sln.outputs.run == 'true'
         with:
           node-version-file: .nvmrc
+      - name: Hook contract (real hooks against the C# judge)
+        if: steps.sln.outputs.run == 'true'
+        # Spec §4c: the bash hooks keep running through the switch, so what they read from judge is frozen.
+        # Runs config/hooks/* with the C# judge first on PATH, offline, and checks only the hook-read points.
+        # Spec §4a step 3 and §4b.5: the real hooks run against the NativeAOT binary, the one the NativeAOT smoke step
+        # above published to artifacts/aot-judge-smoke/bin/judge (its cleanup removes only its run directory), so a
+        # trimmed member or a missing source-generated type on a hook path fails here.
+        # judge/dist isn't built in this job, so the TS side of the comparison is skipped here (it runs locally).
+        run: AW_JUDGE_CS_BIN=artifacts/aot-judge-smoke/bin/judge bash config/lib/tests/judge-cs-hook-surface.test.sh
       - name: Lane budgets per package
         if: steps.sln.outputs.run == 'true'
         # Times each test project's unit and integration lanes against the Release build

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Aw.Sindri.Host (scaffolded by /new-package): the composition root and the minimal API endpoints
+       (one per slice). NativeAOT entry point 'sindri' (spec §4b.6); the only project that uses Infrastructure, in
+       Composition. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AwAotEntryPoint>true</AwAotEntryPoint>
+    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+    <AssemblyName>sindri</AssemblyName>
+    <RootNamespace>Aw.Sindri.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.Sindri.Core/Aw.Sindri.Core.csproj" />
+    <ProjectReference Include="../Aw.Sindri.Features/Aw.Sindri.Features.csproj" />
+    <ProjectReference Include="../Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj" />
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+    <ProjectReference Include="../../Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.Sindri.Tests" />
+  </ItemGroup>
+</Project>

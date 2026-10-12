@@ -172,7 +172,7 @@ async function labelBatch(batch: readonly LabelItem[], runner: LabelRunner): Pro
   return { error };
 }
 
-// One call at a time (one heavy job at a time). A batch that fails twice is counted in labelErrors
+// One call at a time. A batch that fails twice is counted in labelErrors
 // (its last error kept in errors) and its items stay unlabeled; the rest still run. If the first two
 // batches both fail, the cause is systemic (missing CLI, not logged in, changed envelope), so the run
 // aborts with that error instead of burning every remaining call. The message never contains turn text.

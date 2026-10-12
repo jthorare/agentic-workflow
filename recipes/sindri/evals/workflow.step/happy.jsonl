@@ -1,0 +1,4 @@
+{"start":{"inputs":{"fact:spec":"Add a --version flag that prints the build's version."}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Added --version; it prints 1.4.0."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"passed"},"expect":{"state":"verify"}}
+{"trigger":{"kind":"step.completed","outcome":"accepted"},"expect":{"state":"done","outcome":"resolved"}}

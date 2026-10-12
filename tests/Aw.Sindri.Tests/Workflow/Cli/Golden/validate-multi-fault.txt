@@ -1,0 +1,10 @@
+$ sindri recipe validate <tmp>/multi-fault.yaml
+exit 1
+--- stdout
+RCP-NEXT-001: the next of state 'produce' uses '{ticket}', which isn't a recipe variable at multi-fault.yaml:15:5 (states.produce.next); use only {item}, {instance}, {state}, {user}, {child}, {loop.<name>}, {loop.<name>.cap} and {budget.tokens.left}
+RCP-REACH-001: state 'orphan' is unreachable from 'queued' at multi-fault.yaml:19:3 (states.orphan); add a transition into it or remove it
+RCP-BLOCK-001: block 'step.prodcue' isn't registered at multi-fault.yaml:13:5 (states.produce.step.use); name a registered step block, or fix the id
+information: RCP-RES-001: resource 'heavy' has no allocator in this build at multi-fault.yaml:8:16 (states.queued.waitFor.resource); it parks with SND-WF-010 until the heavy-job lock port lands
+skipped: RCP-EFFECT-001: effect 'effect.notify.desk' wasn't checked against an effect allowlist, since the profile has no workflow.effects at multi-fault.yaml:23:64 (transitions[0].effects[0].use); add workflow.effects to the profile; until then the effect is refused at run time
+hash sha256:e6cbf54e1c027a85d2ec4c7da2bb3138b1a8a03f4515c3bbd6658217d8dc1009
+--- stderr

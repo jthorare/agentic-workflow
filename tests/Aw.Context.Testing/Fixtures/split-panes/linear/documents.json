@@ -1,0 +1,29 @@
+{
+  "data": {
+    "documents": {
+      "nodes": [
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000020",
+          "title": "PRD: Split panes",
+          "slugId": "prd-split-panes-0e5a1b",
+          "content": "# PRD: Split panes\n\n## Problem\nPeople run two or three commands side by side and today open a second window for it.\n\n## Goals\n1. Split the focused pane vertically or horizontally, from a command or a key.\n2. Toggle a split's orientation without losing your place.\n3. Keep each tab's pane layout when switching tabs.\n4. Resize panes from the keyboard. A pane has a minimum width so a prompt stays readable.\n\n## Non-goals\n- Remembering layouts across restarts (later; SPL-106).\n- Mouse dragging of pane borders.\n\n## Notes\nAll actions are commands in the command registry, so they can be bound to keys and listed in the palette.\nThe layout is one shared state (PaneLayout) read by the tab manager and written by the split features.\n",
+          "url": "https://linear.app/fixture-labs/document/prd-split-panes-0e5a1b",
+          "createdAt": "2026-06-28T10:00:00.000Z",
+          "updatedAt": "2026-07-20T12:00:00.000Z",
+          "creator": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "0e5a1b00-0000-4000-8000-000000000020"
+      }
+    }
+  }
+}

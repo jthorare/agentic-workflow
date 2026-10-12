@@ -1,0 +1,44 @@
+{
+  "data": {
+    "projectUpdates": {
+      "nodes": [
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000031",
+          "health": "onTrack",
+          "url": "https://linear.app/fixture-labs/project/split-panes-0e5a1b/updates#0e5a1b00-0000-4000-8000-000000000031",
+          "body": "Split and toggle orientation shipped (SPL-102, SPL-103). Tab layout restore (SPL-104) is next.",
+          "createdAt": "2026-07-17T16:00:00.000Z",
+          "updatedAt": "2026-07-17T16:00:00.000Z",
+          "user": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          }
+        },
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000032",
+          "health": "atRisk",
+          "url": "https://linear.app/fixture-labs/project/split-panes-0e5a1b/updates#0e5a1b00-0000-4000-8000-000000000032",
+          "body": "Keyboard resize shipped (SPL-105). The minimum pane width decision changed to 20 columns after user testing; the code still uses 10. Persisting layouts (SPL-106) has started.",
+          "createdAt": "2026-08-14T16:00:00.000Z",
+          "updatedAt": "2026-08-14T16:00:00.000Z",
+          "user": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "project": {
+            "id": "0e5a1b00-0000-4000-8000-000000000010",
+            "name": "Split panes"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "0e5a1b00-0000-4000-8000-000000000032"
+      }
+    }
+  }
+}

@@ -56,7 +56,7 @@ export const ERRORS = {
   "SND-TRACKER-003": { summary: "A plan file is too big to read (over 2 MiB).", fix: "Split the plan file into smaller plans." },
   "SND-TRACKER-404": { summary: "The tracker has no such item.", fix: "Check the id with `sindri observe`." },
   "SND-TRACKER-405": { summary: "This tracker can't write.", fix: "The plan-file tracker is read-only; edit the plan file." },
-  "SND-INDEX-001": { summary: "The heavy-job lock is busy.", fix: "wait for the holder to finish; `sindri doctor` shows it" },
+  "SND-INDEX-001": { summary: "All heavy-job slots are busy.", fix: "wait for the holder to finish; `sindri doctor` shows it" },
   "SND-INDEX-002": { summary: "The repo path is not a git repo.", fix: "check repos/<name>.yaml path, then sindri profile approve" },
   "SND-INDEX-003": { summary: "The index input is larger than index.maxTotalMB.", fix: "add generated or vendored paths to index.denyPaths, or raise index.maxTotalMB" },
   "SND-INDEX-404": { summary: "No index has been built for this repo.", fix: "sindri index build --repo <name>" },

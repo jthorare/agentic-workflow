@@ -51,4 +51,4 @@ X_BIN # doc-comment example of a binary override
 
 # Set by CI or by a caller, never by hand.
 GITHUB_STEP_SUMMARY # GitHub Actions sets it; scripts/ci/lane-budgets.mjs appends its table there
-AW_HEAVY_LOCK_HELD # set to 1 by a caller that already holds the heavy-job lock (bash-tests.sh, the scaffold e2e)
+AW_HEAVY_LOCK_HELD # set to 1 by a caller that already holds a heavy-job lock slot (bash-tests.sh, the scaffold e2e)

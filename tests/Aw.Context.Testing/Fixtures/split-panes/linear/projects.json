@@ -1,0 +1,37 @@
+{
+  "data": {
+    "projects": {
+      "nodes": [
+        {
+          "id": "0e5a1b00-0000-4000-8000-000000000010",
+          "name": "Split panes",
+          "slugId": "split-panes-0e5a1b",
+          "description": "Panes inside a tab: split, toggle orientation, resize, and keep each tab's layout when switching tabs.",
+          "url": "https://linear.app/fixture-labs/project/split-panes-0e5a1b",
+          "state": "started",
+          "createdAt": "2026-06-27T09:00:00.000Z",
+          "updatedAt": "2026-08-14T16:00:00.000Z",
+          "startDate": "2026-07-01",
+          "targetDate": "2026-09-01",
+          "lead": {
+            "id": "0e5a1b00-0000-4000-8000-000000000901",
+            "name": "Avery Fixture"
+          },
+          "teams": {
+            "nodes": [
+              {
+                "id": "0e5a1b00-0000-4000-8000-000000000001",
+                "key": "SPL",
+                "name": "Split Panes"
+              }
+            ]
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "0e5a1b00-0000-4000-8000-000000000010"
+      }
+    }
+  }
+}

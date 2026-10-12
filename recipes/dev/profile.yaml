@@ -1,0 +1,18 @@
+# The dev profile for the workflow engine's phase signals (engine spec section 12). Point AW_SINDRI_PROFILE at a copy of
+# this file, with 'user' and the repo path set to yours.
+#
+# P1 note: this build's profile schema (S1, docs/csharp/sindri.md "Profile") is closed, and the 'workflow:' keys
+# arrive later (P4: workflow.deskTimeout; P6: workflow.effects, workflow.dispatchDelay; P7: workflow.route,
+# workflow.budget). Each phase adds its keys here once its schema reads them:
+#   workflow:
+#     deskTimeout: 1m                                   # desk floor off, so workflow.dev-timeout parks after 1m
+#     effects: [effect.claim.ref, effect.notify.desk]
+#     route: { startable: all }
+#     budget: { tokens: 1M }
+schemaVersion: 1
+user: dev
+tenant: local
+repos:
+  - { name: dev-repo, path: /tmp/sindri-dev-repo }   # a temp repo with one commit (effect.claim.ref needs a head)
+services:
+  heartbeat: { every: 30s }

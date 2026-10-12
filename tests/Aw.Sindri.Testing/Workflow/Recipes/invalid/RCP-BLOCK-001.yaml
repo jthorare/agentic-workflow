@@ -1,0 +1,15 @@
+schema: 1
+id: workflow.block-unknown
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.prodcue
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: done, on: step.completed, when: { outcome: done } }

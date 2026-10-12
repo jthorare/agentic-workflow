@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/recipes/recipe.editor.schema.json",
+  "title": "Sindri recipe, schema 1 (editor overlay)",
+  "description": "Hand-written for editors: it accepts the short forms the reader normalizes (spec §3.1) as well as the long form that recipe.schema.json describes. Use it from YAML with '# yaml-language-server: $schema=<path>/recipe.editor.schema.json'. RecipeSchemaTests checks that every $defs record here lists exactly the long form's fields.",
+  "$ref": "#/$defs/Recipe",
+  "$defs": {
+    "Recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "id", "version", "initial", "states", "transitions"],
+      "properties": {
+        "schema": { "const": 1 },
+        "id": { "$ref": "#/$defs/RecipeId" },
+        "version": { "type": "integer", "minimum": 1 },
+        "description": { "type": ["string", "null"] },
+        "base": { "oneOf": [{ "$ref": "#/$defs/RecipeRef" }, { "type": "null" }] },
+        "inputs": { "type": "array", "items": { "oneOf": [{ "$ref": "#/$defs/FactKey" }, { "$ref": "#/$defs/RecipeInput" }] } },
+        "initial": { "type": "string" },
+        "states": {
+          "type": "object",
+          "propertyNames": { "not": { "enum": ["cancelled", "escalated", "parked", "taken-over"] } },
+          "additionalProperties": { "$ref": "#/$defs/RecipeState" }
+        },
+        "transitions": { "type": "array", "items": { "$ref": "#/$defs/RecipeTransition" } },
+        "loops": { "type": "object", "additionalProperties": { "$ref": "#/$defs/LoopSpec" } },
+        "budget": { "oneOf": [{ "$ref": "#/$defs/BudgetSpec" }, { "type": "null" }] },
+        "evals": { "type": "array", "items": { "type": "string" } },
+        "hash": { "oneOf": [{ "$ref": "#/$defs/RecipeHash" }, { "type": "null" }] }
+      }
+    },
+    "RecipeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key"],
+      "properties": {
+        "key": { "$ref": "#/$defs/FactKey" },
+        "label": { "type": ["string", "null"] },
+        "type": { "enum": ["text", "file", "item", null] }
+      }
+    },
+    "RecipeRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "hash"],
+      "properties": {
+        "id": { "$ref": "#/$defs/RecipeId" },
+        "hash": { "$ref": "#/$defs/RecipeHash" }
+      }
+    },
+    "RecipeState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["active", "wait", "terminal"] },
+        "step": { "oneOf": [{ "$ref": "#/$defs/BlockId" }, { "$ref": "#/$defs/StepUse" }, { "type": "null" }] },
+        "waitFor": { "oneOf": [{ "$ref": "#/$defs/WaitFor" }, { "type": "null" }] },
+        "timeout": { "oneOf": [{ "$ref": "#/$defs/TimeoutSpec" }, { "type": "null" }] },
+        "loop": { "type": ["string", "null"] },
+        "budget": { "oneOf": [{ "$ref": "#/$defs/BudgetSpec" }, { "type": "null" }] },
+        "next": { "type": ["string", "null"] },
+        "outcome": { "enum": ["resolved", "unresolved", "alreadySatisfied", "failed", null] }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "active" } } }, "then": { "required": ["step", "timeout", "next"] } },
+        { "if": { "properties": { "kind": { "const": "wait" } } }, "then": { "required": ["waitFor", "timeout", "next"] } },
+        { "if": { "properties": { "kind": { "const": "terminal" } } }, "then": { "required": ["outcome"] } }
+      ]
+    },
+    "StepUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": {
+        "use": { "$ref": "#/$defs/BlockId" },
+        "with": { "$ref": "#/$defs/WithMap" },
+        "inputs": { "type": "array", "items": { "oneOf": [{ "$ref": "#/$defs/BlockId" }, { "$ref": "#/$defs/BlockUse" }] } }
+      }
+    },
+    "BlockUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": {
+        "use": { "$ref": "#/$defs/BlockId" },
+        "with": { "$ref": "#/$defs/WithMap" }
+      }
+    },
+    "GateUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": {
+        "use": { "$ref": "#/$defs/BlockId" },
+        "threshold": { "type": ["number", "null"] },
+        "with": { "$ref": "#/$defs/WithMap" }
+      }
+    },
+    "WithMap": { "type": "object", "additionalProperties": { "oneOf": [{ "$ref": "#/$defs/Literal" }, { "$ref": "#/$defs/WithValue" }] } },
+    "Literal": {
+      "oneOf": [
+        { "type": ["string", "number", "boolean"] },
+        { "type": "array", "items": { "type": ["string", "number", "boolean"] } }
+      ]
+    },
+    "WithValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "literal": { "oneOf": [{ "$ref": "#/$defs/Literal" }, { "type": "null" }] },
+        "fact": { "oneOf": [{ "$ref": "#/$defs/FactKey" }, { "type": "null" }] },
+        "profile": { "type": ["string", "null"] }
+      }
+    },
+    "WaitFor": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "event": { "oneOf": [{ "$ref": "#/$defs/EventKind" }, { "type": "null" }] },
+        "answer": { "oneOf": [{ "$ref": "#/$defs/AnswerWait" }, { "type": "null" }] },
+        "resource": { "enum": ["heavy", "slot", null] },
+        "child": { "oneOf": [{ "$ref": "#/$defs/ChildWait" }, { "type": "null" }] }
+      }
+    },
+    "AnswerWait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question"],
+      "properties": {
+        "id": { "$ref": "#/$defs/AnswerId" },
+        "question": { "type": "string" }
+      }
+    },
+    "ChildWait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipe", "onParked"],
+      "properties": {
+        "recipe": { "$ref": "#/$defs/RecipeId" },
+        "inputs": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/FactKey" },
+          "additionalProperties": { "oneOf": [{ "$ref": "#/$defs/Literal" }, { "$ref": "#/$defs/WithValue" }] }
+        },
+        "onParked": { "enum": ["propagate", "ignore"] }
+      }
+    },
+    "TimeoutSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["after", "then"],
+      "properties": {
+        "after": { "$ref": "#/$defs/RecipeDuration" },
+        "then": { "enum": ["park", "escalate", "retry"] }
+      }
+    },
+    "BudgetSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens"],
+      "properties": {
+        "tokens": { "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "string", "pattern": "^[1-9][0-9]*[kM]?$" }] }
+      }
+    },
+    "RecipeTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "on"],
+      "properties": {
+        "from": { "oneOf": [{ "type": "string" }, { "type": "array", "minItems": 1, "items": { "type": "string" } }] },
+        "to": { "type": "string" },
+        "on": { "type": "string", "pattern": "^(step\\.completed|step\\.failed|wait\\.satisfied|command\\.[a-z][a-z-]{1,31})$" },
+        "when": { "oneOf": [{ "$ref": "#/$defs/WhenClause" }, { "type": "null" }] },
+        "gates": { "type": "array", "items": { "oneOf": [{ "$ref": "#/$defs/BlockId" }, { "$ref": "#/$defs/GateUse" }] } },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/EvidenceCheck" } },
+        "effects": { "type": "array", "items": { "oneOf": [{ "$ref": "#/$defs/BlockId" }, { "$ref": "#/$defs/BlockUse" }] } },
+        "produces": { "type": "array", "items": { "$ref": "#/$defs/FactKey" } }
+      }
+    },
+    "WhenClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "outcome": { "oneOf": [{ "$ref": "#/$defs/OutcomeName" }, { "type": "null" }] },
+        "fact": { "oneOf": [{ "$ref": "#/$defs/FactKey" }, { "type": "null" }] },
+        "is": { "enum": ["present", "absent", null] },
+        "loop": { "type": ["string", "null"] },
+        "below": { "enum": ["cap", null] },
+        "all": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/WhenClause" } },
+        "any": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/WhenClause" } },
+        "not": { "oneOf": [{ "$ref": "#/$defs/WhenClause" }, { "type": "null" }] }
+      }
+    },
+    "EvidenceCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "at", "expect"],
+      "properties": {
+        "kind": { "type": "string" },
+        "at": { "enum": ["base", "head"] },
+        "expect": { "enum": ["pass", "fail"] }
+      }
+    },
+    "LoopSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cap"],
+      "properties": {
+        "cap": { "type": "integer", "minimum": 1 },
+        "noProgress": { "type": "array", "minItems": 1, "items": { "enum": ["findings", "emptyDiff", "sameFailure"] } }
+      }
+    },
+    "RecipeId": { "type": "string", "maxLength": 64, "pattern": "^workflow\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "BlockId": { "type": "string", "maxLength": 64, "pattern": "^(gate|step|effect|evidence|input)(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*){1,2}$" },
+    "FactKey": { "type": "string", "maxLength": 64, "pattern": "^(fact:[a-z][A-Za-z0-9]*|evidence:[a-z][a-z0-9]*([.-][a-z0-9]+)*@(base|head))$" },
+    "EventKind": { "type": "string", "maxLength": 64, "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][A-Za-z0-9]*$" },
+    "OutcomeName": { "type": "string", "maxLength": 40, "pattern": "^[a-z][A-Za-z0-9]*$" },
+    "AnswerId": { "type": "string", "maxLength": 40, "pattern": "^[a-z][A-Za-z0-9]*(-[a-z0-9]+)*$" },
+    "RecipeHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "RecipeDuration": { "type": "string", "pattern": "^[1-9][0-9]{0,5}[mhd]$" }
+  }
+}

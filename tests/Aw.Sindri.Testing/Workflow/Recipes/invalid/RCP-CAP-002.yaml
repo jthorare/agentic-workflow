@@ -1,0 +1,53 @@
+schema: 1
+id: workflow.cap-002
+version: 1
+base: { id: workflow.cap-base, hash: "sha256:5aa84cb58a5a6a2c70fa4c9b3a1758625a9e78b625734ec55e49f2e762125b03" }
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    loop: revisions
+    budget: { tokens: 100k }
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  publish:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  running:
+    kind: wait
+    waitFor: { child: { recipe: workflow.step, onParked: propagate } }
+    timeout: { after: 4h, then: park }
+    next: "Waiting for {child}."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - from: produce
+    to: publish
+    on: step.completed
+    when: { outcome: done }
+    gates:
+      - { use: gate.review, threshold: 0.9 }
+      - gate.check
+    evidence:
+      - { kind: tests, at: head, expect: pass }
+    produces: [fact:output]
+  - from: produce
+    to: produce
+    on: step.failed
+  - from: publish
+    to: running
+    on: step.completed
+    when: { outcome: done }
+    gates: [gate.check]
+    effects:
+      - use: effect.repo.push
+        with: { remote: upstream }
+  - from: running
+    to: done
+    on: wait.satisfied
+loops: { revisions: { cap: 2 } }
+budget: { tokens: 300k }

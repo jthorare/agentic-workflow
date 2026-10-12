@@ -20,12 +20,16 @@ checks:
     id: "OutboxContract"
     ref: tests/Aw.Kernel.Testing/OutboxContract.cs
     status: active
+  - type: test
+    id: "IdGeneratorContract"
+    ref: tests/Aw.Kernel.Testing/IdGeneratorContract.cs
+    status: active
   - type: review
     id: "no mocking library pins"
     status: active
     note: "Directory.Packages.props is reviewed"
 gap: partial
-gapNote: "The Kernel ports' contract bases (read repository, unit of work, outbox) run against their fakes and SQL adapters; that every new port gets one (/new-slice writes it) and that no mocking library is pinned are reviewed."
+gapNote: "The Kernel ports' contract bases (read repository, unit of work, outbox, id generator) run against their fakes and real adapters (SQL, and the judge's RandomIdGenerator); that every new port gets one (/new-slice writes it) and that no mocking library is pinned are reviewed."
 source:
   type: adr
   ref: "docs/superpowers/specs/2026-10-09-agent-readiness-design.md#4b5"

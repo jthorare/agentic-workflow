@@ -34,8 +34,16 @@ expect "a judge change also runs scorer, whose tests import judge's source" \
   "$(printf 'judge/src/db.ts\n')" \
   "$(printf 'bash=true\ndotnet=false\npackages=["judge","scorer"]')"
 
-expect "a hook change runs bash tests only" \
+expect "a hook change runs the bash tests and dotnet (its hook-contract step runs the hooks against the C# judge)" \
   "$(printf 'config/hooks/send-gate.sh\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
+expect "the statusline, the hooks' shared libraries or the hook-contract test also run dotnet" \
+  "$(printf 'config/statusline.sh\nconfig/lib/failopen.sh\nconfig/lib/locks.sh\nconfig/lib/tests/judge-cs-hook-surface.test.sh\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
+expect "another config/lib change runs bash tests only" \
+  "$(printf 'config/lib/merge-hook.sh\n')" \
   "$(printf 'bash=true\ndotnet=false\npackages=[]')"
 
 expect "a devcontainer or .env.example change runs the bash tests (their checks are bash suites)" \

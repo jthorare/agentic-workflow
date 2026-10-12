@@ -38,10 +38,14 @@
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="[10.0.12]" />
     <!-- Typed ids (decision R9, docs/csharp/typed-ids.md). Vogen 8.0.7 published 2026-07-21. -->
     <PackageVersion Include="Vogen" Version="[8.0.7]" />
+    <!-- YAML (the Sindri profile, owner 2026-10-11; later S2 recipes): only the parser and representation model are used,
+         which are reflection-free, so NativeAOT stays clean. The tree is turned into JSON and read through AwJson.
+         YamlDotNet 18.1.0 published 2026-06-26, MIT. -->
+    <PackageVersion Include="YamlDotNet" Version="[18.1.0]" />
     <!-- Aw.Analyzers (spec §4b.6) and its tests: the compiler API the in-repo rules are written against. 5.0.0
          (published 2025-11-18) is the Roslyn of the .NET 10.0.100 SDK: an analyzer must not reference a newer
          compiler than the one that loads it, and every pinned SDK from 10.0.100 on carries 5.0 or later. -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="[5.0.0]" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="[5.9.0]" />
     <!-- Telemetry (Aw.Kernel.Telemetry's one external dependency, spec §4b.1): spans, metrics and the processor and
          exporter seams. OpenTelemetry 1.19.1 published 2026-09-21. It brings Microsoft.Extensions.Logging,
          .Configuration (with the EnvironmentVariables provider), .Options and .DependencyInjection transitively (pinned
@@ -52,10 +56,10 @@
          package only: the xUnit adapter pulls System.Net.Http 4.3.4. 0.13.4 published 2026-08-20. -->
     <PackageVersion Include="TngTech.ArchUnitNET" Version="[0.13.4]" />
     <!-- Logging from an Infrastructure adapter (Aw.Evidence.Infrastructure's UnavailableJudge): ILogger and
-         [LoggerMessage] only; the host's Aw.Kernel.Telemetry brings the implementation. Pinned at 10.0.0, the version
-         OpenTelemetry's Microsoft.Extensions.Logging already resolves (published 2025-11-11), so transitive pinning
-         changes no other package's lock file. -->
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.0]" />
+         [LoggerMessage] only; the host's Aw.Kernel.Telemetry brings the implementation. Pinned at 10.0.12 (published
+         2026-09-08), the DI pins' version: Microsoft.AspNetCore.Mvc.Testing 10.0.12 (the Sindri http tests) needs at
+         least that through Microsoft.Extensions.Hosting, and transitive pinning makes a lower pin a downgrade (NU1109). -->
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.12]" />
     <!-- Browser automation for Evidence (ui-evidence; spec §4b.6 AOT scope: framework-dependent, because Playwright for
          .NET has no NativeAOT or trimming support). Only Aw.Evidence.Infrastructure references it. 1.63.0 published
          2026-09-23; its browsers are installed by `ui-evidence install-browser`, never at build time. -->

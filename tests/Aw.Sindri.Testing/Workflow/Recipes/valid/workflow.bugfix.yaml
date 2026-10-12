@@ -1,0 +1,60 @@
+# Validate-only fixture (engine spec section 12): the bug-fix worker's phases (docs/csharp/bugfix.md,
+# skills/bugFixOrchestrator) as one recipe, modes A (single) and C (split). Its blocks are test-only
+# (FixtureBlocks.Bugfix). Intake is the start: the ticket is the recipe's input; report is the terminal.
+schema: 1
+id: workflow.bugfix
+version: 1
+description: "Drive a bug ticket to a proven fix: investigate, reproduce, fix (mode A or C), evaluate."
+inputs: [{ key: fact:ticket, label: "The ticket (Linear id or pasted text)", type: text }]
+initial: investigate
+states:
+  investigate:
+    kind: active
+    step: step.bugfix.investigate
+    timeout: { after: 2h, then: park }
+    next: "Investigate {item}: confirm a root cause with /rootCause."
+  reproduce:
+    kind: active
+    step: step.bugfix.reproduce
+    timeout: { after: 2h, then: park }
+    next: "Write the check that fails on the baseline, and freeze it."
+  fix-single:
+    kind: active
+    step: step.bugfix.fix-single
+    timeout: { after: 4h, then: park }
+    budget: { tokens: 300k }
+    next: "Mode A: one implementer fixes the confirmed cause in one worktree."
+  fix-split:
+    kind: active
+    step: step.bugfix.fix-split
+    timeout: { after: 6h, then: park }
+    budget: { tokens: 500k }
+    next: "Mode C: one implementer per area, in sequence on one worktree."
+  evaluate:
+    kind: active
+    step: step.bugfix.evaluate
+    loop: attempts
+    timeout: { after: 1h, then: park }
+    next: "Re-run the frozen check on the candidate (attempt {loop.attempts}/{loop.attempts.cap}), then ask judge once."
+  resolved:
+    kind: terminal
+    outcome: resolved
+  unresolved:
+    kind: terminal
+    outcome: unresolved
+transitions:
+  - { from: investigate, to: reproduce,  on: step.completed, when: { outcome: diagnosed }, produces: [fact:rootCause] }
+  - { from: investigate, to: unresolved, on: step.completed, when: { outcome: unfixed } }
+  - { from: reproduce,   to: fix-single, on: step.completed, when: { outcome: oneArea },
+      gates: [gate.bugfix.frozen-check], produces: [fact:check] }
+  - { from: reproduce,   to: fix-split,  on: step.completed, when: { outcome: manyAreas },
+      gates: [gate.bugfix.frozen-check], produces: [fact:check] }
+  - { from: reproduce,   to: unresolved, on: step.completed, when: { outcome: notReproduced } }
+  - { from: [fix-single, fix-split], to: evaluate, on: step.completed, when: { outcome: committed }, produces: [fact:candidate] }
+  - { from: evaluate,    to: resolved,   on: step.completed, when: { outcome: resolved },
+      gates: [{ use: gate.bugfix.resolution, threshold: 0.8 }], produces: [fact:verdict] }
+  - { from: evaluate,    to: fix-single, on: step.completed, when: { outcome: retrySingle }, produces: [fact:findings] }
+  - { from: evaluate,    to: fix-split,  on: step.completed, when: { outcome: retrySplit }, produces: [fact:findings] }
+  - { from: evaluate,    to: unresolved, on: step.completed, when: { outcome: giveUp } }
+loops: { attempts: { cap: 3 } }
+budget: { tokens: 1M }

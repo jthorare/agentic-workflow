@@ -21,13 +21,22 @@ public static class DirectionRules
     /// <summary>Core and Features use Aw.Kernel and no other tier-0 package.</summary>
     public const string TierZeroId = "ARCH-DIR-005";
 
-    /// <summary>Checks every edge against the direction rules.</summary>
+    /// <summary>Checks every edge against the direction rules, with no compose edges declared.</summary>
     /// <param name="edges">The dependencies to check.</param>
     /// <returns>One violation per offending edge.</returns>
-    public static IEnumerable<Violation> Check(IEnumerable<Edge> edges) =>
+    public static IEnumerable<Violation> Check(IEnumerable<Edge> edges) => Check(edges, []);
+
+    /// <summary>
+    /// Checks every edge against the direction rules. A Host's use of a compose target's Features or Infrastructure is
+    /// the ARCH-DIR-004 carve-out: ARCH-COMPOSE-001 (<see cref="ComposeRules"/>) judges it instead.
+    /// </summary>
+    /// <param name="edges">The dependencies to check.</param>
+    /// <param name="compose">The declared compose edges (deps.yaml).</param>
+    /// <returns>One violation per offending edge.</returns>
+    public static IEnumerable<Violation> Check(IEnumerable<Edge> edges, IReadOnlyCollection<ComposeEdge> compose) =>
         edges.Select(e => e switch
         {
-            { From: { } from, To: { } to } => Judge(e, from, to),
+            { From: { } from, To: { } to } => ComposeRules.Covers(e, compose) ? null : Judge(e, from, to),
             { From.Layer: Layer.Core or Layer.Features, To: null } when IsOtherTierZero(e) => new Violation(TierZeroId,
                 $"{e.Text}: {e.From.Layer} uses {TypeNames.AssemblyOf(e.Target)}",
                 "Core and Features use Aw.Kernel only; reach Aw.Kernel.Data, Aw.Kernel.Telemetry or Redaction through a Core port that Infrastructure implements"),

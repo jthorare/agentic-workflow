@@ -74,6 +74,10 @@ internal static class Production
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal)];
 
+    /// <summary>The compose edges deps.yaml declares, by package root (ARCH-COMPOSE-001, the ARCH-DIR-004 carve-out).</summary>
+    public static IReadOnlyList<ComposeEdge> Compose { get; } =
+        ComposeEdge.Parse(File.ReadAllText(Path.Combine(Solution.RepoRoot, "deps.yaml")));
+
     /// <summary>Every dependency edge among the registered assemblies' types.</summary>
     public static IReadOnlyList<Edge> Edges => Edge.All(Architecture.Types, Scope);
 }

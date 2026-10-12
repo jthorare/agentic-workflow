@@ -6,3 +6,6 @@ lookalike: token [REDACTED:github-token] | redacted github-token@6-46
 zwj: x [REDACTED:github-token] y | redacted github-token@2-50
 escaped: {"note":"a\n[REDACTED:github-token]"} | redacted github-token@12-52
 unterminated: [REDACTED:private-key]\n\nafter | redacted private-key@0-86
+extra: order [REDACTED:acme-customer-id] shipped | redacted acme-customer-id@6-17
+extra-refused: refused | AW-REDACT-002 [0].id: The id must be lowercase ASCII letters, digits and single hyphens, start with a letter, and be at most 64 characters (e.g. acme-customer-id); it is the name in [REDACTED:<id>].; AW-REDACT-003 [0].pattern: The pattern uses \d at offset 5, which is Unicode-aware in .NET; write an explicit ASCII class instead: [0-9] (or its negation).; AW-REDACT-003 [1].pattern: The pattern is not a valid .NET regular expression (UnterminatedBracket at offset 9).
+extra-timeout: [REDACTED:blocked] | blocked AW-REDACT-001

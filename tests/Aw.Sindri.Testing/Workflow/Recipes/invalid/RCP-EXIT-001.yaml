@@ -1,0 +1,22 @@
+schema: 1
+id: workflow.exit
+version: 1
+initial: produce
+states:
+  produce:
+    kind: active
+    step: step.produce
+    timeout: { after: 4h, then: park }
+    next: "Produce the Step output."
+  checks:
+    kind: active
+    step: step.produce
+    timeout: { after: 30m, then: park }
+    next: "Run the checks."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: produce, to: done, on: step.completed, when: { outcome: done }, produces: [fact:output] }
+  - { from: produce, to: checks, on: step.failed }
+  - { from: checks, to: checks, on: step.completed }

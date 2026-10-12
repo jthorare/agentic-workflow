@@ -1,0 +1,2 @@
+{"start":{"inputs":{}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Done before the timeout."}},"expect":{"state":"done","outcome":"resolved"}}

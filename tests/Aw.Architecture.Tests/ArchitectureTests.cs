@@ -9,7 +9,11 @@ public sealed class ArchitectureTests
 {
     [Fact]
     public void Dependencies_point_the_right_way_inside_and_between_packages() =>
-        Verify.None(DirectionRules.Check(Production.Edges));
+        Verify.None(DirectionRules.Check(Production.Edges, Production.Compose));
+
+    [Fact]
+    public void A_host_uses_only_the_registration_methods_of_a_compose_target() =>
+        Verify.None(ComposeRules.Check(Production.Edges, Production.Compose));
 
     [Fact]
     public void No_slice_uses_another_slice() => Verify.None(SliceRules.Check(Production.Edges));

@@ -1,0 +1,5 @@
+$ sindri recipe validate
+exit 2
+--- stdout
+--- stderr
+SND-CLI-003 recipe validate needs a recipe file (usage: sindri recipe validate <file> [--json])

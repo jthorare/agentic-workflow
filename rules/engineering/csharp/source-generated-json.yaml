@@ -2,7 +2,7 @@ schemaVersion: 1
 id: engineering.csharp.source-generated-json
 kind: engineering
 section: "4b.3"
-text: "System.Text.Json with one source-generated JsonSerializerContext per package and the shared AwJson profile; no reflection-based serialization."
+text: "System.Text.Json with one source-generated JsonSerializerContext per package (plus, at most, one internal context in an Infrastructure project for third-party wire formats whose records are internal) and the shared AwJson profile; no reflection-based serialization."
 why: "Reflection breaks under NativeAOT and trimming."
 select:
   languages: [csharp]
