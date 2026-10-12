@@ -16,7 +16,7 @@ Each part of the app has its own design spec under `docs/superpowers/specs/`. Th
 | App shell: process, CLI, lease, ledger, profile, scheduler, doctor | `docs/csharp/sindri.md` (on `feat/sindri-s1-app-shell` until it merges) | 1 | S1 |
 | API surface: commands, queries, projections, the event stream, auth v0, the MCP server, `sindri open` | `2026-10-10-sindri-api-surface-design.md` | 1 (the command layer and API) | API P0–P11 |
 | **UI app design** (Avalonia, Linear design language): the control plane's views, actions and launching sessions | `2026-10-11-sindri-ui-design.md` (mockups in `2026-10-11-sindri-ui-design/`). Approved by the owner (revision 6). It settles X2, X5, X15 and X17 for the UI; its own rows X18–X26 are X43–X51 below | 1 (the UI app) | S1b |
-| Workflow engine: recipes, blocks, validator, instances, timers, approval, the agent runtime (revision 7) | `2026-10-10-sindri-workflow-engine-design.md` | 2 | S2 (P1–P7) |
+| Workflow engine: recipes, blocks, validator, approval, the agent runtime; **instances run on Temporal** (revision 8, owner decision Q8, 2026-10-11) | `2026-10-10-sindri-workflow-engine-design.md` | 2 | S2 (P0–P8) |
 | Context retrieval engine: the product graph, adapters, planner, evals | `2026-10-10-sindri-context-retrieval-design.md` | 3 | S3 (Phases 1–10) |
 | What the UI shows (input to the UI design) | `2026-10-09-sindri-dashboard-design.md` | — | — |
 
@@ -56,13 +56,13 @@ Design freezes the **packet** (`packet.json`, A §17.4), the handoff spec the re
 
 - A **recipe** is declarative YAML, validated by a JSON Schema, that names states, transitions, gates, evidence, effects, loop caps, timeouts and budgets. A new workflow, or a change to one, is a config change. Recipes can be generated per deliverable and evolved like other artifacts.
 - A **block** is a typed C# module with its own contract and tests: a gate, an evidence provider, a Step implementation or an effect kind. New code is needed only for a new block.
-- The **engine** owns everything else: state, fencing, idempotency, timers, park, escalate and takeover, loops, budgets and receipts.
+- The **engine** owns everything else: park, escalate and takeover, loops, budgets, gates and receipts. Durable execution (state, replay, idempotent commands, timers, children, signals) is **Temporal's** (WF §0, §5; X53): one Sindri workflow type interprets every recipe on a local Temporal server that `sindri serve` starts beside itself. Every transition is mirrored into the ledger, which stays the one public log.
 - **Tools become blocks, sequences become recipes** (A §17.28.2). The finished C# tool ports (`Redaction`, `Packets`, `Readiness`, `BugFix`, and `Judge` and `Evidence` once they land) are blocks; a skill's phase sequence, such as `/bugFixOrchestrator`'s, becomes a recipe.
 - Gates guard against an agent's honest mistakes. Containing a deliberately adversarial agent is the sandbox's job (A §17.28.3, `docs/csharp/bugfix.md` "Threat model").
 
 ### How you interject
 
-- **A live session:** opening an item that has a running instance takes it over (the workflow pauses, timers stopped) until you hand back (`sindri handback`, or the app's button). "Attach" only focuses a session that's already live; typing into it changes nothing in Sindri.
+- **A live session:** every agent session Sindri runs lives in a **tmux session it owns** (`snd-<run>`), whether a human or the factory started it (X55). "Attach" (`sindri open <item> --attach`, or the app's button) opens a Warp tab joined to that tmux session, so you type into the live agent, whatever Step it is on. The first thing you type is a takeover: the workflow pauses with its timers stopped until you hand back (`sindri handback`, or the app's button). Headless `-p` runs are never used for Steps, because they can't be joined.
 - **No live session** (between steps, at a gate, parked): `sindri open <item> [--agent claude-code|codex|cursor] [--attach | --resume]`, or "open" in the app, starts a session in Warp with Claude Code, Codex or Cursor, seeded with the item id and repo; the session pulls the item's state, packet, evidence and context through Sindri's MCP endpoint. If the item has a live instance, opening it takes it over (`pause`) until you hand back, which the app offers. `--attach` focuses a session that's already live.
 - **From your own sessions:** the `sindri` CLI and a Sindri MCP server give an item's state and context, run a retrieval query, or file a request ("re-scope this"). Calls from a session are requests, never decisions. Approvals stay human actions, through authenticated verbs and UI forms.
 
@@ -93,6 +93,10 @@ Within steps 1–3 the specs' phases land in this order. It is the only cross-sp
 The scoping recipe's spec comes after these. Context S-9 waits for the code index block. "Execution plan" below turns
 this into lanes that run in parallel.
 
+**Rev 8 of the engine spec (2026-10-11, X53):** engine **P0, the Temporal spike**, joins wave 0 and gates engine P4 and
+later; P3 (#180) is rebased on rev 8 and shrinks; the engine's wave labels above are otherwise unchanged. The
+engine lane's order is now P0 → P2 → P3 → P4 → P5 → P6 → P7 → P8 (P1 is merged, #179).
+
 ### Execution plan
 
 Five lanes, each run by its own `/specToProvenPR` agent team (lead plus stage owners, the specs' own team sections),
@@ -103,7 +107,7 @@ parallel across lanes. The lane leads talk only through merged code and these do
 |---|---|---|---|
 | **Gate: land S1** | #163 merged (needs a CI run or the owner's local merge-gate run), #156 Judge merged | — | — |
 | **API** | P0 → P1 → P2 → P3 → P5 → P4 → P6 → P8 → P11 → P10a → P10b | P0 | S1 (P1); engine P4 (P11); engine P5 (P10b) |
-| **Engine** | P1 → P3 → P2 → P4 → P5 → P6 → P7 → P8 | P1 and P3 (stacked on S1) | API P1 (P2); API P3 (P4); API P10a and Judge (P8) |
+| **Engine** | P0 (Temporal spike) → P2 → P3 → P4 → P5 → P6 → P7 → P8 | P0, P2, P3 (P1 merged) | API P1 (P2); API P3 and a passed P0 (P4); API P10a and Judge (P8) |
 | **Context** | S-1C, S-2R, S-FX → S-1A → S-1M, S-2W, S-3, S-5A → S-3M → S-4, S-5B, S-10 → S-6, S-7A, S-CF → S-7B → S-8 | S-1C, S-2R, S-FX | API P1 (S-1A); API P6 (S-4, S-5B); engine P4 (S-10) |
 | **UI** | U0 → U1 → U2 → U3, U4 → U5, U7 → U6a → U6b | U0 (S1b rebased, stacked on S1) | API P1 + P2 (U1); P3 (U2); P4, P6 (U3, U4); engine P4, P5 + API P11 (U5); context S-4 (U7); API P10a (U6a); API P10b (U6b) |
 
@@ -174,6 +178,13 @@ Where the API (API), workflow engine (WF) and context retrieval (CTX) specs disa
 | X50 | (UI X25) API §5.1 and WF §6.2/§6.3 described the old UI role | The app never raises OS notifications, before or after engine P6; `notify.desk` is the only notifier (UI X5). This replaces X32's "until P6" | API §5.1; WF §6.3 |
 | X51 | (UI X26) Golden JSON for the UI's contract tests | Every API phase from P1 writes per-route, per-scenario goldens (UI E-17) | API §12 |
 | X52 | The UI spec's API and engine edits E-1…E-19 (its §6.7, §18.1) were written against the earlier API P10 | **The UI spec wins** for the launch surface: `OpenItem` modes `open`, `attach`, `resume`; target ids `claude-code`, `codex`, `cursor` (`--agent`); `launch.*` events and `GET /launch/targets`; codes `SND-LAUNCH-001…009` as UI E-5 numbers them (API's earlier `-002` "live session" becomes the `attach` mode); P10 splits into P10a and P10b. API §8.1 keeps `session wrap`, the launch secret, liveness and the two target kinds | API §3.2, §8.1, §9, P10; WF §6.5 |
+| X53 | **The engine substrate** (owner, 2026-10-11, decision Q8). WF rev 7 hand-built durable execution (instance store, fencing, inbox, timers, nonces, frames) with no written buy-or-build decision; the context spec had one for Onyx | **Temporal** runs the instances: one `RecipeWorkflow` interprets every recipe; commands are Updates keyed by the nonce, Steps are activities with async completion, events are signals, children are child workflows, timers are `DelayAsync`. The ledger stays the public log (every transition mirrored). Engine P0 is a three-day spike with numbered pass lines that gates P4; a failed spike returns rev 7's §5, cut down | WF §0, §5, §7, Phases; A §17.17 Q8, §17.28.3 |
+| X54 | **AOT scope.** The Temporal .NET SDK has no trimming support (temporalio/sdk-dotnet#286), and csharp.md listed the `sindri` CLI as NativeAOT | The Sindri host (and its Temporal worker) publishes framework-dependent; the adapter project `Aw.Sindri.Workflows` opts out of `IsAotCompatible` with the reason; every other library stays AOT-compatible and the Avalonia app stays NativeAOT. Hook binaries, `aw-readiness`, `aw-packets`, `judge` and `bugfix-state` are unchanged | csharp.md "AOT scope"; AGENTS.md Tech Stack; WF §0 |
+| X55 | **Stepping onto the line.** UI §6.2 said Sindri can't see inside Warp, attach only focuses a tab, and `process` targets (the agent runtime, `--headless`) had no attach at all, so "interact with whatever agent is doing whatever step" was not deliverable | **tmux owns every agent session; Warp attaches.** `ILauncher` starts each agent Step's CLI interactively in `snd-<run>`; attach is `tmux attach` in a Warp tab; the first typed turn is a takeover (D §9.3). The `process` target kind is retired; attended and unattended runs are the same session. `tmux capture-pane` feeds the UI's live preview later (the collector spec) | API §8.1; UI §6.2–§6.4 (rev 7 note); WF §6.5, P8; A §17.29.3 |
+| X56 | Headless runs | `claude -p`, `codex exec` and the like are never used for a Step, because they can't be joined; bounded tool-less jobs (triage, labeling, judge questions) are not Steps and keep using them | WF §6.5 |
+| X57 | Engine storage | The engine's own tables (`workflow_instances`, `_deadlines`, `_inbox`, `_cursor`, `_gate_results`, `_commands`) are not built; `workflow_nonces` is the API's; `recipes`, `recipe_approvals` and `workflow_claims` stay in `ledger.db`. Kernel's outbox is no longer used by the engine (effects are activities); S1-D2, S1-D3 and K-D1 drop from the engine's S1 changes | WF §5.9, §7.2 |
+| X58 | **Downtime and timers.** Rev 7 made downtime count as sleep; Temporal's timers are server-side wall clock and fire on wake | Fire on wake: a timeout that fires parks or escalates, which is visible and harmless, and a takeover still pauses timers. If dogfooding shows wake-storms, the bridge adds a `shift` signal that extends deadlines by the measured gap | WF §0, §5.5 |
+| X59 | **Follow-up specs the walkthrough named** (2026-10-11), none of which exists yet | (a) a **sandbox phase** before any unattended Step runs on the host (D §8.2, §13.1 spike criteria; every threat-model paragraph assumes it); (b) **standing workflows** (webhooks as signal-with-start, Schedules) as the second recipe after bug fix; (c) the **collector** (session hooks and `tmux capture-pane` into the timeline and the Running view); (d) **interjections to recipes**: record `(instance, state, run, turns)` on every takeover and feed the weekly `correct` job, which proposes injection text and deterministic gates, never recipe topology | README (this row); the specs that pick them up |
 
 ## Today: the TypeScript reference (`sindri/`)
 

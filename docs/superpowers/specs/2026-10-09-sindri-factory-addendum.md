@@ -1911,8 +1911,10 @@ A tool with no branching that needs an agent or a gate stays a block. Wrapping i
 ### 17.28.3 Placement and ports
 
 - The engine lives in Sindri's C# package. The recipe model, the validator and every pure decision (is this transition allowed,
-  which gates apply, what a timeout does) are Core types. Persistence is the `LedgerStore` port (§17.20), and the
-  outbox and events are the §17.21 seams. Leases, the launcher and the scheduler stay the existing ports.
+  which gates apply, what a timeout does) are Core types. *Amended 2026-10-11 (Q8):* instance persistence, replay,
+  timers, signals and child workflows are **Temporal's** (engine spec §0, §5), reached through the adapter project
+  `Aw.Sindri.Workflows`; every transition is mirrored into the ledger through the `LedgerStore` port, so the §17.21
+  event log and the receipts are unchanged. Leases, the launcher and the scheduler stay the existing ports.
 - It is not a separate tier-1 package yet. Per the C# rules, a port moves to Kernel or its own package when a
   second package needs it. If a package outside Sindri needs to run recipes, the engine is extracted then,
   with its contract tests.
@@ -2041,9 +2043,10 @@ through blocks, and the human's own sessions query it through the CLI and MCP (b
 
 ### 17.29.3 Agents stay in the human's tool
 
-- A workflow state that needs an agent launches a **Claude Code session** (in its container for factory work, §8.2)
-  and records it. The human sees it like any other session and attaches through the existing attach resolver
-  (Warp, a terminal, tmux; Plan 6 dashboard spec). Sindri has no chat surface of its own.
+- A workflow state that needs an agent launches a **Claude Code, Codex or Cursor session** (in its container for
+  factory work, §8.2) **inside a tmux session Sindri owns** (Q10, 2026-10-11), and records it. The human sees it like
+  any other session and attaches through the existing attach resolver (a Warp tab running `tmux attach`). Sindri has no
+  chat surface of its own.
 - **Interject at any point:**
   - On an item with a live session: attach in Warp and type. That is a takeover (§9.3): the instance pauses,
     with its timers stopped, until `sindri handback`.
@@ -2080,6 +2083,20 @@ application"): the API surface and the UI app design for step 1, the workflow en
 retrieval engine for step 3. That README also keeps the cross-spec reconciliation list (X1–X42) and the one build order.
 
 ## 17.17 Decisions
+
+**Decided by the human (2026-10-11, after the design walkthrough):**
+- **Q8: Temporal is the workflow engine's substrate.** Sindri does not implement durable execution; one Sindri workflow
+  type interprets every recipe on a local Temporal server (`temporal server start-dev`, loopback, its own SQLite file
+  under `$AW_SINDRI_HOME`) that `sindri serve` starts and launchd keeps alive. Recipes, the validator, approval and
+  invariant 13, callers, gates and the ledger as the public log stay Sindri's. Engine P0 is a three-day spike with
+  numbered pass lines; a failed spike returns the hand-built §5 of engine rev 7, cut down. Engine spec §0 and §5;
+  README X53, X57, X58.
+- **Q9: NativeAOT is relaxed for the Sindri host.** The Temporal .NET SDK has no trimming support, so the host (and its
+  worker) publishes framework-dependent; the adapter is its own project opting out of `IsAotCompatible`; every other
+  library and the Avalonia app stay AOT. README X54; csharp.md "AOT scope".
+- **Q10: tmux owns every agent session; Warp attaches.** The human can join the live agent at any Step and the first
+  typed turn is a takeover (§9.3). Non-interactive agent runs are never used for Steps. §17.29.3; API §8.1; README X55,
+  X56.
 
 **Decided by the human (2026-10-11):**
 - **Q7:** Sindri is built as a new C# application, not ported (§17.29). It provides a control plane, the workflow

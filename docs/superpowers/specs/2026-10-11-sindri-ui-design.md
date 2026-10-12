@@ -1,6 +1,10 @@
 # Sindri UI app design: the control plane's views, actions and launching sessions
 
 Status:
+- **Revision 7 note (owner, 2026-10-11; README X55):** tmux owns every agent session and Warp attaches to it, so
+  **Attach joins the live agent** and the human can type into whatever Step is running; the earlier "Sindri can't see
+  inside Warp" limit in §6.2 and §6.6 no longer applies, and the `process` target kind is retired (API §8.1 rev 8).
+  The screens, states and controls of revision 6 are otherwise unchanged; §6.2 and §6.4 carry the amended rows.
 - **Approved by the owner on 2026-10-11** (revision 6).
 - Draft, 2026-10-11; revision 6 after five `/autoplan` passes (pass 1: five lenses NEEDS_WORK, no CRITICAL; pass 2:
   product, design and devex PASS, one shared HIGH fixed; passes 3, 4 and 5: all five PASS). §17 lists
@@ -403,7 +407,7 @@ The item's `launch` block (§6.7 E-2) lists the modes the server allows; the app
 |---|---|---|---|---|
 | **Open** | No launch is `requested` for the item, and the item isn't closed | **Open in <agent>** | A new session in a new Warp tab, in the item's repo (the path from the approved profile's repo entry), seeded with the item id only. The session pulls its state and context through the Sindri MCP server (`sindri_item`, `sindri_item_timeline`, `sindri_pending_decisions`, `sindri_context`). Once the engine runs, opening is a takeover (§6.4) | U6a (before S2, no takeover); U6b adds the takeover |
 | **Open another session** (not a mode: `OpenItem:open` behind a confirm) | Before the engine: the server sets `launch.confirm` because a launch for the item started **within the last 2 h** (`launch.confirmWindow`, a profile value) and nothing has taken it over or handed it back since | **Open another session** (asks `confirm.reason`) | As Open; the row and sheet show "Sent to Warp <age> ago · <agent> · tab `sindri ITM-…`" from `launch.lastStarted` | U6a |
-| **Attach** | The item is **with you** and a `launch.started` for it has no handback since | **Attach** | Brings Warp to the front and names the tab to look for (`sindri ITM-01JA1`). It starts no process: Sindri can't see inside Warp, so it never guesses that a session ended (never two processes on one session, DB §7). `OpenItem:attach` reaches the engine as a no-op takeover | U6b (needs the engine's `taken-over` state) |
+| **Attach** | A tmux session `snd-<run>` for the item is alive (the launcher checks `tmux has-session`), whether the factory or the human started it | **Attach** | Opens a Warp tab running `tmux attach -t snd-<run>` on Sindri's socket (API §8.1 rev 7 note: tmux owns the session, Warp is a viewer). It starts no agent process. If the item is running, the first turn typed is a takeover and the row moves to **With you**; if it is already with you, `OpenItem:attach` reaches the engine as a no-op takeover. Sindri knows the session is alive because it owns it (X55) | U6b (needs the engine's `taken-over` state); the alive check lands with API P10a |
 | **Resume** | A `launch.started` for the item carried a session id (Claude Code always; Codex and Cursor once their ids are known), **and the item was handed back since**. The handback is the human's signal that the session is finished | **Resume <agent> session** (next to **Open new**) | A new Warp tab running the target's resume command; like Open, it is a takeover once the engine runs | U6b (needs the engine's handback) |
 | **Take over** (a running step) | The item is `running` | **Take over** (labelled "pauses automation") | `ApplyCommand:takeover` (`pause`). In the engine phases that exist (WF P1–P7) steps run on the desk runtime, so there is no worker process to stop. When a later engine phase adds a headless worker runtime, it owns stopping the worker and recording `run.stopped`; only then does the server offer **Resume** on that worker's session (X20) | U6b |
 
@@ -507,9 +511,9 @@ The launch block shows a failure as a word, the code, `detail` as it is, and one
 | Sindri isn't running when the session starts | Inside the session: `sindri_item` returns `SND-API-001` | — | — | The session says so; run `sindri` |
 | Cursor without Sindri tools | Probe | — (`limited`) | Yes: a note in the menu | Wait for the switch, or pick another target |
 
-After the click, the app shows **"Sent to Warp"** once the launcher records `launch.started`. It never claims the
-session is running: Sindri can't see inside Warp. Once the engine runs, the item moves to **With you** with the
-takeover.
+After the click, the app shows **"Sent to Warp"** once the launcher records `launch.started`, and **"Session live"**
+once `tmux has-session` confirms the agent process is up (rev 7: Sindri owns the tmux session, so it can tell; it still
+never claims the agent did any work). Once the engine runs, the item moves to **With you** with the takeover.
 
 ### 6.7 The contract the UI needs from `ILauncher` and `OpenItem`, as numbered API edits
 

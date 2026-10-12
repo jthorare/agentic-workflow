@@ -795,8 +795,15 @@ claude -p "<journey>" --mcp-config <tmp>/sindri-mcp.json --strict-mcp-config \
 ### 8.1 The launch contract (`ILauncher`, P10)
 
 One port launches every agent session: the human handoff (`OpenItem`) and the engine's agent runtime (engine §6.5).
-- **Two target kinds.** `interactive`: a Warp tab running the agent CLI (`claude`, `codex` or `cursor-agent`), for the
-  human. `process`: the agent CLI as a plain child process, for the agent runtime and the `--headless` box.
+- **One target kind, and tmux owns it (rev 8, README X55; replaces the earlier `interactive` and `process` kinds).**
+  Every launch, for the human (`OpenItem`) and for the engine's agent runtime alike, starts the agent CLI
+  **interactively** inside a tmux session Sindri owns, named `snd-<run>` (or `snd-<launch>` for a human open with no
+  run), in the item's repo or the Step's worktree, with the seed as the initial prompt. **Warp is a viewer:** opening
+  for a human also opens a Warp tab that runs `tmux attach -t <session>`; the `--headless` box opens no Warp and the
+  session simply runs detached. So attended and unattended runs are the same process, Sindri can see the session
+  (`tmux has-session`, `capture-pane`), and the human can join any Step live. Non-interactive runs (`claude -p`,
+  `codex exec`) are never launched as a Step. The tmux socket is Sindri's own (`-L sindri`), so the human's own tmux
+  is untouched.
 - **Ids only at launch.** The command line carries the item id, the repo path and, for a Step, the run token. Context,
   packets and evidence are pulled through the MCP endpoint (Codex and Cursor get it as launch-time config, §8).
 - **`sindri session wrap`.** Every launched command runs as `sindri session wrap --launch <id> -- <agent cli …>`. Wrap
@@ -806,9 +813,10 @@ One port launches every agent session: the human handoff (`OpenItem`) and the en
 - **Liveness.** Wrap sends a heartbeat every 30 s and an exit call when the agent exits (both `issue` kind, proven by
   the secret). `service:launcher` appends `session.ended` with reason `exit` and the exit code, or `lost` after 120 s
   without a heartbeat. So a closed tab or a crash always ends the session; the double-launch guard clears.
-- **Per-launch files.** An interactive launch writes its own Warp launch configuration
-  (`launch_configurations/sindri-<launch>.yaml`, 0600, no secret in it) and deletes it once Warp has read it. Paths are
-  quoted.
+- **Per-launch files.** A launch that opens Warp writes its own Warp launch configuration
+  (`launch_configurations/sindri-<launch>.yaml`, 0600, no secret in it) whose one `exec` line is the `tmux attach`, and
+  deletes it once Warp has read it. Paths are quoted. The agent command itself is started by Sindri with `tmux new-session
+  -d`, never by Warp, so a Warp that fails to open leaves the session running and attachable.
 - **Usage.** Token usage is read by the target's usage reader (Claude Code's session log, and the Codex and Cursor
   equivalents recorded in P10) when the session ends, and recorded on `session.ended`. It is never self-reported.
 - **`OpenItem` is one event.** The command decides and appends `item.open-requested`; it does no launching (UI E-1).
@@ -816,8 +824,11 @@ One port launches every agent session: the human handoff (`OpenItem`) and the en
   anything; the launcher then performs the launch once within 30 s and appends `launch.started` or `launch.failed`.
   A second open while a session is live offers `attach` instead (UI E-2); a launch already in progress is
   `SND-LAUNCH-008`.
-- **Attach** means one thing: focus the live interactive session's tab. The takeover happened when it opened; typing
-  into the tab changes nothing in Sindri.
+- **Attach** (rev 8) means joining the live session: a new Warp tab running `tmux attach -t snd-<run>` on Sindri's
+  socket. It starts no agent process. The first turn the human types is classified `takeover` by the session's
+  `UserPromptSubmit` hook (D §9.3) and pauses the instance (engine §5.5); until `handback`, `step-report` from that
+  session is refused (`SND-AUTH-003`). Attaching to a session the human opened themselves is a no-op takeover. "Sindri
+  can't see inside Warp" no longer applies: the session is Sindri's tmux session, and Warp only shows it.
 
 ## 9. Errors, versioning and JSON
 

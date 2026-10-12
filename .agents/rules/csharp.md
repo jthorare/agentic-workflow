@@ -161,7 +161,8 @@ Sindri's UI is an [Avalonia UI](https://avaloniaui.net/) app, its own package `S
 
 | Entry point | Build |
 |---|---|
-| Hook binaries; `judge`, `sindri`, `scorer`, `bugfix-state` CLIs | NativeAOT |
+| Hook binaries; `judge`, `bugfix-state` CLIs | NativeAOT |
+| The Sindri host (`sindri serve`, the CLI and the Temporal worker in it) | Framework-dependent (owner, 2026-10-11, README X54): the Temporal .NET SDK has no trimming support (temporalio/sdk-dotnet#286). The adapter `Aw.Sindri.Workflows` sets `AwAotCompatible=false` with that reason; every other Sindri library keeps `IsAotCompatible=true` |
 | `aw-readiness`, `aw-packets` (standalone CLIs before the switch, §4c) | NativeAOT |
 | `Evidence` (ui-evidence) | Framework-dependent (Playwright for .NET has no NativeAOT) |
 | `Aw.Sindri.Ui.Desktop` (the Avalonia app) | NativeAOT; compiled bindings only (`AvaloniaUseCompiledBindingsByDefault`, `x:DataType` on every view, no `ReflectionBinding`) |

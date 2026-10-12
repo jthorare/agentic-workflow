@@ -32,12 +32,13 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 | Layer | Technology (C# build) |
 |-------|------------|
-| Runtime | .NET 10 (LTS), SDK pinned in `global.json`; NativeAOT for hook and CLI entry points |
+| Runtime | .NET 10 (LTS), SDK pinned in `global.json`; NativeAOT for hook and CLI entry points. The Sindri host is framework-dependent (its Temporal worker can't be trimmed; README X54) |
 | Language | C# (latest), nullable on, warnings as errors |
 | HTTP (an http host) | ASP.NET Core minimal APIs (`CreateSlimBuilder`), loopback only |
 | UI (the Sindri app) | [Avalonia UI](https://avaloniaui.net/) (MIT core only, no paid add-ons), MVVM with compiled bindings; a client of Sindri's HTTP API with no logic of its own. Desktop (macOS, Linux, Windows) first; iOS, Android and browser heads later from the same views. Spec §4a "UI" |
 | Database | `Microsoft.Data.Sqlite` with its bundled `e_sqlite3` (shipped beside each AOT tool), new C# schemas, WAL mode |
 | MCP | Official MCP C# SDK (approved in the AOT spike; no package uses it since the bridge was retired) |
+| Workflow engine (Sindri) | [Temporal](https://temporal.io) through the `Temporalio` .NET SDK (pinned, nuget.org): a local `temporal server start-dev` on loopback with its own SQLite file under `$AW_SINDRI_HOME`, started by `sindri serve`; one `RecipeWorkflow` interprets every recipe; every transition is mirrored into the ledger (engine spec §0, §5; decision Q8, 2026-10-11) |
 | JSON | System.Text.Json, one source-generated context per package |
 | Logging | `Aw.Kernel.Telemetry`: JSON lines on stderr (`AW_LOG_LEVEL`), OpenTelemetry spans and metrics, exporting off by default, scrubbed by `Aw.Redaction` |
 | Analyzers | NetAnalyzers, Meziantou, Roslynator, BannedApiAnalyzers, PublicApiAnalyzers (one owner per rule, `.editorconfig`) |
