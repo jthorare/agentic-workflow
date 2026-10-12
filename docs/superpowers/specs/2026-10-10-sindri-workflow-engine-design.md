@@ -765,7 +765,7 @@ order `answer`, `complete`, `handback`, `takeover`, `cancel`. Golden files pin e
 The runtime that runs a Step in an agent session and takes its result back, so the factory line can run unattended.
 It uses API §8.1's launch contract; nothing here launches anything itself.
 - **Launch.** For a Step whose descriptor names an agent runtime, the post-commit loop asks `ILauncher` for a
-  `process` launch (the always-on `--headless` box has no Warp), with only ids: the instance, the run token, the repo,
+  launch (rev 8: a tmux session, with no Warp tab on the always-on `--headless` box; see "tmux owns the session" below), with only ids: the instance, the run token, the repo,
   and a fresh per-run worktree (`<repo>/.claude/worktrees/sindri-<instance>-<run>`). The target and its permission
   mode come from the profile (`workflow.agent.target`: Claude Code, Codex or Cursor; `workflow.agent.permissionMode`).
   The session pulls its injection plan, context and packet through the MCP endpoint. `run.runtime` is `agent` and
