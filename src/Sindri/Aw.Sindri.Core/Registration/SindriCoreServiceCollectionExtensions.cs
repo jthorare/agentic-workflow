@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<HeldHumanToken>()
             .AddSingleton<TemporalRuntime>()
             .AddSingleton<BlockCatalog>()
+            .AddSingleton<ILedgerSignal, LedgerSignal>()
             .AddSingleton<ProjectorProgress>()
             .AddSingleton<IProjectorStatus>(static sp => sp.GetRequiredService<ProjectorProgress>())
             .AddSingleton<IProjectorControl>(static sp => sp.GetRequiredService<ProjectorProgress>())

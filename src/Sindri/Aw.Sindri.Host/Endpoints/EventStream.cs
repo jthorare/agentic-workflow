@@ -2,6 +2,7 @@ using System.Net.ServerSentEvents;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.StreamEvents;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -21,7 +22,7 @@ internal static class EventStream
         return TypedResults.ServerSentEvents(Events(service, clock, cursor, (context.RequestAborted, shutdown.Stopping)));
     }
 
-    internal static async IAsyncEnumerable<SseItem<EventView>> Events(
+    internal static async IAsyncEnumerable<SseItem<PublicEvent>> Events(
         IService<StreamEventsRequest, StreamEventsResponse> service, TimeProvider clock, long cursor, (CancellationToken Aborted, CancellationToken Stopping) until)
     {
         using var either = CancellationTokenSource.CreateLinkedTokenSource(until.Aborted, until.Stopping);
@@ -41,7 +42,7 @@ internal static class EventStream
             foreach (var e in page.IsSuccess ? page.Value.Events : [])
             {
                 cursor = e.Sequence;
-                yield return new SseItem<EventView>(e, e.Type) { EventId = e.Sequence.ToString(System.Globalization.CultureInfo.InvariantCulture) };
+                yield return new SseItem<PublicEvent>(e, e.Type) { EventId = e.Sequence.ToString(System.Globalization.CultureInfo.InvariantCulture) };
             }
 
             try

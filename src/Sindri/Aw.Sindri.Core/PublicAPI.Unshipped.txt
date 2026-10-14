@@ -4261,3 +4261,156 @@ override Aw.Sindri.Core.Events.ContextMapImported.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextMapImported.ToString() -> string!
 static Aw.Sindri.Core.Events.ContextMapImported.operator !=(Aw.Sindri.Core.Events.ContextMapImported? left, Aw.Sindri.Core.Events.ContextMapImported? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapImported.operator ==(Aw.Sindri.Core.Events.ContextMapImported? left, Aw.Sindri.Core.Events.ContextMapImported? right) -> bool
+Aw.Sindri.Core.Events.ApiViews
+Aw.Sindri.Core.Events.EventCatalogEntry.Invalidates.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.EventCatalogEntry.Invalidates.init -> void
+Aw.Sindri.Core.Events.IStreamSlots
+Aw.Sindri.Core.Events.IStreamSlots.Open(Aw.Sindri.Core.Commands.CallerClass caller) -> int
+Aw.Sindri.Core.Events.IStreamSlots.TryEnter(Aw.Sindri.Core.Commands.CallerClass caller, out System.IDisposable! slot) -> bool
+Aw.Sindri.Core.Events.StreamLimits
+Aw.Sindri.Core.Events.TypeFilter
+Aw.Sindri.Core.Events.TypeFilter.<Clone>$() -> Aw.Sindri.Core.Events.TypeFilter!
+Aw.Sindri.Core.Events.TypeFilter.Equals(Aw.Sindri.Core.Events.TypeFilter? other) -> bool
+Aw.Sindri.Core.Events.TypeFilter.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.TypeFilter.Matches(string! type) -> bool
+Aw.Sindri.Core.Ledger.ILedgerReader.Scan(long sequence, int max, Aw.Sindri.Core.Ledger.LedgerFilter! filter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerScan!>!>
+Aw.Sindri.Core.Ledger.ILedgerSignal
+Aw.Sindri.Core.Ledger.ILedgerSignal.Pulse(long sequence) -> void
+Aw.Sindri.Core.Ledger.ILedgerSignal.WaitAfter(long sequence, System.TimeSpan limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<long>
+Aw.Sindri.Core.Ledger.LedgerFilter
+Aw.Sindri.Core.Ledger.LedgerFilter.<Clone>$() -> Aw.Sindri.Core.Ledger.LedgerFilter!
+Aw.Sindri.Core.Ledger.LedgerFilter.Deconstruct(out Aw.Sindri.Core.Events.TypeFilter? Types, out Aw.Sindri.Core.Ids.ItemId? Item, out int ScanLimit) -> void
+Aw.Sindri.Core.Ledger.LedgerFilter.Equals(Aw.Sindri.Core.Ledger.LedgerFilter? other) -> bool
+Aw.Sindri.Core.Ledger.LedgerFilter.Item.get -> Aw.Sindri.Core.Ids.ItemId?
+Aw.Sindri.Core.Ledger.LedgerFilter.Item.init -> void
+Aw.Sindri.Core.Ledger.LedgerFilter.LedgerFilter(Aw.Sindri.Core.Events.TypeFilter? Types, Aw.Sindri.Core.Ids.ItemId? Item, int ScanLimit = 5000) -> void
+Aw.Sindri.Core.Ledger.LedgerFilter.ScanLimit.get -> int
+Aw.Sindri.Core.Ledger.LedgerFilter.ScanLimit.init -> void
+Aw.Sindri.Core.Ledger.LedgerFilter.Types.get -> Aw.Sindri.Core.Events.TypeFilter?
+Aw.Sindri.Core.Ledger.LedgerFilter.Types.init -> void
+Aw.Sindri.Core.Ledger.LedgerScan
+Aw.Sindri.Core.Ledger.LedgerScan.<Clone>$() -> Aw.Sindri.Core.Ledger.LedgerScan!
+Aw.Sindri.Core.Ledger.LedgerScan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>! Events, out long ScannedTo) -> void
+Aw.Sindri.Core.Ledger.LedgerScan.Equals(Aw.Sindri.Core.Ledger.LedgerScan? other) -> bool
+Aw.Sindri.Core.Ledger.LedgerScan.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>!
+Aw.Sindri.Core.Ledger.LedgerScan.Events.init -> void
+Aw.Sindri.Core.Ledger.LedgerScan.LedgerScan(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>! Events, long ScannedTo) -> void
+Aw.Sindri.Core.Ledger.LedgerScan.ScannedTo.get -> long
+Aw.Sindri.Core.Ledger.LedgerScan.ScannedTo.init -> void
+const Aw.Sindri.Core.Events.ApiViews.Commands = "commands" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Item = "item" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Items = "items" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Profile = "profile" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Queue = "queue" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Services = "services" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Status = "status" -> string!
+const Aw.Sindri.Core.Events.ApiViews.Timeline = "timeline" -> string!
+const Aw.Sindri.Core.Events.StreamLimits.HumanReserved = 4 -> int
+const Aw.Sindri.Core.Events.StreamLimits.Session = 12 -> int
+const Aw.Sindri.Core.Events.StreamLimits.Total = 16 -> int
+override Aw.Sindri.Core.Events.TypeFilter.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TypeFilter.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TypeFilter.ToString() -> string!
+override Aw.Sindri.Core.Ledger.LedgerFilter.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ledger.LedgerFilter.GetHashCode() -> int
+override Aw.Sindri.Core.Ledger.LedgerFilter.ToString() -> string!
+override Aw.Sindri.Core.Ledger.LedgerScan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ledger.LedgerScan.GetHashCode() -> int
+override Aw.Sindri.Core.Ledger.LedgerScan.ToString() -> string!
+static Aw.Sindri.Core.Events.ApiViews.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Events.StreamLimits.Admits(Aw.Sindri.Core.Commands.CallerClass caller, int open, int openSessions) -> bool
+static Aw.Sindri.Core.Events.TypeFilter.operator !=(Aw.Sindri.Core.Events.TypeFilter? left, Aw.Sindri.Core.Events.TypeFilter? right) -> bool
+static Aw.Sindri.Core.Events.TypeFilter.operator ==(Aw.Sindri.Core.Events.TypeFilter? left, Aw.Sindri.Core.Events.TypeFilter? right) -> bool
+static Aw.Sindri.Core.Events.TypeFilter.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.TypeFilter!>!
+static Aw.Sindri.Core.Ledger.LedgerFilter.All.get -> Aw.Sindri.Core.Ledger.LedgerFilter!
+static Aw.Sindri.Core.Ledger.LedgerFilter.operator !=(Aw.Sindri.Core.Ledger.LedgerFilter? left, Aw.Sindri.Core.Ledger.LedgerFilter? right) -> bool
+static Aw.Sindri.Core.Ledger.LedgerFilter.operator ==(Aw.Sindri.Core.Ledger.LedgerFilter? left, Aw.Sindri.Core.Ledger.LedgerFilter? right) -> bool
+static Aw.Sindri.Core.Ledger.LedgerScan.operator !=(Aw.Sindri.Core.Ledger.LedgerScan? left, Aw.Sindri.Core.Ledger.LedgerScan? right) -> bool
+static Aw.Sindri.Core.Ledger.LedgerScan.operator ==(Aw.Sindri.Core.Ledger.LedgerScan? left, Aw.Sindri.Core.Ledger.LedgerScan? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.StreamsFull -> Aw.Kernel.ErrorDefinition!
+~Aw.Sindri.Core.Ids.EventId.ToString(string format, System.IFormatProvider provider) -> string
+Aw.Sindri.Core.Events.EventVisibility
+Aw.Sindri.Core.Events.IItemRepos
+Aw.Sindri.Core.Events.IItemRepos.RepoOf(Aw.Sindri.Core.Ids.ItemId item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.RepoName?>!>
+Aw.Sindri.Core.Events.PublicEvent
+Aw.Sindri.Core.Events.PublicEvent.<Clone>$() -> Aw.Sindri.Core.Events.PublicEvent!
+Aw.Sindri.Core.Events.PublicEvent.Actor.get -> string!
+Aw.Sindri.Core.Events.PublicEvent.Actor.init -> void
+Aw.Sindri.Core.Events.PublicEvent.CausationId.get -> Aw.Sindri.Core.Ids.EventId?
+Aw.Sindri.Core.Events.PublicEvent.CausationId.init -> void
+Aw.Sindri.Core.Events.PublicEvent.CorrelationId.get -> Aw.Sindri.Core.Ids.CorrelationId
+Aw.Sindri.Core.Events.PublicEvent.CorrelationId.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Deconstruct(out long Sequence, out Aw.Sindri.Core.Ids.EventId Id, out string! Type, out int SchemaVersion, out System.DateTimeOffset OccurredAt, out string! Actor, out string! Tenant, out int Ring, out Aw.Sindri.Core.Ids.ItemId? Item, out Aw.Sindri.Core.Ids.CorrelationId CorrelationId, out Aw.Sindri.Core.Ids.EventId? CausationId, out Aw.Sindri.Core.Ids.TraceId? TraceId, out System.Text.Json.JsonElement Payload) -> void
+Aw.Sindri.Core.Events.PublicEvent.Equals(Aw.Sindri.Core.Events.PublicEvent? other) -> bool
+Aw.Sindri.Core.Events.PublicEvent.Id.get -> Aw.Sindri.Core.Ids.EventId
+Aw.Sindri.Core.Events.PublicEvent.Id.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Item.get -> Aw.Sindri.Core.Ids.ItemId?
+Aw.Sindri.Core.Events.PublicEvent.Item.init -> void
+Aw.Sindri.Core.Events.PublicEvent.OccurredAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.PublicEvent.OccurredAt.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Payload.get -> System.Text.Json.JsonElement
+Aw.Sindri.Core.Events.PublicEvent.Payload.init -> void
+Aw.Sindri.Core.Events.PublicEvent.PublicEvent(long Sequence, Aw.Sindri.Core.Ids.EventId Id, string! Type, int SchemaVersion, System.DateTimeOffset OccurredAt, string! Actor, string! Tenant, int Ring, Aw.Sindri.Core.Ids.ItemId? Item, Aw.Sindri.Core.Ids.CorrelationId CorrelationId, Aw.Sindri.Core.Ids.EventId? CausationId, Aw.Sindri.Core.Ids.TraceId? TraceId, System.Text.Json.JsonElement Payload) -> void
+Aw.Sindri.Core.Events.PublicEvent.Ring.get -> int
+Aw.Sindri.Core.Events.PublicEvent.Ring.init -> void
+Aw.Sindri.Core.Events.PublicEvent.SchemaVersion.get -> int
+Aw.Sindri.Core.Events.PublicEvent.SchemaVersion.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Sequence.get -> long
+Aw.Sindri.Core.Events.PublicEvent.Sequence.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Tenant.get -> string!
+Aw.Sindri.Core.Events.PublicEvent.Tenant.init -> void
+Aw.Sindri.Core.Events.PublicEvent.TraceId.get -> Aw.Sindri.Core.Ids.TraceId?
+Aw.Sindri.Core.Events.PublicEvent.TraceId.init -> void
+Aw.Sindri.Core.Events.PublicEvent.Type.get -> string!
+Aw.Sindri.Core.Events.PublicEvent.Type.init -> void
+Aw.Sindri.Core.Events.PublicEvents
+Aw.Sindri.Core.Ids.EventId
+Aw.Sindri.Core.Ids.EventId.Equals(Aw.Sindri.Core.Ids.EventId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.EventId>! comparer) -> bool
+Aw.Sindri.Core.Ids.EventId.Equals(Aw.Sindri.Core.Ids.EventId other) -> bool
+Aw.Sindri.Core.Ids.EventId.EventId() -> void
+Aw.Sindri.Core.Ids.EventId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.EventId.ToString(string? format) -> string!
+Aw.Sindri.Core.Ids.EventId.Value.get -> System.Guid
+Aw.Sindri.Core.Ids.TraceId
+Aw.Sindri.Core.Ids.TraceId.Equals(Aw.Sindri.Core.Ids.TraceId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.TraceId>! comparer) -> bool
+Aw.Sindri.Core.Ids.TraceId.Equals(Aw.Sindri.Core.Ids.TraceId other) -> bool
+Aw.Sindri.Core.Ids.TraceId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.TraceId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.TraceId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.TraceId.TraceId() -> void
+Aw.Sindri.Core.Ids.TraceId.Value.get -> string!
+override Aw.Sindri.Core.Events.PublicEvent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.PublicEvent.GetHashCode() -> int
+override Aw.Sindri.Core.Events.PublicEvent.ToString() -> string!
+override Aw.Sindri.Core.Ids.EventId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.EventId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.EventId.ToString() -> string!
+override Aw.Sindri.Core.Ids.TraceId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.TraceId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.TraceId.ToString() -> string!
+static Aw.Sindri.Core.Events.EventVisibility.Visible(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Ledger.LedgerEvent! row, Aw.Sindri.Core.Events.IItemRepos! repos, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+static Aw.Sindri.Core.Events.PublicEvent.operator !=(Aw.Sindri.Core.Events.PublicEvent? left, Aw.Sindri.Core.Events.PublicEvent? right) -> bool
+static Aw.Sindri.Core.Events.PublicEvent.operator ==(Aw.Sindri.Core.Events.PublicEvent? left, Aw.Sindri.Core.Events.PublicEvent? right) -> bool
+static Aw.Sindri.Core.Events.PublicEvents.For(Aw.Sindri.Core.Ledger.LedgerEvent! row, System.Text.Json.JsonSerializerOptions! options, bool includeNonPublic) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.PublicEvent?>!
+static Aw.Sindri.Core.Ids.EventId.From(System.Guid value) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.operator !=(Aw.Sindri.Core.Ids.EventId left, Aw.Sindri.Core.Ids.EventId right) -> bool
+static Aw.Sindri.Core.Ids.EventId.operator ==(Aw.Sindri.Core.Ids.EventId left, Aw.Sindri.Core.Ids.EventId right) -> bool
+static Aw.Sindri.Core.Ids.EventId.Parse(string! input) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.Parse(System.ReadOnlySpan<byte> utf8Text, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.Parse(System.ReadOnlySpan<byte> utf8Text) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.Parse(System.ReadOnlySpan<char> input) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.Parse(System.ReadOnlySpan<char> s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.EventId
+static Aw.Sindri.Core.Ids.EventId.TryFrom(System.Guid value, out Aw.Sindri.Core.Ids.EventId vo) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(string? input, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(System.ReadOnlySpan<byte> utf8Text, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(System.ReadOnlySpan<byte> utf8Text, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(System.ReadOnlySpan<char> input, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.EventId.TryParse(System.ReadOnlySpan<char> s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.EventId result) -> bool
+static Aw.Sindri.Core.Ids.TraceId.From(string! value) -> Aw.Sindri.Core.Ids.TraceId
+static Aw.Sindri.Core.Ids.TraceId.operator !=(Aw.Sindri.Core.Ids.TraceId left, Aw.Sindri.Core.Ids.TraceId right) -> bool
+static Aw.Sindri.Core.Ids.TraceId.operator ==(Aw.Sindri.Core.Ids.TraceId left, Aw.Sindri.Core.Ids.TraceId right) -> bool
+static Aw.Sindri.Core.Ids.TraceId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.TraceId
+static Aw.Sindri.Core.Ids.TraceId.TryFrom(string? value, out Aw.Sindri.Core.Ids.TraceId vo) -> bool
+static Aw.Sindri.Core.Ids.TraceId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.TraceId result) -> bool

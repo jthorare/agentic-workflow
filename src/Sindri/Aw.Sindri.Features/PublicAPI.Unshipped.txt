@@ -129,43 +129,17 @@ Aw.Sindri.Features.StopProcess.StopProcessResponse.Epoch.init -> void
 Aw.Sindri.Features.StopProcess.StopProcessResponse.Equals(Aw.Sindri.Features.StopProcess.StopProcessResponse? other) -> bool
 Aw.Sindri.Features.StopProcess.StopProcessResponse.Pid.get -> int
 Aw.Sindri.Features.StopProcess.StopProcessResponse.Pid.init -> void
-Aw.Sindri.Features.StreamEvents.EventView
-Aw.Sindri.Features.StreamEvents.EventView.<Clone>$() -> Aw.Sindri.Features.StreamEvents.EventView!
-Aw.Sindri.Features.StreamEvents.EventView.Actor.get -> string!
-Aw.Sindri.Features.StreamEvents.EventView.Actor.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Deconstruct(out long Sequence, out string! Type, out System.DateTimeOffset OccurredAt, out string! Actor, out string! Tenant, out int Ring, out long Epoch, out string! Payload) -> void
-Aw.Sindri.Features.StreamEvents.EventView.Epoch.get -> long
-Aw.Sindri.Features.StreamEvents.EventView.Epoch.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Equals(Aw.Sindri.Features.StreamEvents.EventView? other) -> bool
-Aw.Sindri.Features.StreamEvents.EventView.EventView(long Sequence, string! Type, System.DateTimeOffset OccurredAt, string! Actor, string! Tenant, int Ring, long Epoch, string! Payload) -> void
-Aw.Sindri.Features.StreamEvents.EventView.OccurredAt.get -> System.DateTimeOffset
-Aw.Sindri.Features.StreamEvents.EventView.OccurredAt.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Payload.get -> string!
-Aw.Sindri.Features.StreamEvents.EventView.Payload.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Ring.get -> int
-Aw.Sindri.Features.StreamEvents.EventView.Ring.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Sequence.get -> long
-Aw.Sindri.Features.StreamEvents.EventView.Sequence.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Tenant.get -> string!
-Aw.Sindri.Features.StreamEvents.EventView.Tenant.init -> void
-Aw.Sindri.Features.StreamEvents.EventView.Type.get -> string!
-Aw.Sindri.Features.StreamEvents.EventView.Type.init -> void
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.<Clone>$() -> Aw.Sindri.Features.StreamEvents.StreamEventsRequest!
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.After.get -> long
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.After.init -> void
-Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Deconstruct(out long After, out int Max) -> void
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Equals(Aw.Sindri.Features.StreamEvents.StreamEventsRequest? other) -> bool
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Max.get -> int
 Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Max.init -> void
-Aw.Sindri.Features.StreamEvents.StreamEventsRequest.StreamEventsRequest(long After, int Max = 100) -> void
 Aw.Sindri.Features.StreamEvents.StreamEventsResponse
 Aw.Sindri.Features.StreamEvents.StreamEventsResponse.<Clone>$() -> Aw.Sindri.Features.StreamEvents.StreamEventsResponse!
-Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.StreamEvents.EventView!>! Events) -> void
 Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Equals(Aw.Sindri.Features.StreamEvents.StreamEventsResponse? other) -> bool
-Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.StreamEvents.EventView!>!
 Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Events.init -> void
-Aw.Sindri.Features.StreamEvents.StreamEventsResponse.StreamEventsResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.StreamEvents.EventView!>! Events) -> void
 Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest
 Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest.<Clone>$() -> Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest!
 Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest.Equals(Aw.Sindri.Features.ValidateProfile.ValidateProfileRequest? other) -> bool
@@ -220,9 +194,6 @@ override Aw.Sindri.Features.StopProcess.StopProcessRequest.ToString() -> string!
 override Aw.Sindri.Features.StopProcess.StopProcessResponse.Equals(object? obj) -> bool
 override Aw.Sindri.Features.StopProcess.StopProcessResponse.GetHashCode() -> int
 override Aw.Sindri.Features.StopProcess.StopProcessResponse.ToString() -> string!
-override Aw.Sindri.Features.StreamEvents.EventView.Equals(object? obj) -> bool
-override Aw.Sindri.Features.StreamEvents.EventView.GetHashCode() -> int
-override Aw.Sindri.Features.StreamEvents.EventView.ToString() -> string!
 override Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Equals(object? obj) -> bool
 override Aw.Sindri.Features.StreamEvents.StreamEventsRequest.GetHashCode() -> int
 override Aw.Sindri.Features.StreamEvents.StreamEventsRequest.ToString() -> string!
@@ -261,8 +232,6 @@ static Aw.Sindri.Features.StopProcess.StopProcessRequest.operator !=(Aw.Sindri.F
 static Aw.Sindri.Features.StopProcess.StopProcessRequest.operator ==(Aw.Sindri.Features.StopProcess.StopProcessRequest? left, Aw.Sindri.Features.StopProcess.StopProcessRequest? right) -> bool
 static Aw.Sindri.Features.StopProcess.StopProcessResponse.operator !=(Aw.Sindri.Features.StopProcess.StopProcessResponse? left, Aw.Sindri.Features.StopProcess.StopProcessResponse? right) -> bool
 static Aw.Sindri.Features.StopProcess.StopProcessResponse.operator ==(Aw.Sindri.Features.StopProcess.StopProcessResponse? left, Aw.Sindri.Features.StopProcess.StopProcessResponse? right) -> bool
-static Aw.Sindri.Features.StreamEvents.EventView.operator !=(Aw.Sindri.Features.StreamEvents.EventView? left, Aw.Sindri.Features.StreamEvents.EventView? right) -> bool
-static Aw.Sindri.Features.StreamEvents.EventView.operator ==(Aw.Sindri.Features.StreamEvents.EventView? left, Aw.Sindri.Features.StreamEvents.EventView? right) -> bool
 static Aw.Sindri.Features.StreamEvents.StreamEventsRequest.operator !=(Aw.Sindri.Features.StreamEvents.StreamEventsRequest? left, Aw.Sindri.Features.StreamEvents.StreamEventsRequest? right) -> bool
 static Aw.Sindri.Features.StreamEvents.StreamEventsRequest.operator ==(Aw.Sindri.Features.StreamEvents.StreamEventsRequest? left, Aw.Sindri.Features.StreamEvents.StreamEventsRequest? right) -> bool
 static Aw.Sindri.Features.StreamEvents.StreamEventsResponse.operator !=(Aw.Sindri.Features.StreamEvents.StreamEventsResponse? left, Aw.Sindri.Features.StreamEvents.StreamEventsResponse? right) -> bool
@@ -876,3 +845,14 @@ static Aw.Sindri.Features.ContextCalls.ImportContextMapRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.ContextCalls.ImportContextMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.ImportContextMapRequest? left, Aw.Sindri.Features.ContextCalls.ImportContextMapRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.ImportContextMapResponse.operator !=(Aw.Sindri.Features.ContextCalls.ImportContextMapResponse? left, Aw.Sindri.Features.ContextCalls.ImportContextMapResponse? right) -> bool
 static Aw.Sindri.Features.ContextCalls.ImportContextMapResponse.operator ==(Aw.Sindri.Features.ContextCalls.ImportContextMapResponse? left, Aw.Sindri.Features.ContextCalls.ImportContextMapResponse? right) -> bool
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Deconstruct(out long After, out Aw.Sindri.Core.Ids.ItemRef? Item, out Aw.Sindri.Core.Events.TypeFilter? Types, out int Max) -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Item.get -> Aw.Sindri.Core.Ids.ItemRef?
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Item.init -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.StreamEventsRequest(long After, Aw.Sindri.Core.Ids.ItemRef? Item = null, Aw.Sindri.Core.Events.TypeFilter? Types = null, int Max = 100) -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Types.get -> Aw.Sindri.Core.Events.TypeFilter?
+Aw.Sindri.Features.StreamEvents.StreamEventsRequest.Types.init -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsResponse.ScannedTo.get -> long
+Aw.Sindri.Features.StreamEvents.StreamEventsResponse.ScannedTo.init -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.PublicEvent!>! Events, out long ScannedTo) -> void
+Aw.Sindri.Features.StreamEvents.StreamEventsResponse.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.PublicEvent!>!
+Aw.Sindri.Features.StreamEvents.StreamEventsResponse.StreamEventsResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.PublicEvent!>! Events, long ScannedTo) -> void

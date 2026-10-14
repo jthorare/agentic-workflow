@@ -384,6 +384,7 @@ blocks.
 | `SND-API-009` | The command gate wasn't acquired within 5 s: another command is running (503) |
 | `SND-API-010` | A command that reads views was refused while the views rebuild; it wasn't run, retry (503) |
 | `SND-API-011` | The views didn't reach the sequence in time: an `X-Sindri-After` query waited 2 s, or a command waited for the head; at once while the projector is stalled (503) |
+| `SND-API-012` | Every event stream the caller may open is open: 16 in all, 4 held for the human (429); re-query every 5 s instead |
 | `SND-AUTH-001` | A `human` caller without the valid per-start token: missing or stale (403; restart the app or rerun the command), or a `prover` label outside a temp or proof home |
 | `SND-AUTH-002` | The caller may not run the command's action class (403; only the `command.handled` audit row is written) |
 | `SND-CLI-001` | Unknown command |

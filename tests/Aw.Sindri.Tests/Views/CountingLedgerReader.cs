@@ -16,6 +16,9 @@ internal sealed class CountingLedgerReader(ILedgerReader inner) : ILedgerReader
         return inner.ReadAfter(sequence, max, cancellationToken);
     }
 
+    public ValueTask<Result<LedgerScan>> Scan(long sequence, int max, LedgerFilter filter, CancellationToken cancellationToken) =>
+        inner.Scan(sequence, max, filter, cancellationToken);
+
     public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) => inner.Latest(type, cancellationToken);
 
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => inner.Head(cancellationToken);

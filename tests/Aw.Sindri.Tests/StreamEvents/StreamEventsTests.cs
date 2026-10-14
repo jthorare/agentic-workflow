@@ -20,6 +20,7 @@ public sealed class StreamEventsTests
         var page = (await new StreamEventsService(h.Store).Handle(new StreamEventsRequest(After: 1), TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal([2L, 3L], page.Events.Select(e => e.Sequence));
-        Assert.All(page.Events, e => Assert.Equal(("service.heartbeat", "local", grant.Epoch), (e.Type, e.Tenant, e.Epoch)));
+        Assert.All(page.Events, e => Assert.Equal(("service.heartbeat", "local"), (e.Type, e.Tenant)));
+        Assert.Equal(3L, page.ScannedTo);
     }
 }

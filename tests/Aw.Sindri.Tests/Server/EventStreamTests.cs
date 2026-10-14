@@ -37,7 +37,7 @@ public sealed class EventStreamTests : IDisposable
             Reads++;
             shutdown.Request();
             cancellationToken.ThrowIfCancellationRequested();
-            return ValueTask.FromResult<Result<StreamEventsResponse>>(new StreamEventsResponse([]));
+            return ValueTask.FromResult<Result<StreamEventsResponse>>(new StreamEventsResponse([], request.After));
         }
     }
 }

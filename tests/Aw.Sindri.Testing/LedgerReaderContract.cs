@@ -1,5 +1,7 @@
 using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Microsoft.Extensions.Time.Testing;
@@ -73,10 +75,87 @@ public abstract class LedgerReaderContract
         Expect.True(!LedgerExists());
     }
 
-    private LedgerEntry Entry(string type, string key)
+    /// <summary>A scan with a type filter keeps the types its globs match, exact or 'prefix.*', and reports the last row it looked at.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Scan_filters_by_type_glob()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        _ = await ledger.Append(Entry("process.started", "k1"), grant, Token);
+        _ = await ledger.Append(Entry("service.heartbeat", "k2"), grant, Token);
+        _ = await ledger.Append(Entry("command.handled", "k3"), grant, Token);
+        _ = await ledger.Append(Entry("service.ran", "k4"), grant, Token);
+        var filter = new LedgerFilter(TypeFilter.Parse("service.*,process.started").Value, Item: null);
+
+        var scan = (await Reader().Scan(0, 10, filter, Token)).Value;
+
+        Expect.Sequence(["k1", "k2", "k4"], scan.Events.Select(e => e.IdempotencyKey));
+        Expect.Equal(4L, scan.ScannedTo);
+    }
+
+    /// <summary>A scan with an item keeps only that item's events.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Scan_filters_by_item()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        var mine = ItemId.New(_ids);
+        _ = await ledger.Append(Entry("item.created", "k1", mine.Value), grant, Token);
+        _ = await ledger.Append(Entry("item.created", "k2", ItemId.New(_ids).Value), grant, Token);
+        _ = await ledger.Append(Entry("service.heartbeat", "k3"), grant, Token);
+        _ = await ledger.Append(Entry("item.state-changed", "k4", mine.Value), grant, Token);
+
+        var scan = (await Reader().Scan(0, 10, new LedgerFilter(Types: null, mine), Token)).Value;
+
+        Expect.Sequence(["k1", "k4"], scan.Events.Select(e => e.IdempotencyKey));
+        Expect.True(scan.Events.All(e => e.Item == mine.Value));
+    }
+
+    /// <summary>A scan looks at no more than its scan limit of rows past the cursor and says how far it got, so a sparse filter pages on.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Scan_stops_at_its_scan_limit_and_reports_ScannedTo()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        for (var i = 1; i <= 5; i++)
+        {
+            _ = await ledger.Append(Entry("service.heartbeat", "h" + i), grant, Token);
+        }
+
+        _ = await ledger.Append(Entry("process.stopped", "k6"), grant, Token);
+        var filter = new LedgerFilter(TypeFilter.Parse("process.stopped").Value, Item: null, ScanLimit: 3);
+        var reader = Reader();
+
+        var first = (await reader.Scan(0, 10, filter, Token)).Value;
+        var second = (await reader.Scan(first.ScannedTo, 10, filter, Token)).Value;
+
+        Expect.Equal(0, first.Events.Count);
+        Expect.Equal(3L, first.ScannedTo);
+        Expect.Sequence(["k6"], second.Events.Select(e => e.IdempotencyKey));
+        Expect.Equal(6L, second.ScannedTo);
+    }
+
+    /// <summary>On a ledger nothing was written to, a scan is empty at sequence 0 and creates no file.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Scan_on_a_missing_ledger_is_empty()
+    {
+        _ = await Create(Clock, Probe);
+
+        var scan = (await Reader().Scan(0, 10, LedgerFilter.All, Token)).Value;
+
+        Expect.Equal(0, scan.Events.Count);
+        Expect.Equal(0L, scan.ScannedTo);
+        Expect.True(!LedgerExists());
+    }
+
+    private LedgerEntry Entry(string type, string key, string? item = null)
     {
         var context = EventContext.Create("host:sindri", "local", 0, _ids.NewId()).Value;
         Clock.Advance(TimeSpan.FromMilliseconds(1));
-        return new LedgerEntry(context.Envelope(type, """{"n":1}""", Clock, _ids), key, Item: null);
+        return new LedgerEntry(context.Envelope(type, """{"n":1}""", Clock, _ids), key, item);
     }
 }

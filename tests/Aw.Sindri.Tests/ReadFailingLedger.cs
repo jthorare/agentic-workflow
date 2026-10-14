@@ -17,6 +17,9 @@ internal sealed class ReadFailingLedger(ILedgerStore inner) : ILedgerStore, ILed
     public ValueTask<Result<IReadOnlyList<LedgerEvent>>> ReadAfter(long sequence, int max, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<LedgerEvent>>>(Failure);
 
+    public ValueTask<Result<LedgerScan>> Scan(long sequence, int max, LedgerFilter filter, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LedgerScan>>(Failure);
+
     public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LedgerEvent?>>(Failure);
 
