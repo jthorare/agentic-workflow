@@ -80,11 +80,14 @@ public sealed class ToolProcessTests : IDisposable
     [Fact]
     public async Task A_child_left_holding_the_output_doesnt_turn_a_finished_run_into_a_timeout()
     {
-        using var leaky = new StubTool("sleep 5 &\nprintf ok\nexit 0\n");
+        using var leaky = new StubTool("sleep 15 &\nprintf ok\nexit 0\n");
+        var started = TimeProvider.System.GetTimestamp();
 
-        var run = await ToolProcess.Run(new ToolCall("tool", leaky.Binary, [], Stdin: null, TimeSpan.FromSeconds(20)), _settings, Token);
+        var run = await ToolProcess.Run(new ToolCall("tool", leaky.Binary, [], Stdin: null, TimeSpan.FromSeconds(8)), _settings, Token);
 
+        // The child holds stdout for 15 s, past the 8 s timeout: only the 2 s drain grace after exit lets the run finish.
         Assert.Equal((0, "ok"), (run.Value.Exit, Encoding.UTF8.GetString(run.Value.Stdout)));
+        Assert.True(TimeProvider.System.GetElapsedTime(started) < TimeSpan.FromSeconds(8));
     }
 
     [Fact]

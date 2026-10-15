@@ -1,9 +1,9 @@
 # Sindri (C#) — judge and evidence as engine blocks
 
 Stage S4a of the Sindri app (factory addendum §17.28.2 "Tools versus workflows", §17.29.4 step 4). The tools stay tools:
-judge answers questions and ui-evidence drives a browser. In a recipe each becomes a **block** on the registry contract in
-`docs/csharp/sindri-engine.md` § Blocks, and the sequence around them is a recipe. This page is the contract for those
-blocks; the engine contract is unchanged.
+judge answers questions and ui-evidence drives a browser. In a recipe each becomes a **block** on the registry contract
+in `docs/csharp/sindri-engine.md` § Blocks, and the sequence around them is a recipe. This page is the contract for
+those blocks; the engine contract is unchanged.
 
 Code: `src/Sindri/Aw.Sindri.Core/Blocks/{Judge,Evidence}`, `Blocks/IEvidenceProvider.cs`, `Blocks/EvidenceProviders.cs`,
 `Registration/SindriCoreServiceCollectionExtensions.cs` (`AddSindriCore()` registers the tool blocks with the built-ins),
@@ -20,21 +20,22 @@ Both tools are reached **out of process, through their CLI contracts** (`deps.ya
 | ui-evidence (`src/Evidence`, #158) | Its adapters (the stack probe, the database query, Playwright) live in `Aw.Evidence.Infrastructure`, which references Microsoft.Playwright and opts out of AOT. A project edge reaches only `Aw.Evidence.Core` (DEPS-PROJ-007), which has the ports but no adapters, so Sindri would have to write its own copies of the adapters. Sindri's host is NativeAOT, so it can't link Playwright at all. All four blocks (`run`, `parity`, `doctor`, `provenance`) therefore run the `ui-evidence` binary. |
 | judge (`src/Judge`, #156, open) | judge is its own NativeAOT CLI with its own store (`decisions.sqlite`) and provider chain. Its contract is the CLI (`docs/csharp/judge.md` on #156). The port in this package (`IJudgeClient`) binds that contract and nothing else. |
 
-The binaries: `AW_SINDRI_JUDGE_BIN` (default `judge` on `PATH`) and `AW_SINDRI_UI_EVIDENCE_BIN` (default `ui-evidence` on
-`PATH`), read by `ToolSettings` in Infrastructure. **Before the switch**, `judge` on `PATH` is the TypeScript judge, whose
-contract this binding doesn't speak, so a run of the C# blocks sets `AW_SINDRI_JUDGE_BIN` to the C# judge. Nothing installs
-`ui-evidence` yet (`docs/csharp/evidence.md`, "At the switch"). Both variables, and everything the tools themselves read
-(`UI_EVIDENCE_APP_TITLE`, `UI_EVIDENCE_SEED_*`, the lock variables, `AW_JUDGE_PROVIDERS`, a parity manifest's credentials),
-are read from the **control plane's** environment when it starts, and the tools inherit it (with `AW_LOG_LEVEL=warning`):
-set them for `sindri` / `sindri serve`, and restart the control plane to change them; exporting them in the shell that runs
-`sindri workflow …` changes nothing. `sindri workflow signal`, `collect`, `unpark` and `handback` wait up to 25 minutes for an
-answer, because they may run judge gates (a signal, or a parent's `child.done`) and `collect` runs ui-evidence; every other
-call waits 10 s.
+The binaries: `AW_SINDRI_JUDGE_BIN` (default `judge` on `PATH`) and `AW_SINDRI_UI_EVIDENCE_BIN` (default `ui-evidence`
+on `PATH`), read by `ToolSettings` in Infrastructure. **Before the switch**, `judge` on `PATH` is the TypeScript judge,
+whose contract this binding doesn't speak, so a run of the C# blocks sets `AW_SINDRI_JUDGE_BIN` to the C# judge. Nothing
+installs `ui-evidence` yet (`docs/csharp/evidence.md`, "At the switch"). Both variables, and everything the tools
+themselves read (`UI_EVIDENCE_APP_TITLE`, `UI_EVIDENCE_SEED_*`, the lock variables, `AW_JUDGE_PROVIDERS`, a parity
+manifest's credentials), are read from the **control plane's** environment when it starts, and the tools inherit it
+(with `AW_LOG_LEVEL=warning`): set them for `sindri` / `sindri serve`, and restart the control plane to change them;
+exporting them in the shell that runs `sindri workflow …` changes nothing. `sindri workflow signal`, `collect`, `unpark`
+and `handback` wait up to 25 minutes for an answer, because they may run judge gates (a signal, or a parent's
+`child.done`) and `collect` runs ui-evidence; every other call waits 10 s.
 
 The binding was checked against #156 head `fabba31e` (a read-only export, built in a scratch directory): `judge
-visual-critique --providers rules` escalates `no-provider-decided` (exit 2), `brief-scope` with an `Explore` agent decides
-`ready` by pre-rule (exit 0), and `claude-cli,rules` decides `looks-right` or `looks-off` with a decision id that `judge
-why` finds. The contract tests run against the fake and a scripted binary, so this package doesn't depend on #156 merging.
+visual-critique --providers rules` escalates `no-provider-decided` (exit 2), `brief-scope` with an `Explore` agent
+decides `ready` by pre-rule (exit 0), and `claude-cli,rules` decides `looks-right` or `looks-off` with a decision id
+that `judge why` finds. The contract tests run against the fake and a scripted binary, so this package doesn't depend on
+#156 merging.
 
 ## Ports
 
@@ -43,19 +44,20 @@ why` finds. The contract tests run against the fake and a scripted binary, so th
 | `IJudgeClient.Ask(JudgeInput, ct)` → `JudgeAnswer` | `ProcessJudgeClient`: `judge <question>`, the input record on stdin | `FakeJudgeClient`, `JudgeClientContract` |
 | `IUiEvidence`: `Doctor`, `Provenance`, `Run`, `Parity` | `ProcessUiEvidence`: `ui-evidence doctor`, `provenance`, `run <script> <run-dir> --host H --app-build SHA`, `parity <manifest> …` | `FakeUiEvidence`, `UiEvidenceContract` |
 
-Each contract suite runs against the fake (unit lane) and against the process adapter driving a scripted binary that speaks
-the tool's CLI contract (integration lane, `tests/Aw.Sindri.Tests/Blocks/Process*ContractTests.cs`). The process binding
-adds the cases only a process has: a binary that can't be started, an exit outside the contract, a document that doesn't
-read, a run that writes no document.
+Each contract suite runs against the fake (unit lane) and against the process adapter driving a scripted binary that
+speaks the tool's CLI contract (integration lane, `tests/Aw.Sindri.Tests/Blocks/Process*ContractTests.cs`). The process
+binding adds the cases only a process has: a binary that can't be started, an exit outside the contract, a document that
+doesn't read, a run that writes no document.
 
-**Mapping the CLI contracts.** `ToolProcess` runs the binary with an argument list (no shell) and captures stdout and stderr.
-At Sindri's timeout (`ToolSettings`: judge 120 s, since judge's budget is per provider and a chain tries up to four; doctor
-and provenance 60 s; run and parity 20 minutes, past ui-evidence's two 120 s lock waits), or when the caller cancels (Ctrl-C
-on `collect` aborts the request), the tool is stopped. ui-evidence gets SIGTERM and 30 s to exit (it closes the browser,
-which can take its own 10 s bound, and then releases its machine locks); if it is still running then, its whole tree is
-killed. judge handles no signal, so its tree (with any agent CLI it started) is killed at once. Once the tool exits, its output streams get 2 s to drain, so a child
-left holding them can't turn a finished run into a timeout. An error message is the tool's last stderr line that isn't a
-JSON log line (both tools end with their error, after lines such as ui-evidence's `waiting on lock`).
+**Mapping the CLI contracts.** `ToolProcess` runs the binary with an argument list (no shell) and captures stdout and
+stderr. At Sindri's timeout (`ToolSettings`: judge 120 s, since judge's budget is per provider and a chain tries up to
+four; doctor and provenance 60 s; run and parity 20 minutes, past ui-evidence's two 120 s lock waits), or when the
+caller cancels (Ctrl-C on `collect` aborts the request), the tool is stopped. ui-evidence gets SIGTERM and 30 s to exit
+(it closes the browser, which can take its own 10 s bound, and then releases its machine locks); if it is still running
+then, its whole tree is killed. judge handles no signal, so its tree (with any agent CLI it started) is killed at once.
+Once the tool exits, its output streams get 2 s to drain, so a child left holding them can't turn a finished run into a
+timeout. An error message is the tool's last stderr line that isn't a JSON log line (both tools end with their error,
+after lines such as ui-evidence's `waiting on lock`).
 
 | Tool | Exit codes read as an answer | Everything else |
 |---|---|---|
@@ -109,10 +111,10 @@ changing S2's types:
 | `ProvidedEvidence` | `(bool Passed, string Digest, string Document, string Detail)` |
 | `EvidenceProviders` | `Find(kind)`: the registered block `evidence.<kind>` that implements `IEvidenceProvider`, or SND-BLK-003 listing the kinds that have one. It reads the registered `IBlock`s; `IBlockRegistry` has no provider lookup (S2 didn't add `Provider(BlockId)`; this class stands in for it) |
 
-The `CollectEvidence` slice runs a provider **outside any engine transaction** (a run takes minutes; the ledger's write lock
-is never held across it), then registers a **passing** run through the engine's `RegisterEvidenceCommand` (kind, the
-request's sha, the document's digest). A failed run is reported and registers nothing. The kind must have a provider, and
-the instance must exist and still be running (not done or cancelled), before the tool runs.
+The `CollectEvidence` slice runs a provider **outside any engine transaction** (a run takes minutes; the ledger's write
+lock is never held across it), then registers a **passing** run through the engine's `RegisterEvidenceCommand` (kind,
+the request's sha, the document's digest). A failed run is reported and registers nothing. The kind must have a
+provider, and the instance must exist and still be running (not done or cancelled), before the tool runs.
 
 | Surface | Form |
 |---|---|
@@ -124,12 +126,12 @@ the instance must exist and still be running (not done or cancelled), before the
 The ui-evidence skill's sequence as a workflow (approved, built in): **stack** (wait) → `ready` through
 `gate.evidence.doctor` → **run** (active, `step.ui-run`) → `ran` with `evidence: [ui-browser@head]` through
 `gate.evidence.provenance` then `gate.judge.visual-critique` → **done**. `stack-down` goes back from run to stack (loop
-`restack`, cap 3). Publishing (ask-first) is a later effect. As a file recipe (unapproved), the same YAML is refused for its
-judge gate (`capability transitions[2].gates[1]`) and is valid without it.
+`restack`, cap 3). Publishing (ask-first) is a later effect. As a file recipe (unapproved), the same YAML is refused for
+its judge gate (`capability transitions[2].gates[1]`) and is valid without it.
 
-The `ran` signal names the screenshot judge critiques (`visual.evidence-dir`, `visual.screenshot`); nothing yet checks that
-it is the run whose digest was registered, so set them to the `run-dir` given to `collect`. Tying the two (the provider
-reporting its run directory as a fact, or a gate that checks the digest) is a later change.
+The `ran` signal names the screenshot judge critiques (`visual.evidence-dir`, `visual.screenshot`); nothing yet checks
+that it is the run whose digest was registered, so set them to the `run-dir` given to `collect`. Tying the two (the
+provider reporting its run directory as a fact, or a gate that checks the digest) is a later change.
 
 ```bash
 sindri workflow start workflow.ui-evidence ITEM-1
@@ -148,12 +150,13 @@ sindri workflow signal <id> ran --sha <sha> --set visual.evidence-dir=$PWD/runs/
 
 ## Checks
 
-`tests/Aw.Sindri.Tests/Blocks/`: `JudgeGateTests` (each question's pass and fail decisions, escalation, missing facts, every
-field of every input record from its own fact), `JudgeInputWireTests` (the exact JSON each record writes, the field names judge
-reads), `ToolProcessTests` (SIGTERM first on a timeout or a cancel, SIGKILL after the grace for a tool that ignores it, an immediate tree kill for a non-graceful call, the drain grace, an early stdin close, the error line),
-`ToolBlockRegistrationTests`, `EvidenceGateTests`, `UiRunProviderTests`, the two contract suites against the fakes and the process
-adapters, and `UiEvidenceRecipeTests` (the recipe validates approved and is refused unapproved; doctor, collect,
-provenance and judge take an instance to done; an unsure judge refuses; missing evidence refuses before judge or
-provenance runs). `CollectEvidence/CollectEvidenceTests` covers the slice; `Server/WorkflowApiTests` runs the whole recipe
-over the API through scripted tool binaries; `scripts/tests/check-deps.test.sh` covers the deps scan reading C#, which is
-how `check-deps` sees the two `cli` edges.
+`tests/Aw.Sindri.Tests/Blocks/`: `JudgeGateTests` (each question's pass and fail decisions, escalation, missing facts,
+every field of every input record from its own fact), `JudgeInputWireTests` (the exact JSON each record writes, the
+field names judge reads), `ToolProcessTests` (SIGTERM first on a timeout or a cancel, SIGKILL after the grace for a tool
+that ignores it, an immediate tree kill for a non-graceful call, the drain grace, an early stdin close, the error line),
+`ToolBlockRegistrationTests`, `EvidenceGateTests`, `UiRunProviderTests`, the two contract suites against the fakes and
+the process adapters, and `UiEvidenceRecipeTests` (the recipe validates approved and is refused unapproved; doctor,
+collect, provenance and judge take an instance to done; an unsure judge refuses; missing evidence refuses before judge
+or provenance runs). `CollectEvidence/CollectEvidenceTests` covers the slice; `Server/WorkflowApiTests` runs the whole
+recipe over the API through scripted tool binaries; `scripts/tests/check-deps.test.sh` covers the deps scan reading C#,
+which is how `check-deps` sees the two `cli` edges.
