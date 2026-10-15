@@ -12,10 +12,12 @@ folder carries them. `main` was `fe228345` when this was written.
    cp -R docs/handoff/2026-10-14/state/agentic-workflow/. ~/.agentic-workflow/
    chmod +x ~/.agentic-workflow/bin-r1b/heavy ~/.agentic-workflow/orchestrator/*.sh
    ```
-   The scripts use absolute paths under `/Users/thor/`. If the new home differs, run
-   `sed -i '' "s#/Users/thor#$HOME#g"` over them.
+   The scripts use `$HOME` and expect the repo at `~/repos/agentic-workflow` (set `AW_REPO` otherwise). They were
+   made Linux-portable for this move: `df -Pk`, `wc -c`, and `heavy` finds its Claude session under `node` too.
+   Paths in the carried docs read `~/…`; the old machine was macOS with home `/Users/thor`, the new one is Linux with
+   home `/home/thor`.
 3. Claude memory for this project: copy `state/claude-memory/*.md` into
-   `~/.claude/projects/<this repo's project dir>/memory/` and add their lines to that folder's `MEMORY.md` (one line
+   `~/.claude/projects/-home-thor-repos-agentic-workflow/memory/` (the folder name is the repo path with `/` → `-`) and add their lines to that folder's `MEMORY.md` (one line
    each, the `description:` field).
 4. Add to `~/.zshrc` (owner decisions, 2026-10-14; see §4):
    ```bash
@@ -27,8 +29,27 @@ folder carries them. `main` was `fe228345` when this was written.
 5. **The denylist is NOT in this PR.** It's the work-identifier list. Copy `~/.agentic-workflow/denylist.txt` from the
    old machine yourself (off GitHub), then `chmod 600` it. Agents must never open it. They only run
    `scripts/denylist-check.sh`.
-6. Toolchain: .NET SDK per `global.json`, Node per `.nvmrc`, and `scripts/binaries-lock.sh fetch temporal`
-   (the Sindri host and its tests need the Temporal CLI).
+6. Toolchain: .NET SDK per `global.json` (install with `dotnet-install.sh` into `~/.dotnet`, which `heavy` puts on
+   PATH), the NativeAOT prerequisites (`clang`, `zlib1g-dev`), Node per `.nvmrc`, `jq`, `lsof`, `tmux`, and
+   `scripts/binaries-lock.sh fetch temporal` (the lock file has linux-x64 and linux-arm64 rows). Playwright browsers
+   for ui-evidence: `npx playwright install --with-deps chromium`.
+7. Secrets that lived in the macOS keychain (`agentic-workflow-agent-app`, `gh:github.com` and others) don't move by
+   themselves. Read each on the Mac with `security find-generic-password -s "<service>" -w`, then store it on Linux
+   with `secret-tool store --label "<service>" service "<service>"` (libsecret) or wherever the tool that reads it
+   expects it. Run `gh auth login` again on Linux.
+
+### Linux differences the lanes must know
+- **UI real-app proofs were macOS-specific:** AX focus checks through the macOS accessibility API, Reduce motion,
+  VoiceOver, and the ⌘ shortcuts. On Linux, prove focus and announcements through AT-SPI (Accerciser or Orca), and
+  reduced motion through the desktop setting (GNOME: `gsettings set org.gnome.desktop.interface enable-animations
+  false`). The app needs an X11 or Wayland session; a headless box needs `xvfb-run`. The pending Reduce motion and
+  VoiceOver owner checks for U0 still want the Mac, or the owner accepts the Linux equivalents.
+- **The ⌘⌥←/→ region keys** (UI §8) map to Ctrl+Alt+←/→ on Linux per the spec's platform table. Check that the UI
+  spec says so; if it doesn't, that's an owner question.
+- **The engine's launch flow and Attach** target Warp plus tmux. Warp runs on Linux; tmux is the session owner either
+  way.
+- AOT smoke tests publish for the host RID (linux-x64 or arm64), so `expected.txt` path normalizing may need a look
+  the first time they run on Linux.
 
 ## 2. How the team runs
 

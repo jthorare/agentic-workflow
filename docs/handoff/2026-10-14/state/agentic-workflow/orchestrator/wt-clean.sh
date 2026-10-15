@@ -2,7 +2,7 @@
 # Remove worktrees that nothing loses: not open by any process, clean, and HEAD either merged into origin/main
 # or reachable from some origin branch. Skips active lane branches (open PRs) and the main checkout.
 # DRY=1 prints only.
-REPO=/Users/thor/repos/agentic-workflow
+REPO="${AW_REPO:-$HOME/repos/agentic-workflow}"
 cd "$REPO" || exit 1
 git fetch -q --prune origin
 open_heads=$(gh pr list --state open --limit 100 --json headRefName --jq '.[].headRefName')
@@ -19,4 +19,4 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | grep -v "^$REPO$"
   if [ "${DRY:-0}" = 1 ]; then echo "WOULD REMOVE ($why) $b $w"; else git worktree remove "$w" && echo "REMOVED ($why) $b $w"; fi
 done
 git worktree prune
-df -g /System/Volumes/Data | awk 'NR==2{print $4" GB free"}'
+df -Pk "$HOME" | awk 'NR==2{print int($4/1048576)" GB free"}'

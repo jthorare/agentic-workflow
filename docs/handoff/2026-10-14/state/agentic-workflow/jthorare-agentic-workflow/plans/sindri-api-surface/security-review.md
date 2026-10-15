@@ -1,7 +1,7 @@
 # Threat Model — sindri-api-surface (pass 5, final)
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (commit 11500b8, §13 "Pass 4 → final text"); pass 4 at `pass4/security-review.md`
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (commit 11500b8, §13 "Pass 4 → final text"); pass 4 at `pass4/security-review.md`
 **Reviewed:** 2026-10-10
 
 **Threat model applied (unchanged).** Gates guard against honest mistakes by agents, not hostile ones. Forged `X-Sindri-Caller`, `X-Sindri-Terminal` or `X-Sindri-Repo` headers are out of scope for v0. This pass reports only pass-4 findings that are still open and new issues from the pass-4 edit.

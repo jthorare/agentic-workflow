@@ -66,7 +66,7 @@ None.
   - S1 defaults to `AW_SINDRI_HOME=$AW_STATE_DIR/sindri-app` and port `7410`. With 3 implementers each running `sindri serve` for a signal, they share one ledger and one host lease (`SND-LEASE-001`), or lose the port (S1's `SND-API-003`).
   - `which sindri` on this machine resolves to `~/.local/bin/sindri`, the TS CLI, so a bare `sindri item add` in a signal runs TS Sindri.
   - The spec's own examples hardcode `127.0.0.1:7410`.
-  - Evidence: absent. Searched the spec for `AW_SINDRI_HOME`, `AW_SINDRI_PORT`, `worktree`, `PATH`, `bin/sindri`, `dotnet run`. Only `$AW_SINDRI_HOME/views.db` (line 63) and the `7410` curl (line 352) appear. `.env.example` lines 22–29. `which -a sindri` → `/Users/thor/.local/bin/sindri`.
+  - Evidence: absent. Searched the spec for `AW_SINDRI_HOME`, `AW_SINDRI_PORT`, `worktree`, `PATH`, `bin/sindri`, `dotnet run`. Only `$AW_SINDRI_HOME/views.db` (line 63) and the `7410` curl (line 352) appear. `.env.example` lines 22–29. `which -a sindri` → `~/.local/bin/sindri`.
   - Fix: In "The team", require each implementer to export:
     - `AW_SINDRI_HOME=<worktree>/artifacts/sindri-home`
     - `AW_SINDRI_PORT=<7410 + slot>`

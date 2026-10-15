@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Emits one line per change in open PRs or lane branches; silent otherwise.
-REPO=/Users/thor/repos/agentic-workflow
-STATE=/Users/thor/.agentic-workflow/orchestrator/watch-state
+REPO="${AW_REPO:-$HOME/repos/agentic-workflow}"
+free_gb() { df -Pk "$HOME" | awk 'NR==2{print int($4/1048576)}'; }  # portable: Linux and macOS
+STATE="$HOME/.agentic-workflow/orchestrator/watch-state"
 mkdir -p "$STATE"; cd "$REPO" || exit 1
 snap() {
   gh pr list --state open --limit 50 --json number,title,isDraft,mergeable,headRefOid,reviewDecision \
@@ -20,7 +21,7 @@ while true; do
   comm -23 "$STATE/prev" "$STATE/cur" | grep -E '^#' | awk '{print "GONE " $1}' | while read l; do
     n=$(echo "$l" | awk '{print $2}'); grep -q "^$n " "$STATE/cur" || echo "$l (closed or merged)"; done
   mv "$STATE/cur" "$STATE/prev"
-  free=$(df -g /System/Volumes/Data | awk 'NR==2{print $4}')
+  free=$(free_gb)
   if [ "$free" -lt 5 ] && [ ! -f "$STATE/disklow" ]; then echo "DISK LOW: $free GB free"; touch "$STATE/disklow"; fi
   if [ "$free" -ge 8 ] && [ -f "$STATE/disklow" ]; then echo "DISK OK again: $free GB free"; rm -f "$STATE/disklow"; fi
 done

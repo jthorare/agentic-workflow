@@ -1,7 +1,7 @@
 # Threat Model — sindri-api-surface (pass 4, final edit)
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (final edit, commit 0617aae; §13 "Pass 3 → final edit"); pass 3 at `pass3/security-review.md`
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (final edit, commit 0617aae; §13 "Pass 3 → final edit"); pass 3 at `pass3/security-review.md`
 **Reviewed:** 2026-10-10
 
 **Threat model applied.** Unchanged: gates guard against honest mistakes by agents, not against hostile ones. A deliberately forged `X-Sindri-Caller: human` or `X-Sindri-Terminal: 1` is out of scope for v0. This pass reports only (a) pass-3 findings that are still open and (b) new issues from the final edit, mainly the `service:host` caller.

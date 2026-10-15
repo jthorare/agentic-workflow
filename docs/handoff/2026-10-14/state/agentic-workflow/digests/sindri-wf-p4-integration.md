@@ -3,7 +3,7 @@
 **Goal:** P4 integrator. Merge units a–e onto main, apply the integration fixes test-first, run the gate and the proof
 (journeys 1–11), write `manual-test.md` and `evidence.md`, then report to the coordinator. The review loop comes after that.
 
-- **Worktree:** `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`
+- **Worktree:** `~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`
 - **Branch:** `feat/sindri-wf-p4-interpreter`, PR #192 (draft), head `2a974947`, pushed.
 - **Tooling:** every dotnet command runs through `AW_HEAVY_SLOTS=3 ~/.agentic-workflow/bin-r1b/heavy`. Commits end with the
   trailers in `/private/tmp/claude-501/.../scratchpad/p0-unit-brief.md`.
@@ -71,6 +71,6 @@ Fixes (test-first; red commit, then the fix):
    dedupe P2's `IChallenges` / `ProcessChallenges` copies: the 94 PublicAPI lines and the duplicate registration.
    Nonces stay on `HomeCommandNonces`.
 7. **Full gate**, then the proof: `scripts/sindri-prove.sh`, journeys 1–11 from
-   `/Users/thor/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/verification-plan.md`. Write
+   `~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/verification-plan.md`. Write
    `manual-test.md` and `evidence.md` in that `proof/sindri-wf-p4/` folder, then report to the coordinator before the
    review loop.

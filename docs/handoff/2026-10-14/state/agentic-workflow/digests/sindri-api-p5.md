@@ -1,6 +1,6 @@
 # Sindri API P5 handoff (contract unit, partly done)
 
-Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-api-p5`, branch `feat/sindri-api-p5-stream`, base 86d1e596 (P3 contract).
+Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-api-p5`, branch `feat/sindri-api-p5-stream`, base 86d1e596 (P3 contract).
 
 ## Done: commit 55655a60
 Whole-solution `dotnet build -warnaserror` passed with 0 warnings. **`dotnet format --verify-no-changes` was NOT clean**: rc=2, one finding in

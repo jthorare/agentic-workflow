@@ -23,7 +23,7 @@ You are a worker in the Sindri app agent team. The main session is the orchestra
 - **Scratch files:** the scratchpad directory is shared by every lane. Keep ALL your scratch files, scripts, logs and
   hand-test homes in your own subdirectory (`scratchpad/<stage>-lane<X>/`), never at the scratchpad's top level and
   never in another lane's folder (files collided on 2026-10-11).
-- Your own worktree under `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-<stage>`, and your own branch
+- Your own worktree under `~/repos/agentic-workflow/.claude/worktrees/sindri-<stage>`, and your own branch
   (named in your task). Never touch another lane's worktree, or the main checkout.
 - Builds and tests only through `~/.agentic-workflow/bin-r1b/heavy <cmd>` (2 slots for the whole box; it waits for a free
   one). Scaffold with `/new-package` and `/new-slice` under heavy too (`node scripts/scaffold/...`).

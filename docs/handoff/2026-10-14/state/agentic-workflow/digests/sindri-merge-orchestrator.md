@@ -89,7 +89,7 @@ the head nor main moved, `gh pr merge --merge`, then tell the lanes.
 - New PRs #205/#206 (joithor, ui-evidence TS): not lane PRs; ask the owner before merging.
 
 ## Update (2026-10-14 morning, second restart)
-- Scripts now live in /Users/thor/.agentic-workflow/orchestrator/ (gate.sh, watch.sh, wt-clean.sh), which survives reboots.
+- Scripts now live in ~/.agentic-workflow/orchestrator/ (gate.sh, watch.sh, wt-clean.sh), which survives reboots.
 - Lane sessions after the restart: Context = -ca, Engine = -15; API and UI are -5d and -a7 (asked which is which).
 - Merged: #196 (context S-3a, d4de828b), #205 (ui-evidence scroll/env-login, 5034f4d8). #206 conflicts with #205 (4 ui-evidence
   files); its author joithor must merge main.
@@ -108,9 +108,9 @@ the head nor main moved, `gh pr merge --merge`, then tell the lanes.
   renumbered its README rows to X62 (rev-8 edits) and X63 (map review), because main already used X60 and X61. I also
   added PROTO_URL and MOCK_URL to .env.example.
 - Owner decided X63: reversible map-review overrides are `desk`; promote and import stay `protected`.
-- Rev-8 work is assigned per lane in /Users/thor/.agentic-workflow/orchestrator/rev8-assignments.md. Engine's urgent item is
+- Rev-8 work is assigned per lane in ~/.agentic-workflow/orchestrator/rev8-assignments.md. Engine's urgent item is
   P2b (E-21/E-22 recipe schema fields), because P2 merged before them.
-- AW_DENYLIST=file:/Users/thor/.agentic-workflow/denylist.txt is in ~/.zshrc (#208).
+- AW_DENYLIST=file:~/.agentic-workflow/denylist.txt is in ~/.zshrc (#208).
 - Open: #192 (P4), #209 (P5), #190 (API P2), #195 (S-5A), #184/#193/#197 (UI), and #206 (joithor's; conflicts after #205).
 - Lane names confirmed (2026-10-14 pm): API = -c3, Engine = -e0, Context = -1f, UI = -21.
 - MERGE ORDER: #190 (API P2) before #192 (engine P4); #192 carries #190's unreviewed branch. Don't gate #192 until #190 merges.
@@ -120,7 +120,7 @@ the head nor main moved, `gh pr merge --merge`, then tell the lanes.
 
 ## Update (2026-10-14 evening, after the crash)
 - Lock rules changed (owner): 1 heavy job per session plus 2 box-wide slots for expensive jobs; `heavy` auto-detects them,
-  reclaims dead slots, and passes nested calls straight through. Lane brief: /Users/thor/.agentic-workflow/orchestrator/resume-2026-10-14.md.
+  reclaims dead slots, and passes nested calls straight through. Lane brief: ~/.agentic-workflow/orchestrator/resume-2026-10-14.md.
   gate.sh now runs its builds and tests through heavy.
 - Orchestrator is -2c. Lanes: Context = -9c, Engine = -9e, UI = -3f, API = -f9 (by elimination; not yet confirmed).
 - Context codes for rev 8 are SND-CONTEXT-044/045 (040–043 were taken); X63 goes to S-4.

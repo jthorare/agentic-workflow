@@ -9,7 +9,7 @@ Never touch `scratchpad/hand*`; lane B owns them.
 
 ## State
 
-- Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s2-engine`, branch `feat/sindri-s2-engine`,
+- Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-s2-engine`, branch `feat/sindri-s2-engine`,
   pushed at `31c0628`. **Draft PR #167** has base `feat/sindri-s1-app-shell`; the orchestrator has its number. The PR body
   carries the block registry contract and the process-deviation note, and states that `LedgerEntry.Item` is now
   `ItemId?`.

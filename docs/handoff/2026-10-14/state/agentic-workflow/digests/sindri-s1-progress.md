@@ -1,7 +1,7 @@
 # Sindri S1 app shell — progress digest
 
 Resume with: /specToProvenPR (resume mode) in worktree
-/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell (branch feat/sindri-s1-app-shell, off origin/HEAD 5102565).
+~/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell (branch feat/sindri-s1-app-shell, off origin/HEAD 5102565).
 
 - Original handoff: ~/.agentic-workflow/digests/sindri-app-shell-handoff.md
 - Stage file: ~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-app/stages.md (S1 app shell, S1b UI split out, S2, S3, S4+)

@@ -1,8 +1,8 @@
 # Sindri engine P4 integration: handoff 3 (2026-10-13)
 
 Continues `sindri-wf-p4-integration-2.md` (and `-integration.md`). PR #192 (draft). Worktree
-`/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
-**`6d4fa838`**, pushed. Common brief: `/Users/thor/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-engine/unit-brief.md`.
+`~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
+**`6d4fa838`**, pushed. Common brief: `~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-engine/unit-brief.md`.
 Heavy: `AW_HEAVY_SLOTS=3 ~/.agentic-workflow/bin-r1b/heavy` (slots are heavily contended: 10–25 min waits are normal;
 chain build+test in one `sh -c` per slot). Push: `git push origin HEAD:refs/heads/feat/sindri-wf-p4-interpreter`
 (never name origin/main in the same command: the block-push-main hook). Trailers: Co-Authored-By Claude Opus 5.5 +
@@ -53,7 +53,7 @@ Scratch: `~/.agentic-workflow/jthorare-agentic-workflow/scratch/p4-int3/` — `r
    dotnet build, unit + integration lanes (`--ignore-exit-code 8`), lane budgets, dotnet format, verify-packages,
    check-rules, `claude plugin validate/test mods/aw-live`. Also `bash src/Sindri/aot-smoke/run.sh` (expected.txt was
    merged as harness-probe warns then context lines — verify the order).
-3. Journeys 1–11 (`/Users/thor/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/verification-plan.md`)
+3. Journeys 1–11 (`~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/verification-plan.md`)
    via `scripts/sindri-prove.sh` against `sindri serve`, `AW_SINDRI_HOME=$TMPDIR/sindri-dev-p4` (fresh),
    `AW_SINDRI_PORT=0`, built apphost `artifacts/bin/Aw.Sindri.Host/debug/sindri` with `DOTNET_ROOT=$HOME/.dotnet`;
    `recipe register`, then `human recipe approve workflow.step` piping the typed text; items: whatever `SelfItems`

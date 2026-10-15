@@ -1,7 +1,7 @@
 # Threat Model — sindri-api-surface (pass 2, rev 2)
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (rev 2, §13 resolutions); pass 1 at `pass1/security-review.md`; engine spec cross-checked for takeover
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (rev 2, §13 resolutions); pass 1 at `pass1/security-review.md`; engine spec cross-checked for takeover
 **Reviewed:** 2026-10-10
 
 **Threat model applied.** The same model as pass 1. Gates guard against agents' honest mistakes, not hostile agents. A session that deliberately forges `X-Sindri-Caller: human` is out of scope for v0 (owner decision; tokens come later). This pass reports only (a) pass-1 findings that are still unresolved and (b) new issues that rev 2 introduced.

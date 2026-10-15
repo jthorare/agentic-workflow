@@ -1,7 +1,7 @@
 # Threat Model — sindri-workflow-engine
 
 **Mode:** plan
-**Source:** `/Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-workflow-engine-design.md` (read with factory addendum §17.1 inv. 13, §17.19, §17.21, §17.22 D2/D9/D10, §17.28; `docs/csharp/bugfix.md` "Threat model"; S1 branch `feat/sindri-s1-app-shell` for `LoopbackGuard`, `LoopbackBinding`, `ApproveProfileService`, `EndpointTable`)
+**Source:** `~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-workflow-engine-design.md` (read with factory addendum §17.1 inv. 13, §17.19, §17.21, §17.22 D2/D9/D10, §17.28; `docs/csharp/bugfix.md` "Threat model"; S1 branch `feat/sindri-s1-app-shell` for `LoopbackGuard`, `LoopbackBinding`, `ApproveProfileService`, `EndpointTable`)
 **Reviewed:** 2026-10-10
 
 **Threat model applied (A §17.28.3, bugfix.md):** gates guard an agent's honest mistakes and shortcuts (weakening a check, skipping a phase, unblocking itself, re-rolling a verdict). Containing a deliberately adversarial agent is the sandbox's job (§8, §17.19 "What the sandbox really enforces"). A finding that needs a crafted bypass (a hand-built HTTP request, a direct SQLite write, a squatted port) is rated LOW/informational and marked **[written answer]**: answer it against the threat model in §11 "Review resolutions", not with a new rule.

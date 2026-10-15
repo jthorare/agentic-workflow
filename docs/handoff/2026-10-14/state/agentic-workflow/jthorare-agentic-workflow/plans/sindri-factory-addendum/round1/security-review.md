@@ -1,7 +1,7 @@
 # Threat Model — Sindri factory addendum (§17)
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md (rev 2), against the main spec's safety boundary (`2026-10-07-sindri-design.md` §8) and the Plan 6 dashboard spec (§6 Security)
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md (rev 2), against the main spec's safety boundary (`2026-10-07-sindri-design.md` §8) and the Plan 6 dashboard spec (§6 Security)
 **Reviewed:** 2026-10-09
 
 ## Summary

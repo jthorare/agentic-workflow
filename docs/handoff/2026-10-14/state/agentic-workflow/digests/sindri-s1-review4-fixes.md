@@ -1,6 +1,6 @@
 # S1 review run 4 — fix brief (lane A worker)
 
-Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell`, branch `feat/sindri-s1-app-shell`,
+Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell`, branch `feat/sindri-s1-app-shell`,
 PR #163, now at `e8ee0ce1`. Read `~/.agentic-workflow/digests/sindri-lane-brief.md` first. Scratch files go only in
 `scratchpad/s1-laneA/`. The same rules apply: red-first for each behaviour change, atomic commits that each build (no
 commit whose tests fail at it), heavy for builds and tests, public-API lines from RS0016/RS0017, push at the end (no

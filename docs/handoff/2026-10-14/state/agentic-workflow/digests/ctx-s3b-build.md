@@ -1,6 +1,6 @@
 # Handoff: stage S-3b (Sindri context lane), step 3 in progress
 
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/ctx-s3b, branch feat/ctx-s3b. Proof dir
+Worktree ~/repos/agentic-workflow/.claude/worktrees/ctx-s3b, branch feat/ctx-s3b. Proof dir
 ~/.agentic-workflow/jthorare-agentic-workflow/proof/ctx-s3b/ (plan.md, verification-plan.md created 2026-10-14T16:17:21Z).
 Scratchpad helper: <scratchpad>/api.sh <proj> (build under heavy lock, sync PublicAPI RS0016/RS0017, print other diagnostics).
 

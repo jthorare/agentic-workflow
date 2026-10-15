@@ -1,7 +1,7 @@
 # Sindri API lane — common brief for every implementer unit
 
 You implement one unit of an API phase in the worktree the lead names (`.claude/worktrees/sindri-api-p<N>`). Work
-only there. Never switch branches in `/Users/thor/repos/agentic-workflow`, since the live toolkit links to it. Never
+only there. Never switch branches in `~/repos/agentic-workflow`, since the live toolkit links to it. Never
 push, open a PR, rebase or `git clean`; the lead does all of those.
 
 **The plan is the contract:** `~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-api-lane/p<N>-plan.md`. Your

@@ -6,7 +6,7 @@ Read first: `~/.agentic-workflow/digests/sindri-lane-brief.md` (process rules; r
 `~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-s2-engine/verification-plan.md` (created 2026-10-11T06:16:36Z,
 before any code). Spec: `docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md` §17.28.
 
-Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s2-engine`, branch `feat/sindri-s2-engine`, stacked on
+Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-s2-engine`, branch `feat/sindri-s2-engine`, stacked on
 `origin/feat/sindri-s1-app-shell` (a7d2ada). PR base: `feat/sindri-s1-app-shell`. Builds/tests only via
 `~/.agentic-workflow/bin-r1b/heavy` (it can wait 10+ min for a slot: run long ones with run_in_background).
 

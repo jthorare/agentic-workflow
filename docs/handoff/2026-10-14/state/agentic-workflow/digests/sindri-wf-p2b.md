@@ -1,6 +1,6 @@
 # P2b handoff (lead session stopped at ~225k tokens context; no code written yet)
 
-Worktree: /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p2b, branch feat/sindri-wf-p2b-recipe-rev8 off origin/main 4a2389bd. Clean, nothing committed.
+Worktree: ~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p2b, branch feat/sindri-wf-p2b-recipe-rev8 off origin/main 4a2389bd. Clean, nothing committed.
 Done: verification-plan.md (proof/sindri-wf-p2b/, created 16:51 PDT, predates code); baseline Debug host built (artifacts/bin/Aw.Sindri.Host/debug/sindri, DOTNET_ROOT=$HOME/.dotnet);
 baseline hashes (origin/main) in scratch/p2b-lead/hashes-before.txt + before-<id>.json (validate --json output):
   workflow.item 331dd0a5e034..., workflow.step 12e030dc92a0..., dev-notify de3c04e3a865..., dev-timeout 550a3b7aed30...

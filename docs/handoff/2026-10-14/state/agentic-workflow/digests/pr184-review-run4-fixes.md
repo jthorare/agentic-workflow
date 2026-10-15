@@ -1,6 +1,6 @@
 # PR #184 (Sindri UI U0): review run 4 fixes + run 7g + gate + PR body
 
-Worktree: /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-ui-u0 (feat/sindri-ui-u0). Code done and pushed at 9a8893f3.
+Worktree: ~/repos/agentic-workflow/.claude/worktrees/sindri-ui-u0 (feat/sindri-ui-u0). Code done and pushed at 9a8893f3.
 Findings: ~/.agentic-workflow/jthorare-agentic-workflow/reviews/184.json (run 4, 19 issues). Proof dir:
 ~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-ui-u0/ (evidence.md, manual-test.md, merge-gate.md).
 Commit trailer now: Claude-Session: https://claude.ai/code/session_018r3EBCdAtCCempFmH8aqEU

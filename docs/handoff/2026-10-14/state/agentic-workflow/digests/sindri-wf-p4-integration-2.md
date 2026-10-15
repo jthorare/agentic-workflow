@@ -1,7 +1,7 @@
 # Sindri engine P4 integration: handoff 2 (2026-10-13)
 
 Continues `sindri-wf-p4-integration.md`. PR #192 (draft). Worktree
-`/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
+`~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
 `f8b0a629`, pushed. Heavy commands: `AW_HEAVY_SLOTS=3 ~/.agentic-workflow/bin-r1b/heavy`. Push with
 `git push origin HEAD:refs/heads/feat/sindri-wf-p4-interpreter`. Commit trailers: Co-Authored-By Claude Opus 5.5 +
 the session line. Clear only bin/obj/artifacts if disk < 5 GB (never git clean). Scratch:
@@ -41,6 +41,6 @@ the session line. Clear only bin/obj/artifacts if disk < 5 GB (never git clean).
 7. Merge origin/main again; full AGENTS.md gate; journeys 1–11 via `scripts/sindri-prove.sh` against `sindri serve`
    (AW_SINDRI_HOME=$TMPDIR/sindri-dev-p4 fresh, AW_SINDRI_PORT=0; `recipe register` then `human recipe approve` workflow.step
    with the typed text piped; item ids from the SelfItems stub); manual-test.md + evidence.md in
-   `/Users/thor/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/`; prove the 7 API P2 reds also fail on
+   `~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/`; prove the 7 API P2 reds also fail on
    `origin/feat/sindri-api-p2-projector`; update the PR #192 body (footer: Generated with Claude Code + session link).
    Don't run the review loop.

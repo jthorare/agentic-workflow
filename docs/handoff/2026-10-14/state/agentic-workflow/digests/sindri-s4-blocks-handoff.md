@@ -1,6 +1,6 @@
 # Handoff: Sindri S4a (lane E) — judge and evidence as engine blocks
 
-Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s4-blocks`, branch `feat/sindri-s4-blocks` (base
+Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-s4-blocks`, branch `feat/sindri-s4-blocks` (base
 `feat/sindri-s2-engine`, S2 `b29c2672` merged in at `1d2c7126`). Not pushed yet as of `0d63ae12`.
 Scratch: `<scratchpad>/s4-laneE/` (gate.sh, hand.sh, judge156 export of #156 `fabba31e`, bin/ switch wrappers, publicapi.sh).
 Proof: `~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-s4-blocks/` (verification-plan.md, manual-test.md, hand/).

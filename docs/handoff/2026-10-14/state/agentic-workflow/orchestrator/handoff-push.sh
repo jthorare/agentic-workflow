@@ -2,8 +2,8 @@
 # For each lane worktree: commit uncommitted work as a WIP commit (no hooks), check its files with the denylist,
 # then push HEAD to origin handoff/<branch>. Never touches the real PR branches. DRY=1 prints only.
 set -u
-REPO=/Users/thor/repos/agentic-workflow
-export AW_DENYLIST=file:/Users/thor/.agentic-workflow/denylist.txt
+REPO="${AW_REPO:-$HOME/repos/agentic-workflow}"
+export AW_DENYLIST="${AW_DENYLIST:-file:$HOME/.agentic-workflow/denylist.txt}"
 cd "$REPO" || exit 1
 git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch /{print w, $2}' | sed 's#refs/heads/##' | while read -r w b; do
   case "$w" in "$REPO"|*/orchestrator/gate-*) continue ;; esac
@@ -12,7 +12,7 @@ git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch /{print w, $2}'
   if [ "$dirty" = 0 ] && [ "$remote_has" = 1 ]; then echo "SKIP clean+pushed  $b"; continue; fi
   if [ "${DRY:-0}" = 1 ]; then echo "WOULD handoff      $b (dirty=$dirty pushed=$remote_has)"; continue; fi
   if [ "$dirty" != 0 ]; then
-    big=$(git -C "$w" status --porcelain -uall | awk '{print $NF}' | while read -r f; do [ -f "$w/$f" ] && [ "$(stat -f %z "$w/$f")" -gt 5000000 ] && echo "$f"; done)
+    big=$(git -C "$w" status --porcelain -uall | awk '{print $NF}' | while read -r f; do [ -f "$w/$f" ] && [ "$(wc -c < "$w/$f")" -gt 5000000 ] && echo "$f"; done)
     if [ -n "$big" ]; then echo "STOP big files in $b: $big"; continue; fi
     git -C "$w" add -A && git -C "$w" -c user.name=jthorare -c user.email=jthorare@users.noreply.github.com commit -q --no-verify -m "wip(handoff): uncommitted lane work at the machine move, 2026-10-14
 

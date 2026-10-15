@@ -1,9 +1,9 @@
 # Handoff: PR #192 review loop (Sindri engine P4)
 
-Brief: /Users/thor/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-engine/unit-brief.md (lock rules: build once with
+Brief: ~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-engine/unit-brief.md (lock rules: build once with
 `AW_HEAVY_SLOTS=2 ~/.agentic-workflow/bin-r1b/heavy dotnet build ...`, then `dotnet test ... --no-build`; one fix agent at a
 time; no `timeout` binary, bound commands with `perl -e 'alarm shift; exec @ARGV' <secs> ...`; never delete lock dirs).
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4, branch feat/sindri-wf-p4-interpreter.
+Worktree ~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4, branch feat/sindri-wf-p4-interpreter.
 Pushed head 3ed339b5 (main fe228345 merged; carries API P2 #190 at **ba457fdc**). Gate at 3ed339b5: build 0 warnings, format,
 smoke, deps/rules/sync/env ok; lanes 5659/5660, the one failure is cross-lane (UI GoldenContractTests vs #190's status
 golden views/health/lastRun; reported to coordinator, not P4's). Merge order: #192 merges after #190; then merge main
@@ -30,7 +30,7 @@ State file ~/.agentic-workflow/jthorare-agentic-workflow/reviews/192.json holds 
 2. qa-1 (issue): run evidence journeys via scripts/sindri-prove.sh (fresh AW_SINDRI_HOME=$TMPDIR/sindri-dev-p4,
    AW_SINDRI_PORT=0): answer (text + protected grant with typed challenge), command, cancel, events --follow (Ctrl-C exit 0),
    status/events on bare item, desk-timeout park (dev profile deskTimeout 1m), causation routing, E-30 signal 6 sqlite
-   count check; update /Users/thor/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/{evidence.md,manual-test.md,raw/}.
+   count check; update ~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-wf-p4/{evidence.md,manual-test.md,raw/}.
 3. cr-8 (issue): refresh PR body (gh pr edit 192 --body-file; it embeds evidence.md) with head, carried merges, gate, and a
    "Review resolutions" section (from 192.json).
 4. Owner items: spec §5.4 held-window wording (1-min lag, started-before rule); arch-8 §3.4/§3.8 rev 8.2 wording.

@@ -1,6 +1,6 @@
 # Engine lane — common brief for every unit, integrator and finalizer agent
 
-Repo: /Users/thor/repos/agentic-workflow. Spec: `docs/superpowers/specs/2026-10-10-sindri-workflow-engine-design.md`
+Repo: ~/repos/agentic-workflow. Spec: `docs/superpowers/specs/2026-10-10-sindri-workflow-engine-design.md`
 (rev 8.1 on origin/main; read it from `git show origin/main:<path>`), amended by the UI spec's E-6/E-9/E-13/E-19
 (`docs/superpowers/specs/2026-10-11-sindri-ui-design.md` §6.7, §18.1). Cross-spec decisions: `docs/sindri/README.md` X1–X61.
 The spec wins over the reference branches #166/#167/#169.
@@ -63,5 +63,5 @@ The spec wins over the reference branches #166/#167/#169.
 
 ## Report (concise)
 Head SHA, files, contract/shared changes, gate output, open questions (real spec questions first).
-- Denylist check (#208): run as `AW_DENYLIST=file:/Users/thor/.agentic-workflow/denylist.txt scripts/denylist-check.sh <files>`; without the variable it exits 2. Never open or print the list itself.
+- Denylist check (#208): run as `AW_DENYLIST=file:~/.agentic-workflow/denylist.txt scripts/denylist-check.sh <files>`; without the variable it exits 2. Never open or print the list itself.
 - Every test wait is bounded (timeout or WaitAsync), red tests included: a hung test holds a heavy slot for every lane. If you were stopped (usage limit, crash), kill any `dotnet test` left running from your worktree before you start another.

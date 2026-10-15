@@ -4,10 +4,10 @@
   Repo slug / state dir: ~/.agentic-workflow/jthorare-agentic-workflow/ (copied from joi-fairshare-agentic-workflow).
 - Stage map + contracts: ~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-completion/stages.md
   (autonomy: run continuously; order B1 → B2 → Plan 6).
-- Stage 1 (B1) worktree: /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-evolve-privacy-b1, branch feat/sindri-evolve-privacy-b1.
+- Stage 1 (B1) worktree: ~/repos/agentic-workflow/.claude/worktrees/sindri-evolve-privacy-b1, branch feat/sindri-evolve-privacy-b1.
 - Verification plan (written before code, 2026-10-10T02:56Z): ~/.agentic-workflow/jthorare-agentic-workflow/proof/sindri-evolve-privacy-b1/verification-plan.md
 - SDD ledger (source of truth for task progress): <worktree>/.superpowers/sdd/2026-10-09-sindri-evolve-privacy-b1-publish-gate/progress.md
-- SDD scripts: /Users/thor/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1/skills/subagent-driven-development/scripts/{task-brief,review-package}
+- SDD scripts: ~/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1/skills/subagent-driven-development/scripts/{task-brief,review-package}
   (run as `bash <script> ...` from the worktree root; compound shell with cd/source/$HOME is blocked by the worktree guard — use absolute paths).
 - Next after B1 tasks: hand test (manual-test.md), evidence.md + pack.json (CLI journey, hand-written pack), UI evidence skipped (CLI), draft PR, /review loop to zero, ready, then Stage 2.
 - Plan 5 Task 14 (switch-on) is a human step after B1+B2 merge.

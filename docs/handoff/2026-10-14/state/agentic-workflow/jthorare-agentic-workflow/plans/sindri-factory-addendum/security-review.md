@@ -1,7 +1,7 @@
 # Threat Model — Sindri factory addendum (§17), round 2
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md (rev 3, with §17.19–§17.21), against the main spec's safety boundary (`2026-10-07-sindri-design.md` §8) and the round-1 review (`round1/security-review.md`)
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md (rev 3, with §17.19–§17.21), against the main spec's safety boundary (`2026-10-07-sindri-design.md` §8) and the round-1 review (`round1/security-review.md`)
 **Reviewed:** 2026-10-09
 **Out of scope (decided):** C# port, stacked epics, swappable host, ring order, core tenet. Generic shell-script hygiene isn't flagged.
 

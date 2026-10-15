@@ -1,6 +1,6 @@
 # Handoff: S1b Sindri UI shell (lane B) — in review
 
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s1b-ui-shell, branch feat/sindri-s1b-ui-shell
+Worktree ~/repos/agentic-workflow/.claude/worktrees/sindri-s1b-ui-shell, branch feat/sindri-s1b-ui-shell
 (pushed), draft PR #168 (base feat/sindri-s1-app-shell). S1 review-1 merged in (6db5de0). Lane-private scratch:
 scratchpad/s1b-laneB/ (publish.sh, hand.sh, approve.exp, harness/, gate.log, pr-body.md, pr168.diff). Never use scratchpad/hand*.
 

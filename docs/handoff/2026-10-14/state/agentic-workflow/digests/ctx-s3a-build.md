@@ -6,7 +6,7 @@ with tokens. Token budget 3M per stage; ~0.35M used so far (prep).
 
 ## Where things are
 
-- Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/ctx-s3a`, branch `feat/ctx-s3a`, created from
+- Worktree `~/repos/agentic-workflow/.claude/worktrees/ctx-s3a`, branch `feat/ctx-s3a`, created from
   5c4a4593 (S-1A's Core contract). No commits of mine yet. Draft PR later with `--base feat/ctx-s1a`. Port 7497.
 - **Merge only, never rebase** onto `feat/ctx-s1a`; the lead says when (S-1A's Host wiring). API P1 (#181) merged into
   main as 1027a13f; S-1A is merging main and will base its PR on main.

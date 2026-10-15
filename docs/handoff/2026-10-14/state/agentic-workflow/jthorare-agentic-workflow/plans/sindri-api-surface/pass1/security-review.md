@@ -1,7 +1,7 @@
 # Threat Model — sindri-api-surface
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (S1 code read from `feat/sindri-s1-app-shell`: `LoopbackBinding.cs`, `LoopbackGuard.cs`, `Pipeline.cs`, `Server/ServeCommand.cs`)
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (S1 code read from `feat/sindri-s1-app-shell`: `LoopbackBinding.cs`, `LoopbackGuard.cs`, `Pipeline.cs`, `Server/ServeCommand.cs`)
 **Reviewed:** 2026-10-10
 
 **Threat model applied.** This review uses the repo's threat model (`docs/csharp/bugfix.md` "Threat model"): harness gates guard against agents' honest mistakes, not against hostile agents, and keeping a hostile agent contained is the sandbox's job. The owner decided that v0 has no tokens, passkeys or tailnet. A session that deliberately forges `X-Sindri-Caller`, unsets `CLAUDECODE` or otherwise sets out to beat the class check is **out of scope** and is noted only. In scope: something other than an agent session driving commands (a browser, another local process), data leaving the host, and honest-mistake paths that still let a session make a decision.

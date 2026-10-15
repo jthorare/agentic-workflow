@@ -45,6 +45,8 @@ for _ in $(seq 1 20); do
   [ -z "$p" ] || [ "$p" -le 1 ] && break
   c="$(ps -o comm= -p "$p" 2>/dev/null)"; c="${c##*/}"
   if [ "$c" = claude ]; then session="$p"; break; fi
+  # Linux / npm installs: the process is `node …/claude …`
+  if [ "$c" = node ] && ps -o args= -p "$p" 2>/dev/null | grep -qE '(^|/)claude( |$)|/claude-code/'; then session="$p"; break; fi
   p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
 done
 [ -n "$session" ] || session="$PPID"

@@ -1,5 +1,5 @@
 # S-5A onyx adapter — handoff (2026-10-12)
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/ctx-s5a (branch feat/ctx-s5a).
+Worktree ~/repos/agentic-workflow/.claude/worktrees/ctx-s5a (branch feat/ctx-s5a).
 Done: 466621b3 red fake tests; 3ae5afa8 fake (admin search, size-info, /me, Delay, README); 51b3370e red adapter tests + stubs.
 Left: implement Core/Onyx/OnyxRecordKeys (Identify, KindOf) -> commit feat; implement Infrastructure/Onyx:
 OnyxRequests.Send (allowlist exact method+route, bearer, single send path; OnyxVersionProbe should use it),

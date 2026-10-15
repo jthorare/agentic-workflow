@@ -1,6 +1,6 @@
 # Handoff: build the Sindri app — stage S1, the app shell
 
-Paste this into a fresh session in /Users/thor/repos/agentic-workflow.
+Paste this into a fresh session in ~/repos/agentic-workflow.
 
 ---
 

@@ -1,7 +1,7 @@
 # Sindri engine P4 integration: handoff 4 (2026-10-14)
 
 Continues `sindri-wf-p4-integration-3.md`. PR #192 (draft). Worktree
-`/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
+`~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p4`, branch `feat/sindri-wf-p4-interpreter`, head
 **`0c4f07c2`**, pushed. Brief: `~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-engine/unit-brief.md`.
 Scratch: `~/.agentic-workflow/jthorare-agentic-workflow/scratch/p4-int4/` (logs below; `env.sh` sets the proof env and `pv`).
 Push: `git push origin HEAD:refs/heads/feat/sindri-wf-p4-interpreter`.

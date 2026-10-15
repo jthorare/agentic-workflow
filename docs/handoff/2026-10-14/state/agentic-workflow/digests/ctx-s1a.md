@@ -1,7 +1,7 @@
 # ctx-s1a handoff digest (S-1A stage owner)
 
 Goal: stage S-1A of docs/superpowers/specs/2026-10-10-sindri-context-retrieval-design.md via /specToProvenPR steps 1–9.
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/ctx-s1a, branch feat/ctx-s1a (origin/main merged in),
+Worktree ~/repos/agentic-workflow/.claude/worktrees/ctx-s1a, branch feat/ctx-s1a (origin/main merged in),
 PR base feat/sindri-api-p1-cqrs (#181). Stage files: ~/.agentic-workflow/jthorare-agentic-workflow/proof/ctx-s1a/
 (plan.md = design + lead decisions, verification-plan.md created 2026-10-12T15:23:22Z).
 

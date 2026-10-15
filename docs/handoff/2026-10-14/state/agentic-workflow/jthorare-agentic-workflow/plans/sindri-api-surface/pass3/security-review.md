@@ -1,7 +1,7 @@
 # Threat Model — sindri-api-surface (pass 3, rev 3, final)
 
 **Mode:** plan
-**Source:** /Users/thor/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (rev 3, §13 "Pass 2 → rev 3"); pass 2 at `pass2/security-review.md`
+**Source:** ~/repos/agentic-workflow/docs/superpowers/specs/2026-10-10-sindri-api-surface-design.md (rev 3, §13 "Pass 2 → rev 3"); pass 2 at `pass2/security-review.md`
 **Reviewed:** 2026-10-10
 
 **Threat model applied.** Unchanged from passes 1 and 2. Gates guard against honest mistakes by agents, not against hostile agents. A deliberately forged `X-Sindri-Caller: human` or `X-Sindri-Terminal: 1` is out of scope for v0. This pass reports only (a) pass-2 findings that are still unresolved and (b) new issues introduced in rev 3, in particular the `pause` class and `X-Sindri-Terminal`.

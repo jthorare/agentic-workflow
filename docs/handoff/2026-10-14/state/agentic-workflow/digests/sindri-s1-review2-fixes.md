@@ -1,6 +1,6 @@
 # S1 review run 2 — fix brief (lane A worker)
 
-Worktree: `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell`, branch `feat/sindri-s1-app-shell`,
+Worktree: `~/repos/agentic-workflow/.claude/worktrees/sindri-s1-app-shell`, branch `feat/sindri-s1-app-shell`,
 PR #163, now at `0c3a2f1`. Read first: `~/.agentic-workflow/digests/sindri-lane-brief.md` (process rules, tool quirks,
 the heavy wrapper; the scratchpad is shared, so keep your scratch files in your own subdirectory), then
 `docs/csharp/sindri.md` and the C# rules. The review state is `~/.agentic-workflow/jthorare-agentic-workflow/reviews/163.json`

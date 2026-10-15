@@ -1,6 +1,6 @@
 # P2b builder B handoff (stopped at ~250k context; NOTHING committed yet)
 
-Worktree /Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-wf-p2b, branch feat/sindri-wf-p2b-recipe-rev8, head e7595e7d.
+Worktree ~/repos/agentic-workflow/.claude/worktrees/sindri-wf-p2b, branch feat/sindri-wf-p2b-recipe-rev8, head e7595e7d.
 Lock rule (updated): `AW_HEAVY_SLOTS=2 ~/.agentic-workflow/bin-r1b/heavy dotnet build tests/Aw.Sindri.Tests -warnaserror` once, then
 `heavy dotnet test --project tests/Aw.Sindri.Tests --no-build --filter-class '*DeclarationRulesTests'`. No `timeout` binary on this mac; use run_in_background.
 A background build+test (task b91le3g8r) was started in the old session: kill any leftover `dotnet` from this worktree first.

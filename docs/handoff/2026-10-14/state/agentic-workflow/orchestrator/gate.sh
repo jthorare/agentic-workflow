@@ -3,8 +3,8 @@
 # Merges the PR head onto current origin/main in a scratch worktree and runs the merge-gate parts named.
 set -u
 PR="$1"; shift
-REPO=/Users/thor/repos/agentic-workflow
-SP=/Users/thor/.agentic-workflow/orchestrator
+REPO="${AW_REPO:-$HOME/repos/agentic-workflow}"
+SP="$HOME/.agentic-workflow/orchestrator"
 WT="$SP/gate-$PR"
 export PATH="$HOME/.dotnet:$PATH" DOTNET_ROOT="$HOME/.dotnet"
 cd "$REPO" && git fetch -q origin
@@ -20,7 +20,7 @@ if ! git -c user.name=gate -c user.email=gate@local merge -q --no-ff --no-edit "
 fi
 echo "merged $HEAD_SHA onto $(git rev-parse --short origin/main)"
 fail=0
-HEAVY=/Users/thor/.agentic-workflow/bin-r1b/heavy
+HEAVY="$HOME/.agentic-workflow/bin-r1b/heavy"
 export AW_HEAVY_SLOTS=2 AW_SESSION_HEAVY_SLOTS=1
 step() { local name="$1"; shift; if "$@" > "$SP/gate-$PR-$name.log" 2>&1; then echo "ok   $name"; else echo "FAIL $name (log: gate-$PR-$name.log)"; fail=1; fi; }
 for s in "$@"; do

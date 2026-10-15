@@ -1,6 +1,6 @@
 # Sindri API P3 — contract unit handoff (partial)
 
-Worktree `/Users/thor/repos/agentic-workflow/.claude/worktrees/sindri-api-p3`, branch `feat/sindri-api-p3-items`, on P2 tip 776b34b2.
+Worktree `~/repos/agentic-workflow/.claude/worktrees/sindri-api-p3`, branch `feat/sindri-api-p3-items`, on P2 tip 776b34b2.
 Plan: `~/.agentic-workflow/jthorare-agentic-workflow/plans/sindri-api-lane/p3-plan.md` (§1 contract unit, U2-API, Lead answers,
 Owner decisions, and the new **README X61** section). Common brief: scratchpad `p2-common.md` (read "P2" as "P3").
 The first agent stopped early because its context grew too large (about 390k tokens). A fresh agent should continue from here.
