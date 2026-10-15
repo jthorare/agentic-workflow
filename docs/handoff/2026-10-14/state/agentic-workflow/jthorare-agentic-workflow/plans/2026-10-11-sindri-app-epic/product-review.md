@@ -1,0 +1,147 @@
+# Product Review: Sindri application design epic (PR #170), pass 2
+
+_Reviewed by `/productReview` on 2026-10-11 | Mode: growth | Worktree at `1c328de9` (`docs/sindri-app-epic`)_
+
+Read as one plan: `docs/sindri/README.md` (X1–X34 and the new build-order table), the API surface spec, the workflow engine spec (rev 5 plus the X19–X33 batch) and the context retrieval spec. I checked them against S1's contract (`origin/feat/sindri-s1-app-shell:docs/csharp/sindri.md`), `deps.yaml` and the dashboard spec. Pass 1 is in `pass1/` (product #1–#20, consolidated E1–E29).
+
+Scope of this pass:
+- whether each pass-1 finding is resolved;
+- what the X19–X34 edits broke or left inconsistent.
+
+UI design content and settled spec internals were not re-reviewed. As in pass 1, "growth" means growth for one owner: Sindri used in more repos, providers and sessions, with the factory line taking over more of the work.
+
+## Verdict: ITERATE
+
+The rule decides it: one HIGH concern and no CRITICAL. The X19–X34 batch did what pass 1 asked. Every E1–E29 finding is now resolved or partly resolved, and the two owner decisions (X21 agent runtime, X22 launch-time MCP) are written into the specs. The one HIGH is **#1**: X29 and X21 both rest on a `session.ended` event that has no producer. X29 uses it for attach, `ItemView.session` and the double-launch guard. X21 uses it for "a session that exits without reporting fails the Step". A Warp tab started from a launch configuration isn't a child of Sindri, and the collector that would watch the process list is "later" (API §11). As written, closing a tab blocks `sindri open` on that item for good, and an agent that dies leaves its Step waiting until the Step timeout. The 13 MEDIUM concerns fall into three groups:
+- edits applied to one spec but not its sibling: the notifier (#2), MCP and egress text (#3), and the build order (#4);
+- new owner gaps the batch opened: the `human` token (#5), the step-report token (#6), token metering (#7), auto-promotion (#9), item links (#10) and engine routes (#11);
+- two growth-lever risks: unattended runs need a desktop terminal (#8), and per-path MCP registration is checked late (#12).
+
+## Pass-1 findings: status
+
+| Finding | Status | Evidence |
+|---|---|---|
+| E1 / P#2: `SND-API-004/005` collide with S1 | **Resolved** | X20 renumbers them to `SND-API-011/012` (API §1, §9, P2, P5). One nit is left: the "Fixed, from stage S1" table still omits S1's `SND-PROFILE-006` and `SND-CLI-002` (#L9) |
+| E2 / P#1: nobody owns launched-session Step completion | **Partly** | X21 adds WF §6.5 and P8, and API §4.1 adds `step-report`. Open: the `session.ended` producer (#1), how the token reaches the session (#6), the metering owner (#7) and headless launching (#8) |
+| E3 / P#3: build order stated four ways | **Partly** | The README wave table exists, and CTX's stage table gates S-1A, S-4 and S-5B on API P1 and P6. The WF wave table, the API wave table and CTX §11 still state their own order (#4) |
+| E4 / P#10: engine P4 on items nothing created | **Resolved** | WF P4 depends on API P3, and its signals create the item first. The `T-n` shorthand is kept on purpose |
+| E5 / P#4, #18: three ways to act as the human | **Mostly** | `sindri-prove.sh` is used everywhere, including the CTX stage-owner brief. WF §6.1's dev loop still runs `sindri profile approve` through the alias as an agent (#L6) |
+| E6 / P#20: Codex and Cursor MCP registration | **Partly** | API §8 is right (never registered, passed at launch, doctor checks all three). CTX §3 still says "Codex and Cursor get the equivalent entry", and its doctor check covers only `~/.claude.json` (#3) |
+| E7: context egress and repo scope | **Partly** | CTX §3 now has `context.sessions.enabled` on every transport and defines repo scope. API §8's tool table still reads "off while `context.mcp.enabled` is false", and `context.repoTeams` isn't in the §8.8 profile example (#3, #L10) |
+| E8: nonce and challenge vs CQRS | **Resolved** | API §2.5 lists both carve-outs with `issue` rows |
+| E9 / P#12: X18 against the tiers | **Partly** | `IModelPort` in `Aw.Context.Core`, adapted in Sindri's Host. Sindri's project fan-out (4 of 4, with the one exception spent on Context) has no answer for the Judge edge that X18 and engine P8 need (#13) |
+| E10: context jobs inside the command gate | **Resolved** | S-4 and S-5B wait for API P6 |
+| E11 / P#13: scoping unowned, no start form | **Partly** | X34 adds recipe `inputs` and names the scoping spec as next after the UI design. The engine still has no route table, so `GET /workflow/recipes` and the start route are named nowhere else (#11). CTX Phase 10's signal still assumes a "design-studio recipe" (#L10) |
+| E12: engine → item state mapping | **Resolved, with a new slip** | The API §3.6 map exists. It now contradicts the group table above it (#L1) |
+| E13 / E14 / E21 / P#15: open vs takeover vs attach | **Partly** | The rules are written (X29, API P10). The liveness data they depend on has no producer (#1) |
+| E15: `answer-grant-tokens` | **Resolved** | API §2.1 and WF §6.2 name it. API §4.1's `protected` row is still short (#L2) |
+| E16 / P#6: map review's own terminal rule | **Mostly** | `SND-CONTEXT-041` is retired. §8.7 still says `--apply` "asks for confirmation", and interactive review per proposal isn't reconciled with the challenge (#9) |
+| E17: `import` and `promote` reachable from the app | **Resolved, with a new gap** | Both are now `protected`. Promotion still happens automatically on two paths (#9) |
+| E18: `sindri_*` text not fenced | **Resolved** | API §8 |
+| E19: trusted `human` header | **Partly** | API §6 describes the per-start token. No phase builds it, and the prover's `curl` doesn't send it (#5) |
+| E20: routes outside the chain before API P1 | **Resolved** | X17, together with the wave table |
+| E22: provider keys | **Resolved** | X18: pointers only |
+| E23 / P#5: exit codes | **Resolved** | CTX §8.6 adopts S1's codes |
+| E24 / P#9: no notifier before engine P6 | **Partly** | API §5.1 lets the app notify until P6 (X32). README X5 and WF §6.3 still say the app never notifies (#2) |
+| E25 / P#8: `workflow.request` | **Resolved** | WF §5.2, API §3.4 |
+| E26: context commands write no events | **Resolved** | CTX §3 |
+| E27: `EventFactory` owners, `--slice-only` | **Mostly** | WF S1-D7 says API P1, and the engine uses `--slice-only`. The API §3.5 row still reads "whichever phase lands first", and S1-D6 is still owned by engine P4 although API P5 now always lands first (#L3) |
+| E28: contract docs, `register` owner | **Resolved** | `sindri mcp register` ships with whichever creates `/sindri/mcp` |
+| E29 / P#16, #17: stale lines | **Partly** | Several are left (#L8, #L10) |
+| P#11: item ↔ tracker link owner | **Partly** | X23 gives it to CTX Phase 6 (`item.linked` from `context-sync`). Nothing supplies the link's input (#10) |
+| P#14: activation friction on the MCP lever | **Not addressed** | `repo onboard` still doesn't offer MCP registration or the snippet. There is no `mcp:registered` doctor line and no needs-you row (#12) |
+| P#19: needs-you `subkind` | **Not addressed** | `NeedsYouRow.kind` still folds parks, escalations, idle takeovers and desk tasks into `park`, while `--needs-me` splits them (#L11) |
+
+Totals: 15 resolved or mostly resolved, 13 partly resolved, 2 not addressed. No finding regressed.
+
+## Lens checklist (growth)
+
+| Lens item | Result |
+|---|---|
+| Growth levers | All three levers are now owned. (1) `/sindri/mcp` in every work-repo session (X8, X22). (2) Needs-you plus notifications, which bring the owner back (X5, X32). (3) The unattended factory line (X21, engine P8). Lever 3 depends on a `session.ended` event nobody produces (#1) and on a desktop Warp tab (#8). Lever 2 is described two ways (#2) |
+| Activation funnel | Install, then `sindri`, then approve, then `repo onboard`, then `sindri mcp register --apply` in each repo, then `context.sessions.enabled: true` and re-approve, then paste the snippet by hand. The biggest drop-off is still the per-repo steps that nothing prompts for (#12). There is a new risk: Claude Code's `--scope local` is keyed by project path, so sessions in `.claude/worktrees/*` (how this owner and the factory work) may never see the registration. The check is deferred to API P8, four waves after S-1M creates the endpoint (#12) |
+| 10x usage | 10x items now has a runtime (engine P8). It still fails on three things: sessions whose end is never recorded (#1), budgets with no reliable usage source for Codex and Cursor (#7), and launches that need a GUI terminal (#8). 10x repos multiplies the per-repo registration (#12) |
+| Retention hooks | The cadence is good: the needs-you pulse, interrupting parks and escalations, a daily digest of desk tasks, `takeoverIdle`, and weekly evolve. The app-notifies-until-P6 bridge (X32) closes the v0 gap only if WF §6.3 and README X5 change too. Otherwise an implementer following WF P6 or the UI spec builds "the app never notifies" (#2) |
+| Viral coefficient | N/A as user-to-user spread (single owner). Spread across the owner's own providers is now designed: launch-time MCP for Codex and Cursor (API §8), and every model call through one port (X18). CTX §3 still carries the old "equivalent entry" text, which would undo the privacy boundary if someone followed it (#3) |
+
+## Strengths
+
+1. **The batch was applied, not just listed.** Each of X19–X34 points at sections that do carry the change: `SND-API-011/012`, the §2.5 carve-outs, the §3.6 state map, `step-report`, launch-time MCP, `context.sessions.enabled`, `item.linked`, recipe `inputs` and engine P8. Pass 1's two owner decisions (agent runtime, launch-time MCP) are designed rather than deferred.
+2. **One build-order table now exists** (README "Build order"), with waves 0–8 and their gates. The CTX stage table and WF P2 and P4 cite its gates. Most of what remains is making the other wave tables cite it too (#4).
+3. **The agent runtime keeps the trust model intact.** A launched session reports through a run-scoped `step-report` class, and the engine still decides through gates. A session can't report another run, grant, accept or hand back. The P8 signal tests the refusal from another session.
+4. **The privacy boundary is stronger.** No user-wide registration for any provider. Doctor warns on all three config files. Every session-class context read passes one switch on every transport, and repo scope is defined.
+
+## Concerns
+
+| # | Severity | Concern | Recommendation |
+|---|----------|---------|----------------|
+| 1 | HIGH | **`session.ended` has no producer.** API P10 records launches (`session.launched`/`ended`, `ItemView.session?`), offers attach "only when a session is live", and refuses a second open "while one is live". WF §6.5 ends an unreported run as `step.failed` through `session.ended`. `ILauncher` is a Warp launch configuration, so the agent isn't Sindri's child process, and nothing in any spec observes the tab or the process ending. Liveness from the process list belongs to the dashboard collector, which is "later" (API §11). Result: the first closed tab makes `sindri open` refuse that item for good, attach shows a dead session, and a crashed agent session holds its Step until the Step timeout. This affects the UI's headline handoff and the unattended line | Give `session.ended` a producer in P10. One option: `ILauncher` runs the agent under a thin `sindri session-run <launchId> -- <agent cmd>` wrapper that writes `session.ended {exitCode}` when the agent exits. Another: a liveness check (pid from the wrapper, tested on read and by a services tick) that writes `session.ended {reason: gone}`. Add `sindri open --force` (desk) to clear a stale record. Put both in P10's signal: close the tab, and the next `open` succeeds |
+| 2 | MEDIUM | **The notifier rule is still stated two ways.** API §5.1 (X32): the app raises OS notifications for new `pulse` rows until engine P6, which turns that off. WF §6.3: "`notify.desk` is the only source … The app … never raises an OS notification itself". README X5 says the same as WF. The UI design spec will read whichever it opens first | Make WF §6.3 and the README X5 row say what X32 says. Name the switch-off: engine P6 sets a capability flag in `GET /status` (for example `notifier: engine`), and the app stops notifying when it sees it. Key both on `NeedsYouRow.id` so nothing fires twice across the change |
+| 3 | MEDIUM | **X22 and X25 landed in one spec, not the other.** CTX §3 still says "Codex and Cursor get the equivalent entry", which reverses the owner's X22 decision ("never registered"). Its doctor check `context:mcp-scope` covers only `~/.claude.json`. API §8's tool table still says `context_*` is "off while `context.mcp.enabled` is false", though X25 renamed the key to `context.sessions.enabled` and widened it to every transport. `SND-CONTEXT-020` still reads "MCP is disabled" | Replace the CTX §3 MCP paragraph with a pointer to API §8 (one owner of registration text). Make doctor one check, `mcp:scope`, over all three files, owned by whichever stage creates `/sindri/mcp`. Fix the key name in API §8 and the `SND-CONTEXT-020` meaning ("session reads are disabled") |
+| 4 | MEDIUM | **The build order is still stated three ways.** The README wave table is meant to be the one order (X19). But: (a) WF's wave table gates P2 on "S1 merged" only, gates P4 on "P2 and P3" only, and leaves P8 out of the graph and the table; (b) the API wave table (W0–W4) has no P11, and P10 doesn't list the UI design spec, which the README puts first; (c) CTX's own waves (0–6) don't match the README's (S-1A is CTX wave 1 but README wave 3), and the README lumps S-3, S-5A, S-2W and S-3M into wave 6 ("the rest of its stages"), while CTX lets them start right after S-1A; (d) CTX §11 and its mermaid graph have no API P1 or P6 node. An orchestrator reading one spec schedules differently from one reading another | Keep per-spec graphs only for units inside a phase. Replace each spec's wave table with a link to the README table plus its own column of cross-spec gates. List every CTX stage in the README table, or say "CTX stages run on their own graph once API P1 has merged". Add rows for API P1 and P6 to CTX §11 |
+| 5 | MEDIUM | **The `human` token (X31) has no phase and breaks the prover.** API §6 says `serve` mints `auth/human.token` "before the app's first command" and that a `human` header without it counts as `session`. No API phase lists it (P1–P11), and the UI design spec doesn't exist yet. `sindri-prove.sh curl` (API §12) adds `X-Sindri-Caller: human` and the client headers but not `X-Sindri-Token`. So whenever the token lands, every proof that acts as the owner turns into a `session` call and is refused. This is the guard the owner decision (X2, full desk client) was made safe by | Give it a phase: a small API P1b or part of P3, before the UI's first write and after P1, with `SND-AUTH-001`/`SND-API-006` moved out of §11. Have `sindri-prove.sh` read the token from the guarded temp home and send it. Make the UI design spec's first write phase depend on it in the README table |
+| 6 | MEDIUM | **How the launched session proves `step-report` is undefined.** WF §6.5 says the session reports with `sindri workflow complete --run <token>`, "proven by a run-scoped token `ILauncher` hands the session". But `--run` is the run trigger id (`1.1`, §5.4), which `GET /workflow/instances` returns to any caller, so it proves nothing. The secret token's transport (environment variable, file, header) isn't named. The MCP endpoint keeps only `X-Sindri-Repo`, so the token can't ride there. WF §6.2 and §6.3 still list `CompleteStep`/`workflow complete` as `desk` only, with no `step-report` row. WF §6.5 calls `step-report` a "caller class", but it is an action class in API §4.1 | Name the token and its path: for example `ILauncher` sets `AW_SINDRI_RUN_TOKEN` in the launched environment (add it to `scripts/env-scan-ignore.txt`), and the CLI sends it as `X-Sindri-Run-Token`, which the server checks against the open run. Rename the `--run` value in the docs to "run id" so the two aren't confused. Add the `step-report` variant to WF §6.2 and §6.3 and to the catalog (`CompleteStep:report`). Say which phase adds the class to the authorization table (engine P8 or API P10) |
+| 7 | MEDIUM | **Token metering has the wrong owner.** WF §6.5 reads a session's token usage "by the target's provider adapter (Judge's `IModelProvider` catalog) from the session's own usage output". Judge's port makes model calls; it doesn't parse an agent tool's session transcript. The code that already reads Claude Code, Codex and Cursor session usage is the scorer, which isn't being ported (it comes back as a block) and which Sindri already reaches through a declared `cli` edge. Without a defined source, the per-state and per-instance budgets (§3.7) are not enforced for unattended runs, and budget enforcement is the safety rail that lets lever 3 scale | Make usage a capability of the launch target (`ILauncher` target adapter: `ReadUsage(sessionRef)`), with a Claude adapter first. For Codex and Cursor, either call `scorer live --session <id> --json` (an existing edge) or report "usage unknown". Until a target can meter, an unknown usage parks with `budget` rather than passing. Put this in engine P8's files and signal |
+| 8 | MEDIUM | **The unattended line needs a desktop terminal.** WF §6.5 and P8 launch agent Steps through `ILauncher`, which is a Warp launch configuration (API P10), and P8's signal is "launches a Warp tab". The README offers `sindri --headless` "for the always-on box", which is where unattended work would run. Pass 1 suggested "container or attach"; the batch picked Warp only | Give `ILauncher` two kinds of target: `interactive` (Warp, for the human handoff) and `headless` (a detached process or `tmux` session running the agent CLI non-interactively, attachable later). Engine P8 defaults to `headless`. State in P8 that a headless host with no Warp still runs agent Steps |
+| 9 | MEDIUM | **`promote` is `protected`, but promotion still happens automatically.** CTX §8.7 still makes a draft `current` when "emptying the review queue, or a build whose queue is empty from the start" happens. `map build` is `job` and is also run by the scheduled `context-rebuild` service, so an unattended nightly build can make a new map `current` without the challenge X30 requires. Separately, interactive `map review` records one `map_override` per keystroke, and §8.7 doesn't say whether each one is a `protected` `POST` with a typed challenge. If so, a 46-proposal review means 46 challenges, which kills map adoption | Pick one rule and write it in CTX §8.7 and API §3.7. The recommendation: per-proposal review actions are a session-scoped `protected` review run (one challenge opens the run, bound to the draft hash, and each accept or reject inside it is recorded under that run). Promotion is always an explicit `promote` (`protected`). A build with an empty queue leaves a `draft` plus a calm needs-you row "map vN ready to promote". Retire the "asks for confirmation" text |
+| 10 | MEDIUM | **The item ↔ Linear link has an owner but no input.** X23 gives `item.linked` to CTX Phase 6 (`context-sync`). But `CreateItem` takes only `title, repo?, body?` (API §3.2), so nothing tells `context-sync` which `ITM-…` item is which Linear issue, short of guessing from titles. API §3 also promises that routes "accept a linked key and resolve it" from P3, but no link can exist until wave 6. `item.linked` isn't in API §3.4's event catalog, and `ItemView` has no links or aliases field. In practice `sindri open ENG-142`, which the owner will type, fails for the whole of v0 | Let `CreateItem` take `link?` (a tracker URL or key, desk) and append `item.linked` itself (API P3 or P4). Phase 6 then only adds the UUID behind a key, and intake later creates linked items. Add `item.linked` to §3.4, add `links[]` to `ItemView`, and say that alias resolution answers `SND-ITEM-404` with "no linked item; `sindri item add --link`" until then |
+| 11 | MEDIUM | **The engine's routes still have no table.** X34 has `recipe show` and `GET /workflow/recipes` return `inputs` for the app's start form. Neither spec lists that route, the start route, `ApplyCommand`'s route or `CompleteStep`'s route, and API §3.3's catalog test fails when "a row's route isn't in the endpoint table". The UI design spec can't bind its start form, answer forms or desk-task form to anything (pass-1 P#7 asked for this) | Add a route table to WF §6.3: route, slice, action id, class, CLI form, phase. It covers `GET /workflow/recipes[/{id@hash}]`, `POST /workflow/recipes`, `POST /workflow/instances` (start), `POST /workflow/instances/{a}/commands` (`ApplyCommand` variants), `POST /workflow/instances/{a}/complete`, `GET /workflow/instances[?…]`, and the two carve-outs |
+| 12 | MEDIUM | **The main growth lever has two activation risks.** (a) Registration is `claude mcp add --scope local`, which Claude Code keys by project path. Agent sessions in `.claude/worktrees/*` run at other paths and may not see it. API §8 defers the check to P8 (wave 7), while S-1M creates the endpoint in wave 3, so for four waves the context lever may be dark in exactly the sessions that use it. (b) Pass-1 P#14 is untouched: `repo onboard` doesn't offer registration or the snippet, and no doctor or needs-you line says a profile repo lacks it | Move the worktree check into S-1M's owner check, whichever stage creates the endpoint. If local scope doesn't reach worktrees, have `ILauncher` pass the MCP config at launch for Claude too (one mechanism for all targets) and keep registration only for ad-hoc sessions. Have `repo onboard` print or run `sindri mcp register` and offer the snippet. Add a doctor line `mcp:registered` per profile repo, raised as a calm `profile` needs-you row |
+| 13 | MEDIUM | **The Judge edge has no fan-out answer.** X18 and CTX §4 adapt `IModelPort` over Judge's `IModelProvider` in Sindri's Host, and engine P8 and the rung-2 and rung-3 gate blocks need Judge too. Sindri's project fan-out is 4 of 4 in `deps.yaml` (Kernel, KernelData, KernelTelemetry, Redaction), and its one recorded exception is spent on Context (CTX §4). The first PR that adds Sindri → Judge fails `DEPS-FANOUT-001`, and no spec says which PR owns that decision | Record it once, in the README X18 row and `deps.yaml`: a second exception (Judge is one of Sindri's block packages by design), or a `compose`-style edge kind for block packages that doesn't count against fan-out. Name the first PR that adds it (CTX S-4's labeler adapter, or engine P8) |
+| L1 | LOW | API §3.6's group table maps `ItemState` `parked` to the `parked` group, while the engine map below it puts `parked` in `waitingOnYou`. The note that "the `parked` group only holds items parked by a human's own choice" names a state that doesn't exist | Change the group table's `waitingOnYou` row to `needs-decision, needs-answer, parked`, and drop or mark the `parked` group as reserved |
+| L2 | LOW | API §4.1's `protected` row lists only `ApproveProfile`, `answer-grant`, `answer-accept` and `recipe approve`. It is missing `answer-grant-tokens`, `recipe revoke` and the context `import`, `promote` and `review` | Complete the row, or point at §2.1, WF §6.2 and §3.7 |
+| L3 | LOW | API §3.5 still says the `EventFactory` change is "made by whichever phase lands first" (X33: API P1). WF §7.2 still has S1-D6 (the event filter) owned by engine P4, though API P5 (wave 3) now always lands before engine P4 (wave 4) | Set both to API P1 and API P5. Drop D6 and D7 from engine P4's file list |
+| L4 | LOW | API §3.4's event catalog lacks `session.launched` and `session.ended` (P10) and `item.linked` (CTX Phase 6). API P10 and engine P8 both list the session events as their own files | Add the rows. Give the session events to API P10, and have engine P8 only use them |
+| L5 | LOW | In API "Phases", a blank line splits the P11 row into its own table with no header, and the intro says "P6, P8 and P10 follow" without P11. P10 opens an instance takeover "in the same command", which goes against D1's one domain event per command unless §2.1's engine exception is cited | Join the table and name P11 in the intro. Say that `OpenItem` appends `session.launched` and the engine's router turns it into a takeover system trigger (or cite the engine's one-event-per-instance rule) |
+| L6 | LOW | WF §6.1's dev loop aliases `sindri` to `sindri-prove.sh`, then runs `sindri profile approve` and `sindri serve` through it. Bare verbs run as the agent (`session`), so the approval is refused | Write `sindri human profile approve <hash>`, and start the process with the wrapper's own start form, or `$SINDRI serve` |
+| L7 | LOW | Two launch-target settings are implied but not named: the profile default for `OpenItem` (API §3.2) and `workflow.agent.target` (WF §6.5) | Name both keys in one place (S1-D11's profile list), or make them one key with an override per runtime |
+| L8 | LOW | README leftovers: the spec table says "API P0–P10" and "S2 (P1–P7)" (now P11 and P8); "What it is not" still says "Claude Code sessions"; the reconciliation intro and all three specs' status lines say "X19–X33", but the table runs to X34; wave 3 says API P4 needs "API P2" (it needs P3); API §3.7 still comes before §3.6 | One sweep |
+| L9 | LOW | API's "Fixed, from stage S1" table lists `SND-PROFILE-001…005` and `SND-CLI-001/003`. S1 also uses `SND-PROFILE-006` and `SND-CLI-002` (the latter cited in API §7) | Refresh the row from S1's catalogue |
+| L10 | LOW | CTX leftovers: §8.7 "asks for confirmation"; `context.repoTeams` is missing from the §8.8 example; Phase 10's signal uses a "design-studio recipe" no spec defines (use `workflow.step` with an injection plan); examples use `--item ENG-482` instead of an `ITM-…` id or a stated alias | One sweep |
+| L11 | LOW | `--needs-me` shows **Decisions** and **Tasks**, but `NeedsYouRow.kind` folds escalations, idle takeovers and desk tasks into `park` (pass-1 P#19). The UI design spec will need the same split | Add `subkind` (`park`, `escalation`, `idle-takeover`, `desk-task`), folded by API P11 |
+
+## Scope Suggestions
+
+### Cut
+- **Automatic promotion of the context map** (#9). Promotion is always an explicit `protected` act, and a ready draft is a needs-you row.
+- **Per-spec wave tables as sources of order** (#4). Keep the README table and have each spec list only its gates.
+- **Warp as the only agent target** for unattended runs (#8). Interactive handoff keeps Warp.
+
+### Keep
+- **X21's shape**: a run-scoped report, the engine still deciding through gates, no session grants or handback.
+- **X22**: no registration for Codex or Cursor, MCP passed at launch, doctor watching all three user configs. Consider using the same launch-time path for Claude in launched sessions (#12).
+- **X31's per-start `human` token.** It is the right guard for a full desk client; it only needs a phase (#5).
+- **The README build-order table** as the single order.
+
+### Add
+- A **producer for `session.ended`** and a `--force` open (#1).
+- **`step-report` token transport**, and an engine route table (#6, #11).
+- **`CreateItem --link`** and `item.linked` in the API catalog (#10).
+- A **launch-target usage reader** for metering (#7).
+- **For the reserved UI design slot**, on top of pass 1's nine items:
+  1. The notifier switch-off: the app notifies until `GET /status` says `notifier: engine` (#2).
+  2. When the token phase lands and the first write screen depends on it (#5).
+  3. A live-session indicator and stale-session recovery (`open --force`) on item detail (#1).
+  4. Map review in the app: none, or a copy-the-CLI row for "map vN ready to promote" (#9).
+  5. The start form bound to `GET /workflow/recipes` inputs (`text`, `file`, `item`), with scoping shown disabled until its recipe is approved (#11, X34).
+  6. Needs-you `subkind` grouping (#L11).
+  7. Launch-target choice, `interactive` vs `headless`, and what "attach" means for a headless agent run (#8).
+
+## Key Questions for the Team
+1. How does Sindri learn that a launched session ended: a wrapper process around the agent, or a liveness check? And may a human force a re-open (#1)?
+2. Should unattended agent Steps run headless (detached or `tmux`) rather than in Warp tabs, so the always-on box can run the line (#8)?
+3. Is a review run, with one challenge per session bound to the draft hash, an acceptable way to keep map review `protected` without one challenge per proposal (#9)?
+4. Which phase builds the `human` token, so it lands before the UI's first write (#5)?
+
+## Recommended Next Action
+Apply a small X35–X40 batch to PR #170 before the UI design spec starts:
+- the `session.ended` producer and `open --force` in API P10 (#1);
+- the notifier and MCP-text sync across WF §6.3, README X5, CTX §3 and API §8 (#2, #3);
+- each spec's wave table replaced by a link to the README table, with CTX stages placed in it (#4);
+- a phase for the `human` token, and prover support for it (#5);
+- `step-report` token transport plus a WF route table (#6, #11);
+- `CreateItem --link` (#10).
+
+Items #7, #8, #9, #12 and #13 can be settled in the engine P8, CTX S-4 and S-1M plans, provided the README records the owner of each. Then hand the UI design agent pass 1's nine "must settle" items plus the seven above.
+
+verdict: NEEDS_WORK

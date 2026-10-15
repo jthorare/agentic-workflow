@@ -1,0 +1,181 @@
+{
+  "pr": {
+    "number": 195,
+    "title": "feat: Sindri context S-5A \u2014 Onyx source (CE v4.9.0), record keys and aliases, secret pointers",
+    "branch": "feat/ctx-s5a",
+    "owner": "jthorare",
+    "repo": "agentic-workflow",
+    "url": "https://github.com/jthorare/agentic-workflow/pull/195"
+  },
+  "commit_sha": "0bec70d7460c39502d50b4cc321033fd0e854314",
+  "review_run": 4,
+  "previous_run_finding_count": 17,
+  "lenses": [
+    "security-sentinel",
+    "architecture-strategist",
+    "backend-developer",
+    "qa-expert",
+    "code-reviewer"
+  ],
+  "reviewed_at": "2026-10-15T01:04:11.152194+00:00",
+  "posted": false,
+  "posted_at": null,
+  "reviewers": [
+    {
+      "agent": "security-sentinel",
+      "focus": "Secret pointer resolution and leakage, the OnyxClient Key() catch-all and deadline clamp, Onyx content scrubbing, the loopback/URL allowlist, admin-key docs wording, and interaction with the merged Redactor timing change",
+      "summary": "The run-3 fixes are correct. Key() rethrows every OperationCanceledException, so the outer filter still separates the caller's cancellation (thrown) from the timeout (010). Any other exception from the resolution becomes 002, and the exception text stays out of the answer and the log (the test checks this). The 1 ms clamp turns a spent deadline into 010 rather than ArgumentOutOfRangeException. Nothing leaks the key. It goes only into the Authorization header. The 002 message names only the scheme. Degraded messages, titles, aliases, ids and versions are scrubbed at egress in ResultAssembly. The loopback check (localhost, 127/8, [::1], no userinfo, no query) and the HttpClient (no redirects, no proxy) are unchanged and sound. The Redactor change in #211 only refactors the tier and timeout code (TierFor/MatchTimeoutFor), with the same behaviour. Onyx text is cut at 64 KB, below the 128 KB first window, so the two don't interact. Three smaller points remain. First, the new catch-all's comment says doctor names the reason, but a resolution that throws throws in doctor too, uncaught. Second, the throwaway walkthrough puts the now-admin key in shell history. Third, the admin service account is named 'sindri-read'. The admin-key wording is otherwise consistent across onyx.md, context.md, spec \u00a74/\u00a78.8, ContextErrors, OnyxClient and OnyxDoctor. Spec line 899's 'search-only key' is in a dated review log already on main and outside this diff, so I left it alone.",
+      "issues": [
+        {
+          "id": "security-sentinel-0",
+          "severity": "suggestion",
+          "path": "src/Sindri/Aw.Sindri.Infrastructure/Secrets/PointerSecrets.cs",
+          "diff_position": 3037,
+          "summary": "Key() turns a resolution that throws into 002 and says doctor names the reason, but doctor calls the same resolver with no catch, and PointerSecrets.FromFile runs LinkTarget and GetUnixFileMode outside its try",
+          "body": "**[suggestion] The catch-all's 'doctor names the reason' holds only when the resolver returns an error, not when it throws**\n\n`OnyxClient.Key` (OnyxClient.cs:81-84) swallows any non-OCE exception as `null`, which becomes 002 with the comment \"Sindri's doctor names the reason\". The 002 text also tells the user that `'sindri doctor' shows why (its SND-SECRET code ...)`. Doctor resolves the pointer with `SecretPointer.Parse(...).Bind(secrets.Resolve)` (OnyxDoctor.cs:60), and neither that call nor `ContextEngineChecks` or `RunDoctorService` catches anything. So the input that makes the client answer 002 also makes doctor throw, instead of showing a SND-SECRET row.\n\nThe realistic source of such a throw is `PointerSecrets.FromFile` (PointerSecrets.cs:46 and :58). `new FileInfo(path).LinkTarget`, `Directory.Exists` and `File.GetUnixFileMode` all run before the `try` that maps `IOException`/`UnauthorizedAccessException` to SND-SECRET-002. .NET returns null from readlink only for 'not a link' and missing paths. Other errno values, such as EACCES on a parent directory that isn't searchable, or a path component that is a file, surface as exceptions. With a `file:` pointer under such a path, the query answers \"doctor shows why\" and doctor then fails on an unhandled exception, whose message is the IO exception's (it names the path).\n\nFix: move the link, mode and existence checks inside the existing `try` in `FromFile`, so they map to `Unresolved(...)` with the exception type name like the read does. Both paths then return a Result. `Key()`'s catch-all stays as a backstop, and the doctor promise holds. A `file:` test whose parent directory is mode 000 would pin it.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "security-sentinel-1",
+          "severity": "suggestion",
+          "path": "docs/sindri/context.md",
+          "diff_position": 262,
+          "summary": "The throwaway walkthrough has the user type the admin key into an `export` line, which lands in shell history",
+          "body": "**[suggestion] `export SINDRI_ONYX_KEY='on_\u2026'` writes the Onyx admin key to ~/.zsh_history**\n\ncontext.md:471 tells the reader to paste the key into `export SINDRI_ONYX_KEY='on_\u2026'`. Since 0c066cc5/0bec70d7 the docs say this key is an **admin** key that \"could change Onyx settings\" (onyx.md \u00a75). A literal on the command line is saved to shell history, persists after the throwaway home is deleted, and is readable by anything that reads the user's dotfiles. That cuts against the page's own rule of storing the key \"by pointer, never in the profile\".\n\nSuggest reading it without echo or history, for example `read -rs SINDRI_ONYX_KEY && export SINDRI_ONYX_KEY` (zsh: `read -rs` works; bash: `read -rs`). Or lead with the keychain pointer the comment already mentions, which reuses the key onyx.md \u00a75 stored.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "security-sentinel-2",
+          "severity": "nit",
+          "path": "docs/sindri/onyx.md",
+          "diff_position": 359,
+          "summary": "The admin service account and its keychain entry are named `sindri-read`, which says read-only for a key that can change Onyx settings",
+          "body": "**[nit] `sindri-read` names an admin key**\n\nonyx.md:75 creates the service account as `sindri-read`. The keychain entry `keychain:onyx/sindri-read` is used in onyx.md \u00a75 and context.md:471. The same section then says the key is admin and \"could change Onyx settings\". Someone who later finds `sindri-read` in Onyx's API Keys page or in the keychain may reasonably treat it as a harmless read key and reuse it elsewhere, which is the honest mistake that the 'own service account, Sindri alone' mitigation exists to prevent. Naming it `sindri` (or `sindri-admin`) in both the account and the keychain examples keeps the name consistent with the guidance. This is a docs-only rename. The code doesn't depend on the name.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "architecture-strategist",
+      "focus": "C# architecture and repo rules: package shape, dependency direction, Result/error codes, exception handling, TimeProvider, Lazy<Task> caching, DI, doctor composition, deps.yaml, Redaction merge interaction",
+      "summary": "The run-3 fixes are correct, and they follow the repo's rules. Key() in OnyxClient (src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs:75-85) catches every non-cancellation exception and returns null, which becomes 002. The 002 message names only the pointer's scheme and keeps the exception's text out, and the new test checks that. The rules allow this catch: csharp.md 'Types and errors' permits `catch (Exception)` in Infrastructure boundary adapters, and Aw.Context.Infrastructure/.editorconfig sets CA1031 to none with that reason. No pragma or SuppressMessage was added. The `when (e is not OperationCanceledException)` filter is the right shape. A WaitAsync cancelled by the linked deadline still reaches Call's `catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)` and comes back 010, and the caller's own cancellation still propagates. A faulted `Lazy<Task<string?>>` does not stick. The Lazy factory only schedules Task.Run, so the Lazy itself never caches an exception, and the faulted task lives only as long as one OnyxClient. That is one query, because OnyxSources.Create (OnyxSources.cs:18) builds a new OnyxClient per source, and ContextSourceCatalog builds the source per query and per status call. A transient resolver failure is therefore 002 for that query only. The production resolver (SecretPointerEnvironment.Over plus PointerSecrets) returns null rather than throwing on its expected failures, so the new catch covers only unexpected faults. The 1 ms clamp on CancelAfter is the same idiom SourceCalls.Within already uses (SourceCalls.cs:17). The run-3 'wall clock, not the query's TimeProvider' half wasn't changed, and I accept that. This is a per-call I/O deadline in an Infrastructure adapter. SourceCalls.Within already enforces the query's deadline on the query's TimeProvider. The harness's FakeTimeProvider would never fire a TimeProvider-bound CancelAfter, so the real-wait deadline tests depend on the wall clock. The TimeProvider rule bans wall-clock reads in Core only. Package shape (Core/Features/Infrastructure, no Host in Context) and dependency direction are unchanged since run 3, and deps.yaml needs no new edge. The doctor double probe (context:onyx plus context:sources) was answered as a follow-up, and I don't re-raise it. The Redaction merge (cf78574d) only refactors Redactor's tier and timeout helpers into TierFor and MatchTimeoutFor. Behavior and the public surface are unchanged, so nothing this PR relies on moves. The docs (docs/csharp/sindri-context.md:380-388, docs/sindri/onyx.md:111-112) match the code: a pointer that fails is 002, a pointer still resolving at the deadline is 010, and the next query tries again. Result: 0 blocking, 0 issue, 0 suggestion, 1 nit.",
+      "issues": [
+        {
+          "id": "architecture-strategist-0",
+          "severity": "nit",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": 1654,
+          "summary": "A spent deadline still gets a 1 ms window to resolve and send, so 'a spent query deadline is 010' holds only if the timer fires first; the new test asserts that race",
+          "type": "inline",
+          "body": "**[nit] A spent deadline still gets a 1 ms window to resolve and send, so 'a spent query deadline is 010' holds only if the timer fires first; the new test asserts that race**\n\nOnyxClient.cs:45 clamps a deadline of zero or less to `CancelAfter(1 ms)` and then still starts the key resolution and `OnyxRequests.Send`. The comment says a spent query deadline *is* 010. In fact it is 010 only if the 1 ms timer fires before the Task.Run resolution and the loopback round trip finish. That nearly always happens, but nothing guarantees it, because the timer callback and the HTTP completion are both thread-pool work. `A_search_whose_deadline_is_already_spent_is_010_not_an_exception` (tests/Aw.Context.Tests/Onyx/OnyxKeyResolutionTests.cs) asserts that race. Under the load figures evidence.md reports (43-83), a fast fake reply could in principle win, and the test would see a successful search.\n\nThis is the same 1 ms idiom SourceCalls.Within uses, and in production SourceCalls' own expiry bounds the call anyway, so this is not a correctness problem for queries. If you want the comment and the test to be deterministic, return `Failed(call, Unavailable(...))` up front when `deadline <= TimeSpan.Zero`, before arming the timer or touching `_key`. That also avoids starting a keychain or op process for a call that has already missed its deadline. Fine to leave as written.",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "backend-developer",
+      "focus": "Onyx CE v4.9.0 adapter correctness: wire shapes vs research, deadline handling end to end (search vs fetch/probe, 1 ms clamp, SourceCalls interplay, caller cancellation), error-code mapping (002/010/051), record keys and aliases, docs vs head",
+      "summary": "The run-3 fixes hold. In OnyxClient.cs:75-85, Key() now turns a resolver exception into null, which becomes 002. The exception's text never reaches the answer, and the faulted task stays cached, so the same source returns 002 again, as documented. Sindri's real resolver (SecretPointerEnvironment -> PointerSecrets) never throws OperationCanceledException, so the OCE carve-out in Key() can't misreport a resolver timeout as 'didn't answer'. The CancelAfter clamp (OnyxClient.cs:45) removes the ArgumentOutOfRangeException. Caller cancellation is still told apart from a timeout on every path. OnyxClient rethrows only when the caller's token is cancelled (:60). On the search path that token is SourceCalls' linked token (SourceCalls.cs:17-26), so a SourceCalls expiry rethrows and becomes 010 'missed the query's deadline'. A real cancellation of the query propagates through both layers, and OnyxVersionProbe behaves the same way (:37). On the fetch and probe paths the fixed 4 s CallDeadline is bounded by SourceCalls' remaining query deadline. Status mapping is unchanged and correct: 403 -> 050, 404 on /api/document/* -> 052 (dropped silently by QueryContextService as NotFound), 5xx and no answer -> 010, other statuses and bad bodies -> 051. HttpRequestException -> 010. Wire records match onyx-api-research.md and v4.9.0: AdminSearchRequest {query, filters:{}}, SearchDoc fields, DocumentInfo, ChunkInfo, UserInfo, VersionResponse. Record keys and aliases are unchanged since run 2: UUID key, '[ID] ' title prefix checked against the linear.app issue path, team-key gate. The docs match head: context.md:410-418 and 437-450, onyx.md \u00a75-\u00a77, the 002/010/050/053/055 rows and the hidden-document and change-feed sentences. There is one new suggestion on the clamp itself. A spent deadline is not deterministically 010, as its comment and test claim: it still starts the key resolution and sends the request under a 1 ms timer. There is also one doc nit. No blocking findings and no issues.",
+      "issues": [
+        {
+          "id": "backend-developer-0",
+          "severity": "suggestion",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": 1654,
+          "summary": "A spent deadline is clamped to 1 ms rather than refused, so it still starts the key resolution and sends to Onyx. '010' is a race the test depends on, and the message reads 'within -0.25 s'",
+          "body": "**[suggestion] A spent deadline is clamped to 1 ms rather than refused, so it still starts the key resolution and sends to Onyx. '010' is a race the test depends on, and the message reads 'within -0.25 s'**\n\n`OnyxClient.cs:45` turns `deadline <= 0` into `CancelAfter(1 ms)`, and then proceeds normally. The comment says \"a spent query deadline is 010\", and `A_search_whose_deadline_is_already_spent_is_010_not_an_exception` (`OnyxKeyResolutionTests.cs:107-115`) asserts that. The code doesn't guarantee it:\n\n- `Key(timeout.Token)` evaluates `_key.Value`, which starts `Task.Run(() => parts.Environment(settings.Token))` (`:27`). For a `keychain:` or `op:` pointer, a query that is already out of time still spawns `security`/`op`, which can prompt, for a call that can't use the result.\n- If the resolution and the loopback round trip to Onyx finish before the 1 ms timer callback runs, `Send` returns and the search **succeeds**. The timer callback runs on the thread pool, so under load it can be late by much more than 1 ms. That makes the test assertion a race. It's unlikely against a fresh connection to the fake, but nothing rules it out, and it is exactly the kind of timing dependence #211 just removed from Redaction's tests.\n- In the 010 that does come back, the catch at `:65-66` formats the raw deadline, so the detail reads `didn't answer /api/admin/search within -0.25 s` (the test's value) or `within 0 s`.\n\nShort-circuit before anything starts. This is deterministic, starts no process and sends nothing:\n\n```csharp\nif (deadline <= TimeSpan.Zero)\n{\n    return Failed(call, Unavailable($\"wasn't called: the query's deadline was spent before {call.Route}\"), status: null);\n}\nusing var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);\ntimeout.CancelAfter(deadline);\n```\n\nAlso tighten the test to `Assert.Empty(onyx.Requests)` and assert that the resolver was never called. In production SourceCalls has its own 1 ms clamp (`SourceCalls.cs:17`), so this is about the adapter's stated contract and its test, not a query failure. That's why it's a suggestion.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "backend-developer-1",
+          "severity": "nit",
+          "path": "docs/sindri/onyx.md",
+          "diff_position": 408,
+          "summary": "onyx.md \u00a76's code table omits SND-CONTEXT-002, which `sources status` and a query's degraded entry show when the pointer doesn't resolve at run time",
+          "body": "**[nit] onyx.md \u00a76's code table omits SND-CONTEXT-002, which `sources status` and a query's degraded entry show when the pointer doesn't resolve at run time**\n\n\u00a76 runs `$SINDRI context sources status` and then lists codes. It lists only the doctor-side `SND-SECRET-001..003` for a pointer problem. When the pointer doesn't resolve at run time, `OnyxClient.Call` returns `SND-CONTEXT-002` (`OnyxClient.cs:49-54`). `OnyxSource.Probe` puts that code on the `sources status` row (`OnyxSource.cs:97-99`), and a query shows it as the cause in the degraded entry (`SND-CONTEXT-010` with `SND-CONTEXT-002: \u2026`). context.md:417-418 and :448-450 say this, but the Onyx setup page doesn't, so a reader who sees `002` in `sources status` won't find it in that page's table. Add a row such as: `SND-CONTEXT-002` | the pointer didn't resolve when the query or status ran (only the scheme is named) | run `$SINDRI doctor` for the SND-SECRET reason (\u00a75).",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "qa-expert",
+      "focus": "tests: the run-3 red/green pair (OnyxKeyResolutionTests vs 867aace8), OnyxSourceHarness/FakeOnyxServer usage, fetch/probe coverage of the two failure modes, csharp-testing.md adherence, interaction with the merged Redaction test changes",
+      "summary": "The TDD order holds. 4f76f7c6 adds only the two tests and builds on existing APIs. Against its parent's OnyxClient.Call, both tests fail for the right reason. A throwing resolver faults `_key`, and the IOException escapes Call because only OperationCanceledException and HttpRequestException were caught. `CancelAfter(-250 ms)` throws ArgumentOutOfRangeException. 867aace8 turns them green: `Key()` maps a non-OCE exception to null, which gives 002, and the clamp to 1 ms gives 010. The throws test is good. It asserts 002, checks that the exception text stays out of the message, and asserts that no request reached the fake. Both tests inherit the class-level `Lane=integration` trait, so each carries exactly one lane. Both pass `TestContext.Current.CancellationToken` and run in milliseconds, well inside the budget. Fetch and probe go through the same `OnyxClient.Call`, so a throwing resolution there is also 002 (Probe folds it into the health detail through `me.Error`). Those paths always use the fixed `CallDeadline` (positive by construction), so the spent-deadline mode exists only on Search, the one path QueryContextService feeds `deadline - now` into. No extra fetch/probe tests are needed for these two modes. The weak spot is the spent-deadline case. The fix clamps instead of short-circuiting, so a spent deadline still resolves the key and can still send a request. The 010 text reads 'within -0.25 s'. The test asserts only the code, so it cannot pin either behavior and depends on a 1 ms timer. The merged Redaction changes (#211) don't interact: the `Redactor.TierFor`/`MatchTimeoutFor` extraction is behavior-neutral, and the csharp-testing.md edit only widens the heavy-lane description. No Context test depends on Redactor timeouts or the heavy lane.",
+      "issues": [
+        {
+          "id": "qa-expert-0",
+          "severity": "suggestion",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": 1654,
+          "summary": "A spent search deadline still resolves the key and may send the request (1 ms clamp, not a short-circuit); the 010 text says 'within -0.25 s'; the test can only assert the code and depends on a timer race",
+          "body": "**[suggestion] A spent deadline is clamped to 1 ms instead of being refused up front, so the outcome depends on a timer, and the test can't pin what matters**\n\n`OnyxClient.cs:45` turns a deadline <= 0 into `CancelAfter(1 ms)` and then goes on as if the call had time. It starts the key resolution (`Task.Run(parts.Environment)`, which for a `keychain:`/`op:` pointer starts a process). If the env resolution finishes inside the timer's resolution, `OnyxRequests.Send` also starts a POST to `/api/admin/search`. Three consequences:\n\n1. **The message is wrong.** `OnyxClient.cs:66` formats the original `deadline`, so the 010 reason reads `... didn't answer /api/admin/search within -0.25 s`. Depending on whether `_key` finished in that millisecond, it may instead blame `a locked keychain, or op waiting for a sign-in?` for a deadline that was spent before Onyx's turn. In production `SourceCalls.Within` arms its own 1 ms timer, and that one usually wins with \"missed the query's deadline\". When OnyxClient's timer fires first, this text becomes the degraded reason (010 messages pass through `SourceCalls.Degraded` unchanged).\n2. **The test can't assert the behavior that matters.** `A_search_whose_deadline_is_already_spent_is_010_not_an_exception` (`OnyxKeyResolutionTests.cs:112-114`) asserts only `SourceUnavailable.Code`. It can't add `Assert.Empty(onyx.Requests)` the way its sibling at line 103 does, because a request may in fact be sent. It doesn't check the message either.\n3. **It is timing-dependent.** It runs against a real loopback `FakeOnyxServer`, so in principle a warm loopback round trip that beats the 1 ms timer makes the search succeed and the test fail. That is unlikely but not impossible, which is the load-sensitivity pattern this suite has been tightening since run 1.\n\nFix: in `Call`, return early when `deadline <= TimeSpan.Zero`, before `Key()`. For example: `return Failed(call, Unavailable($\"wasn't called: the query's deadline was spent before {call.Route}\"), status: null);`. Then move the test to the `unit` lane in `OnyxClientTests` over `ScriptedHandler`, and assert the code, `Assert.Empty(handler.Requests)`, that no resolution happened (count `Environment` calls), and that the message has no negative number. That makes it deterministic and lets it state the contract. (This differs from the run-3 nits security-sentinel-1 and architecture-strategist-2. Those were about `IsCompleted` misnaming a near-deadline resolution. This one is about a deadline that was already spent, which the fix introduced as a reachable state.)",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "qa-expert-1",
+          "severity": "nit",
+          "path": "tests/Aw.Context.Tests/Onyx/OnyxKeyResolutionTests.cs",
+          "diff_position": 5134,
+          "summary": "The throws test checks that the exception text stays out of the error message but not out of the log; Key() is the place it could leak",
+          "body": "**[nit] Also assert that the fixture text stays out of `harness.Log`**\n\n`A_resolution_that_throws_is_002_not_an_exception` (`OnyxKeyResolutionTests.cs:94-104`) asserts that `\"fixture: the pointer's file\"` is not in `search.Error.Message`. The comment on `OnyxClient.Key()` (`OnyxClient.cs:83`) says the exception text \"may name a path and stays out of the answer\". The other channel it could reach is the log: `Failed` logs `error.Message` through `LogFailed`. A later change that logs the swallowed exception in `Key()` (the natural thing to add for diagnosis) would pass this test. The harness already exposes `CapturingLogger<OnyxClient> Log`, so one `Assert.DoesNotContain` over its entries pins both channels, the same way the line-break test pins `X-Evil`.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "qa-expert-2",
+          "severity": "nit",
+          "path": "tests/Aw.Context.Testing/Engine/ContextSourceContract.cs",
+          "diff_position": null,
+          "summary": "'A spent deadline is an answer, never an exception' is a source-wide obligation (QueryContextService passes deadline - now to every source) but lives only in an onyx-specific test",
+          "body": "**[nit] Consider a contract case for a spent search deadline**\n\n`QueryContextService.cs:63` builds every source's `SourceQuery` with `deadline - clock.GetUtcNow()`, so every `IContextSource.Search` can receive a non-positive `Deadline`. The `SourceQuery` doc says missing it \"counts as unavailable\". Only Onyx is tested for it, and only in an onyx-specific class. Repo-docs ignores the deadline and the fake honors nothing, so neither has an obligation written down. A `ContextSourceContract` case, `Search_with_a_spent_deadline_returns_a_result_not_an_exception`, accepting any `Result`, would hold the next source (Linear, S-5B) to the rule that 867aace8 had to add to Onyx after review. This follows the rule's \"fakes with contract tests\" pattern. Optional, since `SourceCalls.Within` already clamps its own timer.",
+          "type": "top-level",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "code-reviewer",
+      "focus": "docs (including spec edits): commit 0bec70d7 and every doc PR #195 touches, checked against the code at head",
+      "summary": "Most of the run-3 doc fixes in 0bec70d7 match the code. (1) The approve challenge text in onyx.md \u00a75 and context.md matches the code: ChallengeAction.ApproveProfile is 'approve profile ' + hash.Abbreviated, IssueChallengeService's regex is ^approve profile [0-9a-f]{6}, and Verbs.BeforeTheCall prints \"Type '<action>' to approve it:\" after ensureRunning has started the control plane. (2) The throwaway walkthrough now stops the old home's control plane before it switches AW_SINDRI_HOME. In order: validate exits 1, approve <hash> starts serve in the new home (which inherits SINDRI_ONYX_KEY) and takes the typed challenge, then doctor, sources status and query run against that serve. (3) The doctor order in docs/csharp/sindri.md matches the code. RunDoctorService gives lease, ledger, profile, api, temporal, then ContextEngineChecks (context:map, context:retention, context:onyx). WithMoreChecks adds ContextDoctorChecks (context:sources, context:mcp-scope), and the harness lines come last. (4) The new live-probe sentence is right: SourcesStatusService reads repo-docs from its index and calls Probe on every live source, and OnyxSource.Probe sends the keyless /api/version, then /api/me. (5) Spec \u00a74 and \u00a78.8, onyx.md's intro and manual-check note, and context.md's settings sentence now say 'admin key on its own service account' and 'the allowlist has no settings route', which matches OnyxDoctor and the five-route allowlist. The error codes cited (SND-PROFILE-004, SND-SECRET-001..003, SND-CONTEXT-002/010/050/051/053/055) exist as described, and AGENTS.md is not touched by this PR. Two findings remain. First, the change-feed sentence that was rewritten for the admin key now gives a reason that is wrong for that key, and spec \u00a75.2 and \u00a712 still say 'read key'. Second, the walkthrough still leaves the throwaway control plane running on the port. Severity: 0 blocking, 1 issue, 1 suggestion.",
+      "issues": [
+        {
+          "id": "code-reviewer-0",
+          "severity": "issue",
+          "path": "docs/sindri/onyx.md",
+          "diff_position": 436,
+          "summary": "The change-feed reason ('needs manage:connectors') is wrong for Sindri's admin key, and spec \u00a75.2 and \u00a712 still say 'for a read key'",
+          "body": "**[issue] The change-feed reason ('needs manage:connectors') is wrong for Sindri's admin key, and spec \u00a75.2 and \u00a712 still say 'for a read key'**\n\nThree places now give the reason for the change-feed gap: onyx.md \u00a77 (new in 0bec70d7, `docs/sindri/onyx.md:152`), the fixture README (`tests/Aw.Context.Testing/Fixtures/split-panes/README.md:190`) and spec \u00a712 (`docs/superpowers/specs/2026-10-10-sindri-context-retrieval-design.md:779`). Each says Onyx has no change feed \"a key can read\" (or \"for a read key\") because \"its document listing needs `manage:connectors`\". The key Sindri holds is an admin key, and admin carries `manage:connectors`. The PR's own fake `/api/me` admin reply lists it (`tests/Aw.Context.Testing/Fakes/OnyxMe.cs:15`), and the research note maps admin search to `FULL_ADMIN_PANEL_ACCESS`. So Sindri's key *could* read `/onyx-api/connector-docs/{cc_pair_id}`.\n\nThe conclusion still holds. The reasons that apply are that the listing has no times (`[{document_id, semantic_id, link}]`, no `updated_at`), that it is per connector pair, and that it isn't on the adapter's allowlist. The permission reason was true only under the old read-key framing.\n\nThe fix replaced 'read key' in onyx.md and the README, but two spots in the spec still use the old framing:\n- \u00a75.2's adapter table, `onyx` row, Change feed column: \"None for a read key (\u00a712)\" (spec line 231)\n- \u00a712: \"Onyx has no change feed for a read key\" (spec line 779)\n\nThis is the stale key wording that run 3 flagged, and it isn't fully closed. (Line 899's \"search-only key\" sits in the round-3 review log, so it's historical and can stay.)\n\nSuggested wording, used in all four places: \"Onyx has no change feed: its only document listing (`/onyx-api/connector-docs`, per connector) carries no times and is not on the adapter's allowlist, so links are re-derived from search hits \u2026\". Make \u00a75.2's cell \"None (\u00a712)\".",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "code-reviewer-1",
+          "severity": "suggestion",
+          "path": "docs/sindri/context.md",
+          "diff_position": 277,
+          "summary": "The throwaway walkthrough never stops the throwaway control plane, so going back to the real home hits the same port conflict the run-3 fix removed",
+          "body": "**[suggestion] The throwaway walkthrough never stops the throwaway control plane, so going back to the real home hits the same port conflict the run-3 fix removed**\n\nThe walkthrough now stops the real home's control plane first, which is right (`docs/sindri/context.md:469`). It ends with `$SINDRI context query \u2026`, though, and the control plane that `approve` started in the `mktemp -d` home is still running and holding the port (7410 by default). `control.json` is per home (docs/csharp/sindri.md, \"control.json\"). After `unset AW_SINDRI_HOME` (or a new shell), bare `sindri` in the real home finds no control.json, reads \"not running\" and starts `serve`. That fails on the taken port with `SND-API-003` (exit 2). The throwaway Temporal dev server also keeps running.\n\nAdd the teardown that mirrors the first line:\n\n```bash\n$SINDRI stop                                    # last, still with the throwaway home\nunset AW_SINDRI_HOME SINDRI_ONYX_KEY            # back to the real home\n```",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    }
+  ]
+}

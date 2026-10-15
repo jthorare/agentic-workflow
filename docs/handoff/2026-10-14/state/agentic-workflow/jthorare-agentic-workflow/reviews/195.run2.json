@@ -1,0 +1,210 @@
+{
+  "pr": {
+    "number": 195,
+    "title": "feat: Sindri context S-5A — Onyx source (CE v4.9.0), record keys and aliases, secret pointers",
+    "branch": "feat/ctx-s5a",
+    "owner": "jthorare",
+    "repo": "agentic-workflow",
+    "url": "https://github.com/jthorare/agentic-workflow/pull/195"
+  },
+  "commit_sha": "0ba4fecf2feac3d2e069cb3a385b374770d6188f",
+  "review_run": 2,
+  "previous_run_finding_count": 28,
+  "lenses": [
+    "security-sentinel",
+    "architecture-strategist",
+    "backend-developer",
+    "qa-expert",
+    "code-reviewer"
+  ],
+  "reviewed_at": "2026-10-14T16:24:07Z",
+  "posted": false,
+  "posted_at": null,
+  "reviewers": [
+    {
+      "agent": "security-sentinel",
+      "focus": "Secrets and secret-pointer resolution (SecretPointer, PointerSecrets, ProcessToolRunner, SecretPointerEnvironment, OnyxSettings pointer check), key caching after one-resolution-per-source, Onyx request allowlist, loopback, error-message leakage",
+      "summary": "I re-read the Sindri secrets code (SecretPointer, PointerSecrets, ProcessToolRunner, SecretPointerEnvironment, Composition.ContextEnvironment, OnyxDoctor) and the Onyx client path (OnyxSettings, OnyxClient, OnyxRequests allowlist, OnyxHttp, OnyxSources/ContextSourceCatalog, SourceCalls, QueryContextService), and checked the fix commits 403f5dfe..0ba4fecf. Verified fixes: security-sentinel-3 (01fab63e) is correct. Context's IsPointer is now a known scheme plus a non-empty target, so it accepts at least everything SecretPointer.Parse accepts, and SecretPointerAgreementTests holds that. A pointer Context accepts but Sindri refuses still leaks nothing: Parse never echoes the target, OnyxClient's 002 names only the scheme, and OnyxSettings.ToString withholds the token. security-sentinel-0 (6de6ea41) is half fixed. The Lazy<string?> in OnyxClient now resolves once per client, and ContextSourceCatalog builds a new source per call, so it resolves once per query. Failures are not cached across queries and the key lives only as long as one query's source. It is never logged, never in ToString (OnyxClient is a class; OnyxSourceParts holds the function, not the value), and goes only into the Bearer header. The other half of run 1's suggested fix was not done: the resolution still runs synchronously before any await, so the query deadline and the caller's cancellation don't bound it (see security-sentinel-0 below). The allowlist (five routes, path equality after query append, no '#'), the no-redirect/no-proxy client and the loopback/userinfo/query checks are unchanged and sound. sec-1 and sec-2 were answered in writing and I do not re-raise them. I checked whether FileInfo.LinkTarget throws in PointerSecrets.FromFile when the parent directory can't be read: it returns null (tested on .NET 9), so I raised nothing there.",
+      "issues": [
+        {
+          "id": "security-sentinel-0",
+          "severity": "issue",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": 43,
+          "summary": "The key is now resolved once per query, but still synchronously and outside the query deadline, so a locked keychain or an op sign-in stalls every query 5 s or 30 s",
+          "body": "**[issue] The key is now resolved once per query, but still synchronously and outside the query deadline (the remaining half of run 1's security-sentinel-0)**\n\n6de6ea41 fixed the per-request process spawn: `_key = new Lazy<string?>(() => parts.Environment(settings.Token))` at OnyxClient.cs:25, read at :42. The other half of the run-1 finding (\"also run the first resolution off the request thread or under the deadline, so a hung tool can't outlive the query\") is still open. Here is the path as it stands:\n\n- `QueryContextService.Search` (QueryContextService.cs:57-67) builds the per-source tasks lazily inside `Task.WhenAll(calls)`. For the onyx source, `SourceCalls.Within` -> `OnyxSource.Search` -> `OnyxClient.Call` reaches `_key.Value` before the first `await`. That means `PointerSecrets.FromTool` -> `ProcessToolRunner.Run` blocks the request thread synchronously (`WaitForExit(timeout)`) before any `ValueTask` is returned.\n- `SourceCalls.Within`'s expiry token and `OnyxClient.Call`'s `timeout.CancelAfter(deadline)` are never observed during that time. The caller's `cancellationToken` isn't either, so a client disconnect doesn't stop it.\n- With `keychain:` behind a locked keychain, every query takes at least 5 s against a 4 s default deadline. With `op:` waiting on a sign-in, it takes at least 30 s. A pointer that didn't resolve is deliberately retried by the next query (OnyxClient.cs:13-15, `A_pointer_that_did_not_resolve_is_resolved_again_by_the_next_source`), so that wait recurs on every query, not once. The default form for Onyx in spec §8.8 is a `keychain:` pointer, and this is the honest mistake that hits it.\n- `ProcessToolRunner.Wait`'s unbounded post-exit `WaitForExit()` and stream reads (run 1 sec-2, accepted as a follow-up) sit on the same synchronous path.\n\nThe new tests (`OnyxKeyResolutionTests`) count resolutions but use an instant environment function, so they don't catch this.\n\n**Suggested fix:** resolve the key under the call's token and off the calling thread. For example, keep a `Lazy<Task<string?>>` started with `Task.Run(() => parts.Environment(settings.Token))` and in `Call` do `var key = await _key.Value.WaitAsync(timeout.Token)` after the linked CTS is created (the tool still ends at its own 5 s/30 s timeout in the background). Add a test whose environment function sleeps past a 200 ms deadline and asserts that the search returns SND-CONTEXT-010 within roughly the deadline, and that cancelling the caller's token cancels the search.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "security-sentinel-1",
+          "severity": "suggestion",
+          "path": "src/Sindri/Aw.Sindri.Features/RunDoctor/OnyxDoctor.cs",
+          "diff_position": 61,
+          "summary": "Doctor's context:onyx resolves the key pointer twice per run (its own check, then the engine's probe source), so keychain:/op: spawn two tool runs and can prompt twice",
+          "body": "**[suggestion] Doctor resolves the Onyx key pointer twice per run**\n\n`OnyxDoctor.Check` resolves `context.sources.onyx.token` itself (OnyxDoctor.cs:61, `SecretPointer.Parse(...).Bind(secrets.Resolve)`) so it can show the SND-SECRET reason. It then calls `engine.Sources(scope, ...)`, which builds a fresh onyx source through `ContextSourceCatalog.For` -> `OnyxSources.Create`. That source's `Probe` -> `Call(/api/me)` resolves the pointer again through `Composition.ContextEnvironment` (OnyxClient.cs:42). With `op:` that is two `op read` runs per `sindri doctor`; if the CLI needs a sign-in, that is up to 60 s and two prompts. With a keychain item whose ACL asks for confirmation, the owner sees two GUI prompts.\n\nThis doesn't leak anything, but it is the per-call spawn pattern 6de6ea41 removed elsewhere, and doctor is where an owner first sets up a keychain or op pointer. Two possible fixes:\n\n- Have the Host's `SecretPointerEnvironment` keep a successful value for a few seconds, keyed by pointer text. Don't cache failures, so the retry behaviour stays.\n- Have doctor resolve only through the engine and read the SND-SECRET reason separately (Parse only, with Resolve only when the probe reports 002).\n\nThe first option also covers several queries arriving close together.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "architecture-strategist",
+      "focus": "C# rules compliance: package shape, ports, DI and registration, AOT, analyzers and suppressions, PublicAPI, deps.yaml, JSON contexts, the Context/Sindri pointer check, key caching, OnyxVersionProbe removal",
+      "summary": "I reviewed the run-1 fix commits 403f5dfe..0ba4fecf against .agents/rules/csharp.md and csharp-testing.md, then re-read the Context and Sindri parts of the PR diff. Verified fixes: arch-2 is done. The OnyxVersionProbe singleton and its summary clause are gone, and no dead type is left behind: OnyxVersionProbe and OnyxVersionReply are still used by OnyxSource.Probe and by the probe tests. arch-1 is fixed in the right direction. Context does not reference Sindri; its check is a loose scheme-plus-target test, Sindri's parser stays the authority, and the agreement test sits in Aw.Sindri.Tests, which already references Context legitimately (tier 3 to tier 1). arch-0's fan-out is fixed. The key resolves once per OnyxClient, ContextSourceCatalog.For builds one onyx source per call, and nothing caches a failed resolution across queries. Other checks: `node scripts/check-deps.mjs` passes (17 packages, 47 edges); PublicAPI.Unshipped.txt needs no change, because the fixes only touched private and internal members; the JSON wire record gained `hidden` inside the existing OnyxWire context; the MA0182 suppression on FakeToolRunner is justified, accurate and scoped to the one type. Remaining points: one issue, arch-0's 'deadline doesn't cover it' half, which was neither fixed nor answered (the Lazy still blocks synchronously before any deadline token exists); and three smaller points on drift protection for the scheme list, where the Linear team-key pattern lives, and the rule text for the new Testing-to-Infrastructure accommodation.",
+      "issues": [
+        {
+          "id": "architecture-strategist-0",
+          "severity": "issue",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": 43,
+          "summary": "Key resolution is now once per query, but it is still synchronous and runs before any deadline exists, so a slow op:/keychain: pointer stalls the query past its deadline every time",
+          "body": "**[issue] The once-per-query resolution still runs outside the query's deadline (the unaddressed half of run-1 arch-0)**\n\nRun-1 arch-0 raised three problems: process fan-out, *\"the deadline doesn't cover it\"*, and sync-over-async. Commit 6de6ea41 fixed the fan-out with `Lazy<string?> _key` (OnyxClient.cs:25). The other two remain, and evidence.md's \"Review replies\" doesn't answer them.\n\n- `Call<T>` reads `_key.Value` (line 42) before `timeout.CancelAfter(deadline)` (lines 50-51).\n- One level up, `SourceCalls.Within` creates its expiry CTS and then calls `call(timeout.Token)`. That call runs synchronously until its first `await`, and the `Lazy` factory (`SecretPointerEnvironment.Over` -> `PointerSecrets.Resolve` -> `ProcessToolRunner.Run`) runs before that first await. No token can interrupt it.\n- Effect: with `op:` and 1Password locked (an honest, common state), `op read` blocks until its 30 s timeout. The search therefore returns about 30 s late instead of degrading within `query.Deadline`. It also holds a thread-pool thread the whole time.\n- By design a failed resolution is not cached across queries (`A_pointer_that_did_not_resolve_is_resolved_again_by_the_next_source`), so every query pays the 30 s again until the vault is unlocked.\n- Doctor's probe has the same shape: `OnyxDoctor` resolves once, then `Probe` -> `/api/me` resolves again on a fresh client.\n\n**Fix (small, keeps the seam):** make the cached value a task and await it under the call's token, so the deadline covers it:\n\n```csharp\nprivate readonly Lazy<Task<string?>> _key = new(() => Task.Run(() => parts.Environment(settings.Token)));\n...\nusing var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);\ntimeout.CancelAfter(deadline);\nvar key = await _key.Value.WaitAsync(timeout.Token).ConfigureAwait(false);   // OCE -> 010 via the existing catch\n```\n\nThe process still runs to its own timeout in the background, but the query degrades on time with SND-CONTEXT-010. Add a test that uses an environment function which sleeps longer than `Query(...).Deadline` and asserts that the search returns 010 within the deadline. If the owner prefers to keep it as it is, record that decision in the Review replies alongside arch-0.",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "architecture-strategist-1",
+          "severity": "suggestion",
+          "path": "tests/Aw.Sindri.Tests/Secrets/SecretPointerAgreementTests.cs",
+          "diff_position": 19,
+          "summary": "The agreement test only covers the hand-written sample list, so a new SecretScheme in Sindri can silently diverge from Context's hard-coded scheme set",
+          "body": "**[suggestion] Tie the agreement test to `SecretScheme`, not just to the sample list**\n\nThe dependency direction is right: Context does not reference Sindri, and the test lives in Aw.Sindri.Tests. Still, the scheme list now exists twice:\n- `SecretScheme` and `SecretPointer.Parse`'s switch in Aw.Sindri.Core\n- `_schemes = { \"env\", \"file\", \"keychain\", \"op\" }` in `OnyxSettings.cs:17`\n\nThe agreement test iterates `SecretPointerSamples.Accepted` only. Suppose someone adds a `vault:` scheme to Sindri but no sample for it. Then `profile validate` refuses `vault:...` with the \"isn't a secret pointer … rotate the key\" message while doctor resolves it fine, which is the exact divergence arch-1 fixed. The test would stay green.\n\n**Fix:** add one fact asserting that the samples cover every scheme, for example:\n\n```csharp\nAssert.Equal(Enum.GetValues<SecretScheme>().Order(),\n    SecretPointerSamples.Accepted.Select(t => SecretPointer.Parse(t).Value.Scheme).Distinct().Order());\n```\n\nA new scheme then fails the test until it gets a sample, and that sample then forces Context's `_schemes` to learn it. When the planned `ISecrets` reaches Kernel (csharp.md \"Seams\"), the pure grammar can move with it and `_schemes` can go.",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "architecture-strategist-2",
+          "severity": "nit",
+          "path": "src/Context/Aw.Context.Core/Onyx/OnyxRecordKeys.cs",
+          "diff_position": 30,
+          "summary": "The Linear team-key grammar now lives in the Onyx key type, and Engine's settings reader depends on it",
+          "body": "**[nit] `TeamKeyPattern` sits in `OnyxRecordKeys`, but it is a Linear concept**\n\nCommit 69611fe7 correctly unifies the alias regex and the `context.sources.linear.teams` check. As a side effect, `Engine/SourcesReader` (the profile reader for the `linear` section) now reaches into `Onyx/OnyxRecordKeys.TeamKeyPattern`. The native Linear adapter in S-6 will need the same grammar, and it would then depend on the Onyx type as well.\n\n**Fix (optional):** move the constant to a neutral Core home, such as a small `Sources/LinearTeamKey` static or a `Linear` folder. Both `SourcesReader` and `OnyxRecordKeys` would then reference it. Behavior does not change.",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "architecture-strategist-3",
+          "severity": "nit",
+          "path": "tests/Aw.Sindri.Testing/Aw.Sindri.Testing.csproj",
+          "diff_position": 6,
+          "summary": "Aw.Sindri.Testing now references Infrastructure and grants InternalsVisibleTo to Aw.Sindri.Tests, which the testing rule only describes for the small shape",
+          "body": "**[nit] Record the new accommodation in the rule text**\n\nTo host `ToolRunnerContract` over the internal `IToolRunner` seam, commit 5ac30263 adds three things:\n- the first `*.Testing` -> `*.Infrastructure` project reference in the repo (it pulls Kernel.Data, Sqlite and YamlDotNet into Aw.Sindri.Testing's lock file)\n- `InternalsVisibleTo Aw.Sindri.Tests` on a full-shape Testing project\n- a type-level MA0182 suppression\n\nEach is allowed: Testing may reference its own package; `[SuppressMessage]` has an accurate `Justification` and is scoped to `FakeToolRunner` alone, which is better than a project-wide `.editorconfig` switch. check-deps also passes. However, `csharp-testing.md` (\"Tests reach `internal` types…\") and `csharp.md` §Types describe Testing declaring `InternalsVisibleTo` only \"in the small shape\". The next reader will see this case as a deviation.\n\n**Fix (optional):** add one clause to both rule files, for example: *\"a full-shape `Aw.<Pkg>.Testing` may declare it too when a contract base binds an internal Infrastructure seam (e.g. Sindri's `ToolRunnerContract`)\"*. Alternatively, keep adapter-internal seams' contract and fake in `Aw.<Pkg>.Tests`, which run 1's arch-3 noted they don't strictly need.",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "backend-developer",
+      "focus": "Onyx CE v4.9.0 adapter correctness against pinned wire facts: admin search, hidden-document drop, chunk fetch, role check, ranking/fusion, Leaky/AsOf, record keys and aliases, one key resolution per source",
+      "summary": "Read OnyxSource, OnyxClient, OnyxSearchDoc and the reply records, OnyxRecordKeys, OnyxSettings, SourcesReader, RankFusion, the registration, and Sindri's SecretPointerEnvironment, and checked them against onyx-api-research.md. I found no blocking issues or issues, and I raised one suggestion. Verified run-1 fixes. (1) Hidden drop: `hidden` is read from SearchDoc.hidden (`[JsonPropertyName(\"hidden\")] bool`), which is the field admin search returns with include_hidden. The filter runs inside the loop before the limit check, so rank is contiguous (`hits.Count + 1`) and the limit counts only kept hits. Hidden documents are also not remembered in `_seen`, so fetch never takes a title from one. Onyx's fixed 50 cap means hidden documents can still shrink the result, which is acceptable. (2) Team key pattern: `OnyxRecordKeys.TeamKeyPattern` (`[A-Z][A-Z0-9]+`) is used by both the SourcesReader `TeamKey` regex and the `[ID] ` title-prefix regex. The alias check takes the team part with `identifier[..IndexOf('-')]`; the pattern excludes '-', so that cut is exact. Both sides agree on 2+ characters, and a one-character team now fails validation instead of silently never matching. (3) One key resolution per source: `Lazy<string?>` in OnyxClient. Sindri's `SecretPointerEnvironment` returns null on failure and never throws, so the Lazy does not cache an exception. A client lives for one query, so rotation or a fixed pointer is picked up by the next query. A null or unusable key gives SND-CONTEXT-002 with the pointer scheme and no target. The chunk reply and the other replies use RespectNullableAnnotations, so a null `content` is rejected as 051 and cannot reach `GetByteCount`. Leaky and AsOf: `UpdatedAt` null or after the cut is leaky, and SupportsAsOf is false. Fetch: chunk ids start at 0, the loop stops once 64 KB are read, and Cut does not split surrogate pairs. The /me role check separates not admin (Unavailable, 050), admin but not a service account (Degraded), and ok. RRF dedups by canonical key, re-ranks per source, and merges aliases consistently.",
+      "issues": [
+        {
+          "id": "backend-developer-0",
+          "severity": "suggestion",
+          "path": "src/Context/Aw.Context.Infrastructure/Onyx/OnyxClient.cs",
+          "diff_position": null,
+          "summary": "Key resolution runs synchronously before the call deadline starts, so an op: pointer can hold a query for up to 30 s",
+          "body": "**[suggestion] Key resolution is outside the query deadline**\n\n`OnyxClient.Call` reads `_key.Value` (OnyxClient.cs, the `var key = _key.Value;` line) before `timeout.CancelAfter(deadline)`. For `keychain:` and `op:` pointers, `PointerSecrets` blocks the thread for up to 5 s and 30 s (PointerSecrets.cs:18-19). The first Onyx call of a query, search or probe, can therefore overrun `query.Deadline` or `callDeadline` by that much, and the cancellation token is not consulted while the tool runs. The resolution is cached for the client, so the cost is paid once per query, but the deadline contract is not met for that first call. This is not a correctness bug and it is bounded, since the tool runner kills the tool at its timeout, so it is only a suggestion. Options: document the exception in the OnyxClient summary, or resolve the key on a thread-pool task raced against the linked `timeout.Token` and return the SND-CONTEXT-010 unavailable error on timeout.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "qa-expert",
+      "focus": "Test quality per csharp-testing.md: TDD order of the red commit, lanes and traits, fake/real contract, timing, failure-path coverage of the run-1 fixes, test names.",
+      "summary": "Read the test changes in 403f5dfe..0ba4fecf: OnyxKeyResolutionTests, the hidden-docs and 2-character team key tests, SecretPointerSamples with its two readers, ToolRunnerContract and its two bindings, and the 30 s deadline changes. I did not run the tests. TDD order holds: the red commit (403f5dfe) adds tests that compile against existing seams (OnyxPlant, the harness environment overload, OnyxSettings.Create), and each fails for the stated reason. Resolutions per query counted more than once, a hidden doc still became a hit, the team key 'E' passed the old {0,9} regex, and pointers such as 'env:' or an op: pointer with spaces hit the old token check. The fixes make them pass. I verified these run-1 fixes: one key resolution per source (including the failed-pointer retry by the next source), pointer agreement (shared list, both directions of the check), hidden documents dropped with ranks renumbered, 2+ char team keys, and the 30 s per-call deadlines. Lanes and traits are correct: the real-process contract binding is Integration and the fake binding is Unit. The 30 s deadline does not make any failing test hang, because the only tests that expect expiry (Missing_the_deadline_is_unavailable_with_010 and the two OnyxVersionRequestTests expiry cases) pass their own short deadlines. Remaining gaps are all suggestion level: the fetch and probe call deadline no longer has any test that expires it, ToolRunnerContract's fake side is tautological and its real side is POSIX-only, and the real runner's stdin and stderr handling is uncovered.",
+      "issues": [
+        {
+          "id": "qa-expert-0",
+          "severity": "suggestion",
+          "path": "tests/Aw.Context.Tests/Onyx/OnyxSourceHarness.cs",
+          "diff_position": null,
+          "summary": "No test expires the per-call deadline of fetch or probe now that the harness fixes CallDeadline at 30 s",
+          "body": "**[suggestion] Nothing pins the fetch/probe call deadline (OnyxSourceParts.CallDeadline) any more**\n\nOnyxSourceHarness.cs:28 sets `CallDeadline = Patient` (30 s) for every harness test. The only expiry tests that go through the source use the search path (`OnyxSourceFailureTests.Missing_the_deadline_is_unavailable_with_010`, which passes `query.Deadline = 200 ms`) and the probe-level `OnyxVersionRequestTests`. `OnyxSource` uses `callDeadline` for the chunk-info size call, the chunk fetches, `/api/me` and the version probe (OnyxSource.cs:66, 91, 97, 175). Nothing checks that an over-slow Onyx on those calls becomes SND-CONTEXT-010 rather than a hang, or that the default (4 s, OnyxSourceParts.cs:13) is wired through `OnyxSources.Create`. The deadline was loosened for the right reason (qa-expert-0 in run 1), but the cost is that this wiring is now untested.\n\nSuggested fix: one test in OnyxSourceFailureTests that builds a harness variant with `CallDeadline = TimeSpan.FromMilliseconds(200)` against `FakeServerOptions { Delay = 5 s }` and asserts `Fetch` and `Probe` return SND-CONTEXT-010 in under about 3 s. That needs a harness parameter (or a `with`-style option) for the deadline.",
+          "type": "top-level",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "qa-expert-1",
+          "severity": "suggestion",
+          "path": "tests/Aw.Sindri.Testing/ToolRunnerContract.cs",
+          "diff_position": null,
+          "summary": "ToolRunnerContract's fake binding is tautological, the real binding is POSIX-only, and stdin/stderr handling is not covered",
+          "body": "**[suggestion] ToolRunnerContract: only half of it can fail, it needs POSIX tools, and it skips two behaviours the runner promises**\n\n1. The fake binding is `new FakeToolRunner(scripted)` (FakeToolRunnerContractTests.cs) and `scripted` is the same `expected` the case then asserts, so those four Unit tests can never fail. The contract still has value because it ties the real runner's outcomes (Missing, TimedOut, exit code plus stdout) to the values the pointer tests script on the fake. That is worth saying in the summary comment, so nobody counts these as four extra unit tests of behaviour.\n2. The real binding runs `printf`, `sh` and `sleep` (ToolRunnerContract.cs lines 25, 36, 47). That is fine on macOS and Linux, but it fails on Windows, which the repo lists as a desktop target. The `op`/`security` pointer paths are probably POSIX-leaning anyway, but the Integration test will fail on a Windows runner rather than skip. If Windows CI is planned, guard with a platform skip such as `Assert.SkipUnless(!OperatingSystem.IsWindows(), ...)` in the real binding, or use `dotnet` itself as the child process.\n3. `ProcessToolRunner` documents that it closes stdin (so a prompting tool reads EOF instead of hanging) and drains and drops stderr. Neither is in the contract. Two cheap cases: `sh -c 'cat'` returns `Exited 0 \"\"` without timing out, and `sh -c 'echo noise >&2; printf ok'` returns `ok` with no stderr in the output. The first guards against a regression that would hang doctor for the full tool timeout (a real hazard for `op`).\n\nThe timeout case is sound: `sleep 30` with 200 ms, killed as a process tree, so a failure costs 200 ms and not 30 s.",
+          "type": "top-level",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    },
+    {
+      "agent": "code-reviewer",
+      "focus": "Docs accuracy against the code at head 0ba4fecf: docs/sindri/onyx.md, docs/sindri/context.md, docs/csharp/sindri-context.md, docs/csharp/sindri.md, the context spec edits, the split-panes fixture README and src/Sindri/aot-smoke/expected.txt; verification of run-1 doc fixes d3f2edbd and 0ba4fecf.",
+      "summary": "I checked every command, flag, error code, env var and path in the S-5A docs against the head code, and verified the run-1 doc fixes. These are correct: approve is `$SINDRI profile approve <hash>`, which takes the 6-character typed confirmation and starts the control plane through EnsureRunning (CommandTable.Approval and Verbs.Approve). Validate exits 1 when the profile is valid but not approved (Verbs.Validate). `filters: {}` matches the empty OnyxSearchFilters record, and terms are quoted as phrases (OnyxSource.cs:45-51). The as-of leak marking matches OnyxSource.cs:150. The connector-status claim is gone from onyx.md. 052 is left out of the user table but stays in the developer table as 'dropped, not degraded'. S-5B became S-6. `op:` pointers are listed, with the 5 s and 30 s timeouts in PointerSecrets. The file: rules (regular file, no symlink, no group or other bits) match. Team keys are `[A-Z][A-Z0-9]+`, shared through OnyxRecordKeys.TeamKeyPattern and SourcesReader, and context.md describes them correctly. 'Once per query' matches the Lazy key in OnyxClient with one OnyxSources.Create per catalog call. The OnyxPlant README entry matches FakeServerOptions and its three users. The two new expected.txt doctor lines match OnyxDoctor's strings exactly. Human callers get every mapped repo whatever their cwd (ScopeRules.Resolve), so running the `dotnet run` form from the toolkit repo still reaches work-app. Gaps left: the throwaway walkthrough still fails on its first command, because the profile file doesn't exist in a fresh mktemp home and the snippet lacks the required `schemaVersion`/`user`. The new hidden-document filter appears in no doc. After 01fab63e, validate checks only the scheme, but onyx.md still says it checks 'the form' and leaves SND-SECRET-001 out of what doctor may show. The `env:` pointer is read by two different processes, which can disagree. The README's OnyxPlant use list is slightly off. The spec's leftover 'connector status' wording in §8.8/§12 is the owner's already-raised cr-5, so I don't raise it again.",
+      "issues": [
+        {
+          "id": "code-reviewer-0",
+          "severity": "issue",
+          "path": "docs/sindri/context.md",
+          "diff_position": 102,
+          "summary": "The throwaway-profile walkthrough fails at its first command: no profile file exists, and the snippet lacks schemaVersion and user",
+          "body": "**[issue] The throwaway-profile walkthrough fails at its first command: no profile file exists, and the snippet lacks schemaVersion and user**\n\nThe walkthrough runs `export AW_SINDRI_HOME=\"$(mktemp -d)\"` and then says `# add to $AW_SINDRI_HOME/profile/profile.yaml:`. In a fresh temp dir neither `profile/` nor the file exists. `SettingsFromEnvironment.cs:16-18` resolves the profile to `<home>/profile/profile.yaml`, so `$SINDRI profile validate` answers `SND-PROFILE-001` (YamlProfileSource.cs:17: \"create it with 'schemaVersion: 1' and 'user: <you>'\"). Creating the file with only the snippet's `repos:` and `context:` keys still fails: `ProfileRules.cs:15-23` refuses a missing `schemaVersion` and an empty `user` with `SND-PROFILE-002`. The smoke test writes the minimum this needs (`src/Sindri/aot-smoke/run.sh:92-93`).\n\nSuggested fix: write the file instead of saying \"add to\":\n\n```bash\nmkdir -p \"$AW_SINDRI_HOME/profile\"\ncat >\"$AW_SINDRI_HOME/profile/profile.yaml\" <<'YAML'\nschemaVersion: 1\nuser: me\nrepos: [{ name: work-app, path: /path/to/work-app }]\ncontext:\n  sources:\n    onyx: { url: \"http://127.0.0.1:3000\", token: \"env:SINDRI_ONYX_KEY\", version: \"v4.9.0\" }\n    linear: { teams: [ENG] }\nYAML\n```\n\nThe rest of the walkthrough checks out: the validate and approve exit codes, the approve confirmation, the control-plane start, and doctor, `sources status` and `query` as the C# host verbs (CommandTable.cs).",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "code-reviewer-1",
+          "severity": "issue",
+          "path": "docs/sindri/onyx.md",
+          "diff_position": 133,
+          "summary": "No doc says the onyx source drops documents Onyx marks hidden (a7180147)",
+          "body": "**[issue] No doc says the onyx source drops documents Onyx marks hidden (a7180147)**\n\n`OnyxSource.cs:130` now keeps only `!document.Hidden` results. OnyxSearchDoc.cs:15-16 explains why: admin search returns hidden documents (`include_hidden`), and Sindri should see what a standard search would. None of these mention it: onyx.md §7 (which describes exactly what Sindri does with the admin search), context.md \"Asking, status and degraded answers\", sindri-context.md \"Keys and aliases\" and \"Routes and allowlist\", and spec §5.2/§8.8. A grep for `hidden` in those files finds only the repo-docs scrubber's hidden comments.\n\nThis behavior belongs in the docs for two reasons. It is one of the mitigations for the admin-key decision: the admin route doesn't widen what Sindri reads past standard search. And a user who hides a document in Onyx's admin UI now removes it from Sindri's answers.\n\nSuggested fix: in onyx.md §7's search row, after the phrase-quoting note, add \"documents Onyx marks `hidden` are dropped, so Sindri sees what a standard search would\". Add one matching sentence to context.md's S-5A \"Asking\" section and to sindri-context.md's \"Routes and allowlist\". Optionally add one line to spec §8.8's mitigations list.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "code-reviewer-2",
+          "severity": "suggestion",
+          "path": "docs/sindri/onyx.md",
+          "diff_position": 104,
+          "summary": "After 01fab63e, validate checks the scheme only; onyx.md still says 'form' and leaves SND-SECRET-001 out of the doctor codes",
+          "body": "**[suggestion] After 01fab63e, validate checks the scheme only; onyx.md still says 'form' and leaves SND-SECRET-001 out of the doctor codes**\n\n`OnyxSettings.IsPointer` (OnyxSettings.cs, added in 01fab63e) now accepts any known scheme followed by a non-empty target. These all pass `profile validate`: `keychain:onyx` (one segment), `op:vault/item` (two segments), `env:1BAD` and `file:relative`. Only Sindri's `SecretPointer.Parse`, run in doctor, refuses them, with `SND-SECRET-001` (SecretPointer.cs: segment counts, a variable name not starting with a digit, an absolute path, no segment starting with '-').\n\nonyx.md §5 says \"Validate checks the pointer's form only; ... an unset variable or a file at the wrong mode shows up in `$SINDRI doctor` (step 6) as `SND-SECRET-002` or `003`\". Doctor can also show 001. context.md's \"checks only the pointer's form\" has the same imprecision, although it does list 001.\n\nSuggested fix, in onyx.md: \"Validate checks only the pointer's scheme; it doesn't parse the target or resolve it, so a malformed target (`keychain:onyx` without an account), an unset variable or a file at the wrong mode shows up in `$SINDRI doctor` as `SND-SECRET-001`, `002` or `003` with the fix.\" Also state the target grammar once, for example in context.md's pointer table: env names are letters, digits and `_`, not starting with a digit; keychain has exactly 2 segments and op exactly 3; no segment is empty or starts with `-`.",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "code-reviewer-3",
+          "severity": "suggestion",
+          "path": "docs/sindri/context.md",
+          "diff_position": 45,
+          "summary": "The env: pointer is read by two processes: doctor reads the CLI's environment, queries read the control plane's",
+          "body": "**[suggestion] The env: pointer is read by two processes: doctor reads the CLI's environment, queries read the control plane's**\n\nThe table says `env:NAME` is \"the environment variable `NAME` of the `sindri` process\", and two processes are involved:\n\n- **Doctor** runs in-process in the CLI (`Verbs.Doctor` → `OnyxDoctor.Check` → `secrets.Resolve`), so it reads the calling shell's environment.\n- **Queries and `sources status`** resolve through the control plane. It was started earlier by `ServeLauncher` (`/bin/sh -c ... serve`) and inherited the environment of whichever CLI launched it.\n\nIf a user exports `SINDRI_ONYX_KEY` after the control plane is already up, doctor reports `ok` while every query degrades onyx with `SND-CONTEXT-002`. That is a confusing contradiction for the walkthrough's own `env:` example. The walkthrough avoids it because it exports before `profile approve` starts the plane, but only by accident of ordering.\n\nSuggested fix: in the table, write \"the environment variable `NAME` (for queries, `sindri serve`'s environment when it started; doctor reads the calling shell's)\". In the walkthrough, add \"export it before the control plane starts (`$SINDRI stop` first if one is running)\".",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        },
+        {
+          "id": "code-reviewer-4",
+          "severity": "nit",
+          "path": "tests/Aw.Context.Testing/Fixtures/split-panes/README.md",
+          "diff_position": 78,
+          "summary": "The OnyxPlant entry lists a 'bad shape' use no test makes and leaves out the version plant FakeOnyxServerTests does make",
+          "body": "**[nit] The OnyxPlant entry lists a 'bad shape' use no test makes and leaves out the version plant FakeOnyxServerTests does make**\n\nThe entry gives three uses: a hidden document (`OnyxSourceContractTests.cs:75`, correct), a secret-shaped identifier in a link (`OnyxContextTests.cs:62`, correct), and \"a body in a shape v4.9.0 doesn't send\". No test plants the third: the only other user is `FakeOnyxServerTests.cs:233`, which plants a different `backend_version`. Also, the plant must return JSON text, because `FakeOnyxServer.Planted` calls `JsonNode.Parse` on its result. A wrong-shape body is therefore possible, but only one that is still valid JSON.\n\nSuggested fix: replace the third use with \"or another reported version (`FakeOnyxServerTests`, which checks the rewrite itself)\", and add \"the plant must return valid JSON\".",
+          "type": "inline",
+          "addressed": false,
+          "posted_comment_id": null
+        }
+      ]
+    }
+  ]
+}

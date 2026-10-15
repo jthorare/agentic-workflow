@@ -1,0 +1,476 @@
+{
+ "pr": {
+  "number": 192,
+  "title": "Sindri engine P4: the interpreter, the worker, desk Steps and the bridge",
+  "branch": "feat/sindri-wf-p4-interpreter",
+  "owner": "jthorare",
+  "repo": "agentic-workflow",
+  "url": "https://github.com/jthorare/agentic-workflow/pull/192"
+ },
+ "commit_sha": "c3ea98c7",
+ "review_run": 1,
+ "previous_run_finding_count": null,
+ "scope": "P4-only diff vs the union of origin/main 3e3fde3b, P2 187206bc and API P2 95d1e33d",
+ "lenses": [
+  "qa-expert",
+  "data-integrity-guardian",
+  "security-sentinel",
+  "architecture-strategist",
+  "code-reviewer"
+ ],
+ "reviewed_at": "2026-10-14T16:43:45.402997Z",
+ "posted": false,
+ "posted_at": null,
+ "publish_note": "PR comments blocked by hooks this week; resolutions recorded here and in evidence.md",
+ "runs": [
+  {
+   "run": 1,
+   "head": "c3ea98c7",
+   "counts": {
+    "blocking": 3,
+    "issue": 17,
+    "suggestion": 11,
+    "nit": 8
+   }
+  }
+ ],
+ "reviewers": [
+  {
+   "agent": "qa-expert",
+   "focus": "P4 tests and evidence",
+   "issues": [
+    {
+     "id": "qa-expert-0",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "tests/Aw.Sindri.Tests/CompleteStep/DeskTimeoutTests.cs",
+     "summary": "Desk timeout 'always parks whatever then: says' is tested only for then: retry",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "qa-expert-1",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "proof/sindri-wf-p4/manual-test.md",
+     "summary": "No journey evidence for answer, command, cancel, protected-answer challenge, events --follow, desk-timeout park, causation routing",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "qa-expert-2",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "proof/sindri-wf-p4/raw/j8.txt",
+     "summary": "Journey 8's +4 rows aren't explained by two refusals",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "qa-expert-3",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "proof/sindri-wf-p4/manual-test.md",
+     "summary": "Journey 5 shows only --json alreadyApplied; journey 10 injects events with sqlite3",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "qa-expert-4",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "tests/Aw.Sindri.Tests/Workflows/HeldEventTests.cs",
+     "summary": "Held-event tests mix the wall clock and the time-skipped clock",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    }
+   ]
+  },
+  {
+   "agent": "data-integrity-guardian",
+   "focus": "event bridge, held window, ledger, home stand-ins",
+   "issues": [
+    {
+     "id": "data-integrity-guardian-0",
+     "severity": "blocking",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/HeldItemEvents.cs",
+     "summary": "Held window (24 h eventHold) re-sends an item event to instances started after it (a later attempt included)",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-1",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/EventBridge.cs",
+     "summary": "Redeliver runs one visibility List per held event every 5 s and opens a new Temporal client per call",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-2",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/HeldItemEvents.cs",
+     "summary": "An unparseable ledger item stalls the bridge cursor for good",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-3",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/HomeCommandNonces.cs",
+     "summary": "Claim treats a pending claim as fresh; a retried protected answer is refused and its claim released though it applied",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-4",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/EventBridgeCursor.cs",
+     "summary": "Cursor and fact files renamed into place without fsync",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-5",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/EventBridge.cs",
+     "summary": "Cursor rewritten once per ledger row",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "data-integrity-guardian-6",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.cs",
+     "summary": "EventAsync doc says eventHold expiry is open; Hold.cs implements it",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    }
+   ]
+  },
+  {
+   "agent": "security-sentinel",
+   "focus": "write verbs and guards",
+   "issues": [
+    {
+     "id": "security-sentinel-0",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Features/ApplyCommand/ApplyCommandService.cs",
+     "summary": "Release can delete a claim whose Update may have applied",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "security-sentinel-1",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Features/ApplyCommand/ApplyCommandService.cs",
+     "summary": "Challenge's version binding is checked in the handler, not in the Update validator",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "security-sentinel-2",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Features/IssueNonce/IssueNonceService.cs",
+     "summary": "Stand-in nonce isn't bound to instance/version; spec SND-WF-009 text differs",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "security-sentinel-3",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Host/Catalog/EngineRows.cs",
+     "summary": "IssueChallenge row CLI names recipe approve for instance challenges",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    }
+   ]
+  },
+  {
+   "agent": "architecture-strategist",
+   "focus": "interpreter and worker",
+   "issues": [
+    {
+     "id": "architecture-strategist-0",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.Desk.cs",
+     "summary": "A report racing the desk deadline is answered 'parked: timeout' but left in _report",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-1",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.cs",
+     "summary": "Updates accepted with an ending trigger are never settled; the workflow never completes",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-2",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.Hold.cs",
+     "summary": "An event that fits the current wait is expired instead of consumed when older than eventHold",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-3",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.cs",
+     "summary": "StartOf mints instance.Id with a different formula than WorkflowInstanceId.Of",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-4",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.Loop.cs",
+     "summary": "Mirrored ledger rows drop the trigger's actor (spec \u00a75.6)",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-5",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RunStepActivities.cs",
+     "summary": "A LoadRecipe failure leaves a permanently 'starting' instance",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-6",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.Desk.cs",
+     "summary": "Held events aren't expired during an active desk Step",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-7",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "tests/Aw.Sindri.Tests/Workflows/RecipeWorkflowTests.cs",
+     "summary": "No checked-in recorded-history replay fixtures",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "architecture-strategist-8",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "docs/superpowers/specs/2026-10-10-sindri-workflow-engine-design.md",
+     "summary": "\u00a73.4 and \u00a73.8 don't reflect rev 8.2's desk-timeout park",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    }
+   ]
+  },
+  {
+   "agent": "code-reviewer",
+   "focus": "CLI, read verbs, docs",
+   "issues": [
+    {
+     "id": "code-reviewer-0",
+     "severity": "blocking",
+     "owner": "P4",
+     "path": "AGENTS.md",
+     "summary": "AGENTS.md, sindri help and two docstrings say invalid input exits 1; it exits 2",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-1",
+     "severity": "blocking",
+     "owner": "P4",
+     "path": "docs/csharp/sindri-workflow.md",
+     "summary": "'The interpreter's interface' describes contract-time stubs that no longer exist",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-2",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "docs/csharp/sindri-workflow.md",
+     "summary": "Doc says --needs-me lists takeovers; NeedsYou is false while taken over",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-3",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Host/Commands/StatusCommand.cs",
+     "summary": "status, events and complete refuse a bare item the write verbs accept",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-4",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Host/Commands/EventsCommand.cs",
+     "summary": "--follow never observes an interrupt and polls forever after its pipe closes",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-5",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Features/GetInstanceEvents/GetInstanceEventsService.cs",
+     "summary": "events on an unknown address prints 'no events', exit 0",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-6",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Host/Endpoints/EndpointTable.cs",
+     "summary": "\u00a76.3 GET instance and instance-events routes aren't mapped or listed as a gap",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-7",
+     "severity": "issue",
+     "owner": "P4",
+     "path": "docs/csharp/sindri.md",
+     "summary": "Route table lacks P4's five routes; IssueChallenge row lacks the instance actions",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-8",
+     "severity": "issue",
+     "owner": "P4",
+     "path": null,
+     "summary": "PR body's head, merge SHAs and gate evidence predate the current head",
+     "type": "top-level",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-9",
+     "severity": "suggestion",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Features/ListInstances/ListInstancesService.cs",
+     "summary": "list opens one connection and runs one Query per row; query failures drop rows silently",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-10",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Core/Workflow/Engine/Runtime/StatusText.cs",
+     "summary": "Tokens(1_500_000) prints 1500k",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    },
+    {
+     "id": "code-reviewer-11",
+     "severity": "nit",
+     "owner": "P4",
+     "path": "src/Sindri/Aw.Sindri.Host/Commands/WorkflowCommandTable.cs",
+     "summary": "Unknown-verb usage misses --nonce/--json",
+     "type": "inline",
+     "addressed": false,
+     "resolution": null,
+     "posted_comment_id": null
+    }
+   ]
+  }
+ ]
+}

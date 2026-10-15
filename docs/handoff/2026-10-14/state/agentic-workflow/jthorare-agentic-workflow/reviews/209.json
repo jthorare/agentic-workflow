@@ -1,0 +1,240 @@
+{
+ "pr": {
+  "number": 209,
+  "title": "feat: Sindri engine P5 \u2014 timers, takeover and handback, open-request (E-6), start taken over (E-19)",
+  "branch": "feat/sindri-wf-p5-timers",
+  "url": "https://github.com/jthorare/agentic-workflow/pull/209"
+ },
+ "runs": [
+  {
+   "review_run": 1,
+   "commit_sha": "e4953589",
+   "posted": false,
+   "reviewers": {
+    "temporal-determinism": [
+     {
+      "id": "td-1",
+      "severity": "blocking",
+      "path": "src/Sindri/Aw.Sindri.Workflows/RecipeWorkflow.cs:67",
+      "summary": "Updates queued when the instance ends are never decided; handlers hang and the workflow never completes (cancel + takeover/handback/open-request in one activation; complete with unconsumed report)",
+      "resolution": null
+     },
+     {
+      "id": "td-2",
+      "severity": "issue",
+      "path": "RecipeWorkflow.Takeover.cs:55",
+      "summary": "open-request while the instance is starting is refused SND-WF-003 'still starting'; E-6 says it applies to an instance created after the request",
+      "resolution": null
+     },
+     {
+      "id": "td-3",
+      "severity": "suggestion",
+      "path": "TimerScopes.cs:123",
+      "summary": "timer CTS not linked to Workflow.CancellationToken; comments claim it is",
+      "resolution": null
+     },
+     {
+      "id": "td-4",
+      "severity": "suggestion",
+      "path": "TransitionDecision.Timers.cs:83",
+      "summary": "open-request takeover uses caller-supplied actor; enforce service:engine; InstanceIds.Engine duplicates Core EngineActor",
+      "resolution": null
+     },
+     {
+      "id": "td-5",
+      "severity": "nit",
+      "path": "RecipeWorkflow.cs:200",
+      "summary": "start taken over that parked at once shows a paused full timeout (First should pass full only when PendingPark is null)",
+      "resolution": null
+     },
+     {
+      "id": "td-6",
+      "severity": "nit",
+      "path": "TimerScopes.cs:61",
+      "summary": "Fired doc omits takeoverIdle",
+      "resolution": null
+     }
+    ],
+    "tests-and-docs": [
+     {
+      "id": "td2-1",
+      "severity": "issue",
+      "path": "PhaseFiveSignalTests.cs:40",
+      "summary": "under-1s wall-clock assertion load-sensitive across assemblies; Until polling takes ~600ms",
+      "resolution": null
+     },
+     {
+      "id": "td2-2",
+      "severity": "blocking",
+      "path": "docs/csharp/sindri-workflow.md:522",
+      "summary": "false: takeover/handback Update 'refused until P5'; add OpenRequest to Client port and Updates rows",
+      "resolution": null
+     },
+     {
+      "id": "td2-3",
+      "severity": "blocking",
+      "path": "docs/csharp/sindri-workflow.md:78",
+      "summary": "false: 'deadline line fails until timers land (P5)'",
+      "resolution": null
+     },
+     {
+      "id": "td2-4",
+      "severity": "issue",
+      "path": "docs/csharp/sindri-workflow.md:536",
+      "summary": "stale: wait timeouts are P5's; stale _timeoutAt comment at ~640",
+      "resolution": null
+     },
+     {
+      "id": "td2-5",
+      "severity": "issue",
+      "path": "docs/csharp/sindri-workflow.md:557",
+      "summary": "false: P5 does not set NeedsYou for idle takeover",
+      "resolution": null
+     },
+     {
+      "id": "td2-6",
+      "severity": "nit",
+      "path": "docs/csharp/sindri-workflow.md:672",
+      "summary": "'nothing fires while taken over' ignores takeoverIdle; Between also returns arm",
+      "resolution": null
+     },
+     {
+      "id": "td2-7",
+      "severity": "issue",
+      "path": "EvalSimulation.cs:226",
+      "summary": "no test for a 'deadline' eval line (state, retry, takeover cases)",
+      "resolution": null
+     },
+     {
+      "id": "td2-8",
+      "severity": "issue",
+      "path": "TakeoverIdleTests.cs:43",
+      "summary": "atLeast:0 check proves nothing; no test that handback cancels takeoverIdle",
+      "resolution": null
+     },
+     {
+      "id": "td2-9",
+      "severity": "suggestion",
+      "path": "StateTimerTests.cs:61",
+      "summary": "retry test cannot fail on re-arm duration; Question null assert vacuous",
+      "resolution": null
+     },
+     {
+      "id": "td2-10",
+      "severity": "suggestion",
+      "path": "TakeoverCommandTests.cs:102",
+      "summary": "E-19 test asserts Paused not null only; no handback re-arm check",
+      "resolution": null
+     },
+     {
+      "id": "td2-11",
+      "severity": "suggestion",
+      "path": "TakeoverTests.cs:41",
+      "summary": "takeover over a park: no integration test through TimerScopes",
+      "resolution": null
+     },
+     {
+      "id": "td2-12",
+      "severity": "suggestion",
+      "path": "DeskTimeouts.cs:30",
+      "summary": "DeskTimeouts.Expire is dead production code",
+      "resolution": null
+     },
+     {
+      "id": "td2-13",
+      "severity": "suggestion",
+      "path": "LaunchRequestsContract.cs:21",
+      "summary": "ILaunchRequests contract misses the requested-launch behaviour",
+      "resolution": null
+     },
+     {
+      "id": "td2-14",
+      "severity": "nit",
+      "path": "TimerScopes.cs:61",
+      "summary": "Fired doc (dup of td-6)",
+      "resolution": null
+     },
+     {
+      "id": "td2-15",
+      "severity": "nit",
+      "path": "TakeoverIdleTests.cs:59",
+      "summary": "polling bound 10s vs 20s elsewhere; assert notified row trigger/actor",
+      "resolution": null
+     },
+     {
+      "id": "td2-16",
+      "severity": "nit",
+      "path": "TakeoverTests.cs:155",
+      "summary": "pointless discard assignment in Applied helper",
+      "resolution": null
+     }
+    ],
+    "spec-conformance": [
+     {
+      "id": "sc-1",
+      "severity": "issue",
+      "path": "Host/Catalog/EngineRows.cs:35",
+      "summary": "E-19: StartInstance row must be ReadsViews; golden catalog.json",
+      "resolution": null
+     },
+     {
+      "id": "sc-2",
+      "severity": "issue",
+      "path": "Host/Commands/WorkflowCommandTable.cs:31",
+      "summary": "'sindri handback <item>' short form (spec 6.3) not wired",
+      "resolution": null
+     },
+     {
+      "id": "sc-3",
+      "severity": "issue",
+      "path": "RecipeWorkflow.cs:200",
+      "summary": "start taken over that parks at once shows a paused full timer (same as td-5)",
+      "resolution": null
+     },
+     {
+      "id": "sc-4",
+      "severity": "suggestion",
+      "path": "StateTimers.cs:73",
+      "summary": "handback whose takeover kept nothing never stops takeoverIdle",
+      "resolution": null
+     },
+     {
+      "id": "sc-5",
+      "severity": "suggestion",
+      "path": "RecipeWorkflow.cs:160",
+      "summary": "idle takeover never becomes needs-you; spec 6.3 lists it under Decisions",
+      "resolution": null
+     },
+     {
+      "id": "sc-6",
+      "severity": "suggestion",
+      "path": "ApplyCommandService.cs:145",
+      "summary": "Malformed does not refuse stray answer/text/amount/verb on takeover/handback",
+      "resolution": null
+     },
+     {
+      "id": "sc-7",
+      "severity": "nit",
+      "path": "EvalSimulation.cs:231",
+      "summary": "eval fires Retry-kind deadline after resume, workflow arms State kind",
+      "resolution": null
+     },
+     {
+      "id": "sc-8",
+      "severity": "nit",
+      "path": "StartInstanceService.cs:69",
+      "summary": "launches read after facts stored",
+      "resolution": null
+     },
+     {
+      "id": "sc-9",
+      "severity": "nit",
+      "path": "TransitionDecision.Starting.cs:14",
+      "summary": "service:engine defined twice",
+      "resolution": null
+     }
+    ]
+   }
+  }
+ ]
+}
