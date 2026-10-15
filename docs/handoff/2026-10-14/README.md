@@ -36,7 +36,9 @@ folder carries them. `main` was `fe228345` when this was written.
 7. Secrets that lived in the macOS keychain (`agentic-workflow-agent-app`, `gh:github.com` and others) don't move by
    themselves. Read each on the Mac with `security find-generic-password -s "<service>" -w`, then store it on Linux
    with `secret-tool store --label "<service>" service "<service>"` (libsecret) or wherever the tool that reads it
-   expects it. Run `gh auth login` again on Linux.
+   expects it. Run `gh auth login` again on Linux. The judge's Jev provider reads **`TYPESAFE_API_KEY`**: from the
+   environment first, then the keychain service `agentic-workflow-typesafe` (account `TYPESAFE_API_KEY`). On Linux,
+   export `TYPESAFE_API_KEY` in your shell profile.
 
 ### Linux differences the lanes must know
 - **UI real-app proofs were macOS-specific:** AX focus checks through the macOS accessibility API, Reduce motion,
