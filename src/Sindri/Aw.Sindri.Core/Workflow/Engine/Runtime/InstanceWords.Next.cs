@@ -56,7 +56,7 @@ internal sealed partial record InstanceWords
             ParkKind.Revoked => $"{id} was revoked.\nCancel, then start a new attempt from an approved version.",
             ParkKind.ChildRevoked => $"{ChildRecipe(park.Question)} (pinned by {id}) was revoked.\nRe-approve {id} so it pins an approved child; the approval resumes this instance.",
             ParkKind.Drift => $"{Block(park.Question)} changed since {Pinned} was approved.\nRe-approve it (`sindri recipe approve {Pinned}`); the approval resumes this instance.",
-            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => $"{park.Question.TrimEnd('.')} isn't on the profile's effect allowlist.\nAdd it and approve the profile, then resume to send it again.",
+            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => park.Question,   // why: the engine wrote the reason with its own fix (SND-WF-010/015 or the allowlist sentence of SND-WF-011), so it is said once
         };
     }
 

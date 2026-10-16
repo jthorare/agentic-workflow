@@ -1,0 +1,35 @@
+{
+  "rows": [
+    {
+      "id": "decision:DEC-00000000000000000000000000000011",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000011"
+      },
+      "item": null,
+      "title": "Split the checkout work into two items.",
+      "reason": "re-scope request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+    }
+  ],
+  "empty": "Rebuilding views (cursor 6 of 6)…",
+  "asOf": {
+    "cursor": 6,
+    "ledgerHead": 6,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": true,
+    "stalled": false
+  }
+}

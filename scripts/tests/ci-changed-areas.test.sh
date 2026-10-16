@@ -66,6 +66,22 @@ expect "the shared lock library runs dotnet too (Evidence's lock interop tests s
   "$(printf 'config/lib/locks.sh\n')" \
   "$(printf 'bash=true\ndotnet=true\npackages=[]')"
 
+expect "the launcher checks' inputs run the bash tests (check-launcher.mjs and check-profile-doc.mjs suites)" \
+  "$(printf 'tests/fixtures/launcher/manifest.json\nconfig/launcher/builtins.json\nschemas/launcher.schema.json\ndocs/csharp/sindri-profile.md\ndocs/csharp/sindri-launcher.md\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
+expect "SindriProfile.cs runs bash and dotnet" \
+  "$(printf 'src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
+expect "WorkflowSettings.cs (any Profile record) runs bash and dotnet" \
+  "$(printf 'src/Sindri/Aw.Sindri.Core/Profile/WorkflowSettings.cs\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
+expect "a launcher doc alone runs bash only" \
+  "$(printf 'docs/csharp/sindri-launcher.md\n')" \
+  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+
 expect "a C# change runs dotnet only" \
   "$(printf 'src/Aw.Kernel/Result.cs\nDirectory.Packages.props\n')" \
   "$(printf 'bash=false\ndotnet=true\npackages=[]')"

@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Ledger;
 /// <summary>
 /// <see cref="ICommandOrigins"/> over the ledger (engine spec rev 8 §5.4; engine P4 unit (d)): the causing event, found by
 /// its envelope id, names its instance in its payload's 'instance' field, as every 'workflow.*' event the interpreter
-/// mirrors does. A read only: it never migrates or creates the file. P6's 'workflow_commands' map replaces the payload read.
+/// mirrors does. A read only: it never migrates or creates the file. The payload read is the design; there is no 'workflow_commands' map.
 /// </summary>
 /// <param name="database">The ledger file.</param>
 internal sealed class LedgerCommandOrigins(LedgerDatabase database) : ICommandOrigins

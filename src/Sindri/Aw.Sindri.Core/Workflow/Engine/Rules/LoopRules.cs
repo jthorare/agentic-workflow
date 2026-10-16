@@ -155,7 +155,7 @@ internal static partial class LoopRules
     /// <summary>A loop park (kind loop): its grant performs the withheld transition back into the looped state (§5.8).</summary>
     private static Suspension LoopPark(ParkReason reason, string question) => new(
         SuspensionKind.Park, reason, ParkKind.Loop, Escalation: null, question, Actor: string.Empty, Mirrors: null,
-        new ResumeAction(ResumeKind.Transition, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Transition, Withheld: null, Gate: null, Effects: []));
 
     private static string Text(int value) => value.ToString(CultureInfo.InvariantCulture);
 }

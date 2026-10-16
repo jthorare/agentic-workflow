@@ -78,6 +78,10 @@ classify_changes() {
       schemas/*|rules/*) bash=true ;;  # check-deps and check-rules (and their suites) read these
       # scripts/tests/ci-lane-budgets.test.sh checks lane-budgets.mjs against these numbers
       tests/Aw.Kernel.Testing/Lanes.cs) bash=true ;;
+      # the launcher checks (check-launcher.mjs, check-profile-doc.mjs) read these; they sit under src/ and tests/ (dotnet) or docs/ (neither)
+      src/Sindri/Aw.Sindri.Core/Profile/*) dotnet=true; bash=true ;;
+      tests/fixtures/launcher/*|config/launcher/*|schemas/launcher.schema.json) bash=true ;;
+      docs/csharp/sindri-profile.md|docs/csharp/sindri-launcher.md) bash=true ;;
     esac
     for pkg in "${TS_PACKAGES[@]}"; do
       case "$file" in

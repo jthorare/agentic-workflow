@@ -8,12 +8,15 @@ using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.CompleteStep;
+using Aw.Sindri.Tests.Notifications;
 using Aw.Sindri.Tests.Workflows;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using Temporalio.Client;
 using Temporalio.Testing;
@@ -64,6 +67,7 @@ internal sealed class Served : IAsyncDisposable
         {
             // why: the clock is fake, so the projector never ticks and a ReadsViews command (StartInstance, UI E-19) would wait for the views forever
             _ = services.AddSingleton<IProjectorStatus>(static sp => new CaughtUpViews(sp.GetRequiredService<ProjectorProgress>()));
+            _ = services.Replace(ServiceDescriptor.Singleton<IOsNotifier>(new FakeOsNotifier()));   // no test fires a real OS notification
             replace?.Invoke(services);
         });
         _ = Pipeline.Configure(app);

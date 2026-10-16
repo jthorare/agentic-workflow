@@ -19,7 +19,6 @@ public static partial class TargetsReader
     {
         var problems = new Problems();
         problems.AddIf(file.Schema is not null && !TargetsFile.SchemaNames.Contains(file.Schema, StringComparer.Ordinal), "$.schema: must be evidence.targets/1 or evidence.repo/1 when given");
-        problems.AddIf(file.Databases is { ValueKind: not JsonValueKind.Object }, "$.databases: must be an object");
         var outputs = BuildOutputs(file.Cli?.BuildOutputs ?? [], problems);
         var allow = file.Cli?.Allow ?? [];
         for (var i = 0; i < allow.Count; i++)
@@ -33,7 +32,30 @@ public static partial class TargetsReader
             problems.AddIf(!EnvName.IsMatch(passEnv[i]), $"{Item("$.cli.passEnv", i)}: must be an UPPER_SNAKE environment variable name");
         }
 
-        return problems.Into(new ResolvedTargets(outputs, [.. allow], [.. passEnv]), EvidenceErrors.TargetsInvalid);
+        var databases = CheckDatabases(file.Databases, problems);
+        return problems.Into(new ResolvedTargets(outputs, [.. allow], [.. passEnv], databases), EvidenceErrors.TargetsInvalid);
+    }
+
+    private static Dictionary<string, DatabaseEntry> CheckDatabases(IReadOnlyDictionary<string, DatabaseEntry>? raw, Problems problems)
+    {
+        var databases = new Dictionary<string, DatabaseEntry>(StringComparer.Ordinal);
+        foreach (var (name, entry) in raw ?? new Dictionary<string, DatabaseEntry>(StringComparer.Ordinal))
+        {
+            var at = "$.databases." + name;
+            problems.AddIf(name.Length == 0, "$.databases: a name must not be empty");
+            problems.AddIf(!string.Equals(entry.Engine, DatabaseEntry.Postgres, StringComparison.Ordinal), $"{at}.engine: must be postgres");
+            problems.AddIf(string.IsNullOrWhiteSpace(entry.Host) || entry.Host.StartsWith('/') || entry.Host.Any(char.IsWhiteSpace), $"{at}.host: must be a TCP host name or address (a Unix socket directory is not supported)");
+            problems.AddIf(entry.Port is < 1 or > 65535, $"{at}.port: must be 1 to 65535");
+            problems.AddIf(string.IsNullOrWhiteSpace(entry.Database), $"{at}.database: must not be empty");
+            problems.AddIf(string.IsNullOrWhiteSpace(entry.User), $"{at}.user: must not be empty");
+            problems.AddIf(!EnvName.IsMatch(entry.PasswordEnv), $"{at}.passwordEnv: must name an UPPER_SNAKE environment variable");
+            problems.AddIf(string.IsNullOrWhiteSpace(entry.Identity.ServerAddress), $"{at}.identity.serverAddress: must not be empty");
+            problems.AddIf(string.IsNullOrWhiteSpace(entry.Identity.Database), $"{at}.identity.database: must not be empty");
+            problems.AddIf(entry.Identity.ServerPort is < 1 or > 65535, $"{at}.identity.serverPort: must be 1 to 65535 when given");
+            databases[name] = entry;
+        }
+
+        return databases;
     }
 
     private static List<string> BuildOutputs(IReadOnlyList<string> raw, Problems problems)

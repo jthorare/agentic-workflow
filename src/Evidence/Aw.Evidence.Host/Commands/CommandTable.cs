@@ -15,7 +15,7 @@ internal static class CommandTable
     private static readonly string _commands = string.Join(
         '|',
         RunScriptCommand.Name, ParityCommand.Name, ParityPlanCommand.Name, ParityCommentCommand.Name, ParityStaleCommand.Name,
-        ParityPutCommand.Name, PublishPlanCommand.Name, DoctorCommand.Name, CheckProvenanceCommand.Name, InstallBrowserCommand.Name, ApiRunCommand.Name);
+        ParityPutCommand.Name, PublishPlanCommand.Name, DoctorCommand.Name, CheckProvenanceCommand.Name, InstallBrowserCommand.Name, ApiRunCommand.Name, DbRunCommand.Name);
 
     internal static async Task<int> Run(string[] args, IServiceProvider provider)
     {
@@ -65,6 +65,7 @@ internal static class CommandTable
             CheckProvenanceCommand.Name => CheckProvenanceCommand.Run(rest, services, json, cancellationToken),
             InstallBrowserCommand.Name => InstallBrowserCommand.Run(rest, services, json, cancellationToken),
             ApiRunCommand.Name => ApiRunCommand.Run(rest, services, cancellationToken),
+            DbRunCommand.Name => DbRunCommand.Run(rest, services, cancellationToken),
             _ => Task.FromResult(CommandOutput.Usage($"<{_commands}> [arguments] (unknown command '{command}')")),
         };
 

@@ -24,6 +24,9 @@ internal static class EndpointTable
         _ = queries.MapGetItem();
         _ = queries.MapGetItemTimeline();
         _ = queries.MapGetQueue();
+        _ = queries.MapGetNeedsYou();
+        _ = queries.MapListDecisions();
+        _ = queries.MapListRequests();
         _ = queries.MapGetInstance();
         _ = queries.MapGetInstanceEvents();
         _ = queries.MapGetProfile();
@@ -42,6 +45,7 @@ internal static class EndpointTable
         _ = queries.MapListCommands();
         _ = queries.MapListItems();
         _ = queries.MapListInstances();
+        _ = queries.MapListOutbox();
         _ = queries.MapListServices();
         _ = queries.MapListRecipes();
         _ = queries.MapPingProcess();
@@ -59,6 +63,8 @@ internal static class EndpointTable
         _ = commands.MapApproveProfile();
         _ = commands.MapCloseItem();
         _ = commands.MapCreateItem();
+        _ = commands.MapDecide();
+        _ = commands.MapFileRequest();
         _ = commands.MapRebuildViews();
         _ = commands.MapImportContextMap();
         _ = commands.MapPromoteContextMap();

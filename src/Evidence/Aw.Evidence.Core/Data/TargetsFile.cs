@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Aw.Evidence.Core.Data;
@@ -6,9 +5,9 @@ namespace Aw.Evidence.Core.Data;
 /// <summary>The repo's targets config file (.agentic-workflow/evidence.json, or the file --config names).</summary>
 /// <param name="Schema">'evidence.targets/1' or 'evidence.repo/1' when given.</param>
 /// <param name="Cli">Where programs live and which may run.</param>
-/// <param name="Databases">The databases db-run may read; api-run checks only that it is an object.</param>
+/// <param name="Databases">The databases db-run may read; each entry is checked when the file is read.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record TargetsFile(string? Schema = null, CliTargets? Cli = null, JsonElement? Databases = null)
+public sealed record TargetsFile(string? Schema = null, CliTargets? Cli = null, IReadOnlyDictionary<string, DatabaseEntry>? Databases = null)
 {
     /// <summary>The schema names a targets file may state.</summary>
     public static IReadOnlyList<string> SchemaNames { get; } = ["evidence.targets/1", "evidence.repo/1"];

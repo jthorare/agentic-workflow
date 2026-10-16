@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "viewer": {
+    "kind": "exec-template",
+    "name": "kitty",
+    "argv": [
+      "kitty",
+      "--title",
+      "{title}",
+      "--directory",
+      "{cwd}",
+      "--",
+      "{cmd...}"
+    ]
+  },
+  "host": {
+    "kind": "tmux"
+  },
+  "agents": {
+    "aider": {
+      "label": "Aider",
+      "bin": "aider",
+      "open": [
+        "{bin}",
+        "--message",
+        "{seed}"
+      ],
+      "resume": null,
+      "sessionId": "none",
+      "sessionIdPattern": null,
+      "reportedId": null,
+      "processName": "aider",
+      "transcripts": null,
+      "usage": "none",
+      "mcp": "none"
+    },
+    "claude-code": {
+      "override": true,
+      "bin": "/opt/claude/bin/claude"
+    }
+  },
+  "meta": {
+    "lanesAgent": "claude-code",
+    "lanes": {
+      "review": "codex"
+    }
+  }
+}

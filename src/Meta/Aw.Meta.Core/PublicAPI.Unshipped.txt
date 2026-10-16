@@ -864,7 +864,7 @@ Aw.Meta.Core.Worktrees.WorktreeDecision.Kept = 2 -> Aw.Meta.Core.Worktrees.Workt
 Aw.Meta.Core.Worktrees.WorktreeDecision.Removable = 1 -> Aw.Meta.Core.Worktrees.WorktreeDecision
 Aw.Meta.Core.Worktrees.WorktreeInspector
 Aw.Meta.Core.Worktrees.WorktreeInspector.Inspect(Aw.Meta.Core.Config.TeamConfig! team, Aw.Meta.Core.Worktrees.WorktreeScope! scope, bool fetch, string? onlyPath, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Worktrees.WorktreeReport!>!>!>
-Aw.Meta.Core.Worktrees.WorktreeInspector.WorktreeInspector(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IProcessLocations! processes, Aw.Meta.Core.MetaPaths! paths) -> void
+Aw.Meta.Core.Worktrees.WorktreeInspector.WorktreeInspector(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IProcessLocations! processes, Aw.Meta.Core.MetaPaths! paths, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IWorktreeFiles! files) -> void
 Aw.Meta.Core.Worktrees.WorktreeReport
 Aw.Meta.Core.Worktrees.WorktreeReport.<Clone>$() -> Aw.Meta.Core.Worktrees.WorktreeReport!
 Aw.Meta.Core.Worktrees.WorktreeReport.Branch.get -> string?
@@ -1254,3 +1254,6 @@ static readonly Aw.Meta.Core.MetaErrors.MessageNotFound -> Aw.Kernel.ErrorDefini
 static readonly Aw.Meta.Core.MetaErrors.NoTeamConfig -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.QuestionNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.TranscriptUnreadable -> Aw.Kernel.ErrorDefinition!
+Aw.Meta.Core.Ports.IWorktreeFiles
+Aw.Meta.Core.Ports.IWorktreeFiles.NewestChange(string! directory, System.Collections.Generic.IReadOnlyCollection<string!>! skipNames, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset>!>
+const Aw.Meta.Core.KvKeys.WorktreesSweepStart = "worktrees.sweep-start" -> string!

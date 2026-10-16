@@ -17,7 +17,7 @@ namespace Aw.Evidence.Tests.Schemas;
 /// </summary>
 public sealed class EvidenceSchemaTests
 {
-    public static TheoryData<string> Files => ["api-script", "api-summary"];
+    public static TheoryData<string> Files => ["api-script", "api-summary", "db-script", "db-summary"];
 
     internal static JsonObject Committed(string name) =>
         Assert.IsType<JsonObject>(JsonNode.Parse(File.ReadAllText(PathOf(name))));
@@ -26,7 +26,7 @@ public sealed class EvidenceSchemaTests
     [MemberData(nameof(Files))]
     public void The_committed_schema_is_generated_from_the_record(string name)
     {
-        var actual = Render(Generate(name == "api-script" ? typeof(ApiScript) : typeof(ApiSummary), name));
+        var actual = Render(Generate(TypeOf(name), name));
         var path = PathOf(name);
 
         if (string.Equals(Environment.GetEnvironmentVariable(Golden.UpdateVariable), "1", StringComparison.Ordinal)
@@ -40,6 +40,22 @@ public sealed class EvidenceSchemaTests
         Assert.True(File.Exists(path), $"{path} is missing; generate it with {Golden.UpdateVariable}=1.");
         Assert.Equal(File.ReadAllText(path), actual);
     }
+
+    private static Type TypeOf(string name) => name switch
+    {
+        "api-script" => typeof(ApiScript),
+        "api-summary" => typeof(ApiSummary),
+        "db-script" => typeof(DbScript),
+        _ => typeof(DbSummary),
+    };
+
+    private static string Title(string name) => name switch
+    {
+        "api-script" => "ui-evidence api-run script (evidence.api.run/1)",
+        "api-summary" => "ui-evidence api-run summary (evidence.api.summary/1)",
+        "db-script" => "ui-evidence db-run script (evidence.db.run/1)",
+        _ => "ui-evidence db-run summary (evidence.db.summary/1)",
+    };
 
     private static string PathOf(string name) =>
         Path.GetFullPath(Path.Combine(Golden.SourcePath(typeof(EvidenceSchemaTests).Assembly, "Schemas"), "..", "..", "..", "schemas", "evidence", $"{name}.schema.json"));
@@ -55,7 +71,7 @@ public sealed class EvidenceSchemaTests
         {
             ["$schema"] = "https://json-schema.org/draft/2020-12/schema",
             ["$id"] = $"https://github.com/jthorare/agentic-workflow/schemas/evidence/{name}.schema.json",
-            ["title"] = name == "api-script" ? "ui-evidence api-run script (evidence.api.run/1)" : "ui-evidence api-run summary (evidence.api.summary/1)",
+            ["title"] = Title(name),
         };
         foreach (var (key, value) in schema.AsObject().ToList())
         {
@@ -108,6 +124,14 @@ public sealed class EvidenceSchemaTests
             (nameof(ApiSummary), "headline") => Capped(rules, 200),
             (nameof(ApiStep), "output") => Capped(rules, 2000),
             (nameof(ApiFailure), "pointer" or "expected" or "actual") => Capped(rules, 200),
+            (nameof(DbSummary), "schema") => new JsonObject { ["const"] = DbSummary.SchemaName },
+            (nameof(DbSummary), "kind") => new JsonObject { ["const"] = DbSummary.KindName },
+            (nameof(DbSummary), "provenance") => new JsonObject { ["enum"] = new JsonArray(DbSummary.Unseeded, DbSummary.Seeded) },
+            (nameof(DbSummary), "headline") => Capped(rules, 200),
+            (nameof(DbSummary), "engine") => new JsonObject { ["enum"] = new JsonArray("sqlite", "postgres", null) },
+            (nameof(DbStep), "output") => Capped(rules, 2000),
+            (nameof(DbStep), "target") => Capped(rules, 200),
+            (nameof(DbStep), "action") => new JsonObject { ["const"] = "query" },
             _ => node,
         };
     }

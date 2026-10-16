@@ -70,6 +70,46 @@ internal sealed class InMemoryViewRows(Dictionary<string, SortedDictionary<strin
         return Read<TRow>(texts);
     }
 
+    public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class => ValueTask.FromResult(Matching<TRow>(view, column, value));
+
+    /// <summary>The rows of <paramref name="view"/> whose <paramref name="column"/> equals <paramref name="value"/>, ordered by key.</summary>
+    /// <typeparam name="TRow">The row record.</typeparam>
+    /// <param name="view">The view.</param>
+    /// <param name="column">The column.</param>
+    /// <param name="value">The value.</param>
+    /// <returns>The rows.</returns>
+    public Result<IReadOnlyList<TRow>> Matching<TRow>(string view, ViewColumn column, string value)
+        where TRow : class
+    {
+        if (!tables.TryGetValue(view, out var table))
+        {
+            return Unknown(view);
+        }
+
+        if (ViewColumns.JsonPath(view, column) is not { } path)
+        {
+            return SindriErrors.InvalidInput.With($"The '{view}' view doesn't index {column}");
+        }
+
+        return Read<TRow>(table.Values.Where(text => string.Equals(ValueAt(text, path), value, StringComparison.Ordinal)));
+    }
+
+    private static string? ValueAt(string text, IReadOnlyList<string> path)
+    {
+        using var document = JsonDocument.Parse(text);
+        var at = document.RootElement;
+        foreach (var name in path)
+        {
+            if (at.ValueKind != JsonValueKind.Object || !at.TryGetProperty(name, out at))
+            {
+                return null;
+            }
+        }
+
+        return at.ValueKind == JsonValueKind.String ? at.GetString() : null;
+    }
+
     private Result<IReadOnlyList<TRow>> Read<TRow>(IEnumerable<string> texts)
         where TRow : class
     {

@@ -2,8 +2,7 @@
 # this file, with 'user' and the repo path set to yours.
 #
 # The profile schema (S1, docs/csharp/sindri.md "Profile") is closed; each engine phase adds its 'workflow:' keys here
-# once its schema reads them. P4 (S1-D11) reads deskTimeout and eventHold. Still to come:
-#   P6: effects: [effect.claim.ref, effect.notify.desk], dispatchDelay
+# once its schema reads them. P4 (S1-D11) reads deskTimeout and eventHold; P6 effects and dispatchDelay. Still to come:
 #   P7: route: { startable: all }, budget: { tokens: 1M }
 schemaVersion: 1
 user: dev
@@ -15,3 +14,5 @@ services:
 workflow:
   deskTimeout: 1m      # the desk floor is off, so workflow.dev-timeout parks after 1m
   eventHold: 24h       # the default, written out
+  effects: [effect.notify.desk, effect.claim.ref]   # the effect allowlist (RCP-EFFECT-001, the dispatch recheck): desk notices, and the claim workflow.item makes
+  dispatchDelay: 60s   # the undo window before each effect runs (default 10s): long enough to revoke within it (P6 signal 2)

@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Core.Workflow.Validation;
 
 namespace Aw.Sindri.Core.Workflow.Registry;
 
@@ -22,7 +23,8 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 /// <param name="wake">The running instances (a drift approval resumes its parked ones).</param>
 /// <param name="catalog">This build's blocks.</param>
 /// <param name="json">The package's AwJson options (they read the stored text and hash the pins).</param>
-public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals approvals, IRecipeWake wake, BlockCatalog catalog, JsonSerializerOptions json)
+/// <param name="profile">The approved profile's facts (its effect allowlist, which the preview marks each effect against).</param>
+public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals approvals, IRecipeWake wake, BlockCatalog catalog, JsonSerializerOptions json, IRecipeProfileFacts profile)
 {
     /// <summary>The plan for 'approve &lt;id&gt; &lt;version&gt;': the version registered under that id.</summary>
     /// <param name="id">The recipe id.</param>
@@ -120,8 +122,9 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
 
     /// <summary>
     /// The plan for approving <paramref name="recipe"/>. Refused when its hash or its base is revoked (SND-RECIPE-005), it declares no
-    /// evals (SND-RECIPE-008), a child it starts has no approved hash to pin (SND-RECIPE-003), or it is already approved
-    /// with the same pins (SND-CLI-003, nothing to do).
+    /// evals (SND-RECIPE-008) or a child it starts has no approved hash to pin (SND-RECIPE-003). A recipe already approved
+    /// with the same pins plans as <see cref="ApprovalPlan.AlreadyApproved"/>: approving it again records nothing and sends the
+    /// wake again, so an instance a first wake missed can still resume.
     /// </summary>
     /// <param name="recipe">The registered recipe.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -148,9 +151,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
             return latest.Error;
         }
 
-        return latest.Value is { } before && before.Pins == pins.Value
-            ? SindriErrors.InvalidInput.With($"{Name(recipe)} is already approved with these pins; nothing to approve (sindri recipe list shows it)")
-            : await Plan(recipe, standing.Value, pins.Value, latest.Value, cancellationToken).ConfigureAwait(false);
+        return await Plan(recipe, standing.Value, pins.Value, latest.Value, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<ApprovalPlan>> Plan(RegisteredRecipe recipe, (Recipe Parsed, IReadOnlyList<RecipeApproval> Current) standing, RecipePins pins,
@@ -158,12 +159,13 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
     {
         var diff = await Diff(recipe, standing.Current, cancellationToken).ConfigureAwait(false);
         var resumes = latest is null ? Results.Success<IReadOnlyList<WorkflowInstanceId>>([]) : await wake.Running(recipe.Hash, cancellationToken).ConfigureAwait(false);
-        if (diff.IsError || resumes.IsError)
+        var facts = await profile.Current(cancellationToken).ConfigureAwait(false);
+        if (diff.IsError || resumes.IsError || facts.IsError)
         {
-            return diff.IsError ? diff.Error : resumes.Error;
+            return diff.IsError ? diff.Error : resumes.IsError ? resumes.Error : facts.Error;
         }
 
-        var preview = ApprovalPreviews.Approve(standing.Parsed, recipe.Hash, pins, catalog, latest) with { Diff = diff.Value, Resumes = resumes.Value };
+        var preview = ApprovalPreviews.Approve(standing.Parsed, recipe.Hash, pins, catalog, latest) with { Diff = diff.Value, Resumes = resumes.Value, Effects = ApprovalPreviews.Effects(standing.Parsed, facts.Value.EffectAllowlist) };
         // The pins are bound on every approval, not only a drift one: a child approved while the human reads the preview
         // would otherwise be pinned without being seen.
         var subject = ChallengeSubject.ForRecipe(recipe.Hash, recipe.Version, PinRules.Digest(pins, json));

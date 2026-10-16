@@ -10,7 +10,7 @@
 # temporal): doctor with nothing running, start headless with an unapproved profile, a second serve refused by the lease,
 # the approve preview and its non-terminal refusal, a session's typed approve refused (SND-AUTH-002), the human's typed
 # approval, status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client,
-# the views rebuild refused to a session and requested by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add refused, the human's item close, the done list and the queue again), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), a session's stop refused, the human's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
+# the views rebuild refused to a session and requested by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add refused, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide refused, the human's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), a session's stop refused, the human's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
 # context:mcp-scope row never reads the real provider files);
 # then recipe validate on the shipped recipes (their hashes; workflow.item reads its child beside it) and on an invalid
 # fixture (RCP-REACH-001, exit 1). The normalized output (pids, ports, hashes, times, the host name and the temp path
@@ -178,6 +178,15 @@ session_tty() { # an agent session at a terminal (the CLI's own terminal check p
   items_in done 1
   run items --state done
   run queue
+  session request note "Smoke request"
+  settle
+  run needs-you
+  decision="$(bounded "$bin" needs-you --json </dev/null | jq -r '.rows[0].subject.id')"
+  session decide "$decision" accept
+  human decide "$decision" accept </dev/null
+  settle
+  run needs-you
+  run requests --state accepted
   echo "## sindri ledger --json --after 0 | jq (human: command.handled is listed)"
   with_tty "${alarm[@]}" "$bin" ledger --json --after 0 </dev/null | jq -c '[.events[].type] | any(. == "command.handled")'
   echo "## sindri ledger --json --after 0 | jq (session: public types only)"

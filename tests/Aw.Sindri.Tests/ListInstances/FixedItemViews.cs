@@ -33,6 +33,10 @@ internal sealed class FixedItemViews(bool failing = false, params ItemRow[] item
         where TRow : class =>
         throw new NotSupportedException("the list service reads items by key");
 
+    public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class =>
+        throw new NotSupportedException("the list service reads items by key");
+
     public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<ProjectorState?>>((ProjectorState?)null);
 }

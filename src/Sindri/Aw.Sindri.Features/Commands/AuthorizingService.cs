@@ -25,7 +25,13 @@ internal sealed class AuthorizingService<TRequest, TResponse>(IService<TRequest,
     {
         var row = ActionClassifier.Classify(catalog, request);
         return Authorization.Decide(row.Class, callers.Current, row).Refusal is { } refusal
-            ? ValueTask.FromResult<Result<TResponse>>(refusal)
+            ? ValueTask.FromResult<Result<TResponse>>(Named(request, row, refusal))
             : Inner.Handle(request, cancellationToken);
     }
+
+    /// <summary>A row shared by several commands (the challenge row: approve and revoke) refuses with the one command the request asked for.</summary>
+    private static Error Named(TRequest request, CommandRow row, Error refusal) =>
+        request is IRefusalCli { RefusalCli: { } cli }
+            ? refusal with { Message = refusal.Message.Replace(row.Cli.Text, cli, StringComparison.Ordinal) }
+            : refusal;
 }

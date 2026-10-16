@@ -74,6 +74,7 @@ internal sealed partial class RecipeWorkflow
                 : await Wait(instance, context).ConfigureAwait(true);
         }
 
+        await Settle().ConfigureAwait(true);   // every effect it emitted is dispatched, refused or aborted (§5.7)
         await SettleLeftovers(instance, context).ConfigureAwait(true);
         return new RecipeResult(instance.State, instance.Outcome?.Value);
     }
@@ -94,6 +95,7 @@ internal sealed partial class RecipeWorkflow
         _recipe = new InterpretedRecipe(loaded.Version, loaded.Recipe, catalog, start.Inputs);
         _deskTimeout = loaded.DeskTimeout;
         _eventHold = loaded.EventHold;
+        _dispatchDelay = loaded.DispatchDelay;
         var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, new HashSet<BlockId>(), NoChildRecipes.Instance) { DeskTimeout = loaded.DeskTimeout };
         _context = new Interpreting(loaded.Recipe, decisions);
         _repo = start.Inputs.TryGetValue(_itemFact, out var item) ? await RepoOf(item.Value).ConfigureAwait(true) : null;
@@ -101,6 +103,7 @@ internal sealed partial class RecipeWorkflow
         var change = Started(TransitionDecision.Start(StartOf(start, loaded), loaded.Recipe, decisions));
         var instance = Enter(change.After, Desk);
         await Mirror(new WorkflowEventRecord(start.WorkflowId().Value, EventTypes.WorkflowStarted, start.Item.Value, string.Empty, instance.State, "start", Outcome: null, Run: null, Detail: WorkflowEventDetail.Of(change.Event, trigger: null), Causation: start.OpenLaunch), NeedsYou(instance)).ConfigureAwait(true);
+        Emit(before: null, instance, []);
         return (instance, _context);
     }
 
@@ -113,6 +116,21 @@ internal sealed partial class RecipeWorkflow
         return (_instance, _recipe) is ({ } instance, { } recipe)
             ? InstanceViews.Of(instance, recipe, _since, _timers.FiresAt(), new InstanceViewContext(_mirrored, _provenance, Subject: _subject)) with { Id = instance.Id }
             : InstanceViews.Starting(start.WorkflowId(), start.Recipe, _since, start.Item, _subject);
+    }
+
+    /// <summary>
+    /// A registry change the recipe's approval saw (spec §4.1, W11; engine P6 integration): a revoke parks the instance
+    /// at once, a drift parks it, and a drift approval resumes a drift park and re-sends the effect it carries. The loop
+    /// decides it at the instance's current wait like any trigger; a repeat is absorbed.
+    /// </summary>
+    /// <param name="wake">The wake, acting as 'service:engine'.</param>
+    /// <returns>Done once queued.</returns>
+    [WorkflowSignal("wake")]
+    public Task WakeAsync(RecipeWake wake)
+    {
+        ArgumentNullException.ThrowIfNull(wake);
+        _submitted.Enqueue(new Submission(Ticket: 0, wake));
+        return Task.CompletedTask;
     }
 
     /// <summary>

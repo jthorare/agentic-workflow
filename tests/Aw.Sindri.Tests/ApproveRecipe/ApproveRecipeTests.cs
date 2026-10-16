@@ -59,17 +59,79 @@ public sealed class ApproveRecipeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Approving_the_same_pins_again_is_refused_as_nothing_to_do()
+    public async Task Approving_the_same_pins_again_records_nothing_and_wakes_the_running_instances_again()
+    {
+        await using var r = new RegistryHarness();
+        _ = await r.H.HoldLease();
+        var step = await r.Shipped("sindri/workflow.step.yaml");
+        var first = (await r.Approve(step)).Value;
+        var parked = WorkflowInstanceId.For(new Guid(7, 0, 0, new byte[8]));
+        r.Wake.Run(step.Hash, parked);
+
+        var again = await r.Approve(step);   // why: a drift park whose Approved wake was missed has no other way out
+
+        Assert.True(again.IsSuccess, again.IsError ? again.Error.ToString() : null);
+        Assert.True(again.Value.AlreadyApproved);
+        Assert.False(first.AlreadyApproved);
+        Assert.Equal([parked], again.Value.Resumed);
+        Assert.Equal(first.Approval, again.Value.Approval);
+        _ = Assert.Single(r.Events(EventTypes.RecipeApproved));
+        var sent = Assert.Single(r.Wake.Sent);   // why: the first approval had nothing to resume, so it sent none
+        Assert.Equal((RecipeWakeKind.Approved, first.Accepted.Sequence), (sent.Kind, sent.Sequence));
+        _ = Assert.Single((await r.Approvals.History(step.Id, 1, step.Hash, Token)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Approving_the_same_pins_again_after_another_recipe_was_approved_wakes_under_this_hashs_own_approval()
+    {
+        await using var r = new RegistryHarness();
+        _ = await r.H.HoldLease();
+        var step = await r.Shipped("sindri/workflow.step.yaml");
+        var item = await r.Shipped("sindri/workflow.item.yaml");
+        var first = (await r.Approve(step)).Value;
+        var other = (await r.Approve(item)).Value;
+        r.Wake.Run(step.Hash, WorkflowInstanceId.For(new Guid(8, 0, 0, new byte[8])));
+        Assert.NotEqual(first.Accepted.Sequence, other.Accepted.Sequence);
+
+        var again = await r.Approve(step);
+
+        Assert.True(again.IsSuccess, again.IsError ? again.Error.ToString() : null);
+        Assert.Equal(first.Accepted.Sequence, again.Value.Accepted.Sequence);   // why: the other recipe's approval is later, and is not this hash's
+        Assert.Equal(first.Accepted.Sequence, Assert.Single(r.Wake.Sent).Sequence);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Approving_the_same_pins_again_with_a_wake_that_fails_is_refused_and_records_nothing()
     {
         await using var r = new RegistryHarness();
         _ = await r.H.HoldLease();
         var step = await r.Shipped("sindri/workflow.step.yaml");
         _ = await r.Approve(step);
+        r.Wake.Fail = SindriErrors.NotRunning.With("Temporal didn't take the wake");
 
-        var again = await r.Issue("approve workflow.step 1");
+        var again = await r.Approve(step);
 
-        Assert.Equal(SindriErrors.InvalidInput.Code, again.Error.Code);
-        Assert.Contains("already approved with these pins", again.Error.Message, StringComparison.Ordinal);
+        Assert.True(again.IsError);
+        Assert.Equal(SindriErrors.NotRunning.Code, again.Error.Code);
+        _ = Assert.Single(r.Events(EventTypes.RecipeApproved));
+        _ = Assert.Single((await r.Approvals.History(step.Id, 1, step.Hash, Token)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Approving_the_same_pins_again_still_asks_the_human_to_type_the_challenge()
+    {
+        await using var r = new RegistryHarness();
+        _ = await r.H.HoldLease();
+        var step = await r.Shipped("sindri/workflow.step.yaml");
+        _ = await r.Approve(step);
+        var issued = (await r.Issue("approve workflow.step 1")).Value;
+
+        var wrong = await r.Run<ApproveRecipeRequest, ApproveRecipeResponse>(
+            new ApproveRecipeRequest(step.Id, step.Hash, new ChallengeAnswer(issued.Challenge, "approve nothing")), RegistryHarness.Human);
+
+        Assert.True(wrong.IsError);
+        Assert.Equal(WorkflowErrors.RecipeChallengeStale.Code, wrong.Error.Code);
+        Assert.Empty(r.Wake.Sent);
     }
 
     [Fact, Trait("Lane", "unit")]

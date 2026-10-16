@@ -1,0 +1,19 @@
+{
+  "note": "an override of open changes the hash",
+  "builtin": "claude-code",
+  "override": {
+    "override": true,
+    "open": [
+      "{bin}",
+      "--session-id",
+      "{sessionId}",
+      "-n",
+      "{name}",
+      "--model",
+      "opus",
+      "{seed}"
+    ]
+  },
+  "canonical": "{\"bin\":\"claude\",\"mcp\":\"claude-config-file\",\"open\":[\"{bin}\",\"--session-id\",\"{sessionId}\",\"-n\",\"{name}\",\"--model\",\"opus\",\"{seed}\"],\"resume\":[\"{bin}\",\"--resume\",\"{sessionId}\"],\"sessionId\":\"pre-chosen-uuid\"}",
+  "argvHash": "sha256:e5f92b69370f63b89ab902ea23c16dd65d119544e046afde6e62a24b9ace3281"
+}

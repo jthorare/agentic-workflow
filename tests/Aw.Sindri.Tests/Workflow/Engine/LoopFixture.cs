@@ -74,7 +74,7 @@ internal static class LoopFixture
         {
             Suspension = new Suspension(
                 SuspensionKind.Park, reason, kind, Escalation: null, "parked by the test", "service:desk", Mirrors: null,
-                new ResumeAction(resume, withheld, Gate: null, Effect: null)),
+                new ResumeAction(resume, withheld, Gate: null, Effects: [])),
         };
 
     /// <summary>A loop park on the transition back into 'produce' (kind loop): the instance was in 'checks', and 'checks -> produce' is withheld.</summary>

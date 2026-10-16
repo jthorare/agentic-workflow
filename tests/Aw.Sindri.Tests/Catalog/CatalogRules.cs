@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Catalog;
 internal static class CatalogRules
 {
     /// <summary>The phases already shipped: a 'pending:&lt;phase&gt;' row names none of them. Each phase appends itself when it ships.</summary>
-    public static readonly IReadOnlyList<string> ShippedPhases = ["S1", "P0", "P1", "P2", "P3"];
+    public static readonly IReadOnlyList<string> ShippedPhases = ["S1", "P0", "P1", "P2", "P3", "P4"];
 
     /// <summary>UI spec §8's fixed keys: a row's shortcut never uses one.</summary>
     public static readonly IReadOnlySet<string> ReservedKeys = new HashSet<string>(["G", "J", "K", "O", "A", "T", "B", "Y", "C", "R", "/", "?"], StringComparer.Ordinal);

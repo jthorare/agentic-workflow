@@ -1,6 +1,19 @@
 {
   "types": [
     {
+      "type": "decision.recorded",
+      "keyShape": "decision.recorded:<decisionId>",
+      "invalidates": [
+        "needs-you",
+        "requests",
+        "decisions",
+        "queue",
+        "items",
+        "item",
+        "timeline"
+      ]
+    },
+    {
       "type": "item.created",
       "keyShape": "item.created:<itemId>",
       "invalidates": [
@@ -26,7 +39,10 @@
         "queue",
         "items",
         "item",
-        "timeline"
+        "timeline",
+        "needs-you",
+        "requests",
+        "decisions"
       ]
     },
     {
@@ -49,7 +65,8 @@
       "invalidates": [
         "status",
         "profile",
-        "services"
+        "services",
+        "needs-you"
       ]
     },
     {
@@ -57,7 +74,21 @@
       "keyShape": "profile.checked:<previousCheckSequence>",
       "invalidates": [
         "status",
-        "profile"
+        "profile",
+        "needs-you"
+      ]
+    },
+    {
+      "type": "request.filed",
+      "keyShape": "request.filed:<requestId>",
+      "invalidates": [
+        "needs-you",
+        "requests",
+        "decisions",
+        "queue",
+        "items",
+        "item",
+        "timeline"
       ]
     },
     {
@@ -72,7 +103,8 @@
       "keyShape": "service.ran:<name>:<epoch>:<slot>",
       "invalidates": [
         "status",
-        "services"
+        "services",
+        "needs-you"
       ]
     }
   ]

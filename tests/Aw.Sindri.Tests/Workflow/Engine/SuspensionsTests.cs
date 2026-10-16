@@ -121,15 +121,17 @@ public sealed class SuspensionsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_park_while_a_pending_park_waits_leaves_the_first_one_standing()
+    public void A_park_while_a_pending_park_waits_queues_behind_it_and_the_first_stays_first()
     {
         var drift = Park(ParkReason.SpecConflict, ParkKind.Drift, ResumeKind.Rearm);
         var pending = Suspensions.Suspend(Suspended(Park(ParkReason.Timeout, kind: null, ResumeKind.Rearm)), drift);
 
-        var again = Suspensions.Suspend(pending, Park(ParkReason.Budget, ParkKind.Step, ResumeKind.Rerun));
+        var budget = Park(ParkReason.Budget, ParkKind.Step, ResumeKind.Rerun);
+        var again = Suspensions.Suspend(pending, budget);
 
-        // §5.8: a pending park already there stands and takes effect first; the slot holds one, so the later park changes nothing.
-        Assert.Same(pending, again);
+        // §3.8, §5.8: the pending park takes effect first; a later park queues behind it and is not dropped.
+        Assert.Equal([drift, budget], Suspensions.PendingParks(again));
+        Assert.Same(again, Suspensions.Suspend(again, budget));
     }
 
     [Fact, Trait("Lane", "unit")]

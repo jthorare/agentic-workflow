@@ -28,7 +28,7 @@ internal static class ApprovalPreviews
         ArgumentNullException.ThrowIfNull(pins);
         ArgumentNullException.ThrowIfNull(catalog);
         var changed = latest is null ? [] : Changed(latest.Pins, pins);
-        return new ApprovalPreview(recipe.Id, recipe.Version, hash, recipe.Base, Diff: null, CapabilityUses(recipe, catalog), Effects(recipe), pins,
+        return new ApprovalPreview(recipe.Id, recipe.Version, hash, recipe.Base, Diff: null, CapabilityUses(recipe, catalog), Effects(recipe, allowlist: null), pins,
             changed, Resumes: [], Evals(recipe));
     }
 
@@ -89,10 +89,14 @@ internal static class ApprovalPreviews
         return found;
     }
 
-    private static IReadOnlyList<PreviewEffect> Effects(Recipe recipe) =>
+    /// <summary>The effect kinds the recipe emits, each marked against the approved profile's effect allowlist.</summary>
+    /// <param name="recipe">The recipe.</param>
+    /// <param name="allowlist">The approved profile's 'workflow.effects'; null when it sets none (then none is on it).</param>
+    /// <returns>The kinds, ordered by id.</returns>
+    public static IReadOnlyList<PreviewEffect> Effects(Recipe recipe, IReadOnlySet<BlockId>? allowlist) =>
         [.. recipe.Transitions.SelectMany(static t => t.Effects).Select(static e => e.Use).Distinct()
             .OrderBy(static id => id.Value, StringComparer.Ordinal)
-            .Select(static id => new PreviewEffect(id, Allowlisted: false))];   // no 'workflow.effects' allowlist until P6 (S1-D11)
+            .Select(id => new PreviewEffect(id, Allowlisted: allowlist?.Contains(id) ?? false))];   // why: no allowlist set means none is on it (RCP-EFFECT-001 only warns)
 
     private static IReadOnlyList<PreviewBlockChange> Changed(RecipePins approved, RecipePins build) =>
         [.. build.Blocks.SelectMany(b => approved.Blocks.Where(a => a.Block == b.Block && a.Hash != b.Hash)

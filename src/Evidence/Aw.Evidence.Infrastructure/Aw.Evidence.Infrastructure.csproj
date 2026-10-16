@@ -16,11 +16,13 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Aw.Evidence.Core/Aw.Evidence.Core.csproj" />
     <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+    <ProjectReference Include="../../Aw.Kernel.Data/Aw.Kernel.Data.csproj" />
     <ProjectReference Include="../../Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </ItemGroup>
 

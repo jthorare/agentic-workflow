@@ -62,7 +62,7 @@ public sealed class WorkflowSettingsTests
     public async Task The_worker_reads_the_times_from_the_live_profile_and_defaults_when_it_doesnt_load()
     {
         var profiles = new InMemoryProfiles();
-        var times = new ProfileWorkflowTimes(profiles);
+        var times = new ProfileWorkflowTimes(profiles, profiles);
         var ct = TestContext.Current.CancellationToken;
 
         var missing = await times.Read(ct);

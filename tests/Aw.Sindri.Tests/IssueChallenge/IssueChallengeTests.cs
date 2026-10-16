@@ -60,6 +60,22 @@ public sealed class IssueChallengeTests
         Assert.Equal("IssueChallenge is a human decision. Ask the human to run it in a terminal: sindri recipe approve <recipe>", refused.Error.Message);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("revoke workflow.step@9ab2d40c1e77", "sindri recipe revoke <recipe>", "sindri recipe approve")]
+    [InlineData("approve workflow.step 1", "sindri recipe approve <recipe>", "sindri recipe revoke")]
+    public async Task A_session_is_refused_with_the_one_command_for_its_action(string action, string named, string other)
+    {
+        await using var r = new RegistryHarness();
+        _ = await r.H.HoldLease();
+        _ = await r.Shipped("sindri/workflow.step.yaml");
+
+        var refused = await r.Issue(action, A.Caller().Session().Build());
+
+        Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
+        Assert.EndsWith(named, refused.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(other, refused.Error.Message, StringComparison.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Profile_approval_gets_a_challenge_bound_to_the_live_hash()
     {

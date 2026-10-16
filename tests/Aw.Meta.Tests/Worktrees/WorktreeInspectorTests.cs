@@ -137,4 +137,81 @@ public sealed class WorktreeInspectorTests
         Assert.Equal(WorktreeDecision.Kept, unreadable.Decision);
         Assert.Contains(unreadable.Reasons, r => r.Contains("could not inspect", StringComparison.Ordinal));
     }
+
+    private const string Lane = "/work/.claude/worktrees/lane";
+
+    // The shared checkout plus one branch worktree "feat" of pull request 7 (merged), clean and idle.
+    private void ScriptBranch()
+    {
+        _ = _world.Runner
+            .When("git fetch", string.Empty)
+            .When("rev-parse --verify --quiet origin/main", "mainsha\n")
+            .When("worktree list --porcelain", "worktree /work\nHEAD aaaaaaa\nbranch refs/heads/main\n\nworktree " + Lane + "\nHEAD bbbbbbb\nbranch refs/heads/feat\n")
+            .When("gh pr list", "[{\"number\":7,\"state\":\"MERGED\",\"headRefName\":\"feat\",\"headRefOid\":\"bbbbbbb\"}]")
+            .When("--not origin/main", "0\n")
+            .When("--not --remotes", "0\n")
+            .When("status --porcelain", string.Empty)
+            .When("rev-parse --show-toplevel", _ => new CommandResult(0, Lane + "\n", string.Empty, TimedOut: false));
+    }
+
+    private async Task<WorktreeReport> LaneReport()
+    {
+        var result = await _world.Inspector.Inspect(Team(), WorktreeScope.All, fetch: true, onlyPath: null, CancellationToken.None);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        return Assert.Single(result.Value, w => w.Path == Lane);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_changed_after_the_last_sweep_started_is_kept()
+    {
+        ScriptBranch();
+        _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, A.At(10).ToString("O", CultureInfo.InvariantCulture), CancellationToken.None);
+        _world.WorktreeFiles.Touch(Lane, A.At(11));
+
+        var report = await LaneReport();
+
+        Assert.Equal(WorktreeDecision.Kept, report.Decision);
+        Assert.Contains(report.Reasons, r => r.Contains("changed since the last sweep", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_untouched_since_the_last_sweep_started_is_removable()
+    {
+        ScriptBranch();
+        _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, A.At(10).ToString("O", CultureInfo.InvariantCulture), CancellationToken.None);
+        _world.WorktreeFiles.Touch(Lane, A.At(9));
+
+        Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_a_recorded_sweep_the_change_trigger_has_nothing_to_compare_with()
+    {
+        ScriptBranch();
+
+        Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gate_tree_changed_after_the_last_sweep_is_still_removable()
+    {
+        Script();
+        _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, A.At(10).ToString("O", CultureInfo.InvariantCulture), CancellationToken.None);
+        _world.WorktreeFiles.Touch(Gate, A.At(11));
+
+        Assert.Equal(WorktreeDecision.Removable, (await GateTreeReport()).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_whose_files_cannot_be_read_is_kept_unjudged()
+    {
+        ScriptBranch();
+        _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, A.At(10).ToString("O", CultureInfo.InvariantCulture), CancellationToken.None);
+        _world.WorktreeFiles.Failure = MetaErrors.HostUnreadable.With("denied");
+
+        var report = await LaneReport();
+
+        Assert.Equal(WorktreeDecision.Kept, report.Decision);
+        Assert.Contains(report.Reasons, r => r.Contains("could not inspect", StringComparison.Ordinal));
+    }
 }

@@ -59,7 +59,7 @@ public static partial class TransitionDecision
     /// </summary>
     private static WorkflowInstance Unmirrored(WorkflowInstance instance, Trigger trigger) =>
         trigger is WaitSatisfied { Source: ChildWaitSource child } && instance.Suspension?.Mirrors == child.Child
-            ? instance with { Suspension = null, PendingPark = null }
+            ? instance with { Suspension = null, PendingPark = null, LaterParks = null }
             : instance;
 
     /// <summary>Step reports from an active state, a satisfied wait of the kind the wait names, a command a transition from here takes.</summary>

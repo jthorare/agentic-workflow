@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-workflow.local/schemas/launcher.schema.json",
+  "title": "launcher.json",
+  "description": "The machine-wide Sindri session launcher file at $AW_STATE_DIR/launcher.json (spec 2026-10-15-sindri-session-launcher-design.md section 4). One contract for the C# reader (AwJson) and the bash reader (aw-meta-launch). Unknown keys are errors. The x-aw-keys block is read by the bash reader for its key lists and placeholder set; it is an unknown keyword to JSON Schema 2020-12, so validate with Ajv2020 and strict: false.",
+  "x-aw-keys": {
+    "root": [
+      "schema",
+      "viewer",
+      "host",
+      "agents",
+      "meta"
+    ],
+    "viewer": [
+      "kind",
+      "name",
+      "argv"
+    ],
+    "viewerKinds": [
+      "warp",
+      "exec-template",
+      "print"
+    ],
+    "host": [
+      "kind"
+    ],
+    "hostKinds": [
+      "tmux",
+      "none"
+    ],
+    "agent": [
+      "override",
+      "label",
+      "bin",
+      "open",
+      "resume",
+      "sessionId",
+      "sessionIdPattern",
+      "reportedId",
+      "processName",
+      "transcripts",
+      "usage",
+      "mcp"
+    ],
+    "sessionIdModes": [
+      "pre-chosen-uuid",
+      "reported",
+      "none"
+    ],
+    "reportedId": [
+      "hook",
+      "newestFile",
+      "capture"
+    ],
+    "usageReaders": [
+      "claude-code",
+      "codex",
+      "cursor",
+      "none"
+    ],
+    "mcpForms": [
+      "claude-config-file",
+      "codex-overrides",
+      "none"
+    ],
+    "meta": [
+      "lanesAgent",
+      "lanes"
+    ],
+    "builtinAgents": [
+      "claude-code",
+      "codex",
+      "cursor"
+    ],
+    "agentIdPattern": "^[a-z][a-z0-9-]{1,31}$",
+    "placeholders": [
+      "{bin}",
+      "{cwd}",
+      "{title}",
+      "{name}",
+      "{seed}",
+      "{sessionId}",
+      "{mcpConfig}",
+      "{cmd...}"
+    ],
+    "splicePlaceholder": "{cmd...}"
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1,
+      "description": "The file format version."
+    },
+    "viewer": {
+      "$ref": "#/$defs/viewer"
+    },
+    "host": {
+      "$ref": "#/$defs/host"
+    },
+    "agents": {
+      "description": "Entries merged over the built-in claude-code, codex and cursor entries. A built-in id needs \"override\": true; any other id adds an entry, which carries no \"override\": true and names label, bin, open and sessionId.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/agentId"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/agent",
+        "properties": {
+          "override": {
+            "const": false
+          }
+        }
+      },
+      "properties": {
+        "claude-code": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/builtinOverride"
+            },
+            {
+              "if": {
+                "properties": {
+                  "sessionId": {
+                    "const": "reported"
+                  }
+                },
+                "required": [
+                  "sessionId"
+                ]
+              },
+              "then": {
+                "required": [
+                  "reportedId"
+                ],
+                "properties": {
+                  "reportedId": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          ],
+          "description": "The built-in has no reportedId, so an override that sets sessionId: reported must bring one."
+        },
+        "codex": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/builtinOverride"
+            },
+            {
+              "if": {
+                "properties": {
+                  "reportedId": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "reportedId"
+                ]
+              },
+              "then": {
+                "required": [
+                  "sessionId"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "enum": [
+                      "pre-chosen-uuid",
+                      "none"
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "description": "The built-in is sessionId: reported with a reportedId, so an override that nulls reportedId must move sessionId off reported."
+        },
+        "cursor": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/builtinOverride"
+            },
+            {
+              "if": {
+                "properties": {
+                  "reportedId": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "reportedId"
+                ]
+              },
+              "then": {
+                "required": [
+                  "sessionId"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "enum": [
+                      "pre-chosen-uuid",
+                      "none"
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "description": "The built-in is sessionId: reported with a reportedId, so an override that nulls reportedId must move sessionId off reported."
+        }
+      }
+    },
+    "meta": {
+      "$ref": "#/$defs/meta"
+    }
+  },
+  "$defs": {
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}$"
+    },
+    "argvElement": {
+      "description": "One argument template. Placeholders are a closed set; {cmd...} is spliced as separate arguments, so it is the whole element; every other placeholder may sit inside an argument.",
+      "type": "string",
+      "anyOf": [
+        {
+          "const": "{cmd...}"
+        },
+        {
+          "pattern": "^(?:[^{}]|\\{(?:bin|cwd|title|name|seed|sessionId|mcpConfig)\\})*$"
+        }
+      ]
+    },
+    "viewer": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "warp",
+            "exec-template",
+            "print"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "warp"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "print"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "exec-template"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The label the UI shows (\"Sent to kitty\")."
+            },
+            "argv": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/argvElement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "argv"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "tmux",
+            "none"
+          ]
+        }
+      }
+    },
+    "reportedId": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hook": {
+          "type": "boolean"
+        },
+        "newestFile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "capture": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "agent": {
+      "description": "An added entry (full) or an override of a built-in one (\"override\": true, only the fields it names).",
+      "type": "object",
+      "properties": {
+        "override": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "open": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/argvElement"
+          }
+        },
+        "resume": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/argvElement"
+          },
+          "description": "Absent means null (no resume argv; the argvHash default)."
+        },
+        "sessionId": {
+          "enum": [
+            "pre-chosen-uuid",
+            "reported",
+            "none"
+          ]
+        },
+        "sessionIdPattern": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "reportedId": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/reportedId"
+            }
+          ]
+        },
+        "processName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "transcripts": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "usage": {
+          "enum": [
+            "claude-code",
+            "codex",
+            "cursor",
+            "none"
+          ]
+        },
+        "mcp": {
+          "enum": [
+            "claude-config-file",
+            "codex-overrides",
+            "none"
+          ],
+          "description": "Absent means \"none\" (the argvHash default)."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "override": {
+            "const": true
+          }
+        },
+        "required": [
+          "override"
+        ]
+      },
+      "then": {},
+      "else": {
+        "required": [
+          "label",
+          "bin",
+          "open",
+          "sessionId"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "sessionId": {
+                  "enum": [
+                    "pre-chosen-uuid",
+                    "reported"
+                  ]
+                }
+              },
+              "required": [
+                "sessionId"
+              ]
+            },
+            "then": {
+              "required": [
+                "sessionIdPattern"
+              ],
+              "properties": {
+                "sessionIdPattern": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "sessionId": {
+                  "const": "reported"
+                }
+              },
+              "required": [
+                "sessionId"
+              ]
+            },
+            "then": {
+              "required": [
+                "reportedId"
+              ],
+              "properties": {
+                "reportedId": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "builtinOverride": {
+      "description": "A built-in id is replaced only with \"override\": true (SND-LAUNCH-011 otherwise). Every built-in has a sessionIdPattern, so an override may set it to null only together with \"sessionId\": \"none\" (section 4: the pattern is required unless sessionId is none).",
+      "$ref": "#/$defs/agent",
+      "required": [
+        "override"
+      ],
+      "properties": {
+        "override": {
+          "const": true
+        }
+      },
+      "if": {
+        "properties": {
+          "sessionIdPattern": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "sessionIdPattern"
+        ]
+      },
+      "then": {
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "const": "none"
+          }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lanesAgent": {
+          "$ref": "#/$defs/agentId"
+        },
+        "lanes": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/agentId"
+          }
+        }
+      }
+    }
+  }
+}

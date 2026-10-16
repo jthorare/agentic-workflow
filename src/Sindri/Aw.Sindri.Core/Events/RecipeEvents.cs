@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Events;
@@ -59,6 +60,47 @@ public sealed class RecipeEvents(ILedgerStore ledger, EventFactory events, HeldL
         var after = latest.Value?.Sequence ?? 0;
         return await Append(EventTypes.RecipeApproved, payload,
             string.Create(CultureInfo.InvariantCulture, $"{EventTypes.RecipeApproved}:{approval.Hash.Value}:after:{after}"), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The ledger sequence of <paramref name="hash"/>'s own standing approval event (the latest 'recipe.approved' whose key starts
+    /// 'recipe.approved:&lt;hash&gt;:'), not another recipe's later one: the key of the wake an approval that records nothing sends again.
+    /// Approval events chain through their ':after:&lt;seq&gt;' keys, so the walk is one read per approval, newest first.
+    /// </summary>
+    /// <param name="hash">The recipe hash.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The sequence (0 when this hash has no approval event), or the read's error.</returns>
+    public async ValueTask<Result<long>> LatestApproval(RecipeHash hash, CancellationToken cancellationToken)
+    {
+        var own = $"{EventTypes.RecipeApproved}:{hash.Value}:after:";
+        var current = await ledger.Latest(EventTypes.RecipeApproved, cancellationToken).ConfigureAwait(false);
+        while (current.IsSuccess && current.Value is { } at && !at.IdempotencyKey.StartsWith(own, StringComparison.Ordinal))
+        {
+            current = await Previous(at, cancellationToken).ConfigureAwait(false);
+        }
+
+        return current.IsError ? current.Error : current.Value?.Sequence ?? 0L;
+    }
+
+    /// <summary>The approval event <paramref name="at"/> follows (named by its ':after:&lt;seq&gt;' key), or null for the first.</summary>
+    private async ValueTask<Result<LedgerEvent?>> Previous(LedgerEvent at, CancellationToken cancellationToken)
+    {
+        const string After = ":after:";
+        var cut = at.IdempotencyKey.LastIndexOf(After, StringComparison.Ordinal);
+        if (cut < 0 || !long.TryParse(at.IdempotencyKey.AsSpan(cut + After.Length), NumberStyles.None, CultureInfo.InvariantCulture, out var before) || before <= 0)
+        {
+            return Results.Success<LedgerEvent?>(value: null);
+        }
+
+        var read = await ledger.ReadAfter(before - 1, 1, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error;
+        }
+
+        return read.Value is [{ } only] && only.Sequence == before
+            ? Results.Success<LedgerEvent?>(only)
+            : Results.Success<LedgerEvent?>(value: null);
     }
 
     /// <summary>Appends 'recipe.revoked' for <paramref name="revocation"/>, with the base it cascaded from; revoking the same hash again records nothing.</summary>

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "viewer": {
+    "kind": "exec-template",
+    "name": "kitty",
+    "argv": [
+      "kitty",
+      "--title",
+      "{titel}",
+      "--",
+      "{cmd...}"
+    ]
+  }
+}

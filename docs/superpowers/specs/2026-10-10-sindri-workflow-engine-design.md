@@ -546,7 +546,7 @@ stays a public counter in `status` and in the CLI.
 Registered events (`EventDescriptor`, §2) reach instances as Temporal **Signals**.
 - **The bridge service** (`workflow.events`, a built-in service with its own loop, S1-D8 and S1-D10) reads
   `ledger.db` from its cursor, accepts an event only when the envelope's actor is the descriptor's `producer`,
-  resolves the target workflow id through `causation` (via the `workflow_commands` map an effect activity writes) or
+  resolves the target workflow id through `causation` (through the causing event's own payload, which names its instance; no separate `workflow_commands` map is kept) or
   through `item` and attempt, and signals it. Deliveries of engine-origin effects signal nothing, so the engine's own
   notification can never satisfy a recipe's wait. A `route: causation` event signals only the frame entry its command
   was written for; the interpreter drops it if that entry has ended.
@@ -957,6 +957,7 @@ Outside S1:
 | SND-WF-012 | conflict | An earlier attempt of this item is still live | Finish or cancel it first |
 | SND-WF-013 | conflict | A workflow challenge expired, or its subject changed | Run it again and re-read the preview |
 | SND-WF-014 | invalid | `--item` and `fact:item`'s `id` differ | Use the same id in both |
+| SND-WF-015 | unavailable | An effect couldn't be sent (an undeclared reply outcome, or every retry failed) | Fix the block or its service, then resume the dispatch park |
 
 ## 9. Validator and eval format
 

@@ -21,7 +21,7 @@ public sealed class WorktreeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_merged_clean_idle_worktree_is_removed()
+    public void A_merged_clean_idle_worktree_with_an_ended_pull_request_is_removed()
     {
         var verdict = Judge(Merged());
 
@@ -77,12 +77,41 @@ public sealed class WorktreeRulesTests
     public void Unpushed_commits_keep_a_worktree_whatever_else_holds() => AssertKept(Judge(Merged() with { UnpushedCommits = 2 }), "2 commit");
 
     [Fact, Trait("Lane", "unit")]
-    public void A_detached_worktree_counts_only_when_its_head_is_merged()
+    public void A_detached_worktree_that_is_not_a_gate_tree_is_always_kept()
     {
         var detached = new WorktreeFacts { Path = "/wt/detached" };
 
-        Assert.Equal(WorktreeDecision.Removable, Judge(detached).Decision);
-        AssertKept(Judge(detached with { HeadMerged = false }), "detached", "not merged");
+        AssertKept(Judge(detached), "detached, not a gate tree");
+        AssertKept(Judge(detached with { HeadMerged = false }), "detached, not a gate tree");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_branch_with_no_pull_request_is_kept_whatever_its_reachability()
+    {
+        var facts = Merged() with { PrNumber = null, PrState = null };
+
+        AssertKept(Judge(facts), "no pull request: work not finished");
+        AssertKept(Judge(facts with { HeadMerged = false }), "no pull request: work not finished");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_fresh_branch_whose_head_is_already_in_main_with_no_ended_pull_request_is_kept()
+    {
+        // The incident: a worktree on a branch just created from origin/main, no commits, no pull request.
+        var fresh = new WorktreeFacts { Path = "/wt/fresh", Branch = "docs/fresh", HeadMerged = true };
+
+        AssertKept(Judge(fresh), "fresh branch, no commits", "no pull request");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_tree_changed_after_the_last_sweep_is_kept() => AssertKept(Judge(Merged() with { ChangedSinceSweep = true }), "changed since the last sweep");
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_gate_tree_is_not_held_back_by_the_change_trigger()
+    {
+        var gate = new WorktreeFacts { Path = "/gates/7/tree", GatePr = 7, PrState = PrState.Merged, HeadMerged = true, ChangedSinceSweep = true };
+
+        Assert.Equal(WorktreeDecision.Removable, Judge(gate).Decision);
     }
 
     [Fact, Trait("Lane", "unit")]

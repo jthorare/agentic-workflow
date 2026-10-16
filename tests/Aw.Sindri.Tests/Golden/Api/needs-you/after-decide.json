@@ -1,0 +1,35 @@
+{
+  "rows": [
+    {
+      "id": "decision:DEC-0000000000000000000000000000001b",
+      "kind": "decision",
+      "label": "decision · add task",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000001b"
+      },
+      "item": null,
+      "title": "Add a task for the logout flow.",
+      "reason": "add task request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000001b accept"
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 10,
+    "ledgerHead": 10,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

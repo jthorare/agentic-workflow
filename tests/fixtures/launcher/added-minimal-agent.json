@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "agents": {
+    "gemini": {
+      "label": "Gemini",
+      "bin": "gemini",
+      "open": [
+        "{bin}",
+        "-i",
+        "{seed}"
+      ],
+      "sessionId": "none"
+    }
+  }
+}

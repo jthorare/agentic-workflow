@@ -26,13 +26,13 @@ public static class BlockServiceCollectionExtensions
         where T : class, IStep, IDescribedBlock
         => services.AddSingleton(T.Descriptor).AddScoped<T>().AddScoped<IStep, T>();
 
-    /// <summary>Registers the effect <typeparamref name="T"/>.</summary>
+    /// <summary>Registers the effect <typeparamref name="T"/>, also keyed by its block id (the 'RunEffect' activity runs it by id).</summary>
     /// <param name="services">The service collection.</param>
     /// <typeparam name="T">The effect class.</typeparam>
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddEffect<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IServiceCollection services)
         where T : class, IEffectKind, IDescribedBlock
-        => services.AddSingleton(T.Descriptor).AddScoped<T>().AddScoped<IEffectKind, T>();
+        => services.AddSingleton(T.Descriptor).AddScoped<T>().AddScoped<IEffectKind, T>().AddKeyedScoped<IEffectKind, T>(T.Descriptor.Id.Value);
 
     /// <summary>Registers the evidence provider <typeparamref name="T"/>.</summary>
     /// <param name="services">The service collection.</param>

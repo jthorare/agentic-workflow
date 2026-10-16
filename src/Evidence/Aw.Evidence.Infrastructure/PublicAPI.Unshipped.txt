@@ -1,3 +1,4 @@
 #nullable enable
 Aw.Evidence.Infrastructure.EvidenceInfrastructureServiceCollectionExtensions
 static Aw.Evidence.Infrastructure.EvidenceInfrastructureServiceCollectionExtensions.AddEvidenceInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Evidence.Infrastructure.EvidenceInfrastructureServiceCollectionExtensions.AddEvidencePostgresInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

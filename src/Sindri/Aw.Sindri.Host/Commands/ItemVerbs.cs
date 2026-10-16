@@ -68,14 +68,7 @@ internal sealed class ItemVerbs(ControlPlaneClient client, Output output, Func<b
 
     private async Task<int> Items(ItemVerbArguments.Parsed command, CancellationToken ct)
     {
-        var query = new StringBuilder();
-        foreach (var (key, value) in new[] { ("state", command.State), ("repo", command.Repo) })
-        {
-            if (value is not null)
-            {
-                _ = query.Append(query.Length == 0 ? '?' : '&').Append(key).Append('=').Append(Uri.EscapeDataString(value));
-            }
-        }
+        var query = UrlQuery.Of([("state", command.State), ("repo", command.Repo)]);
 
         var answer = await client.GetView<ListItemsResponse>("/sindri/items" + query, ct).ConfigureAwait(false);
         if (answer.IsError)

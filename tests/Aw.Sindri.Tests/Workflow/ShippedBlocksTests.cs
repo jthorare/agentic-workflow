@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Features.Blocks.Effect;
 using Aw.Sindri.Features.Blocks.Gate;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing.Workflow;
@@ -27,14 +28,14 @@ public sealed class ShippedBlocksTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Only_the_budget_gate_has_a_runtime_and_the_desk_steps_run_on_the_desk()
+    public async Task The_budget_gate_and_the_two_effects_have_runtimes_and_the_desk_steps_run_on_the_desk()
     {
         await using var provider = Composed();
         await using var scope = provider.CreateAsyncScope();
 
         _ = Assert.IsType<BudgetAvailableGate>(Assert.Single(scope.ServiceProvider.GetServices<IGate>()));
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
-        Assert.Empty(scope.ServiceProvider.GetServices<IEffectKind>());
+        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
 
     [Theory, Trait("Lane", "unit")]

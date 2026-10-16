@@ -27,7 +27,7 @@ internal static class RecipePreviewText
         if (p.IsDrift || p.Resumes.Count > 0)
         {
             _ = Section(text, "changed blocks (drift)", p.Changed.Select(static c => $"{c.Block.Value} {c.Approved.Display()} -> {c.Build.Display()}"));
-            _ = Section(text, "resumes", p.Resumes.Select(static i => i.Value));
+            _ = Section(text, "open instances woken (those parked on this drift resume)", p.Resumes.Select(static i => i.Value));
         }
 
         return text.ToString();

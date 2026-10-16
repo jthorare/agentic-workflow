@@ -53,19 +53,19 @@ internal static class FrameFixture
 
     public static Suspension Park(ParkReason reason, ParkKind? kind, ResumeKind resume, WithheldTrigger? withheld = null) => new(
         SuspensionKind.Park, reason, kind, Escalation: null, "checks failed twice", "service:test", Mirrors: null,
-        new ResumeAction(resume, withheld, Gate: null, Effect: null));
+        new ResumeAction(resume, withheld, Gate: null, Effects: []));
 
     public static Suspension Escalate(EscalationKind kind, ResumeKind resume, WithheldTrigger? withheld = null, BlockId? gate = null) => new(
         SuspensionKind.Escalation, Reason: null, ParkKind: null, kind, "gate.verify.judge scored 0.62", "service:test", Mirrors: null,
-        new ResumeAction(resume, withheld, gate, Effect: null));
+        new ResumeAction(resume, withheld, gate, Effects: []));
 
     public static Suspension MirrorChild(ParkReason reason) => new(
         SuspensionKind.Park, reason, ParkKind: null, Escalation: null, "child parked", "service:test", ChildId,
-        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effects: []));
 
     public static Suspension Takeover(string actor = "human:cli") => new(
         SuspensionKind.Takeover, Reason: null, ParkKind: null, Escalation: null, string.Empty, actor, Mirrors: null,
-        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effects: []));
 
     public static WithheldTrigger CheckFailed() => new(LoopBack, new StepCompleted(
         "service:desk", RunToken.For(4, 1), OutcomeName.From("failed"), NoOutputs, Tokens: 10, StepRuntime.Desk,

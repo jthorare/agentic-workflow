@@ -65,7 +65,7 @@ internal static partial class RefusalRules
         /// grant (never a stored trigger), wait for the resource again.
         /// </summary>
         public ResumeAction Withhold() => Input.Trigger is WaitSatisfied { Source: ResourceWaitSource }
-            ? new ResumeAction(ResumeKind.Rewait, Withheld: null, Gate: null, Effect: null)
-            : new ResumeAction(ResumeKind.Reevaluate, new WithheldTrigger(Input.Transition, Input.Trigger), Gate: null, Effect: null);
+            ? new ResumeAction(ResumeKind.Rewait, Withheld: null, Gate: null, Effects: [])
+            : new ResumeAction(ResumeKind.Reevaluate, new WithheldTrigger(Input.Transition, Input.Trigger), Gate: null, Effects: []);
     }
 }

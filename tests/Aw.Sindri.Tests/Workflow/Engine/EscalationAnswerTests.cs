@@ -108,6 +108,23 @@ public sealed class EscalationAnswerTests
         Assert.Empty(refused.Changes);
     }
 
+    /// <summary>PR 232 run 4 (I2): rejecting a gate escalation while an approved drift park is queued behind it still sends the effect that park holds, and lists it on the refusal's event.</summary>
+    [Fact, Trait("Lane", "unit")]
+    public void Reject_on_a_command_escalation_resends_the_effect_of_an_approved_drift_park_behind_it()
+    {
+        var recipe = Shipping("gate.test.model");
+        var e1 = new EffectIdentity(Id, Entry: 3, Index: 0);
+        var held = new RefusedEffect(BlockId.From("effect.claim.ref"), e1, new Dictionary<string, WithValue>(StringComparer.Ordinal), CommandOrigin.Recipe);
+        var escalated = Escalated(recipe, Ship(), _modelLow);
+        var drifted = Assert.IsType<Applied>(Decide(escalated, recipe, new OutboxRefused("system:dispatcher", held, "SND-RECIPE-006", Sequence: 91), rules: EngineRules.Default)).Changes[0].After;
+        var approved = Assert.IsType<Applied>(Decide(drifted, recipe, new RecipeWake("service:engine", RecipeWakeKind.Approved, 8), rules: EngineRules.Default)).Changes[0].After;
+
+        var refused = Assert.IsType<Refused>(Decide(approved, recipe, Answer(AnswerVariant.Reject), _modelLow, rules: EngineRules.Default));
+
+        Assert.Equal([e1], [.. refused.Effects.Select(static e => e.Identity)]);
+        Assert.Equal([e1], [.. refused.Changes[0].Event.Effects]);
+    }
+
     private static WorkflowInstance Escalated(Recipe recipe, Trigger trigger, GateAnswers answers)
     {
         var refused = Assert.IsType<Refused>(Decide(At(recipe, "produce"), recipe, trigger, answers, rules: EngineRules.Default));

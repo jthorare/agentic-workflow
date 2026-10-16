@@ -6,8 +6,9 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <summary>
 /// Which instance a reply's command was written for (port; engine spec rev 8 §5.4): the event bridge routes a 'route:
 /// causation' event only to the instance whose command caused it. The command is the ledger event the reply names as its
-/// causation; until P6's 'workflow_commands' map, the adapter reads the instance from that event's own payload
-/// ('instance', as every 'workflow.*' event the interpreter mirrors has).
+/// causation; the adapter reads the instance from that event's own payload ('instance', as every 'workflow.*' event
+/// the interpreter mirrors has). That read is the design: the effect's rows are keyed under the instance's address, so no
+/// separate 'workflow_commands' map is kept.
 /// </summary>
 public interface ICommandOrigins
 {

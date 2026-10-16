@@ -7,10 +7,11 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 /// instance parks with spec-conflict of that kind, unless the same revoke already parked it.
 /// </summary>
 /// <param name="Actor">'system:dispatcher'.</param>
-/// <param name="Effect">The refused effect's identity.</param>
-/// <param name="Code">The refusal: SND-RECIPE-005 (revoked), SND-RECIPE-006 (drift) or SND-WF-011 (not allowlisted).</param>
+/// <param name="Effect">The refused effect as the dispatch emitted it: its kind, identity and arguments.</param>
+/// <param name="Code">The refusal: SND-RECIPE-005 (revoked), SND-RECIPE-006 (drift), SND-WF-011 (not allowlisted) or SND-WF-010 (the setup the effect needs isn't there: no commit, a repo the profile lacks, no 'fact:item').</param>
 /// <param name="Sequence">The 'outbox.refused' event's ledger sequence.</param>
-public sealed record OutboxRefused(string Actor, EffectIdentity Effect, string Code, long Sequence) : Trigger(Actor)
+/// <param name="Reason">The cause, for a setup failure (SND-WF-010); the park names it.</param>
+public sealed record OutboxRefused(string Actor, RefusedEffect Effect, string Code, long Sequence, string? Reason = null) : Trigger(Actor)
 {
     /// <inheritdoc/>
     public override string Name => TriggerNames.OutboxRefused;

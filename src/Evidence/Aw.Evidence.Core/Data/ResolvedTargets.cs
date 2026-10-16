@@ -4,8 +4,12 @@ namespace Aw.Evidence.Core.Data;
 /// <param name="BuildOutputs">Directories relative to the repo whose executables a script may run.</param>
 /// <param name="Allow">Absolute paths of programs a script may run.</param>
 /// <param name="PassEnv">Names of variables every CLI call may inherit.</param>
-public sealed record ResolvedTargets(IReadOnlyList<string> BuildOutputs, IReadOnlyList<string> Allow, IReadOnlyList<string> PassEnv)
+/// <param name="Databases">The databases db-run may read, by name.</param>
+public sealed record ResolvedTargets(IReadOnlyList<string> BuildOutputs, IReadOnlyList<string> Allow, IReadOnlyList<string> PassEnv, IReadOnlyDictionary<string, DatabaseEntry>? Databases = null)
 {
+    /// <summary>The databases db-run may read, by name (empty when none).</summary>
+    public IReadOnlyDictionary<string, DatabaseEntry> DatabaseMap => Databases ?? new Dictionary<string, DatabaseEntry>(StringComparer.Ordinal);
+
     /// <summary>No config: nothing is allowed.</summary>
     public static ResolvedTargets Empty { get; } = new([], [], []);
 

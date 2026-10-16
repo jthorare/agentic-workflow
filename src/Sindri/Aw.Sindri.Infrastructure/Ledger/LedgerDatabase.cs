@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Ledger;
 namespace Aw.Sindri.Infrastructure.Ledger;
 
 /// <summary>
-/// The ledger file: its connections, its migrations (events, lease, outbox_commands, recipes) and its permissions. Writers call
+/// The ledger file: its connections, its migrations (events, lease, outbox_commands, recipes, workflow_claims) and its permissions. Writers call
 /// <see cref="Writable"/>, which migrates once per process; readers never migrate or create the file.
 /// </summary>
 internal sealed class LedgerDatabase : IDisposable
@@ -108,6 +108,9 @@ internal sealed class LedgerDatabase : IDisposable
 
     /// <summary>The first migration with the recipe registry (engine spec §4.1); reads of an older file find no recipes.</summary>
     internal const int RecipesVersion = 4;
+
+    /// <summary>The first migration with 'workflow_claims' (engine spec §5.9; engine P6 unit (d)); reads of an older file find no claim.</summary>
+    internal const int ClaimsVersion = 6;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {

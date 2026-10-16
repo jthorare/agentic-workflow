@@ -5,7 +5,10 @@ using Xunit;
 
 namespace Aw.Sindri.Testing.Workflow;
 
-/// <summary>The contract every <see cref="IFactStore"/> honours (engine spec rev 8.1 §5.3, §6.1), run against the fake and the home's files.</summary>
+/// <summary>
+/// The contract every <see cref="IFactStore"/> honours (engine spec rev 8.1 §5.3, §6.1), run against the fake and the home's
+/// files. Each store also reads its facts back (<see cref="IFactContents"/>, engine P6 unit (d)).
+/// </summary>
 public abstract class FactStoreContract
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -41,5 +44,22 @@ public abstract class FactStoreContract
 
         Expect.Equal(first.Value, again.Value);
         Expect.True(first.Value != other.Value);
+    }
+
+    /// <summary>A stored fact reads back as its content; a fact never stored is an error.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_stored_fact_reads_back()
+    {
+        var store = Create();
+        var contents = store as IFactContents;
+        Expect.True(contents is not null);
+        var stored = await store.Put(Encoding.UTF8.GetBytes("""{ "id": "T-3" }"""), Token);
+
+        var read = await contents!.Read(stored.Value, Token);   // why: checked just above
+        var missing = await contents.Read(stored.Value with { Sha256 = new string('0', 64), Ref = "fact:sha256:" + new string('0', 64) }, Token);
+
+        Expect.Equal("""{ "id": "T-3" }""", Encoding.UTF8.GetString(read.Value.Span));
+        Expect.True(missing.IsError);
     }
 }

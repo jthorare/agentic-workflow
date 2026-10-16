@@ -1,0 +1,124 @@
+== dry-run, no sessions
+[dry-run] legacy-socket check: tmux -L legacy-golden has-session -t =t1-<lane> for each lane (refuses if any exists)
+[dry-run] tmux -L t1 new-session -d -s t1-meta -c @WORK@/repo @SCRIPTS@/meta-lane.sh t1 meta
+[dry-run] tmux -L t1 new-session -d -s t1-api -c @WORK@/repo @SCRIPTS@/meta-lane.sh t1 api
+[dry-run] tmux -L t1 new-session -d -s t1-ui -c @WORK@/repo @SCRIPTS@/meta-lane.sh t1 ui
+[dry-run] would write @WORK@/warp/t1-team.yaml:
+# Written by scripts/meta-launch.sh from @WORK@/state/meta/team.json; rerun it rather than editing.
+name: t1 team
+windows:
+  - tabs:
+      - title: t1
+        layout:
+          split_direction: vertical
+          panes:
+            - cwd: @WORK@/repo
+              commands:
+                - exec: tmux -L t1 new -A -s t1-meta -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 meta'
+            - split_direction: horizontal
+              panes:
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-api -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 api'
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-ui -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 ui'
+rc=0
+== launch
+tmux t1-meta: started
+tmux t1-api: started
+tmux t1-ui: started
+warp: @WORK@/warp/t1-team.yaml
+rc=0
+== yaml
+# Written by scripts/meta-launch.sh from @WORK@/state/meta/team.json; rerun it rather than editing.
+name: t1 team
+windows:
+  - tabs:
+      - title: t1
+        layout:
+          split_direction: vertical
+          panes:
+            - cwd: @WORK@/repo
+              commands:
+                - exec: tmux -L t1 new -A -s t1-meta -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 meta'
+            - split_direction: horizontal
+              panes:
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-api -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 api'
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-ui -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 ui'
+== rerun with --lanes
+tmux t1-api: running
+warp: @WORK@/warp/t1-team.yaml
+rc=0
+== dry-run, exited lane
+[dry-run] legacy-socket check: tmux -L legacy-golden has-session -t =t1-<lane> for each lane (refuses if any exists)
+[dry-run] tmux -L t1 respawn-pane -k -t t1-api @SCRIPTS@/meta-lane.sh t1 api
+[dry-run] would write @WORK@/warp/t1-team.yaml:
+# Written by scripts/meta-launch.sh from @WORK@/state/meta/team.json; rerun it rather than editing.
+name: t1 team
+windows:
+  - tabs:
+      - title: t1
+        layout:
+          split_direction: vertical
+          panes:
+            - cwd: @WORK@/repo
+              commands:
+                - exec: tmux -L t1 new -A -s t1-meta -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 meta'
+            - split_direction: horizontal
+              panes:
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-api -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 api'
+                - cwd: @WORK@/repo
+                  commands:
+                    - exec: tmux -L t1 new -A -s t1-ui -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json '@SCRIPTS@/meta-lane.sh t1 ui'
+rc=0
+== tmux calls
+tmux -L legacy-golden has-session -t =t1-meta
+tmux -L legacy-golden has-session -t =t1-api
+tmux -L legacy-golden has-session -t =t1-ui
+tmux -L t1 has-session -t =t1-meta
+tmux -L t1 has-session -t =t1-api
+tmux -L t1 has-session -t =t1-ui
+tmux new-session -d -s keepalive sleep\ 600
+tmux -L legacy-golden has-session -t =t1-meta
+tmux -L legacy-golden has-session -t =t1-api
+tmux -L legacy-golden has-session -t =t1-ui
+tmux -L t1 has-session -t =t1-meta
+tmux -L t1 new-session -d -s t1-meta -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json @SCRIPTS@/meta-lane.sh\ t1\ meta
+tmux -L t1 has-session -t =t1-api
+tmux -L t1 new-session -d -s t1-api -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json @SCRIPTS@/meta-lane.sh\ t1\ api
+tmux -L t1 has-session -t =t1-ui
+tmux -L t1 new-session -d -s t1-ui -c @WORK@/repo -e AW_META_CONFIG=@WORK@/state/meta/team.json @SCRIPTS@/meta-lane.sh\ t1\ ui
+tmux -L legacy-golden has-session -t =t1-meta
+tmux -L legacy-golden has-session -t =t1-api
+tmux -L legacy-golden has-session -t =t1-ui
+tmux -L t1 has-session -t =t1-api
+tmux kill-session -t t1-api
+tmux new-session -d -s t1-api bash
+tmux -L legacy-golden has-session -t =t1-meta
+tmux -L legacy-golden has-session -t =t1-api
+tmux -L legacy-golden has-session -t =t1-ui
+tmux -L t1 has-session -t =t1-api
+tmux -L t1 display-message -p -t =t1-api: \#\{pane_pid\}
+== lane api, fresh
+--session-id|@ID@|-n|t1-api|API kickoff
+line two $HOME "quoted" 'single'|
+== lane api, resumed
+--resume|@ID@|-n|t1-api|
+== lane api, resumed, AW_META_CLAUDE_ARGS
+--model|x|--verbose|--resume|@ID@|-n|t1-api|
+== lane ui, no prompt
+--session-id|@ID@|-n|t1-ui|
+== lane ui, fresh, AW_META_CLAUDE_ARGS
+--model|x|--session-id|@ID@|-n|t1-ui|
+== lane meta
+role-set --session @ID@ --name t1-meta
+== bad lane
+meta-lane: bad name 'Bad Lane' (lowercase letters, digits, dashes)
+rc=2

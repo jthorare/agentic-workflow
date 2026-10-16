@@ -1,0 +1,51 @@
+{
+  "decisions": [
+    {
+      "id": "DEC-00000000000000000000000000000011",
+      "kind": "accept-request",
+      "class": "decision",
+      "label": "decision · re-scope",
+      "item": null,
+      "itemVersion": 0,
+      "repo": "demo",
+      "question": "Accept this re-scope request?\nSplit the checkout work into two items.",
+      "options": [
+        {
+          "id": "accept",
+          "label": "Accept",
+          "rejectLike": false,
+          "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+        },
+        {
+          "id": "decline",
+          "label": "Decline",
+          "rejectLike": true,
+          "cli": "sindri decide DEC-00000000000000000000000000000011 decline"
+        }
+      ],
+      "recommended": "accept",
+      "state": "pending",
+      "filedBy": "session:cli",
+      "filedAt": "2026-01-01T00:00:00.0000000Z",
+      "decidedBy": null,
+      "decidedAt": null,
+      "choice": null,
+      "note": null,
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000011 accept",
+      "cleared": null
+    }
+  ],
+  "empty": "Views are stalled at 7: run `sindri views rebuild`",
+  "asOf": {
+    "cursor": 6,
+    "ledgerHead": 7,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": true
+  }
+}

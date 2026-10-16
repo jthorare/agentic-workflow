@@ -647,10 +647,12 @@
         "dependencies": {
           "Aw.Evidence.Core": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
+          "Aw.Kernel.Data": "[1.0.0, )",
           "Aw.Redaction": "[1.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.12, 10.0.12]",
-          "Microsoft.Playwright": "[1.63.0, 1.63.0]"
+          "Microsoft.Playwright": "[1.63.0, 1.63.0]",
+          "Npgsql": "[10.0.3, 10.0.3]"
         }
       },
       "aw.judge.core": {
@@ -958,6 +960,15 @@
         "contentHash": "3JelDMuFIwFzXybsh6K30G6wXu5gmqKnuRnieqgBMuR0FkqqXRv4B+NYZuPgthSyNq5UwRyvv2U2VJBE3RD3PQ==",
         "dependencies": {
           "ModelContextProtocol": "[2.2.0]"
+        }
+      },
+      "Npgsql": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.3, 10.0.3]",
+        "resolved": "10.0.3",
+        "contentHash": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
       },
       "OpenTelemetry": {

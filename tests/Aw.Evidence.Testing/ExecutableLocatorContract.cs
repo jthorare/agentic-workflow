@@ -66,4 +66,17 @@ public abstract class ExecutableLocatorContract
         Expect.That(layout.Locator.RealDirectory(layout.Root + "/bin/tool") is null, "a file is not a directory");
         Expect.That(layout.Locator.RealDirectory(layout.Root + "/absent") is null, "a missing path is not a directory");
     }
+
+    /// <summary>A regular file, executable or not, is found through its links; a directory and a missing path are not files.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_regular_file_resolves_through_its_links_and_a_directory_is_not_a_file()
+    {
+        var layout = await ArrangeAsync();
+
+        Expect.That(layout.Locator.RealFile(layout.Root + "/bin/notes.txt") == layout.Root + "/bin/notes.txt", "a plain file is its own real path");
+        Expect.That(layout.Locator.RealFile(layout.Root + "/link-to-tool") == layout.Root + "/bin/tool", "a link to a file resolves to the file");
+        Expect.That(layout.Locator.RealFile(layout.Root + "/bin") is null, "a directory is not a file");
+        Expect.That(layout.Locator.RealFile(layout.Root + "/nothing") is null, "a missing path is not a file");
+    }
 }

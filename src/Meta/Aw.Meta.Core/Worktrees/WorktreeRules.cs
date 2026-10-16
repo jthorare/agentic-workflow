@@ -4,8 +4,10 @@ using Aw.Meta.Core.Watch;
 namespace Aw.Meta.Core.Worktrees;
 
 /// <summary>
-/// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported, and nothing
-/// about age is among them: a worktree that has sat untouched for weeks may still be somebody's work in progress.
+/// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
+/// proven finished (an ended pull request), not merely reachable from origin/main: a branch just cut from main is reachable too.
+/// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
+/// trigger, "changed since the last sweep".
 /// </summary>
 internal static class WorktreeRules
 {
@@ -65,13 +67,28 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 1 for a branch or detached worktree: merged into origin/main, or its pull request closed with everything on the remote.
+    // Rule 1: a detached worktree that is not a gate tree is never removed; a branch only when its pull request ended (merged, or closed with everything on the remote).
     private static void Merged(WorktreeFacts facts, List<string> reasons)
     {
+        if (facts.Branch is null)
+        {
+            reasons.Add("detached, not a gate tree");
+            return;
+        }
+
         var pr = facts.PrNumber is { } number ? string.Create(CultureInfo.InvariantCulture, $"PR #{number}") : "no pull request";
         if (facts.PrState == PrState.Open)
         {
             reasons.Add(pr + " is still open");
+        }
+
+        if (facts.PrState is null)
+        {
+            reasons.Add("no pull request: work not finished");
+            if (facts.HeadMerged)
+            {
+                reasons.Add("fresh branch, no commits of its own, or already in origin/main without a pull request");
+            }
         }
 
         if (facts.HeadMerged)
@@ -79,11 +96,7 @@ internal static class WorktreeRules
             return;
         }
 
-        if (facts.Branch is null)
-        {
-            reasons.Add("detached HEAD is not merged into origin/main");
-        }
-        else if (facts.PrState == PrState.Closed)
+        if (facts.PrState == PrState.Closed)
         {
             if (facts.UnpushedCommits > 0)
             {
@@ -120,9 +133,14 @@ internal static class WorktreeRules
         }
     }
 
-    // Rules 2 and 4: nothing uncommitted or untracked beyond build output, and no process in it.
+    // Rules 2 and 4 and the change trigger: nothing uncommitted or untracked beyond build output, no process in it, and (for a worktree that is not a gate tree) nothing changed since the last sweep started.
     private static void Untouched(WorktreeFacts facts, List<string> reasons)
     {
+        if (facts.ChangedSinceSweep && facts.GatePr is null)
+        {
+            reasons.Add("changed since the last sweep");
+        }
+
         if (facts.DirtyEntries.Count > 0)
         {
             var more = facts.DirtyEntries.Count > ListedPaths ? string.Create(CultureInfo.InvariantCulture, $" (+{facts.DirtyEntries.Count - ListedPaths} more)") : string.Empty;

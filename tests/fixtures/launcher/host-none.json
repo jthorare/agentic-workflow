@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "viewer": {
+    "kind": "exec-template",
+    "name": "T3 Code",
+    "argv": [
+      "t3code",
+      "--title",
+      "{title}"
+    ]
+  },
+  "host": {
+    "kind": "none"
+  }
+}

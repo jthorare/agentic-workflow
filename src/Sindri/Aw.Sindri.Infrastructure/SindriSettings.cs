@@ -8,6 +8,11 @@ internal sealed record SindriSettings(string Home, string ProfilePath)
     /// <summary>The ledger database.</summary>
     public string LedgerPath => Path.Combine(Home, "ledger.db");
 
+    /// <summary>The desk's notices, one JSON line each (engine spec §6.3).</summary>
+    public string NotificationsPath => Path.Combine(Home, "notifications.jsonl");
+
+    /// <summary>The daily digests of non-interrupting notices, '&lt;yyyy-MM-dd&gt;.jsonl' (engine spec §6.3).</summary>
+    public string DigestDirectory => Path.Combine(Home, "digest");
     /// <summary>The views database (derived from the ledger; deleting it rebuilds it).</summary>
     public string ViewsPath => Path.Combine(Home, "views.db");
 

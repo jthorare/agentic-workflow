@@ -24,6 +24,9 @@ public sealed class RecordingRecipeWake : IRecipeWake
         }
     }
 
+    /// <summary>The error every wake answers with while set (the Temporal side failing); null sends normally.</summary>
+    public Error? Fail { get; set; }
+
     /// <summary>Seeds <paramref name="instance"/> as running <paramref name="hash"/>.</summary>
     /// <param name="hash">The recipe hash.</param>
     /// <param name="instance">The instance.</param>
@@ -54,6 +57,11 @@ public sealed class RecordingRecipeWake : IRecipeWake
     public ValueTask<Result<Unit>> Wake(RecipeWakeNotice notice, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(notice);
+        if (Fail is { } failure)
+        {
+            return ValueTask.FromResult<Result<Unit>>(failure);
+        }
+
         lock (_gate)
         {
             _sent.Add(notice);

@@ -33,8 +33,8 @@ public sealed class CatalogRulesTests
     public void No_pending_row_names_a_shipped_phase()
     {
         Assert.Empty(CatalogRules.ShippedPending(Shipped));
-        Assert.Equal(2, CatalogRules.ShippedPending([Row(ActionClass.Desk, "pending:P1"), Row(ActionClass.Desk, "pending:S1")]).Count());
-        Assert.Empty(CatalogRules.ShippedPending([Row(ActionClass.Desk, "pending:P4"), Row(ActionClass.Desk, "pending:P10a")]));
+        Assert.Equal(3, CatalogRules.ShippedPending([Row(ActionClass.Desk, "pending:P1"), Row(ActionClass.Desk, "pending:S1"), Row(ActionClass.Desk, "pending:P4")]).Count());
+        Assert.Empty(CatalogRules.ShippedPending([Row(ActionClass.Desk, "pending:P6"), Row(ActionClass.Desk, "pending:P10a")]));
     }
 
     [Fact, Trait("Lane", "unit")]

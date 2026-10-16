@@ -15,14 +15,14 @@ public sealed class ChildReleaseTests
 
     private static Suspension Timeout { get; } = new(
         SuspensionKind.Park, ParkReason.Timeout, ParkKind: null, Escalation: null, "running timed out", "service:workflow.timers", Mirrors: null,
-        new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effects: []));
 
     [Fact, Trait("Lane", "unit")]
     public void Release_returns_to_the_wait_on_the_same_child()
     {
         foreach (var mirroring in new[] { MirroringPark, MirroringEscalation })
         {
-            var released = ChildPropagation.Release(mirroring, ChildId);
+            var released = ChildPropagation.Release(mirroring, ChildId).Instance;
 
             Assert.Null(released.Suspension);
             Assert.Equal("running", released.State);
@@ -33,8 +33,8 @@ public sealed class ChildReleaseTests
     [Fact, Trait("Lane", "unit")]
     public void Release_with_no_mirror_returns_the_same_instance()
     {
-        Assert.Same(Waiting, ChildPropagation.Release(Waiting, ChildId));
-        Assert.Same(MirroringPark, ChildPropagation.Release(MirroringPark, OtherChildId));
+        Assert.Same(Waiting, ChildPropagation.Release(Waiting, ChildId).Instance);
+        Assert.Same(MirroringPark, ChildPropagation.Release(MirroringPark, OtherChildId).Instance);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -42,7 +42,7 @@ public sealed class ChildReleaseTests
     {
         var taken = TakenOver(MirroringPark);
 
-        var released = ChildPropagation.Release(taken, ChildId);
+        var released = ChildPropagation.Release(taken, ChildId).Instance;
 
         Assert.Equal(EngineStates.TakenOver, released.State);
         Assert.Null(released.PendingPark);
@@ -54,7 +54,7 @@ public sealed class ChildReleaseTests
     {
         var mirroring = MirroringPark with { PendingPark = Timeout };
 
-        var released = ChildPropagation.Release(mirroring, ChildId);
+        var released = ChildPropagation.Release(mirroring, ChildId).Instance;
 
         Assert.Equal(EngineStates.Parked, released.State);
         Assert.Equal(Timeout, released.Suspension);
@@ -67,7 +67,7 @@ public sealed class ChildReleaseTests
     {
         var pending = Push(Waiting, Timeout) with { PendingPark = MirroringPark.Suspension };
 
-        var released = ChildPropagation.Release(pending, ChildId);
+        var released = ChildPropagation.Release(pending, ChildId).Instance;
 
         Assert.Equal(Timeout, released.Suspension);
         Assert.Null(released.PendingPark);
@@ -142,9 +142,9 @@ public sealed class ChildReleaseTests
         Assert.Equal((EngineStates.Parked, ParkReason.NoProgress), (parked.State, parked.Park));
 
         Assert.Equal(ParentEffectKind.Release, ChildPropagation.ToParent(parked, Item, Changed(ChildChange.Resumed)).Kind);
-        var resumed = ChildPropagation.Release(parked, ChildId);
+        var resumed = ChildPropagation.Release(parked, ChildId).Instance;
         Assert.Equal(("running", Entry, (WorkflowInstanceId?)ChildId), (resumed.State, resumed.Frame.Entry, resumed.Frame.Child));
 
-        Assert.Same(resumed, ChildPropagation.Release(resumed, ChildId));
+        Assert.Same(resumed, ChildPropagation.Release(resumed, ChildId).Instance);
     }
 }

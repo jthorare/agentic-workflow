@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/evidence/db-script.schema.json",
+  "title": "ui-evidence db-run script (evidence.db.run/1)",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "connection": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "sqlite": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "seed": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "rowLimit": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "default": null
+    },
+    "queries": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          },
+          "expect": {
+            "type": "object",
+            "properties": {
+              "rowCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "default": null
+              },
+              "pointers": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string"
+                    },
+                    "equals": {
+                      "default": null
+                    },
+                    "exists": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ],
+                      "default": null
+                    },
+                    "matches": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
+                    }
+                  },
+                  "required": [
+                    "pointer"
+                  ],
+                  "additionalProperties": false
+                },
+                "default": null
+              },
+              "golden": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "sql",
+          "expect"
+        ],
+        "additionalProperties": false
+      },
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}

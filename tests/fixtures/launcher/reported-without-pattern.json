@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "agents": {
+    "aider": {
+      "label": "Aider",
+      "bin": "aider",
+      "open": [
+        "{bin}"
+      ],
+      "sessionId": "reported",
+      "reportedId": {
+        "hook": true
+      }
+    }
+  }
+}

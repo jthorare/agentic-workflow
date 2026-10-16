@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "agents": {
+    "claude-code": {
+      "override": true,
+      "sessionId": "reported"
+    }
+  }
+}

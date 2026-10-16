@@ -108,6 +108,7 @@ internal sealed partial class RecipeWorkflow
         {
             after = Enter(after, submission.Trigger.Actor);
             await Mirror(Record(instance, change, submission.Trigger), NeedsYou(after)).ConfigureAwait(true);
+            Emit(instance, after, EffectsOf(decision), change.Event.Type);   // a takeoverIdle row (P5) is an engine notice
         }
 
         if (submission.Ticket != 0)
@@ -200,6 +201,7 @@ internal sealed partial class RecipeWorkflow
         [
             SindriTemporal.ItemKey.ValueSet(start.Item.Value),
             SindriTemporal.RecipeKey.ValueSet(start.Recipe.Id.Value),
+            SindriTemporal.RecipeHashKey.ValueSet(start.Recipe.Hash.Value),
             SindriTemporal.StateKey.ValueSet(state),
             SindriTemporal.NeedsYouKey.ValueSet(needsYou),
             SindriTemporal.TenantKey.ValueSet(start.Tenant),

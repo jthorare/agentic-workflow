@@ -33,8 +33,7 @@ public sealed class WorkflowReadVerbsTests : IDisposable
             var needsMe = await WorkflowsHarness.Listed(sindri, ct, "list", "--needs-me");
             var byItem = await WorkflowsHarness.Listed(sindri, ct, "list", "--item", "T-1");
             var (_, otherState, _) = await WorkflowsHarness.Cli(sindri, "list", "--state", "checks");
-            var (eventsExit, events, _) = await WorkflowsHarness.Cli(sindri, "events", Address);
-
+            var (eventsExit, events) = await EventsOnceNoticed(sindri);
             Assert.Equal((0, string.Empty), (statusExit, statusErr));
             AssertDeskTaskLayout(status);
             Assert.Equal(0, jsonExit);
@@ -45,9 +44,22 @@ public sealed class WorkflowReadVerbsTests : IDisposable
             Assert.Matches(@"^T-1/step/1  workflow\.step@", byItem);
             Assert.Equal("no instances match\n", otherState);
             Assert.Equal(0, eventsExit);
-            Assert.Matches(@"^\d+  \d\d-\d\d \d\d:\d\d:\d\d  workflow\.started  -> produce  start  \S+\n$", events);
+            Assert.Matches(@"^\d+  \d\d-\d\d \d\d:\d\d:\d\d  workflow\.started  -> produce  start  \S+\n\d+  \d\d-\d\d \d\d:\d\d:\d\d  outbox\.pending  \S+\n\d+  \d\d-\d\d \d\d:\d\d:\d\d  outbox\.dispatched  \S+\n$", events);   // the first desk task's engine notice: both its rows (P6 units (c), (d))
             await handle.TerminateAsync("test over");
         }
+    }
+
+    /// <summary>'workflow events' once the first desk task's engine notice is dispatched: it skips the delay, so it lands a moment after the instance shows the task.</summary>
+    private static async Task<(int Exit, string Events)> EventsOnceNoticed(IServiceProvider sindri)
+    {
+        var (exit, events, _) = await WorkflowsHarness.Cli(sindri, "events", Address);
+        for (var tries = 0; tries < 100 && !events.Contains("outbox.dispatched", StringComparison.Ordinal); tries++)
+        {
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+            (exit, events, _) = await WorkflowsHarness.Cli(sindri, "events", Address);
+        }
+
+        return (exit, events);
     }
 
     /// <summary>The §6.4 desk-task layout for T-1/step/1, run 1.1.</summary>

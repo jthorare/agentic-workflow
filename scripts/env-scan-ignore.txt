@@ -10,6 +10,9 @@ TMPDIR # temp directory (OS)
 COLUMNS # terminal width (shell); the statusline falls back to it
 PROMPT_COMMAND # bash prompt hook; the Claude installer appends to it
 XDG_RUNTIME_DIR # per-user runtime dir (OS); sindri doctor reports it and masks it in the graphify sandbox
+DISPLAY # the X11 session sets it; --init-launcher uses it to tell a GUI session from a headless box
+TERM_PROGRAM # the terminal sets it; aw-meta-launch --init-launcher picks the viewer by it
+WAYLAND_DISPLAY # the Wayland session sets it; --init-launcher uses it to tell a GUI session from a headless box
 
 # Owned by another tool; the code only reports or forwards it.
 NODE_OPTIONS # Node's own option variable; sindri doctor checks it for --use-env-proxy
@@ -60,3 +63,6 @@ X_BIN # doc-comment example of a binary override
 # Set by CI or by a caller, never by hand.
 GITHUB_STEP_SUMMARY # GitHub Actions sets it; scripts/ci/lane-budgets.mjs appends its table there
 AW_HEAVY_LOCK_HELD # set to 1 by a caller that already holds a heavy-job lock slot (bash-tests.sh, the scaffold e2e)
+LAUNCHER_KEEP_EMPTY_SEED # a shell variable meta-lane.sh sets for launcher_expand (1: an existing but empty prompt file still passes ""); not user configuration
+TMUX # set by tmux inside a client; scripts/test-tmux.sh unsets it so tests can never reach the box's own server
+TMUX_TMPDIR # tmux's socket directory; tests point it at a temp dir (scripts/test-tmux.sh)

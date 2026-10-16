@@ -128,7 +128,7 @@ public static partial class TransitionDecision
     private static Suspension NoRuntime(BlockId step, string actor) => new(
         SuspensionKind.Park, ParkReason.NoRuntime, ParkKind: null, Escalation: null,
         $"No runtime for {step.Value} in this build. Cancel, or resume in a build that has it.", actor, Mirrors: null,
-        new ResumeAction(ResumeKind.Restart, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Restart, Withheld: null, Gate: null, Effects: []));
 
     /// <summary>'produces' (§3.5): the facts the transition records from what its trigger's source reported.</summary>
     private static IReadOnlyDictionary<FactKey, FactValue> Produce(IReadOnlyDictionary<FactKey, FactValue> facts, RecipeTransition transition, Trigger trigger)

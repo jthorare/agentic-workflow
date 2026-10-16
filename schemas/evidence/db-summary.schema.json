@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/evidence/db-summary.schema.json",
+  "title": "ui-evidence db-run summary (evidence.db.summary/1)",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "evidence.db.summary/1"
+    },
+    "kind": {
+      "const": "db"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "runInstance": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "startedAt": true,
+    "finishedAt": true,
+    "appBuild": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scriptSha256": {
+      "type": "string"
+    },
+    "at": {
+      "enum": [
+        "base",
+        "head"
+      ]
+    },
+    "engine": {
+      "enum": [
+        "sqlite",
+        "postgres",
+        null
+      ]
+    },
+    "target": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "passed",
+        "failed",
+        "refused",
+        "errored"
+      ]
+    },
+    "headline": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "action": {
+            "const": "query"
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "refused",
+              "broken",
+              "skipped"
+            ]
+          },
+          "rowCount": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "output": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "index",
+          "action",
+          "target",
+          "status",
+          "rowCount",
+          "truncated",
+          "output"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer"
+          },
+          "pointer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "expected": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "actual": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "step",
+          "pointer",
+          "expected",
+          "actual"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "enum": [
+        "unseeded",
+        "seeded"
+      ]
+    },
+    "seedSha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "refusal": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "invocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "enum": [
+              "planning",
+              "selector-repair",
+              "visual-critique"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "elapsedMs": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "inputTokens": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "outputTokens": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "cacheHit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "phase",
+          "model",
+          "elapsedMs",
+          "ok",
+          "inputTokens",
+          "outputTokens",
+          "cacheHit"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "kind",
+    "runId",
+    "runInstance",
+    "startedAt",
+    "finishedAt",
+    "appBuild",
+    "scriptSha256",
+    "at",
+    "engine",
+    "target",
+    "outcome",
+    "headline",
+    "steps",
+    "failures",
+    "provenance",
+    "seedSha256",
+    "refusal",
+    "error",
+    "invocations"
+  ],
+  "additionalProperties": false
+}

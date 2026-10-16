@@ -24,6 +24,9 @@ public static class KvKeys
     /// <summary>The last worktree sweep's one-line summary (a trigger's or an explicit sweep's).</summary>
     public const string WorktreesLast = "worktrees.last";
 
+    /// <summary>When the last real worktree sweep started (ISO 8601, round-trip); a worktree changed after it is kept ("changed since the last sweep"). Absent until a sweep has run.</summary>
+    public const string WorktreesSweepStart = "worktrees.sweep-start";
+
     /// <summary>Pull requests the watch saw end whose worktrees it could not yet sweep (the sweep could not run), comma separated; retried on each poll.</summary>
     public const string WorktreesPending = "worktrees.pending-prs";
 }

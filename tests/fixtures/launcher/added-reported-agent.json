@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "agents": {
+    "opencode": {
+      "label": "OpenCode",
+      "bin": "opencode",
+      "open": [
+        "{bin}",
+        "--prompt",
+        "{seed}"
+      ],
+      "resume": [
+        "{bin}",
+        "--session",
+        "{sessionId}"
+      ],
+      "sessionId": "reported",
+      "sessionIdPattern": "^ses_[A-Za-z0-9]{8,40}$",
+      "reportedId": {
+        "hook": false,
+        "newestFile": "~/.local/share/opencode/storage/session/*/ses_*.json",
+        "capture": "(ses_[A-Za-z0-9]+)"
+      },
+      "processName": "opencode",
+      "transcripts": null,
+      "usage": "none",
+      "mcp": "none"
+    }
+  }
+}

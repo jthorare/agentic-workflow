@@ -1,0 +1,6 @@
+{
+  "note": "built-in cursor",
+  "builtin": "cursor",
+  "canonical": "{\"bin\":\"agent\",\"mcp\":\"none\",\"open\":[\"{bin}\",\"{seed}\"],\"resume\":[\"{bin}\",\"--resume={sessionId}\"],\"sessionId\":\"reported\"}",
+  "argvHash": "sha256:ff4793fa4184418fe97b85192f2c6aef6895dc3bdbada172ce8ac1353b0e9800"
+}

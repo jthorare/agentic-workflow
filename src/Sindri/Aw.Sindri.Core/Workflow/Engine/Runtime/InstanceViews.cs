@@ -177,9 +177,15 @@ public static class InstanceViews
             commands.Add(new("CompleteStep", CompleteCli(address, task)));
         }
 
-        commands.Add(instance.Suspension is { Kind: SuspensionKind.Takeover }
-            ? new("ApplyCommand:handback", $"sindri workflow handback {address}")
-            : new("ApplyCommand:takeover", $"sindri workflow takeover {address}"));
+        if (instance.Suspension is { Kind: SuspensionKind.Takeover })
+        {
+            commands.Add(new("ApplyCommand:handback", $"sindri workflow handback {address}"));
+        }
+        else if (instance.Suspension is not { Kind: SuspensionKind.Park, ParkKind: ParkKind.Revoked })   // spec 6.4: a revoked park offers only cancel
+        {
+            commands.Add(new("ApplyCommand:takeover", $"sindri workflow takeover {address}"));
+        }
+
         commands.Add(new("ApplyCommand:cancel", $"sindri workflow cancel {address}"));
         return commands;
     }

@@ -45,7 +45,7 @@ internal sealed class FakeEngineRules : IEngineRules
 
     public Result<WorkflowInstance> TakeOver(WorkflowInstance instance, string actor) => Suspend(instance, new Suspension(
         SuspensionKind.Takeover, Reason: null, ParkKind: null, Escalation: null, "taken over", actor, Mirrors: null,
-        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effect: null)));
+        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effects: [])));
 
     public WorkflowInstance Cancel(WorkflowInstance instance) => instance with
     {
@@ -82,7 +82,7 @@ internal sealed class FakeEngineRules : IEngineRules
         return new BudgetVerdict(spent, BudgetExhausted
             ? new Suspension(
                 SuspensionKind.Park, ParkReason.Budget, ParkKind.Step, Escalation: null, "budget spent", "service:test", Mirrors: null,
-                new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effect: null))
+                new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effects: []))
             : null);
     }
 
@@ -113,18 +113,18 @@ internal sealed class FakeEngineRules : IEngineRules
     {
         ChildChange.Parked => new ParentEffect(ParentEffectKind.MirrorPark, new Suspension(
             SuspensionKind.Park, change.Reason, ParkKind: null, Escalation: null, change.Question ?? string.Empty, change.Actor, change.Child,
-            new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effect: null))),
+            new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effects: []))),
         ChildChange.Resumed => new ParentEffect(ParentEffectKind.Release, Suspend: null),
         ChildChange.Escalated or _ => new ParentEffect(ParentEffectKind.Ignore, Suspend: null),
     };
 
-    public WorkflowInstance Release(WorkflowInstance parent, WorkflowInstanceId child) =>
-        parent.Suspension?.Mirrors == child ? parent with { Suspension = parent.PendingPark, PendingPark = null } : parent;
+    public ParentReleased Release(WorkflowInstance parent, WorkflowInstanceId child) =>
+        new(parent.Suspension?.Mirrors == child ? parent with { Suspension = parent.PendingPark, PendingPark = null } : parent);
 
     public InstanceDelta Delta(WorkflowInstance? before, WorkflowInstance after) =>
         new(after.Frame, after.Suspension, after.PendingPark, after.Loops, after.Spent, after.Facts, after.Outcome);
 
     private static Suspension LoopPark(ParkReason reason) => new(
         SuspensionKind.Park, reason, ParkKind.Loop, Escalation: null, "loop", "service:test", Mirrors: null,
-        new ResumeAction(ResumeKind.Transition, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Transition, Withheld: null, Gate: null, Effects: []));
 }

@@ -1,0 +1,16 @@
+{
+  "note": "an added entry whose mcp and resume are both absent: the hash uses the defaults resume null and mcp none (same canonical text and hash as aider-added.json)",
+  "absent": ["mcp", "resume"],
+  "entry": {
+    "label": "Aider",
+    "bin": "/usr/local/bin/aider",
+    "open": [
+      "{bin}",
+      "--message",
+      "{seed}"
+    ],
+    "sessionId": "none"
+  },
+  "canonical": "{\"bin\":\"aider\",\"mcp\":\"none\",\"open\":[\"{bin}\",\"--message\",\"{seed}\"],\"resume\":null,\"sessionId\":\"none\"}",
+  "argvHash": "sha256:4d9cb60d34ce5af39badb06be033735bb071d7d6537c4d72114c85db0576bf81"
+}

@@ -53,8 +53,8 @@ internal sealed class ApiRunHarness
     {
         var service = new ValidatingService<ApiRunRequest, ApiRunResponse>(
             new ApiRunService(
-                new ApiRunFiles(Files, Scrubber, TestJson.Options),
-                new ApiVetting(Settings, new FakeSecrets(Environment), new ApiRunFiles(Files, Scrubber, TestJson.Options), Targets, Locator),
+                new DataRunFiles(Files, Scrubber, TestJson.Options),
+                new ApiVetting(Settings, new FakeSecrets(Environment), new DataRunFiles(Files, Scrubber, TestJson.Options), Targets, Locator),
                 new RequestRunner(Transport), new CallRunner(Cli), Locks, Clock, Ids), new ApiRunValidator());
         return service.Handle(request ?? Request(), TestContext.Current.CancellationToken);
     }

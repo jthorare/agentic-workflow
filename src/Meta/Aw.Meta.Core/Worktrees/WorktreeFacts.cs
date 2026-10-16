@@ -42,6 +42,9 @@ internal sealed record WorktreeFacts
     /// <summary>The live processes with their working directory or an open file inside it.</summary>
     public IReadOnlyList<ProcessLocation> Occupants { get; init; } = [];
 
+    /// <summary>Whether the directory or one of its files (top two levels, build output left out) changed after the last sweep started.</summary>
+    public bool ChangedSinceSweep { get; init; }
+
     /// <summary>The number of the pull request whose head branch this is.</summary>
     public int? PrNumber { get; init; }
 

@@ -1,0 +1,82 @@
+{
+  "rows": [
+    {
+      "id": "decision:DEC-00000000000000000000000000000019",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000019"
+      },
+      "item": null,
+      "title": "Split the checkout work into two items.",
+      "reason": "re-scope request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000019 accept"
+    },
+    {
+      "id": "failure:service:heartbeat",
+      "kind": "failure",
+      "label": "failure · heartbeat",
+      "subject": {
+        "kind": "service",
+        "id": "heartbeat"
+      },
+      "item": null,
+      "title": "heartbeat failed",
+      "reason": "SND-SCHED-001: A background service failed",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RunService",
+      "actions": [
+        "RunService",
+        "PauseService"
+      ],
+      "cli": "sindri status"
+    },
+    {
+      "id": "profile:drift",
+      "kind": "profile",
+      "label": "profile · drifted",
+      "subject": {
+        "kind": "profile",
+        "id": "932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a"
+      },
+      "item": null,
+      "title": "The profile changed since approval",
+      "reason": "1 key path changed: services.scorer.every",
+      "repo": null,
+      "urgency": "calm",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "ApproveProfile",
+      "actions": [
+        "ApproveProfile"
+      ],
+      "cli": "sindri profile approve 932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a"
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 8,
+    "ledgerHead": 8,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

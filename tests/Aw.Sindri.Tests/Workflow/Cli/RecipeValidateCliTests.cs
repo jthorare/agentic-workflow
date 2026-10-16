@@ -3,9 +3,12 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,6 +69,30 @@ public sealed class RecipeValidateCliTests : IDisposable
 
         Assert.Contains("\ninformation: RCP-RES-001: resource 'slot' has no allocator in this build", "\n" + run.Stdout, StringComparison.Ordinal);
         Assert.Contains("\nskipped: RCP-EFFECT-001: effect 'effect.claim.ref'", "\n" + run.Stdout, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "integration")]
+    [InlineData("effect.notify.desk", 1, "\nRCP-EFFECT-001: effect 'effect.claim.ref' isn't on the profile's effect allowlist")]
+    [InlineData("", 1, "\nRCP-EFFECT-001: effect 'effect.claim.ref' isn't on the profile's effect allowlist")]
+    [InlineData("effect.claim.ref", 0, null)]
+    public async Task The_effect_check_reads_the_approved_profiles_allowlist_and_skips_only_without_the_key(string allowed, int exit, string? finding)
+    {
+        var profiles = new InMemoryProfiles();
+        var profile = new SindriProfile(1, "dev", Workflow: new WorkflowSettings(Effects: allowed.Length == 0 ? [] : [allowed]));
+        _ = await profiles.Save(new LoadedProfile(profile, ProfileHash.From(new string('c', 64)), "/home/profile.yaml"), TestContext.Current.CancellationToken);
+
+        var run = await RunWith(services => services.AddSingleton<IApprovedProfile>(profiles), "validate", PutShipped("workflow.item"));
+
+        Assert.Equal(exit, run.Exit);
+        Assert.DoesNotContain("skipped: RCP-EFFECT-001", run.Stdout, StringComparison.Ordinal);
+        if (finding is null)
+        {
+            Assert.DoesNotContain("RCP-EFFECT-001", run.Stdout, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Contains(finding, "\n" + run.Stdout, StringComparison.Ordinal);
+        }
     }
 
     [Fact, Trait("Lane", "integration")]

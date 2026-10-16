@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Workflow;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -16,7 +17,7 @@ namespace Aw.Sindri.Features.StartInstance;
 /// address; taken over when a launch is still requested for the item (UI spec E-19), so automation never runs beside a
 /// session that's opening. Without '--attempt' the attempt is the latest one, or 1: a live one is returned as it is, an ended one is
 /// shown with the hint to start the next. '--attempt next' is the one after the latest, refused while that one is
-/// live (SND-WF-012).
+/// live, or while the item's claim ('workflow_claims', engine P6 unit (d)) is held by a live instance (SND-WF-012).
 /// </summary>
 /// <param name="items">Resolves the item.</param>
 /// <param name="recipes">The approved recipes.</param>
@@ -24,7 +25,8 @@ namespace Aw.Sindri.Features.StartInstance;
 /// <param name="facts">Where the input facts are stored.</param>
 /// <param name="runtime">The instances on Temporal.</param>
 /// <param name="launches">The item's launches (UI spec E-19): one still requested starts the instance taken over.</param>
-internal sealed class StartInstanceService(IItems items, IApprovedRecipes recipes, IInstanceDirectory directory, IFactStore facts, IInstanceRuntime runtime, ILaunchRequests launches)
+/// <param name="claims">The item claims and their holders' liveness, for '--attempt next'.</param>
+internal sealed class StartInstanceService(IItems items, IApprovedRecipes recipes, IInstanceDirectory directory, IFactStore facts, IInstanceRuntime runtime, ILaunchRequests launches, ClaimHolders claims)
     : IService<StartInstanceRequest, StartInstanceResponse>
 {
     /// <summary>The tenant and ring every start runs under until the profile names them (S1-D11).</summary>
@@ -49,9 +51,10 @@ internal sealed class StartInstanceService(IItems items, IApprovedRecipes recipe
         }
 
         var plan = Plan(request.NextAttempt, latest.Value);
-        if (plan.IsError)
+        var refused = plan.IsError ? plan.Error : request.NextAttempt ? await HeldElsewhere(item.Id, cancellationToken).ConfigureAwait(false) : null;
+        if (refused is not null)
         {
-            return plan.Error;
+            return refused;
         }
 
         if (plan.Value.Ended is { } ended)
@@ -97,6 +100,16 @@ internal sealed class StartInstanceService(IItems items, IApprovedRecipes recipe
         (false, { } running) => new AttemptPlan(running.Attempt, Ended: null, Existing: true),
         (false, null) => new AttemptPlan(1, Ended: null, Existing: false),
     };
+
+    /// <summary>SND-WF-012 on the claim (spec §5.1): a live instance holds the item, so no next attempt starts; null when none does.</summary>
+    private async ValueTask<Error?> HeldElsewhere(ItemKey item, CancellationToken cancellationToken)
+    {
+        var held = await claims.LiveHolder(item, cancellationToken).ConfigureAwait(false);
+        return held.IsError ? held.Error
+            : held.Value is { } holder ? WorkflowErrors.EarlierAttemptLive.With(
+                $"{holder.Owner.Value} holds the claim on {item.Value} and is still live (fix: finish it, or sindri workflow cancel {holder.Owner.Value}, then start --attempt next)")
+            : null;
+    }
 
     /// <summary>What a start needs before it looks at the attempts: facts within 1 MiB, the item, 'fact:item' naming it, the approved recipe, and every input it declares.</summary>
     private async ValueTask<Result<(ResolvedItem Item, ApprovedRecipe Recipe)>> Prepare(StartInstanceRequest request, CancellationToken cancellationToken)

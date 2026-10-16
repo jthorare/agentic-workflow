@@ -298,7 +298,7 @@
       "method": "POST",
       "route": "/sindri/decisions/{decisionId}",
       "cli": "sindri decide <decisionId> <choice> [--note <note>]",
-      "ui": "pending:P4",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null
@@ -316,7 +316,7 @@
       "method": "POST",
       "route": "/sindri/requests",
       "cli": "sindri request <kind> [--item <itemId>] <text>",
-      "ui": "pending:P4",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null

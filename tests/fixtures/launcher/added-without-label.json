@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "agents": {
+    "aider": {
+      "bin": "aider",
+      "open": [
+        "{bin}"
+      ],
+      "sessionId": "none"
+    }
+  }
+}

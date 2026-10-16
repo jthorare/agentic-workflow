@@ -25,6 +25,7 @@ internal static class ApiScenarios
         .. ContextApiScenarios.Rows,
         .. ViewScenarios.All,
         .. ItemScenarios.All,
+        .. RequestScenarios.All,
         .. StreamScenarios.All,
     ];
 
@@ -38,7 +39,7 @@ internal static class ApiScenarios
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
 
     /// <summary>The live profile the scenario's host starts with: the item scenarios need two repos.</summary>
-    public static string ProfileYaml(string slug, string scenario) => ItemScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
+    public static string ProfileYaml(string slug, string scenario) => ItemScenarios.Handles(slug, scenario) || RequestScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
@@ -49,19 +50,9 @@ internal static class ApiScenarios
         }
 
         var token = host.Token.Value;
-        if (ItemScenarios.Handles(slug, scenario))
+        if (Delegated(host, slug, scenario, ct) is { } delegated)
         {
-            return await ItemScenarios.Body(host, slug, scenario, ct);
-        }
-
-        if (StreamScenarios.Handles(slug, scenario))
-        {
-            return await StreamScenarios.Body(host, slug, scenario, ct);
-        }
-
-        if (ViewScenarios.Handles(slug, scenario))
-        {
-            return await ViewScenarios.Body(host, slug, scenario, ct);
+            return await delegated();
         }
 
         return (slug, scenario) switch
@@ -83,6 +74,14 @@ internal static class ApiScenarios
             _ => await ApproveScenario(host, scenario, ct),
         };
     }
+
+    /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>
+    private static Func<Task<string>>? Delegated(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        ItemScenarios.Handles(slug, scenario) ? () => ItemScenarios.Body(host, slug, scenario, ct)
+        : RequestScenarios.Handles(slug, scenario) ? () => RequestScenarios.Body(host, slug, scenario, ct)
+        : StreamScenarios.Handles(slug, scenario) ? () => StreamScenarios.Body(host, slug, scenario, ct)
+        : ViewScenarios.Handles(slug, scenario) ? () => ViewScenarios.Body(host, slug, scenario, ct)
+        : null;
 
     private static (string Name, string Value)[] Session => [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli")];
 

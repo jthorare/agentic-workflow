@@ -29,7 +29,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Services(profile.Services) ?? Durations(profile.Workflow) ?? Globs(profile);
+        var invalid = Services(profile.Services) ?? Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Globs(profile);
         if (invalid is not null)
         {
             return invalid;
@@ -139,6 +139,27 @@ public static class ProfileRules
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The effect keys (S1-D11, engine P6): each 'workflow.effects' entry is an 'effect.*' block id, and
+    /// 'workflow.dispatchDelay' reads like a service cadence (seconds allowed, 5s to 24h).
+    /// </summary>
+    private static Error? Effects(WorkflowSettings? workflow)
+    {
+        var effects = workflow?.Effects ?? [];
+        for (var i = 0; i < effects.Count; i++)
+        {
+            if (!EffectSettings.IsEffectId(effects[i]))
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"workflow.effects[{i}]"),
+                    $"'{effects[i]}' is not an effect id: 'effect.' and a block name (for example effect.notify.desk)");
+            }
+        }
+
+        return workflow?.DispatchDelay is { } delay && EffectSettings.Delay(delay) is null
+            ? Invalid("workflow.dispatchDelay", $"'{delay}' is not a delay: a whole number and s, m or h (for example 10s), from 5s to 24h")
+            : null;
     }
 
     private static Error Invalid(string keyPath, string problem) =>

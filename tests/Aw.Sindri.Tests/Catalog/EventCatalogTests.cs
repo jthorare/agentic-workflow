@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Infrastructure.Workflows;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Catalog;
 
@@ -30,6 +31,19 @@ public sealed class EventCatalogTests
         Assert.Null(handled.PublicPayload);
         Assert.All(EventCatalog.All.Where(e => e.Public), e => Assert.NotNull(e.PublicPayload));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_item_changing_state_invalidates_the_views_that_void_or_drop_rows_with_it()
+    {
+        // why: closing an item voids its decisions and requests and drops its needs-you rows
+        var invalidates = Assert.Single(EventCatalog.All, e => e.Type == EventTypes.ItemStateChanged).Invalidates;
+
+        Expect.Sequence([ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions], invalidates);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Approving_the_profile_invalidates_the_needs_you_view_that_drops_the_drift_row() =>
+        Assert.Contains(ApiViews.NeedsYou, Assert.Single(EventCatalog.All, e => e.Type == EventTypes.ProfileApproved).Invalidates, StringComparer.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(WorkflowEventType.Started, "workflow.started")]

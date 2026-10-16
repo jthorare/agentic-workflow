@@ -96,14 +96,20 @@ internal static class ViewScenarios
     private static async Task<string> Changed(GoldenHost host, CancellationToken ct)
     {
         await Approve(host, ct);
-        await File.WriteAllTextAsync(Path.Combine(host.Home, "profile", "profile.yaml"), GoldenHost.ProfileYaml + "  scorer: { every: 1h }\n", ct);
+        await Drift(host, GoldenHost.ProfileYaml, ct);
+        return await Read(host, "/sindri/profile");
+    }
+
+    /// <summary>Edits the live profile (a second service on top of <paramref name="baseYaml"/>), checks it, and lets the views catch up: the approved profile has drifted.</summary>
+    internal static async Task Drift(GoldenHost host, string baseYaml, CancellationToken ct)
+    {
+        await File.WriteAllTextAsync(Path.Combine(host.Home, "profile", "profile.yaml"), baseYaml + "  scorer: { every: 1h }\n", ct);
         await using (var scope = Service(host, out var grant))
         {
             _ = (await scope.ServiceProvider.GetRequiredService<IService<CheckProfileRequest, CheckProfileResponse>>().Handle(new CheckProfileRequest(grant), ct)).Value;
         }
 
         await CatchUp(host, ct);
-        return await Read(host, "/sindri/profile");
     }
 
     private static async Task<string> Rebuilding(GoldenHost host, string path, CancellationToken ct)

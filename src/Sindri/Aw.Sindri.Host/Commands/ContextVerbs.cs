@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Results;
@@ -108,7 +107,6 @@ internal sealed class ContextVerbs(ControlPlaneClient client, Output output)
 
         private static Kernel.Result<string> EncodedQuery(List<(string Key, string Value)> pairs)
         {
-            var query = new StringBuilder();
             foreach (var (key, value) in pairs)
             {
                 if (!QueryRules.FitsQueryUrl(value))
@@ -116,11 +114,9 @@ internal sealed class ContextVerbs(ControlPlaneClient client, Output output)
                     return ContextErrors.QueryInvalid.With(string.Create(CultureInfo.InvariantCulture,
                         $"{(key == "q" ? "the question" : "--" + key)} is over {QueryRules.MaxEncodedText} characters once percent-encoded for the query (shorten it)"));
                 }
-
-                _ = query.Append(query.Length == 0 ? '?' : '&').Append(key).Append('=').Append(Uri.EscapeDataString(value));
             }
 
-            return query.ToString();
+            return UrlQuery.Of(pairs.Select(static p => (p.Key, (string?)p.Value)));
         }
     }
 }

@@ -19,7 +19,8 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 /// <param name="approvals">The approvals and revocations.</param>
 /// <param name="catalog">This build's blocks, against which an approval's pins drift.</param>
 /// <param name="json">The package's AwJson options (they read the stored text and hash the descriptors).</param>
-public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals approvals, BlockCatalog catalog, JsonSerializerOptions json)
+/// <param name="profile">The approved profile's facts, whose 'workflow.effects' RCP-EFFECT-001 checks against (S1-D11).</param>
+public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals approvals, BlockCatalog catalog, JsonSerializerOptions json, IRecipeProfileFacts profile)
 {
     /// <summary>Every registered recipe's line, by id and then version.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -115,8 +116,8 @@ public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals ap
     }
 
     /// <summary>
-    /// What a served validation of <paramref name="recipe"/> checks against (spec §9.1): this build's catalog, no profile
-    /// facts (the effect allowlist arrives with P6, so RCP-EFFECT-001 is skipped), the registered children, the base when
+    /// What a served validation of <paramref name="recipe"/> checks against (spec §9.1): this build's catalog, the approved
+    /// profile's effect allowlist (RCP-EFFECT-001; skipped when none is approved or it has no 'workflow.effects'), the registered children, the base when
     /// the recipe names a registered one (a recipe naming an unregistered base is hand-written, RCP-CAP-004), and the
     /// registry view (RCP-VERSION-001, -002, RCP-CAP-003).
     /// </summary>
@@ -126,14 +127,15 @@ public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals ap
     public async ValueTask<Result<ValidationContext>> Validation(Recipe recipe, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(recipe);
-        var view = await View(cancellationToken).ConfigureAwait(false);
+        var facts = await profile.Current(cancellationToken).ConfigureAwait(false);
+        var view = facts.IsError ? facts.Error : await View(cancellationToken).ConfigureAwait(false);
         var children = view.IsError ? view.Error : await Children(cancellationToken).ConfigureAwait(false);
         var baseRecipe = children.IsError || recipe.Base is not { } named
             ? children.IsError ? children.Error : Results.Success<Recipe?>(value: null)
             : await Recipe(named.Hash, cancellationToken).ConfigureAwait(false);
         return baseRecipe.IsError
             ? baseRecipe.Error
-            : new ValidationContext(catalog, RecipeProfileFacts.None, children.Value, baseRecipe.Value) { Registry = view.Value };
+            : new ValidationContext(catalog, facts.Value, children.Value, baseRecipe.Value) { Registry = view.Value };
     }
 
     /// <summary>The recipe registered under <paramref name="hash"/>, read back (a generated recipe's base).</summary>

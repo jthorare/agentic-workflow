@@ -13,9 +13,11 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Items;
+using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Evals;
 using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -29,22 +31,28 @@ using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.EvalRecipe;
+using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetEventCatalog;
 using Aw.Sindri.Features.GetInstance;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
+using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
 using Aw.Sindri.Features.ListCommands;
+using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListInstances;
 using Aw.Sindri.Features.ListItems;
+using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListRecipes;
+using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
@@ -83,12 +91,21 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ItemStateChanged))]
 [JsonSerializable(typeof(ItemLinked))]
+[JsonSerializable(typeof(RequestFiled))]
+[JsonSerializable(typeof(RequestFiledPublic))]
+[JsonSerializable(typeof(DecisionRecorded))]
+[JsonSerializable(typeof(DecisionRecordedPublic))]
 [JsonSerializable(typeof(AsOf))]
 [JsonSerializable(typeof(ViewsStatus))]
 [JsonSerializable(typeof(ServiceRow))]
 [JsonSerializable(typeof(ProfileRow))]
 [JsonSerializable(typeof(ItemRow))]
 [JsonSerializable(typeof(AliasRow))]
+[JsonSerializable(typeof(RequestRow))]
+[JsonSerializable(typeof(HumanDecisionRow))]
+[JsonSerializable(typeof(NeedsYouRowRecord))]
+[JsonSerializable(typeof(NeedsYouRow))]
+[JsonSerializable(typeof(NeedsYouSubject))]
 [JsonSerializable(typeof(TimelineRow))]
 [JsonSerializable(typeof(HealthReport))]
 [JsonSerializable(typeof(CommandAccepted))]
@@ -124,6 +141,19 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListItemsResponse))]
 [JsonSerializable(typeof(GetItemRequest))]
 [JsonSerializable(typeof(ItemView))]
+[JsonSerializable(typeof(FileRequestRequest))]
+[JsonSerializable(typeof(RequestFiledResponse))]
+[JsonSerializable(typeof(DecideRequest))]
+[JsonSerializable(typeof(DecideBody))]
+[JsonSerializable(typeof(ListRequestsRequest))]
+[JsonSerializable(typeof(ListRequestsResponse))]
+[JsonSerializable(typeof(RequestView))]
+[JsonSerializable(typeof(ListDecisionsRequest))]
+[JsonSerializable(typeof(ListDecisionsResponse))]
+[JsonSerializable(typeof(DecisionView))]
+[JsonSerializable(typeof(OptionView))]
+[JsonSerializable(typeof(GetNeedsYouRequest))]
+[JsonSerializable(typeof(GetNeedsYouResponse))]
 [JsonSerializable(typeof(GetItemTimelineRequest))]
 [JsonSerializable(typeof(TimelineResponse))]
 [JsonSerializable(typeof(Recipe))]
@@ -138,6 +168,10 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(InstanceView))]
 [JsonSerializable(typeof(GetInstanceResponse))]
 [JsonSerializable(typeof(ListInstancesResponse))]
+[JsonSerializable(typeof(ListOutboxResponse))]   // engine P6 unit (c): outbox list
+[JsonSerializable(typeof(DeskNotice))]   // engine P6 unit (c): a line of notifications.jsonl
+[JsonSerializable(typeof(EffectRow))]            // engine P6: an effect's ledger row (§5.7)
+[JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 [JsonSerializable(typeof(GetInstanceEventsResponse))]
 [JsonSerializable(typeof(InstanceEventView))]
 [JsonSerializable(typeof(InstanceEventFields))]

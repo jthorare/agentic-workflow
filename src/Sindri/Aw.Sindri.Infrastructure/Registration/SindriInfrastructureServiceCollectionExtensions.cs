@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow;
+using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Infrastructure.Auth;
@@ -21,6 +22,7 @@ using Aw.Sindri.Infrastructure.Lease;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
+using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Text;
@@ -67,10 +69,14 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IRecipeWake, NoOpRecipeWake>()
             .AddSingleton<IRecipeStore, SqliteRecipeStore>()
             .AddSingleton<IRecipeApprovals, SqliteRecipeApprovals>()
+            .AddSingleton<IWorkflowClaims, SqliteWorkflowClaims>()   // engine P6 unit (d): workflow_claims in ledger.db
+            .AddSingleton<IClaimRefs, GitClaimRefs>()                // engine P6 unit (d): the claim's marker ref
             .AddSingleton<IChallenges, ProcessChallenges>()
             .AddSingleton(sp => HeavyLockSettings.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<IHeavySlots, DirectoryHeavySlots>()
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
+            .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
+            .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
             .AddSingleton(McpSettings.Read(environment))
             .AddSingleton<IClaudeCli, ProcessClaudeCli>()
             .AddSingleton<IProviderFiles, ProviderConfigFiles>()

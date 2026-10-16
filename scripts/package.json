@@ -1,0 +1,9 @@
+{
+  "name": "aw-scripts",
+  "private": true,
+  "description": "Dev dependencies of the node scripts under scripts/ that need a package (scripts/check-launcher.mjs). check-deps.mjs stays builtins-only.",
+  "type": "module",
+  "devDependencies": {
+    "ajv": "8.17.1"
+  }
+}

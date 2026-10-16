@@ -16,7 +16,7 @@ namespace Aw.Evidence.Features.ApiRun;
 /// input is a refusal (exit 1); a failure of the environment's I/O (an unreadable golden, a lock directory that cannot be made) is
 /// an errored run (exit 4).
 /// </summary>
-internal sealed class ApiRunService(ApiRunFiles files, ApiVetting vetting, RequestRunner requests, CallRunner calls, IMachineLocks locks, TimeProvider clock, IIdGenerator ids)
+internal sealed class ApiRunService(DataRunFiles files, ApiVetting vetting, RequestRunner requests, CallRunner calls, IMachineLocks locks, TimeProvider clock, IIdGenerator ids)
     : IService<ApiRunRequest, ApiRunResponse>
 {
     public async ValueTask<Result<ApiRunResponse>> Handle(ApiRunRequest request, CancellationToken cancellationToken)
@@ -67,7 +67,7 @@ internal sealed class ApiRunService(ApiRunFiles files, ApiVetting vetting, Reque
             await calls.RunAsync(vetted, collected, cancellationToken).ConfigureAwait(false);
         }
 
-        return await files.WriteSummaryAsync(run.Request.RunDirectory, Finished(run, vetted, collected), run.Scrubber, cancellationToken).ConfigureAwait(false);
+        return await WriteAsync(run, Finished(run, vetted, collected), cancellationToken).ConfigureAwait(false);
     }
 
     // An error of the input stops the run as a refusal (exit 1); a failure of the environment (unavailable) as an errored run (exit 4). No step ran either way.
@@ -77,7 +77,13 @@ internal sealed class ApiRunService(ApiRunFiles files, ApiVetting vetting, Reque
         var summary = stopped.Error.Kind == ErrorKind.Unavailable
             ? Compose(run, new SummaryParts(stopped.Script, stopped.Host, ApiOutcome.Errored, "errored: " + stopped.Error.Message, new Collected(run.Scrubber), Refusal: null, coded, []))
             : Compose(run, new SummaryParts(stopped.Script, stopped.Host, ApiOutcome.Refused, Number.Text($"refused: {stopped.Error.Code} {Number.ShortPaths(stopped.Error.Message)}"), new Collected(run.Scrubber), coded, Error: null, []));
-        return files.WriteSummaryAsync(run.Request.RunDirectory, summary, run.Scrubber, cancellationToken);
+        return WriteAsync(run, summary, cancellationToken);
+    }
+
+    private async ValueTask<Result<ApiRunResponse>> WriteAsync(RunFacts run, ApiSummary summary, CancellationToken cancellationToken)
+    {
+        var written = await files.WriteDocumentAsync(run.Request.RunDirectory, summary with { Refusal = DataRunFiles.Messaged(summary.Refusal, run.Scrubber), Error = DataRunFiles.Messaged(summary.Error, run.Scrubber) }, cancellationToken).ConfigureAwait(false);
+        return written.Map(static pair => new ApiRunResponse(pair.Summary, pair.Document));
     }
 
     private ApiSummary Finished(RunFacts run, VettedRun vetted, Collected collected)

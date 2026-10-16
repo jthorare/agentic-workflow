@@ -17,5 +17,6 @@ internal static class Composition
             .AddSingleton(AwJson.CreateOptions(EvidenceJsonContext.Default))   // the one Kernel JSON profile: output and run files
             .AddEvidenceCore()
             .AddEvidenceFeatures()
-            .AddEvidenceInfrastructure(environment);
+            .AddEvidenceInfrastructure(environment)
+            .AddEvidencePostgresInfrastructure();
 }

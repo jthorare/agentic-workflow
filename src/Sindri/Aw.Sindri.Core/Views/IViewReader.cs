@@ -33,6 +33,16 @@ public interface IViewReader
     public ValueTask<Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
         where TRow : class;
 
+    /// <summary>The rows of <paramref name="view"/> whose <paramref name="column"/> equals <paramref name="value"/>, ordered by key.</summary>
+    /// <typeparam name="TRow">The row record.</typeparam>
+    /// <param name="view">A <see cref="ViewNames"/> name.</param>
+    /// <param name="column">The column to match; the view must index it (the requests and decisions views: item, state, repo; the needs-you view: item, repo, kind).</param>
+    /// <param name="value">The value, in its wire form.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The rows, or SND-CLI-003 when <paramref name="view"/> doesn't index <paramref name="column"/>.</returns>
+    public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class;
+
     /// <summary>The projector_state row, or null when the views store doesn't exist (doctor reads it while stopped).</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The state, if any.</returns>

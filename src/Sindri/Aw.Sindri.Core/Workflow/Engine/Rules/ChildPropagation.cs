@@ -106,8 +106,8 @@ internal static class ChildPropagation
     /// <summary>Any change from a child first ends the suspension mirroring that child (spec §5.8), so a child that ends releases its parent.</summary>
     /// <param name="parent">The parent.</param>
     /// <param name="child">The child the change is from.</param>
-    /// <returns>The parent with nothing mirroring that child.</returns>
-    public static WorkflowInstance Release(WorkflowInstance parent, WorkflowInstanceId child) => ChildRelease.Release(parent, child);
+    /// <returns>The parent with nothing mirroring that child, and the effects its ended parks free to send.</returns>
+    public static ParentReleased Release(WorkflowInstance parent, WorkflowInstanceId child) => ChildRelease.Release(parent, child);
 
     /// <summary>Where an answer to the parent goes (spec §5.8): to the child its suspension mirrors; cancel and takeover act on the parent.</summary>
     /// <param name="parent">The parent.</param>
@@ -175,12 +175,12 @@ internal static class ChildPropagation
             return ParentEffectKind.Release;
         }
 
-        return parent.PendingPark?.Mirrors == child ? ParentEffectKind.Hold : ParentEffectKind.Ignore;
+        return Suspensions.PendingParks(parent).Any(p => p.Mirrors == child) ? ParentEffectKind.Hold : ParentEffectKind.Ignore;
     }
 
     private static ParentEffect Effect(ParentEffectKind kind) => new(kind, Suspend: null);
 
     private static Suspension Mirror(ChildChanged change, SuspensionKind kind, EscalationKind? escalation) => new(
         kind, kind == SuspensionKind.Park ? change.Reason : null, ParkKind: null, escalation, change.Question ?? string.Empty, change.Actor, change.Child,
-        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effects: []));
 }

@@ -107,12 +107,24 @@ public static class SindriErrors
     /// <summary>SND-ITEM-409: the item changed since the caller looked, or it is already closed (API spec §2.1).</summary>
     public static readonly ErrorDefinition ItemConflict = new("SND-ITEM-409", ErrorKind.Conflict, "The item changed since you looked");
 
+    /// <summary>SND-REQ-001: a request has an unknown kind, no text, or more than 2,000 characters (API spec §9).</summary>
+    public static readonly ErrorDefinition RequestInvalid = new("SND-REQ-001", ErrorKind.Invalid, "The request isn't valid");
+
+    /// <summary>SND-REQ-002: too many open requests in the repo (20) or in all (50) (API spec §4.2).</summary>
+    public static readonly ErrorDefinition RequestsRateLimited = new("SND-REQ-002", ErrorKind.RateLimited, "Too many open requests");
+
+    /// <summary>SND-DEC-404: no decision has that id, or a session caller may not see it.</summary>
+    public static readonly ErrorDefinition DecisionNotFound = new("SND-DEC-404", ErrorKind.NotFound, "No such decision");
+
+    /// <summary>SND-DEC-001: the choice isn't one of the decision's options, or the note is too long.</summary>
+    public static readonly ErrorDefinition DecisionInvalid = new("SND-DEC-001", ErrorKind.Invalid, "The decision's choice isn't valid");
+
     /// <summary>Every Sindri error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ProfileHashMismatch, ProfileNeedsTerminal,
         ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
-        InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
+        InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
     ];
 }

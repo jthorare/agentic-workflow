@@ -338,3 +338,41 @@ static Aw.Evidence.Features.ApiRun.ApiRunRequest.operator !=(Aw.Evidence.Feature
 static Aw.Evidence.Features.ApiRun.ApiRunRequest.operator ==(Aw.Evidence.Features.ApiRun.ApiRunRequest? left, Aw.Evidence.Features.ApiRun.ApiRunRequest? right) -> bool
 static Aw.Evidence.Features.ApiRun.ApiRunResponse.operator !=(Aw.Evidence.Features.ApiRun.ApiRunResponse? left, Aw.Evidence.Features.ApiRun.ApiRunResponse? right) -> bool
 static Aw.Evidence.Features.ApiRun.ApiRunResponse.operator ==(Aw.Evidence.Features.ApiRun.ApiRunResponse? left, Aw.Evidence.Features.ApiRun.ApiRunResponse? right) -> bool
+Aw.Evidence.Features.DbRun.DbRunRequest
+Aw.Evidence.Features.DbRun.DbRunRequest.<Clone>$() -> Aw.Evidence.Features.DbRun.DbRunRequest!
+Aw.Evidence.Features.DbRun.DbRunRequest.AppBuild.get -> string?
+Aw.Evidence.Features.DbRun.DbRunRequest.AppBuild.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.At.get -> Aw.Evidence.Core.Data.DataRunAt
+Aw.Evidence.Features.DbRun.DbRunRequest.At.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.ConfigPath.get -> string?
+Aw.Evidence.Features.DbRun.DbRunRequest.ConfigPath.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.DbRunRequest(string! ScriptPath, string! RunDirectory, Aw.Evidence.Core.Data.DataRunAt At, System.TimeSpan LockTimeout, string! Repo, string? AppBuild = null, string? ConfigPath = null) -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.Deconstruct(out string! ScriptPath, out string! RunDirectory, out Aw.Evidence.Core.Data.DataRunAt At, out System.TimeSpan LockTimeout, out string! Repo, out string? AppBuild, out string? ConfigPath) -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.Equals(Aw.Evidence.Features.DbRun.DbRunRequest? other) -> bool
+Aw.Evidence.Features.DbRun.DbRunRequest.LockTimeout.get -> System.TimeSpan
+Aw.Evidence.Features.DbRun.DbRunRequest.LockTimeout.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.Repo.get -> string!
+Aw.Evidence.Features.DbRun.DbRunRequest.Repo.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.RunDirectory.get -> string!
+Aw.Evidence.Features.DbRun.DbRunRequest.RunDirectory.init -> void
+Aw.Evidence.Features.DbRun.DbRunRequest.ScriptPath.get -> string!
+Aw.Evidence.Features.DbRun.DbRunRequest.ScriptPath.init -> void
+Aw.Evidence.Features.DbRun.DbRunResponse
+Aw.Evidence.Features.DbRun.DbRunResponse.<Clone>$() -> Aw.Evidence.Features.DbRun.DbRunResponse!
+Aw.Evidence.Features.DbRun.DbRunResponse.DbRunResponse(Aw.Evidence.Core.Data.DbSummary! Summary, string! Document) -> void
+Aw.Evidence.Features.DbRun.DbRunResponse.Deconstruct(out Aw.Evidence.Core.Data.DbSummary! Summary, out string! Document) -> void
+Aw.Evidence.Features.DbRun.DbRunResponse.Document.get -> string!
+Aw.Evidence.Features.DbRun.DbRunResponse.Document.init -> void
+Aw.Evidence.Features.DbRun.DbRunResponse.Equals(Aw.Evidence.Features.DbRun.DbRunResponse? other) -> bool
+Aw.Evidence.Features.DbRun.DbRunResponse.Summary.get -> Aw.Evidence.Core.Data.DbSummary!
+Aw.Evidence.Features.DbRun.DbRunResponse.Summary.init -> void
+override Aw.Evidence.Features.DbRun.DbRunRequest.Equals(object? obj) -> bool
+override Aw.Evidence.Features.DbRun.DbRunRequest.GetHashCode() -> int
+override Aw.Evidence.Features.DbRun.DbRunRequest.ToString() -> string!
+override Aw.Evidence.Features.DbRun.DbRunResponse.Equals(object? obj) -> bool
+override Aw.Evidence.Features.DbRun.DbRunResponse.GetHashCode() -> int
+override Aw.Evidence.Features.DbRun.DbRunResponse.ToString() -> string!
+static Aw.Evidence.Features.DbRun.DbRunRequest.operator !=(Aw.Evidence.Features.DbRun.DbRunRequest? left, Aw.Evidence.Features.DbRun.DbRunRequest? right) -> bool
+static Aw.Evidence.Features.DbRun.DbRunRequest.operator ==(Aw.Evidence.Features.DbRun.DbRunRequest? left, Aw.Evidence.Features.DbRun.DbRunRequest? right) -> bool
+static Aw.Evidence.Features.DbRun.DbRunResponse.operator !=(Aw.Evidence.Features.DbRun.DbRunResponse? left, Aw.Evidence.Features.DbRun.DbRunResponse? right) -> bool
+static Aw.Evidence.Features.DbRun.DbRunResponse.operator ==(Aw.Evidence.Features.DbRun.DbRunResponse? left, Aw.Evidence.Features.DbRun.DbRunResponse? right) -> bool

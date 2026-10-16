@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "viewer": {
+    "kind": "exec-template",
+    "name": "GNOME Terminal",
+    "argv": [
+      "gnome-terminal",
+      "--title={title}",
+      "--working-directory={cwd}",
+      "--",
+      "{cmd...}"
+    ]
+  }
+}

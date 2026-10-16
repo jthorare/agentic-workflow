@@ -78,6 +78,23 @@ internal sealed class SqliteViewRows(ISqliteSession session, long sequence, Json
         return Decode<TRow>(texts);
     }
 
+    public async ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class
+    {
+        if (ViewSql.Table(view) is not { } table)
+        {
+            return Unknown(view);
+        }
+
+        if (table.SelectWhere(column) is not { } sql)
+        {
+            return SindriErrors.InvalidInput.With($"The '{view}' view doesn't index {column}");
+        }
+
+        var texts = await SqliteQueries.List(session, new SqlStatement(sql, c => c.Bind("$value", value)), RowJsonMapper.Instance, cancellationToken).ConfigureAwait(false);
+        return Decode<TRow>(texts);
+    }
+
     private Result<IReadOnlyList<TRow>> Decode<TRow>(Result<IReadOnlyList<string>> texts)
         where TRow : class
     {

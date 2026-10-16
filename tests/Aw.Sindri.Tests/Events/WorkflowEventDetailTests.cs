@@ -35,7 +35,7 @@ public sealed class WorkflowEventDetailTests
     [Fact]
     public void A_park_row_names_its_reason_and_never_the_question()
     {
-        var parked = new Suspension(SuspensionKind.Park, ParkReason.Budget, ParkKind.Loop, Escalation: null, "the secret question text", "service:engine", Mirrors: null, new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effect: null));
+        var parked = new Suspension(SuspensionKind.Park, ParkReason.Budget, ParkKind.Loop, Escalation: null, "the secret question text", "service:engine", Mirrors: null, new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effects: []));
         var recorded = Event(WorkflowEventType.Transition, "step.completed", delta: new InstanceDelta(Frame: null, parked, PendingPark: null, Loops: null, Spent: null, Facts: null, Outcome: null));
 
         var detail = WorkflowEventDetail.Of(recorded, Report());

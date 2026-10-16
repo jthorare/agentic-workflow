@@ -1,0 +1,29 @@
+{
+  "id": "ITM-0000000000000000000000000000000e",
+  "title": "Try the queue",
+  "repo": "demo",
+  "state": "new",
+  "step": null,
+  "since": "2026-01-01T00:00:00.0000000Z",
+  "primaryAction": null,
+  "actions": [
+    "CloseItem:done",
+    "CloseItem:cancelled"
+  ],
+  "owner": null,
+  "version": 1,
+  "createdBy": "human:cli",
+  "waitingOn": null,
+  "instance": null,
+  "createdAt": "2026-01-01T00:00:00.0000000Z",
+  "updatedAt": "2026-01-01T00:00:00.0000000Z",
+  "body": null,
+  "link": null,
+  "asOf": {
+    "cursor": 10,
+    "ledgerHead": 10,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

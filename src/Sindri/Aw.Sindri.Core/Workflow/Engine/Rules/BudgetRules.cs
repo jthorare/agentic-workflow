@@ -117,7 +117,7 @@ internal static class BudgetRules
     /// <summary>A budget park from a Step report (kind step): its answer re-runs the Step under the raised allowance (§5.8).</summary>
     private static Suspension BudgetPark(string question) => new(
         SuspensionKind.Park, ParkReason.Budget, ParkKind.Step, Escalation: null, question, Actor: string.Empty, Mirrors: null,
-        new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effects: []));
 
     /// <summary>A token count as recipes write it: '200k', '1M', or the plain number.</summary>
     private static string Tokens(int count) => count switch

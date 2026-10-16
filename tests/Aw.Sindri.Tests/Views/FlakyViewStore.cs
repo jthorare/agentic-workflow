@@ -55,6 +55,11 @@ internal sealed class FlakyViewStore(InMemoryViewStore inner) : IViewStore, IVie
             ? ValueTask.FromResult<Result<IReadOnlyList<TRow>>>(Unreadable)
             : inner.Range<TRow>(view, afterKey, beforeKey, max, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class => FailReads
+            ? ValueTask.FromResult<Result<IReadOnlyList<TRow>>>(Unreadable)
+            : inner.Where<TRow>(view, column, value, cancellationToken);
+
     public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) =>
         FailReads ? ValueTask.FromResult<Result<ProjectorState?>>(Unreadable) : inner.State(cancellationToken);
 

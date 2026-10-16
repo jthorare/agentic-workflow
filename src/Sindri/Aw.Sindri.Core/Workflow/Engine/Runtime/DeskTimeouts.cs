@@ -29,7 +29,7 @@ public static class DeskTimeouts
     /// <returns>The park.</returns>
     internal static Suspension TimeoutPark(string state, TimeSpan after, string actor) => new(
         SuspensionKind.Park, ParkReason.Timeout, ParkKind: null, Escalation: null, RanPast(state, after), actor, Mirrors: null,
-        new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effects: []));
 
     /// <summary>What a timeout park or escalation says (spec §3.8): '{state} ran past {after}'.</summary>
     internal static string RanPast(string state, TimeSpan after) => $"{state} ran past {Text(after)}";

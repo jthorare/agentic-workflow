@@ -2,8 +2,23 @@
   "groups": [
     {
       "group": "waitingOnYou",
-      "items": [],
-      "empty": "Nothing is waiting on you."
+      "items": [
+        {
+          "id": "ITM-00000000000000000000000000000013",
+          "title": "Item 2",
+          "repo": "demo",
+          "state": "needs-decision",
+          "step": null,
+          "since": "2026-01-01T00:00:00.0000000Z",
+          "primaryAction": null,
+          "actions": [
+            "CloseItem:done",
+            "CloseItem:cancelled"
+          ],
+          "owner": null
+        }
+      ],
+      "empty": null
     },
     {
       "group": "withYou",
@@ -21,20 +36,6 @@
         {
           "id": "ITM-0000000000000000000000000000000e",
           "title": "Item 1",
-          "repo": "demo",
-          "state": "new",
-          "step": null,
-          "since": "2026-01-01T00:00:00.0000000Z",
-          "primaryAction": null,
-          "actions": [
-            "CloseItem:done",
-            "CloseItem:cancelled"
-          ],
-          "owner": null
-        },
-        {
-          "id": "ITM-00000000000000000000000000000013",
-          "title": "Item 2",
           "repo": "demo",
           "state": "new",
           "step": null,
@@ -80,8 +81,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 12,
-    "ledgerHead": 12,
+    "cursor": 14,
+    "ledgerHead": 14,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

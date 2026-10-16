@@ -32,7 +32,15 @@ internal static class ViewSql
         [ViewNames.Items] = new ViewTable("view_items"),
         [ViewNames.ItemAliases] = new ViewTable("view_item_aliases"),
         [ViewNames.ItemTimeline] = new ViewTable("view_item_timeline"),
+        [ViewNames.Requests] = new ViewTable("view_requests", Columns(ViewNames.Requests)),
+        [ViewNames.Decisions] = new ViewTable("view_decisions", Columns(ViewNames.Decisions)),
+        [ViewNames.NeedsYou] = new ViewTable("view_needs_you", Columns(ViewNames.NeedsYou)),
     };
+
+    /// <summary>The columns migration 0003 generates for <paramref name="view"/>: the ones <see cref="ViewColumns"/> maps, named after the column.</summary>
+    private static Dictionary<ViewColumn, string> Columns(string view) =>
+        Enum.GetValues<ViewColumn>().Where(column => ViewColumns.JsonPath(view, column) is not null)
+            .ToDictionary(static column => column, static column => column.ToString().ToLowerInvariant());
 
     /// <summary>The table behind <paramref name="view"/>, or null when it isn't a view.</summary>
     /// <param name="view">A <see cref="ViewNames"/> name.</param>

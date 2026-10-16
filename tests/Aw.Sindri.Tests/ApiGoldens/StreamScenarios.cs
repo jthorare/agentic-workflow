@@ -105,7 +105,7 @@ internal static class StreamScenarios
     }
 
     /// <summary>The data of each frame the stream sends for the request, as a JSON array: reads until the stream has been quiet for a moment (the clock is frozen, so no ping comes).</summary>
-    private static async Task<string> Frames(GoldenHost host, string route, (string Name, string Value)[] headers, CancellationToken ct)
+    internal static async Task<string> Frames(GoldenHost host, string route, (string Name, string Value)[] headers, CancellationToken ct)
     {
         using var response = await host.Http.SendAsync(Get(route, headers), HttpCompletionOption.ResponseHeadersRead, ct);
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);

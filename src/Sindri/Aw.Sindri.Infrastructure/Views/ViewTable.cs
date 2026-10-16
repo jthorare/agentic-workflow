@@ -1,9 +1,18 @@
+using Aw.Sindri.Core.Views;
+
 namespace Aw.Sindri.Infrastructure.Views;
 
 /// <summary>One view's table and its statements; <paramref name="Name"/> comes only from <see cref="ViewSql"/>'s fixed map.</summary>
 /// <param name="Name">The table name.</param>
-internal sealed record ViewTable(string Name)
+/// <param name="Columns">The indexed columns a read can filter by, by <see cref="ViewColumn"/>; empty when the view has none.</param>
+internal sealed record ViewTable(string Name, IReadOnlyDictionary<ViewColumn, string>? Columns = null)
 {
+    /// <summary>The statement that selects the rows whose <paramref name="column"/> equals <c lang="sql">$value</c>, or null when the table doesn't index it.</summary>
+    /// <param name="column">The column.</param>
+    /// <returns>The SQL, built only from this table's fixed column names.</returns>
+    public string? SelectWhere(ViewColumn column) =>
+        Columns is not null && Columns.TryGetValue(column, out var name) ? $"SELECT row_json FROM {Name} WHERE {name} = $value ORDER BY key" : null;
+
     public string Select => $"SELECT row_json FROM {Name} WHERE key = $key";
 
     public string SelectAll => $"SELECT row_json FROM {Name} ORDER BY key";

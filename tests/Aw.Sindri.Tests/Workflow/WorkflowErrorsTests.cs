@@ -13,7 +13,7 @@ public sealed class WorkflowErrorsTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("SND-RECIPE", 10)]
-    [InlineData("SND-WF", 14)]
+    [InlineData("SND-WF", 15)]
     public void Every_code_of_an_area_is_live_or_retired_and_none_is_both(string area, int last)
     {
         var live = WorkflowErrors.All.Select(e => e.Code).Where(c => c.StartsWith(area + "-", StringComparison.Ordinal)).ToHashSet(StringComparer.Ordinal);
@@ -36,6 +36,7 @@ public sealed class WorkflowErrorsTests
     [InlineData("SND-WF-010", ErrorKind.Unavailable)]
     [InlineData("SND-WF-011", ErrorKind.Forbidden)]
     [InlineData("SND-WF-014", ErrorKind.Invalid)]
+    [InlineData("SND-WF-015", ErrorKind.Unavailable)]
     public void Each_code_has_the_spec_s_kind(string code, ErrorKind kind) =>
         Assert.Equal(kind, Assert.Single(WorkflowErrors.All, e => e.Code == code).Kind);
 }

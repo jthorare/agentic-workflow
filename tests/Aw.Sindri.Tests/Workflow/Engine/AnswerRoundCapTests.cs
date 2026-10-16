@@ -87,7 +87,7 @@ public sealed class AnswerRoundCapTests
         {
             Suspension = new Suspension(
                 SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Gate, "gate.test.model scored 0.5", "service:desk", Mirrors: null,
-                new ResumeAction(ResumeKind.Override, new WithheldTrigger(0, Failed()), gate, Effect: null)),
+                new ResumeAction(ResumeKind.Override, new WithheldTrigger(0, Failed()), gate, Effects: [])),
             PendingPark = BudgetPark,
         };
 
@@ -101,7 +101,7 @@ public sealed class AnswerRoundCapTests
     /// <summary>A budget park, as BudgetRules decides one from a Step report.</summary>
     internal static Suspension BudgetPark { get; } = new(
         SuspensionKind.Park, ParkReason.Budget, ParkKind.Step, Escalation: null, "budget spent", "service:test", Mirrors: null,
-        new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effect: null));
+        new ResumeAction(ResumeKind.Rerun, Withheld: null, Gate: null, Effects: []));
 
     private static void AssertParkedAtCap(Applied applied, WithheldTrigger withheld)
     {

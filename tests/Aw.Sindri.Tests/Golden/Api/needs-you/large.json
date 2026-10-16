@@ -1,0 +1,335 @@
+{
+  "rows": [
+    {
+      "id": "decision:DEC-00000000000000000000000000000011",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000011"
+      },
+      "item": null,
+      "title": "Request 1 for demo.",
+      "reason": "re-scope request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+    },
+    {
+      "id": "decision:DEC-0000000000000000000000000000001b",
+      "kind": "decision",
+      "label": "decision · add task",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000001b"
+      },
+      "item": null,
+      "title": "Request 2 for other.",
+      "reason": "add task request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000001b accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000025",
+      "kind": "decision",
+      "label": "decision · note",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000025"
+      },
+      "item": null,
+      "title": "Request 3 for demo.",
+      "reason": "note request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000025 accept"
+    },
+    {
+      "id": "decision:DEC-0000000000000000000000000000002f",
+      "kind": "decision",
+      "label": "decision · hand back",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000002f"
+      },
+      "item": null,
+      "title": "Request 4 for other.",
+      "reason": "hand back request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000002f accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000039",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000039"
+      },
+      "item": null,
+      "title": "Request 5 for demo.",
+      "reason": "re-scope request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000039 accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000043",
+      "kind": "decision",
+      "label": "decision · add task",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000043"
+      },
+      "item": null,
+      "title": "Request 6 for other.",
+      "reason": "add task request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000043 accept"
+    },
+    {
+      "id": "decision:DEC-0000000000000000000000000000004d",
+      "kind": "decision",
+      "label": "decision · note",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000004d"
+      },
+      "item": null,
+      "title": "Request 7 for demo.",
+      "reason": "note request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000004d accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000057",
+      "kind": "decision",
+      "label": "decision · hand back",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000057"
+      },
+      "item": null,
+      "title": "Request 8 for other.",
+      "reason": "hand back request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000057 accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000061",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000061"
+      },
+      "item": null,
+      "title": "Request 9 for demo.",
+      "reason": "re-scope request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000061 accept"
+    },
+    {
+      "id": "decision:DEC-0000000000000000000000000000006b",
+      "kind": "decision",
+      "label": "decision · add task",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000006b"
+      },
+      "item": null,
+      "title": "Request 10 for other.",
+      "reason": "add task request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000006b accept"
+    },
+    {
+      "id": "decision:DEC-00000000000000000000000000000075",
+      "kind": "decision",
+      "label": "decision · note",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-00000000000000000000000000000075"
+      },
+      "item": null,
+      "title": "Request 11 for demo.",
+      "reason": "note request from session:cli",
+      "repo": "demo",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000075 accept"
+    },
+    {
+      "id": "decision:DEC-0000000000000000000000000000007f",
+      "kind": "decision",
+      "label": "decision · hand back",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000007f"
+      },
+      "item": null,
+      "title": "Request 12 for other.",
+      "reason": "hand back request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000007f accept"
+    },
+    {
+      "id": "failure:service:heartbeat",
+      "kind": "failure",
+      "label": "failure · heartbeat",
+      "subject": {
+        "kind": "service",
+        "id": "heartbeat"
+      },
+      "item": null,
+      "title": "heartbeat failed",
+      "reason": "SND-SCHED-001: A background service failed",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RunService",
+      "actions": [
+        "RunService",
+        "PauseService"
+      ],
+      "cli": "sindri status"
+    },
+    {
+      "id": "profile:drift",
+      "kind": "profile",
+      "label": "profile · drifted",
+      "subject": {
+        "kind": "profile",
+        "id": "932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a"
+      },
+      "item": null,
+      "title": "The profile changed since approval",
+      "reason": "1 key path changed: services.scorer.every",
+      "repo": null,
+      "urgency": "calm",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "ApproveProfile",
+      "actions": [
+        "ApproveProfile"
+      ],
+      "cli": "sindri profile approve 932d876195e0684a7eef2cfb155d03297bc90219dd98257fb87549114040c79a"
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 30,
+    "ledgerHead": 30,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

@@ -211,7 +211,7 @@ packages:
     binPaths: [ui-evidence/dist/bin.js]
     files: [ui-evidence/runs, locks/heavy-job.lock, locks/qa-stack.lock]
     namespace: ui-evidence
-    note: "Playwright UI evidence; owns the box-wide heavy-job lock (AW_HEAVY_SLOTS slots, default 2: locks/heavy-job.lock and .2) and the one-slot QA-stack lock. In the C# build they sit behind Evidence's own Core port IMachineLocks, with a directory adapter (atomic mkdir, owner file) that interoperates with config/lib/locks.sh and the heavy wrapper. A tier-0 or tier-1 package can't take those locks (that would be an upward file edge, DEPS-TIER-002)"
+    note: "Playwright UI evidence and the db-run/api-run data evidence (third-party packages in Aw.Evidence.Infrastructure: Playwright for the browser, Npgsql 10.0.3 for a Postgres target, behind the IDatabaseReader port); owns the box-wide heavy-job lock (AW_HEAVY_SLOTS slots, default 2: locks/heavy-job.lock and .2) and the one-slot QA-stack lock. In the C# build they sit behind Evidence's own Core port IMachineLocks, with a directory adapter (atomic mkdir, owner file) that interoperates with config/lib/locks.sh and the heavy wrapper. A tier-0 or tier-1 package can't take those locks (that would be an upward file edge, DEPS-TIER-002)"
   - id: BugFix
     kind: package
     tier: 2
@@ -236,7 +236,7 @@ packages:
     files: [sindri-app/control.json, sindri-app/auth/human.token]
     namespace: sindri
     routes: [/sindri/]
-    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; ts: sindri (profile, ledger, scrub, observe, index, scope, evolve) is the reference and runs until the switch; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) and workflow engine P1 (the recipe model and validator, `sindri recipe validate`) are in src/Sindri; API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub)"
+    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; ts: sindri (profile, ledger, scrub, observe, index, scope, evolve) is the reference and runs until the switch; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) and workflow engine P1 (the recipe model and validator, `sindri recipe validate`) are in src/Sindri; API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text); P6 adds effects (EffectActivities: RecordEffect, RecheckEffect, RunEffect with the outbox retry policy, outbox.* rows), the registry wake (TemporalRecipeWake over the RecipeHash search attribute), effect.notify.desk (notifications.jsonl, digest, OS banner) and effect.claim.ref (git update-ref through GitClaimRefs)"
 
   # ---- tier 4 ----
   - id: SindriUi
@@ -275,7 +275,17 @@ packages:
     bins: [aw-meta]
     ts: null
     src: src/Meta
+    scan: [scripts/meta-launch.sh, scripts/meta-lane.sh, scripts/launcher-lib.sh]
     note: "aw-meta CLI for the /meta skill: the meta orchestrator's obligations (inbox/outbox), lane map, gate and merge runner, owner queue, health and running log; state under $AW_STATE_DIR/meta; a thin harness Sindri absorbs later"
+
+  - id: Launcher
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Launcher
+    ts: null
+    src: null
+    files: [launcher.json]
+    note: "the session launcher's machine file and its contract (spec 2026-10-15-sindri-session-launcher-design.md, SL-0): $AW_STATE_DIR/launcher.json is read by aw-meta-launch (bash, SL-1) and by the C# Sindri launcher (SL-2). The repo-side contract files are schemas/launcher.schema.json, config/launcher/builtins.json and config/launcher/terminals.json (shared fixtures: tests/fixtures/launcher); no C# code of its own, so no projects. The bash reader lives with its only user, Meta (scripts/launcher-lib.sh), and is declared by the Meta -> Launcher file edge"
 
 edges:
   # ---- current: found in the source today ----
@@ -472,6 +482,11 @@ edges:
     kind: project
     status: current
     note: "api-run summaries (bodies, stdout, expected and actual values, the whole document) are scrubbed before they are written (RedactionScrubber behind ITextScrubber; spec DT-E1, section 5.2 Secrets)"
+  - from: Evidence
+    to: KernelData
+    kind: project
+    status: current
+    note: "db-run opens SQLite evidence copies read-only through SqliteConnectionFactory (SqliteDatabaseReader); a Postgres target goes through Npgsql behind the same IDatabaseReader port (spec section 5.2)"
   - from: BugFix
     to: Kernel
     kind: project
@@ -588,6 +603,16 @@ edges:
     kind: file
     status: current
     note: "health lists who holds the box-wide heavy-job lock (locks/heavy-job.lock and its .k siblings, owner file's pid); it only reads them"
+  - from: Meta
+    to: Launcher
+    kind: file
+    status: current
+    note: "SL-1 (scripts/launcher-lib.sh, sourced by meta-launch.sh and meta-lane.sh; the scan reads those three scripts): aw-meta-launch (bash) reads $AW_STATE_DIR/launcher.json for its viewer and lanes' agents, with the key lists and placeholder set from x-aw-keys in schemas/launcher.schema.json and the built-in entries from config/launcher/builtins.json (and the terminal templates from config/launcher/terminals.json for --init-launcher)"
+  - from: Sindri
+    to: Launcher
+    kind: file
+    status: planned
+    note: "SL-2: Aw.Sindri.Infrastructure embeds config/launcher/builtins.json (a linked EmbeddedResource) and reads $AW_STATE_DIR/launcher.json, checked against schemas/launcher.schema.json by the shared fixtures in its tests"
 
 exceptions:
   - rule: DEPS-CYCLE-001

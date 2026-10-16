@@ -1,0 +1,10 @@
+{
+  "note": "resume: null is included in the hash",
+  "builtin": "codex",
+  "override": {
+    "override": true,
+    "resume": null
+  },
+  "canonical": "{\"bin\":\"codex\",\"mcp\":\"codex-overrides\",\"open\":[\"{bin}\",\"-C\",\"{cwd}\",\"{seed}\"],\"resume\":null,\"sessionId\":\"reported\"}",
+  "argvHash": "sha256:de05de1ab053c4d0c1ee0cc66688a11400c0342544559bcdbb29352b9a39943a"
+}

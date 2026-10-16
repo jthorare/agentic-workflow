@@ -18,6 +18,15 @@ public static class ViewNames
     /// <summary>Each item's timeline, keyed '&lt;itemId&gt;/&lt;sequence:D19&gt;'.</summary>
     public const string ItemTimeline = "item-timeline";
 
-    /// <summary>Every view.</summary>
-    public static IReadOnlyList<string> All { get; } = [Services, Profile, Items, ItemAliases, ItemTimeline];
+    /// <summary>Filed requests, keyed by request id (API P4).</summary>
+    public const string Requests = "requests";
+
+    /// <summary>Decisions, keyed by decision id (API P4).</summary>
+    public const string Decisions = "decisions";
+
+    /// <summary>The human's list, keyed by the row's id (API P4).</summary>
+    public const string NeedsYou = "needs_you";
+
+    /// <summary>Every view that has a table.</summary>
+    public static IReadOnlyList<string> All { get; } = [Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou];
 }

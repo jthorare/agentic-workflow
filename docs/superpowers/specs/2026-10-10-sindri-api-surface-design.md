@@ -418,7 +418,7 @@ catalog itself lands in P1. Every domain payload carries `commandId` (or the `se
 | `item.created` | item, title, repo, link?, body? (never public), owner? (reserved, README X61) | `item.created:<itemId>` | yes | P3 |
 | `item.state-changed` | item, from, to, version (the new one), reason? | `item.state-changed:<itemId>:v<version>` | yes | P3 |
 | `request.filed` | request, decision, kind, item?, repo? (the item's repo, else the session's `X-Sindri-Repo`), text (scrubbed, at most 2,000 characters) | `request.filed:<requestId>` | yes (text left out) | P4 |
-| `decision.recorded` | decision, choice, note?, by | `decision.recorded:<decisionId>` | yes | P4 |
+| `decision.recorded` | decision, choice, note?, by, repo? (the decision's repo, copied from its row) | `decision.recorded:<decisionId>` | yes (note left out; a human's ledger read keeps it) | P4 |
 | `job.started` | job, kind, item? | `job.started:<jobId>` | yes | P6 |
 | `service.ran` (manual) | as above; `slot` is the run's start time, and the key carries the job instead | `service.ran:<name>:manual:<jobId>` | yes | P6: a `RunService` job appends it when it ends, so a manual run updates `lastRun` and clears a failure row |
 | `job.progress` | job, round, line | `job.progress:<jobId>:<n>` | yes | P6 |
@@ -525,21 +525,22 @@ How items move through the states:
 |---|---|
 | `id` | A stable id, such as `decision:DEC-…` or `failure:service:heartbeat`. The UI keys focus and the "seen" pulse on it |
 | `kind` | `decision`, `park`, `failure` or `profile` |
-| `subject` | A reference to an item, decision, instance, job or service |
+| `subject` | `{kind, id}`: a reference to an item, decision, instance, job, service or profile. A `profile` row's subject is `{profile, <live hash>}` (owner decision, 2026-10-14) |
 | `title`, `reason` | Scrubbed text |
 | `repo?` | The repo the row belongs to |
 | `urgency` | `pulse`, `colour` or `calm` (dashboard spec §5.1) |
 | `since` | When the row appeared |
 | `recordedOnly` | Whether the decision is recorded only (before S2) |
+| `notice` | The sentence that says so, served by the API (`recorded; acted on once the workflow engine runs`) so no client keeps its own copy; `null` when `recordedOnly` is false. A `DecisionView` voided by closing its item carries the voided sentence (`voided: the item was closed`) in `notice` and `cleared` |
 | `answerKind` | For `park` rows: `text`, `resume`, `grant`, `grantTokens`, `accept` (with reject), or `cancel-only`, taken from the engine's resume action (engine §5.8), so the app shows the right control |
-| `primaryAction` | A catalog action id, or `copy:<cli>` for a `cli-only` row. Per kind: <ul><li>`decision` → `Decide`;</li><li>`park` → the engine's action id;</li><li>`failure` → `copy:sindri status` until P6, then `RunService`;</li><li>`profile` → `copy:sindri profile approve <hash>` (protected).</li></ul> |
+| `primaryAction` | A catalog action id (no P4 row is `cli-only`, so none serves `copy:<cli>`). Per kind: <ul><li>`decision` → `Decide`;</li><li>`park` → the engine's action id;</li><li>`failure` → `RunService` (`pending:P6` until the service runner lands, so the row's `actions` lists it as pending);</li><li>`profile` → `ApproveProfile` (protected: terminal-only, so the app copies the row's `cli`, `sindri profile approve <hash>`, instead of calling it).</li></ul> |
 | `cli` | The CLI form |
 
 **Rows by kind.** A filed request appears **once**, as its `decision` row; there is no separate request row.
 
 | Kind | Source | Urgency | Cleared when |
 |---|---|---|---|
-| `decision` | Pending decisions, including filed requests (P4) | `pulse` | `decision.recorded` |
+| `decision` | Pending decisions, including filed requests (P4) | `pulse` | `decision.recorded`, or the item closing (the decision is voided) |
 | `park` | Engine parks and gates, idle takeovers, and desk tasks (S2) | `pulse` | The engine resumes the instance, a `handback`, or `CompleteStep` |
 | `failure` | `service.ran` with `failed` (C8, P2) | `colour` | The service's next `service.ran` with `ok` (scheduled or manual), or a `profile.checked` whose approved service names no longer include the service (it was removed and approved) |
 | `profile` | `profile.checked` with `drifted: true` (C8, P2) | `calm` | The next `profile.checked` with `drifted: false`, after an approval or a revert |
@@ -550,7 +551,7 @@ How items move through the states:
 - Rows are ordered by urgency, then oldest first.
 
 **Empty, loading and error text.** One `EmptyText` table in `Core` holds the sentences for each list: its empty
-sentence (for example "Nothing is waiting on you. 3 running, 1 queued."), plus `rebuilding` ("Rebuilding views (cursor
+sentence (for example "Nothing needs you. 3 running, 1 queued."), plus `rebuilding` ("Rebuilding views (cursor
 N of M)…"), `stalled` ("Views are stalled at N: run `sindri views rebuild`") and, for a projector that can't run, "The views can't be updated (<code>: <detail>)" with `sindri views rebuild` or `sindri doctor` as its fix.
 - The CLI prints them, and every list view returns the right one in `empty`. The UI never keeps its own copy.
 - The CLI exits 1 (attention) when a view answers `rebuilding` or `stalled`, so a script can tell those apart from an
@@ -929,7 +930,7 @@ The endpoint is `GET /events?after=<sequence>&item=<itemId>&types=<glob,glob>`, 
 - On a reconnect, `Last-Event-ID` wins over `after` (conflict C4).
 - A read error ends the stream with `event: error` and the SND code, instead of being swallowed.
 - A `session` caller's stream is filtered to its repo (§3.1). That filter, and the one on `ReadLedger`, also drop any
-  event whose payload `repo` names another repo, such as a request filed elsewhere without an item.
+  event whose payload `repo` names another repo, such as a request filed elsewhere without an item, or its decision (`decision.recorded` carries the decision's `repo` for this).
 - Not WebSocket: the stream is one-way, SSE resumes natively, it works with `curl -N`, and the Avalonia client reads it
   with a streaming `HttpClient`.
 

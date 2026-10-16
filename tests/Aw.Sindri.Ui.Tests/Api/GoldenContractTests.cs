@@ -46,6 +46,7 @@ public sealed class GoldenContractTests
     private static readonly HashSet<string> _notRead = new(StringComparer.Ordinal)
     {
         "stop", "profile-approve", "profile",
+        "needs-you", "decisions", "decisions-id", "requests",   // API P4: the app reads them in U3
         "context-filemap", "context-lenses", "context-map", "context-map-promote", "context-map-proposals", "context-map-review", "context-map-review-history", "context-node",   // until U9 (context records)
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries

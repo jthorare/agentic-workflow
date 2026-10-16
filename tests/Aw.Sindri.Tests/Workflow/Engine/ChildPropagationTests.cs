@@ -172,7 +172,7 @@ public sealed class ChildPropagationTests
     {
         var parked = Push(Waiting, new Suspension(
             SuspensionKind.Park, ParkReason.Timeout, ParkKind: null, Escalation: null, "running timed out", "service:workflow.timers", Mirrors: null,
-            new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effect: null)));
+            new ResumeAction(ResumeKind.Rearm, Withheld: null, Gate: null, Effects: [])));
 
         Assert.Equal(ParentEffectKind.Hold, ChildPropagation.ToParent(parked, Item, Changed(ChildChange.Escalated, question: "q")).Kind);
     }

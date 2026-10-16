@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
+using Aw.Sindri.Core.Requests;
 
 namespace Aw.Sindri.Core.Views;
 
@@ -41,6 +42,57 @@ public static class EmptyText
     /// <summary>An item's timeline has no line yet.</summary>
     /// <returns>The sentence.</returns>
     public static string Timeline() => "Nothing has happened to this item yet.";
+
+    /// <summary>Nothing needs the human (UI screens R8-13; the 'waiting on you' wording is retired).</summary>
+    /// <param name="running">How many items run.</param>
+    /// <param name="queued">How many items are queued.</param>
+    /// <returns>The sentence, zeroes shown.</returns>
+    public static string NeedsYou(int running, int queued) =>
+        string.Create(CultureInfo.InvariantCulture, $"Nothing needs you. {running} running, {queued} queued.");
+
+    /// <summary>The decision list is empty for its filters.</summary>
+    /// <param name="pending">True for the pending list, false for the decided one, null for both.</param>
+    /// <param name="item">The item filter, or null.</param>
+    /// <returns>The sentence.</returns>
+    public static string Decisions(bool? pending, ItemId? item)
+    {
+        if (item is { } named)
+        {
+            return "No decisions for " + named.Value + ".";
+        }
+
+        return pending is { } waiting ? waiting ? "No decisions are waiting." : "Nothing decided yet." : "No decisions.";
+    }
+
+    /// <summary>The request list is empty for its filters.</summary>
+    /// <param name="state">The state filter, or null.</param>
+    /// <param name="item">The item filter, or null.</param>
+    /// <returns>The sentence.</returns>
+    public static string Requests(RequestState? state, ItemId? item)
+    {
+        if (item is { } named)
+        {
+            return "No requests for " + named.Value + ".";
+        }
+
+        return state switch
+        {
+            null => "No requests filed.",
+            RequestState.Open => "No open requests.",
+            RequestState.Accepted => "No accepted requests.",
+            RequestState.Declined => "No declined requests.",
+            RequestState.Voided => "No voided requests.",
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, "not a request state"),
+        };
+    }
+
+    /// <summary>The notice on a row or a decision whose answer is recorded and not yet acted on (API spec §3.4).</summary>
+    /// <returns>The sentence.</returns>
+    public static string RecordedOnly() => "recorded; acted on once the workflow engine runs";
+
+    /// <summary>The notice on a decision whose item was closed before a human decided it (owner decision of 2026-10-14: the API serves it).</summary>
+    /// <returns>The sentence.</returns>
+    public static string Voided() => "voided: the item was closed";
 
     /// <summary>The views are rebuilding.</summary>
     /// <param name="cursor">The projector's cursor.</param>

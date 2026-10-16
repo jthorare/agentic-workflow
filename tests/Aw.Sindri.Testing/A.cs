@@ -8,6 +8,12 @@ public static class A
     /// <summary>The id the item builders default to.</summary>
     public static ItemId FirstItemId { get; } = ItemId.From("ITM-00000000000000000000000000000001");
 
+    /// <summary>The id the request builders default to.</summary>
+    public static RequestId FirstRequestId { get; } = RequestId.From("REQ-00000000000000000000000000000001");
+
+    /// <summary>The id the decision builders default to.</summary>
+    public static DecisionId FirstDecisionId { get; } = DecisionId.From("DEC-00000000000000000000000000000001");
+
     /// <summary>An items-view row builder: a new item at version 1.</summary>
     /// <returns>A new builder.</returns>
     public static ItemRowBuilder Item() => new();
@@ -63,4 +69,36 @@ public static class A
     /// <summary>A GetEventCatalogRequest builder with deterministic defaults.</summary>
     /// <returns>A new builder.</returns>
     public static GetEventCatalogRequestBuilder GetEventCatalogRequest() => new();
+
+    /// <summary>A FileRequestRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static FileRequestRequestBuilder FileRequestRequest() => new();
+
+    /// <summary>A DecideRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static DecideRequestBuilder DecideRequest() => new();
+
+    /// <summary>A ListRequestsRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static ListRequestsRequestBuilder ListRequestsRequest() => new();
+
+    /// <summary>A ListDecisionsRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static ListDecisionsRequestBuilder ListDecisionsRequest() => new();
+
+    /// <summary>A GetNeedsYouRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static GetNeedsYouRequestBuilder GetNeedsYouRequest() => new();
+
+    /// <summary>A requests-view row builder: an open re-scope request.</summary>
+    /// <returns>A new builder.</returns>
+    public static RequestRowBuilder Request() => new();
+
+    /// <summary>A decisions-view row builder: a pending accept-request decision.</summary>
+    /// <returns>A new builder.</returns>
+    public static DecisionRowBuilder Decision() => new();
+
+    /// <summary>A needs-you row builder: a pulsing decision row.</summary>
+    /// <returns>A new builder.</returns>
+    public static NeedsYouRowBuilder NeedsYouRow() => new();
 }

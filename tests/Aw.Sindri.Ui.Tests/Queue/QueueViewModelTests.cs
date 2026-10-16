@@ -84,8 +84,8 @@ public sealed class QueueViewModelTests
 
         var decide = queue.Groups[0].Rows[0].PrimaryAction;
         Assert.NotNull(decide);
-        Assert.Equal(("Decide", true), (decide.Label, decide.IsPending));
-        Assert.Equal("Decide " + A.DecisionItem + ", arrives in P4", decide.Name);
+        Assert.Equal(("Decide", false), (decide.Label, decide.IsPending));   // API P4 made Decide ready
+        Assert.Equal("Decide " + A.DecisionItem, decide.Name);
         Assert.Null(queue.Groups[3].Rows[0].PrimaryAction);
     }
 

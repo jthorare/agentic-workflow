@@ -22,12 +22,15 @@ using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.EvalRecipe;
+using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetEventCatalog;
 using Aw.Sindri.Features.GetInstance;
 using Aw.Sindri.Features.GetInstanceEvents;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
+using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetStatus;
@@ -35,9 +38,12 @@ using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
 using Aw.Sindri.Features.Items;
 using Aw.Sindri.Features.ListCommands;
+using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListInstances;
 using Aw.Sindri.Features.ListItems;
+using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListRecipes;
+using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.PingProcess;
 using Aw.Sindri.Features.ReadLedger;
@@ -76,6 +82,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         _ = services
             .AddScoped<IItemResolver, ViewItemResolver>()
+            .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RecordServiceRunRequest, RecordServiceRunResponse>, RecordServiceRunService>()
@@ -98,6 +105,8 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         // ---- commands (one line per slice) ----
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
+        _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
+        _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
         _ = services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
@@ -110,6 +119,9 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         // ---- queries (one line per slice) ----
         _ = services.AddScoped<IValidator<GetEventCatalogRequest>, AcceptAllValidator<GetEventCatalogRequest>>().AddQuery<GetEventCatalogRequest, EventCatalogView, GetEventCatalogService>();
+        _ = services.AddScoped<IValidator<GetNeedsYouRequest>, AcceptAllValidator<GetNeedsYouRequest>>().AddQuery<GetNeedsYouRequest, GetNeedsYouResponse, GetNeedsYouService>();
+        _ = services.AddScoped<IValidator<ListDecisionsRequest>, AcceptAllValidator<ListDecisionsRequest>>().AddQuery<ListDecisionsRequest, ListDecisionsResponse, ListDecisionsService>();
+        _ = services.AddScoped<IValidator<ListRequestsRequest>, AcceptAllValidator<ListRequestsRequest>>().AddQuery<ListRequestsRequest, ListRequestsResponse, ListRequestsService>();
         _ = services.AddScoped<IValidator<GetItemRequest>, AcceptAllValidator<GetItemRequest>>().AddQuery<GetItemRequest, ItemView, GetItemService>();
         _ = services.AddScoped<IValidator<GetItemTimelineRequest>, AcceptAllValidator<GetItemTimelineRequest>>().AddQuery<GetItemTimelineRequest, TimelineResponse, GetItemTimelineService>();
         _ = services.AddScoped<IValidator<GetQueueRequest>, AcceptAllValidator<GetQueueRequest>>().AddQuery<GetQueueRequest, QueueResponse, GetQueueService>();
@@ -157,6 +169,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     private static IServiceCollection AddEngineSlices(this IServiceCollection services)
     {
         _ = services.AddScoped<IValidator<StartInstanceRequest>, AcceptAllValidator<StartInstanceRequest>>().AddCommand<StartInstanceRequest, StartInstanceResponse, StartInstanceService>();
+        _ = services.AddScoped<ClaimHolders>();   // engine P6 unit (d): SND-WF-012 against workflow_claims
         _ = services.AddScoped<IValidator<ApplyCommandRequest>, AcceptAllValidator<ApplyCommandRequest>>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, ApplyCommandService>();
         _ = services.AddScoped<IValidator<CompleteStepRequest>, AcceptAllValidator<CompleteStepRequest>>().AddCommand<CompleteStepRequest, CompleteStepResponse, CompleteStepService>();
         _ = services.AddScoped<IValidator<IssueNonceRequest>, AcceptAllValidator<IssueNonceRequest>>().AddIssue<IssueNonceRequest, IssueNonceResponse, IssueNonceService>();
@@ -186,6 +199,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<IssueChallengeRequest>, AcceptAllValidator<IssueChallengeRequest>>().AddIssue<IssueChallengeRequest, IssueChallengeResponse, IssueChallengeService>();
         _ = services.AddScoped<IValidator<ListRecipesRequest>, AcceptAllValidator<ListRecipesRequest>>().AddQuery<ListRecipesRequest, ListRecipesResponse, ListRecipesService>();
         _ = services.AddScoped<IValidator<ShowRecipeRequest>, AcceptAllValidator<ShowRecipeRequest>>().AddQuery<ShowRecipeRequest, ShowRecipeResponse, ShowRecipeService>();
+        _ = services.AddScoped<IValidator<ListOutboxRequest>, AcceptAllValidator<ListOutboxRequest>>().AddQuery<ListOutboxRequest, ListOutboxResponse, ListOutboxService>();   // engine P6 unit (c)
         return services;
     }
 }

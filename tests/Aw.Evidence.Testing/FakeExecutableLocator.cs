@@ -7,6 +7,7 @@ public sealed class FakeExecutableLocator : IExecutableLocator
 {
     private readonly Dictionary<string, string> _executables = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _directories = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _files = new(StringComparer.Ordinal);
     private readonly List<string> _queries = [];
 
     /// <summary>Every path asked about, in order.</summary>
@@ -47,6 +48,23 @@ public sealed class FakeExecutableLocator : IExecutableLocator
     {
         _queries.Add(path);
         return _executables.GetValueOrDefault(path);
+    }
+
+    /// <summary>Makes <paramref name="path"/> a regular file whose real path is <paramref name="real"/>.</summary>
+    /// <param name="path">The path asked about.</param>
+    /// <param name="real">Where it really is (equal to the path when no link is involved).</param>
+    /// <returns>This fake.</returns>
+    public FakeExecutableLocator File(string path, string? real = null)
+    {
+        _files[path] = real ?? path;
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public string? RealFile(string path)
+    {
+        _queries.Add(path);
+        return _files.GetValueOrDefault(path);
     }
 
     /// <inheritdoc/>

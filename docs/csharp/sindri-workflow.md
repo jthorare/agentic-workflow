@@ -34,8 +34,9 @@ reads the file and its child recipes, and writes nothing.
 - **Hand-written only:** `recipe validate` passes no base recipe, so it checks every recipe as hand-written: a `base`
   field is `RCP-CAP-004`, and the generated-recipe rules (`RCP-CAP-001`, `-002`, `-005`, `-006`) don't run. Those will run
   when Sindri's generator checks a generated recipe against its base (the packet freeze, W9); no command runs them in this build.
-- **The profile:** there is no effect allowlist in the profile yet (`workflow.effects`, P6), so `RCP-EFFECT-001` is
-  reported as `skipped`.
+- **The profile:** `RCP-EFFECT-001` checks the **approved** profile's effect allowlist (`workflow.effects`, P6): an
+  effect off it is an error. It is reported as `skipped` only when no profile is approved or the approved one has no
+  `workflow.effects` (an empty list allows nothing). `recipe validate` reads the approval and writes nothing.
 
 | Exit | When |
 |---|---|
@@ -168,8 +169,10 @@ the audit row.
 4. It prints `approved workflow.step@<hash12>`.
 
 The server refuses before any challenge when the hash is revoked (`SND-RECIPE-005`), the recipe declares no evals
-(`SND-RECIPE-008`), a child it starts has no approved hash to pin (`SND-RECIPE-003`), or it is already approved with the
-same pins (`SND-CLI-003`). A wrong typed text, a challenge for another action, an expired one (5 minutes) or one whose
+(`SND-RECIPE-008`) or a child it starts has no approved hash to pin (`SND-RECIPE-003`). An approved hash approved again
+with the same pins is not refused: it records nothing, sends the approve wake to its running instances again and prints
+`already approved workflow.step@<hash12>; woke N instances` (exit 0). That is the remedy for a drift-parked instance a first
+wake missed (the wake failed with `SND-API-001`, or it was absorbed before the drift park existed). A wrong typed text, a challenge for another action, an expired one (5 minutes) or one whose
 subject changed (another hash, or other pins: a child approved while you read) is `SND-RECIPE-009` and records nothing.
 A generated recipe whose base was revoked after it was registered is refused too (`SND-RECIPE-005`). With a file whose
 id and version are registered with other content (edited without raising its version), the CLI refuses before the preview
@@ -177,8 +180,8 @@ with the register call's `SND-RECIPE-007` and its `RCP-VERSION-001` line.
 
 `sindri recipe revoke <id@hash>` (the hash by 8 or more digits) previews the instances that will park, the takeovers it
 ends, the generated recipes approved from it (revoked with it, recursively) and the parents pinning it as a child
-(marked `child-stale`), asks for `revoke <id>@<hash12>`, and prints `revoked …; N instances parked` (N is 0 until P6's
-`TemporalRecipeWake` reaches instances; P4 keeps `NoOpRecipeWake`). Revoking an already revoked hash is `SND-RECIPE-005`, unless a revoke stopped partway through
+(marked `child-stale`), asks for `revoke <id>@<hash12>`, and prints `revoked …; N instances parked` (N counts the running instances
+the registry wake signalled; see "Registry wake (P6)"). Revoking an already revoked hash is `SND-RECIPE-005`, unless a revoke stopped partway through
 its cascade: then the same command finishes it (each step is keyed by its hash, so nothing is recorded twice).
 
 Each approval appends `recipe.approved` (keyed `recipe.approved:<hash>:after:<seq>`) and an approval row keyed by
@@ -373,7 +376,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-THRESH-002` | A threshold is in (0, 1], and a deterministic gate has none | Fix or remove it |
 | `RCP-NEXT-001` | `next` uses only recipe variables | Use only the listed variables |
 | `RCP-NEXT-002` | `next` names no approval-tier command | Leave it out |
-| `RCP-EFFECT-001` | Every effect is on the profile's effect allowlist. **Skipped** while the profile has no `workflow.effects` (P6) | Add it to `workflow.effects` |
+| `RCP-EFFECT-001` | Every effect is on the approved profile's effect allowlist. **Skipped** while no profile is approved or it has no `workflow.effects` | Add it to `workflow.effects` and approve the profile |
 | `RCP-RES-001` | **Information:** a resource wait has no allocator in this build | None needed; it parks with `SND-WF-010` until one lands |
 | `RCP-URG-001` | `urgency` is `incident`, `triage` or `work` | Use one of them, or remove `urgency` (the default is `work`) |
 | `RCP-OUT-001` | An output's `from` names a state of the recipe | Name one of its states |
@@ -646,9 +649,12 @@ The `--json` output is the response as the CLI's serializer prints it (`status` 
   (`SND-RECIPE-008`); the Core port `IApprovalEvals` names the hook and has no implementation or caller yet. Binding it
   (moving `EvalRecipe`'s case running into Core) is a later phase's work.
   `workflow events` reads the ledger directly until API P3's item timeline exists.
-- **Not yet (P6):** the revoke and drift wake. `IRecipeWake` is bound to `NoOpRecipeWake`, so a revoke or a pin drift parks no
-  running instance in P4 (the approval check at each command, answer and `complete` still refuses a revoked or drifted recipe
-  with `SND-RECIPE-005`/`-006`). P6 brings `TemporalRecipeWake`, which signals the running instances.
+- **The revoke wake and the drift park (P6):** `IRecipeWake` is `TemporalRecipeWake` (see "Registry wake (P6)"), so a revoke
+  parks the running instances at once. A pin drift parks an instance lazily, as built: when one of its recipe effects hits
+  the effect recheck or the run-time check (`SND-RECIPE-006`). The startup drift sender (engine spec §5.8: "on startup when
+  the build's descriptor hashes differ from an approval's pins") is **not built in P6**; it is a named follow-up, so an
+  instance that sends no effect after a drift keeps running until one does. The approval check at each command, answer and
+  `complete` still refuses a revoked or drifted recipe with `SND-RECIPE-005`/`-006`.
 
 ## The event bridge (engine P4 unit (d))
 
@@ -663,7 +669,7 @@ own slots that come due meanwhile are skipped, never overlapped.
 | Held window | Visibility lags a start, so an instance started just before its item event can be missing from the item query when the event goes out. Every item event the bridge delivers stays in an in-memory window (`HeldItemEvents`) for `HeldItemEvents.VisibilityLag` (1 minute from delivery), not `workflow.eventHold`. Each run ends by sending it to a live instance of its item that hasn't had it and **started at or before the event** (visibility's start time), one visibility query per item. An instance started after the event, such as a later attempt, never gets it. The workflow drops a repeat by its ledger sequence. The window covers the seconds visibility lags, not a serve restart. An event whose item isn't an item key is logged and skipped, and a delivery refused for a reason other than Unavailable or Timeout is logged and passed, so one bad row can't stall the cursor |
 | Accepted events | A registered `EventDescriptor` kind whose envelope actor is the descriptor's `producer`. Every other event signals nothing |
 | `route: item` | Every live instance of the event's item (a visibility query on `Item`). Temporal buffers the signal until the instance reaches the wait, so an early event isn't lost. The workflow drops a kind its recipe never waits for |
-| `route: causation` | Only the instance that the reply's causing event names (`ICommandOrigins`: the causing ledger event's `instance` field, until P6's `workflow_commands`) |
+| `route: causation` | Only the instance that the reply's causing event names (`ICommandOrigins`: the causing ledger event's `instance` field, which is the design: no `workflow_commands` map) |
 | Trigger | `wait.satisfied` from `EventWaitSource(kind, sequence)`, the payload's `outcome` (one the descriptor declares) and the descriptor's facts from the payload's `facts` |
 | Idempotency | The ledger sequence is the key. `RecipeWorkflow.EventAsync` drops a sequence it has already taken, so a bridge that crashed between a signal and its cursor write re-sends harmlessly |
 | Failures | An instance that has ended is skipped. A Temporal or ledger failure ends the run with the cursor before that event, and the next run retries it |
@@ -712,6 +718,153 @@ Engine spec rev 8.1 §5.1, §5.2, §5.8, §6.1–§6.3.
 - **Namespace and task queue** come from `AW_SINDRI_TEMPORAL_NAMESPACE` and `AW_SINDRI_TEMPORAL_TASK_QUEUE` (each
   `sindri` when unset; README X61). A Step's activity runs on its instance's queue; `StepTaskQueue.For` is the seam a
   later phase uses to route a Step elsewhere.
+
+## Effects as activities (engine P6)
+
+Engine spec rev 8.1 §5.7. A transition's effects run after the transition's ledger event, each on its own path in
+`RecipeWorkflow.Effects.cs`: `RecordEffect` writes its `outbox.pending` row (a local activity keyed like `RecordEvent`),
+`Workflow.DelayAsync(workflow.dispatchDelay)` waits out the undo window (cancelled with the instance), `RecheckEffect`
+(a local activity) checks the recipe's approval and the approved profile's `workflow.effects`, and then `RunEffect`
+(a regular activity) calls the block's `IEffectKind.Dispatch`, writes `outbox.dispatched` and appends the reply event
+(`notify.delivered`, `claim.created`) with that row as its causation, so the bridge routes it to this instance only.
+A refusal writes `outbox.refused` and hands the instance an `OutboxRefused` trigger: it parks with `spec-conflict` of
+the code's kind, or is absorbed when the same revoke already parked it.
+
+- **Effect rows are ledger events**, payload `EffectRow` (identity, command id, kind, origin `recipe` or `engine`, state
+  `pending`, `dispatched`, `refused` or `cancelled`, instance, code, reason). `outbox list` folds them by command. Kernel's
+  `outbox_commands` and `IOutbox` are not used by the engine.
+- **Identity** is `{instance id}:{entry}:{index}`; an engine notice's is `{instance id}:{entry}:n{version}`
+  (`EffectIdentity.ForNotice`); `effect.claim.ref` keys by item through `workflow_claims`. A re-emission (a `retry`, a
+  resumed dispatch park) gets a new command id under the same identity, and the block's existence check makes it harmless.
+- **Profile keys (S1-D11):** `workflow.effects` (the allowlist) and `workflow.dispatchDelay` (default 10 s; the dev
+  profile sets `[effect.notify.desk, effect.claim.ref]` and `60s`), read through `EffectSettings`.
+
+| Unit | Owns |
+|---|---|
+| (a) | `EffectActivities.RecordAsync`, `RunAsync`; `RecipeWorkflow.Dispatch` and its call from `Apply`; the dispatch delay from `LoadedRecipe.DispatchDelay`; the `retry` re-emission (`TransitionDecision.Retry` returns the entering transition's effects, which `Emit` dispatches); the effect ids in the transition's payload |
+| (b) | `EffectRules.Recheck`; `EffectActivities.RecheckAsync`; `TransitionDecision.OutboxRefusal` (the `outbox.refused` park or absorb) and `Reemit` (`--resume` on a dispatch park) |
+| (c) | `NotifyDeskEffect`, `IDeskNotices` and its adapter (`notifications.jsonl`, macOS notifications); `EngineNotices.For` and the engine-origin notices; `ListOutbox`, `GET /outbox?state=`, `OutboxCommandTable` lines |
+| (d) | `ClaimRefEffect`, `IWorkflowClaims` and the `workflow_claims` migration (ledger.db, version 6); `EffectSettings.Of`, the two keys in `ProfileRules` and `ProfileDiff`, RCP-EFFECT-001 against the allowlist, `workflow.dispatchDelay` in `LoadRecipe` |
+
+The contract's red test is `PhaseSixSignalTests` (Phase 6 signal 1 on the time-skipping server).
+
+Unit (a), as built:
+
+- **Dispatch** runs as a workflow task the loop doesn't await, started after every mirrored change (start, `Apply`,
+  the desk report). Recipe effects wait `LoadedRecipe.DispatchDelay` in a cancellation scope; a `cancel` within the delay
+  aborts the effect with an `outbox.cancelled` row (state `cancelled`, no code, reason starting `cancelled`; changed by
+  unit (b): a cancel is not a refusal, and no recheck runs). Engine-origin
+  notices skip the delay and the recheck. The instance returns only once every effect it emitted has settled.
+- **One run per identity:** an identity already dispatched, or still on its way, is skipped, so a `retry` re-emission
+  (`TransitionDecision.Retry`'s effects, through `Emit`) writes nothing twice. `RunEffect` keys its rows by identity
+  (`workflow:{address}:effect:{identity}:dispatched`, `…:reply`, under the instance's address so `workflow events` lists them; envelope ids derived from the keys), so an activity retry
+  writes nothing twice either.
+- **The reply** is the one causation-routed event that declares the block's outcome, appended as its producer
+  (`system:dispatcher`) with the dispatched row as its causation; payload `EffectReply` (`outcome`, `effect`).
+- **Blocks by id:** `AddEffect` also registers the block keyed by its id; `RunEffect` resolves it in its own scope
+  through the `EffectDispatch` registration.
+- The transition's ledger payload lists its effect ids (`effects`, left out when there are none).
+
+Unit (b), as built:
+
+- **`RecheckEffect`** (`EffectActivities.RecheckAsync`, a local activity) reads the recipe's approval through
+  `IApprovedRecipes.Check` (P2's `IRecipeApprovals` and `PinRules.Check`) and the **approved** profile snapshot through
+  `IApprovedProfile.Latest`, never the live file. It reads `workflow.effects` straight from `WorkflowSettings.Effects`
+  (unit (d) validates the key; an id that doesn't parse is not allowlisted). A read that fails throws, so the local
+  activity retries; a running recipe with no approval row is treated as revoked. Engine-origin effects read neither.
+- **`EffectRules.Recheck`** is pure: an engine-origin `effect.notify.desk` passes; any other engine-origin kind is
+  `SND-WF-011` (`Engine_origin_limited_to_notify_desk`); a recipe effect is `SND-RECIPE-005` when revoked,
+  `SND-RECIPE-006` when drifted, and `SND-WF-011` when its kind isn't allowlisted or the approved profile has no
+  `workflow.effects` (or none is approved).
+- **The refusal** writes `outbox.refused` (code and reason) and hands the loop `OutboxRefused`, which carries the
+  effect as it was emitted (`RefusedEffect`: kind, identity, `with`), so the park names it and a resume re-sends it
+  without looking it up in the recipe, even after the instance has entered another frame, and its `Origin`, so a re-send
+  keeps it: an engine notice is re-sent as the engine's (interrupt class, its own text, no reply), a recipe effect is checked
+  again like any recipe effect. `ResumeAction.Effects` is a list of `RefusedEffect`s.
+- **`TransitionDecision.OutboxRefusal`**: `SND-RECIPE-005` parks `spec-conflict (revoked)` with resume `none` (only
+  `cancel`), absorbed when already parked for a revoke; `SND-RECIPE-006` parks `spec-conflict (drift)` with resume
+  `rearm` and the effect kept on it, absorbed when already parked for drift; `SND-WF-011` parks
+  `spec-conflict (dispatch)` with resume `reemit`. A refusal reaching an ended instance is absorbed: the
+  `outbox.refused` row records it, and `workflow.effect-refused` stays unused.
+- **`Reemit`** (`answer --resume` on a dispatch park) ends the park and returns the effect as a new command under the
+  same identity (a new command id, a new `outbox.pending` row, the delay and the recheck again), listed on the
+  answer's event.
+- **Drift approval:** the `recipe.approved` wake ends a drift park wherever it sits and re-sends the effects it carries
+  (see the park invariants below).
+
+Unit (d), as built:
+
+- **Profile keys (S1-D11):** `EffectSettings.Of` reads `workflow.effects` (null when the key is absent; an empty list
+  allows nothing) and `workflow.dispatchDelay` (the grammar of a service cadence, `<n>s|m|h` from 5s to 24h, so `60s`
+  works; default 10s). `ProfileRules.Check` refuses an entry that isn't an `effect.*` id (`workflow.effects[i]`) and a
+  delay outside that grammar; `ProfileDiff` names both keys. Both are left out of the canonical JSON when absent, so an
+  approval made before P6 keeps its hash.
+- **The approved snapshot everywhere:** the recheck (unit (b)) now reads the allowlist through `EffectSettings.Of` on
+  `IApprovedProfile.Latest`; `LoadRecipe` takes `workflow.dispatchDelay` from the approved profile too
+  (`ProfileWorkflowTimes.DispatchDelay`; a read that fails is retried, none approved is 10s), so the undo window is the
+  one the owner approved, and a replay sees it from history. `RCP-EFFECT-001` reads the same snapshot, both in
+  `recipe validate` and in the served validation `recipe approve` runs (`IRecipeProfileFacts`, read by `RecipeRegistryReader` and `ValidateRecipeService`).
+- **`workflow_claims`** (ledger.db, migration 6: `item` primary key, `owner`, `attempt`, `claimed_at`) is the claim.
+  `IWorkflowClaims.Take(claim, ended)` inserts for a free item, takes over a holder the caller found ended, and
+  otherwise returns the holder, inside one write transaction. Liveness is `IInstanceLiveness` (Temporal: the execution
+  runs), never a column.
+- **`effect.claim.ref`** reads `fact:item` back (`IFactContents`), takes the user and the repo's path from the approved
+  profile, takes the claim, and creates `refs/sindri/{user}/{item}` with `git update-ref` (empty old value) at the
+  default branch's head (`origin/HEAD`, else `main`, `master`, `HEAD`); `git show-ref sindri/<user>/<item>` finds it.
+  It never moves an existing ref and touches no branch or working tree. Replies: `created` (taken now, already held by
+  this instance, or taken over from an ended owner, whose marker is reused) and `claimExists` (another live instance
+  holds it; nothing is written). A repo with no commit, a repo key the approved profile lacks, or no `fact:item` is an
+  error (`SND-WF-010`) that `RunEffect` does not retry (non-retryable): the effect is refused and the instance parks
+  `spec-conflict (dispatch)`; resume sends it again once the setup is fixed.
+- **`--attempt next`** is refused with `SND-WF-012` while the latest attempt of the recipe is live (P4) **or** while the
+  item's claim is held by a live instance (`ClaimHolders.LiveHolder`), naming the holder.
+**Park invariants (P6).** The instance holds its suspension and a queue of pending parks (`PendingPark`, then
+`LaterParks`; the wire shape still shows the first pending park). (a) A refused effect is never dropped, except by a revoke
+(which replaces every park: only `cancel` follows, and the `outbox.refused` rows keep the record): it is held by
+exactly one `spec-conflict` drift or dispatch park until a resume or approval re-sends it; a refusal joins the first such
+park of its own kind anywhere (current or queued), else the first of any, de-duplicated by identity, else a new dispatch
+park of its own, which becomes the suspension when the instance has none and otherwise joins the queue. One rule ends every suspension (`Suspensions.EndCurrent`: answer, handback, drift approval, child
+release): when a queued park takes effect, the ended park's effects stay queued as an approved holder; when nothing does,
+the effects of every approved holder are released and the caller sends them (`WithReleased`); none may drop them. (b) A takeover
+never drops a park: what it covers goes first in the queue, and the handback or the next ending makes the first queued
+park the suspension. (c) A revoke wake, and a drift wake when one is sent, always end in a `spec-conflict` park (a revoke
+replaces a takeover by design; a drift wake queues behind other parks). In P6 a drift park comes from the effect recheck
+(`SND-RECIPE-006`), not from a drift wake: nothing sends `RecipeWakeKind.Drifted` yet (a named follow-up). (d) A drift approval ends the drift park wherever it sits; behind a
+takeover or another park it is marked approved and its effects re-send once nothing else holds the instance.
+
+**Registry wake (P6).** A revoke or an approval of a recipe that was already approved (a drift approval, or the same pins
+again) wakes the running instances through the `wake` signal on `RecipeWorkflow`. The signal also carries the `Drifted` kind
+for the startup drift sender (engine spec §5.8), which is not built in P6: nothing sends it. `TemporalRecipeWake` finds them by the `RecipeHash` search attribute (open `RecipeWorkflow` executions
+with that hash) and signals each as `service:engine`. A missing Temporal for the home means nobody runs and the wake
+succeeds; a listing that answers `NotFound` or `InvalidArgument` (not this home's Temporal, or no `RecipeHash` attribute
+yet) is an empty list; an instance that ended between the listing and its signal (`NotFound`) is skipped; any other
+signal failure doesn't stop the rest: every instance is tried, then one `SND-API-001` error names the failures and the
+retry: for an approval, `sindri recipe approve <recipe>` again (same pins records nothing and wakes again); for a
+revoke, the revocation is recorded: run the revoke again to finish any cascade it didn't reach and send the wake again (refused
+SND-RECIPE-005 when nothing is left); an instance the wake missed is refused at its next command, answer, complete or effect
+(SND-RECIPE-005) and parks then.
+
+Unit (c), as built:
+
+- **Engine notices** (`EngineNotices.For`): a new park or escalation interrupts; a `workflow.notified` change of a
+  taken-over instance is takeoverIdle's and interrupts ("hand back {item}?"; P5 writes that row, and `Apply` passes
+  the change's event type); a newly open desk run interrupts if it is the instance's first desk task and is `info`
+  after that. A takeover, a resume into the same run, an ended instance and a `retry` re-emission send none. Each
+  notice is `effect.notify.desk` with origin `engine`, identity `{instance id}:{entry}:n{version}`, and its class and
+  text in its `with` (`class`, `text`).
+- **`effect.notify.desk`** sends a `DeskNotice` through `IDeskNotices`. A recipe's notice is `info`, its text the
+  entered state's rendered `next` (the interpreter passes it as `EffectRun.Text`) with the instance address beside
+  it, and it replies `notify.delivered` with `delivered`; an engine notice replies nothing.
+- **`notifications.jsonl`** (`FileDeskNotices`): one JSON line per identity (`identity`, `instance`, `item`, `class`,
+  `text`, `at`), so a repeat writes nothing. An `interrupt` is then shown as a macOS notification through `osascript`
+  (`IOsNotifier`, internal to Infrastructure; title `Sindri: <address>`); an `info` one isn't, and is collected into
+  `$AW_SINDRI_HOME/digest/<yyyy-MM-dd>.jsonl` (UTC). The spec defines no digest delivery. Every test composition
+  (`WorkflowsHarness.Sindri`, `Served`) replaces the notifier with `FakeOsNotifier`.
+- **`outbox list [--pending | --dispatched] [--json]`** and **`GET /sindri/outbox?state=`** (`pending`, `dispatched`,
+  `refused`, `cancelled`; another is SND-CLI-003) read the ledger's `outbox.*` rows through `ILedgerReader`, fold them
+  by command (latest row wins, oldest emission first), and print `seq  time  state  kind  origin  instance  identity`,
+  a refusal as `refused (<code>)`, or `no commands`. `outbox.cancelled` (unit (b)'s state) is its own `cancelled`
+  line, neither pending nor dispatched.
 
 ## Takeover, handback, takeoverIdle and open-request (engine P5 unit (b))
 

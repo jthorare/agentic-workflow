@@ -57,4 +57,24 @@ internal static class OwnerOnly
 
         System.IO.File.Move(temp, path, overwrite: true);
     }
+
+    /// <summary>Appends <paramref name="contents"/> to <paramref name="path"/>, creating it 0600.</summary>
+    /// <param name="path">The file.</param>
+    /// <param name="contents">The bytes.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Done.</returns>
+    internal static async Task Append(string path, ReadOnlyMemory<byte> contents, CancellationToken cancellationToken)
+    {
+        var options = new FileStreamOptions { Mode = FileMode.Append, Access = FileAccess.Write };
+        if (!OperatingSystem.IsWindows())
+        {
+            options.UnixCreateMode = File;
+        }
+
+        var stream = new FileStream(path, options);
+        await using (stream.ConfigureAwait(false))
+        {
+            await stream.WriteAsync(contents, cancellationToken).ConfigureAwait(false);
+        }
+    }
 }

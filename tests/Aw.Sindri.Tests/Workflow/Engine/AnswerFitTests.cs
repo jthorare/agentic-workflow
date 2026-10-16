@@ -156,8 +156,8 @@ public sealed class AnswerFitTests
         var accept = AnswerFit.Check(escalated, Recipe, Answer(AnswerVariant.Accept)).Value;
         var reject = AnswerFit.Check(escalated, Recipe, Answer(AnswerVariant.Reject)).Value;
 
-        Assert.Equal(new ResumeAction(ResumeKind.Override, CheckFailed(), FrameFixture.Judge, Effect: null), accept);
-        Assert.Equal(new ResumeAction(ResumeKind.Refuse, CheckFailed(), FrameFixture.Judge, Effect: null), reject);
+        Assert.Equal(new ResumeAction(ResumeKind.Override, CheckFailed(), FrameFixture.Judge, Effects: []), accept);
+        Assert.Equal(new ResumeAction(ResumeKind.Refuse, CheckFailed(), FrameFixture.Judge, Effects: []), reject);
         Refused(escalated, Answer(AnswerVariant.Resume), "--accept");
     }
 

@@ -102,7 +102,7 @@ internal static partial class RefusalRules
 
     /// <summary>A re-run that remembers the withheld transition, so status can show it and a grant re-runs the Step (never skipping a gate).</summary>
     private static ResumeAction Rerun(Refusal refusal) =>
-        new(ResumeKind.Rerun, new WithheldTrigger(refusal.Input.Transition, refusal.Input.Trigger), Gate: null, Effect: null);
+        new(ResumeKind.Rerun, new WithheldTrigger(refusal.Input.Transition, refusal.Input.Trigger), Gate: null, Effects: []);
 
     private static RefusalOutcome Park(ParkReason reason, ParkKind kind, ResumeAction resume, Refusal refusal) => new(
         RefusalFollow.Park,
@@ -118,7 +118,7 @@ internal static partial class RefusalRules
             Round: null,
             new Suspension(
                 SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Gate, question, refusal.Input.Trigger.Actor, Mirrors: null,
-                new ResumeAction(ResumeKind.Override, new WithheldTrigger(refusal.Input.Transition, refusal.Input.Trigger), gate.Gate, Effect: null)),
+                new ResumeAction(ResumeKind.Override, new WithheldTrigger(refusal.Input.Transition, refusal.Input.Trigger), gate.Gate, Effects: [])),
             Error: null);
     }
 

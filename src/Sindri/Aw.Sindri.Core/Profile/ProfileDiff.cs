@@ -35,16 +35,24 @@ public static class ProfileDiff
             values[$"services.{name}.every"] = settings.Every;
         }
 
-        if (p.Workflow?.DeskTimeout is { } desk)
+        foreach (var (key, value) in Workflow(p.Workflow))
         {
-            values["workflow.deskTimeout"] = desk;
-        }
-
-        if (p.Workflow?.EventHold is { } hold)
-        {
-            values["workflow.eventHold"] = hold;
+            values[key] = value;
         }
 
         return values;
+    }
+
+    /// <summary>The 'workflow:' keys the profile sets (S1-D11): an absent key has no path, so adding one shows as a change.</summary>
+    private static IEnumerable<(string Key, string Value)> Workflow(WorkflowSettings? workflow)
+    {
+        (string Key, string? Value)[] keys =
+        [
+            ("workflow.deskTimeout", workflow?.DeskTimeout),
+            ("workflow.eventHold", workflow?.EventHold),
+            ("workflow.effects", workflow?.Effects is { } effects ? string.Join(", ", effects) : null),
+            ("workflow.dispatchDelay", workflow?.DispatchDelay),
+        ];
+        return keys.Where(static k => k.Value is not null).Select(static k => (k.Key, k.Value!));   // why: the nulls are filtered out just before
     }
 }

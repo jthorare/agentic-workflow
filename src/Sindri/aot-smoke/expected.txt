@@ -104,6 +104,23 @@ running
   Nothing running.
 queued
   Nothing queued.
+## sindri request note Smoke request (session)
+REQ-ID filed; DEC-ID waits for a human (sequence SEQ)
+## sindri needs-you
+decision · note  Smoke request  since TIME
+  note request from session:cli
+  recorded; acted on once the workflow engine runs
+  sindri decide DEC-ID accept
+## sindri decide DEC-ID accept (session)
+SND-AUTH-002 Decide is a human decision. Ask the human to run it in a terminal or the Sindri app: sindri decide <decisionId> <choice> [--note <note>] (this CLI ran as a session: CLAUDECODE is set)
+exit 2
+## sindri decide DEC-ID accept (human, terminal)
+DEC-ID decided: accept (sequence SEQ)
+## sindri needs-you
+Nothing needs you. 0 running, 0 queued.
+## sindri requests --state accepted
+REQ-ID  note  accepted  by session:cli  since TIME  decision DEC-ID
+  Smoke request
 ## sindri ledger --json --after 0 | jq (human: command.handled is listed)
 true
 ## sindri ledger --json --after 0 | jq (session: public types only)
@@ -122,7 +139,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 5/5
+ok    ledger            schema 6/6
 ok    views             cursor N of head M
 ok    profile           approved, hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -6,4 +7,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(ItemFact))]
 [JsonSerializable(typeof(RegisteredEventPayload))]
+[JsonSerializable(typeof(FactValue))]   // engine P6 unit (a): a fact as an effect argument
 internal sealed partial class WorkflowsJsonContext : JsonSerializerContext;

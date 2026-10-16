@@ -97,6 +97,7 @@ internal sealed partial class RecipeWorkflow
         {
             instance = Enter(instance, decision is null ? Timers : trigger.Actor);
             await Mirror(DeskRow(before, instance, trigger, open, decision), NeedsYou(instance)).ConfigureAwait(true);
+            Emit(before, instance, EffectsOf(decision));
         }
 
         Settle(reportId, new Reported(new CommandResult(GetInstance(), Happened(before, instance, decision)), Refusal: null));

@@ -57,6 +57,22 @@ public sealed class RecipeApproveCliTests : IDisposable
     }
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task Approving_the_same_pins_again_exits_0_and_says_it_woke_the_instances_again()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var app = await Started(ct);
+        var step = await Register(app, ct);
+        var name = $"workflow.step@{step.Hash.Display}";
+        Assert.Equal(0, await Commands(app, human: true, "approve workflow.step 1").Approve(name, ct));
+        _out.GetStringBuilder().Clear();
+
+        var again = await Commands(app, human: true, "approve workflow.step 1").Approve(name, ct);
+
+        Assert.True(again == 0, _error.ToString());
+        Assert.EndsWith($"already approved {name}; woke 0 open instances\n", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
     public async Task Session_and_mistyped_approvals_exit_2_and_record_nothing()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -73,6 +89,22 @@ public sealed class RecipeApproveCliTests : IDisposable
         Assert.Contains("(this CLI ran as a session: CLAUDECODE is set)", sessionError, StringComparison.Ordinal);
         Assert.Contains("SND-RECIPE-009 ", _error.ToString(), StringComparison.Ordinal);
         Assert.Null((await app.Services.GetRequiredService<IRecipeApprovals>().Latest(step.Id, 1, step.Hash, ct)).Value);
+    }
+
+    /// <summary>PR 232 proof F6: a session told to run the revoke is told it is a revoke (the server names the one command).</summary>
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task A_session_revoke_is_refused_naming_the_revoke_command()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var app = await Started(ct);
+        var step = await Register(app, ct);
+
+        var session = await Commands(app, human: false, "revoke workflow.step").Revoke($"workflow.step@{step.Hash.Display}", ct);
+
+        Assert.Equal(2, session);
+        Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("sindri recipe revoke <recipe>", _error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("recipe approve", _error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]

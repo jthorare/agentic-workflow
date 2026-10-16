@@ -55,6 +55,7 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
         var (team, scope, mode, trigger, record) = job;
         ArgumentNullException.ThrowIfNull(team);
         ArgumentNullException.ThrowIfNull(scope);
+        var started = clock.GetUtcNow();
         var inspected = await inspector.Inspect(team, scope, fetch: true, onlyPath: null, cancellationToken).ConfigureAwait(false);
         if (inspected.IsError)
         {
@@ -62,6 +63,12 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
         }
 
         var outcome = await Apply(team, scope, mode, inspected.Value, cancellationToken).ConfigureAwait(false);
+        if (mode == SweepMode.Remove)
+        {
+            // The marker moves only after the removals, which judged again against the previous one; the next sweep keeps whatever changed after this one began.
+            _ = await values.Set(KvKeys.WorktreesSweepStart, started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+        }
+
         var line = outcome.Removed.Count + outcome.Kept.Count == 0 ? string.Empty : Summary(trigger, scope, outcome);
         if (record && line.Length > 0)
         {

@@ -40,7 +40,12 @@ internal static class RecipeSessions
     }
 
     /// <summary>Runs <paramref name="read"/> in a read session, or returns <paramref name="empty"/> when the file has no registry yet.</summary>
-    internal static async ValueTask<Result<T>> Read<T>(LedgerDatabase database, T empty, Func<ISqliteSession, CancellationToken, ValueTask<Result<T>>> read, CancellationToken cancellationToken)
+    internal static ValueTask<Result<T>> Read<T>(LedgerDatabase database, T empty, Func<ISqliteSession, CancellationToken, ValueTask<Result<T>>> read, CancellationToken cancellationToken) =>
+        Read(database, LedgerDatabase.RecipesVersion, empty, read, cancellationToken);
+
+    /// <summary>Runs <paramref name="read"/> in a read session, or returns <paramref name="empty"/> when the file is older than migration <paramref name="since"/>.</summary>
+    internal static async ValueTask<Result<T>> Read<T>(
+        LedgerDatabase database, int since, T empty, Func<ISqliteSession, CancellationToken, ValueTask<Result<T>>> read, CancellationToken cancellationToken)
     {
         var schema = await database.Schema(cancellationToken).ConfigureAwait(false);
         if (schema.IsError)
@@ -48,7 +53,7 @@ internal static class RecipeSessions
             return schema.Error;
         }
 
-        if (schema.Value.Applied < LedgerDatabase.RecipesVersion)
+        if (schema.Value.Applied < since)
         {
             return empty;
         }

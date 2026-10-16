@@ -12,7 +12,9 @@ namespace Aw.Meta.Core.Worktrees;
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="processes">The process scan.</param>
 /// <param name="paths">Where the gate trees live; the home directory.</param>
-public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths)
+/// <param name="values">Holds when the last sweep started.</param>
+/// <param name="files">When a worktree's files last changed.</param>
+public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files)
 {
     private const string GateCommitter = "aw-meta@localhost";
     private static readonly string[] _gateCommands = ["gate-run", "gate-rerun", "merge-run"];
@@ -34,8 +36,14 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             return world.Error;
         }
 
+        var since = await values.Get(KvKeys.WorktreesSweepStart, cancellationToken).ConfigureAwait(false);
+        if (since.IsError)
+        {
+            return since.Error;
+        }
+
         var (entries, pulls, scan) = world.Value;
-        var inspection = new Inspection(team, paths, pulls, scan);
+        var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken);
         var reports = new List<WorktreeReport>();
         foreach (var entry in entries)
         {
@@ -122,7 +130,26 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
     private async ValueTask<Result<WorktreeFacts>> Facts(Inspection inspection, WorktreeEntry entry, int? gatePr, PrBranch? pull)
     {
         var git = await Gather(inspection.Team.Repo, entry, gatePr is not null).ConfigureAwait(false);
-        return git.IsError ? git.Error : Compose(inspection, entry, gatePr, pull, git.Value);
+        if (git.IsError)
+        {
+            return git.Error;
+        }
+
+        var changed = await ChangedSince(inspection, entry, gatePr).ConfigureAwait(false);
+        return changed.IsError ? changed.Error : Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value });
+    }
+
+    // Whether anything in the tree changed after the last sweep started. A gate tree is aw-meta's own and is exempt; so is a missing directory (no files to read).
+    private async ValueTask<Result<bool>> ChangedSince(Inspection inspection, WorktreeEntry entry, int? gatePr)
+    {
+        if (inspection.Since is not { } since || gatePr is not null || entry.Prunable)
+        {
+            return false;
+        }
+
+        var skip = inspection.Team.Worktrees.EffectiveBuildOutputs.Append(".git").ToList();
+        var newest = await files.NewestChange(entry.Path, skip, inspection.Cancellation).ConfigureAwait(false);
+        return newest.IsError ? newest.Error : newest.Value > since;
     }
 
     // The git questions about one worktree; the first failure ends it (the worktree is then kept, unjudged).
@@ -171,6 +198,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             UnpushedCommits = git.Unpushed,
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
             Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
+            ChangedSinceSweep = git.Changed,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
             GatePr = gatePr,
@@ -179,7 +207,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         };
     }
 
-    private sealed record GitFacts(int NotInMain, int Unpushed, string Status, string Physical, string Committer);
+    private sealed record GitFacts(int NotInMain, int Unpushed, string Status, string Physical, string Committer, bool Changed = false);
 
     private static int Count(string text) => int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : 0;
 
@@ -200,8 +228,12 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
     }
 
     // What one inspection shares between its worktrees.
-    private sealed class Inspection(TeamConfig team, MetaPaths paths, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan)
+    private sealed class Inspection(TeamConfig team, MetaPaths paths, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan, DateTimeOffset? since, CancellationToken cancellation)
     {
+        internal DateTimeOffset? Since { get; } = since;
+
+        internal CancellationToken Cancellation { get; } = cancellation;
+
         internal TeamConfig Team { get; } = team;
 
         internal List<PrBranch> Pulls { get; } = pulls;

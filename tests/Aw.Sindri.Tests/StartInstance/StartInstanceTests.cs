@@ -1,7 +1,10 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Tests.ApplyCommand;
 using Aw.Sindri.Tests.CompleteStep;
 using Aw.Sindri.Tests.Workflows;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.StartInstance;
 
@@ -119,5 +122,27 @@ public sealed class StartInstanceTests(DevServer server) : IClassFixture<DevServ
         Assert.NotEqual(0, started.Exit);
         Assert.StartsWith("SND-WF-014 ", started.Stderr, StringComparison.Ordinal);
         Assert.Empty(await served.Events("T-5/step/1"));
+    }
+
+    [Fact]
+    public async Task Next_attempt_refused_while_earlier_is_live()
+    {
+        _harness.Recipe("workflow.dev-timeout", WorkflowsHarness.Shipped("dev/workflow.dev-timeout.yaml"));
+        await using var served = await Served.Start(_harness.Home, server.Environment, TestContext.Current.CancellationToken);
+        var spec = "fact:spec=" + _harness.File("spec.md", "the spec");
+        _ = await served.Cli("start", "workflow.step", "--item", "T-8", "--fact", spec);
+        _ = await served.Sindri.GetRequiredService<IWorkflowClaims>()
+            .Take(new WorkflowClaim(ItemKey.From("T-8"), InstanceAddress.From("T-8/step/1"), 1), ended: null, TestContext.Current.CancellationToken);
+
+        var refused = await served.Cli("start", "workflow.dev-timeout", "--item", "T-8", "--attempt", "next");
+        var cancelled = await served.Cli("cancel", "T-8/step/1");
+        var started = await served.Cli("start", "workflow.dev-timeout", "--item", "T-8", "--attempt", "next");
+
+        Assert.Equal(2, refused.Exit);
+        Assert.StartsWith("SND-WF-012 ", refused.Stderr, StringComparison.Ordinal);
+        Assert.Contains("T-8/step/1", refused.Stderr, StringComparison.Ordinal);
+        Assert.Equal((0, string.Empty), (cancelled.Exit, cancelled.Stderr));
+        Assert.Equal((0, string.Empty), (started.Exit, started.Stderr));
+        Assert.StartsWith("T-8/dev-timeout/1  workflow.dev-timeout@", started.Lines[0], StringComparison.Ordinal);
     }
 }

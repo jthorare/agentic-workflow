@@ -9,4 +9,5 @@ namespace Aw.Sindri.Features.ApproveRecipe;
 /// <param name="Approval">The approval row recorded.</param>
 /// <param name="Preview">The preview the challenge was issued with.</param>
 /// <param name="Resumed">The instances a drift approval resumed (empty otherwise; woken through IRecipeWake).</param>
-public sealed record ApproveRecipeResponse(CommandAccepted Accepted, RecipeApproval Approval, ApprovalPreview Preview, IReadOnlyList<WorkflowInstanceId> Resumed);
+/// <param name="AlreadyApproved">True when the recipe already stood approved with these pins: nothing was recorded, the wake was sent again.</param>
+public sealed record ApproveRecipeResponse(CommandAccepted Accepted, RecipeApproval Approval, ApprovalPreview Preview, IReadOnlyList<WorkflowInstanceId> Resumed, bool AlreadyApproved = false);

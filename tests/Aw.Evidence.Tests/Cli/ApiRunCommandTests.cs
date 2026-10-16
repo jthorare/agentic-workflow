@@ -80,6 +80,18 @@ public sealed class ApiRunCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task ApiRunCommand_exits_1_with_AW_EVIDENCE_022_for_a_targets_file_with_a_malformed_databases_entry()
+    {
+        var config = _root.Combine("targets.json");
+        await File.WriteAllTextAsync(config, """{"databases":{"fixture":{"engine":"mysql"}}}""", TestContext.Current.CancellationToken);
+
+        var (exit, _, error) = await Run(await Script(Get("""{"status":200}""")), "--at", "head", "--host", Origin, "--config", config);
+
+        Assert.Equal(1, exit);
+        Assert.StartsWith("ui-evidence: AW-EVIDENCE-022 ", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ApiRunCommand_exits_2_when_an_expectation_did_not_hold()
     {
         _ = Notes();

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "agents": {
+    "claude-code": {
+      "label": "Claude Code",
+      "bin": "claude",
+      "open": ["{bin}", "--session-id", "{sessionId}", "-n", "{name}", "{seed}"],
+      "resume": ["{bin}", "--resume", "{sessionId}"],
+      "sessionId": "pre-chosen-uuid",
+      "sessionIdPattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "reportedId": null,
+      "processName": "claude",
+      "transcripts": "~/.claude/projects/*/{sessionId}.jsonl",
+      "usage": "claude-code",
+      "mcp": "claude-config-file"
+    },
+    "codex": {
+      "label": "Codex",
+      "bin": "codex",
+      "open": ["{bin}", "-C", "{cwd}", "{seed}"],
+      "resume": ["{bin}", "resume", "{sessionId}"],
+      "sessionId": "reported",
+      "sessionIdPattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "reportedId": {
+        "hook": true,
+        "newestFile": "~/.codex/sessions/*/*/*/rollout-*.jsonl",
+        "capture": "rollout-.*-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\.jsonl$"
+      },
+      "processName": "codex",
+      "transcripts": "~/.codex/sessions/*/*/*/rollout-*-{sessionId}.jsonl",
+      "usage": "codex",
+      "mcp": "codex-overrides"
+    },
+    "cursor": {
+      "label": "Cursor",
+      "bin": "agent",
+      "open": ["{bin}", "{seed}"],
+      "resume": ["{bin}", "--resume={sessionId}"],
+      "sessionId": "reported",
+      "sessionIdPattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "reportedId": {
+        "hook": true,
+        "newestFile": null,
+        "capture": null
+      },
+      "processName": "agent",
+      "transcripts": null,
+      "usage": "cursor",
+      "mcp": "none"
+    }
+  }
+}

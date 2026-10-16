@@ -18,6 +18,8 @@ namespace Aw.Evidence.Host;
 [JsonSerializable(typeof(UiScript))]
 [JsonSerializable(typeof(ApiScript))]
 [JsonSerializable(typeof(ApiSummary))]
+[JsonSerializable(typeof(DbScript))]
+[JsonSerializable(typeof(DbSummary))]
 [JsonSerializable(typeof(TargetsFile))]
 [JsonSerializable(typeof(DesignManifest))]
 [JsonSerializable(typeof(RunSummary))]

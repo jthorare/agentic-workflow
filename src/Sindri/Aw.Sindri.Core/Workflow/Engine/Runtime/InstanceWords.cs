@@ -46,8 +46,13 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
 
     /// <summary>A drift recorded behind the open park (§6.4): the block, and that the answer needs the re-approval first.</summary>
     /// <returns>The line, or null.</returns>
-    public string? Drift() => Instance is { Suspension.Kind: SuspensionKind.Park, PendingPark: { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Drift } drift }
+    public string? Drift() => BehindDrift() is { } drift
         ? $"{Block(drift.Question)} changed since {Pinned} was approved; answer after the re-approval: sindri recipe approve {Pinned}"
+        : null;
+
+    /// <summary>The drift park waiting behind the open park that the re-approval hasn't ended; the line and the note both read it.</summary>
+    private Suspension? BehindDrift() => Instance is { Suspension.Kind: SuspensionKind.Park }
+        ? Instance.PendingParks().FirstOrDefault(static p => p is { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Drift, Approved: false })
         : null;
 
     private string Answering => $"sindri workflow answer {Address}";
@@ -87,7 +92,8 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
         ParkKind.Revoked => $"none (revoked): sindri workflow cancel {Address}, then start a new attempt with --attempt next",
         ParkKind.ChildRevoked => $"none (child revoked): sindri recipe approve {Recipe.Version.Id.Value}{Gap}(at a terminal; the approval resumes it)",
         ParkKind.Drift => $"none (drift): sindri recipe approve {Pinned}{Gap}(at a terminal; the approval resumes it)",
-        ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => $"{Answering} --resume{Gap}(dispatch: once the profile allows the effect)",
+        ParkKind.Dispatch => $"{Answering} --resume{Gap}(dispatch: once {(park.Question.Contains(DispatchWords.CantRun, StringComparison.Ordinal) ? "the cause is fixed" : "the profile allows the effect")})",
+        ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => $"{Answering} --resume",
     };
 
     /// <summary>The grant a budget park suggests: half the active state's budget, else half the recipe's.</summary>

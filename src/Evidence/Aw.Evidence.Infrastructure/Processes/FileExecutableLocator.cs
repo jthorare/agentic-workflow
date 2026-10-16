@@ -13,6 +13,9 @@ internal sealed class FileExecutableLocator : IExecutableLocator
         RealPath(path) is { } real && File.Exists(real) && IsExecutable(real) ? real : null;
 
     /// <inheritdoc/>
+    public string? RealFile(string path) => RealPath(path) is { } real && File.Exists(real) ? real : null;
+
+    /// <inheritdoc/>
     public string? RealDirectory(string path) => RealPath(path) is { } real && Directory.Exists(real) ? real : null;
 
     private static bool IsExecutable(string file) => OperatingSystem.IsWindows() || (File.GetUnixFileMode(file) & AnyExecute) != UnixFileMode.None;

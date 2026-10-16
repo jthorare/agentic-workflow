@@ -12,4 +12,10 @@ public sealed record ApprovalPlan(RegisteredRecipe Recipe, ApprovalPreview Previ
 {
     /// <summary>Whether this approval re-approves an approved hash with new pins (a drift approval, spec §4.1).</summary>
     public bool Reapproval => Latest is not null;
+
+    /// <summary>
+    /// Whether the hash already stands approved with exactly these pins: nothing is recorded, and the approval only sends its
+    /// wake again (the remedy for an instance a first wake missed).
+    /// </summary>
+    public bool AlreadyApproved => Latest is { } latest && latest.Pins == Preview.Pins;
 }

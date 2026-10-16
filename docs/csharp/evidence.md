@@ -21,6 +21,7 @@ every path it writes into a run file is absolute.
 |---|---|---|
 | `run <script.json> <run-dir> [--baseline png] [--app-build sha] [--fixtures id] [--cache verdict-cache.json] [--host url] [--allow-preview-host] [--allow-writes] [--lock-timeout s]` | Once both locks are held, deletes `<run-dir>/summary.json`; runs every step of a UI script in each of its viewports, writes `summary.json` and prints it | 0 every step passed · 2 a step failed or broke · 1 · 4 · 75 |
 | `api-run <script.json> <run-dir> --at base\|head [--repo dir] [--app-build sha] [--host url] [--allow-preview-host] [--config file] [--lock-timeout s]` | Deletes `<run-dir>/summary.json`; vets the script (host, redirects, CLI targets, write verbs, environment) before any lock; once both locks are held, runs the HTTP requests, then the CLI calls, in order; writes `summary.json` (`evidence.api.summary/1`) and prints it | 0 every expectation held · 2 one did not · 1 · 4 · 75 |
+| `db-run <script.json> <run-dir> --at base\|head [--repo dir] [--app-build sha] [--config file] [--lock-timeout s]` | Deletes `<run-dir>/summary.json`; vets the script (the database target, the pre-run write refusal) before any lock; once both locks are held, opens the database read-only (SQLite: a copy in the run directory; Postgres: after the identity and role checks), runs each query, checks its rows; writes `summary.json` (`evidence.db.summary/1`) and prints it | 0 every expectation held · 2 one did not · 1 · 4 · 75 |
 | `parity <manifest.json> <run-dir> [--host url] [--allow-preview-host] [--allow-writes] [--app-build sha] [--db-provenance seeded\|unknown] [--lock-timeout s]` | Once both locks are held, deletes `<run-dir>/parity.json`; measures each design frame, writes `parity.json` and prints it; each failed box check is also a stderr line `ui-evidence: geometry: <frame> <target>: <failure>` | 0 every geometry check passed · 2 one failed · 1 · 4 · 75 |
 | `parity-plan <run-dir> [--reviewed file,file]` | Prints the Linear attachment plan (one side-by-side image per frame) | 0 every image reviewed · 3 an image is unreviewed · 1 provenance unknown (AW-EVIDENCE-016: the evidence stays local) |
 | `parity-comment <run-dir> --for linear\|github` | Prints the comment as markdown (Linear: a table with geometry; GitHub: a table, images stay on Linear) | 0 · 1 |
@@ -42,10 +43,10 @@ One scheme for every command:
 | Exit | Meaning | Errors |
 |---|---|---|
 | 0 | Done; every check passed | — |
-| 1 | Usage error, invalid input, or a guard refused | `ui-evidence: usage: ui-evidence <shape>`; AW-EVIDENCE-001…006, 010, 012, 016, 017, 019, 022 |
-| 2 | A check failed: a step failed or broke (`run`), an expectation did not hold (`api-run`), a box check failed (`parity`), the stack is unhealthy (`doctor`) | the document is still written and printed |
+| 1 | Usage error, invalid input, or a guard refused | `ui-evidence: usage: ui-evidence <shape>`; AW-EVIDENCE-001…006, 010, 012, 016, 017, 018, 019, 020, 021, 022 |
+| 2 | A check failed: a step failed or broke (`run`), an expectation did not hold (`api-run`, `db-run`), a box check failed (`parity`), the stack is unhealthy (`doctor`) | the document is still written and printed |
 | 3 | Blocked on review (`parity-plan`) | the plan is still printed |
-| 4 | The run itself errored, or the environment's I/O failed: the browser failed to start or crashed, a frame's anchor is missing, a region runs past the viewport, a file couldn't be read or written (the script included), a lock directory couldn't be made; `api-run`: a request failed, timed out or was redirected off its origin (AW-EVIDENCE-023), a golden file could not be read (011), a CLI call would not start or ran past its limit, or its temporary directory could not be made (AW-EVIDENCE-015, the same code the unexpected-exception line uses) | AW-EVIDENCE-011, 013, 015, 023 (a stack probe failure, AW-EVIDENCE-014, is never an exit: `doctor` and `provenance` report it in their document) |
+| 4 | The run itself errored, or the environment's I/O failed: the browser failed to start or crashed, a frame's anchor is missing, a region runs past the viewport, a file couldn't be read or written (the script included), a lock directory couldn't be made; `api-run`: a request failed, timed out or was redirected off its origin (AW-EVIDENCE-023), a golden file could not be read (011), a CLI call would not start or ran past its limit, or its temporary directory could not be made (AW-EVIDENCE-015, the same code the unexpected-exception line uses); `db-run`: the database cannot be reached or copied (AW-EVIDENCE-024), a script, seed or golden file could not be read (011) or a query fails for a reason other than a refused write (AW-EVIDENCE-015) | AW-EVIDENCE-011, 013, 015, 023, 024 (a stack probe failure, AW-EVIDENCE-014, is never an exit: `doctor` and `provenance` report it in their document) |
 | 75 | A machine lock stayed busy past `--lock-timeout` | AW-EVIDENCE-009 |
 | 130 | Interrupted (SIGINT, SIGTERM, SIGHUP, SIGQUIT): a browser call in flight is abandoned at once and the locks are released on the way out. A second signal terminates the process without waiting (a lock it held is then left for a person to remove) | `ui-evidence: interrupted` |
 
@@ -53,8 +54,8 @@ The mapping is by error kind: `timeout` → 75, `unavailable` → 4, anything el
 or a failure outside a result) is `ui-evidence: AW-EVIDENCE-015 the run failed unexpectedly: <first line>` and exit 4,
 never the runtime's crash exit.
 
-Codes AW-EVIDENCE-018 (database script), 020 (database refused), 021 (server identity mismatch) and 024 are reserved for
-`db-run` and the identity check (DT-E2) and are returned by nothing yet.
+`db-run` returns AW-EVIDENCE-001 (bad arguments), 006 (a `passwordEnv` variable that is unset), 010 (a SQLite source, a seed or golden file, or a `--config` file that isn't there), 022 (an invalid targets config: the repo's `evidence.json` or `--config`), 018 (database script, a SQLite source that isn't a database, or a seed that fails on the run's copy), 020 (database refused: outside the repo, not disposable, a role that can write, a write statement before connecting, or a write the server refused), 021 (server identity mismatch), 024
+(database cannot be reached or copied), 011 (a script, seed or golden file that exists but can't be read, or a file that can't be written), 015 (an unexpected exception or a query that fails for a reason other than a refused write) and 009 (a lock that stayed busy, exit 75).
 
 ### stdout and stderr
 
@@ -211,6 +212,32 @@ scalar, within 100 ms). A pointer is `""` or starts with `/`; `~0` is `~` and `~
 refused. An array index is digits without a leading zero; `-` never resolves. A document that does not parse as JSON
 fails its pointer assertions (`actual: "not JSON"`).
 
+### DB script (`db-run <script.json>`)
+
+Schema `evidence.db.run/1`, read exactly like the API script (camelCase, unknown keys refused at every level), under
+AW-EVIDENCE-018 (exit 1) and checked before any lock. The script's SHA-256 is the summary's `scriptSha256`. Writing the
+script is the plan Step's job; `db-run` only reads and checks it.
+
+| Key | Type | Required | Holds and rules |
+|---|---|---|---|
+| `schema` | string | no | `evidence.db.run/1` when given |
+| `connection` | string | one of the two | the name of an entry in the targets config's `databases` (Postgres). Not together with `sqlite` |
+| `sqlite` | string | one of the two | a SQLite file: a path below `--repo`, or an absolute path that, after every symlink, is inside the repo or the run directory (else AW-EVIDENCE-020). Not together with `connection` |
+| `seed` | string | no | a `.sql` file (relative to the script's directory) run against the run's copy of a SQLite file before the queries (below); it may not `ATTACH`, `DETACH`, `VACUUM` or `load_extension` (AW-EVIDENCE-020). Not with `connection`: Postgres is never seeded |
+| `rowLimit` | integer 1 to 1000 | no | rows kept per query; default 200. More rows than that end the query's rows there and set `truncated` |
+| `queries` | query[] | yes | at least one, run in order |
+
+A query:
+
+| Key | Type | Required | Holds and rules |
+|---|---|---|---|
+| `sql` | string | yes | exactly one statement (a trailing `;` is fine; a second statement is AW-EVIDENCE-018). Use `$1`-free literal SQL: there are no parameters |
+| `expect` | object | yes | at least one of the three below |
+
+`expect`: `rowCount` (integer, at least 0: the number of rows returned, after the cap), `pointers` (JSON Pointer
+assertions, the API script's `equals`, `exists` and `matches`, over the rows read as a JSON array of objects keyed by
+column name: `/0/text` is the first row's `text`), `golden` (a file the rows' JSON must equal, canonically; resolved like the API script's).
+
 ## Run files
 
 Scorer and bugfix-state read these files after their own ports; the fields they read are marked †.
@@ -285,14 +312,65 @@ output, each failure's `pointer`, `expected` and `actual`, and the `headline` (b
 `Aw.Redaction` as it is recorded: the run's own values are replaced by value (each resolved header value with
 `[REDACTED:header-value]`, and for a `<scheme> <credential>` value such as `Bearer <token>` the credential alone too; each
 pass-through variable value with `[REDACTED:env-value]`; wherever an app echoes them, including their JSON-escaped forms; a value
-under 6 characters is left to the patterns) together with the pattern scrub, then the value of every secret-named JSON member is
-hidden, the value and pattern scrub runs again, and the text is capped. A failure whose `pointer` runs through a secret-named member has its `expected` and `actual` replaced whole by `[REDACTED:secret-field]`. The refusal and error messages are the tool's own text, not
+under 6 characters is left to the patterns) together with the pattern scrub, after the value of every secret-named JSON member is
+hidden (first, on the text as written, so a learned numeric value replaced by an unquoted placeholder cannot make the JSON invalid and switch member hiding off), and the text is capped. A failure whose `pointer` runs through a secret-named member has its `expected` and `actual` replaced whole by `[REDACTED:secret-field]`. The refusal and error messages are the tool's own text, not
 a response body: they get the value and pattern scrub, not member hiding or the cap. Every other field is written as it is: it comes
 from the command line, the repo, the script or the tool itself (`schema`, `kind`, `at`, `host`, `appBuild`, `runId`, `runInstance`, timestamps,
 `scriptSha256`, `seedSha256`, `declaredWrites`, `passedEnv` names, `provenance`, step `index`, `action`, `target`, `headerNames`,
 `failures[].step`, a refusal's or error's `code`, the always-empty `invocations`), or it is a number or enum value that can't carry text (a step's HTTP status or exit
 `code`, its `status`, the run's `outcome`). stdout is exactly the file's content (no trailing newline) and logs go to stderr. The JSON Schemas of the script and the summary are generated from the records and committed as
 `schemas/evidence/api-script.schema.json` and `schemas/evidence/api-summary.schema.json`; a test validates a produced summary against its schema.
+
+The secret-name rule (`Aw.Redaction`) matches whole tokens: a name is split at `_`, `-`, `.`, camelCase humps and where letters turn into digits (`password2` is `password`, `2`; `oauth2`, `sha256`, `base64`, `utf8` and `x509` stay ordinary), and a token that equals a secret word (`password`, `passwd`, `pwd`, `passphrase`, `credential`, `secret`, `token`, `apikey`, each also plural) or neighbours that spell one (`api`, `access`, `private`, `secret`, `encryption`, `signing`, `hmac`, `master` or `client`, then `key`) make it secret. `token(s)` is a count, not a secret, only when a count word is directly beside it (`max_token`, `max_tokens`, `tokens_used`, `input_tokens`, `totalTokens`); `used_refresh_tokens` is secret. Only `token` has a count reading: `password_min_length` and `password_changed_at` stay secret. A column the result repeats keeps hiding under its numbered key (`cookie_2`) because the original name is secret.
+
+### `summary.json` for `db-run` (`schema: "evidence.db.summary/1"`)
+
+The same engine contract as `api-run`: every key always written (`null` or `[]`, never missing), in this order; the run
+directory made and an earlier `summary.json` deleted first; a summary on every exit except 75, an unreadable script, a
+run directory that cannot be made, an unexpected exception and 130; stdout exactly the file's content; logs on stderr;
+nothing written outside the absolute `<run-dir>` and the box-wide locks; the exit code alone decides the outcome (a test
+pins that they agree). Recorded text — each step's `output` (the rows as JSON), each step's `target` (the SQL), each failure's
+`pointer`, `expected` and `actual`, and the `headline` (built from them, or from the refusal or error message) — goes through the run's
+scrubber and `Aw.Redaction` as it is recorded, in this order: (1) the value of every secret-named JSON member is hidden first, on the text as written (so a learned numeric value, replaced by an unquoted placeholder, cannot make the JSON invalid and switch member hiding off); (2) the run's own values are replaced by value, together with the pattern scrub:
+the role's password, resolved from the entry's `passwordEnv`, with `[REDACTED:env-value]` (including its JSON-escaped forms), and every value
+read from a secret-named column (below) with `[REDACTED:secret-field]`; a value under 6 characters is left to the patterns (a header-value
+placeholder, `[REDACTED:header-value]`, exists in the shared scrubber but a db-run has no headers); step (1) is the hiding of the value of every secret-named
+JSON member, wherever it occurs and whatever the document repeats (a streaming pass over the text, not a parsed tree, so a body or stdout that repeats a key still has every secret-named member hidden; text that isn't JSON keeps only the value and pattern scrub) (a result column called `password`, `api_key`, `accessToken`, …) is hidden with `[REDACTED:secret-field]`; (3) the text is capped. A failure whose `pointer` runs through a secret-named column has its `expected` and `actual`
+replaced whole by `[REDACTED:secret-field]`. The refusal and error messages are the tool's own text, not rows: they get the value and
+pattern scrub, not member hiding or the cap.
+
+Which values count as secret column values. A value is hidden by value, in every text recorded from that query on, when it was read from a
+column that is secret-named by its output name, or by the table column it reads when the engine can say: Postgres reports each result
+column's table and attribute number (RowDescription), which the session looks up in `pg_attribute`; SQLite reports the origin column of a
+direct column reference. So `SELECT api_key AS copy_of_key` is hidden in both engines, and `'key is ' || api_key AS sentence` is hidden when
+`api_key` is in the same result set (its value is learned from that column). Bytes are learned in the `\x`-hex form the rows are recorded in, and every element of an array column; dates and times in the ISO form they are recorded in (`yyyy-MM-dd`, `HH:mm:ss[.fffffff]`, invariant culture; a DateTime or DateTimeOffset in the round-trip `O` form). A secret-named column is one whose name holds a secret word as a whole token (the shared rule below), so `password_hash` and `api_tokens` count. A result that repeats a column name (`SELECT a.id, b.id`, Postgres's `?column?`) is recorded with unique keys: the first keeps its name, later ones become `id_2`, `id_3` (skipping any name the result really has), so a pointer such as `/0/id_2` reaches every column. **The limit:** a value that comes out of a computed
+expression, under a name that is not secret, from a column the query does not also select, can't be traced to its source (`SELECT 'key is ' || api_key
+AS sentence FROM accounts` alone). Such a value is caught only if it matches a secret pattern (a token shape, an `Authorization`
+value, …) or is the role's password. The scrub does not claim to hide a secret wherever it sits in the database, only the values this run
+read from secret-named columns. Every other field is written as it is: it comes from the command line, the repo, the script or the tool itself
+(`schema`, `kind`, `at`, `appBuild`, `runId`, `runInstance`, timestamps, `scriptSha256`, `seedSha256`, `engine`, the top-level `target` (the connection name or the
+SQLite path as the script gave it), `provenance`, step `index`, `action`, `failures[].step`, a refusal's or error's `code`, the always-empty
+`invocations`), or it is a number or enum value that can't carry text (a step's `status`, `rowCount` and `truncated`, the run's `outcome`).
+A password that happens to equal the connection name leaves that field intact.
+
+| Field | Type | Holds |
+|---|---|---|
+| `schema`, `kind` | string | `evidence.db.summary/1`; `db` |
+| `runId`, `runInstance`, `startedAt`, `finishedAt`, `appBuild`, `scriptSha256`, `at` | | as in `evidence.api.summary/1` |
+| `engine` | `sqlite` \| `postgres` \| null | the engine of the database the script names; null when the script could not be read |
+| `target` | string \| null | the connection name, or the SQLite path as the script gave it |
+| `outcome`, `headline` | | as in `evidence.api.summary/1`: `passed`, `failed` (exit 2), `refused` (1), `errored` (4); `headline` is one line, 200 characters at most (`passed: 3 assertions`, `query 2: rowCount 1, expected 2 (assertion 4 of 5)`) |
+| `steps[]` | object[] | one per query: `index` (1-based), `action` (`query`), `target` (the SQL, one line, scrubbed, 200 characters at most), `status` (`passed` \| `failed` \| `refused` \| `broken` \| `skipped`), `rowCount` (rows kept, or null), `truncated` (the cap cut the rows), `output` (the rows as JSON, scrubbed and capped at 2,000 characters, or null) |
+| `failures[]` | object[] | as in `evidence.api.summary/1`: `step`, `pointer`, `expected`, `actual`; a `rowCount` or golden failure has a null `pointer` |
+| `provenance`, `seedSha256` | `unseeded` \| `seeded`; string \| null | `seeded` with the seed file's SHA-256 when a seed ran against the copy; else `unseeded` and null |
+| `refusal` | `{code, message}` \| null | set on exit 1 (including a write the server refused, with its SQLSTATE in the message) |
+| `error` | `{code, message}` \| null | set on exit 4 |
+| `invocations[]` | | always `[]` |
+
+A step is `refused` when the database or the connection refused it (the run is then exit 1 and later steps are
+`skipped`), `broken` when it failed for another reason, such as a table that does not exist or a connection lost
+(exit 4). The schemas of the script and the summary are generated from the records and committed as
+`schemas/evidence/db-script.schema.json` and `schemas/evidence/db-summary.schema.json`; a test validates a produced summary against its schema.
 
 ### `parity.json` (`schema: "ui-evidence.parity/1"`)
 
@@ -341,6 +419,27 @@ something), not a determined agent.
 | CLI environment | each call runs in a fresh temporary directory (its `HOME` and `TMPDIR`) with an empty environment plus `PATH`, `LANG` and the declared pass-through names. A pass-through name that reads as a secret (it contains `TOKEN`, `SECRET`, `PASSWORD`, `CREDENTIAL`, `API_KEY` or `PRIVATE_KEY`, starts with `AWS_`, `AZURE_`, `GCP_`, `GOOGLE_`, `SSH_` or `GITHUB_`, or is `DATABASE_URL`) is refused | AW-EVIDENCE-019 |
 | Redaction | recorded text (step output, failures' pointer, expected and actual, and the headline) is scrubbed by the run's own values and `Aw.Redaction`'s patterns, has secret-named JSON members hidden, and is capped; refusal and error messages get the value and pattern scrub; every other field is written as it is (see the summary section) | |
 
+### Database guards (`db-run`)
+
+Read-only is enforced where the database accepts a connection, not by parsing statements; the statement check below
+exists only to give a clear early error. Order: the script and the targets config are read (for every run, SQLite too: a missing `--config` is AW-EVIDENCE-010, an invalid file 022), the write statements and the seed's reaching statements are refused, the
+target is resolved and its file or entry checked, then the locks are taken, then the database is opened, and only then does a
+query run. Each refusal is exit 1 with its code and the summary says `refused`.
+
+| Guard | Rule | Code |
+|---|---|---|
+| Pre-run write refusal | a script query that is not exactly one statement never gets here: the script reader refuses it first as AW-EVIDENCE-018 (`must be exactly one statement`). Before anything connects, each query is split into statements (quotes, comments and dollar quoting respected) and refused when it is not one statement starting `SELECT`, `WITH`, `VALUES`, `TABLE`, `SHOW`, `EXPLAIN` or a read `PRAGMA` (`table_info`, `table_xinfo`, `index_list`, `index_info`, `index_xinfo`, `foreign_key_list`, `database_list`, `table_list`, never one that assigns), or when `INSERT`, `UPDATE`, `DELETE` `MERGE` or `INTO` (a `SELECT … INTO` creates a table) appears in it outside a string, so a writing CTE is caught. `COPY`, `ATTACH`, `VACUUM`, DDL, `SET` and transaction control fall to the first rule. A function that writes (`bump()`) and `nextval` are **not** caught here on purpose: only the connection can know | AW-EVIDENCE-020 |
+| SQLite source | the file's real path (every symlink followed) is inside the repo or the run directory; a file that is not there is AW-EVIDENCE-010 (exit 1, like a missing seed or golden) | AW-EVIDENCE-020, 010 |
+| SQLite connection | the source is copied as a file (`File.Copy` of the database and, when present, its `-wal` and `-journal` files, never `-shm`) into `<run-dir>/db/`, and no SQLite connection ever opens the source, so a WAL-mode database gets no `-wal` or `-shm` file beside it and any page size copies; a source inside `<run-dir>/db/` is refused (both paths are compared with every symlink resolved, so a symlinked run directory or source can't get past it). The copy takes none of SQLite's locks, so it is verified: the main file, `-wal` and `-journal` are stat'ed (length and modification time) before and after and the copy is made again, up to three times, if any changed; the copy is then opened read-write once, which rolls a hot `-journal` back on the copy (the source keeps its journal), and `PRAGMA quick_check` must say `ok`. A source that keeps changing, or a copy that fails the check, is AW-EVIDENCE-024 (`changed while it was copied` / `not a consistent database`): stop the app's writes to the file, or retry. A file SQLite says is not a database at all (SQLITE_NOTADB, such as a text file) is the script's input, AW-EVIDENCE-018 (exit 1), not 024. Block comments do not nest for SQLite (they do for Postgres) in the statement check. The query connection is that copy opened `Mode=ReadOnly` with `query_only` (`Aw.Kernel.Data`'s `OpenReadOnly`). SQLite has no connection setting that stops `ATTACH` or `VACUUM INTO` from creating a file, so the adapter refuses a statement that is not a single read, or that attaches, detaches, vacuums or assigns a pragma, before SQLite sees it | AW-EVIDENCE-020 |
+| Postgres entry | only an entry in the targets config, with `disposable: true` and an `identity`; the password comes from the environment variable `passwordEnv` names, never the script, and only that variable's name is recorded | AW-EVIDENCE-020 |
+| Postgres identity | before any script query, `inet_server_addr()`, optionally `inet_server_port()`, and `current_database()` must equal the entry's `identity`; a mismatch sends no query and ends the run | AW-EVIDENCE-021 |
+| Postgres role | the role must not be a superuser or hold `rolcreaterole`, `rolcreatedb`, `rolreplication` or `rolbypassrls`; must not be a member of `pg_write_server_files` or `pg_execute_server_program`; and must hold no `INSERT`, `UPDATE`, `DELETE` or `TRUNCATE` privilege on any table, view or the like outside `pg_catalog`, `information_schema` and the toast and temp schemas, as `has_table_privilege` answers it, so a grant to the role itself, to `PUBLIC` and one inherited through a group it is a member of (`IN ROLE writers`) all count (column-level and sequence grants are not counted). That is what makes `COPY … TO` fail at the server | AW-EVIDENCE-020 |
+| Postgres connection | every connection field is set explicitly, so no `PG*` environment variable or password file applies; `Options=-c default_transaction_read_only=on` and a statement timeout; no pooling; each query runs on its own in `BEGIN READ ONLY` (followed by a `SELECT 1`, because Postgres lets the first statement of a transaction switch it back to read-write) over the extended protocol: the adapter refuses a second statement (`COMMIT; INSERT …`) before sending it (the driver would split it into separate commands, so the server never sees one). The layers that stop a write are the session default `default_transaction_read_only`, the `BEGIN READ ONLY` transaction and the role check made when the connection opens. The transaction is always rolled back. A write the server refuses (SQLSTATE 25001, 25006, or 42501 on a statement the pre-run guard would have refused, such as `COPY … TO`) is recorded as a refused step; a 42501 on a plain read is `the server refused the query`, a broken step (errored, exit 4). Server error text is recorded with its SQLSTATE and without the values it quotes (outside SQLSTATE class 42 everything from the first quote character to the last, a double quote or a localized pair such as `„…“`, becomes `"…"`, because the server does not escape a quote inside the value it quotes), so a data error such as `invalid input syntax for type uuid` can't carry a secret; a cell the driver can't read (numeric `NaN`, a BC date, an unmapped type) is read as text when possible, else recorded as `<type: not representable>` | AW-EVIDENCE-020 |
+| Seeds | SQLite only, and only into the run's copy, over a separate read-write connection that is closed before the read-only one opens. The seed gets the statement guard before any lock (a statement that uses `ATTACH`, `DETACH`, `VACUUM` or `load_extension` is refused with its code, so a seed can't name another file) and the connection allows no attached database at all (`SQLITE_LIMIT_ATTACHED` 0), so no other database file is reachable. The seed file's SHA-256 is the summary's `seedSha256` and `provenance` is `seeded`. The source is never opened. The `seedSha256` is the hash of the file's own bytes | AW-EVIDENCE-018 (a seed with `connection`, or a seed statement that fails on the copy), AW-EVIDENCE-020 (a seed that reaches beyond the copy) |
+| Rows | at most `rowLimit` rows per query are read; the recorded rows are scrubbed (secret column values by value, then secret-named columns hidden, in the order the summary section gives) and capped at 2,000 characters | |
+
+A Postgres `host` must be a TCP host (a Unix socket directory is not supported by this stage).
+
 ### Targets config
 
 What a script may reach comes from configuration beside the repo under test, not from the script; there is no built-in default (no
@@ -355,19 +454,21 @@ What a script may reach comes from configuration beside the repo under test, not
     "cli": { "buildOutputs": ["out", "build/bin"], "allow": ["/abs/path/to/tool"], "passEnv": ["LANG"] },
     "databases": { "<name>": { "engine": "postgres", "host": "127.0.0.1", "port": 55432, "database": "fixture",
                                "user": "evidence_ro", "passwordEnv": "EVIDENCE_PG_PASSWORD", "disposable": true,
-                               "identity": { "serverAddress": "172.17.0.2", "database": "fixture" } } }
+                               "identity": { "serverAddress": "172.17.0.2", "serverPort": 5432, "database": "fixture" } } }
   }
   ```
   `schema` is `evidence.targets/1` or `evidence.repo/1`. `cli.buildOutputs` are relative directories that, after symlinks, stay
   inside the repo; `cli.allow` holds absolute paths; `cli.passEnv` names variables every CLI call may inherit. `databases`
-  belongs to `db-run` (a later stage); `api-run` reads and validates the file whole. Unknown keys, an absolute or escaping
+  is read by `db-run` (each entry: `engine` `postgres`, `host`, `port` 1 to 65535, `database`, `user`, `passwordEnv`
+  (UPPER_SNAKE), `disposable` (must be true), `identity` with `database` and `serverAddress` required and `serverPort`
+  optional); `api-run` reads and validates the file whole. Unknown keys, an absolute or escaping
   build output, a relative allow path, and invalid JSON are AW-EVIDENCE-022 (the message names the file and the JSON location).
 
 The use cases see only the Core port `IEvidenceTargets`; the file names and the state directory are the adapter's.
 
 ## Locks
 
-`run`, `parity` and `api-run` hold two box-wide locks for the whole browser run, through Evidence's own Core port
+`run`, `parity`, `api-run` and `db-run` hold two box-wide locks for the whole browser run, through Evidence's own Core port
 `IMachineLocks` (`AcquireAsync(LockKind, timeout) → Result<ILockLease>`), in a fixed order: the QA-stack lock (the wider
 one) first, then the heavy-job lock; failing to take the second releases the first. A guard refusal or a bad input is
 reported before any lock is taken. The leases are released on every path: success, failure, exception and
@@ -447,6 +548,7 @@ These are read by Infrastructure's `EnvironmentEvidenceSettings` and lock settin
 | `UI_EVIDENCE_SEED_DOMAINS`, `UI_EVIDENCE_SEED_EMAIL_PATTERN` | `provenance`: the seed policy (defaults match only `example.com`, so an unconfigured install stays `unknown`) |
 | `AW_QA_STACK_LOCK`, `AW_HEAVY_JOB_LOCK`, `AW_HEAVY_SLOTS`, `AW_HEAVY_LOCK_HELD`, `AW_STATE_DIR` | the lock adapter |
 | the script's `headers.*.env` and `passEnv`, the targets file's `cli.passEnv` | `api-run`: values by the name the script or file gives, never recorded |
+| a database entry's `passwordEnv` | `db-run`: the Postgres password by the name the entry gives, never recorded and scrubbed by value |
 | the manifest's `login.emailEnv` / `login.passwordEnv` | `parity` sign-in |
 
 `doctor` checks `http://localhost:3000/login`'s title, `docker exec <container> pg_isready -U <user>` when a container is
@@ -481,6 +583,7 @@ move behind an AOT host if the browser adapter ever allowed it.
 | `IApiTransport` (one HTTP request, never following a redirect) | `HttpApiTransport` | `FakeApiTransport` |
 | `ICliRunner` (one program, a fresh temporary directory, an exact environment) | `ProcessCliRunner` | `FakeCliRunner` |
 | `IExecutableLocator` (the real path of an executable file or a directory, symlinks followed) | `FileExecutableLocator` | `FakeExecutableLocator` |
+| `IDatabaseReader` (`OpenAsync(DbTarget)` → a read-only `IReadSession`; `QueryAsync(sql, rowLimit)` runs one statement) | `SqliteDatabaseReader` (`Aw.Kernel.Data`), `PostgresDatabaseReader` (Npgsql; `AddEvidencePostgresInfrastructure`), behind a router that picks by target | `FakeDatabaseReader` |
 | `IEvidenceTargets` (the merged targets config) | `FileEvidenceTargets` | `FakeEvidenceTargets` |
 | `ITextScrubber` | `RedactionScrubber` (`Aw.Redaction`) | `FakeTextScrubber` |
 | `IIdGenerator` (Kernel; the run instance) | `RandomIds` | `SequentialIds` |
@@ -490,7 +593,7 @@ run: `BrowserSessionContract` (fake: unit; Playwright on the fixture site: heavy
 Playwright: heavy), `RunFilesContract`, `ImageCodecContract`, `VerdictCacheStoreContract`, `MachineLocksContract`,
 `JudgeContract`, `StackProbeContract` (the adapter over a local HTTP server, a stub `docker` and a loopback listener),
 `ProvenanceQueryContract` (the adapter over a stub `docker` playing `psql -At`), `SecretsSourceContract`, `IdGeneratorContract`, `ApiTransportContract` (the adapter over a loopback server), `CliRunnerContract` (over stub programs),
-`ExecutableLocatorContract`, `EvidenceTargetsContract` and `TextScrubberContract`. `IEvidenceSettings` has none: its fake is a set of plain values with no behaviour that could
+`ExecutableLocatorContract`, `EvidenceTargetsContract`, `TextScrubberContract` and `ReadOnlyDatabaseContract` (a writing CTE, a side-effecting function, `nextval`, `COPY … TO`, a `PRAGMA` assignment, `VACUUM INTO`, `ATTACH`, `SET transaction_read_only = off` and `COMMIT; INSERT …` each refused with the data and the directory unchanged; the fake and the SQLite adapter run it as unit and integration, Postgres against a throwaway container as heavy). `IEvidenceSettings` has none: its fake is a set of plain values with no behaviour that could
 drift; the adapter's names, defaults, blank-as-unset and env-file fallback are pinned by `EnvironmentEvidenceSettingsTests`.
 
 ## At the switch

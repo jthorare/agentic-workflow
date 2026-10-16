@@ -15,8 +15,10 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="steps">The RunStep activities.</param>
 /// <param name="events">The RecordEvent activity.</param>
 /// <param name="items">The ReadItemRepo activity.</param>
+/// <param name="effects">The effect activities (engine P6).</param>
 /// <param name="logger">The log.</param>
-internal sealed partial class SindriWorkerHost(TemporalSettings settings, RunStepActivities steps, RecordEventActivities events, FactReadActivities items, ILogger<SindriWorkerHost> logger) : ITemporalWorker
+internal sealed partial class SindriWorkerHost(
+    TemporalSettings settings, RunStepActivities steps, RecordEventActivities events, FactReadActivities items, EffectActivities effects, ILogger<SindriWorkerHost> logger) : ITemporalWorker
 {
     public async Task Run(TemporalEndpoint endpoint, CancellationToken cancellationToken)
     {
@@ -35,7 +37,7 @@ internal sealed partial class SindriWorkerHost(TemporalSettings settings, RunSte
 
         try
         {
-            using var worker = new TemporalWorker(client, SindriWorker.Options(settings, steps, events, items));
+            using var worker = new TemporalWorker(client, SindriWorker.Options(settings, steps, events, items, effects));
             Polling(logger, target, settings.TaskQueue);
             await worker.ExecuteAsync(cancellationToken).ConfigureAwait(false);
         }

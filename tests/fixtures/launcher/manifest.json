@@ -1,0 +1,256 @@
+{
+  "comment": "Every file in this directory except manifest.json is a launcher.json fixture. schema: the expected verdict against schemas/launcher.schema.json (Ajv2020, strict false) and the C# reader. bash: whether the SL-1 bash reader accepts or refuses it (it refuses unknown keys, unknown placeholders and wrong JSON types for the fields it uses, spec section 4; the rest it leaves to sindri launch show). A file that does not parse is invalid and refused. Tag choice: bash: refuse is used where the reader must refuse because the failing field is one SL-1 uses or a rule it enforces while building argv (unknown viewer or host kind, {cmd...} inside an argument, an unsupported schema version); each such row carries tagWhy. Other schema-invalid rows are bash: accept because the bash reader leaves entry-shape rules to sindri launch show.",
+  "fixtures": [
+    {
+      "file": "minimal.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "only the required key: every default applies"
+    },
+    {
+      "file": "viewer-print.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "print viewer, tmux host"
+    },
+    {
+      "file": "viewer-warp.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "warp viewer"
+    },
+    {
+      "file": "host-none.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "none host with an exec-template viewer that owns processes"
+    },
+    {
+      "file": "kitty-example.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "the spec section 4 example"
+    },
+    {
+      "file": "gnome-terminal-concat.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "a placeholder inside an argument (--title={title})"
+    },
+    {
+      "file": "added-reported-agent.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "an added agent that reports its id (hook absent: newestFile fallback)"
+    },
+    {
+      "file": "added-minimal-agent.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "an added agent with only the required fields"
+    },
+    {
+      "file": "override-all-builtins.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "overrides name only the fields they change"
+    },
+    {
+      "file": "meta-lanes.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "meta lane agents"
+    },
+    {
+      "file": "unknown-top-key.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "unknown key at the top level (terminal, not viewer)"
+    },
+    {
+      "file": "unknown-viewer-key.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "print takes no name"
+    },
+    {
+      "file": "unknown-host-key.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "unknown key under host"
+    },
+    {
+      "file": "unknown-agent-key.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "unknown key under an agent"
+    },
+    {
+      "file": "unknown-meta-key.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "unknown key under meta"
+    },
+    {
+      "file": "unknown-placeholder.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "{titel} is not in the closed placeholder set"
+    },
+    {
+      "file": "unknown-placeholder-agent.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "{prompt} is not in the closed placeholder set"
+    },
+    {
+      "file": "wrong-type-argv.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "argv is a string, not an array"
+    },
+    {
+      "file": "wrong-type-schema.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "schema is a string"
+    },
+    {
+      "file": "wrong-type-agents.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "agents is an array, not an object"
+    },
+    {
+      "file": "wrong-type-override.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "override is a string, not a boolean"
+    },
+    {
+      "file": "wrong-type-lanes.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "lanes is an array, not an object"
+    },
+    {
+      "file": "builtin-without-override.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "claude-code is built in: add \"override\": true (SND-LAUNCH-011); the bash reader does not know the catalog and promises less"
+    },
+    {
+      "file": "builtin-override-false.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "override must be true for a built-in id"
+    },
+    {
+      "file": "exec-template-missing-name.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "exec-template needs name (the UI label); a value check beyond the bash promise"
+    },
+    {
+      "file": "exec-template-missing-argv.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "exec-template needs argv"
+    },
+    {
+      "file": "cmd-inside-argument.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "{cmd...} is spliced as separate arguments, so it must be a whole element",
+      "tagWhy": "section 4/5 allow {cmd...} only as a whole element (spliced), and the bash reader splices, so it cannot run this"
+    },
+    {
+      "file": "reported-without-pattern.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "sessionIdPattern is required unless sessionId is none"
+    },
+    {
+      "file": "reported-without-reportedid.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "sessionId reported needs reportedId"
+    },
+    {
+      "file": "added-without-label.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "an added entry needs label, bin, open and sessionId"
+    },
+    {
+      "file": "bad-agent-id.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "agent ids match ^[a-z][a-z0-9-]{1,31}$"
+    },
+    {
+      "file": "bad-lane-agent-id.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "tagWhy": "SL-1 resolves meta.lanesAgent through the catalog, and a bad meta makes aw-meta-launch refuse (section 4)",
+      "note": "meta agent ids are AgentIds"
+    },
+    {
+      "file": "unknown-viewer-kind.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "iterm is a later adapter (spec section 9)",
+      "tagWhy": "the viewer kind is a field SL-1 uses, and x-aw-keys.viewerKinds is its closed list"
+    },
+    {
+      "file": "unknown-host-kind.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "zellij is a later adapter (spec section 9)",
+      "tagWhy": "the host kind is a field SL-1 uses, and x-aw-keys.hostKinds is its closed list"
+    },
+    {
+      "file": "unknown-usage-reader.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "usage names built-in readers only"
+    },
+    {
+      "file": "schema-version-2.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "this build reads schema 1",
+      "tagWhy": "section 4 reads schema 1 only, and the bash reader checks the version first"
+    },
+    {
+      "file": "not-json.json",
+      "schema": "invalid",
+      "bash": "refuse",
+      "note": "the JSON itself does not parse"
+    },
+    {
+      "file": "override-on-added-agent.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "override: true on an id that is not built in has nothing to merge over, and the entry lacks bin, open and sessionId (the bash reader leaves entry shape to sindri launch show)"
+    },
+    {
+      "file": "override-null-pattern.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "a built-in override that nulls sessionIdPattern without sessionId: none leaves a reported/pre-chosen-uuid agent with no pattern (section 4); not a field the bash reader checks"
+    },
+    {
+      "file": "override-null-reportedid-codex.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "codex's built-in is sessionId: reported; nulling reportedId without moving sessionId leaves a reported agent with no reportedId (section 4: the merged entry gets the added entry's verdict)"
+    },
+    {
+      "file": "override-reported-without-reportedid-claude.json",
+      "schema": "invalid",
+      "bash": "accept",
+      "note": "claude-code's built-in has no reportedId; an override to sessionId: reported without one leaves a reported agent with no reportedId (section 4)"
+    }
+  ]
+}

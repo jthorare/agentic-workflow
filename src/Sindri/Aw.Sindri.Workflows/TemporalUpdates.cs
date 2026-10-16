@@ -49,9 +49,10 @@ internal static class TemporalUpdates
 
     /// <summary>Whether <paramref name="e"/> is the frontend saying it has no such namespace.</summary>
     /// <param name="e">The RPC failure.</param>
-    /// <returns>True for a NotFound that names the namespace.</returns>
+    /// <returns>True for a NotFound that names the namespace as the missing thing, not a workflow execution inside it.</returns>
     internal static bool NoNamespace(RpcException e) =>
-        e.Code == RpcException.StatusCode.NotFound && e.Message.Contains("namespace", StringComparison.OrdinalIgnoreCase);
+        e.Code == RpcException.StatusCode.NotFound && e.Message.Contains("namespace", StringComparison.OrdinalIgnoreCase)
+        && !e.Message.Contains("execution not found", StringComparison.OrdinalIgnoreCase);   // a missing workflow's message names its namespace too ("WorkflowId{namespace='default', …}")
 
     /// <summary>SND-API-001 for a Temporal without the client's namespace.</summary>
     /// <param name="client">The client, on the settings' namespace.</param>

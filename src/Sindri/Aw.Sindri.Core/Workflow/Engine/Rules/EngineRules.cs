@@ -55,7 +55,7 @@ internal sealed class EngineRules : IEngineRules
     public ParentEffect ToParent(WorkflowInstance parent, Recipe recipe, ChildChanged change) => ChildPropagation.ToParent(parent, recipe, change);
 
     /// <inheritdoc/>
-    public WorkflowInstance Release(WorkflowInstance parent, WorkflowInstanceId child) => ChildPropagation.Release(parent, child);
+    public ParentReleased Release(WorkflowInstance parent, WorkflowInstanceId child) => ChildPropagation.Release(parent, child);
 
     /// <inheritdoc/>
     public InstanceDelta Delta(WorkflowInstance? before, WorkflowInstance after) => InstanceDeltas.Between(before, after);

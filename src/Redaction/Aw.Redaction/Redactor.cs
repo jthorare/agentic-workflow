@@ -110,7 +110,7 @@ public sealed class Redactor : IRedactor
     public bool IsSecretName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
-        return _secretName.IsMatch(name);
+        return (_secretName.IsMatch(name) && !SecretNameTokens.EndsInCountedToken(name)) || SecretNameTokens.Holds(name);
     }
 
     /// <inheritdoc/>

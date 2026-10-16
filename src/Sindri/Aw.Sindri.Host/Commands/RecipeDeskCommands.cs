@@ -98,7 +98,7 @@ internal sealed class RecipeDeskCommands(RecipeDesk desk, IServiceProvider servi
         }
 
         // Registering the file names the real reason when its id and version hold other content (SND-RECIPE-007), even
-        // where the server refused the registered content first (already approved, revoked); a file it doesn't know yet is
+        // where the server refused the registered content first (revoked); a file it doesn't know yet is
         // registered and asked for again.
         var registered = await desk.Client.Post<RegisterRecipeRequest, RegisterRecipeResponse>("/sindri/workflow/recipes",
             new RegisterRecipeRequest(file.Text, file.File), ct).ConfigureAwait(false);
@@ -139,9 +139,11 @@ internal sealed class RecipeDeskCommands(RecipeDesk desk, IServiceProvider servi
 
     private static string Route(RecipeId id, RecipeHash hash, string verb) => $"/sindri/workflow/recipes/{id.Value}@{hash.Digest}/{verb}";
 
-    private static string Approved(ApproveRecipeResponse r) => r.Resumed.Count == 0
-        ? $"approved {r.Approval.Id.Value}@{r.Approval.Hash.Display}\n"
-        : string.Create(CultureInfo.InvariantCulture, $"approved {r.Approval.Id.Value}@{r.Approval.Hash.Display}; {r.Resumed.Count} instances resumed\n");
+    internal static string Approved(ApproveRecipeResponse r) => r.AlreadyApproved
+        ? string.Create(CultureInfo.InvariantCulture, $"already approved {r.Approval.Id.Value}@{r.Approval.Hash.Display}; woke {r.Resumed.Count} open instances\n")
+        : r.Resumed.Count == 0
+            ? $"approved {r.Approval.Id.Value}@{r.Approval.Hash.Display}\n"
+            : string.Create(CultureInfo.InvariantCulture, $"approved {r.Approval.Id.Value}@{r.Approval.Hash.Display}; woke {r.Resumed.Count} open instances (those parked on the drift resume)\n");
 
     private static string Revoked(RevokeRecipeResponse r) =>
         string.Create(CultureInfo.InvariantCulture, $"revoked {r.Revocation.Id.Value}@{r.Revocation.Hash.Display}; {r.Preview.Parks.Count} instances parked\n")

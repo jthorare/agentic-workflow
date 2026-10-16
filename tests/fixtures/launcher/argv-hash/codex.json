@@ -1,0 +1,6 @@
+{
+  "note": "built-in codex",
+  "builtin": "codex",
+  "canonical": "{\"bin\":\"codex\",\"mcp\":\"codex-overrides\",\"open\":[\"{bin}\",\"-C\",\"{cwd}\",\"{seed}\"],\"resume\":[\"{bin}\",\"resume\",\"{sessionId}\"],\"sessionId\":\"reported\"}",
+  "argvHash": "sha256:f888f0b3b16a994d6409b9a411555f274720f5feb9087cbbdc37337af0e3f424"
+}

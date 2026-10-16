@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "meta": {
+    "lanesAgent": "codex",
+    "lanes": {
+      "review": "claude-code",
+      "api": "cursor"
+    }
+  }
+}

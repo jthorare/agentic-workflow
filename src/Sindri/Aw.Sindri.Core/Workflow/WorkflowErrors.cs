@@ -71,13 +71,16 @@ public static class WorkflowErrors
     /// <summary>SND-WF-014: '--item' and fact:item's id differ.</summary>
     public static readonly ErrorDefinition ItemMismatch = new("SND-WF-014", ErrorKind.Invalid, "--item and fact:item's id differ");
 
+    /// <summary>SND-WF-015: an effect couldn't be sent: its block replied an outcome no event declares, or every retry failed.</summary>
+    public static readonly ErrorDefinition EffectFailed = new("SND-WF-015", ErrorKind.Unavailable, "An effect couldn't be sent");
+
     /// <summary>Every live workflow error, for ErrorCatalogue.Validate (together with SindriErrors.All).</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         RecipeInvalid, RecipeNotFound, RecipeNotApproved, RecipeRevoked, RecipePinDrift, RecipeVersionTaken, RecipeEvalsFailing,
         RecipeChallengeStale, RecipeUnreadable,
         InstanceNotFound, TriggerNotAllowed, GateRefused, StaleRunToken, AmbiguousAddress, MalformedReport,
-        NonceRefused, NoRuntime, EffectNotAllowed, EarlierAttemptLive, WorkflowChallengeStale, ItemMismatch,
+        NonceRefused, NoRuntime, EffectNotAllowed, EarlierAttemptLive, WorkflowChallengeStale, ItemMismatch, EffectFailed,
     ];
 
     /// <summary>

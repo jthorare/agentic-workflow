@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "terminals": [
+    {
+      "id": "kitty",
+      "name": "kitty",
+      "bin": "kitty",
+      "termProgram": ["kitty"],
+      "argv": ["kitty", "--title", "{title}", "--directory", "{cwd}", "--", "{cmd...}"]
+    },
+    {
+      "id": "wezterm",
+      "name": "WezTerm",
+      "bin": "wezterm",
+      "termProgram": ["WezTerm"],
+      "titleless": true,
+      "argv": ["wezterm", "start", "--cwd", "{cwd}", "--", "{cmd...}"]
+    },
+    {
+      "id": "gnome-terminal",
+      "name": "GNOME Terminal",
+      "bin": "gnome-terminal",
+      "termProgram": ["gnome-terminal"],
+      "argv": ["gnome-terminal", "--title={title}", "--working-directory={cwd}", "--", "{cmd...}"]
+    },
+    {
+      "id": "alacritty",
+      "name": "Alacritty",
+      "bin": "alacritty",
+      "termProgram": ["alacritty"],
+      "argv": ["alacritty", "--title", "{title}", "--working-directory", "{cwd}", "-e", "{cmd...}"]
+    },
+    {
+      "id": "konsole",
+      "name": "Konsole",
+      "bin": "konsole",
+      "termProgram": ["konsole"],
+      "argv": ["konsole", "--workdir", "{cwd}", "-p", "tabtitle={title}", "-e", "{cmd...}"]
+    },
+    {
+      "id": "foot",
+      "name": "foot",
+      "bin": "foot",
+      "termProgram": ["foot"],
+      "argv": ["foot", "--title", "{title}", "--working-directory", "{cwd}", "{cmd...}"]
+    },
+    {
+      "id": "xterm",
+      "name": "xterm",
+      "bin": "xterm",
+      "termProgram": ["xterm"],
+      "argv": ["xterm", "-T", "{title}", "-e", "{cmd...}"]
+    }
+  ]
+}

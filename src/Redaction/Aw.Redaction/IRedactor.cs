@@ -13,7 +13,7 @@ public interface IRedactor
 
     /// <summary>
     /// True when a field, header or attribute named <paramref name="name"/> holds a secret whatever its value looks
-    /// like (client_secret, X-Api-Key, accessToken, Authorization, Cookie). A caller that scrubs a key and its value
+    /// like (client_secret, X-Api-Key, accessToken, Authorization, Cookie). A name qualifies when it ends in a secret word, or when a secret word is a whole token of it (split at _ - . camelCase humps and where letters turn into digits (password2 is password, 2), plurals included: password_hash, api_tokens, secretKey), unless a count word sits directly beside token(s) (max_tokens, input_tokens). A caller that scrubs a key and its value
     /// separately, such as a telemetry processor, redacts the whole value of such a field: the assignment rules can't
     /// see the name once it is split from the value.
     /// </summary>

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "agents": {
+    "claude-code": {
+      "override": true,
+      "bin": "/opt/claude/bin/claude"
+    },
+    "codex": {
+      "override": true,
+      "resume": null
+    },
+    "cursor": {
+      "override": true,
+      "label": "Cursor Agent",
+      "open": [
+        "{bin}",
+        "--force",
+        "{seed}"
+      ]
+    }
+  }
+}

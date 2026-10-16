@@ -24,6 +24,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Instances;
 /// <param name="Spent">The token spend.</param>
 /// <param name="Facts">The facts, as stored references.</param>
 /// <param name="Outcome">The terminal outcome, once the instance ended (a recipe terminal's, or 'cancelled').</param>
+/// <param name="LaterParks">The parks queued behind <see cref="PendingPark"/>, in order; null when there are none (the queue is PendingPark then these).</param>
 public sealed record WorkflowInstance(
     WorkflowInstanceId Id,
     InstanceAddress Address,
@@ -39,7 +40,8 @@ public sealed record WorkflowInstance(
     IReadOnlyDictionary<string, LoopState> Loops,
     TokenSpend Spent,
     IReadOnlyDictionary<FactKey, FactValue> Facts,
-    OutcomeName? Outcome)
+    OutcomeName? Outcome,
+    IReadOnlyList<Suspension>? LaterParks = null)
 {
     /// <summary>The state status shows: the suspension's engine-owned state, else the frame's.</summary>
     [JsonIgnore]
@@ -52,4 +54,8 @@ public sealed record WorkflowInstance(
     /// <summary>Whether the instance has ended.</summary>
     [JsonIgnore]
     public bool Ended => Outcome is not null;
+
+    /// <summary>The parks waiting behind the suspension, in order: the pending park, then the queued ones.</summary>
+    /// <returns>The pending parks.</returns>
+    internal IReadOnlyList<Suspension> PendingParks() => PendingPark is { } pending ? [pending, .. LaterParks ?? []] : [];
 }

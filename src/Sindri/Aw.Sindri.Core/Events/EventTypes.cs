@@ -80,6 +80,12 @@ public static class EventTypes
     /// <summary>An existing item was linked to a tracker record.</summary>
     public const string ItemLinked = "item.linked";
 
+    /// <summary>A session or a human filed a request; a decision was created with it.</summary>
+    public const string RequestFiled = "request.filed";
+
+    /// <summary>A human chose an option of a decision.</summary>
+    public const string DecisionRecorded = "decision.recorded";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

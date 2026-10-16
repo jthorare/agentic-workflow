@@ -1,0 +1,17 @@
+{
+  "note": "JCS: UTF-8 text, quotes and backslashes escaped, keys sorted",
+  "entry": {
+    "label": "x",
+    "bin": "tool",
+    "open": [
+      "{bin}",
+      "--say=héllo \"q\" \\  ",
+      "{seed}"
+    ],
+    "resume": null,
+    "sessionId": "none",
+    "mcp": "none"
+  },
+  "canonical": "{\"bin\":\"tool\",\"mcp\":\"none\",\"open\":[\"{bin}\",\"--say=héllo \\\"q\\\" \\\\  \",\"{seed}\"],\"resume\":null,\"sessionId\":\"none\"}",
+  "argvHash": "sha256:a9fc154258f962bacb5c20f15c78df84dec5b568b1090f3d976e55890dcc7063"
+}

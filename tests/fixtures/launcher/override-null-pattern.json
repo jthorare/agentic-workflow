@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "agents": {
+    "codex": {
+      "override": true,
+      "sessionIdPattern": null
+    }
+  }
+}

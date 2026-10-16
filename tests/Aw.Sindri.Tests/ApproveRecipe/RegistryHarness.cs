@@ -68,10 +68,12 @@ internal sealed class RegistryHarness : IAsyncDisposable
             .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceReader>(_instances)
             .AddSingleton(SliceHarness.Json)
             .AddSingleton<IProfileSource>(H.Profiles)
+            .AddEffectPorts(H)
             .AddRecipeBlocks()
             .AddSingleton<BlockCatalog>()
             .AddScoped<RecipeApprovalPlanner>()
             .AddScoped<RecipeRevokePlanner>()
+            .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
             .AddScoped<RecipeRegistryReader>()
             .AddSingleton(Workflow.RecipeReaderTests.Reader)
             .AddSingleton<Core.Events.RecipeEvents>()
@@ -175,4 +177,16 @@ internal sealed class RegistryHarness : IAsyncDisposable
     public IReadOnlyList<LedgerEvent> Events(string type) => [.. H.Store.Events.Where(e => e.Envelope.Type == type)];
 
     public ValueTask DisposeAsync() => _provider.DisposeAsync();
+}
+
+/// <summary>The effect blocks' ports, in memory (engine P6): the approved allowlist, the claim, its marker ref, liveness, fact contents and the desk's notices.</summary>
+file static class EffectPortRegistrations
+{
+    public static IServiceCollection AddEffectPorts(this IServiceCollection services, SliceHarness h) => services
+        .AddSingleton<IApprovedProfile>(h.Profiles)
+        .AddSingleton<Core.Workflow.Engine.Effects.IWorkflowClaims>(new InMemoryWorkflowClaims())
+        .AddSingleton<Core.Workflow.Engine.Effects.IClaimRefs>(new InMemoryClaimRefs())
+        .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
+        .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(new InMemoryFactStore())
+        .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices());
 }

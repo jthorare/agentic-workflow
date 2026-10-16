@@ -2,10 +2,12 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.RecordServiceRun;
 using Aw.Sindri.Host.Server;
+using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Server;
@@ -31,6 +33,23 @@ public sealed class IdleRunTests
         Assert.Equal([ServiceOutcome.Failed, ServiceOutcome.Ok], Rows().Select(r => r.Outcome));
         Assert.Equal(ServiceOutcome.Ok, ViewRow().LastRun!.Outcome);
         Assert.Null(ViewRow().LastRun!.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_failure_row_stands_after_the_failure_and_is_gone_after_the_first_idle_ok_the_scheduler_records()
+    {
+        await Run(new ScriptedService(ScriptedService.Failed, ScriptedService.Quiet, ScriptedService.Quiet), runs: 3);
+        var views = new InMemoryViewStore(SliceHarness.Json);
+        _ = await views.Open(ViewSchema.Version, Token);
+        var rowsAfterEach = new List<int>();
+
+        foreach (var recorded in _h.Store.Events.Where(e => e.Envelope.Type == EventTypes.ServiceRan))
+        {
+            _ = await views.Apply([recorded], [new NeedsYouProjection(_h.Events, new PassThroughScrubber())], _h.Clock.GetUtcNow(), Token);
+            rowsAfterEach.Add((await views.List<NeedsYouRowRecord>(ViewNames.NeedsYou, Token)).Value.Count);
+        }
+
+        Assert.Equal([1, 0], rowsAfterEach);   // the scheduler records the failure and the first quiet run only: the second quiet run writes nothing
     }
 
     [Fact, Trait("Lane", "unit")]

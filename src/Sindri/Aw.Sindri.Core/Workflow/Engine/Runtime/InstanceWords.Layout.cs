@@ -38,7 +38,7 @@ internal sealed partial record InstanceWords
 
     /// <summary>A drift recorded behind the open park, as fields: the block, and that the answer needs the re-approval first.</summary>
     /// <returns>The note, or null.</returns>
-    public StatusDrift? DriftNote() => Instance is { Suspension.Kind: SuspensionKind.Park, PendingPark: { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Drift } drift }
+    public StatusDrift? DriftNote() => BehindDrift() is { } drift
         ? new StatusDrift(BlockId.From(Block(drift.Question)), NeedsReapproval: true)
         : null;
 

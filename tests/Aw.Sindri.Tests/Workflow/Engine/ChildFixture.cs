@@ -98,17 +98,17 @@ internal static class ChildFixture
     /// <summary>The parent mirroring the child's no-progress park.</summary>
     public static WorkflowInstance MirroringPark { get; } = Push(Waiting, new Suspension(
         SuspensionKind.Park, ParkReason.NoProgress, ParkKind: null, Escalation: null, "checks failed twice with the same findings", Inbox, ChildId,
-        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effect: null)));
+        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effects: [])));
 
     /// <summary>The parent mirroring the child's escalation.</summary>
     public static WorkflowInstance MirroringEscalation { get; } = Push(Waiting, new Suspension(
         SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Child, "gate.verify.judge scored 0.62", Inbox, ChildId,
-        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effect: null)));
+        new ResumeAction(ResumeKind.Forward, Withheld: null, Gate: null, Effects: [])));
 
     /// <summary><paramref name="instance"/> taken over by <see cref="Terminal"/>.</summary>
     public static WorkflowInstance TakenOver(WorkflowInstance instance) => Push(instance, new Suspension(
         SuspensionKind.Takeover, Reason: null, ParkKind: null, Escalation: null, string.Empty, Terminal, Mirrors: null,
-        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effect: null)));
+        new ResumeAction(ResumeKind.Return, Withheld: null, Gate: null, Effects: [])));
 
     /// <summary>A command stamp with a nonce made of <paramref name="digit"/>.</summary>
     public static CommandStamp Stamp(char digit) => new(CommandNonce.From(new string(digit, 32)), new string('f', 64));

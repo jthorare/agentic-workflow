@@ -79,7 +79,7 @@ public static partial class TransitionDecision
         var withheld = d.Trigger is StepCompleted or StepFailed or WaitSatisfied or CommandFired ? new WithheldTrigger(transition, d.Trigger) : null;
         var park = new Suspension(
             SuspensionKind.Park, ParkReason.SpecConflict, revoked ? ParkKind.Revoked : ParkKind.Drift, Escalation: null, question, d.Trigger.Actor, Mirrors: null,
-            new ResumeAction(revoked ? ResumeKind.None : ResumeKind.Rearm, revoked ? null : withheld, Gate: null, Effect: null));
+            new ResumeAction(revoked ? ResumeKind.None : ResumeKind.Rearm, revoked ? null : withheld, Gate: null, Effects: []));
         return d.ChangedOrAbsorbed(d.Rules.Suspend(instance, park), instance, "already parked for drift");
     }
 

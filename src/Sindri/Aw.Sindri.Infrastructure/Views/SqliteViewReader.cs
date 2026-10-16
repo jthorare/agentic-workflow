@@ -29,6 +29,12 @@ internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOpt
             ? await Read(view, Results.Success<IReadOnlyList<TRow>>([]), rows => rows.Range<TRow>(view, afterKey, beforeKey, max, cancellationToken), cancellationToken).ConfigureAwait(false)
             : Results.Success<IReadOnlyList<TRow>>([]);
 
+    public async ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+        where TRow : class =>
+        database.Exists
+            ? await Read(view, Results.Success<IReadOnlyList<TRow>>([]), rows => rows.Where<TRow>(view, column, value, cancellationToken), cancellationToken).ConfigureAwait(false)
+            : Results.Success<IReadOnlyList<TRow>>([]);
+
     public async ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken)
     {
         if (!database.Exists)

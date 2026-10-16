@@ -49,7 +49,7 @@ internal interface IEngineRules
     public ParentEffect ToParent(WorkflowInstance parent, Recipe recipe, ChildChanged change);
 
     /// <summary><see cref="ChildPropagation.Release"/>.</summary>
-    public WorkflowInstance Release(WorkflowInstance parent, WorkflowInstanceId child);
+    public ParentReleased Release(WorkflowInstance parent, WorkflowInstanceId child);
 
     /// <summary><see cref="InstanceDeltas.Between"/>.</summary>
     public InstanceDelta Delta(WorkflowInstance? before, WorkflowInstance after);

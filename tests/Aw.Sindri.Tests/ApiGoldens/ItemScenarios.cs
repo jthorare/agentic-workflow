@@ -31,7 +31,7 @@ internal static class ItemScenarios
         ("queue", "fixture"), ("queue", "empty"), ("queue", "stalled"), ("queue", "large"), ("queue", "session-scoped"), ("queue", "rebuilding"),
         ("items", "list-empty"), ("items", "list-open"), ("items", "list-state-done"), ("items", "list-repo"), ("items", "list-session-other-repo"), ("items", "list-bad-state"),
         ("items", "created"), ("items", "created-repo"), ("items", "created-link"), ("items", "invalid-title"), ("items", "unknown-repo"), ("items", "refused-session"), ("items", "refused-origin"),
-        ("items-id", "new"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
+        ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
         ("items-id-timeline", "fixture"), ("items-id-timeline", "page-2"), ("items-id-timeline", "closed"), ("items-id-timeline", "not-found"),
         ("items-id-close", "accepted"), ("items-id-close", "stale-version"), ("items-id-close", "accepted-cancelled"), ("items-id-close", "already-closed"), ("items-id-close", "not-found"),
         ("items-id-close", "refused-session"), ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"),
@@ -60,17 +60,18 @@ internal static class ItemScenarios
         switch (scenario)
         {
             case "fixture":
-                await CreateMany(host, 4, repo: "demo");
+                var made = await CreateMany(host, 4, repo: "demo");
+                _ = await RequestCalls.Filed(host, "Split the work.", Session("demo"), ct, item: made[1]);   // item 2 waits on a decision (UI #197's needs-decision row)
                 break;
             case "large":
-                await CreateMany(host, 30, repo: "demo");
+                _ = await CreateMany(host, 30, repo: "demo");
                 break;
             case "stalled":
-                await CreateMany(host, 2, repo: "demo");
+                _ = await CreateMany(host, 2, repo: "demo");
                 await Stall(host, ct);
                 break;
             case "rebuilding":
-                await CreateMany(host, 2, repo: "demo");
+                _ = await CreateMany(host, 2, repo: "demo");
                 await ViewScenarios.CatchUp(host, ct);
                 host.App.Services.GetRequiredService<IProjectorControl>().RequestRebuild();
                 return await Send(host, Get("/sindri/queue", Human(host)));
@@ -92,7 +93,7 @@ internal static class ItemScenarios
         switch (scenario)
         {
             case "list-open":
-                await CreateMany(host, 3, repo: "demo");
+                _ = await CreateMany(host, 3, repo: "demo");
                 break;
             case "list-state-done":
                 var id = await Create(host, "Finished", "demo");
@@ -151,9 +152,7 @@ internal static class ItemScenarios
             return await Send(host, Get("/sindri/items/not-an-item", Human(host)));
         }
 
-        var id = scenario == "with-body"
-            ? await Create(host, "Fix the login redirect", "demo", body: "Users land on /home after a deep link.", link: "linear:issue/abc-123")
-            : await Create(host, "Try the queue", scenario == "session-other-repo" ? "other" : "demo");
+        var id = await CreateForDetail(host, scenario);
         await ViewScenarios.CatchUp(host, ct);
         switch (scenario)
         {
@@ -162,6 +161,9 @@ internal static class ItemScenarios
                 break;
             case "cancelled":
                 _ = await Close(host, id, "cancelled", 1);
+                break;
+            case "needs-decision" or "after-decide":
+                await WaitOnDecision(host, id, decide: scenario == "after-decide", ct);
                 break;
             case "alias":
                 await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb1), ItemId.From(id), RecordKey.From("linear:issue/abc-123"), ItemAlias.From("ENG-142")), "item.linked:golden:alias", ct);
@@ -173,6 +175,20 @@ internal static class ItemScenarios
 
         await ViewScenarios.CatchUp(host, ct);
         return await Send(host, Get("/sindri/items/" + id, scenario == "session-other-repo" ? Session("demo") : Human(host)));
+    }
+
+    private static Task<string> CreateForDetail(GoldenHost host, string scenario) =>
+        scenario == "with-body"
+            ? Create(host, "Fix the login redirect", "demo", body: "Users land on /home after a deep link.", link: "linear:issue/abc-123")
+            : Create(host, "Try the queue", scenario == "session-other-repo" ? "other" : "demo");
+
+    private static async Task WaitOnDecision(GoldenHost host, string item, bool decide, CancellationToken ct)
+    {
+        var (_, decision) = await RequestCalls.Filed(host, "Split the work.", Session("demo"), ct, item: item);
+        if (decide)
+        {
+            _ = await RequestCalls.Decide(host, decision, "decline", note: null, Human(host), ct);
+        }
     }
 
     private static async Task<string> TimelineBody(GoldenHost host, string scenario, CancellationToken ct)
@@ -259,15 +275,18 @@ internal static class ItemScenarios
         return JsonDocument.Parse(answer.Body).RootElement.GetProperty("itemId").GetString() ?? throw new InvalidOperationException($"no itemId in {answer.Body}");
     }
 
-    private static async Task CreateMany(GoldenHost host, int count, string repo)
+    private static async Task<List<string>> CreateMany(GoldenHost host, int count, string repo)
     {
+        var ids = new List<string>(count);
         for (var n = 1; n <= count; n++)
         {
-            _ = await Create(host, string.Create(CultureInfo.InvariantCulture, $"Item {n}"), repo);
+            ids.Add(await Create(host, string.Create(CultureInfo.InvariantCulture, $"Item {n}"), repo));
         }
+
+        return ids;
     }
 
-    private static async Task Stall(GoldenHost host, CancellationToken ct)
+    internal static async Task Stall(GoldenHost host, CancellationToken ct)
     {
         await ViewScenarios.CatchUp(host, ct);   // the first build finishes, so the stall is one of a running projector
         await ViewScenarios.Append(host, EventTypes.ItemCreated, "not an item", "item.created:unreadable", ct);

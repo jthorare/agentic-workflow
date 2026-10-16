@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Profile;
@@ -15,5 +16,17 @@ public sealed class DevProfileTests
         var loaded = ProfileReading.FromJson(json, "profile.yaml", ProfileFiles.Options);
 
         Assert.True(loaded.IsSuccess, loaded.IsSuccess ? null : loaded.Error.Message);
+    }
+
+    /// <summary>workflow.item claims its item with effect.claim.ref, so the dev profile allowlists it beside the desk notice (a dev fixture; built-in recipes still ship unapproved).</summary>
+    [Fact, Trait("Lane", "unit")]
+    public void Dev_profile_allowlists_the_desk_notice_and_the_claim_ref()
+    {
+        Assert.Null(YamlToJson.TryConvert(ShippedRecipes.Read("dev/profile.yaml"), out var json));
+        var loaded = ProfileReading.FromJson(json, "profile.yaml", ProfileFiles.Options);
+
+        var allowlist = EffectSettings.Of(loaded.Value.Profile).Allowlist;
+
+        Assert.Equal(["effect.claim.ref", "effect.notify.desk"], allowlist!.Select(static b => b.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 }

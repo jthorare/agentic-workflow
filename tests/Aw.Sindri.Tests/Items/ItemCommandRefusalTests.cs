@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Items;
 
-/// <summary>The item commands on the real host and a real SQLite ledger (API spec §3.2, §6): desk commands a session can't run, and a browser's Origin.</summary>
+/// <summary>The item commands and Decide on the real host and a real SQLite ledger (API spec §3.2, §6): desk commands a session can't run, and a browser's Origin.</summary>
 public sealed class ItemCommandRefusalTests : IDisposable
 {
     private const string CreateBody = """{"title":"Try the queue"}""";
@@ -25,6 +25,7 @@ public sealed class ItemCommandRefusalTests : IDisposable
     {
         { "/sindri/items", CreateBody },
         { "/sindri/items/ITM-00000000000000000000000000000001/close", CloseBody },
+        { "/sindri/decisions/DEC-00000000000000000000000000000001", """{"choice":"accept"}""" },
     };
 
     [Theory(Timeout = 30_000), Trait("Lane", "integration")]

@@ -1,0 +1,13 @@
+{
+  "note": "label, processName, transcripts, usage and sessionIdPattern are not hash inputs",
+  "builtin": "claude-code",
+  "override": {
+    "override": true,
+    "label": "Claude",
+    "processName": "claude-code",
+    "transcripts": null
+  },
+  "equalsBuiltin": "claude-code",
+  "canonical": "{\"bin\":\"claude\",\"mcp\":\"claude-config-file\",\"open\":[\"{bin}\",\"--session-id\",\"{sessionId}\",\"-n\",\"{name}\",\"{seed}\"],\"resume\":[\"{bin}\",\"--resume\",\"{sessionId}\"],\"sessionId\":\"pre-chosen-uuid\"}",
+  "argvHash": "sha256:e0c86e63de1a891eb9f2912271c11e93416638ed2f87f9b77d49186b034231c0"
+}

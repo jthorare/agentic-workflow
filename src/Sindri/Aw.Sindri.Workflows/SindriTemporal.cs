@@ -20,6 +20,7 @@ internal static class SindriTemporal
     [
         ("Item", IndexedValueType.Keyword),
         ("Recipe", IndexedValueType.Keyword),
+        ("RecipeHash", IndexedValueType.Keyword),
         ("State", IndexedValueType.Keyword),
         ("NeedsYou", IndexedValueType.Bool),
         ("Repo", IndexedValueType.Keyword),
@@ -35,6 +36,9 @@ internal static class SindriTemporal
 
     /// <summary>The 'Recipe' search attribute: the recipe id.</summary>
     public static SearchAttributeKey<string> RecipeKey { get; } = SearchAttributeKey.CreateKeyword("Recipe");
+
+    /// <summary>The 'RecipeHash' search attribute: the hash of the recipe version the instance runs, so a registry wake finds its instances (engine P6 integration).</summary>
+    public static SearchAttributeKey<string> RecipeHashKey { get; } = SearchAttributeKey.CreateKeyword("RecipeHash");
 
     /// <summary>The 'State' search attribute: the state the instance is in.</summary>
     public static SearchAttributeKey<string> StateKey { get; } = SearchAttributeKey.CreateKeyword("State");

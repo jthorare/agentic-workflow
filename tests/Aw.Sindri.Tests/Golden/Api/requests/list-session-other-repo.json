@@ -1,0 +1,11 @@
+{
+  "requests": [],
+  "empty": "No requests filed.",
+  "asOf": {
+    "cursor": 6,
+    "ledgerHead": 6,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

@@ -31,7 +31,9 @@ public static partial class TransitionDecision
             DeadlineFired { Kind: DeadlineKind.TakeoverIdle } idle => Idle(d, instance, idle),
             DeadlineFired fired => Expired(d, instance, fired),
             OpenRequested open => OpenRequest(d, instance, open),
-            _ => throw new NotSupportedException($"{d.Trigger.Name} is decided by the engine-owned rules its phase adds (P2, P6: recipe wakes and effect refusals)."),
+            OutboxRefused refused => OutboxRefusal(d, instance, refused),
+            RecipeWake wake => Woken(d, instance, wake),
+            _ => throw new NotSupportedException($"{d.Trigger.Name} is decided by the engine-owned rules its phase adds."),
         };
     }
 
@@ -44,7 +46,14 @@ public static partial class TransitionDecision
         }
 
         var ending = d.Rules.End(instance, child: null);
-        return ending.IsError ? new Rejected(d.Key, ending.Error) : d.Changed(ending.Value.Instance);
+        return ending.IsError ? new Rejected(d.Key, ending.Error) : WithReleased(d.Changed(ending.Value.Instance), ending.Value.Released);
+    }
+
+    /// <summary>The change's release of the parent's mirror, then <paramref name="then"/>; the effects the release frees are sent with it.</summary>
+    private static Decision ReleasedChild(Deciding d, WorkflowInstance instance, ChildChanged change, Func<WorkflowInstance, Decision> then)
+    {
+        var freed = d.Rules.Release(instance, change.Child);
+        return WithReleased(then(freed.Instance), freed.Released);
     }
 
     /// <summary>
@@ -57,8 +66,8 @@ public static partial class TransitionDecision
         return effect.Kind switch
         {
             ParentEffectKind.MirrorPark or ParentEffectKind.Escalate when effect.Suspend is { } suspend =>
-                d.Changed(d.Rules.Suspend(d.Rules.Release(instance, change.Child), suspend)),
-            ParentEffectKind.Release => d.ChangedOrAbsorbed(d.Rules.Release(instance, change.Child), instance, "nothing mirrors that child"),
+                ReleasedChild(d, instance, change, freed => d.Changed(d.Rules.Suspend(freed, suspend))),
+            ParentEffectKind.Release => ReleasedChild(d, instance, change, freed => d.ChangedOrAbsorbed(freed, instance, "nothing mirrors that child")),
             ParentEffectKind.Hold => new Rejected(d.Key, WorkflowErrors.TriggerNotAllowed.With(
                 $"{instance.Address.Value} is busy, so the child's {change.Name} stays pending (fix: none needed; it applies when the parent can take it)")),
             ParentEffectKind.Ignore or ParentEffectKind.MirrorPark or ParentEffectKind.Escalate or _ =>

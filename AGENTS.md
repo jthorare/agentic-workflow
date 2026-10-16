@@ -106,7 +106,7 @@ dotnet run --project src/Packets/Aw.Packets.App -- validate <packet-dir> [--repo
 dotnet run --project src/Packets/Aw.Packets.App -- freeze <packet-dir> [--repo <dir>] [--json]     # Record the packet's canonical hash under $AW_STATE_DIR/packets/<owner>/<name>/<id>/frozen/
 bash src/Packets/aot-smoke/run.sh        # aw-packets under NativeAOT: publish (on a copy), run against a temp repo, compare with expected.txt
 bash src/Judge/aot-smoke/run.sh          # judge under NativeAOT: publish (on a copy), run offline on a temp AW_STATE_DIR, compare with expected.txt
-dotnet run --project src/Evidence/Aw.Evidence.Host -- <run|parity|parity-plan|parity-comment|parity-stale|parity-put|publish-plan|doctor|provenance|install-browser|api-run> …   # ui-evidence, C# build (docs/csharp/evidence.md; api-run: HTTP and CLI contract checks, summary.json on stdout, `--at base|head`, `--host` for requests, targets from <repo>/.agentic-workflow/evidence.json): exit 0 ok, 1 usage/invalid/refused, 2 a check failed, 3 review pending, 4 the run errored, 75 a lock stayed busy
+dotnet run --project src/Evidence/Aw.Evidence.Host -- <run|parity|parity-plan|parity-comment|parity-stale|parity-put|publish-plan|doctor|provenance|install-browser|api-run|db-run> …   # ui-evidence, C# build (docs/csharp/evidence.md; api-run: HTTP and CLI contract checks, summary.json on stdout, `--at base|head`, `--host` for requests, targets from <repo>/.agentic-workflow/evidence.json; db-run: read-only SQLite (a copy) or Postgres (identity and role checked) row assertions, same summary contract, Npgsql): exit 0 ok, 1 usage/invalid/refused, 2 a check failed, 3 review pending, 4 the run errored, 75 a lock stayed busy
 dotnet run --project src/BugFix/Aw.BugFix.Host -- <command> --state <dir> [options]   # bugfix-state, the C# /bugFixOrchestrator helper (docs/csharp/bugfix.md); exit 0 ok, 1 bad input, 2 usage, 3 refused
 bash src/BugFix/aot-smoke/run.sh         # bugfix-state under NativeAOT: publish (on a copy), run a bug fix in a temp repo, compare with expected.txt
 dotnet run --project src/Sindri/Aw.Sindri.Host -- [--headless | serve | status [--follow] [--json] | stop | profile validate|approve | views rebuild [--no-start] | queue [--json] | items [--state S] [--repo R] [--json] | item add <title> [--repo R] | item close <item> [--cancelled] [--version N] | ledger [--after N] [--item X] [--type T] [--max N] [--json] | doctor]   # the C# Sindri app (S1 app shell, docs/csharp/sindri.md; `views rebuild` replays the ledger into views.db, the fix when the projector stalls); state in AW_SINDRI_HOME (default $AW_STATE_DIR/sindri-app); exit 0 ok, 1 attention, 2 error
@@ -153,6 +153,8 @@ bash providers/tests/install.test.sh
 bash scripts/tests/sync-rules.test.sh
 bash scripts/tests/check-deps.test.sh
 bash scripts/tests/check-rules.test.sh
+bash scripts/tests/check-launcher.test.sh   # launcher.json schema, fixtures, built-ins and argvHash goldens (node scripts/check-launcher.mjs; Ajv is a dev dependency of scripts/)
+bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/binaries-lock.test.sh

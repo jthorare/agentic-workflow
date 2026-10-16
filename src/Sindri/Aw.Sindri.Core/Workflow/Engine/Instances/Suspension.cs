@@ -29,6 +29,12 @@ public sealed record Suspension(
     /// </summary>
     public RemainingTimer? Remaining { get; init; }
 
+    /// <summary>
+    /// A drift park the re-approval already ended while a takeover held the instance: it waits in the queue only to
+    /// re-send its effects once nothing else holds the instance, and is never made the current suspension (spec §3.8).
+    /// </summary>
+    public bool Approved { get; init; }
+
     /// <summary>The engine-owned state this suspension shows (spec §3.8).</summary>
     public string State => Kind switch
     {

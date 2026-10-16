@@ -40,6 +40,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IProcessLocations, ProcessScanner>()
             .AddSingleton<IHostResources>(new ProcHostResources(settings.StateDirectory, settings.HeavyLock))
             .AddSingleton<ILogFiles, FileLogFiles>()
+            .AddSingleton<IWorktreeFiles, DirectoryWorktreeFiles>()
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()
             .AddScoped<IRunningLog>(sp => new AppendRunningLog(async cancellationToken =>

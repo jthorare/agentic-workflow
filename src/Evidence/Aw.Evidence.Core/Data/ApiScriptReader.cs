@@ -80,7 +80,7 @@ public static partial class ApiScriptReader
         }
     }
 
-    private static void CheckPointer(PointerCheck check, string at, Problems problems)
+    internal static void CheckPointer(PointerCheck check, string at, Problems problems)
     {
         if (JsonPointer.Problem(check.Location) is { } bad)
         {
@@ -103,7 +103,7 @@ public static partial class ApiScriptReader
         }
     }
 
-    private static string Item(string list, int index) => list + "[" + index.ToString(CultureInfo.InvariantCulture) + "]";
+    internal static string Item(string list, int index) => list + "[" + index.ToString(CultureInfo.InvariantCulture) + "]";
 
     private static bool IsRegex(string pattern)
     {
