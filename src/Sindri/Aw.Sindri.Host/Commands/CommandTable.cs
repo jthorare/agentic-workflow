@@ -17,14 +17,22 @@ namespace Aw.Sindri.Host.Commands;
 /// </summary>
 internal static class CommandTable
 {
-    internal static async Task<int> Run(string[] args, Func<string, string?> environment, TimeProvider clock)
+    /// <summary>Runs one verb as Program does.</summary>
+    /// <param name="args">The command line.</param>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="clock">The clock.</param>
+    /// <param name="configure">Tests only: changes the registrations after Compose, to swap a port for its fake; Program passes nothing.</param>
+    /// <returns>The exit code.</returns>
+    internal static async Task<int> Run(string[] args, Func<string, string?> environment, TimeProvider clock, Action<IServiceCollection>? configure = null)
     {
         if (args is ["serve"])
         {
             return await Serve(environment, clock).ConfigureAwait(false);
         }
 
-        var provider = Composition.Compose(new ServiceCollection(), environment, clock).BuildServiceProvider();
+        var services = Composition.Compose(new ServiceCollection(), environment, clock);
+        configure?.Invoke(services);   // tests only: a test replaces a port with its fake; Program passes nothing
+        var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
         {
             _ = provider.GetRequiredService<TelemetryRuntime>();
@@ -85,6 +93,7 @@ internal static class CommandTable
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["services" or "jobs", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
             ["doctor", ..] => await Doctor(args, verbs, harnesses, output, ct).ConfigureAwait(false),
+            ["onyx", "status", .. var rest] when Json(rest) is { } json => await verbs.OnyxStatus(json, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output, session).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["recipe", .. var rest] => await RecipeCommandTable.Run(rest, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c)), ct).ConfigureAwait(false),

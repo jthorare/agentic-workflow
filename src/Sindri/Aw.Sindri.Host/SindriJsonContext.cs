@@ -57,6 +57,7 @@ using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
+using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
@@ -107,6 +108,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(TimelineResponse)), JsonSerializable(typeof(Recipe)), JsonSerializable(typeof(BlockDescriptor)), JsonSerializable(typeof(ValidateRecipeResponse))]
 [JsonSerializable(typeof(EvalRecipeResponse)), JsonSerializable(typeof(WorkflowEvent)), JsonSerializable(typeof(EvalStartLine)), JsonSerializable(typeof(EvalStepLine))]
 [JsonSerializable(typeof(RecipeValidationView)), JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
+[JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(DeskNotice))]   // engine P6 unit (c): a line of notifications.jsonl
 [JsonSerializable(typeof(EffectRow))]            // engine P6: an effect's ledger row (§5.7)
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)

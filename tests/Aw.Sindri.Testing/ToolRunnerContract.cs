@@ -38,6 +38,17 @@ public abstract class ToolRunnerContract
         Expect.Equal(expected, run);
     }
 
+    /// <summary>Standard error is kept beside standard output, for a caller that classifies a failure by it.</summary>
+    [Fact]
+    public void An_exit_returns_standard_error_apart_from_standard_output()
+    {
+        var expected = new ToolRun(ToolOutcome.Exited, 1, "out\n", "permission denied\n");
+
+        var run = Create(expected).Run("sh", ["-c", "echo out; echo 'permission denied' >&2; exit 1"], TimeSpan.FromSeconds(30));
+
+        Expect.Equal(expected, run);
+    }
+
     /// <summary>A tool not on PATH is Missing.</summary>
     [Fact]
     public void A_tool_not_on_path_is_missing()

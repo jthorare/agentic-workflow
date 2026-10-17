@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Aw.Sindri.Infrastructure.Secrets;
 
-/// <summary>IToolRunner over System.Diagnostics.Process: no shell, standard output captured, standard error drained and dropped.</summary>
+/// <summary>IToolRunner over System.Diagnostics.Process: no shell, standard output and standard error captured.</summary>
 internal sealed class ProcessToolRunner : IToolRunner
 {
     /// <inheritdoc />
@@ -50,7 +50,6 @@ internal sealed class ProcessToolRunner : IToolRunner
         }
 
         process.WaitForExit();   // flushes the redirected streams
-        _ = error.GetAwaiter().GetResult();
-        return new ToolRun(ToolOutcome.Exited, process.ExitCode, output.GetAwaiter().GetResult());
+        return new ToolRun(ToolOutcome.Exited, process.ExitCode, output.GetAwaiter().GetResult(), error.GetAwaiter().GetResult());
     }
 }

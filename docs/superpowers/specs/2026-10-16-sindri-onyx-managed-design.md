@@ -98,7 +98,9 @@ Each step is idempotent and checks before it acts; the run records each complete
 
 1. **Preflight.** Docker CLI present and the daemon answering (`docker version`), Compose v2 (`docker compose
    version`); Docker's memory limit ≥ the one-user sizing needs (builder measures; the manual page says ~6 GB with the VM
-   capped at 6 GB); free disk on Docker's data root and `$AW_SINDRI_HOME` ≥ the pinned total image size plus headroom
+   capped at 6 GB); free disk at `$AW_SINDRI_HOME` and, where Docker's data root is a directory on this host (a Linux engine), at the data root
+   (`docker info` DockerRootDir), the smaller of the two ≥ the pinned total image size plus headroom; on Docker Desktop the
+   data root lives in its VM, so the host measurement stands and the row notes that Docker Desktop caps its disk image too
    (the builder measures the real pull and model download on v4.9.0 and records the number in the pins). The chosen
    port (default 3000, §7) free or already ours.
 2. **Fetch the deployment files** listed in the pins (the compose file, `env.template`, the nginx config files the
@@ -230,15 +232,16 @@ UI's Health page shows both rows as it shows every doctor row; nothing UI-specif
 ## 9. Architecture (where the code goes)
 
 Inside the Sindri package, by the C# rules (`.agents/rules/csharp.md`): slices `OnyxUp`, `OnyxStatus`, `OnyxDown`,
-`OnyxLogin` in `Aw.Sindri.Features`; ports `IContainerRuntime` (compose project up, stop, pull, ps, version),
+`OnyxLogin` in `Aw.Sindri.Features`; ports `IContainerRuntime` (P1 has `Inspect`, the read-only facts; P2 adds the compose operations pull, up, stop and ps),
 `IOnyxProvisioning` (§5.2), `ISecretWriter` (§5.3), `IDeployFiles` (fetch and verify against the pins) in Core, with
 fakes and contract tests in `Aw.Sindri.Testing`; the Docker CLI, HTTP and keychain adapters in Infrastructure; CLI
 commands in Host. The first-run offer (O6) lives in the C# bare start (`StartCommand`, before it launches `serve`),
 not in `scripts/sindri-app.sh`: the launcher stays a thin build-and-exec wrapper, and a published `sindri` started any
 other way behaves the same. The launcher's only change is its header and `docs/csharp/sindri-ui.md`'s paragraph
 naming Onyx among what bare `sindri-app` brings up. The serve and stop hooks sit beside the Temporal ones (`TemporalDevServer` is the model for detach,
-readiness, bounded stop). `deps.yaml` declares the new `cli` edges (`docker`, `security`, `secret-tool`, `pbcopy` and
-the Linux clipboards) and the `file` edge to `context/onyx.lock`.
+readiness, bounded stop). `deps.yaml` models edges between this repo's packages only, so the external executables
+(`docker`, `security`, `secret-tool`, `pbcopy` and the Linux clipboards) are not declared there: `docs/csharp/sindri.md`
+lists them instead.
 
 ## 10. Proof
 
@@ -259,9 +262,10 @@ the Linux clipboards) and the `file` edge to `context/onyx.lock`.
 ## 11. Phases (for /specToProvenPR)
 
 1. **P1 — pins and preflight:** `context/onyx.lock` with the measured numbers, its check and test; `IContainerRuntime`
-   and the preflight; `sindri onyx status`; `SND-ONYX-001..003, 006`.
+   and the preflight (its memory check is the `MemTotal` floor only); `sindri onyx status`; `SND-ONYX-001..003, 006`.
 2. **P2 — files, config, start:** fetch and verify, `.env` and the override, pull, start, readiness, `sindri onyx down`,
-   doctor `onyx:stack`; `SND-ONYX-004, 005`.
+   doctor `onyx:stack`; `SND-ONYX-004, 005`; the memory check that counts what Docker's existing containers already use (§12),
+   moved here from P1 by owner decision 2026-10-17.
 3. **P3 — owner setup, key, secret, profile:** the sign-up hand-off, the provisioning client and its allowlist, the
    secret writer, the profile write and inline approval, `sindri onyx open`; `SND-ONYX-007..009`.
 4. **P4 — the entry path, serve and stop:** the first-run offer in bare `sindri-app` (O6), the lifecycle hooks,

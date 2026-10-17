@@ -4,7 +4,8 @@ namespace Aw.Sindri.Infrastructure.Secrets;
 /// <param name="Outcome">How it ended.</param>
 /// <param name="ExitCode">The exit code when it exited, otherwise -1.</param>
 /// <param name="Output">Its standard output when it exited, otherwise empty. May hold a secret: never log it.</param>
-internal sealed record ToolRun(ToolOutcome Outcome, int ExitCode, string Output)
+/// <param name="Error">Its standard error when it exited, otherwise empty. For a caller that classifies a failure by it; never log or print it.</param>
+internal sealed record ToolRun(ToolOutcome Outcome, int ExitCode, string Output, string Error = "")
 {
     /// <summary>The tool wasn't on PATH.</summary>
     internal static ToolRun Missing { get; } = new(ToolOutcome.Missing, -1, "");

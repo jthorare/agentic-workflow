@@ -1,0 +1,56 @@
+# context/onyx.lock — the pins for Sindri-managed Onyx (spec docs/superpowers/specs/2026-10-16-sindri-onyx-managed-design.md §6).
+# Checked by scripts/onyx-lock.sh check (CI) and embedded into the Sindri build (Aw.Sindri.Infrastructure, onyx.lock).
+# Rows (format documented in scripts/onyx-lock.sh):
+#   version <tag> <commit>                          the Onyx release and the commit its tag points to
+#   file <path under deployment/> <sha256>          deployment files Sindri fetches from raw.githubusercontent.com at <commit>
+#   image <repository> <tag> <platform> <digest>   every image the v4.9.0 compose names, by manifest digest per platform
+#   need disk-bytes | docker-memory-bytes <n>       what preflight requires
+# Measured 2026-10-16 on v4.9.0 without pulling anything:
+#   commit   gh api repos/onyx-dot-app/onyx/git/ref/tags/v4.9.0 (a lightweight tag: the object is the commit)
+#   files    sha256 of docker_compose/docker-compose.yml, docker_compose/env.template and every file of data/nginx/ (the
+#            compose mounts ../data/nginx), downloaded at the commit
+#   images   `docker buildx imagetools inspect <repo>:<tag> --raw`, the linux/arm64 and linux/amd64 manifest digests of the
+#            index (`scripts/onyx-lock.sh verify` repeats this per row, from the recorded tag). Tags: onyx-* at v4.9.0, postgres 15.2-alpine, opensearch 3.6.0, nginx 1.25.5-alpine, redis 7.4-alpine,
+#            minio RELEASE.2025-07-23T15-54-02Z-cpuv1 (the s3-filestore profile), code-interpreter 0.4.8
+#   need disk-bytes
+#            2712988889 (config + layers sizes, compressed, of the nine linux/arm64 manifests) x 2.5 for uncompressed
+#            layers and volumes = 6782472222, + 10 GiB (10737418240) for models and data = 17519890462. A first estimate:
+#            P2 re-measures on a real pull and adjusts.
+#   need docker-memory-bytes
+#            5905580032 = 5.5 GiB: the floor for `docker info` MemTotal. The one-user sizing of docs/sindri/onyx.md is a
+#            6 GiB Docker VM, and Docker Desktop reports MemTotal a few percent under the limit the user sets, so a 6 GiB
+#            VM reads about 5.8 GiB. Preflight compares MemTotal with this floor and tells the user the floor rounded up to
+#            a whole GiB (6 GiB) as the setting.
+
+version v4.9.0 f1738ed539dc69d3bb06520c96fa068f9bd45c31
+
+file docker_compose/docker-compose.yml f1fe1b7c3d7c4cf743fd9075cd261627a7bb2bed117e74be607a4d4b101eb817
+file docker_compose/env.template ecb6d32f2b197435adb939e3d1151dd6144b230199203315e67d7e1430b923a3
+file data/nginx/app.conf.template 48be277af667a8978a52f4d3e7a3ce6a6109917793d571d2d05465668d7d9de8
+file data/nginx/app.conf.template.no-letsencrypt 36671d079d8853c26537fffab53e7033daecb2c65783a19864a1e6845033cb82
+file data/nginx/app.conf.template.prod 9fda3cf2b47e7521b0530b44fdb39afbda38f76b641c1b938f6c87cd08f3e036
+file data/nginx/mcp.conf.inc.template c5560ac929dba0b245ccbcd96bb3eda6f0cea64fa3f9d64516258d322018f0de
+file data/nginx/mcp_upstream.conf.inc.template cbf02dbe7d3117da2c6eb3b3960254b77d3bcd96a9e54edc0b95a7fe47f72f6d
+file data/nginx/run-nginx.sh bff6aa973c83620cd572f6712a214bfb0b4c1e66760080f8d95de584567a4ffc
+
+image docker.io/onyxdotapp/onyx-backend v4.9.0 linux/arm64 sha256:7c3877f16fa98444c45b0489e44971746613d530729d27640dd031ebb41df6bf
+image docker.io/onyxdotapp/onyx-backend v4.9.0 linux/amd64 sha256:4243c9663ba48f9a3061e7bd4085f7b79cb34a1fc1b5a2f034d007a202698481
+image docker.io/onyxdotapp/onyx-web-server v4.9.0 linux/arm64 sha256:1fb77c4d6356d52a8dbdd70588e7dfed022f8c8f1ee4337548a256bc4a42400a
+image docker.io/onyxdotapp/onyx-web-server v4.9.0 linux/amd64 sha256:736e9e391a6ae12c29b30b5583ec9d21c87ed6d6c4b3a5c833dd08a56cf44aa9
+image docker.io/onyxdotapp/onyx-model-server v4.9.0 linux/arm64 sha256:4db15ff662d2afed6f56d4286302c715cf50b1e6fdf360b9fddbda33f261ad6b
+image docker.io/onyxdotapp/onyx-model-server v4.9.0 linux/amd64 sha256:630e3371615e293d300406435077fc8876ba3ecb1f787ad5da3fb55df63f77bf
+image docker.io/library/postgres 15.2-alpine linux/arm64 sha256:12cbba911ab20aff0594c832f0639f71bb2b6a6d5ea72adc91f3eafe7c152afd
+image docker.io/library/postgres 15.2-alpine linux/amd64 sha256:07ec36ad2d5ab9250f38c8ef749239b662cf15d03c9ddb7167422edbbdf71156
+image docker.io/opensearchproject/opensearch 3.6.0 linux/arm64 sha256:394b1c4eb141df969e05b186e9560b4cd0ab5c7ffa748788d2f322410a3cf856
+image docker.io/opensearchproject/opensearch 3.6.0 linux/amd64 sha256:d0a466bd00e38724b72ab0471f2206206e8d1a18b550f53a02f8d5d4f5da95c0
+image docker.io/library/nginx 1.25.5-alpine linux/arm64 sha256:05325b3a32db871dc396a859d9a9609d75f50d2f7ad12194f9f3a550111bdcaa
+image docker.io/library/nginx 1.25.5-alpine linux/amd64 sha256:721fa00bc549df26b3e67cc558ff176112d4ba69847537766f3c28e171d180e7
+image docker.io/library/redis 7.4-alpine linux/arm64 sha256:1f09a89a207d794a8c61d9edfc26e7c58427de10ccef7c5d18d638df79a63b85
+image docker.io/library/redis 7.4-alpine linux/amd64 sha256:ca0acbb137c1dc3339c8b147a58fd6f42775d4599327b50e7b116c23de501af2
+image docker.io/onyxdotapp/minio RELEASE.2025-07-23T15-54-02Z-cpuv1 linux/arm64 sha256:c15700875d9161c1dc37fc3de4e4e844b6bba846c0af935f4fb9d5a25c15b211
+image docker.io/onyxdotapp/minio RELEASE.2025-07-23T15-54-02Z-cpuv1 linux/amd64 sha256:e4c33a64461b493e5ac699fe7c0878ddd793c0cdeccd9501382c100abbab3856
+image docker.io/onyxdotapp/code-interpreter 0.4.8 linux/arm64 sha256:4fd52d3b18012fbfa83d4b7504877e99f2be78a55093b22dd96f7b7cad297a1c
+image docker.io/onyxdotapp/code-interpreter 0.4.8 linux/amd64 sha256:30b96dce1c5f60dfe138c19afb8737a5ec995803b7e26ca9c2907a2a59f0d6d2
+
+need disk-bytes 17519890462
+need docker-memory-bytes 5905580032
