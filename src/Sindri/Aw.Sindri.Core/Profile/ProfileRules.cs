@@ -29,13 +29,74 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Services(profile.Services) ?? Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Globs(profile);
+        var invalid = Sections(profile);
         if (invalid is not null)
         {
             return invalid;
         }
 
         return Canonical(profile);
+    }
+
+    private static Error? Sections(SindriProfile profile) =>
+        Services(profile.Services) ?? Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Globs(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents);
+
+    /// <summary>The 'launch:' keys: the confirm window is a duration, and a repo has a name. Agent ids are checked by pattern when read, never against the catalog.</summary>
+    private static Error? LaunchKeys(LaunchSettings? launch)
+    {
+        if (launch?.ConfirmWindow is { } window && !RecipeDuration.TryFrom(window, out _))
+        {
+            return Invalid("launch.confirmWindow", $"'{window}' is not a duration: a whole number and m, h or d (for example 90m, 2h)");
+        }
+
+        return (launch?.Repos ?? new Dictionary<string, LaunchRepoSettings>(StringComparer.Ordinal)).Keys.Any(string.IsNullOrWhiteSpace)
+            ? Invalid("launch.repos", "a repo name must be non-empty text")
+            : null;
+    }
+
+    private const int MaxHash = 128;
+
+    private static Error? AgentProblem(string id, AgentLimits limits)
+    {
+        if (!Launch.AgentId.TryParse(id, provider: null, out _))
+        {
+            return Invalid($"agents.{id}", "is not an agent id: a lowercase letter, then lowercase letters, digits or '-', 2 to 32 characters");
+        }
+
+        if (limits.DailyBudget is <= 0m)
+        {
+            return Invalid($"agents.{id}.dailyBudget", "must be above 0 (a decimal amount in USD)");
+        }
+
+        var hashes = limits.StepArgvHash ?? [];
+        for (var i = 0; i < hashes.Count; i++)
+        {
+            if (hashes[i].Length is 0 or > MaxHash || hashes[i].Any(char.IsWhiteSpace))
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"agents.{id}.stepArgvHash[{i}]"), $"must be 1 to {MaxHash} characters with no spaces");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The 'agents:' keys: ids match the id pattern (never the catalog), 'softLimit' is a fraction, a budget is positive, a hash is a short word.</summary>
+    private static Error? AgentKeys(AgentSettings? agents)
+    {
+        if (agents?.SoftLimit is <= 0m or > 1m)
+        {
+            return Invalid("agents.softLimit", "must be above 0 and at most 1 (a fraction of the daily budget)");
+        }
+
+        foreach (var (id, limits) in agents?.Targets ?? new Dictionary<string, AgentLimits>(StringComparer.Ordinal))
+        {
+            if (AgentProblem(id, limits) is { } problem)
+            {
+                return problem;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The longest glob 'index.denyPaths' takes.</summary>
@@ -106,6 +167,8 @@ public static class ProfileRules
         Services = new SortedDictionary<string, ServiceSettings>(
             (profile.Services ?? SindriProfile.NoServices).ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal),
         Api = profile.Api ?? new ApiSettings(),
+        Launch = profile.Launch is { Repos: { } repos } launch ? launch with { Repos = new SortedDictionary<string, LaunchRepoSettings>(repos.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Launch,
+        Agents = profile.Agents is { Targets: { } targets } agents ? agents with { Targets = new SortedDictionary<string, AgentLimits>(targets.ToDictionary(StringComparer.Ordinal), StringComparer.Ordinal) } : profile.Agents,
     };
 
     /// <summary>Each service's name and cadence.</summary>

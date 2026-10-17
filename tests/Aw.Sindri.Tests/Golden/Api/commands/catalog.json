@@ -369,6 +369,32 @@
       "shortcut": null
     },
     {
+      "action": "LaunchInit",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri launch init [--viewer <name>] [--force] [--stdout]",
+      "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
+      "action": "LaunchShow",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri launch show [<id>] [--json]",
+      "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
       "action": "OpenItem:attach",
       "class": "desk",
       "allowedCallers": [
@@ -379,7 +405,7 @@
       "method": "POST",
       "route": "/sindri/items/{itemId}/open",
       "cli": "sindri open <itemId> --attach [--agent <agent>]",
-      "ui": "pending:P10a",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null
@@ -395,7 +421,7 @@
       "method": "POST",
       "route": "/sindri/items/{itemId}/open",
       "cli": "sindri open <itemId> [--agent <agent>]",
-      "ui": "pending:P10a",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null
@@ -411,7 +437,7 @@
       "method": "POST",
       "route": "/sindri/items/{itemId}/open",
       "cli": "sindri open <itemId> --resume [--agent <agent>]",
-      "ui": "pending:P10a",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null
@@ -774,6 +800,40 @@
       "method": "POST",
       "route": "/sindri/services/{name}/run",
       "cli": "sindri services run <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
+      "action": "SessionExit",
+      "class": "issue",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sessions/{launchId}/exit",
+      "cli": "sindri session wrap --launch <launchId>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
+      "action": "SessionHeartbeat",
+      "class": "issue",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sessions/{launchId}/heartbeat",
+      "cli": "sindri session wrap --launch <launchId>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

@@ -30,6 +30,9 @@ public static class ViewNames
     /// <summary>Jobs, keyed by job id (API P6).</summary>
     public const string Jobs = "jobs";
 
+    /// <summary>Launches, keyed by launch id (API P10a).</summary>
+    public const string Launches = "launches";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs];
+    public static IReadOnlyList<string> All { get; } = [Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches];
 }

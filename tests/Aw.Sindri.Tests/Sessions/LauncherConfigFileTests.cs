@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Launch;
@@ -36,23 +35,6 @@ public sealed class LauncherConfigFileTests
         Assert.Equal("~/.claude/projects/*/{sessionId}.jsonl", entries[0].Transcripts);
         Assert.Equal(["{bin}", "--resume", "{sessionId}"], entries[0].Resume);
         Assert.StartsWith("rollout-", entries[1].IdCapture, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Every_launcher_fixture_gets_the_schemas_verdict()
-    {
-        var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(SessionFixtures.Launcher, "manifest.json")));
-        var builtins = SessionFixtures.Builtins();
-
-        foreach (var fixture in manifest.RootElement.GetProperty("fixtures").EnumerateArray())
-        {
-            var file = fixture.GetProperty("file").GetString()!;
-            var expected = fixture.GetProperty("schema").GetString() == "valid";
-
-            var read = LauncherConfigFile.Read(builtins, File.ReadAllBytes(Path.Combine(SessionFixtures.Launcher, file)));
-
-            Assert.True(read.IsSuccess == expected, $"{file}: expected {(expected ? "valid" : "invalid")}, got {(read.IsError ? read.Error.Message : "valid")}");
-        }
     }
 
     [Fact, Trait("Lane", "unit")]

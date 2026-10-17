@@ -135,7 +135,7 @@ public sealed partial class FreshnessTests : IDisposable
             .Select(r => r.GetProperty("ui").GetString()!).ToList();   // why: read from the catalog golden, so the next lane's rows don't break the counts
         var pending = rows.Where(u => u.StartsWith("pending:", StringComparison.Ordinal)).Select(u => u["pending:".Length..]).ToList();
         Assert.Equal(rows.Count, _vm.Catalog.Controls.Count);
-        Assert.Equal($"{pending.Count} actions arrive in later phases", _vm.Catalog.PendingSummary);
+        Assert.Equal(pending.Count == 1 ? "1 action arrives in later phases" : $"{pending.Count} actions arrive in later phases", _vm.Catalog.PendingSummary);
         Assert.Equal(pending.Distinct(StringComparer.Ordinal).Select(stage => $"arrives in {stage}"), _vm.Catalog.Pending.Select(p => p.Heading), StringComparer.Ordinal);
         Assert.Equal(rows.Count(u => u.StartsWith("cli-only", StringComparison.Ordinal)), _vm.Catalog.CliOnly.Count);
     }
@@ -318,7 +318,7 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _vm.Banner.HasRebuild);
 
-        Assert.Equal((53, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
+        Assert.Equal((57, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
     }
 
     // F13: the pill words come from the goldens, not from records built by hand.

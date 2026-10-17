@@ -1,0 +1,103 @@
+{
+  "probed": true,
+  "probedAt": "2026-01-01T00:00:00.0000000Z",
+  "terminal": {
+    "kind": "exec-template",
+    "label": "xterm",
+    "present": false,
+    "source": "detected",
+    "configPath": "/home/demo/.agentic-workflow/launcher.json",
+    "problem": "no-gui-session",
+    "detail": null
+  },
+  "host": {
+    "kind": "tmux",
+    "present": true,
+    "version": "3.4",
+    "problem": null
+  },
+  "targets": [
+    {
+      "facts": {
+        "id": "claude-code",
+        "present": true,
+        "version": "1.0.0",
+        "limited": null,
+        "problem": null,
+        "source": "builtin",
+        "overridden": false
+      },
+      "budget": {
+        "dailyUsd": null,
+        "spentUsd": null,
+        "fraction": null,
+        "state": "none",
+        "basis": null,
+        "tokens": 0
+      }
+    },
+    {
+      "facts": {
+        "id": "codex",
+        "present": false,
+        "version": null,
+        "limited": null,
+        "problem": "not-installed",
+        "source": "builtin",
+        "overridden": false
+      },
+      "budget": {
+        "dailyUsd": null,
+        "spentUsd": null,
+        "fraction": null,
+        "state": "none",
+        "basis": null,
+        "tokens": 0
+      }
+    },
+    {
+      "facts": {
+        "id": "aider",
+        "present": true,
+        "version": "0.5",
+        "limited": "no-usage-reader",
+        "problem": null,
+        "source": "added",
+        "overridden": false
+      },
+      "budget": {
+        "dailyUsd": null,
+        "spentUsd": null,
+        "fraction": null,
+        "state": "none",
+        "basis": null,
+        "tokens": 0
+      }
+    }
+  ],
+  "repos": [
+    {
+      "repo": "demo",
+      "present": true
+    },
+    {
+      "repo": "other",
+      "present": false
+    }
+  ],
+  "budgetTotal": {
+    "dailyUsd": null,
+    "spentUsd": null,
+    "fraction": null,
+    "state": "none",
+    "basis": null,
+    "tokens": 0
+  },
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

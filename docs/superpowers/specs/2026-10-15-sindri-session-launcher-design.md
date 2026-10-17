@@ -61,10 +61,10 @@ rows. What it does change in their contracts is listed as numbered edits in §6 
   text, the seed, the MCP config path). Doctor checks `bin` itself: it prints each entry's resolved path and warns
   when it doesn't resolve. Goldens in `tests/fixtures/launcher/argv-hash/` fix the value; `launch.started`,
   `sindri launch show` and doctor reproduce it.
-- **Session host:** the process owner. `tmux` (Sindri's socket `-L sindri`, session `snd-<run>` or `snd-<launch>`), or
+- **Session host:** the process owner. `tmux` (Sindri's socket `-L sindri-launch`, session `snd-<run>` or `snd-<launch>`), or
   `none`.
 - **Terminal viewer:** opens a human-visible window running a command (for a tmux host,
-  `tmux -L sindri attach -t …`), or brings an app forward. Its **label** is what the app names it: `Warp` for `warp`,
+  `tmux -L sindri-launch attach -t …`), or brings an app forward. Its **label** is what the app names it: `Warp` for `warp`,
   `viewer.name` for `exec-template` (required there), none for `print` (the copy has label-less forms, L-7).
 - **Attended:** a launch a human asked for (`OpenItem`, `sindri open`). Unattended launches come from the engine's agent
   runtime (WF §6.5), skip the viewer and always use the tmux host (L-1, SL4).
@@ -81,12 +81,12 @@ All three live in `Aw.Sindri.Core/Launch/` beside `ILauncher` (API P10a's `Core/
 | Port | Members | Notes |
 |---|---|---|
 | `IAgentCatalog` | `Resolve(AgentId) → Result<AgentEntry>`; `All()`; `BuildArgv(AgentEntry, LaunchMode, ArgvInputs) → Result<IReadOnlyList<string>>` | Pure. `ArgvInputs` holds only ids, the repo path, the session name, the seed (a fixed template plus ids, UI §6.2) and the per-launch MCP config path. The result is an argument list, never a string. `AgentEntry` carries its `source` and `argvHash` |
-| `ISessionHost` | `Start(HostSession, argv, cwd, env, deadline) → Result<HostRef>`; `IsAlive(HostRef)`; `AttachCommand(HostRef) → argv?` (null for `none`); `AttachedClients(HostRef) → int`; `Capture(HostRef)` (later, the collector X59c); `Stop(HostRef)` | `tmux` adapter: `tmux -L sindri new-session -d -s snd-… -c <cwd> -e K=V…` with the argv wrapped by `sindri session wrap`. `none`: `Start` is refused; the viewer starts the process |
+| `ISessionHost` | `Start(HostSession, argv, cwd, env, deadline) → Result<HostRef>`; `IsAlive(HostRef)`; `AttachCommand(HostRef) → argv?` (null for `none`); `AttachedClients(HostRef) → int`; `Capture(HostRef)` (later, the collector X59c); `Stop(HostRef)` | `tmux` adapter: `tmux -L sindri-launch new-session -d -s snd-… -c <cwd> -e K=V…` with the argv wrapped by `sindri session wrap`. `none`: `Start` is refused; the viewer starts the process |
 | `ITerminalViewer` | `Open(ViewerRequest{title, cwd, argv, host}) → Result<ViewerOutcome>`; `Probe() → TerminalFacts{id, label?, present, version?, problem?}` | `ViewerOutcome` is `opened`, `unconfirmed`, `skipped` (print, or unattended) or `failed(code, detail?)` |
 
 **The agent's environment** (review C10). UI §6.3 step 2 put `AW_SINDRI_CHILD=1`, `AW_SINDRI_ITEM`, `AW_SINDRI_LAUNCH`
 and the missing-CLI guard into Warp's exec line; with tmux as the host that line only runs `tmux attach`, so they move:
-`ISessionHost.Start(env)` passes them with `new-session -e` (tmux ≥ 3.0, checked by the host probe), never with
+`ISessionHost.Start(env)` passes them with `new-session -e` (tmux ≥ 3.2, checked by the host probe; the floor the P10a build found `new-session -e` needs, provisional owner default 2026-10-17), never with
 `set-environment -g`, and `sindri session wrap` sets them again before it starts the agent as its child (wrap stays
 the parent: it waits for a reported id, L-9, and sends API §8.1's heartbeat), so a session started by hand inside the
 pane has them too. `AW_SINDRI_HOME` is passed the same way when it isn't the default (the prover's temp home), so the
@@ -106,8 +106,8 @@ adapter stops it.
 
 | Stage | Bound | When it runs out |
 |---|---|---|
-| Catalog and host start | 4 s, a timeout passed to `ISessionHost.Start` | `Launch` returns `Failed(SND-LAUNCH-009, stage: host)` and runs `tmux -L sindri kill-session -t =snd-…`, so a start that completes late leaves no orphan. The service writes `launch.failed` |
-| Viewer observation window | 3 s after the host started | A non-zero exit inside it is `failed SND-LAUNCH-001`; the launcher polls `AttachedClients` (`tmux -L sindri list-clients -t =snd-…`) every 250 ms, and the first attached client is `opened`. A viewer still running, or exited 0, with no client at the end is `unconfirmed` |
+| Catalog and host start | 4 s, a timeout passed to `ISessionHost.Start` | `Launch` returns `Failed(SND-LAUNCH-009, stage: host)` and runs `tmux -L sindri-launch kill-session -t =snd-…`, so a start that completes late leaves no orphan. The service writes `launch.failed` |
+| Viewer observation window | 3 s after the host started | A non-zero exit inside it is `failed SND-LAUNCH-001`; the launcher polls `AttachedClients` (`tmux -L sindri-launch list-clients -t =snd-…`) every 250 ms, and the first attached client is `opened`. A viewer still running, or exited 0, with no client at the end is `unconfirmed` |
 | Viewer `Open` itself hangs | the end of the window | `Launch` returns `Started(viewer: failed SND-LAUNCH-009)`: the host started, so the service writes `launch.started` (SL5) |
 | E-1's 10 s outer limit | backstop only | It fires only if `Launch` itself hangs. The service writes `launch.failed SND-LAUNCH-009` and stops `snd-<launch>` if it exists |
 
@@ -123,7 +123,7 @@ and the projections then report `viewer.outcome: opened` with `late: true`. Afte
 the deadline `unconfirmed` stays.
 
 `ILauncher.Probe` (UI E-3) fills `launch.probed` as today. `terminal` keeps its shape; `terminal.id` is now the viewer
-kind (`warp`, `exec-template:<name>`, `print`), so no golden changes shape. Added fields (additive, API §9 versioning
+kind (`warp`, `exec-template`, `print`; an exec-template's name is `terminal.label`), so no golden changes shape. Added fields (additive, API §9 versioning
 rules; L-4): `terminal.label`, `terminal.source` (`file` or `detected`), `terminal.configPath`,
 `terminal.detail {line, reason}` when `problem` is `config-invalid`, `host: {kind, present, version?, problem?}` and,
 on each target row, `source` and `overridden`.
@@ -181,7 +181,7 @@ generator writes live once, in `config/launcher/terminals.json`.
 Rules:
 - **Placeholders are a closed set:** `{bin}`, `{cwd}`, `{title}`, `{name}`, `{seed}`, `{sessionId}`, `{mcpConfig}`,
   `{cmd...}`. `{name}` is the session's name (Meta's `-n <team>-<lane>`; Sindri's `sindri ITM-…`). `{cmd...}` is the
-  host's attach argv, spliced as separate arguments: Sindri's is `tmux -L sindri attach -t =snd-…`, Meta's is
+  host's attach argv, spliced as separate arguments: Sindri's is `tmux -L sindri-launch attach -t =snd-…`, Meta's is
   `tmux -L <team> attach -t =<team>-<lane>` (owner, 2026-10-16: the team runs on its own tmux socket, #264). Each other placeholder expands to exactly one argument;
   there is no string concatenation inside an argument and no shell. An unknown placeholder fails validation.
 - **No option smuggling** (review C18). An expanded `{title}`, `{name}`, `{sessionId}` or `{seed}` that starts with
@@ -326,7 +326,7 @@ Numbered so the owning lane can take them into its spec and phase. This doc edit
 | viewer `failed` | "Session started · <label> didn't open (`SND-LAUNCH-001`): run `<attach>`" (copy button), with `viewer.detail` on the detail line | n/a |
 | `skipped` | n/a | "Session started: run `<attach>`" (copy button) |
 | "Session live" | shows for every started outcome once `has-session` confirms, beside the attach line, which stays until a client attaches | same |
-| `-007`/`-009` fix | "A <label> window may have opened: look for `sindri ITM-…`, or run `tmux -L sindri ls`" | "A session may have started: run `tmux -L sindri ls`" |
+| `-007`/`-009` fix | "A <label> window may have opened: look for `sindri ITM-…`, or run `tmux -L sindri-launch ls`" | "A session may have started: run `tmux -L sindri-launch ls`" |
 | `-009` at the host stage (`launch.failed` with `detail.stage: host`) | "The session didn't start in time: run `sindri doctor`" (no window opened, since the viewer never ran) | same |
 | The launcher never answered (UI §6.6, app-owned, 15 s) | "Sindri hasn't answered: run `sindri doctor`" | same |
 | `lastStarted` row and sheet (E-2, L-15) | opened: "Sent to <label> 12m ago · Claude Code · `sindri ITM-…`"; otherwise "Started 12m ago · Claude Code · not attached · `<attach>`" | "Started 12m ago · Claude Code · not attached · `<attach>`" |
@@ -368,7 +368,7 @@ from `t3_thread_read` is a request Sindri records, not a decision.
 | T8 | Does the teammate get to a live thread (review C14)? | From a fresh pairing, the teammate opens an item and reaches a live T3 thread, or the fallback below, in under 10 minutes; the time is recorded |
 
 **The fallback, written now** (in `docs/csharp/sindri.md`, SL-0): a T3 Code user sets the `print` viewer (or their
-terminal's `exec-template`), and `sindri open ITM-…` prints the `tmux -L sindri attach …` command to run in any
+terminal's `exec-template`), and `sindri open ITM-…` prints the `tmux -L sindri-launch attach …` command to run in any
 terminal, including one inside T3 Code if it has one. The session is the normal tmux-hosted CLI, so liveness, usage,
 budgets and takeover all work; T3 Code just isn't the window.
 

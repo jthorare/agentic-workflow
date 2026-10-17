@@ -1,0 +1,28 @@
+{
+  "id": "LCH-00000000000000000000000000000001",
+  "item": "ITM-0000000000000000000000000000000e",
+  "mode": "open",
+  "state": "requested",
+  "target": "claude-code",
+  "chosenBy": "click",
+  "requestedAt": "2026-01-01T00:00:00.0000000Z",
+  "outcomeAt": null,
+  "code": null,
+  "detail": null,
+  "stage": null,
+  "sessionId": null,
+  "tabTitle": null,
+  "viewer": null,
+  "late": false,
+  "attach": null,
+  "catalogSource": null,
+  "argvHash": null,
+  "ended": null,
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

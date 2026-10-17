@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Edit(//work/repo/.claude/worktrees/sindri-1/**)",
+      "Write(//work/repo/.claude/worktrees/sindri-1/**)"
+    ],
+    "additionalDirectories": [
+      "/work/repo/.claude/worktrees/sindri-1"
+    ]
+  }
+}

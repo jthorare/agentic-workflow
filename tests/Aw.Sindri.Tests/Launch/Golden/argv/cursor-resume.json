@@ -1,0 +1,8 @@
+{
+  "agent": "cursor",
+  "mode": "resume",
+  "argv": [
+    "agent",
+    "--resume=0b1f6c3e-52d4-4c7a-9a58-3d1e7f9a2b10"
+  ]
+}

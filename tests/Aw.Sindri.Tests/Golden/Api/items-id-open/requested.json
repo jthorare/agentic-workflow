@@ -1,0 +1,10 @@
+{
+  "accepted": {
+    "commandId": "00000000-0000-0000-0000-000000000013",
+    "sequence": 7
+  },
+  "launch": "LCH-00000000000000000000000000000015",
+  "target": "claude-code",
+  "chosenBy": "default",
+  "warnings": []
+}

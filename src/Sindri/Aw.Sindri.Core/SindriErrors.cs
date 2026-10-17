@@ -134,6 +134,45 @@ public static class SindriErrors
     /// <summary>SND-SVC-404: no service of the approved profile has that name (API spec §9).</summary>
     public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the approved profile");
 
+    /// <summary>SND-LAUNCH-001: the terminal viewer didn't open the launch; on a tmux host the session keeps running (API P10a, UI E-5).</summary>
+    public static readonly ErrorDefinition LaunchViewerFailed = new("SND-LAUNCH-001", ErrorKind.Unavailable, "The terminal didn't open the launch");
+
+    /// <summary>SND-LAUNCH-002: no terminal viewer is available here (launcher L-3: 'no terminal viewer', not 'no Warp').</summary>
+    public static readonly ErrorDefinition LaunchNoViewer = new("SND-LAUNCH-002", ErrorKind.Unavailable, "There is no terminal viewer here");
+
+    /// <summary>SND-LAUNCH-003: the agent CLI isn't on the login PATH, or the target isn't in the catalog (detail 'not-in-catalog').</summary>
+    public static readonly ErrorDefinition LaunchAgentMissing = new("SND-LAUNCH-003", ErrorKind.NotFound, "The agent CLI isn't available");
+
+    /// <summary>SND-LAUNCH-004: the item's repo isn't on disk.</summary>
+    public static readonly ErrorDefinition LaunchRepoMissing = new("SND-LAUNCH-004", ErrorKind.NotFound, "The repo isn't on disk");
+
+    /// <summary>SND-LAUNCH-404: no launch has that id, or a session caller may not see it.</summary>
+    public static readonly ErrorDefinition LaunchNotFound = new("SND-LAUNCH-404", ErrorKind.NotFound, "No such launch");
+
+    /// <summary>SND-LAUNCH-006: there is no session to resume or attach to; the mode falls back to Open.</summary>
+    public static readonly ErrorDefinition LaunchNoSession = new("SND-LAUNCH-006", ErrorKind.NotFound, "There is no session to resume or attach to");
+
+    /// <summary>SND-LAUNCH-007: the launch was interrupted (Sindri restarted mid-launch, or the request passed its 30 s deadline); it is never retried on its own.</summary>
+    public static readonly ErrorDefinition LaunchInterrupted = new("SND-LAUNCH-007", ErrorKind.Unavailable, "The launch was interrupted");
+
+    /// <summary>SND-LAUNCH-008: a launch is already in progress for the item.</summary>
+    public static readonly ErrorDefinition LaunchInProgress = new("SND-LAUNCH-008", ErrorKind.Conflict, "A launch is already in progress for the item");
+
+    /// <summary>SND-LAUNCH-009: the launch (or its host start) timed out; a session or a window may still have opened.</summary>
+    public static readonly ErrorDefinition LaunchTimedOut = new("SND-LAUNCH-009", ErrorKind.Timeout, "The launch timed out");
+
+    /// <summary>SND-LAUNCH-010: the target's spend today reached its dailyBudget, or a budget is set on a target with no usage reader (detail 'no-usage-reader').</summary>
+    public static readonly ErrorDefinition LaunchBudgetReached = new("SND-LAUNCH-010", ErrorKind.RateLimited, "The target's daily budget is reached");
+
+    /// <summary>SND-LAUNCH-012: the agent entry isn't approved for unattended Steps (detail 'not-approved' or 'hash-changed'; launcher SL8).</summary>
+    public static readonly ErrorDefinition LaunchNotApproved = new("SND-LAUNCH-012", ErrorKind.Forbidden, "This agent entry isn't approved for unattended Steps");
+
+    /// <summary>SND-LAUNCH-013: a Step asked for a model or a policy, and the entry's matching form is 'none'; nothing launches (launcher L-17).</summary>
+    public static readonly ErrorDefinition LaunchFormUnsupported = new("SND-LAUNCH-013", ErrorKind.Invalid, "The agent entry can't express the Step's model or policy");
+
+    /// <summary>SND-AUTH-003: the launch secret doesn't match an open launch, or the run was taken over (API spec §8.1).</summary>
+    public static readonly ErrorDefinition AuthLaunchSecret = new("SND-AUTH-003", ErrorKind.Forbidden, "The launch secret doesn't match an open launch");
+
     /// <summary>SND-LAUNCH-011: launcher.json or an agent entry in it isn't valid (launcher spec §4); the defaults are used.</summary>
     public static readonly ErrorDefinition LauncherInvalid = new("SND-LAUNCH-011", ErrorKind.Invalid, "launcher.json isn't valid");
 
@@ -153,6 +192,7 @@ public static class SindriErrors
         ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, ServiceNotFound, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
-        LauncherInvalid, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride,
+        LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
+        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride,
     ];
 }

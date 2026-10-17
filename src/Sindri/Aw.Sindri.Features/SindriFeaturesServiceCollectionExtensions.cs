@@ -13,6 +13,7 @@ using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Locks;
@@ -41,6 +42,8 @@ using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
 using Aw.Sindri.Features.GetJob;
+using Aw.Sindri.Features.GetLaunch;
+using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetQueue;
@@ -50,6 +53,7 @@ using Aw.Sindri.Features.IssueNonce;
 using Aw.Sindri.Features.Items;
 using Aw.Sindri.Features.JobProbe;
 using Aw.Sindri.Features.Jobs;
+using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Features.ListCommands;
 using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListInstances;
@@ -59,6 +63,7 @@ using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
+using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PingProcess;
 using Aw.Sindri.Features.ReadLedger;
@@ -69,12 +74,16 @@ using Aw.Sindri.Features.RegisterRecipe;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RevokeRecipe;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.SampleSessionUsage;
+using Aw.Sindri.Features.SessionExit;
+using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Features.ShowRecipe;
 using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.StreamEvents;
+using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateRecipe;
 using Microsoft.Extensions.DependencyInjection;
@@ -124,7 +133,9 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddContextSlices()
             .AddContextJobs()
             .AddEngineSlices()
-            .AddSessionSlices();
+            .AddSessionSlices()
+            .AddLaunchSlices()
+            .AddLaunchTargetJob();
         return services;
     }
 
@@ -136,6 +147,11 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddRunService();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
+        _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddScoped<OpenTarget>();
+        _ = services.AddScoped<ISessionUsageSampler, SessionUsageSampler>();   // API P10a U11: the 60 s sample of what a live session has used
+        _ = services.AddScoped<ILostSessions, LostSessions>()   // API P10a U10: 'session wrap' says the session is alive and when it exited (issues, proven by the launch secret)
+            .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>()
+            .AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
         _ = services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
@@ -154,6 +170,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<ListDecisionsRequest>, AcceptAllValidator<ListDecisionsRequest>>().AddQuery<ListDecisionsRequest, ListDecisionsResponse, ListDecisionsService>();
         _ = services.AddScoped<IValidator<ListRequestsRequest>, AcceptAllValidator<ListRequestsRequest>>().AddQuery<ListRequestsRequest, ListRequestsResponse, ListRequestsService>();
         _ = services.AddScoped<IValidator<GetJobRequest>, AcceptAllValidator<GetJobRequest>>().AddQuery<GetJobRequest, JobView, GetJobService>();
+        _ = services.AddScoped<IValidator<GetLaunchRequest>, AcceptAllValidator<GetLaunchRequest>>().AddQuery<GetLaunchRequest, LaunchView, GetLaunchService>();
+        _ = services.AddScoped<IValidator<GetLaunchTargetsRequest>, AcceptAllValidator<GetLaunchTargetsRequest>>().AddQuery<GetLaunchTargetsRequest, LaunchTargets, GetLaunchTargetsService>();
         _ = services.AddScoped<IValidator<ListJobsRequest>, AcceptAllValidator<ListJobsRequest>>().AddQuery<ListJobsRequest, JobList, ListJobsService>();
         _ = services.AddScoped<IValidator<GetItemRequest>, AcceptAllValidator<GetItemRequest>>().AddQuery<GetItemRequest, ItemView, GetItemService>();
         _ = services.AddScoped<IValidator<GetItemTimelineRequest>, AcceptAllValidator<GetItemTimelineRequest>>().AddQuery<GetItemTimelineRequest, TimelineResponse, GetItemTimelineService>();

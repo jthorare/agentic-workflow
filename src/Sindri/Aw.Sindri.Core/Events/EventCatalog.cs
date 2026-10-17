@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Events;
@@ -43,6 +44,14 @@ public static class EventCatalog
         new(EventTypes.ServiceResumed, Public: true, typeof(ServiceResumed), "service.resumed:<name>:<commandId>") { Invalidates = [ApiViews.Services, ApiViews.Status] },
         new(EventTypes.ProfileChecked, Public: true, typeof(ProfileChecked), "profile.checked:<previousCheckSequence>") { Invalidates = [ApiViews.Status, ApiViews.Profile, ApiViews.NeedsYou] },
         new(EventTypes.FleetChanged, Public: true, typeof(FleetChanged), "fleet.changed:<provider>:<id>:<change>:<observedAtMs>") { Invalidates = [ApiViews.Status] },
+        new(EventTypes.ItemOpenRequested, Public: true, typeof(ItemOpenRequested), "item.open-requested:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
+        new(EventTypes.LaunchStarted, Public: true, typeof(LaunchStartedPublic), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou] },
+        new(EventTypes.LaunchFailed, Public: true, typeof(LaunchFailed), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.LaunchTargets] },
+        new(EventTypes.LaunchProbed, Public: true, typeof(LaunchProbed), "launch.probed:<probe>") { Invalidates = [ApiViews.LaunchTargets, ApiViews.Item] },
+        new(EventTypes.SessionEnded, Public: true, typeof(SessionEnded), "session.ended:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
+        new(EventTypes.SessionUsage, Public: false, PublicPayload: null, "session.usage:<launch>:<n>"),
+        new(EventTypes.LaunchSessionReported, Public: true, typeof(LaunchSessionReported), "launch.session-reported:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
+        new(EventTypes.LaunchViewerAttached, Public: true, typeof(LaunchViewerAttached), "launch.viewer-attached:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

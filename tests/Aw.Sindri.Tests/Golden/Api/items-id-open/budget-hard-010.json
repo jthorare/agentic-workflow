@@ -1,0 +1,6 @@
+{
+  "title": "SND-LAUNCH-010",
+  "status": 429,
+  "detail": "claude-code has reached its daily budget (fix: wait for tomorrow, raise agents.claude-code.dailyBudget, or pick another agent)",
+  "traceId": "<trace>"
+}

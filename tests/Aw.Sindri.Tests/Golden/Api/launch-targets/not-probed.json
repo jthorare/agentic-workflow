@@ -1,0 +1,23 @@
+{
+  "probed": false,
+  "probedAt": null,
+  "terminal": null,
+  "host": null,
+  "targets": [],
+  "repos": [],
+  "budgetTotal": {
+    "dailyUsd": null,
+    "spentUsd": null,
+    "fraction": null,
+    "state": "none",
+    "basis": null,
+    "tokens": 0
+  },
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false
+  }
+}

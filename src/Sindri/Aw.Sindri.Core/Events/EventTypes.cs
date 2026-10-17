@@ -107,6 +107,30 @@ public static class EventTypes
     /// <summary>A human resumed a paused background service (API P6).</summary>
     public const string ServiceResumed = "service.resumed";
 
+    /// <summary>A person asked to open an item's agent session (API P10a, UI E-1).</summary>
+    public const string ItemOpenRequested = "item.open-requested";
+
+    /// <summary>A launch started a session, whatever its viewer did (API P10a).</summary>
+    public const string LaunchStarted = "launch.started";
+
+    /// <summary>A launch failed before any session started (API P10a).</summary>
+    public const string LaunchFailed = "launch.failed";
+
+    /// <summary>The launcher probed the viewer, the host, the targets and the repos (API P10a, UI E-3).</summary>
+    public const string LaunchProbed = "launch.probed";
+
+    /// <summary>A launched session ended, by exit or lost heartbeat (API P10a).</summary>
+    public const string SessionEnded = "session.ended";
+
+    /// <summary>A usage sample of a launched session (not public; API P10a, SCR E-28).</summary>
+    public const string SessionUsage = "session.usage";
+
+    /// <summary>The agent's own session id was read and reported (API P10a, launcher L-9).</summary>
+    public const string LaunchSessionReported = "launch.session-reported";
+
+    /// <summary>A client attached to a session whose viewer had not confirmed (API P10a, launcher L-10).</summary>
+    public const string LaunchViewerAttached = "launch.viewer-attached";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

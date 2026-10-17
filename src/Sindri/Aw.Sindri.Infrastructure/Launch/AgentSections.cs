@@ -40,7 +40,11 @@ internal static partial class AgentSections
     };
 
     /// <summary>Checks <paramref name="section"/> as a full entry named <paramref name="id"/> and reads the fields the collector uses.</summary>
-    internal static Result<AgentEntry> Entry(string id, AgentSection section)
+    /// <param name="id">The entry's id.</param>
+    /// <param name="section">The merged section.</param>
+    /// <param name="source">Where the entry came from (launcher L-10).</param>
+    /// <returns>The entry, with its forms and argv hash, or SND-LAUNCH-011.</returns>
+    internal static Result<AgentEntry> Entry(string id, AgentSection section, CatalogSource source = CatalogSource.Builtin)
     {
         if (!AgentId.TryFrom(id, out var agentId))
         {
@@ -53,8 +57,47 @@ internal static partial class AgentSections
             : new AgentEntry(agentId, section.Label!, section.Bin!, Text(section.ProcessName), Text(section.Transcripts), Strings(section.Resume)) // why: Problem() proved label and bin are set
             {
                 IdCapture = Capture(section.ReportedId),
+                ReportedNewestFile = ReportedText(section.ReportedId, "newestFile"),
+                Open = section.Open!, // why: Problem() proved open is set
+                SessionIdMode = Mode(section.SessionId),
+                SessionIdPattern = Text(section.SessionIdPattern),
+                Usage = section.Usage,
+                ModelForm = ModelOf(Text(section.Model)),
+                PolicyForm = PolicyOf(Text(section.Policy)),
+                Source = source,
+                ArgvHash = Hash(section),
             };
     }
+
+    /// <summary>Where entry <paramref name="id"/> came from: a built-in id the file also names is an override, an id only the file names is added.</summary>
+    internal static CatalogSource SourceOf(string id, IReadOnlyDictionary<string, AgentSection> builtins, IReadOnlyDictionary<string, AgentSection>? named) =>
+        !builtins.ContainsKey(id) ? CatalogSource.Added : named?.ContainsKey(id) == true ? CatalogSource.Override : CatalogSource.Builtin;
+
+    private static string Hash(AgentSection s) => ArgvHash.Of(ArgvHash.Canonical(new HashInput(
+        s.Bin!, s.Open!, Strings(s.Resume), s.SessionId!, s.Mcp ?? "none", Text(s.Model) ?? "none", Text(s.Policy) ?? "none"))); // why: Problem() proved bin, open and sessionId are set
+
+    private static ModelForm ModelOf(string? name) => name switch
+    {
+        "claude-flag" => ModelForm.ClaudeFlag,
+        "codex-flag" => ModelForm.CodexFlag,
+        "cursor-flag" => ModelForm.CursorFlag,
+        _ => ModelForm.None,
+    };
+
+    private static PolicyForm PolicyOf(string? name) => name switch
+    {
+        "claude-settings-file" => PolicyForm.ClaudeSettingsFile,
+        "codex-overrides" => PolicyForm.CodexOverrides,
+        "cursor-config" => PolicyForm.CursorConfig,
+        _ => PolicyForm.None,
+    };
+
+    private static SessionIdMode Mode(string? value) => value switch
+    {
+        "pre-chosen-uuid" => SessionIdMode.PreChosenUuid,
+        "reported" => SessionIdMode.Reported,
+        _ => SessionIdMode.None,
+    };
 
     private static string? Problem(AgentSection s)
     {
@@ -95,8 +138,10 @@ internal static partial class AgentSections
 
     private static bool Present(JsonElement element) => element.ValueKind != JsonValueKind.Undefined;
 
-    private static string? Capture(JsonElement reported) =>
-        reported.ValueKind == JsonValueKind.Object && reported.TryGetProperty("capture", out var capture) ? Text(capture) : null;
+    private static string? Capture(JsonElement reported) => ReportedText(reported, "capture");
+
+    private static string? ReportedText(JsonElement reported, string name) =>
+        reported.ValueKind == JsonValueKind.Object && reported.TryGetProperty(name, out var value) ? Text(value) : null;
 
     private static string? Text(JsonElement element) => element.ValueKind == JsonValueKind.String ? element.GetString() : null;
 

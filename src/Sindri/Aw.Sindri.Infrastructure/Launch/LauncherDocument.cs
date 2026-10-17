@@ -6,13 +6,18 @@ namespace Aw.Sindri.Infrastructure.Launch;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 internal sealed record LauncherDocument(int Schema)
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ViewerSection? Viewer { get; init; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public HostSection? Host { get; init; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, AgentSection>? Agents { get; init; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public MetaSection? Meta { get; init; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public SessionsSection? Sessions { get; init; }
 }

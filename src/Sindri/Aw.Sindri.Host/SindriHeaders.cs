@@ -18,6 +18,9 @@ internal static class SindriHeaders
     /// <summary>The per-start human token.</summary>
     internal const string Token = "X-Sindri-Token";
 
+    /// <summary>A launch's proof: authorizes 'session wrap''s heartbeat and exit calls for that launch (API spec §8.1; SND-AUTH-003 when it doesn't match an open launch).</summary>
+    internal const string LaunchSecret = "X-Sindri-Launch-Secret";
+
     /// <summary>On a query: the ledger sequence its answer must include (read-your-writes, API spec §2.1).</summary>
     internal const string After = "X-Sindri-After";
 

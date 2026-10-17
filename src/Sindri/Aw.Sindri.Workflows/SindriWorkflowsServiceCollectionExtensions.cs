@@ -40,7 +40,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<TemporalFrontend>()
             .AddSingleton<KnownInstances>()                            // engine P4: the opaque ids this process has seen (spec §6.3)
             .AddSingleton<IItems, SelfItems>()                       // stub until API P3's items
-            .AddSingleton<ILaunchRequests>(NoLaunchRequests.Instance)  // engine P5 unit (b): stub until API P10a's launches (UI E-19)
+            .AddSingleton<ILaunchRequests, LaunchRequestsView>()       // API P10a U9: the item's launch still requested, read from the launches view (UI E-19)
             .AddSingleton<IInstanceRuntime, TemporalInstanceRuntime>()
             .AddSingleton<IInstanceReader>(provider => provider.GetRequiredService<IInstanceRuntime>())   // the queries' read port (ARCH-CQRS-002)
             .AddSingleton<IWorkflowInstances, TemporalWorkflowInstances>()

@@ -19,6 +19,7 @@
     <EmbeddedResource Include="Views/Migrations/*.sql" />
     <!-- the built-in agent catalog, once in config/launcher (collector spec CA-0) -->
     <EmbeddedResource Include="../../../config/launcher/builtins.json" LogicalName="builtins.json" Link="Launch/builtins.json" />
+    <EmbeddedResource Include="../../../config/launcher/terminals.json" LogicalName="terminals.json" Link="Launch/terminals.json" />
   </ItemGroup>
 
   <ItemGroup>

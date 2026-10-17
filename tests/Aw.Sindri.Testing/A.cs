@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Testing;
 
@@ -16,6 +17,13 @@ public static class A
 
     /// <summary>The id the job builders default to.</summary>
     public static JobId FirstJobId { get; } = JobId.From("JOB-00000000000000000000000000000001");
+
+    /// <summary>The launch id the launch builders default to.</summary>
+    public static LaunchId FirstLaunchId { get; } = LaunchId.From("LCH-00000000000000000000000000000001");
+
+    /// <summary>A LaunchRequest builder: the first launch of the first item, an attended open of claude-code.</summary>
+    /// <returns>A new builder.</returns>
+    public static Launch.LaunchRequestBuilder LaunchRequest() => new();
 
     /// <summary>An items-view row builder: a new item at version 1.</summary>
     /// <returns>A new builder.</returns>
@@ -132,4 +140,28 @@ public static class A
     /// <summary>A ListJobsRequest builder with deterministic defaults.</summary>
     /// <returns>A new builder.</returns>
     public static ListJobsRequestBuilder ListJobsRequest() => new();
+
+    /// <summary>A GetLaunchRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static GetLaunchRequestBuilder GetLaunchRequest() => new();
+
+    /// <summary>A OpenItemRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static OpenItemRequestBuilder OpenItemRequest() => new();
+
+    /// <summary>A GetLaunchTargetsRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static GetLaunchTargetsRequestBuilder GetLaunchTargetsRequest() => new();
+
+    /// <summary>A ProbeLaunchTargetsRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static ProbeLaunchTargetsRequestBuilder ProbeLaunchTargetsRequest() => new();
+
+    /// <summary>A SessionHeartbeatRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static SessionHeartbeatRequestBuilder SessionHeartbeatRequest() => new();
+
+    /// <summary>A SessionExitRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static SessionExitRequestBuilder SessionExitRequest() => new();
 }

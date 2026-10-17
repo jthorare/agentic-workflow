@@ -109,6 +109,23 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
         return Send<T>(HttpMethod.Post, route, content, after: null, ct);
     }
 
+    /// <summary>POST <paramref name="body"/> to a route a launch's own proof authorizes (API spec §8.1): sent as the X-Sindri-Launch-Secret header, with the caller headers.</summary>
+    /// <param name="route">The route.</param>
+    /// <param name="body">The request record.</param>
+    /// <param name="proof">The launch's proof.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <typeparam name="TBody">The request type.</typeparam>
+    /// <typeparam name="T">The response type.</typeparam>
+    /// <returns>The answer, or the API's error.</returns>
+    public Task<Result<ApiAnswer<T>>> PostProven<TBody, T>(string route, TBody body, string proof, CancellationToken ct)
+    {
+#pragma warning disable CA2000 // Send disposes the content, on its failure paths and with the request
+        var content = new ByteArrayContent(AwJson.Serialize(body, options)) { Headers = { ContentType = new MediaTypeHeaderValue("application/json") } };
+#pragma warning restore CA2000
+        content.Headers.Add(SindriHeaders.LaunchSecret, proof);   // sent with the request
+        return Send<T>(HttpMethod.Post, route, content, after: null, ct);
+    }
+
     private async Task<Result<ApiAnswer<T>>> Send<T>(HttpMethod method, string route, HttpContent? content, long? after, CancellationToken ct)
     {
         var found = await probe.Check(ct).ConfigureAwait(false);

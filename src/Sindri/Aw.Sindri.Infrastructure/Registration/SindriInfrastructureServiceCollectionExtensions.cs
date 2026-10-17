@@ -19,6 +19,7 @@ using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Infrastructure.Auth;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Control;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Lease;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.Locks;
@@ -45,7 +46,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriAdapters(environment);
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment);
     }
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)

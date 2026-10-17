@@ -2414,6 +2414,80 @@ static Aw.Sindri.Features.Sessions.RestoreFleetHistoryRequest.operator ==(Aw.Sin
 static Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse.operator !=(Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse? left, Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse? right) -> bool
 static Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse.operator ==(Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse? left, Aw.Sindri.Features.Sessions.RestoreFleetHistoryResponse? right) -> bool
 static Aw.Sindri.Features.SindriJobServiceCollectionExtensions.AddJob<TRequest, TResult, TService>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<TRequest!, Aw.Sindri.Core.Ids.JobKey>! key, System.Func<TResult, string!>! summary, System.Func<TRequest!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>>? precheck = null, System.Func<TRequest!, Aw.Sindri.Core.Ids.RepoName?>? repo = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.<Clone>$() -> Aw.Sindri.Features.GetLaunch.GetLaunchRequest!
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId) -> void
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.Equals(Aw.Sindri.Features.GetLaunch.GetLaunchRequest? other) -> bool
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.GetLaunchRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId) -> void
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.LaunchId.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.GetLaunch.GetLaunchRequest.LaunchId.init -> void
+Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest
+Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.<Clone>$() -> Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest!
+Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.Equals(Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest? other) -> bool
+Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.GetLaunchTargetsRequest() -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest
+Aw.Sindri.Features.OpenItem.OpenItemRequest.<Clone>$() -> Aw.Sindri.Features.OpenItem.OpenItemRequest!
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Equals(Aw.Sindri.Features.OpenItem.OpenItemRequest? other) -> bool
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.<Clone>$() -> Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest!
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.Equals(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest? other) -> bool
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.ProbeLaunchTargetsRequest() -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest
+Aw.Sindri.Features.SessionExit.SessionExitRequest.<Clone>$() -> Aw.Sindri.Features.SessionExit.SessionExitRequest!
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Equals(Aw.Sindri.Features.SessionExit.SessionExitRequest? other) -> bool
+Aw.Sindri.Features.SessionExit.SessionExitRequest.LaunchId.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.SessionExit.SessionExitRequest.LaunchId.init -> void
+Aw.Sindri.Features.SessionExit.SessionExitResponse
+Aw.Sindri.Features.SessionExit.SessionExitResponse.<Clone>$() -> Aw.Sindri.Features.SessionExit.SessionExitResponse!
+Aw.Sindri.Features.SessionExit.SessionExitResponse.Equals(Aw.Sindri.Features.SessionExit.SessionExitResponse? other) -> bool
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.<Clone>$() -> Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest!
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Equals(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest? other) -> bool
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.LaunchId.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.LaunchId.init -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.<Clone>$() -> Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse!
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Equals(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse? other) -> bool
+override Aw.Sindri.Features.GetLaunch.GetLaunchRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLaunch.GetLaunchRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLaunch.GetLaunchRequest.ToString() -> string!
+override Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.ToString() -> string!
+override Aw.Sindri.Features.OpenItem.OpenItemRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.OpenItem.OpenItemRequest.GetHashCode() -> int
+override Aw.Sindri.Features.OpenItem.OpenItemRequest.ToString() -> string!
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.ToString() -> string!
+override Aw.Sindri.Features.SessionExit.SessionExitRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SessionExit.SessionExitRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SessionExit.SessionExitRequest.ToString() -> string!
+override Aw.Sindri.Features.SessionExit.SessionExitResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SessionExit.SessionExitResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SessionExit.SessionExitResponse.ToString() -> string!
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.ToString() -> string!
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.ToString() -> string!
+static Aw.Sindri.Features.GetLaunch.GetLaunchRequest.operator !=(Aw.Sindri.Features.GetLaunch.GetLaunchRequest? left, Aw.Sindri.Features.GetLaunch.GetLaunchRequest? right) -> bool
+static Aw.Sindri.Features.GetLaunch.GetLaunchRequest.operator ==(Aw.Sindri.Features.GetLaunch.GetLaunchRequest? left, Aw.Sindri.Features.GetLaunch.GetLaunchRequest? right) -> bool
+static Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.operator !=(Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest? left, Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest? right) -> bool
+static Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest.operator ==(Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest? left, Aw.Sindri.Features.GetLaunchTargets.GetLaunchTargetsRequest? right) -> bool
+static Aw.Sindri.Features.OpenItem.OpenItemRequest.operator !=(Aw.Sindri.Features.OpenItem.OpenItemRequest? left, Aw.Sindri.Features.OpenItem.OpenItemRequest? right) -> bool
+static Aw.Sindri.Features.OpenItem.OpenItemRequest.operator ==(Aw.Sindri.Features.OpenItem.OpenItemRequest? left, Aw.Sindri.Features.OpenItem.OpenItemRequest? right) -> bool
+static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.operator !=(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest? right) -> bool
+static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.operator ==(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest? right) -> bool
+static Aw.Sindri.Features.SessionExit.SessionExitRequest.operator !=(Aw.Sindri.Features.SessionExit.SessionExitRequest? left, Aw.Sindri.Features.SessionExit.SessionExitRequest? right) -> bool
+static Aw.Sindri.Features.SessionExit.SessionExitRequest.operator ==(Aw.Sindri.Features.SessionExit.SessionExitRequest? left, Aw.Sindri.Features.SessionExit.SessionExitRequest? right) -> bool
+static Aw.Sindri.Features.SessionExit.SessionExitResponse.operator !=(Aw.Sindri.Features.SessionExit.SessionExitResponse? left, Aw.Sindri.Features.SessionExit.SessionExitResponse? right) -> bool
+static Aw.Sindri.Features.SessionExit.SessionExitResponse.operator ==(Aw.Sindri.Features.SessionExit.SessionExitResponse? left, Aw.Sindri.Features.SessionExit.SessionExitResponse? right) -> bool
+static Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.operator !=(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest? left, Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest? right) -> bool
+static Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.operator ==(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest? left, Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest? right) -> bool
+static Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.operator !=(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse? left, Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse? right) -> bool
+static Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.operator ==(Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse? left, Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse? right) -> bool
 Aw.Sindri.Features.ContextCalls.BacktestArmLine
 Aw.Sindri.Features.ContextCalls.BacktestArmLine.<Clone>$() -> Aw.Sindri.Features.ContextCalls.BacktestArmLine!
 Aw.Sindri.Features.ContextCalls.BacktestArmLine.Arm.get -> string!
@@ -2498,6 +2572,192 @@ override Aw.Sindri.Features.ContextCalls.BacktestArmScore.GetHashCode() -> int
 override Aw.Sindri.Features.ContextCalls.BacktestArmScore.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.BacktestArmScore.operator !=(Aw.Sindri.Features.ContextCalls.BacktestArmScore? left, Aw.Sindri.Features.ContextCalls.BacktestArmScore? right) -> bool
 static Aw.Sindri.Features.ContextCalls.BacktestArmScore.operator ==(Aw.Sindri.Features.ContextCalls.BacktestArmScore? left, Aw.Sindri.Features.ContextCalls.BacktestArmScore? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.SessionId.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Viewer.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Mode.get -> Aw.Sindri.Core.Launch.LaunchMode
+Aw.Sindri.Features.GetLaunch.LaunchView.TabTitle.get -> string?
+Aw.Sindri.Features.OpenItem.LaunchRequested.Warnings.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Detail.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.RequestedAt.get -> System.DateTimeOffset
+override Aw.Sindri.Features.GetLaunch.LaunchView.ToString() -> string!
+static Aw.Sindri.Features.OpenItem.LaunchRequested.operator ==(Aw.Sindri.Features.OpenItem.LaunchRequested? left, Aw.Sindri.Features.OpenItem.LaunchRequested? right) -> bool
+Aw.Sindri.Features.OpenItem.LaunchRequested.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.GetLaunch.LaunchView.Id.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+override Aw.Sindri.Features.OpenItem.LaunchRequested.ToString() -> string!
+Aw.Sindri.Features.OpenItem.OpenItemRequest.CarriesProtectedFields.get -> bool
+Aw.Sindri.Features.OpenItem.LaunchRequested.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Features.OpenItem.LaunchRequested.operator !=(Aw.Sindri.Features.OpenItem.LaunchRequested? left, Aw.Sindri.Features.OpenItem.LaunchRequested? right) -> bool
+override Aw.Sindri.Features.GetLaunch.LaunchView.GetHashCode() -> int
+Aw.Sindri.Features.GetLaunch.LaunchView.State.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Detail.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.CatalogSource.get -> Aw.Sindri.Core.Launch.CatalogSource?
+Aw.Sindri.Features.OpenItem.OpenItemRequest.ItemVersion.get -> long
+Aw.Sindri.Features.GetLaunch.LaunchView.Equals(Aw.Sindri.Features.GetLaunch.LaunchView? other) -> bool
+Aw.Sindri.Features.OpenItem.LaunchRequested.ChosenBy.get -> string!
+Aw.Sindri.Features.GetLaunch.LaunchView.AsOf.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.TabTitle.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Mode.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Deconstruct(out Aw.Sindri.Core.Ids.ItemRef Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId? Target, out long ItemVersion) -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Item.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Target.get -> Aw.Sindri.Core.Launch.AgentId
+Aw.Sindri.Features.OpenItem.LaunchRequested
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Variant.get -> string!
+Aw.Sindri.Features.GetLaunch.LaunchView.ChosenBy.init -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
+override Aw.Sindri.Features.OpenItem.LaunchRequested.GetHashCode() -> int
+Aw.Sindri.Features.GetLaunch.LaunchView.Stage.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Item.get -> Aw.Sindri.Core.Ids.ItemRef
+Aw.Sindri.Features.OpenItem.OpenItemRequest.ItemVersion.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Mode.get -> Aw.Sindri.Core.Launch.LaunchMode
+Aw.Sindri.Features.GetLaunch.LaunchView.Item.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.OpenItemRequest(Aw.Sindri.Core.Ids.ItemRef Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId? Target, long ItemVersion) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Attach.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.GetLaunch.LaunchView.Late.get -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.CatalogSource.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Ended.init -> void
+override Aw.Sindri.Features.OpenItem.LaunchRequested.Equals(object? obj) -> bool
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Target.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Stage.get -> Aw.Sindri.Core.Launch.LaunchStage?
+Aw.Sindri.Features.GetLaunch.LaunchView.OutcomeAt.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.OutcomeAt.get -> System.DateTimeOffset?
+Aw.Sindri.Features.GetLaunch.LaunchView.<Clone>$() -> Aw.Sindri.Features.GetLaunch.LaunchView!
+Aw.Sindri.Features.GetLaunch.LaunchView.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.OpenItem.LaunchRequested.<Clone>$() -> Aw.Sindri.Features.OpenItem.LaunchRequested!
+override Aw.Sindri.Features.GetLaunch.LaunchView.Equals(object? obj) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.Target.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Target.get -> Aw.Sindri.Core.Launch.AgentId?
+Aw.Sindri.Features.OpenItem.LaunchRequested.Launch.init -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.Target.get -> Aw.Sindri.Core.Launch.AgentId
+Aw.Sindri.Features.GetLaunch.LaunchView.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.GetLaunch.LaunchView.Code.init -> void
+Aw.Sindri.Features.OpenItem.OpenItemRequest.Mode.init -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.Equals(Aw.Sindri.Features.OpenItem.LaunchRequested? other) -> bool
+static Aw.Sindri.Features.GetLaunch.LaunchView.operator !=(Aw.Sindri.Features.GetLaunch.LaunchView? left, Aw.Sindri.Features.GetLaunch.LaunchView? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView
+Aw.Sindri.Features.GetLaunch.LaunchView.Id.init -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.ChosenBy.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.ArgvHash.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.ArgvHash.get -> string?
+Aw.Sindri.Features.OpenItem.LaunchRequested.Target.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Code.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Features.GetLaunch.LaunchView.ChosenBy.get -> string!
+Aw.Sindri.Features.GetLaunch.LaunchView.RequestedAt.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Viewer.get -> Aw.Sindri.Core.Events.LaunchViewer?
+Aw.Sindri.Features.GetLaunch.LaunchView.Attach.init -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.LaunchRequested(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
+Aw.Sindri.Features.OpenItem.LaunchRequested.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
+static Aw.Sindri.Features.GetLaunch.LaunchView.operator ==(Aw.Sindri.Features.GetLaunch.LaunchView? left, Aw.Sindri.Features.GetLaunch.LaunchView? right) -> bool
+Aw.Sindri.Features.OpenItem.LaunchRequested.Accepted.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Late.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.State.get -> Aw.Sindri.Core.Launches.LaunchState
+Aw.Sindri.Features.GetLaunch.LaunchView.Ended.get -> Aw.Sindri.Core.Launches.LaunchEnd?
+Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Sessions.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Sessions.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.Launching.PendingLaunch
+Aw.Sindri.Features.Launching.PendingLaunch.<Clone>$() -> Aw.Sindri.Features.Launching.PendingLaunch!
+Aw.Sindri.Features.Launching.PendingLaunch.At.get -> System.DateTimeOffset
+Aw.Sindri.Features.Launching.PendingLaunch.At.init -> void
+Aw.Sindri.Features.Launching.PendingLaunch.Deconstruct(out Aw.Sindri.Core.Events.ItemOpenRequested! Request, out long Sequence, out System.DateTimeOffset At) -> void
+Aw.Sindri.Features.Launching.PendingLaunch.Equals(Aw.Sindri.Features.Launching.PendingLaunch? other) -> bool
+Aw.Sindri.Features.Launching.PendingLaunch.PendingLaunch(Aw.Sindri.Core.Events.ItemOpenRequested! Request, long Sequence, System.DateTimeOffset At) -> void
+Aw.Sindri.Features.Launching.PendingLaunch.Request.get -> Aw.Sindri.Core.Events.ItemOpenRequested!
+Aw.Sindri.Features.Launching.PendingLaunch.Request.init -> void
+Aw.Sindri.Features.Launching.PendingLaunch.Sequence.get -> long
+Aw.Sindri.Features.Launching.PendingLaunch.Sequence.init -> void
+Aw.Sindri.Features.Launching.ProcessLaunchRequest
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.<Clone>$() -> Aw.Sindri.Features.Launching.ProcessLaunchRequest!
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Deconstruct(out Aw.Sindri.Core.Lease.LeaseGrant! Grant, out Aw.Sindri.Features.Launching.PendingLaunch! Pending) -> void
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Equals(Aw.Sindri.Features.Launching.ProcessLaunchRequest? other) -> bool
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Grant.get -> Aw.Sindri.Core.Lease.LeaseGrant!
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Grant.init -> void
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Pending.get -> Aw.Sindri.Features.Launching.PendingLaunch!
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.Pending.init -> void
+Aw.Sindri.Features.Launching.ProcessLaunchRequest.ProcessLaunchRequest(Aw.Sindri.Core.Lease.LeaseGrant! Grant, Aw.Sindri.Features.Launching.PendingLaunch! Pending) -> void
+Aw.Sindri.Features.Launching.ProcessLaunchResponse
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.<Clone>$() -> Aw.Sindri.Features.Launching.ProcessLaunchResponse!
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.Deconstruct(out bool Launched) -> void
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.Equals(Aw.Sindri.Features.Launching.ProcessLaunchResponse? other) -> bool
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.Launched.get -> bool
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.Launched.init -> void
+Aw.Sindri.Features.Launching.ProcessLaunchResponse.ProcessLaunchResponse(bool Launched) -> void
+Aw.Sindri.Features.Launching.RunLaunchRequest
+Aw.Sindri.Features.Launching.RunLaunchRequest.<Clone>$() -> Aw.Sindri.Features.Launching.RunLaunchRequest!
+Aw.Sindri.Features.Launching.RunLaunchRequest.Deconstruct(out Aw.Sindri.Core.Lease.LeaseGrant! Grant) -> void
+Aw.Sindri.Features.Launching.RunLaunchRequest.Equals(Aw.Sindri.Features.Launching.RunLaunchRequest? other) -> bool
+Aw.Sindri.Features.Launching.RunLaunchRequest.Grant.get -> Aw.Sindri.Core.Lease.LeaseGrant!
+Aw.Sindri.Features.Launching.RunLaunchRequest.Grant.init -> void
+Aw.Sindri.Features.Launching.RunLaunchRequest.RunLaunchRequest(Aw.Sindri.Core.Lease.LeaseGrant! Grant) -> void
+Aw.Sindri.Features.Launching.RunLaunchResponse
+Aw.Sindri.Features.Launching.RunLaunchResponse.<Clone>$() -> Aw.Sindri.Features.Launching.RunLaunchResponse!
+Aw.Sindri.Features.Launching.RunLaunchResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.Launching.PendingLaunch!>! Due) -> void
+Aw.Sindri.Features.Launching.RunLaunchResponse.Due.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.Launching.PendingLaunch!>!
+Aw.Sindri.Features.Launching.RunLaunchResponse.Due.init -> void
+Aw.Sindri.Features.Launching.RunLaunchResponse.Equals(Aw.Sindri.Features.Launching.RunLaunchResponse? other) -> bool
+Aw.Sindri.Features.Launching.RunLaunchResponse.RunLaunchResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.Launching.PendingLaunch!>! Due) -> void
+override Aw.Sindri.Features.Launching.PendingLaunch.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Launching.PendingLaunch.GetHashCode() -> int
+override Aw.Sindri.Features.Launching.PendingLaunch.ToString() -> string!
+override Aw.Sindri.Features.Launching.ProcessLaunchRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Launching.ProcessLaunchRequest.GetHashCode() -> int
+override Aw.Sindri.Features.Launching.ProcessLaunchRequest.ToString() -> string!
+override Aw.Sindri.Features.Launching.ProcessLaunchResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Launching.ProcessLaunchResponse.GetHashCode() -> int
+override Aw.Sindri.Features.Launching.ProcessLaunchResponse.ToString() -> string!
+override Aw.Sindri.Features.Launching.RunLaunchRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Launching.RunLaunchRequest.GetHashCode() -> int
+override Aw.Sindri.Features.Launching.RunLaunchRequest.ToString() -> string!
+override Aw.Sindri.Features.Launching.RunLaunchResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Launching.RunLaunchResponse.GetHashCode() -> int
+override Aw.Sindri.Features.Launching.RunLaunchResponse.ToString() -> string!
+static Aw.Sindri.Features.Launching.PendingLaunch.operator !=(Aw.Sindri.Features.Launching.PendingLaunch? left, Aw.Sindri.Features.Launching.PendingLaunch? right) -> bool
+static Aw.Sindri.Features.Launching.PendingLaunch.operator ==(Aw.Sindri.Features.Launching.PendingLaunch? left, Aw.Sindri.Features.Launching.PendingLaunch? right) -> bool
+static Aw.Sindri.Features.Launching.ProcessLaunchRequest.operator !=(Aw.Sindri.Features.Launching.ProcessLaunchRequest? left, Aw.Sindri.Features.Launching.ProcessLaunchRequest? right) -> bool
+static Aw.Sindri.Features.Launching.ProcessLaunchRequest.operator ==(Aw.Sindri.Features.Launching.ProcessLaunchRequest? left, Aw.Sindri.Features.Launching.ProcessLaunchRequest? right) -> bool
+static Aw.Sindri.Features.Launching.ProcessLaunchResponse.operator !=(Aw.Sindri.Features.Launching.ProcessLaunchResponse? left, Aw.Sindri.Features.Launching.ProcessLaunchResponse? right) -> bool
+static Aw.Sindri.Features.Launching.ProcessLaunchResponse.operator ==(Aw.Sindri.Features.Launching.ProcessLaunchResponse? left, Aw.Sindri.Features.Launching.ProcessLaunchResponse? right) -> bool
+static Aw.Sindri.Features.Launching.RunLaunchRequest.operator !=(Aw.Sindri.Features.Launching.RunLaunchRequest? left, Aw.Sindri.Features.Launching.RunLaunchRequest? right) -> bool
+static Aw.Sindri.Features.Launching.RunLaunchRequest.operator ==(Aw.Sindri.Features.Launching.RunLaunchRequest? left, Aw.Sindri.Features.Launching.RunLaunchRequest? right) -> bool
+static Aw.Sindri.Features.Launching.RunLaunchResponse.operator !=(Aw.Sindri.Features.Launching.RunLaunchResponse? left, Aw.Sindri.Features.Launching.RunLaunchResponse? right) -> bool
+static Aw.Sindri.Features.Launching.RunLaunchResponse.operator ==(Aw.Sindri.Features.Launching.RunLaunchResponse? left, Aw.Sindri.Features.Launching.RunLaunchResponse? right) -> bool
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.<Clone>$() -> Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult!
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Changed.get -> bool
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Changed.init -> void
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Deconstruct(out bool Changed, out int Targets, out int Present) -> void
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Equals(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? other) -> bool
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Present.get -> int
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Present.init -> void
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.ProbeLaunchTargetsResult(bool Changed, int Targets, int Present) -> void
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Targets.get -> int
+Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Targets.init -> void
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.GetHashCode() -> int
+override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.ToString() -> string!
+static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.operator !=(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? right) -> bool
+static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.operator ==(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? right) -> bool
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out int ExitCode, out Aw.Sindri.Core.Sessions.SessionId? SessionId) -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.ExitCode.get -> int
+Aw.Sindri.Features.SessionExit.SessionExitRequest.ExitCode.init -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Secret.get -> Aw.Sindri.Core.Launches.LaunchSecret
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Secret.init -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionExitRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, int ExitCode, Aw.Sindri.Core.Sessions.SessionId? SessionId = null) -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionId.init -> void
+Aw.Sindri.Features.SessionExit.SessionExitResponse.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
+Aw.Sindri.Features.SessionExit.SessionExitResponse.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.SessionExit.SessionExitResponse.Launch.init -> void
+Aw.Sindri.Features.SessionExit.SessionExitResponse.SessionExitResponse(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out Aw.Sindri.Core.Sessions.SessionId? SessionId) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Secret.get -> Aw.Sindri.Core.Launches.LaunchSecret
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Secret.init -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionHeartbeatRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, Aw.Sindri.Core.Sessions.SessionId? SessionId = null) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionId.init -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Launch.init -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.SessionHeartbeatResponse(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesRequest.Deconstruct(out string! Anchor, out bool Draft, out int? Depth, out string? MapVersion) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesRequest.GetContextLensesRequest(string! Anchor, bool Draft = false, int? Depth = null, string? MapVersion = null) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesRequest.MapVersion.get -> string?

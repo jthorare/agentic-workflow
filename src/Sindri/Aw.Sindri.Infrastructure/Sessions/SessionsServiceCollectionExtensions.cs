@@ -22,6 +22,7 @@ internal static class SessionsServiceCollectionExtensions
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return services
             .AddSingleton<IAgentCatalog>(load.Catalog)
+            .AddSingleton(LauncherStartup.Catalog(environment, settings))
             .AddSingleton(load.Sessions)
             .AddSingleton<IProcessTable>(new ProcProcessTable(procRoot, OwnUid.Read()))
             .AddSingleton<IClaudeSessionRecords>(new ClaudeSessionRecords(load.ClaudeSessionsDirectory))

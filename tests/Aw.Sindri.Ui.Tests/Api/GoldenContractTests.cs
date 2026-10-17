@@ -55,6 +55,7 @@ public sealed class GoldenContractTests
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume", "jobs-id", "jobs-id-cancel", "jobs",   // API P6: the app reads them in U4 (Services and the job panel)
+        "items-id-open", "launches-id", "sessions-id-heartbeat", "sessions-id-exit", "launch-targets", "launch-targets-probe",   // API P10a (U8): the app reads the open's answer and the launch in U6a (Open in the terminal); U10: the session wrap's own calls, never the app's
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
     };
 

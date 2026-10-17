@@ -57,6 +57,6 @@ public static class TriggerNames
     /// <summary>The child escalated (always propagates).</summary>
     public const string ChildEscalated = "child.escalated";
 
-    /// <summary>Reserved (UI spec E-6, P5): an 'item.open-requested' that takes the instance over before the launcher opens Warp.</summary>
+    /// <summary>UI spec E-6: an 'item.open-requested' that takes the instance over; the launcher service (API P10a) sends it through 'IInstanceRuntime.OpenRequest' and waits for its recorded result before a session opens.</summary>
     public const string OpenRequest = "open-request";
 }

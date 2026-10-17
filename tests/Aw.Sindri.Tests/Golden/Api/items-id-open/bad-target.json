@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CLI-003",
+  "status": 400,
+  "detail": "POST /sindri/items/ITM-0000000000000000000000000000000e/open: the request's body or query values aren't valid for this route",
+  "traceId": "<trace>"
+}

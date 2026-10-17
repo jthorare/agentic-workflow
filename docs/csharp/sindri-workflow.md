@@ -1050,8 +1050,8 @@ Engine spec rev 8.1 §3.8, §5.2, §5.5, §5.8, §6.2; UI spec E-6, E-19.
   and is `SND-WF-003` on an ended instance whose workflow is still open (`SND-WF-001` once it has closed), for any actor other than `service:engine`,
   and for a launch that is not a launch id (`LCH-` and 32 lower-case hex digits). One that arrives while the
   instance is still starting waits for the start, then takes over. Temporal deduplicates the id, so a repeat applies once. The ledger row
-  carries the launch id as `causation`. Its sender is API P10b's launcher.
+  carries the launch id as `causation`. Its sender is the launcher service (API P10a, `Features/Launching/TakeoverWait`), which waits for the result inside the request's 30 s deadline.
 - **Start taken over (E-19).** `StartInstance` reads the item's launches (`ILaunchRequests.Requested` returns a `LaunchId?`: `LCH-` and 32 hex digits); when one is still
   requested the instance starts taken over (`InstanceStart.OpenLaunch`, actor `service:engine`), with the launch as the
-  `workflow.started` row's `causation`, the state's full timeout kept for the handback and takeoverIdle running. Until
-  API P10a's launches projection lands, the adapter (`NoLaunchRequests`) reads none.
+  `workflow.started` row's `causation`, the state's full timeout kept for the handback and takeoverIdle running. The adapter
+  (`LaunchRequestsView`) reads the `launches` view: the launch still `requested` and inside its 30 s deadline; a key that is no item id has none.

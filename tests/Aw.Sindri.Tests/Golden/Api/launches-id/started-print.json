@@ -1,0 +1,41 @@
+{
+  "id": "LCH-00000000000000000000000000000001",
+  "item": "ITM-0000000000000000000000000000000e",
+  "mode": "open",
+  "state": "started",
+  "target": "claude-code",
+  "chosenBy": "click",
+  "requestedAt": "2026-01-01T00:00:00.0000000Z",
+  "outcomeAt": "2026-01-01T00:00:00.0000000Z",
+  "code": null,
+  "detail": null,
+  "stage": null,
+  "sessionId": "0a1b2c3d-0000-4000-8000-000000000001",
+  "tabTitle": "sindri ITM-0000000000000000000000000000000e",
+  "viewer": {
+    "kind": "print",
+    "label": "print",
+    "outcome": "skipped",
+    "code": null,
+    "detail": null
+  },
+  "late": false,
+  "attach": [
+    "tmux",
+    "-L",
+    "sindri",
+    "attach",
+    "-t",
+    "=snd-LCH-00000000000000000000000000000001"
+  ],
+  "catalogSource": "builtin",
+  "argvHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "ended": null,
+  "asOf": {
+    "cursor": 8,
+    "ledgerHead": 8,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

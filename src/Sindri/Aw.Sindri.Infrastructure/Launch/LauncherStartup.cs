@@ -14,13 +14,24 @@ internal static class LauncherStartup
     internal static LauncherLoad Load(Func<string, string?> environment, SindriSettings settings)
     {
         var builtins = Builtins();
-        var path = NonEmpty(environment("AW_LAUNCHER_CONFIG")) ?? Path.Combine(settings.StateDirectory, "launcher.json");
+        var path = ConfigPath(environment, settings);
         var (bytes, unreadable) = ReadFile(path);
         var config = IsolatedLauncherRead.Read(builtins, bytes);
         var problem = unreadable ?? config.Problem;
         var section = config.Sessions;
         return new LauncherLoad(new AgentCatalog(config.Agents), Sessions(section, problem, TestOverride(environment)), ClaudeDirectory(environment, section?.ClaudeSessionsDir)) { AttendedProblems = config.AttendedProblems };
     }
+
+    /// <summary>The catalog that re-reads launcher.json when it changes (the launcher's, one read per open).</summary>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="settings">Sindri's settings.</param>
+    /// <returns>The reloading catalog.</returns>
+    internal static ReloadingAgentCatalog Catalog(Func<string, string?> environment, SindriSettings settings) =>
+        new(ConfigPath(environment, settings), Builtins());
+
+    /// <summary>The file in force: AW_LAUNCHER_CONFIG, else launcher.json in the state directory (precedence: environment, file, built-ins).</summary>
+    internal static string ConfigPath(Func<string, string?> environment, SindriSettings settings) =>
+        NonEmpty(environment("AW_LAUNCHER_CONFIG")) ?? Path.Combine(settings.StateDirectory, "launcher.json");
 
     private static bool TestOverride(Func<string, string?> environment) =>
         NonEmpty(environment("AW_SESSIONS_PROC_ROOT")) is not null || NonEmpty(environment("AW_SESSIONS_CLAUDE_DIR")) is not null;
@@ -40,7 +51,7 @@ internal static class LauncherStartup
         return chosen.StartsWith('~') ? home + chosen[1..] : chosen;
     }
 
-    private static byte[] Builtins()
+    internal static byte[] Builtins()
     {
         using var stream = typeof(LauncherStartup).Assembly.GetManifestResourceStream("builtins.json")
             ?? throw new InvalidOperationException("builtins.json isn't embedded in Aw.Sindri.Infrastructure");
@@ -49,7 +60,7 @@ internal static class LauncherStartup
         return copy.ToArray();
     }
 
-    private static (byte[]? Bytes, string? Problem) ReadFile(string path)
+    internal static (byte[]? Bytes, string? Problem) ReadFile(string path)
     {
         try
         {

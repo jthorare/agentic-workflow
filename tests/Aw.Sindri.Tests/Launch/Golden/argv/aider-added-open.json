@@ -1,0 +1,9 @@
+{
+  "agent": "aider-added",
+  "mode": "open",
+  "argv": [
+    "aider",
+    "--message",
+    "Sindri item ITM-00000000000000000000000000000001. Read it with the sindri_item tool before you start; you are taking it over from Sindri."
+  ]
+}
