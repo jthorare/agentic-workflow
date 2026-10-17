@@ -1755,3 +1755,26 @@ static readonly Aw.Meta.Core.MetaErrors.TranscriptUnreadable -> Aw.Kernel.ErrorD
 static readonly Aw.Meta.Core.MetaErrors.UnknownLane -> Aw.Kernel.ErrorDefinition!
 ~override Aw.Meta.Core.Config.ReserveSlots.Equals(object obj) -> bool
 ~override Aw.Meta.Core.Config.ReserveSlots.ToString() -> string
+Aw.Meta.Core.Commands.CommandRequest.TailCharacters.get -> int
+Aw.Meta.Core.Commands.CommandRequest.TailCharacters.init -> void
+const Aw.Meta.Core.Commands.CommandRequest.DefaultTailCharacters = 65536 -> int
+Aw.Meta.Core.Ports.BuildInfo
+Aw.Meta.Core.Ports.BuildInfo.<Clone>$() -> Aw.Meta.Core.Ports.BuildInfo!
+Aw.Meta.Core.Ports.BuildInfo.BuildInfo(string! Commit, string! BuiltAt, string! Os, string! Rid) -> void
+Aw.Meta.Core.Ports.BuildInfo.BuiltAt.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.BuiltAt.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Commit.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Commit.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Deconstruct(out string! Commit, out string! BuiltAt, out string! Os, out string! Rid) -> void
+Aw.Meta.Core.Ports.BuildInfo.Equals(Aw.Meta.Core.Ports.BuildInfo? other) -> bool
+Aw.Meta.Core.Ports.BuildInfo.Os.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Os.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Rid.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Rid.init -> void
+Aw.Meta.Core.Ports.IBuildInfo
+Aw.Meta.Core.Ports.IBuildInfo.Read() -> Aw.Meta.Core.Ports.BuildInfo!
+override Aw.Meta.Core.Ports.BuildInfo.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.BuildInfo.GetHashCode() -> int
+override Aw.Meta.Core.Ports.BuildInfo.ToString() -> string!
+static Aw.Meta.Core.Ports.BuildInfo.operator !=(Aw.Meta.Core.Ports.BuildInfo? left, Aw.Meta.Core.Ports.BuildInfo? right) -> bool
+static Aw.Meta.Core.Ports.BuildInfo.operator ==(Aw.Meta.Core.Ports.BuildInfo? left, Aw.Meta.Core.Ports.BuildInfo? right) -> bool

@@ -8,7 +8,7 @@ not habits.
 
 It is a portable harness for any project. Everything team-specific (lanes, repo, gate scopes, merge order, known
 flakes, kickoff prompts, log file) lives in a team config. It runs before the C# switch as an opt-in standalone
-NativeAOT CLI (`./setup.sh --with-meta`; the meta itself is Claude Code only, lanes can run other agent CLIs and take part in its obligations, see [Launcher](#launcher) and [Non-Claude lanes](#non-claude-lanes); Linux only for now, aw-meta reads /proc, so on macOS setup skips it) that keeps its state under `$AW_STATE_DIR/meta/` (per team: `teams/<team>/`, see [Named teams](#named-teams)) and
+NativeAOT CLI (`./setup.sh --with-meta`; the meta itself is Claude Code only, lanes can run other agent CLIs and take part in its obligations, see [Launcher](#launcher) and [Non-Claude lanes](#non-claude-lanes); Linux and macOS, see [OS support](#os-support)) that keeps its state under `$AW_STATE_DIR/meta/` (per team: `teams/<team>/`, see [Named teams](#named-teams)) and
 appends to the configured running log. Its gate and merge commands act on the team's checkout and PRs: `git fetch`, a
 gate worktree registered in the repo, the configured gate steps, `gh pr merge`, and the removal of finished worktrees (`git worktree remove`, never forced; see "Worktree cleanup"). Sindri absorbs it later (see the
 last section).
@@ -100,6 +100,7 @@ the team config (`AW-META-002` otherwise); the hook commands must let any sessio
 | `watch [--interval <s>] [--for <dur>]` | Prints one line per settled change (PR opened, merged, ready, head moved, mergeable after two equal polls and never `UNKNOWN`, main moved, `DISK LOW` / `DISK OK`, `MEMORY LOW` / `MEMORY OK`, each after two polls agree) and keeps a heartbeat; every poll also recomputes the heavy reservation |
 | `worktree-list [--no-fetch]` | Every worktree of the team repo (`git worktree list --porcelain`) with its branch, head, pull request (number and state) and verdict `removable` or `kept` with every reason; changes nothing (it fetches origin first unless `--no-fetch`). Exit 0 |
 | `worktree-sweep [--dry-run] [--pr <n>]` | Removes the removable worktrees (see "Worktree cleanup"), all or just pull request n's (its head branch and its gate trees); prints each removed and each kept one with its reasons. `--dry-run` removes nothing. Exit 0, 1 when git refused a removal, 2 when nothing could be judged (git, gh or the process scan failed: nothing is removed) |
+| `version` | The commit the binary was built from, its build time, the OS and the runtime identifier (`aw-meta <commit> (built <UTC time>, <OS> <rid>)`; `--json`: `commit`, `builtAt`, `os`, `rid`). `scripts/install-meta.sh` stamps them at publish (`-p:SourceRevisionId`, `-p:AwBuildTime`); a build that was not stamped reads `unknown`. Needs no team. Exit 0 |
 | `log-append --kind merge\|decision\|lanes\|incident\|note --text <t>` | Appends a dated line to the running log |
 | `status` | Obligations, merge queue (ready pull requests; one leaves it when any merge is recorded for it, or when the watch saw it merged or closed on GitHub, kept under `watch.ended-prs`), owner queue, lanes, and one line each for the heavy reservation and the builders advice |
 | `queue-drop <pr> --reason <text>` | Removes the pull request's merge-queue entry and appends a `NOTE` line (`queue-drop #N: <reason>`) to the running log. The inbox message stays; the drop is kept with its time under `queue.dropped`, so only a ready message sent after it queues the pull request again. Exit 0 dropped; 2 when the pull request has no queue entry (`AW-META-018`), the reason is blank or usage |
@@ -113,11 +114,11 @@ The meta watches memory and disk and adapts, so a team never has to be told by h
 (`resources`, `builders`, `heavy`) and have defaults; nothing is specific to one repo.
 
 **Events** (`watch`, one line when the state flips, never repeated): `DISK LOW` / `DISK OK` (state-disk free space against
-`resources.diskFloorGb`), `MEMORY LOW` / `MEMORY OK` (`MemAvailable` from `/proc/meminfo` against `resources.memFloorGb`, or swap
+`resources.diskFloorGb`), `MEMORY LOW` / `MEMORY OK` (available memory (`MemAvailable` from `/proc/meminfo` on Linux, vm_stat on macOS) against `resources.memFloorGb`, or swap
 used at or above `resources.swapHighPct`). A flip is reported only after two consecutive polls agree on it (the rule `mergeable`
 already follows), so a host sitting at its floor does not flap LOW, OK, LOW and make the meta message every lane each time. The
 last reported state is kept in the team's store (`watch.resources`), so a re-armed watch does not announce a standing LOW again.
-`health` judges memory by the same rule (`ResourceRules.MemoryLow`), so the two never disagree. aw-meta is Linux-only because it reads `/proc`.
+`health` judges memory by the same rule (`ResourceRules.MemoryLow`), so the two never disagree. How each OS reads these figures is under [OS support](#os-support).
 
 **Gate priority and the reservation.** The heavy-job wrapper (`AW_HEAVY` or `$AW_STATE_DIR/bin-r1b/heavy`) shares a
 box-wide number of slots between every expensive job. aw-meta stays inside its own state directory: it never writes the
@@ -155,6 +156,44 @@ the other:
 below 1. The line reads `builders: 4 per lane (disk 132 GB free, mem 12 GB available)`, or `builders: 2 per lane (disk below
 floor+headroom)` / `builders: 1 per lane (memory low)` when something cuts it; `--json` carries `builders` (`perLane`,
 `maxPerLane`, `diskFreeGb`, `memAvailableGb`, `limit`) and `heavy` (`cap`, `reserve`, `depth`, `computedAt`, `stale`; absent when no reservation was computed or `heavy.reserve` is false). Without a team config the defaults and one lane apply, and no reservation.
+
+## OS support
+
+aw-meta runs on **Linux** and **macOS** (`scripts/install-meta.sh`, `./setup.sh --with-meta`; the host RID is whatever
+`dotnet --info` reports: `linux-x64`, `linux-arm64`, `osx-arm64` or `osx-x64`; NativeAOT needs the platform's C toolchain, Xcode's
+command line tools on macOS). On any other OS the installer exits 1 and says so; setup stops with that message. Nothing is
+skipped quietly, so a reinstall never leaves an old binary in place without a signal: the installer prints the installed
+version, and the launcher warns when the binary is older than the Meta sources it runs from (below).
+
+What reads the host differs; everything else (the SQLite stores, the team config, the CLI, gate and merge, the launcher) is the same
+code. The adapter is chosen by OS when the host composes (`AddMetaInfrastructure`).
+
+| Need | Linux | macOS |
+|------|-------|-------|
+| Memory total and available (`health`, `status`, `watch`'s `MEMORY LOW`) | `/proc/meminfo` (`MemAvailable`) | `sysctl -n hw.memsize`; available is the free, inactive and speculative pages of `vm_stat` times its page size |
+| Swap used and total | `/proc/meminfo` | `sysctl -n vm.swapusage` |
+| The process table (orphans, duplicate MCP servers, process groups, `health`'s counts) | `/proc/<pid>/stat` and `cmdline`; age from the process start time | `ps -axww -o pid=,ppid=,etime=,rss=,stat=,args=`; age from `etime`, so no time-zone or boot-time arithmetic. Zombies are left out on both |
+| Is this pid running (live sessions, heavy-lock holders) | `/proc/<pid>` | the OS process list (`Process.GetProcessById`) |
+| What a process holds (worktree cleanup's idle test) | `/proc/<pid>/cwd` and `fd` | `lsof -w -n -F pcn` (cwd, open files, executables) |
+| Termination (`health`'s orphan kill) | `kill -TERM` | `kill -TERM` |
+| Disk free space, the heavy-job lock directories | the same on both | the same on both |
+
+A macOS tool that cannot run, times out or prints something unreadable makes the figure unavailable: the command fails with
+`AW-META-010` and a reason that starts "unavailable on macOS: <tool> ..." (for example `sysctl -n vm.swapusage exited 1: ...`). It is
+never replaced by a made-up value, and `health` does not guess from the rest. The tools' whole output is read (`ps` lists far
+more than the command runner's default 64 KB tail). Symlinked paths: git reports a worktree's physical path (`/private/var/...`),
+while a team config may name it through a symlink (`/var/...`); put worktree roots in `worktrees.roots` by their physical path on
+macOS. The launcher script's own test suite (`scripts/tests/meta-launch.test.sh`: golden transcript, GNU tools) is Linux-only;
+`scripts/tests/meta-version.test.sh` covers the staleness check on both.
+
+**Version and staleness.** `aw-meta version` is how a stale install shows. `scripts/install-meta.sh` stamps the publish with the tree's
+`git rev-parse HEAD` and a UTC time and prints `aw-meta <commit> (built ..., <os> <rid>)` when it finishes (`... predates 'aw-meta
+version'` for an older binary). `scripts/meta-launch.sh` runs `aw-meta version --json` at each launch and prints one stderr line, never
+failing the launch, when the binary is older than the sources of this checkout: the last commit that touched `src/Meta`, `src/Aw.Kernel`,
+`src/Aw.Kernel.Data`, `src/Aw.Kernel.Telemetry`, `src/Redaction` or `src/Aw.Analyzers` (what the publish builds) is not an ancestor of, or
+equal to, the binary's commit (`git merge-base --is-ancestor`); an unstamped binary, one with no `version` command, and a commit this
+checkout lacks warn too. Docs-only commits after the binary do not. `AW_META_NO_STALE_CHECK=1` turns it off; `AW_META_BIN` names the
+binary (default `$AW_STATE_DIR/bin/aw-meta`).
 
 ## Worktree cleanup
 

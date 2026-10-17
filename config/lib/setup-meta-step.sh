@@ -13,7 +13,7 @@ aw_setup_meta_step() {
     case $rc in
       0) built=1 ;;
       3) echo "  meta: NOT installed for $p (the tree was refused, see above); rerun scripts/install-meta.sh from the canonical checkout" >&2 ;;
-      *) return "$rc" ;;
+      *) echo "  meta: scripts/install-meta.sh failed for $p (exit $rc); setup stops here, the installed aw-meta (if any) is unchanged and may be stale" >&2; return "$rc" ;;
     esac
   done
   return 0

@@ -23,6 +23,7 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.Roles;
+using Aw.Meta.Features.ShowVersion;
 using Aw.Meta.Features.Status;
 using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Features.SyncInbox;
@@ -61,6 +62,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<TeamInitService, TeamInitRequest, TeamConfig>()
         .AddScoped<TeamShowService>()
         .Plain<TeamShowService, TeamShowRequest, TeamConfig>()
+        .AddScoped<ShowVersionService>()
+        .Plain<ShowVersionService, ShowVersionRequest, BuildInfo>()
         .AddScoped<TeamListService>()
         .Plain<TeamListService, TeamListRequest, TeamListResponse>()
         .AddScoped<TeamMigrateService>()

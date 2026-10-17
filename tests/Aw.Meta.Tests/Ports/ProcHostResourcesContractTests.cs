@@ -15,7 +15,11 @@ public sealed class ProcHostResourcesContractTests : HostResourcesContract, IDis
 
     private string Lock => Path.Combine(_state.Path, "locks", "heavy-job.lock");
 
-    protected override IHostResources Create() => new ProcHostResources(_state.Path, Lock);
+    protected override IHostResources Create()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "the /proc adapter reads /proc");
+        return new ProcHostResources(_state.Path, Lock);
+    }
 
     protected override void TakeLock(IHostResources resources, int pid)
     {

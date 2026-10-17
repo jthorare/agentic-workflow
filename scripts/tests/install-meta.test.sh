@@ -3,7 +3,9 @@
 # (AW_SKIP_BUILD=1 with a stub binary; nothing is built, installed or linked outside the sandbox): for Claude both hooks
 # registered once (Stop; PostToolUse matching SendMessage), the hook scripts and the fail-open logger copied, the PATH links
 # made, and a rerun idempotent; for Codex and Cursor the lane hooks (session-id-report, meta-lane-gate) registered once through
-# the adapters beside the user's own hooks, the Codex /hooks trust step printed, and nothing registered for the other events.
+# the adapters beside the user's own hooks, the Codex /hooks trust step printed, and nothing registered for the other events;
+# macOS installs like Linux, any other OS is refused loudly, the publish gets the commit and build-time stamp, and the installed
+# version is printed.
 # Run: bash scripts/tests/install-meta.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,7 +20,7 @@ trap 'rm -rf "$WORK"' EXIT
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller may be a meta session: its team config, bin and claude must not reach the stubs
 export HOME="$WORK/home" AW_STATE_DIR="$WORK/state" AW_SKIP_BUILD=1
 unset CLAUDE_DIR CLAUDE_LOCAL_BIN AW_DRY_RUN AW_HOOKS_DIR CODEX_HOOKS_FILE CODEX_HOME CURSOR_HOOKS_FILE CLAUDE_SETTINGS_FILE CLAUDE_HOOKS_DIR AW_HOOK_ADAPTER_FLAGS SETTINGS_FILE TOOLKIT_DIR
-# the installer is Linux-only: stub uname to Linux so the suite passes on macOS runners too (the Darwin cases below override it)
+# the installer behaves the same on Linux and macOS: stub uname to Linux so the suite is one thing everywhere (the Darwin and other-OS cases below override it)
 mkdir -p "$WORK/linuxbin"
 printf '#!/usr/bin/env bash\necho Linux\n' > "$WORK/linuxbin/uname"; chmod +x "$WORK/linuxbin/uname"
 export PATH="$WORK/linuxbin:$PATH"
@@ -88,21 +90,70 @@ rm "$AW_STATE_DIR/bin/aw-meta"
 bash "$DIR/install-meta.sh" --provider claude > /dev/null 2>&1; RC=$?
 check "AW_SKIP_BUILD with no binary: exit 1" "$RC" "1"
 
-# aw-meta reads Linux /proc (memory, uptime, process table): the installer refuses on macOS, before touching anything
-printf '#!/usr/bin/env bash\nexit 0\n' > "$AW_STATE_DIR/bin/aw-meta"; chmod +x "$AW_STATE_DIR/bin/aw-meta"   # a binary is present, so only the refusal can keep the links away
+# macOS installs like Linux (its host adapters read sysctl, vm_stat and ps); an OS that is neither fails loudly, before touching anything
+printf '#!/usr/bin/env bash\nexit 0\n' > "$AW_STATE_DIR/bin/aw-meta"; chmod +x "$AW_STATE_DIR/bin/aw-meta"
 mkdir -p "$WORK/fakebin"
 printf '#!/usr/bin/env bash\necho Darwin\n' > "$WORK/fakebin/uname"; chmod +x "$WORK/fakebin/uname"
 OUT="$(PATH="$WORK/fakebin:$PATH" CLAUDE_LOCAL_BIN="$WORK/darwin-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
-check "Darwin: refused with the Linux-only message, exit 1" "$RC:$(printf '%s' "$OUT" | grep -c 'Linux-only')" "1:1"
-check "Darwin: nothing linked" "$(ls "$WORK/darwin-bin" 2>/dev/null | wc -l | tr -d ' ')" "0"
-OUT="$(PATH="$WORK/fakebin:$PATH" bash "$DIR/install-meta.sh" --provider codex 2>&1)"; RC=$?
-check "Darwin, another provider: refused too, exit 1" "$RC:$(printf '%s' "$OUT" | grep -c 'Linux-only')" "1:1"
+check "Darwin: installs, exit 0, no refusal" "$RC:$(printf '%s' "$OUT" | grep -c 'Linux-only')" "0:0"
+check "Darwin: linked" "$(readlink "$WORK/darwin-bin/aw-meta")" "$AW_STATE_DIR/bin/aw-meta"
+OUT="$(PATH="$WORK/fakebin:$PATH" CLAUDE_LOCAL_BIN="$WORK/darwin-bin2" bash "$DIR/install-meta.sh" --provider codex 2>&1)"; RC=$?
+check "Darwin, another provider: installs too" "$RC:$(printf '%s' "$OUT" | grep -c 'Linux-only')" "0:0"
+mkdir -p "$WORK/bsdbin"
+printf '#!/usr/bin/env bash\necho FreeBSD\n' > "$WORK/bsdbin/uname"; chmod +x "$WORK/bsdbin/uname"
+OUT="$(PATH="$WORK/bsdbin:$PATH" CLAUDE_LOCAL_BIN="$WORK/bsd-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "an unsupported OS: exit 1 naming the OS and the supported ones" "$RC:$(printf '%s' "$OUT" | grep -c 'Linux and macOS only (this is FreeBSD)')" "1:1"
+check "an unsupported OS: nothing linked" "$(ls "$WORK/bsd-bin" 2>/dev/null | wc -l | tr -d ' ')" "0"
+
+# The version stamp: the installed binary's version is printed, an old binary without `version` says so, and the publish is
+# stamped with this tree's commit and a build time. A stub dotnet stands in for the SDK (under the sandboxed HOME's ~/.dotnet, where
+# the script looks first); it records its publish arguments and writes a stub aw-meta and e_sqlite3 into the -o directory.
+cat > "$AW_STATE_DIR/bin/aw-meta" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" = version ]; then echo '{"commit":"abc123","builtAt":"2026-10-17T00:00:00Z","os":"macOS","rid":"osx-arm64"}'; exit 0; fi
+exit 0
+STUB
+OUT="$(CLAUDE_LOCAL_BIN="$WORK/ver-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "the installed version is printed: commit, build time, OS and runtime id" "$RC:$(printf '%s' "$OUT" | grep -c 'aw-meta abc123 (built 2026-10-17T00:00:00Z, macOS osx-arm64)')" "0:1"
+printf '#!/usr/bin/env bash\nexit 2\n' > "$AW_STATE_DIR/bin/aw-meta"
+OUT="$(CLAUDE_LOCAL_BIN="$WORK/ver-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "a binary that has no version command is said to predate it, exit 0" "$RC:$(printf '%s' "$OUT" | grep -c 'predates .aw-meta version')" "0:1"
+unlink "$AW_STATE_DIR/bin/aw-meta"
+mkdir -p "$HOME/.dotnet"
+sdk="$(jq -r '.sdk.version' "$DIR/../global.json")"
+cat > "$HOME/.dotnet/dotnet" <<STUB
+#!/usr/bin/env bash
+case "\${1:-}" in
+  --list-sdks) echo "$sdk [/stub]" ;;
+  --info) echo "  RID:         osx-arm64" ;;
+  publish)
+    echo "\$*" > "$WORK/publish-args"
+    [ -e "$WORK/publish-fails" ] && { echo "stub publish failed" >&2; exit 1; }
+    out=""; prev=""; for a in "\$@"; do [ "\$prev" = -o ] && out="\$a"; prev="\$a"; done
+    mkdir -p "\$out"
+    printf '#!/usr/bin/env bash\necho built\n' > "\$out/aw-meta"; chmod +x "\$out/aw-meta"
+    echo dylib > "\$out/libe_sqlite3.dylib" ;;
+esac
+STUB
+chmod +x "$HOME/.dotnet/dotnet"
+unset AW_SKIP_BUILD
+OUT="$(CLAUDE_LOCAL_BIN="$WORK/pub-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
+ARGS="$(cat "$WORK/publish-args" 2>/dev/null)"
+check "a real install publishes for the host runtime id and installs the binary and e_sqlite3" "$RC:$(test -x "$AW_STATE_DIR/bin/aw-meta" && test -f "$AW_STATE_DIR/bin/libe_sqlite3.dylib" && echo yes):$(printf '%s' "$ARGS" | grep -c -- '-r osx-arm64')" "0:yes:1"
+check "the publish is stamped with this tree's commit" "$(printf '%s' "$ARGS" | grep -c -- "-p:SourceRevisionId=$(git -C "$DIR/.." rev-parse HEAD)")" "1"
+check "the publish is stamped with a UTC build time" "$(printf '%s' "$ARGS" | grep -cE -- '-p:AwBuildTime=[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z')" "1"
+: > "$WORK/publish-fails"; printf 'old\n' > "$AW_STATE_DIR/bin/aw-meta"
+OUT="$(CLAUDE_LOCAL_BIN="$WORK/pub-bin" bash "$DIR/install-meta.sh" --provider claude 2>&1)"; RC=$?
+check "a failed publish exits 1 with its log and leaves the installed binary alone" "$RC:$(printf '%s' "$OUT" | grep -c 'stub publish failed'):$(cat "$AW_STATE_DIR/bin/aw-meta")" "1:1:old"
+unlink "$HOME/.dotnet/dotnet"
+export AW_SKIP_BUILD=1
+printf '#!/usr/bin/env bash\nexit 0\n' > "$AW_STATE_DIR/bin/aw-meta"; chmod +x "$AW_STATE_DIR/bin/aw-meta"
 
 # Linking: aw-meta-launch points into the canonical checkout only. A temp git repo holding a copy of the installer stands in for the
 # tree it runs from; a linked worktree of it is the throwaway one.
 TOP="$DIR/.."
 mkdir -p "$WORK/tree/scripts" "$WORK/tree/config/hooks/adapters" "$WORK/tree/config/lib"
-cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$WORK/tree/scripts/"
+cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$WORK/tree/scripts/"
 cp "$TOP/config/hooks/adapters/"* "$WORK/tree/config/hooks/adapters/" 2>/dev/null
 cp -r "$TOP/config/lib/." "$WORK/tree/config/lib/"
 cp "$TOP/config/hooks/meta-stop-gate.sh" "$TOP/config/hooks/meta-outbox.sh" "$WORK/tree/config/hooks/"
@@ -129,7 +180,7 @@ check "a team repo set, run from a second plain clone: refused too" "$RC:$(link)
 OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktree 2>&1)"; RC=$?
 check "a team repo set, --allow-worktree: installs from this tree and links it" "$RC:$(link)" "0:$WORK/wt/scripts/meta-launch.sh"
 rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
-cp "$WORK/tree/scripts/install-meta.sh" "$WORK/tree/scripts/meta-team-lib.sh" "$WORK/canon2/scripts/"
+cp "$WORK/tree/scripts/install-meta.sh" "$WORK/tree/scripts/meta-team-lib.sh" "$WORK/tree/scripts/meta-version-lib.sh" "$WORK/canon2/scripts/"
 cp -r "$WORK/tree/config" "$WORK/tree/global.json" "$WORK/canon2/"
 OUT="$(bash "$WORK/canon2/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
 check "a team repo set, run from it: linked into it, no flag needed" "$RC:$(link)" "0:$WORK/canon2/scripts/meta-launch.sh"
@@ -148,5 +199,11 @@ step() { # step <installer exit code> -> "<step rc>:<warnings>:<installer calls>
 }
 check "setup step: a tree refusal (3) warns for each provider and returns 0" "$(step 3)" "0:2:2"
 check "setup step: a publish failure (1) fails the step at once" "$(step 1)" "1:0:1"
+check "setup step: a failure says setup stops and the installed binary may be stale" "$( ( source "$DIR/../config/lib/setup-meta-step.sh"; step 1 > /dev/null; aw_setup_meta_step "$WORK/fake" claude ) 2>&1 | grep -c 'install-meta.sh failed for claude (exit 1); setup stops')" "1"
 check "setup step: an installer success returns 0, no warning" "$(step 0)" "0:0:2"
+
+# setup.sh --with-meta runs the meta step on every OS (it used to print "skipped" on macOS), under the real uname
+mkdir -p "$WORK/shome"
+OUT="$(PATH="${PATH#"$WORK/linuxbin:"}" HOME="$WORK/shome" AW_STATE_DIR="$WORK/sstate" AW_NO_SYSTEM_INSTALL=1 AW_SKIP_BUILD= bash "$DIR/../setup.sh" --providers claude --dry-run --with-meta 2>&1)"; RC=$?
+check "setup.sh --with-meta --dry-run: the meta step is planned, never skipped" "$RC:$(printf '%s' "$OUT" | grep -c 'would run scripts/install-meta.sh --provider claude'):$(printf '%s' "$OUT" | grep -c 'meta: skipped')" "0:1:0"
 exit $fail

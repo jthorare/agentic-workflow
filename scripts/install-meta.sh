@@ -7,15 +7,22 @@
 #   install-meta.sh [--provider claude|codex|cursor] [--allow-worktree]   default claude
 #   --allow-worktree  install from this tree although it is not the canonical checkout: a linked worktree, a second clone, or any
 #                     tree other than the team config's repo (the name is historical; it covers all three)
-#   Exit codes: 0 installed; 1 failed (usage, macOS, a missing binary, a failed publish); 3 refused because this tree is not the
+#   Exit codes: 0 installed; 1 failed (usage, an unsupported OS, a missing binary, a failed publish); 3 refused because this tree is not the
 #   canonical checkout (setup.sh --with-meta warns on 3 and carries on, and stops on every other non-zero exit)
 #   AW_DRY_RUN=1     print what would happen, write nothing
 #   AW_SKIP_BUILD=1  don't publish; install the binary already in $AW_STATE_DIR/bin (tests)
 #   CLAUDE_LOCAL_BIN where the aw-meta and aw-meta-launch links go (default ~/.local/bin)
 #
+# Supported OSes: Linux (x64, arm64) and macOS (arm64, x64: the host RID is whatever `dotnet --info` reports, osx-arm64 or osx-x64). Any
+# other OS fails at once with exit 1 and says why; this script never skips quietly. On macOS aw-meta reads memory, swap and the process
+# table through sysctl, vm_stat, ps and lsof instead of /proc (docs/csharp/meta.md "OS support"); NativeAOT needs Xcode's command line tools.
+#
 # 1. Publish src/Meta/Aw.Meta.Host with NativeAOT for the host RID, on a copy of the files it needs (a RID publish
 #    adds the host's ILCompiler packs to the lock files, so it never runs on the checkout), under the heavy-job lock
-#    when it exists. The binary and its bundled e_sqlite3 land in $AW_STATE_DIR/bin.
+#    when it exists. The binary and its bundled e_sqlite3 (libe_sqlite3.so, or libe_sqlite3.dylib on macOS) land in
+#    $AW_STATE_DIR/bin. The publish is stamped with this tree's commit (-p:SourceRevisionId=$(git rev-parse HEAD)) and a UTC build
+#    time (-p:AwBuildTime), and the installed version is printed from `aw-meta version`; scripts/meta-launch.sh warns when the
+#    installed binary is older than the Meta sources it is launched from. A failed publish exits 1 and leaves the installed binary alone.
 # 2. Hooks, per provider:
 #    claude: Stop → meta-stop-gate.sh, PostToolUse with matcher SendMessage → meta-outbox.sh. Both pass straight through for
 #      every session but the registered meta one.
@@ -46,11 +53,15 @@ LOCAL_BIN="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
 HEAVY="$STATE/bin-r1b/heavy"
 dry() { [ "${AW_DRY_RUN:-0}" = 1 ]; }
 
-# aw-meta reads Linux /proc (memory, uptime, the process table), so it does not run on macOS yet.
-if [ "$(uname)" = Darwin ]; then
-  echo "install-meta: aw-meta is Linux-only for now (it reads /proc); not installing on macOS" >&2
-  exit 1
-fi
+case "$(uname)" in
+  Linux | Darwin) ;;
+  *)
+    echo "install-meta: aw-meta is supported on Linux and macOS only (this is $(uname)); not installing" >&2
+    exit 1
+    ;;
+esac
+# shellcheck source=meta-version-lib.sh
+. "$SCRIPT_DIR/scripts/meta-version-lib.sh"
 
 # Never silently install an unmerged build. The team config's repo (when it has the launcher) is the canonical checkout: this
 # script must run from it; from any other tree (a worktree, a second clone) it refuses. With no team repo, a linked git worktree
@@ -106,7 +117,10 @@ else
     'BannedSymbols*.txt' CodeMetricsConfig.txt src/Aw.Kernel src/Aw.Kernel.Data src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers src/Meta \
     | (cd "$SCRIPT_DIR" && tar --null -T - -cf -) | tar -xf - -C "$tree"
   rid="$(dotnet --info | awk '/^ *RID:/ {print $2; exit}')"
-  run=(dotnet publish "$tree/src/Meta/Aw.Meta.Host/Aw.Meta.Host.csproj" -c Release -r "$rid" -p:RestoreLockedMode=false -o "$tree/out")
+  stamp=(-p:AwBuildTime="$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+  commit="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2> /dev/null || true)"
+  [ -n "$commit" ] && stamp+=(-p:SourceRevisionId="$commit")
+  run=(dotnet publish "$tree/src/Meta/Aw.Meta.Host/Aw.Meta.Host.csproj" -c Release -r "$rid" -p:RestoreLockedMode=false "${stamp[@]}" -o "$tree/out")
   [ -x "$HEAVY" ] && run=("$HEAVY" "${run[@]}")
   echo "  meta: publishing aw-meta ($rid) — takes a box-wide build slot"
   "${run[@]}" < /dev/null > "$work/publish.log" 2>&1 || { tail -20 "$work/publish.log" >&2; exit 1; }
@@ -118,6 +132,7 @@ else
   find "$tree" -delete
   echo "  meta: installed $BIN/aw-meta"
 fi
+[ -x "$BIN/aw-meta" ] && echo "  meta: $(meta_version_line "$BIN/aw-meta")"
 
 # 2. Hooks.
 aw_hooks_init "$AW_PROVIDER"

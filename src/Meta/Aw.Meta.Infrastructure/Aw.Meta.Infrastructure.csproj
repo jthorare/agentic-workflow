@@ -22,6 +22,14 @@
     <EmbeddedResource Include="Sqlite/Migrations/*.sql" LogicalName="Aw.Meta.Infrastructure.Sqlite.Migrations.%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(AwBuildTime)' != ''">
+    <!-- scripts/install-meta.sh publishes with -p:AwBuildTime=<UTC ISO 8601> -p:SourceRevisionId=<commit>; `aw-meta version` reads both back (AssemblyBuildInfo). -->
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AwBuildTime</_Parameter1>
+      <_Parameter2>$(AwBuildTime)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Aw.Meta.Tests" />
     <InternalsVisibleTo Include="Aw.Meta.Testing" />

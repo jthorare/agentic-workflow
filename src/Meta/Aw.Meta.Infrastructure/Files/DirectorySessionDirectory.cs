@@ -9,7 +9,7 @@ namespace Aw.Meta.Infrastructure.Files;
 /// <summary>
 /// ISessionDirectory over Claude Code's sessions directory (one &lt;pid&gt;.json per session). The format is Claude Code's
 /// own and undocumented, so every record is read defensively: one that can't be read is skipped, never an error.
-/// Liveness is the pid's /proc entry.
+/// Liveness is ProcessLiveness (the pid's /proc entry on Linux, the OS process list on macOS).
 /// </summary>
 /// <param name="directory">The sessions directory.</param>
 internal sealed class DirectorySessionDirectory(string directory) : ISessionDirectory
@@ -25,7 +25,7 @@ internal sealed class DirectorySessionDirectory(string directory) : ISessionDire
         foreach (var file in Directory.EnumerateFiles(directory, "*.json").Order(StringComparer.Ordinal))
         {
             var session = await Read(file, cancellationToken).ConfigureAwait(false);
-            if (session is not null && Directory.Exists("/proc/" + session.Pid.ToString(System.Globalization.CultureInfo.InvariantCulture)))
+            if (session is not null && ProcessLiveness.IsAlive(session.Pid))
             {
                 sessions.Add(session);
             }

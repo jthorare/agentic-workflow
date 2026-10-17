@@ -5,7 +5,7 @@
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fail=0
-[ "$(uname -s)" = Darwin ] && { echo "skip: aw-meta is Linux-only"; exit 0; }
+[ "$(uname -s)" = Darwin ] && { echo "skip: this suite (the golden transcript, GNU tools, uuid case, wc padding) is Linux-only; the launcher check against a stale aw-meta runs everywhere in meta-version.test.sh"; exit 0; }
 check() {
   if [ "$2" == "$3" ]; then echo "ok - $1"; else
     echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
@@ -30,6 +30,7 @@ golden_transcript() {
     export HOME="$G/home" AW_STATE_DIR="$G/state" AW_WARP_LAUNCH_DIR="$G/warp" CALLS="$G/calls"
     unset TMUX AW_LAUNCHER_CONFIG
     for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done
+    export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command: the staleness check (meta-version.test.sh) would add a warning and a call
     export AW_META_LEGACY_TMUX_SOCKET=legacy-golden   # the launcher's legacy-socket check looks here (a private socket, empty), never at tmux's default
     mkdir -p "$HOME/.claude/projects/p" "$G/repo" "$G/prompts" "$AW_STATE_DIR/meta" "$G/shim"
     printf 'API kickoff\nline two $HOME "quoted" '"'"'single'"'"'\n' > "$G/prompts/api.md"
@@ -94,6 +95,7 @@ echo "$*" >> "$CALLS.meta"
 EOF
 chmod +x "$WORK/claude" "$WORK/aw-meta"
 export AW_META_CLAUDE="$WORK/claude" AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHELL=1
+export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command; the staleness check has its own suite (meta-version.test.sh)
 export AW_META_LEGACY_TMUX_SOCKET=t1-legacy   # the launcher's legacy (default-socket) check goes to this private socket, never the real default
 cfg="$AW_STATE_DIR/meta/team.json"
 jq -n --arg r "$WORK/repo" --arg p "$WORK/prompts" '{team:"t1", repo:$r, prompts:$p, metaLane:"meta", lanes:["api","ui"]}' > "$cfg"

@@ -38,6 +38,7 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(TeamConfig))]
 [JsonSerializable(typeof(MetaRole))]
+[JsonSerializable(typeof(BuildInfo))]
 [JsonSerializable(typeof(TeamListResponse))]
 [JsonSerializable(typeof(TeamMigration))]
 [JsonSerializable(typeof(ShowRoleResponse))]

@@ -659,18 +659,15 @@ fi
 # template). Each selected provider gets its own hooks: Claude Code the meta gates, Codex and Cursor the lane hooks for
 # non-Claude Meta lanes (the Codex /hooks trust step is printed). The binary is published once, by the first provider ---
 if [ "$WITH_META" = "1" ]; then
-  if [ "$(uname)" = "Darwin" ]; then
-    echo "  meta: skipped (aw-meta is Linux-only for now: it reads /proc)"
+  # shellcheck source=config/lib/setup-meta-step.sh
+  source "$SCRIPT_DIR/config/lib/setup-meta-step.sh"
+  if aw_dry; then
+    for _p in $PROVIDERS; do echo "  [dry-run] would run scripts/install-meta.sh --provider $_p"; done
   else
-    # shellcheck source=config/lib/setup-meta-step.sh
-    source "$SCRIPT_DIR/config/lib/setup-meta-step.sh"
-    if aw_dry; then
-      for _p in $PROVIDERS; do echo "  [dry-run] would run scripts/install-meta.sh --provider $_p"; done
-    else
-      # install-meta exits 3 when it refuses the tree (a worktree or a tree that is not the team's repo): setup warns and goes on;
-      # any other failure stops setup
-      aw_setup_meta_step "$SCRIPT_DIR" $PROVIDERS
-    fi
+    # install-meta exits 3 when it refuses the tree (a worktree or a tree that is not the team's repo): setup warns and goes on;
+    # any other failure (an unsupported OS, a failed publish) stops setup with install-meta's message: there is no quiet skip, so a
+    # reinstall never leaves an old binary in place without saying so
+    aw_setup_meta_step "$SCRIPT_DIR" $PROVIDERS
   fi
 fi
 

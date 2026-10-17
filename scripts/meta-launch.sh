@@ -23,6 +23,9 @@
 #   AW_META_ALLOW_LEGACY=1  same as --allow-legacy
 #   AW_META_LEGACY_TMUX_SOCKET  the `-L` name of the legacy server to check instead of tmux's default (tests point it at a private socket)
 #   AW_META_ID_WAIT     seconds a lane whose agent reports its own session id has to report it (default 30; tests)
+#   AW_META_BIN         the installed aw-meta (default $AW_STATE_DIR/bin/aw-meta); a launch warns on stderr (one line, never fatal) when
+#                       its commit stamp (`aw-meta version`) is older than the Meta sources of this checkout (scripts/meta-version-lib.sh)
+#   AW_META_NO_STALE_CHECK=1  skip that check
 set -euo pipefail
 here="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"   # through the ~/.local/bin/aw-meta-launch symlink too
 only=""; team_sel="${AW_META_TEAM:-}"; open=1; dry=0; allow_legacy="${AW_META_ALLOW_LEGACY:-0}"; init=0; init_viewer=""; init_force=0; init_stdout=0
@@ -49,6 +52,8 @@ state_dir="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
 . "$here/launcher-lib.sh"
 # shellcheck source=meta-team-lib.sh
 . "$here/meta-team-lib.sh"
+# shellcheck source=meta-version-lib.sh
+. "$here/meta-version-lib.sh"
 
 # --init-launcher: detect this box's terminal and write launcher.json (spec section 4, "The generator"): no GUI session
 # is print; else Warp when present; else $TERM_PROGRAM when it names a terminal in config/launcher/terminals.json; else
@@ -99,6 +104,8 @@ init_launcher() {
 if [ "$init" = 1 ]; then init_launcher; exit $?; fi
 
 command -v tmux > /dev/null || { echo "meta-launch: tmux is not installed" >&2; exit 1; }
+# A binary older than the Meta sources this launcher runs from is the usual reason a fix "didn't take" after a reinstall that was skipped.
+[ "${AW_META_NO_STALE_CHECK:-0}" = 1 ] || meta_stale_line "${AW_META_BIN:-$state_dir/bin/aw-meta}" "$here/.." >&2
 if [ -n "${AW_META_CONFIG:-}" ] && [ -z "$team_sel" ]; then   # an explicit config names its team: the state directory follows it
   team_sel="$(jq -r 'if (.team | type) == "string" then .team else empty end' "$AW_META_CONFIG" 2> /dev/null || true)"
 fi

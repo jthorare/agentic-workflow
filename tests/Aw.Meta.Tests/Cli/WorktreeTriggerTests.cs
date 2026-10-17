@@ -21,7 +21,7 @@ public sealed class WorktreeTriggerTests : IDisposable
         // `gh pr merge 7` lands the head on main (a fast-forward) and flips the pull request to MERGED, as GitHub would.
         await File.WriteAllTextAsync(
             Path.Combine(_lab.GhState, "merge-7.sh"),
-            $"git -C '{_lab.Repo}' push -q origin {head}:refs/heads/main && sed -i 's/\"state\":\"OPEN\"/\"state\":\"MERGED\"/' '{_lab.GhState}/view-7.json' && sed -i 's/\"number\":7,\"state\":\"OPEN\"/\"number\":7,\"state\":\"MERGED\"/' '{_lab.GhState}/list.json'\n",
+            $"git -C '{_lab.Repo}' push -q origin {head}:refs/heads/main && sed -i.bak 's/\"state\":\"OPEN\"/\"state\":\"MERGED\"/' '{_lab.GhState}/view-7.json' && sed -i.bak 's/\"number\":7,\"state\":\"OPEN\"/\"number\":7,\"state\":\"MERGED\"/' '{_lab.GhState}/list.json'\n",
             TestContext.Current.CancellationToken);
     }
 

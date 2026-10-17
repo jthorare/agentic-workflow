@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Testing;
+using Aw.Meta.Tests.Adapters;
 
 namespace Aw.Meta.Tests.Ports;
 
@@ -25,7 +26,7 @@ public sealed class ProcessScannerContractTests : ProcessLocationsContract, IDis
 
     protected override string NewDirectory()
     {
-        var path = Directory.CreateTempSubdirectory("aw-meta-scan-").FullName;
+        var path = RealPath.Of(Directory.CreateTempSubdirectory("aw-meta-scan-").FullName);
         _directories.Add(path);
         return Path.GetFullPath(path);
     }
