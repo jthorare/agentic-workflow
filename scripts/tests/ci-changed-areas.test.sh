@@ -134,6 +134,10 @@ expect "the binaries.lock script runs dotnet (where CI fetches with it) and bash
   "$(printf 'scripts/binaries-lock.sh\n')" \
   "$(printf 'bash=true\ndotnet=true\npackages=[]')"
 
+expect "the Onyx pins run dotnet (embedded in the Sindri build, parsed by its tests) and bash (their check)" \
+  "$(printf 'context/onyx.lock\n')" \
+  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+
 expect "spike projects never run dotnet" \
   "$(printf 'spikes/aot/Spike.csproj\nspikes/aot/Program.cs\nspikes/Directory.Build.props\n')" \
   "$(printf 'bash=false\ndotnet=false\npackages=[]')"

@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Secrets;
+using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Secrets;
 
@@ -112,6 +113,7 @@ internal sealed class PointerSecrets(Func<string, string?> environment, IToolRun
             ToolOutcome.TimedOut => string.Create(CultureInfo.InvariantCulture, $"'{tool}' didn't answer within {timeout.TotalSeconds:0} s (a locked keychain or a sign-in prompt?)"),
             ToolOutcome.Exited when run.ExitCode != 0 => string.Create(CultureInfo.InvariantCulture, $"'{tool}' exited with {run.ExitCode} ({hints.ExitedWhy ?? "no such entry?"})"),
             ToolOutcome.Exited => null,
+            ToolOutcome.Cancelled => $"'{tool}' was cancelled",
             _ => throw new ArgumentOutOfRangeException(nameof(tool), run.Outcome, "unknown outcome"),
         };
         return why is null

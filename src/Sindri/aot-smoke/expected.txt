@@ -195,3 +195,14 @@ hash sha256:HASH
 RCP-REACH-001: state 'orphan' is unreachable from 'produce' at RCP-REACH-001.yaml:14:3 (states.orphan); add a transition into it or remove it
 hash sha256:HASH
 exit 1
+## sindri onyx status --json | jq '{state, docker}' (no docker on PATH; a check's state 2 is fail)
+{"state":"not-set-up","docker":{"failed":true,"code":"SND-ONYX-001"}}
+## sindri onyx up (session)
+SND-AUTH-002 `sindri onyx up` runs Docker and writes Onyx's files, so only a human at a terminal runs it (this CLI ran as a session: CLAUDECODE is set; fix: ask the human to run `sindri onyx up`)
+exit 1
+## sindri onyx up
+SND-AUTH-002 `sindri onyx up` runs Docker and writes Onyx's files, so only a human at a terminal runs it (this CLI ran as a session: no terminal; fix: ask the human to run `sindri onyx up`)
+exit 1
+## sindri onyx down (session)
+SND-AUTH-002 `sindri onyx down` stops Docker containers, so only a human at a terminal runs it (this CLI ran as a session: CLAUDECODE is set; fix: ask the human to run `sindri onyx down`)
+exit 1

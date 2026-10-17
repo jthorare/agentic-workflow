@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
 

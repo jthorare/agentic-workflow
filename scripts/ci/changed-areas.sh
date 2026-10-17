@@ -52,6 +52,8 @@ classify_changes() {
       # the .NET job fetches the pins (sha256 check) and its Temporal tests and the Sindri host smoke run them
       binaries.lock) dotnet=true; bash=true ;;
       scripts/binaries-lock.sh) dotnet=true ;;  # the .NET job fetches with it; its bash test runs below
+      # the Sindri build embeds it (Aw.Sindri.Infrastructure, onyx.lock) and its tests parse it; scripts/tests/onyx-lock.test.sh checks it
+      context/onyx.lock) dotnet=true; bash=true ;;
       # global.json also pins the devcontainer's base image, which a bash suite checks (repo-templates).
       global.json|docs/devcontainer.md) bash=true ;;
     esac

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Aw.Kernel.Ids;
 using Aw.Redaction;
 using Aw.Sindri.Core.Auth;
@@ -7,6 +8,7 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
+using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Secrets;
@@ -24,6 +26,8 @@ using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
 using Aw.Sindri.Infrastructure.Notifications;
+using Aw.Sindri.Infrastructure.Onyx;
+using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Text;
@@ -43,7 +47,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
         => services
-            .AddSingleton(SettingsFromEnvironment.Read(environment))
+            .AddSettings(environment)
             .AddSingleton<IIdGenerator, GuidV7Ids>()
             .AddSingleton<IProcessProbe, PosixProcessProbe>()
             .AddSingleton<LedgerDatabase>()
@@ -79,10 +83,33 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
             .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
+            .AddMcpAdapters(environment)
+            .AddOnyxInfrastructure(environment)
+            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default));
+
+    // The settings and the one place that reads Sindri's home from them.
+    private static IServiceCollection AddSettings(this IServiceCollection services, Func<string, string?> environment)
+        => services
+            .AddSingleton(SettingsFromEnvironment.Read(environment))
+            .AddSingleton<ISindriHome, SettingsSindriHome>();
+
+    // The MCP registration adapters: its settings, the claude CLI and the provider config files.
+    private static IServiceCollection AddMcpAdapters(this IServiceCollection services, Func<string, string?> environment)
+        => services
             .AddSingleton(McpSettings.Read(environment))
             .AddSingleton<IClaudeCli, ProcessClaudeCli>()
-            .AddSingleton<IProviderFiles, ProviderConfigFiles>()
-            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default));
+            .AddSingleton<IProviderFiles, ProviderConfigFiles>();
+
+    private static IServiceCollection AddOnyxInfrastructure(this IServiceCollection services, Func<string, string?> environment)
+        => services
+            .AddSingleton<IOnyxPinsSource, EmbeddedOnyxPins>()                                            // context/onyx.lock, embedded
+            .AddSingleton<IContainerRuntime>(_ => new DockerCliRuntime(new ProcessToolRunner(), environment))   // docker facts and compose operations
+            .AddSingleton<IDeployFiles>(static _ => new HttpDeployFiles(new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }), new Uri("https://raw.githubusercontent.com/onyx-dot-app/onyx/")))   // the pinned files, https, no redirect; the handler keeps the environment proxy on purpose (corporate networks need it, and integrity is the pinned sha256, not the path)
+            .AddSingleton<IOnyxWorkspace>(sp => new FileOnyxWorkspace(sp.GetRequiredService<ISindriHome>(), sp.GetRequiredService<JsonSerializerOptions>()))   // onyx/ under the Sindri home
+            .AddSingleton<IComposeServices, YamlComposeServices>()                                       // the compose file's services, read only
+            .AddSingleton<IRandomHex, OsRandomHex>()                                                      // the OS random source, for the auth key
+            .AddSingleton<IOnyxHealth>(static _ => new HttpOnyxHealth(HttpOnyxHealth.CreateClient()))                 // readiness, http://127.0.0.1 only
+            .AddSingleton<IHostProbes>(static _ => new HostProbes());                                     // free disk and loopback ports
 
     /// <summary>
     /// Makes the secret-pointer resolver (env:, file:, keychain:, op:) over <paramref name="environment"/>, for Composition to

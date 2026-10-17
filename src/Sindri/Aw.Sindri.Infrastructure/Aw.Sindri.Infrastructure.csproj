@@ -17,6 +17,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Ledger/Migrations/*.sql" />
     <EmbeddedResource Include="Views/Migrations/*.sql" />
+    <!-- The Onyx pins (spec docs/superpowers/specs/2026-10-16-sindri-onyx-managed-design.md §6), checked by scripts/onyx-lock.sh. -->
+    <EmbeddedResource Include="../../../context/onyx.lock" LogicalName="onyx.lock" />
   </ItemGroup>
 
   <ItemGroup>

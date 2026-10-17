@@ -9,6 +9,9 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Where a command writes: text or JSON on stdout, errors as 'CODE message' on stderr. No colour, so state is always a word.</summary>
 internal sealed class Output(TextWriter stdout, TextWriter stderr, JsonSerializerOptions options)
 {
+    /// <summary>The shell's exit code for a command ended by SIGINT.</summary>
+    internal const int InterruptedExit = 130;
+
     public TextWriter Out { get; } = stdout;
 
     /// <summary>Reads a UTF-8 JSON document the way the API's bodies are read (camelCase names, strict).</summary>

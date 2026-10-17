@@ -3,8 +3,9 @@ using System.Runtime.InteropServices;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// Ctrl-C and SIGTERM as a cancelled token, for a verb that runs until it is told to stop ('workflow events --follow'),
-/// so it ends with its own exit code instead of the runtime killing the process. Every other verb keeps the default
+/// Ctrl-C and SIGTERM as a cancelled token, for a verb that runs until it is told to stop ('workflow events --follow') or that holds
+/// resources a kill would leave behind ('onyx up' and 'onyx down' run docker children and hold the workspace lock), so it ends with
+/// its own exit code instead of the runtime killing the process. Every other verb keeps the default
 /// behaviour (Ctrl-C ends it, also at a prompt that is waiting for typed text), so only a verb that
 /// <see cref="Streams"/> listens.
 /// </summary>
@@ -35,12 +36,13 @@ internal sealed class Interrupt : IDisposable
     /// <summary>Cancelled by the second Ctrl-C of a verb that follows a job (<see cref="FollowsJob"/>): it leaves at once. Never cancelled otherwise.</summary>
     public CancellationToken Again => _again.Token;
 
-    /// <summary>Whether <paramref name="args"/> is a verb that runs until interrupted: 'workflow events … --follow' or 'status --follow'.</summary>
+    /// <summary>Whether <paramref name="args"/> is a verb that runs until interrupted: 'workflow events … --follow', 'status --follow', 'onyx up' or 'onyx down'.</summary>
     /// <param name="args">The command line.</param>
     /// <returns>True for a following verb.</returns>
     public static bool Streams(string[] args) =>
         FollowsJob(args) || (args is ["workflow", "events", .. var rest] && rest.Contains("--follow", StringComparer.Ordinal))
-        || (args is ["status", .. var follow] && follow.Contains("--follow", StringComparer.Ordinal));
+        || (args is ["status", .. var follow] && follow.Contains("--follow", StringComparer.Ordinal))
+        || args is ["onyx", "up" or "down", ..];
 
     /// <summary>Whether <paramref name="args"/> is 'services run', 'context sources sync', 'context map build' or 'context eval backtest' without --detach: it follows its job, so the first Ctrl-C cancels the job and the second leaves.</summary>
     /// <param name="args">The command line.</param>

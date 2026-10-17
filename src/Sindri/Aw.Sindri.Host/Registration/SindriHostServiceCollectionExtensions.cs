@@ -1,6 +1,8 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Host.Catalog;
+using Aw.Sindri.Host.Onyx;
 using Aw.Sindri.Host.Server;
 
 namespace Aw.Sindri.Host.Registration;
@@ -17,7 +19,8 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<IExitCode, ProcessExitCode>()
         .AddSingleton<ICommandCatalog, CommandCatalog>()
         .AddSingleton<Projector>()
-        .AddSingleton<ScheduleInputs>();
+        .AddSingleton<ScheduleInputs>()
+        .AddSingleton<IOnyxProgress>(static _ => new ConsoleOnyxProgress(Console.Error));   // `onyx up`'s lines and dots on standard error
 
     /// <summary>
     /// Adds what only 'sindri serve' runs: the port it chooses before it binds (and the check that refuses to start without

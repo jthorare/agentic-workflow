@@ -15,6 +15,7 @@ using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
 

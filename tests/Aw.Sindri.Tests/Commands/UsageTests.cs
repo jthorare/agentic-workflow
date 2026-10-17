@@ -81,5 +81,12 @@ public sealed class UsageTests
         Assert.Contains(flags, part, StringComparison.Ordinal);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("onyx status")]
+    [InlineData("onyx up")]
+    [InlineData("onyx down")]
+    public void Usage_lists_the_onyx_verbs(string verb) =>
+        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} ", StringComparison.Ordinal) || l.StartsWith($"sindri {verb}\t", StringComparison.Ordinal));
+
     private static IEnumerable<string> Lines() => Usage.Text.Split('\n').Select(static l => l.Trim().Replace("usage: ", string.Empty, StringComparison.Ordinal));
 }

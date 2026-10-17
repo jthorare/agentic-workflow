@@ -6,9 +6,11 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.IssueChallenge;
+using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.StopProcess;
@@ -102,6 +104,41 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         var lines = report.Checks.Select(c => $"{Word(c.State),-5} {c.Name,-17} {c.Detail}{(c.Fix is null ? string.Empty : $" (fix: {c.Fix})")}");
         return await output.Text(string.Join('\n', lines) + "\n", report.ExitCode).ConfigureAwait(false);
     }
+
+    internal async Task<int> OnyxStatus(bool json, CancellationToken ct)
+    {
+        var answer = await scope.GetRequiredService<IService<OnyxStatusRequest, OnyxStatusResponse>>().Handle(new OnyxStatusRequest(), ct).ConfigureAwait(false);
+        if (answer.IsError)
+        {
+            return await OnyxVerbs.Fail(output, answer.Error).ConfigureAwait(false);
+        }
+
+        var status = answer.Value;
+        if (json)
+        {
+            return await output.Json(status, status.ExitCode).ConfigureAwait(false);
+        }
+
+        var rows = new List<string> { $"{"onyx",-10}{OnyxStateText(status)}" };
+        if (status.Url is not null)
+        {
+            rows.Add($"{"url",-10}{status.Url}");
+            rows.Add($"{"running",-10}{status.RunningVersion}");
+        }
+
+        rows.Add($"{"pinned",-10}{status.PinnedVersion} ({status.PinnedCommit[..7]})");
+        rows.AddRange(status.Checks.Select(c => $"{c.Name,-10}{Word(c.State)} {c.Detail}{(c.Problem is null ? string.Empty : $" ({c.Problem.Code}: {c.Problem.Message})")}"));
+        return await output.Text(string.Join('\n', rows) + "\n", status.ExitCode).ConfigureAwait(false);
+    }
+
+    private static string OnyxStateText(OnyxStatusResponse status) => status.State switch
+    {
+        OnyxState.NotSetUp => "not set up (run `sindri onyx up`)",
+        OnyxState.Stopped => "stopped (run `sindri onyx up` to start it)",
+        OnyxState.Running => "running",
+        OnyxState.Unknown => $"unknown (Docker isn't usable here: {status.Checks.FirstOrDefault(static c => c.Name == "docker")?.Detail})",
+        _ => status.State.ToString(),
+    };
 
     internal async Task<int> Approve(string? hashText, bool interactive, TextReader input, CancellationToken ct)
     {

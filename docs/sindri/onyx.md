@@ -37,6 +37,8 @@ checks in §6.
 
 ## 2. Bind every published port to loopback
 
+> `sindri onyx up` does steps 1-5 of this page for you (pinned files fetched and checked, the `.env` and `docker-compose.override.yml` below written, the images pulled by digest, the stack started and checked) under `$AW_SINDRI_HOME/onyx/`, and `sindri onyx down` stops it. Creating the account and Sindri's key (§5) stay manual until P3. To keep the Slack and Discord bots from starting, `up` replaces the background service's command with one that patches the image's own supervisord config in a copy and runs supervisord on it, so it needs no file to copy out of the image and mount; the copy-out-and-mount recipe below remains for a hand setup. That replacement command drops the compose file's own custom-CA step (it runs `update-ca-certificates` when `/etc/ssl/certs/custom-ca.crt` is mounted into the background container), so a box that needs a custom CA inside the background container must add it to its own override.
+
 The stock compose file publishes nginx on all interfaces (`"${HOST_PORT:-3000}:80"` and `"80:80"`). Add a
 `docker-compose.override.yml` beside it:
 

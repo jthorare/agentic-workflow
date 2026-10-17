@@ -35,6 +35,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The v4.9.0 deployment files, small text fixtures fetched from raw.githubusercontent.com at the pinned commit (checked against context/onyx.lock by OnyxFixturesTests). -->
+    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Golden files (Aw.Kernel.Testing Golden) live in this project's source tree (the recipe goldens, and the API goldens of API P1 unit E); AW_GOLDEN_UPDATE=1 rewrites them there. -->
     <AssemblyMetadata Include="AwGoldenSourceRoot" Value="$(MSBuildProjectDirectory)" />
   </ItemGroup>

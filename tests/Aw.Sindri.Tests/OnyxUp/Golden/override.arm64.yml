@@ -1,0 +1,28 @@
+# Written by `sindri onyx up` and replaced on every run: change nothing here.
+# Binds nginx to 127.0.0.1, runs every image by its pinned digest, sizes Onyx for one user and keeps the Slack and Discord bots off.
+services:
+  api_server:
+    image: docker.io/onyxdotapp/onyx-backend@sha256:7c3877f16fa98444c45b0489e44971746613d530729d27640dd031ebb41df6bf
+  background:
+    image: docker.io/onyxdotapp/onyx-backend@sha256:7c3877f16fa98444c45b0489e44971746613d530729d27640dd031ebb41df6bf
+    command: ["/bin/sh","-c","sed -e '/^\\[program:slack_bot\\]/a autostart=false' -e '/^\\[program:discord_bot\\]/a autostart=false' /etc/supervisor/conf.d/supervisord.conf > /tmp/supervisord.conf && exec /usr/bin/supervisord -c /tmp/supervisord.conf"]
+    depends_on:
+      indexing_model_server:
+        condition: service_started
+        required: false
+    environment:
+      - CELERY_WORKER_DOCFETCHING_CONCURRENCY=1
+      - CELERY_WORKER_DOCPROCESSING_CONCURRENCY=1
+      - CELERY_WORKER_LIGHT_CONCURRENCY=1
+  indexing_model_server:
+    image: docker.io/onyxdotapp/onyx-model-server@sha256:4db15ff662d2afed6f56d4286302c715cf50b1e6fdf360b9fddbda33f261ad6b
+    profiles: ["indexing-model-server"]
+  nginx:
+    image: docker.io/library/nginx@sha256:05325b3a32db871dc396a859d9a9609d75f50d2f7ad12194f9f3a550111bdcaa
+    ports: !override
+      - "127.0.0.1:3000:80"
+  opensearch:
+    image: docker.io/opensearchproject/opensearch@sha256:394b1c4eb141df969e05b186e9560b4cd0ab5c7ffa748788d2f322410a3cf856
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    mem_limit: 2g
