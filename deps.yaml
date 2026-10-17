@@ -286,6 +286,13 @@ packages:
     src: null
     files: [launcher.json]
     note: "the session launcher's machine file and its contract (spec 2026-10-15-sindri-session-launcher-design.md, SL-0): $AW_STATE_DIR/launcher.json is read by aw-meta-launch (bash, SL-1) and by the C# Sindri launcher (SL-2). The repo-side contract files are schemas/launcher.schema.json, config/launcher/builtins.json and config/launcher/terminals.json (shared fixtures: tests/fixtures/launcher); no C# code of its own, so no projects. The bash reader lives with its only user, Meta (scripts/launcher-lib.sh), and is declared by the Meta -> Launcher file edge"
+  - id: Forge
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Forge
+    ts: null
+    src: src/Forge
+    note: "the forge port (IForge): GitHub and file-backed adapters, a fake and its contract tests"
 
 edges:
   # ---- current: found in the source today ----
@@ -618,6 +625,21 @@ edges:
     kind: file
     status: current
     note: "session collector CO-2a (CA-0): Aw.Sindri.Infrastructure embeds config/launcher/builtins.json (a linked EmbeddedResource) and reads $AW_STATE_DIR/launcher.json (AW_LAUNCHER_CONFIG), its agents and sessions sections, checked against schemas/launcher.schema.json by the shared fixtures in its tests; SL-2 extends the same reader with the launch argv, the viewer and host sections"
+  - from: Forge
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, IService, ports (scaffolded by /new-package)"
+  - from: Forge
+    to: KernelTelemetry
+    kind: project
+    status: current
+    note: "the host starts Kernel telemetry in Compose (scaffolded by /new-package)"
+  - from: Forge
+    to: Redaction
+    kind: project
+    status: current
+    note: "the GitHub adapter and the git pusher scrub forge text, check logs and git output through Aw.Redaction before they leave the package (tests build the same redactor)"
 
 exceptions:
   - rule: DEPS-CYCLE-001

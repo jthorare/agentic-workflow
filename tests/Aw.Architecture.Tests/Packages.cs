@@ -46,6 +46,9 @@ internal static class Packages
         "Aw.Meta.Features",
         "Aw.Meta.Infrastructure",
         "Aw.Meta.Host",
+        "Aw.Forge.Core",
+        "Aw.Forge.Infrastructure",
+        "Aw.Forge.Host",
     ];
 
     /// <summary>

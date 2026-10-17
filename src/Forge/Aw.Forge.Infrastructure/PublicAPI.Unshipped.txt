@@ -1,0 +1,4 @@
+#nullable enable
+Aw.Forge.Infrastructure.ForgeInfrastructureServiceCollectionExtensions
+static Aw.Forge.Infrastructure.ForgeInfrastructureServiceCollectionExtensions.AddForgeFileInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment, Aw.Forge.Core.Refs.ForgeHosts! hosts) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Forge.Infrastructure.ForgeInfrastructureServiceCollectionExtensions.AddForgeGitHubInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment, Aw.Forge.Core.Refs.ForgeHosts! hosts, Aw.Forge.Core.Credentials.ForgeCredentialSpec? credential = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

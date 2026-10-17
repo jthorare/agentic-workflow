@@ -1,0 +1,458 @@
+#nullable enable
+Aw.Forge.Core.Credentials.ForgeCredentialKind
+Aw.Forge.Core.Credentials.ForgeCredentialKind.Command = 2 -> Aw.Forge.Core.Credentials.ForgeCredentialKind
+Aw.Forge.Core.Credentials.ForgeCredentialKind.Env = 1 -> Aw.Forge.Core.Credentials.ForgeCredentialKind
+Aw.Forge.Core.Credentials.ForgeCredentialSpec
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Argv.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Argv.init -> void
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.<Clone>$() -> Aw.Forge.Core.Credentials.ForgeCredentialSpec!
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Deconstruct(out Aw.Forge.Core.Credentials.ForgeCredentialKind Kind, out string? Name, out System.Collections.Generic.IReadOnlyList<string!>! Argv) -> void
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Equals(Aw.Forge.Core.Credentials.ForgeCredentialSpec? other) -> bool
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.ForgeCredentialSpec(Aw.Forge.Core.Credentials.ForgeCredentialKind Kind, string? Name, System.Collections.Generic.IReadOnlyList<string!>! Argv) -> void
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Kind.get -> Aw.Forge.Core.Credentials.ForgeCredentialKind
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Kind.init -> void
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Name.get -> string?
+Aw.Forge.Core.Credentials.ForgeCredentialSpec.Name.init -> void
+Aw.Forge.Core.ForgeCoreServiceCollectionExtensions
+Aw.Forge.Core.ForgeErrors
+Aw.Forge.Core.ForgeLimits
+Aw.Forge.Core.ForgeMarker
+Aw.Forge.Core.Ports.IForge
+Aw.Forge.Core.Ports.IForge.CheckLog(Aw.Forge.Core.Refs.ForgeRef! pull, string! check, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Forge.Core.Ports.IForge.DefaultBranch(Aw.Forge.Core.Refs.ForgeRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Forge.Core.Ports.IForge.FindPull(Aw.Forge.Core.Pulls.FindPullQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Refs.ForgeRef?>!>
+Aw.Forge.Core.Ports.IForge.GetPull(Aw.Forge.Core.Refs.ForgeRef! pull, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.PullSnapshot!>!>
+Aw.Forge.Core.Ports.IForge.GetPullDigest(System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Refs.ForgeRef!>! pulls, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.PullDigest!>!>!>
+Aw.Forge.Core.Ports.IForge.Kind.get -> Aw.Forge.Core.Refs.ForgeKind
+Aw.Forge.Core.Ports.IForge.ListThreads(Aw.Forge.Core.Refs.ForgeRef! pull, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Forge.Core.Pulls.ForgeThread!>!>!>
+Aw.Forge.Core.Ports.IForge.Merge(Aw.Forge.Core.Pulls.MergeRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.MergeOutcome!>!>
+Aw.Forge.Core.Ports.IForge.OpenPull(Aw.Forge.Core.Pulls.OpenPullRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Refs.ForgeRef!>!>
+Aw.Forge.Core.Ports.IForge.Parse(string? link) -> Aw.Kernel.Result<Aw.Forge.Core.Refs.ForgeRef!>!
+Aw.Forge.Core.Ports.IForge.Push(Aw.Forge.Core.Pulls.PushRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.PushOutcome>!>
+Aw.Forge.Core.Ports.IForge.React(Aw.Forge.Core.Pulls.ReactionRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.Delivery>!>
+Aw.Forge.Core.Ports.IForge.Reply(Aw.Forge.Core.Pulls.ReplyRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Forge.Core.Pulls.Delivery>!>
+Aw.Forge.Core.Ports.IForge.RerunChecks(Aw.Forge.Core.Refs.ForgeRef! pull, string! sha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Forge.Core.Ports.IForge.Retarget(Aw.Forge.Core.Refs.ForgeRef! pull, string! newBase, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Forge.Core.Ports.IForgeSeed
+Aw.Forge.Core.Ports.IForgeSeed.AdvanceHead(Aw.Forge.Core.Refs.ForgeRef! pull, string! sha) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Forge.Core.Ports.IForgeSeed.SeedChecks(Aw.Forge.Core.Pulls.SeedChecksRequest! request) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Forge.Core.Ports.IForgeSeed.SeedThread(Aw.Forge.Core.Pulls.SeedThreadRequest! request) -> Aw.Kernel.Result<string!>!
+Aw.Forge.Core.Ports.IForge.UpdatePull(Aw.Forge.Core.Pulls.UpdatePullRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Forge.Core.Pulls.BaseBranch
+Aw.Forge.Core.Pulls.BaseBranch.BaseBranch(string! Ref, string! Sha, bool IsDefault) -> void
+Aw.Forge.Core.Pulls.BaseBranch.<Clone>$() -> Aw.Forge.Core.Pulls.BaseBranch!
+Aw.Forge.Core.Pulls.BaseBranch.Deconstruct(out string! Ref, out string! Sha, out bool IsDefault) -> void
+Aw.Forge.Core.Pulls.BaseBranch.Equals(Aw.Forge.Core.Pulls.BaseBranch? other) -> bool
+Aw.Forge.Core.Pulls.BaseBranch.IsDefault.get -> bool
+Aw.Forge.Core.Pulls.BaseBranch.IsDefault.init -> void
+Aw.Forge.Core.Pulls.BaseBranch.Ref.get -> string!
+Aw.Forge.Core.Pulls.BaseBranch.Ref.init -> void
+Aw.Forge.Core.Pulls.BaseBranch.Sha.get -> string!
+Aw.Forge.Core.Pulls.BaseBranch.Sha.init -> void
+Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksState.Failing = 4 -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksState.None = 1 -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksState.Passing = 3 -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksState.Pending = 2 -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksSummary
+Aw.Forge.Core.Pulls.ChecksSummary.ChecksSummary(Aw.Forge.Core.Pulls.ChecksState State, string! Sha, System.Collections.Generic.IReadOnlyList<string!>! Failing) -> void
+Aw.Forge.Core.Pulls.ChecksSummary.<Clone>$() -> Aw.Forge.Core.Pulls.ChecksSummary!
+Aw.Forge.Core.Pulls.ChecksSummary.Deconstruct(out Aw.Forge.Core.Pulls.ChecksState State, out string! Sha, out System.Collections.Generic.IReadOnlyList<string!>! Failing) -> void
+Aw.Forge.Core.Pulls.ChecksSummary.Equals(Aw.Forge.Core.Pulls.ChecksSummary? other) -> bool
+Aw.Forge.Core.Pulls.ChecksSummary.Failing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Forge.Core.Pulls.ChecksSummary.Failing.init -> void
+Aw.Forge.Core.Pulls.ChecksSummary.Sha.get -> string!
+Aw.Forge.Core.Pulls.ChecksSummary.Sha.init -> void
+Aw.Forge.Core.Pulls.ChecksSummary.State.get -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.ChecksSummary.State.init -> void
+Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.CommentKind.Comment = 3 -> Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.CommentKind.Review = 2 -> Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.CommentKind.Thread = 1 -> Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.Delivery
+Aw.Forge.Core.Pulls.Delivery.AlreadyDelivered = 2 -> Aw.Forge.Core.Pulls.Delivery
+Aw.Forge.Core.Pulls.Delivery.Delivered = 1 -> Aw.Forge.Core.Pulls.Delivery
+Aw.Forge.Core.Pulls.FindPullQuery
+Aw.Forge.Core.Pulls.FindPullQuery.Author.get -> string?
+Aw.Forge.Core.Pulls.FindPullQuery.Author.init -> void
+Aw.Forge.Core.Pulls.FindPullQuery.<Clone>$() -> Aw.Forge.Core.Pulls.FindPullQuery!
+Aw.Forge.Core.Pulls.FindPullQuery.Deconstruct(out Aw.Forge.Core.Refs.ForgeRepo! Repo, out string! Head, out string? Author, out string? Marker) -> void
+Aw.Forge.Core.Pulls.FindPullQuery.Equals(Aw.Forge.Core.Pulls.FindPullQuery? other) -> bool
+Aw.Forge.Core.Pulls.FindPullQuery.FindPullQuery(Aw.Forge.Core.Refs.ForgeRepo! Repo, string! Head, string? Author, string? Marker) -> void
+Aw.Forge.Core.Pulls.FindPullQuery.Head.get -> string!
+Aw.Forge.Core.Pulls.FindPullQuery.Head.init -> void
+Aw.Forge.Core.Pulls.FindPullQuery.Marker.get -> string?
+Aw.Forge.Core.Pulls.FindPullQuery.Marker.init -> void
+Aw.Forge.Core.Pulls.FindPullQuery.Repo.get -> Aw.Forge.Core.Refs.ForgeRepo!
+Aw.Forge.Core.Pulls.FindPullQuery.Repo.init -> void
+Aw.Forge.Core.Pulls.ForgeThread
+Aw.Forge.Core.Pulls.ForgeThread.Association.get -> string!
+Aw.Forge.Core.Pulls.ForgeThread.Association.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Author.get -> string!
+Aw.Forge.Core.Pulls.ForgeThread.Author.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Body.get -> string!
+Aw.Forge.Core.Pulls.ForgeThread.Body.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.<Clone>$() -> Aw.Forge.Core.Pulls.ForgeThread!
+Aw.Forge.Core.Pulls.ForgeThread.Deconstruct(out string! Key, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out bool Resolved, out bool Outdated, out string? Path, out string! Body, out System.Collections.Generic.IReadOnlyList<string!>! Markers) -> void
+Aw.Forge.Core.Pulls.ForgeThread.Equals(Aw.Forge.Core.Pulls.ForgeThread? other) -> bool
+Aw.Forge.Core.Pulls.ForgeThread.ForgeThread(string! Key, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, bool Resolved, bool Outdated, string? Path, string! Body, System.Collections.Generic.IReadOnlyList<string!>! Markers) -> void
+Aw.Forge.Core.Pulls.ForgeThread.IsBot.get -> bool
+Aw.Forge.Core.Pulls.ForgeThread.IsBot.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Key.get -> string!
+Aw.Forge.Core.Pulls.ForgeThread.Key.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Kind.get -> Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.ForgeThread.Kind.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Markers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Forge.Core.Pulls.ForgeThread.Markers.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Outdated.get -> bool
+Aw.Forge.Core.Pulls.ForgeThread.Outdated.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Path.get -> string?
+Aw.Forge.Core.Pulls.ForgeThread.Path.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Resolved.get -> bool
+Aw.Forge.Core.Pulls.ForgeThread.Resolved.init -> void
+Aw.Forge.Core.Pulls.HeadBranch
+Aw.Forge.Core.Pulls.HeadBranch.<Clone>$() -> Aw.Forge.Core.Pulls.HeadBranch!
+Aw.Forge.Core.Pulls.HeadBranch.Deconstruct(out string! Ref, out string! Sha, out bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.Equals(Aw.Forge.Core.Pulls.HeadBranch? other) -> bool
+Aw.Forge.Core.Pulls.HeadBranch.Fork.get -> bool
+Aw.Forge.Core.Pulls.HeadBranch.Fork.init -> void
+Aw.Forge.Core.Pulls.HeadBranch.HeadBranch(string! Ref, string! Sha, bool Fork) -> void
+Aw.Forge.Core.Pulls.HeadBranch.Ref.get -> string!
+Aw.Forge.Core.Pulls.HeadBranch.Ref.init -> void
+Aw.Forge.Core.Pulls.HeadBranch.Sha.get -> string!
+Aw.Forge.Core.Pulls.HeadBranch.Sha.init -> void
+Aw.Forge.Core.Pulls.MergeMethod
+Aw.Forge.Core.Pulls.MergeMethod.Merge = 1 -> Aw.Forge.Core.Pulls.MergeMethod
+Aw.Forge.Core.Pulls.MergeMethod.Rebase = 3 -> Aw.Forge.Core.Pulls.MergeMethod
+Aw.Forge.Core.Pulls.MergeMethod.Squash = 2 -> Aw.Forge.Core.Pulls.MergeMethod
+Aw.Forge.Core.Pulls.MergeOutcome
+Aw.Forge.Core.Pulls.MergeOutcome.<Clone>$() -> Aw.Forge.Core.Pulls.MergeOutcome!
+Aw.Forge.Core.Pulls.MergeOutcome.Deconstruct(out Aw.Forge.Core.Pulls.MergeStatus Status, out string? MergedSha, out string? Reason) -> void
+Aw.Forge.Core.Pulls.MergeOutcome.Equals(Aw.Forge.Core.Pulls.MergeOutcome? other) -> bool
+Aw.Forge.Core.Pulls.MergeOutcome.MergedSha.get -> string?
+Aw.Forge.Core.Pulls.MergeOutcome.MergedSha.init -> void
+Aw.Forge.Core.Pulls.MergeOutcome.MergeOutcome(Aw.Forge.Core.Pulls.MergeStatus Status, string? MergedSha, string? Reason) -> void
+Aw.Forge.Core.Pulls.MergeOutcome.Reason.get -> string?
+Aw.Forge.Core.Pulls.MergeOutcome.Reason.init -> void
+Aw.Forge.Core.Pulls.MergeOutcome.Status.get -> Aw.Forge.Core.Pulls.MergeStatus
+Aw.Forge.Core.Pulls.MergeOutcome.Status.init -> void
+Aw.Forge.Core.Pulls.MergeRequest
+Aw.Forge.Core.Pulls.MergeRequest.<Clone>$() -> Aw.Forge.Core.Pulls.MergeRequest!
+Aw.Forge.Core.Pulls.MergeRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.MergeMethod Method, out string! ExpectedHead) -> void
+Aw.Forge.Core.Pulls.MergeRequest.Equals(Aw.Forge.Core.Pulls.MergeRequest? other) -> bool
+Aw.Forge.Core.Pulls.MergeRequest.ExpectedHead.get -> string!
+Aw.Forge.Core.Pulls.MergeRequest.ExpectedHead.init -> void
+Aw.Forge.Core.Pulls.MergeRequest.MergeRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.MergeMethod Method, string! ExpectedHead) -> void
+Aw.Forge.Core.Pulls.MergeRequest.Method.get -> Aw.Forge.Core.Pulls.MergeMethod
+Aw.Forge.Core.Pulls.MergeRequest.Method.init -> void
+Aw.Forge.Core.Pulls.MergeRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.MergeRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.MergeStatus
+Aw.Forge.Core.Pulls.MergeStatus.Blocked = 2 -> Aw.Forge.Core.Pulls.MergeStatus
+Aw.Forge.Core.Pulls.MergeStatus.HeadMoved = 3 -> Aw.Forge.Core.Pulls.MergeStatus
+Aw.Forge.Core.Pulls.MergeStatus.Merged = 1 -> Aw.Forge.Core.Pulls.MergeStatus
+Aw.Forge.Core.Pulls.OpenPullRequest
+Aw.Forge.Core.Pulls.OpenPullRequest.Base.get -> string!
+Aw.Forge.Core.Pulls.OpenPullRequest.Base.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Body.get -> string!
+Aw.Forge.Core.Pulls.OpenPullRequest.Body.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.<Clone>$() -> Aw.Forge.Core.Pulls.OpenPullRequest!
+Aw.Forge.Core.Pulls.OpenPullRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRepo! Repo, out string! Head, out string! Base, out string! HeadSha, out string! Title, out string! Body, out bool Draft) -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Draft.get -> bool
+Aw.Forge.Core.Pulls.OpenPullRequest.Draft.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Equals(Aw.Forge.Core.Pulls.OpenPullRequest? other) -> bool
+Aw.Forge.Core.Pulls.OpenPullRequest.Head.get -> string!
+Aw.Forge.Core.Pulls.OpenPullRequest.Head.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.HeadSha.get -> string!
+Aw.Forge.Core.Pulls.OpenPullRequest.HeadSha.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.OpenPullRequest(Aw.Forge.Core.Refs.ForgeRepo! Repo, string! Head, string! Base, string! HeadSha, string! Title, string! Body, bool Draft) -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Repo.get -> Aw.Forge.Core.Refs.ForgeRepo!
+Aw.Forge.Core.Pulls.OpenPullRequest.Repo.init -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Title.get -> string!
+Aw.Forge.Core.Pulls.OpenPullRequest.Title.init -> void
+Aw.Forge.Core.Pulls.PullDigest
+Aw.Forge.Core.Pulls.PullDigest.Checks.get -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.PullDigest.Checks.init -> void
+Aw.Forge.Core.Pulls.PullDigest.<Clone>$() -> Aw.Forge.Core.Pulls.PullDigest!
+Aw.Forge.Core.Pulls.PullDigest.CommentCount.get -> int
+Aw.Forge.Core.Pulls.PullDigest.CommentCount.init -> void
+Aw.Forge.Core.Pulls.PullDigest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out Aw.Forge.Core.Pulls.PullStatus Status, out string! HeadSha, out Aw.Forge.Core.Pulls.ChecksState Checks, out int CommentCount, out string! Version) -> void
+Aw.Forge.Core.Pulls.PullDigest.Equals(Aw.Forge.Core.Pulls.PullDigest? other) -> bool
+Aw.Forge.Core.Pulls.PullDigest.HeadSha.get -> string!
+Aw.Forge.Core.Pulls.PullDigest.HeadSha.init -> void
+Aw.Forge.Core.Pulls.PullDigest.PullDigest(Aw.Forge.Core.Refs.ForgeRef! Ref, Aw.Forge.Core.Pulls.PullStatus Status, string! HeadSha, Aw.Forge.Core.Pulls.ChecksState Checks, int CommentCount, string! Version) -> void
+Aw.Forge.Core.Pulls.PullDigest.Ref.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.PullDigest.Ref.init -> void
+Aw.Forge.Core.Pulls.PullDigest.Status.get -> Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PullDigest.Status.init -> void
+Aw.Forge.Core.Pulls.PullDigest.Version.get -> string!
+Aw.Forge.Core.Pulls.PullDigest.Version.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot
+Aw.Forge.Core.Pulls.PullSnapshot.Author.get -> string!
+Aw.Forge.Core.Pulls.PullSnapshot.Author.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Base.get -> Aw.Forge.Core.Pulls.BaseBranch!
+Aw.Forge.Core.Pulls.PullSnapshot.Base.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Checks.get -> Aw.Forge.Core.Pulls.ChecksSummary!
+Aw.Forge.Core.Pulls.PullSnapshot.Checks.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.<Clone>$() -> Aw.Forge.Core.Pulls.PullSnapshot!
+Aw.Forge.Core.Pulls.PullSnapshot.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out string! Url, out string! Title, out string! Author, out Aw.Forge.Core.Pulls.PullStatus Status, out bool Draft, out Aw.Forge.Core.Pulls.BaseBranch! Base, out Aw.Forge.Core.Pulls.HeadBranch! Head, out bool? Mergeable, out string? ReviewDecision, out Aw.Forge.Core.Pulls.ChecksSummary! Checks) -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Draft.get -> bool
+Aw.Forge.Core.Pulls.PullSnapshot.Draft.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Equals(Aw.Forge.Core.Pulls.PullSnapshot? other) -> bool
+Aw.Forge.Core.Pulls.PullSnapshot.Head.get -> Aw.Forge.Core.Pulls.HeadBranch!
+Aw.Forge.Core.Pulls.PullSnapshot.Head.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.get -> bool?
+Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.PullSnapshot(Aw.Forge.Core.Refs.ForgeRef! Ref, string! Url, string! Title, string! Author, Aw.Forge.Core.Pulls.PullStatus Status, bool Draft, Aw.Forge.Core.Pulls.BaseBranch! Base, Aw.Forge.Core.Pulls.HeadBranch! Head, bool? Mergeable, string? ReviewDecision, Aw.Forge.Core.Pulls.ChecksSummary! Checks) -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Ref.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.PullSnapshot.Ref.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.ReviewDecision.get -> string?
+Aw.Forge.Core.Pulls.PullSnapshot.ReviewDecision.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Status.get -> Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PullSnapshot.Status.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Title.get -> string!
+Aw.Forge.Core.Pulls.PullSnapshot.Title.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Url.get -> string!
+Aw.Forge.Core.Pulls.PullSnapshot.Url.init -> void
+Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PullStatus.Closed = 2 -> Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PullStatus.Merged = 3 -> Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PullStatus.Open = 1 -> Aw.Forge.Core.Pulls.PullStatus
+Aw.Forge.Core.Pulls.PushOutcome
+Aw.Forge.Core.Pulls.PushOutcome.HeadMoved = 2 -> Aw.Forge.Core.Pulls.PushOutcome
+Aw.Forge.Core.Pulls.PushOutcome.Pushed = 1 -> Aw.Forge.Core.Pulls.PushOutcome
+Aw.Forge.Core.Pulls.PushRequest
+Aw.Forge.Core.Pulls.PushRequest.Branch.get -> string!
+Aw.Forge.Core.Pulls.PushRequest.Branch.init -> void
+Aw.Forge.Core.Pulls.PushRequest.<Clone>$() -> Aw.Forge.Core.Pulls.PushRequest!
+Aw.Forge.Core.Pulls.PushRequest.Deconstruct(out string! RepoDir, out string! Sha, out string! Remote, out string! Branch, out string? LeaseSha) -> void
+Aw.Forge.Core.Pulls.PushRequest.Equals(Aw.Forge.Core.Pulls.PushRequest? other) -> bool
+Aw.Forge.Core.Pulls.PushRequest.LeaseSha.get -> string?
+Aw.Forge.Core.Pulls.PushRequest.LeaseSha.init -> void
+Aw.Forge.Core.Pulls.PushRequest.PushRequest(string! RepoDir, string! Sha, string! Remote, string! Branch, string? LeaseSha) -> void
+Aw.Forge.Core.Pulls.PushRequest.Remote.get -> string!
+Aw.Forge.Core.Pulls.PushRequest.Remote.init -> void
+Aw.Forge.Core.Pulls.PushRequest.RepoDir.get -> string!
+Aw.Forge.Core.Pulls.PushRequest.RepoDir.init -> void
+Aw.Forge.Core.Pulls.PushRequest.Sha.get -> string!
+Aw.Forge.Core.Pulls.PushRequest.Sha.init -> void
+Aw.Forge.Core.Pulls.ReactionRequest
+Aw.Forge.Core.Pulls.ReactionRequest.<Clone>$() -> Aw.Forge.Core.Pulls.ReactionRequest!
+Aw.Forge.Core.Pulls.ReactionRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out string! ThreadKey, out string! Reaction, out string! Marker) -> void
+Aw.Forge.Core.Pulls.ReactionRequest.Equals(Aw.Forge.Core.Pulls.ReactionRequest? other) -> bool
+Aw.Forge.Core.Pulls.ReactionRequest.Marker.get -> string!
+Aw.Forge.Core.Pulls.ReactionRequest.Marker.init -> void
+Aw.Forge.Core.Pulls.ReactionRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.ReactionRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.ReactionRequest.Reaction.get -> string!
+Aw.Forge.Core.Pulls.ReactionRequest.Reaction.init -> void
+Aw.Forge.Core.Pulls.ReactionRequest.ReactionRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, string! ThreadKey, string! Reaction, string! Marker) -> void
+Aw.Forge.Core.Pulls.ReactionRequest.ThreadKey.get -> string!
+Aw.Forge.Core.Pulls.ReactionRequest.ThreadKey.init -> void
+Aw.Forge.Core.Pulls.ReplyRequest
+Aw.Forge.Core.Pulls.ReplyRequest.<Clone>$() -> Aw.Forge.Core.Pulls.ReplyRequest!
+Aw.Forge.Core.Pulls.ReplyRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out string! ThreadKey, out string! Text, out string! Marker) -> void
+Aw.Forge.Core.Pulls.ReplyRequest.Equals(Aw.Forge.Core.Pulls.ReplyRequest? other) -> bool
+Aw.Forge.Core.Pulls.ReplyRequest.Marker.get -> string!
+Aw.Forge.Core.Pulls.ReplyRequest.Marker.init -> void
+Aw.Forge.Core.Pulls.ReplyRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.ReplyRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.ReplyRequest.ReplyRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, string! ThreadKey, string! Text, string! Marker) -> void
+Aw.Forge.Core.Pulls.ReplyRequest.Text.get -> string!
+Aw.Forge.Core.Pulls.ReplyRequest.Text.init -> void
+Aw.Forge.Core.Pulls.ReplyRequest.ThreadKey.get -> string!
+Aw.Forge.Core.Pulls.ReplyRequest.ThreadKey.init -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest
+Aw.Forge.Core.Pulls.SeedChecksRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SeedChecksRequest!
+Aw.Forge.Core.Pulls.SeedChecksRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.ChecksState State, out System.Collections.Generic.IReadOnlyList<string!>! Failing, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs) -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.Equals(Aw.Forge.Core.Pulls.SeedChecksRequest? other) -> bool
+Aw.Forge.Core.Pulls.SeedChecksRequest.Failing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Forge.Core.Pulls.SeedChecksRequest.Failing.init -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.Logs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Forge.Core.Pulls.SeedChecksRequest.Logs.init -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.SeedChecksRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.SeedChecksRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.ChecksState State, System.Collections.Generic.IReadOnlyList<string!>! Failing, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Logs) -> void
+Aw.Forge.Core.Pulls.SeedChecksRequest.State.get -> Aw.Forge.Core.Pulls.ChecksState
+Aw.Forge.Core.Pulls.SeedChecksRequest.State.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest
+Aw.Forge.Core.Pulls.SeedThreadRequest.Association.get -> string!
+Aw.Forge.Core.Pulls.SeedThreadRequest.Association.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Author.get -> string!
+Aw.Forge.Core.Pulls.SeedThreadRequest.Author.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Body.get -> string!
+Aw.Forge.Core.Pulls.SeedThreadRequest.Body.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SeedThreadRequest!
+Aw.Forge.Core.Pulls.SeedThreadRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out string? Path, out string! Body) -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Equals(Aw.Forge.Core.Pulls.SeedThreadRequest? other) -> bool
+Aw.Forge.Core.Pulls.SeedThreadRequest.IsBot.get -> bool
+Aw.Forge.Core.Pulls.SeedThreadRequest.IsBot.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Kind.get -> Aw.Forge.Core.Pulls.CommentKind
+Aw.Forge.Core.Pulls.SeedThreadRequest.Kind.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Path.get -> string?
+Aw.Forge.Core.Pulls.SeedThreadRequest.Path.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.SeedThreadRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.SeedThreadRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, string? Path, string! Body) -> void
+Aw.Forge.Core.Pulls.UpdatePullRequest
+Aw.Forge.Core.Pulls.UpdatePullRequest.Body.get -> string?
+Aw.Forge.Core.Pulls.UpdatePullRequest.Body.init -> void
+Aw.Forge.Core.Pulls.UpdatePullRequest.<Clone>$() -> Aw.Forge.Core.Pulls.UpdatePullRequest!
+Aw.Forge.Core.Pulls.UpdatePullRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out string? Title, out string? Body) -> void
+Aw.Forge.Core.Pulls.UpdatePullRequest.Equals(Aw.Forge.Core.Pulls.UpdatePullRequest? other) -> bool
+Aw.Forge.Core.Pulls.UpdatePullRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Pulls.UpdatePullRequest.Pull.init -> void
+Aw.Forge.Core.Pulls.UpdatePullRequest.Title.get -> string?
+Aw.Forge.Core.Pulls.UpdatePullRequest.Title.init -> void
+Aw.Forge.Core.Pulls.UpdatePullRequest.UpdatePullRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, string? Title, string? Body) -> void
+Aw.Forge.Core.Refs.ForgeHosts
+Aw.Forge.Core.Refs.ForgeHosts.Allows(string! host) -> bool
+Aw.Forge.Core.Refs.ForgeHosts.ForgeHosts(System.Collections.Generic.IEnumerable<string!>! hosts) -> void
+Aw.Forge.Core.Refs.ForgeHosts.Names.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+Aw.Forge.Core.Refs.ForgeKind
+Aw.Forge.Core.Refs.ForgeKind.File = 2 -> Aw.Forge.Core.Refs.ForgeKind
+Aw.Forge.Core.Refs.ForgeKind.GitHub = 1 -> Aw.Forge.Core.Refs.ForgeKind
+Aw.Forge.Core.Refs.ForgeRef
+Aw.Forge.Core.Refs.ForgeRef.<Clone>$() -> Aw.Forge.Core.Refs.ForgeRef!
+Aw.Forge.Core.Refs.ForgeRef.Deconstruct(out Aw.Forge.Core.Refs.ForgeKind Forge, out string! Host, out string! Owner, out string! Repo, out int Number) -> void
+Aw.Forge.Core.Refs.ForgeRef.Equals(Aw.Forge.Core.Refs.ForgeRef? other) -> bool
+Aw.Forge.Core.Refs.ForgeRef.Forge.get -> Aw.Forge.Core.Refs.ForgeKind
+Aw.Forge.Core.Refs.ForgeRef.Forge.init -> void
+Aw.Forge.Core.Refs.ForgeRef.ForgeRef(Aw.Forge.Core.Refs.ForgeKind Forge, string! Host, string! Owner, string! Repo, int Number) -> void
+Aw.Forge.Core.Refs.ForgeRef.Host.get -> string!
+Aw.Forge.Core.Refs.ForgeRef.Host.init -> void
+Aw.Forge.Core.Refs.ForgeRef.Link.get -> string!
+Aw.Forge.Core.Refs.ForgeRef.Number.get -> int
+Aw.Forge.Core.Refs.ForgeRef.Number.init -> void
+Aw.Forge.Core.Refs.ForgeRef.Owner.get -> string!
+Aw.Forge.Core.Refs.ForgeRef.Owner.init -> void
+Aw.Forge.Core.Refs.ForgeRef.Repo.get -> string!
+Aw.Forge.Core.Refs.ForgeRef.Repo.init -> void
+Aw.Forge.Core.Refs.ForgeRef.Repository.get -> Aw.Forge.Core.Refs.ForgeRepo!
+Aw.Forge.Core.Refs.ForgeRepo
+Aw.Forge.Core.Refs.ForgeRepo.<Clone>$() -> Aw.Forge.Core.Refs.ForgeRepo!
+Aw.Forge.Core.Refs.ForgeRepo.Deconstruct(out string! Host, out string! Owner, out string! Name) -> void
+Aw.Forge.Core.Refs.ForgeRepo.Equals(Aw.Forge.Core.Refs.ForgeRepo? other) -> bool
+Aw.Forge.Core.Refs.ForgeRepo.ForgeRepo(string! Host, string! Owner, string! Name) -> void
+Aw.Forge.Core.Refs.ForgeRepo.Host.get -> string!
+Aw.Forge.Core.Refs.ForgeRepo.Host.init -> void
+Aw.Forge.Core.Refs.ForgeRepo.Key.get -> string!
+Aw.Forge.Core.Refs.ForgeRepo.Name.get -> string!
+Aw.Forge.Core.Refs.ForgeRepo.Name.init -> void
+Aw.Forge.Core.Refs.ForgeRepo.Owner.get -> string!
+Aw.Forge.Core.Refs.ForgeRepo.Owner.init -> void
+const Aw.Forge.Core.ForgeLimits.LogExcerptCharacters = 8000 -> int
+const Aw.Forge.Core.ForgeLimits.MarkerCharacters = 128 -> int
+override Aw.Forge.Core.Credentials.ForgeCredentialSpec.Equals(object? obj) -> bool
+override Aw.Forge.Core.Credentials.ForgeCredentialSpec.GetHashCode() -> int
+override Aw.Forge.Core.Credentials.ForgeCredentialSpec.ToString() -> string!
+override Aw.Forge.Core.Pulls.BaseBranch.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.BaseBranch.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.BaseBranch.ToString() -> string!
+override Aw.Forge.Core.Pulls.ChecksSummary.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.ChecksSummary.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.ChecksSummary.ToString() -> string!
+override Aw.Forge.Core.Pulls.FindPullQuery.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.FindPullQuery.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.FindPullQuery.ToString() -> string!
+override Aw.Forge.Core.Pulls.ForgeThread.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.ForgeThread.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.ForgeThread.ToString() -> string!
+override Aw.Forge.Core.Pulls.HeadBranch.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.HeadBranch.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.HeadBranch.ToString() -> string!
+override Aw.Forge.Core.Pulls.MergeOutcome.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.MergeOutcome.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.MergeOutcome.ToString() -> string!
+override Aw.Forge.Core.Pulls.MergeRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.MergeRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.MergeRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.OpenPullRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.OpenPullRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.OpenPullRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.PullDigest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.PullDigest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.PullDigest.ToString() -> string!
+override Aw.Forge.Core.Pulls.PullSnapshot.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.PullSnapshot.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.PullSnapshot.ToString() -> string!
+override Aw.Forge.Core.Pulls.PushRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.PushRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.PushRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.ReactionRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.ReactionRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.ReactionRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.ReplyRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.ReplyRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.ReplyRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.SeedChecksRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.SeedChecksRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.SeedChecksRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.SeedThreadRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.SeedThreadRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.SeedThreadRequest.ToString() -> string!
+override Aw.Forge.Core.Pulls.UpdatePullRequest.Equals(object? obj) -> bool
+override Aw.Forge.Core.Pulls.UpdatePullRequest.GetHashCode() -> int
+override Aw.Forge.Core.Pulls.UpdatePullRequest.ToString() -> string!
+override Aw.Forge.Core.Refs.ForgeRef.Equals(object? obj) -> bool
+override Aw.Forge.Core.Refs.ForgeRef.GetHashCode() -> int
+override Aw.Forge.Core.Refs.ForgeRef.ToString() -> string!
+override Aw.Forge.Core.Refs.ForgeRepo.Equals(object? obj) -> bool
+override Aw.Forge.Core.Refs.ForgeRepo.GetHashCode() -> int
+override Aw.Forge.Core.Refs.ForgeRepo.ToString() -> string!
+static Aw.Forge.Core.Credentials.ForgeCredentialSpec.Default.get -> Aw.Forge.Core.Credentials.ForgeCredentialSpec!
+static Aw.Forge.Core.Credentials.ForgeCredentialSpec.operator !=(Aw.Forge.Core.Credentials.ForgeCredentialSpec? left, Aw.Forge.Core.Credentials.ForgeCredentialSpec? right) -> bool
+static Aw.Forge.Core.Credentials.ForgeCredentialSpec.operator ==(Aw.Forge.Core.Credentials.ForgeCredentialSpec? left, Aw.Forge.Core.Credentials.ForgeCredentialSpec? right) -> bool
+static Aw.Forge.Core.Credentials.ForgeCredentialSpec.Parse(string? value) -> Aw.Kernel.Result<Aw.Forge.Core.Credentials.ForgeCredentialSpec!>!
+static Aw.Forge.Core.ForgeCoreServiceCollectionExtensions.AddForgeCore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Forge.Core.ForgeErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
+static Aw.Forge.Core.ForgeMarker.Append(string! text, string! marker) -> string!
+static Aw.Forge.Core.ForgeMarker.IsIn(string? text, string! marker) -> bool
+static Aw.Forge.Core.ForgeMarker.Of(string? text) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Forge.Core.ForgeMarker.Tag(string! marker) -> string!
+static Aw.Forge.Core.ForgeMarker.Validate(string? marker) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.Forge.Core.Pulls.BaseBranch.operator !=(Aw.Forge.Core.Pulls.BaseBranch? left, Aw.Forge.Core.Pulls.BaseBranch? right) -> bool
+static Aw.Forge.Core.Pulls.BaseBranch.operator ==(Aw.Forge.Core.Pulls.BaseBranch? left, Aw.Forge.Core.Pulls.BaseBranch? right) -> bool
+static Aw.Forge.Core.Pulls.ChecksSummary.operator !=(Aw.Forge.Core.Pulls.ChecksSummary? left, Aw.Forge.Core.Pulls.ChecksSummary? right) -> bool
+static Aw.Forge.Core.Pulls.ChecksSummary.operator ==(Aw.Forge.Core.Pulls.ChecksSummary? left, Aw.Forge.Core.Pulls.ChecksSummary? right) -> bool
+static Aw.Forge.Core.Pulls.FindPullQuery.operator !=(Aw.Forge.Core.Pulls.FindPullQuery? left, Aw.Forge.Core.Pulls.FindPullQuery? right) -> bool
+static Aw.Forge.Core.Pulls.FindPullQuery.operator ==(Aw.Forge.Core.Pulls.FindPullQuery? left, Aw.Forge.Core.Pulls.FindPullQuery? right) -> bool
+static Aw.Forge.Core.Pulls.ForgeThread.operator !=(Aw.Forge.Core.Pulls.ForgeThread? left, Aw.Forge.Core.Pulls.ForgeThread? right) -> bool
+static Aw.Forge.Core.Pulls.ForgeThread.operator ==(Aw.Forge.Core.Pulls.ForgeThread? left, Aw.Forge.Core.Pulls.ForgeThread? right) -> bool
+static Aw.Forge.Core.Pulls.HeadBranch.operator !=(Aw.Forge.Core.Pulls.HeadBranch? left, Aw.Forge.Core.Pulls.HeadBranch? right) -> bool
+static Aw.Forge.Core.Pulls.HeadBranch.operator ==(Aw.Forge.Core.Pulls.HeadBranch? left, Aw.Forge.Core.Pulls.HeadBranch? right) -> bool
+static Aw.Forge.Core.Pulls.MergeOutcome.operator !=(Aw.Forge.Core.Pulls.MergeOutcome? left, Aw.Forge.Core.Pulls.MergeOutcome? right) -> bool
+static Aw.Forge.Core.Pulls.MergeOutcome.operator ==(Aw.Forge.Core.Pulls.MergeOutcome? left, Aw.Forge.Core.Pulls.MergeOutcome? right) -> bool
+static Aw.Forge.Core.Pulls.MergeRequest.operator !=(Aw.Forge.Core.Pulls.MergeRequest? left, Aw.Forge.Core.Pulls.MergeRequest? right) -> bool
+static Aw.Forge.Core.Pulls.MergeRequest.operator ==(Aw.Forge.Core.Pulls.MergeRequest? left, Aw.Forge.Core.Pulls.MergeRequest? right) -> bool
+static Aw.Forge.Core.Pulls.OpenPullRequest.operator !=(Aw.Forge.Core.Pulls.OpenPullRequest? left, Aw.Forge.Core.Pulls.OpenPullRequest? right) -> bool
+static Aw.Forge.Core.Pulls.OpenPullRequest.operator ==(Aw.Forge.Core.Pulls.OpenPullRequest? left, Aw.Forge.Core.Pulls.OpenPullRequest? right) -> bool
+static Aw.Forge.Core.Pulls.PullDigest.operator !=(Aw.Forge.Core.Pulls.PullDigest? left, Aw.Forge.Core.Pulls.PullDigest? right) -> bool
+static Aw.Forge.Core.Pulls.PullDigest.operator ==(Aw.Forge.Core.Pulls.PullDigest? left, Aw.Forge.Core.Pulls.PullDigest? right) -> bool
+static Aw.Forge.Core.Pulls.PullSnapshot.operator !=(Aw.Forge.Core.Pulls.PullSnapshot? left, Aw.Forge.Core.Pulls.PullSnapshot? right) -> bool
+static Aw.Forge.Core.Pulls.PullSnapshot.operator ==(Aw.Forge.Core.Pulls.PullSnapshot? left, Aw.Forge.Core.Pulls.PullSnapshot? right) -> bool
+static Aw.Forge.Core.Pulls.PushRequest.operator !=(Aw.Forge.Core.Pulls.PushRequest? left, Aw.Forge.Core.Pulls.PushRequest? right) -> bool
+static Aw.Forge.Core.Pulls.PushRequest.operator ==(Aw.Forge.Core.Pulls.PushRequest? left, Aw.Forge.Core.Pulls.PushRequest? right) -> bool
+static Aw.Forge.Core.Pulls.ReactionRequest.operator !=(Aw.Forge.Core.Pulls.ReactionRequest? left, Aw.Forge.Core.Pulls.ReactionRequest? right) -> bool
+static Aw.Forge.Core.Pulls.ReactionRequest.operator ==(Aw.Forge.Core.Pulls.ReactionRequest? left, Aw.Forge.Core.Pulls.ReactionRequest? right) -> bool
+static Aw.Forge.Core.Pulls.ReplyRequest.operator !=(Aw.Forge.Core.Pulls.ReplyRequest? left, Aw.Forge.Core.Pulls.ReplyRequest? right) -> bool
+static Aw.Forge.Core.Pulls.ReplyRequest.operator ==(Aw.Forge.Core.Pulls.ReplyRequest? left, Aw.Forge.Core.Pulls.ReplyRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SeedChecksRequest.operator !=(Aw.Forge.Core.Pulls.SeedChecksRequest? left, Aw.Forge.Core.Pulls.SeedChecksRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SeedChecksRequest.operator ==(Aw.Forge.Core.Pulls.SeedChecksRequest? left, Aw.Forge.Core.Pulls.SeedChecksRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SeedThreadRequest.operator !=(Aw.Forge.Core.Pulls.SeedThreadRequest? left, Aw.Forge.Core.Pulls.SeedThreadRequest? right) -> bool
+static Aw.Forge.Core.Pulls.SeedThreadRequest.operator ==(Aw.Forge.Core.Pulls.SeedThreadRequest? left, Aw.Forge.Core.Pulls.SeedThreadRequest? right) -> bool
+static Aw.Forge.Core.Pulls.UpdatePullRequest.operator !=(Aw.Forge.Core.Pulls.UpdatePullRequest? left, Aw.Forge.Core.Pulls.UpdatePullRequest? right) -> bool
+static Aw.Forge.Core.Pulls.UpdatePullRequest.operator ==(Aw.Forge.Core.Pulls.UpdatePullRequest? left, Aw.Forge.Core.Pulls.UpdatePullRequest? right) -> bool
+static Aw.Forge.Core.Refs.ForgeRef.operator !=(Aw.Forge.Core.Refs.ForgeRef? left, Aw.Forge.Core.Refs.ForgeRef? right) -> bool
+static Aw.Forge.Core.Refs.ForgeRef.operator ==(Aw.Forge.Core.Refs.ForgeRef? left, Aw.Forge.Core.Refs.ForgeRef? right) -> bool
+static Aw.Forge.Core.Refs.ForgeRef.Parse(string? link, Aw.Forge.Core.Refs.ForgeKind forge, Aw.Forge.Core.Refs.ForgeHosts! hosts) -> Aw.Kernel.Result<Aw.Forge.Core.Refs.ForgeRef!>!
+static Aw.Forge.Core.Refs.ForgeRepo.operator !=(Aw.Forge.Core.Refs.ForgeRepo? left, Aw.Forge.Core.Refs.ForgeRepo? right) -> bool
+static Aw.Forge.Core.Refs.ForgeRepo.operator ==(Aw.Forge.Core.Refs.ForgeRepo? left, Aw.Forge.Core.Refs.ForgeRepo? right) -> bool
+static readonly Aw.Forge.Core.ForgeErrors.HostNotAllowed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.Invalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.NotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.PushFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.RateLimited -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.Rejected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.Unauthorized -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Forge.Core.ForgeErrors.Unavailable -> Aw.Kernel.ErrorDefinition!

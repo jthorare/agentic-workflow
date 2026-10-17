@@ -545,6 +545,16 @@
           "xunit.v3.runner.common": "[4.0.1]"
         }
       },
+      "aw-forge-fake": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Forge.Core": "[1.0.0, )",
+          "Aw.Forge.Infrastructure": "[1.0.0, )",
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Kernel.Telemetry": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.12, 10.0.12]"
+        }
+      },
       "aw-meta": {
         "type": "Project",
         "dependencies": {
@@ -653,6 +663,23 @@
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.12, 10.0.12]",
           "Microsoft.Playwright": "[1.63.0, 1.63.0]",
           "Npgsql": "[10.0.3, 10.0.3]"
+        }
+      },
+      "aw.forge.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Vogen": "[8.0.7, 8.0.7]"
+        }
+      },
+      "aw.forge.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Forge.Core": "[1.0.0, )",
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
         }
       },
       "aw.judge.core": {

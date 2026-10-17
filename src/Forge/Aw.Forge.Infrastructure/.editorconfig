@@ -1,0 +1,5 @@
+root = false
+
+# Boundary adapters: catching every exception is allowed here (CA1031, .agents/rules/csharp.md "Types and errors").
+[*.cs]
+dotnet_diagnostic.CA1031.severity = none

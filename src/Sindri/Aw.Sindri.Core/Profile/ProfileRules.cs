@@ -29,7 +29,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Services(profile.Services) ?? Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Globs(profile);
+        var invalid = Services(profile.Services) ?? Workflow(profile.Workflow) ?? Globs(profile);
         if (invalid is not null)
         {
             return invalid;
@@ -161,6 +161,9 @@ public static class ProfileRules
             ? Invalid("workflow.dispatchDelay", $"'{delay}' is not a delay: a whole number and s, m or h (for example 10s), from 5s to 24h")
             : null;
     }
+
+    private static Error? Workflow(WorkflowSettings? workflow) =>
+        Durations(workflow) ?? Effects(workflow) ?? ForgeRules.Check(workflow?.Forge);
 
     private static Error Invalid(string keyPath, string problem) =>
         SindriErrors.ProfileInvalid.With($"{keyPath}: {problem}");

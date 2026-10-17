@@ -1801,6 +1801,17 @@ Aw.Sindri.Core.Profile.EffectSettings.DispatchDelay.get -> System.TimeSpan
 Aw.Sindri.Core.Profile.EffectSettings.DispatchDelay.init -> void
 Aw.Sindri.Core.Profile.EffectSettings.EffectSettings(System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Workflow.Ids.BlockId>? Allowlist, System.TimeSpan DispatchDelay) -> void
 Aw.Sindri.Core.Profile.EffectSettings.Equals(Aw.Sindri.Core.Profile.EffectSettings? other) -> bool
+Aw.Sindri.Core.Profile.ForgeSettings
+Aw.Sindri.Core.Profile.ForgeSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ForgeSettings!
+Aw.Sindri.Core.Profile.ForgeSettings.Adapter.get -> string?
+Aw.Sindri.Core.Profile.ForgeSettings.Adapter.init -> void
+Aw.Sindri.Core.Profile.ForgeSettings.Credential.get -> string?
+Aw.Sindri.Core.Profile.ForgeSettings.Credential.init -> void
+Aw.Sindri.Core.Profile.ForgeSettings.Deconstruct(out string? Adapter, out System.Collections.Generic.IReadOnlyList<string!>? Hosts, out string? Credential) -> void
+Aw.Sindri.Core.Profile.ForgeSettings.Equals(Aw.Sindri.Core.Profile.ForgeSettings? other) -> bool
+Aw.Sindri.Core.Profile.ForgeSettings.ForgeSettings(string? Adapter = null, System.Collections.Generic.IReadOnlyList<string!>? Hosts = null, string? Credential = null) -> void
+Aw.Sindri.Core.Profile.ForgeSettings.Hosts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.ForgeSettings.Hosts.init -> void
 Aw.Sindri.Core.Profile.IApprovals
 Aw.Sindri.Core.Profile.IApprovals.Save(Aw.Sindri.Core.Profile.LoadedProfile! profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Profile.IApprovedProfile
@@ -1873,7 +1884,7 @@ Aw.Sindri.Core.Profile.SindriProfile.Workflow.get -> Aw.Sindri.Core.Profile.Work
 Aw.Sindri.Core.Profile.SindriProfile.Workflow.init -> void
 Aw.Sindri.Core.Profile.WorkflowSettings
 Aw.Sindri.Core.Profile.WorkflowSettings.<Clone>$() -> Aw.Sindri.Core.Profile.WorkflowSettings!
-Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.ForgeSettings? Forge) -> void
 Aw.Sindri.Core.Profile.WorkflowSettings.DeskTimeout.get -> string?
 Aw.Sindri.Core.Profile.WorkflowSettings.DeskTimeout.init -> void
 Aw.Sindri.Core.Profile.WorkflowSettings.DispatchDelay.get -> string?
@@ -1883,7 +1894,9 @@ Aw.Sindri.Core.Profile.WorkflowSettings.Effects.init -> void
 Aw.Sindri.Core.Profile.WorkflowSettings.Equals(Aw.Sindri.Core.Profile.WorkflowSettings? other) -> bool
 Aw.Sindri.Core.Profile.WorkflowSettings.EventHold.get -> string?
 Aw.Sindri.Core.Profile.WorkflowSettings.EventHold.init -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Forge.get -> Aw.Sindri.Core.Profile.ForgeSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Forge.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null) -> void
 Aw.Sindri.Core.Profile.WorkflowTimes
 Aw.Sindri.Core.Profile.WorkflowTimes.<Clone>$() -> Aw.Sindri.Core.Profile.WorkflowTimes!
 Aw.Sindri.Core.Profile.WorkflowTimes.Deconstruct(out System.TimeSpan DeskTimeout, out System.TimeSpan EventHold) -> void
@@ -6508,6 +6521,9 @@ override Aw.Sindri.Core.Profile.Cadence.ToString() -> string!
 override Aw.Sindri.Core.Profile.EffectSettings.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Profile.EffectSettings.GetHashCode() -> int
 override Aw.Sindri.Core.Profile.EffectSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.ForgeSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ForgeSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ForgeSettings.ToString() -> string!
 override Aw.Sindri.Core.Profile.IndexSettings.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Profile.IndexSettings.GetHashCode() -> int
 override Aw.Sindri.Core.Profile.IndexSettings.ToString() -> string!
@@ -7831,6 +7847,8 @@ static Aw.Sindri.Core.Profile.EffectSettings.IsEffectId(string! entry) -> bool
 static Aw.Sindri.Core.Profile.EffectSettings.Of(Aw.Sindri.Core.Profile.SindriProfile! profile) -> Aw.Sindri.Core.Profile.EffectSettings!
 static Aw.Sindri.Core.Profile.EffectSettings.operator !=(Aw.Sindri.Core.Profile.EffectSettings? left, Aw.Sindri.Core.Profile.EffectSettings? right) -> bool
 static Aw.Sindri.Core.Profile.EffectSettings.operator ==(Aw.Sindri.Core.Profile.EffectSettings? left, Aw.Sindri.Core.Profile.EffectSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ForgeSettings.operator !=(Aw.Sindri.Core.Profile.ForgeSettings? left, Aw.Sindri.Core.Profile.ForgeSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ForgeSettings.operator ==(Aw.Sindri.Core.Profile.ForgeSettings? left, Aw.Sindri.Core.Profile.ForgeSettings? right) -> bool
 static Aw.Sindri.Core.Profile.IndexSettings.operator !=(Aw.Sindri.Core.Profile.IndexSettings? left, Aw.Sindri.Core.Profile.IndexSettings? right) -> bool
 static Aw.Sindri.Core.Profile.IndexSettings.operator ==(Aw.Sindri.Core.Profile.IndexSettings? left, Aw.Sindri.Core.Profile.IndexSettings? right) -> bool
 static Aw.Sindri.Core.Profile.LoadedProfile.operator !=(Aw.Sindri.Core.Profile.LoadedProfile? left, Aw.Sindri.Core.Profile.LoadedProfile? right) -> bool
