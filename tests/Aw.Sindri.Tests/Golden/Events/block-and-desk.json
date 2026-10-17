@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "sequence": 2,
+      "type": "workflow.started",
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "host:sindri",
+      "transition": {
+        "from": "",
+        "to": "produce",
+        "trigger": "start",
+        "outcome": null,
+        "run": null
+      }
+    },
+    {
+      "sequence": 4,
+      "type": "workflow.transition",
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "host:sindri",
+      "transition": {
+        "from": "produce",
+        "to": "checks",
+        "trigger": "step.completed",
+        "outcome": "done",
+        "run": "1.1"
+      }
+    },
+    {
+      "sequence": 6,
+      "type": "workflow.transition",
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "host:sindri",
+      "transition": {
+        "from": "route-evidence",
+        "to": "evidence-ui",
+        "trigger": "step.completed",
+        "outcome": "ui",
+        "run": "1.1",
+        "via": "block",
+        "decision": "JD-7"
+      }
+    }
+  ],
+  "cursor": 6
+}

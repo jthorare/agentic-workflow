@@ -116,6 +116,11 @@ internal static class EventsCommand
             parts.Add($"run {run}");
         }
 
+        if (t.Via is { } via)
+        {
+            parts.Add(t.Decision is { } decision ? $"via {via} · decision {decision}" : $"via {via}");
+        }
+
         parts.Add(e.Actor);
         return string.Join("  ", parts);
     }

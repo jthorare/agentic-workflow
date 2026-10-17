@@ -74,7 +74,7 @@ internal sealed partial class RecordEventActivities(ILedgerStore ledger, HeldLea
     internal async Task<LedgerAppend> Record(WorkflowEventRecord record, string key, string activityId, CancellationToken cancellationToken)
     {
         var grant = lease.Current ?? throw new InvalidOperationException("SND-LEASE-002: this process holds no lease; the event waits for one");
-        var payload = new WorkflowEventPayload(record.WorkflowId, record.From, record.To, record.Trigger, record.Outcome, record.Run, record.Detail) { Causation = record.Causation };
+        var payload = PayloadOf(record);
         var own = events.Scope;
         var scope = new EventScope(record.Actor ?? own.Actor, record.Tenant ?? own.Tenant, record.Ring ?? own.Ring);
         var entry = Scrubbed(events.Entry(record.Type, payload, key, record.Item, scope) with { TemporalEvent = activityId }, record, payload, scope, key);   // the key's third part (UI E-30)
@@ -90,6 +90,15 @@ internal sealed partial class RecordEventActivities(ILedgerStore ledger, HeldLea
             ? throw new InvalidOperationException($"{appended.Error.Code}: {appended.Error.Message}")
             : appended.Value;
     }
+
+    /// <summary>The event's payload: the transition, its detail, and the detail's block-runtime fields lifted for the events line.</summary>
+    private static WorkflowEventPayload PayloadOf(WorkflowEventRecord record) =>
+        new(record.WorkflowId, record.From, record.To, record.Trigger, record.Outcome, record.Run, record.Detail)
+        {
+            Causation = record.Causation,
+            Via = record.Detail?.Via,
+            Decision = record.Detail?.Decision,
+        };
 
     /// <summary>
     /// The entry with its serialized payload scrubbed (<see cref="IRedactor"/>), so what is stored, and what <see cref="Differs"/>

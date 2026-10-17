@@ -170,6 +170,14 @@ internal static class InvalidFixtureCases
             FixtureSetup.Shipped,
             "RCP-TIME-002: state 'running' retries a child wait when it times out at RCP-TIME-002.yaml:9:28 (states.running.timeout.then); use then: park or then: escalate, since a child can't be retried",
             []),
+        ["RCP-TIME-003"] = new(
+            FixtureSetup.Shipped,
+            "RCP-TIME-003: state 'route' runs step.judge.choose on the block runtime, where 'then: retry' doesn't apply at RCP-TIME-003.yaml:16:27 (states.route.timeout.then); use then: park (a judge call that runs out ends as step.failed, which the route sends to its desk twin)",
+            []),
+        ["RCP-TIME-003-short"] = new(
+            FixtureSetup.Shipped,
+            "RCP-TIME-003: state 'route' times out after 1 min but step.judge.choose may run for 2 min, so the state's timer and the Step's own bound would race at RCP-TIME-003-short.yaml:16:16 (states.route.timeout.after); make the state timeout longer than the Step's maxDuration (2 min)",
+            []),
         ["RCP-TRIG-001"] = new(
             FixtureSetup.Shipped,
             "RCP-TRIG-001: trigger 'wait.satisfied' doesn't fit active state 'produce' at RCP-TRIG-001.yaml:15:32 (transitions[0].on); from an active state, use step.completed, step.failed or command.<verb>",

@@ -16,8 +16,9 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="approvals">The approved recipes.</param>
 /// <param name="catalog">The build's block catalog.</param>
 /// <param name="times">The profile's 'workflow:' times (S1-D11): 'workflow.deskTimeout' and 'workflow.eventHold'.</param>
+/// <param name="blocks">Runs a block-runtime Step (DT-J2).</param>
 /// <param name="logger">The log the open desk task is recorded in.</param>
-internal sealed partial class RunStepActivities(IApprovedRecipes approvals, BlockCatalog catalog, ProfileWorkflowTimes times, ILogger<RunStepActivities> logger)
+internal sealed partial class RunStepActivities(IApprovedRecipes approvals, BlockCatalog catalog, ProfileWorkflowTimes times, BlockStepRunner blocks, ILogger<RunStepActivities> logger)
 {
     /// <summary>Reads the approved recipe and the descriptors of its blocks.</summary>
     /// <param name="recipe">The recipe the instance is pinned to.</param>
@@ -43,7 +44,7 @@ internal sealed partial class RunStepActivities(IApprovedRecipes approvals, Bloc
         var delay = await times.DispatchDelay(cancel).ConfigureAwait(false);   // the approved profile's (S1-D11); a read that fails is retried
         return delay.IsError
             ? throw new InvalidOperationException($"{delay.Error.Code}: {delay.Error.Message}")
-            : new LoadedRecipe(found.Value.Version, definition, [.. catalog.Blocks.Where(b => used.Contains(b.Id))], workflow.DeskTimeout, workflow.EventHold, delay.Value);
+            : new LoadedRecipe(found.Value.Version, definition, [.. catalog.Blocks.Where(b => used.Contains(b.Id))], workflow.DeskTimeout, workflow.EventHold, delay.Value, blocks.Registered(used));
     }
 
     /// <summary>
@@ -61,6 +62,51 @@ internal sealed partial class RunStepActivities(IApprovedRecipes approvals, Bloc
         DeskTaskOpen(logger, run.Address, run.State, run.Token);
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Runs a block-runtime Step (DT spec §8.2), once: the activity, scheduled with 'block:{token}:{n}' as its id and never retried,
+    /// resolves the registered <see cref="IBlockStep"/>, runs it and stores its outputs.
+    /// </summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The outcome and stored outputs, or the failure.</returns>
+    [Activity("RunBlockStep")]
+    public async Task<BlockStepOutcome> RunBlockStepAsync(BlockStepRun run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        BlockStepRequested(logger, run.Address, run.State, run.Token);
+        var context = ActivityExecutionContext.Current;
+        using var done = new CancellationTokenSource();
+        var beating = BeatAsync(context, done.Token);
+        try
+        {
+            return await blocks.Run(run, context.CancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            await done.CancelAsync().ConfigureAwait(false);
+            await beating.ConfigureAwait(false);
+        }
+    }
+
+    // Temporal tells a running activity it was cancelled only in the answer to a heartbeat, so a block Step heartbeats while it runs.
+    private static async Task BeatAsync(ActivityExecutionContext context, CancellationToken stop)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stop).ConfigureAwait(false))
+            {
+                context.Heartbeat();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // boundary: the Step ended, so the beat ends
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "block step requested: {Address} {State} run {Token}")]
+    private static partial void BlockStepRequested(ILogger logger, string address, string state, string token);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "desk task open: {Address} {State} run {Token}")]
     private static partial void DeskTaskOpen(ILogger logger, string address, string state, string token);

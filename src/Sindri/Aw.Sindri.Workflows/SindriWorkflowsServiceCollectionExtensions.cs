@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Desk;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,6 +34,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<RecordEventActivities>()
             .AddSingleton<FactReadActivities>()
             .AddSingleton<EffectDispatch>(static provider => (context, ct) => DispatchScoped(provider, context, ct))   // engine P6 unit (a): RunEffect runs a scoped block by id
+            .AddSingleton<BlockStepDispatch>(static provider => (step, context, ct) => RunBlockScoped(provider, step, context, ct))   // DT-J2: RunBlockStep runs a scoped block Step by id
+            .AddSingleton<BlockStepRunner>()
             .AddSingleton<EffectActivities>()                          // engine P6: RecordEffect, RecheckEffect, RunEffect
             .AddSingleton(provider => SindriWorker.Options(settings,
                 provider.GetRequiredService<RunStepActivities>(), provider.GetRequiredService<RecordEventActivities>(),
@@ -60,6 +63,15 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<EventBridgeCursor>()                         // engine P4 unit (d): the bridge's cursor file
             .AddScoped<IScheduledService, EventBridge>()               // engine P4 unit (d): the ledger-to-Temporal bridge
             .AddSingleton(EventBridge.BuiltIn);                        // engine P4 unit (d): runs without a profile entry (S1-D8)
+    }
+
+    private static async ValueTask<BlockStepResult> RunBlockScoped(IServiceProvider provider, BlockId step, StepContext context, CancellationToken cancellationToken)
+    {
+        var scope = provider.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            return await scope.ServiceProvider.GetRequiredKeyedService<IBlockStep>(step.Value).Run(context, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>The <see cref="EffectDispatch"/> registration: resolves the block AddEffect keyed by the effect's id, in its own scope.</summary>

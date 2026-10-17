@@ -1,0 +1,35 @@
+schema: 1
+id: workflow.time-block
+version: 1
+initial: route
+states:
+  route:
+    kind: active
+    step:
+      use: step.judge.choose
+      with:
+        prompt: "Which evidence proves this change works?"
+        facts: [fact:change]
+        choices:
+          - "ui: what a user sees changed"
+          - "api: a contract changed"
+    timeout: { after: 2d, then: retry }
+    next: "Pick the evidence."
+  route-desk:
+    kind: active
+    step: { use: step.desk.choose, with: { from: route } }
+    timeout: { after: 2d, then: park }
+    next: "Pick the evidence."
+  prove:
+    kind: active
+    step: step.produce
+    timeout: { after: 1d, then: park }
+    next: "Prove it."
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: [route, route-desk], to: prove, on: step.completed, when: { outcome: ui }, produces: [fact:decision] }
+  - { from: [route, route-desk], to: prove, on: step.completed, when: { outcome: api }, produces: [fact:decision] }
+  - { from: route, to: route-desk, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }
+  - { from: route, to: route-desk, on: step.failed }
+  - { from: prove, to: done, on: step.completed, when: { outcome: done }, produces: [fact:output] }
+inputs: [{ key: fact:change, label: "Change", type: text, kind: text }]

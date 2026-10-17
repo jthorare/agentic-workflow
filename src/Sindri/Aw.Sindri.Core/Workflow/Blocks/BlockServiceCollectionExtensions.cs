@@ -26,6 +26,17 @@ public static class BlockServiceCollectionExtensions
         where T : class, IStep, IDescribedBlock
         => services.AddSingleton(T.Descriptor).AddScoped<T>().AddScoped<IStep, T>();
 
+    /// <summary>Registers the block-runtime Step <typeparamref name="T"/> (DT spec §8.2) as itself, as <see cref="IBlockStep"/> (what contract tests enumerate) and keyed by its block id (the 'RunBlockStep' activity runs it by id); its descriptor must say <see cref="BlockRuntime.Block"/>.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <typeparam name="T">The Step class.</typeparam>
+    /// <returns>The same collection.</returns>
+    public static IServiceCollection AddBlockStep<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IServiceCollection services)
+        where T : class, IBlockStep, IDescribedBlock
+        => T.Descriptor.Runtime == BlockRuntime.Block
+            ? services.AddSingleton(T.Descriptor).AddSingleton(new BlockStepRegistration(T.Descriptor.Id)).AddScoped<T>()
+                .AddScoped<IBlockStep, T>().AddKeyedScoped<IBlockStep, T>(T.Descriptor.Id.Value)
+            : throw new InvalidOperationException($"{T.Descriptor.Id.Value} is registered as a block Step but its descriptor's runtime is {T.Descriptor.Runtime}; the engine would open a desk run no one answers.");
+
     /// <summary>Registers the effect <typeparamref name="T"/>, also keyed by its block id (the 'RunEffect' activity runs it by id).</summary>
     /// <param name="services">The service collection.</param>
     /// <typeparam name="T">The effect class.</typeparam>

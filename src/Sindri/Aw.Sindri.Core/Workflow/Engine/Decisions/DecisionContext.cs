@@ -26,4 +26,15 @@ public sealed record DecisionContext(
     /// can't name without a namespace cycle).
     /// </summary>
     public TimeSpan DeskTimeout { get; init; } = TimeSpan.FromDays(2);
+
+    /// <summary>
+    /// The Steps this build runs on the block runtime (DT spec §8.2): a Step in it whose descriptor says <see cref="BlockRuntime.Block"/>
+    /// opens its run on <see cref="StepRuntime.Block"/>. Empty by default, which is the desk path every history before the block runtime took.
+    /// </summary>
+    public IReadOnlySet<BlockId> BlockRuntimes { get; init; } = new HashSet<BlockId>();
+
+    /// <summary>Whether <paramref name="step"/> opens a block run: this build registered its runtime and its descriptor says <see cref="BlockRuntime.Block"/>. The one rule entry and Runnable both ask.</summary>
+    /// <param name="step">The Step.</param>
+    /// <returns>True when its run is the engine's.</returns>
+    internal bool RunsAsBlock(BlockId step) => BlockRuntimes.Contains(step) && Catalog.Find(step) is { Runtime: BlockRuntime.Block };
 }

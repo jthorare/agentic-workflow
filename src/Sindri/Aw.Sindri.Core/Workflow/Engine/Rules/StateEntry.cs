@@ -54,13 +54,18 @@ internal static class StateEntry
             : null;
     }
 
-    // An active state's run '{entry}.1': the agent runtime when the build has the Step's, else the desk when it is
+    // An active state's run '{entry}.1': the block runtime when this build registered the Step's (DT spec §8.2), the agent runtime when the build has the Step's, else the desk when it is
     // deskCapable (W20); with neither there is no run, and the decision parks with SND-WF-010 (W5).
     private static OpenRun? OpenRun(RecipeState target, int entry, DecisionContext context)
     {
         if (target.Kind != StateKind.Active || target.Step is not { } step)
         {
             return null;
+        }
+
+        if (context.RunsAsBlock(step.Use))
+        {
+            return new OpenRun(RunToken.For(entry, 1), StepRuntime.Block, Launch: null, Task: null);   // DT spec §8.2: the engine runs it, no desk task
         }
 
         if (context.Runtimes.Contains(step.Use))

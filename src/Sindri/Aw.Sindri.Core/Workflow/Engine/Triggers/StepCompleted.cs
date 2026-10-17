@@ -13,6 +13,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 /// <param name="Tokens">The tokens the run spent (0 for a desk report).</param>
 /// <param name="Via">The runtime that ran it.</param>
 /// <param name="ReportSha256">The SHA-256 of the canonical report, so two different reports never share a key.</param>
+/// <param name="Decision">The Judge decision id a block Step reports ('JD-…'), for the event's 'decision'; null for any other.</param>
 public sealed record StepCompleted(
     string Actor,
     RunToken Run,
@@ -20,7 +21,8 @@ public sealed record StepCompleted(
     IReadOnlyDictionary<FactKey, FactValue> Outputs,
     int Tokens,
     StepRuntime Via,
-    string ReportSha256) : Trigger(Actor)
+    string ReportSha256,
+    string? Decision = null) : Trigger(Actor)
 {
     /// <inheritdoc/>
     public override string Name => TriggerNames.StepCompleted;

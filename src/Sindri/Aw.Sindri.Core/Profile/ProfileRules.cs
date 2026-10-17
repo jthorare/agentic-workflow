@@ -29,7 +29,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Services(profile.Services) ?? Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Globs(profile);
+        var invalid = Services(profile.Services) ?? Workflow(profile) ?? Globs(profile);
         if (invalid is not null)
         {
             return invalid;
@@ -160,6 +160,39 @@ public static class ProfileRules
         return workflow?.DispatchDelay is { } delay && EffectSettings.Delay(delay) is null
             ? Invalid("workflow.dispatchDelay", $"'{delay}' is not a delay: a whole number and s, m or h (for example 10s), from 5s to 24h")
             : null;
+    }
+
+    private static Error? Workflow(SindriProfile profile) => Durations(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile);
+
+    /// <summary>The judge provider lists (DT-J plan Q8): the box's and each repo's name only known providers.</summary>
+    private static Error? Judges(SindriProfile profile)
+    {
+        foreach (var (path, names) in JudgeLists(profile))
+        {
+            var unknown = names.Select(static (name, i) => (name, i)).FirstOrDefault(static n => !JudgeProviders.Known.Contains(n.name, StringComparer.Ordinal));
+            if (unknown.name is not null)
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"{path}[{unknown.i}]"), $"'{unknown.name}' is not a judge provider: {string.Join(", ", JudgeProviders.Known)}");
+            }
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<(string Path, IReadOnlyList<string> Names)> JudgeLists(SindriProfile profile)
+    {
+        if (profile.Workflow?.Judge?.Providers is { } box)
+        {
+            yield return ("workflow.judge.providers", box);
+        }
+
+        foreach (var repo in profile.Repos ?? [])
+        {
+            if (repo.Workflow?.Judge?.Providers is { } own)
+            {
+                yield return ($"repos.{repo.Name}.workflow.judge.providers", own);
+            }
+        }
     }
 
     private static Error Invalid(string keyPath, string problem) =>

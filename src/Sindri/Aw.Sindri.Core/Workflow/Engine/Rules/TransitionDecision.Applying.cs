@@ -123,7 +123,7 @@ public static partial class TransitionDecision
 
     /// <summary>A Step runs when this build has its runtime, or on the desk runtime when its descriptor says deskCapable (W5, W20).</summary>
     private static bool Runnable(DecisionContext context, BlockId step) =>
-        context.Runtimes.Contains(step) || context.Catalog.Find(step) is { DeskCapable: true };
+        context.Runtimes.Contains(step) || context.RunsAsBlock(step) || context.Catalog.Find(step) is { DeskCapable: true };
 
     private static Suspension NoRuntime(BlockId step, string actor) => new(
         SuspensionKind.Park, ParkReason.NoRuntime, ParkKind: null, Escalation: null,

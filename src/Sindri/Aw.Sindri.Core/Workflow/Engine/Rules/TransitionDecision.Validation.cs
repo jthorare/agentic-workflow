@@ -20,6 +20,8 @@ public static partial class TransitionDecision
         MatchMiss.StaleRun => WorkflowErrors.StaleRunToken.With(
             $"run {Run(d.Trigger)?.Value} isn't the open run{(instance.Frame.Run is { } open ? $" {open.Token.Value}" : string.Empty)} of '{instance.State}' (fix: use the token in status)"),
         MatchMiss.NotAllowed => NotAllowed(d.Trigger, instance),
+        MatchMiss.EngineOwnedRun => WorkflowErrors.TriggerNotAllowed.With(
+            $"the engine is running this Step; take it over to answer it yourself (fix: sindri workflow takeover {instance.Address.Value}, then complete the run)"),
         MatchMiss.None or MatchMiss.NoTransition or MatchMiss.EngineTrigger or _ => d.Trigger is StepCompleted completed ? Malformed(d, instance, completed) : null,
     };
 

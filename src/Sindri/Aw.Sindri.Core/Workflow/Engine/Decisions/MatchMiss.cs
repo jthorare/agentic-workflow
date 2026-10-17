@@ -17,4 +17,7 @@ public enum MatchMiss
 
     /// <summary>An engine trigger (answer, takeover, handback, cancel, timer, wake, child change, open-request): the engine-owned rules decide it, not a recipe transition.</summary>
     EngineTrigger = 4,
+
+    /// <summary>A desk or agent report for a run the engine is running itself (a block Step, DT spec §8.2): only that run's own result applies, so the report is refused (SND-WF-003) and a takeover is the way to answer it.</summary>
+    EngineOwnedRun = 5,
 }

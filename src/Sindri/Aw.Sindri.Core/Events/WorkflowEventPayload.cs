@@ -22,4 +22,12 @@ public sealed record WorkflowEventPayload(string Instance, string From, string T
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Causation { get; init; }
+
+    /// <summary>'block' when the engine ran the Step on the block runtime (DT spec §8.2). Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Via { get; init; }
+
+    /// <summary>The Judge decision id of a block Step's result ('sindri workflow why'). Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Decision { get; init; }
 }

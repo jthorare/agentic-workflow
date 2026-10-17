@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Edges = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
 
@@ -9,9 +10,10 @@ internal sealed partial class GraphRules
 {
     /// <summary>
     /// RCP-TIME-001: an active or wait state without a timeout, reported where the state starts. RCP-TIME-002: 'then:
-    /// retry' on a child wait, which would start a second child instead of re-arming the same wait.
+    /// retry' on a child wait, which would start a second child instead of re-arming the same wait. RCP-TIME-003: on a state whose Step runs on the block runtime (DT spec §8.2), 'then: retry' (a run that outlives its
+    /// 'maxDuration' ends as step.failed, with no timer park to retry), and a timeout that isn't longer than that 'maxDuration' (the state's timer would race the Step's own bound).
     /// </summary>
-    private static IEnumerable<RecipeFinding> Timeouts(Recipe recipe, RecipeSource source)
+    private static IEnumerable<RecipeFinding> Timeouts(Recipe recipe, BlockCatalog catalog, RecipeSource source)
     {
         foreach (var (name, state) in recipe.States.Where(s => s.Value.Kind != StateKind.Terminal))
         {
@@ -32,6 +34,36 @@ internal sealed partial class GraphRules
                     $"state '{name}' retries a child wait when it times out",
                     "use then: park or then: escalate, since a child can't be retried");
             }
+            else if (state.Step is { } step && catalog.Find(step.Use) is { Runtime: BlockRuntime.Block } block)
+            {
+                foreach (var finding in BlockTimeouts(name, state.Timeout, step, block, source))
+                {
+                    yield return finding;
+                }
+            }
+        }
+    }
+
+    // RCP-TIME-003 for a state whose Step runs on the block runtime.
+    private static IEnumerable<RecipeFinding> BlockTimeouts(string name, TimeoutSpec timeout, StepUse step, BlockDescriptor block, RecipeSource source)
+    {
+        if (timeout.Then == TimeoutAction.Retry)
+        {
+            yield return source.Finding(
+                "RCP-TIME-003",
+                $"states.{name}.timeout.then",
+                $"state '{name}' runs {step.Use.Value} on the block runtime, where 'then: retry' doesn't apply",
+                "use then: park (a judge call that runs out ends as step.failed, which the route sends to its desk twin)");
+        }
+
+        var max = BlockLimits.MaxDuration(block);
+        if (timeout.After.Span <= max)
+        {
+            yield return source.Finding(
+                "RCP-TIME-003",
+                $"states.{name}.timeout.after",
+                string.Create(CultureInfo.InvariantCulture, $"state '{name}' times out after {timeout.After.Span.TotalMinutes:0.##} min but {step.Use.Value} may run for {max.TotalMinutes:0.##} min, so the state's timer and the Step's own bound would race"),
+                string.Create(CultureInfo.InvariantCulture, $"make the state timeout longer than the Step's maxDuration ({max.TotalMinutes:0.##} min)"));
         }
     }
 

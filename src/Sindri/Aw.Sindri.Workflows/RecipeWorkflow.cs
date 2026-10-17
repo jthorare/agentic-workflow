@@ -70,9 +70,12 @@ internal sealed partial class RecipeWorkflow
         var (instance, context) = await Begin(start).ConfigureAwait(true);
         while (!instance.Ended)
         {
-            instance = instance is { Suspension: null, Frame.Run: { } open }
-                ? await RunDeskStep(instance, open, context).ConfigureAwait(true)
-                : await Wait(instance, context).ConfigureAwait(true);
+            instance = instance switch
+            {
+                { Suspension: null, Frame.Run: { Runtime: StepRuntime.Block } block } => await RunBlockStep(instance, block, context).ConfigureAwait(true),
+                { Suspension: null, Frame.Run: { } open } => await RunDeskStep(instance, open, context).ConfigureAwait(true),
+                _ => await Wait(instance, context).ConfigureAwait(true),
+            };
         }
 
         await Settle().ConfigureAwait(true);   // every effect it emitted is dispatched, refused or aborted (§5.7)
@@ -89,6 +92,8 @@ internal sealed partial class RecipeWorkflow
         ArgumentNullException.ThrowIfNull(start);
         _start = start;
         _since = Now;
+        // DT-J2: first, before any await, so the marker is the first command and replays at the same place; a history that began before the block runtime has no marker, so it replays with no block runtimes, on the desk path exactly as recorded (kept until the cutover; DT-J plan Q7)
+        var blockRuntime = Workflow.Patched("dt-j-block-runtime");
         var loaded = await Workflow.ExecuteLocalActivityAsync(
             (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe),
             new LocalActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(30) }).ConfigureAwait(true);
@@ -97,7 +102,8 @@ internal sealed partial class RecipeWorkflow
         _deskTimeout = loaded.DeskTimeout;
         _eventHold = loaded.EventHold;
         _dispatchDelay = loaded.DispatchDelay;
-        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, new HashSet<BlockId>(), NoChildRecipes.Instance) { DeskTimeout = loaded.DeskTimeout };
+        var blocks = blockRuntime ? loaded.BlockRuntimes ?? [] : [];
+        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, new HashSet<BlockId>(), NoChildRecipes.Instance) { DeskTimeout = loaded.DeskTimeout, BlockRuntimes = blocks.ToHashSet() };
         _context = new Interpreting(loaded.Recipe, decisions);
         _repo = start.Inputs.TryGetValue(_itemFact, out var item) ? await RepoOf(item.Value).ConfigureAwait(true) : null;
         (_subject, _contents) = await NamedSubject(_recipe, start).ConfigureAwait(true);

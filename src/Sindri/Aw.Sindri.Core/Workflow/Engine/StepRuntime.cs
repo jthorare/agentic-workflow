@@ -13,4 +13,8 @@ public enum StepRuntime
     /// <summary>An agent session launched for the run.</summary>
     [JsonStringEnumMemberName("agent")]
     Agent = 2,
+
+    /// <summary>The engine's block runtime (DT spec §8.2): an activity runs the Step's <see cref="Blocks.IBlockStep"/> and reports for it; outcomes are labelled 'via: block'.</summary>
+    [JsonStringEnumMemberName("block")]
+    Block = 3,
 }

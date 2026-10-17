@@ -4,7 +4,7 @@ using Edges = System.Collections.Generic.Dictionary<string, System.Collections.G
 namespace Aw.Sindri.Core.Workflow.Validation;
 
 /// <summary>
-/// The graph rules (spec §9.1): RCP-REACH-001 (reachable), RCP-EXIT-001 (a way out), RCP-TIME-001/002 (timeouts), RCP-LOOP-001–003 (loop caps), RCP-TRIG-001/002 (triggers), RCP-NEXT-001/002 and RCP-CHILD-002/003 (child cycles and depth).
+/// The graph rules (spec §9.1): RCP-REACH-001 (reachable), RCP-EXIT-001 (a way out), RCP-TIME-001/002/003 (timeouts), RCP-LOOP-001–003 (loop caps), RCP-TRIG-001/002 (triggers), RCP-NEXT-001/002 and RCP-CHILD-002/003 (child cycles and depth).
 /// Pure: they read the bound recipe and the context's child resolver only. A state name the recipe doesn't declare
 /// (an unknown initial, 'from' or 'to') is the schema rules' to report, so these rules skip it. The findings come
 /// back ordered by where their node starts in the file, then by rule.
@@ -22,7 +22,7 @@ internal sealed partial class GraphRules : IRecipeRules
         [
             .. Unreachable(recipe, edges, source),
             .. NoWayOut(recipe, edges, source),
-            .. Timeouts(recipe, source),
+            .. Timeouts(recipe, context.Catalog, source),
             .. Loops(recipe, edges, source),
             .. Triggers(recipe, source),
             .. NextTexts(recipe, source),

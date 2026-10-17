@@ -50,6 +50,11 @@ public static partial class TransitionDecision
             return MatchMiss.StaleRun;
         }
 
+        if (trigger is StepCompleted { Via: not StepRuntime.Block } && instance.Frame.Run is { Runtime: StepRuntime.Block })
+        {
+            return MatchMiss.EngineOwnedRun;
+        }
+
         return recipe.States.TryGetValue(instance.State, out var state) && Allowed(instance, recipe, state, trigger) ? MatchMiss.None : MatchMiss.NotAllowed;
     }
 

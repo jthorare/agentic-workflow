@@ -283,7 +283,7 @@ Every state has `kind: active | wait | terminal`. State, loop and parameter (`wi
 `{ child: { recipe, inputs, onParked: propagate | ignore } }`. No resource has an allocator in this build, so a resource
 wait is reported as information (`RCP-RES-001`); at run time it parks with `SND-WF-010` until one lands. `then: retry`
 re-arms the deadline in the same frame and re-sends the entering transition's effects; it isn't allowed on a child wait
-(`RCP-TIME-002`).
+(`RCP-TIME-002`), nor on a state whose Step runs on the block runtime, whose timeout must also outlast the Step's `maxDuration` (`RCP-TIME-003`).
 
 ### Transitions
 
@@ -376,6 +376,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-EXIT-001` | Every non-terminal state has a path to a terminal state | Add a transition towards a terminal state |
 | `RCP-TIME-001` | Every active and wait state has a timeout | Add `timeout: { after, then }` |
 | `RCP-TIME-002` | A child wait doesn't `retry` | Use `park` or `escalate` |
+| `RCP-TIME-003` | A state whose Step runs on the block runtime doesn't `retry`, and its `timeout.after` is longer than the Step's `maxDuration` (two minutes when the descriptor sets none) | Use `then: park` (a block call that runs out ends as `step.failed`, which the route sends to its desk twin); make the state timeout longer than the Step's `maxDuration` |
 | `RCP-LOOP-001` | A state's `loop` is declared, every loop's `cap` is at least 1, and every cycle of step and wait transitions passes through a state with a `loop` (a cycle closed by a `command.<verb>` or by the answer to an `answer` wait is a human's, and a cycle with no way out is `RCP-EXIT-001`'s) | Declare it under `loops`, or add `loop` to a state on the cycle |
 | `RCP-LOOP-002` | A looped state has a transition back into it | Add it, or remove `loop` |
 | `RCP-LOOP-003` | `noProgress` isn't empty | Name a signal, or leave it out |
@@ -1055,3 +1056,24 @@ Engine spec rev 8.1 §3.8, §5.2, §5.5, §5.8, §6.2; UI spec E-6, E-19.
   requested the instance starts taken over (`InstanceStart.OpenLaunch`, actor `service:engine`), with the launch as the
   `workflow.started` row's `causation`, the state's full timeout kept for the handback and takeoverIdle running. Until
   API P10a's launches projection lands, the adapter (`NoLaunchRequests`) reads none.
+
+## Block runtime (DT-J2)
+
+A Step whose descriptor says `runtime: block` and that has a registered `IBlockStep` runs without a desk: the workflow
+opens a run with no launch and no desk task, calls the `RunBlockStep` activity (one attempt, no retry; heartbeating so a
+`cancel` is delivered) and feeds the result back as `step.completed` (actor `service:block:<step>`), validated like a
+desk report. An invalid result, a failure or a run past the descriptor's `maxDuration` becomes `step.failed`
+(`invalid-result: <code>`, `failed: <type>`, `timeout`); the route sends it on to the desk twin. A Step with no
+registered runtime keeps opening a desk run and stays human-only.
+
+- **Which Steps:** `LoadedRecipe.BlockRuntimes` records the registered block ids the recipe uses, so a worker with other
+  registrations replays the same set.
+- **Replay: patch ids.** `Workflow.Patched("dt-j-block-runtime")` is the first call in `Begin`. A history started
+  before DT-J has no marker, so it replays with the empty set and a `judge.choose` run stays a desk task exactly as
+  recorded (`A_pre_DT_J_history_replays_on_the_desk_path`). New instances write the marker at start. The patch is
+  deprecated only after the cutover.
+- **Events:** a block result's `workflow.transition` carries `via: block` and the judge `decision` id. `sindri workflow
+  events` prints `via block · decision <id>` (a `sindri workflow why` verb that explains the decision comes with DT-J3); the API's event detail has `via` and
+  `decision`, left out when null. Desk reports carry neither.
+- **Profile:** `workflow.judge.providers` (and `repos[].workflow.judge.providers`) narrows which providers a Judge
+  Step may ask; see `sindri-profile.md`.
