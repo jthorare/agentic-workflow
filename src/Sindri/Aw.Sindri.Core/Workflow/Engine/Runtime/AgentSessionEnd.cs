@@ -8,4 +8,7 @@ public enum AgentSessionEnd
 
     /// <summary>No heartbeat for 120 s.</summary>
     Lost = 2,
+
+    /// <summary>A sandbox limit killed it ('session.ended' with the reason limit): the Step fails with 'limit' and is never auto-retried.</summary>
+    Limit = 3,
 }

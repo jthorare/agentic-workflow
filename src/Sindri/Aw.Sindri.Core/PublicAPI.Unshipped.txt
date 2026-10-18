@@ -10191,8 +10191,6 @@ static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget.operator !=(Aw.Sin
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget? left, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget? right) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState!
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.EndedAs.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.EndedAs.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState? other) -> bool
@@ -11350,3 +11348,33 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun.Deconstruct(out Aw.Sindri.Co
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun.LoginSource.get -> Aw.Sindri.Core.Sandbox.ModelLoginSource?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun.LoginSource.init -> void
 static Aw.Sindri.Core.Sandbox.LoginSources.Stricter(Aw.Sindri.Core.Sandbox.ModelLoginSource configured, Aw.Sindri.Core.Sandbox.ModelLoginSource? ask) -> Aw.Sindri.Core.Sandbox.ModelLoginSource
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.FailureReason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.FailureReason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.Source.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailure.Source.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind.LaunchPark = 4 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind.NoRuntime = 3 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind.Wait = 5 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchFailureKind
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Limit = 3 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit!
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.AgentSessionLimit(Aw.Sindri.Core.Events.LimitKind Kind, long Limit, long Peak) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Deconstruct(out Aw.Sindri.Core.Events.LimitKind Kind, out long Limit, out long Peak) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Kind.get -> Aw.Sindri.Core.Events.LimitKind
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Kind.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.get -> long
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Limit.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.get -> long
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Peak.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.AgentSessionState(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs = null, int? ExitCode = null, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd? EndedAs, out int? ExitCode, out Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? Limit) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Limit.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionState.Limit.init -> void
+override Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? left, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? left, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit? right) -> bool

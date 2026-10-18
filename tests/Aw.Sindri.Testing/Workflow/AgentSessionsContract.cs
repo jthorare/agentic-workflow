@@ -25,6 +25,15 @@ public abstract class AgentSessionsContract
     /// <returns>Done.</returns>
     protected abstract ValueTask End(IAgentSessions sessions, LaunchId launch, SessionEndReason reason, int? exitCode);
 
+    /// <summary>Records the end of <paramref name="launch"/>'s session by a sandbox limit.</summary>
+    /// <param name="sessions">The sessions from <see cref="Create"/>.</param>
+    /// <param name="launch">The launch.</param>
+    /// <param name="kind">Memory or wall.</param>
+    /// <param name="limit">The limit.</param>
+    /// <param name="peak">The most the session used.</param>
+    /// <returns>Done.</returns>
+    protected abstract ValueTask EndByLimit(IAgentSessions sessions, LaunchId launch, LimitKind kind, long limit, long peak);
+
     /// <summary>Records usage sample <paramref name="sample"/> of <paramref name="launch"/>.</summary>
     /// <param name="sessions">The sessions from <see cref="Create"/>.</param>
     /// <param name="launch">The launch.</param>
@@ -66,6 +75,19 @@ public abstract class AgentSessionsContract
 
     /// <summary>Spend is the latest sample, and another launch's samples don't count.</summary>
     /// <returns>The test.</returns>
+    /// <summary>A limit kill names which limit it was and the peak.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_limit_end_names_the_limit_and_the_peak()
+    {
+        var sessions = await Create();
+        await EndByLimit(sessions, A.FirstLaunchId, LimitKind.Memory, 2_147_483_648, 2_300_000_000);
+
+        var state = await sessions.Watch(A.FirstLaunchId, Token);
+
+        Expect.True(state.IsSuccess && state.Value is { IsLive: false, EndedAs: AgentSessionEnd.Limit, ExitCode: null, Limit: { Kind: LimitKind.Memory, Limit: 2_147_483_648, Peak: 2_300_000_000 } });
+    }
+
     [Fact]
     public async Task Spend_is_the_latest_cumulative_sample_of_this_launch()
     {

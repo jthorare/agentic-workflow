@@ -30,6 +30,9 @@ public sealed class LedgerAgentSessionsContractTests : AgentSessionsContract
     protected override async ValueTask End(IAgentSessions sessions, LaunchId launch, SessionEndReason reason, int? exitCode) =>
         await Append(EventTypes.SessionEnded, new SessionEnded(launch, reason, exitCode), $"{EventTypes.SessionEnded}:{launch.Value}");
 
+    protected override async ValueTask EndByLimit(IAgentSessions sessions, LaunchId launch, LimitKind kind, long limit, long peak) =>
+        await Append(EventTypes.SessionEnded, SessionEnded.Limited(launch, new LimitEnd(kind, limit, peak)), $"{EventTypes.SessionEnded}:{launch.Value}");
+
     protected override async ValueTask Spend(IAgentSessions sessions, LaunchId launch, int sample, long tokens) =>
         await Append(EventTypes.SessionUsage, new SessionUsage(launch, sample, tokens / 2, tokens - (tokens / 2)), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.SessionUsage}:{launch.Value}:{sample}"));
 
