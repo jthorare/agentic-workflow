@@ -251,6 +251,22 @@ public sealed class AgentRuntimeInterpreterTests(SindriTimeSkippingServer skippi
     }
 
     [Fact(Timeout = 120_000)]
+    public async Task The_run_folder_holds_the_declared_inputs_when_the_launcher_is_asked()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var rig = await Rig(ct);
+        string? seen = null;
+        _launcher.Observe = _ => seen = File.ReadAllText(Path.Combine(rig.RunFolder, "issue"));
+        await rig.Run(async handle =>
+        {
+            _ = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
+            await Launched(ct);
+
+            Assert.Equal("The button is broken", seen);
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
     public async Task A_limit_kill_is_step_failed_limit_with_the_kind_and_the_peak()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -267,6 +283,7 @@ public sealed class AgentRuntimeInterpreterTests(SindriTimeSkippingServer skippi
             Assert.StartsWith("limit: memory", reason, StringComparison.Ordinal);
             Assert.Contains("2147483648", reason, StringComparison.Ordinal);
             Assert.Contains("2300000000", reason, StringComparison.Ordinal);
+            Assert.Contains(RunRefs.Branch(WorkflowInstanceId.Of(rig.Address), RunToken.For(1, 1)), reason, StringComparison.Ordinal);   // the killed run's branch is kept and named
         });
     }
 
@@ -349,6 +366,10 @@ public sealed class AgentRuntimeInterpreterTests(SindriTimeSkippingServer skippi
         public WorkflowEnvironment Environment { get; }
 
         public ServiceProvider Sindri { get; }
+
+        public string RunFolder => RunFolders.PathFor(_test._harness.Home, WorkflowInstanceId.Of(Address), "write", RunToken.For(1, 1));
+
+        public InstanceAddress Address => _start!.WorkflowId();   // why: Start(rig) set it
 
         public LaunchId Launch => AgentLaunches.LaunchIdFor(Run());
 

@@ -46,6 +46,9 @@ public sealed class FakeLauncher : ILauncher
     /// <summary>When set, 'Launch' waits for it (and its caller's cancellation) before answering: a launch that is still running.</summary>
     public Task? Hold { get; set; }
 
+    /// <summary>Gets or sets a callback that sees every request before the launcher answers it.</summary>
+    public Action<LaunchRequest>? Observe { get; set; }
+
     /// <summary>What the viewer did for an attended launch; null opens it.</summary>
     public ViewerOutcome? Viewer { get; set; }
 
@@ -54,6 +57,7 @@ public sealed class FakeLauncher : ILauncher
     {
         ArgumentNullException.ThrowIfNull(request);
         _requests.Add(request);
+        Observe?.Invoke(request);
         if (Hold is { } hold)
         {
             await hold.WaitAsync(cancellationToken).ConfigureAwait(false);

@@ -10,7 +10,7 @@ internal sealed class GitRunDiff : IRunDiff
     public async ValueTask<Result<string>> Head(string worktree, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(worktree);
-        var run = await GitProcess.Run(worktree, ["rev-parse", "--verify", "HEAD"], cancellationToken).ConfigureAwait(false);
+        var run = await GitProcess.Run(worktree, ["rev-parse", "--verify", "HEAD"], cancellationToken, inWorktree: true).ConfigureAwait(false);
         return run.Exit == 0 ? run.Output : WorkflowErrors.EffectFailed.With($"git rev-parse HEAD failed in {worktree}: {run.Error.Trim()}");
     }
 
@@ -28,7 +28,7 @@ internal sealed class GitRunDiff : IRunDiff
             return false;
         }
 
-        var status = await GitProcess.Run(worktree, ["status", "--porcelain", "--untracked-files=all"], cancellationToken).ConfigureAwait(false);
+        var status = await GitProcess.Run(worktree, ["status", "--porcelain", "--untracked-files=all"], cancellationToken, inWorktree: true).ConfigureAwait(false);
         return status.Exit == 0 ? status.Output.Length == 0 : WorkflowErrors.EffectFailed.With($"git status failed in {worktree}: {status.Error.Trim()}");
     }
 }

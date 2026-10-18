@@ -68,7 +68,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
     private static IServiceCollection AddAgentRuntime(this IServiceCollection services) => services
         .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentClosing>()
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
-        .AddSingleton<IRunSuspensions, InstanceRunSuspensions>()
+        .AddSingleton<IRunSuspensions, InstanceRunSuspensions>().AddSingleton<AgentRunFolder>()
         .AddSingleton<WorkerActivities>();
 
     private static async ValueTask<BlockStepResult> RunBlockScoped(IServiceProvider provider, BlockId step, StepContext context, CancellationToken cancellationToken)

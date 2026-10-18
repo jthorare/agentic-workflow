@@ -8,9 +8,20 @@ internal static class GitProcess
 {
     private static readonly TimeSpan _budget = TimeSpan.FromSeconds(30);
 
-    internal static async Task<GitRun> Run(string repository, string[] args, CancellationToken cancellationToken)
+    /// <summary>The full argument list of one git call.</summary>
+    /// <param name="directory">The repository or worktree git runs in.</param>
+    /// <param name="args">The git command and its arguments.</param>
+    /// <param name="inWorktree">True for a call in an agent's worktree: its content is the agent's, so hooks, fsmonitor and the ownership check are settled by the engine on the command line (engine P8 D10, sandbox spec E1-S2).</param>
+    /// <returns>The arguments after 'git'.</returns>
+    internal static string[] Arguments(string directory, string[] args, bool inWorktree)
     {
-        var start = new ProcessStartInfo("git", ["-C", repository, .. args])
+        string[] plain = ["-C", directory, .. args];
+        return inWorktree ? [.. plain] : plain;
+    }
+
+    internal static async Task<GitRun> Run(string repository, string[] args, CancellationToken cancellationToken, bool inWorktree = false)
+    {
+        var start = new ProcessStartInfo("git", Arguments(repository, args, inWorktree))
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,

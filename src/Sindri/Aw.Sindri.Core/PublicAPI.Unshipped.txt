@@ -11471,3 +11471,9 @@ virtual Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Equals(Aw.Sindri.C
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Text.get -> string!
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions.IsSuspended(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Workflow.Engine.Runtime.RunFolders
+Aw.Sindri.Core.Workflow.Engine.Runtime.RunRefs
+static Aw.Sindri.Core.Workflow.Engine.Runtime.RunFolders.Contains(string! folder, string! name) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Runtime.RunFolders.PathFor(string! home, Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, string! step, Aw.Sindri.Core.Workflow.Engine.RunToken run) -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.RunRefs.Branch(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, Aw.Sindri.Core.Workflow.Engine.RunToken run) -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.RunRefs.Namespace(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, Aw.Sindri.Core.Workflow.Engine.RunToken run) -> string!
