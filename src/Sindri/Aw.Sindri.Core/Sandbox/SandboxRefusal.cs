@@ -12,9 +12,10 @@ public static class SandboxRefusal
     /// <param name="reason">A reason from <see cref="SandboxReasons"/> (for -018 'http-' and a status).</param>
     /// <param name="detail">What happened this time (the failing argv, the missing tool), already scrubbed; or null.</param>
     /// <param name="source">The credential source for -017, or null.</param>
-    /// <param name="details">Named values the owner copy fills in ('which', 'tool', 'path', 'cap', 'running', 'limit', 'time', 'name', 'status'): each becomes an extension of that name.</param>
+    /// <param name="details">Named values the owner copy fills in ('which', 'tool', 'path', 'cap', 'running', 'limit', 'time', 'name', 'status'): each becomes an extension of that name. Values are plain text the caller already scrubbed, like <paramref name="detail"/>; 'reason' and 'source' are reserved.</param>
     /// <returns>The error.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The pair isn't a defined (code, reason): a programming error.</exception>
+    /// <exception cref="ArgumentException"><paramref name="details"/> uses a reserved key: a programming error.</exception>
     public static Error For(ErrorDefinition definition, string reason, string? detail = null, ModelLoginSource? source = null, IReadOnlyDictionary<string, string>? details = null)
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -27,7 +28,17 @@ public static class SandboxRefusal
         var error = definition.With(detail is null ? $"{definition.Title} ({reason})" : $"{definition.Title} ({reason}): {detail}")
             .WithExtension("reason", Text(reason));
         error = source is { } s ? error.WithExtension("source", Text(SandboxWire.Name(s))) : error;
-        return (details ?? new Dictionary<string, string>(StringComparer.Ordinal)).Aggregate(error, (e, d) => e.WithExtension(d.Key, Text(d.Value)));
+        if (details is null)
+        {
+            return error;
+        }
+
+        if (details.Keys.FirstOrDefault(k => string.Equals(k, "reason", StringComparison.Ordinal) || string.Equals(k, "source", StringComparison.Ordinal)) is { } reserved)
+        {
+            throw new ArgumentException($"'{reserved}' belongs to the refusal, not to its details.", nameof(details));
+        }
+
+        return details.Aggregate(error, (e, d) => e.WithExtension(d.Key, Text(d.Value)));
     }
 
     /// <summary>Reads back the reason a sandbox refusal carries (Extensions aren't serialized with the error).</summary>

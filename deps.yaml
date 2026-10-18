@@ -594,6 +594,11 @@ edges:
     kind: project
     status: current
     note: "the desktop head (sindri-ui) starts Kernel telemetry and hands the app its logger: a failed start-up logs SND-UI-004 as a JSON line on standard error"
+  - from: Sindri
+    to: Scorer
+    kind: file
+    status: current
+    note: "the sandbox's hook inventory (Aw.Sindri.Core/Sandbox/Plan/HookInventory.cs, SB-1) binds the context-guard state directory into a session, read-only with state/ writable, so the context-guard hook runs in a Step as in a lane (sandbox spec §3.1). Sindri never reads or writes the files; the contract stays with scorer"
   - from: SindriUi
     to: Sindri
     kind: file

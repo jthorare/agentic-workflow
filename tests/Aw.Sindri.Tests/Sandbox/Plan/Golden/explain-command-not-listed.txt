@@ -1,0 +1,1 @@
+No rule blocks 'dotnet build'. Whether it works depends on the files and hosts it needs; ask about those.

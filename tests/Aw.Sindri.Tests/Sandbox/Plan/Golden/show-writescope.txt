@@ -1,0 +1,67 @@
+Sandbox 085c88679e85 (pass-through) for a Step
+Launch: LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+Files, bottom to top (a later line wins):
+  read-only /  (the system, toolchains and other repos can be read, not written)
+  device    /dev  (a fresh /dev)
+  process   /proc  (a fresh /proc)
+  writable  /tmp  (private scratch, removed with the run)
+  empty     /home/owner  (an empty home: only the entries below exist)
+  read-only /home/owner/.dotnet  (the .NET SDK)
+  read-only /home/owner/.nvm  (node versions)
+  read-only /home/owner/.cargo  (Rust tools)
+  read-only /home/owner/.rustup  (Rust toolchains)
+  read-only /home/owner/.local/bin  (tools, and the judge wrapper)
+  writable  /home/owner/.nuget/packages  (a restore writes new packages; shared with the owner's builds)
+  writable  /home/owner/.npm/_cacache  (the npm cache; shared with the owner's builds)
+  read-only /home/owner/repos/toolkit  (the toolkit checkout the judge wrapper runs)
+  read-only /home/owner/.claude  (the agent home, from the owner-copy login source)
+  writable  /home/owner/.claude-run  (the agent home, from the owner-copy login source)
+  blocked   /home/owner/.claude/.credentials.json  (always blocked: the owner's own login file; a session gets its login from its credential source)
+  blocked   /home/owner/.agentic-workflow  (always blocked: the ledger, profile, tokens and other runs' areas live here)
+  blocked   /home/owner/.agentic-workflow/sindri-app  (always blocked: Sindri's own state: the ledger, tokens and other runs' areas)
+  blocked   /var/run/docker.sock  (always blocked: the Docker socket is root on the host)
+  blocked   /run/podman  (always blocked: the Podman socket is root on the host)
+  blocked   /run/user/1000  (always blocked: the ssh, gpg and dbus agent sockets sign as the owner)
+  blocked   /etc/ssh  (always blocked: host keys)
+  blocked   /root  (always blocked: not the session's)
+  blocked   /home/other  (always blocked: other users' files)
+  writable  /home/owner/.agentic-workflow/judge  (done-gate, external-write-guard, turn-origin, send-gate, outbox-flush, record-teammate-name, subagent-start-map, judge: decisions.sqlite with its -wal and -shm, sessions, outbox, teammate names)
+  read-only /home/owner/.agentic-workflow/judge/config.json  (judge: the configuration stays the owner's)
+  this run  /home/owner/.agentic-workflow/logs  (lib/failopen.sh appends failopen.log; the launcher reads the per-launch log into the run's denial summary)
+  this run  /home/owner/.agentic-workflow/probe  (probe-log writes the hook-input probe)
+  this run  /home/owner/.agentic-workflow/digests  (context-guard writes digests; a Step can't read other sessions' excerpts)
+  read-only /home/owner/.agentic-workflow/context-guard  (context-guard reads its configuration)
+  writable  /home/owner/.agentic-workflow/context-guard/state  (context-guard writes per-session state)
+  writable  /home/owner/.agentic-workflow/locks  (heavy: mkdir mutexes, heavy-job.lock and heavy-session)
+  read-only /home/owner/.agentic-workflow/heavy-slots-cap  (heavy reads the box-wide cap)
+  read-only /home/owner/.agentic-workflow/heavy-meta-reserve  (heavy reads the meta reserve)
+  read-only /home/owner/.agentic-workflow/bin-r1b  (the heavy wrapper)
+  this run  /home/owner/.agentic-workflow/sindri-app/launches  (session-id-report writes here; thrown away with the run)
+  read-only /run/sindri/net  (the sockets to Sindri and the egress proxy)
+  read-only /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/shims  (the dotnet, npm and npx shims that go through heavy)
+  read-only /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/githooks  (the refusing pre-push and the repo's own hooks)
+  read-only /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/gitconfig.empty  (an empty global git config)
+  read-only /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json  (the value-free summary 'sandbox explain' reads)
+  writable  /home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1  (the Step's outputs)
+  read-only /work/web/.git  (the git directory: config, hooks, packed-refs, tags and other runs' refs stay read-only)
+  writable  /work/web/.claude/worktrees/sindri-x-1  (the run's worktree)
+  writable  /work/web/.git/objects  (a commit writes objects)
+  writable  /work/web/.git/worktrees/sindri-x-1  (the worktree's own git state)
+  writable  /work/web/.git/refs/heads/sindri/x/1  (the run's ref directory: the branch lives one level inside it)
+  writable  /work/web/.git/logs/refs/heads/sindri/x/1  (the run's reflog directory)
+
+Network (enforce):
+  model: api.anthropic.com
+  packages: api.nuget.org, *.nuget.org, registry.npmjs.org
+
+Environment (names only):
+  PATH, HOME, LANG, TERM, TMPDIR, USER, SHELL, DOTNET_ROOT, DOTNET_CLI_HOME, DOTNET_SKIP_FIRST_TIME_EXPERIENCE, DOTNET_CLI_TELEMETRY_OPTOUT, DOTNET_NOLOGO, NUGET_PACKAGES, NUGET_HTTP_CACHE_PATH, NVM_DIR, npm_config_cache, npm_config_logs_dir, npm_config_ignore_scripts, DISABLE_TELEMETRY, DISABLE_AUTOUPDATER, CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC, DOTNET_PROCESSOR_COUNT, MSBUILDDISABLENODEREUSE, DOTNET_CLI_USE_MSBUILD_SERVER, GIT_CONFIG_COUNT, GIT_CONFIG_KEY_n and GIT_CONFIG_VALUE_n, GIT_CONFIG_GLOBAL, HTTPS_PROXY, HTTP_PROXY, ALL_PROXY, https_proxy, http_proxy, all_proxy, NO_PROXY, no_proxy, AW_SANDBOX, AW_SANDBOX_PLAN, AW_SINDRI_INSTANCE, AW_SINDRI_RUN_DIR, AW_SINDRI_WORKTREE, AW_SINDRI_BRANCH, AW_SINDRI_CHILD, AW_SINDRI_ITEM, AW_SINDRI_LAUNCH, AW_SINDRI_LAUNCH_SECRET, CLAUDE_CONFIG_DIR
+
+Limits:
+  memory 6.4GiB (slowed at 5.1GiB), cpu 400%, processes 2048, sessions 3, home 256MiB, time 70m
+
+Credentials: GitHub none, model login owner-copy
+The agent's own policy: refuses, 64 rules; its own sandbox: auto
+Hooks kept: block-destructive, block-push-main, context-guard, detect-secrets, done-gate, done-gate-annotate, git-context, judge-health, meta-lane-gate, meta-outbox, meta-stop-gate, outbox-flush, prism-context, probe-log, prompt-sort, rtk-rewrite, session-id-report, sindri-nudge, subagent-start-map, turn-origin, winch, aw-live
+Hooks left out: external-write-guard, record-teammate-name, scope-gate, send-gate

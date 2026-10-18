@@ -1,0 +1,2 @@
+'git push origin main' is blocked in the sandbox (rule: git push:*).
+Push and secrets are blocked. Run it in a new terminal window outside the sandbox, or let Sindri send it.

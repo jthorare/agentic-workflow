@@ -64,8 +64,8 @@ words "scope", "plan", "canary" and "confined" never appear.
 | Event | Fields |
 |---|---|
 | `launch.started` | gains `sandbox` (the `SandboxSummary`) |
-| `session.ended` | `reason: limit` adds `kind`, `limit`, `peak` and `peaks`; a final usage sample precedes it. Written by `LaunchSessionEvents.EndByLimit`; the launches view's `ended` carries `kind`, `limit` and `peak` |
-| `sandbox.denied` | `{launch, kind: network\|policy\|path, target, rule, count}`; the 1st, 10th and 100th denial of each (kind, target) per run; at most 200 distinct targets, then one event with `overflow: true`, an empty `target`, rule `overflow` and `count` the denials not counted by target; a denied command line is never recorded whole |
+| `session.ended` | `reason: limit` adds `kind`, `limit`, `peak` and `peaks`; a final usage sample precedes it. Written by `LaunchSessionEvents.EndByLimit`; the launches view's `ended` carries `kind`, `limit` and `peak` only: the tripped limit is what the limit ending shows, so `peaks` stays on the event |
+| `sandbox.denied` | `{launch, kind: network\|policy\|path, target, rule, count}`; the 1st, 10th and 100th denial of each (kind, target) per run; at most 200 distinct targets, then one event per `kind` (the key includes the kind, so up to three) with `overflow: true`, an empty `target`, rule `overflow` and `count` the denials not counted by target; a denied command line is never recorded whole |
 | `sandbox.limit-hit` | `{launch, kind: pids\|memory\|disk, peak}` |
 
 Wire shapes are goldens under `Golden/Sandbox/events/`. The spec writes `launchId` in these payloads; on the wire the field is `launch`, as in every other launch event.
@@ -155,6 +155,80 @@ The copy, the states (`Golden/Sandbox/states.json`), the accessibility rows (`ac
 tmux status lines (`statusline.txt`, `statusline-attended.txt`, each under 80 characters with the prefix read from tmux), the takeover
 banner (`takeover-banner.txt`) and the in-pane refusal (`refusal.txt`) are goldens under `tests/Aw.Sindri.Tests/Golden/Sandbox/`.
 `Aw.Sindri.Ui.Tests` links the directory and reads it, so a change to any of them runs the UI lane (SB-6 builds the view models over it).
+
+## The pure core (SB-1)
+
+`Aw.Sindri.Core.Sandbox.Plan` builds the plan with no I/O: `SandboxPlanner.Build(mechanism, SandboxRequest)` returns a `SandboxPlan` or a refusal, and every adapter's
+`ISandbox.Plan` calls it. The host gives it the box's facts (`SandboxHostFacts`: home, state directory, RAM, cores, the environment the allowlist copies from), so Core reads no
+environment. `ISandbox` is `Probe`, `Plan`, `SelfCheck` and `Wrap`, all returning `Result`. The product registers `UnavailableSandbox` (every call is `-014 unsupported-platform`);
+`PassThroughSandbox` and `RecordingSandbox` live in `Aw.Sindri.Testing` and only test hosts register them (`Product_host_registers_only_UnavailableSandbox`).
+
+| Piece | Rule |
+|---|---|
+| Mount stack | Bottom to top, a later entry wins: root read-only, `/dev`, `/proc`, scratch as `/tmp`, an empty sized home, the home allowlist (defaults plus profile plus repo), the agent home from the prepared login, the permanent denies, the hook inventory, the per-launch files, the writable set, then `sandbox.fs.denyExtra` and the line's extra denies last |
+| Agent home | The login's files are rewritten by rename, so they are bound by directory; a file bind of `.credentials.json`, `.claude.json` or `auth.json`, or a writable agent-home root, is `-016 login`. The owner's original `.credentials.json` and `auth.json` are masked inside the read-only bind |
+| Git directory | Read-only, with `objects/`, `worktrees/<name>/`, `refs/heads/<ns>/` and `logs/refs/heads/<ns>/` writable for a WriteScope session. The branch is `<ns>/work` |
+| Hook inventory | `HookInventory` lists the state paths the installed hooks use and each hook with its "answers permissions" and "rewrites" columns and its treatment (below); `Hook_inventory_matches_config_hooks` reads `config/hooks` so it cannot drift |
+| Environment | `EnvironmentAllowlist` lists every name with a reason; the host environment is never copied wholesale; `AW_HEAVY_LOCK_HELD` is never set; a secret-shaped name in the login's environment is `-016 env` |
+| Git settings | `GIT_CONFIG_COUNT/KEY_n/VALUE_n` (command-line scope, so they beat the repo's config) and an empty `GIT_CONFIG_GLOBAL` |
+| Limits | `LimitsResolver`: memory auto is a fifth of RAM up to 12 GiB, CPU is cores times the share, wall is timeout plus grace (4 h without a timeout, at most `longMax` plus grace), the loose ceiling adds `parkMax`; an attended session has neither unless `sandbox.attended.wall` is set |
+| Host groups | `HostGroups`: `model` follows the target, `packages` for a session that may write, `github` only with `agent-app` and never attended, profile groups replace built-ins of the same name, the repo adds groups and hosts, a Step may remove a group |
+| Login source | `LoginSourceResolver`: repo, then target, then profile; a Step's ask is the stricter of the two. `ModelCredentialSources` never falls back: a source that cannot deliver is `-017` with its id |
+| `planHash` | 12 hex digits of SHA-256 over a canonical text of the plan with per-launch paths replaced by placeholders, so one policy hashes the same across launches; it includes the login source |
+| Renderer | `SandboxPlanRenderer.Show` and `Explain` are pure over the plan (goldens in `tests/Aw.Sindri.Tests/Sandbox/Plan/Golden/`) |
+
+**Fix round 2 (#355 run 2).** A narrow `Bash(<cmd>:*)` in a read-only Step stays narrow (only commands inside the read-only set survive); model API key values are never in the plan or the hash (the launcher supplies them at start, like the launch secret); a request that is both attended and carries a `StepPolicy` is an error; the agent-home write set also applies to `homeAllow` and `cachePaths`; Edit, Write and NotebookEdit patterns must be clean and inside a root; the git directory must be inside the repo; the run namespace is exactly three git-safe segments; `DISABLE_AUTOUPDATER=1` is set (spike item 11; the spec text still needs the line, with the next amendment); `TERM`, `LANG`, `USER` and `SHELL` stay out of the hash.
+
+**Fix round 1 (#355 run 1).** The builder refuses, with `-015 worktree-outside-repo` (the closest closed reason; the detail says which), a ReadOnly or Plan Step that names a writable path, and
+any path that is not absolute and normalized (no `..`, no `.`, no `//`, no trailing slash, not empty): the repo, the worktree (strictly inside the repo), the git directory, the run directory and
+run area (inside the Sindri home), the home, the state directory, the Sindri home and the socket directory; the run namespace must be `sindri/<instance>/<run>`. A credential source may set
+only `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and the model key (`-016 env` otherwise), and a Codex home under `/tmp` is `-016 login`. A read-write bind inside the owner's `~/.claude` or `~/.codex` must be
+in `AgentHomeWriteSet` (Claude: projects, sessions, session-env, shell-snapshots, file-history, todos, history.jsonl, backups, cache, state; Codex: sessions, log, memories, shell_snapshots, cache, tmp).
+The credential masks follow what is bound: the owner's `.credentials.json` and `auth.json` are masked whenever the owner's real home covers them (a `homeAllow` entry included), and not when a
+`separate-login` home from another host path is bound there. `PATH` is the shims, then `$AW_STATE_DIR/bin-r1b` (so the shims find `heavy`), then the host tools outside the state directory.
+The `-015 worktree-outside-repo` reason also covers a bad home, state directory, Sindri home or socket directory (a Sindri fault either way; the detail names the path).
+A repo declaration cannot add `github` or `packages` beyond what the session kind allows. The inner policy carries `DefaultMode` (`dontAsk` for a Step, `default` for an attended session) and
+`DisableBypassPermissions`: **SB-5a's rendered settings must write `permissions.defaultMode` and `disableBypassPermissionsMode: "disable"` explicitly**, because the owner's own settings may say
+`bypassPermissions` (spike items 1 and 6); an attended session gets `Ask` rules for Bash, Edit and Write and no Bash allow. SB-5a test names: `Rendered_settings_set_the_default_mode_explicitly`,
+`Rendered_attended_settings_ask_for_bash`. Not in SB-1, for SB-2 and SB-5a: the `control.json` directory bind for the `sindri` CLI (spike item 7), the `expiresAt` margin of `-017 expired`.
+
+**Hooks inside the sandbox (§5; owner, 2026-10-18).** Hooks help performance and quality, so the default is to keep them. Only a hook that weakens the sandbox is treated:
+it is dropped when it answers `allow` in a way that bypasses `dontAsk`, and a hook that rewrites commands is kept with every denied command also denied in its rewritten form.
+`HookInventory.Scripts` holds each hook's row and `HookPermissionPolicy` applies it (`TreatmentOf`, `ForSession(installed)`); `DenyRuleExpansion.Expand(rules, hooks)` adds the rewritten
+forms for each kept `KeepDenyRewrites` hook. The adapter passes the installed hooks in `SandboxHostFacts.InstalledHooks`; a hook the inventory doesn't list is kept and named in the plan's notes
+(`PlanHooks.Notes`, printed by `sindri sandbox show` as `Note:` lines). The tests check the "answers" and "rewrites" columns against what each script prints.
+**`rtk-rewrite` is strict in Steps (owner, 2026-10-18; enforced in SB-5a).** The hook still rewrites commands to their `rtk` form, but its `allow` grants no permission inside a Step:
+a Step runs only what its own tool list names, so `npm test` or `cargo build` in their `rtk` form don't run in a read-only Step whose list doesn't name them. SB-1 records the rule;
+SB-5a's rendered settings put it into effect.
+
+| Hook | Runs on | Answers permissions | Rewrites | Treatment | Why |
+|---|---|---|---|---|---|
+| `block-destructive` | PreToolUse Bash | no | no | keep | denies only (exit 2): a guard that tightens |
+| `block-push-main` | PreToolUse Bash | no | no | keep | denies only (exit 2): a guard that tightens |
+| `context-guard` | PostToolUse * | no | no | keep | adds context and writes digests; answers nothing |
+| `detect-secrets` | PreToolUse Bash | no | no | keep | denies only (exit 2): a guard that tightens |
+| `done-gate` | Stop | no | no | keep | blocks a stop (exit 2) until the brief's proof is shown; answers no permission |
+| `done-gate-annotate` | PostToolUse Agent | no | no | keep | annotates the result; never blocks or answers |
+| `external-write-guard` | PreToolUse * | allow | no | **drop** | answers 'allow' to every tool call it doesn't match, so with it every tool would pass 'dontAsk'; its external writes stay refused by the deny rule 'gh:*' and by 'dontAsk' for tools outside the Step's list |
+| `git-context` | SessionStart | no | no | keep | prints git context; answers nothing |
+| `judge-health` | SessionStart | no | no | keep | warns when the judge is degraded; answers nothing |
+| `meta-lane-gate` | UserPromptSubmit, SessionStart, PostToolUse, Stop (Codex and Cursor lanes) | no | no | keep | acts only in a Meta lane (does nothing in a Sindri launch); blocks a stop, answers no permission |
+| `meta-outbox` | PostToolUse SendMessage | no | no | keep | records sent messages for the meta; answers nothing |
+| `meta-stop-gate` | Stop | no | no | keep | blocks only the registered meta's stop; answers no permission |
+| `outbox-flush` | TeammateIdle | no | no | keep | keeps a teammate working (exit 2); answers no permission |
+| `prism-context` | SessionStart | no | no | keep | loads memory context; answers nothing |
+| `probe-log` | every event, while the probe is on | no | no | keep | logs the hook input; prints nothing |
+| `prompt-sort` | UserPromptSubmit | no | no | keep | may print a scaffold note; answers nothing |
+| `record-teammate-name` | PreToolUse Agent | allow | no | **drop** | always answers 'allow' to Agent, so every dispatch would pass 'dontAsk'; without it subagent-start-map uses its dispatch-order fallback |
+| `rtk-rewrite` | PreToolUse Bash | allow | yes | **keep, deny the rewritten forms; strict in Steps** | rewrites commands to their 'rtk' form for token savings (the owner keeps it); every denied command is also denied in its 'rtk' form, so 'git push' can't pass as 'rtk git push'; its 'allow' grants nothing inside a Step, which runs only what its own list names (owner, 2026-10-18; enforced in SB-5a) |
+| `scope-gate` | PreToolUse Agent | allow | no | **drop** | answers 'allow' to an Agent dispatch with a good brief, so dispatches would pass 'dontAsk' |
+| `send-gate` | PreToolUse SendMessage | allow | yes | **drop** | answers 'allow' to SendMessage (and rewrites the message), so messages would pass 'dontAsk' |
+| `session-id-report` | SessionStart (Codex and Cursor) | no | no | keep | reports the session id to Sindri's launcher; answers nothing |
+| `sindri-nudge` | SessionStart | no | no | keep | prints a reminder; answers nothing |
+| `subagent-start-map` | SubagentStart | no | no | keep | maps a subagent to its brief; answers nothing |
+| `turn-origin` | UserPromptSubmit | no | no | keep | marks the turn's origin; answers nothing |
+| `winch` | PreToolUse *, Stop (inline) | no | no | keep | asks the owner's terminal to redraw; answers nothing |
+| `aw-live` | in-process mod (the /live pane) | no | no | keep | draws this session's numbers; answers nothing |
 
 ## Phases
 

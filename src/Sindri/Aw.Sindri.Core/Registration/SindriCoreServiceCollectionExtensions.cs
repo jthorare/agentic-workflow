@@ -9,6 +9,8 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox.Credentials;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -69,5 +71,15 @@ public static class SindriCoreServiceCollectionExtensions
             .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
             .AddScoped<RecipeRegistryReader>()
             .AddSingleton<RecipeEvents>()
-            .AddSingleton<IApprovedRecipes, RegistryApprovedRecipes>();
+            .AddSingleton<IApprovedRecipes, RegistryApprovedRecipes>()
+            .AddSandboxCore();
+
+    /// <summary>
+    /// The sandbox port and the credential registry (sandbox spec SB12, SB18). The product registers only <see cref="UnavailableSandbox"/> until SB-5a; test hosts replace it
+    /// with the Testing sandboxes. Credential adapters are registered by SB-2 (owner-copy) and SB-8 (separate-login).
+    /// </summary>
+    private static IServiceCollection AddSandboxCore(this IServiceCollection services)
+        => services
+            .AddSingleton<ISandbox, UnavailableSandbox>()
+            .AddSingleton<ModelCredentialSources>();
 }

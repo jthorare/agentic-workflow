@@ -1,0 +1,1 @@
+/work/web/.claude/worktrees/sindri-x-1/src/a.cs is writable (the run's worktree).
