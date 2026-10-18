@@ -196,6 +196,31 @@ A repo declaration cannot add `github` or `packages` beyond what the session kin
 Default (the lead's proposal): the session omits the five permission-answering hooks and the deny rules also list the rtk forms. The answer is a one-line change of
 `HookPermissionPolicy.OmitPermissionAnsweringHooks` and `HookPermissionPolicy.IncludeRtkForms`; the tests follow the constants.
 
+## Egress (SB-4a)
+
+`Aw.Sindri.Infrastructure/Sandbox/Egress*` is the outside half of spec §3.2 and the init script of the inside half. All types are internal until SB-5a wires the launcher
+(three carry a `MA0182` pragma; **SB-5a removes them**).
+
+**Rules the proxy enforces (enforce mode; learn mode is SB-4b):**
+
+- Only ports **80 and 443**. A group names hosts, not ports; a repo that needs another port waits for a later additive `host:port` form.
+- The host must be in a group of the plan (`HostGroups.Allowing`). A name that resolves to a loopback, link-local, private, shared (`100.64/10`), multicast or
+  reserved address is refused unless a group lists that address; an address literal needs a group that lists it. The proxy dials the address it validated.
+- Plain HTTP (an absolute URI, rewritten to origin form with `Connection: close`) and `CONNECT`; no TLS interception.
+- A request head must arrive within `HeadTimeout` (30 s). When one side of a connection ends cleanly the other side is half-closed and the other direction gets `HalfCloseGrace` (30 s in total, counted from that moment and not reset by traffic) to finish; a byte-cap stop or a fault ends both at once.
+
+**Caps** (fixed defaults; profile keys later if wanted): 64 concurrent connections and 2 GiB relayed, both **per run**; a **connection lifetime** of 2 h per connection.
+The run's own length belongs to the wall watchdog (SB-3a), not the proxy. Over a cap the proxy answers 503 and counts the request as `Refused` under the host `(cap)`.
+
+**`egress.log`** (in the run directory): one line per host, port and verdict, tab separated, sorted: `host<TAB>port<TAB>verdict<TAB>count`; verdict is `allowed`, `denied`,
+`refused` or `failed` (the host was allowed but the dial failed; the client got 502). No URLs. A malformed request is answered 400 and not counted. The file is
+rewritten (temp file and rename) about once a second while anything changed, and at the end, so an open tunnel shows up.
+
+**The init script** (`EgressInit.Render`) closes fds 3 to 9, starts both `socat` forwards with their output appended to a log file (not the pane), exits with
+status **70** if either is not running 0.2 s later (the launcher reads that as `-016 net-forward`), exports `NO_PROXY=127.0.0.1,localhost,::1`, and runs the agent as
+its **child**, with the init's standard input (held on fd 3, because a shell without job control gives a background command `/dev/null`): the sandbox has no PID namespace, so an `exec` would leave the forwarders running after the agent. A TERM, INT or HUP to the init reaches the agent; the
+init waits for it, stops both forwarders and exits with the agent's status. The self-check of the spec's start order is a second run of the same script with a check argv. The script needs a POSIX `sh` (tested under `sh`, `dash` and `bash`); on Linux it reads `/proc/<pid>/stat` to tell a dead forwarder from a zombie, elsewhere `kill -0` alone (a zombie then looks alive, so a macOS profile that reuses the script needs a `ps` fallback; SB-9). The agent starts with SIGINT and SIGQUIT ignored, the POSIX rule for a background command; the launcher sends TERM. Without `ps`: nothing needs it.
+
 ## Phases
 
 | Phase | Builds |
