@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Sandbox;
