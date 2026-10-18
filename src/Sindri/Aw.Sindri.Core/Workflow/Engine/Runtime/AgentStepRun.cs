@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
@@ -8,4 +9,5 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Run">The run's token.</param>
 /// <param name="Step">The recipe state and block whose seed prompt the session gets.</param>
 /// <param name="WriteScope">Whether the Step's descriptor has <see cref="Blocks.Capability.WriteScope"/>.</param>
-public sealed record AgentStepRun(WorkflowInstanceId Workflow, InstanceAddress Address, RunToken Run, StepRef Step, bool WriteScope);
+/// <param name="LoginSource">The model login source the Step's descriptor asks for, or null for no ask (the launcher takes the stricter of this and the profile's).</param>
+public sealed record AgentStepRun(WorkflowInstanceId Workflow, InstanceAddress Address, RunToken Run, StepRef Step, bool WriteScope, ModelLoginSource? LoginSource = null);
