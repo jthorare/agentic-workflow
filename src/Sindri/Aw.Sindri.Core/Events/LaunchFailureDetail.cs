@@ -12,7 +12,7 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Current">The error's 'current' extension (the entry's argv hash), or null.</param>
 /// <param name="Approved">The error's 'approved' extension (the hashes the profile lists), or null.</param>
 /// <param name="Source">The error's 'source' extension (the credential source of SND-LAUNCH-017), or null.</param>
-public sealed record LaunchFailureDetail(LaunchStage? Stage, string? Reason = null, string? Current = null, IReadOnlyList<string>? Approved = null, string? Source = null)
+public sealed record LaunchFailureDetail(LaunchStage? Stage, string? Reason = null, string? Current = null, IReadOnlyList<string>? Approved = null, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Source = null)
 {
     /// <summary>The detail of a failure: the stage and what <paramref name="error"/> carries, or null when there is neither.</summary>
     /// <param name="error">The error.</param>

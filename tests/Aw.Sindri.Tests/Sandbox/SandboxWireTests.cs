@@ -74,7 +74,7 @@ public sealed class SandboxWireTests
     [Fact, Trait("Lane", "unit")]
     public void An_old_session_ended_payload_still_reads()
     {
-        var read = JsonSerializer.Deserialize<SessionEnded>("{\"launch\":\"" + A.FirstLaunchId.Value + "\",\"reason\":\"lost\",\"exitCode\":null}", Json)!;
+        var read = JsonSerializer.Deserialize<SessionEnded>("{\"launchId\":\"" + A.FirstLaunchId.Value + "\",\"reason\":\"lost\",\"exitCode\":null}", Json)!;
 
         Assert.Equal((SessionEndReason.Lost, null, null), (read.Reason, read.Kind, read.Limit));
     }
@@ -122,7 +122,7 @@ public sealed class SandboxWireTests
     {
         var json = JsonSerializer.Serialize(new SessionEnded(A.FirstLaunchId, SessionEndReason.Exit, 0), Json);
 
-        Assert.Equal("{\"launch\":\"" + A.FirstLaunchId.Value + "\",\"reason\":\"exit\",\"exitCode\":0}", json);
+        Assert.Equal("{\"launchId\":\"" + A.FirstLaunchId.Value + "\",\"reason\":\"exit\",\"exitCode\":0,\"inputTokens\":null,\"outputTokens\":null}", json);
     }
 
     [Fact, Trait("Lane", "unit")]

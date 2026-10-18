@@ -1,1 +1,1 @@
-{"launch":"LCH-00000000000000000000000000000001","item":"ITM-00000000000000000000000000000001","code":"SND-LAUNCH-017","message":"The agent's sign-in isn't available for Steps (expired)","stage":null,"reason":"expired","source":"separate-login"}
+{"launchId":"LCH-00000000000000000000000000000001","item":"ITM-00000000000000000000000000000001","code":"SND-LAUNCH-017","message":"The agent's sign-in isn't available for Steps (expired)","detail":{"stage":null,"reason":"expired","current":null,"approved":null,"source":"separate-login"}}
