@@ -201,8 +201,9 @@ internal sealed partial class RecipeWorkflow
     private AgentStepRun AgentRunOf(WorkflowInstance instance, OpenRun open, StepUse step)
     {
         var address = _start!.WorkflowId(); // why: the loop runs only after RunAsync set _start
-        var writes = _recipe!.Catalog.Find(step.Use) is { } descriptor && descriptor.Capabilities.HasFlag(Capability.WriteScope); // why: as above
-        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes);
+        var descriptor = _recipe!.Catalog.Find(step.Use); // why: as above
+        var writes = descriptor is not null && descriptor.Capabilities.HasFlag(Capability.WriteScope);
+        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes, descriptor?.LoginSource);
     }
 
     private StepFailed AgentFailed(OpenRun open, StepUse step, string reason, int tokens)

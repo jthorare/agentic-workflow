@@ -41,4 +41,4 @@ public sealed record BlockDescriptor(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? HumanOnly = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BlockRuntime? Runtime = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonConverter(typeof(BlockDurationJsonConverter))] TimeSpan? MaxDuration = null,
-    ModelLoginSource? LoginSource = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelLoginSource? LoginSource = null);

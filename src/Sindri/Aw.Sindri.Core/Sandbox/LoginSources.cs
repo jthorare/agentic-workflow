@@ -8,5 +8,5 @@ public static class LoginSources
     /// <param name="ask">The Step's ask, or null for none.</param>
     /// <returns><paramref name="configured"/> when there is no ask or the ask is looser, else the ask.</returns>
     public static ModelLoginSource Stricter(ModelLoginSource configured, ModelLoginSource? ask) =>
-        throw new NotSupportedException("the stricter-of rule is not built yet");
+        ask is { } asked && asked > configured ? asked : configured;
 }

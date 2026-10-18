@@ -36,8 +36,8 @@ public static class AgentLaunches
     {
         var worktree = WorktreeFor(run, target);
         var policy = run.WriteScope
-            ? new StepPolicy([], StepPermissionMode.Default, worktree)   // a Step only tightens the profile: it may write its own worktree and nothing else
-            : new StepPolicy([], StepPermissionMode.ReadOnly, WritablePath: null);
+            ? new StepPolicy([], StepPermissionMode.Default, worktree, run.LoginSource)   // a Step only tightens the profile: it may write its own worktree and nothing else
+            : new StepPolicy([], StepPermissionMode.ReadOnly, WritablePath: null, run.LoginSource);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
             new StepArgs(Model: null, policy, run.Step), run.Run);   // Model null: per-Step models are SC-R
