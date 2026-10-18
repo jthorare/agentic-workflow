@@ -6,4 +6,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Worktree">The run's worktree; null when the launch failed.</param>
 /// <param name="StartHead">The worktree's HEAD when the session started, which the diff signal measures from; null when it couldn't be read (the signal is then not measured) or the launch failed.</param>
 /// <param name="Failure">Why it did not start, and whether that parks or fails the Step; null when it started.</param>
-internal sealed record AgentLaunched(string? Worktree, string? StartHead, AgentLaunchFailure? Failure);
+/// <param name="Waiting">True when the session cap was still reached at the end of the activity's slice: nothing was started or recorded, and the workflow launches again.</param>
+internal sealed record AgentLaunched(string? Worktree, string? StartHead, AgentLaunchFailure? Failure, bool Waiting = false);
