@@ -13,12 +13,20 @@ public static class RunFolders
     /// <param name="run">The run's token.</param>
     /// <returns>The absolute path.</returns>
     public static string PathFor(string home, WorkflowInstanceId instance, string step, RunToken run) =>
-        throw new NotSupportedException("the run folder is not built yet");
+        Path.Combine(home, "workflow", "runs", instance.Value, step, run.Value);
 
     /// <summary>Whether a file name resolves inside the folder: a relative name whose '..' segments never leave it.</summary>
     /// <param name="folder">The run folder.</param>
     /// <param name="name">The name a report gives.</param>
     /// <returns>True when the name stays inside the folder.</returns>
-    public static bool Contains(string folder, string name) =>
-        throw new NotSupportedException("the run folder is not built yet");
+    public static bool Contains(string folder, string name)
+    {
+        if (string.IsNullOrEmpty(name) || Path.IsPathRooted(name))
+        {
+            return false;
+        }
+
+        var root = Path.GetFullPath(folder);
+        return Path.GetFullPath(Path.Combine(root, name)).StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    }
 }

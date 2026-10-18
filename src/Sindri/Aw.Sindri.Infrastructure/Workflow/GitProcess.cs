@@ -15,8 +15,9 @@ internal static class GitProcess
     /// <returns>The arguments after 'git'.</returns>
     internal static string[] Arguments(string directory, string[] args, bool inWorktree)
     {
-        string[] plain = ["-C", directory, .. args];
-        return inWorktree ? [.. plain] : plain;
+        return inWorktree
+            ? ["-C", directory, "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "safe.directory=" + directory, .. args]
+            : ["-C", directory, .. args];
     }
 
     internal static async Task<GitRun> Run(string repository, string[] args, CancellationToken cancellationToken, bool inWorktree = false)

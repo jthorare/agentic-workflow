@@ -16,7 +16,7 @@ internal sealed partial class RecipeWorkflow
     {
         var (state, step) = StateOf(instance, context);
         var run = AgentRunOf(instance, open, step);
-        var (applied, launched) = await LaunchUntilSettled(instance, open, run, context).ConfigureAwait(true);
+        var (applied, launched) = await LaunchUntilSettled(instance, open, run, step, context).ConfigureAwait(true);
         if (launched is null)
         {
             return (await StopIfClosed(applied, new AgentRunning(open, state, run, Launched: null)).ConfigureAwait(true), true);
@@ -34,14 +34,15 @@ internal sealed partial class RecipeWorkflow
     }
 
     // The launch activity, again for as long as the session cap holds it back (SND-LAUNCH-020): each ask is its own activity, so the state timer and the commands apply meanwhile. Null says the run ended first.
-    private async Task<(WorkflowInstance Instance, AgentLaunched? Launched)> LaunchUntilSettled(WorkflowInstance instance, OpenRun open, AgentStepRun run, Interpreting context)
+    private async Task<(WorkflowInstance Instance, AgentLaunched? Launched)> LaunchUntilSettled(WorkflowInstance instance, OpenRun open, AgentStepRun run, StepUse step, Interpreting context)
     {
         var (state, _) = StateOf(instance, context);
+        var inputs = InputsOf(instance, step);
         var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
         while (true)
         {
             using var cancel = new CancellationTokenSource();
-            var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(new AgentLaunchRun(run, item)), AgentOptions(_launchCall, open, state, cancel.Token));
+            var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(new AgentLaunchRun(run, item, inputs)), AgentOptions(_launchCall, open, state, cancel.Token));
             var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
             if (end == AgentEnd.Over)
             {
@@ -57,6 +58,11 @@ internal sealed partial class RecipeWorkflow
             instance = applied;
         }
     }
+
+    // The facts the Step's descriptor declares as inputs and the instance holds: they go into the run folder before the launch (sandbox spec SB17).
+    private Dictionary<string, FactValue> InputsOf(WorkflowInstance instance, StepUse step) => _recipe!.Catalog.Find(step.Use) is { } descriptor   // why: the loop runs only after Begin set the recipe
+        ? descriptor.Inputs.Where(instance.Facts.ContainsKey).ToDictionary(static key => key.Value, key => instance.Facts[key], StringComparer.Ordinal)
+        : new Dictionary<string, FactValue>(StringComparer.Ordinal);
 
     // A refused launch: the agent run is closed (N1), then what the code means decides the instance (sandbox spec §6, SB16). Any other refusal is a Step failure.
     private async Task<WorkflowInstance> ClosedByRefusal(WorkflowInstance instance, AgentRunning running, StepUse step, AgentLaunchFailure failure, Interpreting context)

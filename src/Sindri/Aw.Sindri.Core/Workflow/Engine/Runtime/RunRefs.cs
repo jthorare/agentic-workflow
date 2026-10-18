@@ -7,13 +7,11 @@ public static class RunRefs
     /// <param name="instance">The workflow instance.</param>
     /// <param name="run">The run's token.</param>
     /// <returns>The directory, without a trailing slash.</returns>
-    public static string Namespace(WorkflowInstanceId instance, RunToken run) =>
-        throw new NotSupportedException("the run ref is not built yet");
+    public static string Namespace(WorkflowInstanceId instance, RunToken run) => $"sindri/{instance.Value}/{run.Value}";
 
     /// <summary>The run's branch: 'sindri/{instance}/{run}/work'. A killed run's branch is kept, and a limit failure names it.</summary>
     /// <param name="instance">The workflow instance.</param>
     /// <param name="run">The run's token.</param>
     /// <returns>The branch name, without 'refs/heads/'.</returns>
-    public static string Branch(WorkflowInstanceId instance, RunToken run) =>
-        throw new NotSupportedException("the run ref is not built yet");
+    public static string Branch(WorkflowInstanceId instance, RunToken run) => Namespace(instance, run) + "/work";
 }

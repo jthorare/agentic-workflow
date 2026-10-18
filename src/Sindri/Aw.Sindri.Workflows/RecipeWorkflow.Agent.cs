@@ -75,7 +75,7 @@ internal sealed partial class RecipeWorkflow
         var closed = await Close(running, measure: true).ConfigureAwait(true);
         var reason = ended switch
         {
-            { EndedAs: AgentSessionEnd.Limit, Limit: { } limit } => limit.Text,
+            { EndedAs: AgentSessionEnd.Limit, Limit: { } limit } => $"{limit.Text}; its work so far is kept on branch {RunRefs.Branch(running.Run.Workflow, running.Open.Token)}",
             { EndedAs: AgentSessionEnd.Lost } => "lost",
             _ => "exit",
         };

@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -13,7 +14,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="options">How long to wait for a free session slot.</param>
-internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, AgentRuntimeOptions options)
+/// <param name="folder">Makes the run folder and writes the inputs.</param>
+internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, AgentRuntimeOptions options, AgentRunFolder folder)
 {
     /// <summary>Launches the run's session.</summary>
     /// <param name="run">The run.</param>
@@ -26,6 +28,12 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
         if (target.IsError)
         {
             return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));   // nothing was asked of the launcher, so there is no outcome to record
+        }
+
+        var prepared = await folder.Prepare(run.Run, run.Inputs ?? new Dictionary<string, FactValue>(StringComparer.Ordinal), cancellationToken).ConfigureAwait(false);
+        if (prepared.IsError)
+        {
+            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, prepared.Error.Code, prepared.Error.Message));   // nothing was asked of the launcher
         }
 
         var request = AgentLaunches.RequestFor(run.Run, target.Value);
