@@ -7,9 +7,16 @@ namespace Aw.Sindri.Features.GetRunSuspension;
 
 internal sealed class GetRunSuspensionService(LaunchSessionEvents session, IRunSuspensions suspensions) : IService<GetRunSuspensionRequest, RunSuspensionView>
 {
-    public ValueTask<Result<RunSuspensionView>> Handle(GetRunSuspensionRequest request, CancellationToken cancellationToken)
+    public async ValueTask<Result<RunSuspensionView>> Handle(GetRunSuspensionRequest request, CancellationToken cancellationToken)
     {
-        _ = (session, suspensions);
-        throw new NotSupportedException("the suspension read is not built yet");
+        ArgumentNullException.ThrowIfNull(request);
+        var proven = session.Verify(request.LaunchId, request.Secret);
+        if (proven.IsError)
+        {
+            return proven.Error;
+        }
+
+        var suspended = await suspensions.IsSuspended(request.LaunchId, cancellationToken).ConfigureAwait(false);
+        return suspended.IsError ? suspended.Error : new RunSuspensionView(suspended.Value);
     }
 }

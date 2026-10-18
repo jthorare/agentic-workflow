@@ -15,7 +15,7 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Unit)]
 public sealed class InstanceRunSuspensionsContractTests : RunSuspensionsContract
 {
-    private static readonly InstanceAddress _address = InstanceAddress.From("T-1/workflow.step/1");
+    private static readonly InstanceAddress _address = InstanceAddress.From("T-1/step/1");
     private static readonly RecipeVersion _recipe = new(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64)));
     private readonly Views _views = new();
 
