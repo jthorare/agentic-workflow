@@ -1,9 +1,9 @@
 using System.Text;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
 

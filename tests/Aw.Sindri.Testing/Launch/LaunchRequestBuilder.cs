@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine;
 
@@ -10,6 +11,8 @@ public sealed class LaunchRequestBuilder
     private AgentId _agent = AgentId.From("claude-code");
     private bool _attended = true;
     private StepArgs? _step;
+    private LaunchMode _mode = LaunchMode.Open;
+    private SessionId? _resume;
 
     /// <summary>Sets the launch id.</summary>
     /// <param name="value">The id.</param>
@@ -39,8 +42,18 @@ public sealed class LaunchRequestBuilder
         return this;
     }
 
+    /// <summary>Makes it a Resume of this session.</summary>
+    /// <param name="value">The session id to resume.</param>
+    /// <returns>This builder.</returns>
+    public LaunchRequestBuilder Resuming(SessionId value)
+    {
+        _mode = LaunchMode.Resume;
+        _resume = value;
+        return this;
+    }
+
     /// <summary>Builds the request.</summary>
     /// <returns>The request.</returns>
     public LaunchRequest Build() =>
-        new(_launch, A.FirstItemId, _agent, LaunchMode.Open, _attended, "/work/repo", Instance: null, Worktree: null, _step, Run: null);
+        new(_launch, A.FirstItemId, _agent, _mode, _attended, "/work/repo", Instance: null, Worktree: null, _step, Run: null, _resume);
 }

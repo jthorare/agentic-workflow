@@ -90,7 +90,7 @@ internal sealed class LauncherRig
     {
         get
         {
-            var plans = new LaunchPlans(H.Views, Slice.Profiles, Spend);
+            var plans = new LaunchPlans(H.Views, Slice.Profiles, Spend, new LaunchViews(H.Views));
             return new ProcessLaunch(
                 Outcomes, new TakeoverWait(Status, Slice.Store, H.Views, Runtime, Timings), Port,
                 new AttachFlow(new LaunchViews(H.Views), Viewer, Port, plans, Outcomes, Timings), plans, Work, Timings);

@@ -4,7 +4,6 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.GetLaunch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Views;

@@ -24,7 +24,22 @@ public sealed class ConfigInvalidProbeTests : IDisposable
         var facts = await viewer.Probe(TestContext.Current.CancellationToken);
 
         Expect.Equal(("config-invalid", path), (facts.Problem, facts.ConfigPath));
-        Assert.Matches(@"^line \d+: ", facts.Detail);
+        Expect.True(facts.Detail is { Line: > 0, Reason.Length: > 0 });
+    }
+
+    [Fact]
+    public async Task A_problem_the_reader_has_no_line_for_has_a_null_line_and_its_reason()
+    {
+        var path = Path.Combine(_home, "launcher.json");
+        await File.WriteAllTextAsync(path, "{\n  \"schema\": 1,\n  \"viewer\": { \"kind\": \"bogus-terminal\" }\n}\n", TestContext.Current.CancellationToken);
+        var catalog = new ReloadingAgentCatalog(path, LauncherStartup.Builtins());
+        var detection = new DetectionInputs(static _ => null, static (_, _) => ValueTask.FromResult(false), static _ => ValueTask.FromResult(false), []);
+        using var viewer = new ConfiguredViewer(catalog, static _ => new PrintViewer(), detection);
+
+        var facts = await viewer.Probe(TestContext.Current.CancellationToken);
+
+        Expect.Equal("config-invalid", facts.Problem);
+        Expect.True(facts.Detail is { Line: null } detail && detail.Reason.Contains("bogus-terminal", StringComparison.Ordinal));
     }
 
     [Fact]

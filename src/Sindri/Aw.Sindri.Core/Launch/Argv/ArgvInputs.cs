@@ -19,7 +19,7 @@ public sealed record ArgvInputs(
     string RepoPath,
     string SessionName,
     string Seed,
-    Sessions.SessionId? SessionId = null,
+    SessionId? SessionId = null,
     string? McpConfigPath = null,
     StepArgs? Step = null,
     string? PolicyFilePath = null);

@@ -85,26 +85,42 @@ public sealed class LauncherTests : IDisposable
     }
 
     [Fact]
-    public async Task The_secret_hash_is_a_0600_file_deleted_on_stop_and_the_secret_is_only_in_the_env()
+    public async Task The_secret_is_in_a_0600_file_beside_its_hash_and_never_in_what_the_host_is_given()
     {
         var launcher = Make();
         var request = A.LaunchRequest().Build();
 
         var started = (StartedLaunch)await launcher.Launch(request, CancellationToken.None);
 
-        var env = _host.Started.Single().Env;
-        var file = Path.Combine(Options.SecretsDirectory, request.Launch.Value + ".hash");
-        var secret = env["AW_SINDRI_LAUNCH_SECRET"];
-        Expect.Equal("sha256:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(secret))), (await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken)).Trim());
-        Expect.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(file));
-        Expect.Equal("1", env["AW_SINDRI_CHILD"]);
-        Expect.Equal(request.Launch.Value, env["AW_SINDRI_LAUNCH"]);
-        Expect.True(!_host.Started.Single().Argv.Any(a => a.Contains(secret, StringComparison.Ordinal)));
+        var session = _host.Started.Single();
+        var hashFile = Path.Combine(Options.SecretsDirectory, request.Launch.Value + ".hash");
+        var secretFile = Path.Combine(Options.SecretsDirectory, request.Launch.Value + ".secret");
+        var secret = (await File.ReadAllTextAsync(secretFile, TestContext.Current.CancellationToken)).Trim();
+        Expect.Equal("sha256:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(secret))), (await File.ReadAllTextAsync(hashFile, TestContext.Current.CancellationToken)).Trim());
+        Expect.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(secretFile));
+        Expect.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(hashFile));
+        Expect.Equal(secretFile, session.Env["AW_SINDRI_LAUNCH_SECRET_FILE"]);
+        Expect.True(!session.Env.ContainsKey("AW_SINDRI_LAUNCH_SECRET"));
+        Expect.Equal("1", session.Env["AW_SINDRI_CHILD"]);
+        Expect.Equal(request.Launch.Value, session.Env["AW_SINDRI_LAUNCH"]);
+        Expect.True(!session.Argv.Any(a => a.Contains(secret, StringComparison.Ordinal)) && !session.Env.Values.Any(v => v.Contains(secret, StringComparison.Ordinal)));
         Expect.True(!started.ToString().Contains(secret, StringComparison.Ordinal));
 
         _ = await launcher.Stop(request.Launch, CancellationToken.None);
 
-        Expect.True(!File.Exists(file));
+        Expect.True(!File.Exists(hashFile) && !File.Exists(secretFile));
+    }
+
+    [Fact]
+    public async Task A_resume_runs_the_resume_template_with_the_session_it_was_given()
+    {
+        var id = Core.Ids.SessionId.From("0b1f6c3e-52d4-4c7a-9a58-3d1e7f9a2b10");
+        var request = A.LaunchRequest().Resuming(id).Build();
+
+        _ = await Make().Launch(request, CancellationToken.None);
+
+        var argv = _host.Started.Single().Argv;
+        Expect.Sequence(["claude", "--resume", id.Value], [.. argv.SkipWhile(a => a != "--").Skip(1).Take(3)]);
     }
 
     [Fact]
@@ -194,7 +210,7 @@ public sealed class LauncherTests : IDisposable
         var rule = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken)).RootElement;
         Expect.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(file));
         Expect.Equal((codex.SessionIdPattern, codex.ReportedNewestFile, codex.IdCapture), (rule.GetProperty("sessionIdPattern").GetString(), rule.GetProperty("newestFile").GetString(), rule.GetProperty("capture").GetString()));
-        Expect.True(!(await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken)).Contains(_host.Started.Single().Env["AW_SINDRI_LAUNCH_SECRET"], StringComparison.Ordinal));
+        Expect.True(!(await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken)).Contains((await File.ReadAllTextAsync(Options.SecretsDirectory + "/" + request.Launch.Value + ".secret", TestContext.Current.CancellationToken)).Trim(), StringComparison.Ordinal));
 
         _ = await launcher.Stop(request.Launch, CancellationToken.None);
 

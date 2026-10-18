@@ -74,7 +74,7 @@ internal static class LaunchTargetScenarios
     {
         "file-exec-template" => new("exec-template", "kitty", Present: true, "file", "/home/demo/.agentic-workflow/launcher.json", Problem: null, Detail: null),
         "print" => new("print", "Print", Present: true, "detected", "/home/demo/.agentic-workflow/launcher.json", Problem: null, Detail: null),
-        "config-invalid" => new("print", "Print", Present: false, "detected", "/home/demo/.agentic-workflow/launcher.json", "config-invalid", "line 4: viewer.argv must contain {attach}"),
+        "config-invalid" => new("print", "Print", Present: false, "detected", "/home/demo/.agentic-workflow/launcher.json", "config-invalid", new TerminalDetail(4, "viewer.argv must contain {attach}")),
         "no-gui" => new("exec-template", "xterm", Present: false, "detected", "/home/demo/.agentic-workflow/launcher.json", "no-gui-session", Detail: null),
         _ => new("exec-template", "xterm", Present: true, "detected", "/home/demo/.agentic-workflow/launcher.json", Problem: null, Detail: null),
     };

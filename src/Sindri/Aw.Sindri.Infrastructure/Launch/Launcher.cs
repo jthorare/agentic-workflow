@@ -2,9 +2,9 @@ using System.Collections.Concurrent;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 using HostKind = Aw.Sindri.Core.Launch.HostKind;
 
@@ -172,7 +172,7 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
             WriteCaptureRule(request.Launch, entry);
             var secret = LaunchSecrets.Mint();
             LaunchSecrets.Write(parts.Options.SecretsDirectory, request.Launch, secret);
-            return new Prepared(workDir, composed.Value.Argv, Environment(request, secret), composed.Value.Session?.Value);
+            return new Prepared(workDir, composed.Value.Argv, Environment(request), composed.Value.Session?.Value);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -186,7 +186,7 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
         var policyPath = step?.Policy is { } policy && entry.PolicyForm == PolicyForm.ClaudeSettingsFile
             ? StepPolicyFile.Write(parts.Options.PolicyDirectory, request.Launch, policy)
             : null;
-        var session = PreChosen(entry);
+        var session = request.Mode == LaunchMode.Resume && request.Resume is { } resumed ? resumed : PreChosen(entry);
         var seed = ArgvBuilder.Seed(request.Item) + (step is null ? string.Empty : $" This is the {step.Ref.State} step, block {step.Ref.Block}.");
         var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), parts.Options.LaunchDirectory, request.Launch);
         var built = ArgvBuilder.Build(entry, request.Mode, new ArgvInputs(request.Item, workDir, SessionName(request.Launch), seed, session, mcpPath, step, policyPath));
@@ -215,14 +215,14 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
         OwnerOnly.WriteAtomically(Path.Combine(parts.Options.LaunchesDirectory, LaunchFiles.CaptureName(launch)), AwJson.Serialize(rule, _captureJson));
     }
 
-    private Dictionary<string, string> Environment(LaunchRequest request, string secret)
+    private Dictionary<string, string> Environment(LaunchRequest request)
     {
         var env = new Dictionary<string, string>(StepEnvironment.For(request), StringComparer.Ordinal)
         {
             ["AW_SINDRI_CHILD"] = "1",
             ["AW_SINDRI_ITEM"] = request.Item.Value,
             ["AW_SINDRI_LAUNCH"] = request.Launch.Value,
-            ["AW_SINDRI_LAUNCH_SECRET"] = secret,
+            ["AW_SINDRI_LAUNCH_SECRET_FILE"] = LaunchSecrets.SecretPathFor(parts.Options.SecretsDirectory, request.Launch),   // the path only: the secret itself never sits in a tmux command line
         };
         if (parts.Options.SindriHome is { } home)
         {

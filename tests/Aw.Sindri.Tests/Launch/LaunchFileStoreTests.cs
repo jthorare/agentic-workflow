@@ -66,6 +66,21 @@ public sealed class LaunchFileStoreTests : LaunchFilesContract, IDisposable
     }
 
     [Fact]
+    public void Startup_sweep_removes_a_secret_file_no_wrap_ever_read_but_not_a_live_launchs()
+    {
+        var now = KnownInstants.Epoch.AddHours(1);
+        var files = Create();
+        LaunchSecrets.Write(Options.SecretsDirectory, A.FirstLaunchId, "never-read");
+        LaunchSecrets.Write(Options.SecretsDirectory, Second, "still-needed");
+        File.SetLastWriteTimeUtc(LaunchSecrets.SecretPathFor(Options.SecretsDirectory, A.FirstLaunchId), now.AddMinutes(-5).UtcDateTime);
+        File.SetLastWriteTimeUtc(LaunchSecrets.SecretPathFor(Options.SecretsDirectory, Second), now.AddMinutes(-5).UtcDateTime);
+
+        var removed = files.SweepStale(now, TimeSpan.FromSeconds(60), static launch => launch.Equals(Second));
+
+        Expect.Equal((1, false, true), (removed, File.Exists(LaunchSecrets.SecretPathFor(Options.SecretsDirectory, A.FirstLaunchId)), File.Exists(LaunchSecrets.SecretPathFor(Options.SecretsDirectory, Second))));
+    }
+
+    [Fact]
     public void Startup_sweep_keeps_the_files_of_a_launch_with_a_live_session()
     {
         var now = KnownInstants.Epoch.AddHours(1);

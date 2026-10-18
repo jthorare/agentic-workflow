@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Host.Commands.SessionWrap;
 using Aw.Sindri.Testing;
@@ -93,6 +94,37 @@ public sealed class SessionWrapTests : IDisposable
 
         Expect.True(!_children.Child.Killed);
         Expect.Equal(0, code);
+    }
+
+    [Fact]
+    public async Task The_secret_file_is_read_once_deleted_and_the_secret_reaches_the_agent_only()
+    {
+        var file = Path.Combine(Path.GetTempPath(), "wrap-secret-" + RealTime.NewGuid().ToString("N"));
+        await File.WriteAllTextAsync(file, "from-the-file\n", TestContext.Current.CancellationToken);
+        _ = _env.Remove("AW_SINDRI_LAUNCH_SECRET");
+        _env["AW_SINDRI_LAUNCH_SECRET_FILE"] = file;
+        var run = Command().Run(Args, TestContext.Current.CancellationToken);
+
+        var code = await Finish(run, 0);
+
+        Expect.Equal(0, code);
+        Expect.True(!File.Exists(file));
+        Expect.Equal("from-the-file", _children.Environment!["AW_SINDRI_LAUNCH_SECRET"]);
+        Expect.True(!_children.Environment.ContainsKey("AW_SINDRI_LAUNCH_SECRET_FILE"));
+        Expect.Equal("from-the-file", _calls.Exits.Single().Proof);
+    }
+
+    [Fact]
+    public async Task A_missing_secret_file_means_no_secret_and_no_heartbeats()
+    {
+        _ = _env.Remove("AW_SINDRI_LAUNCH_SECRET");
+        _env["AW_SINDRI_LAUNCH_SECRET_FILE"] = Path.Combine(Path.GetTempPath(), "no-such-wrap-secret-" + RealTime.NewGuid().ToString("N"));
+        var run = Command().Run(Args, TestContext.Current.CancellationToken);
+
+        _ = await Finish(run, 0);
+
+        Expect.True(_errors.ToString().Contains("AW_SINDRI_LAUNCH_SECRET is not set", StringComparison.Ordinal));
+        Expect.True(_calls.Beats.Count == 0 && _calls.Exits.Count == 0 && !_children.Environment!.ContainsKey("AW_SINDRI_LAUNCH_SECRET"));
     }
 
     [Fact]

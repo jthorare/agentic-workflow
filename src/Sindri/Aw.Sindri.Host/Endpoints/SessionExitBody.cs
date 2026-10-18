@@ -1,4 +1,4 @@
-using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Host.Endpoints;
 

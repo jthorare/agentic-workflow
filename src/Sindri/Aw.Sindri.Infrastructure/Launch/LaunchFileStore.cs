@@ -70,7 +70,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live);
+        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live);
         if (!Directory.Exists(options.LaunchesDirectory))
         {
             return removed;
@@ -80,6 +80,27 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         {
             var match = PerLaunch.Match(Path.GetFileName(file));
             if (match.Success && LaunchId.TryParse(match.Groups["launch"].Value, provider: null, out var launch)
+                && now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > olderThan && !live(launch) && TryDelete(file))
+            {
+                removed++;
+            }
+        }
+
+        return removed;
+    }
+
+    /// <summary>Deletes secret files that no wrap read (it never ran): older than the limit and not of a live launch.</summary>
+    private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
+    {
+        if (!Directory.Exists(options.SecretsDirectory))
+        {
+            return 0;
+        }
+
+        var removed = 0;
+        foreach (var file in Directory.EnumerateFiles(options.SecretsDirectory, "*.secret"))
+        {
+            if (LaunchId.TryParse(Path.GetFileNameWithoutExtension(file), provider: null, out var launch)
                 && now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > olderThan && !live(launch) && TryDelete(file))
             {
                 removed++;

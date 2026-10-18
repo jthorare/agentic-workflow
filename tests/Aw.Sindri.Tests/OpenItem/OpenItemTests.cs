@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Items;
 using Aw.Sindri.Features.OpenItem;

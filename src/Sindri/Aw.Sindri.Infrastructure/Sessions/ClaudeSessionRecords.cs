@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Infrastructure.Sessions;

@@ -20,5 +20,5 @@ public interface IUsageReader
     /// <param name="session">The agent's session id.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per model; empty when the session's transcript isn't there.</returns>
-    public ValueTask<IReadOnlyList<ModelTokens>> OfSession(Sessions.SessionId session, CancellationToken cancellationToken);
+    public ValueTask<IReadOnlyList<ModelTokens>> OfSession(Ids.SessionId session, CancellationToken cancellationToken);
 }

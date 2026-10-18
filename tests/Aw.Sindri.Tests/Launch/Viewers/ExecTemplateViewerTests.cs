@@ -179,6 +179,6 @@ public sealed class ExecTemplateViewerTests : TerminalViewerContract, IDisposabl
 
         var facts = await viewer.Probe(TestContext.Current.CancellationToken);
 
-        Expect.True(facts.Present && facts.Detail!.Contains("{title}", StringComparison.Ordinal));
+        Expect.True(facts.Present && facts.Detail!.Reason.Contains("{title}", StringComparison.Ordinal));
     }
 }

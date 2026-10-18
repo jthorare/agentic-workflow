@@ -7,5 +7,5 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="Source">'file' when launcher.json chose it, else 'detected'.</param>
 /// <param name="ConfigPath">The resolved launcher.json path (also when the file is missing), or null.</param>
 /// <param name="Problem">Why it can't open ('not-installed', 'no-gui-session', 'config-invalid'), or null.</param>
-/// <param name="Detail">For 'config-invalid': the line and reason, or null.</param>
-public sealed record TerminalFacts(string Kind, string Label, bool Present, string Source, string? ConfigPath, string? Problem, string? Detail);
+/// <param name="Detail">For 'config-invalid': the line (when the reader has one) and the reason; for a template without {title}, the note; else null.</param>
+public sealed record TerminalFacts(string Kind, string Label, bool Present, string Source, string? ConfigPath, string? Problem, TerminalDetail? Detail);

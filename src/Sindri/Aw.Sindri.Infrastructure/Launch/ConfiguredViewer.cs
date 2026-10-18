@@ -38,7 +38,8 @@ internal sealed class ConfiguredViewer(ReloadingAgentCatalog catalog, Func<Viewe
         var (viewer, source) = await Current(cancellationToken).ConfigureAwait(false);
         var facts = await viewer.Probe(cancellationToken).ConfigureAwait(false);
         var invalid = config.Unusable || config.AttendedProblems.Count > 0;
-        var detail = invalid ? (config.ProblemLine > 0 ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"line {config.ProblemLine}: ") : string.Empty) + (config.Problem ?? (config.AttendedProblems.Count > 0 ? config.AttendedProblems[0] : null)) : facts.Detail;
+        var reason = config.Problem ?? (config.AttendedProblems.Count > 0 ? config.AttendedProblems[0] : null);
+        var detail = invalid && reason is not null ? new TerminalDetail(config.ProblemLine > 0 ? config.ProblemLine : null, reason) : invalid ? null : facts.Detail;
         return facts with { Source = source, ConfigPath = catalog.Path, Problem = invalid ? "config-invalid" : facts.Problem, Detail = detail };
     }
 

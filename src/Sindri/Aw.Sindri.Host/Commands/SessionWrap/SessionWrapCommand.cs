@@ -1,6 +1,6 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Host.Commands.SessionWrap;
@@ -25,9 +25,11 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
     private static readonly TimeSpan _exitRetry = TimeSpan.FromSeconds(1);
     private const int ExitAttempts = 3;
     private SessionId? _found;
+    private Func<string, string?>? _resolved;
 
     internal async Task<int> Run(string[] args, CancellationToken cancellationToken)
     {
+        _resolved = WithSecretFromFile(environment);
         var (failed, begunLaunch, started) = await Begin(args).ConfigureAwait(false);
         if (failed is { } failure)
         {
@@ -36,7 +38,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
 
         using var child = started!;   // why: a start without a failure code has a child
         var launch = begunLaunch!.Value;   // why: set with the child
-        var proof = environment("AW_SINDRI_LAUNCH_SECRET") is { Length: > 0 } value ? new LaunchSecret(value) : (LaunchSecret?)null;
+        var proof = Env("AW_SINDRI_LAUNCH_SECRET") is { Length: > 0 } value ? new LaunchSecret(value) : (LaunchSecret?)null;
         if (proof is null)
         {
             await errors.WriteLineAsync("AW_SINDRI_LAUNCH_SECRET is not set: this session sends no heartbeats").ConfigureAwait(false);
@@ -58,6 +60,33 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
 
         return code;
+    }
+
+    private string? Env(string name) => (_resolved ?? environment)(name);
+
+    /// <summary>
+    /// The launcher never puts the launch secret in a command line: it names a 0600 file (AW_SINDRI_LAUNCH_SECRET_FILE). The file is read once and deleted, and the
+    /// secret joins the environment the agent gets (and wrap's own proof). An AW_SINDRI_LAUNCH_SECRET already set wins; a missing or unreadable file means no secret.
+    /// </summary>
+    private static Func<string, string?> WithSecretFromFile(Func<string, string?> environment)
+    {
+        if (environment("AW_SINDRI_LAUNCH_SECRET") is { Length: > 0 } || environment("AW_SINDRI_LAUNCH_SECRET_FILE") is not { Length: > 0 } path)
+        {
+            return environment;
+        }
+
+        string? secret = null;
+        try
+        {
+            secret = File.ReadAllText(path).Trim();
+            File.Delete(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // no file, no secret: wrap says so and sends no heartbeats
+        }
+
+        return name => string.Equals(name, "AW_SINDRI_LAUNCH_SECRET", StringComparison.Ordinal) ? secret : environment(name);
     }
 
     /// <summary>Waits for the agent. A hang-up (the terminal closed) is also sent to the agent by the kernel, but an agent that doesn't read its terminal can outlive it; after the grace it is killed, so the session ends and its exit is reported.</summary>
@@ -85,13 +114,13 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
 
         var (launch, argv) = (parsed.Value.Launch, parsed.Value.Argv);
-        if (!BinOnPath.Resolves(argv[0], environment("PATH")))
+        if (!BinOnPath.Resolves(argv[0], Env("PATH")))
         {
             await errors.WriteLineAsync($"{argv[0]} not found ({SindriErrors.LaunchAgentMissing.Code}): install it, or run `sindri launch show` to see the catalog").ConfigureAwait(false);
             return (127, launch, null);
         }
 
-        var started = children.Start(argv, WrapEnvironment.For(launch, environment));
+        var started = children.Start(argv, WrapEnvironment.For(launch, Env));
         if (started.IsError)
         {
             await errors.WriteLineAsync($"{started.Error.Code}: {started.Error.Message}").ConfigureAwait(false);

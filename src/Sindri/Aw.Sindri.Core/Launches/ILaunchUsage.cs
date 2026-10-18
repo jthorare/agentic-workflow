@@ -10,5 +10,5 @@ public interface ILaunchUsage
     /// <param name="session">The agent's session id.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The rows, or null when the agent has no usage reader.</returns>
-    public ValueTask<IReadOnlyList<ModelTokens>?> OfSession(AgentId target, Sessions.SessionId session, CancellationToken cancellationToken);
+    public ValueTask<IReadOnlyList<ModelTokens>?> OfSession(AgentId target, Ids.SessionId session, CancellationToken cancellationToken);
 }

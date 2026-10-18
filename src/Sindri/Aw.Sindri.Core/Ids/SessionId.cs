@@ -4,7 +4,7 @@ using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Vogen;
 
-namespace Aw.Sindri.Core.Sessions;
+namespace Aw.Sindri.Core.Ids;
 
 /// <summary>
 /// An agent's session id (collector spec §2; launcher spec L-9's generic pattern): 1 to 128 of letters, digits, '.', '_', ':' and '-',

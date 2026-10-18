@@ -51,7 +51,7 @@ internal sealed class ExecTemplateViewer(ExecTemplateOptions options, ISessionHo
         var problem = !found ? "not-installed" : gui ? null : "no-gui-session";
         var detail = options.Argv.Any(a => a.Contains("{title}", StringComparison.Ordinal))
             ? null
-            : "the template has no {title}: windows open untitled";
+            : new TerminalDetail(Line: null, "the template has no {title}: windows open untitled");
         return new TerminalFacts(Kind, options.Name, problem is null, "file", ConfigPath: null, problem, detail);
     }
 

@@ -334,7 +334,7 @@ public sealed class LauncherServiceTests
     {
         await Boot();
         using var caller = _rig.Caller();
-        var chosen = Core.Sessions.SessionId.From("0198f2a1-0000-7000-8000-000000000001");
+        var chosen = Core.Ids.SessionId.From("0198f2a1-0000-7000-8000-000000000001");
         _rig.Launcher.PreChosenSession = chosen;
 
         Assert.True(await _rig.Launch(await Filed(_a)));

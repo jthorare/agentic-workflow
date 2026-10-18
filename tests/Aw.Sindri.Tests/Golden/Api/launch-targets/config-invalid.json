@@ -8,7 +8,10 @@
     "source": "detected",
     "configPath": "/home/demo/.agentic-workflow/launcher.json",
     "problem": "config-invalid",
-    "detail": "line 4: viewer.argv must contain {attach}"
+    "detail": {
+      "line": 4,
+      "reason": "viewer.argv must contain {attach}"
+    }
   },
   "host": {
     "kind": "tmux",

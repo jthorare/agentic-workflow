@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 using static Aw.Sindri.Tests.Sessions.SessionData;
 

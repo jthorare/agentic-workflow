@@ -35,7 +35,7 @@ public sealed class FakeLauncher : ILauncher
     public void FailNextWith(Error error, LaunchStage stage = LaunchStage.Host) => _nextFailure = (error, stage);
 
     /// <summary>The session id every new launch reports as chosen before it started, or null (an agent whose id is reported later).</summary>
-    public Core.Sessions.SessionId? PreChosenSession { get; set; }
+    public Core.Ids.SessionId? PreChosenSession { get; set; }
 
     /// <summary>When set, 'Launch' waits for it (and its caller's cancellation) before answering: a launch that is still running.</summary>
     public Task? Hold { get; set; }

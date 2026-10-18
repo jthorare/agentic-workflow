@@ -2692,7 +2692,7 @@ Aw.Sindri.Features.GetLaunch.LaunchView.Target.init -> void
 Aw.Sindri.Features.OpenItem.OpenItemRequest.Target.get -> Aw.Sindri.Core.Launch.AgentId?
 Aw.Sindri.Features.OpenItem.LaunchRequested.Launch.init -> void
 Aw.Sindri.Features.OpenItem.LaunchRequested.Target.get -> Aw.Sindri.Core.Launch.AgentId
-Aw.Sindri.Features.GetLaunch.LaunchView.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.GetLaunch.LaunchView.SessionId.get -> Aw.Sindri.Core.Ids.SessionId?
 Aw.Sindri.Features.GetLaunch.LaunchView.Code.init -> void
 Aw.Sindri.Features.OpenItem.OpenItemRequest.Mode.init -> void
 Aw.Sindri.Features.OpenItem.LaunchRequested.Equals(Aw.Sindri.Features.OpenItem.LaunchRequested? other) -> bool
@@ -2716,8 +2716,8 @@ Aw.Sindri.Features.OpenItem.LaunchRequested.Accepted.init -> void
 Aw.Sindri.Features.GetLaunch.LaunchView.Late.init -> void
 Aw.Sindri.Features.GetLaunch.LaunchView.State.get -> Aw.Sindri.Core.Launches.LaunchState
 Aw.Sindri.Features.GetLaunch.LaunchView.Ended.get -> Aw.Sindri.Core.Launches.LaunchEnd?
-Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Sessions.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
-Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Sessions.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.Launching.PendingLaunch
 Aw.Sindri.Features.Launching.PendingLaunch.<Clone>$() -> Aw.Sindri.Features.Launching.PendingLaunch!
 Aw.Sindri.Features.Launching.PendingLaunch.At.get -> System.DateTimeOffset
@@ -2800,23 +2800,23 @@ override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.GetHashC
 override Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.ToString() -> string!
 static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.operator !=(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? right) -> bool
 static Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult.operator ==(Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? left, Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsResult? right) -> bool
-Aw.Sindri.Features.SessionExit.SessionExitRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out int ExitCode, out Aw.Sindri.Core.Sessions.SessionId? SessionId) -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out int ExitCode, out Aw.Sindri.Core.Ids.SessionId? SessionId) -> void
 Aw.Sindri.Features.SessionExit.SessionExitRequest.ExitCode.get -> int
 Aw.Sindri.Features.SessionExit.SessionExitRequest.ExitCode.init -> void
 Aw.Sindri.Features.SessionExit.SessionExitRequest.Secret.get -> Aw.Sindri.Core.Launches.LaunchSecret
 Aw.Sindri.Features.SessionExit.SessionExitRequest.Secret.init -> void
-Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionExitRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, int ExitCode, Aw.Sindri.Core.Sessions.SessionId? SessionId = null) -> void
-Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionExitRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, int ExitCode, Aw.Sindri.Core.Ids.SessionId? SessionId = null) -> void
+Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionId.get -> Aw.Sindri.Core.Ids.SessionId?
 Aw.Sindri.Features.SessionExit.SessionExitRequest.SessionId.init -> void
 Aw.Sindri.Features.SessionExit.SessionExitResponse.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
 Aw.Sindri.Features.SessionExit.SessionExitResponse.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
 Aw.Sindri.Features.SessionExit.SessionExitResponse.Launch.init -> void
 Aw.Sindri.Features.SessionExit.SessionExitResponse.SessionExitResponse(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
-Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out Aw.Sindri.Core.Sessions.SessionId? SessionId) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, out Aw.Sindri.Core.Launches.LaunchSecret Secret, out Aw.Sindri.Core.Ids.SessionId? SessionId) -> void
 Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Secret.get -> Aw.Sindri.Core.Launches.LaunchSecret
 Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.Secret.init -> void
-Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionHeartbeatRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, Aw.Sindri.Core.Sessions.SessionId? SessionId = null) -> void
-Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionId.get -> Aw.Sindri.Core.Sessions.SessionId?
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionHeartbeatRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId LaunchId, Aw.Sindri.Core.Launches.LaunchSecret Secret, Aw.Sindri.Core.Ids.SessionId? SessionId = null) -> void
+Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionId.get -> Aw.Sindri.Core.Ids.SessionId?
 Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatRequest.SessionId.init -> void
 Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch) -> void
 Aw.Sindri.Features.SessionHeartbeat.SessionHeartbeatResponse.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId

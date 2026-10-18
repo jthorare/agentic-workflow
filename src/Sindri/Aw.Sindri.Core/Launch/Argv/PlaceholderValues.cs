@@ -15,6 +15,6 @@ public sealed record PlaceholderValues(
     string Title,
     string Name,
     string Seed,
-    Sessions.SessionId? SessionId = null,
+    Ids.SessionId? SessionId = null,
     string? McpConfig = null,
     IReadOnlyList<string>? Cmd = null);

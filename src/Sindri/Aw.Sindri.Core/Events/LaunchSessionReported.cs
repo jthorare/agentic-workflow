@@ -1,4 +1,4 @@
-using Aw.Sindri.Core.Sessions;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Events;
