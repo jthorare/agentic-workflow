@@ -34,5 +34,7 @@
   <ItemGroup>
     <None Include="../Aw.Sindri.Tests/Golden/Api/**/*.json" Link="Golden/Api/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Golden/SpecShaped/**/*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The sandbox goldens (sandbox spec §8, SB-0): the owner-voice copy, the states and the accessibility rows SB-6 builds its views over. -->
+    <None Include="../Aw.Sindri.Tests/Golden/Sandbox/**/*" Link="Golden/Sandbox/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -2572,7 +2572,6 @@ override Aw.Sindri.Features.ContextCalls.BacktestArmScore.GetHashCode() -> int
 override Aw.Sindri.Features.ContextCalls.BacktestArmScore.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.BacktestArmScore.operator !=(Aw.Sindri.Features.ContextCalls.BacktestArmScore? left, Aw.Sindri.Features.ContextCalls.BacktestArmScore? right) -> bool
 static Aw.Sindri.Features.ContextCalls.BacktestArmScore.operator ==(Aw.Sindri.Features.ContextCalls.BacktestArmScore? left, Aw.Sindri.Features.ContextCalls.BacktestArmScore? right) -> bool
-
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Deconstruct(out string? From, out string? To, out string? Trigger, out string? Outcome, out string? Run, out string? Via, out string? Decision) -> void
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.InstanceEventFields(string? From = null, string? To = null, string? Trigger = null, string? Outcome = null, string? Run = null, string? Via = null, string? Decision = null) -> void
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Via.get -> string?
@@ -2865,8 +2864,6 @@ static Aw.Sindri.Features.ApproveProfile.StepArgvEntry.operator !=(Aw.Sindri.Fea
 static Aw.Sindri.Features.ApproveProfile.StepArgvEntry.operator ==(Aw.Sindri.Features.ApproveProfile.StepArgvEntry? left, Aw.Sindri.Features.ApproveProfile.StepArgvEntry? right) -> bool
 static Aw.Sindri.Features.ApproveProfile.StepArgvLine.operator !=(Aw.Sindri.Features.ApproveProfile.StepArgvLine? left, Aw.Sindri.Features.ApproveProfile.StepArgvLine? right) -> bool
 static Aw.Sindri.Features.ApproveProfile.StepArgvLine.operator ==(Aw.Sindri.Features.ApproveProfile.StepArgvLine? left, Aw.Sindri.Features.ApproveProfile.StepArgvLine? right) -> bool
-
-
 Aw.Sindri.Features.GetSession.GetSessionRequest
 Aw.Sindri.Features.GetSession.GetSessionRequest.<Clone>$() -> Aw.Sindri.Features.GetSession.GetSessionRequest!
 Aw.Sindri.Features.GetSession.GetSessionRequest.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRef Ref) -> void
@@ -2987,4 +2984,7 @@ static Aw.Sindri.Features.ListSessions.SessionCounts.operator !=(Aw.Sindri.Featu
 static Aw.Sindri.Features.ListSessions.SessionCounts.operator ==(Aw.Sindri.Features.ListSessions.SessionCounts? left, Aw.Sindri.Features.ListSessions.SessionCounts? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator !=(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator ==(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
-
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.init -> void

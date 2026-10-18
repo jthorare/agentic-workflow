@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Sandbox;
+
 namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
@@ -9,4 +12,12 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="AllowedTools">The tools the Step may use; empty means the CLI's read-only defaults for the mode.</param>
 /// <param name="Mode">The permission mode; never bypass or full access.</param>
 /// <param name="WritablePath">The one path the Step may write (its worktree or Step directory), or null for none.</param>
-public sealed record StepPolicy(IReadOnlyList<string> AllowedTools, StepPermissionMode Mode, string? WritablePath);
+/// <param name="LoginSource">
+/// The model login source the Step asks for (sandbox spec SB18, owner note 4): a stricter one than the profile gives, never a looser.
+/// Null means no ask and is left out of the JSON. The launcher takes the stricter of the ask and the profile, repo and target value (SB-1/SB-5a).
+/// </param>
+public sealed record StepPolicy(
+    IReadOnlyList<string> AllowedTools,
+    StepPermissionMode Mode,
+    string? WritablePath,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelLoginSource? LoginSource = null);

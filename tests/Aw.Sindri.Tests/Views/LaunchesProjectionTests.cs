@@ -24,6 +24,41 @@ public sealed class LaunchesProjectionTests
     private async Task<LaunchRow?> Row() => (await _v.Views.Get<LaunchRow>(ViewNames.Launches, A.FirstLaunchId.Value, Token)).Value;
 
     [Fact]
+    public async Task A_failure_keeps_its_sandbox_reason_and_source()
+    {
+        await _v.Request();
+        await _v.Fail("SND-LAUNCH-017", reason: "expired", source: "separate-login");
+
+        var row = (await Row())!;
+
+        Expect.Equal(("SND-LAUNCH-017", "expired", "separate-login"), (row.Code, row.Reason, row.Source));
+    }
+
+    [Fact]
+    public async Task A_limit_ending_keeps_its_kind_limit_and_peak()
+    {
+        await _v.Request();
+        await _v.Start();
+        await _v.EndByLimit(new LimitEnd(LimitKind.Memory, 12_884_901_888, 13_000_000_000));
+
+        var ended = (await Row())!.Ended!;
+
+        Expect.Equal((SessionEndReason.Limit, LimitKind.Memory, 12_884_901_888L, 13_000_000_000L), (ended.Reason, ended.Kind, ended.Limit, ended.Peak));
+    }
+
+    [Fact]
+    public async Task An_exit_ending_has_no_limit_fields()
+    {
+        await _v.Request();
+        await _v.Start();
+        await _v.End();
+
+        var ended = (await Row())!.Ended!;
+
+        Expect.Equal((null, null, null), (ended.Kind, ended.Limit, ended.Peak));
+    }
+
+    [Fact]
     public async Task A_request_makes_a_requested_row_with_the_items_repo()
     {
         await _v.Item(_repo);

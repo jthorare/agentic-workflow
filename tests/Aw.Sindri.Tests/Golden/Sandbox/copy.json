@@ -1,0 +1,238 @@
+{
+  "note": "Owner-voice sentence per (code, reason[, source]); `text` is the Step wording, `attendedText` the wording for a session you open yourself (sandbox spec §8). The `command` is the copyable second line. `deskSuffix` is added to every 014 and 017 `text` of a deskCapable Step. `state` marks a card shown gray or as a wait, never red.",
+  "deskSuffix": " Or do it at your desk.",
+  "deskCodes": [
+    "SND-LAUNCH-014",
+    "SND-LAUNCH-017"
+  ],
+  "bannedWords": [
+    "scope",
+    "plan",
+    "canary",
+    "confined"
+  ],
+  "entries": [
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-bwrap",
+      "text": "This machine has no sandbox tool, so this Step can't run by itself. Install bubblewrap (`sudo apt install bubblewrap`), then press Check again.",
+      "attendedText": "This machine has no sandbox tool, so this session can't be opened. Install bubblewrap (`sudo apt install bubblewrap`), then press Check again.",
+      "command": "sudo apt install bubblewrap"
+    },
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-user-namespace",
+      "text": "The system blocks the sandbox tool. Allow bubblewrap in AppArmor, then press Check again.",
+      "attendedText": "The system blocks the sandbox tool. Allow bubblewrap in AppArmor, then press Check again.",
+      "command": "printf 'abi <abi/4.0>,\\ninclude <tunables/global>\\nprofile bwrap /usr/bin/bwrap flags=(unconfined) {\\n  userns,\\n  include if exists <local/bwrap>\\n}\\n' | sudo tee /etc/apparmor.d/bwrap && sudo apparmor_parser -r /etc/apparmor.d/bwrap"
+    },
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-user-manager",
+      "text": "The sandbox needs your user session manager, which isn't running. Run `loginctl enable-linger $USER`, then press Check again.",
+      "attendedText": "The sandbox needs your user session manager, which isn't running. Run `loginctl enable-linger $USER`, then press Check again.",
+      "command": "loginctl enable-linger $USER"
+    },
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-cgroup-controllers",
+      "text": "The system doesn't give your account memory or CPU limits. Enable the missing limit (<which>) in systemd, then press Check again.",
+      "attendedText": "The system doesn't give your account memory or CPU limits. Enable the missing limit (<which>) in systemd, then press Check again."
+    },
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-forwarder",
+      "text": "The sandbox needs `socat` to reach Sindri. Install it, then press Check again.",
+      "attendedText": "The sandbox needs `socat` to reach Sindri. Install it, then press Check again.",
+      "command": "sudo apt install socat"
+    },
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "unsupported-platform",
+      "text": "Steps can't run by themselves on macOS yet.",
+      "attendedText": "Sessions can't be opened in a sandbox on macOS yet.",
+      "state": "gray"
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "form-none",
+      "text": "This agent hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
+      "attendedText": "This agent hasn't been taught how to follow the sandbox's rules, so this session can't be opened. Use Claude Code or Codex, or add its policy setting."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "form-reserved",
+      "text": "This agent hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
+      "attendedText": "This agent hasn't been taught how to follow the sandbox's rules, so this session can't be opened. Use Claude Code or Codex, or add its policy setting."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "tool-not-expressible",
+      "text": "This Step allows `<tool>`, which this agent can't restrict. Change the Step's tools, or use another agent.",
+      "attendedText": "This session allows `<tool>`, which this agent can't restrict. Use another agent."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "bin-denied",
+      "text": "The agent program lives somewhere the sandbox hides (`<path>`). Move or reinstall it somewhere under your home or `/usr`.",
+      "attendedText": "The agent program lives somewhere the sandbox hides (`<path>`). Move or reinstall it somewhere under your home or `/usr`."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "host-not-tmux",
+      "text": "The Step's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then Resume.",
+      "attendedText": "The session's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then open again."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "worktree-outside-repo",
+      "text": "The Step's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then Resume.",
+      "attendedText": "The session's workspace isn't set up the way the sandbox needs. This is a Sindri fault: press Copy details and report it, then open again."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "reason": "no-stored-plan",
+      "text": "This session's sandbox record is gone, so it can't be reopened safely. Start the Step again.",
+      "attendedText": "This session's sandbox record is gone, so it can't be reopened safely. Open a new session."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "fs-deny",
+      "text": "The sandbox could not hide your private files (SSH keys, Sindri's data) from the Step. Open the details, fix what they name, then Check again.",
+      "attendedText": "The sandbox could not hide your private files (SSH keys, Sindri's data) from this session. Open the details, fix what they name, then Check again."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "fs-write",
+      "text": "The sandbox could not give the Step its workspace to write in.",
+      "attendedText": "The sandbox could not give this session its workspace to write in."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "git-ref",
+      "text": "The sandbox could not let the Step commit on its own branch only.",
+      "attendedText": "The sandbox could not let this session commit on its own branch only."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "env",
+      "text": "The sandbox found a secret in the Step's environment.",
+      "attendedText": "The sandbox found a secret in this session's environment."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "hooks-run",
+      "text": "Your safety hooks did not run inside the sandbox (`<which>`).",
+      "attendedText": "Your safety hooks did not run inside the sandbox (`<which>`)."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "net-forward",
+      "text": "The sandbox could not reach Sindri from inside.",
+      "attendedText": "The sandbox could not reach Sindri from inside."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "net-deny",
+      "text": "The sandbox did not stop a connection it should block.",
+      "attendedText": "The sandbox did not stop a connection it should block."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "reason": "login",
+      "text": "The sandbox could not give the Step its sign-in without exposing yours.",
+      "attendedText": "The sandbox could not give this session its sign-in without exposing yours."
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "reason": "no-login",
+      "source": "owner-copy",
+      "text": "Claude Code (or Codex) isn't signed in for Steps. Sign in as yourself, then press Check again.",
+      "attendedText": "Claude Code (or Codex) isn't signed in for sessions you open. Sign in as yourself, then press Check again."
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "reason": "no-login",
+      "source": "separate-login",
+      "text": "Steps have their own Claude Code (or Codex) sign-in, and it's missing or has expired. Run `sindri sandbox login <target>`, then press Check again.",
+      "attendedText": "Sessions have their own Claude Code (or Codex) sign-in, and it's missing or has expired. Run `sindri sandbox login <target>`, then press Check again.",
+      "command": "sindri sandbox login <target>"
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "reason": "expired",
+      "source": "owner-copy",
+      "text": "Claude Code (or Codex) isn't signed in for Steps. Sign in as yourself, then press Check again.",
+      "attendedText": "Claude Code (or Codex) isn't signed in for sessions you open. Sign in as yourself, then press Check again."
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "reason": "expired",
+      "source": "separate-login",
+      "text": "Steps have their own Claude Code (or Codex) sign-in, and it's missing or has expired. Run `sindri sandbox login <target>`, then press Check again.",
+      "attendedText": "Sessions have their own Claude Code (or Codex) sign-in, and it's missing or has expired. Run `sindri sandbox login <target>`, then press Check again.",
+      "command": "sindri sandbox login <target>"
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "reason": "source-unsupported",
+      "text": "The sign-in method chosen for Steps (`<source>`) isn't available for `<target>`. Change `sandbox.login.source` in the profile, then press Check again.",
+      "attendedText": "The sign-in method chosen for sessions (`<source>`) isn't available for `<target>`. Change `sandbox.login.source` in the profile, then press Check again."
+    },
+    {
+      "code": "SND-LAUNCH-018",
+      "reason": "no-key",
+      "text": "Sindri couldn't get a short-lived GitHub token for this Step: the agent GitHub key is missing. Retry the Step, or do it at your desk.",
+      "attendedText": "Sindri couldn't get a short-lived GitHub token for this session: the agent GitHub key is missing. Retry the session."
+    },
+    {
+      "code": "SND-LAUNCH-018",
+      "reason": "http-<status>",
+      "text": "Sindri couldn't get a short-lived GitHub token for this Step: GitHub refused the request (`<status>`). Retry the Step, or do it at your desk.",
+      "attendedText": "Sindri couldn't get a short-lived GitHub token for this session: GitHub refused the request (`<status>`). Retry the session."
+    },
+    {
+      "code": "SND-LAUNCH-018",
+      "reason": "no-network",
+      "text": "Sindri couldn't get a short-lived GitHub token for this Step: there is no network to GitHub. Retry the Step, or do it at your desk.",
+      "attendedText": "Sindri couldn't get a short-lived GitHub token for this session: there is no network to GitHub. Retry the session."
+    },
+    {
+      "code": "SND-LAUNCH-019",
+      "reason": "memory",
+      "text": "This Step ran out of memory (`<limit>`) after `<time>`. Its work so far is kept on branch `<name>`. Raise `sandbox.limits.memory` in the profile (now `<limit>`; for example `<1.5 ×>`; a re-approval), then run the Step again; or do it at your desk.",
+      "attendedText": "This session ran out of memory (`<limit>`) after `<time>`. Raise `sandbox.limits.memory` in the profile (now `<limit>`; for example `<1.5 ×>`; a re-approval), then open again."
+    },
+    {
+      "code": "SND-LAUNCH-019",
+      "reason": "wall",
+      "text": "This Step ran out of time after `<time>`. Its work so far is kept on branch `<name>`. Run it again, or do it at your desk.",
+      "attendedText": "This session ran out of time after `<time>`. Open it again."
+    },
+    {
+      "code": "SND-LAUNCH-020",
+      "reason": "sessions",
+      "text": "Waiting for a free session slot (`<n>` of `<cap>` running). This Step starts by itself.",
+      "attendedText": "No free session slot (`<n>` of `<cap>` running). Close one, then open again.",
+      "state": "wait"
+    },
+    {
+      "code": "SND-LAUNCH-021",
+      "reason": "install-failed",
+      "text": "Sindri couldn't prepare this repo's packages for the Step (the install failed). Open the details, fix what they name, then run the Step again; or do it at your desk.",
+      "attendedText": "Sindri couldn't prepare this repo's packages for the session (the install failed). Open the details, fix what they name, then open again."
+    },
+    {
+      "code": "SND-LAUNCH-021",
+      "reason": "lockfile-missing",
+      "text": "Sindri couldn't prepare this repo's packages for the Step (a package list is missing). Open the details, fix what they name, then run the Step again; or do it at your desk.",
+      "attendedText": "Sindri couldn't prepare this repo's packages for the session (a package list is missing). Open the details, fix what they name, then open again."
+    },
+    {
+      "code": "SND-LAUNCH-021",
+      "reason": "timeout",
+      "text": "Sindri couldn't prepare this repo's packages for the Step (it took too long). Open the details, fix what they name, then run the Step again; or do it at your desk.",
+      "attendedText": "Sindri couldn't prepare this repo's packages for the session (it took too long). Open the details, fix what they name, then open again."
+    }
+  ]
+}

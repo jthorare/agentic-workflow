@@ -31,4 +31,13 @@ namespace Aw.Sindri.Features.GetLaunch;
 /// <param name="AsOf">How fresh the answer is.</param>
 public sealed record LaunchView(LaunchId Id, ItemId Item, LaunchMode Mode, LaunchState State, AgentId Target, string ChosenBy, DateTimeOffset RequestedAt,
     DateTimeOffset? OutcomeAt, string? Code, string? Detail, LaunchStage? Stage, SessionId? SessionId, string? TabTitle, LaunchViewer? Viewer, bool Late,
-    IReadOnlyList<string>? Attach, CatalogSource? CatalogSource, string? ArgvHash, LaunchEnd? Ended, AsOf AsOf);
+    IReadOnlyList<string>? Attach, CatalogSource? CatalogSource, string? ArgvHash, LaunchEnd? Ended, AsOf AsOf)
+{
+    /// <summary>The failure's sandbox reason (SND-LAUNCH-014 to -021), left out otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; init; }
+
+    /// <summary>The failure's credential source (SND-LAUNCH-017), left out otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Source { get; init; }
+}

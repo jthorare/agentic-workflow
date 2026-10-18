@@ -39,7 +39,7 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        Services(profile.Services) ?? Workflow(profile) ?? Globs(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents);
+        Services(profile.Services) ?? Workflow(profile) ?? Globs(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SandboxRules.Check(profile.Sandbox);
 
     /// <summary>The 'launch:' keys: the confirm window is a duration, and a repo has a name. Agent ids are checked by pattern when read, never against the catalog.</summary>
     private static Error? LaunchKeys(LaunchSettings? launch)

@@ -676,6 +676,14 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-LAUNCH-012` | The agent entry isn't approved for unattended Steps: `detail.reason` is `not-approved` or `hash-changed`, with the `current` and `approved` hashes (403; launcher SL8; API P10a) |
 | `SND-LAUNCH-013` | A Step asked for a model or a policy and the entry's matching form is `none`; nothing launches (400; launcher L-17; API P10a) |
 | `SND-LAUNCH-011` | `launcher.json` (or an agent entry in it) isn't valid: an unknown key in a section, a bad kind, a placeholder outside the closed set, an entry that lacks `label`, `bin`, `open` or `sessionId`, a `sessions.pollSeconds` outside 1 to 30. The collector reads the built-in agents and the default settings instead and shows one problem row (collector CO-2a). Each error names the section and key at fault (`sessions.pollSeconds is 1 to 30`), so a fix is per section even though the fallback is the whole file |
+| `SND-LAUNCH-014` | The sandbox isn't available on this box; `reason` is `no-bwrap`, `no-user-namespace`, `no-user-manager`, `no-cgroup-controllers`, `no-forwarder` or `unsupported-platform`. Kind **no runtime**: a deskCapable Step takes the `runtime.unavailable` transition, any other parks NoRuntime (503; sandbox spec SB11, §6) |
+| `SND-LAUNCH-015` | The target or its form can't be confined to the Step's policy; `reason` is `form-none`, `form-reserved`, `tool-not-expressible`, `bin-denied`, `host-not-tmux`, `worktree-outside-repo` or `no-stored-plan`. Kind **launch park**: Resume starts a new run (409) |
+| `SND-LAUNCH-016` | The sandbox self-check failed; `reason` is the canary (`fs-deny`, `fs-write`, `git-ref`, `env`, `login`, `hooks-run`, `net-forward`, `net-deny`). Kind **launch park** (409) |
+| `SND-LAUNCH-017` | The target's model login isn't available from the chosen credential source; `reason` is `no-login`, `expired` or `source-unsupported`, `source` is `owner-copy` or `separate-login`. Kind **no runtime**; never falls back to another source (409) |
+| `SND-LAUNCH-018` | The agent GitHub App token couldn't be minted (`reason`: `no-key`, `http-<status>`, `no-network`). Kind **step failure** (503) |
+| `SND-LAUNCH-019` | A sandbox limit ended the session (`reason`: `memory`, `wall`). Kind **step failure** (`step.failed(limit)`), never auto-retried. Catalogue only: it rides on `session.ended` and `step.failed` and has no HTTP class |
+| `SND-LAUNCH-020` | The cap on concurrent sandboxed sessions is reached (`reason`: `sessions`). Kind **resource wait**: the launch activity retries until the state timeout; an attended open is refused at once (503) |
+| `SND-LAUNCH-021` | The host-side prepare of the repo's packages failed (`reason`: `install-failed`, `lockfile-missing`, `timeout`). Kind **step failure** (503) |
 | `SND-LAUNCH-404` | No launch has that id, or a session caller may not see it: `GET /sindri/launches/{launchId}` (404; API P10a) |
 | `SND-SESSION-001` | One of the session collector's sources failed or a pass overran its 500 ms budget: a problem row beside a normal list, never an exception message (collector CO-2a) |
 | `SND-SESSION-002` | The session collector can't run here; the `detail` is `unsupported-platform`, `proc-unreadable` or `disabled`, and only these replace the list (collector CO-2a; the routes `GET /sessions` and `GET /sessions/{provider}/{id}` answer it, CO-3) |
@@ -784,6 +792,13 @@ sentence is singular at 1 (a provisional owner default, 2026-10-14 night).
 
 **Marked previews.** Since P4c a supplied input is served `required: true` and a `generate` input `required: false`; every input of a started instance is present. `workflow-instances/preview-missing-input` (ITM-01JKH) is still a preview (a started instance never misses an input), like the fan-out previews; it gives the UI data for the missing and
 blocked renders. `workflow-recipe/workflow.no-outputs`' `fact:context` is a real `generate` input. `workflow-status/needs-answer-step` is a Step's text-answered park and `needs-answer-wait` a wait's `--resume` park.
+
+## Sandbox contract (sandbox spec; SB-0)
+
+The sandbox's types, codes, goldens and profile keys are specified in `docs/csharp/sindri-sandbox.md`. In this page's terms: `session.ended` gains
+the reason `limit` with `kind`, `limit`, `peak` and `peaks` (all left out of the JSON when null), `launch.started` gains an optional `sandbox`
+summary, and `sandbox.denied` and `sandbox.limit-hit` are public events that invalidate the `launch` and `item` views. The codes `-014` to
+`-021` are in the table above. No sandbox behavior exists before SB-1; the product Host refuses every Step launch with `-014` until SB-5a.
 
 ## Hook contract
 

@@ -61,4 +61,12 @@ public sealed record LaunchRow(
 
     /// <summary>True while the session exists: started and not ended.</summary>
     public bool Live => State == LaunchState.Started && Ended is null;
+
+    /// <summary>The failure's sandbox reason (SND-LAUNCH-014 to -021), otherwise null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; init; }
+
+    /// <summary>The failure's credential source (SND-LAUNCH-017), otherwise null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Source { get; init; }
 }

@@ -38,6 +38,7 @@ internal sealed class GetLaunchService(ILaunchViews launches, IProjectorStatus s
         }
 
         return new LaunchView(row.Id, row.Item, row.Mode, row.State, row.Target, row.ChosenBy, row.RequestedAt, row.OutcomeAt, row.Code, row.Message, row.Stage, row.ResumableId,
-            row.TabTitle, row.Viewer, row.Late, row.Attach, row.CatalogSource, row.ArgvHash, row.Ended, asOf);
+            row.TabTitle, row.Viewer, row.Late, row.Attach, row.CatalogSource, row.ArgvHash, row.Ended, asOf)
+        { Reason = row.Reason, Source = row.Source };
     }
 }

@@ -131,6 +131,12 @@ public static class EventTypes
     /// <summary>A client attached to a session whose viewer had not confirmed (API P10a, launcher L-10).</summary>
     public const string LaunchViewerAttached = "launch.viewer-attached";
 
+    /// <summary>The 1st, 10th or 100th denial of a (kind, target) in a sandboxed session (sandbox spec §8).</summary>
+    public const string SandboxDenied = "sandbox.denied";
+
+    /// <summary>A sandbox limit was reached without ending the session: pids, memory high or disk growth (sandbox spec §8).</summary>
+    public const string SandboxLimitHit = "sandbox.limit-hit";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

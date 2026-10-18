@@ -1,0 +1,105 @@
+{
+  "note": "The one table the launcher and the engine both read (sandbox spec SB11, §6). The engine routes on the code, never on text. `http` is null for a code that is never an HTTP response.",
+  "codes": [
+    {
+      "code": "SND-LAUNCH-014",
+      "kind": "no-runtime",
+      "http": 503,
+      "reasons": [
+        "no-bwrap",
+        "no-user-namespace",
+        "no-user-manager",
+        "no-cgroup-controllers",
+        "no-forwarder",
+        "unsupported-platform"
+      ],
+      "engineRoute": "N1 (SB16): the launch result closes the agent run. A deskCapable Step takes the runtime.unavailable transition and the desk run opens in the same frame (no round counted, loop rules bypassed, not a Step failure); any other Step parks NoRuntime with a sandbox marker whose Resume opens a new agent run. Availability never enters the recorded agent map."
+    },
+    {
+      "code": "SND-LAUNCH-015",
+      "kind": "launch-park",
+      "http": 409,
+      "reasons": [
+        "form-none",
+        "form-reserved",
+        "tool-not-expressible",
+        "bin-denied",
+        "host-not-tmux",
+        "worktree-outside-repo",
+        "no-stored-plan"
+      ],
+      "engineRoute": "New park kind launch (ParkReason.Launch, ParkKind.Unconfinable); Resume starts a new run."
+    },
+    {
+      "code": "SND-LAUNCH-016",
+      "kind": "launch-park",
+      "http": 409,
+      "reasons": [
+        "fs-deny",
+        "fs-write",
+        "git-ref",
+        "env",
+        "hooks-run",
+        "net-forward",
+        "net-deny",
+        "login"
+      ],
+      "engineRoute": "Same launch park (ParkKind.SelfCheck)."
+    },
+    {
+      "code": "SND-LAUNCH-017",
+      "kind": "no-runtime",
+      "http": 409,
+      "reasons": [
+        "no-login",
+        "expired",
+        "source-unsupported"
+      ],
+      "engineRoute": "Same as 014 for a Step; an attended open shows the card and parks nothing. Never falls back to another source."
+    },
+    {
+      "code": "SND-LAUNCH-018",
+      "kind": "step-failure",
+      "http": 503,
+      "reasons": [
+        "no-key",
+        "http-<status>",
+        "no-network"
+      ],
+      "engineRoute": "step.failed(launch); the owner retries (a new run) or uses the desk twin.",
+      "failureReason": "launch"
+    },
+    {
+      "code": "SND-LAUNCH-019",
+      "kind": "step-failure",
+      "http": null,
+      "reasons": [
+        "memory",
+        "wall"
+      ],
+      "engineRoute": "step.failed(limit) carrying kind, limit and peak; never auto-retried in the same run. Catalogue only: no HTTP class.",
+      "failureReason": "limit"
+    },
+    {
+      "code": "SND-LAUNCH-020",
+      "kind": "resource-wait",
+      "http": 503,
+      "reasons": [
+        "sessions"
+      ],
+      "engineRoute": "The launch activity retries with backoff (30 s) until the Step's state timeout; no launch.outcome meanwhile; an attended open is refused at once."
+    },
+    {
+      "code": "SND-LAUNCH-021",
+      "kind": "step-failure",
+      "http": 503,
+      "reasons": [
+        "install-failed",
+        "lockfile-missing",
+        "timeout"
+      ],
+      "engineRoute": "step.failed(launch); never auto-retried.",
+      "failureReason": "launch"
+    }
+  ]
+}

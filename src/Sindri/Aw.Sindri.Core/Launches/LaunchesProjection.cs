@@ -180,6 +180,8 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
                 Code = failed.Code,
                 Message = SafeText.Escape(failed.Message),
                 Stage = failed.Stage,
+                Reason = failed.Reason,
+                Source = failed.Source,
                 Sequence = recorded.Sequence,
             };
     }
@@ -222,6 +224,6 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(ended);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.Ended is null ? row with { Ended = new LaunchEnd(ended.Reason, ended.ExitCode, recorded.Envelope.OccurredAt), Sequence = recorded.Sequence } : row;
+        return row.Ended is null ? row with { Ended = new LaunchEnd(ended.Reason, ended.ExitCode, recorded.Envelope.OccurredAt, ended.Kind, ended.Limit, ended.Peak), Sequence = recorded.Sequence } : row;
     }
 }

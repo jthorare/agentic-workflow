@@ -191,6 +191,22 @@
       ]
     },
     {
+      "type": "sandbox.denied",
+      "keyShape": "sandbox.denied:<launch>:<kind>:<targetHash>:<count>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
+      "type": "sandbox.limit-hit",
+      "keyShape": "sandbox.limit-hit:<launch>:<kind>:<n>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
       "type": "service.heartbeat",
       "keyShape": "service.heartbeat:<epoch>:<slot>",
       "invalidates": [

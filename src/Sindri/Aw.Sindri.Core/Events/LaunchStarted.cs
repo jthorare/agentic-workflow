@@ -1,5 +1,7 @@
+using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 
@@ -19,6 +21,8 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Attach">The command that attaches to the session.</param>
 /// <param name="CatalogSource">Where the entry came from.</param>
 /// <param name="ArgvHash">The hash of the entry's argv template.</param>
+/// <param name="Sandbox">The sandbox summary (sandbox spec §8); left out when the launch was not sandboxed.</param>
 public sealed record LaunchStarted(
     LaunchId Launch, ItemId Item, LaunchMode Mode, AgentId Target, SessionId? SessionId, string TabTitle, LaunchViewer Viewer,
-    IReadOnlyList<string> Attach, CatalogSource CatalogSource, string ArgvHash);
+    IReadOnlyList<string> Attach, CatalogSource CatalogSource, string ArgvHash,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SandboxSummary? Sandbox = null);

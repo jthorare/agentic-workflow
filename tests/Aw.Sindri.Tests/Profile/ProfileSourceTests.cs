@@ -53,7 +53,7 @@ public sealed class ProfileSourceTests : IDisposable
     }
 
     [Theory, Trait("Lane", "integration")]
-    [InlineData("schemaVersion: 1\nuser: thor\ncolour: blue\n", "'colour' is not a profile key here (allowed: schemaVersion, user, tenant, repos, services, api, workflow, context, index, launch, agents)")]
+    [InlineData("schemaVersion: 1\nuser: thor\ncolour: blue\n", "'colour' is not a profile key here (allowed: schemaVersion, user, tenant, repos, services, api, workflow, context, index, launch, agents, sandbox)")]
     [InlineData("schemaVersion: one\nuser: thor\n", "schemaVersion: expected a whole number")]
     [InlineData("schemaVersion: 1\nuser: thor\nrepos: { a: 1 }\n", "repos: expected a list")]
     [InlineData("schemaVersion: 1\n", "user")]

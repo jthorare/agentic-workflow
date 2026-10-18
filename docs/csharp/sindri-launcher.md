@@ -71,7 +71,7 @@ never hashed, so one approval holds across runs; changing a form name changes th
 Scoping-station spec section 12.5, row L-17. An entry names, like `mcp`, which built-in form passes a per-run model id
 (`model`) and a Step's policy (`policy`: a settings file for `claude-settings-file`, typed `-c` overrides with no file for
 `codex-overrides`) to its CLI. The Step's policy is target-neutral (owner, 2026-10-17, amending L-17(a)):
-`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath)`. The engine writes no policy file; the launcher renders
+`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath, LoginSource?)`; `LoginSource` (`owner-copy` < `separate-login`, sandbox spec SB18) is the stricter model login a Step asks for, null for no ask and left out of the JSON. The engine writes no policy file; the launcher renders
 it per form, writes any file 0600 and deletes it with the launch. A Step only tightens the profile: bypass or full access is never a
 Step mode, and a mode the entry can't express is `SND-LAUNCH-013`. Both are enums, default `none`, and an added entry defaults to
 `none`; an override keeps the built-in's forms unless it names them. A form adds its arguments only on an **unattended Step
@@ -95,6 +95,17 @@ id and `<path>` the 0600 settings file the launcher renders from the Step's poli
 A Step that requests a model or a policy on an entry whose matching form is `none`, or a reserved form (`cursor-flag`,
 `cursor-config`), parks with `SND-LAUNCH-013` and never
 launches unrestricted (the API implements the check).
+
+### The sandboxed launch flow (sandbox spec §6; SB-0 contract, built in SB-1 to SB-5b)
+
+For a Step run `ILauncher.Launch` becomes, with the new steps in bold: resolve the agent, SL8 (`-012`), L-17's form check (`-013`),
+**build the sandbox plan from the `StepPolicy` (pure; `-015`)**, **probe the mechanism (cached per box, refreshed by Check again; `-014`)**,
+**the session cap (`-020`: an atomic count; a wait, not a failure)**, **prepare credentials from the Step's credential source (`-017`, `-018`)**,
+**the host-side prepare of the repo's packages (`-021`)**, budget (E-28), **write the plan file, start the outside half of the network, run the
+self-check (`-016`)**, start in the host, return. The launcher appends nothing: the engine's launch activity writes `launch.outcome`, and the
+sandbox summary rides on `StartedLaunch.Sandbox`. A launch whose confinement can't be built or proven never falls back to unconfined. Until
+SB-5a the product Host registers `UnavailableSandbox`, so every Step launch is `-014`; a `sindri open` session opens as today until SB-5b.
+The codes, kinds and reasons are in `docs/csharp/sindri-sandbox.md`.
 
 ## Worked examples for `exec-template`
 

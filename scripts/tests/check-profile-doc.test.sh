@@ -24,7 +24,7 @@ d="$TMPROOT/new-key"
 mkdir -p "$d/src/Sindri/Aw.Sindri.Core" "$d/docs/csharp"
 cp -R "$REPO/src/Sindri/Aw.Sindri.Core/Profile" "$d/src/Sindri/Aw.Sindri.Core/"
 cp "$REPO/docs/csharp/sindri-profile.md" "$d/docs/csharp/"
-perl -pi -e 's/AgentSettings\? Agents = null\)$/AgentSettings? Agents = null,\n    string? Drift = null)/' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs"
+perl -pi -e 's/SandboxSettings\? Sandbox = null\)$/SandboxSettings? Sandbox = null,\n    string? Drift = null)/' "$d/src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs"
 run "$d"; expect_rc "a new profile key the doc lacks fails" 1
 expect_out "names the key and the fix" "add drift to docs/csharp/sindri-profile.md"
 

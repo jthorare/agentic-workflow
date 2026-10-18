@@ -13,4 +13,8 @@ public enum SessionEndReason
     /// <summary>No heartbeat for 120 s.</summary>
     [JsonStringEnumMemberName("lost")]
     Lost,
+
+    /// <summary>A sandbox limit killed the session (memory or wall); 'session.ended' names the kind, the limit and the peak. The engine maps it to step.failed(limit).</summary>
+    [JsonStringEnumMemberName("limit")]
+    Limit,
 }

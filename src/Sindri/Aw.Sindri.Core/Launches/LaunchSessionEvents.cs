@@ -74,19 +74,31 @@ public sealed class LaunchSessionEvents(ILaunchFiles files, LaunchLiveness liven
 
     /// <summary>Appends 'session.ended', then deletes the launch's files and forgets its clock.</summary>
     /// <param name="launch">The launch.</param>
-    /// <param name="reason">Exit or lost.</param>
+    /// <param name="reason">Exit, lost or limit.</param>
     /// <param name="exitCode">The exit code for an exit.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>Success, or why the ledger refused (the files stay).</returns>
-    public async ValueTask<Result<Unit>> End(LaunchId launch, SessionEndReason reason, int? exitCode, CancellationToken cancellationToken)
+    public ValueTask<Result<Unit>> End(LaunchId launch, SessionEndReason reason, int? exitCode, CancellationToken cancellationToken) =>
+        Append(new SessionEnded(launch, reason, exitCode), cancellationToken);
+
+    /// <summary>Appends 'session.ended' for a sandbox limit kill (reason limit, with the kind, the limit and the peaks), then deletes the launch's files and forgets its clock.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="limit">Which limit, its value and the peaks.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Success, or why the ledger refused (the files stay).</returns>
+    public ValueTask<Result<Unit>> EndByLimit(LaunchId launch, LimitEnd limit, CancellationToken cancellationToken) =>
+        Append(SessionEnded.Limited(launch, limit), cancellationToken);
+
+    private async ValueTask<Result<Unit>> Append(SessionEnded ended, CancellationToken cancellationToken)
     {
         if (held.Current is not { } grant)
         {
             return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
         }
 
+        var launch = ended.Launch;
         var admitted = await admission.Admit(launch, id: null, cancellationToken).ConfigureAwait(false);
-        var entry = events.Entry(EventTypes.SessionEnded, new SessionEnded(launch, reason, exitCode), $"{EventTypes.SessionEnded}:{launch.Value}", admitted.Item);
+        var entry = events.Entry(EventTypes.SessionEnded, ended, $"{EventTypes.SessionEnded}:{launch.Value}", admitted.Item);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
         {

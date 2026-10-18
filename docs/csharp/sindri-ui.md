@@ -783,3 +783,12 @@ A read-only sheet for `recipe/<id>[@<hash>]` (`RecipeSheetViewModel`, `Views/Rec
 **Gaps (provisional defaults; each is an API ask).** G1: the recipe serves no terminal, desk or child mark on its states, so none is drawn and none is guessed from position. G2: approval standing, date, drift and stale are on the list summary only, so they are not shown. G3: gates per state are not served. G4: schema version, pinned blocks, evals, open instances, Versions, Run evals and Validate are U10 proper. G5: stats are out of scope. G6: `GET /workflow/recipes` has no golden, which blocks U10b. G7: SND-RECIPE-003 (no approved version) has no golden; any refusal shows through the one path. G8: the recipe route serves the whole hash, so the sheet shows its first 12 hex digits, the form the CLI prints.
 
 **Tests.** `RecipeSheetViewModelTests`, `RecipeStatesViewModelTests`, `RecipeFactsViewModelTests`, `ShellRecipeTests` and the `DeepLink` cases (unit); `RecipeFramesTests` (integration; key frames `u10a-recipe-*`, with the automation tree walked from the sheet down). Every literal is read from `tests/Aw.Sindri.Tests/Golden/Api/workflow-recipe/*`; the fake serves a recipe by a hash prefix as the API does.
+
+## Sandbox surfaces (sandbox spec §8; SB-0 goldens, SB-6 views)
+
+The park card with Check again and its resume list, the Sandbox line, the Blocked list with Allow, the waiting state, the limit ending, the
+takeover banner, and the Health and Settings rows are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/`
+(`copy.json`, `states.json`, `accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as
+`Golden/Sandbox`. The vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string.
+The accessibility rows of `accessibility.json` use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on
+its label before a repeat outcome) and each gets a test in SB-6.

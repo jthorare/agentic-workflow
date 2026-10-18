@@ -25,6 +25,7 @@ namespace Aw.Sindri.Core.Profile;
 /// </param>
 /// <param name="Launch">The 'launch:' block (UI spec E-4). Left out of the canonical JSON when absent, so a profile without it keeps its hash.</param>
 /// <param name="Agents">The 'agents:' block (budgets, SL8's stepArgvHash). Left out of the canonical JSON when absent.</param>
+/// <param name="Sandbox">The 'sandbox:' section (sandbox spec §9). Left out of the canonical JSON when absent, so a profile without it keeps its hash and gets the built-in defaults.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record SindriProfile(
     int SchemaVersion,
@@ -37,7 +38,8 @@ public sealed record SindriProfile(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] JsonElement? Context = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IndexSettings? Index = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LaunchSettings? Launch = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AgentSettings? Agents = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AgentSettings? Agents = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SandboxSettings? Sandbox = null)
 {
     /// <summary>The tenant key until team mode.</summary>
     public const string DefaultTenant = "local";

@@ -25,6 +25,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `index` | `IndexSettings` | no | none | Deny paths for every repo's map extraction |
 | `launch` | `LaunchSettings` | no | none | The launch targets and the confirm window (UI spec E-4). Left out of the canonical JSON when absent, so a profile without it keeps its approved hash |
 | `agents` | `AgentSettings` | no | none | Per-agent budgets and the argv hashes unattended Steps may run (screens spec E-28, launcher L-11). Left out of the canonical JSON when absent |
+| `sandbox` | `SandboxSettings` | no | built-in defaults | How a Step's session is confined (sandbox spec §9, `docs/csharp/sindri-sandbox.md`). An approved profile with no `sandbox:` section is valid and gets the defaults below. Left out of the canonical JSON when absent, so a profile without it keeps its approved hash |
 
 ### `repos[]`
 
@@ -100,3 +101,77 @@ A map of agent id to its limits, plus the reserved sibling `softLimit`. An id is
 | `dailyBudget` | decimal (USD) | no | none | `agents.<id>.dailyBudget`: the agent's daily budget; a target with no usage reader and a budget is refused (`SND-LAUNCH-010`; screens spec E-28) |
 | `stepArgvHash` | string or string[] | no | none | `agents.<id>.stepArgvHash`: one `argvHash` or a list, the hashes an unattended Step may run for this agent when its entry isn't built in or a `bin`-only override (SL8; session-launcher spec L-11) |
 | `softLimit` | fraction, `0 < x <= 1` | no | `0.8` | `agents.softLimit`: the share of a daily budget that raises the soft warning (screens spec E-28) |
+
+### `sandbox`
+
+In the spec's terms tightening needs no re-approval and loosening (a longer limit, a new group or host, learn mode, `agent-app`, a looser login source) does. **That split is not built yet:** today every change to the `sandbox:` section changes the profile hash and is a re-approval (`ProfileDiff` records values, not direction). The spec's §12 assigns the tighten/loosen split to no phase; it is an open question for the spec lane (default: the launcher phase that first reads the section, SB-5a). A key can only tighten a Step. `sindri doctor` prints "using the built-in sandbox defaults" when the section is absent.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `limits` | `SandboxLimits` | all defaults | The limits below |
+| `fs` | `SandboxFs` | detected | Filesystem additions |
+| `network` | `SandboxNetwork` | the spec's groups | Host groups and the mode |
+| `repos` | map of repo name to `SandboxRepoSettings` | none | Per-repo declarations (spec §3.7) |
+| `inner` | `auto`, `on` or `off` | `auto` | The agent CLI's own sandbox inside Sindri's |
+| `credentials` | `SandboxCredentials` | `{ github: none }` | GitHub credentials for Steps |
+| `login` | `SandboxLogin` | `{ source: owner-copy }` | The model credential source (SB18) |
+| `attended` | `SandboxAttended` | `{ wall: off }` | Settings for sessions you open with `sindri open` |
+
+`sandbox.limits`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `memory` | `auto` or a size (`12GiB`) | `auto` | Per-session memory: 20% of RAM, at most 12 GiB |
+| `cpu` | percent, `1%` to `100%` | `50%` | Per-session CPU share of all cores |
+| `tasks` | integer, at least 1 | `2048` | Processes per session |
+| `sessions` | integer, at least 1 | `3` | Concurrent sandboxed sessions |
+| `total` | percent or a size | `60%` | The parent slice's memory cap, of RAM |
+| `wallGrace` | duration (`m`, `h`, `d`) | `10m` | Added to the Step's `timeout` for the wall limit |
+| `homeTmpfs` | size | `256MiB` | The size of the `$HOME` tmpfs (counts against the scope's memory) |
+| `parkMax` | duration | `24h` | The longest single suspension the scope's ceiling allows beyond the Step's timeout |
+
+`sandbox.fs`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `homeAllow` | list of `{ path, mode }` | detected | `$HOME` entries bound back in; `path` is relative to `$HOME`, `mode` is `ro` (default) or `rw` |
+| `denyExtra` | list of absolute paths | `[]` | More denied paths |
+
+`sandbox.network`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `groups` | map of group name to host list | the spec's table | Named host groups (`model`, `packages`, `signing`, `releases`, `github`); a host is `name` or `*.name` |
+| `mode` | `enforce` or `learn` | `enforce` | Learn mode (owner decision Q13) allows and records every host for a bounded first period; setting `enforce` ends it early |
+
+`sandbox.repos.<repo>`:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `homeAllow` | list of `{ path, mode }` | none | More home entries for this repo |
+| `groups` | list of group names | none | Host groups this repo's Steps get |
+| `hosts` | list of hosts | none | Extra hosts |
+| `cachePaths` | list of relative paths | none | Extra cache paths |
+| `login` | `{ source }` | none | This repo's login source; the most specific value wins (repo, then target, then profile) |
+| `prepare` | `{ dirs }` | none | The host-side prepare (spec §3.8): `dirs` is a list of `{ dir, tool, allowScripts }` (`tool` is `npm ci`, `allowScripts` the packages whose install scripts may run) |
+
+`sandbox.repos.<repo>.prepare.dirs[]`: `dir` (a path relative to the repo, no `..`), `tool` (`npm ci`, the only prepare tool) and `allowScripts` (the packages whose install scripts may run; none by default).
+
+`sandbox.credentials`: `github` is `none` (default) or `agent-app` (SB-7).
+
+`sandbox.login`: `source` is `owner-copy` (default) or `separate-login`; `targets` is a map of agent id to source (a per-agent override). A
+recipe or Step may ask for a stricter source and never a looser one (`owner-copy` < `separate-login`). An unknown source id is a profile
+error. The earlier `sandbox.agentHome` key is retired.
+
+`sandbox.attended`: `wall` is `off` (default) or a duration, a wall-clock ceiling for sessions you open yourself.
+
+## Keys specified, not yet in `SindriProfile`
+
+These keys are specified by other lanes' specs and join the profile in their phases. Until then the C# profile
+refuses them as unknown keys. They are listed here so the launcher's files and the profile agree on names. Every key that
+names an agent takes any `AgentId` (pattern `^[a-z][a-z0-9-]{1,31}$`); the profile checks the pattern and never the
+catalog, because the catalog is per box.
+
+| Key | Meaning | Specified in |
+|---|---|---|
+| `workflow.agent.target` | The agent a Step launches | workflow engine spec §6.5 |

@@ -52,6 +52,8 @@ public static class EventCatalog
         new(EventTypes.SessionUsage, Public: false, PublicPayload: null, "session.usage:<launch>:<n>"),
         new(EventTypes.LaunchSessionReported, Public: true, typeof(LaunchSessionReported), "launch.session-reported:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.LaunchViewerAttached, Public: true, typeof(LaunchViewerAttached), "launch.viewer-attached:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
+        new(EventTypes.SandboxDenied, Public: true, typeof(SandboxDenied), "sandbox.denied:<launch>:<kind>:<targetHash>:<count>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
+        new(EventTypes.SandboxLimitHit, Public: true, typeof(SandboxLimitHit), "sandbox.limit-hit:<launch>:<kind>:<n>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

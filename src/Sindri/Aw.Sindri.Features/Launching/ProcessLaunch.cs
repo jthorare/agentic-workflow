@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Sandbox;
 
 namespace Aw.Sindri.Features.Launching;
 
@@ -105,7 +106,7 @@ internal sealed class ProcessLaunch(LaunchOutcomes outcomes, TakeoverWait takeov
     private async ValueTask<Result<bool>> Fail(LeaseGrant grant, PendingLaunch pending, Error error, LaunchStage? stage, CancellationToken cancellationToken)
     {
         work.ProbeSoon();   // what a launch could not do may be what the box lost: the next tick checks the targets again (E-3)
-        var failed = new LaunchFailed(pending.Request.Launch, pending.Request.Item, error.Code, error.Message, stage);
+        var failed = new LaunchFailed(pending.Request.Launch, pending.Request.Item, error.Code, error.Message, stage, SandboxRefusal.ReasonOf(error), SandboxRefusal.SourceTextOf(error));
         var appended = await outcomes.Failed(grant, failed, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : false;
     }
