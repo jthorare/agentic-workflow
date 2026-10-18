@@ -11469,3 +11469,5 @@ static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.operator !=(Aw.Sind
 static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? right) -> bool
 virtual Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? other) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionLimit.Text.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions
+Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions.IsSuspended(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>

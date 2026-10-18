@@ -145,6 +145,10 @@ public static class A
     /// <returns>A new builder.</returns>
     public static GetLaunchRequestBuilder GetLaunchRequest() => new();
 
+    /// <summary>A GetRunSuspensionRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static GetRunSuspensionRequestBuilder GetRunSuspensionRequest() => new();
+
     /// <summary>A OpenItemRequest builder with deterministic defaults.</summary>
     /// <returns>A new builder.</returns>
     public static OpenItemRequestBuilder OpenItemRequest() => new();
