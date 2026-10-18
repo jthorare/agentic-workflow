@@ -69,10 +69,8 @@ check "meta-lane.sh: the lane's session id lands in that team's lane-sessions" "
 
 # install-meta.sh and meta-launch.sh refuse to guess with several teams and none selected (before building or touching tmux sessions).
 S="$W/amb"; mk_named "$S" alpha; mk_named "$S" beta; mkdir -p "$W/home"
-if [ "$(uname)" != Darwin ]; then   # install-meta.sh stops earlier on macOS (aw-meta is Linux-only)
-  OUT="$(env -i PATH="$PATH" HOME="$W/home" AW_STATE_DIR="$S" bash "$DIR/install-meta.sh" 2>&1)"; RC=$?
-  check "install-meta.sh: several teams, none selected: refused (rc 3), naming the way out" "$RC:$(grep -c 'AW_META_TEAM' <<< "$OUT")" "3:1"
-fi
+OUT="$(env -i PATH="$PATH" HOME="$W/home" AW_STATE_DIR="$S" bash "$DIR/install-meta.sh" 2>&1)"; RC=$?
+check "install-meta.sh: several teams, none selected: refused (rc 3), naming the way out" "$RC:$(grep -c 'AW_META_TEAM' <<< "$OUT")" "3:1"
 if command -v tmux > /dev/null; then
   OUT="$(env -i PATH="$PATH" HOME="$W/home" AW_STATE_DIR="$S" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
   check "meta-launch.sh: several teams, none selected: refused (rc 2) listing them" "$RC:$(grep -c 'alpha beta' <<< "$OUT")" "2:1"

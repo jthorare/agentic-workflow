@@ -8,7 +8,7 @@ not habits.
 
 It is a portable harness for any project. Everything team-specific (lanes, repo, gate scopes, merge order, known
 flakes, kickoff prompts, log file) lives in a team config. It runs before the C# switch as an opt-in standalone
-NativeAOT CLI (`./setup.sh --with-meta`; the meta itself is Claude Code only, lanes can run other agent CLIs and take part in its obligations, see [Launcher](#launcher) and [Non-Claude lanes](#non-claude-lanes); Linux only for now, aw-meta reads /proc, so on macOS setup skips it) that keeps its state under `$AW_STATE_DIR/meta/` (per team: `teams/<team>/`, see [Named teams](#named-teams)) and
+NativeAOT CLI (`./setup.sh --with-meta`; the meta itself is Claude Code only, lanes can run other agent CLIs and take part in its obligations, see [Launcher](#launcher) and [Non-Claude lanes](#non-claude-lanes); Linux and macOS, see [OS support](#os-support)) that keeps its state under `$AW_STATE_DIR/meta/` (per team: `teams/<team>/`, see [Named teams](#named-teams)) and
 appends to the configured running log. Its gate and merge commands act on the team's checkout and PRs: `git fetch`, a
 gate worktree registered in the repo, the configured gate steps, `gh pr merge`, and the removal of finished worktrees (`git worktree remove`, never forced; see "Worktree cleanup"). Sindri absorbs it later (see the
 last section).
@@ -101,6 +101,7 @@ the team config (`AW-META-002` otherwise); the hook commands must let any sessio
 | `watch [--interval <s>] [--for <dur>]` | Prints one line per settled change (PR opened, merged, ready, head moved, mergeable after two equal polls and never `UNKNOWN`, main moved, `DISK LOW` / `DISK OK`, `MEMORY LOW` / `MEMORY OK`, each after two polls agree) and keeps a heartbeat; every poll also recomputes the heavy reservation |
 | `worktree-list [--no-fetch]` | Every worktree of the team repo (`git worktree list --porcelain`) with its branch, head, pull request (number and state) and verdict `removable` or `kept` with every reason; changes nothing (it fetches origin first unless `--no-fetch`). Exit 0 |
 | `worktree-sweep [--dry-run] [--pr <n>]` | Removes the removable worktrees (see "Worktree cleanup"), all or just pull request n's (its head branch and its gate trees); prints each removed and each kept one with its reasons. `--dry-run` removes nothing. Exit 0, 1 when git refused a removal, 2 when nothing could be judged (git, gh or the process scan failed: nothing is removed) |
+| `version` | The commit the binary was built from, its build time, the OS and the runtime identifier (`aw-meta commit <commit>, built <UTC time>, <OS> <rid>`; `--json`: `commit`, `builtAt`, `os`, `rid`). `scripts/install-meta.sh` stamps them at publish (`-p:SourceRevisionId`, `-p:AwBuildTime`); a build that was not stamped reads `unknown`. Needs no team. Exit 0 |
 | `log-append --kind merge\|decision\|lanes\|incident\|note --text <t>` | Appends a dated line to the running log |
 | `status` | Obligations, merge queue (ready pull requests; one leaves it when any merge is recorded for it, or when the watch saw it merged or closed on GitHub, kept under `watch.ended-prs`), owner queue, lanes, and one line each for the heavy reservation and the builders advice |
 | `queue-drop <pr> --reason <text>` | Removes the pull request's merge-queue entry and appends a `NOTE` line (`queue-drop #N: <reason>`) to the running log. The inbox message stays; the drop is kept with its time under `queue.dropped`, so only a ready message sent after it queues the pull request again. Exit 0 dropped; 2 when the pull request has no queue entry (`AW-META-018`), the reason is blank or usage |
@@ -125,11 +126,11 @@ The meta watches memory and disk and adapts, so a team never has to be told by h
 (`resources`, `builders`, `heavy`) and have defaults; nothing is specific to one repo.
 
 **Events** (`watch`, one line when the state flips, never repeated): `DISK LOW` / `DISK OK` (state-disk free space against
-`resources.diskFloorGb`), `MEMORY LOW` / `MEMORY OK` (`MemAvailable` from `/proc/meminfo` against `resources.memFloorGb`, or swap
+`resources.diskFloorGb`), `MEMORY LOW` / `MEMORY OK` (available memory (`MemAvailable` from `/proc/meminfo` on Linux, vm_stat on macOS) against `resources.memFloorGb`, or swap
 used at or above `resources.swapHighPct`). A flip is reported only after two consecutive polls agree on it (the rule `mergeable`
 already follows), so a host sitting at its floor does not flap LOW, OK, LOW and make the meta message every lane each time. The
 last reported state is kept in the team's store (`watch.resources`), so a re-armed watch does not announce a standing LOW again.
-`health` judges memory by the same rule (`ResourceRules.MemoryLow`), so the two never disagree. aw-meta is Linux-only because it reads `/proc`.
+`health` judges memory by the same rule (`ResourceRules.MemoryLow`), so the two never disagree. How each OS reads these figures is under [OS support](#os-support).
 
 **Gate priority and the reservation.** The heavy-job wrapper (`AW_HEAVY` or `$AW_STATE_DIR/bin-r1b/heavy`) shares a
 box-wide number of slots between every expensive job. aw-meta stays inside its own state directory: it never writes the
@@ -167,6 +168,57 @@ the other:
 below 1. The line reads `builders: 4 per lane (disk 132 GB free, mem 12 GB available)`, or `builders: 2 per lane (disk below
 floor+headroom)` / `builders: 1 per lane (memory low)` when something cuts it; `--json` carries `builders` (`perLane`,
 `maxPerLane`, `diskFreeGb`, `memAvailableGb`, `limit`) and `heavy` (`cap`, `reserve`, `depth`, `computedAt`, `stale`; absent when no reservation was computed or `heavy.reserve` is false). Without a team config the defaults and one lane apply, and no reservation.
+
+## OS support
+
+aw-meta runs on **Linux** and **macOS** (`scripts/install-meta.sh`, `./setup.sh --with-meta`; the host RID is whatever
+`dotnet --info` reports: `linux-x64`, `linux-arm64`, `osx-arm64` or `osx-x64`; NativeAOT needs the platform's C toolchain, Xcode's
+command line tools on macOS). On any other OS the installer exits 1 and says so; `setup.sh --with-meta` finishes the rest of setup, then exits non-zero with that message. Nothing is
+skipped quietly, so a reinstall never leaves an old binary in place without a signal: the installer prints the installed
+version, and the launcher warns when the binary is older than the Meta sources it runs from (below).
+
+What reads the host differs; everything else (the SQLite stores, the team config, the CLI, gate and merge, the launcher) is the same
+code. One internal function (`AddHostAdapters`, over a `HostPlatform`) picks the adapters for the process table, host resources, process liveness and process locations when the host composes (`AddMetaInfrastructure`); on an OS that is neither Linux nor macOS those four answer `AW-META-010` "unavailable on <OS>", and `lsof` and the tools below are never run. Nothing sniffs `/proc` at run time to pick one.
+
+| Need | Linux | macOS |
+|------|-------|-------|
+| Memory total and available (`health`, `status`, `watch`'s `MEMORY LOW`) | `/proc/meminfo` (`MemAvailable`) | `sysctl -n hw.memsize`; available is the free, inactive and speculative pages of `vm_stat` times its page size |
+| Swap used and total | `/proc/meminfo` | `sysctl -n vm.swapusage` |
+| The process table (orphans, duplicate MCP servers, process groups, `health`'s counts) | `/proc/<pid>/stat` and `cmdline`; age from the process start time | `ps -axww -o pid=,ppid=,etime=,rss=,stat=,args=`; age from `etime`, so no time-zone or boot-time arithmetic. Zombies are left out on both |
+| Is this pid running, and is it the process the file names (live sessions, heavy-lock holders; `IProcessLiveness`) | `/proc/<pid>/stat` start time against `/proc/uptime` | `ps -o etime= -p <pid>`: the start time is now (read before `ps` runs) minus the elapsed time. Many pids at once (`IProcessLiveness.Running`: the session list, the heavy-lock holders) go through one `ps -axo pid=,etime=` |
+| What a process holds (worktree cleanup's idle test) | `/proc/<pid>/cwd` and `fd` | `lsof -w -n -F pcnR` (cwd, open files, executables, parent pid), run like the other tools. The scanning process and its ancestors (the shell that ran it) are marked as invokers, from lsof's parent field here and the `/proc` stat there, so a wrapper shell is never counted as a running gate |
+| Termination (`health`'s orphan kill) | `kill -TERM` | `kill -TERM` |
+| Disk free space, the heavy-job lock directories | the same on both | the same on both |
+
+**A reused pid is not the session.** A session record (`~/.claude/sessions/<pid>.json`) or a heavy-lock owner file names a pid, and the OS hands a
+pid to a new process once the old one exits. Liveness therefore also compares the process's start time with the file's last write: a
+process that started more than 2 seconds after the file was written (`ProcessStart.Tolerance`; `ps` and `/proc` count whole seconds) is
+another process, and the session or lock is not live. The check is as good as the file's modified time: a record that is rewritten
+later by something other than its own process would hide a reuse, and a start time that cannot be read (a failed `ps`) makes that
+pid unknown, not dead: the session or lock is kept (one pid the host can't be asked about never fails the whole listing), and on Linux a `/proc/uptime` that is unreadable or earlier than the process's start (inconsistent clocks) is `AW-META-010`, never "not running" or a reused pid.
+
+A macOS tool that cannot run, times out or prints something unreadable makes the figure unavailable: the command fails with
+`AW-META-010` and a reason that starts "unavailable on macOS: <tool> ..." (for example `/usr/sbin/sysctl -n vm.swapusage exited 1: ...`; at most 300 characters of the tool's stderr are quoted). A number too large for a 64-bit integer in a tool's output is the same error, never an exception. Each tool runs by the absolute path macOS ships it at (`/usr/sbin/sysctl`, `/usr/bin/vm_stat`, `/bin/ps`, `/bin/kill`, `/usr/sbin/lsof`) so a PATH that something else controls can't substitute another program; a tool missing at its path fails to run, which is the `AW-META-010` above, never a lookup by bare name. It is
+never replaced by a made-up value, and `health` does not guess from the rest. The tools' output is read up to 16 MiB (`ps` lists far
+more than the command runner's default 64 KB tail; 16 MiB is about thirty times a busy machine's list, and past it the start is dropped). Symlinked paths: git reports a worktree's physical path (`/private/var/...`),
+while a team config may name it through a symlink (`/var/...`); put worktree roots in `worktrees.roots` by their physical path on
+macOS.
+
+**The launcher on macOS.** `scripts/meta-launch.sh`, `meta-lane.sh` and `launcher-lib.sh` run on macOS's bash 3.2 and BSD tools: no `flock`,
+`exec {fd}>`, `BASHPID`, `mapfile`, associative arrays or `readlink -f`. The team start lock is the symlink `lane-sessions/.reported.lock`
+(`ln -s` is atomic and records the owner pid in one step): a lock whose owner is dead is taken over, a live holder is waited for. macOS
+`uuidgen` ids are lowercased. `scripts/tests/meta-launch.test.sh` runs on both OSes (it builds a one-line C `sleep` with `cc` on macOS: a
+copy of the system `sleep` is killed there). It was run on macOS for this section (a throwaway team on a private tmux server, one Claude lane and
+two lanes whose agent reports its session id, started one at a time); it has not run on a real Warp window here, and `aw-meta-launch` on
+macOS opens Warp with `open warp://launch/<team>%20team`. `scripts/tests/meta-version.test.sh` covers the staleness check on both.
+
+**Version and staleness.** `aw-meta version` is how a stale install shows. `scripts/install-meta.sh` stamps the publish with the tree's
+`git rev-parse HEAD` (`<HEAD>-dirty` when a file under a build path has uncommitted or untracked changes) and a UTC time and prints `aw-meta commit <commit>, built ..., <os> <rid>` when it finishes (`... predates 'aw-meta
+version'` for an older binary). `scripts/meta-launch.sh` runs `aw-meta version --json` at each launch and prints one stderr line, never
+failing the launch, when the binary is older than the sources of this checkout: the last commit that touched a build path (`scripts/meta-build-paths.txt`, the one list: `src/Meta`, the Kernel, Redaction and Analyzers projects and the root build files; the installer, the staleness check and the NativeAOT smoke all read it) is not an ancestor of, or
+equal to, the binary's commit (`git merge-base --is-ancestor`); an unstamped binary, one with no `version` command, and a commit this
+checkout lacks, and a `-dirty` stamp warn too. After copying the binary the installer runs `aw-meta version --json` and fails (exit 1, "install didn't take") unless its commit is the one stamped, and fails when the publish produced no `aw-meta`. Docs-only commits after the binary do not. `AW_META_NO_STALE_CHECK=1` turns it off; `AW_META_BIN` names the
+binary (default `$AW_STATE_DIR/bin/aw-meta`).
 
 ## Worktree cleanup
 
@@ -272,7 +324,7 @@ working untouched. `team-migrate` moves it into `teams/<its team name>/` on requ
 | `$AW_STATE_DIR/launcher.json` | the owner, or `aw-meta-launch --init-launcher` (read by `scripts/launcher-lib.sh`) |
 | `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/<lane>.ambiguous` | `scripts/meta-lane.sh` when an agent that reports its own session id left more than one candidate session file |
 | `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/<lane>.settled` | `scripts/meta-lane.sh` for a lane whose agent reports its own session id: left once the id is recorded or refused; `meta-launch.sh` waits for it before starting the next lane |
-| `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/.reported.flock` | `scripts/meta-lane.sh`: the team start lock (`flock`; the kernel drops it when the holder dies) that serialises the start of lanes whose agent reports its own session id |
+| `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/.reported.lock` | `scripts/meta-lane.sh`: the team start lock (a symlink whose target is the owner's pid; a dead owner's lock is taken over) that serialises the start of lanes whose agent reports its own session id |
 
 ## Launcher
 
@@ -299,7 +351,7 @@ chooses its own id: lanes of that kind start one at a time, each waiting up to `
 (the `lane-sessions/<lane>` file a hook writes, else the single new file the catalog's `newestFile` glob finds that no other
 lane has recorded; two candidates are refused and leave `<lane>.ambiguous`). "New" means a path that did not exist when
 the lane started (a snapshot taken before the agent runs), not a recently modified one. The one-at-a-time start is the
-lane's own: `meta-lane.sh` takes a team start lock (`flock` on `lane-sessions/.reported.flock`) before the agent runs and releases it
+lane's own: `meta-lane.sh` takes a team start lock (the symlink `lane-sessions/.reported.lock`, no `flock`: macOS has none) before the agent runs and releases it
 when the id is recorded or refused, or after a timeout plus a grace window (`AW_META_ID_GRACE` seconds, default 10, during which the lane still watches for its late file and keeps it if it arrives, so the next lane cannot take it), so lanes created together (a Warp pane that creates its session, a
 reboot, `--lanes`) are safe too. A lane that cannot start leaves `<lane>.failed` (the reason, the line the launcher prints as `lane <l> failed to start: ...`) and `<lane>.settled`, so the launcher reports it at once instead of waiting out the timeout. A lane refused by the launcher reader (a kickoff prompt starting with `-` once a
 `launcher.json` exists) starts no agent and records no id.

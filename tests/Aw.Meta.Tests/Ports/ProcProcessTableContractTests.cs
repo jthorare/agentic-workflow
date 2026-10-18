@@ -11,7 +11,11 @@ public sealed class ProcProcessTableContractTests : ProcessTableContract, IDispo
 {
     private readonly List<Process> _started = [];
 
-    protected override IProcessTable Create() => new ProcProcessTable(Path.GetTempPath());
+    protected override IProcessTable Create()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "the /proc adapter reads /proc");
+        return new ProcProcessTable(Path.GetTempPath());
+    }
 
     protected override int StartProcess()
     {

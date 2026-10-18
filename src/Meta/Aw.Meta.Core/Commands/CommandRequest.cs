@@ -26,6 +26,20 @@ public sealed record CommandRequest(IReadOnlyList<string> Argv, TimeSpan Timeout
     /// <summary>A file the combined output is appended to as it arrives; null for none.</summary>
     public string? LogFile { get; init; }
 
+    /// <summary>How many characters of each output stream the result keeps, counted from the end; the default is 64 KB. At least 1.</summary>
+    public int TailCharacters
+    {
+        get;
+        init
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            field = value;
+        }
+    } = DefaultTailCharacters;
+
+    /// <summary>The default for <see cref="TailCharacters"/>.</summary>
+    public const int DefaultTailCharacters = 64 * 1024;
+
     /// <summary>How long the command gets to exit after SIGTERM before it and what it started are killed; null for the runner's default (45 seconds).</summary>
     public TimeSpan? TermGrace { get; init; }
 }

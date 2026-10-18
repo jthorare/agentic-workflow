@@ -48,6 +48,8 @@ exit 1
 ## merge-check
 AW-META-001: expected 1 argument(s) before the options, got 0; usage: aw-meta merge-check <pr> [--json]
 exit 2
+## version --json
+{"commit":"aot-smoke","builtAt":"<date>T03:04:05Z","os":"<os>","rid":"<rid>"}
 ## frobnicate
 AW-META-001: unknown command 'frobnicate'; usage: aw-meta <command> [arguments]
 exit 2

@@ -305,7 +305,6 @@ public sealed class NamedTeamsCommandTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Team_migrate_refuses_while_a_lane_session_of_the_team_is_running()
     {
-        Assert.SkipUnless(OperatingSystem.IsLinux(), "session liveness reads /proc");
         Directory.CreateDirectory(Meta("lane-sessions"));
         await File.WriteAllTextAsync(Meta("team.json"), """{"team":"t2","repo":"/r","lanes":["api"]}""", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(Path.Combine(_cli.SessionsDirectory, "1.json"), "{\"pid\":" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"sessionId\":\"s-api\",\"name\":\"t2-api\",\"status\":\"idle\",\"cwd\":\"/w\"}", TestContext.Current.CancellationToken);

@@ -1,0 +1,15 @@
+# The files aw-meta is built from, one git pathspec per line: the one list. scripts/install-meta.sh copies exactly these into its publish
+# tree and checks them for uncommitted changes (a stamp of <commit>-dirty); scripts/meta-version-lib.sh decides from them whether an
+# installed binary is older than a checkout; src/Meta/aot-smoke/run.sh publishes a copy of them. A new project that Meta references goes here.
+global.json
+nuget.config
+.editorconfig
+Directory.*
+BannedSymbols*.txt
+CodeMetricsConfig.txt
+src/Aw.Kernel
+src/Aw.Kernel.Data
+src/Aw.Kernel.Telemetry
+src/Redaction
+src/Aw.Analyzers
+src/Meta

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Meta.Core.Ports;
+using Aw.Meta.Infrastructure.Build;
 using Aw.Meta.Infrastructure.Config;
 using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Infrastructure.Processes;
@@ -15,8 +16,8 @@ public static class MetaInfrastructureServiceCollectionExtensions
 
     /// <summary>
     /// Adds the Meta adapters and their settings: the SQLite stores over $AW_STATE_DIR/meta/meta.db, the team config file
-    /// (which needs the host's JsonSerializerOptions registered), the transcript reader, the sessions directory, the /proc
-    /// process table, the process command runner and the running log (the config's log path, else log.md in the state directory).
+    /// (which needs the host's JsonSerializerOptions registered), the transcript reader, the sessions directory, the host's
+    /// process table and resources (/proc on Linux, sysctl, vm_stat and ps on macOS), the process command runner and the running log (the config's log path, else log.md in the state directory).
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="environment">Reads an environment variable (Environment.GetEnvironmentVariable in Program.cs, a lambda in tests).</param>
@@ -40,11 +41,10 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
             .AddScoped<ILanePane>(sp => new TmuxLanePane(sp.GetRequiredService<ICommandRunner>(), settings.Tmux, settings.TmuxSocket, sp.GetRequiredService<IMetaConfig>()))
             .AddScoped<ISessionDirectory>(sp => new LaneSessionDirectory(
-                new DirectorySessionDirectory(settings.SessionsDirectory), sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<ILaneFiles>(), sp.GetRequiredService<ILanePane>()))
+                new DirectorySessionDirectory(settings.SessionsDirectory, sp.GetRequiredService<IProcessLiveness>()), sp.GetRequiredService<IMetaConfig>(), sp.GetRequiredService<ILaneFiles>(), sp.GetRequiredService<ILanePane>()))
             .AddScoped<ITeamCatalog>(sp => new FileTeamCatalog(settings.Layout, sp.GetRequiredService<ISessionDirectory>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<TimeProvider>()))
-            .AddSingleton<IProcessTable>(new ProcProcessTable(settings.StateDirectory))
-            .AddSingleton<IProcessLocations, ProcessScanner>()
-            .AddSingleton<IHostResources>(new ProcHostResources(settings.StateDirectory, settings.HeavyLock))
+            .AddHostAdapters(HostPlatform.Current, settings.StateDirectory, settings.HeavyLock)
+            .AddSingleton<IBuildInfo, AssemblyBuildInfo>()
             .AddSingleton<IHeavyReserve>(new FileHeavyReserve(settings.StateDirectory))
             .AddSingleton<ILogFiles, FileLogFiles>()
             .AddSingleton<IWorktreeFiles, DirectoryWorktreeFiles>()

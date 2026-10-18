@@ -2,24 +2,32 @@ using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Infrastructure.Files;
 
-/// <summary>Reads the field output of "lsof -F pcn" (the macOS fallback of the process scan).</summary>
+/// <summary>Reads the field output of "lsof -F pcnR" (the macOS process scan).</summary>
 internal static class LsofOutput
 {
-    /// <summary>Groups the p (pid), c (command) and n (name) fields into one location per process.</summary>
+    /// <summary>One process lsof listed: its parent (R) and the location it holds.</summary>
+    /// <param name="Ppid">The parent process id, 0 when lsof gave none.</param>
+    /// <param name="Location">The process, its command and the absolute paths it holds.</param>
+    internal sealed record Entry(int Ppid, ProcessLocation Location);
+
+    /// <summary>Groups the p (pid), R (parent pid), c (command) and n (name) fields into one entry per process.</summary>
     /// <param name="output">The lsof output.</param>
     /// <returns>The processes with the absolute paths they hold.</returns>
-    internal static IReadOnlyList<ProcessLocation> Parse(string output)
+    internal static IReadOnlyList<Entry> Parse(string output)
     {
         ArgumentNullException.ThrowIfNull(output);
-        List<ProcessLocation> found = [];
-        var (pid, command, paths) = (0, string.Empty, new List<string>());
+        List<Entry> found = [];
+        var (pid, ppid, command, paths) = (0, 0, string.Empty, new List<string>());
         foreach (var line in output.ReplaceLineEndings("\n").Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             switch (line[0])
             {
                 case 'p' when int.TryParse(line.AsSpan(1), out var next):
                     Flush();
-                    (pid, command, paths) = (next, string.Empty, []);
+                    (pid, ppid, command, paths) = (next, 0, string.Empty, []);
+                    break;
+                case 'R' when int.TryParse(line.AsSpan(1), out var parent):
+                    ppid = parent;
                     break;
                 case 'c':
                     command = line[1..];
@@ -39,7 +47,7 @@ internal static class LsofOutput
         {
             if (pid > 0)
             {
-                found.Add(new ProcessLocation(pid, command, paths));
+                found.Add(new Entry(ppid, new ProcessLocation(pid, command, paths)));
             }
         }
     }

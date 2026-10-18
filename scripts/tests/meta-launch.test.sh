@@ -5,7 +5,6 @@
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fail=0
-[ "$(uname -s)" = Darwin ] && { echo "skip: aw-meta is Linux-only"; exit 0; }
 check() {
   if [ "$2" == "$3" ]; then echo "ok - $1"; else
     echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
@@ -30,6 +29,7 @@ golden_transcript() {
     export HOME="$G/home" AW_STATE_DIR="$G/state" AW_WARP_LAUNCH_DIR="$G/warp" CALLS="$G/calls"
     unset TMUX AW_LAUNCHER_CONFIG
     for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done
+    export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command: the staleness check (meta-version.test.sh) would add a warning and a call
     export AW_META_LEGACY_TMUX_SOCKET=legacy-golden   # the launcher's legacy-socket check looks here (a private socket, empty), never at tmux's default
     mkdir -p "$HOME/.claude/projects/p" "$G/repo" "$G/prompts" "$AW_STATE_DIR/meta" "$G/shim"
     printf 'API kickoff\nline two $HOME "quoted" '"'"'single'"'"'\n' > "$G/prompts/api.md"
@@ -38,6 +38,7 @@ golden_transcript() {
     printf '#!/usr/bin/env bash\nprintf "%%s|" "$@" >> "$CALLS"; echo >> "$CALLS"\n' > "$G/claude"
     printf '#!/usr/bin/env bash\nexec sleep 600\n' > "$G/claude-noop"
     printf '#!/usr/bin/env bash\necho "$*" >> "$CALLS.meta"\n' > "$G/aw-meta"
+    for o in open xdg-open; do printf '#!/usr/bin/env bash\nexit 0\n' > "$G/shim/$o"; chmod +x "$G/shim/$o"; done   # never the real Warp
     chmod +x "$G/shim/tmux" "$G/claude" "$G/claude-noop" "$G/aw-meta"
     export PATH="$G/shim:$PATH" AW_META_BIN="$G/aw-meta" AW_META_NO_SHELL=1 AW_META_CLAUDE="$G/claude-noop"
     local cfg="$AW_STATE_DIR/meta/team.json"
@@ -94,9 +95,23 @@ echo "$*" >> "$CALLS.meta"
 EOF
 chmod +x "$WORK/claude" "$WORK/aw-meta"
 export AW_META_CLAUDE="$WORK/claude" AW_META_BIN="$WORK/aw-meta" AW_META_NO_SHELL=1
+# `open` (macOS) and `xdg-open` would start the real Warp from a launch that opens its window: stubs first on PATH record the URI instead.
+mkdir -p "$WORK/guard"
+for o in open xdg-open; do printf '#!/usr/bin/env bash\necho "$1" > "%s"\n' "$WORK/opened.guard" > "$WORK/guard/$o"; chmod +x "$WORK/guard/$o"; done
+export PATH="$WORK/guard:$PATH"
+export AW_META_NO_STALE_CHECK=1   # the stub aw-meta has no version command; the staleness check has its own suite (meta-version.test.sh)
 export AW_META_LEGACY_TMUX_SOCKET=t1-legacy   # the launcher's legacy (default-socket) check goes to this private socket, never the real default
 cfg="$AW_STATE_DIR/meta/team.json"
 jq -n --arg r "$WORK/repo" --arg p "$WORK/prompts" '{team:"t1", repo:$r, prompts:$p, metaLane:"meta", lanes:["api","ui"]}' > "$cfg"
+# A process the pane check and tmux see under a name of the test's choosing: a copy of sleep named <name> on Linux. macOS kills a copy
+# of its system sleep (platform binary), so there it is a one-line C program built with cc; both show <name> to ps and to tmux.
+if [ "$(uname -s)" = Darwin ]; then
+  printf '#include <unistd.h>\n#include <stdlib.h>\nint main(int c, char **v) { sleep(c > 1 ? (unsigned) atoi(v[1]) : 1); return 0; }\n' > "$WORK/sleeper.c"
+  cc -o "$WORK/sleeper" "$WORK/sleeper.c" || { echo "not ok - cc is needed to build the sleeper stub on macOS"; exit 1; }
+  SLEEPBIN="$WORK/sleeper"
+else SLEEPBIN="$(command -v sleep)"; fi
+mkdir -p "$WORK/procs"
+sleeper() { [ -x "$WORK/procs/$1" ] || cp "$SLEEPBIN" "$WORK/procs/$1"; echo "$WORK/procs/$1"; }   # sleeper <name>: its path
 
 # meta-lane.sh: fresh start with a prompt, then resume once a transcript exists.
 cat > "$WORK/claude-env" <<'EOF2'
@@ -143,12 +158,19 @@ tmux new-session -d -s t1-api "bash -c 'sleep 60; true'" 2> /dev/null
 OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
 check "rerun: live session kept" "$OUT" "$(printf 'tmux t1-api: running\nwarp: %s' "$yaml")"
 check "rerun with --lanes: the layout still has every lane" "$(grep -c 'exec: tmux -L t1 new -A -s t1-' "$yaml")" "3"
-mkdir -p "$WORK/path"; printf '#!/usr/bin/env bash\necho "$1" > "%s"\n' "$WORK/opened" > "$WORK/path/xdg-open"; chmod +x "$WORK/path/xdg-open"
+mkdir -p "$WORK/path"; for o in open xdg-open; do printf '#!/usr/bin/env bash\necho "$1" > "%s"\n' "$WORK/opened" > "$WORK/path/$o"; chmod +x "$WORK/path/$o"; done   # open on macOS, xdg-open on Linux
 OUT="$(PATH="$WORK/path:$PATH" bash "$DIR/meta-launch.sh" --lanes api)"
 for _ in $(seq 50); do [ -s "$WORK/opened" ] && break; sleep 0.1; done   # xdg-open runs in the background
 check "open: by the config's name, URI-encoded" "$(tail -1 <<< "$OUT"):$(cat "$WORK/opened" 2> /dev/null)" "warp: opening warp://launch/t1%20team:warp://launch/t1%20team"
+# An open that fails (no app registered for warp://: LSOpenURLs -10814) never aborts a launch whose sessions and layout exist.
+mkdir -p "$WORK/failpath"; for o in open xdg-open warp-terminal; do printf '#!/usr/bin/env bash\nexit 1\n' > "$WORK/failpath/$o"; chmod +x "$WORK/failpath/$o"; done
+OUT="$(PATH="$WORK/failpath:$PATH" bash "$DIR/meta-launch.sh" --lanes api 2>&1)"; RC=$?
+check "open fails: the launch still exits 0" "$RC" "0"
+if [ "$(uname -s)" = Darwin ]; then
+  check "open fails: the manual hint is printed" "$(grep -c 'Command Palette' <<< "$OUT")" "1"
+fi
 # claude restarted by hand in the fallback shell: the marker is still there, but a claude runs in the pane.
-mkdir -p "$WORK/fakebin"; cp "$(command -v sleep)" "$WORK/fakebin/claude"
+mkdir -p "$WORK/fakebin"; cp "$SLEEPBIN" "$WORK/fakebin/claude"
 : > "$AW_STATE_DIR/meta/lane-sessions/api.exited"
 tmux kill-session -t t1-api; tmux new-session -d -s t1-api "bash -c '$WORK/fakebin/claude 60; true'"
 for _ in $(seq 50); do pgrep -f "$WORK/fakebin/claude 60" > /dev/null && break; sleep 0.1; done
@@ -288,7 +310,7 @@ jq -n --arg v "$WORK/viewer" '{schema:1, viewer:{kind:"exec-template", name:"rec
 reset; : > "$VIEWER_CALLS"
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" 2>&1)"; RC=$?
 waitfor '[ "$(wc -l < "$VIEWER_CALLS")" -ge 3 ]'
-check "exec-template: exit 0, one window per lane" "$RC:$(wc -l < "$VIEWER_CALLS")" "0:3"
+check "exec-template: exit 0, one window per lane" "$RC:$(wc -l < "$VIEWER_CALLS" | tr -d ' ')" "0:3"
 check "exec-template: title, cwd and the attach argv as separate arguments" "$(grep -- '-t1-api\|t1-api' "$VIEWER_CALLS")" "--title|t1-api|--directory|$WORK/repo|--|tmux|-L|t1|attach|-t|=t1-api|"
 check "exec-template: no Warp YAML written" "$(test -e "$yaml" && echo yes || echo no)" "no"
 : > "$VIEWER_CALLS"
@@ -322,7 +344,7 @@ chmod +x "$WORK/codex"
 jq -n --arg c "$WORK/codex" '{schema:1, agents:{codex:{override:true, bin:$c, model:"codex-flag", policy:"codex-overrides"}}, meta:{lanesAgent:"codex"}}' > "$LCFG"   # the forms are named and never applied: the argv check below holds
 reset; : > "$CALLS.events"; : > "$CALLS.codex"
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --no-open 2>&1)"; RC=$?
-check "codex lanes: the launch notes that they take part through their hooks" "$RC:$(grep -x 'lane api: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT" | wc -l):$(grep -c '^lane meta' <<< "$OUT")" "0:1:0"
+check "codex lanes: the launch notes that they take part through their hooks" "$RC:$(grep -c -x 'lane api: codex, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT"):$(grep -c '^lane meta' <<< "$OUT")" "0:1:0"
 ids="$AW_STATE_DIR/meta/lane-sessions"
 waitfor '[ -s "$ids/api" ] && [ -s "$ids/ui" ] && [ "$(wc -l < "$CALLS.codex")" -ge 2 ]'
 check "codex lanes: started one at a time (each id is reported before the next lane starts)" "$(awk '{print $1" "$2}' "$CALLS.events" | tr '\n' ';')" "start api;wrote api;start ui;wrote ui;"
@@ -345,7 +367,7 @@ rp=$!; waitfor '[ -s "$CALLS.codex" ]'; kill "$rp" 2> /dev/null; pkill -f "$WORK
 check "codex lane with a recorded id and its rollout: resumes it" "$(head -1 "$CALLS.codex" | cut -d'|' -f1-2)" "resume|$a"
 # A non-Claude lane's pane is named after its agent: tmux reads the foreground process group's leader, and aw-meta's wake guard
 # compares it with the catalog's processName. meta-lane.sh gives the agent its own group (job control); a Claude lane is untouched.
-printf '#!/usr/bin/env bash\nexec -a codex sleep 60\n' > "$WORK/codex-named"; chmod +x "$WORK/codex-named"
+printf '#!/usr/bin/env bash\nexec -a codex %s 60\n' "$(sleeper codex)" > "$WORK/codex-named"; chmod +x "$WORK/codex-named"
 jq --arg c "$WORK/codex-named" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l4.json"
 tmux kill-server 2> /dev/null; tmux new-session -d -s keepalive "sleep 600"
 tmux new-session -d -s t1-api "env AW_LAUNCHER_CONFIG=$WORK/l4.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=1 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
@@ -355,14 +377,16 @@ tmux kill-session -t =t1-api 2> /dev/null
 # The id watcher ends with the lane: a real hangup (the pty closed, as when a terminal pane is killed) must take the agent, the lane
 # script and the watcher with it, and a watcher must not outlive its lane to hold the team start lock.
 if command -v script > /dev/null 2>&1; then
-  printf '#!/usr/bin/env bash\nexec -a codex sleep 60\n' > "$WORK/codex-quiet"; chmod +x "$WORK/codex-quiet"
+  printf '#!/usr/bin/env bash\nexec -a codex %s 60\n' "$(sleeper codex)" > "$WORK/codex-quiet"; chmod +x "$WORK/codex-quiet"
   jq --arg c "$WORK/codex-quiet" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l5.json"
   find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
-  script -qfec "env AW_LAUNCHER_CONFIG=$WORK/l5.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=20 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api" /dev/null < /dev/null > /dev/null 2>&1 &
+  pty_cmd="env AW_LAUNCHER_CONFIG=$WORK/l5.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=20 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
+  if script --version 2>&1 | grep -q util-linux; then script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
+  else script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
   sp=$!
-  waitfor '[ "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l)" -ge 2 ] && pgrep -f "^codex 60$" > /dev/null'
+  waitfor '[ "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l | tr -d " ")" -ge 2 ] && pgrep -f "^codex 60$" > /dev/null'
   lane_pids="$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$")"; agent_pid="$(pgrep -f '^codex 60$' | head -1)"
-  check "a lane under a pty runs its script, its agent and an id watcher" "$([ "$(echo "$lane_pids" | wc -l)" -ge 2 ] && kill -0 "$agent_pid" 2> /dev/null && echo yes)" "yes"
+  check "a lane under a pty runs its script, its agent and an id watcher" "$([ "$(echo "$lane_pids" | wc -l | tr -d ' ')" -ge 2 ] && kill -0 "$agent_pid" 2> /dev/null && echo yes)" "yes"
   kill -KILL "$sp" 2> /dev/null; wait "$sp" 2> /dev/null
   waitfor '! pgrep -f "^bash $DIR/meta-lane.sh t1 api$" > /dev/null && ! kill -0 "$agent_pid" 2> /dev/null'
   check "after the pty closes the agent, the lane script and the id watcher are all gone" "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l | tr -d ' '):$(kill -0 "$agent_pid" 2> /dev/null && echo alive || echo gone)" "0:gone"
@@ -375,8 +399,9 @@ fi
 cat > "$WORK/codex-npm" <<'EOF'
 #!/usr/bin/env bash
 if command -v node > /dev/null 2>&1; then exec node -e "require('child_process').spawnSync('sleep', ['60'], { stdio: 'inherit' })"; fi
-exec -a node sleep 60
+exec -a node SLEEPER_NODE 60
 EOF
+sed -i.bak "s#SLEEPER_NODE#$(sleeper node)#" "$WORK/codex-npm"; rm "$WORK/codex-npm.bak"
 chmod +x "$WORK/codex-npm"
 jq --arg c "$WORK/codex-npm" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l6.json"
 find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
@@ -386,7 +411,7 @@ waitfor '[ "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent" 2>
 check "an npm-shaped agent (a node wrapper): the .agent record carries the name the pane shows" "$(jq -r .processName "$AW_STATE_DIR/meta/lane-sessions/api.agent"):$(tmux display-message -p -t =t1-api: '#{pane_current_command}')" "node:node"
 tmux kill-session -t =t1-api 2> /dev/null
 # no processName/transcripts surprises: the pane check uses the catalog's processName.
-mkdir -p "$WORK/fakebin2"; cp "$(command -v sleep)" "$WORK/fakebin2/codex"
+mkdir -p "$WORK/fakebin2"; cp "$SLEEPBIN" "$WORK/fakebin2/codex"
 : > "$ids/api.exited"
 tmux kill-server 2> /dev/null; tmux new-session -d -s keepalive "sleep 600"
 tmux new-session -d -s t1-api "bash -c '$WORK/fakebin2/codex 60; true'"
@@ -476,7 +501,8 @@ tmux kill-server 2> /dev/null; killstubs
 # Three reported lanes started at the same moment (as Warp's panes do) still start one at a time.
 reset; : > "$CALLS.events"; : > "$CALLS.codex"; rm -f "$ids/p1" "$ids/p2" "$ids/p3" "$ids/p1.settled" "$ids/p2.settled" "$ids/p3.settled"
 export -n OLD_ROLLOUT
-( : ) > "$ids/.reported.flock"   # a lock file left by a crashed start: flock holds nothing on it, so it is no obstacle
+# a lock left by a crashed start (its owner pid is dead) is no obstacle: the next start takes it over
+( sleep 0 & dead=$!; wait "$dead"; ln -s "$dead" "$ids/.reported.lock" )
 AW_LAUNCHER_CONFIG="$LCFG" AW_META_ID_WAIT=10 bash "$DIR/meta-lane.sh" t1 p1 > /dev/null 2>&1 & p1=$!
 AW_LAUNCHER_CONFIG="$LCFG" AW_META_ID_WAIT=10 bash "$DIR/meta-lane.sh" t1 p2 > /dev/null 2>&1 & p2=$!
 AW_LAUNCHER_CONFIG="$LCFG" AW_META_ID_WAIT=10 bash "$DIR/meta-lane.sh" t1 p3 > /dev/null 2>&1 & p3=$!
@@ -485,7 +511,64 @@ a1="$(tr -d '[:space:]' < "$ids/p1")"; a2="$(tr -d '[:space:]' < "$ids/p2")"; a3
 check "three lanes starting at once: one at a time (each id recorded before the next agent starts)" "$(awk '{print $1}' "$CALLS.events" | tr '\n' ';')" "start;wrote;start;wrote;start;wrote;"
 check "three lanes starting at once: each lane recorded its own rollout's id" "$(grep -c "wrote p1 $a1" "$CALLS.events"):$(grep -c "wrote p2 $a2" "$CALLS.events"):$(grep -c "wrote p3 $a3" "$CALLS.events"):$(printf '%s\n' "$a1" "$a2" "$a3" | sort -u | wc -l | tr -d ' ')" "1:1:1:3"
 kill "$p1" "$p2" "$p3" 2> /dev/null; killstubs; wait 2> /dev/null
-check "the start lock is released afterwards" "$(flock -n "$ids/.reported.flock" true && echo free || echo held)" "free"
+check "the start lock is released afterwards" "$(test -e "$ids/.reported.lock" -o -L "$ids/.reported.lock" && echo held || echo free)" "free"
+
+# A lock held by a live process is waited for: the lane starts anyway once AW_META_ID_WAIT x 10 s have passed, and says so.
+reset; : > "$CALLS.events"; : > "$CALLS.codex"; rm -f "$ids/p1" "$ids/p1.settled"
+sleep 60 & holder=$!
+ln -s "$holder" "$ids/.reported.lock"
+t0=$SECONDS
+AW_LAUNCHER_CONFIG="$LCFG" AW_META_ID_WAIT=1 bash "$DIR/meta-lane.sh" t1 p1 > "$WORK/held.out" 2>&1 & p1=$!
+for _ in $(seq 250); do grep -q "starting p1 anyway" "$WORK/held.out" && break; sleep 0.1; done
+check "a start lock held by a live process: the lane waits about AW_META_ID_WAIT x 10 s, then starts anyway" "$(grep -c "another lane's start did not finish; starting p1 anyway" "$WORK/held.out"):$([ $((SECONDS - t0)) -ge 9 ] && echo waited || echo "early $((SECONDS - t0))s")" "1:waited"
+check "the live holder's lock is left alone" "$(readlink "$ids/.reported.lock")" "$holder"
+kill "$p1" "$holder" 2> /dev/null; killstubs; wait 2> /dev/null; unlink "$ids/.reported.lock" 2> /dev/null
+
+# The start lock's takeover of a dead owner: no gap lets a second lane in, and an owner that is not a positive integer is stale.
+# meta-start-lock.sh is sourced in a subshell per taker; its test seam (start_lock_hook) plays the other lanes at the exact
+# points where they could interleave.
+mkdir -p "$WORK/lk"; lk="$WORK/lk/.reported.lock"
+dead="$(sh -c 'echo $$')"   # a pid that has exited
+sleep 60 & live_b=$!
+sleep 60 & live_c=$!
+run_acquire() { # <lane_pid> [hook body]: acquire with no wait at all, prints the exit status
+  ( start_lock="$lk"; lane_pid="$1"; lane=t; AW_META_ID_WAIT=0
+    . "$DIR/meta-start-lock.sh"
+    [ -z "${2:-}" ] || eval "start_lock_hook() { $2; }"
+    acquire_start_lock 2> /dev/null; echo $? )
+}
+reset_lock() { unlink "$lk" 2> /dev/null; rmdir "$lk.takeover" 2> /dev/null; rm -f "$WORK/lk/c"; }
+# two takers of a dead lock: the other one finishes its takeover between our check and ours, and a newcomer tries the gap
+reset_lock; ln -s "$dead" "$lk"
+rc="$(run_acquire 4242 'case "$1" in checked) unlink "$start_lock"; ln -s '"$live_b"' "$start_lock" ;; gap) ln -s '"$live_c"' "$start_lock" && : > '"$WORK/lk/c"' ;; esac')"
+check "takeover: a taker that lost the race leaves the other's live lock alone, and no newcomer gets in" "$rc:$(readlink "$lk"):$(test -e "$WORK/lk/c" && echo newcomer || echo none)" "1:$live_b:none"
+# a newcomer in the gap of a real takeover: exactly one of the two holds the lock
+reset_lock; ln -s "$dead" "$lk"
+rc="$(run_acquire 4242 'case "$1" in gap) ln -s '"$live_c"' "$start_lock" && : > '"$WORK/lk/c"' ;; esac')"
+owner="$(readlink "$lk")"
+if [ -e "$WORK/lk/c" ]; then want="1:$live_c"; else want="0:4242"; fi
+check "takeover: a newcomer in the gap and the taker never both hold the lock" "$rc:$owner" "$want"
+# six lanes taking over one dead lock together: never two in the critical section
+reset_lock; ln -s "$dead" "$lk"; rm -f "$WORK/lk/violations" "$WORK/lk/entered"; rmdir "$WORK/lk/crit" 2> /dev/null
+for _ in 1 2 3 4 5 6; do
+  ( start_lock="$lk"; lane_pid="$(sh -c 'echo $PPID')"; lane=t; AW_META_ID_WAIT=5
+    . "$DIR/meta-start-lock.sh"
+    acquire_start_lock 2> /dev/null || exit 0
+    mkdir "$WORK/lk/crit" 2> /dev/null || echo v >> "$WORK/lk/violations"
+    echo e >> "$WORK/lk/entered"; sleep 0.3; rmdir "$WORK/lk/crit" 2> /dev/null; release_start_lock ) &
+done
+wait $(jobs -p | grep -v -e "^$live_b\$" -e "^$live_c\$") 2> /dev/null
+check "takeover: six lanes take a dead lock over one at a time" "$(wc -l < "$WORK/lk/entered" | tr -d ' '):$(test -e "$WORK/lk/violations" && echo overlap || echo none)" "6:none"
+# an owner that is not a positive integer (0 signals the process group, -1 every process) is stale, never a live holder
+for bad in 0 -1 not-a-pid 12x; do
+  reset_lock; ln -s -- "$bad" "$lk"
+  rc="$(run_acquire 4242)"
+  check "takeover: an owner of '$bad' is stale and taken over" "$rc:$(readlink "$lk")" "0:4242"
+done
+reset_lock; kill "$live_b" "$live_c" 2> /dev/null; wait "$live_b" "$live_c" 2> /dev/null
+
+# The launcher scripts run on macOS's bash 3.2 and BSD tools: no flock, fd-number redirections, BASHPID, mapfile or associative arrays.
+check "the launcher scripts use no flock, exec {fd}, BASHPID, mapfile, readarray or declare -A" "$(grep -n -E 'flock|exec \{[a-z_]+\}|BASHPID|mapfile|readarray|declare -A|\$\{[A-Za-z_]+(,,|\^\^)\}' "$DIR/meta-lane.sh" "$DIR/meta-start-lock.sh" "$DIR/meta-launch.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" | grep -v -E '^[^:]+:[0-9]+:[[:space:]]*#' | wc -l | tr -d ' ')" "0"
 
 # Precedence: AW_META_CLAUDE ranks above the file's claude-code bin; without it the file's bin is used.
 jq -n '{schema:1, agents:{"claude-code":{override:true, bin:"/nonexistent/claude"}}}' > "$LCFG"

@@ -6,27 +6,26 @@ using Aw.Meta.Core.Ports;
 namespace Aw.Meta.Infrastructure.Files;
 
 /// <summary>
-/// IProcessLocations over /proc (the working directory and every open file of each process the user may read), or lsof where there is
-/// no /proc (macOS). A process that exits mid-scan, or belongs to someone else, is skipped; a scan that cannot run at all is an error.
+/// IProcessLocations on Linux over /proc: the working directory and every open file of each process the user may read. A process
+/// that exits mid-scan, or belongs to someone else, is skipped; a scan that cannot run at all is an error.
 /// </summary>
-internal sealed class ProcessScanner : IProcessLocations
+internal sealed class ProcProcessLocations : IProcessLocations
 {
     private const string Proc = "/proc";
 
-    public async ValueTask<Result<IReadOnlyList<ProcessLocation>>> Locations(CancellationToken cancellationToken)
+    public ValueTask<Result<IReadOnlyList<ProcessLocation>>> Locations(CancellationToken cancellationToken)
     {
         try
         {
-            var found = Directory.Exists(Proc + "/self") ? ScanProc() : await Lsof(cancellationToken).ConfigureAwait(false);
-            return Results.Success<IReadOnlyList<ProcessLocation>>(found);
+            return ValueTask.FromResult(Results.Success<IReadOnlyList<ProcessLocation>>(Scan()));
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or FormatException or System.ComponentModel.Win32Exception or InvalidOperationException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or FormatException)
         {
-            return MetaErrors.HostUnreadable.With("the process scan failed: " + exception.Message);
+            return ValueTask.FromResult(Results.Failure<IReadOnlyList<ProcessLocation>>(MetaErrors.HostUnreadable.With("the process scan failed: " + exception.Message)));
         }
     }
 
-    private static List<ProcessLocation> ScanProc()
+    private static List<ProcessLocation> Scan()
     {
         var parents = new Dictionary<int, int>();
         var directories = new List<(int Pid, string Directory)>();
@@ -42,7 +41,7 @@ internal sealed class ProcessScanner : IProcessLocations
             }
         }
 
-        var invoker = Chain(Environment.ProcessId, parents);
+        var invoker = ProcessAncestry.Chain(Environment.ProcessId, parents);
         var found = new List<ProcessLocation>();
         foreach (var (pid, directory) in directories)
         {
@@ -53,17 +52,6 @@ internal sealed class ProcessScanner : IProcessLocations
         }
 
         return found;
-    }
-
-    private static HashSet<int> Chain(int start, Dictionary<int, int> parents)
-    {
-        var chain = new HashSet<int>();
-        for (var pid = start; pid > 1 && chain.Add(pid) && parents.TryGetValue(pid, out var parent); pid = parent)
-        {
-            // each ancestor, up to init
-        }
-
-        return chain;
     }
 
     private static int? Parent(string directory)
@@ -105,24 +93,5 @@ internal sealed class ProcessScanner : IProcessLocations
         {
             paths.Add(target);
         }
-    }
-
-    private static async ValueTask<List<ProcessLocation>> Lsof(CancellationToken cancellationToken)
-    {
-        var info = new System.Diagnostics.ProcessStartInfo("lsof") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
-        foreach (var argument in (string[])["-w", "-n", "-F", "pcn"])
-        {
-            info.ArgumentList.Add(argument);
-        }
-
-        using var lsof = System.Diagnostics.Process.Start(info) ?? throw new InvalidOperationException("lsof could not be started");
-        var errors = lsof.StandardError.ReadToEndAsync(cancellationToken);
-        var output = await lsof.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-        await lsof.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-        _ = await errors.ConfigureAwait(false);
-        var found = LsofOutput.Parse(output);
-        return found.Count == 0
-            ? throw new InvalidOperationException("lsof listed no process")
-            : [.. found.Select(static p => p.Pid == Environment.ProcessId ? p with { IsInvoker = true } : p)];
     }
 }

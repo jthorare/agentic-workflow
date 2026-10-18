@@ -18,6 +18,7 @@ internal static class CommandTable
         TeamInitCommand.Entry,
         TeamShowCommand.Entry,
         TeamListCommand.Entry,
+        VersionCommand.Entry,
         TeamMigrateCommand.Entry,
         SyncInboxCommand.Entry,
         StopCheckCommand.Entry,
@@ -49,7 +50,7 @@ internal static class CommandTable
     ];
 
     // Commands that work across teams: they never need one selected.
-    private static readonly HashSet<string> _teamFree = new(["team-list", "team-migrate"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _teamFree = new(["team-list", "team-migrate", "version"], StringComparer.Ordinal);
 
     // The hook commands run for every session of the box, so they pass through when the team can't be told.
     private static readonly HashSet<string> _hooks = new(["stop-check", "outbox-record"], StringComparer.Ordinal);

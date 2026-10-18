@@ -23,7 +23,7 @@ public sealed class DirectorySessionDirectoryContractTests : SessionDirectoryCon
                 $$"""{"pid":{{pid}},"sessionId":"{{session.Session.Value}}","name":"{{session.Name}}","status":"{{session.Status}}","cwd":"{{session.Cwd}}","kind":"interactive"}""");
         }
 
-        return new DirectorySessionDirectory(_dir.Path);
+        return new DirectorySessionDirectory(_dir.Path, RealLiveness.Create());
     }
 
     public void Dispose() => _dir.Dispose();

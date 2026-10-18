@@ -25,7 +25,12 @@
 #   AW_META_ID_GRACE     seconds a lane whose id timed out keeps the start lock for its late session file (default 10; tests)
 #   AW_META_NO_SHELL     1: exit when the agent exits instead of dropping to a shell (tests)
 set -u
-here="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+self="$0"   # resolve symlinks without readlink -f (older macOS has none)
+while [ -L "$self" ]; do
+  d="$(cd "$(dirname "$self")" && pwd)"; t="$(readlink "$self")"
+  case "$t" in /*) self="$t" ;; *) self="$d/$t" ;; esac
+done
+here="$(cd "$(dirname "$self")" && pwd)"
 team="${1:?usage: meta-lane.sh <team> <lane>}"
 lane="${2:?usage: meta-lane.sh <team> <lane>}"
 for n in "$team" "$lane"; do
@@ -111,7 +116,7 @@ watch_reported_id() { # [seconds]: the wait (default AW_META_ID_WAIT); a second 
         done
         [ "$claimed" = 0 ] || continue
         if [ "$f" != "$cid" ]; then n=$((n + 1)); cid="$f"; fi
-      done < <(compgen -G "$glob" | grep -Fxv -f "$snapfile")   # paths that existed before this start are not ours (one pass, however many there are)
+      done < <(compgen -G "$glob" | awk -v f="$snapfile" 'BEGIN { while ((getline l < f) > 0) seen[l] = 1 } !($0 in seen)')   # paths that existed before this start are not ours (one pass, however many there are; BSD grep -f is quadratic)
       if [ "$n" -gt 1 ]; then : > "$ids/$lane.ambiguous"; : > "$ids/$lane.settled"; return 1; fi
       if [ "$n" = 1 ]; then printf '%s\n' "$cid" > "$ids/$lane.tmp" && mv "$ids/$lane.tmp" "$ids/$lane"; : > "$ids/$lane.settled"; return 0; fi
     fi
@@ -122,16 +127,13 @@ watch_reported_id() { # [seconds]: the wait (default AW_META_ID_WAIT); a second 
 
 # Lanes whose agent reports its own id start one at a time, whoever starts them (aw-meta-launch, a Warp pane that creates
 # its session, a reboot, --lanes): the newest-file fallback cannot tell two new session files apart. A lane takes the
-# team's start lock (flock on lane-sessions/.reported.flock) before its agent runs; the watcher subshell holds it and
-# releases it by exiting, once the id is recorded, refused or timed out. The kernel drops the lock when its holder dies,
-# so a crashed start never leaves a stale one. Linux (flock from util-linux).
-start_lock="$ids/.reported.flock"
-acquire_start_lock() { # opens lock_fd and takes the lock; returns 1 (fd closed) if the holder did not finish in time
-  exec {lock_fd}> "$start_lock" || return 1
-  if flock -w $(( ${AW_META_ID_WAIT:-30} * 10 )) "$lock_fd"; then return 0; fi
-  echo "meta-lane: another lane's start did not finish; starting $lane anyway" >&2
-  exec {lock_fd}>&-; return 1
-}
+# team's start lock before its agent runs; the watcher subshell releases it once the id is recorded, refused or timed out
+# (or the lane script ends first). The lock is a symlink, lane-sessions/.reported.lock, whose target is the owner's pid:
+# `ln -s` is atomic and records the owner in one step, on macOS (no flock there) and Linux alike. A lock whose owner pid
+# is dead is taken over, so a crashed start never leaves a stale one.
+# shellcheck source=meta-start-lock.sh
+start_lock="$ids/.reported.lock"
+. "$here/meta-start-lock.sh"
 
 id=""; mode=fresh; write_id=0
 case "$id_mode" in
@@ -141,7 +143,7 @@ case "$id_mode" in
     if [ -n "$id" ] && id_ok "$id" && [ -n "$(field resume)" ] && has_transcript "$id"; then
       mode=resume
     elif [ "$id_mode" = pre-chosen-uuid ]; then
-      id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen)"
+      id="$(cat /proc/sys/kernel/random/uuid 2> /dev/null || uuidgen | tr '[:upper:]' '[:lower:]')"   # macOS uuidgen prints uppercase; a transcript is named by the lowercase id
     else
       id=""; rm -f "$ids/$lane" "$ids/$lane.ambiguous" "$ids/$lane.settled"
     fi
@@ -217,15 +219,16 @@ if [ "$id_mode" = reported ] && [ "$mode" = fresh ]; then
     # A timed-out lane keeps the lock through the grace period unless its late file turns up (or it was refused).
     watch_reported_id || [ -e "$ids/$lane.settled" ] || watch_reported_id "${AW_META_ID_GRACE:-10}"
     unlink "$snapfile" 2> /dev/null
+    [ "$have_lock" = 0 ] || release_start_lock
   ) > /dev/null 2>&1 &
   watcher=$!
-  [ "$have_lock" = 0 ] || exec {lock_fd}>&-   # the watcher subshell keeps the lock; this shell, and so the agent, must not
 fi
 watcher="${watcher:-}"
 recorder=""
 # Ends the id watcher and the pane-name recorder, and removes the watcher's snapshot (it unlinks it itself only when it finishes).
 stop_watcher() {
   [ -z "$watcher" ] || kill "$watcher" 2> /dev/null
+  [ "${have_lock:-0}" = 0 ] || release_start_lock
   [ -z "$recorder" ] || kill "$recorder" 2> /dev/null
   [ -z "${snapfile:-}" ] || unlink "$snapfile" 2> /dev/null
   watcher=""; recorder=""
@@ -249,7 +252,7 @@ else
       shown="$(ps -o args= -p "$fg" 2> /dev/null)"; shown="${shown%% *}"; shown="${shown##*/}"
       case "$shown" in ''|bash|sh|dash|zsh|ksh|fish|env) continue ;; esac   # a shell (or env) stands for "the agent is down" (the pane's fallback): never record it
       if [ "$shown" != "$(jq -r .processName "$ids/$lane.agent" 2> /dev/null)" ]; then
-        tmpf="$ids/$lane.agent.tmp.$BASHPID"
+        tmpf="$ids/$lane.agent.tmp.$$.$RANDOM"
         jq -c --arg n "$shown" '.processName = $n' "$ids/$lane.agent" > "$tmpf" && mv "$tmpf" "$ids/$lane.agent"
       fi
       exit 0

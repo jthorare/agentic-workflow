@@ -15,7 +15,7 @@ gate and merge their PRs, relay between them and the owner, and keep the box hea
 Every step below is an `aw-meta` call. Don't improvise a step the CLI has a command for, and never edit its state
 (`$AW_STATE_DIR/meta/`) by hand. Works for any project: everything team-specific is in the team config.
 
-`aw-meta` is on PATH after `./setup.sh --with-meta` (Linux only for now: aw-meta reads /proc; on macOS setup skips it) (else `$HOME/.agentic-workflow/bin/aw-meta`). Every command takes
+`aw-meta` is on PATH after `./setup.sh --with-meta` (Linux and macOS; `aw-meta version` shows which commit it was built from) (else `$HOME/.agentic-workflow/bin/aw-meta`). Every command takes
 `--json`. Exit 0 ok, 1 attention (read the output and act on it), 2 usage or tool error. Reference:
 `$HOME/.agentic-workflow/toolkit/docs/csharp/meta.md`.
 

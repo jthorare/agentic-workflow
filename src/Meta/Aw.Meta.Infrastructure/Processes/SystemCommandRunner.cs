@@ -13,7 +13,6 @@ namespace Aw.Meta.Infrastructure.Processes;
 /// </summary>
 internal sealed class SystemCommandRunner : ICommandRunner
 {
-    private const int TailCharacters = 64 * 1024;
     private readonly TimeSpan _drainGrace;
     private readonly TimeSpan _termGrace;
 
@@ -91,8 +90,8 @@ internal sealed class SystemCommandRunner : ICommandRunner
         var reading = Task.CompletedTask;
         try
         {
-            var stdout = new TailBuffer(TailCharacters);
-            var stderr = new TailBuffer(TailCharacters);
+            var stdout = new TailBuffer(request.TailCharacters);
+            var stderr = new TailBuffer(request.TailCharacters);
             process.StandardInput.Close();
 #pragma warning disable CA2025 // awaited in the finally below, before the caller disposes the process and stopPumping goes out of scope
             reading = Task.WhenAll(

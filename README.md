@@ -172,7 +172,7 @@ The setup script:
 | C# scaffolds | `new-package`, `new-slice` |
 | Review | `review`, `postReview`, `addressReview`, `cso` |
 | Debug & QA | `rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit` |
-| Ship & operate | `shipRelease`, `landAndDeploy`, `canary`, `syncDocs`, `weeklyRetro`, `prismStatus`, `judge`, `meta` (opt-in: `./setup.sh --with-meta`; Linux only for now, aw-meta reads /proc, so setup skips it on macOS) |
+| Ship & operate | `shipRelease`, `landAndDeploy`, `canary`, `syncDocs`, `weeklyRetro`, `prismStatus`, `judge`, `meta` (opt-in: `./setup.sh --with-meta`; Linux and macOS) |
 | Repo setup | `bootstrap` |
 | Self-evolution | `reflect`, `correct` |
 

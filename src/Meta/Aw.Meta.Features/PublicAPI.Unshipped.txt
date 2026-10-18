@@ -876,6 +876,15 @@ static Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.operator !=(Aw.Meta.
 static Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.operator ==(Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest? left, Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest? right) -> bool
 static Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse.operator !=(Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse? left, Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse? right) -> bool
 static Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse.operator ==(Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse? left, Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse? right) -> bool
+Aw.Meta.Features.ShowVersion.ShowVersionRequest
+Aw.Meta.Features.ShowVersion.ShowVersionRequest.<Clone>$() -> Aw.Meta.Features.ShowVersion.ShowVersionRequest!
+Aw.Meta.Features.ShowVersion.ShowVersionRequest.Equals(Aw.Meta.Features.ShowVersion.ShowVersionRequest? other) -> bool
+Aw.Meta.Features.ShowVersion.ShowVersionRequest.ShowVersionRequest() -> void
+override Aw.Meta.Features.ShowVersion.ShowVersionRequest.Equals(object? obj) -> bool
+override Aw.Meta.Features.ShowVersion.ShowVersionRequest.GetHashCode() -> int
+override Aw.Meta.Features.ShowVersion.ShowVersionRequest.ToString() -> string!
+static Aw.Meta.Features.ShowVersion.ShowVersionRequest.operator !=(Aw.Meta.Features.ShowVersion.ShowVersionRequest? left, Aw.Meta.Features.ShowVersion.ShowVersionRequest? right) -> bool
+static Aw.Meta.Features.ShowVersion.ShowVersionRequest.operator ==(Aw.Meta.Features.ShowVersion.ShowVersionRequest? left, Aw.Meta.Features.ShowVersion.ShowVersionRequest? right) -> bool
 Aw.Meta.Features.GateRerun.GateRerunResponse.AloneLog.get -> string?
 Aw.Meta.Features.GateRerun.GateRerunResponse.AloneLog.init -> void
 Aw.Meta.Features.GateRerun.GateRerunResponse.MainLog.get -> string?

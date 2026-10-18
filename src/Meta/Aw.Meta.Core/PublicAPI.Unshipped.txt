@@ -1750,6 +1750,51 @@ static readonly Aw.Meta.Core.MetaErrors.TranscriptUnreadable -> Aw.Kernel.ErrorD
 static readonly Aw.Meta.Core.MetaErrors.UnknownLane -> Aw.Kernel.ErrorDefinition!
 ~override Aw.Meta.Core.Config.ReserveSlots.Equals(object obj) -> bool
 ~override Aw.Meta.Core.Config.ReserveSlots.ToString() -> string
+Aw.Meta.Core.Commands.CommandRequest.TailCharacters.get -> int
+Aw.Meta.Core.Commands.CommandRequest.TailCharacters.init -> void
+const Aw.Meta.Core.Commands.CommandRequest.DefaultTailCharacters = 65536 -> int
+Aw.Meta.Core.Ports.BuildInfo
+Aw.Meta.Core.Ports.BuildInfo.<Clone>$() -> Aw.Meta.Core.Ports.BuildInfo!
+Aw.Meta.Core.Ports.BuildInfo.BuildInfo(string! Commit, string! BuiltAt, string! Os, string! Rid) -> void
+Aw.Meta.Core.Ports.BuildInfo.BuiltAt.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.BuiltAt.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Commit.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Commit.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Deconstruct(out string! Commit, out string! BuiltAt, out string! Os, out string! Rid) -> void
+Aw.Meta.Core.Ports.BuildInfo.Equals(Aw.Meta.Core.Ports.BuildInfo? other) -> bool
+Aw.Meta.Core.Ports.BuildInfo.Os.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Os.init -> void
+Aw.Meta.Core.Ports.BuildInfo.Rid.get -> string!
+Aw.Meta.Core.Ports.BuildInfo.Rid.init -> void
+Aw.Meta.Core.Ports.IBuildInfo
+Aw.Meta.Core.Ports.IBuildInfo.Read() -> Aw.Meta.Core.Ports.BuildInfo!
+override Aw.Meta.Core.Ports.BuildInfo.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.BuildInfo.GetHashCode() -> int
+override Aw.Meta.Core.Ports.BuildInfo.ToString() -> string!
+static Aw.Meta.Core.Ports.BuildInfo.operator !=(Aw.Meta.Core.Ports.BuildInfo? left, Aw.Meta.Core.Ports.BuildInfo? right) -> bool
+static Aw.Meta.Core.Ports.BuildInfo.operator ==(Aw.Meta.Core.Ports.BuildInfo? left, Aw.Meta.Core.Ports.BuildInfo? right) -> bool
+Aw.Meta.Core.Health.ProcessStart
+Aw.Meta.Core.Ports.IProcessLiveness
+Aw.Meta.Core.Ports.IProcessLiveness.IsRunning(int pid, System.DateTimeOffset recordedAt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+static Aw.Meta.Core.Health.ProcessStart.IsReused(System.DateTimeOffset startedAt, System.DateTimeOffset recordedAt) -> bool
+static Aw.Meta.Core.Health.ProcessStart.Tolerance.get -> System.TimeSpan
+Aw.Meta.Core.Ports.LivenessVerdicts
+Aw.Meta.Core.Ports.ProcessClaim.Pid.get -> int
+Aw.Meta.Core.Ports.ProcessClaim.RecordedAt.get -> System.DateTimeOffset
+Aw.Meta.Core.Ports.ProcessClaim
+Aw.Meta.Core.Ports.ProcessClaim.Pid.init -> void
+Aw.Meta.Core.Ports.ProcessClaim.RecordedAt.init -> void
+override Aw.Meta.Core.Ports.ProcessClaim.ToString() -> string!
+static Aw.Meta.Core.Ports.ProcessClaim.operator !=(Aw.Meta.Core.Ports.ProcessClaim? left, Aw.Meta.Core.Ports.ProcessClaim? right) -> bool
+static Aw.Meta.Core.Ports.ProcessClaim.operator ==(Aw.Meta.Core.Ports.ProcessClaim? left, Aw.Meta.Core.Ports.ProcessClaim? right) -> bool
+override Aw.Meta.Core.Ports.ProcessClaim.GetHashCode() -> int
+override Aw.Meta.Core.Ports.ProcessClaim.Equals(object? obj) -> bool
+Aw.Meta.Core.Ports.ProcessClaim.Equals(Aw.Meta.Core.Ports.ProcessClaim? other) -> bool
+Aw.Meta.Core.Ports.ProcessClaim.<Clone>$() -> Aw.Meta.Core.Ports.ProcessClaim!
+Aw.Meta.Core.Ports.ProcessClaim.Deconstruct(out int Pid, out System.DateTimeOffset RecordedAt) -> void
+Aw.Meta.Core.Ports.ProcessClaim.ProcessClaim(int Pid, System.DateTimeOffset RecordedAt) -> void
+static Aw.Meta.Core.Ports.LivenessVerdicts.IsLiveOrUnknown(this Aw.Kernel.Result<bool>! verdict) -> bool
+Aw.Meta.Core.Ports.IProcessLiveness.Running(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ports.ProcessClaim!>! claims, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Kernel.Result<bool>!>!>
 Aw.Meta.Core.Commands.CommandRequest.Isolated.get -> bool
 Aw.Meta.Core.Commands.CommandRequest.Isolated.init -> void
 Aw.Meta.Core.Commands.CommandRequest.UnsetEnv.get -> System.Collections.Generic.IReadOnlyList<string!>!

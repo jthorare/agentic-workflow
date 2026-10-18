@@ -7,15 +7,24 @@
 #   install-meta.sh [--provider claude|codex|cursor] [--allow-worktree]   default claude
 #   --allow-worktree  install from this tree although it is not the canonical checkout: a linked worktree, a second clone, or any
 #                     tree other than the team config's repo (the name is historical; it covers all three)
-#   Exit codes: 0 installed; 1 failed (usage, macOS, a missing binary, a failed publish); 3 refused because this tree is not the
+#   Exit codes: 0 installed; 1 failed (usage, an unsupported OS, a missing binary, a failed publish); 3 refused because this tree is not the
 #   canonical checkout (setup.sh --with-meta warns on 3 and carries on, and stops on every other non-zero exit)
 #   AW_DRY_RUN=1     print what would happen, write nothing
 #   AW_SKIP_BUILD=1  don't publish; install the binary already in $AW_STATE_DIR/bin (tests)
 #   CLAUDE_LOCAL_BIN where the aw-meta and aw-meta-launch links go (default ~/.local/bin)
 #
+# Supported OSes: Linux (x64, arm64) and macOS (arm64, x64: the host RID is whatever `dotnet --info` reports, osx-arm64 or osx-x64). Any
+# other OS fails at once with exit 1 and says why; this script never skips quietly. On macOS aw-meta reads memory, swap and the process
+# table through sysctl, vm_stat, ps and lsof instead of /proc (docs/csharp/meta.md "OS support"); NativeAOT needs Xcode's command line tools.
+#
 # 1. Publish src/Meta/Aw.Meta.Host with NativeAOT for the host RID, on a copy of the files it needs (a RID publish
 #    adds the host's ILCompiler packs to the lock files, so it never runs on the checkout), under the heavy-job lock
-#    when it exists. The binary and its bundled e_sqlite3 land in $AW_STATE_DIR/bin.
+#    when it exists. The binary and its bundled e_sqlite3 (libe_sqlite3.so, or libe_sqlite3.dylib on macOS) land in
+#    $AW_STATE_DIR/bin. The publish is stamped with this tree's commit (-p:SourceRevisionId=$(git rev-parse HEAD)) and a UTC build
+#    time (-p:AwBuildTime); a tree with uncommitted changes under a build path (scripts/meta-build-paths.txt, the one list of them) is
+#    stamped <commit>-dirty, the publish must have produced aw-meta, and the installed binary must report the stamped commit (else
+#    "install didn't take", exit 1). The installed version is printed from `aw-meta version`; scripts/meta-launch.sh warns when the
+#    installed binary is older than the Meta sources it is launched from. A failed publish exits 1 and leaves the installed binary alone.
 # 2. Hooks, per provider:
 #    claude: Stop → meta-stop-gate.sh, PostToolUse with matcher SendMessage → meta-outbox.sh. Both pass straight through for
 #      every session but the registered meta one.
@@ -46,11 +55,15 @@ LOCAL_BIN="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
 HEAVY="$STATE/bin-r1b/heavy"
 dry() { [ "${AW_DRY_RUN:-0}" = 1 ]; }
 
-# aw-meta reads Linux /proc (memory, uptime, the process table), so it does not run on macOS yet.
-if [ "$(uname)" = Darwin ]; then
-  echo "install-meta: aw-meta is Linux-only for now (it reads /proc); not installing on macOS" >&2
-  exit 1
-fi
+case "$(uname)" in
+  Linux | Darwin) ;;
+  *)
+    echo "install-meta: aw-meta is supported on Linux and macOS only (this is $(uname)); not installing" >&2
+    exit 1
+    ;;
+esac
+# shellcheck source=meta-version-lib.sh
+. "$SCRIPT_DIR/scripts/meta-version-lib.sh"
 
 # Never silently install an unmerged build. The team config's repo (when it has the launcher) is the canonical checkout: this
 # script must run from it; from any other tree (a worktree, a second clone) it refuses. With no team repo, a linked git worktree
@@ -102,25 +115,41 @@ else
   work="$STATE/cache/meta-build"
   mkdir -p "$work"
   tree="$(mktemp -d "$work/tree.XXXXXX")"
-  git -C "$SCRIPT_DIR" ls-files -z --cached --others --exclude-standard -- global.json nuget.config .editorconfig 'Directory.*' \
-    'BannedSymbols*.txt' CodeMetricsConfig.txt src/Aw.Kernel src/Aw.Kernel.Data src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers src/Meta \
+  git -C "$SCRIPT_DIR" ls-files -z --cached --others --exclude-standard -- "${META_BUILD_PATHS[@]}" \
     | (cd "$SCRIPT_DIR" && tar --null -T - -cf -) | tar -xf - -C "$tree"
   rid="$(dotnet --info | awk '/^ *RID:/ {print $2; exit}')"
-  run=(dotnet publish "$tree/src/Meta/Aw.Meta.Host/Aw.Meta.Host.csproj" -c Release -r "$rid" -p:RestoreLockedMode=false -o "$tree/out")
+  stamp=(-p:AwBuildTime="$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+  commit="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2> /dev/null || true)"
+  # an uncommitted change under a build path (the publish copies the working tree, untracked files too) makes the stamp <HEAD>-dirty
+  if [ -n "$commit" ] && [ -n "$(git -C "$SCRIPT_DIR" status --porcelain -- "${META_BUILD_PATHS[@]}" 2> /dev/null)" ]; then commit="$commit-dirty"; fi
+  [ -n "$commit" ] && stamp+=(-p:SourceRevisionId="$commit")
+  run=(dotnet publish "$tree/src/Meta/Aw.Meta.Host/Aw.Meta.Host.csproj" -c Release -r "$rid" -p:RestoreLockedMode=false "${stamp[@]}" -o "$tree/out")
   [ -x "$HEAVY" ] && run=("$HEAVY" "${run[@]}")
   echo "  meta: publishing aw-meta ($rid) — takes a box-wide build slot"
   "${run[@]}" < /dev/null > "$work/publish.log" 2>&1 || { tail -20 "$work/publish.log" >&2; exit 1; }
+  [ -e "$tree/out/aw-meta" ] || { echo "install-meta: the publish produced no aw-meta in $tree/out (log: $work/publish.log)" >&2; exit 1; }
   mkdir -p "$BIN"
   for f in aw-meta libe_sqlite3.so libe_sqlite3.dylib; do
     [ -e "$tree/out/$f" ] || continue
     cp "$tree/out/$f" "$BIN/.$f.new" && mv "$BIN/.$f.new" "$BIN/$f"
   done
   find "$tree" -delete
+  # the binary now in place must be the one just built: its stamped commit is the one the publish was given
+  installed="$(meta_version_json "$BIN/aw-meta" | jq -r '.commit // empty' 2> /dev/null || true)"
+  if [ "$installed" != "${commit:-unknown}" ]; then
+    echo "install-meta: install didn't take: $BIN/aw-meta reports commit '${installed:-none}', the publish was stamped '${commit:-unknown}'" >&2
+    exit 1
+  fi
   echo "  meta: installed $BIN/aw-meta"
 fi
+[ -x "$BIN/aw-meta" ] && echo "  meta: $(meta_version_line "$BIN/aw-meta")"
 
 # 2. Hooks.
+# sq <text>: the text as one single-quoted shell word (a ' inside becomes '\''), so a path with a space, a $, a backtick or a
+# quote reaches the hook's shell as exactly that path. Every hook command below goes through it.
+sq() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
 aw_hooks_init "$AW_PROVIDER"
+hooks_before="$(cat "$AW_HOOKS_CONFIG" 2> /dev/null || true)"
 if [ "$AW_PROVIDER" = claude ]; then
   if dry; then
     echo "  [dry-run] would install meta-stop-gate (Stop) and meta-outbox (PostToolUse SendMessage) in $AW_HOOKS_CONFIG"
@@ -131,8 +160,8 @@ if [ "$AW_PROVIDER" = claude ]; then
       chmod +x "$AW_HOOKS_INSTALL_DIR/$h"
     done
     cp "$SCRIPT_DIR/config/lib/failopen.sh" "$AW_HOOKS_INSTALL_DIR/lib/failopen.sh"
-    stop=$(jq -nc --arg c "$AW_HOOKS_INSTALL_DIR/meta-stop-gate.sh # aw:meta-stop-gate" '{hooks:[{type:"command",command:$c,timeout:20}]}')
-    out=$(jq -nc --arg c "$AW_HOOKS_INSTALL_DIR/meta-outbox.sh # aw:meta-outbox" '{matcher:"SendMessage",hooks:[{type:"command",command:$c,timeout:10}]}')
+    stop=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-stop-gate.sh") # aw:meta-stop-gate" '{hooks:[{type:"command",command:$c,timeout:20}]}')
+    out=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-outbox.sh") # aw:meta-outbox" '{matcher:"SendMessage",hooks:[{type:"command",command:$c,timeout:10}]}')
     merge_hook "$AW_HOOKS_CONFIG" Stop aw:meta-stop-gate "$stop"
     merge_hook "$AW_HOOKS_CONFIG" PostToolUse aw:meta-outbox "$out"
     echo "  meta: hooks installed in $AW_HOOKS_CONFIG"
@@ -143,20 +172,27 @@ else
   else
     mkdir -p "$(dirname "$AW_HOOKS_CONFIG")"
     aw_hooks_stage
+    # the adapter and the script are single-quoted in the command (a HOME with a space or a $), which aw_hook_set does not do
+    lane_hook() { # lane_hook <event> <id> <script> <timeout>
+      aw_hook_set_cmd "$1" "$2" "$(sq "$AW_HOOKS_INSTALL_DIR/adapters/$AW_HOOK_PROVIDER.sh") ${AW_HOOK_ADAPTER_FLAGS:+$AW_HOOK_ADAPTER_FLAGS }$(sq "$AW_HOOKS_INSTALL_DIR/$3")" "" "$4"
+    }
     if [ "$AW_PROVIDER" = codex ]; then
-      aw_hook_set SessionStart aw:session-id-report session-id-report.sh "" 10
-      aw_hook_set UserPromptSubmit aw:meta-lane-gate meta-lane-gate.sh "" 10
-      aw_hook_set Stop aw:meta-lane-gate meta-lane-gate.sh "" 20
+      lane_hook SessionStart aw:session-id-report session-id-report.sh 10
+      lane_hook UserPromptSubmit aw:meta-lane-gate meta-lane-gate.sh 10
+      lane_hook Stop aw:meta-lane-gate meta-lane-gate.sh 20
     else
-      aw_hook_set sessionStart aw:session-id-report session-id-report.sh "" 10
-      aw_hook_set sessionStart aw:meta-lane-gate meta-lane-gate.sh "" 10
-      aw_hook_set postToolUse aw:meta-lane-gate meta-lane-gate.sh "" 10
-      aw_hook_set stop aw:meta-lane-gate meta-lane-gate.sh "" 20
+      lane_hook sessionStart aw:session-id-report session-id-report.sh 10
+      lane_hook sessionStart aw:meta-lane-gate meta-lane-gate.sh 10
+      lane_hook postToolUse aw:meta-lane-gate meta-lane-gate.sh 10
+      lane_hook stop aw:meta-lane-gate meta-lane-gate.sh 20
     fi
     echo "  meta: lane hooks installed in $AW_HOOKS_CONFIG"
   fi
   # Codex records trust against each hook's hash and runs only trusted hooks: after every install (a changed command needs it again).
   if [ "$AW_PROVIDER" = codex ]; then
+    if ! dry && [ "$(cat "$AW_HOOKS_CONFIG" 2> /dev/null || true)" != "$hooks_before" ]; then
+      echo "  meta: the hook commands changed in $AW_HOOKS_CONFIG (the hook text is what Codex's trust hash covers): trust them again"
+    fi
     echo "  meta: open \`codex\` and run \`/hooks\` to trust the \`aw:*\` hooks (until then a Codex lane shows \"hooks not running\" in aw-meta health)"
   fi
 fi

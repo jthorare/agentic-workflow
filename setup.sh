@@ -595,19 +595,18 @@ fi
 # needs clang and zlib) and after the provider install (its hooks merge into the settings that install copies from the
 # template). Each selected provider gets its own hooks: Claude Code the meta gates, Codex and Cursor the lane hooks for
 # non-Claude Meta lanes (the Codex /hooks trust step is printed). The binary is published once, by the first provider ---
+META_RC=0
 if [ "$WITH_META" = "1" ]; then
-  if [ "$(uname)" = "Darwin" ]; then
-    echo "  meta: skipped (aw-meta is Linux-only for now: it reads /proc)"
+  # shellcheck source=config/lib/setup-meta-step.sh
+  source "$SCRIPT_DIR/config/lib/setup-meta-step.sh"
+  if aw_dry; then
+    for _p in $PROVIDERS; do echo "  [dry-run] would run scripts/install-meta.sh --provider $_p"; done
   else
-    # shellcheck source=config/lib/setup-meta-step.sh
-    source "$SCRIPT_DIR/config/lib/setup-meta-step.sh"
-    if aw_dry; then
-      for _p in $PROVIDERS; do echo "  [dry-run] would run scripts/install-meta.sh --provider $_p"; done
-    else
-      # install-meta exits 3 when it refuses the tree (a worktree or a tree that is not the team's repo): setup warns and goes on;
-      # any other failure stops setup
-      aw_setup_meta_step "$SCRIPT_DIR" $PROVIDERS
-    fi
+    # install-meta exits 3 when it refuses the tree (a worktree or a tree that is not the team's repo): setup warns and goes on;
+    # any other failure (an unsupported OS, a failed publish) fails setup at its end with install-meta's message: there is no quiet
+    # skip, so a reinstall never leaves an old binary in place without saying so
+    # (set -e must not end setup here: the rc is kept, the rest of setup runs, and the exit code and message come last)
+    aw_setup_meta_step "$SCRIPT_DIR" $PROVIDERS || META_RC=$?
   fi
 fi
 
@@ -649,3 +648,5 @@ case " $PROVIDERS " in *" claude "*)
   echo "Claude plugins:     github, superpowers, compound-engineering, playwright" ;;
 esac
 echo "Custom agents:      run ./setup.sh --install-agents to install lean agent types"
+# The meta step's failure (if any) comes last, after everything else has been installed.
+if [ "$WITH_META" = "1" ]; then aw_setup_meta_finish "$META_RC" || exit "$?"; fi
