@@ -45,6 +45,8 @@ internal sealed partial record InstanceWords
             ParkReason.Timeout => $"Parked (timeout): {question}.\nResume to give it the full time again, or cancel.",
             ParkReason.SpecConflict when park.Mirrors is not null => $"Parked (spec-conflict){where}: {question}.",
             ParkReason.SpecConflict => SpecConflict(park),
+            ParkReason.Launch => $"Parked (launch): {question}.\nFix the cause it names, then resume to start the Step again, or cancel.",
+            ParkReason.NoRuntime when park.Sandbox is not null => $"Parked (no runtime): {question}.\nFix the cause it names, then resume to start the Step again, or cancel.",
             ParkReason.NoRuntime or null or _ => $"No runtime for {Block(question)} in this build.\nCancel, or resume in a build that has it.",
         };
     }
@@ -57,7 +59,7 @@ internal sealed partial record InstanceWords
             ParkKind.Revoked => $"{id} was revoked.\nCancel, then start a new attempt from an approved version.",
             ParkKind.ChildRevoked => $"{ChildRecipe(park.Question)} (pinned by {id}) was revoked.\nRe-approve {id} so it pins an approved child; the approval resumes this instance.",
             ParkKind.Drift => $"{Block(park.Question)} changed since {Pinned} was approved.\nRe-approve it (`sindri recipe approve {Pinned}`); the approval resumes this instance.",
-            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => park.Question,   // why: the engine wrote the reason with its own fix (SND-WF-010/015 or the allowlist sentence of SND-WF-011), so it is said once
+            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or null or _ => park.Question,   // why: the engine wrote the reason with its own fix (SND-WF-010/015 or the allowlist sentence of SND-WF-011), so it is said once
         };
     }
 

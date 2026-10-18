@@ -48,6 +48,12 @@ public static class TriggerNames
     /// <summary>An effect's recheck refused one of the instance's effects (§5.7).</summary>
     public const string OutboxRefused = "outbox.refused";
 
+    /// <summary>The launch found no agent runtime on this box (SND-LAUNCH-014, -017): a deskCapable Step runs at the desk in the same frame, any other parks (sandbox spec SB16, N1).</summary>
+    public const string RuntimeUnavailable = "runtime.unavailable";
+
+    /// <summary>The launch was refused in a way that parks the instance as 'launch' (SND-LAUNCH-015, -016).</summary>
+    public const string LaunchRefused = "launch.refused";
+
     /// <summary>The child parked (with 'onParked: propagate' the parent mirrors it).</summary>
     public const string ChildParked = "child.parked";
 

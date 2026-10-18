@@ -33,4 +33,8 @@ public enum ParkReason
     /// <summary>A Step or resource with no runtime in this build (W5); answered by '--resume' in a build that has it.</summary>
     [JsonStringEnumMemberName("SND-WF-010")]
     NoRuntime = 7,
+
+    /// <summary>A Step can't be confined to its policy (SND-LAUNCH-015) or its sandbox self-check failed (-016); answered by '--resume', which starts a new run (sandbox spec SB16).</summary>
+    [JsonStringEnumMemberName("launch")]
+    Launch = 8,
 }

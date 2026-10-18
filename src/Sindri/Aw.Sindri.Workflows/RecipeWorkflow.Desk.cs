@@ -237,6 +237,7 @@ internal sealed partial class RecipeWorkflow
         ParkReason.NeedsAnswer => "needs-answer",
         ParkReason.Timeout => "timeout",
         ParkReason.SpecConflict => "spec-conflict",
+        ParkReason.Launch => "launch",
         ParkReason.NoRuntime or _ => "SND-WF-010",
     };
 

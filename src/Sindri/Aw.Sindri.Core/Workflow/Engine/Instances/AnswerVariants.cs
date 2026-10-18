@@ -27,7 +27,7 @@ internal static class AnswerVariants
                 ParkReason.NoProgress => [AnswerVariant.Grant, AnswerVariant.Text],
                 ParkReason.Budget => [AnswerVariant.GrantTokens],
                 ParkReason.NeedsAnswer => suspension.ParkKind == ParkKind.Wait ? [AnswerVariant.Resume] : [AnswerVariant.Text],
-                ParkReason.Timeout or ParkReason.NoRuntime => [AnswerVariant.Resume],
+                ParkReason.Timeout or ParkReason.NoRuntime or ParkReason.Launch => [AnswerVariant.Resume],
                 ParkReason.SpecConflict or _ => suspension.ParkKind == ParkKind.Dispatch ? [AnswerVariant.Resume] : [],
             };
     }
@@ -39,5 +39,5 @@ internal static class AnswerVariants
     /// </summary>
     /// <param name="reason">The park reason.</param>
     /// <returns>Whether the fit is the reason's alone.</returns>
-    internal static bool ReasonFixesChildFit(ParkReason? reason) => reason is ParkReason.Rounds or ParkReason.NoProgress or ParkReason.Timeout or ParkReason.NoRuntime;
+    internal static bool ReasonFixesChildFit(ParkReason? reason) => reason is ParkReason.Rounds or ParkReason.NoProgress or ParkReason.Timeout or ParkReason.NoRuntime or ParkReason.Launch;
 }

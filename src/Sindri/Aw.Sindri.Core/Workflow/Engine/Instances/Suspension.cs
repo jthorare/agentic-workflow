@@ -35,6 +35,12 @@ public sealed record Suspension(
     /// </summary>
     public bool Approved { get; init; }
 
+    /// <summary>
+    /// The sandbox refusal behind a no-runtime or launch park (sandbox spec §6): which code and reason, so the owner text is the golden for that pair instead of 'no runtime in this build'. Null for every other park.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public SandboxPark? Sandbox { get; init; }
+
     /// <summary>The engine-owned state this suspension shows (spec §3.8).</summary>
     public string State => Kind switch
     {

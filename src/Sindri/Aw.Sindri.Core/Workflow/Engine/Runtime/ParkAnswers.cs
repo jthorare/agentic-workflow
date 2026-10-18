@@ -46,7 +46,7 @@ public static class ParkAnswers
         ParkReason.Budget => Line(AnswerKind.GrantTokens, $"{answering} --grant-tokens {grantTokens}", atTerminal: true),
         ParkReason.NeedsAnswer when park.ParkKind == ParkKind.Wait => Line(AnswerKind.Resume, $"{answering} --resume [--text <answer>]"),
         ParkReason.NeedsAnswer => Line(AnswerKind.Text, $"{answering} --text <answer>"),
-        ParkReason.Timeout or ParkReason.SpecConflict or ParkReason.NoRuntime or null or _ => Line(AnswerKind.Resume, $"{answering} --resume"),
+        ParkReason.Timeout or ParkReason.SpecConflict or ParkReason.NoRuntime or ParkReason.Launch or null or _ => Line(AnswerKind.Resume, $"{answering} --resume"),
     };
 
     private static StatusAnswer Line(AnswerKind kind, string cli, bool atTerminal = false)

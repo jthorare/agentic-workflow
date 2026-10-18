@@ -11394,3 +11394,72 @@ Aw.Sindri.Core.Events.LaunchStarted.Deconstruct(out Aw.Sindri.Core.Workflow.Engi
 Aw.Sindri.Core.Events.LaunchStarted.LaunchStarted(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewer! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null) -> void
 Aw.Sindri.Core.Events.LaunchStartedPublic.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launch.AgentId Target, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string! TabTitle, out Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash, out Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox) -> void
 Aw.Sindri.Core.Events.LaunchStartedPublic.LaunchStartedPublic(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launch.AgentId Target, Aw.Sindri.Core.Ids.SessionId? SessionId, string! TabTitle, Aw.Sindri.Core.Events.LaunchViewerPublic! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash, Aw.Sindri.Core.Sandbox.SandboxSummary? Sandbox = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark!
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Code.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Code.init -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Deconstruct(out string! Code, out string? Reason, out string? Source) -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Equals(Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.SandboxPark(string! Code, string? Reason, string? Source) -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Source.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Source.init -> void
+Aw.Sindri.Core.Workflow.Engine.Instances.Suspension.Sandbox.get -> Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark?
+Aw.Sindri.Core.Workflow.Engine.Instances.Suspension.Sandbox.init -> void
+Aw.Sindri.Core.Workflow.Engine.ParkKind.SelfCheck = 10 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
+Aw.Sindri.Core.Workflow.Engine.ParkKind.Unconfinable = 9 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
+Aw.Sindri.Core.Workflow.Engine.ParkReason.Launch = 8 -> Aw.Sindri.Core.Workflow.Engine.ParkReason
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Code.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Code.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out string! Code, out string? Reason, out string? Source, out string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Detail.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Detail.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.LaunchRefused(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, string! Code, string? Reason, string? Source, string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Run.get -> Aw.Sindri.Core.Workflow.Engine.RunToken
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Run.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Source.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Source.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Code.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Code.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out string! Code, out string? Reason, out string? Source, out string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Detail.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Detail.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Run.get -> Aw.Sindri.Core.Workflow.Engine.RunToken
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Run.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.RuntimeUnavailable(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, string! Code, string? Reason, string? Source, string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Source.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Source.init -> void
+const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.LaunchRefused = "launch.refused" -> string!
+const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.RuntimeUnavailable = "runtime.unavailable" -> string!
+override Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.ToString() -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.KeyPart.get -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Name.get -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.ToString() -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.KeyPart.get -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Name.get -> string!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.ToString() -> string!
+override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.Trigger? other) -> bool
+override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.Trigger? other) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.operator !=(Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? left, Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.operator ==(Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? left, Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.operator !=(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.operator !=(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? left, Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? left, Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? right) -> bool

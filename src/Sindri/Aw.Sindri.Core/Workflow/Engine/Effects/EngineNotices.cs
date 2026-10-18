@@ -99,6 +99,7 @@ public static class EngineNotices
         ParkReason.Timeout => "timeout",
         ParkReason.SpecConflict => "spec-conflict",
         ParkReason.NoRuntime => "SND-WF-010",
+        ParkReason.Launch => "launch",
         _ => "parked",
     };
 }

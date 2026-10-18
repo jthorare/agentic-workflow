@@ -22,6 +22,8 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 [JsonDerivedType(typeof(OutboxRefused), "outbox-refused")]
 [JsonDerivedType(typeof(ChildChanged), "child")]
 [JsonDerivedType(typeof(OpenRequested), "open-request")]
+[JsonDerivedType(typeof(RuntimeUnavailable), "runtime-unavailable")]
+[JsonDerivedType(typeof(LaunchRefused), "launch-refused")]
 public abstract record Trigger(string Actor)
 {
     /// <summary>The trigger's name (<see cref="TriggerNames"/>): what the event records as its kind and an eval line names.</summary>
