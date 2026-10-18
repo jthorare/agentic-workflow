@@ -9,7 +9,6 @@ using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Rules;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
-using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Temporalio.Common;
 using Temporalio.Exceptions;
@@ -53,44 +52,6 @@ internal sealed partial class RecipeWorkflow
         return await WatchPhase(instance, open, context).ConfigureAwait(true);
     }
 
-    // Launches the session. Done is true when the run ended first or the launch failed; the instance is then the decided one, else it has its launch filled in.
-    private async Task<(WorkflowInstance Instance, bool Done)> LaunchPhase(WorkflowInstance instance, OpenRun open, Interpreting context)
-    {
-        var (state, step) = StateOf(instance, context);
-        using var cancel = new CancellationTokenSource();
-        var run = AgentRunOf(instance, open, step);
-        var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
-        var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(new AgentLaunchRun(run, item)), AgentOptions(_launchCall, open, state, cancel.Token));
-        var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
-        if (end == AgentEnd.Over)
-        {
-            return (await StopIfClosed(applied, new AgentRunning(open, state, run, Launched: null)).ConfigureAwait(true), true);
-        }
-
-        var launched = await Launching(launching).ConfigureAwait(true);
-        if (launched.Failure is { } failure)
-        {
-            return (await Decided(applied, open, AgentFailed(open, step, failure.Text, tokens: 0), reportId: null, context).ConfigureAwait(true), true);
-        }
-
-        _agent = (open.Token.Value, launched);
-        var filled = applied with { Frame = applied.Frame with { Run = open with { Launch = AgentLaunches.LaunchIdFor(run).Value } } };
-        _instance = filled;   // why: the run's launch is part of the instance the Query and the validator read; no timer or state changed
-        return (filled, false);
-    }
-
-    private static async Task<AgentLaunched> Launching(Task<AgentLaunched> launching)
-    {
-        try
-        {
-            return await launching.ConfigureAwait(true);
-        }
-        catch (ActivityFailureException e)
-        {
-            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, "SND-LAUNCH-007", $"the launch activity failed: {e.InnerException?.Message ?? e.Message}"));
-        }
-    }
-
     private async Task<WorkflowInstance> WatchPhase(WorkflowInstance instance, OpenRun open, Interpreting context)
     {
         var (state, step) = StateOf(instance, context);
@@ -112,7 +73,12 @@ internal sealed partial class RecipeWorkflow
 
         var ended = await watching.ConfigureAwait(true);
         var closed = await Close(running, measure: true).ConfigureAwait(true);
-        var reason = ended.EndedAs == AgentSessionEnd.Lost ? "lost" : "exit";
+        var reason = ended switch
+        {
+            { EndedAs: AgentSessionEnd.Limit, Limit: { } limit } => limit.Text,
+            { EndedAs: AgentSessionEnd.Lost } => "lost",
+            _ => "exit",
+        };
         return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens), reportId: null, context).ConfigureAwait(true);
     }
 

@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -11,7 +12,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="targets">Where the Step runs.</param>
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
-internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff)
+/// <param name="options">How long to wait for a free session slot.</param>
+internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, AgentRuntimeOptions options)
 {
     /// <summary>Launches the run's session.</summary>
     /// <param name="run">The run.</param>
@@ -27,7 +29,34 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
         }
 
         var request = AgentLaunches.RequestFor(run.Run, target.Value);
-        var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
+        var result = await LaunchOrWait(request, cancellationToken).ConfigureAwait(false);
+        return result is null
+            ? new AgentLaunched(Worktree: null, StartHead: null, Failure: null, Waiting: true)   // the cap is still reached: nothing is recorded, the workflow asks again
+            : await Settle(request, result, cancellationToken).ConfigureAwait(false);
+    }
+
+    // SND-LAUNCH-020 is a queue condition (sandbox spec §6): ask again every SlotRetry until the slice ends, recording nothing; null says the slice ended.
+    private async Task<LaunchResult?> LaunchOrWait(LaunchRequest request, CancellationToken cancellationToken)
+    {
+        for (var waited = TimeSpan.Zero; ; waited += options.SlotRetry)
+        {
+            var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
+            if (result is not FailedLaunch failed || SandboxCodes.KindOf(failed.Error.Code) != LaunchCodeKind.ResourceWait)
+            {
+                return result;
+            }
+
+            if (waited + options.SlotRetry > options.SlotSlice)
+            {
+                return null;
+            }
+
+            await Task.Delay(options.SlotRetry, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<AgentLaunched> Settle(LaunchRequest request, LaunchResult result, CancellationToken cancellationToken)
+    {
         switch (result)
         {
             case StartedLaunch started:

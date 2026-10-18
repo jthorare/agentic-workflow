@@ -285,7 +285,7 @@ public sealed class AgentRuntimeInterpreterTests(SindriTimeSkippingServer skippi
             await WaitFor(() => _launcher.SessionCount == 1, ct);
             var view = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
             Assert.Null(view.Question);
-            _ = Assert.Single(await rig.Payloads("launch.started", ct));
+            _ = Assert.Single(await rig.PayloadsUntil("launch.started", ct));
         });
     }
 
@@ -415,6 +415,20 @@ public sealed class AgentRuntimeInterpreterTests(SindriTimeSkippingServer skippi
         {
             var rows = (await Sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 500, ct)).Value;
             return [.. rows.Where(e => e.Envelope.Type == type).Select(static e => e.Envelope.Payload)];
+        }
+
+        /// <summary>The payloads of <paramref name="type"/> once at least one is recorded (the outcome follows the launch by a moment).</summary>
+        public async Task<IReadOnlyList<string>> PayloadsUntil(string type, CancellationToken ct)
+        {
+            var deadline = RealTime.NowDateTime.AddSeconds(30);
+            var rows = await Payloads(type, ct);
+            while (rows.Count == 0 && RealTime.NowDateTime < deadline)
+            {
+                await Task.Delay(50, ct);
+                rows = await Payloads(type, ct);
+            }
+
+            return rows;
         }
 
         public async ValueTask DisposeAsync()
