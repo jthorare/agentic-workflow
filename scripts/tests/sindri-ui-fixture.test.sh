@@ -106,8 +106,17 @@ cat > "$STUB" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >> "$STUB_LOG"
 case "$*" in
-  "profile validate --json") echo '{"valid":true,"hash":"abcdef0123456789","approved":false}' ;;
-  "profile approve abcdef0123456789") IFS= read -r line; echo "typed=$line" >> "$STUB_LOG" ;;
+  "profile validate --json")
+    ok=false; [ "$(cat "$STUB_LOG.approved" 2>/dev/null)" = "$(cksum < "$AW_SINDRI_HOME/profile/profile.yaml")" ] && ok=true
+    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\",\"approved\":$ok}" ;;
+  "profile approve abcdef0123456789")
+    IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "approval text from the CLI"
+    echo "approve-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"
+    [ -n "${STUB_FAIL_APPROVE:-}" ] && { echo "approve refused" >&2; exit 1; }
+    cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
+  "context map status --json") [ -z "${STUB_NO_MAP:-}" ] || exit 1; echo '{"version":{"number":1}}' ;;
+  "context map build") echo "build-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env" ;;
+  "context map import "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "import-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"; [ -z "${STUB_FAIL_IMPORT:-}" ] || { echo "SND-AUTH-002 refused" >&2; exit 1; } ;;
   "item add "*) n=$(($(cat "$STUB_LOG.n" 2>/dev/null || echo 0) + 1)); echo "$n" > "$STUB_LOG.n"; echo "added ITM-0$n" ;;
   "workflow start "*)
     for a in "$@"; do case "$a" in fact:*=*) echo "fact ${a%%=*} $(cat "${a#*=}")" >> "$STUB_LOG" ;; esac; done
@@ -267,5 +276,110 @@ for v in "workflows" "workflows --large" "incident start" "incident stop"; do
   # shellcheck disable=SC2086
   AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" $v >/dev/null 2>&1; check "every_workflow_verb_refuses_an_unguarded_home: $v" "$?" "2"
 done
+
+# --- T-F: context up | draft | down (the Context page's data, U9) ---
+C="$TMPDIR/ctx"
+mkdir -p "$C"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+: > "$STUB_LOG"
+out="$(AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" context up 2>&1)"; check "context up refuses outside a guarded home" "$?" "2"
+contains "the refusal is the prover's" "$out" "sindri-prove:"
+check "the refused context up wrote nothing" "$(ls -A "$WORK/elsewhere")" ""
+for v in draft down; do AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" context $v >/dev/null 2>&1; check "context $v refuses outside a guarded home" "$?" "2"; done
+AW_SINDRI_HOME="$C" bash "$FIXTURE" context >/dev/null 2>&1; check "context needs up, draft or down (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$C" bash "$FIXTURE" context sideways >/dev/null 2>&1; check "context refuses another word (exit 2)" "$?" "2"
+
+: > "$STUB_LOG"
+rm -f "$STUB_LOG.env"   # per case: the assertions below read only this context up
+out="$(AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up 2>/dev/null)"; check "context up exits 0" "$?" "0"
+check "context up prints the repo name" "$out" "aw-split-panes"
+R="$C/ui-fixture-context/aw-split-panes"
+for f in src/tabs/TabManager.ts src/tabs/TabGroups.ts src/tabs/Pinned.ts src/layout/Grid.ts README.md .env; do
+  check "context up writes $f" "$([ -f "$R/$f" ] && echo yes || echo no)" "yes"
+done
+check "the repo is a git repo on main with one commit" "$(git -C "$R" rev-list --count main 2>/dev/null)" "1"
+check "the repo is clean" "$(git -C "$R" status --porcelain)" ""
+check "the repo's sha is the same on every run (fixed author and date)" "$(git -C "$R" log -1 --format='%an|%aI')" "Fixture Author|2026-07-01T09:00:00+00:00"
+contains "the repo is one of the profile's repos" "$(cat "$C/profile/profile.yaml")" "name: aw-split-panes, path: $R"
+contains "the profile keeps its other keys" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
+calls="$(tr '\n' ';' < "$STUB_LOG")"
+contains "the changed profile is approved by typing the hash's first six characters" "$calls" "profile approve abcdef0123456789;typed=approve profile abcdef;"
+want="import map $(sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -c1-6)"
+contains "the tabs map is imported by typing 'import map' and the file's hash6, under the human pty" "$calls" "context map import $C/ui-fixture-context/tabs-map.json;typed=$want;"
+check "the imported file is the tabs map" "$(cmp "$C/ui-fixture-context/tabs-map.json" "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" && echo same)" "same"
+envs="$(cat "$STUB_LOG.env")"
+contains "the approve runs as the owner under a pty (human mode, not a session)" "$envs" "approve-env prover=1 tty=1"
+contains "the import runs as the owner under a pty (human mode, not a session)" "$envs" "import-env prover=1 tty=1"
+check "context up's stdout is exactly the repo name even when approve prints text" "$out" "aw-split-panes"
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "a second context up exits 0" "$?" "0"
+check "a second context up adds the repo to the profile once" "$(grep -c 'name: aw-split-panes' "$C/profile/profile.yaml")" "1"
+check "a second context up keeps one commit" "$(git -C "$R" rev-list --count main)" "1"
+absent "a second context up does not approve again" "$(cat "$STUB_LOG")" "profile approve"
+absent "a second context up does not import the map again (the current map is this file's)" "$(cat "$STUB_LOG")" "context map import"
+rm -f "$C/ui-fixture-context-imported"
+out="$(STUB_FAIL_IMPORT=1 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up 2>&1)"; check "a refused import exits non-zero" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
+contains "a refused import carries the CLI's refusal" "$out" "SND-AUTH-002 refused"
+
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context draft >/dev/null 2>&1; check "context draft exits 0" "$?" "0"
+check "context draft builds the draft: map build as the owner" "$(cat "$STUB_LOG")" "context map build"
+contains "context draft runs as the owner under a pty" "$(cat "$STUB_LOG.env")" "build-env prover=1 tty=1"
+
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "context down exits 0" "$?" "0"
+check "context down removes the repo and the map copy" "$([ -e "$C/ui-fixture-context" ] && echo present || echo gone)" "gone"
+absent "context down removes the profile entry" "$(cat "$C/profile/profile.yaml")" "aw-split-panes"
+absent "context down leaves no empty repos: key" "$(cat "$C/profile/profile.yaml")" "repos:"
+contains "context down keeps the rest of the profile" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
+contains "context down approves the changed profile" "$(cat "$STUB_LOG")" "typed=approve profile abcdef"
+before="$(cat "$C/profile/profile.yaml")"; : > "$STUB_LOG"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "context down twice exits 0 (idempotent)" "$?" "0"
+check "the second context down changes nothing" "$(cat "$C/profile/profile.yaml")" "$before"
+absent "the second context down approves nothing" "$(cat "$STUB_LOG")" "profile approve"
+# --- review run 1: re-import, approval retry, AW_SINDRI_PROFILE ---
+: > "$STUB_LOG"
+# The marker names this very file, so only the status check can send it back to the import.
+sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -d' ' -f1 > "$C/ui-fixture-context-imported"
+STUB_NO_MAP=1 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "context up imports again when the store has no map" "$?" "0"
+contains "the import ran although the marker is current" "$(cat "$STUB_LOG")" "context map import"
+rm -f "$C/ui-fixture-context-imported"
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+contains "a changed map file is imported again" "$(cat "$STUB_LOG")" "context map import"
+
+# A failed approve is retried by the next up, which approves because the profile says it isn't approved.
+D="$TMPDIR/ctx2"; mkdir -p "$D"
+AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+rm -f "$STUB_LOG.approved"; : > "$STUB_LOG"
+STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+check "a refused approve fails context up" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
+contains "the profile already lists the repo" "$(cat "$D/profile/profile.yaml")" "name: aw-split-panes"
+absent "no import ran against the unapproved profile" "$(cat "$STUB_LOG")" "context map import"
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "the next context up exits 0" "$?" "0"
+contains "the next context up approves although the entry is already there" "$(cat "$STUB_LOG")" "profile approve"
+contains "and then imports" "$(cat "$STUB_LOG")" "context map import"
+# down: a failed approve is warned about and the next down tries again
+STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "the next context down exits 0" "$?" "0"
+contains "the next context down approves the profile it left unapproved" "$(cat "$STUB_LOG")" "profile approve"
+
+# AW_SINDRI_PROFILE outside the home: the real file is untouched, the home's profile is used
+G="$TMPDIR/ctx3"; mkdir -p "$G" "$WORK/realprofile"
+AW_SINDRI_HOME="$G" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+printf 'schemaVersion: 1\nuser: owner\n' > "$WORK/realprofile/profile.yaml"; cp "$WORK/realprofile/profile.yaml" "$WORK/realprofile/orig"
+AW_SINDRI_PROFILE="$WORK/realprofile/profile.yaml" AW_SINDRI_HOME="$G" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+AW_SINDRI_PROFILE="$WORK/realprofile/profile.yaml" AW_SINDRI_HOME="$G" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1
+AW_SINDRI_PROFILE="$WORK/realprofile/profile.yaml" AW_SINDRI_HOME="$G" SINDRI="$STUB" bash "$FIXTURE" drift >/dev/null 2>&1
+check "an AW_SINDRI_PROFILE outside the home is never edited" "$(cmp "$WORK/realprofile/profile.yaml" "$WORK/realprofile/orig" && echo same)" "same"
+contains "the fixture edited the home's own profile instead" "$(cat "$G/profile/profile.yaml")" "every: 7s"
+
+# --help keeps the FIXTURE_REPO and Environment lines
+contains "--help shows FIXTURE_REPO" "$(bash "$FIXTURE" --help)" "FIXTURE_REPO names"
+contains "--help shows the environment" "$(bash "$FIXTURE" --help)" "Environment: AW_SINDRI_HOME"
+
+AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "context up works again after down" "$?" "0"
 
 exit "$fail"

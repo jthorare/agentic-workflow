@@ -361,6 +361,8 @@ sqlite3 -readonly $H/ledger.db "select type, actor from events where type in ('c
 scripts/sindri-ui-fixture.sh down
 ```
 
+**Context page data (U9).** After `up`: `scripts/sindri-ui-fixture.sh context up` writes the tabs repo `aw-split-panes` under `$H/ui-fixture-context`, adds it to the profile, approves the profile when it is not approved, imports `map-tabs.json` through the typed `import map <hash6>` and prints only the repo name (the app's `repo=`). A repeat `up` imports the map only when the store has no map or the file changed. `context draft` runs `context map build` and builds the next draft version after the current map (v2 on a fresh home; the imported versions stay in `context.db` through `down`, so the number depends on earlier runs). `context down` removes the repo and the profile entry, approves again if needed, and is safe to repeat. The verbs always edit `$H/profile/profile.yaml`; an exported `AW_SINDRI_PROFILE` is ignored.
+
 **Tests.** Unit lane: `Palette/*` (the palette and the sheet), `Controls/ControlViewModelTests`, `Shell/FreshnessTests`
 (the pill, the banners, the catalog on connect, the 250 ms re-read), `Api/*` (headers, token, ProblemDetails, and
 `GoldenContractTests`, which deserializes every golden through `SindriUiJsonContext`). Integration lane:
