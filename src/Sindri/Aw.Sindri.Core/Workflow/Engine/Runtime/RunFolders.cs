@@ -13,7 +13,7 @@ public static class RunFolders
     /// <param name="run">The run's token.</param>
     /// <returns>The absolute path.</returns>
     public static string PathFor(string home, WorkflowInstanceId instance, string step, RunToken run) =>
-        Path.Combine(home, "workflow", "runs", instance.Value, step, run.Value);
+        $"{home.TrimEnd('/')}/workflow/runs/{instance.Value}/{step}/{run.Value}";
 
     /// <summary>Whether a file name resolves inside the folder: a relative name whose '..' segments never leave it.</summary>
     /// <param name="folder">The run folder.</param>
@@ -21,12 +21,27 @@ public static class RunFolders
     /// <returns>True when the name stays inside the folder.</returns>
     public static bool Contains(string folder, string name)
     {
-        if (string.IsNullOrEmpty(name) || Path.IsPathRooted(name))
+        ArgumentException.ThrowIfNullOrEmpty(folder);
+        if (string.IsNullOrEmpty(name) || name[0] is '/' or '\\' || name.Contains(':', StringComparison.Ordinal))
         {
             return false;
         }
 
-        var root = Path.GetFullPath(folder);
-        return Path.GetFullPath(Path.Combine(root, name)).StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+        var depth = 0;
+        foreach (var segment in name.Split('/'))
+        {
+            depth += segment switch
+            {
+                ".." => -1,
+                "" or "." => 0,
+                _ => 1,
+            };
+            if (depth < 0)
+            {
+                return false;
+            }
+        }
+
+        return depth > 0;
     }
 }
