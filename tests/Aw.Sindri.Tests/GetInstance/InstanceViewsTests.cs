@@ -209,7 +209,7 @@ public sealed class InstanceViewsTests
     {
         var fixes = Enum.GetValues<ParkReason>().Where(r => AnswerVariants.ReasonFixesChildFit(r)).ToArray();
 
-        Assert.Equal([ParkReason.Rounds, ParkReason.NoProgress, ParkReason.Timeout, ParkReason.NoRuntime], fixes);
+        Assert.Equal([ParkReason.Rounds, ParkReason.NoProgress, ParkReason.Timeout, ParkReason.NoRuntime, ParkReason.Launch], fixes);
         foreach (var reason in fixes)
         {
             var fits = new ParkKind?[] { null, ParkKind.Loop, ParkKind.Refusal, ParkKind.Step, ParkKind.Wait }.Select(k => AnswerVariants.Fitting(FrameFixture.Park(reason, k, ResumeKind.Transition)).ToArray()).ToList();

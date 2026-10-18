@@ -35,7 +35,7 @@ public static partial class TransitionDecision
             var before = Input.Instance;
             var trigger = Answered is { } answer
                 ? new TriggerRecord(answer.Name, Key, answer.Actor, Outcome: null)
-                : new TriggerRecord(Trigger.Name, Key, Trigger.Actor, Outcome(Trigger), (Trigger as StepFailed)?.Reason, Via: ViaOf(Trigger), Decision: (Trigger as StepCompleted)?.Decision)
+                : new TriggerRecord(Trigger.Name, Key, Trigger.Actor, Outcome(Trigger), ReasonOf(Trigger), Via: ViaOf(Trigger), Decision: (Trigger as StepCompleted)?.Decision)
                 {
                     Tokens = Trigger is StepCompleted { Via: StepRuntime.Agent } agent ? agent.Tokens : null,
                 };
@@ -45,6 +45,13 @@ public static partial class TransitionDecision
         }
 
         /// <summary>The runtime an event says ran the Step: 'block' for a block run's result or failure, 'agent' for an agent report; null for a desk report or any other trigger.</summary>
+        private static string? ReasonOf(Trigger trigger) => trigger switch
+        {
+            StepFailed failed => failed.Reason,
+            LaunchRefusal refusal => refusal.Detail,
+            _ => null,
+        };
+
         private static string? ViaOf(Trigger trigger) => trigger switch
         {
             StepCompleted { Via: StepRuntime.Block } => "block",

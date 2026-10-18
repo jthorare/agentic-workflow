@@ -11411,33 +11411,13 @@ Aw.Sindri.Core.Workflow.Engine.ParkKind.SelfCheck = 10 -> Aw.Sindri.Core.Workflo
 Aw.Sindri.Core.Workflow.Engine.ParkKind.Unconfinable = 9 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
 Aw.Sindri.Core.Workflow.Engine.ParkReason.Launch = 8 -> Aw.Sindri.Core.Workflow.Engine.ParkReason
 Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Code.get -> string!
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Code.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out string! Code, out string? Reason, out string? Source, out string! Detail) -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Detail.get -> string!
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Detail.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? other) -> bool
 Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.LaunchRefused(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, string! Code, string? Reason, string? Source, string! Detail) -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Reason.get -> string?
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Reason.init -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Run.get -> Aw.Sindri.Core.Workflow.Engine.RunToken
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Run.init -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Source.get -> string?
-Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Source.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Code.get -> string!
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Code.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out string! Code, out string? Reason, out string? Source, out string! Detail) -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Detail.get -> string!
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Detail.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? other) -> bool
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Reason.get -> string?
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Reason.init -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Run.get -> Aw.Sindri.Core.Workflow.Engine.RunToken
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Run.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.RuntimeUnavailable(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, string! Code, string? Reason, string? Source, string! Detail) -> void
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Source.get -> string?
-Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Source.init -> void
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.LaunchRefused = "launch.refused" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Triggers.TriggerNames.RuntimeUnavailable = "runtime.unavailable" -> string!
 override Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.Equals(object? obj) -> bool
@@ -11455,11 +11435,36 @@ override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.GetHashCode(
 override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.KeyPart.get -> string!
 override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Name.get -> string!
 override Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.ToString() -> string!
-override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.Trigger? other) -> bool
-override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.Trigger? other) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.operator !=(Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? left, Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark.operator ==(Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? left, Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.operator !=(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.operator !=(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? left, Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? left, Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable? right) -> bool
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Code.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Code.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out string! Code, out string? Reason, out string? Source, out string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Detail.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Detail.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.LaunchRefusal(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal! original) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.LaunchRefusal(string! Actor, Aw.Sindri.Core.Workflow.Engine.RunToken Run, string! Code, string? Reason, string? Source, string! Detail) -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Marker.get -> Aw.Sindri.Core.Workflow.Engine.Instances.SandboxPark!
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Run.get -> Aw.Sindri.Core.Workflow.Engine.RunToken
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Run.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Source.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Source.init -> void
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.EqualityContract.get -> System.Type!
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.ToString() -> string!
+override abstract Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal!
+override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.Trigger? other) -> bool
+override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefused.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? other) -> bool
+override sealed Aw.Sindri.Core.Workflow.Engine.Triggers.RuntimeUnavailable.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? other) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.operator !=(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.operator ==(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? left, Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? right) -> bool
+virtual Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.LaunchRefusal? other) -> bool
