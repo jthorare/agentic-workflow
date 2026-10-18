@@ -18,5 +18,5 @@ internal sealed class PrintViewer(string source = "file") : ITerminalViewer
 
     /// <inheritdoc/>
     public ValueTask<TerminalFacts> Probe(CancellationToken cancellationToken) =>
-        ValueTask.FromResult(new TerminalFacts(Kind, Kind, Present: true, source, ConfigPath: null, Problem: null, Detail: null));
+        ValueTask.FromResult(new TerminalFacts(Kind, "Print", Present: true, source, ConfigPath: null, Problem: null, Detail: null));
 }

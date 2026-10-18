@@ -75,7 +75,7 @@ internal sealed class RunLaunch(LaunchRecovery recovery, LaunchIntake intake, La
         foreach (var pending in work.Expired(timings))
         {
             var failed = new LaunchFailed(pending.Request.Launch, pending.Request.Item, SindriErrors.LaunchInterrupted.Code,
-                "The launch did not start within 30 s (fix: open the item again)", Stage: null);
+                "The launch did not start within 30 s (fix: open the item again)");
             var appended = await outcomes.Failed(grant, failed, cancellationToken).ConfigureAwait(false);
             if (appended.IsError)
             {

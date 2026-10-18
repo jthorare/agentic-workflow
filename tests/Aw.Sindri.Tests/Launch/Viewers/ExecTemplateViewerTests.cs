@@ -21,8 +21,10 @@ public sealed class ExecTemplateViewerTests : TerminalViewerContract, IDisposabl
     // a zero window: the contract tests call Open without moving the fake clock, so no poll may wait on it
     protected override ViewerRequest Request() => _f.Request() with { Window = TimeSpan.Zero };
 
+    // A stub script is run by "sh <file>", never exec'd: a script written a moment ago can still be open for writing in a process another test forked at that
+    // instant, and exec of such a file fails with ETXTBSY ("Text file busy"), so the viewer answers 'failed' at once and the stub never runs (seen once in a gate lane).
     private ExecTemplateViewer Viewer(string script, Func<string, string?>? getEnv = null) =>
-        new(new ExecTemplateOptions("stub", [script, .. _template]) { GetEnv = getEnv }, _f.Host, _f.Clock);
+        new(new ExecTemplateOptions("stub", File.Exists(script) ? ["sh", script, .. _template] : [script, .. _template]) { GetEnv = getEnv }, _f.Host, _f.Clock);
 
     private static string? Display(string name) => name == "DISPLAY" ? ":99" : null;
 
@@ -39,6 +41,30 @@ public sealed class ExecTemplateViewerTests : TerminalViewerContract, IDisposabl
         Expect.Equal(SindriErrors.LaunchViewerFailed.Code, outcome.Code);
         Expect.True(outcome.Detail!.Contains("no display", StringComparison.Ordinal));
         Expect.True(!outcome.Detail.Contains(token, StringComparison.Ordinal));
+    }
+
+    [Fact(Timeout = 30_000)]
+    public async Task The_terminal_runs_in_its_own_session_with_stdin_and_stdout_on_dev_null()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux() && File.Exists("/usr/bin/setsid"), "needs /proc and setsid");
+        await _f.StartSession();
+        var seen = Path.Combine(_f.Dir, "seen.txt");
+        var viewer = Viewer(_f.Script("detached.sh", $"in=$(readlink /proc/$$/fd/0); out=$(readlink /proc/$$/fd/1); sid=$(ps -o sid= -p $$); printf '%s\\n%s\\n%s\\n%s\\n' \"$in\" \"$out\" \"$sid\" \"$$\" > '{seen}'; exit 0"));
+
+        _ = await _f.Drive(viewer.Open(_f.Request() with { Window = TimeSpan.Zero }, TestContext.Current.CancellationToken));
+        await WaitFor(seen);
+
+        var lines = (await File.ReadAllLinesAsync(seen, TestContext.Current.CancellationToken)).Select(static l => l.Trim()).ToArray();
+        Expect.Equal(("/dev/null", "/dev/null"), (lines[0], lines[1]));
+        Expect.Equal(lines[3], lines[2]);   // session id = its own pid: a session leader, so Ctrl-C on a foreground Sindri doesn't reach it
+    }
+
+    private static async Task WaitFor(string path)
+    {
+        for (var i = 0; i < 200 && (!File.Exists(path) || new FileInfo(path).Length < 20); i++)
+        {
+            await Task.Delay(25, TestContext.Current.CancellationToken);
+        }
     }
 
     [Fact(Timeout = 30_000)]

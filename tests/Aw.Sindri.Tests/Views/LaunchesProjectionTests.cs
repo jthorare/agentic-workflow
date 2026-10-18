@@ -171,15 +171,23 @@ public sealed class LaunchesProjectionTests
     }
 
     [Fact]
-    public async Task An_event_for_a_launch_that_has_no_row_stalls_the_projector()
+    public async Task An_outcome_for_a_launch_that_has_no_row_is_skipped_and_never_stalls_the_projector()
     {
         var ct = Token;
         _ = (await _v.Views.Open(ViewSchema.Version, ct)).Value;
-        var orphan = Recorded.Of(_v.Slice.Events, EventTypes.LaunchViewerAttached, new LaunchViewerAttached(A.FirstLaunchId, _v.Slice.Clock.GetUtcNow()), 1);
+        var now = _v.Slice.Clock.GetUtcNow();
+        var orphans = new[]
+        {
+            Recorded.Of(_v.Slice.Events, EventTypes.LaunchViewerAttached, new LaunchViewerAttached(A.FirstLaunchId, now), 1),
+            Recorded.Of(_v.Slice.Events, EventTypes.LaunchFailed, new LaunchFailed(A.FirstLaunchId, A.FirstItemId, "SND-LAUNCH-007", "gone"), 2),
+            Recorded.Of(_v.Slice.Events, EventTypes.LaunchSessionReported, new LaunchSessionReported(A.FirstLaunchId, SessionId.From("reported-1")), 3),
+            Recorded.Of(_v.Slice.Events, EventTypes.SessionEnded, new SessionEnded(A.FirstLaunchId, SessionEndReason.Lost, ExitCode: null), 4),
+        };
 
-        var applied = (await _v.Views.Apply([orphan], [new LaunchesProjection(_v.Slice.Events)], _v.Slice.Clock.GetUtcNow(), ct)).Value;
+        var applied = (await _v.Views.Apply(orphans, [new LaunchesProjection(_v.Slice.Events)], now, ct)).Value;
 
-        Assert.NotNull(applied.Stall);
+        Assert.Null(applied.Stall);
+        Assert.Null((await _v.Views.Get<LaunchRow>(ViewNames.Launches, A.FirstLaunchId.Value, ct)).Value);
     }
 
     [Fact]

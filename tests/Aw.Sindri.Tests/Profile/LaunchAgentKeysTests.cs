@@ -1,3 +1,4 @@
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 
@@ -78,6 +79,20 @@ public sealed class LaunchAgentKeysTests : IDisposable
         _files.Write(Base + "agents:\n  softLimit: { dailyBudget: 1 }\n");
 
         Assert.False((await _files.Source.Load(Token)).IsSuccess);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("\"0.8\"")]
+    [InlineData("[1]")]
+    [InlineData("{ a: 1 }")]
+    [InlineData("true")]
+    public async Task A_mistyped_softLimit_is_a_profile_error_not_a_crash(string value)
+    {
+        _files.Write(Base + "agents:\n  softLimit: " + value + "\n");
+
+        var loaded = await _files.Source.Load(Token);
+
+        Assert.Equal(SindriErrors.ProfileInvalid.Code, loaded.Error.Code);
     }
 
     [Theory, Trait("Lane", "unit")]

@@ -38,6 +38,7 @@ internal sealed class OpenItemService(OpenChecks checks, OpenTarget target, Held
             return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
         }
 
+        using var turn = await checks.Turn(cancellationToken).ConfigureAwait(false);   // check and append as one step: two clicks can't both pass the in-flight check
         var admitted = await checks.Admit(request, caller, cancellationToken).ConfigureAwait(false);
         if (admitted.IsError)
         {
@@ -55,6 +56,11 @@ internal sealed class OpenItemService(OpenChecks checks, OpenTarget target, Held
         var requested = new ItemOpenRequested(launch, item.Id, request.Mode, decided.Value.Target, decided.Value.ChosenBy);
         var entry = events.Entry(EventTypes.ItemOpenRequested, requested, $"{EventTypes.ItemOpenRequested}:{launch.Value}", item.Id.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+        if (appended.IsSuccess)
+        {
+            checks.Note(item.Id, launch);
+        }
+
         return appended.IsError
             ? appended.Error
             : new LaunchRequested(new CommandAccepted(caller.CommandId, appended.Value.Sequence), launch, decided.Value.Target, decided.Value.ChosenBy, decided.Value.Warnings);

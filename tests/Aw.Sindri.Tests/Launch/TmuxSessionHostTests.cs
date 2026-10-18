@@ -40,7 +40,7 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
     {
         var argv = Create().AttachArgv(new HostRef(HostKind.Tmux, "snd-one"));
 
-        Expect.Sequence(["tmux", "-L", _tmux.Socket, "attach-session", "-t", "=snd-one"], argv);
+        Expect.Sequence(["tmux", "-L", _tmux.Socket, "attach", "-t", "=snd-one"], argv);
     }
 
     [Fact]
@@ -111,9 +111,55 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
     }
 
     [Theory]
+    [InlineData("tmux 3.2", "3.2")]
+    [InlineData("tmux 3.2a", "3.2")]
+    [InlineData("tmux next-3.5", "3.5")]
+    [InlineData("tmux master", "master")]
+    public async Task Tmux_3_2_and_newer_and_development_builds_are_usable(string banner, string version)
+    {
+        var fake = FakeTmux.Install(_tmux.Scratch, banner);
+
+        var facts = await new TmuxSessionHost(new TmuxHostOptions(fake.Path, "sindri-launch")).Probe(CancellationToken.None);
+
+        Expect.Equal(new HostFacts(HostKind.Tmux, Present: true, version, Problem: null), facts);
+    }
+
+    [Theory]
+    [InlineData("error connecting to /tmp/tmux-1000/sindri-launch (No such file or directory)", true)]
+    [InlineData("error connecting to /tmp/tmux-1000/sindri-launch (Connection refused)", true)]
+    [InlineData("no server running on /tmp/tmux-1000/sindri-launch", true)]
+    [InlineData("can't find session: snd-x", true)]
+    [InlineData("error connecting to /tmp/tmux-1000/sindri-launch (Permission denied)", false)]
+    [InlineData("server exited unexpectedly", false)]
+    public async Task Stop_treats_only_a_session_that_is_really_gone_as_stopped(string complaint, bool gone)
+    {
+        var path = Path.Combine(_tmux.Scratch, "kill-fails");
+        await File.WriteAllTextAsync(path, $"#!/bin/sh\ncase \"$*\" in\n  *kill-session*) echo \"{complaint}\" >&2; exit 1 ;;\nesac\nexit 0\n", TestContext.Current.CancellationToken);
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        var stopped = await new TmuxSessionHost(new TmuxHostOptions(path, "sindri-launch")).Stop(new HostRef(HostKind.Tmux, "snd-x"), CancellationToken.None);
+
+        Expect.Equal(gone, stopped.IsSuccess);   // a refused socket is not "gone": the caller keeps the secrets of a session that may still run
+    }
+
+    [Fact]
+    public async Task One_deadline_covers_the_version_check_and_the_new_session()
+    {
+        var path = Path.Combine(_tmux.Scratch, "slow-tmux");
+        await File.WriteAllTextAsync(path, "#!/bin/sh\nsleep 0.6\ncase \"$*\" in\n  -V) echo 'tmux 3.4' ;;\nesac\nexit 0\n", TestContext.Current.CancellationToken);
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        var result = await new TmuxSessionHost(new TmuxHostOptions(path, "sindri-launch")).Start(Session("snd-slow"), TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        Expect.True(result.IsError && result.Error.Code == SindriErrors.LaunchTimedOut.Code);   // 0.6 s + 0.6 s is over the 1 s the host stage gets; each alone is not
+        Expect.True(clock.Elapsed < TimeSpan.FromSeconds(4));
+    }
+
+    [Theory]
     [InlineData("tmux 2.9", "2.9")]
     [InlineData("tmux 3.1c", "3.1")]
-    public async Task Tmux_older_than_3_is_a_host_problem(string banner, string version)
+    public async Task Tmux_older_than_3_2_is_a_host_problem(string banner, string version)
     {
         var fake = FakeTmux.Install(_tmux.Scratch, banner);
         var host = new TmuxSessionHost(new TmuxHostOptions(fake.Path, "sindri-launch"));
@@ -172,7 +218,7 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
     }
 
     [Fact]
-    public async Task Secret_never_in_argv_or_tmux_global_env()
+    public async Task A_value_given_to_new_session_e_is_scoped_to_that_session_and_not_to_tmuxs_global_environment()
     {
         const string Value = "launch-proof-0123456789abcdef";
         var host = Create();

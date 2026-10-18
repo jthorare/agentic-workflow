@@ -86,7 +86,7 @@ public sealed class FakeLauncher : ILauncher
         var host = new HostRef(HostKind.Tmux, LaunchSessionName.For(request.Launch));
         var started = new StartedLaunch(
             host, request.Attended ? Viewer ?? ViewerOutcome.Opened : ViewerOutcome.Skipped,
-            ["tmux", "-L", "sindri", "attach-session", "-t", "=" + host.Name], CatalogSource.Builtin, "fake-argv-hash")
+            ["tmux", "-L", "sindri-launch", "attach", "-t", "=" + host.Name], CatalogSource.Builtin, "fake-argv-hash")
         {
             ChosenSession = PreChosenSession?.Value,
         };

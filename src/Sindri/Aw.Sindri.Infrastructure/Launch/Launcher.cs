@@ -20,33 +20,25 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
     private static readonly TimeSpan _viewerGrace = TimeSpan.FromSeconds(1);
     private static readonly System.Text.Json.JsonSerializerOptions _captureJson = AwJson.CreateOptions(LauncherJsonContext.Default);
     private readonly ConcurrentDictionary<LaunchId, StartedLaunch> _started = new();
-    private readonly ConcurrentDictionary<LaunchId, SemaphoreSlim> _gates = new();
+    private readonly LaunchGates _gates = new();
 
     /// <inheritdoc/>
     public async ValueTask<LaunchResult> Launch(LaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var gate = _gates.GetOrAdd(request.Launch, static _ => new SemaphoreSlim(1, 1));
-        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        using var turn = await _gates.Turn(request.Launch, cancellationToken).ConfigureAwait(false);
+        if (_started.TryGetValue(request.Launch, out var existing))
         {
-            if (_started.TryGetValue(request.Launch, out var existing))
-            {
-                return existing;
-            }
-
-            var result = await Start(request, cancellationToken).ConfigureAwait(false);
-            if (result is StartedLaunch started)
-            {
-                _started[request.Launch] = started;
-            }
-
-            return result;
+            return existing;
         }
-        finally
+
+        var result = await Start(request, cancellationToken).ConfigureAwait(false);
+        if (result is StartedLaunch started)
         {
-            _ = gate.Release();
+            _started[request.Launch] = started;
         }
+
+        return result;
     }
 
     /// <inheritdoc/>
@@ -55,7 +47,6 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
         _ = _started.TryRemove(launch, out _);
         var stopped = await parts.HostFor(false).Stop(new HostRef(HostKind.Tmux, SessionName(launch)), cancellationToken).ConfigureAwait(false);
         Cleanup(launch);
-        _ = _gates.TryRemove(launch, out _);
         return stopped;
     }
 
@@ -102,12 +93,6 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
 
         var entry = resolved.Value;
         var host = parts.HostFor(request.Attended);
-        if (File.Exists(LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch)))
-        {
-            var live = new HostRef(host.Kind, SessionName(request.Launch));   // a launch that was started and not stopped: the same session, never a second
-            return new StartedLaunch(live, ViewerOutcome.Skipped, host.AttachArgv(live), entry.Source, entry.ArgvHash ?? string.Empty);
-        }
-
         var prepared = await Prepare(request, entry, cancellationToken).ConfigureAwait(false);
         if (prepared.IsError)
         {
@@ -251,9 +236,20 @@ internal sealed class Launcher(LauncherParts parts) : ILauncher
             return Fail(started.Error);
         }
 
-        var viewer = request.Attended
-            ? await OpenViewer(new ViewerRequest(started.Value, host.AttachArgv(started.Value), $"sindri {request.Item.Value}", parts.Options.ViewerWindow) { Cwd = prepared.WorkDir }, cancellationToken).ConfigureAwait(false)
-            : ViewerOutcome.Skipped;
+        ViewerOutcome viewer;
+        try
+        {
+            viewer = request.Attended
+                ? await OpenViewer(new ViewerRequest(started.Value, host.AttachArgv(started.Value), $"sindri {request.Item.Value}", parts.Options.ViewerWindow) { Cwd = prepared.WorkDir }, cancellationToken).ConfigureAwait(false)
+                : ViewerOutcome.Skipped;
+        }
+        catch (OperationCanceledException)
+        {
+            _ = await host.Stop(started.Value, CancellationToken.None).ConfigureAwait(false);   // the caller gave up after the session started: nobody will be told it exists
+            Cleanup(request.Launch);
+            throw;
+        }
+
         return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session };
     }
 

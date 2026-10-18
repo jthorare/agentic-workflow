@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Launch;
 
 namespace Aw.Sindri.Tests.Launching;
 
@@ -47,7 +48,7 @@ public sealed class LauncherServiceTests
         _rig.Slice.Clock.Advance(_beyondDeadline);
         await _rig.Request(_b);
         await _rig.Request(_c);
-        await _rig.Append(EventTypes.LaunchFailed, new LaunchFailed(_c, A.FirstItemId, "SND-LAUNCH-003", "gone", Stage: null), "launch.outcome:" + _c.Value, A.FirstItemId);
+        await _rig.Append(EventTypes.LaunchFailed, new LaunchFailed(_c, A.FirstItemId, "SND-LAUNCH-003", "gone"), "launch.outcome:" + _c.Value, A.FirstItemId);
 
         var due = await _rig.Tick();
 
@@ -223,7 +224,8 @@ public sealed class LauncherServiceTests
         _rig.Slice.Clock.Advance(TimeSpan.FromSeconds(11));
 
         Assert.False(await running);
-        Expect.Equal(SindriErrors.LaunchTimedOut.Code, Assert.Single(_rig.Failures).Code);
+        var failure = Assert.Single(_rig.Failures);
+        Expect.Equal((SindriErrors.LaunchTimedOut.Code, LaunchStage.Backstop), (failure.Code, failure.Stage));   // a window may have opened: the copy needs to tell this from a host-stage -009
         Assert.Contains(_a, _rig.Launcher.Stops);   // a launch that finished late must leave no session
     }
 
@@ -255,6 +257,100 @@ public sealed class LauncherServiceTests
 
         Expect.Equal(SindriErrors.LaunchNoSession.Code, Assert.Single(_rig.Failures).Code);
         Assert.Empty(_rig.Viewer.Requests);
+        Assert.Empty(_rig.Launcher.Requests);   // the answer is known from the view: the launcher is not asked, so it can't hang the request
+    }
+
+    [Fact]
+    public async Task Attach_is_held_to_the_claim_reserve_like_a_start()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        Assert.True(await _rig.Launch(await Filed(_a)));
+        var attach = await Filed(_b, LaunchMode.Attach);
+        _rig.Slice.Clock.Advance(TimeSpan.FromSeconds(21));   // 9 s of the deadline remain
+
+        Assert.False(await _rig.Launch(attach));
+
+        Assert.Empty(_rig.Viewer.Requests);   // unclaimed, the sweep fails it instead of a window opening late
+    }
+
+    [Fact]
+    public async Task An_unconfirmed_attach_viewer_is_watched_and_turns_opened_when_a_client_attaches()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        Assert.True(await _rig.Launch(await Filed(_a)));
+        var session = new HostRef(HostKind.Tmux, "snd-" + _a.Value);
+        _ = await _rig.Host.Start(new HostSession(session.Name, "/work/demo", ["claude"], new Dictionary<string, string>(StringComparer.Ordinal)), TimeSpan.FromSeconds(1), Token);
+        _rig.Viewer.Script(ViewerOutcome.Unconfirmed);
+        Assert.True(await _rig.Launch(await Filed(_b, LaunchMode.Attach)));
+
+        _rig.Host.AttachClient(session);
+        _ = await _rig.Tick();
+
+        Expect.Equal(_b, Assert.Single(_rig.Recorded(EventTypes.LaunchViewerAttached).Select(_rig.Payload<LaunchViewerAttached>)).Launch);
+    }
+
+    [Fact]
+    public async Task A_restart_adopts_the_live_sessions_and_one_whose_wrap_died_ends_as_lost()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        Assert.True(await _rig.Launch(await Filed(_a)));
+        _rig.Restart();   // Sindri restarts: nothing remembers a heartbeat
+
+        _ = await _rig.Tick();
+
+        Expect.Equal(_a, Assert.Single(_rig.Liveness.Active()));
+        Assert.Empty(_rig.Liveness.Silent(_rig.Slice.Clock.GetUtcNow() + TimeSpan.FromSeconds(119), LaunchRules.LostAfter));
+        Expect.Equal(_a, Assert.Single(_rig.Liveness.Silent(_rig.Slice.Clock.GetUtcNow() + LaunchRules.LostAfter, LaunchRules.LostAfter)));   // no beat ever comes: it ends as lost
+    }
+
+    [Fact]
+    public async Task A_request_swept_after_a_crash_has_its_session_stopped()
+    {
+        await _rig.Boot();
+        await _rig.Item();
+        using var caller = _rig.Caller();
+        await _rig.Request(_a);   // the process died after the host started the session and before the outcome was written
+
+        _ = await _rig.Tick();
+
+        Expect.Equal(SindriErrors.LaunchInterrupted.Code, Assert.Single(_rig.Failures).Code);
+        Assert.Contains(_a, _rig.Launcher.Stops);   // not left running invisibly under a failed row
+    }
+
+    [Fact]
+    public async Task A_shutdown_in_the_middle_of_a_launch_stops_the_session_it_started()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        var pending = await Filed(_a);
+        _rig.Launcher.Hold = new TaskCompletionSource().Task;
+        using var shutdown = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        var running = _rig.LaunchRaw(pending, shutdown.Token);
+        await LauncherRig.Until(() => _rig.Launcher.Requests.Count == 1);
+
+        await shutdown.CancelAsync();
+
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => running);
+        Assert.Contains(_a, _rig.Launcher.Stops);
+        Assert.Empty(_rig.Failures);   // not written at shutdown: the next start's sweep gives the request its 007
+    }
+
+    [Fact]
+    public async Task Launch_started_names_the_viewers_own_kind_and_label_and_print_has_none()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        Assert.True(await _rig.Launch(await Filed(_a)));
+        _rig.Viewer = new FakeTerminalViewer("print", "Print");
+        Assert.True(await _rig.Launch(await Filed(_b)));
+
+        var viewers = _rig.Recorded(EventTypes.LaunchStarted).Select(_rig.Payload<LaunchStarted>).ToDictionary(static s => s.Launch, static s => s.Viewer);
+
+        Expect.Equal(("warp", "Warp"), (viewers[_a].Kind, viewers[_a].Label));
+        Expect.Equal(("print", null), (viewers[_b].Kind, viewers[_b].Label));
     }
 
     [Fact]

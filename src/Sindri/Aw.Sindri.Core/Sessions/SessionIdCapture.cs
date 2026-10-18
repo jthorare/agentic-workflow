@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Launch.Argv;
 
 namespace Aw.Sindri.Core.Sessions;
 
@@ -52,7 +53,7 @@ public static class SessionIdCapture
             return true;
         }
 
-        return Compile(pattern) is { } regex && Matches(regex, id.Value);
+        return SessionIdRules.Matches(pattern, id.Value);
     }
 
     private static Regex? Compile(string? pattern)
@@ -69,18 +70,6 @@ public static class SessionIdCapture
         catch (ArgumentException)
         {
             return null;
-        }
-    }
-
-    private static bool Matches(Regex regex, string text)
-    {
-        try
-        {
-            return regex.IsMatch(text);
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return false;
         }
     }
 

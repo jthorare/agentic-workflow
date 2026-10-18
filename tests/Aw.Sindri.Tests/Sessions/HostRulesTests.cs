@@ -129,6 +129,7 @@ public sealed class HostRulesTests
         var teams = new[] { new TeamNames("t1", ["api", "web"]) };
 
         Assert.Equal("sindri", HostRules.SocketKind("/run/x/sindri", "any", teams));
+        Assert.Equal("sindri", HostRules.SocketKind("/tmp/tmux-1000/sindri-launch", "snd-LCH-1", teams));   // a launched session is Sindri's, not 'other'
         Assert.Equal("default", HostRules.SocketKind("/tmp/tmux-1000/default", "t1-api", teams));   // the owner's lanes on the default socket stay 'default'
         Assert.Equal("team", HostRules.SocketKind("/tmp/tmux-1000/t1", "x", teams));   // a socket named for a team
         Assert.Equal("team", HostRules.SocketKind("/tmp/other", "t1-web", teams));   // a session named <team>-<lane>

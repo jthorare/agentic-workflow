@@ -84,13 +84,13 @@ public static partial class Placeholders
         return value;
     }
 
-    /// <summary>Whether a path is absolute: rooted with '/' or '\\', or a drive letter and a separator. Core does no I/O, so this is text only.</summary>
+    /// <summary>Whether a path is absolute: rooted with '/', a UNC path (two backslashes, then the server), or a drive letter and a separator. Core does no I/O, so this is text only.</summary>
     /// <param name="path">The path.</param>
     /// <returns>True when it is absolute.</returns>
     public static bool IsAbsolute(string path)
     {
         ArgumentNullException.ThrowIfNull(path);
-        return path.Length > 0 && (path[0] is '/' or '\\' || (path.Length > 2 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '/' or '\\'));
+        return path.Length > 0 && (path[0] == '/' || path.StartsWith(@"\\", StringComparison.Ordinal) || (path.Length > 2 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '/' or '\\'));
     }
 
     [GeneratedRegex("\\{(?<name>bin|cwd|title|name|seed|sessionId|mcpConfig|cmd\\.\\.\\.)\\}", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

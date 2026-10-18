@@ -427,9 +427,9 @@ catalog itself lands in P1. Every domain payload carries `commandId` (or the `se
 | `job.cancelled` | job, by, item?, repo? | `job.cancelled:<jobId>` | yes | P6 |
 | `service.paused`, `service.resumed` | service | `service.paused:<name>:<commandId>` | yes | P6 |
 | `item.linked` | item, record key, alias | `item.linked:<itemId>:<record>` | yes | context Phase 6 only (`service:context-sync`); a `CreateItem` with `link` stores it on `item.created` and gives no alias, so `GET /items/<tracker key>` resolves only after a later `item.linked` |
-| `item.open-requested` | item, target, mode, launch | `item.open-requested:<itemId>:<launch>` | yes | P10 |
-| `launch.started`, `launch.failed`, `launch.probed`, `session.ended` | as UI E-1 and E-3; `session.ended`: launch, reason (`exit`, `lost`), exit code, token usage | `launch.started:<launch>`, `launch.failed:<launch>`, `session.ended:<launch>` | yes | P10a (written by `service:launcher`; the engine's agent runtime uses the same events) |
-| `session.usage` | launch, target, model, tokens in, tokens out (cumulative for the launch) | `session.usage:<launch>:<n>` | no | P10a (E-28; sampled every 60 s while the session is live by the target's usage reader, and once more at its end) |
+| `item.open-requested` | `launchId`, item, mode, target, chosenBy | `item.open-requested:<launchId>` | yes | P10 |
+| `launch.started`, `launch.failed`, `launch.probed`, `session.ended` | as UI E-1, E-3 and launcher L-1, L-10: every launch payload names the launch `launchId`; `launch.failed` carries `code`, `message` and an optional `detail` (`stage`: `host`/`backstop`; for SND-LAUNCH-012 also `reason`, `current`, `approved`); `session.ended`: `launchId`, reason (`exit`, `lost`), exit code, and the final `inputTokens`/`outputTokens` when the target's reader had a transcript | `launch.outcome:<launchId>` (`launch.started` and `launch.failed` share it), `session.ended:<launchId>` | yes | P10a (written by `service:launcher`; the engine's agent runtime uses the same events) |
+| `session.usage` | `launchId`, `sample`, `target`, `model` (the one with the most tokens; null when the reader named none), `inputTokens`, `outputTokens` (cumulative for the launch) | `session.usage:<launchId>:<n>` | no | P10a (E-28; sampled every 60 s while the session is live by the target's usage reader, and once more at its end) |
 
 **How a request becomes a decision** (one domain event per command):
 1. `FileRequest` appends `request.filed`, with both ids chosen by the handler.
@@ -853,7 +853,7 @@ The key is part of the profile, so a change shows in `GET /profile` and needs th
 `budget: {dailyUsd, spentUsd, fraction, state, basis}`, with `state` `none` (no budget set), `ok`, `soft` or `hard`, and
 `basis` `price-table` or `tokens-only` (the scorer's price table lacks the model: tokens are shown and no limit is
 applied); the response gains `budgetTotal` with the same fields over all targets. Spend is the day's token usage
-(`session.usage` and `session.ended` events, §3.4) priced by the scorer's table, for the local calendar day. The
+(`session.usage` and `session.ended` events, §3.4) priced by Sindri's own price table (`Budgets`: USD per million tokens, matched by model-id prefix; the scorer reports tokens and keeps no prices), for the local calendar day. The
 Agents page reads this, and the collector's `GET /sessions` (§11) carries each session's tokens.
 - **At the hard limit,** `OpenItem` for that target is refused with `SND-LAUNCH-010`, and the launcher re-checks when
   it launches (the spend can move in the 30 s between) and appends `launch.failed` with the same code. The engine's
@@ -1120,12 +1120,15 @@ One port launches every agent session: the human handoff (`OpenItem`) and the en
 - **Ids only at launch.** The command line carries the item id, the repo path and, for a Step, the run token. Context,
   packets and evidence are pulled through the MCP endpoint (Codex and Cursor get it as launch-time config, §8).
 - **`sindri session wrap`.** Every launched command runs as `sindri session wrap --launch <id> -- <agent cli …>`. Wrap
-  reads the launch secret from a one-time file (`$AW_SINDRI_HOME/launches/<id>.secret`, 0600), deletes it, and passes
+  reads the launch secret from a one-time file (`$AW_SINDRI_HOME/launch/secrets/<id>.secret`, 0600, its path in `AW_SINDRI_LAUNCH_SECRET_FILE`), deletes it, and passes
   the secret to the agent only through its environment (`AW_SINDRI_LAUNCH_SECRET`), never argv or a shared file. It
   also sets `AW_SINDRI_CHILD`, so the CLI inside is a session.
 - **Liveness.** Wrap sends a heartbeat every 30 s and an exit call when the agent exits (both `issue` kind, proven by
   the secret). `service:launcher` appends `session.ended` with reason `exit` and the exit code, or `lost` after 120 s
   without a heartbeat. So a closed tab or a crash always ends the session; the double-launch guard clears.
+  Every accepted heartbeat is audited like any `issue` call (a `command.handled` row) and takes the command gate, so one
+  live session writes about 2,900 audit rows a day; that volume is accepted for now. A self-audited flag for accepted
+  heartbeats (no row, as for `StopProcess`) is the way out if the gate or the ledger's size ever matters (review of #295, I26).
 - **Per-launch files.** A launch that opens Warp writes its own Warp launch configuration
   (`launch_configurations/sindri-<launch>.yaml`, 0600, no secret in it) whose one `exec` line is the `tmux attach`, and
   deletes it once Warp has read it. Paths are quoted. The agent command itself is started by Sindri with `tmux new-session

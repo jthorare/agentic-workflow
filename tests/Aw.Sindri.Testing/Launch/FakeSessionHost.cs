@@ -73,7 +73,7 @@ public sealed class FakeSessionHost : ISessionHost
     public IReadOnlyList<string> AttachArgv(HostRef host)
     {
         ArgumentNullException.ThrowIfNull(host);
-        return ["tmux", "-L", "sindri", "attach-session", "-t", "=" + host.Name];
+        return ["tmux", "-L", "sindri-launch", "attach", "-t", "=" + host.Name];
     }
 
     /// <inheritdoc/>

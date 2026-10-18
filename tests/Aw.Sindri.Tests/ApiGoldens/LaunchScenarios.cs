@@ -3,6 +3,8 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Features.Launching;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -145,10 +147,10 @@ internal static class LaunchScenarios
                 await ViewScenarios.Append(host, EventTypes.LaunchViewerAttached, new LaunchViewerAttached(launch, host.Now()), $"launch.viewer-attached:{launch.Value}", ct);
                 break;
             case "started-viewer-failed":
-                await Started(host, launch, item, ViewerOutcomeKind.Failed, ct, new LaunchViewer("exec-template", "kitty", ViewerOutcomeKind.Failed, "SND-LAUNCH-001", "kitty: no display"));
+                await Started(host, launch, item, ViewerOutcomeKind.Failed, ct, ViewerOf("exec-template", "kitty", ViewerOutcomeKind.Failed, "SND-LAUNCH-001", "kitty: no display"));
                 break;
             case "started-print":
-                await Started(host, launch, item, ViewerOutcomeKind.Skipped, ct, new LaunchViewer("print", "print", ViewerOutcomeKind.Skipped, Code: null, Detail: null));
+                await Started(host, launch, item, ViewerOutcomeKind.Skipped, ct, ViewerOf("print", "Print", ViewerOutcomeKind.Skipped));
                 break;
             case "failed-host-stage":
                 await Failed(host, launch, item, "SND-LAUNCH-009", "The launch timed out (fix: run `sindri doctor`)", LaunchStage.Host, ct);
@@ -167,11 +169,29 @@ internal static class LaunchScenarios
     internal static Task Started(GoldenHost host, LaunchId launch, string item, ViewerOutcomeKind outcome, CancellationToken ct, LaunchViewer? viewer = null) =>
         ViewScenarios.Append(host, EventTypes.LaunchStarted,
             new LaunchStarted(launch, ItemId.From(item), LaunchMode.Open, AgentId.From("claude-code"), SessionId.From("0a1b2c3d-0000-4000-8000-000000000001"), "sindri " + item,
-                viewer ?? new LaunchViewer("warp", "Warp", outcome, Code: null, Detail: null), ["tmux", "-L", "sindri", "attach", "-t", "=snd-" + launch.Value], CatalogSource.Builtin, "sha256:" + new string('a', 64)),
+                viewer ?? ViewerOf("warp", "Warp", outcome), AttachOf(launch), CatalogSource.Builtin, "sha256:" + new string('a', 64)),
             $"launch.outcome:{launch.Value}", ct);
 
+    /// <summary>The viewer part as the launcher service records it: through <see cref="LaunchOutcomes.ViewerFrom"/>, from the viewer's own facts, not hand-written.</summary>
+    internal static LaunchViewer ViewerOf(string kind, string label, ViewerOutcomeKind outcome, string? code = null, string? detail = null) =>
+        LaunchOutcomes.ViewerFrom(
+            new TerminalFacts(kind, label, Present: true, "file", ConfigPath: null, Problem: null, Detail: null),
+            outcome switch
+            {
+                ViewerOutcomeKind.Opened => ViewerOutcome.Opened,
+                ViewerOutcomeKind.Unconfirmed => ViewerOutcome.Unconfirmed,
+                ViewerOutcomeKind.Skipped => ViewerOutcome.Skipped,
+                ViewerOutcomeKind.Failed => ViewerOutcome.Failed(code ?? "SND-LAUNCH-001", detail ?? "failed"),
+                _ => throw new ArgumentOutOfRangeException(nameof(outcome)),
+            },
+            attended: true);
+
+    /// <summary>The command that attaches to the launch's session: what the tmux host builds, so the golden pins a command that attaches.</summary>
+    private static string[] AttachOf(LaunchId launch) =>
+        [.. new TmuxSessionHost(new TmuxHostOptions()).AttachArgv(new HostRef(HostKind.Tmux, LaunchSessionName.For(launch)))];
+
     private static Task Failed(GoldenHost host, LaunchId launch, string item, string code, string message, LaunchStage? stage, CancellationToken ct) =>
-        ViewScenarios.Append(host, EventTypes.LaunchFailed, new LaunchFailed(launch, ItemId.From(item), code, message, stage), $"launch.outcome:{launch.Value}", ct);
+        ViewScenarios.Append(host, EventTypes.LaunchFailed, new LaunchFailed(launch, ItemId.From(item), code, message, stage is { } s ? new LaunchFailureDetail(s) : null), $"launch.outcome:{launch.Value}", ct);
 
     private static async Task<string> Send(GoldenHost host, HttpRequestMessage request) => (await host.Http.Ask(request)).Body;
 }

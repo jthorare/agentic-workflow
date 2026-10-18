@@ -11,6 +11,12 @@ internal static class BinResolver
         }
 
         var found = await ViewerProcess.Output("bash", ["-lc", "command -v -- \"$1\"", "_", bin], cancellationToken).ConfigureAwait(false);
-        return found is { Length: > 0 } ? found : null;
+        return LastLine(found);
     }
+
+    /// <summary>The last non-empty line of a login shell's output: a profile may print before `command -v` does.</summary>
+    /// <param name="output">The shell's stdout, or null.</param>
+    /// <returns>The line, or null when there is none.</returns>
+    internal static string? LastLine(string? output) =>
+        output?.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault();
 }

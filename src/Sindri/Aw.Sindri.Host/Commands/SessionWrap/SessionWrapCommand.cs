@@ -136,7 +136,15 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         {
             while (!token.IsCancellationRequested)
             {
-                _ = await calls.Heartbeat(launch, proof, _found, token).ConfigureAwait(false);   // a refused or unreachable heartbeat never stops the agent
+                try
+                {
+                    _ = await calls.Heartbeat(launch, proof, _found, token).ConfigureAwait(false);   // a refused or unreachable heartbeat never stops the agent
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    await errors.WriteLineAsync($"heartbeat failed: {e.Message}").ConfigureAwait(false);   // the next one tries again; the agent and its exit report go on
+                }
+
                 await Task.Delay(LaunchRules.HeartbeatEvery, clock, token).ConfigureAwait(false);
             }
         }
@@ -166,6 +174,11 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
         catch (OperationCanceledException)
         {
+            return;
+        }
+        catch (Exception e)
+        {
+            await errors.WriteLineAsync($"the session id could not be read: {e.Message}").ConfigureAwait(false);   // no id is recorded; the exit report still goes out
             return;
         }
 

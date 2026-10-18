@@ -111,8 +111,14 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         }
 
         var key = launch(payload.Value).Value;
-        var row = await rows.Require<LaunchRow>(ViewNames.Launches, key, recorded.Envelope.Type, cancellationToken).ConfigureAwait(false);
-        return row.IsError ? row.Error : await rows.Put(ViewNames.Launches, key, fold(row.Value, payload.Value, recorded), cancellationToken).ConfigureAwait(false);
+        var row = await rows.Get<LaunchRow>(ViewNames.Launches, key, cancellationToken).ConfigureAwait(false);
+        if (row.IsError)
+        {
+            return row.Error;
+        }
+
+        // An outcome for a launch nobody requested (an engine launch whose request the ledger never held) has no row to change: skip it, never stall the projector on it
+        return row.Value is null ? Unit.Value : await rows.Put(ViewNames.Launches, key, fold(row.Value, payload.Value, recorded), cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<Result<RepoName?>> RepoOf(IViewRows rows, ItemId item, CancellationToken cancellationToken)

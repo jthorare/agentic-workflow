@@ -48,11 +48,11 @@ public sealed class SandboxWireTests
 
     [Fact, Trait("Lane", "unit")]
     public void A_failed_launch_with_a_reason_has_its_wire_shape() =>
-        Match(JsonSerializer.Serialize(new LaunchFailed(A.FirstLaunchId, A.FirstItemId, "SND-LAUNCH-017", "The agent's sign-in isn't available for Steps (expired)", Stage: null, Reason: "expired", Source: "separate-login"), Json), "launch-failed-reason.json");
+        Match(JsonSerializer.Serialize(new LaunchFailed(A.FirstLaunchId, A.FirstItemId, "SND-LAUNCH-017", "The agent's sign-in isn't available for Steps (expired)", new LaunchFailureDetail(Stage: null, Reason: "expired", Source: "separate-login")), Json), "launch-failed-reason.json");
 
     [Fact, Trait("Lane", "unit")]
     public void A_failed_launch_without_a_reason_is_unchanged() =>
-        Assert.DoesNotContain("reason", JsonSerializer.Serialize(new LaunchFailed(A.FirstLaunchId, A.FirstItemId, "SND-LAUNCH-003", "gone", Stage: null), Json), StringComparison.Ordinal);
+        Assert.DoesNotContain("reason", JsonSerializer.Serialize(new LaunchFailed(A.FirstLaunchId, A.FirstItemId, "SND-LAUNCH-003", "gone"), Json), StringComparison.Ordinal);
 
     [Fact, Trait("Lane", "unit")]
     public void An_overflow_denial_has_its_wire_shape() =>
@@ -112,7 +112,7 @@ public sealed class SandboxWireTests
     [Fact, Trait("Lane", "unit")]
     public void A_limit_kill_names_its_kind_limit_and_peaks()
     {
-        var ended = new SessionEnded(A.FirstLaunchId, SessionEndReason.Limit, ExitCode: null, LimitKind.Memory, 12_884_901_888, 12_884_901_888, new LimitPeaks(12_884_901_888, 310, 214, 1_900));
+        var ended = new SessionEnded(A.FirstLaunchId, SessionEndReason.Limit, ExitCode: null, Kind: LimitKind.Memory, Limit: 12_884_901_888, Peak: 12_884_901_888, Peaks: new LimitPeaks(12_884_901_888, 310, 214, 1_900));
 
         Match(JsonSerializer.Serialize(ended, Json), "session-ended-limit.json");
     }

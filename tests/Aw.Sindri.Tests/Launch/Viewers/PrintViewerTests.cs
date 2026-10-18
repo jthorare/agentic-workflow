@@ -27,6 +27,6 @@ public sealed class PrintViewerTests : TerminalViewerContract
     {
         var facts = await new PrintViewer("detected").Probe(TestContext.Current.CancellationToken);
 
-        Expect.Equal(new TerminalFacts("print", "print", Present: true, "detected", ConfigPath: null, Problem: null, Detail: null), facts);
+        Expect.Equal(new TerminalFacts("print", "Print", Present: true, "detected", ConfigPath: null, Problem: null, Detail: null), facts);
     }
 }

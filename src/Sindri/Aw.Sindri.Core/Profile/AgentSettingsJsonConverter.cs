@@ -25,7 +25,9 @@ public sealed class AgentSettingsJsonConverter : JsonConverter<AgentSettings>
             _ = reader.Read();
             if (string.Equals(name, AgentSettings.SoftLimitKey, StringComparison.Ordinal))
             {
-                soft = reader.GetDecimal();
+                soft = reader.TokenType == JsonTokenType.Number && reader.TryGetDecimal(out var parsed)
+                    ? parsed
+                    : throw new JsonException("agents.softLimit must be a number");
             }
             else
             {

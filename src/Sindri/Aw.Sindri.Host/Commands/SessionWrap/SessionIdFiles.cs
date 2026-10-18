@@ -41,7 +41,7 @@ internal sealed class SessionIdFiles(string home) : ISessionIdSource
             var read = File.Exists(path) ? AwJson.Deserialize<CaptureRule>(File.ReadAllBytes(path), _json) : null;
             return read is { IsSuccess: true } ? read.Value : null;
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return null;
         }
@@ -61,7 +61,7 @@ internal sealed class SessionIdFiles(string home) : ISessionIdSource
             text = File.ReadAllText(path).Trim();
             File.Delete(path);
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return null;
         }
@@ -83,7 +83,7 @@ internal sealed class SessionIdFiles(string home) : ISessionIdSource
             {
                 _ = claimed.Add(File.ReadAllText(file).Trim());
             }
-            catch (IOException)
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 // a file that vanished claims nothing
             }

@@ -1,0 +1,34 @@
+{
+  "terminal": {
+    "kind": "warp",
+    "label": "Warp",
+    "present": true,
+    "source": "detected",
+    "configPath": null,
+    "problem": null,
+    "detail": null
+  },
+  "host": {
+    "kind": "tmux",
+    "present": true,
+    "version": "3.4",
+    "problem": null
+  },
+  "targets": [
+    {
+      "id": "codex",
+      "present": true,
+      "version": "0.40.0",
+      "limited": "usage-unverified",
+      "problem": null,
+      "source": "builtin",
+      "overridden": false
+    }
+  ],
+  "repos": [
+    {
+      "repo": "demo",
+      "present": true
+    }
+  ]
+}

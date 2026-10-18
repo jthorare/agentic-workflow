@@ -32,35 +32,14 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
             return KernelErrors.Invalid.With("A session needs a command to run");
         }
 
-        if (await HostProblem(cancellationToken).ConfigureAwait(false) is { } problem)
-        {
-            return problem;
-        }
-
         var name = new HostRef(HostKind.Tmux, session.Name);
-        if (await Exists(name, cancellationToken).ConfigureAwait(false))
-        {
-            return KernelErrors.Conflict.With($"A session named {session.Name} already exists");
-        }
-
-        return await Launch(session, name, timeout, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask<Result<HostRef>> Launch(HostSession session, HostRef name, TimeSpan timeout, CancellationToken cancellationToken)
-    {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(timeout);
+        deadline.CancelAfter(timeout);   // one deadline over the whole start: the version check and new-session share it
         try
         {
-            var created = await Run(Create(session), deadline.Token).ConfigureAwait(false);
-            if (created.ExitCode == 0)
-            {
-                return name;
-            }
-
-            return created.Error.Contains("duplicate session", StringComparison.Ordinal)
-                ? KernelErrors.Conflict.With($"A session named {session.Name} already exists")
-                : SindriErrors.LaunchTimedOut.With($"tmux could not start the session: {Short(created.Error)}");
+            return await HostProblem(deadline.Token).ConfigureAwait(false) is { } problem
+                ? problem
+                : await Launch(session, name, deadline.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -76,6 +55,19 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         {
             return SindriErrors.LaunchTimedOut.With("tmux is not installed");
         }
+    }
+
+    private async ValueTask<Result<HostRef>> Launch(HostSession session, HostRef name, CancellationToken deadline)
+    {
+        var created = await Run(Create(session), deadline).ConfigureAwait(false);
+        if (created.ExitCode == 0)
+        {
+            return name;
+        }
+
+        return created.Error.Contains("duplicate session", StringComparison.Ordinal)
+            ? KernelErrors.Conflict.With($"A session named {session.Name} already exists")
+            : SindriErrors.LaunchTimedOut.With($"tmux could not start the session: {Short(created.Error)}");
     }
 
     /// <inheritdoc/>
@@ -122,7 +114,7 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     public IReadOnlyList<string> AttachArgv(HostRef host)
     {
         ArgumentNullException.ThrowIfNull(host);
-        return [options.Executable, "-L", options.Socket, "attach-session", "-t", Target(host)];
+        return [options.Executable, "-L", options.Socket, "attach", "-t", Target(host)];
     }
 
     /// <inheritdoc/>
@@ -171,7 +163,8 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     private static bool IsGone(string error) =>
         error.Contains("can't find session", StringComparison.Ordinal)
         || error.Contains("no server running", StringComparison.Ordinal)
-        || error.Contains("error connecting", StringComparison.Ordinal);
+        || (error.Contains("error connecting to", StringComparison.Ordinal)
+            && (error.Contains("(No such file or directory)", StringComparison.Ordinal) || error.Contains("(Connection refused)", StringComparison.Ordinal)));   // a permission error is not "gone"
 
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
@@ -186,18 +179,6 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
         args.AddRange(session.Argv);
         return args;
-    }
-
-    private async ValueTask<bool> Exists(HostRef host, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return (await Run(["has-session", "-t", Target(host)], cancellationToken, _callBudget).ConfigureAwait(false)).ExitCode == 0;
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return false;
-        }
     }
 
     private Task<TmuxRun> Run(IReadOnlyList<string> args, CancellationToken cancellationToken, TimeSpan? budget = null) =>
@@ -240,9 +221,30 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         }
         catch (OperationCanceledException)
         {
-            process.Kill();   // never leave a tmux client running; the server it may have started is the caller's to clean up
-            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            await Reap(process).ConfigureAwait(false);   // never leave a tmux client running; the server it may have started is the caller's to clean up
             throw;
+        }
+    }
+
+    private static async Task Reap(Process process)
+    {
+        try
+        {
+            process.Kill();
+        }
+        catch (InvalidOperationException)
+        {
+            return;   // it ended between the cancel and the kill
+        }
+
+        using var wait = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        try
+        {
+            await process.WaitForExitAsync(wait.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // killed and still not reaped after 2 s: the OS will; the caller must not hang on it
         }
     }
 

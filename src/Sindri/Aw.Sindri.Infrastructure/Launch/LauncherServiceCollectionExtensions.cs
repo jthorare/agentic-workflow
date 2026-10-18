@@ -39,7 +39,7 @@ internal static class LauncherServiceCollectionExtensions
 
     private static LauncherOptions Options(Func<string, string?> environment, SindriSettings settings) => new(settings.Home)
     {
-        SindriExecutable = Environment.ProcessPath ?? "sindri",
+        SindriExecutable = SindriExecutable(environment),
         SindriHome = LauncherStartup.NonEmpty(environment("AW_SINDRI_HOME")),
     };
 
@@ -90,10 +90,29 @@ internal static class LauncherServiceCollectionExtensions
         var time = sp.GetRequiredService<TimeProvider>();
         return section.Kind switch
         {
-            "warp" when !OperatingSystem.IsWindows() => new WarpViewer(WarpOptions(environment), host, time, Redactor.Default),
+            "warp" when !OperatingSystem.IsWindows() => SweptWarp(new WarpViewer(WarpOptions(environment), host, time, Redactor.Default)),
             "exec-template" => new ExecTemplateViewer(new ExecTemplateOptions(section.Name!, section.Argv!), host, time, Redactor.Default),   // why: a valid section has both
             _ => new PrintViewer(),
         };
+    }
+
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
+    private static WarpViewer SweptWarp(WarpViewer viewer)
+    {
+        viewer.Sweep();   // a restart inside the 60 s window must not leave a launch file in Warp's palette (UI spec 6.3)
+        return viewer;
+    }
+
+    /// <summary>The program that runs <c lang="text">session wrap</c> inside the session: <c lang="text">AW_SINDRI_EXE</c>, else this process, else <c lang="text">sindri</c> on the PATH (under <c lang="text">dotnet run</c> the process is the dotnet host, which can't run the wrap).</summary>
+    private static string SindriExecutable(Func<string, string?> environment)
+    {
+        if (LauncherStartup.NonEmpty(environment("AW_SINDRI_EXE")) is { } named)
+        {
+            return named;
+        }
+
+        var self = Environment.ProcessPath;
+        return self is null || string.Equals(Path.GetFileNameWithoutExtension(self), "dotnet", StringComparison.OrdinalIgnoreCase) ? "sindri" : self;
     }
 
     /// <summary>The usage readers over the CLIs' own transcript directories: where the CLIs write by default, or where their own variables point.</summary>

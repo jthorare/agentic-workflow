@@ -34,10 +34,7 @@ internal static class LaunchSecrets
     /// <param name="launch">The launch.</param>
     internal static void Delete(string directory, LaunchId launch)
     {
-        if (Directory.Exists(directory))
-        {
-            File.Delete(PathFor(directory, launch));
-            File.Delete(SecretPathFor(directory, launch));
-        }
+        _ = OwnerOnly.TryDelete(PathFor(directory, launch));
+        _ = OwnerOnly.TryDelete(SecretPathFor(directory, launch));
     }
 }

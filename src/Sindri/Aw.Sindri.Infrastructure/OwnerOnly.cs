@@ -43,19 +43,43 @@ internal static class OwnerOnly
     /// <param name="contents">The bytes.</param>
     internal static void WriteAtomically(string path, ReadOnlySpan<byte> contents)
     {
-        var temp = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{path}.tmp-{Environment.ProcessId}");
+        var temp = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{path}.tmp-{Environment.ProcessId}-{Guid.NewGuid():N}");   // unique: two writers of one path in this process never share a temp file
         var options = new FileStreamOptions { Mode = FileMode.Create, Access = FileAccess.Write };
         if (!OperatingSystem.IsWindows())
         {
             options.UnixCreateMode = File;
         }
 
-        using (var stream = new FileStream(temp, options))
+        try
         {
-            stream.Write(contents);
-        }
+            using (var stream = new FileStream(temp, options))
+            {
+                stream.Write(contents);
+            }
 
-        System.IO.File.Move(temp, path, overwrite: true);
+            System.IO.File.Move(temp, path, overwrite: true);
+        }
+        catch
+        {
+            _ = TryDelete(temp);   // a failed write or move leaves no temp file behind
+            throw;
+        }
+    }
+
+    /// <summary>Deletes <paramref name="path"/>; a missing file, a missing directory or one that can't be removed right now is not an error.</summary>
+    /// <param name="path">The file.</param>
+    /// <returns>True when the file is gone, false when it could not be removed.</returns>
+    internal static bool TryDelete(string path)
+    {
+        try
+        {
+            System.IO.File.Delete(path);
+            return true;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Appends <paramref name="contents"/> to <paramref name="path"/>, creating it 0600.</summary>

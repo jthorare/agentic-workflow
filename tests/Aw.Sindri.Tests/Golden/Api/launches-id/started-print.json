@@ -14,7 +14,7 @@
   "tabTitle": "sindri ITM-0000000000000000000000000000000e",
   "viewer": {
     "kind": "print",
-    "label": "print",
+    "label": null,
     "outcome": "skipped",
     "code": null,
     "detail": null
@@ -23,7 +23,7 @@
   "attach": [
     "tmux",
     "-L",
-    "sindri",
+    "sindri-launch",
     "attach",
     "-t",
     "=snd-LCH-00000000000000000000000000000001"

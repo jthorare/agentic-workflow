@@ -20,7 +20,7 @@ namespace Aw.Sindri.Tests.OpenItem;
 
 /// <summary>Opening an item (UI spec E-1, API spec §3.2): one 'item.open-requested', after the checks; the launcher service does the launching.</summary>
 [Lane(TestLane.Unit)]
-public sealed class OpenItemTests
+public sealed class OpenItemTests : IDisposable
 {
     private static readonly RepoName _repo = RepoName.From("demo");
     private static readonly AgentId _codex = AgentId.From("codex");
@@ -30,13 +30,21 @@ public sealed class OpenItemTests
 
     private readonly ViewsHarness _h = new();
     private readonly FixedLaunchSpend _spend = new();
+    private readonly OpenRequests _requests;
+
+    public OpenItemTests()
+    {
+        _requests = new OpenRequests(_h.Slice.Clock);
+    }
+
+    public void Dispose() => _requests.Dispose();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private OpenItemService Service(params AgentEntry[] catalog)
     {
         var launches = new LaunchViews(_h.Views);
-        return new(new OpenChecks(new ViewItemResolver(_h.Views), launches, _h.Slice.Clock),
+        return new(new OpenChecks(new ViewItemResolver(_h.Views), launches, _requests, _h.Slice.Clock),
             new OpenTarget(_h.Slice.Profiles, launches, new AgentCatalog(catalog.Length == 0 ? [AgentEntries.ClaudeCode, AgentEntries.Codex] : catalog), _spend),
             _h.Slice.Held, _h.Slice.Store, _h.Slice.Events, _h.Slice.Ids, _h.Slice.Callers);
     }
@@ -295,6 +303,7 @@ public sealed class OpenItemTests
         await Seed();
         await _h.Request(_earlier, target: _codex);
         await _h.Start(_earlier, target: _codex);   // started with no id
+        await _h.End(launch: _earlier);   // a session that still runs is attached to, not resumed
         using var entered = Human();
 
         var without = await Service().Handle(A.OpenItemRequest().InMode(LaunchMode.Resume).Build(), Token);
@@ -304,6 +313,67 @@ public sealed class OpenItemTests
         Expect.Equal(SindriErrors.LaunchNoSession.Code, without.Error.Code);
         Assert.True(with.IsSuccess, with.IsError ? with.Error.ToString() : null);
         Expect.Equal((LaunchMode.Resume, _codex), (Requested().Mode, Requested().Target));
+    }
+
+    [Fact]
+    public async Task Resume_of_a_session_that_still_runs_is_refused_and_points_at_attach()
+    {
+        await Seed();
+        await _h.Request(_earlier, target: _codex);
+        await _h.Start(_earlier, target: _codex, session: SessionId.From("sess-1"));   // started, never ended: live
+        using var entered = Human();
+
+        var live = await Service().Handle(A.OpenItemRequest().InMode(LaunchMode.Resume).Build(), Token);
+        await _h.End(launch: _earlier);
+        var ended = await Service().Handle(A.OpenItemRequest().InMode(LaunchMode.Resume).Build(), Token);
+
+        Expect.Equal(SindriErrors.LaunchNoSession.Code, live.Error.Code);
+        Assert.Contains("attach", live.Error.Message, StringComparison.Ordinal);
+        Assert.True(ended.IsSuccess, ended.IsError ? ended.Error.ToString() : null);
+    }
+
+    [Fact]
+    public async Task An_attach_launch_is_not_a_live_session_to_attach_to()
+    {
+        await Seed();
+        await _h.Request(_earlier, target: _codex, mode: LaunchMode.Attach);
+        await _h.Start(_earlier, target: _codex, mode: LaunchMode.Attach);   // the human attached once; nothing ever ends that row
+        using var entered = Human();
+
+        var result = await Service().Handle(A.OpenItemRequest().InMode(LaunchMode.Attach).Build(), Token);
+
+        Expect.Equal(SindriErrors.LaunchNoSession.Code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Two_opens_at_once_record_one_request()
+    {
+        await Seed();
+        using var entered = Human();
+        var service = Service();
+
+        var results = await Task.WhenAll(service.Handle(A.OpenItemRequest().Build(), Token).AsTask(), service.Handle(A.OpenItemRequest().Build(), Token).AsTask());
+
+        _ = Assert.Single(results, static r => r.IsSuccess);
+        Expect.Equal(SindriErrors.LaunchInProgress.Code, Assert.Single(results, static r => r.IsError).Error.Code);
+        _ = Assert.Single(_h.Slice.Store.Events);
+    }
+
+    [Fact]
+    public async Task An_open_right_after_another_is_in_progress_before_the_view_shows_the_first()
+    {
+        await Seed();
+        using var entered = Human();
+        var first = await Service().Handle(A.OpenItemRequest().Build(), Token);   // appended; the launches view has not folded it yet
+
+        var second = await Service().Handle(A.OpenItemRequest().Build(), Token);
+        await _h.Request(first.Value.Launch);
+        await _h.Fail(launch: first.Value.Launch);
+        var third = await Service().Handle(A.OpenItemRequest().Build(), Token);   // the view now shows it failed: the note no longer holds the item
+
+        Expect.Equal(SindriErrors.LaunchInProgress.Code, second.Error.Code);
+        Assert.Contains(first.Value.Launch.Value, second.Error.Message, StringComparison.Ordinal);
+        Assert.True(third.IsSuccess, third.IsError ? third.Error.ToString() : null);
     }
 
     [Fact]

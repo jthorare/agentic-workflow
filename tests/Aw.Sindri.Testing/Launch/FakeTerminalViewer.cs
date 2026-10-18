@@ -4,7 +4,8 @@ namespace Aw.Sindri.Testing.Launch;
 
 /// <summary>An <see cref="ITerminalViewer"/> with scripted outcomes: each Open takes the next one queued, then <see cref="ViewerOutcome.Opened"/>.</summary>
 /// <param name="kind">The viewer kind.</param>
-public sealed class FakeTerminalViewer(string kind = "exec-template") : ITerminalViewer
+/// <param name="label">What the app calls it; the kind when none is given.</param>
+public sealed class FakeTerminalViewer(string kind = "exec-template", string? label = null) : ITerminalViewer
 {
     private readonly Queue<ViewerOutcome> _script = new();
     private readonly List<ViewerRequest> _requests = [];
@@ -29,5 +30,5 @@ public sealed class FakeTerminalViewer(string kind = "exec-template") : ITermina
 
     /// <inheritdoc/>
     public ValueTask<TerminalFacts> Probe(CancellationToken cancellationToken) =>
-        ValueTask.FromResult(new TerminalFacts(Kind, Kind, Present: true, "file", ConfigPath: null, Problem: null, Detail: null));
+        ValueTask.FromResult(new TerminalFacts(Kind, label ?? Kind, Present: true, "file", ConfigPath: null, Problem: null, Detail: null));
 }

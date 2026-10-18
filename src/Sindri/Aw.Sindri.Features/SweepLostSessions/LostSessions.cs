@@ -17,7 +17,7 @@ internal sealed class LostSessions(LaunchLiveness liveness, LaunchSessionEvents 
     public async ValueTask<int> Sweep(CancellationToken cancellationToken)
     {
         var ended = 0;
-        foreach (var launch in liveness.Silent(clock.GetUtcNow(), LaunchRules.LostAfter))
+        foreach (var launch in liveness.SilentAfterSweep(clock.GetUtcNow(), LaunchRules.LostAfter, LaunchRules.SweepGap))
         {
             if ((await session.End(launch, SessionEndReason.Lost, exitCode: null, cancellationToken).ConfigureAwait(false)).IsSuccess)
             {

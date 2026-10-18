@@ -17,6 +17,6 @@ public sealed class TmuxHostDefaultSocketTests
         Expect.Equal("sindri-launch", new TmuxHostOptions().Socket);
         Expect.True(new TmuxHostOptions().Socket != "sindri");
         Expect.True(new TmuxHostOptions().Socket.EndsWith("-launch", StringComparison.Ordinal));   // a bare team name never ends this way
-        Expect.Sequence(["tmux", "-L", "sindri-launch", "attach-session", "-t", "=snd-one"], host.AttachArgv(new HostRef(HostKind.Tmux, "snd-one")));
+        Expect.Sequence(["tmux", "-L", "sindri-launch", "attach", "-t", "=snd-one"], host.AttachArgv(new HostRef(HostKind.Tmux, "snd-one")));
     }
 }

@@ -1,0 +1,25 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "item": "ITM-00000000000000000000000000000001",
+  "mode": "open",
+  "target": "codex",
+  "sessionId": null,
+  "tabTitle": "sindri ITM-00000000000000000000000000000001",
+  "viewer": {
+    "kind": "exec-template",
+    "label": "kitty",
+    "outcome": "failed",
+    "code": "SND-LAUNCH-001",
+    "detail": "kitty: no display"
+  },
+  "attach": [
+    "tmux",
+    "-L",
+    "sindri-launch",
+    "attach",
+    "-t",
+    "=snd-1"
+  ],
+  "catalogSource": "override",
+  "argvHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

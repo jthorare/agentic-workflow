@@ -23,7 +23,7 @@
   "attach": [
     "tmux",
     "-L",
-    "sindri",
+    "sindri-launch",
     "attach",
     "-t",
     "=snd-LCH-00000000000000000000000000000001"

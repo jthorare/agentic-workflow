@@ -48,16 +48,27 @@ internal static class ViewerProcess
         }
     }
 
-    /// <summary>Starts the program (argv[0]) with a clean TMUX; null when it can't be started (the message says why).</summary>
-    internal static (Child? Child, string? Problem) Start(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment)
+    // A terminal that outlives Sindri must not share its session or its pipes (launcher spec: new session, stdin and stdout /dev/null): sh
+    // closes both, then starts the program under setsid where the box has it (macOS has none, so there it only detaches the descriptors).
+    private const string DetachScript = "exec </dev/null >/dev/null; if command -v setsid >/dev/null 2>&1; then exec setsid \"$@\"; else exec \"$@\"; fi";
+
+    private static ProcessStartInfo Info(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, bool detached)
     {
-        var info = new ProcessStartInfo(argv[0])
+        var info = new ProcessStartInfo(detached ? "/bin/sh" : argv[0])
         {
             UseShellExecute = false,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        if (detached)
+        {
+            info.ArgumentList.Add("-c");
+            info.ArgumentList.Add(DetachScript);
+            info.ArgumentList.Add("sh");
+            info.ArgumentList.Add(argv[0]);
+        }
+
         foreach (var argument in argv.Skip(1))
         {
             info.ArgumentList.Add(argument);
@@ -69,6 +80,17 @@ internal static class ViewerProcess
             info.Environment[key] = value;
         }
 
+        return info;
+    }
+
+    /// <summary>Starts the program (argv[0]) with a clean TMUX; null when it can't be started (the message says why).</summary>
+    /// <param name="argv">The program and its arguments, no shell.</param>
+    /// <param name="environment">Extra environment, or null.</param>
+    /// <param name="detached">True for a terminal window that may outlive Sindri: its own session, stdin and stdout on /dev/null; stderr stays piped for the window.</param>
+    /// <returns>The child, or the reason it could not start.</returns>
+    internal static (Child? Child, string? Problem) Start(IReadOnlyList<string> argv, IReadOnlyDictionary<string, string>? environment, bool detached = false)
+    {
+        var info = Info(argv, environment, detached);
         try
         {
             var process = Process.Start(info);
@@ -177,11 +199,20 @@ internal static class ViewerProcess
     internal static async ValueTask<bool> OnLoginPath(string program, CancellationToken cancellationToken) =>
         await Output("bash", ["-lc", "command -v -- \"$1\"", "_", program], cancellationToken).ConfigureAwait(false) is { Length: > 0 };
 
-    /// <summary>The stdout of a short query (5 s) that exited 0; null when it failed, wasn't found or ran over.</summary>
-    internal static async ValueTask<string?> Output(string program, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
+    /// <summary>The stdout of a short query (5 s) that exited 0; null when it failed, wasn't found or ran over (a query that runs over is killed with its children).</summary>
+    internal static ValueTask<string?> Output(string program, IReadOnlyList<string> arguments, CancellationToken cancellationToken) =>
+        Output(program, arguments, _probeBudget, cancellationToken);
+
+    /// <summary>As <see cref="Output(string, IReadOnlyList{string}, CancellationToken)"/> with its own <paramref name="budget"/>.</summary>
+    /// <param name="program">The program (no shell).</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <param name="budget">How long it may run.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>The trimmed stdout, or null.</returns>
+    internal static async ValueTask<string?> Output(string program, IReadOnlyList<string> arguments, TimeSpan budget, CancellationToken cancellationToken)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(_probeBudget);
+        deadline.CancelAfter(budget);
         var info = new ProcessStartInfo(program) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true };
         foreach (var argument in arguments)
         {
@@ -189,19 +220,11 @@ internal static class ViewerProcess
         }
 
         _ = info.Environment.Remove("TMUX");
+        Process? process = null;
         try
         {
-            using var process = Process.Start(info);
-            if (process is null)
-            {
-                return null;
-            }
-
-            process.StandardInput.Close();
-            var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-            _ = process.StandardError.ReadToEndAsync(CancellationToken.None);
-            await process.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
-            return process.ExitCode == 0 ? (await output.ConfigureAwait(false)).Trim() : null;
+            process = Process.Start(info);
+            return process is null ? null : await ReadOutput(process, deadline.Token).ConfigureAwait(false);
         }
         catch (Win32Exception)
         {
@@ -210,6 +233,46 @@ internal static class ViewerProcess
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return null;
+        }
+        finally
+        {
+            Kill(process);
+        }
+    }
+
+    private static async Task<string?> ReadOutput(Process process, CancellationToken deadline)
+    {
+        process.StandardInput.Close();
+        var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        _ = process.StandardError.ReadToEndAsync(CancellationToken.None);
+        await process.WaitForExitAsync(deadline).ConfigureAwait(false);
+        var text = await output.WaitAsync(deadline).ConfigureAwait(false);   // a backgrounded child that holds stdout open can't hold the call past its budget
+        return process.ExitCode == 0 ? text.Trim() : null;
+    }
+
+    /// <summary>Ends a process that is still running, with its children; one that already ended, or can't be signalled, is left alone.</summary>
+    /// <param name="process">The process, or null.</param>
+    internal static void Kill(Process? process)
+    {
+        if (process is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch (Exception e) when (e is InvalidOperationException or Win32Exception)
+        {
+            // it ended between the check and the kill
+        }
+        finally
+        {
+            process.Dispose();
         }
     }
 

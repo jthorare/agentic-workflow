@@ -55,7 +55,7 @@ internal static class McpLaunchConfig
     /// <summary>Deletes the launch's file; a missing one is fine.</summary>
     /// <param name="directory">The launcher's <c lang="text">launch/</c> directory.</param>
     /// <param name="launch">The launch.</param>
-    internal static void Delete(string directory, LaunchId launch) => File.Delete(PathFor(directory, launch));
+    internal static void Delete(string directory, LaunchId launch) => _ = OwnerOnly.TryDelete(PathFor(directory, launch));
 
     /// <summary>Deletes every config file older than <paramref name="olderThan"/> whose launch <paramref name="live"/> doesn't name (a crashed host leaves them).</summary>
     /// <param name="directory">The launcher's <c lang="text">launch/</c> directory.</param>
@@ -77,12 +77,35 @@ internal static class McpLaunchConfig
             var name = Path.GetFileNameWithoutExtension(file)["mcp-".Length..];
             if (LaunchId.TryParse(name, provider: null, out var launch) && now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > olderThan && !live(launch))
             {
-                File.Delete(file);
-                removed++;
+                if (OwnerOnly.TryDelete(file))
+                {
+                    removed++;
+                }
             }
         }
 
         return removed;
+    }
+
+    /// <summary>A TOML basic string: quoted, with the backslash and the quote escaped and control characters written as \uXXXX, so a value can't end the string or the table early.</summary>
+    /// <param name="value">The text.</param>
+    /// <returns>The quoted string.</returns>
+    internal static string Toml(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        var text = new System.Text.StringBuilder("\"");
+        foreach (var c in value)
+        {
+            _ = c switch
+            {
+                '\\' => text.Append("\\\\"),
+                '"' => text.Append("\\\""),
+                < ' ' or '\u007f' => text.Append(CultureInfo.InvariantCulture, $"\\u{(int)c:X4}"),
+                _ => text.Append(c),
+            };
+        }
+
+        return text.Append('"').ToString();
     }
 
     /// <summary>The arguments that give the agent its endpoint, after its expanded open or resume template.</summary>
@@ -98,8 +121,8 @@ internal static class McpLaunchConfig
             McpForm.ClaudeConfigFile when configPath is not null => ["--mcp-config", configPath],
             McpForm.CodexOverrides =>
             [
-                "-c", $"mcp_servers.{McpScope.ServerName}.url=\"{Url(target.Port)}\"",
-                "-c", $"mcp_servers.{McpScope.ServerName}.http_headers={{ {RepoHeader} = \"{target.Repo}\" }}",
+                "-c", $"mcp_servers.{McpScope.ServerName}.url={Toml(Url(target.Port))}",
+                "-c", $"mcp_servers.{McpScope.ServerName}.http_headers={{ {RepoHeader} = {Toml(target.Repo)} }}",
             ],
             McpForm.None or McpForm.ClaudeConfigFile => [],
             _ => [],

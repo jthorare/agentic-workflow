@@ -32,7 +32,7 @@ public static partial class HostRules
         };
     }
 
-    /// <summary>The kind of a tmux socket: 'sindri' for a path ending /sindri, 'default' for /default, 'team' for a team's lane session or a socket named for a team, else 'other'.</summary>
+    /// <summary>The kind of a tmux socket: 'sindri' for a path ending /sindri or /sindri-launch (the launcher's own socket), 'default' for /default, 'team' for a team's lane session or a socket named for a team, else 'other'.</summary>
     /// <param name="socket">The socket path, or null.</param>
     /// <param name="session">The tmux session name, or null.</param>
     /// <param name="teams">The Meta teams.</param>
@@ -41,7 +41,7 @@ public static partial class HostRules
     {
         ArgumentNullException.ThrowIfNull(teams);
         var name = socket?[(socket.LastIndexOf('/') + 1)..];
-        if (string.Equals(name, "sindri", StringComparison.Ordinal))
+        if (string.Equals(name, "sindri", StringComparison.Ordinal) || string.Equals(name, "sindri-launch", StringComparison.Ordinal))
         {
             return "sindri";
         }

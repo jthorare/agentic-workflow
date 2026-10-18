@@ -53,5 +53,5 @@ internal static class StepPolicyFile
     /// <summary>Deletes the launch's file; a missing one is fine.</summary>
     /// <param name="directory">The launcher's policy directory.</param>
     /// <param name="launch">The launch.</param>
-    internal static void Delete(string directory, LaunchId launch) => File.Delete(PathFor(directory, launch));
+    internal static void Delete(string directory, LaunchId launch) => _ = OwnerOnly.TryDelete(PathFor(directory, launch));
 }

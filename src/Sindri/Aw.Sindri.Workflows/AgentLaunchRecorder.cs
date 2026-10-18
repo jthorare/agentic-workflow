@@ -4,7 +4,6 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -48,7 +47,7 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(failed);
-        var payload = new LaunchFailed(request.Launch, request.Item, failed.Error.Code, failed.Error.Message, failed.Stage, SandboxRefusal.ReasonOf(failed.Error), SandboxRefusal.SourceTextOf(failed.Error));
+        var payload = new LaunchFailed(request.Launch, request.Item, failed.Error.Code, failed.Error.Message, LaunchFailureDetail.Of(failed.Error, failed.Stage));
         _ = await Append(events.Entry(EventTypes.LaunchFailed, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
     }
 

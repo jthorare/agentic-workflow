@@ -1,0 +1,14 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "item": "ITM-00000000000000000000000000000001",
+  "code": "SND-LAUNCH-012",
+  "message": "aider isn't approved for unattended Steps",
+  "detail": {
+    "stage": null,
+    "reason": "hash-changed",
+    "current": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "approved": [
+      "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    ]
+  }
+}

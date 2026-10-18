@@ -17,6 +17,9 @@ internal sealed class FakeWrapCalls(TimeProvider clock) : IWrapCalls
 
     public Error? Refuse { get; set; }
 
+    /// <summary>When set, a heartbeat throws it (an unreachable control plane, a bad response) instead of answering.</summary>
+    public Exception? ThrowOnBeat { get; set; }
+
     private Result<Unit> Answer() => Refuse is { } error ? error : Unit.Value;
 
     public ValueTask<Result<Unit>> Heartbeat(LaunchId launch, LaunchSecret proof, SessionId? session, CancellationToken cancellationToken)
@@ -24,6 +27,11 @@ internal sealed class FakeWrapCalls(TimeProvider clock) : IWrapCalls
         lock (_beats)
         {
             _beats.Add((clock.GetUtcNow(), session));
+        }
+
+        if (ThrowOnBeat is { } thrown)
+        {
+            throw thrown;
         }
 
         return ValueTask.FromResult(Answer());

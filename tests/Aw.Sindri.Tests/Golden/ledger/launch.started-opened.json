@@ -1,0 +1,25 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "item": "ITM-00000000000000000000000000000001",
+  "mode": "open",
+  "target": "codex",
+  "sessionId": "0a1b2c3d-0000-4000-8000-000000000001",
+  "tabTitle": "sindri ITM-00000000000000000000000000000001",
+  "viewer": {
+    "kind": "warp",
+    "label": "Warp",
+    "outcome": "opened",
+    "code": null,
+    "detail": null
+  },
+  "attach": [
+    "tmux",
+    "-L",
+    "sindri-launch",
+    "attach",
+    "-t",
+    "=snd-1"
+  ],
+  "catalogSource": "builtin",
+  "argvHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

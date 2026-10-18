@@ -21,7 +21,8 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="outcomes">Appends the failures.</param>
 /// <param name="work">What the launcher remembers.</param>
 /// <param name="timings">The limits.</param>
-internal sealed class LaunchRecovery(ILedgerStore ledger, IProjectorStatus views, IViewReader reader, LaunchOutcomes outcomes, LaunchWork work, LaunchTimings timings)
+/// <param name="launcher">Stops the session an interrupted request may have left running.</param>
+internal sealed class LaunchRecovery(ILedgerStore ledger, IProjectorStatus views, IViewReader reader, LaunchOutcomes outcomes, LaunchWork work, LaunchTimings timings, ILauncher launcher)
 {
     private static readonly TimeSpan _ready = TimeSpan.FromSeconds(2);
 
@@ -68,9 +69,15 @@ internal sealed class LaunchRecovery(ILedgerStore ledger, IProjectorStatus views
         if (row.State == LaunchState.Requested)
         {
             var failed = new LaunchFailed(row.Id, row.Item, SindriErrors.LaunchInterrupted.Code,
-                "Sindri restarted before the launch started (fix: open the item again)", Stage: null);
+                "Sindri restarted before the launch started (fix: open the item again)");
             var appended = await outcomes.Failed(grant, failed, cancellationToken).ConfigureAwait(false);
+            _ = await launcher.Stop(row.Id, cancellationToken).ConfigureAwait(false);   // a crash mid-launch may have left a running session under a failed row; Stop is idempotent
             return appended.IsError ? appended.Error : Unit.Value;
+        }
+
+        if (row.Live)
+        {
+            outcomes.Adopt(row.Id);   // its wrap may be alive or dead: a dead one is silent for 120 s from now and ends as lost
         }
 
         if (row.Live && row is { Viewer.Outcome: ViewerOutcomeKind.Unconfirmed, Late: false, OutcomeAt: { } at } && at + timings.Deadline > timings.Clock.GetUtcNow())

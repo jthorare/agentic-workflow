@@ -7,6 +7,7 @@ namespace Aw.Sindri.Core.Launch.Argv;
 public static class SessionIdRules
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromMilliseconds(100);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Regex?> _compiled = new(StringComparer.Ordinal);
 
     /// <summary>The id when <paramref name="text"/> passes the generic bound (1 to 128 of [A-Za-z0-9._:-], no leading dot, no '..'), else null.</summary>
     /// <param name="text">Text that may be a session id.</param>
@@ -25,18 +26,41 @@ public static class SessionIdRules
             return false;
         }
 
-        if (entry.SessionIdPattern is not { } pattern)
+        return entry.SessionIdPattern is not { } pattern || Matches(pattern, value.Value);
+    }
+
+    /// <summary>Whether <paramref name="text"/> is wholly matched by an entry's session id pattern (anchored at both ends; a pattern that doesn't compile, or runs over 100 ms, matches nothing).</summary>
+    /// <param name="pattern">The entry's pattern.</param>
+    /// <param name="text">The id.</param>
+    /// <returns>True when the whole text matches.</returns>
+    public static bool Matches(string pattern, string text)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        ArgumentNullException.ThrowIfNull(text);
+        if (Compiled(pattern) is not { } regex)
         {
-            return true;
+            return false;
         }
 
         try
         {
-            return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.CultureInvariant, _timeout).IsMatch(value.Value);
+            return regex.IsMatch(text);
         }
-        catch (Exception e) when (e is ArgumentException or NotSupportedException or RegexMatchTimeoutException)
+        catch (RegexMatchTimeoutException)
         {
             return false;
         }
     }
+
+    private static Regex? Compiled(string pattern) => _compiled.GetOrAdd(pattern, static p =>
+    {
+        try
+        {
+            return new Regex(@"\A(?:" + p + @")\z", RegexOptions.NonBacktracking | RegexOptions.CultureInvariant, _timeout);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    });
 }

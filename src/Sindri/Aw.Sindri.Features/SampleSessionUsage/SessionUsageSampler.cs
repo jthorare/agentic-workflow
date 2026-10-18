@@ -36,16 +36,17 @@ internal sealed class SessionUsageSampler(LaunchLiveness liveness, ILaunchViews 
                 continue;
             }
 
-            var input = tokens.Sum(static t => t.Input + t.CacheRead + t.CacheWrite);
-            var output = tokens.Sum(static t => t.Output);
-            if ((input, output) == (0, 0) || !samples.Changed(launch, input, output))
+            var (input, output) = ModelTokens.Totals(tokens);
+            if ((input, output) == (0, 0) || !samples.IsNew(launch, input, output))
             {
                 continue;
             }
 
-            var number = (int)Math.Floor(Math.Max(0, (now - (row.OutcomeAt ?? row.RequestedAt)) / LaunchRules.UsageEvery)) + 1;
-            if ((await events.Usage(row.Item.Value, new SessionUsage(launch, number, input, output), cancellationToken).ConfigureAwait(false)).IsSuccess)
+            var number = samples.Next(launch, (int)Math.Floor(Math.Max(0, (now - (row.OutcomeAt ?? row.RequestedAt)) / LaunchRules.UsageEvery)) + 1);
+            var sample = new SessionUsage(launch, number, input, output, row.Target, ModelTokens.Dominant(tokens));
+            if ((await events.Usage(row.Item.Value, sample, cancellationToken).ConfigureAwait(false)).IsSuccess)
             {
+                samples.Record(launch, input, output, number);   // only a sample that is in the ledger counts as seen
                 appended++;
             }
         }

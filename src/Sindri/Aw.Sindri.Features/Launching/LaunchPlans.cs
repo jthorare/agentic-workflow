@@ -63,6 +63,6 @@ internal sealed class LaunchPlans(IViewReader reader, IApprovedProfile profile, 
     private async ValueTask<SessionId?> ResumableSession(Core.Events.ItemOpenRequested request, CancellationToken cancellationToken)
     {
         var history = await launches.ForItem(request.Item, cancellationToken).ConfigureAwait(false);
-        return history.IsError ? null : history.Value.FirstOrDefault(row => row.Target == request.Target && row.State == LaunchState.Started && row.ResumableId is not null)?.ResumableId;
+        return history.IsError ? null : history.Value.FirstOrDefault(row => row.Target == request.Target && row.State == LaunchState.Started && !row.Live && row.ResumableId is not null)?.ResumableId;
     }
 }

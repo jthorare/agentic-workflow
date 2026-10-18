@@ -43,7 +43,7 @@ public sealed class LaunchContractTypesTests
         var started = new LaunchStarted(
             A.FirstLaunchId, A.FirstItemId, LaunchMode.Open, AgentId.From("claude-code"), SessionId.From("0192f0c1-a2b3"), "sindri ITM-1",
             new LaunchViewer("warp", "Warp", ViewerOutcomeKind.Failed, "SND-LAUNCH-001", "open: exit 3 (private stderr)"),
-            ["tmux", "-L", "sindri", "attach-session", "-t", "=snd-x"], CatalogSource.Builtin, "hash");
+            ["tmux", "-L", "sindri-launch", "attach", "-t", "=snd-x"], CatalogSource.Builtin, "hash");
         var h = new SliceHarness();
         var entry = h.Events.Entry(EventTypes.LaunchStarted, started, "launch.outcome:x", A.FirstItemId.Value);
         var row = new Core.Ledger.LedgerEvent(Sequence: 1, Epoch: 1, entry.Envelope, entry.IdempotencyKey, entry.Item);

@@ -245,6 +245,34 @@ public sealed class SessionWrapTests : IDisposable
     }
 
     [Fact]
+    public async Task A_heartbeat_that_throws_is_reported_and_retried_and_the_exit_report_still_goes_out()
+    {
+        _calls.ThrowOnBeat = new UnauthorizedAccessException("the control file is unreadable");
+        var run = Command().Run(Args, TestContext.Current.CancellationToken);
+        await Until(() => _calls.Beats.Count == 1);
+        await Run(TimeSpan.FromSeconds(35));
+
+        var code = await Finish(run, 3);
+
+        Expect.Equal((3, 1), (code, _calls.Exits.Count));
+        Assert.True(_calls.Beats.Count >= 2);   // the next beat went out after the failed one
+        Assert.Contains("heartbeat failed: the control file is unreadable", _errors.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_session_id_scan_that_throws_does_not_skip_the_exit_report()
+    {
+        _ids.Script = _ => throw new UnauthorizedAccessException("no access to the transcripts");
+        var run = Command().Run(Args, TestContext.Current.CancellationToken);
+        await Until(() => _calls.Beats.Count == 1);
+
+        var code = await Finish(run, 4);
+
+        Expect.Equal((4, 1), (code, _calls.Exits.Count));
+        Assert.Contains("the session id could not be read: no access to the transcripts", _errors.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Refused_heartbeats_do_not_stop_the_agent_and_a_failed_exit_call_is_tried_three_times()
     {
         _calls.Refuse = SindriErrors.AuthLaunchSecret.With("the launch secret doesn't match an open launch");

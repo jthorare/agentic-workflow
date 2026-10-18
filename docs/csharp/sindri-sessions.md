@@ -126,7 +126,7 @@ socket, the terminals and the Meta teams), which `Features/Sessions/PassHostSour
   fills in only when the table gives none and the server pid in it is this server's. The pane is the one whose pid is the agent or an ancestor. The terminal that shows a
   tmux session comes from the chain of an attached client of that session only: the agent inherited `TERM_PROGRAM` and `WARP_*` through the server, which say nothing.
   The label is `tmux · <terminal>`, or `tmux` with no client or a server that can't be read (that is not a problem row; only a pass-deadline timeout is).
-- **Socket kind:** `sindri` (path ends `/sindri`), `default` (ends `/default`, whatever the session is named, so the owner's lanes there show `default`), `team` (the socket
+- **Socket kind:** `sindri` (path ends `/sindri`, or `/sindri-launch` for the launcher's own socket), `default` (ends `/default`, whatever the session is named, so the owner's lanes there show `default`), `team` (the socket
   is named for a Meta team, or the session is `<team>-<lane>`), else `other`. Teams come from `<state>/meta/team.json` and `<state>/meta/teams/*/team.json` (`team` and `lanes` only).
 - **Facts for human callers only** (never in the ledger payload): `TerminalFacts` (`XWindow` from `WINDOWID`, `KittyWindow`, `KittyListenOn`, `WeztermPane`, `WarpFocusUrl` only when it
   has the form `warp://session/<32 lower-case hex>`) and `TmuxFacts` (`Socket`, `SocketKind`, `Session`, `Pane`).

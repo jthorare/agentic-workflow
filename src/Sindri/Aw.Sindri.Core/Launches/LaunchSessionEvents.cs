@@ -34,8 +34,13 @@ public sealed class LaunchSessionEvents(ILaunchFiles files, LaunchLiveness liven
     /// <returns>Success, or why the ledger refused.</returns>
     public async ValueTask<Result<Unit>> Beat(LaunchId launch, SessionId? reported, CancellationToken cancellationToken)
     {
-        liveness.Beat(launch, clock.GetUtcNow());
-        return await Report(launch, reported, cancellationToken).ConfigureAwait(false);
+        var reports = await Report(launch, reported, cancellationToken).ConfigureAwait(false);
+        if (reports.IsSuccess)
+        {
+            liveness.Beat(launch, clock.GetUtcNow());   // after the report: a heartbeat that comes back as an error doesn't restart the silence clock
+        }
+
+        return reports;
     }
 
     /// <summary>Records the agent's session id as 'launch.session-reported', once, when the entry's pattern accepts it.</summary>
@@ -98,7 +103,8 @@ public sealed class LaunchSessionEvents(ILaunchFiles files, LaunchLiveness liven
 
         var launch = ended.Launch;
         var admitted = await admission.Admit(launch, id: null, cancellationToken).ConfigureAwait(false);
-        var entry = events.Entry(EventTypes.SessionEnded, ended, $"{EventTypes.SessionEnded}:{launch.Value}", admitted.Item);
+        var (input, output) = await admission.FinalTokens(launch, cancellationToken).ConfigureAwait(false);
+        var entry = events.Entry(EventTypes.SessionEnded, ended with { InputTokens = input, OutputTokens = output }, $"{EventTypes.SessionEnded}:{launch.Value}", admitted.Item);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
         {

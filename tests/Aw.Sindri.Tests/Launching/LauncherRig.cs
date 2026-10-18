@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Events;
@@ -42,11 +43,11 @@ internal sealed class LauncherRig
 
     public FakeSessionHost Host { get; } = new();
 
-    public FakeTerminalViewer Viewer { get; } = new();
+    public FakeTerminalViewer Viewer { get; set; } = new("warp", "Warp");
 
     public FakeOpenRuntime Runtime { get; } = new();
 
-    public LaunchLiveness Liveness { get; } = new();
+    public LaunchLiveness Liveness { get; private set; } = new();
 
     public FixedLaunchSpend Spend { get; } = new();
 
@@ -79,12 +80,13 @@ internal sealed class LauncherRig
 
     private LaunchProbeRecorder Probes => new(Port, Slice.Profiles, Repos, Slice.Store, Slice.Events);
 
-    public void Restart() => Work = new LaunchWork();
+    /// <summary>A new process: the work it remembers and the liveness it has seen are gone; the ledger and the views stay.</summary>
+    public void Restart() => (Work, Liveness) = (new LaunchWork(), new LaunchLiveness());
 
     private LaunchOutcomes Outcomes => new(Slice.Store, Slice.Events, Viewer, Liveness, Slice.Clock);
 
     private RunLaunch Run => new(
-        new LaunchRecovery(Slice.Store, Status, H.Views, Outcomes, Work, Timings), new LaunchIntake(Slice.Store, Slice.Events, Work), Outcomes, Host, Probes, Work, Timings);
+        new LaunchRecovery(Slice.Store, Status, H.Views, Outcomes, Work, Timings, Port), new LaunchIntake(Slice.Store, Slice.Events, Work), Outcomes, Host, Probes, Work, Timings);
 
     private ProcessLaunch Process
     {
@@ -93,7 +95,7 @@ internal sealed class LauncherRig
             var plans = new LaunchPlans(H.Views, Slice.Profiles, Spend, new LaunchViews(H.Views));
             return new ProcessLaunch(
                 Outcomes, new TakeoverWait(Status, Slice.Store, H.Views, Runtime, Timings), Port,
-                new AttachFlow(new LaunchViews(H.Views), Viewer, Port, plans, Outcomes, Timings), plans, Work, Timings);
+                new AttachFlow(new LaunchViews(H.Views), Viewer, Outcomes, Work, Timings), plans, Work, Timings);
         }
     }
 
@@ -113,6 +115,12 @@ internal sealed class LauncherRig
         Assert.True(done.IsSuccess, done.IsError ? done.Error.ToString() : null);
         await Sync();
         return done.Value.Launched;
+    }
+
+    public async Task<Result<ProcessLaunchResponse>> LaunchRaw(PendingLaunch pending, CancellationToken cancellationToken)
+    {
+        await Sync();
+        return await Process.Handle(new ProcessLaunchRequest(Grant, pending), cancellationToken);
     }
 
     public Task Item() =>

@@ -102,7 +102,7 @@ public sealed class WarpViewerTests : TerminalViewerContract, IDisposable
     }
 
     [Fact(Timeout = 30_000)]
-    public async Task Per_launch_files_are_0600_and_swept()
+    public async Task Per_launch_files_are_swept_after_60_seconds()
     {
         await _f.StartSession();
         _ = await _f.Drive(Create().Open(_f.Request(), TestContext.Current.CancellationToken));

@@ -68,6 +68,7 @@ internal sealed class LaunchWork
         lock (_gate)
         {
             _ = _pending.Remove(launch);
+            _ = _handedOut.Remove(launch);
         }
     }
 

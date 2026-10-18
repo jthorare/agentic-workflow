@@ -1,0 +1,8 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "sample": 3,
+  "inputTokens": 1200,
+  "outputTokens": 340,
+  "target": "codex",
+  "model": "gpt-5-codex"
+}

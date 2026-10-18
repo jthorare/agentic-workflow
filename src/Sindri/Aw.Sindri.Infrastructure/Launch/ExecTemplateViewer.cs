@@ -32,15 +32,20 @@ internal sealed class ExecTemplateViewer(ExecTemplateOptions options, ISessionHo
             return ViewerProcess.Failed(argv.Error.Message);
         }
 
-        var (child, problem) = ViewerProcess.Start(argv.Value, options.Environment);
+        var (child, problem) = ViewerProcess.Start(argv.Value, options.Environment, detached: true);
         if (child is null)
         {
             return ViewerProcess.Failed(problem ?? "the viewer did not start");
         }
 
-        var outcome = await ViewerProcess.Watch(host, time, new ViewerProcess.WatchPlan(request, () => Failure(child), child.Exited), cancellationToken).ConfigureAwait(false);
-        ViewerProcess.Reap(child);
-        return outcome;
+        try
+        {
+            return await ViewerProcess.Watch(host, time, new ViewerProcess.WatchPlan(request, () => Failure(child), child.Exited), cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            ViewerProcess.Reap(child);   // also when the caller cancels: the process is disposed and the pipe drain ends with it
+        }
     }
 
     /// <inheritdoc/>
