@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
@@ -12,7 +13,25 @@ public static class AgentLaunchFailures
     {
         ArgumentNullException.ThrowIfNull(failed);
         var error = failed.Error;
+        if (SandboxCodes.All.FirstOrDefault(c => string.Equals(c.Error.Code, error.Code, StringComparison.Ordinal)) is { } sandbox)
+        {
+            return new AgentLaunchFailure(KindOf(sandbox.Kind), error.Code, error.Message)
+            {
+                Reason = SandboxRefusal.ReasonOf(error),   // read here: an error's extensions don't cross Temporal
+                Source = SandboxRefusal.SourceTextOf(error),
+                FailureReason = sandbox.FailureReason,
+            };
+        }
+
         var parks = string.Equals(error.Code, SindriErrors.LaunchNotApproved.Code, StringComparison.Ordinal) || string.Equals(error.Code, SindriErrors.LaunchFormUnsupported.Code, StringComparison.Ordinal);
         return new AgentLaunchFailure(parks ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, error.Code, error.Message);
     }
+
+    private static AgentLaunchFailureKind KindOf(LaunchCodeKind kind) => kind switch
+    {
+        LaunchCodeKind.NoRuntime => AgentLaunchFailureKind.NoRuntime,
+        LaunchCodeKind.LaunchPark => AgentLaunchFailureKind.LaunchPark,
+        LaunchCodeKind.ResourceWait => AgentLaunchFailureKind.Wait,
+        LaunchCodeKind.StepFailure or _ => AgentLaunchFailureKind.StepFailed,
+    };
 }

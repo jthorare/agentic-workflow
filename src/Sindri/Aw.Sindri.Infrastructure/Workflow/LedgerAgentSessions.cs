@@ -34,8 +34,15 @@ internal sealed class LedgerAgentSessions(ILaunchViews views, ILedgerReader ledg
         }
 
         var payload = events.Payload<SessionEnded>(ended);
-        return payload.IsError ? payload.Error : new AgentSessionState(payload.Value.Reason == SessionEndReason.Exit ? AgentSessionEnd.Exit : AgentSessionEnd.Lost, payload.Value.ExitCode);
+        return payload.IsError ? payload.Error : Ended(payload.Value);
     }
+
+    private static AgentSessionState Ended(SessionEnded ended) => ended switch
+    {
+        { Reason: SessionEndReason.Exit } => new AgentSessionState(AgentSessionEnd.Exit, ended.ExitCode),
+        { Reason: SessionEndReason.Limit, Kind: { } kind, Limit: { } limit, Peak: { } peak } => new AgentSessionState(AgentSessionEnd.Limit, ExitCode: null, new AgentSessionLimit(kind, limit, peak)),
+        _ => new AgentSessionState(AgentSessionEnd.Lost, ended.ExitCode),
+    };
 
     public async ValueTask<Result<long>> Usage(LaunchId launch, CancellationToken cancellationToken)
     {

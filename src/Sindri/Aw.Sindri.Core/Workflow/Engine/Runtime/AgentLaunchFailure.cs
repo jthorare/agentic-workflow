@@ -16,5 +16,5 @@ public sealed record AgentLaunchFailure(AgentLaunchFailureKind Kind, string Code
     public string? FailureReason { get; init; }
 
     /// <summary>The text of the park's question or of the 'step.failed' reason.</summary>
-    public string Text => Kind == AgentLaunchFailureKind.Park ? $"{Code}: {Message}" : $"launch: {Code}: {Message}";
+    public string Text => Kind is AgentLaunchFailureKind.Park or AgentLaunchFailureKind.NoRuntime or AgentLaunchFailureKind.LaunchPark ? $"{Code}: {Message}" : $"{FailureReason ?? "launch"}: {Code}: {Message}";
 }

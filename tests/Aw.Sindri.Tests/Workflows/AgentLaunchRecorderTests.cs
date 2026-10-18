@@ -37,7 +37,9 @@ public sealed class AgentLaunchRecorderTests
         await recorder.Started(Request(), started, TestContext.Current.CancellationToken);
 
         var recorded = Assert.Single(_slice.Store.Events, static e => e.Envelope.Type == EventTypes.LaunchStarted);
-        Assert.Equal(_sandbox, _slice.Events.Payload<LaunchStarted>(recorded).Value.Sandbox);
+        var sandbox = _slice.Events.Payload<LaunchStarted>(recorded).Value.Sandbox;
+        Assert.Equal((_sandbox.Mechanism, _sandbox.PlanHash, _sandbox.Login), (sandbox?.Mechanism, sandbox?.PlanHash, sandbox?.Login));
+        Assert.Equal(_sandbox.Writable, sandbox?.Writable);
     }
 
     [Fact]
