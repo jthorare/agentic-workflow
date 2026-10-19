@@ -12,7 +12,7 @@ public sealed class FileExecutableLocatorContractTests : ExecutableLocatorContra
 
     protected override async Task<LocatorUnderTest> ArrangeAsync()
     {
-        var root = _root.Path;
+        var root = CanonicalPath.Of(_root.Path);   // the locator answers real paths; on macOS the temp path is under a link
         _ = Directory.CreateDirectory(Path.Combine(root, "bin"));
         _ = Directory.CreateDirectory(Path.Combine(root, "outside"));
         _ = StubCommand.Write(_root, "bin/tool", "exit 0");

@@ -188,7 +188,7 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 
 | Command | Who | What it does |
 |---|---|---|
-| `sindri-app` | Human-only | Starts the control plane if it isn't running (detached, so closing the terminal doesn't stop it), opens the app, prints the startup summary, and registers MCP for the repo you are in (step 7) |
+| `sindri-app` | Human-only | Starts the control plane if it isn't running (detached, so closing the terminal doesn't stop it), opens the app, prints the startup summary, and prints the command that registers MCP for the repo you are in (step 7; it can't run it for you: no terminal) |
 | `sindri-app --headless` | Human-only | The same without the app: for a box you reach over SSH or one that stays on |
 | `sindri-app status` | Agent OK | The running control plane's summary; never starts it |
 | `sindri-app doctor` | Agent OK | One line per check, each `ok`, `warn` or `fail` with a fix; works while the control plane is down |
@@ -348,8 +348,9 @@ sindri-app mcp register                            # Agent OK: prints what it wo
 sindri-app mcp register --apply --providers all    # Human-only: Claude Code (local scope), Cursor and Codex project files
 ```
 
-A bare `sindri-app` run from the repo does the `--apply` for you once the control plane is up, and again whenever the
-port changes. Each provider line is `registered`, `unchanged`, `skipped` (not installed), `registered, needs trust` or
+A bare `sindri-app` run from the repo prints that `--apply` command (with `--repo` when it applies) once the control plane
+is up. It can't run it for you: sindri only takes `--apply` from a terminal, and the watcher that waits for the plane has
+none. Run it once, and again when the port changes. Each provider line is `registered`, `unchanged`, `skipped` (not installed), `registered, needs trust` or
 `failed` with a fix. A tracked `.cursor/mcp.json` or `.codex/config.toml` that would change is `failed`, not edited:
 add the entry by hand or keep those files out of git.
 

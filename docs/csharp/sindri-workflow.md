@@ -549,7 +549,7 @@ Descriptor-only too (`ScopingSteps` in `Aw.Sindri.Features/Blocks/`; the three c
 
 ### Block catalog (line design and plan stations)
 
-Descriptor-only Steps of `workflow.design` and `workflow.plan` (line spec §4-§6, LN-Y1; `Aw.Sindri.Features/Blocks/Step/{DesignSteps,LensRoundSteps,LensSteps,PlanSteps}.cs`). A served instance parks at one with SND-WF-010 until its runtime ships; at the desk each completes with plain outcomes and outputs. `bundle`, `pack` and `subject` are optional text parameters (`subject` required on `step.lens.run`), descriptor-only until LN-PK resolves packs; `workflow.packs.lenses.design` and `workflow.packs.style` are profile key names only. Neither recipe uses an `input.*` Step input.
+Steps of `workflow.design` and `workflow.plan` (line spec §4-§6, LN-Y1; all descriptor-only except `step.lens.log`, a block runtime since BS-4; `Aw.Sindri.Features/Blocks/Step/{DesignSteps,LensRoundSteps,LensSteps,PlanSteps}.cs`). A served instance parks at a descriptor-only one with SND-WF-010 until its runtime ships; at the desk each completes with plain outcomes and outputs. `bundle`, `pack` and `subject` are optional text parameters (`subject` required on `step.lens.run`), descriptor-only until LN-PK resolves packs; `workflow.packs.lenses.design` and `workflow.packs.style` are profile key names only. Neither recipe uses an `input.*` Step input.
 
 | Step | Kind | Reads | Outcomes | Writes |
 |---|---|---|---|---|
@@ -578,6 +578,22 @@ The Step inputs `input.context.lenses`, `input.context.code` and `input.context.
 
 `step.judge.choose` is `block` runtime and `step.desk.choose` is `desk` and human-only; their hashes moved once when the two fields
 landed (provisional owner default). The agent runtime (engine P8) moved `step.produce`, `step.build.red`, `step.build.green` and `step.prove.holdout`; every other shipped descriptor hashes as before (`ShippedBlocksTests` pins all of them). `sindri recipe list --stale` shows which approved recipes use a moved descriptor and need re-approval.
+
+### Lens loop facts (`step.lens.log` and the lens report)
+
+`step.lens.log` is a block runtime (BS-4, `Aw.Sindri.Features/LensLoops/`); `step.lens.round`, `step.review.round`, `step.review.log` and `step.review.record` still run at the desk (see below). The facts the loop passes between its Steps have these shapes, so the prompts of `step.lens.run` and the Steps that read the log can target them. Facts are JSON text; every field not listed is kept as written. Severity names are matched ignoring case: the design scale is CRITICAL, HIGH, MEDIUM, LOW (the gold packet writes them upper case), the review scale blocking, issue, suggestion, nit. The two most severe stop a round.
+
+| Fact | Written by | Shape |
+|---|---|---|
+| `fact:lensQueue` | `step.lens.round` (seed), `step.lens.log` (on `next`) | array of lens ids, in pack order (an element may be an object `{ "id": ... }`). `step.lens.log` takes the reported lens off it |
+| `fact:lensReport` | `step.lens.run` (the agent) | `{ "lens": "<id>", "packHash"?: "sha256:...", "model"?: "...", "changedSections"?: ["sec-..."], "findings": [Finding], "notApplicable"?: "<reason>" }`. `lens` is required and must be in `fact:lensQueue`; either `findings` (may be empty) or a non-empty `notApplicable` is required. A severity off the loop's scale fails the Step |
+| Finding | the agent; `resolution` is added later by the revise Step or the desk | `{ "id"?, "severity", "cite", "text", "resolution"? }` (the gold `lens-rounds.jsonl` shape) |
+| `fact:lensRounds` | `step.lens.log` (append-only; every outcome) | array, one entry per lens run: the report as written plus `"round": n` (counted from 1) and, on the last entry of a round (the queue is empty), `"closes": true`. A round continues while the last entry does not close; the entry after a closing one opens round n+1, and so does a report for a lens the open round already logged. A `closes` or `round` the agent wrote in its report is ignored: the Step sets both. `step.design.evidence` writes `lens-rounds.jsonl` from these entries and drops `closes` |
+| `fact:findings` (design, on `findings`) | `step.lens.log` | array of the round's CRITICAL and HIGH findings, each with `"lens": "<id>"` added |
+
+Outcomes of `step.lens.log`: `next` while the queue is not empty (writes `lensRounds`, `lensQueue`); at the round's end `clean` (no CRITICAL or HIGH finding in any entry of the round) or `findings`. Caps and no-progress are the recipe's loops, not the Step's.
+
+**Review loop, not a block yet.** `step.review.log` has the same job with the review scale and a running `fact:review`, but its descriptor reads only `lensReport` and `lensRounds`; the runner gives a Step only the facts its descriptor reads, so the Step cannot see `fact:lensQueue` and cannot tell `next` from a round's end. Likewise `step.review.round` reads neither `lensRounds` nor `review`, so it cannot carry earlier rounds forward, and the `round` number and the review packet's `rounds` would restart each iteration. Two descriptor changes (a hash move) unblock it: `step.review.log` reads `fact:lensQueue`, and `step.review.round` reads `fact:lensRounds` and keeps it. The intended `fact:review` is `{ "round": n, "verdict": "clean" | "findings" | "behaviourWrong", "blocking": n, "issue": n, "suggestions": n, "nits": n, "behaviour"?: "wrong", "findings": [Finding + lens] }`, where `behaviourWrong` is a blocking finding with `"behaviour": "wrong"`. `step.review.recheck` writes the same shape, `step.review.record` freezes `review.json` from it with `fact:lensRounds` and the head sha of `fact:change`.
 
 ### Block catalog (line stations: build and prove)
 

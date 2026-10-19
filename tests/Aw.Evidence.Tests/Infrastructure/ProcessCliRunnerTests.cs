@@ -23,8 +23,9 @@ public sealed class ProcessCliRunnerTests : IDisposable
         var first = (await Runner().RunAsync(Invoke(tool), TestContext.Current.CancellationToken)).Value.Stdout.Split('|');
         var second = (await Runner().RunAsync(Invoke(tool), TestContext.Current.CancellationToken)).Value.Stdout.Split('|');
 
-        Assert.Equal(first[0], first[1], StringComparer.Ordinal);
-        Assert.Equal(first[0], first[2], StringComparer.Ordinal);
+        // $PWD is the resolved directory, $HOME and $TMPDIR the path as given: the same directory on macOS, where temp is under a link.
+        Assert.Equal(first[0], CanonicalPath.Of(first[1]), StringComparer.Ordinal);
+        Assert.Equal(first[0], CanonicalPath.Of(first[2]), StringComparer.Ordinal);
         Assert.NotEqual(first[0], second[0], StringComparer.Ordinal);
         Assert.False(Directory.Exists(first[0]));
         Assert.False(Directory.Exists(second[0]));

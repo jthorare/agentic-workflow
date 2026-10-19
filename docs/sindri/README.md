@@ -26,6 +26,8 @@ Use `sindri-app`, not `sindri`: until the C# build replaces it, `sindri` on your
 
 The full setup, from prerequisites through Onyx, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 
+Demo handoff and remaining work: [demo-handoff.md](demo-handoff.md) is a prompt for an agent on a fresh machine to set up and rehearse the Sindri demo, and its section 9 lists what is not built yet against the spec.
+
 ## Two builds
 
 Two things carry the name today:

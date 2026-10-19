@@ -160,12 +160,12 @@ public sealed class ShippedBlocksTests
         Assert.Equal(BlockRuntime.Block, catalog.Find(BlockId.From("step.judge.choose"))!.Runtime);
 
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());   // no runtime until the block runtime (DT-J)
-        // the scoping station's Steps listed here are the block runtimes of this build (BS-1); the judge's comes with J3 and moves its contract to BlockContract
+        // the scoping station's and the design lens loop's Steps listed here are the block runtimes of this build (BS-1, BS-4); the judge's comes with J3 and moves its contract to BlockContract
         Assert.Equal(
-            ["step.brief.seed", "step.interview.record", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.reanchor", "step.scope.withdraw"],
+            ["step.brief.seed", "step.interview.record", "step.lens.log", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.reanchor", "step.scope.withdraw"],
             provider.GetServices<BlockStepRegistration>().Select(static r => r.Step.Value).Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
-        Assert.Equal(11, scope.ServiceProvider.GetServices<IBlockStep>().Count());
+        Assert.Equal(12, scope.ServiceProvider.GetServices<IBlockStep>().Count());
     }
 
     [Fact, Trait("Lane", "unit")]

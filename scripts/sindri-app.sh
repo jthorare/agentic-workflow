@@ -28,13 +28,13 @@
 # and links $CLAUDE_LOCAL_BIN/sindri-app (default ~/.local/bin) to this script, unless AW_SINDRI_APP_NO_LINK=1, this tree
 # is a linked git worktree, or something else already has that name (a dangling link is replaced).
 #
-# MCP: a bare run (or `serve`) also registers Sindri's /sindri/mcp with every installed provider (Claude Code's local
-# scope, the checkout's .cursor/mcp.json and .codex/config.toml, plus Codex's project trust row in its user config) once the
-# control plane's port is known: `sindri mcp register --apply --providers all`, idempotent, re-registered when the port
-# changes. You running this script is the human --apply; an agent session is refused by sindri (SND-AUTH-002). A provider
-# that fails is reported on stderr and never stops the start. The repo is the one the directory is in, or
-# AW_SINDRI_MCP_REPO (passed through as --repo); a linked git worktree passes its main checkout's folder name, which
-# works when the profile names the repo after its folder (else set AW_SINDRI_MCP_REPO). AW_SINDRI_APP_NO_MCP=1 skips it.
+# MCP: once the control plane is up, a bare run (or `serve`) prints the command that registers Sindri's /sindri/mcp with every
+# installed provider (Claude Code's local scope, the checkout's .cursor/mcp.json and .codex/config.toml, plus Codex's project trust
+# row in its user config): `sindri-app mcp register --apply --providers all`, idempotent; run it again when the port changes. It
+# only prints: `--apply` is the human's verb, and sindri refuses it from anything without a terminal on stdin and stdout
+# (SND-AUTH-002), which the background watcher that waits for the plane never has. The repo is the one the directory is in, or
+# AW_SINDRI_MCP_REPO (printed as --repo); a linked git worktree names its main checkout's folder, which works when the profile
+# names the repo after its folder (else set AW_SINDRI_MCP_REPO). AW_SINDRI_APP_NO_MCP=1 skips it.
 #
 # Exit: sindri's exit code; 1 when setup or a publish failed (the publish log's tail on stderr).
 # Bash 3.2 compatible (macOS /bin/bash).
@@ -207,29 +207,28 @@ fi
 
 rm -f "$inputs"
 
-# 6. MCP registration, once the plane is up (a background watcher: the exec below replaces this shell).
+# 6. The MCP registration command, printed once the plane is up (a background watcher: the exec below replaces this shell).
 mcp_repo="${AW_SINDRI_MCP_REPO:-}"
 if [ -z "$mcp_repo" ]; then
   gitdir="$(git rev-parse --absolute-git-dir 2>/dev/null || true)"
   common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
   if [ -n "$gitdir" ] && [ -n "$common" ] && [ "$gitdir" != "$common" ]; then mcp_repo="$(basename "$(dirname "$common")")"; fi
 fi
-register_mcp() { # $1 = the sindri binary; waits up to 2 minutes for a live control plane, then registers
-  local bin="$1" i pid url out
-  local args=(mcp register --apply --providers all)
-  if [ -n "$mcp_repo" ]; then args+=(--repo "$mcp_repo"); fi
+register_hint() { # waits up to 2 minutes for a live control plane, then prints the registration command (it can't run it: no terminal)
+  local i pid url cmd="sindri-app mcp register --apply --providers all"
+  if [ -n "$mcp_repo" ]; then cmd="$cmd --repo $(printf '%q' "$mcp_repo")"; fi   # pasteable even when the folder name has a space
   for i in $(seq 1 240); do
     pid="$(jq -r '.pid // empty' "$control" 2>/dev/null || true)"
     url="$(jq -r '.url // empty' "$control" 2>/dev/null || true)"
     if [ -n "$pid" ] && [ -n "$url" ] && kill -0 "$pid" 2>/dev/null; then
-      if out="$("$bin" "${args[@]}" 2>&1 </dev/null)"; then say "mcp${mcp_repo:+ (--repo $mcp_repo)}: $out"; else say "mcp${mcp_repo:+ (--repo $mcp_repo)} registration needs attention (the control plane is unaffected): $out"; fi
+      say "mcp: to register Sindri's MCP server with your providers (once, and again when the port changes), run: $cmd"
       return 0
     fi
     sleep 0.5
   done
-  say "mcp: the control plane didn't come up in 2 minutes, so nothing was registered (run: sindri-app mcp register --apply --providers all)"
+  say "mcp: the control plane didn't come up in 2 minutes; once it is up, run: $cmd"
 }
 if [ "${AW_SINDRI_APP_NO_MCP:-0}" != 1 ] && { [ $# -eq 0 ] || [ "${1:-}" = serve ]; }; then
-  register_mcp "$base/$stamp/sindri" >&2 </dev/null &
+  register_hint >&2 </dev/null &
 fi
 exec "$base/$stamp/sindri" "$@"

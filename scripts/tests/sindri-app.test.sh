@@ -191,47 +191,40 @@ done
 check "I3: the in-use build is kept when the state dir is a symlink" "$(test -d "$RB/$S_OLD" && echo kept)" "kept"
 kill "$HOLD" 2>/dev/null; wait "$HOLD" 2>/dev/null
 
-# MCP registration: a bare run registers every provider once the plane is up (a live control.json), passes --repo from a
-# linked worktree or AW_SINDRI_MCP_REPO, reports a failure without failing the start, and skips on AW_SINDRI_APP_NO_MCP=1.
+# MCP registration: `mcp register --apply` is the human's verb and sindri refuses it without a terminal (SND-AUTH-002), which a
+# background watcher never has. So once the plane is up (a live control.json) a bare run or serve prints the exact command to run,
+# with --repo from a linked worktree or AW_SINDRI_MCP_REPO, on stderr, and runs nothing; AW_SINDRI_APP_NO_MCP=1 skips it.
 export AW_STATE_DIR="$WORK/mcpstate"
 mkdir -p "$AW_STATE_DIR/sindri-app"
 sleep 60 & PLANE=$!
 printf '{"pid": %s, "url": "http://127.0.0.1:7480/"}\n' "$PLANE" > "$AW_STATE_DIR/sindri-app/control.json"
 : > "$CALLS"
 unset AW_SINDRI_APP_NO_MCP
-waitfor() { local i; for i in $(seq 1 40); do grep -q "$1" "$CALLS" && return 0; sleep 0.25; done; return 1; }
+waitfor() { local i; for i in $(seq 1 40); do grep -q "$1" "$2" && return 0; sleep 0.25; done; return 1; }
+HINT='run: sindri-app mcp register --apply --providers all'
 (cd "$WORK" && AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >"$WORK/out" 2>"$WORK/err"); RC=$?
-waitfor "^sindri mcp register" ; sleep 0.5
-check "mcp: a bare run registers every provider after the plane is up" "$(grep '^sindri mcp' "$CALLS")" "sindri mcp register --apply --providers all"
+waitfor "mcp register" "$WORK/err"; sleep 0.5
+check "mcp: a bare run prints the register command once the plane is up" "$(grep -c "$HINT\$" "$WORK/err")" "1"
+check "mcp: it runs no registration itself (sindri would refuse it without a terminal)" "$(grep -c '^sindri mcp' "$CALLS")" "0"
 check "mcp: the bare run's exit is unaffected" "$RC" "0"
-check "mcp: the report goes to stderr, never stdout" "$(grep -c 'codex: registered' "$WORK/out")" "0"
-check "mcp: the report reaches stderr" "$(grep -c 'codex: registered' "$WORK/err")" "1"
+check "mcp: the hint goes to stderr, never stdout" "$(grep -c 'mcp register' "$WORK/out")" "0"
 
-: > "$CALLS"
 (cd "$WORK" && AW_SINDRI_MCP_REPO=demo AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" serve >/dev/null 2>"$WORK/err")
-waitfor "^sindri mcp register"; sleep 0.5
-check "mcp: AW_SINDRI_MCP_REPO is passed as --repo (serve registers too)" "$(grep '^sindri mcp' "$CALLS")" "sindri mcp register --apply --providers all --repo demo"
-check "mcp: the report names the repo it registered" "$(grep -c '^sindri-app: mcp (--repo demo): ' "$WORK/err")" "1"
+waitfor "mcp register" "$WORK/err"; sleep 0.5
+check "mcp: AW_SINDRI_MCP_REPO is in the command as --repo (serve prints it too)" "$(grep -c "$HINT --repo demo\$" "$WORK/err")" "1"
 
 git -C "$R" worktree add -q "$WORK/wt2" -b wt2 >/dev/null 2>&1
-: > "$CALLS"
-(cd "$WORK/wt2" && AW_SINDRI_APP_NO_LINK=1 bash "$WORK/wt2/scripts/sindri-app.sh" >/dev/null 2>&1)
-waitfor "^sindri mcp register"; sleep 0.5
-check "mcp: from a linked worktree the main checkout's name is passed as --repo" "$(grep '^sindri mcp' "$CALLS")" "sindri mcp register --apply --providers all --repo repo"
+(cd "$WORK/wt2" && AW_SINDRI_APP_NO_LINK=1 bash "$WORK/wt2/scripts/sindri-app.sh" >/dev/null 2>"$WORK/err")
+waitfor "mcp register" "$WORK/err"; sleep 0.5
+check "mcp: from a linked worktree the main checkout's name is the --repo" "$(grep -c "$HINT --repo repo\$" "$WORK/err")" "1"
 git -C "$R" worktree remove --force "$WORK/wt2" >/dev/null 2>&1
 
-: > "$CALLS"
-(cd "$WORK" && MCP_EXIT=2 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >"$WORK/out" 2>"$WORK/err"); RC=$?
-waitfor "^sindri mcp register"; sleep 0.5
-check "mcp: a failing registration never fails the start" "$RC:$(grep -c 'needs attention' "$WORK/err")" "0:1"
+(cd "$WORK" && AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >/dev/null 2>"$WORK/err"); sleep 1
+check "mcp: AW_SINDRI_APP_NO_MCP=1 prints nothing about it" "$(grep -c 'mcp register' "$WORK/err")" "0"
 
-: > "$CALLS"
-(cd "$WORK" && AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >/dev/null 2>&1); sleep 1
-check "mcp: AW_SINDRI_APP_NO_MCP=1 registers nothing" "$(grep -c '^sindri mcp' "$CALLS")" "0"
-
-: > "$CALLS"
-AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" status >/dev/null 2>&1; sleep 1
-check "mcp: other commands register nothing" "$(grep -c '^sindri mcp' "$CALLS")" "0"
+AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" status >/dev/null 2>"$WORK/err"; sleep 1
+check "mcp: other commands print nothing about it" "$(grep -c 'mcp register' "$WORK/err")" "0"
+check "mcp: and nothing ran a registration" "$(grep -c '^sindri mcp' "$CALLS")" "0"
 kill "$PLANE" 2>/dev/null; wait "$PLANE" 2>/dev/null
 
 exit "$fail"

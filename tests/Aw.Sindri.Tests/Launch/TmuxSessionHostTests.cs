@@ -64,7 +64,7 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
 
         _ = await Create().Start(session, _deadline, CancellationToken.None);
 
-        Expect.Equal(Path.GetFullPath(_tmux.Scratch), (await ReadWhenWritten(marker)).Trim());
+        Expect.Equal(CanonicalPath.Of(_tmux.Scratch), (await ReadWhenWritten(marker)).Trim());
     }
 
     [Fact]

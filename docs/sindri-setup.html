@@ -421,7 +421,7 @@ sindri-app mcp register --apply --providers all</code></pre><p class="note">Your
 <span class="ok">ok</span>    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor</pre></div>
   <details class="more"><summary>Why per repo</summary><div class="body"><ul>
     <li>Registration is never user-wide, so work context never shows up in personal repos.</li>
-    <li>Starting Sindri with plain <code>sindri-app</code> from the repo does this for you, and again when the port changes.</li>
+    <li>Starting Sindri with plain <code>sindri-app</code> from the repo prints this command; it can't run it for you, so run it once, and again when the port changes.</li>
     <li><code>sindri-app mcp register</code> without <code>--apply</code> previews it (agent OK).</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
