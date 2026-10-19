@@ -29,6 +29,7 @@ Status:
   so a live session counts against a budget; the Agents view's "fed later" line now excepts the budget panel. E-21,
   E-26, E-27 and E-31 are the workflow and context specs' edits, and the ledger column for E-30 and the doctor's
   `consumers` declaration for E-29 are cross-referenced, not written here.
+- **Revision note (2026-10-19, CI apply, proposed):** the CI apply amendment (`2026-10-19-sindri-ci-apply-design.md`) edits §3.7, §4.1, §4.2 and §6 (CI-1…CI-4). Map import and promote and recipe approval gain a `ci` variant applied by the built-in `ci-apply` service from a merged, checked PR; the `protected` variants stay as the terminal fallback. Where they differ, that spec wins for those verbs.
 - This document is the written spec for review.
 
 The spec designs the surface every Sindri client uses: the `sindri` CLI, the Avalonia app (`SindriUi`), the Sindri MCP
@@ -477,7 +478,7 @@ is a command with a catalog row and an action class, and every route goes throug
 | `GET /context/query`, `/context/node`, `/context/neighbors`, `/context/path`, `/context/map`, `/context/map/export`, `/context/map/review`, `/context/map/review/history`, `/context/map/review/export`, `/context/map/proposals`, `/context/lenses`, `/context/filemap`, `/context/sources` | query (session callers repo-scoped, §3.1) |
 | `GET /context/subgraph?nodes=` (at most 20 keys), `QUERY /context/subgraph` with a JSON body (at most 1000 keys) | query (session callers repo-scoped, §3.1); the `QUERY` refuses an `Origin` header with `SND-API-008` ("a body query from a foreign Origin is refused"), honours `X-Sindri-After`, has no catalog row |
 | `POST /context/map/build`, `POST /context/sources/sync` | `job` |
-| `POST /context/map/import`, `POST /context/map/promote` (both make content `current`) | `protected` |
+| `POST /context/map/import`, `POST /context/map/promote` (both make content `current`) | `protected`; their `ci` variants run only in-process as `service:ci-apply` (CI-1, CI apply §3.3) |
 | `POST /context/map/review`, variants `accept`, `reject`, `rename`, `move`, `accept-deterministic`, `undo`, `drop`, `repoint` (one reversible `map_override` row, with Undo; README X63) | `desk` |
 | `POST /context/map/review`, variants `apply-file`, `merge`, `add`, `delete` | `protected` |
 | `POST /context/map/proposals` (a scoping run's surfaces as draft proposals; synchronous until API P6) | `job` |
@@ -876,6 +877,7 @@ Agents page reads this, and the collector's `GET /sessions` (§11) carries each 
 | `decision` | A non-protected human decision (the §17.12 list) | `Decide` |
 | `desk` | A human action that changes item or process state (§17.27.2) | `StopProcess`, `RebuildViews`, `CreateItem`, `CloseItem`, `PauseService`, `ResumeService`, `OpenItem`; the engine's start, answer, handback, cancel and complete |
 | `protected` | The approval tier: a typed confirmation, bound to the content, at a terminal | `ApproveProfile`, and the engine's `ApplyCommand:answer-grant`, `answer-accept` and `recipe approve`. Later: evolve adopt, channel promote and tier raises |
+| `ci` | An approval a merged, checked pull request stands in for, applied in-process by the built-in `ci-apply` service from the profile's `ci:` scope (CI-2; CI apply spec §3, §4) | `ApproveRecipe:ci`, `ImportMap:ci`, `PromoteMap:ci`, and the deterministic accept inside a CI promote |
 | `local` | Runs in the CLI, never through the API | `doctor`, `profile validate` |
 | `issue` | Issues a one-time value and appends no domain event (audited by `command.handled`). The only `POST`s that aren't commands (§2.5) | `IssueNonce` (any caller whose class may run a command on that instance, repo-scoped for sessions), `IssueChallenge` (`human` + terminal), and `session wrap`'s heartbeat and exit (the launch secret, §8.1) |
 
@@ -892,6 +894,7 @@ Agents page reads this, and the collector's `GET /sessions` (§11) carries each 
 | `desk` | yes | yes | **no** | only the engine commands its recipe step owns (the engine spec lists them), and `service:host` → `StopProcess` (§2.1) |
 | `protected` | yes | **no**: shown as `cli-only` | **no** | no |
 | `issue` | per row in §4.1 | per row | per row | no |
+| `ci` (CI-3) | no: use the `protected` variant | no | **no** | **only** `service:ci-apply`, in-process |
 
 **The app is a full desk client.** It starts workflows (scoping included), answers parks, takes over and hands back,
 closes items, runs services and hands work off to a session in Warp with Claude Code, Codex or Cursor (`OpenItem`).
@@ -1027,6 +1030,8 @@ prove `step-report` with their launch secret instead (§8.1). Session-class toke
 own home is under `$TMPDIR` or a proof folder, so the owner's real process never does.
 
 **Out of scope for v0:** a session that deliberately reads the owner's token file (§11).
+
+**CI apply (CI-4).** No header, token or route yields a `ci` caller: the `ci` class is reachable only in-process as `service:ci-apply`, and a `ci` variant sent over HTTP is `SND-AUTH-002`. The CI identity's scope is the profile's `ci:` block, so widening it is a profile approval (CI apply spec §3.1, §4).
 
 **When tokens arrive,** only the source of the caller class and the terminal flag changes. The authorization table, the
 decorators and every test stay.

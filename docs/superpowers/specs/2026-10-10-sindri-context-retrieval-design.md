@@ -12,6 +12,7 @@ Revision note (2026-10-14): the UI screens spec's edits E-26, E-27 and E-31 (con
 `map/proposals`, `context_lenses`), §8.6 (`SND-CONTEXT-044`, `-045`; `-003` reused), §8.7 (scoping proposals and the
 lifecycle), new §8.9 (the lenses result and the file map), §6.1 (the `propose` override action), Phases 4 and 9. Where
 these differ from earlier text the UI spec wins (X52).
+Revision note (2026-10-19, CI apply, proposed): the CI apply amendment (`2026-10-19-sindri-ci-apply-design.md`) edits §3 "Decisions stay human", the worktree rule and §8.7 (CI-8…CI-10): `map import` from a private CI repo and `map promote` after a merge run as `service:ci-apply`; review decisions stay human.
 It refines the factory addendum §17.3 (the context graph), §17.29.2 and §17.29.3 (the engine, and access from
 sessions) and §17.17 Q2 (component options), for build step 3 of §17.29.4 (stage S3 in `docs/csharp/sindri.md`).
 Where they disagree, this document wins for the context retrieval engine.
@@ -91,7 +92,7 @@ that graph plus rank fusion across adapters.
   `$AW_STATE_DIR/sindri/`): `context.db` and its `-wal`/`-shm` files, `eval/`, exports. Directories 0700, files 0600,
   set by `umask 077` on the process and checked by a test on all three SQLite files. Full-disk encryption is assumed.
 - **Nothing lands in a git worktree:** map files, exports, eval corpora and reports are refused inside one (the
-  `sindri scope` guard, SND-SCOPE-025, generalized as `SND-CONTEXT-005`).
+  `sindri scope` guard, SND-SCOPE-025, generalized as `SND-CONTEXT-005`). CI apply (CI-8) reads a map from its own bare mirror of a CI repo the profile names for maps, never from a worktree, and only while the forge reports that repo private (CI apply spec §3.2).
 - **Before the switch** (readiness §4a step 3): `~/.local/bin/sindri` is still the TS wrapper. The C# app runs as
   `dotnet run --project src/Sindri/Aw.Sindri.Host -- <verb>` or its published AOT binary; `docs/sindri/context.md`
   defines `SINDRI=<that command>` and every phase signal uses `$SINDRI`, never the TS `sindri`. Nothing in `setup.sh`,
@@ -117,7 +118,7 @@ that graph plus rank fusion across adapters.
   challenge (`review <verb> <hash6>`, `promote map v<N>`, `import map <hash6>`; the same rule as `profile approve`).
   The class check is Sindri's (a session is `SND-AUTH-002` on both); the engine adds its own `SND-CONTEXT-020` for a
   session caller on the whole-map paths (bulk accept, `--apply`, export, promote, build) and leaves a single decision to
-  the class check.
+  the class check. **CI apply (CI-9):** `map import` and `map promote` also have `ci` variants, run only in-process by `service:ci-apply` (CI apply spec §3.3). Inside a CI promote the deterministic proposals are accepted as `ci:…` (one reversible row each) and undecided model proposals are left out of the promoted version; every other review decision stays human.
 - **Session reads, any transport.** `context.sessions.enabled` gates every `session`-class context read: MCP, the CLI
   run inside an agent session, and plain HTTP. Off, they answer `SND-CONTEXT-020`; `human` reads are unaffected.
 - **Denied paths.** The profile's `index.denyPaths` (added to the built-in secret globs) hide a path from every read of the map as soon as the profile with the glob is approved: its code nodes, the edges touching them, the features only they made, the surfaces only they produced and any evidence that names them are left out of lenses, file maps, queries, export, `map status`, the review queue (its counts, the bulk accept and the promote check), the history and a run's proposal statuses, for every caller. The decision is made once, on the map with the overrides applied, so a feature a person accepted goes with its only file. The path leaves the stored map when a draft is promoted, whether the draft came from a build or from a proposal.
@@ -535,7 +536,7 @@ map v13 (draft, a41b07d) · 46 proposals · 3 orphaned links
 
 - **Map version lifecycle:** `map build` writes a `draft`; queries read the `current` version (`--draft` reads the draft);
   `map review` works on the latest draft; only `map promote`, a `protected` command (API §3.7), makes it `current`. An empty review queue, from review or from
-  a build, marks the draft ready to promote; `map promote` refuses while any proposal is undecided (`SND-CONTEXT-046`; skipping does not decide), and the proposals a person accepted become nodes of the version first;
+  a build, marks the draft ready to promote; `map promote` refuses while any proposal is undecided (`SND-CONTEXT-046`; skipping does not decide; a CI promote instead leaves undecided model proposals out, CI-10), and the proposals a person accepted become nodes of the version first;
   a scoping run's proposals (below) join the latest draft, or open one if none exists, and never `current`;
   `map import` writes `current` directly and, like `promote`, is a `protected` command (API §3.7); doctor `context:map` warns with the draft's age and how many commits `current`
   is behind HEAD; and the old
