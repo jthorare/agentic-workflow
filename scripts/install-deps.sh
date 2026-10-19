@@ -9,13 +9,16 @@
 #     temporal, temporal-test-server   scripts/binaries-lock.sh fetch <name> (sha256-verified, idempotent) into
 #                  ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/<name>-<pin>/, where sindri serve and the tests look;
 #                  `temporal --version` is run afterwards and a failed fetch or a binary that won't run fails the script
+#   systemd-run --user --scope is checked (a warning only: the Sindri sandbox's limits need a user manager; AW_DEPS_SYSTEMD_PROBE replaces the command, tests).
 #   bwrap is also probed with a no-op sandbox (`bwrap --ro-bind / / true`); when that fails because AppArmor restricts
 #   user namespaces (Ubuntu 24.04), the /etc/apparmor.d/bwrap profile is written and loaded with sudo, then probed again.
 #   system packages, installed when missing through config/lib/sys-pkg.sh (sudo + apt-get/dnf/yum/pacman/zypper on
 #   Linux, Homebrew on macOS, installing Homebrew itself when needed); AW_NO_SYSTEM_INSTALL=1 only prints the command:
-#     Linux: bubblewrap (bwrap: graphify never runs unsandboxed), libsecret-tools (secret-tool: Sindri keychain:
+#     Linux: bubblewrap (bwrap: graphify never runs unsandboxed), socat (the Sindri sandbox's forwarders), libsecret-tools (secret-tool: Sindri keychain:
 #            pointers), clang + zlib1g-dev (NativeAOT), lsof, tmux, curl, git
 #     macOS: tmux
+#
+#   bubblewrap and socat are SOFT until SB-5a wires the Sindri sandbox into a launch: installed when missing, but a failure to install them only warns (SOFT_PKGS below).
 #
 # Exit: 0 everything present or installed, 1 something could not be installed (system package, AppArmor fix, user-level tool).
 # Bash 3.2 compatible (macOS /bin/bash).
@@ -45,6 +48,7 @@ check_system() {
   MISSING_PKGS=""
   if [ "$OS" = "Linux" ]; then
     need bwrap bubblewrap "network sandbox for graphify; it never runs unsandboxed"
+    need socat socat "Sindri sandbox forwarders; without it a sandboxed launch is SND-LAUNCH-014 no-forwarder"
     need secret-tool secret-tool "Sindri keychain: pointers"
     need clang clang "NativeAOT publish"
     if [ -e "${AW_DEPS_ZLIB_H:-/usr/include/zlib.h}" ]; then echo "  zlib.h: found"; else
@@ -70,19 +74,44 @@ probe_bwrap() {
   fi
 }
 
+# The sandbox's cgroup limits run through `systemd-run --user --scope`. Not a package to install (systemd is the base system),
+# and the sandbox is not wired into a launch yet, so this only warns: a missing user manager is SND-LAUNCH-014 no-user-manager.
+probe_systemd_run() {
+  [ "$OS" = "Linux" ] || return 0
+  if ! command -v systemd-run &>/dev/null; then
+    echo "  systemd-run: MISSING (WARN: the Sindri sandbox's limits need a systemd user manager)"; return 0
+  fi
+  if eval "${AW_DEPS_SYSTEMD_PROBE:-systemd-run --user --scope --quiet true}" >/dev/null 2>&1; then echo "  systemd-run: user scope works"; else
+    echo "  systemd-run: found but no user scope (WARN: the Sindri sandbox's limits need a systemd user manager; loginctl enable-linger \"\$USER\")"
+  fi
+}
+
+# Installed when missing, but a failure to install them only warns until SB-5a wires the Sindri sandbox into a launch (flip this list then).
+SOFT_PKGS="bubblewrap socat"
+hard_missing() {   # the packages in $MISSING_PKGS that setup cannot go on without
+  local p hard=""
+  for p in $MISSING_PKGS; do case " $SOFT_PKGS " in *" $p "*) ;; *) hard="$hard $p" ;; esac; done
+  echo "$hard"
+}
+
 check_system
 if [ -n "$MISSING_PKGS" ]; then
   echo ""
   echo "  Installing missing system packages:$MISSING_PKGS"
+  INITIAL_HARD="$(hard_missing)"
   if aw_sys_install $MISSING_PKGS && ! dry; then
     echo "  Checking again:"
     check_system
-    if [ -n "$MISSING_PKGS" ]; then echo "  WARN: still missing after the install:$MISSING_PKGS"; FAILED=1; fi
+    if [ -n "$MISSING_PKGS" ]; then
+      echo "  WARN: still missing after the install:$MISSING_PKGS"
+      if [ -n "$(hard_missing)" ]; then FAILED=1; else echo "  (only $SOFT_PKGS: nothing needs them until the Sindri sandbox is wired in, so setup goes on)"; fi
+    fi
   elif ! dry; then
-    FAILED=1
+    if [ -n "$INITIAL_HARD" ]; then FAILED=1; else echo "  WARN: could not install$MISSING_PKGS (nothing needs them until the Sindri sandbox is wired in, so setup goes on)"; fi
   fi
 fi
 probe_bwrap
+probe_systemd_run
 
 # --- uv ---
 if command -v uv &>/dev/null; then

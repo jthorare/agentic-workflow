@@ -95,8 +95,8 @@ internal static class PlanPolicy
             return _readOnlyCommands.Select(cmd => Allow("Bash", cmd + ":*"));
         }
 
-        var prefix = pattern.EndsWith(":*", StringComparison.Ordinal) ? pattern[..^2] : null;
-        return prefix is not null && _readOnlyCommands.Any(cmd => string.Equals(prefix, cmd, StringComparison.Ordinal) || prefix.StartsWith(cmd + " ", StringComparison.Ordinal))
+        var prefix = pattern.EndsWith(":*", StringComparison.Ordinal) ? pattern[..^2] : pattern.EndsWith(" *", StringComparison.Ordinal) ? pattern[..^2] : pattern;   // 'cmd:*', 'cmd *' and the exact 'cmd'
+        return _readOnlyCommands.Any(cmd => string.Equals(prefix, cmd, StringComparison.Ordinal) || prefix.StartsWith(cmd + " ", StringComparison.Ordinal))
             ? [Allow("Bash", pattern)]
             : [];
     }

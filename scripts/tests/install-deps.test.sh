@@ -65,8 +65,8 @@ expect "dry run prints the new steps" 0 \
   "would run: uv tool install graphifyy==$PIN --exclude-newer $DATE" \
   "would run: scripts/binaries-lock.sh fetch temporal\$" \
   "would run: scripts/binaries-lock.sh fetch temporal-test-server" \
-  "bwrap: MISSING" "secret-tool: MISSING" \
-  "would run: sudo apt-get install -y bubblewrap libsecret-tools clang zlib1g-dev lsof tmux curl git"
+  "bwrap: MISSING" "socat: MISSING" "secret-tool: MISSING" "systemd-run: MISSING" \
+  "would run: sudo apt-get install -y bubblewrap socat libsecret-tools clang zlib1g-dev lsof tmux curl git"
 [ -z "$(ls -A "$HOME_DIR")" ] && ok "dry run wrote nothing into HOME" || fail "dry run wrote: $(ls -A "$HOME_DIR")"
 
 # 2. uv and graphify at the pin are recognised.
@@ -82,11 +82,24 @@ expect "a graphify off the pin is reinstalled" 0 "would run: uv tool install gra
 
 # 4. Everything present: exit 0, no sudo line.
 fake graphify "echo graphify $PIN"
-for t in bwrap secret-tool clang lsof tmux curl git; do fake "$t"; done
+for t in bwrap socat secret-tool clang lsof tmux curl git systemd-run; do fake "$t"; done
 : >"$TMPROOT/zlib.h"
 run AW_DEPS_OS=Linux AW_DRY_RUN=1
 expect "all system packages present" 0 "bwrap: found" "secret-tool: found"
 printf '%s\n' "$OUT" | has "sudo apt-get" && fail "no sudo line when nothing is missing" || ok "no sudo line when nothing is missing"
+
+# 4a. systemd-run: a working user scope is reported, a failing one is a warning that never fails the run (exit 0).
+run AW_DEPS_OS=Linux AW_DRY_RUN=1 AW_DEPS_SYSTEMD_PROBE=true
+expect "a working systemd user scope is reported" 0 "systemd-run: user scope works"
+run AW_DEPS_OS=Linux AW_DRY_RUN=1 AW_DEPS_SYSTEMD_PROBE=false
+expect "a missing systemd user manager only warns" 0 "systemd-run: found but no user scope \\(WARN"
+# The default probe command itself: a fake systemd-run that succeeds only for exactly `--user --scope --quiet true`.
+fake systemd-run 'echo "$*" >"'"$TMPROOT"'/sd-args"; [ "$*" = "--user --scope --quiet true" ]'
+run AW_DEPS_OS=Linux AW_DRY_RUN=1
+expect "the default systemd probe is a quiet user scope running true" 0 "systemd-run: user scope works"
+[ "$(cat "$TMPROOT/sd-args")" = "--user --scope --quiet true" ] && ok "the default probe ran systemd-run --user --scope --quiet true" || fail "the default probe ran systemd-run --user --scope --quiet true"
+fake systemd-run
+printf '%s\n' "$OUT" | has "sudo apt-get" && fail "no sudo line for socat when present" || ok "socat present: no install line"
 
 # 4b. bwrap present but its sandbox fails with the AppArmor restriction on: the profile is written and loaded through
 # sudo, then the sandbox is probed again (the fake probe passes once apparmor_parser ran).
@@ -119,16 +132,34 @@ grep -q "^sudo apt-get update" "$LOG" && grep -q "^apt-get install -y bubblewrap
 printf '%s\n' "$OUT" | has "Checking again" && printf '%s\n' "$OUT" | has "bwrap: found" \
   && ok "the packages are checked again after the install" || { fail "no re-check"; printf '%s\n' "$OUT" | sed 's/^/      | /'; }
 
-# 5b. The install runs but the command is still missing: exit 1.
-rm "$BIN/bwrap"
-run AW_DEPS_OS=Linux AW_DEPS_BWRAP_PROBE=true
-expect "a package still missing after the install fails" 1 "still missing after the install: bubblewrap"
+# The temporal binaries are cached, so only the system packages decide the exit code in the runs below and in 7.
+STATE="$TMPROOT/state"
+V="$(awk '$1=="temporal"{print $2; exit}' "$REPO/binaries.lock")"; TV="$(awk '$1=="temporal-test-server"{print $2; exit}' "$REPO/binaries.lock")"
+mkdir -p "$STATE/cache/bin/temporal-$V" "$STATE/cache/bin/temporal-test-server-$TV"
+printf '#!/bin/sh\necho "temporal version %s"\n' "$V" >"$STATE/cache/bin/temporal-$V/temporal"
+: >"$STATE/cache/bin/temporal-test-server-$TV/temporal-test-server"
+chmod +x "$STATE"/cache/bin/*/*
 
-# 5c. AW_NO_SYSTEM_INSTALL=1: nothing installed, the exact command printed, exit 1.
+# 5b. The install runs but a hard package is still missing: exit 1. A soft one (bubblewrap, socat) only warns: nothing needs them until the Sindri sandbox is wired in (SB-5a).
+rm "$BIN/tmux"
+run AW_DEPS_OS=Linux AW_DEPS_BWRAP_PROBE=true
+expect "a package still missing after the install fails" 1 "still missing after the install: tmux"
+fake tmux
+rm "$BIN/bwrap" "$BIN/socat"
+run AW_DEPS_OS=Linux AW_DEPS_BWRAP_PROBE=true AW_STATE_DIR="$STATE"
+expect "bubblewrap and socat still missing after the install only warn" 0 "still missing after the install: bubblewrap socat" "setup goes on"
+fake bwrap; fake socat
+
+# 5c. AW_NO_SYSTEM_INSTALL=1: nothing installed, the exact command printed; exit 1 for a hard package, a warning for the soft ones.
 : >"$LOG"
+rm "$BIN/tmux"
 run AW_DEPS_OS=Linux AW_NO_SYSTEM_INSTALL=1 AW_DEPS_BWRAP_PROBE=true
-expect "AW_NO_SYSTEM_INSTALL=1 prints the command and fails" 1 "sudo apt-get install -y bubblewrap"
+expect "AW_NO_SYSTEM_INSTALL=1 prints the command and fails for a hard package" 1 "sudo apt-get install -y tmux"
 grep -q "install" "$LOG" && fail "AW_NO_SYSTEM_INSTALL=1 still installed: $(cat "$LOG")" || ok "AW_NO_SYSTEM_INSTALL=1 installs nothing"
+fake tmux
+rm "$BIN/bwrap"
+run AW_DEPS_OS=Linux AW_NO_SYSTEM_INSTALL=1 AW_DEPS_BWRAP_PROBE=true AW_STATE_DIR="$STATE"
+expect "AW_NO_SYSTEM_INSTALL=1 with only bubblewrap missing prints the command and warns" 0 "sudo apt-get install -y bubblewrap" "setup goes on"
 fake bwrap
 
 # 6. macOS: no Linux-only packages are required.
@@ -143,12 +174,6 @@ grep -q "^brew install tmux$" "$LOG" && ok "macOS installs a missing tmux with b
 fake tmux
 
 # 7. Temporal: a cached fetch is found in the cache layout sindri serve reads, and `temporal --version` is run.
-STATE="$TMPROOT/state"
-V="$(awk '$1=="temporal"{print $2; exit}' "$REPO/binaries.lock")"; TV="$(awk '$1=="temporal-test-server"{print $2; exit}' "$REPO/binaries.lock")"
-mkdir -p "$STATE/cache/bin/temporal-$V" "$STATE/cache/bin/temporal-test-server-$TV"
-printf '#!/bin/sh\necho "temporal version %s"\n' "$V" >"$STATE/cache/bin/temporal-$V/temporal"
-: >"$STATE/cache/bin/temporal-test-server-$TV/temporal-test-server"
-chmod +x "$STATE"/cache/bin/*/*
 fake bwrap
 run AW_DEPS_OS=Linux AW_STATE_DIR="$STATE"
 expect "temporal is found at cache/bin/temporal-<pin>/ and runs" 0 "temporal: .*/cache/bin/temporal-$V/temporal \\(temporal version $V\\)" "temporal-test-server: .*temporal-test-server-$TV"

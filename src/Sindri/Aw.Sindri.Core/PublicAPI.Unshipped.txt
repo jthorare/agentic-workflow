@@ -11113,11 +11113,13 @@ Aw.Sindri.Core.Sandbox.Credentials.LoginState.Missing = 1 -> Aw.Sindri.Core.Sand
 Aw.Sindri.Core.Sandbox.Credentials.LoginState.Ready = 0 -> Aw.Sindri.Core.Sandbox.Credentials.LoginState
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.<Clone>$() -> Aw.Sindri.Core.Sandbox.Credentials.LoginStatus!
-Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Deconstruct(out Aw.Sindri.Core.Sandbox.Credentials.LoginState State, out Aw.Sindri.Core.Sandbox.ModelLoginSource Source, out string? Detail) -> void
+Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Deconstruct(out Aw.Sindri.Core.Sandbox.Credentials.LoginState State, out Aw.Sindri.Core.Sandbox.ModelLoginSource Source, out string? Detail, out System.DateTimeOffset? ExpiresAt) -> void
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Detail.get -> string?
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Detail.init -> void
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Equals(Aw.Sindri.Core.Sandbox.Credentials.LoginStatus? other) -> bool
-Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.LoginStatus(Aw.Sindri.Core.Sandbox.Credentials.LoginState State, Aw.Sindri.Core.Sandbox.ModelLoginSource Source, string? Detail = null) -> void
+Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.LoginStatus(Aw.Sindri.Core.Sandbox.Credentials.LoginState State, Aw.Sindri.Core.Sandbox.ModelLoginSource Source, string? Detail = null, System.DateTimeOffset? ExpiresAt = null) -> void
+Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.ExpiresAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.ExpiresAt.init -> void
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Source.get -> Aw.Sindri.Core.Sandbox.ModelLoginSource
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.Source.init -> void
 Aw.Sindri.Core.Sandbox.Credentials.LoginStatus.State.get -> Aw.Sindri.Core.Sandbox.Credentials.LoginState
@@ -11215,10 +11217,10 @@ static Aw.Sindri.Core.Sandbox.SandboxRefusal.SourceOf(Aw.Kernel.Error! error) ->
 static Aw.Sindri.Core.Sandbox.SandboxRefusal.SourceTextOf(Aw.Kernel.Error! error) -> string?
 Aw.Sindri.Core.Sandbox.Credentials.LoginSourceResolver
 Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources
-Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Check(Aw.Sindri.Core.Sandbox.ModelLoginSource id, Aw.Sindri.Core.Launch.AgentId target) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Credentials.LoginStatus!>!
 Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Has(Aw.Sindri.Core.Sandbox.ModelLoginSource id) -> bool
-Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.ModelCredentialSources(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Sandbox.Credentials.IModelCredentialSource!>! sources) -> void
-Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Prepare(Aw.Sindri.Core.Sandbox.ModelLoginSource id, Aw.Sindri.Core.Launch.AgentId target, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Credentials.PreparedLogin!>!>!
+Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.ModelCredentialSources(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Sandbox.Credentials.IModelCredentialSource!>! sources, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Check(Aw.Sindri.Core.Sandbox.ModelLoginSource id, Aw.Sindri.Core.Launch.AgentId target, System.TimeSpan needed) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Credentials.LoginStatus!>!
+Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Prepare(Aw.Sindri.Core.Sandbox.ModelLoginSource id, Aw.Sindri.Core.Launch.AgentId target, Aw.Sindri.Core.Workflow.Engine.LaunchId launch, System.TimeSpan needed, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Credentials.PreparedLogin!>!>!
 Aw.Sindri.Core.Sandbox.Credentials.ModelCredentialSources.Release(Aw.Sindri.Core.Sandbox.Credentials.PreparedLogin! prepared) -> void
 Aw.Sindri.Core.Sandbox.Plan.AgentHomeWriteSet
 Aw.Sindri.Core.Sandbox.Plan.DenyRuleExpansion
@@ -11263,6 +11265,7 @@ Aw.Sindri.Core.Sandbox.Plan.HookScript.Name.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.HookScript.Name.init -> void
 Aw.Sindri.Core.Sandbox.Plan.HostGroups
 Aw.Sindri.Core.Sandbox.Plan.ISandbox
+Aw.Sindri.Core.Sandbox.Plan.ISandbox.Discard(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan) -> void
 Aw.Sindri.Core.Sandbox.Plan.ISandbox.Plan(Aw.Sindri.Core.Sandbox.Plan.SandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
 Aw.Sindri.Core.Sandbox.Plan.ISandbox.Probe() -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxCapabilities!>!
 Aw.Sindri.Core.Sandbox.Plan.ISandbox.SelfCheck(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Kernel.Unit>!>!
@@ -11372,13 +11375,15 @@ Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.get -> System.TimeSpan
 Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.PlanMount!
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason, out bool Optional) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Equals(Aw.Sindri.Core.Sandbox.Plan.PlanMount? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.get -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.init -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.get -> bool
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.init -> void
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "") -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "", bool Optional = false) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Size.get -> long?
@@ -11571,6 +11576,7 @@ Aw.Sindri.Core.Sandbox.Plan.StatePathKind.PerLaunchDir = 2 -> Aw.Sindri.Core.San
 Aw.Sindri.Core.Sandbox.Plan.StatePathKind.ReadOnly = 0 -> Aw.Sindri.Core.Sandbox.Plan.StatePathKind
 Aw.Sindri.Core.Sandbox.Plan.StatePathKind.ReadWrite = 1 -> Aw.Sindri.Core.Sandbox.Plan.StatePathKind
 Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox
+Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.Discard(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan) -> void
 Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.Plan(Aw.Sindri.Core.Sandbox.Plan.SandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
 Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.Probe() -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxCapabilities!>!
 Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.SelfCheck(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Aw.Kernel.Result<Aw.Kernel.Unit>!>!

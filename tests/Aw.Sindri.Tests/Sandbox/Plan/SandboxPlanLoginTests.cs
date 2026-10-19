@@ -7,7 +7,7 @@ using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 
-/// <summary>#355 run 1, I3, I4 and I5: what a credential source may add to the plan, and the masks that follow what is actually bound.</summary>
+/// <summary>What a credential source may add to the plan, and the masks that follow what is actually bound.</summary>
 public sealed class SandboxPlanLoginTests
 {
     private static SandboxRequest WithEnv(params (string Name, string Value)[] env) =>

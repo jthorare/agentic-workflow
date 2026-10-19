@@ -6,7 +6,7 @@ using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 
-/// <summary>#355 run 1, B1 and B2: the builder never produces a looser plan than the engine asked for, and never binds a path it did not check (an empty string must not widen a bind).</summary>
+/// <summary>The builder never produces a looser plan than the engine asked for, and never binds a path it did not check (an empty string must not widen a bind).</summary>
 public sealed class SandboxPlanPathTests
 {
     private const string SindriHome = Req.SindriHome;

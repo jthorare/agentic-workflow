@@ -12,6 +12,7 @@ public sealed class RecordingSandbox(ISandbox? inner = null) : ISandbox
     private readonly List<SandboxRequest> _requests = [];
     private readonly List<SandboxPlan> _checked = [];
     private readonly List<IReadOnlyList<string>> _wrapped = [];
+    private readonly List<SandboxPlan> _discarded = [];
     private Error? _selfCheckFailure;
 
     /// <summary>The requests <see cref="Plan"/> got.</summary>
@@ -55,5 +56,15 @@ public sealed class RecordingSandbox(ISandbox? inner = null) : ISandbox
     {
         _wrapped.Add(argv);
         return _inner.Wrap(plan, argv);
+    }
+
+    /// <summary>The plans <see cref="Discard"/> got.</summary>
+    public IReadOnlyList<SandboxPlan> Discarded => _discarded;
+
+    /// <inheritdoc />
+    public void Discard(SandboxPlan plan)
+    {
+        _discarded.Add(plan);
+        _inner.Discard(plan);
     }
 }

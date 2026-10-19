@@ -21,4 +21,10 @@ public sealed class PassThroughSandbox : ISandbox
 
     /// <inheritdoc />
     public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => Results.Success(argv);
+
+    /// <inheritdoc />
+    public void Discard(SandboxPlan plan)
+    {
+        // Wrap writes nothing, so there is nothing to remove.
+    }
 }

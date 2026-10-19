@@ -13,6 +13,7 @@ namespace Aw.Sindri.Testing.Sandbox;
 public sealed class FakeModelCredentialSource(ModelLoginSource id) : IModelCredentialSource
 {
     private readonly Dictionary<AgentId, LoginState> _logins = [];
+    private readonly Dictionary<AgentId, DateTimeOffset> _expiry = [];
     private readonly List<LoginHandle> _prepared = [];
     private readonly List<LoginHandle> _released = [];
 
@@ -28,10 +29,16 @@ public sealed class FakeModelCredentialSource(ModelLoginSource id) : IModelCrede
     /// <summary>Gives <paramref name="target"/> a login in <paramref name="state"/>; an agent never given one is unsupported.</summary>
     /// <param name="target">The agent.</param>
     /// <param name="state">Ready, missing or expired.</param>
+    /// <param name="expiresAt">When a ready login stops being valid, or null when the source cannot tell.</param>
     /// <returns>This source.</returns>
-    public FakeModelCredentialSource With(AgentId target, LoginState state)
+    public FakeModelCredentialSource With(AgentId target, LoginState state, DateTimeOffset? expiresAt = null)
     {
         _logins[target] = state;
+        if (expiresAt is { } at)
+        {
+            _expiry[target] = at;
+        }
+
         return this;
     }
 
@@ -40,7 +47,7 @@ public sealed class FakeModelCredentialSource(ModelLoginSource id) : IModelCrede
 
     /// <inheritdoc />
     public LoginStatus Probe(AgentId target) =>
-        _logins.TryGetValue(target, out var state) ? new LoginStatus(state, Id, state == LoginState.Ready ? null : "fake") : new LoginStatus(LoginState.Missing, Id, "unsupported");
+        _logins.TryGetValue(target, out var state) ? new LoginStatus(state, Id, state == LoginState.Ready ? null : "fake", _expiry.TryGetValue(target, out var at) ? at : null) : new LoginStatus(LoginState.Missing, Id, "unsupported");
 
     /// <inheritdoc />
     public Task<Result<PreparedLogin>> Prepare(AgentId target, LaunchId launch, CancellationToken ct)

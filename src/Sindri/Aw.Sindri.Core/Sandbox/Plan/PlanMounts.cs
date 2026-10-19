@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox.Credentials;
 
 namespace Aw.Sindri.Core.Sandbox.Plan;
 
@@ -16,6 +17,8 @@ internal static class PlanMounts
         (".npm/_cacache", PlanMountKind.ReadWrite, "the npm cache; shared with the owner's builds"),
     ];
 
+    private const long RunTmpfsBytes = 16L * 1024 * 1024;
+
     internal static IReadOnlyList<PlanMount> Build(PlanContext c)
     {
         List<PlanMount> m =
@@ -23,6 +26,7 @@ internal static class PlanMounts
             new("/", PlanMountKind.ReadOnly, Reason: "the system, toolchains and other repos can be read, not written"),
             new("/dev", PlanMountKind.Dev, Reason: "a fresh /dev"),
             new("/proc", PlanMountKind.Proc, Reason: "a fresh /proc"),
+            new("/run", PlanMountKind.Tmpfs, Size: RunTmpfsBytes, Reason: "an empty /run: the user sockets and the Docker socket are gone, and the net directory has a place to bind"),
             new("/tmp", PlanMountKind.ReadWrite, c.RunArea + "/tmp", Reason: "private scratch, removed with the run"),
             new(c.Home, PlanMountKind.Tmpfs, Size: c.Limits.HomeTmpfsBytes, Reason: "an empty home: only the entries below exist"),
         ];
@@ -39,15 +43,15 @@ internal static class PlanMounts
 
     private static void AddHomeAllow(List<PlanMount> m, PlanContext c)
     {
-        m.AddRange(_homeDefaults.Select(d => new PlanMount($"{c.Home}/{d.Path}", d.Kind, Reason: d.Reason)));
+        m.AddRange(_homeDefaults.Select(d => new PlanMount($"{c.Home}/{d.Path}", d.Kind, Reason: d.Reason, Optional: true)));
         if (c.Request.Host.ToolkitDir.Length > 0)
         {
-            m.Add(new PlanMount(c.Request.Host.ToolkitDir, PlanMountKind.ReadOnly, Reason: "the toolkit checkout the judge wrapper runs"));
+            m.Add(new PlanMount(c.Request.Host.ToolkitDir, PlanMountKind.ReadOnly, Reason: "the toolkit checkout the judge wrapper runs", Optional: true));
         }
 
         IEnumerable<HomeAllowEntry> declared = [.. c.Request.Settings?.Fs?.HomeAllow ?? [], .. c.Repo.HomeAllow ?? []];
-        m.AddRange(declared.Select(e => new PlanMount($"{c.Home}/{e.Path}", e.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly, Reason: "allowed by the profile")));
-        m.AddRange((c.Repo.CachePaths ?? []).Select(p => new PlanMount($"{c.Home}/{p}", PlanMountKind.ReadWrite, Reason: "a cache path this repo declares")));
+        m.AddRange(declared.Select(e => new PlanMount($"{c.Home}/{e.Path}", e.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly, Reason: "allowed by the profile", Optional: true)));
+        m.AddRange((c.Repo.CachePaths ?? []).Select(p => new PlanMount($"{c.Home}/{p}", PlanMountKind.ReadWrite, Reason: "a cache path this repo declares", Optional: true)));
     }
 
     private static void AddLogin(List<PlanMount> m, PlanContext c)
@@ -62,6 +66,23 @@ internal static class PlanMounts
             var kind = mount.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly;
             m.Add(new PlanMount(mount.SandboxPath, kind, string.Equals(mount.HostPath, mount.SandboxPath, StringComparison.Ordinal) ? null : mount.HostPath, Reason: $"the agent home, from the {SandboxWire.Name(c.Login)} login source"));
         }
+
+        AddTranscripts(m, c, login);
+    }
+
+    // The CLI writes under its config directory, which is a per-launch copy; only this worktree's transcripts go back to the owner's real 'projects/<key>', so
+    // Sindri's readers and a resume find them. The memory directory inside stays the owner's (spec §3.1).
+    private static void AddTranscripts(List<PlanMount> m, PlanContext c, PreparedLogin login)
+    {
+        if (c.Worktree is not { } worktree || !login.Environment.TryGetValue("CLAUDE_CONFIG_DIR", out var config))
+        {
+            return;
+        }
+
+        var key = ProjectKey.For(worktree);
+        var real = $"{c.Home}/.claude/projects/{key}";
+        m.Add(new PlanMount($"{config}/projects/{key}", PlanMountKind.ReadWrite, real, Reason: "this worktree's transcripts, in the owner's agent home"));
+        m.Add(new PlanMount($"{config}/projects/{key}/memory", PlanMountKind.ReadOnly, real + "/memory", Reason: "the owner's memory for this project stays read-only", Optional: true));
     }
 
     private static void AddMasks(List<PlanMount> m, PlanContext c)
@@ -99,7 +120,7 @@ internal static class PlanMounts
             return new PlanMount(path, PlanMountKind.PerLaunchDir, spool, Reason: entry.UsedBy);
         }
 
-        return new PlanMount(path, entry.Kind == StatePathKind.ReadOnly ? PlanMountKind.ReadOnly : PlanMountKind.ReadWrite, Reason: entry.UsedBy);
+        return new PlanMount(path, entry.Kind == StatePathKind.ReadOnly ? PlanMountKind.ReadOnly : PlanMountKind.ReadWrite, Reason: entry.UsedBy, Optional: entry.Kind == StatePathKind.ReadOnly);   // a read-write state directory is made, never skipped: a session with a private locks/ or judge/ shares nothing with the box
     }
 
     private static void AddLaunchFiles(List<PlanMount> m, PlanContext c)
@@ -115,10 +136,7 @@ internal static class PlanMounts
     {
         var paths = c.Request.Paths;
         m.Add(new PlanMount(paths.RunDirectory, PlanMountKind.ReadWrite, Reason: "the Step's outputs"));
-        if (paths.GitCommonDir.Length > 0)
-        {
-            m.Add(new PlanMount(paths.GitCommonDir, PlanMountKind.ReadOnly, Reason: "the git directory: config, hooks, packed-refs, tags and other runs' refs stay read-only"));
-        }
+        m.Add(new PlanMount(paths.GitCommonDir, PlanMountKind.ReadOnly, Reason: "the git directory: config, hooks, packed-refs, tags and other runs' refs stay read-only"));   // why: PlanChecks proved it is a clean path inside the repo
 
         if (c.WritablePath is not { } worktree)
         {
@@ -126,11 +144,6 @@ internal static class PlanMounts
         }
 
         m.Add(new PlanMount(worktree, PlanMountKind.ReadWrite, Reason: "the run's worktree"));
-        if (paths.GitCommonDir.Length == 0)
-        {
-            return;
-        }
-
         var git = paths.GitCommonDir;
         var ns = c.Request.RunNamespace;
         m.Add(new PlanMount(git + "/objects", PlanMountKind.ReadWrite, Reason: "a commit writes objects"));

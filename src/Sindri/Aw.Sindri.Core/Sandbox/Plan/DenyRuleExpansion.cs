@@ -14,8 +14,10 @@ public static class DenyRuleExpansion
         ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(hooks);
         var prefixes = hooks.Kept.Select(HookInventory.Find)
-            .Where(h => h is { Treatment: HookTreatment.KeepDenyRewrites, RewritePrefix.Length: > 0 })
-            .Select(h => h!.RewritePrefix!)
+            .Where(h => h is { Treatment: HookTreatment.KeepDenyRewrites })
+            .Select(h => h?.RewritePrefix)
+            .OfType<string>()
+            .Where(prefix => prefix.Length > 0)
             .ToList();
         if (prefixes.Count == 0)
         {

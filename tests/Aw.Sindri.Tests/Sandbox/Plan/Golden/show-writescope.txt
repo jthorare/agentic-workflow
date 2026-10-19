@@ -1,10 +1,11 @@
-Sandbox 085c88679e85 (pass-through) for a Step
+Sandbox c9acc3788df8 (pass-through) for a Step
 Launch: LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 Files, bottom to top (a later line wins):
   read-only /  (the system, toolchains and other repos can be read, not written)
   device    /dev  (a fresh /dev)
   process   /proc  (a fresh /proc)
+  empty     /run  (an empty /run: the user sockets and the Docker socket are gone, and the net directory has a place to bind)
   writable  /tmp  (private scratch, removed with the run)
   empty     /home/owner  (an empty home: only the entries below exist)
   read-only /home/owner/.dotnet  (the .NET SDK)
@@ -17,6 +18,8 @@ Files, bottom to top (a later line wins):
   read-only /home/owner/repos/toolkit  (the toolkit checkout the judge wrapper runs)
   read-only /home/owner/.claude  (the agent home, from the owner-copy login source)
   writable  /home/owner/.claude-run  (the agent home, from the owner-copy login source)
+  writable  /home/owner/.claude-run/projects/-work-web--claude-worktrees-sindri-x-1  (this worktree's transcripts, in the owner's agent home)
+  read-only /home/owner/.claude-run/projects/-work-web--claude-worktrees-sindri-x-1/memory  (the owner's memory for this project stays read-only)
   blocked   /home/owner/.claude/.credentials.json  (always blocked: the owner's own login file; a session gets its login from its credential source)
   blocked   /home/owner/.agentic-workflow  (always blocked: the ledger, profile, tokens and other runs' areas live here)
   blocked   /home/owner/.agentic-workflow/sindri-app  (always blocked: Sindri's own state: the ledger, tokens and other runs' areas)

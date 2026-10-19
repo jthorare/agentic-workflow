@@ -37,7 +37,7 @@ public sealed class ProductHostSandboxTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_credential_registry_is_registered_and_empty_until_an_adapter_lands()
+    public void The_credential_registry_is_registered_and_empty_until_SB_5a_wires_the_adapter()
     {
         using var provider = Compose().BuildServiceProvider();
 

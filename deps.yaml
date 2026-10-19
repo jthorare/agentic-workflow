@@ -344,6 +344,16 @@ edges:
     status: planned
     note: "the sandbox runs bwrap, systemd-run and socat around a Step's agent session (SB-2, SB-3a, SB-4a); check-deps does not scan C# for cli edges"
   - from: Sindri
+    to: Judge
+    kind: cli
+    status: planned
+    note: "the sandbox's hook canary (SandboxCanaries.cs, SB-2) runs `judge brief get task:selfcheck` inside the session, the hooks' own round trip; check-deps does not scan C# for cli edges"
+  - from: Sindri
+    to: Judge
+    kind: file
+    status: current
+    note: "the sandbox's hook canary (SandboxCanaries.cs, SB-2) writes and removes a probe file in judge/sessions inside the session, and runs `judge brief get task:selfcheck` (the hooks' own round trip); the sandbox binds the judge directory read-write into a session so the installed hooks run"
+  - from: Sindri
     to: Evidence
     kind: file
     status: current

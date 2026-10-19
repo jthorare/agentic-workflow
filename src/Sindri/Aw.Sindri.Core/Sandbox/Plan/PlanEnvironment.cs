@@ -39,12 +39,17 @@ internal static class PlanEnvironment
             Var("MSBUILDDISABLENODEREUSE", "1"),
             Var("DOTNET_CLI_USE_MSBUILD_SERVER", "0"),
         ];
+        env.AddRange(StateDir(c));
         env.AddRange(GitSettings.ToEnvironment(Git(c), c.RunArea + "/gitconfig.empty"));
         env.AddRange(Proxy(r.Net.ProxyPort));
         env.AddRange(Sindri(c));
         env.AddRange((r.Login?.Environment ?? new Dictionary<string, string>(StringComparer.Ordinal)).OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => Var(e.Key, EnvironmentAllowlist.IsModelKey(e.Key) ? null : e.Value)));
         return env;
     }
+
+    // The hooks default to $HOME/.agentic-workflow; anywhere else they need to be told.
+    private static IEnumerable<PlanEnvVar> StateDir(PlanContext c) =>
+        string.Equals(c.StateDir, c.Home + "/.agentic-workflow", StringComparison.Ordinal) ? [] : [Var("AW_STATE_DIR", c.StateDir)];
 
     internal static IReadOnlyList<GitSetting> Git(PlanContext c) => GitSettings.For(c.Worktree, c.RunArea + "/githooks");
 

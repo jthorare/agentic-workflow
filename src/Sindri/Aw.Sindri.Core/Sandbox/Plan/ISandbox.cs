@@ -28,4 +28,8 @@ public interface ISandbox
     /// <param name="argv">The agent's argv.</param>
     /// <returns>The wrapped argv, or SND-LAUNCH-014.</returns>
     public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv);
+
+    /// <summary>Removes what <see cref="Wrap"/> left on disk for this launch when its wrapper never ran (the launcher's failure path); another launch's files stay.</summary>
+    /// <param name="plan">The plan that was wrapped.</param>
+    public void Discard(SandboxPlan plan);
 }

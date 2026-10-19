@@ -8,12 +8,16 @@ namespace Aw.Sindri.Core.Sandbox.Credentials;
 public sealed class ModelCredentialSources
 {
     private readonly Dictionary<ModelLoginSource, IModelCredentialSource> _byId = [];
+    private readonly TimeProvider _clock;
 
     /// <summary>Creates the registry.</summary>
     /// <param name="sources">The registered adapters; two with one id is a programming error.</param>
-    public ModelCredentialSources(IEnumerable<IModelCredentialSource> sources)
+    /// <param name="clock">The clock the logins' expiry is read against.</param>
+    public ModelCredentialSources(IEnumerable<IModelCredentialSource> sources, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(sources);
+        ArgumentNullException.ThrowIfNull(clock);
+        _clock = clock;
         foreach (var source in sources)
         {
             if (!_byId.TryAdd(source.Id, source))
@@ -28,11 +32,12 @@ public sealed class ModelCredentialSources
     /// <returns>True when it is.</returns>
     public bool Has(ModelLoginSource id) => _byId.ContainsKey(id);
 
-    /// <summary>Checks the login cheaply: ready, or SND-LAUNCH-017 with the source id. Never tries another source.</summary>
+    /// <summary>Checks the login cheaply: ready for at least <paramref name="needed"/>, or SND-LAUNCH-017 with the source id. Never tries another source.</summary>
     /// <param name="id">The source.</param>
     /// <param name="target">The agent.</param>
+    /// <param name="needed">How long the login must stay valid: the Step's wall time plus grace plus margin.</param>
     /// <returns>The status, or the -017 error.</returns>
-    public Result<LoginStatus> Check(ModelLoginSource id, AgentId target)
+    public Result<LoginStatus> Check(ModelLoginSource id, AgentId target, TimeSpan needed)
     {
         if (!_byId.TryGetValue(id, out var source) || !source.Supports(target))
         {
@@ -42,7 +47,9 @@ public sealed class ModelCredentialSources
         var status = source.Probe(target);
         if (status.State == LoginState.Ready)
         {
-            return status;
+            return status.ExpiresAt is { } expires && expires - _clock.GetUtcNow() < needed
+                ? Unavailable(SandboxReasons.Expired, id, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the login runs out at {expires.UtcDateTime:yyyy-MM-dd HH:mm} UTC, before the {(int)needed.TotalMinutes} minutes this session needs"))
+                : status;
         }
 
         return Unavailable(status.State == LoginState.Expired ? SandboxReasons.Expired : SandboxReasons.NoLogin, id, status.Detail);
@@ -52,11 +59,12 @@ public sealed class ModelCredentialSources
     /// <param name="id">The source.</param>
     /// <param name="target">The agent.</param>
     /// <param name="launch">The launch.</param>
+    /// <param name="needed">How long the login must stay valid (see <see cref="Check(ModelLoginSource, AgentId, TimeSpan)"/>).</param>
     /// <param name="ct">Cancels the work.</param>
     /// <returns>The prepared login, or SND-LAUNCH-017 with the source id.</returns>
-    public async Task<Result<PreparedLogin>> Prepare(ModelLoginSource id, AgentId target, LaunchId launch, CancellationToken ct)
+    public async Task<Result<PreparedLogin>> Prepare(ModelLoginSource id, AgentId target, LaunchId launch, TimeSpan needed, CancellationToken ct)
     {
-        var status = Check(id, target);
+        var status = Check(id, target, needed);
         return status.IsError ? status.Error : await _byId[id].Prepare(target, launch, ct).ConfigureAwait(false);
     }
 

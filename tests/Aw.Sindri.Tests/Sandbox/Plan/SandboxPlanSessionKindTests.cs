@@ -9,8 +9,8 @@ using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 
-/// <summary>#355 run 1: I1, I2, I6, I7, S1, S2, S4, S5 and N4.</summary>
-public sealed class SandboxPlanReviewRound1Tests
+/// <summary>Session kind, PATH, policy modes, hash and explain behaviours of the plan.</summary>
+public sealed class SandboxPlanSessionKindTests
 {
     private static bool Has(SandboxPlan plan, InnerRuleEffect effect, string tool, Func<string, bool> pattern) =>
         plan.Policy.Rules.Any(r => r.Effect == effect && string.Equals(r.Tool, tool, StringComparison.Ordinal) && pattern(r.Pattern));

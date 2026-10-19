@@ -190,7 +190,7 @@ The `-015 worktree-outside-repo` reason also covers a bad home, state directory,
 A repo declaration cannot add `github` or `packages` beyond what the session kind allows. The inner policy carries `DefaultMode` (`dontAsk` for a Step, `default` for an attended session) and
 `DisableBypassPermissions`: **SB-5a's rendered settings must write `permissions.defaultMode` and `disableBypassPermissionsMode: "disable"` explicitly**, because the owner's own settings may say
 `bypassPermissions` (spike items 1 and 6); an attended session gets `Ask` rules for Bash, Edit and Write and no Bash allow. SB-5a test names: `Rendered_settings_set_the_default_mode_explicitly`,
-`Rendered_attended_settings_ask_for_bash`. Not in SB-1, for SB-2 and SB-5a: the `control.json` directory bind for the `sindri` CLI (spike item 7), the `expiresAt` margin of `-017 expired`.
+`Rendered_attended_settings_ask_for_bash`. Not in SB-1: the `control.json` directory bind for the `sindri` CLI (spike item 7; SB-5a). The `expiresAt` margin of `-017 expired` is in SB-2.
 
 **Hooks inside the sandbox (§5; owner, 2026-10-18).** Hooks help performance and quality, so the default is to keep them. Only a hook that weakens the sandbox is treated:
 it is dropped when it answers `allow` in a way that bypasses `dontAsk`, and a hook that rewrites commands is kept with every denied command also denied in its rewritten form.
@@ -230,6 +230,28 @@ SB-5a's rendered settings put it into effect.
 | `winch` | PreToolUse *, Stop (inline) | no | no | keep | asks the owner's terminal to redraw; answers nothing |
 | `aw-live` | in-process mod (the /live pane) | no | no | keep | draws this session's numbers; answers nothing |
 
+## SB-2: the bubblewrap adapter and the owner-copy login
+
+`Aw.Sindri.Infrastructure/Sandbox/` holds `BubblewrapSandbox` (Probe, Plan, Wrap, SelfCheck), `BubblewrapArgv` (plan to arguments), `OwnerCopyCredentialSource`, the canaries and the run-area preparer.
+`AddSindriBubblewrapSandbox` registers them; **nothing calls it until SB-5a**, and a test pins that the product Host registers only `UnavailableSandbox`.
+
+- **Argv.** `--die-with-parent --unshare-net --clearenv`, then the mount stack in plan order (`--ro-bind`, `--bind`, `--dev`, `--proc`, `--perms 0700 --size N --tmpfs` for the home and `/run`), then `--setenv` for every
+  valued variable, `--chdir`. A denied path under a tmpfs, or whose link target is, adds nothing; a denied directory is an empty read-only tmpfs (writable while the hook inventory is bound into it);
+  a denied file is an empty read-only file. A variable the plan leaves to the launcher (the launch secret, a model key) never reaches a command line: the launcher puts the per-launch values in `ILaunchSecrets`, `Wrap` writes them as NUL-separated `--setenv` pairs to a 0600 file under the run area and returns a `sh` wrapper that opens it on fd 3, deletes it and runs `bwrap --args 3` (so `ps` shows the file's path, not a value; bubblewrap closes the descriptor before the agent starts, and the real-bwrap test checks the agent has none; closing fds 3-9 in the forwarders is SB-4a's). A `Wrap` removes any older file in the launch's own directory, `secrets/<launch id>/`, and the launcher calls `ISandbox.Discard(plan)` on its failure path, so a file never outlives a launch whose wrapper did not run; one launch's `Wrap` or `Discard` never touches another's. `Discard` swallows an IO or access failure and reports it through the sandbox's warning sink, so it never replaces the launch's own error; the 0600 file then stays for the run area's cleanup. The self-check canaries are wrapped without any secret.
+  No pid namespace (SB6). `PlanMount.Optional` marks the entries that use the `-try` forms (toolchain directories, the hook inventory).
+- **The plan gained** a `/run` tmpfs (the net directory needs a place to bind on a read-only root), `AW_STATE_DIR` when the state directory is not `~/.agentic-workflow`, and this worktree's
+  `projects/<key>` bound read-write from the owner's agent home into the config directory (its `memory/` read-only), so Sindri's readers and a resume find the transcripts.
+- **Owner-copy login.** `launches/<launch>/login` (0700) gets `.credentials.json` and `.claude.json` (0600, temp file and rename) and is bound at `~/.claude-run` (`CLAUDE_CONFIG_DIR`); every other entry of
+  `~/.claude` outside the write set is bound read-only into it; the original `.credentials.json` stays masked in the read-only `~/.claude` bind. The source reports `LoginStatus.ExpiresAt` and holds no policy: `ModelCredentialSources.Check`/`Prepare(needed)` turns "valid for less than the time the Step needs" into `-017 expired`
+  (spike item 2: assume a refresh rotates the token); the caller always passes the time it needs (there is no default). A Claude `.claude.json` copy has every MCP server's `env` and `headers` values emptied. Codex gets `~/.codex-run`
+  with `auth.json`, the config read-only and `sessions/` shared; its login is gated too (the earlier of the token's `exp` and `last_refresh` plus Codex's 8-day refresh age: Codex refreshes an older login at start whatever the token has left). The agent-home write set is the spike's, three files included
+  (`mcp-needs-auth-cache.json`, `.last-update-result.json`, `.last-cleanup`). The run area and the rw state directories (`judge`, `locks`, `context-guard/state`) are made by the preparer; a missing worktree is `-015` and a missing run directory `-016`, never created; `SelfCheck` prepares the run area once before the first canary and returns those refusals unchanged.
+  `SweepStale` is the crash sweep; `Release` removes a copy.
+- **Self-check.** `fs-deny`, `fs-write`, `git-ref` (the sandbox's git settings win; two ref updates in the run's directory work; another ref does not; the `selfcheck` ref is removed from outside afterwards),
+  `env`, `login`, the three-part `hooks-run` (under bash: `lib/failopen.sh` is bash, and Claude's `~/.claude/hooks` layout: Codex and Cursor lanes need their own directory in SB-5b; its guard checks derive from `plan.Hooks.Kept`, so a dropped hook is never exercised, and `rtk-rewrite` is never relied on: inside a Step its `allow` grants nothing, SB-5a enforces that) and the direct-connect half of `net-deny`. `net-forward` and the proxy half of `net-deny` need the forwarders (SB-4a, SB-5a wires them).
+- **Contract.** `ISandboxContract` (in `Aw.Sindri.Testing`) runs on the pass-through (confinement cases skipped) and on the real bubblewrap; it skips cleanly where bwrap cannot make a user namespace. Its `SandboxBox` is a
+  fixture repo, worktree, state directory and fake login under the test output directory, with the owner's real home (toolchains, hooks, the judge wrapper) and nothing of the owner's state or login.
+
 ## Phases
 
 | Phase | Builds |
@@ -244,5 +266,4 @@ SB-5a's rendered settings put it into effect.
 ## Environment
 
 `AW_SANDBOX_BWRAP`, `AW_SANDBOX_SYSTEMD_RUN` and `AW_SANDBOX_SOCAT` redirect the three host binaries for a test. No variable switches the
-sandbox off. `deps.yaml` declares the host-tool edges; `setup.sh` and `scripts/install-deps.sh` gain `bubblewrap` and `socat` in SB-2, the
-first phase that needs them.
+sandbox off. `deps.yaml` declares the host-tool edges; `scripts/install-deps.sh` (which `setup.sh` runs) checks `bubblewrap` and `socat` (both soft until SB-5a wires the sandbox into a launch: a failed install warns and setup goes on), and warns when `systemd-run --user --scope` does not work.

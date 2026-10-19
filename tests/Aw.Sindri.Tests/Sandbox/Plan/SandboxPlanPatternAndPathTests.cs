@@ -7,8 +7,8 @@ using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 
-/// <summary>#355 run 2: I8, I9 and S1 to S6, N1.</summary>
-public sealed class SandboxPlanReviewRound2Tests
+/// <summary>Bash and write patterns, model-key placeholders, the write set on home entries, the git directory and the run namespace.</summary>
+public sealed class SandboxPlanPatternAndPathTests
 {
     private static readonly string[] _writeTools = ["Write", "Edit", "NotebookEdit"];
 
@@ -38,24 +38,42 @@ public sealed class SandboxPlanReviewRound2Tests
         Assert.Empty(Bash(ReadOnlyWith("Bash(rm:*)")));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("Bash(git status)")]
+    [InlineData("Bash(git status *)")]
+    [InlineData("Bash(git log --oneline *)")]
+    public void Read_only_step_keeps_the_exact_and_the_star_forms_of_a_read_only_command(string tool) =>
+        Assert.Equal([tool[5..^1]], Bash(ReadOnlyWith(tool)));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("Bash(git push)")]
+    [InlineData("Bash(git statusx *)")]
+    [InlineData("Bash(rm *)")]
+    public void Read_only_step_drops_the_exact_and_the_star_forms_of_anything_else(string tool) =>
+        Assert.Empty(Bash(ReadOnlyWith(tool)));
+
     [Fact, Trait("Lane", "unit")]
     public void Read_only_step_maps_a_bare_bash_to_the_whole_read_only_set() =>
         Assert.Equal(["git status:*", "git diff:*", "git log:*", "git show:*", "sindri:*"], Bash(ReadOnlyWith("Bash")));
 
-    [Fact, Trait("Lane", "unit")]
-    public void Model_key_values_never_enter_the_plan_or_its_hash()
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("ANTHROPIC_API_KEY")]
+    [InlineData("OPENAI_API_KEY")]
+    public void Model_key_values_never_enter_the_plan_or_its_hash(string name)
     {
-        static SandboxRequest With(string key) => Req.WriteScope with
+        SandboxRequest With(string key) => Req.WriteScope with
         {
-            Login = Req.OwnerCopyLogin() with { Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["ANTHROPIC_API_KEY"] = key } },
+            Login = Req.OwnerCopyLogin() with { Environment = new Dictionary<string, string>(StringComparer.Ordinal) { [name] = key } },
         };
 
         var first = SandboxPlannerTests.Build(With("sk-test-one"));
         var second = SandboxPlannerTests.Build(With("sk-test-two"));
 
-        Assert.Null(first.Environment.Single(e => e.Name == "ANTHROPIC_API_KEY").Value);
+        var serialized = System.Text.Json.JsonSerializer.Serialize(first);
+        Assert.Null(first.Environment.Single(e => e.Name == name).Value);
         Assert.Equal(first.PlanHash, second.PlanHash);
-        Assert.DoesNotContain("sk-test", SandboxPlanRenderer.Show(first), StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-test", serialized, StringComparison.Ordinal);
+        Assert.Contains(name, serialized, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -116,6 +134,21 @@ public sealed class SandboxPlanReviewRound2Tests
 
         Assert.Equal(SindriErrors.LaunchUnconfinable.Code, result.Error.Code);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("/work/web/src")]
+    [InlineData("/work/web/.gitx")]
+    [InlineData("/work/web/.claude/worktrees")]
+    public void A_git_directory_inside_the_repo_but_not_dot_git_is_refused(string git)
+    {
+        var result = SandboxPlanner.Build(SandboxMechanism.PassThrough, Req.WriteScope with { Paths = Req.WriteScope.Paths with { GitCommonDir = git } });
+
+        Assert.Equal(SindriErrors.LaunchUnconfinable.Code, result.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_dot_git_directory_itself_is_accepted() =>
+        _ = SandboxPlannerTests.Build(Req.WriteScope with { Paths = Req.WriteScope.Paths with { GitCommonDir = Req.Repo + "/.git" } });
 
     [Fact, Trait("Lane", "unit")]
     public void A_git_directory_inside_the_repo_is_accepted() =>

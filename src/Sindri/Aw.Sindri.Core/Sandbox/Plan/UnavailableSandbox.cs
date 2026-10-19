@@ -19,4 +19,10 @@ public sealed class UnavailableSandbox : ISandbox
 
     /// <inheritdoc />
     public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => Refusal();
+
+    /// <inheritdoc />
+    public void Discard(SandboxPlan plan)
+    {
+        // Wrap never writes anything here, so there is nothing to remove.
+    }
 }
