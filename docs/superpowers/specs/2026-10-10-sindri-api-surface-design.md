@@ -877,7 +877,7 @@ Agents page reads this, and the collector's `GET /sessions` (§11) carries each 
 | `decision` | A non-protected human decision (the §17.12 list) | `Decide` |
 | `desk` | A human action that changes item or process state (§17.27.2) | `StopProcess`, `RebuildViews`, `CreateItem`, `CloseItem`, `PauseService`, `ResumeService`, `OpenItem`; the engine's start, answer, handback, cancel and complete |
 | `protected` | The approval tier: a typed confirmation, bound to the content, at a terminal | `ApproveProfile`, and the engine's `ApplyCommand:answer-grant`, `answer-accept` and `recipe approve`. Later: evolve adopt, channel promote and tier raises |
-| `ci` | An approval a merged, checked pull request stands in for, applied in-process by the built-in `ci-apply` service from the profile's `ci:` scope (CI-2; CI apply spec §3, §4). The catalog row names the one service allowed (`AllowedServices: [ci-apply]`) | `ApproveRecipeCiRequest`, `PromoteMapCiRequest` (with the deterministic accepts inside it), `ImportMapCiRequest` (only with CI apply O2) |
+| `ci` | An approval a merged, checked pull request stands in for, applied in-process by the built-in `ci-apply` service from the profile's `ci:` scope (CI-2; CI apply spec §3, §4). The catalog row grants the one service through `ServiceGrants: ["ci-apply"]` | `ApproveRecipeCiRequest`, `PromoteMapCiRequest` (with the deterministic accepts inside it), `ImportMapCiRequest` (only with CI apply O2) |
 | `local` | Runs in the CLI, never through the API | `doctor`, `profile validate` |
 | `issue` | Issues a one-time value and appends no domain event (audited by `command.handled`). The only `POST`s that aren't commands (§2.5) | `IssueNonce` (any caller whose class may run a command on that instance, repo-scoped for sessions), `IssueChallenge` (`human` + terminal), and `session wrap`'s heartbeat and exit (the launch secret, §8.1) |
 
@@ -1031,7 +1031,7 @@ own home is under `$TMPDIR` or a proof folder, so the owner's real process never
 
 **Out of scope for v0:** a session that deliberately reads the owner's token file (§11).
 
-**CI apply (CI-4).** No header, token or route yields a `ci` caller: the `ci` class is reachable only in-process as `service:ci-apply`, and a `ci` variant sent over HTTP is `SND-AUTH-002`. The CI identity's scope is the profile's `ci:` block, so widening it is a profile approval (CI apply spec §3.1, §4).
+**CI apply (CI-4).** No header, token or route yields a `ci` caller: the `ci` class is reachable only in-process as `service:ci-apply`; its request types have no route, so a `POST` to such a path is a plain 404. The CI identity's scope is the profile's `ci:` block, so widening it is a profile approval (CI apply spec §3.1, §4).
 
 **When tokens arrive,** only the source of the caller class and the terminal flag changes. The authorization table, the
 decorators and every test stay.
