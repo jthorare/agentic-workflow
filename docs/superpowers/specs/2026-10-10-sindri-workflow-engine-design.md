@@ -19,7 +19,7 @@ always parks and `then:` doesn't apply when it fires (§3.4, §3.8). Each is mar
 state machine) and §17.29.4 step 2 · **Next:** P4a (the Temporal foundation), then `/specToProvenPR` takes the Phases at
 the end to PRs.
 
-**Revision note (2026-10-19, CI apply, proposed):** the CI apply amendment (`2026-10-19-sindri-ci-apply-design.md`) edits W8 and W9 (CI-5), §4.1 (CI-6) and the action-class table (CI-7): a hand-written recipe merged into a CI repo's branch with its required checks green is approved by the `ci-apply` service (`via: ci`); revoke and the grants stay `protected`.
+**Revision note (2026-10-19, CI apply, proposed):** the CI apply amendment (`2026-10-19-sindri-ci-apply-design.md`) edits W8 and W9 (CI-5), §4.1 (CI-6) and the action-class table (CI-7): a hand-written recipe that a listed merger merged into a CI repo's branch, with its required checks green and within its capability ceiling, is approved by the `ci-apply` service (`via: ci`); revoke, drift re-approval and the grants stay `protected`.
 
 **Revision note (2026-10-16, DT-C):** a child's declared `outputs` are the facts of its parent's `wait.satisfied` (§3.2, §5.8, §9.2), `produces` gains the long form `{ fact, from }` (§3.5), `RCP-WIRE-003` joins §9.1 and `RCP-OUT-002` is an error, not information, when the fact only arrives through a child (§9.1). Each is marked *DT-C, 2026-10-16* inline.
 
@@ -127,7 +127,7 @@ P3 (#180) keeps its pure decisions and drops the frame, fold and store work. P4 
 | W6 | **Outcomes are a closed set:** `resolved`, `unresolved`, `alreadySatisfied` and `failed` for recipe terminals, plus the engine's `cancelled` | Receipts count outcomes |
 | W7 | **Grants are explicit and need a terminal.** `--grant n` (1 ≤ n ≤ the loop's cap) answers a `rounds` or `no-progress` park. `--grant-tokens n` (at most the original budget, once per park) answers a `budget` park | Every park has a useful answer (E10). A session can never grant itself anything |
 | W8 | **Every recipe needs a human approval to run**, or a CI approval: the merged, checked PR stands in for the typed confirmation (CI-5). Approvals are stored keyed by `(id, version, hash)`, never in the file | §17.19: workflow templates are approval-tier |
-| W9 | **Hand-written recipes are approved with `sindri recipe approve`**, through a server-issued challenge, **or by CI apply** when the file merges into a CI repo's branch with its required checks green (CI-5; CI apply spec §3.3). **Generated recipes are approved by the packet freeze**, from a `base` that Sindri code picks | Invariant 13 |
+| W9 | **Hand-written recipes are approved with `sindri recipe approve`**, through a server-issued challenge, **or by CI apply** when a listed merger merges the file into a CI repo's branch with its required checks green, within its capability ceiling (CI-5; CI apply spec §3.4). **Generated recipes are approved by the packet freeze**, from a `base` that Sindri code picks | Invariant 13 |
 | W10 | **`RCP-CAP-001`–`007` keep a generated recipe at or below its base** (§4.3), comparing guards by path and loops by state | C16, C17, E19 |
 | W11 | **Approval and pins are checked on every `Commit` and at dispatch.** Approval pins the descriptor hashes of the blocks the recipe names and the hashes of its children. A revoke cascades to the generated recipes approved from it, and wakes running instances so they park at once. `cancel`, `takeover`, `handback`, `takeoverIdle` and engine-owned notifications are exempt from the check. Drift is fixed by re-approving the same hash with the new pins | Drift and revokes take effect immediately, and every instance can still be cancelled or resumed (C13, E15, G2, G7) |
 | W12 | **A transition is keyed by its trigger:** `wf:{instance}:{trigger}`. `Commit` checks, in order: the caller (API's chain), the key, the nonce, the run token and state, the fence, the approval, the version. Only **decisions** (applied, or refused by a gate or evidence) are recorded under the key and replayed; a validation refusal (actor, nonce, token, fence, version, malformed report) records nothing and consumes nothing | Replays are no-ops, and a bad request never burns a task's key (C1, G6, H3)  *(rev 8: the key is the Update id; the validator rejects without recording; §5.2)* |
@@ -459,7 +459,7 @@ approval of it (before the no-evals check). A row already approved can still be 
 
 `IRecipeApprovals` records:
 - the recipe: `id`, `version`, `hash`;
-- who and how: `approver`, `approvedAt`, `via: desk|freeze|ci`, `base?`; for `ci` (CI-6) also `repo`, `sha`, `pr?` and `mergedBy?`, with `approver` `ci:<host>/<owner>/<name>@<sha>`;
+- who and how: `approver`, `approvedAt`, `via: desk|freeze|ci`, `base?`; for `ci` (CI-6) also `repo`, `sha`, `blob`, `pr` and `mergedBy`, with `approver` `ci:<host>/<owner>/<name>@<sha>`;
 - what it pins: `descriptorHashes` and `children { id: hash }`.
 
 `IRecipeStore` keeps the normalized text by hash. Register, approve and revoke write `recipe.registered`,
@@ -795,7 +795,7 @@ Action classes of the engine's commands (API §4.1), with the fail-closed `IClas
 | `pause` | `ApplyCommand:takeover`. A session may take over (the attach hook runs inside the session); handing back is `desk` |
 | `desk` | `recipe register`, `StartInstance` (start, including scoping and any other workflow), `ApplyCommand:answer` (text, resume, reject), `ApplyCommand:handback`, `ApplyCommand:cancel`, `ApplyCommand:command-<verb>`, `CompleteStep` |
 | `protected` | `recipe approve`, `recipe revoke`, `ApplyCommand:answer-grant`, `ApplyCommand:answer-grant-tokens`, `ApplyCommand:answer-accept`. Each also needs the §4.2 challenge |
-| `ci` (CI-7) | `ApproveRecipe:ci`, and the drift re-approval of a CI-approved recipe when its capability diff is empty (CI apply §3.4, O5). In-process as `service:ci-apply` only; no challenge |
+| `ci` (CI-7) | `ApproveRecipeCiRequest` (its own request type, no route), within the capability ceiling (CI apply §3.4). In-process as `service:ci-apply` only; no challenge. Revoke, drift re-approval and a recipe past its ceiling stay `protected` |
 
 So the app is a full desk client: it starts workflows (scoping included), answers parks, takes over, hands back,
 cancels, completes desk tasks and hands work off to a session (API P10, `OpenItem`). `protected` actions show the

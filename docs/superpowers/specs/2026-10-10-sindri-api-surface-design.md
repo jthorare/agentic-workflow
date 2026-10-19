@@ -478,7 +478,7 @@ is a command with a catalog row and an action class, and every route goes throug
 | `GET /context/query`, `/context/node`, `/context/neighbors`, `/context/path`, `/context/map`, `/context/map/export`, `/context/map/review`, `/context/map/review/history`, `/context/map/review/export`, `/context/map/proposals`, `/context/lenses`, `/context/filemap`, `/context/sources` | query (session callers repo-scoped, §3.1) |
 | `GET /context/subgraph?nodes=` (at most 20 keys), `QUERY /context/subgraph` with a JSON body (at most 1000 keys) | query (session callers repo-scoped, §3.1); the `QUERY` refuses an `Origin` header with `SND-API-008` ("a body query from a foreign Origin is refused"), honours `X-Sindri-After`, has no catalog row |
 | `POST /context/map/build`, `POST /context/sources/sync` | `job` |
-| `POST /context/map/import`, `POST /context/map/promote` (both make content `current`) | `protected`; their `ci` variants run only in-process as `service:ci-apply` (CI-1, CI apply §3.3) |
+| `POST /context/map/import`, `POST /context/map/promote` (both make content `current`) | `protected`; their `ci` variants are their own request types with no route, run only in-process as `service:ci-apply` (CI-1, CI apply §3.5, §3.6, §4) |
 | `POST /context/map/review`, variants `accept`, `reject`, `rename`, `move`, `accept-deterministic`, `undo`, `drop`, `repoint` (one reversible `map_override` row, with Undo; README X63) | `desk` |
 | `POST /context/map/review`, variants `apply-file`, `merge`, `add`, `delete` | `protected` |
 | `POST /context/map/proposals` (a scoping run's surfaces as draft proposals; synchronous until API P6) | `job` |
@@ -877,7 +877,7 @@ Agents page reads this, and the collector's `GET /sessions` (§11) carries each 
 | `decision` | A non-protected human decision (the §17.12 list) | `Decide` |
 | `desk` | A human action that changes item or process state (§17.27.2) | `StopProcess`, `RebuildViews`, `CreateItem`, `CloseItem`, `PauseService`, `ResumeService`, `OpenItem`; the engine's start, answer, handback, cancel and complete |
 | `protected` | The approval tier: a typed confirmation, bound to the content, at a terminal | `ApproveProfile`, and the engine's `ApplyCommand:answer-grant`, `answer-accept` and `recipe approve`. Later: evolve adopt, channel promote and tier raises |
-| `ci` | An approval a merged, checked pull request stands in for, applied in-process by the built-in `ci-apply` service from the profile's `ci:` scope (CI-2; CI apply spec §3, §4) | `ApproveRecipe:ci`, `ImportMap:ci`, `PromoteMap:ci`, and the deterministic accept inside a CI promote |
+| `ci` | An approval a merged, checked pull request stands in for, applied in-process by the built-in `ci-apply` service from the profile's `ci:` scope (CI-2; CI apply spec §3, §4). The catalog row names the one service allowed (`AllowedServices: [ci-apply]`) | `ApproveRecipeCiRequest`, `PromoteMapCiRequest` (with the deterministic accepts inside it), `ImportMapCiRequest` (only with CI apply O2) |
 | `local` | Runs in the CLI, never through the API | `doctor`, `profile validate` |
 | `issue` | Issues a one-time value and appends no domain event (audited by `command.handled`). The only `POST`s that aren't commands (§2.5) | `IssueNonce` (any caller whose class may run a command on that instance, repo-scoped for sessions), `IssueChallenge` (`human` + terminal), and `session wrap`'s heartbeat and exit (the launch secret, §8.1) |
 
