@@ -1,6 +1,6 @@
 # Sindri CI apply: map import and promote, and recipe approval, from CI/CD (spec amendment)
 
-**Status:** proposed, rev 3 (2026-10-19), after `/autoplan` rounds 1 and 2 (§12). The owner reads it before it is
+**Status:** proposed, rev 4 (2026-10-19), after the three `/autoplan` rounds (§12). The owner reads it before it is
 marked ready. It is a docs-only amendment: no code lands until the owner approves it and answers the open questions
 in §11.
 
@@ -78,15 +78,15 @@ ci:
       promote:
         profileRepo: aw-split-panes   # the repos[] entry whose map is built and promoted
         checks: [build]           # that repo's own CI job; confirm its name with `sindri ci check` (§6.4)
-        paths: ["src/**"]         # optional: only merges touching these build (default: any path not denied)
-        minInterval: 1h           # optional: at most one CI promote per interval (default 1h)
+        paths: ["src/**"]         # optional: only merges touching these build (default: any path outside the profile's index.denyPaths)
+        minInterval: 1h           # optional: at most one CI promote per interval (default 1h); a merge inside it waits, it isn't dropped
     # maps: not in v1 (O2, CI-P8)
 ```
 
 - Each entry names the verbs it may apply: `recipes`, `promote`, and (CI-P8) `maps`. A verb not named is never applied
   from that repo. Each verb needs at least one check, and each entry needs `mergers`; profile validate refuses either
-  missing (`SND-PROFILE-006`, `-007`) and a `credential` pointer equal to `workflow.forge.credential`'s
-  (`SND-PROFILE-008`).
+  missing (`SND-PROFILE-017`, `-018`) and a `credential` pointer equal to `workflow.forge.credential`'s
+  (`SND-PROFILE-019`).
 - `ci:` is left out of the canonical JSON when absent, so existing approved profiles keep their hash.
 
 ### 3.2 The service `ci-apply`
@@ -101,24 +101,31 @@ For each `ci.repos` entry, a tick:
 1. **Fetches** the branch into a Sindri-owned bare mirror (`IGitMirror`, §5.2),
    `$AW_SINDRI_HOME/ci/mirrors/<host>/<owner>/<name>.git` (0700), hardened like `GitPusher`, with `--prune`. `gc` runs
    only after the cursor has moved, never between a fetch and a merge-base computation.
-2. **Walks** the first-parent commits from the entry's cursor to the tip and moves the cursor to the tip. The cursor is
-   keyed by `(repo, branch, entry hash)`, so removing and re-adding an entry, or changing its branch, starts fresh. It
-   starts at `since`, or at the tip when the entry is first approved, so history is never applied (the owner applies
-   older files at the terminal). If the cursor is no longer an ancestor of the tip (a force-push), it moves to the
-   merge base with reason `force-push` and raises a repo row (§6.2, `SND-CI-009`).
+2. **Walks** the first-parent commits from the entry's cursor to the tip. The cursor is keyed by `(host, owner, name,
+   branch)` only, so editing `mergers`, `checks` or a ceiling (the fixes for `003` and `007`) never moves it; removing
+   the entry and adding it back, or changing its branch, starts fresh. It starts at `since`, or at the tip when the
+   entry is first approved, so history is never applied (the owner applies older files at the terminal). If the cursor
+   is no longer an ancestor of the tip (a force-push), or its commit is gone from the mirror, it moves to the merge base
+   (or the tip when there is none) with reason `force-push` and raises a repo row (§6.2, `SND-CI-009`).
 3. **Picks candidates.** A walked commit is a candidate only if it is the `merge_commit_sha` of a PR that is
    `merged`, whose base is the entry's branch (`GetMergedPull`; for a rebase merge that is the PR's last commit, and the
    commits before it are part of the same PR, never candidates). Commits that are no merged PR's merge commit (a direct
    push) are `SND-CI-003`. A candidate counts for a verb when the PR changed one of that verb's paths. **Only the newest
-   candidate per path is kept**; older ones are recorded `superseded` before anything is checked.
+   candidate per path is kept**; older ones are recorded `superseded` before anything is checked. Each kept candidate
+   is recorded **open** (`ci.candidate.recorded`), and only then does the cursor move (`ci.cursor.moved`, written last
+   and only when it moves). An open candidate stays open across ticks until it is applied, failed or superseded, so a
+   transient fault or a crash after the cursor moved never drops it; a crash before the cursor event re-walks, and the
+   candidate events are idempotent by `(repo, sha, path)`.
 4. **Checks** each kept candidate:
    - the PR's merger is in `mergers`, else `SND-CI-003`;
    - for each named check, the **newest** check run with that `name` from the `github-actions` app **on that commit**
      (the job's name, not the `workflow / job` label the UI shows) concluded `success`. `skipped`, `neutral`,
      `cancelled`, `timed_out` and `failure` fail (`SND-CI-001`);
    - a check that is queued, in progress or not there yet is **pending**: `ci.apply.pending` is recorded once with its
-     start time, and the candidate is looked at again on every tick. A pending candidate becomes `SND-CI-002` when 30
-     minutes of **ticks** have seen it pending (time the box was off doesn't count).
+     start time, and the candidate is looked at again on every tick. A pending candidate becomes `SND-CI-002` at the
+     first tick that is at least 30 minutes (or 3 cadences, whichever is longer) after `since` **and** is at least the
+     third tick to see it pending; the tick count lives in the projection, not the ledger, so a box that was off, or a
+     projection rebuild, only ever makes it wait longer.
 5. **Binds** the content: read the file at that commit from the mirror (`git cat-file`), and record `(repo, sha, path,
    blob, hash)`, where `hash` is the canonical hash the terminal path uses. What is applied is exactly those bytes; the
    verb hashes them again and refuses a mismatch. Nothing is read from a working tree.
@@ -129,6 +136,8 @@ for the same path supersedes it or 7 days pass: every tick re-reads its checks, 
 and getting `success` applies it with no other step. A candidate that failed for any other reason is re-tried by
 **Retry** (`RetryCiApply`, `desk`; §6.2), after the owner fixed the cause (added the merger, raised the ceiling, ...).
 
+After the 7 days a watched candidate is a plain failure: its row stays with Retry.
+
 A file deleted on the branch applies nothing, and removal never revokes (§3.7).
 
 ### 3.3 The events
@@ -137,15 +146,17 @@ Every state is a ledger event, so `views rebuild` rebuilds the cursor, the watch
 
 | Event | When | Payload (public: ids, hashes, codes; no file text) |
 |---|---|---|
-| `ci.apply.applied` | A verb applied (or the bytes were already approved: `noop: true`) | `repo, sha, path, blob, verb, hash, pr, mergedBy, noop` |
+| `ci.candidate.recorded` | A kept candidate, before the cursor moves | `repo, sha, path, verb, pr` |
+| `ci.apply.applied` | A verb applied (or the bytes were already approved: `noop: true`) | `repo, sha, path, blob, verb, hash, pr, mergedBy, mergedAt, noop, subject`; `subject` is `{kind: recipe, id, version, hash}` or `{kind: map, repo, version, accepted, waiting}` |
 | `ci.apply.pending` | First tick a candidate's check is pending | `repo, sha, path, verb, check, since` |
-| `ci.apply.failed` | A failure (watched for `001`/`002`) | `repo, sha, path, verb, code, wrappedCode?, check?, pr?` |
+| `ci.apply.failed` | A failure (watched for `001`/`002`) | `repo, sha, path, verb, code, wrappedCode?, check?, pr?, subject?` (`{kind: recipe, id, hash}` once the file parsed) |
+| `ci.repo.failed` · `ci.repo.ok` | A repo-level fault (`004`, `006` past 1 h, `009`, `010`) starts · the next good tick ends it | `repo, code` · `repo` |
 | `ci.apply.superseded` | A newer candidate for the path | `repo, sha, path, by` |
 | `ci.apply.retried` | `RetryCiApply` re-opened a failure | `repo, sha, path, by` |
-| `ci.cursor.moved` | Once per tick per repo | `repo, branch, entry, from, to, reason (tick, first, force-push)` |
+| `ci.cursor.moved` | When a tick moves the cursor (written last) | `repo, branch, from, to, reason (tick, first, force-push)` |
 
-A transient error (forge or network down, the heavy-job slot busy) records nothing and the tick tries again; it is
-shown as `SND-CI-006` only after 1 hour. A failed Temporal wake after an approval row is stored is transient: the next
+A transient error (forge or network down, the heavy-job slot busy) leaves the candidate open and the next tick tries
+again; it is shown as `SND-CI-006` (a repo row) only after 1 hour. A failed Temporal wake after an approval row is stored is transient: the next
 tick sees `AlreadyApproved` and wakes again.
 
 ### 3.4 Recipe approve
@@ -168,13 +179,13 @@ hash was revoked, it fails with `SND-CI-005` wrapping `SND-RECIPE-005`; the fix 
 
 ### 3.5 Map promote
 
-No file merges. For a candidate in a `promote` entry (changing `promote.paths`, at least `minInterval` after the last
-CI promote of that repo; a skipped one is `superseded` by the next), with its checks green, `ci-apply`:
-1. asks the context engine to **build the draft with that repo at the merge commit**, reading it from the mirror (the
-   build request gains `repo` and `commit`, and an `IRepoReader` over the mirror). Other repos the map covers are
-   read at the commit they were last built at, which the draft records per repo; the owner's checkouts are never read
-   for a CI build. A busy heavy-job slot is transient;
-2. refuses unless the draft's recorded commit for that repo is the merge sha (`SND-CI-008`), so a draft from another
+No file merges. A candidate in a `promote` entry is a merge that changed `promote.paths`, with its checks green. If
+it lands within `minInterval` of the last CI promote of that repo it **waits** (open) and runs at the first tick after
+the interval, unless a newer one replaces it. Its path, for rows and Retry, is `promote`. `ci-apply`:
+1. asks the context engine to **build the map of `profileRepo` at the merge commit**, with the mirror as the repo's
+   path (the context readers already read a bare repository at a commit; the build request gains `commit`). A CI build
+   builds that one repo; it never reads the owner's checkout. A busy heavy-job slot is transient;
+2. refuses unless the draft's recorded commit is the merge sha (`SND-CI-008`), so a draft from another
    commit or a later scheduled rebuild is never promoted for this merge;
 3. writes **no new version when the promoted content would equal `current`** (`noop`);
 4. otherwise promotes under the **CI promote rule**:
@@ -220,6 +231,8 @@ A new class, **`ci`**: an approval that a merged, checked PR stands in for.
 - The deterministic accepts inside a CI promote run as part of `PromoteMapCiRequest`, not as a separate review
   command, so `ReviewMap` keeps its classes.
 - `RetryCiApply` and `CheckCi` (§6.4) are ordinary rows: `desk` and query.
+- Today `Authorization` honours `ServiceGrants` for the `desk` class only; CI-P1 extends it to `ci` (and `CallersFor`
+  lists `service:ci-apply` for it).
 
 **What stops a session from using it:**
 1. `service` callers never arrive over HTTP (API §4.2), and the `ci` request types have no route.
@@ -246,7 +259,7 @@ on:
     branches: [main]
 permissions: { contents: read }
 concurrency:
-  group: sindri-ci-${{ github.event_name }}-${{ github.sha }}
+  group: sindri-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # never cancel a run on the merge commit
 jobs:
   recipes:                      # the check run's name is the job's name: "recipes"
@@ -256,16 +269,21 @@ jobs:
       - uses: actions/checkout@<full commit sha>      # CI-P6 picks the shas; Dependabot (github-actions) updates them
       - uses: actions/setup-dotnet@<full commit sha>
         with: { global-json-file: global.json }
-      - run: scripts/ci/sindri-recipes-check.sh   # validate + eval every changed recipe/sindri/*.yaml; exit 0 fast when none changed
+      - run: scripts/ci/sindri-recipes-check.sh --base "${{ github.event.pull_request.base.sha || github.event.before }}"
 ```
 
+- **The script** (CI-P6): lists the `recipes/sindri/*.yaml` files changed since `--base` (all of them when `--base` is
+  empty or unknown), runs `recipe validate` and `recipe eval` on each, prints one line per file (`ok` or the code),
+  and exits 0 when all pass, 1 otherwise; under 5 minutes for 20 recipes on a hosted runner, within the job's 15-minute
+  timeout.
 - **No path filter.** A path-filtered workflow that doesn't run leaves no check (pending, then `002`), and as a
   required check it blocks unrelated PRs. The job exits 0 fast when no recipe changed (`git diff --name-only` against
   the event's base).
 - The `push` trigger makes the check run **on the merge commit**, which is what `ci-apply` checks; `merge_group` keeps a
   merge queue moving if the owner turns one on.
 - Never `pull_request_target`. `CODEOWNERS` covers `.github/workflows/`, `scripts/ci/` and `recipes/`. Branch
-  protection can't be read with a read-only token, so it is documented in `docs/sindri/ci.md`, not checked.
+  protection can't be read with a read-only token, so it is documented in `docs/sindri/ci.md`, not checked; `ci.md` also
+  says a merge-queue bot's merges count only if its login is in `mergers`.
 - `recipe eval` needs no model egress (the eval engine is pure).
 - **A promote repo's check is that repo's own CI** (for example its `build` job); `sindri ci check` shows the check
   names it finds on the last merge so the owner can copy the right one.
@@ -279,11 +297,12 @@ jobs:
   status, conclusion, started time), `GetRepoVisibility(repo)`, and one write, `PostCommitStatus(repo, sha, state,
   description)`; plus a new port `IGitMirror` (fetch a branch into a bare mirror, read a blob, list first-parent commits,
   merge base), implemented in `Aw.Forge.Infrastructure` next to `GitPusher`, sharing its hardening.
-- `IForgeClients.For(host, credential)` returns a client per host and credential, so the ci read client, the status
+- `IForgeClients.For(host, credential)` (interface in `Aw.Forge.Core`, implementation in `Aw.Forge.Infrastructure`) returns a client per host and credential, so the ci read client, the status
   client and the babysitter's client are separate (today one `IForge` is built from the environment).
 - **Edges** (`deps.yaml`): `Aw.Sindri.Features → Aw.Forge.Core` (a project edge: Features reach another package through
   its Core) and `Aw.Sindri.Host` composes `Aw.Forge.Infrastructure` (a compose edge, DEPS-COMPOSE-001).
-  `Aw.Sindri.Infrastructure` takes no Forge reference.
+  `Aw.Sindri.Infrastructure` takes no Forge reference. This brings `Aw.Sindri.Features` to 4 in-repo references, the
+  fan-out limit, so the next edge from Features needs a split or a reviewed exception.
 
 ## 6. What the owner sees
 
@@ -303,31 +322,34 @@ accessible name, as for any failure):
 
 | Field | Value |
 |---|---|
-| `id` | `failure:ci:<repo>:<path>` (a path row) or `failure:ci:<repo>` (a repo row: `004`, `006` after 1 h, `009`) |
+| `id` | `failure:ci:<repo>:<path>` (a path row; `path` is `promote` for a promote, and the repo and path are percent-encoded) or `failure:ci:<repo>` (a repo row, from `ci.repo.failed`: `004`, `006` after 1 h, `009`, `010`). More than 5 path rows in one repo collapse into its repo row: "6 files couldn't apply", linking to the System node |
 | `subject` | `{service, ci-apply}` |
 | title | `CI couldn't apply recipes/sindri/workflow.step.yaml` (a path inside a denied glob is shown as its verb and repo only) |
 | reason | the code's line from §6.4, filled from the event (`check`, `pr`, `wrappedCode`): "The check `recipes` didn't succeed on 4f1c2a9 (PR #512)." |
 | `primaryAction` | `RetryCiApply` (`desk`) for `003`, `005`, `007`, `008`; none for `001`/`002` (re-run the check on GitHub; the row says so); `RunService` for a repo row |
-| `cli` | the code's terminal command: `sindri recipe approve <id@hash>` for `007`, `sindri ci retry <repo> <sha> <path>` otherwise |
-| `link` | the PR (the row's link field; no new action) |
+| `cli` | the code's terminal command: `sindri recipe approve <id@hash>` for `007` (from the event's `subject`), `sindri ci retry <repo> <sha> <path>` otherwise; built only from parsed ids (`RecipeRef`, `ForgeRepo`, a sha) and shell-quoted |
+| `link` | the PR. A new optional `link` field on needs-you rows (an https forge URL; API §3.6 edit, CI-P1); the app opens it with the existing open-link behaviour |
 
 It clears when that path applies (by CI, or by a terminal approval of the same hash), when a newer candidate for that
 path supersedes it, or, for a repo row, when the next tick succeeds. There is no Dismiss: needs-you acknowledgement is
 deferred (API §11). A failure raises no OS notification (notifications come only from the engine's `notify.desk`).
+These raise and clear rules are the CI rows' own; other `failure` rows keep theirs. The generic
+`failure:service:ci-apply` row is raised only when the service itself crashes, never for an apply failure.
 
 The **System screen** shows CI as the doctor check node `ci:apply` and its detail view (no new screen): each repo, its
 last fetch, cursor, pending and watched candidates, the last applies, open failures, and whether `ci-apply` is paused.
-States and chip words: **ok**, **Waiting for checks** (pending), **Catching up** (more than 5 commits walked in one
-tick), **Paused**, **Failed**; "No CI repos in the profile" when there is no `ci:` block.
+States use the UI's existing word-and-colour table (doctor node states): **ok**, **warn** (pending past one cadence,
+or catching up: more than 5 commits walked in one tick), **paused**, **fail**; the detail line carries the long text
+("Waiting for checks: build on 77ab01c (3m)", "Catching up: 12 commits"); "No CI repos in the profile" when there is no `ci:` block.
 
 `GET /ci` returns `{ repos: [ { repo, branch, cursor, fetchedAt, state, pending: [ {sha, path, check, since} ],
-watched: [ {sha, path, code, check} ], recent: [ {sha, path, verb, hash, pr, mergedBy, at} ], failures: [ {sha?, path?,
-code, wrappedCode?} ] } ], paused }` (query; a session sees only its repo).
+watched: [ {sha, path, code, check} ], recent: [ {sha, path, verb, hash, pr, mergedBy, mergedAt, at, subject} ], failures:
+[ {sha?, path?, code, wrappedCode?, subject?} ] } ], paused, stats: { applied, sentToTerminal } }` (`stats` over 14 days) (query; a session sees only its repo).
 
 ### 6.3 Back on the forge
 
 With `statusCredential` set, `ci-apply` posts a commit status `sindri/apply` on the merge commit: `pending` while it
-waits for checks, then `success` with what it applied, or `failure` with the code and its line. Doctor suggests it when
+waits for checks, then `success` or `failure`. Its description carries only ids, hashes and codes (`applied workflow.step@1a2b3c4d5e6f`, `SND-CI-007`), never file text or a reason sentence. Doctor suggests it when
 it's off.
 
 ### 6.4 `sindri ci status`, `sindri ci check` and the codes
@@ -356,7 +378,7 @@ Run it after editing the `ci:` block to catch a wrong check name before the firs
 | `SND-CI-004` | The maps repo isn't private | Make the repo private, or remove `maps` from the entry |
 | `SND-CI-005` | The content was refused by its verb (wraps its code: `SND-RECIPE-008`, `SND-CONTEXT-031`, …) | The wrapped code's fix, in a new PR |
 | `SND-CI-006` | The forge or the mirror is unavailable (transient; shown after 1 h) | Check the network; doctor `ci:apply` |
-| `SND-CI-007` | The recipe is past its capability ceiling | Read the preview and approve it at the terminal; or raise `allowCapabilities` (profile approval) and Retry |
+| `SND-CI-007` | The recipe is past its capability ceiling | Read the preview and approve it at the terminal. For a recipe id with no approved version, raising `allowCapabilities` (profile approval) and Retry also works |
 | `SND-CI-008` | No draft built for that repo at that merge commit | Retry; doctor `context:map` |
 | `SND-CI-009` | The branch was force-pushed; the cursor moved back to the merge base | Check the branch's history; nothing applied from the rewritten commits |
 | `SND-CI-010` | The forge refused the credential (401 or 403, expired or missing a permission) | Renew `ci.credential` with the §7 permissions; doctor `ci:apply` names the missing one |
@@ -375,10 +397,11 @@ use a separate token.
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token.
 2. Resource owner: the repos' owner. Repository access: **Only select repositories**, the `ci.repos` of that owner.
 3. Repository permissions: **Contents: Read-only**, **Metadata: Read-only**, **Pull requests: Read-only**,
-   **Checks: Read-only**. Nothing else. Expiry: the owner's choice (doctor warns 7 days before, from `SND-CI-010`'s
-   probe).
-4. Export it where `sindri serve` reads it (`SINDRI_CI_TOKEN`), or point `credential` at a program that prints it
-   (`command:<argv>`, for example a keychain read).
+   **Checks: Read-only**. Nothing else. Expiry: the owner's choice; doctor's probe reads GitHub's
+   `github-authentication-token-expiration` response header and warns 7 days before.
+4. `env:NAME` is read from the environment of the `sindri serve` process (the shell that started it, or its launchd or
+   systemd unit), so it must be set there before serve starts. `command:<argv>` (for example a keychain read) is read
+   per call and needs nothing at start; `docs/sindri/ci.md` recommends it.
 
 A GitHub App installation with the same four permissions works too. `statusCredential`, if set, is a second token with
 **Commit statuses: Read and write** only. One credential serves one host and one owner; an entry under another owner or
@@ -411,12 +434,13 @@ still has to check the merger, the checks and the bytes itself.
 | Workflow engine spec | W8, W9, §4.1, class table | CI-5…CI-7 | This PR |
 | Context retrieval spec | §3 (worktree rule, decisions), §8.7 | CI-8…CI-10 | This PR |
 | `docs/sindri/README.md` | X63 | A line: the CI variants, and the deterministic accepts inside a CI promote | This PR |
-| API surface spec | §3.3 catalog, §3.6 needs-you, §9 error registry | The `ci` rows with `ServiceGrants`, `RetryCiApply`, `CheckCi`; the `failure:ci:*` rows; `SND-CI-001…010`, `SND-PROFILE-006…008` | CI-P1 |
+| API surface spec | §3.3 catalog, §3.6 needs-you, §9 error registry | The `ci` rows with `ServiceGrants`, `RetryCiApply`, `CheckCi`; the `failure:ci:*` rows with their own raise and clear rules, `RetryCiApply` as a `failure` row's `primaryAction`, the optional `link` field; `SND-CI-001…010`, `SND-PROFILE-017…019` | CI-P1 |
+| UI action catalog | `RetryCiApply` | A catalog row; `Aw.Sindri.Ui.Tests` pins the catalog, so CI-P1's gate runs it | CI-P1 |
 | UI screens spec | System page, needs-you | The `ci:apply` node and detail view; the `failure:ci:*` rows' fields | CI-P7 |
 | Engine spec | §4.1 `recipe.approved` payload | `repo, sha, blob, pr, mergedBy` | CI-P4 |
 | Context spec | §8.7, build | Build at a commit per repo; the deterministic/model marks; the CI promote rule | CI-P5 |
 | `docs/csharp/sindri-profile.md` | new `ci` section | Every key (`check-profile-doc.mjs` enforces it) | CI-P1 |
-| `docs/sindri/errors.md` | `SND-CI-*`, `SND-PROFILE-006…008` | The codes and fix lines | CI-P1 |
+| `docs/sindri/errors.md` | `SND-CI-*`, `SND-PROFILE-017…019` | The codes and fix lines | CI-P1 |
 | `docs/csharp/forge.md` | The port | The four calls, `IGitMirror`, `IForgeClients` | CI-P2 |
 | `deps.yaml` | Sindri.Features → Forge.Core; Sindri.Host composes Forge.Infrastructure | §5.2 | CI-P2 |
 | `docs/sindri/ci.md` (new) | Setup | In order: the credential (§7), the profile block, `sindri ci check`, the workflow, CODEOWNERS and branch protection, the first tick | CI-P3 |
@@ -473,7 +497,7 @@ design NEEDS_WORK (5 HIGH), devex NEEDS_WORK (3 HIGH). Resolved in rev 3:
 | "From a merged PR" unspecified; GitHub returns open PRs too (security R2-M1, arch N7) | `GetMergedPull`: merged, `merge_commit_sha` equals the commit, base is the branch (§3.2, §5.2) |
 | The 30-minute clock has no stored start (security R2-M2, arch N2, devex) | `ci.apply.pending` with `since`; counted in ticks, so time off doesn't fail a commit (§3.2, §3.3) |
 | A pending commit mid-range re-walks applied ones (arch N2b) | The cursor always moves to the tip; pending and watched candidates are their own set (§3.2) |
-| The cursor isn't keyed to the entry (security R2-M3, arch N5) | Keyed by repo, branch and entry hash; `gc` never runs before a merge base (§3.2) |
+| The cursor isn't keyed to the entry (security R2-M3, arch N5) | Keyed by repo and branch (rev 4 dropped the entry hash); `gc` never runs before a merge base (§3.2) |
 | Every merge promotes (product, security R2-M4) | `promote.paths`, `minInterval`, no version when nothing changed (§3.1, §3.5) |
 | The ceiling can follow a revoked version (security R2-M5) | The currently approved version is the baseline (§3.4) |
 | `Sindri.Infrastructure → Forge.Core` breaks the tier rules; no compose edge; the fetch has no home (arch N1) | `Sindri.Features → Forge.Core`, Host composes Forge.Infrastructure, `IGitMirror` in Forge (§5.2) |
@@ -486,8 +510,28 @@ design NEEDS_WORK (5 HIGH), devex NEEDS_WORK (3 HIGH). Resolved in rev 3:
 | No literal credential recipe; an expired token reads as transient; one host per adapter (devex H3) | §7's steps; `SND-CI-010` shown at once with a permission probe; a credential per entry (§3.1, §6.4, §7) |
 | No dry run (product) | `sindri ci check` (§6.4) |
 | Reverts unclear (product, security) | `noop` on an approved hash; a revoked hash fails with its fix (§3.4) |
-| No tick logging; docs late; `errors.md` missing; profile codes unnamed (devex) | Per-repo log line and metrics (§3.2); `ci.md` in CI-P3; §10; `SND-PROFILE-006…008` |
+| No tick logging; docs late; `errors.md` missing; profile codes unnamed (devex) | Per-repo log line and metrics (§3.2); `ci.md` in CI-P3; §10; `SND-PROFILE-017…019` (rev 4: 006…008 were taken) |
 | First approval of an existing recipe unclear (product) | §1's table and §8 say it |
+
+**Round 3** (2026-10-19): product PASS, security PASS, devex PASS, architecture NEEDS_WORK (1 HIGH), design
+NEEDS_WORK (3 HIGH). Resolved in rev 4:
+
+| Finding | Resolution |
+|---|---|
+| The cursor moves past a candidate a transient fault or crash left unsettled (arch N12) | Candidates are recorded open before the cursor moves; the cursor event is written last; open candidates persist (§3.2, §3.3) |
+| "Entry hash" resets the cursor on the very edits that fix `003`/`007` (arch N15, security R3-M1, product N1) | The cursor is keyed by host, owner, name and branch only (§3.2) |
+| Tick counting undefined, and ledger growth (arch N13, security R3-L1, R3-L5) | 30 minutes or 3 cadences plus a third pending tick, counted in the projection; `ci.cursor.moved` only when it moves (§3.2, §3.3) |
+| A CI build reads other repos and needs a per-repo commit schema (arch N14) | A CI build builds `profileRepo` only, with the mirror as its path (§3.5) |
+| A merge inside `minInterval` is dropped (arch N16, product N2, security R3-L3) | It waits and runs after the interval (§3.1, §3.5) |
+| Repo-level rows have no event (design B1) | `ci.repo.failed` / `ci.repo.ok` (§3.3, §6.2) |
+| Events miss what the display and the `007` command need (design B2) | `subject`, `mergedAt` and the promote counts; commands built from parsed ids (§3.3, §6.2) |
+| The CI rows extend the needs-you contract silently (design B3) | The `link` field, the CI rows' raise and clear rules, `RetryCiApply` as `primaryAction` and its UI catalog row listed in §10; no generic service row for an apply failure (§6.2, §10) |
+| Grants honoured only for `desk`; promote has no path; `IForgeClients` home; a lost cursor commit (arch N18, N19) | §4, §3.5 (`promote`), §5.2, §3.2 |
+| `SND-PROFILE-006…008` already used; `007` fix line; script contract; where the token is read; concurrency per push (devex) | 017…019; split fix line; the script's contract; §7 step 4; grouped by PR number (§3.1, §5.1, §6.4, §7) |
+| Status text could carry reasons (security R3-L4) | Ids, hashes and codes only (§6.3) |
+| Missing tests (security R3-L2) | Added to the CI-P6 proof (§13) |
+| Measures not in the output (product N3); deny list unnamed (N4) | `mergedAt`, `stats`; `index.denyPaths` (§3.1, §6.2) |
+| Chip words outside the UI table; many failures; row id characters; after the watch (design) | Doctor node states with a detail line; collapse past 5; percent-encoded; plain failure with Retry (§6.2, §3.2) |
 
 Not taken (with reasons): binding checks to one workflow file as well as the app (one owner, one CI app; `sindri ci
 check` shows the app); checking branch protection (a read-only token can't read it; documented instead); shrinking §9
@@ -509,9 +553,9 @@ further (it is the owner's O1 alternative).
 **The proof (CI-P6), on the file forge in a scratch home:** a recipe PR that is a new version of an approved recipe,
 within its ceiling, is approved with no typed step and shows on the System node; one past its ceiling raises the row
 with the terminal command; a failed check re-run to green applies on the next tick; a merge by an unlisted login
-raises `003`, and Retry after adding the login applies it. **Measures:** time from merge to apply (target: one tick
-after the checks finish), and the share of recipe merges applied without a terminal step, reported by `sindri ci
-status --json` over the first two weeks.
+raises `003`, and Retry after adding the login applies it (the cursor doesn't move on that profile edit); a commit that is in an open PR but was pushed directly raises `003`; after a revoke, an edited recipe's ceiling is the version still approved; a transient forge fault mid-tick leaves the candidate open and the next tick applies it. **Measures:** time from merge to apply (`mergedAt` to `at`; target: one tick
+after the checks finish), and the share of recipe merges applied without a terminal step (`stats`), reported by
+`sindri ci status --json` over the first two weeks.
 
 **Parallel plan:** CI-P1 and CI-P2 start together (two api builders). Once CI-P1 merges, CI-P4 (engine), CI-P5
 (context) and CI-P7 (ui) run in parallel with CI-P3 (api). CI-P6 closes the recipe path; CI-P5's own proof closes
