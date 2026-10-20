@@ -1,0 +1,88 @@
+{
+  "typescript": [
+    {
+      "caller": "square",
+      "callerFile": "src/math.ts",
+      "callee": "multiply",
+      "calleeFile": "src/math.ts"
+    },
+    {
+      "caller": "multiply",
+      "callerFile": "src/math.ts",
+      "callee": "add",
+      "calleeFile": "src/math.ts"
+    },
+    {
+      "caller": "Report.push",
+      "callerFile": "src/report.ts",
+      "callee": "square",
+      "calleeFile": "src/math.ts"
+    },
+    {
+      "caller": "Report.total",
+      "callerFile": "src/report.ts",
+      "callee": "add",
+      "calleeFile": "src/math.ts"
+    },
+    {
+      "caller": "Report.render",
+      "callerFile": "src/report.ts",
+      "callee": "Report.total",
+      "calleeFile": "src/report.ts"
+    },
+    {
+      "caller": "Report.render",
+      "callerFile": "src/report.ts",
+      "callee": "format",
+      "calleeFile": "src/report.ts"
+    },
+    {
+      "caller": "run",
+      "callerFile": "src/main.ts",
+      "callee": "Report.push",
+      "calleeFile": "src/report.ts"
+    },
+    {
+      "caller": "run",
+      "callerFile": "src/main.ts",
+      "callee": "Report.render",
+      "calleeFile": "src/report.ts"
+    }
+  ],
+  "python": [
+    {
+      "caller": "normalize",
+      "callerFile": "pkg/textutil.py",
+      "callee": "strip_marks",
+      "calleeFile": "pkg/textutil.py"
+    },
+    {
+      "caller": "WordCounter.add",
+      "callerFile": "pkg/counter.py",
+      "callee": "normalize",
+      "calleeFile": "pkg/textutil.py"
+    },
+    {
+      "caller": "WordCounter.add",
+      "callerFile": "pkg/counter.py",
+      "callee": "WordCounter.split",
+      "calleeFile": "pkg/counter.py"
+    },
+    {
+      "caller": "count_all",
+      "callerFile": "pkg/counter.py",
+      "callee": "WordCounter.add",
+      "calleeFile": "pkg/counter.py",
+      "knownMiss": true,
+      "reason": "constructor-assigned local: graphify does not resolve a method called on a variable assigned from a constructor"
+    },
+    {
+      "caller": "count_all",
+      "callerFile": "pkg/counter.py",
+      "callee": "WordCounter.top",
+      "calleeFile": "pkg/counter.py",
+      "knownMiss": true,
+      "reason": "constructor-assigned local: graphify does not resolve a method called on a variable assigned from a constructor"
+    }
+  ]
+}

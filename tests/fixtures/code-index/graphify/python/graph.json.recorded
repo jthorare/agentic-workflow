@@ -1,0 +1,289 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "pkg_counter_wordcounter",
+      "label": "WordCounter",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": "wordcounter",
+      "source_file": "pkg/counter.py",
+      "source_location": "L4"
+    },
+    {
+      "id": "pkg_counter_count_all",
+      "label": "count_all()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "count_all()",
+      "source_file": "pkg/counter.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "pkg_textutil_normalize",
+      "label": "normalize()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "normalize()",
+      "source_file": "pkg/textutil.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "pkg_textutil_strip_marks",
+      "label": "strip_marks()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "strip_marks()",
+      "source_file": "pkg/textutil.py",
+      "source_location": "L5"
+    },
+    {
+      "id": "pkg_counter_wordcounter_add",
+      "label": ".add()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": ".add()",
+      "source_file": "pkg/counter.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "pkg_counter_wordcounter_init",
+      "label": ".__init__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": ".__init__()",
+      "source_file": "pkg/counter.py",
+      "source_location": "L5"
+    },
+    {
+      "id": "pkg_counter_wordcounter_split",
+      "label": ".split()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": ".split()",
+      "source_file": "pkg/counter.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "pkg_counter_wordcounter_top",
+      "label": ".top()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": ".top()",
+      "source_file": "pkg/counter.py",
+      "source_location": "L15"
+    },
+    {
+      "id": "pkg_counter",
+      "label": "counter.py",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "counter.py",
+      "source_file": "pkg/counter.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "pkg_textutil",
+      "label": "textutil.py",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "textutil.py",
+      "source_file": "pkg/textutil.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "pkg_init",
+      "label": "__init__.py",
+      "_origin": "ast",
+      "community": 2,
+      "file_type": "code",
+      "norm_label": "__init__.py",
+      "source_file": "pkg/__init__.py",
+      "source_location": "L1"
+    }
+  ],
+  "links": [
+    {
+      "source": "pkg_counter_count_all",
+      "target": "pkg_counter_wordcounter",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "pkg/counter.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter_add",
+      "target": "pkg_counter_wordcounter_split",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "pkg/counter.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter_add",
+      "target": "pkg_textutil_normalize",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "pkg/counter.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_textutil_normalize",
+      "target": "pkg_textutil_strip_marks",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "pkg/textutil.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter",
+      "target": "pkg_textutil_normalize",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "pkg/counter.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter",
+      "target": "pkg_textutil",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "pkg/counter.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter",
+      "target": "pkg_counter_count_all",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter",
+      "target": "pkg_counter_wordcounter",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_textutil",
+      "target": "pkg_textutil_normalize",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/textutil.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_textutil",
+      "target": "pkg_textutil_strip_marks",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/textutil.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter",
+      "target": "pkg_counter_wordcounter_split",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter",
+      "target": "pkg_counter_wordcounter_top",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter",
+      "target": "pkg_counter_wordcounter_init",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pkg_counter_wordcounter",
+      "target": "pkg_counter_wordcounter_add",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pkg/counter.py",
+      "source_location": "L8",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
