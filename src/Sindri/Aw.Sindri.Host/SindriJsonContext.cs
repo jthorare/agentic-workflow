@@ -19,6 +19,7 @@ using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
@@ -96,6 +97,7 @@ using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
 using Aw.Sindri.Features.ValidateRecipe;
+using Aw.Sindri.Host.Commands.Line;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Commands.Recipe;
 using Aw.Sindri.Host.Commands.Scoping;
@@ -140,6 +142,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(EvalRecipeResponse)), JsonSerializable(typeof(WorkflowEvent)), JsonSerializable(typeof(EvalStartLine)), JsonSerializable(typeof(EvalStepLine))]
 [JsonSerializable(typeof(RecipeValidationView)), JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
 [JsonSerializable(typeof(ScopingApproved)), JsonSerializable(typeof(ScopingEscape)), JsonSerializable(typeof(ScopingView)), JsonSerializable(typeof(ScopingCheckResponse)), JsonSerializable(typeof(ScopingDeskReport))]   // SC-K: the scoping verbs
+[JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView))]   // LN-K: the line verbs
 [JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(OnyxSetupState))]
 [JsonSerializable(typeof(OnyxUpResponse))]

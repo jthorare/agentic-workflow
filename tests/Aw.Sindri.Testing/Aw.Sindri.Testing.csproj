@@ -33,5 +33,14 @@
     <EmbeddedResource Include="../fixtures/scoping/facts/**/*.json" LogicalName="scoping-facts/%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- The context engine's view JSON the gather, anchor and propose desk blocks read (SC-K2). -->
     <EmbeddedResource Include="../fixtures/scoping/views/*.json" LogicalName="scoping-views/%(Filename)%(Extension)" />
+    <!-- The line fixture's gold scope, design and plan packets, its packs and the one repo file a contract edit quotes (LN-K), read by LineFacts without file I/O. -->
+    <EmbeddedResource Include="../fixtures/line/gold/design/expiry/*" LogicalName="line-gold/design/expiry/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../fixtures/line/gold/design/expiry.formal.spec.md" LogicalName="line-gold/design/expiry.formal.spec.md" />
+    <EmbeddedResource Include="../fixtures/line/gold/plan/expiry/*" LogicalName="line-gold/plan/expiry/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../fixtures/line/gold/scope/expiry/*" LogicalName="line-gold/scope/expiry/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../fixtures/line/packs/style/**/pack.json" LogicalName="line-packs/style/%(RecursiveDir)pack.json" />
+    <EmbeddedResource Include="../fixtures/line/packs/lenses/**/pack.json" LogicalName="line-packs/lenses/%(RecursiveDir)pack.json" />
+    <EmbeddedResource Include="../../schemas/line/examples/design.*.json" LogicalName="line-schemas/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../fixtures/scoping/repo/docs/decisions/*.md" LogicalName="line-repo/docs/decisions/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -34,7 +34,7 @@ public sealed record EffectSettings(IReadOnlySet<BlockId>? Allowlist, TimeSpan D
 
     /// <summary>
     /// The allowlist's ids; null when the key is absent. An entry that isn't an 'effect.*' id is left out: the profile
-    /// check (<see cref="ProfileRules.Check"/>) refuses one before a profile can be approved.
+    /// check (<see cref="ProfileRules.Check(SindriProfile)"/>) refuses one before a profile can be approved.
     /// </summary>
     private static HashSet<BlockId>? AllowlistOf(IReadOnlyList<string>? ids) =>
         ids is null ? null : [.. ids.Where(IsEffectId).Select(BlockId.From)];

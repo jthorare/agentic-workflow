@@ -15,6 +15,16 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Judge">The 'judge:' section (DT-J plan Q8): which providers a Judge Step may ask (<see cref="JudgeProviders"/>).</param>
 /// <param name="Forge">The forge port's settings (PR babysitter spec W27): adapter, hosts and credential source.</param>
 /// <param name="Route">The 'route:' section (engine P7 plan D8): whether the router stub lets routed items start (<see cref="RouteSettings"/>).</param>
+/// <param name="Packs">The 'packs:' section (line spec §5): the style and lens packs and their pins.</param>
+/// <param name="Line">The 'line:' section (line spec §8): parallel phases, open pull requests and stack depth.</param>
+/// <param name="Plan">The 'plan:' section (line spec §6.3): the size classes and the largest phase size.</param>
+/// <param name="Prove">The 'prove:' section (line spec §7.3): the hidden-scenario minimum.</param>
+/// <param name="Build">The 'build:' section (line spec §7.2): the commands that check a change.</param>
+/// <param name="Ship">The 'ship:' section (line spec §7.5): draft pull requests.</param>
+/// <param name="Design">The 'design:' section (line spec §4): the design and lens models.</param>
+/// <param name="Review">The 'review:' section (line spec §7.4): the review lens model.</param>
+/// <param name="Steps">The 'steps:' section (line spec LN-WF7): the longest block Step.</param>
+/// <param name="Docs">The 'docs:' section (line spec §7.6): where docs sync may write.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DeskTimeout = null,
@@ -24,4 +34,14 @@ public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] JudgeSettings? Judge = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] WorkflowAgentSettings? Agent = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ForgeSettings? Forge = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] RouteSettings? Route = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] RouteSettings? Route = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PackSettings? Packs = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LineSettings? Line = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PlanSettings? Plan = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ProveSettings? Prove = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BuildSettings? Build = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShipSettings? Ship = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DesignSettings? Design = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ReviewSettings? Review = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StepsSettings? Steps = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DocsSettings? Docs = null);

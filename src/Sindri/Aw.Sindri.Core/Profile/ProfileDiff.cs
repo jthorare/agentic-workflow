@@ -123,8 +123,67 @@ public static class ProfileDiff
             ("workflow.effects", Joined(workflow?.Effects)),
             ("workflow.dispatchDelay", workflow?.DispatchDelay),
         ];
-        return keys.Concat(Runtimes(workflow)).Concat(Forge(workflow?.Forge)).Where(static k => k.Value is not null).Select(static k => (k.Key, k.Value!));   // why: the nulls are filtered out just before
+        return keys.Concat(Runtimes(workflow)).Concat(Forge(workflow?.Forge)).Concat(LineKeys(workflow)).Where(static k => k.Value is not null).Select(static k => (k.Key, k.Value!));   // why: the nulls are filtered out just before
     }
+
+    /// <summary>The line's keys (line spec LN-WF9): every one is a re-approval, so each key the profile sets has a path.</summary>
+    private static IEnumerable<(string Key, string? Value)> LineKeys(WorkflowSettings? workflow) =>
+        PackDefaults(workflow?.Packs).Concat(PackMaps(workflow?.Packs)).Concat(LineLimits(workflow?.Line)).Concat(PlanKeys(workflow?.Plan)).Concat(BuildKeys(workflow)).Concat(ModelKeys(workflow)).Concat(StepKeys(workflow));
+
+    private static (string Key, string? Value)[] PackDefaults(PackSettings? packs) =>
+    [
+        ("workflow.packs.style.default", packs?.Style?.Default),
+        ("workflow.packs.lenses.design.default", packs?.Lenses?.Design?.Default),
+        ("workflow.packs.lenses.review.default", packs?.Lenses?.Review?.Default),
+    ];
+
+    private static IEnumerable<(string Key, string? Value)> PackMaps(PackSettings? packs) =>
+        Mapped("workflow.packs.style.repos", packs?.Style?.Repos).Concat(Mapped("workflow.packs.lenses.design.repos", packs?.Lenses?.Design?.Repos))
+            .Concat(Mapped("workflow.packs.lenses.review.repos", packs?.Lenses?.Review?.Repos)).Concat(Mapped("workflow.packs.pins", packs?.Pins));
+
+    private static IEnumerable<(string Key, string? Value)> Mapped(string path, IReadOnlyDictionary<string, string>? values) =>
+        (values ?? new Dictionary<string, string>(StringComparer.Ordinal)).Select(v => ($"{path}.{v.Key}", (string?)v.Value));
+
+    private static (string Key, string? Value)[] LineLimits(LineSettings? line) =>
+    [
+        ("workflow.line.parallel", Number(line?.Parallel)),
+        ("workflow.line.maxOpenPrs", Number(line?.MaxOpenPrs)),
+        ("workflow.line.maxStack", Number(line?.MaxStack)),
+    ];
+
+    private static IEnumerable<(string Key, string? Value)> PlanKeys(PlanSettings? plan) =>
+        new (string Key, string? Value)[] { ("workflow.plan.maxPhaseSize", plan?.MaxPhaseSize) }.Concat((plan?.Sizes ?? new Dictionary<string, SizeSettings>(StringComparer.Ordinal)).SelectMany(static s => SizeKeys(s.Key, s.Value)));
+
+    private static (string Key, string? Value)[] SizeKeys(string size, SizeSettings limits) =>
+    [
+        ($"workflow.plan.sizes.{size}.files", Number(limits.Files)),
+        ($"workflow.plan.sizes.{size}.items", Number(limits.Items)),
+        ($"workflow.plan.sizes.{size}.budget.tokens", Number(limits.Budget?.Tokens)),
+        ($"workflow.plan.sizes.{size}.budget.turns", Number(limits.Budget?.Turns)),
+        ($"workflow.plan.sizes.{size}.budget.wallMinutes", Number(limits.Budget?.WallMinutes)),
+    ];
+
+    private static (string Key, string? Value)[] BuildKeys(WorkflowSettings? workflow) =>
+    [
+        ("workflow.prove.holdoutMin", Number(workflow?.Prove?.HoldoutMin)),
+        ("workflow.build.commands", Joined(workflow?.Build?.Commands)),
+        ("workflow.ship.draft", workflow?.Ship?.Draft?.ToString()),
+    ];
+
+    private static (string Key, string? Value)[] ModelKeys(WorkflowSettings? workflow) =>
+    [
+        ("workflow.design.models.writer", workflow?.Design?.Models?.Writer),
+        ("workflow.design.models.lens", workflow?.Design?.Models?.Lens),
+        ("workflow.review.models.lens", workflow?.Review?.Models?.Lens),
+    ];
+
+    private static (string Key, string? Value)[] StepKeys(WorkflowSettings? workflow) =>
+    [
+        ("workflow.steps.longMax", workflow?.Steps?.LongMax),
+        ("workflow.docs.globs", Joined(workflow?.Docs?.Globs)),
+    ];
+
+    private static string? Number(long? value) => value?.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private static string? Joined(IReadOnlyList<string>? values) => values is null ? null : string.Join(", ", values);
 

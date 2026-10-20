@@ -814,6 +814,7 @@ an address is the typed `InstanceAddress`), plus
 | `GET /workflow/instances/{id}` | `GetInstance` (engine) | `InstanceDetail` (with `stepRuns[]`, the Step runs folded from the instance's ledger rows) |
 | `GET /workflow/instances/{id}/facts/{key}` | `GetInstanceFact` | `FactView` |
 | `GET /workflow/instances/{id}/scoping` | `GetInstanceScoping` (scoping, API2) | `ScopingView` (docs/csharp/sindri-scoping.md) |
+| `GET /workflow/instances/{id}/design-stop` | `GetInstanceDesignStop` (design, LN-API2) | `DesignStopView` of a `workflow.plan` instance (docs/csharp/sindri-line.md) |
 | `GET /workflow/instances/{id}/packets/{hash}/files/{name}` | `GetPacketFile` (scoping, API9) | the file as JSON or text (docs/csharp/sindri-scoping.md) |
 | `GET /workflow/recipes/{id}` and `{id}@{hash}` | `ShowRecipe` (engine) | `RecipeView` |
 

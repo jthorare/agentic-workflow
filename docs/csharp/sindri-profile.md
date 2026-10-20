@@ -59,6 +59,48 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `judge` | object (`providers`) | no | none | Which providers a Judge Step (`step.judge.choose`) may ask (DT-J plan Q8). `judge.providers` is a list of `jev`, `claude-cli`, `codex-cli`, `cursor-cli`, `rules`; absent: `claude-cli`, `codex-cli`, `cursor-cli`, `rules`. `jev` runs only when listed, so it is opt-in. `rules` is always kept, last. A recipe's own `providers` list only narrows this one and never adds `jev`. A name that is not one of the five is refused before approval (`workflow.judge.providers[i]`). A repo may set its own list under `repos[].workflow.judge.providers`; it wins over the box's |
 | `forge` | object | no | none | The forge port's settings: `adapter`, `hosts` and `credential` (see `workflow.forge` below) |
 | `route` | object (`startable`) | no | none | The router stub's setting (engine P7 plan D8; see `workflow.route` below) |
+| `packs` | object | no | none | The style and lens packs a repo uses and their pins (line spec §5; see `workflow.packs` below) |
+| `line` | object | no | none | How many phases run at once, how many pull requests stay open and how deep a stack goes (line spec §8; see `workflow.line` below) |
+| `plan` | object | no | none | The size classes and the largest phase size (line spec §6.3; see `workflow.plan` below) |
+| `prove` | object (`holdoutMin`) | no | none | The hidden-scenario minimum (line spec §7.3; see `workflow.prove` below) |
+| `build` | object (`commands`) | no | none | The commands that check a phase's change (line spec §7.2) |
+| `ship` | object (`draft`) | no | none | Whether the line opens draft pull requests (line spec §7.5) |
+| `design` | object (`models`) | no | none | The design writer and lens models (line spec §4; see `workflow.design` below) |
+| `review` | object (`models`) | no | none | The review lens model (line spec §7.4) |
+| `steps` | object (`longMax`) | no | none | The longest a block Step may declare (line spec LN-WF7) |
+| `docs` | object (`globs`) | no | none | Where docs sync may write (line spec §7.6) |
+
+### The line's keys (`workflow.packs`, `.line`, `.plan`, `.prove`, `.build`, `.ship`, `.design`, `.review`, `.steps`, `.docs`)
+
+Line spec Appendix D and LN-WF9. Every key is optional and each is a re-approval: `profile approve` lists the paths that changed. A profile that sets none of them keeps its canonical JSON and its approval. A pack or model id takes the id pattern only (a pack: `^[a-z][a-z0-9-]{1,39}$`; an agent: `^[a-z][a-z0-9-]{1,31}$`), never a catalog.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `workflow.packs.style` | object (`default`, `repos`) | no | `plain` | The style pack the design is written in (line spec §5.1): `default` is the pack id for every repo, `repos` maps a repo name to the pack it uses instead |
+| `workflow.packs.lenses` (`lenses`) | object (`design`, `review`) | no | `design-five`, `code-review` | The lens packs (line spec §5.2): `design` and `review` each take `default` and `repos` as `style` does |
+| `default` | pack id | no | the pack named above | A pack kind's pack for every repo without its own entry (`workflow.packs.style.default`, `.lenses.design.default`, `.lenses.review.default`) |
+| `repos` | map of repo name to pack id | no | none | A repo's pack for that kind (`workflow.packs.style.repos.<repo>` …); a repo name is non-empty text |
+| `workflow.packs.pins` (`pins`) | map of `style/<id>` or `lenses/<id>` to `sha256:` and 64 lower-case hex digits | no | `{}` | The hash a machine or repo pack must have (line spec §5.1); a pack with no pin, or another hash, is `SND-PACK-002` |
+| `workflow.line.parallel` (`parallel`) | integer, 1 or more | no | `2` | How many phases run at once. **Cross-key rule:** a value above the box's heavy-slot cap (`$AW_STATE_DIR/heavy-slots-cap`, else `AW_HEAVY_SLOTS`) is refused by `profile validate` and `profile approve` (`workflow.line.parallel`); a value left out is never held to the cap, and `line doctor` repeats the check when the cap later drops |
+| `workflow.line.maxOpenPrs` (`maxOpenPrs`) | integer, 1 or more | no | `4` | How many pull requests the line keeps open |
+| `workflow.line.maxStack` (`maxStack`) | integer, 1 or more | no | `4` | How deep a stack of phases may go (`PLN-STACK-001`) |
+| `workflow.plan.maxPhaseSize` (`maxPhaseSize`) | `XS`, `S` or `M` | no | `M` | The largest size a phase may be (`PLN-SIZE-001`); a phase larger than `M` is split (LN5) |
+| `workflow.plan.sizes` (`sizes`) | map of `XS`, `S`, `M`, `L`, `XL` to `files`, `items` and `budget` | no | spec Q5 | The limits of each size class, written to the sizes file `aw-packets validate --sizes` reads (`PKT-SIZE-001`, LN-PKT3; `LineProfile.SizesFile`). A size or a field left out takes its default: XS 3 files and 2 items, S 8 and 4, M 20 and 8; L (40, 16) and XL (80, 32) are provisional, and so is every budget (XS 100k tokens, 30 turns, 20 minutes; S 400k, 60, 45; M 800k, 100, 90; L 1.6M, 150, 180; XL 3.2M, 200, 360), tuned after LN-P from the merge records |
+| `files` | integer, 0 or more | no | per size | `workflow.plan.sizes.<size>.files`: the most files a phase's write scope covers |
+| `items` | integer, 0 or more | no | per size | `workflow.plan.sizes.<size>.items`: the most acceptance items a phase holds, hidden scenarios included |
+| `budget` | object (`tokens`, `turns`, `wallMinutes`) | no | per size | `workflow.plan.sizes.<size>.budget`: the most a phase may spend |
+| `tokens` | integer, 0 or more | no | per size | `…budget.tokens` |
+| `turns` | integer, 0 or more | no | per size | `…budget.turns` |
+| `wallMinutes` | integer, 0 or more | no | per size | `…budget.wallMinutes` |
+| `workflow.prove.holdoutMin` | integer, 1 or more | no | `2` | The fewest hidden scenarios a phase needs besides its canary (`PLN-HOLD-003`, `PRV-HOLD-002`) |
+| `workflow.build.commands` | string[] | no | none | The commands that check a phase's change (`step.build.checks`); each one command line of 1 to 1000 characters with no line break, and a list that is there is not empty. `line doctor` asks when it is absent |
+| `workflow.ship.draft` | boolean | no | `false` | Whether `effect.pr.open` opens the pull request as a draft |
+| `workflow.design.models` | object (`writer`, `lens`) | no | profile roles | The agents that write the design (`writer`) and run its lenses (`lens`); `DSN-LENS-002` warns when they are one model |
+| `workflow.review.models` | object (`lens`) | no | profile roles | The agent that runs the review lenses |
+| `workflow.steps.longMax` | duration | no | `2h` | The longest `MaxDuration` a block Step may declare (LN-WF7) |
+| `workflow.docs.globs` | string[] | no | `docs/**`, `*.md` | The paths docs sync may write (BD5): repo-relative globs with `/` separators and no `..`, as `index.denyPaths` takes them |
+
+`workflow.effects` gains no key of its own: the line's effects (`effect.line.start-phase`, `effect.line.report`, `effect.pr.open`) are entries of the allowlist. Code reads the values with their defaults through `LineProfile` (`Aw.Sindri.Core.Profile`).
 
 ### `repos[].workflow`
 

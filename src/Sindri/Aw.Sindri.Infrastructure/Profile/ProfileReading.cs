@@ -15,8 +15,9 @@ internal static class ProfileReading
     /// <param name="json">The profile as JSON.</param>
     /// <param name="source">The file it came from, for messages.</param>
     /// <param name="options">The package's AwJson options.</param>
+    /// <param name="box">The box's limits the profile must stay inside (the heavy-slot cap), or null to check the profile alone.</param>
     /// <returns>The loaded profile, or SND-PROFILE-002 naming the file, the key path and the fix.</returns>
-    internal static Result<LoadedProfile> FromJson(ReadOnlySpan<byte> json, string source, JsonSerializerOptions options)
+    internal static Result<LoadedProfile> FromJson(ReadOnlySpan<byte> json, string source, JsonSerializerOptions options, BoxLimits? box = null)
     {
         var typed = AwJson.Deserialize<SindriProfile>(json, options);
         if (typed.IsError)
@@ -24,7 +25,7 @@ internal static class ProfileReading
             return SindriErrors.ProfileInvalid.With($"{source}: {ProfileErrors.Explain(typed.Error.Message, options)} ({Fix})");
         }
 
-        var checkedProfile = ProfileRules.Check(typed.Value);
+        var checkedProfile = ProfileRules.Check(typed.Value, box);
         if (checkedProfile.IsError)
         {
             return SindriErrors.ProfileInvalid.With($"{source}: {checkedProfile.Error.Message} ({Fix})");

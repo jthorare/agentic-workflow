@@ -1,0 +1,752 @@
+{
+  "notYet": [],
+  "accepted": [],
+  "models": {
+    "writer": {
+      "model": "fixture-writer-model",
+      "vendor": "fixture-a"
+    },
+    "lens": {
+      "model": "fixture-lens-model",
+      "vendor": "fixture-b"
+    },
+    "warnings": []
+  },
+  "decisions": [
+    {
+      "decision": "D1",
+      "question": "Which expiry choices does the Share dialog offer?",
+      "status": "answered",
+      "recommended": "D1.a",
+      "chosen": "D1.a",
+      "affects": [
+        "sec-2.4"
+      ],
+      "cites": [
+        "S4",
+        "AC-1"
+      ],
+      "options": [
+        {
+          "option": "D1.a",
+          "answer": "Fixed choices: no expiry, 1 day, 7 days, 30 days.",
+          "tradeoffs": "Four buttons and no date maths; matches the examples in the brief; nobody can pick a date years away.",
+          "recommended": true
+        },
+        {
+          "option": "D1.b",
+          "answer": "A date field, up to 90 days ahead.",
+          "tradeoffs": "Any end date; needs a date input, its validation and a time zone choice in the dialog.",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "decision": "D2",
+      "question": "What does the expired page show besides the fact that the link expired?",
+      "status": "answered",
+      "recommended": "D2.a",
+      "chosen": "D2.a",
+      "affects": [
+        "sec-2.3"
+      ],
+      "cites": [
+        "S23",
+        "AC-2"
+      ],
+      "options": [
+        {
+          "option": "D2.a",
+          "answer": "Only that the link expired.",
+          "tradeoffs": "Reveals nothing about the note; a visitor must ask the sharer what happened.",
+          "recommended": true
+        },
+        {
+          "option": "D2.b",
+          "answer": "The note's title and the sharer's name.",
+          "tradeoffs": "A visitor knows whom to ask; the page reveals that the note exists and who wrote about it.",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "decision": "D3",
+      "question": "Where does link expiry run: on read, or in the nightly job?",
+      "status": "answered",
+      "recommended": "D3.a",
+      "chosen": "D3.a",
+      "affects": [
+        "sec-2.2",
+        "sec-3"
+      ],
+      "cites": [
+        "S3",
+        "AC-2",
+        "AC-5"
+      ],
+      "options": [
+        {
+          "option": "D3.a",
+          "answer": "Checked on read, in the public route.",
+          "tradeoffs": "Exact to the second; one column read per request.",
+          "recommended": true
+        },
+        {
+          "option": "D3.b",
+          "answer": "Swept by the nightly job.",
+          "tradeoffs": "No cost on read; an expired link stays open for up to a day, which AC-2 forbids.",
+          "recommended": false
+        }
+      ]
+    }
+  ],
+  "acceptance": {
+    "added": [
+      {
+        "item": "AC-11",
+        "text": "When a team's notes are exported, the system shall produce the same output as before this change, whether or not a note has a link with an expiry time.",
+        "citations": [
+          "sec-4"
+        ],
+        "trust": "untrusted"
+      }
+    ],
+    "superseded": []
+  },
+  "escapes": [
+    {
+      "from": "scoping",
+      "station": "design",
+      "kind": "acceptance",
+      "target": "AC-11",
+      "why": "Export regression, added by the design; export is excluded in the scope map."
+    },
+    {
+      "from": "scoping",
+      "station": "design",
+      "kind": "surface",
+      "target": "surface:route/export-download",
+      "why": "AC-11's surface; the scope map lists it as excluded."
+    }
+  ],
+  "graph": {
+    "parallel": 2,
+    "maxStack": 4,
+    "prCount": 4,
+    "criticalPath": [
+      "P1",
+      "P2",
+      "P4"
+    ],
+    "waves": [
+      [
+        "P1"
+      ],
+      [
+        "P2",
+        "P3"
+      ],
+      [
+        "P4"
+      ]
+    ],
+    "phases": [
+      {
+        "phase": "P1",
+        "title": "The expiry field and its migration",
+        "size": "S",
+        "kind": "feature",
+        "stack": 1,
+        "wave": 1,
+        "base": "default-branch main",
+        "waitsForMerge": false,
+        "items": [
+          "AC-4",
+          "AC-7",
+          "AC-10"
+        ],
+        "allowedFiles": [
+          "new: migrations/006_link_expiry.sql",
+          "src/sharing/links.ts",
+          "src/sharing/routes.ts"
+        ],
+        "testChanges": [
+          {
+            "path": "tests/sharing.test.ts",
+            "reason": "createLink gains an optional expiry argument, so its call sites in the test change"
+          }
+        ],
+        "hiddenScenarios": 2
+      },
+      {
+        "phase": "P2",
+        "title": "The public route's expired page",
+        "size": "S",
+        "kind": "feature",
+        "stack": 1,
+        "wave": 2,
+        "base": "dependency-head P1",
+        "waitsForMerge": false,
+        "items": [
+          "AC-2",
+          "AC-3",
+          "AC-5",
+          "AC-8"
+        ],
+        "allowedFiles": [
+          "src/sharing/links.ts",
+          "src/sharing/routes.ts",
+          "new: src/sharing/expired-page.ts"
+        ],
+        "testChanges": [
+          {
+            "path": "tests/revoke.test.ts",
+            "reason": "a revoked link and an expired link both end the link; the test's setup changes"
+          }
+        ],
+        "hiddenScenarios": 2
+      },
+      {
+        "phase": "P3",
+        "title": "The expiry picker in the web screens",
+        "size": "XS",
+        "kind": "feature",
+        "stack": 2,
+        "wave": 2,
+        "base": "dependency-head P1",
+        "waitsForMerge": false,
+        "items": [
+          "AC-1"
+        ],
+        "allowedFiles": [
+          "web/screens/ShareDialog.ts",
+          "web/api-client.ts"
+        ],
+        "testChanges": [],
+        "hiddenScenarios": 2
+      },
+      {
+        "phase": "P4",
+        "title": "Regression coverage for export and the digest",
+        "size": "S",
+        "kind": "feature",
+        "stack": 1,
+        "wave": 3,
+        "base": "dependency-head P2",
+        "waitsForMerge": true,
+        "items": [
+          "AC-6",
+          "AC-9",
+          "AC-11"
+        ],
+        "allowedFiles": [
+          "src/digest/digest.ts"
+        ],
+        "testChanges": [
+          {
+            "path": "tests/digest.test.ts",
+            "reason": "the digest test gains a week that holds an expiring link"
+          }
+        ],
+        "hiddenScenarios": 2
+      }
+    ]
+  },
+  "trace": [
+    {
+      "item": "AC-4",
+      "phase": "P1",
+      "signals": [
+        {
+          "signal": "SG-4a",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "POST /api/links with an expiresAt 1 second in the past answers 400, and the link count stays the same."
+        },
+        {
+          "signal": "SG-4b",
+          "kind": "test",
+          "runsAt": "head",
+          "statement": "tests/expiry.test.ts 'refuses an expiry time that is not in the future' passes at the head."
+        }
+      ]
+    },
+    {
+      "item": "AC-7",
+      "phase": "P1",
+      "signals": [
+        {
+          "signal": "SG-7a",
+          "kind": "migration",
+          "runsAt": "head",
+          "statement": "After migration 006 on a database with 2 existing links, 0 rows have a non-null expires_at."
+        },
+        {
+          "signal": "SG-7b",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "GET /s/:token for each of those 2 links answers 200 with the note."
+        }
+      ]
+    },
+    {
+      "item": "AC-10",
+      "phase": "P1",
+      "signals": [
+        {
+          "signal": "SG-R3a",
+          "kind": "api-transcript",
+          "runsAt": "base+head",
+          "statement": "POST /api/links as a viewer answers 403 at the base and at the head."
+        }
+      ]
+    },
+    {
+      "item": "AC-2",
+      "phase": "P2",
+      "signals": [
+        {
+          "signal": "SG-2a",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "GET /s/:token for a link that expired 1 second ago answers 410, and the body holds 0 characters of the note."
+        },
+        {
+          "signal": "SG-2b",
+          "kind": "ui-browser",
+          "runsAt": "head",
+          "statement": "Opening that link in a browser shows the words 'This link has expired' and no note title."
+        }
+      ]
+    },
+    {
+      "item": "AC-3",
+      "phase": "P2",
+      "signals": [
+        {
+          "signal": "SG-3a",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "GET /s/:token for a link with no expiry answers 200 with the note, after the server clock moves 365 days."
+        }
+      ]
+    },
+    {
+      "item": "AC-5",
+      "phase": "P2",
+      "signals": [
+        {
+          "signal": "SG-5a",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "GET /s/:token for a link that is both revoked and expired answers 404 or 410, and the body holds 0 characters of the note."
+        }
+      ]
+    },
+    {
+      "item": "AC-8",
+      "phase": "P2",
+      "signals": [
+        {
+          "signal": "SG-R1a",
+          "kind": "api-transcript",
+          "runsAt": "base+head",
+          "statement": "DELETE /api/links/:id then GET /s/:token gives the same status and a body of the same length at the base and at the head, for 1 revoked link."
+        }
+      ]
+    },
+    {
+      "item": "AC-1",
+      "phase": "P3",
+      "signals": [
+        {
+          "signal": "SG-1a",
+          "kind": "ui-browser",
+          "runsAt": "head",
+          "statement": "In the Share dialog, picking 7 days and creating the link shows a link whose stored expiry is 168 hours after the click, to the minute."
+        },
+        {
+          "signal": "SG-1b",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "POST /api/links with an expiresAt 7 days ahead answers 200, and the body returns expiresAt unchanged."
+        }
+      ]
+    },
+    {
+      "item": "AC-6",
+      "phase": "P4",
+      "signals": [
+        {
+          "signal": "SG-6a",
+          "kind": "api-transcript",
+          "runsAt": "head",
+          "statement": "A digest built for a team with 2 links expiring within 7 days and 1 expiring in 8 days lists exactly 2 links."
+        }
+      ]
+    },
+    {
+      "item": "AC-9",
+      "phase": "P4",
+      "signals": [
+        {
+          "signal": "SG-R2a",
+          "kind": "api-transcript",
+          "runsAt": "base+head",
+          "statement": "A digest built for a week with no changed note and no link expiring within 7 days sends 0 mails, at the base and at the head."
+        }
+      ]
+    },
+    {
+      "item": "AC-11",
+      "phase": "P4",
+      "signals": [
+        {
+          "signal": "SG-R4a",
+          "kind": "api-transcript",
+          "runsAt": "base+head",
+          "statement": "GET /api/export for a team with 1 note whose link expires tomorrow returns a body that is byte-for-byte equal at the base and at the head."
+        }
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "scope": "S1",
+      "key": "feature:sharing",
+      "sections": [
+        "sec-1"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S2",
+      "key": "surface:route/links-create",
+      "sections": [
+        "sec-2.1"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S3",
+      "key": "surface:route/link-resolve",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S4",
+      "key": "surface:screen/share-dialog",
+      "sections": [
+        "sec-2.4"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S5",
+      "key": "action:sharing.create-link",
+      "sections": [
+        "sec-2.1"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S6",
+      "key": "action:sharing.resolve-link",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S7",
+      "key": "thing:shared-link",
+      "sections": [
+        "sec-1"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S8",
+      "key": "code:src/sharing/links.ts",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S9",
+      "key": "code:src/sharing/routes.ts",
+      "sections": [
+        "sec-2.1"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S10",
+      "key": "code:web/screens/ShareDialog.ts",
+      "sections": [
+        "sec-2.4"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S11",
+      "key": "code:tests/sharing.test.ts",
+      "sections": [
+        "sec-4"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S12",
+      "key": "feature:sharing.link-revocation",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S13",
+      "key": "surface:route/links-revoke",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S15",
+      "key": "action:sharing.revoke-link",
+      "sections": [
+        "sec-2.2"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S16",
+      "key": "feature:digest",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S17",
+      "key": "surface:api/weekly-digest-email",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S18",
+      "key": "action:digest.send",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S19",
+      "key": "surface:job/nightly",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S20",
+      "key": "code:src/digest/digest.ts",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S21",
+      "key": "code:src/jobs/nightly.ts",
+      "sections": [
+        "sec-2.5"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S22",
+      "key": "surface:dialog/share-expiry",
+      "sections": [
+        "sec-2.4"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S23",
+      "key": "surface:screen/link-expired",
+      "sections": [
+        "sec-2.3"
+      ],
+      "excluded": null
+    },
+    {
+      "scope": "S14",
+      "key": "surface:setting/linkRevocation",
+      "sections": [],
+      "excluded": "Expiry is not behind the linkRevocation flag (owner answer, round 1), so the flag's surface is untouched."
+    }
+  ],
+  "spec": {
+    "text": "# Shared links expire after a chosen time\n\n## Summary\n\nA member who shares a note can pick when the link stops working. A link with no chosen time works as it does today\n(AC-3). An expired link answers with a page that says it expired and never returns the note (AC-2, AC-5). This\nreverses decision 0001 only for links that choose a time (S1).\n\n## Behaviour\n\n### Creating a link\n\nThe create route (S2, S5) takes an optional expiry time. It refuses a time that is not in the future and creates no\nlink (AC-4). Any editor may set one; a viewer still cannot create a link (AC-10).\n\n### Opening a link\n\nassumes: D3.a\n\nThe public route (S3, S6) compares the link's expiry time with the server clock, in UTC, once per request. The\ninstant of expiry is the end: a request at that instant is refused (AC-2). A revoked link and an expired link both end\nthe link, and expiry is not behind the linkRevocation flag (AC-5, S12). A link with no expiry time stays valid until\nit is revoked or its note is deleted (AC-3). A link made before this change counts as having none (AC-7).\n\n### The expired page\n\nassumes: D2.a\n\nThe public route answers 410 with a page that says the link expired, and nothing else. It does not say whether the\nnote still exists (S23, AC-2, D2).\n\n### The picker\n\nassumes: D1.a\n\nThe Share dialog (S4, S22) offers four choices: no expiry, 1 day, 7 days and 30 days. No expiry is the default\n(AC-1, D1).\n\n### The digest notice\n\nThe weekly digest lists the owner's links that expire within 7 days, one line for each (S17, S18, AC-6). A week with\nno changed note and no expiring link sends nothing (AC-9).\n\n## Data\n\nassumes: D3.a\n\nMigration 006 adds a nullable `expires_at` column to `shared_links`. It holds a UTC instant in ISO 8601 with a `Z`\nsuffix. Old rows stay null (AC-7). The public route reads the column on each request, and no job writes it (D3).\n\n## Proof\n\nEach item has a signal in `signals.json`. Create, refuse and open are shown with API transcripts at the head. The\npicker is shown in a browser. Migration 006 is shown on a database that already holds two links (AC-7). The\nregressions are compared at the base and at the head: revoke (AC-8), the quiet digest (AC-9), the viewer refusal\n(AC-10) and the export (AC-11, an added item under sec-4).\n\n## Rows to other lanes\n\n1. Docs: edit decision 0001 so that a link may now choose an expiry time (X1).\n",
+    "assumes": [
+      {
+        "section": "sec-2.2",
+        "decision": "D3",
+        "option": "D3.a"
+      },
+      {
+        "section": "sec-2.3",
+        "decision": "D2",
+        "option": "D2.a"
+      },
+      {
+        "section": "sec-2.4",
+        "decision": "D1",
+        "option": "D1.a"
+      },
+      {
+        "section": "sec-3",
+        "decision": "D3",
+        "option": "D3.a"
+      }
+    ]
+  },
+  "contracts": [
+    {
+      "edit": "X1",
+      "lane": "docs",
+      "file": "docs/decisions/0001-links-never-expire.md",
+      "heading": "0001: Shared links never expire",
+      "quote": "A shared link stays valid until its note is deleted.",
+      "change": "A shared link stays valid until its note is deleted, unless the person who shared it chose an expiry time.",
+      "row": 1,
+      "checks": [
+        {
+          "rule": "DSN-XSPEC-001",
+          "status": "not-run"
+        },
+        {
+          "rule": "DSN-XSPEC-002",
+          "status": "not-run"
+        },
+        {
+          "rule": "DSN-XSPEC-003",
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "lensRounds": [
+    {
+      "round": 1,
+      "lenses": [
+        {
+          "lens": "product",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        },
+        {
+          "lens": "architecture",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": [
+            {
+              "finding": "F-1",
+              "severity": "HIGH",
+              "cite": "sec-2.2",
+              "text": "The public route could read the clock twice, once to refuse and once to log, and the two reads may fall either side of the expiry instant.",
+              "resolution": "Fixed: sec-2.2 now reads the clock once for each request."
+            }
+          ]
+        },
+        {
+          "lens": "design",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": [
+            {
+              "finding": "F-2",
+              "severity": "MEDIUM",
+              "cite": "sec-2.3",
+              "text": "The expired page has no next step for the visitor.",
+              "resolution": "Not changed: what the page shows beyond the fact is decision D2; the owner picks at stop 2."
+            }
+          ]
+        },
+        {
+          "lens": "devex",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": [
+            {
+              "finding": "F-3",
+              "severity": "LOW",
+              "cite": "sec-2.3",
+              "text": "The status code for an expired link is not named.",
+              "resolution": "Fixed: sec-2.3 names 410."
+            }
+          ]
+        },
+        {
+          "lens": "security",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": [
+            {
+              "finding": "F-4",
+              "severity": "MEDIUM",
+              "cite": "sec-2.3",
+              "text": "The expired answer must not tell a stranger whether the note still exists.",
+              "resolution": "Fixed: sec-2.3 says the page does not say whether the note exists."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "lenses": [
+        {
+          "lens": "product",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        },
+        {
+          "lens": "architecture",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        },
+        {
+          "lens": "design",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        },
+        {
+          "lens": "devex",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        },
+        {
+          "lens": "security",
+          "model": "fixture-lens-model",
+          "notApplicable": null,
+          "findings": []
+        }
+      ]
+    }
+  ],
+  "freezeRefused": null
+}

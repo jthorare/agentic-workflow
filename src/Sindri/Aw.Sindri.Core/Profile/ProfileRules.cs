@@ -11,8 +11,15 @@ public static class ProfileRules
     /// <summary>Checks <paramref name="profile"/> and returns it with defaults applied (sorted services and repos).</summary>
     /// <param name="profile">The deserialized profile.</param>
     /// <returns>The canonical profile, or SND-PROFILE-002 naming the key path and the fix.</returns>
-    public static Result<SindriProfile> Check(SindriProfile profile)
+    public static Result<SindriProfile> Check(SindriProfile profile) => Check(profile, box: null);
+
+    /// <summary>Checks <paramref name="profile"/> against what the box allows, and returns it with defaults applied.</summary>
+    /// <param name="profile">The deserialized profile.</param>
+    /// <param name="box">The box's limits (the heavy-slot cap), or null to check the profile alone.</param>
+    /// <returns>The canonical profile, or SND-PROFILE-002 naming the key path and the fix.</returns>
+    public static Result<SindriProfile> Check(SindriProfile profile, BoxLimits? box)
     {
+        ArgumentNullException.ThrowIfNull(profile);
         if (profile.SchemaVersion != SindriProfile.CurrentSchemaVersion)
         {
             return Invalid("schemaVersion", string.Create(CultureInfo.InvariantCulture,
@@ -29,7 +36,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Sections(profile);
+        var invalid = Sections(profile) ?? LineProfileRules.Check(profile.Workflow, box);
         if (invalid is not null)
         {
             return invalid;
@@ -132,7 +139,7 @@ public static class ProfileRules
         return null;
     }
 
-    private static string? GlobProblem(string glob) => true switch
+    internal static string? GlobProblem(string glob) => true switch
     {
         _ when string.IsNullOrWhiteSpace(glob) => "must be a non-empty glob",
         _ when glob.Length > MaxGlob => string.Create(CultureInfo.InvariantCulture, $"is over {MaxGlob} characters"),

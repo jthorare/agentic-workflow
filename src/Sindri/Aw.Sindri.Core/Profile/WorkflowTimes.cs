@@ -11,7 +11,7 @@ public sealed record WorkflowTimes(TimeSpan DeskTimeout, TimeSpan EventHold)
     public static WorkflowTimes Defaults { get; } = new(TimeSpan.FromDays(2), TimeSpan.FromHours(24));
 
     /// <summary>The times <paramref name="profile"/> sets, a key it leaves out (or a profile with no 'workflow:' block) taking its default.</summary>
-    /// <param name="profile">A checked profile (<see cref="ProfileRules.Check"/> refused any value that isn't a duration).</param>
+    /// <param name="profile">A checked profile (<see cref="ProfileRules.Check(SindriProfile)"/> refused any value that isn't a duration).</param>
     /// <returns>The times.</returns>
     public static WorkflowTimes Of(SindriProfile profile)
     {

@@ -11878,8 +11878,6 @@ static Aw.Sindri.Core.Sessions.PaneRead.Captured(int panePid, byte[]! capture) -
 Aw.Sindri.Core.Mcp.ProviderResult.Detail.get -> string!
 Aw.Sindri.Core.Mcp.ProviderResult.Detail.init -> void
 static Aw.Sindri.Core.Mcp.McpRegistration.Url(int port) -> string!
-Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route) -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null) -> void
 Aw.Sindri.Core.Scoping.IScopePacketStore
 Aw.Sindri.Core.Scoping.IScopePacketStore.Hash(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Scoping.IScopePacketStore.ReadFile(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
@@ -12936,6 +12934,1006 @@ static Aw.Sindri.Core.Sessions.SessionIdCapture.Check(string? pattern, Aw.Sindri
 static readonly Aw.Sindri.Core.SindriErrors.LaunchSessionIdTimedOut -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceDetailContext.Deconstruct(out string! Title, out Aw.Sindri.Core.Workflow.Views.ParentRef? Parent, out Aw.Sindri.Core.Workflow.Views.ViewCounts! Counts, out System.DateTimeOffset AsOf, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StepRun!>? StepRuns, out string? RecipeDisplayName) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceDetailContext.InstanceDetailContext(string! Title, Aw.Sindri.Core.Workflow.Views.ParentRef? Parent, Aw.Sindri.Core.Workflow.Views.ViewCounts! Counts, System.DateTimeOffset AsOf, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StepRun!>? StepRuns = null, string? RecipeDisplayName = null) -> void
+
+Aw.Sindri.Core.Line.LineCheckResponse
+Aw.Sindri.Core.Line.LineCheckResponse.<Clone>$() -> Aw.Sindri.Core.Line.LineCheckResponse!
+Aw.Sindri.Core.Line.LineCheckResponse.Deconstruct(out string! Station, out Aw.Sindri.Core.Line.LineStage Stage, out Aw.Sindri.Core.Line.LineOutcome Outcome, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Findings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Warnings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineRuleResult!>! Rules) -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Equals(Aw.Sindri.Core.Line.LineCheckResponse? other) -> bool
+Aw.Sindri.Core.Line.LineCheckResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>!
+Aw.Sindri.Core.Line.LineCheckResponse.Findings.init -> void
+Aw.Sindri.Core.Line.LineCheckResponse.LineCheckResponse(string! Station, Aw.Sindri.Core.Line.LineStage Stage, Aw.Sindri.Core.Line.LineOutcome Outcome, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Findings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Warnings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineRuleResult!>! Rules) -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Outcome.get -> Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineCheckResponse.Outcome.init -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Passed.get -> bool
+Aw.Sindri.Core.Line.LineCheckResponse.Rules.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineRuleResult!>!
+Aw.Sindri.Core.Line.LineCheckResponse.Rules.init -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Stage.get -> Aw.Sindri.Core.Line.LineStage
+Aw.Sindri.Core.Line.LineCheckResponse.Stage.init -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Station.get -> string!
+Aw.Sindri.Core.Line.LineCheckResponse.Station.init -> void
+Aw.Sindri.Core.Line.LineCheckResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>!
+Aw.Sindri.Core.Line.LineCheckResponse.Warnings.init -> void
+Aw.Sindri.Core.Line.LineFinding
+Aw.Sindri.Core.Line.LineFinding.<Clone>$() -> Aw.Sindri.Core.Line.LineFinding!
+Aw.Sindri.Core.Line.LineFinding.Deconstruct(out string! Rule, out string? Item, out string! Message, out string! Fix, out Aw.Sindri.Core.Line.LineSeverity Severity) -> void
+Aw.Sindri.Core.Line.LineFinding.Equals(Aw.Sindri.Core.Line.LineFinding? other) -> bool
+Aw.Sindri.Core.Line.LineFinding.Fix.get -> string!
+Aw.Sindri.Core.Line.LineFinding.Fix.init -> void
+Aw.Sindri.Core.Line.LineFinding.Item.get -> string?
+Aw.Sindri.Core.Line.LineFinding.Item.init -> void
+Aw.Sindri.Core.Line.LineFinding.LineFinding(string! Rule, string? Item, string! Message, string! Fix, Aw.Sindri.Core.Line.LineSeverity Severity) -> void
+Aw.Sindri.Core.Line.LineFinding.Message.get -> string!
+Aw.Sindri.Core.Line.LineFinding.Message.init -> void
+Aw.Sindri.Core.Line.LineFinding.Rule.get -> string!
+Aw.Sindri.Core.Line.LineFinding.Rule.init -> void
+Aw.Sindri.Core.Line.LineFinding.Severity.get -> Aw.Sindri.Core.Line.LineSeverity
+Aw.Sindri.Core.Line.LineFinding.Severity.init -> void
+Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineOutcome.Complete = 3 -> Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineOutcome.Gaps = 2 -> Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineOutcome.Incomplete = 4 -> Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineOutcome.Pass = 1 -> Aw.Sindri.Core.Line.LineOutcome
+Aw.Sindri.Core.Line.LineRuleResult
+Aw.Sindri.Core.Line.LineRuleResult.<Clone>$() -> Aw.Sindri.Core.Line.LineRuleResult!
+Aw.Sindri.Core.Line.LineRuleResult.Deconstruct(out string! Rule, out Aw.Sindri.Core.Line.LineRuleStatus Status, out System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.Sindri.Core.Line.LineRuleResult.Equals(Aw.Sindri.Core.Line.LineRuleResult? other) -> bool
+Aw.Sindri.Core.Line.LineRuleResult.LineRuleResult(string! Rule, Aw.Sindri.Core.Line.LineRuleStatus Status, System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.Sindri.Core.Line.LineRuleResult.Missing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.LineRuleResult.Missing.init -> void
+Aw.Sindri.Core.Line.LineRuleResult.Rule.get -> string!
+Aw.Sindri.Core.Line.LineRuleResult.Rule.init -> void
+Aw.Sindri.Core.Line.LineRuleResult.Status.get -> Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineRuleResult.Status.init -> void
+Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineRuleStatus.Fail = 2 -> Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineRuleStatus.NotRun = 4 -> Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineRuleStatus.Pass = 1 -> Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineRuleStatus.Warn = 3 -> Aw.Sindri.Core.Line.LineRuleStatus
+Aw.Sindri.Core.Line.LineSeverity
+Aw.Sindri.Core.Line.LineSeverity.Fail = 1 -> Aw.Sindri.Core.Line.LineSeverity
+Aw.Sindri.Core.Line.LineSeverity.Warn = 2 -> Aw.Sindri.Core.Line.LineSeverity
+Aw.Sindri.Core.Line.LineStage
+Aw.Sindri.Core.Line.LineStage.Draft = 1 -> Aw.Sindri.Core.Line.LineStage
+Aw.Sindri.Core.Line.LineStage.Evidence = 2 -> Aw.Sindri.Core.Line.LineStage
+override Aw.Sindri.Core.Line.LineCheckResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineCheckResponse.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineCheckResponse.ToString() -> string!
+override Aw.Sindri.Core.Line.LineFinding.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineFinding.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineFinding.ToString() -> string!
+override Aw.Sindri.Core.Line.LineRuleResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineRuleResult.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineRuleResult.ToString() -> string!
+static Aw.Sindri.Core.Line.LineCheckResponse.operator !=(Aw.Sindri.Core.Line.LineCheckResponse? left, Aw.Sindri.Core.Line.LineCheckResponse? right) -> bool
+static Aw.Sindri.Core.Line.LineCheckResponse.operator ==(Aw.Sindri.Core.Line.LineCheckResponse? left, Aw.Sindri.Core.Line.LineCheckResponse? right) -> bool
+static Aw.Sindri.Core.Line.LineFinding.operator !=(Aw.Sindri.Core.Line.LineFinding? left, Aw.Sindri.Core.Line.LineFinding? right) -> bool
+static Aw.Sindri.Core.Line.LineFinding.operator ==(Aw.Sindri.Core.Line.LineFinding? left, Aw.Sindri.Core.Line.LineFinding? right) -> bool
+static Aw.Sindri.Core.Line.LineRuleResult.operator !=(Aw.Sindri.Core.Line.LineRuleResult? left, Aw.Sindri.Core.Line.LineRuleResult? right) -> bool
+static Aw.Sindri.Core.Line.LineRuleResult.operator ==(Aw.Sindri.Core.Line.LineRuleResult? left, Aw.Sindri.Core.Line.LineRuleResult? right) -> bool
+Aw.Sindri.Core.Line.LineChecks
+Aw.Sindri.Core.Line.LineFacts
+Aw.Sindri.Core.Line.LineFacts.Has(string! name) -> bool
+Aw.Sindri.Core.Line.LineFacts.Json(string! name) -> System.Text.Json.Nodes.JsonNode?
+Aw.Sindri.Core.Line.LineFacts.LineFacts(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! files) -> void
+Aw.Sindri.Core.Line.LineFacts.Missing(params string![]! names) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.LineFacts.Names.get -> System.Collections.Generic.IEnumerable<string!>!
+Aw.Sindri.Core.Line.LineFacts.Text(string! name) -> string!
+Aw.Sindri.Core.Line.LineFacts.Unparseable(string! name) -> string?
+Aw.Sindri.Core.Line.LineJson
+Aw.Sindri.Core.Line.LineRule
+Aw.Sindri.Core.Line.LineRule.<Clone>$() -> Aw.Sindri.Core.Line.LineRule!
+Aw.Sindri.Core.Line.LineRule.Body.get -> System.Action<Aw.Sindri.Core.Line.LineFacts!, Aw.Sindri.Core.Line.LineSink!>!
+Aw.Sindri.Core.Line.LineRule.Body.init -> void
+Aw.Sindri.Core.Line.LineRule.Deconstruct(out string! Name, out Aw.Sindri.Core.Line.LineStage From, out System.Action<Aw.Sindri.Core.Line.LineFacts!, Aw.Sindri.Core.Line.LineSink!>! Body) -> void
+Aw.Sindri.Core.Line.LineRule.Equals(Aw.Sindri.Core.Line.LineRule? other) -> bool
+Aw.Sindri.Core.Line.LineRule.From.get -> Aw.Sindri.Core.Line.LineStage
+Aw.Sindri.Core.Line.LineRule.From.init -> void
+Aw.Sindri.Core.Line.LineRule.LineRule(string! Name, Aw.Sindri.Core.Line.LineStage From, System.Action<Aw.Sindri.Core.Line.LineFacts!, Aw.Sindri.Core.Line.LineSink!>! Body) -> void
+Aw.Sindri.Core.Line.LineRule.Name.get -> string!
+Aw.Sindri.Core.Line.LineRule.Name.init -> void
+Aw.Sindri.Core.Line.LineSink
+Aw.Sindri.Core.Line.LineSink.Fail(string? item, string! message, string! fix) -> void
+Aw.Sindri.Core.Line.LineSink.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>!
+Aw.Sindri.Core.Line.LineSink.LineSink(string! rule, Aw.Sindri.Core.Line.LineFacts! facts) -> void
+Aw.Sindri.Core.Line.LineSink.Missing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.LineSink.Need(params string![]! names) -> bool
+Aw.Sindri.Core.Line.LineSink.Warn(string? item, string! message, string! fix) -> void
+override Aw.Sindri.Core.Line.LineRule.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineRule.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineRule.ToString() -> string!
+static Aw.Sindri.Core.Line.LineChecks.Run(string! station, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineRule!>! rules, Aw.Sindri.Core.Line.LineFacts! facts, Aw.Sindri.Core.Line.LineStage stage) -> Aw.Sindri.Core.Line.LineCheckResponse!
+static Aw.Sindri.Core.Line.LineJson.Arr(System.Text.Json.Nodes.JsonNode? node, string! name) -> System.Text.Json.Nodes.JsonArray?
+static Aw.Sindri.Core.Line.LineJson.Bool(System.Text.Json.Nodes.JsonNode? node, string! name) -> bool?
+static Aw.Sindri.Core.Line.LineJson.Items(System.Text.Json.Nodes.JsonNode? array) -> System.Collections.Generic.IEnumerable<System.Text.Json.Nodes.JsonNode!>!
+static Aw.Sindri.Core.Line.LineJson.Items(System.Text.Json.Nodes.JsonNode? node, string! name) -> System.Collections.Generic.IEnumerable<System.Text.Json.Nodes.JsonNode!>!
+static Aw.Sindri.Core.Line.LineJson.Number(System.Text.Json.Nodes.JsonNode? node, string! name) -> int?
+static Aw.Sindri.Core.Line.LineJson.Obj(System.Text.Json.Nodes.JsonNode? node, string! name) -> System.Text.Json.Nodes.JsonObject?
+static Aw.Sindri.Core.Line.LineJson.Str(System.Text.Json.Nodes.JsonNode? node, string! name) -> string?
+static Aw.Sindri.Core.Line.LineJson.Strings(System.Text.Json.Nodes.JsonNode? array) -> System.Collections.Generic.IEnumerable<string!>!
+static Aw.Sindri.Core.Line.LineJson.Strings(System.Text.Json.Nodes.JsonNode? node, string! name) -> System.Collections.Generic.IEnumerable<string!>!
+static Aw.Sindri.Core.Line.LineRule.operator !=(Aw.Sindri.Core.Line.LineRule? left, Aw.Sindri.Core.Line.LineRule? right) -> bool
+static Aw.Sindri.Core.Line.LineRule.operator ==(Aw.Sindri.Core.Line.LineRule? left, Aw.Sindri.Core.Line.LineRule? right) -> bool
+Aw.Sindri.Core.Line.LineErrors
+Aw.Sindri.Core.Line.LineFile
+Aw.Sindri.Core.Line.LineFile.<Clone>$() -> Aw.Sindri.Core.Line.LineFile!
+Aw.Sindri.Core.Line.LineFile.Content.get -> string!
+Aw.Sindri.Core.Line.LineFile.Content.init -> void
+Aw.Sindri.Core.Line.LineFile.Deconstruct(out string! Path, out string! Content) -> void
+Aw.Sindri.Core.Line.LineFile.Equals(Aw.Sindri.Core.Line.LineFile? other) -> bool
+Aw.Sindri.Core.Line.LineFile.LineFile(string! Path, string! Content) -> void
+Aw.Sindri.Core.Line.LineFile.Path.get -> string!
+Aw.Sindri.Core.Line.LineFile.Path.init -> void
+Aw.Sindri.Core.Line.LinePacketIndex
+Aw.Sindri.Core.Line.PacketIdentity
+Aw.Sindri.Core.Line.PacketIdentity.<Clone>$() -> Aw.Sindri.Core.Line.PacketIdentity!
+Aw.Sindri.Core.Line.PacketIdentity.BaseSha.get -> string!
+Aw.Sindri.Core.Line.PacketIdentity.BaseSha.init -> void
+Aw.Sindri.Core.Line.PacketIdentity.Deconstruct(out string! Packet, out string! Repo, out string! BaseSha) -> void
+Aw.Sindri.Core.Line.PacketIdentity.Equals(Aw.Sindri.Core.Line.PacketIdentity? other) -> bool
+Aw.Sindri.Core.Line.PacketIdentity.Packet.get -> string!
+Aw.Sindri.Core.Line.PacketIdentity.Packet.init -> void
+Aw.Sindri.Core.Line.PacketIdentity.PacketIdentity(string! Packet, string! Repo, string! BaseSha) -> void
+Aw.Sindri.Core.Line.PacketIdentity.Repo.get -> string!
+Aw.Sindri.Core.Line.PacketIdentity.Repo.init -> void
+Aw.Sindri.Core.Packets.FrozenPacket
+Aw.Sindri.Core.Packets.FrozenPacket.<Clone>$() -> Aw.Sindri.Core.Packets.FrozenPacket!
+Aw.Sindri.Core.Packets.FrozenPacket.By.get -> Aw.Sindri.Core.Packets.PacketFreezer
+Aw.Sindri.Core.Packets.FrozenPacket.By.init -> void
+Aw.Sindri.Core.Packets.FrozenPacket.Deconstruct(out string! Hash, out string! Packet, out string! Kind, out Aw.Sindri.Core.Packets.PacketFreezer By) -> void
+Aw.Sindri.Core.Packets.FrozenPacket.Equals(Aw.Sindri.Core.Packets.FrozenPacket? other) -> bool
+Aw.Sindri.Core.Packets.FrozenPacket.FrozenPacket(string! Hash, string! Packet, string! Kind, Aw.Sindri.Core.Packets.PacketFreezer By) -> void
+Aw.Sindri.Core.Packets.FrozenPacket.Hash.get -> string!
+Aw.Sindri.Core.Packets.FrozenPacket.Hash.init -> void
+Aw.Sindri.Core.Packets.FrozenPacket.Kind.get -> string!
+Aw.Sindri.Core.Packets.FrozenPacket.Kind.init -> void
+Aw.Sindri.Core.Packets.FrozenPacket.Packet.get -> string!
+Aw.Sindri.Core.Packets.FrozenPacket.Packet.init -> void
+Aw.Sindri.Core.Packets.IFrozenPackets
+Aw.Sindri.Core.Packets.IFrozenPackets.Find(string! hash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Packets.FrozenPacket?>!>
+override Aw.Sindri.Core.Line.LineFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineFile.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineFile.ToString() -> string!
+override Aw.Sindri.Core.Line.PacketIdentity.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.PacketIdentity.GetHashCode() -> int
+override Aw.Sindri.Core.Line.PacketIdentity.ToString() -> string!
+override Aw.Sindri.Core.Packets.FrozenPacket.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Packets.FrozenPacket.GetHashCode() -> int
+override Aw.Sindri.Core.Packets.FrozenPacket.ToString() -> string!
+static Aw.Sindri.Core.Line.LineErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
+static Aw.Sindri.Core.Line.LineFile.operator !=(Aw.Sindri.Core.Line.LineFile? left, Aw.Sindri.Core.Line.LineFile? right) -> bool
+static Aw.Sindri.Core.Line.LineFile.operator ==(Aw.Sindri.Core.Line.LineFile? left, Aw.Sindri.Core.Line.LineFile? right) -> bool
+static Aw.Sindri.Core.Line.LinePacketIndex.Parents(string! indexJson) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Line.PacketIdentity.operator !=(Aw.Sindri.Core.Line.PacketIdentity? left, Aw.Sindri.Core.Line.PacketIdentity? right) -> bool
+static Aw.Sindri.Core.Line.PacketIdentity.operator ==(Aw.Sindri.Core.Line.PacketIdentity? left, Aw.Sindri.Core.Line.PacketIdentity? right) -> bool
+static Aw.Sindri.Core.Packets.FrozenPacket.operator !=(Aw.Sindri.Core.Packets.FrozenPacket? left, Aw.Sindri.Core.Packets.FrozenPacket? right) -> bool
+static Aw.Sindri.Core.Packets.FrozenPacket.operator ==(Aw.Sindri.Core.Packets.FrozenPacket? left, Aw.Sindri.Core.Packets.FrozenPacket? right) -> bool
+static readonly Aw.Sindri.Core.Line.LineErrors.PacketMismatch -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Line.LineErrors.PhaseBlocked -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Line.LineErrors.SetupMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Line.LineErrors.WrongRecipe -> Aw.Kernel.ErrorDefinition!
+static Aw.Sindri.Core.Line.LineJson.Hash(string! text) -> string!
+static Aw.Sindri.Core.Line.LineJson.Rewritten(string! original, System.Text.Json.Nodes.JsonNode! edited) -> string!
+static Aw.Sindri.Core.Line.LineJson.Terminated(string! text) -> string!
+static Aw.Sindri.Core.Line.LineJson.Write(System.Text.Json.Nodes.JsonNode! node) -> string!
+static Aw.Sindri.Core.Line.LineJson.Append(System.Text.Json.Nodes.JsonArray! array, System.Text.Json.Nodes.JsonNode! node) -> void
+static Aw.Sindri.Core.Line.LineJson.StringArray(System.Collections.Generic.IEnumerable<string!>! values) -> System.Text.Json.Nodes.JsonArray!
+Aw.Sindri.Core.Line.LineDeskContext
+Aw.Sindri.Core.Line.LineDeskContext.<Clone>$() -> Aw.Sindri.Core.Line.LineDeskContext!
+Aw.Sindri.Core.Line.LineDeskContext.Deconstruct(out Aw.Sindri.Core.Line.PacketIdentity? Identity, out string? ScopeHash, out string? DesignHash, out int Parallel, out int MaxStack, out string! DefaultBranch) -> void
+Aw.Sindri.Core.Line.LineDeskContext.DefaultBranch.get -> string!
+Aw.Sindri.Core.Line.LineDeskContext.DefaultBranch.init -> void
+Aw.Sindri.Core.Line.LineDeskContext.DesignHash.get -> string?
+Aw.Sindri.Core.Line.LineDeskContext.DesignHash.init -> void
+Aw.Sindri.Core.Line.LineDeskContext.Equals(Aw.Sindri.Core.Line.LineDeskContext? other) -> bool
+Aw.Sindri.Core.Line.LineDeskContext.Identity.get -> Aw.Sindri.Core.Line.PacketIdentity?
+Aw.Sindri.Core.Line.LineDeskContext.Identity.init -> void
+Aw.Sindri.Core.Line.LineDeskContext.LineDeskContext(Aw.Sindri.Core.Line.PacketIdentity? Identity = null, string? ScopeHash = null, string? DesignHash = null, int Parallel = 2, int MaxStack = 4, string! DefaultBranch = "main") -> void
+Aw.Sindri.Core.Line.LineDeskContext.MaxStack.get -> int
+Aw.Sindri.Core.Line.LineDeskContext.MaxStack.init -> void
+Aw.Sindri.Core.Line.LineDeskContext.Parallel.get -> int
+Aw.Sindri.Core.Line.LineDeskContext.Parallel.init -> void
+Aw.Sindri.Core.Line.LineDeskContext.ScopeHash.get -> string?
+Aw.Sindri.Core.Line.LineDeskContext.ScopeHash.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse
+Aw.Sindri.Core.Line.LineDeskResponse.<Clone>$() -> Aw.Sindri.Core.Line.LineDeskResponse!
+Aw.Sindri.Core.Line.LineDeskResponse.Block.get -> string!
+Aw.Sindri.Core.Line.LineDeskResponse.Block.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Deconstruct(out string! Block, out string! Outcome, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFile!>! Files, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Findings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Warnings) -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Equals(Aw.Sindri.Core.Line.LineDeskResponse? other) -> bool
+Aw.Sindri.Core.Line.LineDeskResponse.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFile!>!
+Aw.Sindri.Core.Line.LineDeskResponse.Files.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>!
+Aw.Sindri.Core.Line.LineDeskResponse.Findings.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse.LineDeskResponse(string! Block, string! Outcome, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFile!>! Files, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Findings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>! Warnings) -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Outcome.get -> string!
+Aw.Sindri.Core.Line.LineDeskResponse.Outcome.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Line.LineDeskResponse.Outputs.init -> void
+Aw.Sindri.Core.Line.LineDeskResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFinding!>!
+Aw.Sindri.Core.Line.LineDeskResponse.Warnings.init -> void
+override Aw.Sindri.Core.Line.LineDeskContext.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineDeskContext.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineDeskContext.ToString() -> string!
+override Aw.Sindri.Core.Line.LineDeskResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineDeskResponse.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineDeskResponse.ToString() -> string!
+static Aw.Sindri.Core.Line.LineDeskContext.operator !=(Aw.Sindri.Core.Line.LineDeskContext? left, Aw.Sindri.Core.Line.LineDeskContext? right) -> bool
+static Aw.Sindri.Core.Line.LineDeskContext.operator ==(Aw.Sindri.Core.Line.LineDeskContext? left, Aw.Sindri.Core.Line.LineDeskContext? right) -> bool
+static Aw.Sindri.Core.Line.LineDeskResponse.operator !=(Aw.Sindri.Core.Line.LineDeskResponse? left, Aw.Sindri.Core.Line.LineDeskResponse? right) -> bool
+static Aw.Sindri.Core.Line.LineDeskResponse.operator ==(Aw.Sindri.Core.Line.LineDeskResponse? left, Aw.Sindri.Core.Line.LineDeskResponse? right) -> bool
+Aw.Sindri.Core.Line.LineDesk
+static Aw.Sindri.Core.Line.LineDesk.Check(string! block, Aw.Sindri.Core.Line.LineCheckResponse! response) -> Aw.Sindri.Core.Line.LineDeskResponse!
+static Aw.Sindri.Core.Line.LineDesk.Complete(string! block, Aw.Sindri.Core.Line.LineCheckResponse! response, string! directory, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineFile!>! files) -> Aw.Sindri.Core.Line.LineDeskResponse!
+static Aw.Sindri.Core.Line.LineDesk.Incomplete(string! block, Aw.Sindri.Core.Line.LineCheckResponse! response) -> Aw.Sindri.Core.Line.LineDeskResponse!
+Aw.Sindri.Core.Line.PlanGraph
+Aw.Sindri.Core.Line.PlanGraphOptions
+Aw.Sindri.Core.Line.PlanGraphOptions.<Clone>$() -> Aw.Sindri.Core.Line.PlanGraphOptions!
+Aw.Sindri.Core.Line.PlanGraphOptions.Deconstruct(out int Parallel, out int MaxStack, out string! DefaultBranch) -> void
+Aw.Sindri.Core.Line.PlanGraphOptions.DefaultBranch.get -> string!
+Aw.Sindri.Core.Line.PlanGraphOptions.DefaultBranch.init -> void
+Aw.Sindri.Core.Line.PlanGraphOptions.Equals(Aw.Sindri.Core.Line.PlanGraphOptions? other) -> bool
+Aw.Sindri.Core.Line.PlanGraphOptions.MaxStack.get -> int
+Aw.Sindri.Core.Line.PlanGraphOptions.MaxStack.init -> void
+Aw.Sindri.Core.Line.PlanGraphOptions.Parallel.get -> int
+Aw.Sindri.Core.Line.PlanGraphOptions.Parallel.init -> void
+Aw.Sindri.Core.Line.PlanGraphOptions.PlanGraphOptions(int Parallel = 2, int MaxStack = 4, string! DefaultBranch = "main") -> void
+override Aw.Sindri.Core.Line.PlanGraphOptions.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.PlanGraphOptions.GetHashCode() -> int
+override Aw.Sindri.Core.Line.PlanGraphOptions.ToString() -> string!
+static Aw.Sindri.Core.Line.PlanGraph.Derive(string! tasksJson, Aw.Sindri.Core.Line.PlanGraphOptions! options) -> string?
+static Aw.Sindri.Core.Line.PlanGraphOptions.operator !=(Aw.Sindri.Core.Line.PlanGraphOptions? left, Aw.Sindri.Core.Line.PlanGraphOptions? right) -> bool
+static Aw.Sindri.Core.Line.PlanGraphOptions.operator ==(Aw.Sindri.Core.Line.PlanGraphOptions? left, Aw.Sindri.Core.Line.PlanGraphOptions? right) -> bool
+Aw.Sindri.Core.Line.DesignStopView
+Aw.Sindri.Core.Line.DesignStopView.<Clone>$() -> Aw.Sindri.Core.Line.DesignStopView!
+Aw.Sindri.Core.Line.DesignStopView.Acceptance.get -> Aw.Sindri.Core.Line.StopAcceptance!
+Aw.Sindri.Core.Line.DesignStopView.Acceptance.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Accepted.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAccepted!>!
+Aw.Sindri.Core.Line.DesignStopView.Accepted.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Contracts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopContract!>!
+Aw.Sindri.Core.Line.DesignStopView.Contracts.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Coverage.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCoverageRow!>!
+Aw.Sindri.Core.Line.DesignStopView.Coverage.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Decisions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopDecision!>!
+Aw.Sindri.Core.Line.DesignStopView.Decisions.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! NotYet, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAccepted!>! Accepted, out Aw.Sindri.Core.Line.StopModels! Models, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopDecision!>! Decisions, out Aw.Sindri.Core.Line.StopAcceptance! Acceptance, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopEscape!>! Escapes, out Aw.Sindri.Core.Line.StopGraph! Graph, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTraceRow!>! Trace, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCoverageRow!>! Coverage, out Aw.Sindri.Core.Line.StopSpec! Spec, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopContract!>! Contracts, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRound!>! LensRounds, out Aw.Sindri.Core.Line.StopFreezeRefused? FreezeRefused) -> void
+Aw.Sindri.Core.Line.DesignStopView.DesignStopView(System.Collections.Generic.IReadOnlyList<string!>! NotYet, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAccepted!>! Accepted, Aw.Sindri.Core.Line.StopModels! Models, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopDecision!>! Decisions, Aw.Sindri.Core.Line.StopAcceptance! Acceptance, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopEscape!>! Escapes, Aw.Sindri.Core.Line.StopGraph! Graph, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTraceRow!>! Trace, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCoverageRow!>! Coverage, Aw.Sindri.Core.Line.StopSpec! Spec, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopContract!>! Contracts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRound!>! LensRounds, Aw.Sindri.Core.Line.StopFreezeRefused? FreezeRefused) -> void
+Aw.Sindri.Core.Line.DesignStopView.Equals(Aw.Sindri.Core.Line.DesignStopView? other) -> bool
+Aw.Sindri.Core.Line.DesignStopView.Escapes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopEscape!>!
+Aw.Sindri.Core.Line.DesignStopView.Escapes.init -> void
+Aw.Sindri.Core.Line.DesignStopView.FreezeRefused.get -> Aw.Sindri.Core.Line.StopFreezeRefused?
+Aw.Sindri.Core.Line.DesignStopView.FreezeRefused.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Graph.get -> Aw.Sindri.Core.Line.StopGraph!
+Aw.Sindri.Core.Line.DesignStopView.Graph.init -> void
+Aw.Sindri.Core.Line.DesignStopView.LensRounds.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRound!>!
+Aw.Sindri.Core.Line.DesignStopView.LensRounds.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Models.get -> Aw.Sindri.Core.Line.StopModels!
+Aw.Sindri.Core.Line.DesignStopView.Models.init -> void
+Aw.Sindri.Core.Line.DesignStopView.NotYet.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.DesignStopView.NotYet.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Spec.get -> Aw.Sindri.Core.Line.StopSpec!
+Aw.Sindri.Core.Line.DesignStopView.Spec.init -> void
+Aw.Sindri.Core.Line.DesignStopView.Trace.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTraceRow!>!
+Aw.Sindri.Core.Line.DesignStopView.Trace.init -> void
+Aw.Sindri.Core.Line.StopAcceptance
+Aw.Sindri.Core.Line.StopAcceptance.<Clone>$() -> Aw.Sindri.Core.Line.StopAcceptance!
+Aw.Sindri.Core.Line.StopAcceptance.Added.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopItem!>!
+Aw.Sindri.Core.Line.StopAcceptance.Added.init -> void
+Aw.Sindri.Core.Line.StopAcceptance.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopItem!>! Added, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSuperseded!>! Superseded) -> void
+Aw.Sindri.Core.Line.StopAcceptance.Equals(Aw.Sindri.Core.Line.StopAcceptance? other) -> bool
+Aw.Sindri.Core.Line.StopAcceptance.StopAcceptance(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopItem!>! Added, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSuperseded!>! Superseded) -> void
+Aw.Sindri.Core.Line.StopAcceptance.Superseded.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSuperseded!>!
+Aw.Sindri.Core.Line.StopAcceptance.Superseded.init -> void
+Aw.Sindri.Core.Line.StopAccepted
+Aw.Sindri.Core.Line.StopAccepted.<Clone>$() -> Aw.Sindri.Core.Line.StopAccepted!
+Aw.Sindri.Core.Line.StopAccepted.Cite.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Cite.init -> void
+Aw.Sindri.Core.Line.StopAccepted.Deconstruct(out string! Finding, out string! Lens, out string! Severity, out string! Cite, out string! Text, out string! Resolution) -> void
+Aw.Sindri.Core.Line.StopAccepted.Equals(Aw.Sindri.Core.Line.StopAccepted? other) -> bool
+Aw.Sindri.Core.Line.StopAccepted.Finding.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Finding.init -> void
+Aw.Sindri.Core.Line.StopAccepted.Lens.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Lens.init -> void
+Aw.Sindri.Core.Line.StopAccepted.Resolution.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Resolution.init -> void
+Aw.Sindri.Core.Line.StopAccepted.Severity.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Severity.init -> void
+Aw.Sindri.Core.Line.StopAccepted.StopAccepted(string! Finding, string! Lens, string! Severity, string! Cite, string! Text, string! Resolution) -> void
+Aw.Sindri.Core.Line.StopAccepted.Text.get -> string!
+Aw.Sindri.Core.Line.StopAccepted.Text.init -> void
+Aw.Sindri.Core.Line.StopAssumes
+Aw.Sindri.Core.Line.StopAssumes.<Clone>$() -> Aw.Sindri.Core.Line.StopAssumes!
+Aw.Sindri.Core.Line.StopAssumes.Decision.get -> string!
+Aw.Sindri.Core.Line.StopAssumes.Decision.init -> void
+Aw.Sindri.Core.Line.StopAssumes.Deconstruct(out string! Section, out string! Decision, out string! Option) -> void
+Aw.Sindri.Core.Line.StopAssumes.Equals(Aw.Sindri.Core.Line.StopAssumes? other) -> bool
+Aw.Sindri.Core.Line.StopAssumes.Option.get -> string!
+Aw.Sindri.Core.Line.StopAssumes.Option.init -> void
+Aw.Sindri.Core.Line.StopAssumes.Section.get -> string!
+Aw.Sindri.Core.Line.StopAssumes.Section.init -> void
+Aw.Sindri.Core.Line.StopAssumes.StopAssumes(string! Section, string! Decision, string! Option) -> void
+Aw.Sindri.Core.Line.StopCheck
+Aw.Sindri.Core.Line.StopCheck.<Clone>$() -> Aw.Sindri.Core.Line.StopCheck!
+Aw.Sindri.Core.Line.StopCheck.Deconstruct(out string! Rule, out string! Status) -> void
+Aw.Sindri.Core.Line.StopCheck.Equals(Aw.Sindri.Core.Line.StopCheck? other) -> bool
+Aw.Sindri.Core.Line.StopCheck.Rule.get -> string!
+Aw.Sindri.Core.Line.StopCheck.Rule.init -> void
+Aw.Sindri.Core.Line.StopCheck.Status.get -> string!
+Aw.Sindri.Core.Line.StopCheck.Status.init -> void
+Aw.Sindri.Core.Line.StopCheck.StopCheck(string! Rule, string! Status) -> void
+Aw.Sindri.Core.Line.StopContract
+Aw.Sindri.Core.Line.StopContract.<Clone>$() -> Aw.Sindri.Core.Line.StopContract!
+Aw.Sindri.Core.Line.StopContract.Change.get -> string!
+Aw.Sindri.Core.Line.StopContract.Change.init -> void
+Aw.Sindri.Core.Line.StopContract.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCheck!>!
+Aw.Sindri.Core.Line.StopContract.Checks.init -> void
+Aw.Sindri.Core.Line.StopContract.Deconstruct(out string! Edit, out string! Lane, out string! File, out string! Heading, out string! Quote, out string! Change, out int Row, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCheck!>! Checks) -> void
+Aw.Sindri.Core.Line.StopContract.Edit.get -> string!
+Aw.Sindri.Core.Line.StopContract.Edit.init -> void
+Aw.Sindri.Core.Line.StopContract.Equals(Aw.Sindri.Core.Line.StopContract? other) -> bool
+Aw.Sindri.Core.Line.StopContract.File.get -> string!
+Aw.Sindri.Core.Line.StopContract.File.init -> void
+Aw.Sindri.Core.Line.StopContract.Heading.get -> string!
+Aw.Sindri.Core.Line.StopContract.Heading.init -> void
+Aw.Sindri.Core.Line.StopContract.Lane.get -> string!
+Aw.Sindri.Core.Line.StopContract.Lane.init -> void
+Aw.Sindri.Core.Line.StopContract.Quote.get -> string!
+Aw.Sindri.Core.Line.StopContract.Quote.init -> void
+Aw.Sindri.Core.Line.StopContract.Row.get -> int
+Aw.Sindri.Core.Line.StopContract.Row.init -> void
+Aw.Sindri.Core.Line.StopContract.StopContract(string! Edit, string! Lane, string! File, string! Heading, string! Quote, string! Change, int Row, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopCheck!>! Checks) -> void
+Aw.Sindri.Core.Line.StopCoverageRow
+Aw.Sindri.Core.Line.StopCoverageRow.<Clone>$() -> Aw.Sindri.Core.Line.StopCoverageRow!
+Aw.Sindri.Core.Line.StopCoverageRow.Deconstruct(out string! Scope, out string! Key, out System.Collections.Generic.IReadOnlyList<string!>! Sections, out string? Excluded) -> void
+Aw.Sindri.Core.Line.StopCoverageRow.Equals(Aw.Sindri.Core.Line.StopCoverageRow? other) -> bool
+Aw.Sindri.Core.Line.StopCoverageRow.Excluded.get -> string?
+Aw.Sindri.Core.Line.StopCoverageRow.Excluded.init -> void
+Aw.Sindri.Core.Line.StopCoverageRow.Key.get -> string!
+Aw.Sindri.Core.Line.StopCoverageRow.Key.init -> void
+Aw.Sindri.Core.Line.StopCoverageRow.Scope.get -> string!
+Aw.Sindri.Core.Line.StopCoverageRow.Scope.init -> void
+Aw.Sindri.Core.Line.StopCoverageRow.Sections.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopCoverageRow.Sections.init -> void
+Aw.Sindri.Core.Line.StopCoverageRow.StopCoverageRow(string! Scope, string! Key, System.Collections.Generic.IReadOnlyList<string!>! Sections, string? Excluded) -> void
+Aw.Sindri.Core.Line.StopDecision
+Aw.Sindri.Core.Line.StopDecision.<Clone>$() -> Aw.Sindri.Core.Line.StopDecision!
+Aw.Sindri.Core.Line.StopDecision.Affects.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopDecision.Affects.init -> void
+Aw.Sindri.Core.Line.StopDecision.Chosen.get -> string?
+Aw.Sindri.Core.Line.StopDecision.Chosen.init -> void
+Aw.Sindri.Core.Line.StopDecision.Cites.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopDecision.Cites.init -> void
+Aw.Sindri.Core.Line.StopDecision.Decision.get -> string!
+Aw.Sindri.Core.Line.StopDecision.Decision.init -> void
+Aw.Sindri.Core.Line.StopDecision.Deconstruct(out string! Decision, out string! Question, out string! Status, out string! Recommended, out string? Chosen, out System.Collections.Generic.IReadOnlyList<string!>! Affects, out System.Collections.Generic.IReadOnlyList<string!>! Cites, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopOption!>! Options) -> void
+Aw.Sindri.Core.Line.StopDecision.Equals(Aw.Sindri.Core.Line.StopDecision? other) -> bool
+Aw.Sindri.Core.Line.StopDecision.Options.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopOption!>!
+Aw.Sindri.Core.Line.StopDecision.Options.init -> void
+Aw.Sindri.Core.Line.StopDecision.Question.get -> string!
+Aw.Sindri.Core.Line.StopDecision.Question.init -> void
+Aw.Sindri.Core.Line.StopDecision.Recommended.get -> string!
+Aw.Sindri.Core.Line.StopDecision.Recommended.init -> void
+Aw.Sindri.Core.Line.StopDecision.Status.get -> string!
+Aw.Sindri.Core.Line.StopDecision.Status.init -> void
+Aw.Sindri.Core.Line.StopDecision.StopDecision(string! Decision, string! Question, string! Status, string! Recommended, string? Chosen, System.Collections.Generic.IReadOnlyList<string!>! Affects, System.Collections.Generic.IReadOnlyList<string!>! Cites, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopOption!>! Options) -> void
+Aw.Sindri.Core.Line.StopEscape
+Aw.Sindri.Core.Line.StopEscape.<Clone>$() -> Aw.Sindri.Core.Line.StopEscape!
+Aw.Sindri.Core.Line.StopEscape.Deconstruct(out string! From, out string! Station, out string! Kind, out string! Target, out string! Why) -> void
+Aw.Sindri.Core.Line.StopEscape.Equals(Aw.Sindri.Core.Line.StopEscape? other) -> bool
+Aw.Sindri.Core.Line.StopEscape.From.get -> string!
+Aw.Sindri.Core.Line.StopEscape.From.init -> void
+Aw.Sindri.Core.Line.StopEscape.Kind.get -> string!
+Aw.Sindri.Core.Line.StopEscape.Kind.init -> void
+Aw.Sindri.Core.Line.StopEscape.Station.get -> string!
+Aw.Sindri.Core.Line.StopEscape.Station.init -> void
+Aw.Sindri.Core.Line.StopEscape.StopEscape(string! From, string! Station, string! Kind, string! Target, string! Why) -> void
+Aw.Sindri.Core.Line.StopEscape.Target.get -> string!
+Aw.Sindri.Core.Line.StopEscape.Target.init -> void
+Aw.Sindri.Core.Line.StopEscape.Why.get -> string!
+Aw.Sindri.Core.Line.StopEscape.Why.init -> void
+Aw.Sindri.Core.Line.StopFinding
+Aw.Sindri.Core.Line.StopFinding.<Clone>$() -> Aw.Sindri.Core.Line.StopFinding!
+Aw.Sindri.Core.Line.StopFinding.Cite.get -> string!
+Aw.Sindri.Core.Line.StopFinding.Cite.init -> void
+Aw.Sindri.Core.Line.StopFinding.Deconstruct(out string! Finding, out string! Severity, out string! Cite, out string! Text, out string? Resolution) -> void
+Aw.Sindri.Core.Line.StopFinding.Equals(Aw.Sindri.Core.Line.StopFinding? other) -> bool
+Aw.Sindri.Core.Line.StopFinding.Finding.get -> string!
+Aw.Sindri.Core.Line.StopFinding.Finding.init -> void
+Aw.Sindri.Core.Line.StopFinding.Resolution.get -> string?
+Aw.Sindri.Core.Line.StopFinding.Resolution.init -> void
+Aw.Sindri.Core.Line.StopFinding.Severity.get -> string!
+Aw.Sindri.Core.Line.StopFinding.Severity.init -> void
+Aw.Sindri.Core.Line.StopFinding.StopFinding(string! Finding, string! Severity, string! Cite, string! Text, string? Resolution) -> void
+Aw.Sindri.Core.Line.StopFinding.Text.get -> string!
+Aw.Sindri.Core.Line.StopFinding.Text.init -> void
+Aw.Sindri.Core.Line.StopFreezeRefused
+Aw.Sindri.Core.Line.StopFreezeRefused.<Clone>$() -> Aw.Sindri.Core.Line.StopFreezeRefused!
+Aw.Sindri.Core.Line.StopFreezeRefused.Deconstruct(out string! Rule, out string! Message) -> void
+Aw.Sindri.Core.Line.StopFreezeRefused.Equals(Aw.Sindri.Core.Line.StopFreezeRefused? other) -> bool
+Aw.Sindri.Core.Line.StopFreezeRefused.Message.get -> string!
+Aw.Sindri.Core.Line.StopFreezeRefused.Message.init -> void
+Aw.Sindri.Core.Line.StopFreezeRefused.Rule.get -> string!
+Aw.Sindri.Core.Line.StopFreezeRefused.Rule.init -> void
+Aw.Sindri.Core.Line.StopFreezeRefused.StopFreezeRefused(string! Rule, string! Message) -> void
+Aw.Sindri.Core.Line.StopGraph
+Aw.Sindri.Core.Line.StopGraph.<Clone>$() -> Aw.Sindri.Core.Line.StopGraph!
+Aw.Sindri.Core.Line.StopGraph.CriticalPath.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopGraph.CriticalPath.init -> void
+Aw.Sindri.Core.Line.StopGraph.Deconstruct(out int Parallel, out int MaxStack, out int PrCount, out System.Collections.Generic.IReadOnlyList<string!>! CriticalPath, out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>! Waves, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopPhase!>! Phases) -> void
+Aw.Sindri.Core.Line.StopGraph.Equals(Aw.Sindri.Core.Line.StopGraph? other) -> bool
+Aw.Sindri.Core.Line.StopGraph.MaxStack.get -> int
+Aw.Sindri.Core.Line.StopGraph.MaxStack.init -> void
+Aw.Sindri.Core.Line.StopGraph.Parallel.get -> int
+Aw.Sindri.Core.Line.StopGraph.Parallel.init -> void
+Aw.Sindri.Core.Line.StopGraph.Phases.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopPhase!>!
+Aw.Sindri.Core.Line.StopGraph.Phases.init -> void
+Aw.Sindri.Core.Line.StopGraph.PrCount.get -> int
+Aw.Sindri.Core.Line.StopGraph.PrCount.init -> void
+Aw.Sindri.Core.Line.StopGraph.StopGraph(int Parallel, int MaxStack, int PrCount, System.Collections.Generic.IReadOnlyList<string!>! CriticalPath, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>! Waves, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopPhase!>! Phases) -> void
+Aw.Sindri.Core.Line.StopGraph.Waves.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Line.StopGraph.Waves.init -> void
+Aw.Sindri.Core.Line.StopItem
+Aw.Sindri.Core.Line.StopItem.<Clone>$() -> Aw.Sindri.Core.Line.StopItem!
+Aw.Sindri.Core.Line.StopItem.Citations.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopItem.Citations.init -> void
+Aw.Sindri.Core.Line.StopItem.Deconstruct(out string! Item, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Citations, out string! Trust) -> void
+Aw.Sindri.Core.Line.StopItem.Equals(Aw.Sindri.Core.Line.StopItem? other) -> bool
+Aw.Sindri.Core.Line.StopItem.Item.get -> string!
+Aw.Sindri.Core.Line.StopItem.Item.init -> void
+Aw.Sindri.Core.Line.StopItem.StopItem(string! Item, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Citations, string! Trust) -> void
+Aw.Sindri.Core.Line.StopItem.Text.get -> string!
+Aw.Sindri.Core.Line.StopItem.Text.init -> void
+Aw.Sindri.Core.Line.StopItem.Trust.get -> string!
+Aw.Sindri.Core.Line.StopItem.Trust.init -> void
+Aw.Sindri.Core.Line.StopLensRound
+Aw.Sindri.Core.Line.StopLensRound.<Clone>$() -> Aw.Sindri.Core.Line.StopLensRound!
+Aw.Sindri.Core.Line.StopLensRound.Deconstruct(out int Round, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRow!>! Lenses) -> void
+Aw.Sindri.Core.Line.StopLensRound.Equals(Aw.Sindri.Core.Line.StopLensRound? other) -> bool
+Aw.Sindri.Core.Line.StopLensRound.Lenses.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRow!>!
+Aw.Sindri.Core.Line.StopLensRound.Lenses.init -> void
+Aw.Sindri.Core.Line.StopLensRound.Round.get -> int
+Aw.Sindri.Core.Line.StopLensRound.Round.init -> void
+Aw.Sindri.Core.Line.StopLensRound.StopLensRound(int Round, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopLensRow!>! Lenses) -> void
+Aw.Sindri.Core.Line.StopLensRow
+Aw.Sindri.Core.Line.StopLensRow.<Clone>$() -> Aw.Sindri.Core.Line.StopLensRow!
+Aw.Sindri.Core.Line.StopLensRow.Deconstruct(out string! Lens, out string! Model, out string? NotApplicable, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopFinding!>! Findings) -> void
+Aw.Sindri.Core.Line.StopLensRow.Equals(Aw.Sindri.Core.Line.StopLensRow? other) -> bool
+Aw.Sindri.Core.Line.StopLensRow.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopFinding!>!
+Aw.Sindri.Core.Line.StopLensRow.Findings.init -> void
+Aw.Sindri.Core.Line.StopLensRow.Lens.get -> string!
+Aw.Sindri.Core.Line.StopLensRow.Lens.init -> void
+Aw.Sindri.Core.Line.StopLensRow.Model.get -> string!
+Aw.Sindri.Core.Line.StopLensRow.Model.init -> void
+Aw.Sindri.Core.Line.StopLensRow.NotApplicable.get -> string?
+Aw.Sindri.Core.Line.StopLensRow.NotApplicable.init -> void
+Aw.Sindri.Core.Line.StopLensRow.StopLensRow(string! Lens, string! Model, string? NotApplicable, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopFinding!>! Findings) -> void
+Aw.Sindri.Core.Line.StopModel
+Aw.Sindri.Core.Line.StopModel.<Clone>$() -> Aw.Sindri.Core.Line.StopModel!
+Aw.Sindri.Core.Line.StopModel.Deconstruct(out string! Model, out string? Vendor) -> void
+Aw.Sindri.Core.Line.StopModel.Equals(Aw.Sindri.Core.Line.StopModel? other) -> bool
+Aw.Sindri.Core.Line.StopModel.Model.get -> string!
+Aw.Sindri.Core.Line.StopModel.Model.init -> void
+Aw.Sindri.Core.Line.StopModel.StopModel(string! Model, string? Vendor) -> void
+Aw.Sindri.Core.Line.StopModel.Vendor.get -> string?
+Aw.Sindri.Core.Line.StopModel.Vendor.init -> void
+Aw.Sindri.Core.Line.StopModels
+Aw.Sindri.Core.Line.StopModels.<Clone>$() -> Aw.Sindri.Core.Line.StopModels!
+Aw.Sindri.Core.Line.StopModels.Deconstruct(out Aw.Sindri.Core.Line.StopModel? Writer, out Aw.Sindri.Core.Line.StopModel? Lens, out System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
+Aw.Sindri.Core.Line.StopModels.Equals(Aw.Sindri.Core.Line.StopModels? other) -> bool
+Aw.Sindri.Core.Line.StopModels.Lens.get -> Aw.Sindri.Core.Line.StopModel?
+Aw.Sindri.Core.Line.StopModels.Lens.init -> void
+Aw.Sindri.Core.Line.StopModels.StopModels(Aw.Sindri.Core.Line.StopModel? Writer, Aw.Sindri.Core.Line.StopModel? Lens, System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
+Aw.Sindri.Core.Line.StopModels.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopModels.Warnings.init -> void
+Aw.Sindri.Core.Line.StopModels.Writer.get -> Aw.Sindri.Core.Line.StopModel?
+Aw.Sindri.Core.Line.StopModels.Writer.init -> void
+Aw.Sindri.Core.Line.StopOption
+Aw.Sindri.Core.Line.StopOption.<Clone>$() -> Aw.Sindri.Core.Line.StopOption!
+Aw.Sindri.Core.Line.StopOption.Answer.get -> string!
+Aw.Sindri.Core.Line.StopOption.Answer.init -> void
+Aw.Sindri.Core.Line.StopOption.Deconstruct(out string! Option, out string! Answer, out string! Tradeoffs, out bool Recommended) -> void
+Aw.Sindri.Core.Line.StopOption.Equals(Aw.Sindri.Core.Line.StopOption? other) -> bool
+Aw.Sindri.Core.Line.StopOption.Option.get -> string!
+Aw.Sindri.Core.Line.StopOption.Option.init -> void
+Aw.Sindri.Core.Line.StopOption.Recommended.get -> bool
+Aw.Sindri.Core.Line.StopOption.Recommended.init -> void
+Aw.Sindri.Core.Line.StopOption.StopOption(string! Option, string! Answer, string! Tradeoffs, bool Recommended) -> void
+Aw.Sindri.Core.Line.StopOption.Tradeoffs.get -> string!
+Aw.Sindri.Core.Line.StopOption.Tradeoffs.init -> void
+Aw.Sindri.Core.Line.StopPhase
+Aw.Sindri.Core.Line.StopPhase.<Clone>$() -> Aw.Sindri.Core.Line.StopPhase!
+Aw.Sindri.Core.Line.StopPhase.AllowedFiles.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopPhase.AllowedFiles.init -> void
+Aw.Sindri.Core.Line.StopPhase.Base.get -> string!
+Aw.Sindri.Core.Line.StopPhase.Base.init -> void
+Aw.Sindri.Core.Line.StopPhase.Deconstruct(out string! Phase, out string! Title, out string! Size, out string! Kind, out int Stack, out int Wave, out string! Base, out bool WaitsForMerge, out System.Collections.Generic.IReadOnlyList<string!>! Items, out System.Collections.Generic.IReadOnlyList<string!>! AllowedFiles, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTestChange!>! TestChanges, out int HiddenScenarios) -> void
+Aw.Sindri.Core.Line.StopPhase.Equals(Aw.Sindri.Core.Line.StopPhase? other) -> bool
+Aw.Sindri.Core.Line.StopPhase.HiddenScenarios.get -> int
+Aw.Sindri.Core.Line.StopPhase.HiddenScenarios.init -> void
+Aw.Sindri.Core.Line.StopPhase.Items.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.StopPhase.Items.init -> void
+Aw.Sindri.Core.Line.StopPhase.Kind.get -> string!
+Aw.Sindri.Core.Line.StopPhase.Kind.init -> void
+Aw.Sindri.Core.Line.StopPhase.Phase.get -> string!
+Aw.Sindri.Core.Line.StopPhase.Phase.init -> void
+Aw.Sindri.Core.Line.StopPhase.Size.get -> string!
+Aw.Sindri.Core.Line.StopPhase.Size.init -> void
+Aw.Sindri.Core.Line.StopPhase.Stack.get -> int
+Aw.Sindri.Core.Line.StopPhase.Stack.init -> void
+Aw.Sindri.Core.Line.StopPhase.StopPhase(string! Phase, string! Title, string! Size, string! Kind, int Stack, int Wave, string! Base, bool WaitsForMerge, System.Collections.Generic.IReadOnlyList<string!>! Items, System.Collections.Generic.IReadOnlyList<string!>! AllowedFiles, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTestChange!>! TestChanges, int HiddenScenarios) -> void
+Aw.Sindri.Core.Line.StopPhase.TestChanges.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopTestChange!>!
+Aw.Sindri.Core.Line.StopPhase.TestChanges.init -> void
+Aw.Sindri.Core.Line.StopPhase.Title.get -> string!
+Aw.Sindri.Core.Line.StopPhase.Title.init -> void
+Aw.Sindri.Core.Line.StopPhase.WaitsForMerge.get -> bool
+Aw.Sindri.Core.Line.StopPhase.WaitsForMerge.init -> void
+Aw.Sindri.Core.Line.StopPhase.Wave.get -> int
+Aw.Sindri.Core.Line.StopPhase.Wave.init -> void
+Aw.Sindri.Core.Line.StopSignal
+Aw.Sindri.Core.Line.StopSignal.<Clone>$() -> Aw.Sindri.Core.Line.StopSignal!
+Aw.Sindri.Core.Line.StopSignal.Deconstruct(out string! Signal, out string! Kind, out string! RunsAt, out string! Statement) -> void
+Aw.Sindri.Core.Line.StopSignal.Equals(Aw.Sindri.Core.Line.StopSignal? other) -> bool
+Aw.Sindri.Core.Line.StopSignal.Kind.get -> string!
+Aw.Sindri.Core.Line.StopSignal.Kind.init -> void
+Aw.Sindri.Core.Line.StopSignal.RunsAt.get -> string!
+Aw.Sindri.Core.Line.StopSignal.RunsAt.init -> void
+Aw.Sindri.Core.Line.StopSignal.Signal.get -> string!
+Aw.Sindri.Core.Line.StopSignal.Signal.init -> void
+Aw.Sindri.Core.Line.StopSignal.Statement.get -> string!
+Aw.Sindri.Core.Line.StopSignal.Statement.init -> void
+Aw.Sindri.Core.Line.StopSignal.StopSignal(string! Signal, string! Kind, string! RunsAt, string! Statement) -> void
+Aw.Sindri.Core.Line.StopSpec
+Aw.Sindri.Core.Line.StopSpec.<Clone>$() -> Aw.Sindri.Core.Line.StopSpec!
+Aw.Sindri.Core.Line.StopSpec.Assumes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAssumes!>!
+Aw.Sindri.Core.Line.StopSpec.Assumes.init -> void
+Aw.Sindri.Core.Line.StopSpec.Deconstruct(out string! Text, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAssumes!>! Assumes) -> void
+Aw.Sindri.Core.Line.StopSpec.Equals(Aw.Sindri.Core.Line.StopSpec? other) -> bool
+Aw.Sindri.Core.Line.StopSpec.StopSpec(string! Text, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopAssumes!>! Assumes) -> void
+Aw.Sindri.Core.Line.StopSpec.Text.get -> string!
+Aw.Sindri.Core.Line.StopSpec.Text.init -> void
+Aw.Sindri.Core.Line.StopSuperseded
+Aw.Sindri.Core.Line.StopSuperseded.<Clone>$() -> Aw.Sindri.Core.Line.StopSuperseded!
+Aw.Sindri.Core.Line.StopSuperseded.Deconstruct(out string! Item, out string! Text, out string! SupersededBy) -> void
+Aw.Sindri.Core.Line.StopSuperseded.Equals(Aw.Sindri.Core.Line.StopSuperseded? other) -> bool
+Aw.Sindri.Core.Line.StopSuperseded.Item.get -> string!
+Aw.Sindri.Core.Line.StopSuperseded.Item.init -> void
+Aw.Sindri.Core.Line.StopSuperseded.StopSuperseded(string! Item, string! Text, string! SupersededBy) -> void
+Aw.Sindri.Core.Line.StopSuperseded.SupersededBy.get -> string!
+Aw.Sindri.Core.Line.StopSuperseded.SupersededBy.init -> void
+Aw.Sindri.Core.Line.StopSuperseded.Text.get -> string!
+Aw.Sindri.Core.Line.StopSuperseded.Text.init -> void
+Aw.Sindri.Core.Line.StopTestChange
+Aw.Sindri.Core.Line.StopTestChange.<Clone>$() -> Aw.Sindri.Core.Line.StopTestChange!
+Aw.Sindri.Core.Line.StopTestChange.Deconstruct(out string! Path, out string! Reason) -> void
+Aw.Sindri.Core.Line.StopTestChange.Equals(Aw.Sindri.Core.Line.StopTestChange? other) -> bool
+Aw.Sindri.Core.Line.StopTestChange.Path.get -> string!
+Aw.Sindri.Core.Line.StopTestChange.Path.init -> void
+Aw.Sindri.Core.Line.StopTestChange.Reason.get -> string!
+Aw.Sindri.Core.Line.StopTestChange.Reason.init -> void
+Aw.Sindri.Core.Line.StopTestChange.StopTestChange(string! Path, string! Reason) -> void
+Aw.Sindri.Core.Line.StopTraceRow
+Aw.Sindri.Core.Line.StopTraceRow.<Clone>$() -> Aw.Sindri.Core.Line.StopTraceRow!
+Aw.Sindri.Core.Line.StopTraceRow.Deconstruct(out string! Item, out string! Phase, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSignal!>! Signals) -> void
+Aw.Sindri.Core.Line.StopTraceRow.Equals(Aw.Sindri.Core.Line.StopTraceRow? other) -> bool
+Aw.Sindri.Core.Line.StopTraceRow.Item.get -> string!
+Aw.Sindri.Core.Line.StopTraceRow.Item.init -> void
+Aw.Sindri.Core.Line.StopTraceRow.Phase.get -> string!
+Aw.Sindri.Core.Line.StopTraceRow.Phase.init -> void
+Aw.Sindri.Core.Line.StopTraceRow.Signals.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSignal!>!
+Aw.Sindri.Core.Line.StopTraceRow.Signals.init -> void
+Aw.Sindri.Core.Line.StopTraceRow.StopTraceRow(string! Item, string! Phase, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.StopSignal!>! Signals) -> void
+override Aw.Sindri.Core.Line.DesignStopView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.DesignStopView.GetHashCode() -> int
+override Aw.Sindri.Core.Line.DesignStopView.ToString() -> string!
+override Aw.Sindri.Core.Line.StopAcceptance.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopAcceptance.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopAcceptance.ToString() -> string!
+override Aw.Sindri.Core.Line.StopAccepted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopAccepted.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopAccepted.ToString() -> string!
+override Aw.Sindri.Core.Line.StopAssumes.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopAssumes.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopAssumes.ToString() -> string!
+override Aw.Sindri.Core.Line.StopCheck.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopCheck.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopCheck.ToString() -> string!
+override Aw.Sindri.Core.Line.StopContract.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopContract.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopContract.ToString() -> string!
+override Aw.Sindri.Core.Line.StopCoverageRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopCoverageRow.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopCoverageRow.ToString() -> string!
+override Aw.Sindri.Core.Line.StopDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopDecision.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopDecision.ToString() -> string!
+override Aw.Sindri.Core.Line.StopEscape.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopEscape.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopEscape.ToString() -> string!
+override Aw.Sindri.Core.Line.StopFinding.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopFinding.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopFinding.ToString() -> string!
+override Aw.Sindri.Core.Line.StopFreezeRefused.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopFreezeRefused.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopFreezeRefused.ToString() -> string!
+override Aw.Sindri.Core.Line.StopGraph.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopGraph.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopGraph.ToString() -> string!
+override Aw.Sindri.Core.Line.StopItem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopItem.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopItem.ToString() -> string!
+override Aw.Sindri.Core.Line.StopLensRound.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopLensRound.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopLensRound.ToString() -> string!
+override Aw.Sindri.Core.Line.StopLensRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopLensRow.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopLensRow.ToString() -> string!
+override Aw.Sindri.Core.Line.StopModel.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopModel.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopModel.ToString() -> string!
+override Aw.Sindri.Core.Line.StopModels.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopModels.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopModels.ToString() -> string!
+override Aw.Sindri.Core.Line.StopOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopOption.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopOption.ToString() -> string!
+override Aw.Sindri.Core.Line.StopPhase.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopPhase.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopPhase.ToString() -> string!
+override Aw.Sindri.Core.Line.StopSignal.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopSignal.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopSignal.ToString() -> string!
+override Aw.Sindri.Core.Line.StopSpec.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopSpec.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopSpec.ToString() -> string!
+override Aw.Sindri.Core.Line.StopSuperseded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopSuperseded.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopSuperseded.ToString() -> string!
+override Aw.Sindri.Core.Line.StopTestChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopTestChange.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopTestChange.ToString() -> string!
+override Aw.Sindri.Core.Line.StopTraceRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.StopTraceRow.GetHashCode() -> int
+override Aw.Sindri.Core.Line.StopTraceRow.ToString() -> string!
+static Aw.Sindri.Core.Line.DesignStopView.operator !=(Aw.Sindri.Core.Line.DesignStopView? left, Aw.Sindri.Core.Line.DesignStopView? right) -> bool
+static Aw.Sindri.Core.Line.DesignStopView.operator ==(Aw.Sindri.Core.Line.DesignStopView? left, Aw.Sindri.Core.Line.DesignStopView? right) -> bool
+static Aw.Sindri.Core.Line.StopAcceptance.operator !=(Aw.Sindri.Core.Line.StopAcceptance? left, Aw.Sindri.Core.Line.StopAcceptance? right) -> bool
+static Aw.Sindri.Core.Line.StopAcceptance.operator ==(Aw.Sindri.Core.Line.StopAcceptance? left, Aw.Sindri.Core.Line.StopAcceptance? right) -> bool
+static Aw.Sindri.Core.Line.StopAccepted.operator !=(Aw.Sindri.Core.Line.StopAccepted? left, Aw.Sindri.Core.Line.StopAccepted? right) -> bool
+static Aw.Sindri.Core.Line.StopAccepted.operator ==(Aw.Sindri.Core.Line.StopAccepted? left, Aw.Sindri.Core.Line.StopAccepted? right) -> bool
+static Aw.Sindri.Core.Line.StopAssumes.operator !=(Aw.Sindri.Core.Line.StopAssumes? left, Aw.Sindri.Core.Line.StopAssumes? right) -> bool
+static Aw.Sindri.Core.Line.StopAssumes.operator ==(Aw.Sindri.Core.Line.StopAssumes? left, Aw.Sindri.Core.Line.StopAssumes? right) -> bool
+static Aw.Sindri.Core.Line.StopCheck.operator !=(Aw.Sindri.Core.Line.StopCheck? left, Aw.Sindri.Core.Line.StopCheck? right) -> bool
+static Aw.Sindri.Core.Line.StopCheck.operator ==(Aw.Sindri.Core.Line.StopCheck? left, Aw.Sindri.Core.Line.StopCheck? right) -> bool
+static Aw.Sindri.Core.Line.StopContract.operator !=(Aw.Sindri.Core.Line.StopContract? left, Aw.Sindri.Core.Line.StopContract? right) -> bool
+static Aw.Sindri.Core.Line.StopContract.operator ==(Aw.Sindri.Core.Line.StopContract? left, Aw.Sindri.Core.Line.StopContract? right) -> bool
+static Aw.Sindri.Core.Line.StopCoverageRow.operator !=(Aw.Sindri.Core.Line.StopCoverageRow? left, Aw.Sindri.Core.Line.StopCoverageRow? right) -> bool
+static Aw.Sindri.Core.Line.StopCoverageRow.operator ==(Aw.Sindri.Core.Line.StopCoverageRow? left, Aw.Sindri.Core.Line.StopCoverageRow? right) -> bool
+static Aw.Sindri.Core.Line.StopDecision.operator !=(Aw.Sindri.Core.Line.StopDecision? left, Aw.Sindri.Core.Line.StopDecision? right) -> bool
+static Aw.Sindri.Core.Line.StopDecision.operator ==(Aw.Sindri.Core.Line.StopDecision? left, Aw.Sindri.Core.Line.StopDecision? right) -> bool
+static Aw.Sindri.Core.Line.StopEscape.operator !=(Aw.Sindri.Core.Line.StopEscape? left, Aw.Sindri.Core.Line.StopEscape? right) -> bool
+static Aw.Sindri.Core.Line.StopEscape.operator ==(Aw.Sindri.Core.Line.StopEscape? left, Aw.Sindri.Core.Line.StopEscape? right) -> bool
+static Aw.Sindri.Core.Line.StopFinding.operator !=(Aw.Sindri.Core.Line.StopFinding? left, Aw.Sindri.Core.Line.StopFinding? right) -> bool
+static Aw.Sindri.Core.Line.StopFinding.operator ==(Aw.Sindri.Core.Line.StopFinding? left, Aw.Sindri.Core.Line.StopFinding? right) -> bool
+static Aw.Sindri.Core.Line.StopFreezeRefused.operator !=(Aw.Sindri.Core.Line.StopFreezeRefused? left, Aw.Sindri.Core.Line.StopFreezeRefused? right) -> bool
+static Aw.Sindri.Core.Line.StopFreezeRefused.operator ==(Aw.Sindri.Core.Line.StopFreezeRefused? left, Aw.Sindri.Core.Line.StopFreezeRefused? right) -> bool
+static Aw.Sindri.Core.Line.StopGraph.operator !=(Aw.Sindri.Core.Line.StopGraph? left, Aw.Sindri.Core.Line.StopGraph? right) -> bool
+static Aw.Sindri.Core.Line.StopGraph.operator ==(Aw.Sindri.Core.Line.StopGraph? left, Aw.Sindri.Core.Line.StopGraph? right) -> bool
+static Aw.Sindri.Core.Line.StopItem.operator !=(Aw.Sindri.Core.Line.StopItem? left, Aw.Sindri.Core.Line.StopItem? right) -> bool
+static Aw.Sindri.Core.Line.StopItem.operator ==(Aw.Sindri.Core.Line.StopItem? left, Aw.Sindri.Core.Line.StopItem? right) -> bool
+static Aw.Sindri.Core.Line.StopLensRound.operator !=(Aw.Sindri.Core.Line.StopLensRound? left, Aw.Sindri.Core.Line.StopLensRound? right) -> bool
+static Aw.Sindri.Core.Line.StopLensRound.operator ==(Aw.Sindri.Core.Line.StopLensRound? left, Aw.Sindri.Core.Line.StopLensRound? right) -> bool
+static Aw.Sindri.Core.Line.StopLensRow.operator !=(Aw.Sindri.Core.Line.StopLensRow? left, Aw.Sindri.Core.Line.StopLensRow? right) -> bool
+static Aw.Sindri.Core.Line.StopLensRow.operator ==(Aw.Sindri.Core.Line.StopLensRow? left, Aw.Sindri.Core.Line.StopLensRow? right) -> bool
+static Aw.Sindri.Core.Line.StopModel.operator !=(Aw.Sindri.Core.Line.StopModel? left, Aw.Sindri.Core.Line.StopModel? right) -> bool
+static Aw.Sindri.Core.Line.StopModel.operator ==(Aw.Sindri.Core.Line.StopModel? left, Aw.Sindri.Core.Line.StopModel? right) -> bool
+static Aw.Sindri.Core.Line.StopModels.operator !=(Aw.Sindri.Core.Line.StopModels? left, Aw.Sindri.Core.Line.StopModels? right) -> bool
+static Aw.Sindri.Core.Line.StopModels.operator ==(Aw.Sindri.Core.Line.StopModels? left, Aw.Sindri.Core.Line.StopModels? right) -> bool
+static Aw.Sindri.Core.Line.StopOption.operator !=(Aw.Sindri.Core.Line.StopOption? left, Aw.Sindri.Core.Line.StopOption? right) -> bool
+static Aw.Sindri.Core.Line.StopOption.operator ==(Aw.Sindri.Core.Line.StopOption? left, Aw.Sindri.Core.Line.StopOption? right) -> bool
+static Aw.Sindri.Core.Line.StopPhase.operator !=(Aw.Sindri.Core.Line.StopPhase? left, Aw.Sindri.Core.Line.StopPhase? right) -> bool
+static Aw.Sindri.Core.Line.StopPhase.operator ==(Aw.Sindri.Core.Line.StopPhase? left, Aw.Sindri.Core.Line.StopPhase? right) -> bool
+static Aw.Sindri.Core.Line.StopSignal.operator !=(Aw.Sindri.Core.Line.StopSignal? left, Aw.Sindri.Core.Line.StopSignal? right) -> bool
+static Aw.Sindri.Core.Line.StopSignal.operator ==(Aw.Sindri.Core.Line.StopSignal? left, Aw.Sindri.Core.Line.StopSignal? right) -> bool
+static Aw.Sindri.Core.Line.StopSpec.operator !=(Aw.Sindri.Core.Line.StopSpec? left, Aw.Sindri.Core.Line.StopSpec? right) -> bool
+static Aw.Sindri.Core.Line.StopSpec.operator ==(Aw.Sindri.Core.Line.StopSpec? left, Aw.Sindri.Core.Line.StopSpec? right) -> bool
+static Aw.Sindri.Core.Line.StopSuperseded.operator !=(Aw.Sindri.Core.Line.StopSuperseded? left, Aw.Sindri.Core.Line.StopSuperseded? right) -> bool
+static Aw.Sindri.Core.Line.StopSuperseded.operator ==(Aw.Sindri.Core.Line.StopSuperseded? left, Aw.Sindri.Core.Line.StopSuperseded? right) -> bool
+static Aw.Sindri.Core.Line.StopTestChange.operator !=(Aw.Sindri.Core.Line.StopTestChange? left, Aw.Sindri.Core.Line.StopTestChange? right) -> bool
+static Aw.Sindri.Core.Line.StopTestChange.operator ==(Aw.Sindri.Core.Line.StopTestChange? left, Aw.Sindri.Core.Line.StopTestChange? right) -> bool
+static Aw.Sindri.Core.Line.StopTraceRow.operator !=(Aw.Sindri.Core.Line.StopTraceRow? left, Aw.Sindri.Core.Line.StopTraceRow? right) -> bool
+static Aw.Sindri.Core.Line.StopTraceRow.operator ==(Aw.Sindri.Core.Line.StopTraceRow? left, Aw.Sindri.Core.Line.StopTraceRow? right) -> bool
+Aw.Sindri.Core.Line.IOwnerDecisions
+Aw.Sindri.Core.Line.IOwnerDecisions.Ingest(Aw.Sindri.Core.Workflow.Engine.InstanceAddress run, string! packet, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.OwnerDecision!>! decisions, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Line.OwnerDecisionsIngested!>!>
+Aw.Sindri.Core.Line.OwnerDecision
+Aw.Sindri.Core.Line.OwnerDecision.<Clone>$() -> Aw.Sindri.Core.Line.OwnerDecision!
+Aw.Sindri.Core.Line.OwnerDecision.Answer.get -> string!
+Aw.Sindri.Core.Line.OwnerDecision.Answer.init -> void
+Aw.Sindri.Core.Line.OwnerDecision.Deconstruct(out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Nodes, out string! Answer) -> void
+Aw.Sindri.Core.Line.OwnerDecision.Equals(Aw.Sindri.Core.Line.OwnerDecision? other) -> bool
+Aw.Sindri.Core.Line.OwnerDecision.Nodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Line.OwnerDecision.Nodes.init -> void
+Aw.Sindri.Core.Line.OwnerDecision.OwnerDecision(string! Text, System.Collections.Generic.IReadOnlyList<string!>! Nodes, string! Answer) -> void
+Aw.Sindri.Core.Line.OwnerDecision.Text.get -> string!
+Aw.Sindri.Core.Line.OwnerDecision.Text.init -> void
+Aw.Sindri.Core.Line.OwnerDecisionsIngested
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.<Clone>$() -> Aw.Sindri.Core.Line.OwnerDecisionsIngested!
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Deconstruct(out int Stored, out string? Skipped) -> void
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Equals(Aw.Sindri.Core.Line.OwnerDecisionsIngested? other) -> bool
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.OwnerDecisionsIngested(int Stored, string? Skipped) -> void
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Skipped.get -> string?
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Skipped.init -> void
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Stored.get -> int
+Aw.Sindri.Core.Line.OwnerDecisionsIngested.Stored.init -> void
+override Aw.Sindri.Core.Line.OwnerDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.OwnerDecision.GetHashCode() -> int
+override Aw.Sindri.Core.Line.OwnerDecision.ToString() -> string!
+override Aw.Sindri.Core.Line.OwnerDecisionsIngested.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.OwnerDecisionsIngested.GetHashCode() -> int
+override Aw.Sindri.Core.Line.OwnerDecisionsIngested.ToString() -> string!
+static Aw.Sindri.Core.Line.OwnerDecision.operator !=(Aw.Sindri.Core.Line.OwnerDecision? left, Aw.Sindri.Core.Line.OwnerDecision? right) -> bool
+static Aw.Sindri.Core.Line.OwnerDecision.operator ==(Aw.Sindri.Core.Line.OwnerDecision? left, Aw.Sindri.Core.Line.OwnerDecision? right) -> bool
+static Aw.Sindri.Core.Line.OwnerDecisionsIngested.operator !=(Aw.Sindri.Core.Line.OwnerDecisionsIngested? left, Aw.Sindri.Core.Line.OwnerDecisionsIngested? right) -> bool
+static Aw.Sindri.Core.Line.OwnerDecisionsIngested.operator ==(Aw.Sindri.Core.Line.OwnerDecisionsIngested? left, Aw.Sindri.Core.Line.OwnerDecisionsIngested? right) -> bool
+Aw.Sindri.Core.Profile.BoxLimits
+Aw.Sindri.Core.Profile.BoxLimits.<Clone>$() -> Aw.Sindri.Core.Profile.BoxLimits!
+Aw.Sindri.Core.Profile.BoxLimits.BoxLimits(int HeavySlots) -> void
+Aw.Sindri.Core.Profile.BoxLimits.Deconstruct(out int HeavySlots) -> void
+Aw.Sindri.Core.Profile.BoxLimits.Equals(Aw.Sindri.Core.Profile.BoxLimits? other) -> bool
+Aw.Sindri.Core.Profile.BoxLimits.HeavySlots.get -> int
+Aw.Sindri.Core.Profile.BoxLimits.HeavySlots.init -> void
+Aw.Sindri.Core.Profile.BudgetSettings
+Aw.Sindri.Core.Profile.BudgetSettings.<Clone>$() -> Aw.Sindri.Core.Profile.BudgetSettings!
+Aw.Sindri.Core.Profile.BudgetSettings.BudgetSettings(long? Tokens = null, int? Turns = null, int? WallMinutes = null) -> void
+Aw.Sindri.Core.Profile.BudgetSettings.Deconstruct(out long? Tokens, out int? Turns, out int? WallMinutes) -> void
+Aw.Sindri.Core.Profile.BudgetSettings.Equals(Aw.Sindri.Core.Profile.BudgetSettings? other) -> bool
+Aw.Sindri.Core.Profile.BudgetSettings.Tokens.get -> long?
+Aw.Sindri.Core.Profile.BudgetSettings.Tokens.init -> void
+Aw.Sindri.Core.Profile.BudgetSettings.Turns.get -> int?
+Aw.Sindri.Core.Profile.BudgetSettings.Turns.init -> void
+Aw.Sindri.Core.Profile.BudgetSettings.WallMinutes.get -> int?
+Aw.Sindri.Core.Profile.BudgetSettings.WallMinutes.init -> void
+Aw.Sindri.Core.Profile.BuildSettings
+Aw.Sindri.Core.Profile.BuildSettings.<Clone>$() -> Aw.Sindri.Core.Profile.BuildSettings!
+Aw.Sindri.Core.Profile.BuildSettings.BuildSettings(System.Collections.Generic.IReadOnlyList<string!>? Commands = null) -> void
+Aw.Sindri.Core.Profile.BuildSettings.Commands.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.BuildSettings.Commands.init -> void
+Aw.Sindri.Core.Profile.BuildSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Commands) -> void
+Aw.Sindri.Core.Profile.BuildSettings.Equals(Aw.Sindri.Core.Profile.BuildSettings? other) -> bool
+Aw.Sindri.Core.Profile.DesignModels
+Aw.Sindri.Core.Profile.DesignModels.<Clone>$() -> Aw.Sindri.Core.Profile.DesignModels!
+Aw.Sindri.Core.Profile.DesignModels.Deconstruct(out string? Writer, out string? Lens) -> void
+Aw.Sindri.Core.Profile.DesignModels.DesignModels(string? Writer = null, string? Lens = null) -> void
+Aw.Sindri.Core.Profile.DesignModels.Equals(Aw.Sindri.Core.Profile.DesignModels? other) -> bool
+Aw.Sindri.Core.Profile.DesignModels.Lens.get -> string?
+Aw.Sindri.Core.Profile.DesignModels.Lens.init -> void
+Aw.Sindri.Core.Profile.DesignModels.Writer.get -> string?
+Aw.Sindri.Core.Profile.DesignModels.Writer.init -> void
+Aw.Sindri.Core.Profile.DesignSettings
+Aw.Sindri.Core.Profile.DesignSettings.<Clone>$() -> Aw.Sindri.Core.Profile.DesignSettings!
+Aw.Sindri.Core.Profile.DesignSettings.Deconstruct(out Aw.Sindri.Core.Profile.DesignModels? Models) -> void
+Aw.Sindri.Core.Profile.DesignSettings.DesignSettings(Aw.Sindri.Core.Profile.DesignModels? Models = null) -> void
+Aw.Sindri.Core.Profile.DesignSettings.Equals(Aw.Sindri.Core.Profile.DesignSettings? other) -> bool
+Aw.Sindri.Core.Profile.DesignSettings.Models.get -> Aw.Sindri.Core.Profile.DesignModels?
+Aw.Sindri.Core.Profile.DesignSettings.Models.init -> void
+Aw.Sindri.Core.Profile.DocsSettings
+Aw.Sindri.Core.Profile.DocsSettings.<Clone>$() -> Aw.Sindri.Core.Profile.DocsSettings!
+Aw.Sindri.Core.Profile.DocsSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Globs) -> void
+Aw.Sindri.Core.Profile.DocsSettings.DocsSettings(System.Collections.Generic.IReadOnlyList<string!>? Globs = null) -> void
+Aw.Sindri.Core.Profile.DocsSettings.Equals(Aw.Sindri.Core.Profile.DocsSettings? other) -> bool
+Aw.Sindri.Core.Profile.DocsSettings.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.DocsSettings.Globs.init -> void
+Aw.Sindri.Core.Profile.LensPackSettings
+Aw.Sindri.Core.Profile.LensPackSettings.<Clone>$() -> Aw.Sindri.Core.Profile.LensPackSettings!
+Aw.Sindri.Core.Profile.LensPackSettings.Deconstruct(out Aw.Sindri.Core.Profile.PackChoice? Design, out Aw.Sindri.Core.Profile.PackChoice? Review) -> void
+Aw.Sindri.Core.Profile.LensPackSettings.Design.get -> Aw.Sindri.Core.Profile.PackChoice?
+Aw.Sindri.Core.Profile.LensPackSettings.Design.init -> void
+Aw.Sindri.Core.Profile.LensPackSettings.Equals(Aw.Sindri.Core.Profile.LensPackSettings? other) -> bool
+Aw.Sindri.Core.Profile.LensPackSettings.LensPackSettings(Aw.Sindri.Core.Profile.PackChoice? Design = null, Aw.Sindri.Core.Profile.PackChoice? Review = null) -> void
+Aw.Sindri.Core.Profile.LensPackSettings.Review.get -> Aw.Sindri.Core.Profile.PackChoice?
+Aw.Sindri.Core.Profile.LensPackSettings.Review.init -> void
+Aw.Sindri.Core.Profile.LineSettings
+Aw.Sindri.Core.Profile.LineSettings.<Clone>$() -> Aw.Sindri.Core.Profile.LineSettings!
+Aw.Sindri.Core.Profile.LineSettings.Deconstruct(out int? Parallel, out int? MaxOpenPrs, out int? MaxStack) -> void
+Aw.Sindri.Core.Profile.LineSettings.Equals(Aw.Sindri.Core.Profile.LineSettings? other) -> bool
+Aw.Sindri.Core.Profile.LineSettings.LineSettings(int? Parallel = null, int? MaxOpenPrs = null, int? MaxStack = null) -> void
+Aw.Sindri.Core.Profile.LineSettings.MaxOpenPrs.get -> int?
+Aw.Sindri.Core.Profile.LineSettings.MaxOpenPrs.init -> void
+Aw.Sindri.Core.Profile.LineSettings.MaxStack.get -> int?
+Aw.Sindri.Core.Profile.LineSettings.MaxStack.init -> void
+Aw.Sindri.Core.Profile.LineSettings.Parallel.get -> int?
+Aw.Sindri.Core.Profile.LineSettings.Parallel.init -> void
+Aw.Sindri.Core.Profile.PackChoice
+Aw.Sindri.Core.Profile.PackChoice.<Clone>$() -> Aw.Sindri.Core.Profile.PackChoice!
+Aw.Sindri.Core.Profile.PackChoice.Deconstruct(out string? Default, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Repos) -> void
+Aw.Sindri.Core.Profile.PackChoice.Default.get -> string?
+Aw.Sindri.Core.Profile.PackChoice.Default.init -> void
+Aw.Sindri.Core.Profile.PackChoice.Equals(Aw.Sindri.Core.Profile.PackChoice? other) -> bool
+Aw.Sindri.Core.Profile.PackChoice.PackChoice(string? Default = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Repos = null) -> void
+Aw.Sindri.Core.Profile.PackChoice.Repos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Profile.PackChoice.Repos.init -> void
+Aw.Sindri.Core.Profile.PackSettings
+Aw.Sindri.Core.Profile.PackSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PackSettings!
+Aw.Sindri.Core.Profile.PackSettings.Deconstruct(out Aw.Sindri.Core.Profile.PackChoice? Style, out Aw.Sindri.Core.Profile.LensPackSettings? Lenses, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Pins) -> void
+Aw.Sindri.Core.Profile.PackSettings.Equals(Aw.Sindri.Core.Profile.PackSettings? other) -> bool
+Aw.Sindri.Core.Profile.PackSettings.Lenses.get -> Aw.Sindri.Core.Profile.LensPackSettings?
+Aw.Sindri.Core.Profile.PackSettings.Lenses.init -> void
+Aw.Sindri.Core.Profile.PackSettings.PackSettings(Aw.Sindri.Core.Profile.PackChoice? Style = null, Aw.Sindri.Core.Profile.LensPackSettings? Lenses = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Pins = null) -> void
+Aw.Sindri.Core.Profile.PackSettings.Pins.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Profile.PackSettings.Pins.init -> void
+Aw.Sindri.Core.Profile.PackSettings.Style.get -> Aw.Sindri.Core.Profile.PackChoice?
+Aw.Sindri.Core.Profile.PackSettings.Style.init -> void
+Aw.Sindri.Core.Profile.PlanSettings
+Aw.Sindri.Core.Profile.PlanSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PlanSettings!
+Aw.Sindri.Core.Profile.PlanSettings.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.SizeSettings!>? Sizes, out string? MaxPhaseSize) -> void
+Aw.Sindri.Core.Profile.PlanSettings.Equals(Aw.Sindri.Core.Profile.PlanSettings? other) -> bool
+Aw.Sindri.Core.Profile.PlanSettings.MaxPhaseSize.get -> string?
+Aw.Sindri.Core.Profile.PlanSettings.MaxPhaseSize.init -> void
+Aw.Sindri.Core.Profile.PlanSettings.PlanSettings(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.SizeSettings!>? Sizes = null, string? MaxPhaseSize = null) -> void
+Aw.Sindri.Core.Profile.PlanSettings.Sizes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.SizeSettings!>?
+Aw.Sindri.Core.Profile.PlanSettings.Sizes.init -> void
+Aw.Sindri.Core.Profile.ProveSettings
+Aw.Sindri.Core.Profile.ProveSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ProveSettings!
+Aw.Sindri.Core.Profile.ProveSettings.Deconstruct(out int? HoldoutMin) -> void
+Aw.Sindri.Core.Profile.ProveSettings.Equals(Aw.Sindri.Core.Profile.ProveSettings? other) -> bool
+Aw.Sindri.Core.Profile.ProveSettings.HoldoutMin.get -> int?
+Aw.Sindri.Core.Profile.ProveSettings.HoldoutMin.init -> void
+Aw.Sindri.Core.Profile.ProveSettings.ProveSettings(int? HoldoutMin = null) -> void
+Aw.Sindri.Core.Profile.ReviewModels
+Aw.Sindri.Core.Profile.ReviewModels.<Clone>$() -> Aw.Sindri.Core.Profile.ReviewModels!
+Aw.Sindri.Core.Profile.ReviewModels.Deconstruct(out string? Lens) -> void
+Aw.Sindri.Core.Profile.ReviewModels.Equals(Aw.Sindri.Core.Profile.ReviewModels? other) -> bool
+Aw.Sindri.Core.Profile.ReviewModels.Lens.get -> string?
+Aw.Sindri.Core.Profile.ReviewModels.Lens.init -> void
+Aw.Sindri.Core.Profile.ReviewModels.ReviewModels(string? Lens = null) -> void
+Aw.Sindri.Core.Profile.ReviewSettings
+Aw.Sindri.Core.Profile.ReviewSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ReviewSettings!
+Aw.Sindri.Core.Profile.ReviewSettings.Deconstruct(out Aw.Sindri.Core.Profile.ReviewModels? Models) -> void
+Aw.Sindri.Core.Profile.ReviewSettings.Equals(Aw.Sindri.Core.Profile.ReviewSettings? other) -> bool
+Aw.Sindri.Core.Profile.ReviewSettings.Models.get -> Aw.Sindri.Core.Profile.ReviewModels?
+Aw.Sindri.Core.Profile.ReviewSettings.Models.init -> void
+Aw.Sindri.Core.Profile.ReviewSettings.ReviewSettings(Aw.Sindri.Core.Profile.ReviewModels? Models = null) -> void
+Aw.Sindri.Core.Profile.ShipSettings
+Aw.Sindri.Core.Profile.ShipSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ShipSettings!
+Aw.Sindri.Core.Profile.ShipSettings.Deconstruct(out bool? Draft) -> void
+Aw.Sindri.Core.Profile.ShipSettings.Draft.get -> bool?
+Aw.Sindri.Core.Profile.ShipSettings.Draft.init -> void
+Aw.Sindri.Core.Profile.ShipSettings.Equals(Aw.Sindri.Core.Profile.ShipSettings? other) -> bool
+Aw.Sindri.Core.Profile.ShipSettings.ShipSettings(bool? Draft = null) -> void
+Aw.Sindri.Core.Profile.SizeSettings
+Aw.Sindri.Core.Profile.SizeSettings.<Clone>$() -> Aw.Sindri.Core.Profile.SizeSettings!
+Aw.Sindri.Core.Profile.SizeSettings.Budget.get -> Aw.Sindri.Core.Profile.BudgetSettings?
+Aw.Sindri.Core.Profile.SizeSettings.Budget.init -> void
+Aw.Sindri.Core.Profile.SizeSettings.Deconstruct(out int? Files, out int? Items, out Aw.Sindri.Core.Profile.BudgetSettings? Budget) -> void
+Aw.Sindri.Core.Profile.SizeSettings.Equals(Aw.Sindri.Core.Profile.SizeSettings? other) -> bool
+Aw.Sindri.Core.Profile.SizeSettings.Files.get -> int?
+Aw.Sindri.Core.Profile.SizeSettings.Files.init -> void
+Aw.Sindri.Core.Profile.SizeSettings.Items.get -> int?
+Aw.Sindri.Core.Profile.SizeSettings.Items.init -> void
+Aw.Sindri.Core.Profile.SizeSettings.SizeSettings(int? Files = null, int? Items = null, Aw.Sindri.Core.Profile.BudgetSettings? Budget = null) -> void
+Aw.Sindri.Core.Profile.StepsSettings
+Aw.Sindri.Core.Profile.StepsSettings.<Clone>$() -> Aw.Sindri.Core.Profile.StepsSettings!
+Aw.Sindri.Core.Profile.StepsSettings.Deconstruct(out string? LongMax) -> void
+Aw.Sindri.Core.Profile.StepsSettings.Equals(Aw.Sindri.Core.Profile.StepsSettings? other) -> bool
+Aw.Sindri.Core.Profile.StepsSettings.LongMax.get -> string?
+Aw.Sindri.Core.Profile.StepsSettings.LongMax.init -> void
+Aw.Sindri.Core.Profile.StepsSettings.StepsSettings(string? LongMax = null) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Build.get -> Aw.Sindri.Core.Profile.BuildSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Build.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route, out Aw.Sindri.Core.Profile.PackSettings? Packs, out Aw.Sindri.Core.Profile.LineSettings? Line, out Aw.Sindri.Core.Profile.PlanSettings? Plan, out Aw.Sindri.Core.Profile.ProveSettings? Prove, out Aw.Sindri.Core.Profile.BuildSettings? Build, out Aw.Sindri.Core.Profile.ShipSettings? Ship, out Aw.Sindri.Core.Profile.DesignSettings? Design, out Aw.Sindri.Core.Profile.ReviewSettings? Review, out Aw.Sindri.Core.Profile.StepsSettings? Steps, out Aw.Sindri.Core.Profile.DocsSettings? Docs) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Design.get -> Aw.Sindri.Core.Profile.DesignSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Design.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Docs.get -> Aw.Sindri.Core.Profile.DocsSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Docs.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Line.get -> Aw.Sindri.Core.Profile.LineSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Line.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Packs.get -> Aw.Sindri.Core.Profile.PackSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Packs.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Plan.get -> Aw.Sindri.Core.Profile.PlanSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Plan.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Prove.get -> Aw.Sindri.Core.Profile.ProveSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Prove.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Review.get -> Aw.Sindri.Core.Profile.ReviewSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Review.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Ship.get -> Aw.Sindri.Core.Profile.ShipSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Ship.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Steps.get -> Aw.Sindri.Core.Profile.StepsSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Steps.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null, Aw.Sindri.Core.Profile.PackSettings? Packs = null, Aw.Sindri.Core.Profile.LineSettings? Line = null, Aw.Sindri.Core.Profile.PlanSettings? Plan = null, Aw.Sindri.Core.Profile.ProveSettings? Prove = null, Aw.Sindri.Core.Profile.BuildSettings? Build = null, Aw.Sindri.Core.Profile.ShipSettings? Ship = null, Aw.Sindri.Core.Profile.DesignSettings? Design = null, Aw.Sindri.Core.Profile.ReviewSettings? Review = null, Aw.Sindri.Core.Profile.StepsSettings? Steps = null, Aw.Sindri.Core.Profile.DocsSettings? Docs = null) -> void
+override Aw.Sindri.Core.Profile.BoxLimits.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.BoxLimits.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.BoxLimits.ToString() -> string!
+override Aw.Sindri.Core.Profile.BudgetSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.BudgetSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.BudgetSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.BuildSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.BuildSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.BuildSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.DesignModels.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.DesignModels.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.DesignModels.ToString() -> string!
+override Aw.Sindri.Core.Profile.DesignSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.DesignSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.DesignSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.DocsSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.DocsSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.DocsSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.LensPackSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.LensPackSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.LensPackSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.LineSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.LineSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.LineSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.PackChoice.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PackChoice.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PackChoice.ToString() -> string!
+override Aw.Sindri.Core.Profile.PackSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PackSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PackSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.PlanSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PlanSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PlanSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.ProveSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ProveSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ProveSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.ReviewModels.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ReviewModels.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ReviewModels.ToString() -> string!
+override Aw.Sindri.Core.Profile.ReviewSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ReviewSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ReviewSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.ShipSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ShipSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ShipSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.SizeSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.SizeSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.SizeSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.StepsSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.StepsSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.StepsSettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.BoxLimits.operator !=(Aw.Sindri.Core.Profile.BoxLimits? left, Aw.Sindri.Core.Profile.BoxLimits? right) -> bool
+static Aw.Sindri.Core.Profile.BoxLimits.operator ==(Aw.Sindri.Core.Profile.BoxLimits? left, Aw.Sindri.Core.Profile.BoxLimits? right) -> bool
+static Aw.Sindri.Core.Profile.BudgetSettings.operator !=(Aw.Sindri.Core.Profile.BudgetSettings? left, Aw.Sindri.Core.Profile.BudgetSettings? right) -> bool
+static Aw.Sindri.Core.Profile.BudgetSettings.operator ==(Aw.Sindri.Core.Profile.BudgetSettings? left, Aw.Sindri.Core.Profile.BudgetSettings? right) -> bool
+static Aw.Sindri.Core.Profile.BuildSettings.operator !=(Aw.Sindri.Core.Profile.BuildSettings? left, Aw.Sindri.Core.Profile.BuildSettings? right) -> bool
+static Aw.Sindri.Core.Profile.BuildSettings.operator ==(Aw.Sindri.Core.Profile.BuildSettings? left, Aw.Sindri.Core.Profile.BuildSettings? right) -> bool
+static Aw.Sindri.Core.Profile.DesignModels.operator !=(Aw.Sindri.Core.Profile.DesignModels? left, Aw.Sindri.Core.Profile.DesignModels? right) -> bool
+static Aw.Sindri.Core.Profile.DesignModels.operator ==(Aw.Sindri.Core.Profile.DesignModels? left, Aw.Sindri.Core.Profile.DesignModels? right) -> bool
+static Aw.Sindri.Core.Profile.DesignSettings.operator !=(Aw.Sindri.Core.Profile.DesignSettings? left, Aw.Sindri.Core.Profile.DesignSettings? right) -> bool
+static Aw.Sindri.Core.Profile.DesignSettings.operator ==(Aw.Sindri.Core.Profile.DesignSettings? left, Aw.Sindri.Core.Profile.DesignSettings? right) -> bool
+static Aw.Sindri.Core.Profile.DocsSettings.operator !=(Aw.Sindri.Core.Profile.DocsSettings? left, Aw.Sindri.Core.Profile.DocsSettings? right) -> bool
+static Aw.Sindri.Core.Profile.DocsSettings.operator ==(Aw.Sindri.Core.Profile.DocsSettings? left, Aw.Sindri.Core.Profile.DocsSettings? right) -> bool
+static Aw.Sindri.Core.Profile.LensPackSettings.operator !=(Aw.Sindri.Core.Profile.LensPackSettings? left, Aw.Sindri.Core.Profile.LensPackSettings? right) -> bool
+static Aw.Sindri.Core.Profile.LensPackSettings.operator ==(Aw.Sindri.Core.Profile.LensPackSettings? left, Aw.Sindri.Core.Profile.LensPackSettings? right) -> bool
+static Aw.Sindri.Core.Profile.LineSettings.operator !=(Aw.Sindri.Core.Profile.LineSettings? left, Aw.Sindri.Core.Profile.LineSettings? right) -> bool
+static Aw.Sindri.Core.Profile.LineSettings.operator ==(Aw.Sindri.Core.Profile.LineSettings? left, Aw.Sindri.Core.Profile.LineSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PackChoice.operator !=(Aw.Sindri.Core.Profile.PackChoice? left, Aw.Sindri.Core.Profile.PackChoice? right) -> bool
+static Aw.Sindri.Core.Profile.PackChoice.operator ==(Aw.Sindri.Core.Profile.PackChoice? left, Aw.Sindri.Core.Profile.PackChoice? right) -> bool
+static Aw.Sindri.Core.Profile.PackSettings.operator !=(Aw.Sindri.Core.Profile.PackSettings? left, Aw.Sindri.Core.Profile.PackSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PackSettings.operator ==(Aw.Sindri.Core.Profile.PackSettings? left, Aw.Sindri.Core.Profile.PackSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PlanSettings.operator !=(Aw.Sindri.Core.Profile.PlanSettings? left, Aw.Sindri.Core.Profile.PlanSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PlanSettings.operator ==(Aw.Sindri.Core.Profile.PlanSettings? left, Aw.Sindri.Core.Profile.PlanSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileRules.Check(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.BoxLimits? box) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.SindriProfile!>!
+static Aw.Sindri.Core.Profile.ProveSettings.operator !=(Aw.Sindri.Core.Profile.ProveSettings? left, Aw.Sindri.Core.Profile.ProveSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ProveSettings.operator ==(Aw.Sindri.Core.Profile.ProveSettings? left, Aw.Sindri.Core.Profile.ProveSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ReviewModels.operator !=(Aw.Sindri.Core.Profile.ReviewModels? left, Aw.Sindri.Core.Profile.ReviewModels? right) -> bool
+static Aw.Sindri.Core.Profile.ReviewModels.operator ==(Aw.Sindri.Core.Profile.ReviewModels? left, Aw.Sindri.Core.Profile.ReviewModels? right) -> bool
+static Aw.Sindri.Core.Profile.ReviewSettings.operator !=(Aw.Sindri.Core.Profile.ReviewSettings? left, Aw.Sindri.Core.Profile.ReviewSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ReviewSettings.operator ==(Aw.Sindri.Core.Profile.ReviewSettings? left, Aw.Sindri.Core.Profile.ReviewSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ShipSettings.operator !=(Aw.Sindri.Core.Profile.ShipSettings? left, Aw.Sindri.Core.Profile.ShipSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ShipSettings.operator ==(Aw.Sindri.Core.Profile.ShipSettings? left, Aw.Sindri.Core.Profile.ShipSettings? right) -> bool
+static Aw.Sindri.Core.Profile.SizeSettings.operator !=(Aw.Sindri.Core.Profile.SizeSettings? left, Aw.Sindri.Core.Profile.SizeSettings? right) -> bool
+static Aw.Sindri.Core.Profile.SizeSettings.operator ==(Aw.Sindri.Core.Profile.SizeSettings? left, Aw.Sindri.Core.Profile.SizeSettings? right) -> bool
+static Aw.Sindri.Core.Profile.StepsSettings.operator !=(Aw.Sindri.Core.Profile.StepsSettings? left, Aw.Sindri.Core.Profile.StepsSettings? right) -> bool
+static Aw.Sindri.Core.Profile.StepsSettings.operator ==(Aw.Sindri.Core.Profile.StepsSettings? left, Aw.Sindri.Core.Profile.StepsSettings? right) -> bool
+Aw.Sindri.Core.Profile.LineProfile
+static Aw.Sindri.Core.Profile.LineProfile.DocsGlobs(Aw.Sindri.Core.Profile.SindriProfile! profile) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Profile.LineProfile.Draft(Aw.Sindri.Core.Profile.SindriProfile! profile) -> bool
+static Aw.Sindri.Core.Profile.LineProfile.HoldoutMin(Aw.Sindri.Core.Profile.SindriProfile! profile) -> int
+static Aw.Sindri.Core.Profile.LineProfile.LongMax(Aw.Sindri.Core.Profile.SindriProfile! profile) -> string!
+static Aw.Sindri.Core.Profile.LineProfile.MaxOpenPrs(Aw.Sindri.Core.Profile.SindriProfile! profile) -> int
+static Aw.Sindri.Core.Profile.LineProfile.MaxPhaseSize(Aw.Sindri.Core.Profile.SindriProfile! profile) -> string!
+static Aw.Sindri.Core.Profile.LineProfile.MaxStack(Aw.Sindri.Core.Profile.SindriProfile! profile) -> int
+static Aw.Sindri.Core.Profile.LineProfile.Parallel(Aw.Sindri.Core.Profile.SindriProfile! profile) -> int
+static Aw.Sindri.Core.Profile.LineProfile.SizesFile(Aw.Sindri.Core.Profile.SindriProfile! profile) -> string!
 Aw.Sindri.Core.Profile.SetupSettings
 Aw.Sindri.Core.Profile.SetupSettings.<Clone>$() -> Aw.Sindri.Core.Profile.SetupSettings!
 Aw.Sindri.Core.Profile.SetupSettings.Deconstruct(out string? Mcp) -> void
