@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Kernel;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -24,7 +25,7 @@ internal static partial class Labels
     internal const string JobsUnreadable = "The job list can't be read from this Sindri.";
 
     /// <summary>The page when the first read failed: the reason follows.</summary>
-    internal static string JobsFailed(Aw.Kernel.Error error) => "Couldn't read the jobs just now. " + InstanceRefused(error);
+    internal static string JobsFailed(Error error) => "Couldn't read the jobs just now. " + InstanceRefused(error);
 
     /// <summary>The action beside a failed read.</summary>
     internal const string TryAgain = "Try again";
@@ -130,5 +131,5 @@ internal static partial class Labels
     /// <summary>The sheet's stale note.</summary>
     /// <param name="error">The error of the failed read.</param>
     /// <returns>The words.</returns>
-    internal static string JobStale(Aw.Kernel.Error error) => "Couldn't read the job just now. " + InstanceRefused(error);
+    internal static string JobStale(Error error) => "Couldn't read the job just now. " + InstanceRefused(error);
 }
