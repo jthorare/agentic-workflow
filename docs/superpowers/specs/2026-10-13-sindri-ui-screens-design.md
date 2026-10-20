@@ -71,7 +71,7 @@ before:
 
 | # | Page | Key | Count in the tab | Detail sheet opens |
 |---|---|---|---|---|
-| 1 | Home (default) | `G H` | — | any row |
+| 1 | Home (default) **(SO-19)**: a Setup card above Needs you until every setup step is done or skipped (three rows and "and N more", so Needs you stays above the fold); chord `G U` and the in-app route `setup` open it (no OS scheme) | `G H` | — | any row |
 | 2 | Workflows | `G W` | open root instances | an instance (§4.2) |
 | 3 | Work | `G Q` | items | an item, in the Workflows frame (§4.7) |
 | 4 | Recipes | `G R` | recipes | a recipe (§4.3) |
@@ -255,7 +255,7 @@ intake.linear        ○ draft      —    —     —     —       —       �
 - Child-only recipes (never a root) show `—` for run stats and say so; their numbers appear under their parents'
   per-state rows.
 - STATUS is the registry's word (WF P2): approved, changed since approval (a pinned block or the file changed,
-  `SND-RECIPE-006`), draft. Re-approval is `protected`: the CLI to copy.
+  `SND-RECIPE-006`), draft. Re-approval is `protected`; **(SO-21)** it is typed in the app (`ApproveRecipe`), and the CLI stays the fallback.
 - **Validate file…** runs the validator on a chosen file in-process (`recipe validate`); **Import** registers a
   file as a draft (an `issue` kind command, X26).
 

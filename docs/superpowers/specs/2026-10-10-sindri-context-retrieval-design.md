@@ -110,6 +110,7 @@ that graph plus rank fusion across adapters.
   creates `/sindri/mcp`, ships this check, `sindri mcp register`, and the probe of whether Claude Code's local scope
   reaches the repo's worktree sessions.
 - **Decisions stay human (README X63):** a map review decision is made by a person, never a session, and there is no
+  **(SO-14, owner rule 2026-10-19)** One exception: map promote has no manual step. The built-in `context-map-refresh` service builds, runs a cleanup agent and promotes through the engine directly (`Who = service:context-map-refresh`), bypassing the protected command by design; each accept is a reversible override with that actor. The cleanup agent runs read-only with no tools on scrubbed input, its output is schema-checked, a per-run removal ceiling parks the run instead of promoting, and its model calls have a daily cap per repo with a machine ceiling. The manual protected promote stays. See `2026-10-19-sindri-setup-once-design.md` §5.5.
   review tool over MCP. The classes follow how far a decision reaches. A single accept, reject, rename or move, the
   bulk deterministic accept, `--undo`, and the orphan repoint and drop are `desk` actions: the terminal or the app may run
   them, each is one reversible `map_override` row, and Undo is the recovery. `map review --apply <file>`, merge, add,
