@@ -89,6 +89,9 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
     /// <summary>The expanded state; null before a read.</summary>
     public ExpandedStateViewModel? Expanded { get; private set => Set(ref field, value); }
 
+    /// <summary>The Step runs; null before a read.</summary>
+    public StepRunsViewModel? StepRuns { get; private set => Set(ref field, value); }
+
     /// <summary>The sentence a refusal or an unreadable answer shows.</summary>
     public string ProblemText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -254,6 +257,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         }
 
         ShowPanels(detail);
+        ShowStepRuns(detail);
         var expanded = new ExpandedStateViewModel(detail.Current, detail.Address, clipboard, clock);
         if (Expanded is null || !string.Equals(Expanded.Signature, expanded.Signature, StringComparison.Ordinal))
         {
@@ -273,7 +277,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         _generation++;
         (Title, Recipe, Hash12, Version, StateText, Detail, SinceText, Identity, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (WorkflowName, DetailsText, AddressCopy) = (string.Empty, string.Empty, null);
-        (Subject, Band, Expanded) = (null, null, null);
+        (Subject, Band, Expanded, StepRuns) = (null, null, null, null);
         ClearPanels();
         (_eventsFor, _eventRows) = (null, []);
         WantedFocus = null;

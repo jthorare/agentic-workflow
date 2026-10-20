@@ -46,6 +46,21 @@
       <Panel IsVisible="{Binding Expanded, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:ExpandedStateView x:Name="Expanded" DataContext="{Binding Expanded}" />
       </Panel>
+      <StackPanel x:Name="InstanceStepRuns" Spacing="4" IsVisible="{Binding StepRuns.HasRows, FallbackValue=False}">
+        <TextBlock x:Name="InstanceRunLine" Classes="body" Text="{Binding StepRuns.CurrentLine}" IsVisible="{Binding StepRuns.HasCurrentLine, FallbackValue=False}"
+                   TextWrapping="Wrap" AutomationProperties.Name="{Binding StepRuns.CurrentLine}" />
+        <Expander x:Name="InstanceRuns" Header="{Binding StepRuns.Heading}" IsExpanded="False">
+          <ItemsControl x:Name="InstanceRunRows" ItemsSource="{Binding StepRuns.Rows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="inst:StepRunRowViewModel">
+                <Border AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" Margin="0,2">
+                  <TextBlock Classes="caption" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Expander>
+      </StackPanel>
       <Panel IsVisible="{Binding Facts, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:FactsPanel x:Name="Facts" DataContext="{Binding Facts}" />
       </Panel>
