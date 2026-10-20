@@ -37,6 +37,11 @@ public sealed class EventStreamBindTests
     [InlineData("?types=workflow.instance-changed&after=3", null, 3)]
     [InlineData("?types=workflow.instance-changed&after=0", null, 0)]   // an explicit 0 is still asked for
     [InlineData("?types=workflow.instance-changed", "4", 4)]
+    [InlineData("?types=workflow.instance-changed", "nope", 9)]   // an unparseable Last-Event-ID names no cursor
+    [InlineData("?types=workflow.instance-changed", "-1", 9)]   // nor does a negative one
+    [InlineData("?types=workflow.instance-changed&after=3", "4", 4)]   // both: Bind's cursor is the header
+    [InlineData("?types=workflow.instance-changed&after=3", "-1", 3)]   // a negative header falls through to after=
+    [InlineData("?types=workflow.instance-changed&after=", null, 9)]   // an empty after= is no cursor
     [InlineData("?types=workflow.instance-changed,service.heartbeat", null, 0)]   // it also names a ledger type: the usual cursor
     [InlineData("?types=workflow.*", null, 0)]
     [InlineData("", null, 0)]

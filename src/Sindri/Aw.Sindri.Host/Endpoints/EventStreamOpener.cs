@@ -19,7 +19,7 @@ namespace Aw.Sindri.Host.Endpoints;
 /// GET /sindri/events: the ledger's public events as a server-sent event stream (API spec §5; factory addendum §17.21). Everything
 /// that can refuse the request is decided before the first frame, as a ProblemDetails answer: a bad filter (400), a cursor past the
 /// ledger's head (400), an item filter that names no item the caller may see (404) and no free stream slot (429, SND-API-012). The cursor is the Last-Event-ID header when it holds a sequence,
-/// else ?after=, else 0 (C4). ?item= (an id or tracker alias), ?types= (globs) and ?instance= (engine spec S1-D6) filter the stream.
+/// else ?after=, else 0 (C4); a stream of only 'workflow.instance-changed' with no explicit cursor (no valid Last-Event-ID, no non-empty ?after=) opens at the ledger head instead (StartAt). ?item= (an id or tracker alias), ?types= (globs) and ?instance= (engine spec S1-D6) filter the stream.
 /// </summary>
 /// <param name="ledger">The ledger, for the head.</param>
 /// <param name="slots">The open streams.</param>
