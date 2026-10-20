@@ -12010,6 +12010,102 @@ Aw.Sindri.Core.Onyx.IOnyxSession.RevokeTokens(string! name, System.Threading.Can
 Aw.Sindri.Core.Onyx.OnyxAccounts
 const Aw.Sindri.Core.Onyx.OnyxAccounts.DedicatedEmail = "sindri@example.com" -> string!
 const Aw.Sindri.Core.Onyx.OnyxAccounts.LegacyEmail = "sindri@sindri.app" -> string!
+Aw.Sindri.Core.Packets.IPackets
+Aw.Sindri.Core.Packets.IPackets.Freeze(Aw.Sindri.Core.Packets.PacketRef! packet, Aw.Sindri.Core.Packets.PacketFreezer by, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Packets.PacketFreeze!>!>
+Aw.Sindri.Core.Packets.IPackets.Hash(Aw.Sindri.Core.Packets.PacketRef! packet, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Packets.IPackets.Validate(Aw.Sindri.Core.Packets.PacketRef! packet, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Packets.PacketValidation!>!>
+Aw.Sindri.Core.Packets.PacketFailure
+Aw.Sindri.Core.Packets.PacketFailure.<Clone>$() -> Aw.Sindri.Core.Packets.PacketFailure!
+Aw.Sindri.Core.Packets.PacketFailure.Deconstruct(out string! Rule, out string! Subject, out string! Message, out string? Fix) -> void
+Aw.Sindri.Core.Packets.PacketFailure.Equals(Aw.Sindri.Core.Packets.PacketFailure? other) -> bool
+Aw.Sindri.Core.Packets.PacketFailure.Fix.get -> string?
+Aw.Sindri.Core.Packets.PacketFailure.Fix.init -> void
+Aw.Sindri.Core.Packets.PacketFailure.Message.get -> string!
+Aw.Sindri.Core.Packets.PacketFailure.Message.init -> void
+Aw.Sindri.Core.Packets.PacketFailure.PacketFailure(string! Rule, string! Subject, string! Message, string? Fix) -> void
+Aw.Sindri.Core.Packets.PacketFailure.Rule.get -> string!
+Aw.Sindri.Core.Packets.PacketFailure.Rule.init -> void
+Aw.Sindri.Core.Packets.PacketFailure.Subject.get -> string!
+Aw.Sindri.Core.Packets.PacketFailure.Subject.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze
+Aw.Sindri.Core.Packets.PacketFreeze.<Clone>$() -> Aw.Sindri.Core.Packets.PacketFreeze!
+Aw.Sindri.Core.Packets.PacketFreeze.AlreadyFrozen.get -> bool
+Aw.Sindri.Core.Packets.PacketFreeze.AlreadyFrozen.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.AlreadyFrozenBy.get -> Aw.Sindri.Core.Packets.PacketFreezer?
+Aw.Sindri.Core.Packets.PacketFreeze.AlreadyFrozenBy.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.By.get -> Aw.Sindri.Core.Packets.PacketFreezer
+Aw.Sindri.Core.Packets.PacketFreeze.By.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.Deconstruct(out bool Frozen, out string? Hash, out Aw.Sindri.Core.Packets.PacketFreezer By, out bool AlreadyFrozen, out Aw.Sindri.Core.Packets.PacketFreezer? AlreadyFrozenBy, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>! Failures) -> void
+Aw.Sindri.Core.Packets.PacketFreeze.Equals(Aw.Sindri.Core.Packets.PacketFreeze? other) -> bool
+Aw.Sindri.Core.Packets.PacketFreeze.Failures.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>!
+Aw.Sindri.Core.Packets.PacketFreeze.Failures.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.Frozen.get -> bool
+Aw.Sindri.Core.Packets.PacketFreeze.Frozen.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.Hash.get -> string?
+Aw.Sindri.Core.Packets.PacketFreeze.Hash.init -> void
+Aw.Sindri.Core.Packets.PacketFreeze.PacketFreeze(bool Frozen, string? Hash, Aw.Sindri.Core.Packets.PacketFreezer By, bool AlreadyFrozen, Aw.Sindri.Core.Packets.PacketFreezer? AlreadyFrozenBy, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>! Failures) -> void
+Aw.Sindri.Core.Packets.PacketFreezer
+Aw.Sindri.Core.Packets.PacketFreezer.Machine = 1 -> Aw.Sindri.Core.Packets.PacketFreezer
+Aw.Sindri.Core.Packets.PacketFreezer.Owner = 2 -> Aw.Sindri.Core.Packets.PacketFreezer
+Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Build = 1 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Design = 3 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Handoff = 8 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Phase = 5 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Plan = 4 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Proof = 6 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Review = 7 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketKind.Scoping = 2 -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketRef
+Aw.Sindri.Core.Packets.PacketRef.<Clone>$() -> Aw.Sindri.Core.Packets.PacketRef!
+Aw.Sindri.Core.Packets.PacketRef.Deconstruct(out Aw.Sindri.Core.Packets.PacketKind Kind, out string! Directory, out string? Repo, out string? RepoSlug, out string? Instance) -> void
+Aw.Sindri.Core.Packets.PacketRef.Directory.get -> string!
+Aw.Sindri.Core.Packets.PacketRef.Directory.init -> void
+Aw.Sindri.Core.Packets.PacketRef.Equals(Aw.Sindri.Core.Packets.PacketRef? other) -> bool
+Aw.Sindri.Core.Packets.PacketRef.Instance.get -> string?
+Aw.Sindri.Core.Packets.PacketRef.Instance.init -> void
+Aw.Sindri.Core.Packets.PacketRef.Kind.get -> Aw.Sindri.Core.Packets.PacketKind
+Aw.Sindri.Core.Packets.PacketRef.Kind.init -> void
+Aw.Sindri.Core.Packets.PacketRef.PacketRef(Aw.Sindri.Core.Packets.PacketKind Kind, string! Directory, string? Repo = null, string? RepoSlug = null, string? Instance = null) -> void
+Aw.Sindri.Core.Packets.PacketRef.Repo.get -> string?
+Aw.Sindri.Core.Packets.PacketRef.Repo.init -> void
+Aw.Sindri.Core.Packets.PacketRef.RepoSlug.get -> string?
+Aw.Sindri.Core.Packets.PacketRef.RepoSlug.init -> void
+Aw.Sindri.Core.Packets.PacketValidation
+Aw.Sindri.Core.Packets.PacketValidation.<Clone>$() -> Aw.Sindri.Core.Packets.PacketValidation!
+Aw.Sindri.Core.Packets.PacketValidation.Deconstruct(out bool Passed, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>! Failures) -> void
+Aw.Sindri.Core.Packets.PacketValidation.Equals(Aw.Sindri.Core.Packets.PacketValidation? other) -> bool
+Aw.Sindri.Core.Packets.PacketValidation.Failures.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>!
+Aw.Sindri.Core.Packets.PacketValidation.Failures.init -> void
+Aw.Sindri.Core.Packets.PacketValidation.PacketValidation(bool Passed, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Packets.PacketFailure!>! Failures) -> void
+Aw.Sindri.Core.Packets.PacketValidation.Passed.get -> bool
+Aw.Sindri.Core.Packets.PacketValidation.Passed.init -> void
+override Aw.Sindri.Core.Packets.PacketFailure.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Packets.PacketFailure.GetHashCode() -> int
+override Aw.Sindri.Core.Packets.PacketFailure.ToString() -> string!
+override Aw.Sindri.Core.Packets.PacketFreeze.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Packets.PacketFreeze.GetHashCode() -> int
+override Aw.Sindri.Core.Packets.PacketFreeze.ToString() -> string!
+override Aw.Sindri.Core.Packets.PacketRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Packets.PacketRef.GetHashCode() -> int
+override Aw.Sindri.Core.Packets.PacketRef.ToString() -> string!
+override Aw.Sindri.Core.Packets.PacketValidation.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Packets.PacketValidation.GetHashCode() -> int
+override Aw.Sindri.Core.Packets.PacketValidation.ToString() -> string!
+static Aw.Sindri.Core.Packets.PacketFailure.operator !=(Aw.Sindri.Core.Packets.PacketFailure? left, Aw.Sindri.Core.Packets.PacketFailure? right) -> bool
+static Aw.Sindri.Core.Packets.PacketFailure.operator ==(Aw.Sindri.Core.Packets.PacketFailure? left, Aw.Sindri.Core.Packets.PacketFailure? right) -> bool
+static Aw.Sindri.Core.Packets.PacketFreeze.operator !=(Aw.Sindri.Core.Packets.PacketFreeze? left, Aw.Sindri.Core.Packets.PacketFreeze? right) -> bool
+static Aw.Sindri.Core.Packets.PacketFreeze.operator ==(Aw.Sindri.Core.Packets.PacketFreeze? left, Aw.Sindri.Core.Packets.PacketFreeze? right) -> bool
+static Aw.Sindri.Core.Packets.PacketRef.operator !=(Aw.Sindri.Core.Packets.PacketRef? left, Aw.Sindri.Core.Packets.PacketRef? right) -> bool
+static Aw.Sindri.Core.Packets.PacketRef.operator ==(Aw.Sindri.Core.Packets.PacketRef? left, Aw.Sindri.Core.Packets.PacketRef? right) -> bool
+static Aw.Sindri.Core.Packets.PacketValidation.operator !=(Aw.Sindri.Core.Packets.PacketValidation? left, Aw.Sindri.Core.Packets.PacketValidation? right) -> bool
+static Aw.Sindri.Core.Packets.PacketValidation.operator ==(Aw.Sindri.Core.Packets.PacketValidation? left, Aw.Sindri.Core.Packets.PacketValidation? right) -> bool
+Aw.Sindri.Core.Workflow.Blocks.StepFacts
+static Aw.Sindri.Core.Workflow.Blocks.StepFacts.Done(string! outcome, params (string! Key, System.Text.Json.Nodes.JsonNode! Value)[]! outputs) -> Aw.Sindri.Core.Workflow.Blocks.BlockStepResult!
+static Aw.Sindri.Core.Workflow.Blocks.StepFacts.Head(System.Text.Json.Nodes.JsonNode? fact) -> string?
+static Aw.Sindri.Core.Workflow.Blocks.StepFacts.Missing(Aw.Sindri.Core.Workflow.Blocks.StepContext! context, params string![]! keys) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Workflow.Blocks.StepFacts.Read(Aw.Sindri.Core.Workflow.Blocks.StepContext! context, string! key) -> System.Text.Json.Nodes.JsonNode?
+static Aw.Sindri.Core.Workflow.Blocks.StepFacts.Text(Aw.Sindri.Core.Workflow.Blocks.StepContext! context, string! key) -> string?
 Aw.Sindri.Core.Workflow.Blocks.IRunArea
 Aw.Sindri.Core.Workflow.Blocks.IRunArea.Read(string! address, string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Workflow.Blocks.IRunArea.Write(string! address, string! name, string! content, bool append, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>

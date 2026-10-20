@@ -5,6 +5,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Host.Commands.Scoping;
@@ -162,7 +163,7 @@ internal static partial class ScopingCommandTable
 
     private static async Task<int> Desk(IReadOnlyList<string> args, Host host, CancellationToken ct)
     {
-        var (services, output, _, environment) = host;
+        var (services, output, _, _) = host;
         var parsed = ScopingArguments.Parse(args, "--facts", "--out", "--repo-root", "--notes-dir", "--query", "--lenses", "--code", "--history", "--propose");
         if (!DeskArguments(parsed, out var block, out var directory, out var outDirectory))
         {
@@ -187,7 +188,7 @@ internal static partial class ScopingCommandTable
             return await Fail(output, result.Error).ConfigureAwait(false);
         }
 
-        var report = await WriteReport(result.Value, outDirectory, (environment, services.GetRequiredService<JsonSerializerOptions>()), ct).ConfigureAwait(false);
+        var report = await WriteReport(result.Value, outDirectory, (services.GetRequiredService<IPackets>(), services.GetRequiredService<JsonSerializerOptions>()), ct).ConfigureAwait(false);
         if (report.IsError)
         {
             return await Fail(output, report.Error).ConfigureAwait(false);
@@ -212,7 +213,7 @@ internal static partial class ScopingCommandTable
     }
 
     /// <summary>Writes the Step's fact files, its run-area files and report.json under the out directory; the evidence step's packet gets its hash from aw-packets.</summary>
-    private static async Task<Result<ScopingDeskReport>> WriteReport(ScopingDeskResponse response, string outDirectory, (Func<string, string?> Environment, JsonSerializerOptions Json) context, CancellationToken ct)
+    private static async Task<Result<ScopingDeskReport>> WriteReport(ScopingDeskResponse response, string outDirectory, (IPackets Packets, JsonSerializerOptions Json) context, CancellationToken ct)
     {
         var outputs = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var (key, text) in response.Outputs)
@@ -228,7 +229,7 @@ internal static partial class ScopingCommandTable
 
         if (response.Files.Any(static f => f.Path.StartsWith(ScopePacketDirectory + "/", StringComparison.Ordinal)))
         {
-            var hash = await PacketsCli.Hash(Path.Combine(outDirectory, ScopePacketDirectory), context.Environment, ct).ConfigureAwait(false);
+            var hash = await PacketsCli.Hash(context.Packets, Path.Combine(outDirectory, ScopePacketDirectory), ct).ConfigureAwait(false);
             if (hash.IsError)
             {
                 return hash.Error;

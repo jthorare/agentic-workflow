@@ -87,11 +87,11 @@ DTC2 to DTC9 as the plan reads them. Out of this change: seeds (DT-R3), `workflo
 
 ## Line stations: build and prove
 
-- Every Step of `workflow.build` and `workflow.prove` is descriptor-only (`BuildSteps.cs`, `ProveSteps.cs`), so each parks with SND-WF-010 at the desk until its runtime ships. Only the owner may report `step.build.scope-desk`.
+- `step.build.prepare` has a block runtime (`BuildPrepareStep`); every other Step of `workflow.build` and `workflow.prove` is descriptor-only (`BuildSteps.cs`, `ProveSteps.cs`) and parks with SND-WF-010 at the desk until its runtime ships. Only the owner may report `step.build.scope-desk`.
 - `workflow.build` inputs: `fact:phasePacket`, `fact:workspace` (text), `fact:buildNotes`, `fact:lineContext`. Outputs: `fact:built`, `fact:change`, `fact:redTests`, `fact:activePacket`. Terminals: `built` (resolved), `stopped` (unresolved).
 - `workflow.prove` inputs: `fact:phasePacket`, `fact:built`, `fact:workspace` (text), `fact:redTests`. Outputs: `fact:proofPack`, `fact:findings`. Terminals: `proven` (resolved), `failed` (unresolved, `fact:findings`). It waits on `workflow.hand-test`, `workflow.verify` and `workflow.evidence`.
 - Neither recipe waits on the heavy-job slot yet, because nothing in a served build grants it. Restore the slot waits (line spec C.3, C.4) when the heavy allocator exists.
 
 ### The line's phase (workflow.phase)
 
-`workflow.phase` waits on `build`, `prove`, `review-loop`, `ship` and `pr-babysitter`. `pr-babysitter` is a **stub** until the PR babysitter spec's recipe replaces it. Steps with no runtime (`step.phase.seed`, `step.phase.drift`, `step.phase.decide`, `step.babysit.watch`) are descriptors only: `recipe validate` and `recipe eval` pass, and a served instance parks with `SND-WF-010` at the desk. `effect.line.report` is descriptor-only too. The renames in phase's `produces` use the long form (`{ fact, from }`) and hold under `RCP-WIRE-003` because every path to the terminal each is taken on writes the note.
+`workflow.phase` waits on `build`, `prove`, `review-loop`, `ship` and `pr-babysitter`. `pr-babysitter` is a **stub** until the PR babysitter spec's recipe replaces it. `step.phase.drift` has a block runtime (`PhaseDriftStep`), and so do `step.build.prepare` and `step.ship.return`. Steps with no runtime (`step.phase.seed`, `step.phase.decide`, `step.babysit.watch`) are descriptors only: `recipe validate` and `recipe eval` pass, and a served instance parks with `SND-WF-010` at the desk. `effect.line.report` is descriptor-only too. The renames in phase's `produces` use the long form (`{ fact, from }`) and hold under `RCP-WIRE-003` because every path to the terminal each is taken on writes the note.

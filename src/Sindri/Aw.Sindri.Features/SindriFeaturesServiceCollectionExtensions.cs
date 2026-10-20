@@ -21,6 +21,7 @@ using Aw.Sindri.Features.ApplyCommand;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
 using Aw.Sindri.Features.Blocks;
+using Aw.Sindri.Features.Build;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
@@ -87,6 +88,7 @@ using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
+using Aw.Sindri.Features.Ship;
 using Aw.Sindri.Features.ShowRecipe;
 using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StartProcess;
@@ -149,6 +151,8 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddLaunchTargetJob()
             .AddScoped<IRepoCheckouts, ProfileRepoCheckouts>()
             .AddScopingSlices()
+            .AddBuildSlices()
+            .AddShipSlices()
             .AddLensLoops();
         return services;
     }

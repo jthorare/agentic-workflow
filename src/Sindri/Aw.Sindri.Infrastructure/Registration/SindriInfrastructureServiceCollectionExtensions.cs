@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
@@ -30,6 +31,7 @@ using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Onyx;
+using Aw.Sindri.Infrastructure.Packets;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Infrastructure.Scoping;
@@ -61,7 +63,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
         services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IAgentSessions, LedgerAgentSessions>();
 
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services, Func<string, string?> environment) =>
-        services.AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), new ProcessToolRunner(), environment)).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>();
+        services.AddSingleton<IPackets>(_ => new AwPacketsTool(new ProcessToolRunner(), environment))
+            .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>();
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {

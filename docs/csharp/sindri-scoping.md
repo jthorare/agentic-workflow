@@ -76,7 +76,7 @@ Deferred from the SC-K1 review (runs 1 and 2) to SC-K2 or later:
 - `brief.md` in the packet uses its own backtick fence; API9 wraps a `.md` file in the pack fence (`UntrustedFence`), and the packet moves to it.
 - `--draft` with an address is checked against the runs root, not that instance's run area, and skips the worktree check; resolve the instance first and share one `AW_SINDRI_HOME` resolution.
 - `SCP-ACC-003` reads `openQuestions` and `questions` without `Need`-ing them, so a Step directory without them fails instead of `not-run`.
-- `PacketsCli` does not kill the child process on timeout or Ctrl-C, and reports a tool failure as `InvalidInput`.
+- `PacketsCli` reports a tool failure as `InvalidInput` (the services report SND-SCOPING-008); it now shares the services' invocation, which kills the child on timeout or Ctrl-C.
 - The `noBehaviourChange` marker needs a spec amendment (§8.2 ACC-002 and ACC-005, A.1 and the SC-E seeds); it also means "covered through another surface" for some surfaces (owner decision, in the PR).
 - `ScopeSchemas` caches parsed `JsonNode` documents in a static field; materialize them under the lock before `serve` shares the view (API2).
 - `workflow.scoping.mapCoverageFloor` is the constant 0.5, to become the profile key.

@@ -1,9 +1,8 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Engine;
-using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Workflow;
 
 namespace Aw.Sindri.Infrastructure.Scoping;
@@ -13,28 +12,17 @@ namespace Aw.Sindri.Infrastructure.Scoping;
 /// hashed with aw-packets hash --kind scoping (AW_PACKETS_BIN, else aw-packets on the PATH) and read file by file.
 /// </summary>
 /// <param name="settings">Sindri's home.</param>
-/// <param name="runner">Runs aw-packets.</param>
-/// <param name="environment">Reads AW_PACKETS_BIN.</param>
-internal sealed class ScopePacketStore(SindriSettings settings, IToolRunner runner, Func<string, string?> environment) : IScopePacketStore
+/// <param name="packets">Hashes the packet (aw-packets).</param>
+internal sealed class ScopePacketStore(SindriSettings settings, IPackets packets) : IScopePacketStore
 {
     private const long MaxBytes = 4 * 1024 * 1024;
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(60);
 
     public ValueTask<Result<string>> Hash(WorkflowInstanceId instance, CancellationToken cancellationToken)
     {
         var directory = PacketDirectory(instance);
-        if (!Directory.Exists(directory))
-        {
-            return ValueTask.FromResult<Result<string>>(NotThere(instance));
-        }
-
-        var program = environment("AW_PACKETS_BIN") is { Length: > 0 } given ? given : "aw-packets";
-        var run = runner.Run(program, ["hash", "--kind", "scoping", directory], _timeout, options: null, cancellationToken);
-        var hash = run.Output.Trim();
-        Result<string> result = run.Outcome == ToolOutcome.Exited && run.ExitCode == 0 && hash.StartsWith("sha256:", StringComparison.Ordinal)
-            ? hash
-            : ScopingErrors.PacketToolFailed.With($"aw-packets hash failed ({program}: {run.Outcome}, exit {run.ExitCode.ToString(CultureInfo.InvariantCulture)}) (fix: build aw-packets and put it on the PATH, or set AW_PACKETS_BIN)");
-        return ValueTask.FromResult(result);
+        return Directory.Exists(directory)
+            ? packets.Hash(new PacketRef(PacketKind.Scoping, directory), cancellationToken)
+            : ValueTask.FromResult<Result<string>>(NotThere(instance));
     }
 
     public async ValueTask<Result<string>> ReadFile(WorkflowInstanceId instance, string name, CancellationToken cancellationToken)

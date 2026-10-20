@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure;
+using Aw.Sindri.Infrastructure.Packets;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Scoping;
 using Aw.Sindri.Tests.Ledger;
@@ -23,7 +24,7 @@ public sealed class ScopePacketStoreTests : IDisposable
     private ScopePacketStore Store(ToolRun run)
     {
         _ = Directory.CreateDirectory(Path.Combine(_home.Path, "workflow", "runs", _instance.Value, "scope-packet"));
-        return new ScopePacketStore(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), new Runner(run), static _ => null);
+        return new ScopePacketStore(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), new AwPacketsTool(new Runner(run), static _ => null));
     }
 
     [Fact, Trait("Lane", "integration")]
