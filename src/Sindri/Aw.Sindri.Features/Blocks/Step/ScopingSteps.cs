@@ -114,9 +114,10 @@ internal static class ScopingSteps
     public static BlockDescriptor Review { get; } = HumanDeskStep("step.scope.review", Capability.None)
         .Reads("fact:scopePacket").Reports("approve", "revise", "drop").Writes(On("fact:answers", "revise"));
 
-    /// <summary>'step.scope.freeze': re-checks the packet, confirms its hash and freezes it through aw-packets; 'frozen' or 'mismatch'.</summary>
+    /// <summary>'step.scope.freeze': re-runs the evidence checks, confirms the packet's hash and freezes it through aw-packets; 'frozen' re-records fact:scopePacket as {hash, dir}, 'mismatch' carries findings.</summary>
     public static BlockDescriptor Freeze { get; } = BlockStep("step.scope.freeze", Capability.Tools)
-        .Reads("fact:scopePacket", "fact:answerLog").Reports("frozen", "mismatch").Writes(On("fact:findings", "mismatch"));
+        .Reads("fact:scopePacket", "fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions", "fact:decision", "fact:anchors", "fact:questions")
+        .Reports("frozen", "mismatch").Writes(On("fact:scopePacket", "frozen"), On("fact:findings", "mismatch"));
 
     /// <summary>'step.scope.withdraw': withdraws the run's undecided map proposals; 'withdrawn'.</summary>
     public static BlockDescriptor Withdraw { get; } = BlockStep("step.scope.withdraw", Capability.Tools).Reports("withdrawn").Writes();

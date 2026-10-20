@@ -34,7 +34,7 @@ public sealed class ScopingBlocksTests
     [InlineData("step.scope.propose", BlockRuntime.Block, false, "fact:scopeMap", "proposed,skipped", "fact:scopeMap", "", Capability.Tools)]
     [InlineData("step.scope.evidence", BlockRuntime.Block, false, "fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions", "complete,incomplete,regather", "", "fact:scopeMap=complete;fact:acceptance=complete;fact:coverage=complete;fact:openQuestions=complete;fact:scopePacket=complete;fact:findings=incomplete,regather", Capability.Tools)]
     [InlineData("step.scope.review", BlockRuntime.Desk, true, "fact:scopePacket", "approve,revise,drop", "", "fact:answers=revise", Capability.None)]
-    [InlineData("step.scope.freeze", BlockRuntime.Block, false, "fact:scopePacket,fact:answerLog", "frozen,mismatch", "", "fact:findings=mismatch", Capability.Tools)]
+    [InlineData("step.scope.freeze", BlockRuntime.Block, false, "fact:scopePacket,fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions", "frozen,mismatch", "", "fact:scopePacket=frozen;fact:findings=mismatch", Capability.Tools)]
     [InlineData("step.scope.withdraw", BlockRuntime.Block, false, "", "withdrawn", "", "", Capability.Tools)]
     public void Each_scoping_step_declares_what_it_runs_reads_reports_and_writes(
         string id, BlockRuntime runtime, bool humanOnly, string inputs, string outcomes, string every, string required, Capability capabilities)

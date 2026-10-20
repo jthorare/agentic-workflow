@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 1
+version: 2
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 urgency: work
 inputs:
@@ -11,7 +11,7 @@ outputs:
   - { key: fact:coverage,      label: "Lens coverage",   type: payload,   from: evidence }
   - { key: fact:decision,      label: "Size estimate",   type: payload,   from: size }
   - { key: fact:openQuestions, label: "Open questions",  type: payload,   from: evidence }
-  - { key: fact:scopePacket,   label: "Scope packet",    type: payload,   from: evidence }
+  - { key: fact:scopePacket,   label: "Scope packet",    type: payload,   from: freeze }
 initial: intake
 states:
   intake:       { kind: active, step: step.scope.intake, timeout: { after: 1h, then: park },
@@ -126,7 +126,7 @@ transitions:
   - { from: stop, to: freeze,   on: step.completed, when: { outcome: approve } }
   - { from: stop, to: record,   on: step.completed, when: { outcome: revise }, produces: [fact:answers] }
   - { from: stop, to: withdraw, on: step.completed, when: { outcome: drop } }
-  - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen } }
+  - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
 loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 4 }, refreeze: { cap: 2 } }

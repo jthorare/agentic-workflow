@@ -72,6 +72,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
     private static IServiceCollection AddInterpreterActivities(this IServiceCollection services) => services
         .AddSingleton<RunStepActivities>()
         .AddSingleton<RecordEventActivities>()
+        .AddScoped<ScopingApprovals>()                             // BS-1b: the scoping.approved row after step.scope.freeze reports frozen
         .AddSingleton<FactReadActivities>()
         .AddSingleton<EffectDispatch>(static provider => (context, ct) => DispatchScoped(provider, context, ct))   // engine P6 unit (a): RunEffect runs a scoped block by id
         .AddSingleton<BlockStepDispatch>(static provider => (step, context, ct) => RunBlockScoped(provider, step, context, ct))   // DT-J2: RunBlockStep runs a scoped block Step by id
@@ -118,7 +119,10 @@ public static class SindriWorkflowsServiceCollectionExtensions
         var scope = provider.CreateAsyncScope();
         await using (scope.ConfigureAwait(false))
         {
-            return await scope.ServiceProvider.GetRequiredKeyedService<IBlockStep>(step.Value).Run(context, cancellationToken).ConfigureAwait(false);
+            var result = await scope.ServiceProvider.GetRequiredKeyedService<IBlockStep>(step.Value).Run(context, cancellationToken).ConfigureAwait(false);
+            return step == ScopingApprovals.Freeze   // BS-1b: the freeze Step has no ledger port, so the engine appends scoping.approved for its 'frozen'
+                ? await scope.ServiceProvider.GetRequiredService<ScopingApprovals>().After(step, context, result, cancellationToken).ConfigureAwait(false)
+                : result;
         }
     }
 
