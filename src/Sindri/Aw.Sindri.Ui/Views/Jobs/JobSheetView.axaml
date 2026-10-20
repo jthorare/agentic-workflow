@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:jb="using:Aw.Sindri.Ui.ViewModels.Jobs"
+             xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Jobs.JobSheetView"
+             x:DataType="jb:JobSheetViewModel">
+  <!-- The job sheet (API P6), read-only, inside the shell's sheet (F3): the job in words, its state line and how it ended, Cancel while it runs, then what it has said so far.
+       What it produced and the technical fields (the id, the kind as served, the key, the code) wait behind closed disclosures. Every named line is a Border the screen
+       reader reads as one text; the TextBlocks inside are Raw (a TextBlock's peer reads its Text and ignores a Name). -->
+  <StackPanel x:Name="JobSheet" Spacing="{StaticResource Space.MD}">
+    <TextBlock x:Name="JobLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
+    <TextBlock x:Name="JobProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding IsProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
+    <Expander x:Name="JobProblemDetails" Header="{Binding DetailsLabel}" IsExpanded="False" IsVisible="{Binding HasProblemCode}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding DetailsLabel}">
+      <Border x:Name="JobProblemCode" AutomationProperties.Name="{Binding ProblemCode}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body mono" Text="{Binding ProblemCode}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+    </Expander>
+    <Border x:Name="JobNote" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <StackPanel x:Name="JobBody" Spacing="{StaticResource Space.MD}" IsVisible="{Binding IsShown}">
+      <StackPanel Spacing="4">
+        <Border x:Name="JobHeading" AutomationProperties.Name="{Binding Heading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong" Text="{Binding Heading}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="JobState" AutomationProperties.Name="{Binding StateLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body mono" Text="{Binding StateLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="JobSummary" IsVisible="{Binding HasSummary}" AutomationProperties.Name="{Binding SummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Text="{Binding SummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+
+      <Panel IsVisible="{Binding Cancel, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <controls:CommandControl x:Name="JobCancel" DataContext="{Binding Cancel}" />
+      </Panel>
+
+      <StackPanel x:Name="JobProgress" Spacing="6">
+        <TextBlock Classes="eyebrow" Text="{Binding ProgressHeading}" AutomationProperties.AccessibilityView="Raw" />
+        <Border x:Name="JobNoProgress" IsVisible="{Binding HasNoProgress}" AutomationProperties.Name="{Binding NoProgressText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding NoProgressText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <ItemsControl x:Name="JobProgressList" ItemsSource="{Binding Progress}" IsVisible="{Binding HasProgress}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Name="JobProgressLine" Margin="0,0,0,2" AutomationProperties.Name="{Binding}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption mono" Text="{Binding}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <Expander x:Name="JobResult" Header="{Binding ResultLabel}" IsExpanded="False" IsVisible="{Binding HasResult}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding ResultLabel}">
+        <Border x:Name="JobResultBody" AutomationProperties.Name="{Binding ResultText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption mono" Text="{Binding ResultText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </Expander>
+
+      <!-- The technical detail (F3): closed by default. -->
+      <Expander x:Name="JobDetails" Header="{Binding DetailsLabel}" IsExpanded="False" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding DetailsLabel}">
+        <StackPanel Spacing="{StaticResource Space.MD}">
+          <ItemsControl x:Name="JobFields" ItemsSource="{Binding Fields}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="jb:JobFieldViewModel">
+                <Border Name="JobField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                  <StackPanel Spacing="1" AutomationProperties.AccessibilityView="Raw">
+                    <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+                    <TextBlock Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel x:Name="JobCliRow" Spacing="6" IsVisible="{Binding HasCli}">
+            <TextBlock Classes="caption subtle" Text="{Binding CliLabel}" AutomationProperties.AccessibilityView="Raw" />
+            <Border x:Name="JobCliLine" AutomationProperties.Name="{Binding Cli}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption mono" Text="{Binding Cli}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Button x:Name="JobCliCopy" Content="{Binding CopyLabel}" Click="OnCopyCli" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CopyName}" />
+          </StackPanel>
+        </StackPanel>
+      </Expander>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

@@ -9,8 +9,11 @@ internal sealed partial class ShellViewModel
     /// <summary>The session whose Agents row opened the sheet (its ref), where Esc returns focus; null when it was opened some other way.</summary>
     internal string? OpenerSession { get; private set; }
 
-    // A session sheet names its session as the sheet does ("Session <provider> <title or id8>"), not by the ref, once the read has drawn.
-    private string NamedSubject => SheetLink?.Kind == DeepLinkKind.Session && AgentSheet.Heading.Length > 0 ? AgentSheet.Heading : SheetSubject;
+    // A session or job sheet names its subject as the sheet does ("Session <provider> <title or id8>"), not by the ref, once the read has drawn.
+    private string NamedSubject =>
+        SheetLink?.Kind == DeepLinkKind.Session && AgentSheet.Heading.Length > 0 ? AgentSheet.Heading
+        : SheetLink?.Kind == DeepLinkKind.Job && JobSheet.Heading.Length > 0 ? JobSheet.Heading
+        : SheetSubject;
 
     partial void InitAgentSheet()
     {

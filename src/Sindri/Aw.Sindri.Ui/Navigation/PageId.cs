@@ -24,6 +24,9 @@ internal enum PageId
     /// <summary>Dependencies, services and health (screens spec §4.6).</summary>
     System,
 
+    /// <summary>The background jobs Sindri ran (API P6). Not a tab: G J, the palette and System's Jobs link open it.</summary>
+    Jobs,
+
     /// <summary>Local preferences only (⌘,).</summary>
     Settings,
 }

@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Workflow;
 
@@ -113,6 +114,7 @@ internal sealed class FakeSindriHandler(FakeSindriApi server) : HttpMessageHandl
             { } path when path.StartsWith("/sindri/context/", StringComparison.Ordinal) => await ContextRoute(request, cancellationToken),
             // LANE ANCHOR U11a: the session reads, as arms above the workflow-read arm. Insert immediately below this marker, never between the markers.
             { } path when request.Method == HttpMethod.Get && (path == "/sindri/sessions" || path.StartsWith("/sindri/sessions/", StringComparison.Ordinal)) => await Sessions(uri, cancellationToken),
+            { } path when path == "/sindri/jobs" || path.StartsWith("/sindri/jobs/", StringComparison.Ordinal) => await Jobs(request, cancellationToken),
             { } path when request.Method == HttpMethod.Get && path.StartsWith("/sindri/workflow/", StringComparison.Ordinal) => await Workflow(uri, cancellationToken),
             _ => Text(HttpStatusCode.NotFound, "{}", "application/json"),
         };
@@ -219,6 +221,25 @@ internal sealed class FakeSindriHandler(FakeSindriApi server) : HttpMessageHandl
             case [var provider, var id]:
                 _ = await server.Session(uri, provider, id, cancellationToken);
                 return Answer(server.SessionOneAnswer(provider, id));
+            default:
+                return Text(HttpStatusCode.NotFound, "{}", "application/json");
+        }
+    }
+
+    private async Task<HttpResponseMessage> Jobs(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var uri = request.RequestUri!; // why: HttpClient always sets it on a sent request
+        var parts = uri.AbsolutePath["/sindri/jobs".Length..].Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.UnescapeDataString).ToArray();
+        switch (parts)
+        {
+            case [] when request.Method == HttpMethod.Get:
+                _ = await server.Jobs(uri, new JobQuery(Query(uri, "state"), Query(uri, "kind")), cancellationToken);
+                return Answer(server.JobsAnswer);
+            case [var id] when request.Method == HttpMethod.Get:
+                _ = await server.Job(uri, id, cancellationToken);
+                return Answer(server.JobOneAnswer(id));
+            case [var id, "cancel"] when request.Method == HttpMethod.Post:
+                return Answer(Counted(await server.CancelJob(uri, id, cancellationToken), server.CancelJobAnswer));
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }

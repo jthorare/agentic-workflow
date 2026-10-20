@@ -115,6 +115,7 @@ internal sealed partial class ShellViewModel
         "C" => (PageId.Context, HomeFilter.All),
         "A" => (PageId.Agents, HomeFilter.All),
         "." or "S" => (PageId.System, HomeFilter.All),
+        "J" => (PageId.Jobs, HomeFilter.All),
         _ => null,
     };
 

@@ -43,6 +43,7 @@ internal sealed partial class ShellViewModel
         // LANE ANCHOR U9: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Node), the node card of the Context page (U9b writes the arm; until then Node still shows the placeholder). System, Service and Job are claimed later, at this switch, by the phase that renders them (screens spec §8). Insert immediately below this marker, never between the markers.
         // LANE ANCHOR U11a: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Session), U11a's session sheet (collector spec CU-3); the arm is written by the sheet's builder (T4), not by the contract. Insert immediately below this marker, never between the markers.
         DeepLinkKind.Session => false,
+        DeepLinkKind.Job => false,
         _ => true,
     };
 #pragma warning restore IDE0072
@@ -75,6 +76,7 @@ internal sealed partial class ShellViewModel
         }
 
         (IsSheetOpen, OpenerRow, OpenerStrip, OpenerRecipeGroup, OpenerSession) = (true, null, null, null, null);
+        OnJobSheetReopened();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));
     }
 }

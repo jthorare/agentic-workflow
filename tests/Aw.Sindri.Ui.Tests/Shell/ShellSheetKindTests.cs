@@ -78,7 +78,7 @@ public sealed class ShellSheetKindTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 
-            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session), shell.IsSheetPlaceholderShown);   // Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
+            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session or DeepLinkKind.Job), shell.IsSheetPlaceholderShown);   // Job is the Jobs lane's, Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
             var noun = Labels.KindNoun(kind);
             var subject = kind == DeepLinkKind.HomeNeedsYou ? string.Empty : "X";
             Assert.Equal(noun.Length > 0 ? noun + " " + subject : subject, shell.SheetName);
@@ -129,7 +129,7 @@ public sealed class ShellSheetKindTests
     [InlineData("service/serena", "Service serena", "Reopen service serena")]
     [InlineData("item/ITM-1", "ITM-1", "Reopen ITM-1")]
     [InlineData("decision/REQ-1", "REQ-1", "Reopen REQ-1")]
-    [InlineData("job/JOB-1", "JOB-1", "Reopen JOB-1")]
+    [InlineData("job/JOB-1", "Job JOB-1", "Reopen job JOB-1")]
     public async Task The_sheet_and_its_edge_tab_are_named_with_the_kind(string link, string sheet, string edge)
     {
         var shell = await Shell();

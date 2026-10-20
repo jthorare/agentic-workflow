@@ -32,7 +32,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     private static readonly string[] _pageProperties =
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsWorkflows), nameof(IsWork), nameof(IsRecipes), nameof(IsContext),
-        nameof(IsAgents), nameof(IsSystem), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible),
+        nameof(IsAgents), nameof(IsSystem), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible),
     ];
 
     private readonly Preferences _store;

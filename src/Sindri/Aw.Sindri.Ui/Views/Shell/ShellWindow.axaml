@@ -11,6 +11,7 @@
         xmlns:iv="using:Aw.Sindri.Ui.Views.Instance"
         xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
+        xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
@@ -203,8 +204,15 @@
                 <Panel IsVisible="{Binding IsAgents}"><agv:AgentsPage x:Name="AgentsPage" DataContext="{Binding Agents}" /></Panel>
                 <!-- System hosts the control plane's health until U12 builds the rest (screens spec §4.6). -->
                 <Panel IsVisible="{Binding IsSystem}">
-                  <views:HealthPage x:Name="HealthPage" DataContext="{Binding Health}" />
+                  <StackPanel Spacing="{StaticResource Size.PanelGap}">
+                    <views:HealthPage x:Name="HealthPage" DataContext="{Binding Health}" />
+                    <!-- Jobs is not a tab: System leads to it (G J and the palette too). -->
+                    <Button x:Name="JobsLink" Classes="row-title" Click="OnJobsLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.JobsLinkName}">
+                      <TextBlock Classes="body" Text="{Binding Text.JobsLink}" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
+                  </StackPanel>
                 </Panel>
+                <Panel IsVisible="{Binding IsJobs}"><jv:JobsPage x:Name="JobsPage" DataContext="{Binding Jobs}" /></Panel>
                 <!-- Settings (⌘,): SindriApp puts Settings' view here at start-up; the placeholder shows where nothing does (view tests). -->
                 <ContentControl x:Name="SettingsSlot" IsVisible="{Binding IsSettings}">
                   <views:PlaceholderPage Title="{Binding Text.Settings}" />
@@ -279,6 +287,9 @@
                 </ScrollViewer>
                 <!-- LANE ANCHOR U9: the sheet content for the kinds U9 claims (kinds: Node), the node card of the Context page. Insert immediately below this marker, never between the markers. -->
                 <!-- LANE ANCHOR U11a: the sheet content for the kinds U11a claims (kinds: Session), the session sheet. Insert immediately below this marker, never between the markers. -->
+                <ScrollViewer x:Name="JobSheetScroll" IsVisible="{Binding IsJobSheet}">
+                  <jv:JobSheetView x:Name="JobSheetContent" DataContext="{Binding JobSheet}" />
+                </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
                   <agv:SessionSheetView x:Name="SessionSheetContent" DataContext="{Binding AgentSheet}" />
                 </ScrollViewer>

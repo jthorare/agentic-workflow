@@ -58,6 +58,7 @@ internal sealed partial class ShellViewModel
         OnInstanceSheetOpened(link);
         OnRecipeSheetOpened(link);
         OnAgentSheetOpened(link);
+        OnJobSheetOpened(link);
         if (link.Kind != DeepLinkKind.Item || link.Subject is null)
         {
             return;
