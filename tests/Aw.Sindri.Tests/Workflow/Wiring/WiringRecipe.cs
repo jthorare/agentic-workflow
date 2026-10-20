@@ -103,6 +103,9 @@ internal static class WiringRecipe
     /// <summary>The findings of the block rules for <paramref name="recipe"/>.</summary>
     public static IReadOnlyList<RecipeFinding> CheckBlocks(Recipe recipe, Located? located = null) => Run(new BlockRules(), recipe, located ?? Located.Nowhere);
 
+    /// <summary>The findings of the human-trigger rule for <paramref name="recipe"/>.</summary>
+    public static IReadOnlyList<RecipeFinding> CheckHumanTrigger(Recipe recipe, Located? located = null) => Run(new HumanTriggerRules(), recipe, located ?? Located.Nowhere);
+
     public static IReadOnlyList<string> Lines(this IEnumerable<RecipeFinding> findings) => [.. findings.Select(f => f.ToLine())];
 
     public static ChildRecipe Child(Recipe recipe) => new(recipe, RecipeHash.Of("{}"u8));

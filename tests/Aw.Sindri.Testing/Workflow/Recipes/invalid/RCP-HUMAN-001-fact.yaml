@@ -1,0 +1,23 @@
+# The merge transition requires fact:output, but the transition that produces it leaves a state a Step entered, not a human's command.
+schema: 1
+id: workflow.human-trigger-fact
+version: 1
+initial: ask
+states:
+  ask:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Write the line to send to your desk, then complete this Step."
+  hold:
+    kind: wait
+    waitFor: { event: notify.delivered }
+    timeout: { after: 1h, then: park }
+    next: "Waiting for the desk."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ask, to: hold, on: step.completed, when: { outcome: done }, produces: [fact:output] }
+  - { from: hold, to: done, on: wait.satisfied, when: { fact: fact:output, is: present }, effects: [effect.test.merge] }
+inputs: [{ key: fact:item, type: item, kind: item }]

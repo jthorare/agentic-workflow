@@ -2,7 +2,7 @@ namespace Aw.Sindri.Core.Workflow.Validation;
 
 /// <summary>
 /// The recipe validator (spec §9.1): pure, in-process, and the same for every surface. It runs the rule groups in
-/// order (schema, graph, wiring, blocks, capability, registry) and returns every finding of every group. A recipe passes when
+/// order (schema, graph, wiring, blocks, human trigger, capability, registry) and returns every finding of every group. A recipe passes when
 /// no finding is an <see cref="FindingSeverity.Error"/>.
 /// </summary>
 public static class RecipeValidator
@@ -16,6 +16,7 @@ public static class RecipeValidator
         new ChoiceRules(),
         new DeclarationRules(),
         new BlockRules(),
+        new HumanTriggerRules(),
         new CapabilityRules(),
         new RegistryRules(),
     ];

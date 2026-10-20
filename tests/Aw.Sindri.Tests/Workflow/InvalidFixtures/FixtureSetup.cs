@@ -23,4 +23,7 @@ internal enum FixtureSetup
 
     /// <summary>The capability catalog and base, with InvalidFixtureRun.Registry, where the base is registered but not approved.</summary>
     CapabilityWithUnapprovedBase,
+
+    /// <summary>The wiring catalog with a profile whose workflow.effects allows only effect.test.merge, which acts with a human's authority.</summary>
+    HumanTrigger,
 }

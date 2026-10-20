@@ -82,6 +82,22 @@ internal static class InvalidFixtureCases
             FixtureSetup.EffectAllowlist,
             "RCP-EFFECT-001: effect 'effect.notify.desk' isn't on the profile's effect allowlist at RCP-EFFECT-001.yaml:16:83 (transitions[0].effects[0].use); add it to workflow.effects and approve the profile, or remove it",
             []),
+        ["RCP-HUMAN-001"] = new(
+            FixtureSetup.HumanTrigger,
+            "RCP-HUMAN-001: effect 'effect.test.merge' acts with a human's authority, but transitions[0] (ask -> done on step.completed) isn't a human's act at RCP-HUMAN-001.yaml:16:83 (transitions[0].effects[0].use); put it on a command.<verb> transition, a step.completed out of a human-only Step, or a transition that requires a fact only such a transition produces",
+            []),
+        ["RCP-HUMAN-001-fact"] = new(
+            FixtureSetup.HumanTrigger,
+            "RCP-HUMAN-001: effect 'effect.test.merge' acts with a human's authority, but transitions[1] (hold -> done on wait.satisfied) isn't a human's act at RCP-HUMAN-001-fact.yaml:22:101 (transitions[1].effects[0].use); put it on a command.<verb> transition, a step.completed out of a human-only Step, or a transition that requires a fact only such a transition produces",
+            []),
+        ["RCP-HUMAN-001-input"] = new(
+            FixtureSetup.HumanTrigger,
+            "RCP-HUMAN-001: effect 'effect.test.merge' acts with a human's authority, but transitions[3] (tidy -> done on step.completed) isn't a human's act at RCP-HUMAN-001-input.yaml:29:135 (transitions[3].effects[0].use); put it on a command.<verb> transition, a step.completed out of a human-only Step, or a transition that requires a fact only such a transition produces",
+            []),
+        ["RCP-HUMAN-001-step"] = new(
+            FixtureSetup.HumanTrigger,
+            "RCP-HUMAN-001: effect 'effect.test.merge' acts with a human's authority, but transitions[4] (tidy -> done on step.completed) isn't a human's act at RCP-HUMAN-001-step.yaml:36:135 (transitions[4].effects[0].use); put it on a command.<verb> transition, a step.completed out of a human-only Step, or a transition that requires a fact only such a transition produces",
+            []),
         ["RCP-EVENT-001"] = new(
             FixtureSetup.Shipped,
             "RCP-EVENT-001: event 'item.rooted' isn't registered at RCP-EVENT-001.yaml:8:16 (states.triaged.waitFor.event); wait for a registered event: claim.created, item.routed, notify.delivered",

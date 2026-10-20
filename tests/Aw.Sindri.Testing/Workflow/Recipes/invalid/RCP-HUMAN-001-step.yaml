@@ -1,0 +1,37 @@
+# The merge needs fact:approval, which the Step after a human's merge command records, but the same Step also runs in
+# 'approve', which no command enters, so the fact can be present with no click.
+schema: 1
+id: workflow.human-trigger-step
+version: 1
+initial: ready
+states:
+  ready:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Write the line to send to your desk, then complete this Step."
+  merging:
+    kind: active
+    step: step.test.approve
+    timeout: { after: 1h, then: park }
+    next: "Approve the merge."
+  approve:
+    kind: active
+    step: step.test.approve
+    timeout: { after: 1h, then: park }
+    next: "Approve the line."
+  tidy:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Tidy up after the merge."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ready, to: merging, on: command.merge, effects: [effect.test.merge] }
+  - { from: ready, to: approve, on: step.completed, when: { outcome: done } }
+  - { from: approve, to: done, on: step.completed, when: { outcome: approved } }
+  - { from: merging, to: tidy, on: step.completed, when: { outcome: approved }, produces: [fact:approval] }
+  - { from: tidy, to: done, on: step.completed, when: { all: [ { outcome: done }, { fact: fact:approval, is: present } ] }, effects: [effect.test.merge] }
+inputs: [{ key: fact:item, type: item, kind: item }]

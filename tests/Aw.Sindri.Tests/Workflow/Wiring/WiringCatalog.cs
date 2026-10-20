@@ -43,6 +43,8 @@ internal static class WiringCatalog
                     new ParameterSpec("strict", ParameterType.Flag, Required: false, IsCapabilityField: false),
                     new ParameterSpec("tags", ParameterType.List, Required: false, IsCapabilityField: false),
                 ]),
+            Step("step.test.approve", [], ["approved"], ("fact:approval", "approved")) with { HumanOnly = true },
+            Effect("effect.test.merge", []) with { HumanTrigger = true },
             new BlockDescriptor(BlockId.From("evidence.checks"), BlockKind.EvidenceProvider, Version: 1, Inputs: [], Outputs: [], Outcomes: [],
                 Capability.None, Parameters: [], Rung: null, DeskCapable: false),
             new BlockDescriptor(BlockId.From("input.context.retrieve"), BlockKind.StepInput, Version: 1, Inputs: [FactKey.From("fact:spec")],

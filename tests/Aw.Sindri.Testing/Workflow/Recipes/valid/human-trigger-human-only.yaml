@@ -1,0 +1,17 @@
+# (b) the human-trigger effect sits on a step.completed out of a human-only Step.
+schema: 1
+id: workflow.human-trigger-human-only
+version: 1
+initial: ask
+states:
+  ask:
+    kind: active
+    step: step.test.approve
+    timeout: { after: 1h, then: park }
+    next: "Approve it, then complete this Step."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ask, to: done, on: step.completed, when: { outcome: approved }, effects: [effect.test.merge] }
+inputs: [{ key: fact:item, type: item, kind: item }]

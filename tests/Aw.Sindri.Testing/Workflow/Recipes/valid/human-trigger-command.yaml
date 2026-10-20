@@ -1,0 +1,18 @@
+# (a) the human-trigger effect sits on a command transition.
+schema: 1
+id: workflow.human-trigger-command
+version: 1
+initial: ask
+states:
+  ask:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Write the line to send to your desk, then complete this Step."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ask, to: done, on: command.merge, effects: [effect.test.merge] }
+  - { from: ask, to: done, on: step.completed, when: { outcome: done } }
+inputs: [{ key: fact:item, type: item, kind: item }]

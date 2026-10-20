@@ -45,6 +45,7 @@ internal static class InvalidFixtureRun
             FixtureSetup.Capability => await Service(reader, files, CapabilityRecipe.Catalog, path, cancellationToken),
             FixtureSetup.CapabilityWithBase => await WithContext(reader, files, path, CapabilityRecipe.Catalog, RecipeProfileFacts.None, Base(reader), registry: null, cancellationToken),
             FixtureSetup.EffectAllowlist => await WithContext(reader, files, path, WiringCatalog.WithTestBlocks, ClaimOnly, baseRecipe: null, registry: null, cancellationToken),
+            FixtureSetup.HumanTrigger => await WithContext(reader, files, path, WiringCatalog.WithTestBlocks, MergeOnly, baseRecipe: null, registry: null, cancellationToken),
             FixtureSetup.Registry => await WithContext(reader, files, path, provider.GetRequiredService<BlockCatalog>(), RecipeProfileFacts.None, baseRecipe: null, Registry, cancellationToken),
             FixtureSetup.CapabilityWithUnapprovedBase => await WithContext(reader, files, path, CapabilityRecipe.Catalog, RecipeProfileFacts.None, Base(reader), Registry, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(setup), setup, "Not a fixture setup."),
@@ -58,6 +59,8 @@ internal static class InvalidFixtureRun
             ?? throw new InvalidOperationException("The base fixture doesn't bind.");
 
     private static RecipeProfileFacts ClaimOnly { get; } = new(new HashSet<BlockId> { BlockId.From("effect.claim.ref") });
+
+    private static RecipeProfileFacts MergeOnly { get; } = new(new HashSet<BlockId> { BlockId.From("effect.test.merge") });
 
     /// <summary>
     /// The registry the registry fixtures are validated against: workflow.version-taken 1 and workflow.version-behind 1

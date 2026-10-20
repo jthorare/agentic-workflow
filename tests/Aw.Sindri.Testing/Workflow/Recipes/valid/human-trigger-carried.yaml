@@ -1,0 +1,30 @@
+# (c) the human-trigger effect needs fact:stepSpec, which only a state entered by a human command produces.
+schema: 1
+id: workflow.human-trigger-carried
+version: 1
+initial: ready
+states:
+  ready:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Write the line to send to your desk, then complete this Step."
+  merging:
+    kind: wait
+    waitFor: { event: item.routed }
+    timeout: { after: 1h, then: park }
+    next: "Waiting for the merge."
+  tidy:
+    kind: active
+    step: step.produce
+    timeout: { after: 1h, then: park }
+    next: "Tidy up after the merge."
+  done:
+    kind: terminal
+    outcome: resolved
+transitions:
+  - { from: ready, to: merging, on: command.merge, effects: [effect.test.merge] }
+  - { from: ready, to: done, on: step.completed, when: { outcome: done } }
+  - { from: merging, to: tidy, on: wait.satisfied, produces: [fact:stepSpec] }
+  - { from: tidy, to: done, on: step.completed, when: { all: [ { outcome: done }, { fact: fact:stepSpec, is: present } ] }, effects: [effect.test.merge] }
+inputs: [{ key: fact:item, type: item, kind: item }]
