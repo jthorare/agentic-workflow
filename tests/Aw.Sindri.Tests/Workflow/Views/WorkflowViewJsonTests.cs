@@ -102,7 +102,7 @@ public sealed class WorkflowViewJsonTests
     [InlineData(null, false, "alreadySatisfied", false, "DONE", ChipTone.Neutral)]
     [InlineData(null, false, "notStartable", false, "DONE", ChipTone.Neutral)]
     [InlineData(null, false, "failed", false, "FAILED", ChipTone.Fail)]
-    [InlineData(null, false, "unresolved", false, "DIDN'T WORK OUT", ChipTone.Attn)]
+    [InlineData(null, false, "unresolved", false, "DIDN'T WORK OUT", ChipTone.Neutral)]
     [InlineData(null, false, "cancelled", false, "CANCELLED", ChipTone.Neutral)]
     [InlineData(null, false, null, true, "QUEUED", ChipTone.Neutral)]
     [InlineData(null, false, "failed", true, "QUEUED", ChipTone.Neutral)]
@@ -119,4 +119,8 @@ public sealed class WorkflowViewJsonTests
 
         Assert.Equal(new StateChip(word, tone), StateChip.For(badge, deskOpen, ended, notStarted));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_run_that_did_not_work_out_is_neutral_not_amber() =>
+        Assert.Equal(new StateChip(StateChip.DidntWorkOut, ChipTone.Neutral), StateChip.For(engineOwned: null, deskOpen: false, outcome: OutcomeName.From("unresolved"), notStarted: false));
 }
