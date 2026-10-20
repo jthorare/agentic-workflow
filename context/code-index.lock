@@ -1,0 +1,20 @@
+# context/code-index.lock — the pins for the Sindri code index (spec docs/superpowers/specs/2026-10-19-sindri-code-index-design.md §5.5, §5.6, §9).
+# Checked by scripts/code-index-lock.sh check (CI), read by scripts/install-deps.sh (setup) and embedded into the build.
+# Rows (format documented in scripts/code-index-lock.sh):
+#   graphify <version> <exclude-newer-date> <requirements-sha256>   the graph tool, installed into its own environment from
+#                                                  context/code-index-requirements.txt (hash-pinned, transitive packages included)
+#   ollama-model <name> <digest>                   the embedding model and its manifest digest, as `ollama list` and /api/tags report it
+#   need disk-bytes <n>                            what setup requires free
+# Measured 2026-10-20:
+#   graphify  equals sindri/package.json's sindri.graphifyPin and graphifyPinDate (the check compares them, so the two can't drift
+#             before the switch). The requirements file is `uv pip compile code-index-requirements.in --universal --generate-hashes
+#             --exclude-newer <date> --python-version 3.11`; the sha256 is of that file.
+#   model     nomic-embed-text:latest is the TS index's default model (sindri/src/profile/schema.ts). The digest is the sha256 of the
+#             manifest GET https://registry.ollama.ai/v2/library/nomic-embed-text/manifests/latest (a manifest read, nothing pulled);
+#             its first 12 hex digits, 0a109f422b47, are the ID `ollama list` shows for it.
+#   need      1073741824 (1 GiB) = the model, 274301030 bytes (its three layers), + the graphify environment, 158689618 bytes
+#             (`du -sb` of a fresh venv installed from the requirements file), rounded up with headroom.
+
+graphify 0.9.67 2026-09-24T00:00:00Z ebe4304d077efc000bef00c0833d3c0161ff3d9aaae2011652e329c5cd16920a
+ollama-model nomic-embed-text:latest sha256:0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f
+need disk-bytes 1073741824

@@ -6,6 +6,11 @@
 #     uv           Linux: astral.sh installer into ~/.local/bin; macOS: brew
 #     graphify     the code index's feature-cluster tool, `uv tool install graphifyy==<pin> --exclude-newer <date>`;
 #                  the pin is sindri/package.json's "sindri.graphifyPin" (what `sindri index setup` installs)
+#     code-index graphify  the new code index's own copy: a virtual environment at ${AW_STATE_DIR:-~/.agentic-workflow}/cache/code-index/
+#                  graphify-<version>-<requirements sha12>/, `uv pip install --require-hashes` from context/code-index-requirements.txt
+#                  with the lock's --exclude-newer date (context/code-index.lock, scripts/code-index-lock.sh); the build checks that binary
+#     ollama model the lock's embedding model: `ollama pull <name>` when `ollama list` doesn't show the pinned digest (the build never pulls).
+#                  Ollama itself is not installed here: without it, or without a running server, this step warns and skips (embeddings are optional)
 #     temporal, temporal-test-server   scripts/binaries-lock.sh fetch <name> (sha256-verified, idempotent) into
 #                  ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/<name>-<pin>/, where sindri serve and the tests look;
 #                  `temporal --version` is run afterwards and a failed fetch or a binary that won't run fails the script
@@ -115,6 +120,55 @@ elif command -v uv &>/dev/null; then
   fi
 else
   echo "  WARN: graphify not installed (uv missing)"; FAILED=1
+fi
+
+# --- code index pins (context/code-index.lock): graphify in its own environment, the Ollama embedding model ---
+CI_LOCK="$ROOT/scripts/code-index-lock.sh"
+if ! bash "$CI_LOCK" check >/dev/null 2>&1; then
+  echo "  WARN: context/code-index.lock fails scripts/code-index-lock.sh check; skipping the code index pins"; FAILED=1
+else
+  CI_VER="$(bash "$CI_LOCK" get graphify-version)"; CI_DATE="$(bash "$CI_LOCK" get graphify-date)"; CI_SHA="$(bash "$CI_LOCK" get requirements-sha256)"
+  CI_ENV="${AW_STATE_DIR:-$HOME/.agentic-workflow}/cache/code-index/graphify-$CI_VER-${CI_SHA:0:12}"
+  CI_REQ="$ROOT/context/code-index-requirements.txt"
+  if [ -x "$CI_ENV/bin/graphify" ] && [ "$("$CI_ENV/bin/graphify" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" = "$CI_VER" ]; then
+    echo "  code-index graphify: already installed ($CI_ENV)"
+  elif dry; then
+    echo "  [dry-run] would run: uv venv $CI_ENV && uv pip install --python $CI_ENV/bin/python --require-hashes -r $CI_REQ --exclude-newer $CI_DATE"
+  elif command -v uv &>/dev/null; then
+    echo "  Installing graphifyy==$CI_VER into $CI_ENV (hash-pinned, dependencies age-gated to $CI_DATE)..."
+    # A venv's scripts name their own path, so it is built where it lives; an earlier half-built one is removed first.
+    if { [ ! -e "$CI_ENV" ] || find "$CI_ENV" -delete; } && mkdir -p "$(dirname "$CI_ENV")" && uv venv --quiet "$CI_ENV" \
+      && uv pip install --quiet --python "$CI_ENV/bin/python" --require-hashes -r "$CI_REQ" --exclude-newer "$CI_DATE" \
+      && [ "$("$CI_ENV/bin/graphify" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" = "$CI_VER" ]; then
+      echo "  code-index graphify: installed ($CI_ENV)"
+    else
+      echo "  WARN: code-index graphify install failed; rerun after: uv venv $CI_ENV && uv pip install --python $CI_ENV/bin/python --require-hashes -r $CI_REQ --exclude-newer $CI_DATE"; FAILED=1
+    fi
+  else
+    echo "  WARN: code-index graphify not installed (uv missing)"; FAILED=1
+  fi
+
+  CI_MODEL="$(bash "$CI_LOCK" get model)"; CI_DIGEST="$(bash "$CI_LOCK" get model-digest)"; CI_ID="${CI_DIGEST#sha256:}"; CI_ID="${CI_ID:0:12}"
+  if ! command -v ollama &>/dev/null; then
+    echo "  WARN: ollama not installed; skipping the embedding model $CI_MODEL (install Ollama, https://ollama.com/download, and rerun)"
+  elif dry; then
+    echo "  [dry-run] would run: ollama pull $CI_MODEL (unless ollama list shows id $CI_ID)"
+  elif ! _list="$(ollama list 2>&1)"; then
+    echo "  WARN: the Ollama server does not answer; start it (the app, or \`ollama serve\`) and rerun to pull $CI_MODEL"
+  elif printf '%s\n' "$_list" | awk -v m="$CI_MODEL" -v id="$CI_ID" '$1 == m && $2 == id { f = 1 } END { exit !f }'; then
+    echo "  ollama model: already pulled ($CI_MODEL, $CI_ID)"
+  else
+    echo "  Pulling $CI_MODEL (about 275 MB)..."
+    if ! ollama pull "$CI_MODEL"; then
+      echo "  WARN: ollama pull $CI_MODEL failed; run it by hand"; FAILED=1
+    else
+      # The pin is the digest, and a moved tag pulls another one: read the list again and compare the ids.
+      _got="$(ollama list 2>/dev/null | awk -v m="$CI_MODEL" '$1 == m { print $2; exit }')"
+      if [ "$_got" = "$CI_ID" ]; then echo "  ollama model: pulled ($CI_MODEL, $CI_ID)"; else
+        echo "  WARN: $CI_MODEL now has id ${_got:-none}, not the pinned $CI_ID (the tag moved?); update context/code-index.lock in a reviewed change"; FAILED=1
+      fi
+    fi
+  fi
 fi
 
 # --- Temporal CLI + time-skipping test server (binaries.lock) ---

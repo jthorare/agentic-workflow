@@ -152,8 +152,12 @@ sindri onyx status [--json]             # Where Onyx stands (not set up / runnin
 sindri onyx up [--json]                 # Preflight, verified file fetch, .env and compose override, digest-pinned pull, start and readiness for Onyx v4.9.0 on 127.0.0.1; idempotent, resumable, the human's verb (a session is refused, SND-AUTH-002); exit 0 running, 1 a step failed (the error names the fix)
 sindri onyx down [--json]               # Stop it (containers only; data, images and files are kept); the human's verb
 
-# External tools, once per box (setup.sh runs it): uv, graphify at sindri's pin, both Temporal binaries, system packages (installed when missing)
+# External tools, once per box (setup.sh runs it): uv, graphify at sindri's pin, the code index's graphify environment and Ollama model from context/code-index.lock, both Temporal binaries, system packages (installed when missing)
 scripts/install-deps.sh                 # AW_DRY_RUN=1 prints only; missing system packages are installed (brew on macOS; sudo + apt-get, dnf, yum, pacman or zypper on Linux); AW_NO_SYSTEM_INSTALL=1 prints the commands and exits 1 instead
+
+# Code index pins (context/code-index.lock: graphify version, date and requirements hash, the Ollama embedding model and digest, disk need; context/code-index-requirements.txt is the hash-pinned requirements; spec docs/superpowers/specs/2026-10-19-sindri-code-index-design.md §9)
+scripts/code-index-lock.sh check        # Shape of the lock, the requirements file's sha256, and parity with sindri/package.json's graphifyPin and graphifyPinDate; exit 0 ok, 1 a check failed, 2 usage
+scripts/code-index-lock.sh get <graphify-version|graphify-date|requirements-sha256|model|model-digest|disk-bytes>   # One pinned value (install-deps.sh reads these)
 
 # Rule records (rules/engineering/csharp/*.yaml + schemas/rule-record.schema.json; docs/csharp/rule-records.md)
 node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every active check exists; pending ones wait on their PR
@@ -180,6 +184,7 @@ bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/binaries-lock.test.sh
 bash scripts/tests/onyx-lock.test.sh
+bash scripts/tests/code-index-lock.test.sh
 bash scripts/tests/install-deps.test.sh
 bash scripts/tests/denylist-check.test.sh
 bash scripts/tests/owner-check.test.sh
