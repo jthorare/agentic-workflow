@@ -47,6 +47,14 @@ public sealed partial class ContrastTests
         { "InkMuted", "Surface2", 12.5, TextAa },   // the neutral chip
         { "Hairline", "Canvas", 1.3, 0 },
         { "HairlineStrong", "Canvas", 1.7, 0 },
+        // The context map (F3 spec 1 §2 "Tokens"): the wire and its ports are decoration, 1.3+ like the hairline; the
+        // highlighted wire and the anchor ring are the same values as InkSubtle and InkMuted, so they pass as non-text.
+        { "Wire", "Canvas", 2.4, 1.3 },
+        { "Wire", "Surface1", 2.2, 1.3 },
+        { "WireHi", "Canvas", 6.4, NonText },
+        { "WireHi", "Surface1", 5.9, NonText },
+        { "RingAnchor", "Canvas", 14.3, NonText },
+        { "RingAnchor", "Surface1", 13.0, NonText },
     };
 
     [Theory]
@@ -57,6 +65,18 @@ public sealed partial class ContrastTests
 
         Assert.True(Math.Abs(ratio - recorded) <= 0.1, string.Create(CultureInfo.InvariantCulture, $"{foreground} on {background} is {ratio:F2}, §11.1 records {recorded}"));
         Assert.True(ratio >= minimum, string.Create(CultureInfo.InvariantCulture, $"{foreground} on {background} is {ratio:F2}, below {minimum}"));
+    }
+
+    // The band fill is a wash of white at 1.8 % over the canvas: it must stay too faint to carry anything.
+    [Fact]
+    public void The_lane_fill_is_white_at_under_two_percent()
+    {
+        var fill = _tokens.Color("LaneFill");
+
+        Assert.Equal(9, fill.Length);
+        Assert.Equal("ffffff", fill[3..]);
+        Assert.InRange(Convert.ToInt32(fill[1..3], 16) / 255.0, 0.017, 0.02);
+        Assert.Contains("Color.LaneFill", _tokens.Resources["Brush.LaneFill"].Attribute("Color")?.Value, StringComparison.Ordinal);
     }
 
     [Fact]

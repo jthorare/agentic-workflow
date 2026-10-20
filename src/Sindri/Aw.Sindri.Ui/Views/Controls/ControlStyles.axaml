@@ -83,4 +83,30 @@
   <Style Selector="controls|StateChipView.ok > TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
   </Style>
+  <!-- The context map's own controls (F3 spec 1 §2). The stage shows the hand cursor, since a drag pans it; the edges layer is
+       never a keyboard stop (the nodes are); the coverage strip is a quiet button that lifts to Surface2 under the pointer, its
+       words in InkMuted with the lead in Ink. -->
+  <Style Selector="controls|ZoomBorder">
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="controls|ContextEdgesControl">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+  </Style>
+  <Style Selector="controls|CoverageStrip">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="MinHeight" Value="{StaticResource Size.Control}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+  </Style>
+  <Style Selector="controls|CoverageStrip:pointerover /template/ ContentPresenter#PART_ContentPresenter, controls|CoverageStrip:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
+  <Style Selector="controls|CoverageStrip TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+  </Style>
+  <Style Selector="controls|CoverageStrip TextBlock.lead">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
 </Styles>

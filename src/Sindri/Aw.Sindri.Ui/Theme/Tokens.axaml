@@ -82,6 +82,19 @@
   <!-- derived (S1b): the selected nav background, the running pill -->
   <Color x:Key="Color.PrimarySoft">#1d2036</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
+  <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
+       hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
+  <Color x:Key="Color.Wire">#4a4a52</Color>
+  <SolidColorBrush x:Key="Brush.Wire" Color="{StaticResource Color.Wire}" />
+  <!-- context map: a hovered or selected edge and its neighbours (same value as ink-subtle, kept as its own role) -->
+  <Color x:Key="Color.WireHi">#8a8f98</Color>
+  <SolidColorBrush x:Key="Brush.WireHi" Color="{StaticResource Color.WireHi}" />
+  <!-- context map: a band's fill, white at 1.8 % alpha over the canvas (#aarrggbb) -->
+  <Color x:Key="Color.LaneFill">#05ffffff</Color>
+  <SolidColorBrush x:Key="Brush.LaneFill" Color="{StaticResource Color.LaneFill}" />
+  <!-- context map: the ring around the anchor node (same value as ink-muted, kept as its own role) -->
+  <Color x:Key="Color.RingAnchor">#d0d6e0</Color>
+  <SolidColorBrush x:Key="Brush.RingAnchor" Color="{StaticResource Color.RingAnchor}" />
 
   <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) per step. TextScale.Apply writes scaled copies over
        these (0.9–1.3) and records the scale in Type.Scale; the Typography.axaml styles read them as DynamicResource. -->

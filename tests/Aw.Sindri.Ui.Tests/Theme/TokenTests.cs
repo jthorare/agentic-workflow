@@ -37,6 +37,10 @@ public sealed class TokenTests
         { "PrimarySoft", "#1d2036" },
         { "ErrorSoft", "#220d0e" },
         { "SuccessSoft", "#06180b" },
+        { "Wire", "#4a4a52" },
+        { "WireHi", "#8a8f98" },
+        { "LaneFill", "#05ffffff" },
+        { "RingAnchor", "#d0d6e0" },
     };
 
     [Theory]
