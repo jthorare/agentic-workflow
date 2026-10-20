@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
 
@@ -17,7 +18,7 @@ internal sealed class ViewsHarness
     private readonly IReadOnlyList<IProjection> _projections;
     private long _sequence;
 
-    public ViewsHarness()
+    public ViewsHarness(params BuiltInService[] builtIns)
     {
         Progress = new ProjectorProgress(Slice.Clock);
         _projections =
@@ -28,7 +29,7 @@ internal sealed class ViewsHarness
             new ItemsProjection(Slice.Events, new PassThroughScrubber()),
             new ItemAliasesProjection(Slice.Events),
             new ItemTimelineProjection(SliceHarness.Json, new PassThroughScrubber()),
-            new NeedsYouProjection(Slice.Events, new PassThroughScrubber()),
+            new NeedsYouProjection(Slice.Events, new PassThroughScrubber(), builtIns),
             new JobsProjection(Slice.Events),
             new LaunchesProjection(Slice.Events),
         ];

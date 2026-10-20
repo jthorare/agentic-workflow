@@ -10,13 +10,14 @@ namespace Aw.Sindri.Features.RunService;
 
 /// <summary>
 /// What a RunService start checks inside the gate, so the HTTP caller sees the refusal at once (API P6 unit D): the service is one of the approved
-/// profile's (SND-SVC-404; a built-in the profile does not name is not one, owner answer Q4), this build has it (SND-SVC-404), and no scheduled run
+/// profile's or a built-in (SND-SVC-404; a built-in runs by name though the profile does not name it, so the failure row's `sindri services run` works), this build has it (SND-SVC-404), and no scheduled run
 /// of it is in flight (SND-JOB-409 without a running job). Two manual runs of one service are the registry's SND-JOB-409.
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
 /// <param name="scheduled">Every service this build has.</param>
+/// <param name="builtIns">The services the build runs without a profile entry.</param>
 /// <param name="guard">Says whether a run of the service is in flight.</param>
-internal sealed class RunServiceAdmission(IApprovedProfile approvals, IEnumerable<IScheduledService> scheduled, ServiceRunGuard guard) : IJobAdmission<RunServiceRequest>
+internal sealed class RunServiceAdmission(IApprovedProfile approvals, IEnumerable<IScheduledService> scheduled, IEnumerable<BuiltInService> builtIns, ServiceRunGuard guard) : IJobAdmission<RunServiceRequest>
 {
     private bool _reserved;   // this instance is scoped to one start
 
@@ -40,7 +41,7 @@ internal sealed class RunServiceAdmission(IApprovedProfile approvals, IEnumerabl
             return approved.Error;
         }
 
-        if (approved.Value?.Profile.Services?.ContainsKey(name.Value) != true)
+        if (approved.Value?.Profile.Services?.ContainsKey(name.Value) != true && !builtIns.Any(b => b.Name == name))
         {
             return SindriErrors.ServiceNotFound.With($"The approved profile has no service '{name.Value}' (fix: sindri services)");
         }

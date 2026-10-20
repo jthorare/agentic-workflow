@@ -1,7 +1,9 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 
@@ -15,8 +17,11 @@ namespace Aw.Sindri.Core.NeedsYou;
 /// </summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 /// <param name="scrubber">Scrubs secrets out of the text a row stores.</param>
-internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrubber scrubber) : IProjection
+/// <param name="builtIns">The services the build runs without a profile entry: a failure row of one offers RunService only and outlives a profile check.</param>
+internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrubber scrubber, IEnumerable<BuiltInService> builtIns) : IProjection
 {
+    private IReadOnlyList<ServiceName> BuiltIns { get; } = [.. builtIns.Select(static b => b.Name)];
+
     private const string DriftKey = "profile:drift";
 
     public IReadOnlyList<string> Views => [ViewNames.NeedsYou];
@@ -107,7 +112,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         }
 
         var service = ServicesProjection.Fold(row: null, ran.Value, recorded);
-        var next = NeedsYouClearing.AfterRun(existing.Value?.Row, service, scrubber);
+        var next = NeedsYouClearing.AfterRun(existing.Value?.Row, service, scrubber, BuiltIns.Contains(ran.Value.Service));
         return await Replace(rows, key, next, recorded, cancellationToken).ConfigureAwait(false);
     }
 
@@ -135,7 +140,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         var failures = await rows.Where<NeedsYouRowRecord>(ViewNames.NeedsYou, ViewColumn.Kind, "failure", cancellationToken).ConfigureAwait(false);
         return failures.IsError
             ? failures.Error
-            : await DeleteAll(rows, failures.Value.Where(r => !NeedsYouClearing.FailureStands(r.Row, profile)), cancellationToken).ConfigureAwait(false);
+            : await DeleteAll(rows, failures.Value.Where(r => !NeedsYouClearing.FailureStands(r.Row, profile, BuiltIns)), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Approved(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)

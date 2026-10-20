@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
@@ -82,6 +83,19 @@ public sealed class RunServiceTests
 
         Expect.Equal(SindriErrors.ServiceNotFound.Code, started.Error.Code);
         Assert.Empty(runtime.Of(EventTypes.JobStarted));
+    }
+
+    [Fact]
+    public async Task A_built_in_service_the_profile_does_not_name_runs_by_name()
+    {
+        var builtIn = new ScriptedService(ScriptedService.Worked);
+        await using var runtime = await RunServiceRuntime.Open(builtIn, new BuiltInService(ServiceName.From("tidy"), new Cadence(TimeSpan.FromMinutes(1))), profile: false);
+
+        var started = await runtime.Start(A.RunServiceRequest().ForService(_tidy).Build(), Human());
+        await runtime.Quiesce();
+
+        Assert.True(started.IsSuccess, started.IsError ? started.Error.ToString() : null);
+        Expect.Equal(1, builtIn.Runs);
     }
 
     [Fact]
@@ -233,7 +247,7 @@ public sealed class RunServiceTests
 
         foreach (var recorded in runtime.Of(EventTypes.ServiceRan))
         {
-            _ = await views.Apply([recorded], [new NeedsYouProjection(runtime.H.Events, new PassThroughScrubber()), new ServicesProjection(runtime.H.Events)], runtime.H.Clock.GetUtcNow(), Token);
+            _ = await views.Apply([recorded], [new NeedsYouProjection(runtime.H.Events, new PassThroughScrubber(), []), new ServicesProjection(runtime.H.Events)], runtime.H.Clock.GetUtcNow(), Token);
             rowsAfterEach.Add((await views.List<NeedsYouRowRecord>(ViewNames.NeedsYou, Token)).Value.Count);
         }
 

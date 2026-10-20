@@ -75,6 +75,17 @@ public sealed class NeedsYouRowsTests
     }
 
     [Fact]
+    public void A_built_in_failure_offers_run_only_since_a_built_in_cannot_be_paused()
+    {
+        var failed = new ServiceRow(_service, new LastRun(_t, ServiceOutcome.Failed, "SND-SCHED-001", _t), Paused: false, Sequence: 4);
+
+        var row = NeedsYouRows.ForFailure(failed, _t, _plain, builtIn: true).Value;
+
+        Expect.Equal((ActionId.From("RunService"), "sindri services run heartbeat"), (row.PrimaryAction, row.Cli));
+        Expect.Sequence([ActionId.From("RunService")], row.Actions);
+    }
+
+    [Fact]
     public void A_failure_for_a_service_the_build_lacks_cannot_be_run_and_points_at_the_profile()
     {
         var failed = new ServiceRow(_service, new LastRun(_t, ServiceOutcome.Failed, "SND-SVC-404", _t), Paused: false, Sequence: 4);

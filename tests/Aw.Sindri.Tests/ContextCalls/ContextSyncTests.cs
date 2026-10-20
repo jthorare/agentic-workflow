@@ -40,7 +40,7 @@ public sealed class ContextSyncTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, listed.Status);
         Assert.Contains("\"name\":\"context-sync\"", listed.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain("context-sync", absent.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"name\":\"context-sync\"", absent.Body, StringComparison.Ordinal);
     }
 
     [Fact(Timeout = 90_000), Trait("Lane", "integration")]

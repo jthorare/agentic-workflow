@@ -4,6 +4,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApiGoldens;
@@ -105,6 +106,22 @@ public sealed class JobEndpointTests
         var answer = await Post(host, "/sindri/services/ghost/run");
 
         Assert.Equal((HttpStatusCode.NotFound, "SND-SVC-404"), (answer.Status, answer.Code));
+    }
+
+    [Fact(Timeout = 30_000)]
+    public async Task A_built_in_service_is_listed_and_runs_by_name()
+    {
+        await using var host = await JobHost.Start(TestContext.Current.CancellationToken);
+        await ViewScenarios.Approve(host, TestContext.Current.CancellationToken);
+        await ViewScenarios.CatchUp(host, TestContext.Current.CancellationToken);
+        var builtIn = host.App.Services.GetServices<BuiltInService>().First().Name.Value;   // the profile does not name it
+
+        var list = Json(await JobHost.Read(host, "/sindri/services")).GetProperty("services").EnumerateArray().Select(static s => s.GetProperty("name").GetString());
+        var run = await Post(host, $"/sindri/services/{builtIn}/run");
+
+        Assert.Contains(builtIn, list, StringComparer.Ordinal);
+        Assert.NotEqual(HttpStatusCode.NotFound, run.Status);
+        Assert.NotEqual("SND-SVC-404", run.Code, StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 30_000)]

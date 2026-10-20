@@ -21,7 +21,7 @@ public sealed class RunServiceReservationTests
         var h = new SliceHarness();
         _ = await h.Profiles.Save(SliceHarness.ProfileOf("thor", ("tidy", "5s")), Token);
         var guard = new ServiceRunGuard();
-        return (h, guard, new RunServiceAdmission(h.Profiles, [new ScriptedService(ScriptedService.Worked)], guard));
+        return (h, guard, new RunServiceAdmission(h.Profiles, [new ScriptedService(ScriptedService.Worked)], [], guard));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class RunServiceReservationTests
     public async Task A_second_admission_that_is_refused_never_gives_back_the_first_ones_reservation()
     {
         var (h, guard, first) = await Admission();
-        var second = new RunServiceAdmission(h.Profiles, [new ScriptedService(ScriptedService.Worked)], guard);
+        var second = new RunServiceAdmission(h.Profiles, [new ScriptedService(ScriptedService.Worked)], [], guard);
         var request = A.RunServiceRequest().ForService(_tidy).Build();
         _ = await first.Admit(request, Token);
         _ = await second.Admit(request, Token);   // a manual run is reserved: this one is refused by the registry later

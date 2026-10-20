@@ -167,7 +167,7 @@ public static class SindriErrors
     /// <summary>SND-JOB-002: the most jobs are running (8); start again when one ends.</summary>
     public static readonly ErrorDefinition JobsRateLimited = new("SND-JOB-002", ErrorKind.RateLimited, "Too many jobs are running");
 
-    /// <summary>SND-SVC-404: no service of the approved profile has that name (API spec §9).</summary>
+    /// <summary>SND-SVC-404: no service of the approved profile, and no built-in, has that name (API spec §9).</summary>
     public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the approved profile");
 
     /// <summary>SND-LAUNCH-001: the terminal viewer didn't open the launch; on a tmux host the session keeps running (API P10a, UI E-5).</summary>

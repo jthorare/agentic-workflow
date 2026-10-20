@@ -45,7 +45,7 @@ public sealed class IdleRunTests
 
         foreach (var recorded in _h.Store.Events.Where(e => e.Envelope.Type == EventTypes.ServiceRan))
         {
-            _ = await views.Apply([recorded], [new NeedsYouProjection(_h.Events, new PassThroughScrubber())], _h.Clock.GetUtcNow(), Token);
+            _ = await views.Apply([recorded], [new NeedsYouProjection(_h.Events, new PassThroughScrubber(), [])], _h.Clock.GetUtcNow(), Token);
             rowsAfterEach.Add((await views.List<NeedsYouRowRecord>(ViewNames.NeedsYou, Token)).Value.Count);
         }
 

@@ -104,7 +104,7 @@ public sealed class EngineRebuildTests : IDisposable
         new RequestsProjection(_slice.Events, new PassThroughScrubber()),   // before the items one, as registered
         new ItemsProjection(_slice.Events, new PassThroughScrubber()),
         new ItemAliasesProjection(_slice.Events),
-        new NeedsYouProjection(_slice.Events, new PassThroughScrubber()),
+        new NeedsYouProjection(_slice.Events, new PassThroughScrubber(), []),
     ];
 
     /// <summary>An item with two root instances: the first parks, the second (the latest) is answered and ends; with <paramref name="firstEnds"/> the first is then cancelled too.</summary>

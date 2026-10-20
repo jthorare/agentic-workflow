@@ -1,5 +1,30 @@
 {
-  "services": [],
+  "services": [
+    {
+      "name": "context-sync-gaps",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
+    },
+    {
+      "name": "router-stub",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
+    },
+    {
+      "name": "workflow-events",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
+    }
+  ],
   "empty": "Views are stalled at 2: run `sindri views rebuild`",
   "asOf": {
     "cursor": 1,

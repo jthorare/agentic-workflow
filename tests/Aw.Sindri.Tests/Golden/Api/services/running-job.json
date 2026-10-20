@@ -1,6 +1,14 @@
 {
   "services": [
     {
+      "name": "context-sync-gaps",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
+    },
+    {
       "name": "heartbeat",
       "every": "5s",
       "paused": false,
@@ -17,12 +25,28 @@
       "job": null
     },
     {
+      "name": "router-stub",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
+    },
+    {
       "name": "stuck",
       "every": "5s",
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
       "job": "JOB-0000000000000000000000000000000e"
+    },
+    {
+      "name": "workflow-events",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null
     }
   ],
   "empty": null,

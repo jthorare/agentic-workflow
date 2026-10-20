@@ -77,6 +77,15 @@ public sealed class NeedsYouClearingTests
     }
 
     [Fact]
+    public void A_built_in_failure_stands_at_a_check_whose_profile_does_not_name_it()
+    {
+        var failing = NeedsYouClearing.AfterRun(existing: null, Run(ServiceOutcome.Failed, _t), _plain, builtIn: true).Value!;
+
+        Expect.True(NeedsYouClearing.FailureStands(failing, Profile(drifted: false, approved: [ServiceName.From("index")]), [_service]));
+        Expect.True(!NeedsYouClearing.FailureStands(failing, Profile(drifted: false, approved: [ServiceName.From("index")]), [ServiceName.From("other")]));
+    }
+
+    [Fact]
     public void A_failure_stands_while_the_removal_is_unapproved_or_nothing_is_approved()
     {
         var failing = NeedsYouClearing.AfterRun(existing: null, Run(ServiceOutcome.Failed, _t), _plain).Value!;

@@ -65,7 +65,7 @@ public sealed class StatusInjectionTests
     {
         var slice = new SliceHarness();
 
-        Assert.False(new NeedsYouProjection(slice.Events, new PassThroughScrubber()).Handles(EventTypes.WorkflowInjection));
+        Assert.False(new NeedsYouProjection(slice.Events, new PassThroughScrubber(), []).Handles(EventTypes.WorkflowInjection));
         Assert.False(new ItemsProjection(slice.Events, new PassThroughScrubber()).Handles(EventTypes.WorkflowInjection));
         Assert.False(new RequestsProjection(slice.Events, new PassThroughScrubber()).Handles(EventTypes.WorkflowInjection));
     }
