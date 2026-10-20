@@ -20,6 +20,7 @@ internal sealed class ContextJobVerbs(ControlPlaneClient client, Output output, 
     internal const string SyncUsage = "context sources sync [<source>] [--detach] [--json]";
     internal const string BacktestUsage = "context eval backtest [--arms a,b|all] [--since <date>] [--until <date>] [--limit <n>] [--detach] [--json]";
     internal const string BuildUsage = "context map build [--detach] [--json]";
+    internal const string RefreshUsage = "context map refresh [--detach] [--json]";
 
     internal async Task<int> Run(string[] args, CancellationToken interrupt, CancellationToken again)
     {
@@ -30,10 +31,16 @@ internal sealed class ContextJobVerbs(ControlPlaneClient client, Output output, 
         }
 
         var sync = args is ["sources", ..];
+        var refresh = args is ["map", "refresh", ..];
         var line = Parse(args[2..], sync ? 1 : 0);
         if (line is null)
         {
-            return await output.Error(SindriErrors.InvalidInput.With($"'context {string.Join(' ', args)}' isn't this command: {(sync ? SyncUsage : BuildUsage)}")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.InvalidInput.With($"'context {string.Join(' ', args)}' isn't this command: {(sync ? SyncUsage : UsageOf(refresh))}")).ConfigureAwait(false);
+        }
+
+        if (refresh)
+        {
+            return await Refresh((line.Detach, line.Json), interrupt, again).ConfigureAwait(false);
         }
 
         // Ctrl-C ends the start POST (as 'services run'; nothing else bounds a hung start): the job may already exist on the server, which `sindri jobs` shows
@@ -46,6 +53,17 @@ internal sealed class ContextJobVerbs(ControlPlaneClient client, Output output, 
         }
 
         return await Followed(started.Value, (line.Detach, line.Json), interrupt, again, sync ? null : BuildTable).ConfigureAwait(false);
+    }
+
+    private static string UsageOf(bool refresh) => refresh ? RefreshUsage : BuildUsage;
+
+    /// <summary>'context map refresh [--detach] [--json]': the refresh job (owner F1).</summary>
+    private async Task<int> Refresh((bool Detach, bool Json) flags, CancellationToken interrupt, CancellationToken again)
+    {
+        var begun = await client.Post<RefreshContextMapRequest, JobStartedResponse>("/sindri/context/map/refresh", new RefreshContextMapRequest(), interrupt).ConfigureAwait(false);
+        return begun.IsError
+            ? await output.Error(begun.Error).ConfigureAwait(false)
+            : await Followed(begun.Value, flags, interrupt, again, RefreshTable).ConfigureAwait(false);
     }
 
     /// <summary>'context eval backtest [--arms a,b|all] [--since D] [--until D] [--limit N] [--detach] [--json]': the backtest job (context spec §9.1).</summary>
@@ -73,6 +91,18 @@ internal sealed class ContextJobVerbs(ControlPlaneClient client, Output output, 
 
         var read = output.Read<BuildContextMapResult>(Encoding.UTF8.GetBytes(result.GetRawText()));
         return read.IsSuccess ? MapBuildJobText.Render(read.Value) : null;
+    }
+
+    /// <summary>The refresh's one-line outcome, read from the final job's small result; nothing when the result isn't there or doesn't read.</summary>
+    private string? RefreshTable(JobView job)
+    {
+        if (job.Result is not { } result)
+        {
+            return null;
+        }
+
+        var read = output.Read<RefreshContextMapResult>(Encoding.UTF8.GetBytes(result.GetRawText()));
+        return read.IsSuccess ? MapRefreshJobText.Render(read.Value) : null;
     }
 
     /// <summary>The backtest's rows, read from the final job's small result; nothing when the result isn't there or doesn't read.</summary>

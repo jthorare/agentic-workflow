@@ -44,12 +44,12 @@ internal sealed class Interrupt : IDisposable
         || (args is ["status", .. var follow] && follow.Contains("--follow", StringComparer.Ordinal))
         || args is ["onyx", "up" or "down", ..];
 
-    /// <summary>Whether <paramref name="args"/> is 'services run', 'context sources sync', 'context map build', 'context eval backtest' or 'launch probe' without --detach: it follows its job, so the first Ctrl-C cancels the job and the second leaves.</summary>
+    /// <summary>Whether <paramref name="args"/> is 'services run', 'context sources sync', 'context map build', 'context map refresh', 'context eval backtest' or 'launch probe' without --detach: it follows its job, so the first Ctrl-C cancels the job and the second leaves.</summary>
     /// <param name="args">The command line.</param>
     /// <returns>True for a job-following verb.</returns>
     public static bool FollowsJob(string[] args) =>
         !args.Contains("--detach", StringComparer.Ordinal)
-        && (args is ["services", "run", ..] or ["context", "sources", "sync", ..] or ["context", "map", "build", ..] or ["context", "eval", "backtest", ..] or ["launch", "probe", ..]);
+        && (args is ["services", "run", ..] or ["context", "sources", "sync", ..] or ["context", "map", "build", ..] or ["context", "map", "refresh", ..] or ["context", "eval", "backtest", ..] or ["launch", "probe", ..]);
 
     /// <summary>Starts listening when <paramref name="args"/> <see cref="Streams"/> or <see cref="FollowsJob"/>.</summary>
     /// <param name="args">The command line.</param>

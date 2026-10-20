@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
@@ -18,6 +19,7 @@ using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
 using Aw.Context.Features.CheckRetention;
+using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EvalMap;
 using Aw.Context.Features.EvalProbes;
 using Aw.Context.Features.EvalPurge;
@@ -32,6 +34,7 @@ using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.ImportMap;
 using Aw.Context.Features.ListNeighbors;
+using Aw.Context.Features.MapHeads;
 using Aw.Context.Features.PreviewMap;
 using Aw.Context.Features.PreviewReviewFile;
 using Aw.Context.Features.PromoteMap;
@@ -69,7 +72,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddContextSlices();
+        return services.AddMapHeads().AddContextSlices();
     }
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
@@ -98,7 +101,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<ExportReviewRequest, ReviewExported>, ExportReviewService>()
         .AddScoped<IService<PreviewReviewFileRequest, ReviewFilePreview>, PreviewReviewFileService>()
         .AddScoped<IService<ApplyReviewFileRequest, ReviewResult>, ApplyReviewFileService>()
-        .AddScoped<IService<PromoteMapRequest, MapPromoted>, PromoteMapService>()
+        .AddPromoteSlices()
         .AddScoped<IService<ProposeFromScopeRequest, ProposeResult>, ProposeFromScopeService>()
         .AddScoped<IService<GetProposalsRequest, ProposalsView>, GetProposalsService>()
         .AddScoped<IService<GetFileMapRequest, FileMapView>, GetFileMapService>()
@@ -114,6 +117,10 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IContextEngine, ContextEngine>()
         .AddLensSlices();
 
+    // The repo heads the map watcher reads (F1).
+    private static IServiceCollection AddMapHeads(this IServiceCollection services) =>
+        services.AddScoped<IService<MapHeadsRequest, IReadOnlyList<RepoHead>>, MapHeadsService>();
+
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services
         .AddScoped<IService<GetLensesRequest, LensesView>, GetLensesService>()
@@ -127,6 +134,10 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<LexicalTestsRule>()
         .AddScoped<LexicalSchemaRule>()
         .AddScoped<IContextCode>(static sp => sp.GetRequiredService<ContextGraph>());
+
+    private static IServiceCollection AddPromoteSlices(this IServiceCollection services) => services
+        .AddScoped<IService<PromoteMapRequest, MapPromoted>, PromoteMapService>()
+        .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>();
 
     private static IServiceCollection AddHistory(this IServiceCollection services) => services
         .AddScoped<IService<GetHistoryRequest, HistoryView>, GetHistoryService>()

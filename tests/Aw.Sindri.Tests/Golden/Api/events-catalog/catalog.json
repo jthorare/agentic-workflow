@@ -1,6 +1,13 @@
 {
   "types": [
     {
+      "type": "context.map.refreshed",
+      "keyShape": "context.map.refreshed:<repo>:v<version>",
+      "invalidates": [
+        "jobs"
+      ]
+    },
+    {
       "type": "decision.recorded",
       "keyShape": "decision.recorded:<decisionId>",
       "invalidates": [

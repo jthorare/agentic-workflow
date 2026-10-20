@@ -107,6 +107,10 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<MapPromoted>> Promote(ContextScope scope, CancellationToken cancellationToken) => inner.Promote(scope, cancellationToken);
 
+    public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken) => inner.CleanDraft(scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) => inner.MapHeads(scope, cancellationToken);
+
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         inner.Propose(proposal, scope, cancellationToken);
 

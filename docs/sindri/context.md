@@ -607,6 +607,15 @@ job (the engine's step lines are the job's progress), and exits 0, 1 or 2 as `so
   `context.map.built`;
 - a scoping run's surfaces: `context map propose <file>` (below).
 
+### Refreshing the map with no human step
+
+`sindri context map refresh [--detach] [--json]` is a job (catalog row `RefreshContextMap`, `POST /sindri/context/map/refresh`, key `refresh`, so one at a
+time): it builds a draft, runs the cleanup agent over the review queue (strong and agent-approved proposals are kept, weak ones removed), promotes the
+draft through the engine and records `context.map.built`, `context.map.promoted` and `context.map.refreshed` (repo, version, the heads it mapped, and the
+cleanup's counts). It does not go through `map promote` or its typed confirmation: the owner decided on 2026-10-19 that this job promotes as its caller. A
+terminal, the app or the `context-map-refresh` service may start it; a session may not. Any step's error fails the job (nothing is promoted; a built draft
+stays). The summary reads `map v<N>: <kept> kept, <removed> removed`, plus `, cleanup unavailable` when no model answered.
+
 A build takes a slot of the box-wide heavy-job lock (`$AW_STATE_DIR/locks/heavy-job.lock`, `.2` for the second slot,
 `AW_HEAVY_SLOTS`; the same directory the shell tools and `ui-evidence` use). If every slot stays held for 60 seconds
 it answers `SND-CONTEXT-040` (exit 75) naming the holder, and writes nothing. A second build keeps every decision you made

@@ -49,7 +49,7 @@ internal sealed class JudgeModelPort(Func<IProviderCatalog> catalog) : IModelPor
             }
         }
 
-        return ContextErrors.SourceUnavailable.With("no agent CLI (claude, codex, cursor-agent) answered the labeling request (fix: log in to one of them, or turn 'context.labeling.enabled' off)");
+        return ContextErrors.SourceUnavailable.With("no agent CLI (claude, codex, cursor-agent) answered the request (fix: log in to one of them; labeling can be turned off with 'context.labeling.enabled')");
     }
 
     private static int Tokens(string text) => (text.Length + 3) / 4;

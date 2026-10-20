@@ -3628,6 +3628,39 @@ override Aw.Sindri.Features.Scoping.PacketFile.ToString() -> string!
 static Aw.Sindri.Features.Scoping.PacketFile.operator !=(Aw.Sindri.Features.Scoping.PacketFile? left, Aw.Sindri.Features.Scoping.PacketFile? right) -> bool
 static Aw.Sindri.Features.Scoping.PacketFile.operator ==(Aw.Sindri.Features.Scoping.PacketFile? left, Aw.Sindri.Features.Scoping.PacketFile? right) -> bool
 static Aw.Sindri.Features.Commands.SindriCommandServiceCollectionExtensions.AddStopCommand<TCommand, TResult, TService>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest
+Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.Equals(Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.RefreshContextMapRequest() -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Accepted.get -> int
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Accepted.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Cleanup.get -> string!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Dropped.get -> int
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Dropped.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Heads.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Heads.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Removed.get -> int
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Removed.init -> void
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.operator !=(Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest? left, Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest? left, Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Cleanup.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RefreshContextMapResult!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Deconstruct(out string! Repo, out int Version, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, out int Accepted, out int Removed, out int Dropped, out string! Cleanup) -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Equals(Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.RefreshContextMapResult(string! Repo, int Version, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, int Accepted, int Removed, int Dropped, string! Cleanup) -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Repo.get -> string!
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Repo.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Version.get -> int
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Version.init -> void
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.operator !=(Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? left, Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.operator ==(Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? left, Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? right) -> bool
 override Aw.Sindri.Features.ApproveAllRecipes.ApproveAllRecipesRequest.GetHashCode() -> int
 static Aw.Sindri.Features.GetApproveAllPlan.GetApproveAllPlanRequest.operator ==(Aw.Sindri.Features.GetApproveAllPlan.GetApproveAllPlanRequest? left, Aw.Sindri.Features.GetApproveAllPlan.GetApproveAllPlanRequest? right) -> bool
 Aw.Sindri.Features.GetApproveAllPlan.GetApproveAllPlanRequest

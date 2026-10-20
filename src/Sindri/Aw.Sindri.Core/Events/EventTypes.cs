@@ -56,6 +56,9 @@ public static class EventTypes
     /// <summary>A draft map became current (context spec §3).</summary>
     public const string ContextMapPromoted = "context.map.promoted";
 
+    /// <summary>A refresh job built, cleaned up and promoted the map with no human step (owner F1, 2026-10-19).</summary>
+    public const string ContextMapRefreshed = "context.map.refreshed";
+
     /// <summary>The owner approved a scope packet (scoping spec §3, SC3); written by the freeze Step.</summary>
     public const string ScopingApproved = "scoping.approved";
 

@@ -18,6 +18,7 @@ public static class EventCatalog
         new(EventTypes.ContextMapImported, Public: true, typeof(ContextMapImported), "context.map.imported:<hash>:v<version>"),
         new(EventTypes.ContextMapReviewed, Public: true, typeof(ContextMapReviewed), "context.map.reviewed:<overrideId>"),
         new(EventTypes.ContextMapPromoted, Public: true, typeof(ContextMapPromoted), "context.map.promoted:<repo>:v<version>"),
+        new(EventTypes.ContextMapRefreshed, Public: true, typeof(ContextMapRefreshed), "context.map.refreshed:<repo>:v<version>") { Invalidates = [ApiViews.Jobs] },
         new(EventTypes.ScopingApproved, Public: true, typeof(ScopingApproved), "scoping.approved:<packetHash>"),
         new(EventTypes.ScopingEscape, Public: true, typeof(ScopingEscape), "scoping.escape:<packetHash>:<station>:<reference>"),
         new(EventTypes.ContextMapProposed, Public: true, typeof(ContextMapProposed), "context.map.proposed:<run>:<rows hash16>"),

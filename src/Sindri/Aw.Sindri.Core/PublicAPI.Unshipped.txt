@@ -410,6 +410,25 @@ Aw.Sindri.Core.Events.ContextMapPromoted.Retained.get -> int?
 Aw.Sindri.Core.Events.ContextMapPromoted.Retained.init -> void
 Aw.Sindri.Core.Events.ContextMapPromoted.Version.get -> int
 Aw.Sindri.Core.Events.ContextMapPromoted.Version.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed
+Aw.Sindri.Core.Events.ContextMapRefreshed.<Clone>$() -> Aw.Sindri.Core.Events.ContextMapRefreshed!
+Aw.Sindri.Core.Events.ContextMapRefreshed.ContextMapRefreshed(string! Repo, int Version, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, int Accepted, int Removed, int Dropped, string! Cleanup) -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Deconstruct(out string! Repo, out int Version, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, out int Accepted, out int Removed, out int Dropped, out string! Cleanup) -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Equals(Aw.Sindri.Core.Events.ContextMapRefreshed? other) -> bool
+Aw.Sindri.Core.Events.ContextMapRefreshed.Repo.get -> string!
+Aw.Sindri.Core.Events.ContextMapRefreshed.Repo.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Version.get -> int
+Aw.Sindri.Core.Events.ContextMapRefreshed.Version.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Heads.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Events.ContextMapRefreshed.Heads.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Accepted.get -> int
+Aw.Sindri.Core.Events.ContextMapRefreshed.Accepted.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Removed.get -> int
+Aw.Sindri.Core.Events.ContextMapRefreshed.Removed.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Dropped.get -> int
+Aw.Sindri.Core.Events.ContextMapRefreshed.Dropped.init -> void
+Aw.Sindri.Core.Events.ContextMapRefreshed.Cleanup.get -> string!
+Aw.Sindri.Core.Events.ContextMapRefreshed.Cleanup.init -> void
 Aw.Sindri.Core.Events.ContextMapProposed
 Aw.Sindri.Core.Events.ContextMapProposed.<Clone>$() -> Aw.Sindri.Core.Events.ContextMapProposed!
 Aw.Sindri.Core.Events.ContextMapProposed.Added.get -> int
@@ -5636,6 +5655,7 @@ const Aw.Sindri.Core.Events.EventTypes.CommandHandled = "command.handled" -> str
 const Aw.Sindri.Core.Events.EventTypes.ContextMapBuilt = "context.map.built" -> string!
 const Aw.Sindri.Core.Events.EventTypes.ContextMapImported = "context.map.imported" -> string!
 const Aw.Sindri.Core.Events.EventTypes.ContextMapPromoted = "context.map.promoted" -> string!
+const Aw.Sindri.Core.Events.EventTypes.ContextMapRefreshed = "context.map.refreshed" -> string!
 const Aw.Sindri.Core.Events.EventTypes.ContextMapProposed = "context.map.proposed" -> string!
 const Aw.Sindri.Core.Events.EventTypes.ContextMapReviewed = "context.map.reviewed" -> string!
 const Aw.Sindri.Core.Events.EventTypes.ContextSourcesSynced = "context.sources.synced" -> string!
@@ -5817,6 +5837,9 @@ override Aw.Sindri.Core.Events.ContextMapImported.ToString() -> string!
 override Aw.Sindri.Core.Events.ContextMapPromoted.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextMapPromoted.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextMapPromoted.ToString() -> string!
+override Aw.Sindri.Core.Events.ContextMapRefreshed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ContextMapRefreshed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ContextMapRefreshed.ToString() -> string!
 override Aw.Sindri.Core.Events.ContextMapProposed.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextMapProposed.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextMapProposed.ToString() -> string!
@@ -6993,6 +7016,8 @@ static Aw.Sindri.Core.Events.ContextMapImported.operator !=(Aw.Sindri.Core.Event
 static Aw.Sindri.Core.Events.ContextMapImported.operator ==(Aw.Sindri.Core.Events.ContextMapImported? left, Aw.Sindri.Core.Events.ContextMapImported? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapPromoted.operator !=(Aw.Sindri.Core.Events.ContextMapPromoted? left, Aw.Sindri.Core.Events.ContextMapPromoted? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapPromoted.operator ==(Aw.Sindri.Core.Events.ContextMapPromoted? left, Aw.Sindri.Core.Events.ContextMapPromoted? right) -> bool
+static Aw.Sindri.Core.Events.ContextMapRefreshed.operator !=(Aw.Sindri.Core.Events.ContextMapRefreshed? left, Aw.Sindri.Core.Events.ContextMapRefreshed? right) -> bool
+static Aw.Sindri.Core.Events.ContextMapRefreshed.operator ==(Aw.Sindri.Core.Events.ContextMapRefreshed? left, Aw.Sindri.Core.Events.ContextMapRefreshed? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapProposed.operator !=(Aw.Sindri.Core.Events.ContextMapProposed? left, Aw.Sindri.Core.Events.ContextMapProposed? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapProposed.operator ==(Aw.Sindri.Core.Events.ContextMapProposed? left, Aw.Sindri.Core.Events.ContextMapProposed? right) -> bool
 static Aw.Sindri.Core.Events.ContextMapReviewed.operator !=(Aw.Sindri.Core.Events.ContextMapReviewed? left, Aw.Sindri.Core.Events.ContextMapReviewed? right) -> bool
@@ -12562,6 +12587,14 @@ static Aw.Sindri.Core.Events.InstanceChanged.operator !=(Aw.Sindri.Core.Events.I
 static Aw.Sindri.Core.Events.InstanceChanged.operator ==(Aw.Sindri.Core.Events.InstanceChanged? left, Aw.Sindri.Core.Events.InstanceChanged? right) -> bool
 Aw.Sindri.Core.Events.InstanceChanged.Deconstruct(out string! Instance, out string! State, out long Cursor) -> void
 static Aw.Sindri.Core.Events.InstanceChanged.Changing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Scheduling.MainMoveAction
+Aw.Sindri.Core.Scheduling.MainMoveAction.BackoffNotDue = 2 -> Aw.Sindri.Core.Scheduling.MainMoveAction
+Aw.Sindri.Core.Scheduling.MainMoveAction.JobRunning = 1 -> Aw.Sindri.Core.Scheduling.MainMoveAction
+Aw.Sindri.Core.Scheduling.MainMoveAction.Nothing = 0 -> Aw.Sindri.Core.Scheduling.MainMoveAction
+Aw.Sindri.Core.Scheduling.MainMoveAction.Start = 3 -> Aw.Sindri.Core.Scheduling.MainMoveAction
+Aw.Sindri.Core.Scheduling.MainMoveDecision
+static Aw.Sindri.Core.Scheduling.MainMoveDecision.Decide(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! onDefaultHeads, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? lastSucceededHeads, bool running, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.SyncAttempt!>! finishedNewestFirst, System.DateTimeOffset now) -> Aw.Sindri.Core.Scheduling.MainMoveAction
+static Aw.Sindri.Core.Scheduling.MainMoveDecision.FailedInARow(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.SyncAttempt!>! finishedNewestFirst) -> int
 Aw.Sindri.Core.Workflow.Views.InstanceRecipe.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.RecipeId Id, out Aw.Sindri.Core.Workflow.Ids.RecipeHash Hash, out int Version, out Aw.Sindri.Core.Workflow.Recipes.RecipeUrgency Urgency, out string? DisplayName) -> void
 Aw.Sindri.Core.Workflow.Views.NoRecipeDisplayNames.Of(Aw.Sindri.Core.Workflow.Ids.RecipeId id) -> string?
 Aw.Sindri.Core.Workflow.Registry.RecipeSummary.DisplayName.get -> string?

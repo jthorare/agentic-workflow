@@ -6004,3 +6004,51 @@ static readonly Aw.Context.Core.ContextErrors.GraphifyLimitInvalid -> Aw.Kernel.
 static Aw.Context.Core.Eval.Backtest.AsOfMapCache.WithLimits(string! key, Aw.Context.Core.Engine.ClusterLimits! limits) -> string!
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
 static Aw.Context.Core.Graph.RepoScope.WithHierarchy(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlySet<string!>! implemented) -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Context.Core.Engine.RepoHead
+Aw.Context.Core.Engine.RepoHead.<Clone>$() -> Aw.Context.Core.Engine.RepoHead!
+Aw.Context.Core.Engine.RepoHead.Deconstruct(out Aw.Context.Core.Engine.ContextRepoName Repo, out string! Head, out bool OnDefault) -> void
+Aw.Context.Core.Engine.RepoHead.Equals(Aw.Context.Core.Engine.RepoHead? other) -> bool
+Aw.Context.Core.Engine.RepoHead.Head.get -> string!
+Aw.Context.Core.Engine.RepoHead.Head.init -> void
+Aw.Context.Core.Engine.RepoHead.OnDefault.get -> bool
+Aw.Context.Core.Engine.RepoHead.OnDefault.init -> void
+Aw.Context.Core.Engine.RepoHead.Repo.get -> Aw.Context.Core.Engine.ContextRepoName
+Aw.Context.Core.Engine.RepoHead.RepoHead(Aw.Context.Core.Engine.ContextRepoName Repo, string! Head, bool OnDefault) -> void
+Aw.Context.Core.Engine.RepoHead.Repo.init -> void
+Aw.Context.Core.Extract.IDefaultBranch
+Aw.Context.Core.Extract.IDefaultBranch.Reaches(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Facade.IContextEngine.MapHeads(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.RepoHead!>!>!>
+Aw.Context.Core.Facade.IContextMap.CleanDraft(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Review.CleanupReport!>!>
+Aw.Context.Core.Models.ModelPurpose.Cleanup = 4 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupMode.Agent = 1 -> Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupMode.None = 0 -> Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupMode.Partial = 2 -> Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupMode.Unavailable = 3 -> Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupPolicy
+Aw.Context.Core.Review.CleanupReport
+Aw.Context.Core.Review.CleanupReport.Accepted.get -> int
+Aw.Context.Core.Review.CleanupReport.Accepted.init -> void
+Aw.Context.Core.Review.CleanupReport.CleanupReport(int Accepted, int Removed, int Dropped, Aw.Context.Core.Review.CleanupMode Mode) -> void
+Aw.Context.Core.Review.CleanupReport.<Clone>$() -> Aw.Context.Core.Review.CleanupReport!
+Aw.Context.Core.Review.CleanupReport.Deconstruct(out int Accepted, out int Removed, out int Dropped, out Aw.Context.Core.Review.CleanupMode Mode) -> void
+Aw.Context.Core.Review.CleanupReport.Dropped.get -> int
+Aw.Context.Core.Review.CleanupReport.Dropped.init -> void
+Aw.Context.Core.Review.CleanupReport.Equals(Aw.Context.Core.Review.CleanupReport? other) -> bool
+Aw.Context.Core.Review.CleanupReport.Mode.get -> Aw.Context.Core.Review.CleanupMode
+Aw.Context.Core.Review.CleanupReport.Mode.init -> void
+Aw.Context.Core.Review.CleanupReport.Removed.get -> int
+Aw.Context.Core.Review.CleanupReport.Removed.init -> void
+const Aw.Context.Core.Review.CleanupPolicy.Batch = 40 -> int
+const Aw.Context.Core.Review.CleanupPolicy.KeepAt = 0.75 -> double
+const Aw.Context.Core.Review.CleanupPolicy.MaxTokens = 100000 -> int
+override Aw.Context.Core.Engine.RepoHead.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.RepoHead.GetHashCode() -> int
+override Aw.Context.Core.Engine.RepoHead.ToString() -> string!
+override Aw.Context.Core.Review.CleanupReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Review.CleanupReport.GetHashCode() -> int
+override Aw.Context.Core.Review.CleanupReport.ToString() -> string!
+static Aw.Context.Core.Engine.RepoHead.operator !=(Aw.Context.Core.Engine.RepoHead? left, Aw.Context.Core.Engine.RepoHead? right) -> bool
+static Aw.Context.Core.Engine.RepoHead.operator ==(Aw.Context.Core.Engine.RepoHead? left, Aw.Context.Core.Engine.RepoHead? right) -> bool
+static Aw.Context.Core.Review.CleanupReport.operator !=(Aw.Context.Core.Review.CleanupReport? left, Aw.Context.Core.Review.CleanupReport? right) -> bool
+static Aw.Context.Core.Review.CleanupReport.operator ==(Aw.Context.Core.Review.CleanupReport? left, Aw.Context.Core.Review.CleanupReport? right) -> bool

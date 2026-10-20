@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
@@ -89,10 +88,7 @@ internal sealed class PromoteContextMapService(ContextScopes scopes, IContextEng
             return promoted.Error;
         }
 
-        var version = promoted.Value.Version;
-        var payload = new ContextMapPromoted(version.Number, version.Repo.Value, promoted.Value.Retained?.Number);
-        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapPromoted}:{version.Repo.Value}:v{version.Number}");
-        var appended = await ledger.Append(events.Entry(EventTypes.ContextMapPromoted, payload, key), grant, cancellationToken).ConfigureAwait(false);
+        var appended = await new ContextMapEvents(ledger, events, grant).Promoted(promoted.Value, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : new PromoteContextMapResponse(draft, promoted.Value, appended.Value.Sequence);
     }
 }

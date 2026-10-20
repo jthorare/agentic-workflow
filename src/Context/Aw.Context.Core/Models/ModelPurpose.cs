@@ -21,4 +21,8 @@ public enum ModelPurpose
     /// <summary>The eval adjudicator (context.eval.adjudicator).</summary>
     [JsonStringEnumMemberName("adjudication")]
     Adjudication,
+
+    /// <summary>The map cleanup agent: keep or remove each low-confidence proposal before an automatic promote.</summary>
+    [JsonStringEnumMemberName("map-cleanup")]
+    Cleanup,
 }

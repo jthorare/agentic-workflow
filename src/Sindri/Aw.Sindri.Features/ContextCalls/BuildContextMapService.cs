@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -49,11 +48,9 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
         }
 
         var report = built.Value;
-        var payload = new ContextMapBuilt(report.Draft.Repo.Value, report.Draft.Number, report.Proposed.Count, report.Degraded);
-        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapBuilt}:{grant.Epoch}:{slot:O}");
-        var appended = await ledger.Append(events.Entry(EventTypes.ContextMapBuilt, payload, key), grant, cancellationToken).ConfigureAwait(false);
-        return appended.IsError
-            ? appended.Error
-            : new BuildContextMapResult(payload.Repo, payload.Draft, payload.Proposed, [.. report.Degraded.Take(MaxDegraded)]);
+        var recorded = await new ContextMapEvents(ledger, events, grant).Built(report, slot, cancellationToken).ConfigureAwait(false);
+        return recorded.IsError
+            ? recorded.Error
+            : new BuildContextMapResult(recorded.Value.Repo, recorded.Value.Draft, recorded.Value.Proposed, [.. report.Degraded.Take(MaxDegraded)]);
     }
 }

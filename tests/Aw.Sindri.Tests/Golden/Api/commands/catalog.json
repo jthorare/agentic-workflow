@@ -570,6 +570,23 @@
       "shortcut": null
     },
     {
+      "action": "RefreshContextMap",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/map/refresh",
+      "cli": "sindri context map refresh",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
       "action": "RegisterRecipe",
       "class": "desk",
       "allowedCallers": [

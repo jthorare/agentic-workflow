@@ -137,6 +137,13 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<MapPromoted>> Promote(ContextScope scope, CancellationToken cancellationToken) => NoMap<MapPromoted>();
 
     /// <inheritdoc/>
+    public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken) => NoMap<CleanupReport>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<IReadOnlyList<RepoHead>>>(Array.Empty<RepoHead>());
+
+    /// <inheritdoc/>
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         proposal.Surfaces.Count == 0 ? ValueTask.FromResult(Results.Success(new ProposeResult(Draft: null, Added: 0, Existing: 0, Rejected: 0))) : NoMap<ProposeResult>();   // like the engine: with no map a withdrawal has nothing to take back
 

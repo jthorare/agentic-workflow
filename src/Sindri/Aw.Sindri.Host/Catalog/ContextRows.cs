@@ -36,6 +36,7 @@ internal static class ContextRows
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/proposals", ShellRows.Form("sindri context map propose <file>"), "ready"),
         JobRows.Job("BuildContextMap", typeof(BuildContextMapRequest), "/sindri/context/map/build", "sindri context map build"),
+        JobRows.Job("RefreshContextMap", typeof(RefreshContextMapRequest), "/sindri/context/map/refresh", "sindri context map refresh"),
         new(ActionId.From("ImportContextMap"), typeof(ImportContextMapRequest), Variant: null, ActionClass.Protected, ServiceGrants: [],
             NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "cli-only:typed-confirmation"),

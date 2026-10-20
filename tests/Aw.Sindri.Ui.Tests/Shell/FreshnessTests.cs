@@ -318,7 +318,7 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _vm.Banner.HasRebuild);
 
-        Assert.Equal((60, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
+        Assert.Equal((61, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
     }
 
     // F13: the pill words come from the goldens, not from records built by hand.

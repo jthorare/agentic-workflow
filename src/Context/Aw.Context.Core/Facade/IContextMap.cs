@@ -108,6 +108,16 @@ public interface IContextMap : IScopeProposals
     /// <returns>The rows written and the entries skipped, or SND-CONTEXT-001/004/005/043/044.</returns>
     public ValueTask<Result<ReviewResult>> ApplyReviewFile(string path, ContextScope scope, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The cleanup agent (owner F1, 2026-10-19): settles every entry of the latest draft's review queue so the draft can be promoted with no human step.
+    /// Deterministic entries are accepted, orphaned overrides dropped, model entries at or above <see cref="CleanupPolicy.KeepAt"/> accepted, and the ones
+    /// below it judged by a model (keep: accept, remove: reject); when no model answers they are rejected. Every row is written as the caller. A session is refused.
+    /// </summary>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the pass; the rows already written stay (each is an ordinary review decision).</param>
+    /// <returns>What it decided, or SND-CONTEXT-001/004/020/044/047.</returns>
+    public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken);
+
     /// <summary>Makes the latest draft current (a protected command with the typed challenge: Sindri checks the caller first).</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

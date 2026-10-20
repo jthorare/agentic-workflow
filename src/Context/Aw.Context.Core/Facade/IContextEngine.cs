@@ -42,6 +42,12 @@ public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IC
     /// <returns>True when a configured intent source has no successful sync; false when none is configured or all have synced.</returns>
     public ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken);
 
+    /// <summary>Each mapped repo's checkout HEAD and whether it is on the default branch, read from local refs (no fetch): what an automatic refresh compares with the heads it last mapped.</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>One head per mapped repo ('context.repos' within the profile's repos), or SND-CONTEXT-001/048.</returns>
+    public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken);
+
     /// <summary>
     /// Runs a probe file (spec §9.2 item 3): reads and checks it, asks each question through <paramref name="ask"/> (Sindri's
     /// CLI passes its GET /sindri/context/query, so probes see what callers see), scores the answers, compares them with the

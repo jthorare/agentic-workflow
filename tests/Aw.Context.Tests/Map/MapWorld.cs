@@ -80,6 +80,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IProbeFileReader>(new NoProbes())
             .AddSingleton<IProbeReportStore>(new NoProbes())
             .AddSingleton(repoReader ?? new FakeRepoReader(Repos[0], Head, BuildFiles))
+            .AddSingleton<IDefaultBranch>(DefaultBranch)
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton<IIntentStore>(Intents)
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
@@ -97,6 +98,8 @@ internal sealed class MapWorld : IDisposable
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
+
+    public FakeDefaultBranch DefaultBranch { get; } = new();
 
     public FakeIntentStore Intents { get; } = new();
 

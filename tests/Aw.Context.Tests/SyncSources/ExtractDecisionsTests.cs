@@ -55,7 +55,7 @@ public sealed class ExtractDecisionsTests
         ModelPurpose.DecisionExtraction when request.Prompt.Contains(R105, StringComparison.Ordinal) =>
             "{\"decisions\":[" + Decisions(QOld, Resize, "Ten columns.") + "," + Decisions(QNew, Resize, "Twenty columns.", QOld) + "]}",
         ModelPurpose.Adjudication => "{\"verdict\":\"" + verdict + "\"}",
-        ModelPurpose.DecisionExtraction or ModelPurpose.Labeling or ModelPurpose.Rerank => "{\"decisions\":[]}",
+        ModelPurpose.DecisionExtraction or ModelPurpose.Labeling or ModelPurpose.Rerank or ModelPurpose.Cleanup => "{\"decisions\":[]}",
         _ => "{\"decisions\":[]}",
     };
 
