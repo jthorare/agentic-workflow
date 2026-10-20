@@ -13143,3 +13143,34 @@ Aw.Sindri.Core.Events.SetupStepChanged.Deconstruct(out Aw.Sindri.Core.Ids.Comman
 Aw.Sindri.Core.Events.SetupStepChanged.SetupStepChanged(Aw.Sindri.Core.Ids.CommandId CommandId, string! Step, string! State, string? Code = null) -> void
 Aw.Sindri.Core.Events.SetupStepChanged.Step.get -> string!
 Aw.Sindri.Core.Events.SetupStepChanged.Step.init -> void
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.PromptEvalCasesInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.PromptEvalEgressRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.PromptEvalHeavyBusy -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.PromptEvalModelUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Ports.IPromptModel.AllowedProviders(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+Aw.Sindri.Core.Ports.IPromptModel.Ask(Aw.Sindri.Core.Ports.PromptAsk! ask, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ports.PromptAnswer!>!>
+Aw.Sindri.Core.Ports.PromptAnswer
+Aw.Sindri.Core.Ports.PromptAnswer.<Clone>$() -> Aw.Sindri.Core.Ports.PromptAnswer!
+Aw.Sindri.Core.Ports.PromptAnswer.Deconstruct(out string! Text, out string! Model) -> void
+Aw.Sindri.Core.Ports.PromptAnswer.Equals(Aw.Sindri.Core.Ports.PromptAnswer? other) -> bool
+Aw.Sindri.Core.Ports.PromptAnswer.PromptAnswer(string! Text, string! Model) -> void
+Aw.Sindri.Core.Ports.PromptAsk
+Aw.Sindri.Core.Ports.PromptAsk.Budget.get -> System.TimeSpan
+Aw.Sindri.Core.Ports.PromptAsk.Budget.init -> void
+Aw.Sindri.Core.Ports.PromptAsk.<Clone>$() -> Aw.Sindri.Core.Ports.PromptAsk!
+Aw.Sindri.Core.Ports.PromptAsk.Deconstruct(out string! Role, out string! Prompt, out System.TimeSpan Budget) -> void
+Aw.Sindri.Core.Ports.PromptAsk.Equals(Aw.Sindri.Core.Ports.PromptAsk? other) -> bool
+Aw.Sindri.Core.Ports.PromptAsk.PromptAsk(string! Role, string! Prompt, System.TimeSpan Budget) -> void
+Aw.Sindri.Core.Ports.PromptAsk.Prompt.get -> string!
+Aw.Sindri.Core.Ports.PromptAsk.Prompt.init -> void
+Aw.Sindri.Core.Ports.PromptAsk.Role.get -> string!
+Aw.Sindri.Core.Ports.PromptAsk.Role.init -> void
+override Aw.Sindri.Core.Ports.PromptAnswer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ports.PromptAnswer.GetHashCode() -> int
+override Aw.Sindri.Core.Ports.PromptAnswer.ToString() -> string!
+override Aw.Sindri.Core.Ports.PromptAsk.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ports.PromptAsk.GetHashCode() -> int
+override Aw.Sindri.Core.Ports.PromptAsk.ToString() -> string!
+static Aw.Sindri.Core.Ports.PromptAnswer.operator !=(Aw.Sindri.Core.Ports.PromptAnswer? left, Aw.Sindri.Core.Ports.PromptAnswer? right) -> bool
+static Aw.Sindri.Core.Ports.PromptAsk.operator !=(Aw.Sindri.Core.Ports.PromptAsk? left, Aw.Sindri.Core.Ports.PromptAsk? right) -> bool
+static Aw.Sindri.Core.Ports.PromptAsk.operator ==(Aw.Sindri.Core.Ports.PromptAsk? left, Aw.Sindri.Core.Ports.PromptAsk? right) -> bool

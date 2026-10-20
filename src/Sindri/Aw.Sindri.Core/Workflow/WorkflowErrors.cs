@@ -100,11 +100,24 @@ public static class WorkflowErrors
     /// <summary>SND-RECIPE-011: a recipe is not one this build ships (its 'id@hash' is not in the embedded set); approve-all names it (setup-once spec §7.6).</summary>
     public static readonly ErrorDefinition RecipeNotShipped = new("SND-RECIPE-011", ErrorKind.Conflict, "The recipe is not one this build ships");
 
+    /// <summary>SND-RECIPE-012: a prompt eval's cases file is missing or malformed, or its step is not in the recipe.</summary>
+    public static readonly ErrorDefinition PromptEvalCasesInvalid = new("SND-RECIPE-012", ErrorKind.Invalid, "The prompt eval's cases are missing or malformed");
+
+    /// <summary>SND-RECIPE-013: the repo's profile allows no provider, so a prompt eval sends nothing (egress check, refused before any model call).</summary>
+    public static readonly ErrorDefinition PromptEvalEgressRefused = new("SND-RECIPE-013", ErrorKind.Forbidden, "The profile allows no provider for a prompt eval");
+
+    /// <summary>SND-RECIPE-014: the heavy-job lock stayed busy, so a prompt eval did not run.</summary>
+    public static readonly ErrorDefinition PromptEvalHeavyBusy = new("SND-RECIPE-014", ErrorKind.Unavailable, "The heavy-job lock stayed busy for a prompt eval");
+
+    /// <summary>SND-RECIPE-015: a model call of a prompt eval failed; the run stops with no partial verdict.</summary>
+    public static readonly ErrorDefinition PromptEvalModelUnavailable = new("SND-RECIPE-015", ErrorKind.Unavailable, "A prompt eval's model call failed");
+
     /// <summary>Every live workflow error, for ErrorCatalogue.Validate (together with SindriErrors.All).</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
         RecipeInvalid, RecipeNotFound, RecipeNotApproved, RecipeRevoked, RecipePinDrift, RecipeVersionTaken, RecipeEvalsFailing,
         RecipeChallengeStale, RecipeUnreadable, RecipeNotShipped,
+        PromptEvalCasesInvalid, PromptEvalEgressRefused, PromptEvalHeavyBusy, PromptEvalModelUnavailable,
         InstanceNotFound, TriggerNotAllowed, GateRefused, StaleRunToken, AmbiguousAddress, MalformedReport,
         NonceRefused, NoRuntime, EffectNotAllowed, EarlierAttemptLive, WorkflowChallengeStale, ItemMismatch, EffectFailed,
         StepInputNoRuntime, InjectionChanged, InputChanged, InjectionInvalid, BlockFactUnreadable, BlockProfileUnreadable, BlockRepoUnreadable, BlockRunAreaUnavailable,

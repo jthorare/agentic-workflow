@@ -12,7 +12,7 @@ public sealed class WorkflowErrorsTests
         Assert.True(ErrorCatalogue.Validate([.. SindriErrors.All, .. WorkflowErrors.All]).IsSuccess);
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("SND-RECIPE", 11)]
+    [InlineData("SND-RECIPE", 15)]
     [InlineData("SND-WF", 19)]
     [InlineData("SND-BLOCK", 4)]
     public void Every_code_of_an_area_is_live_or_retired_and_none_is_both(string area, int last)
@@ -33,6 +33,10 @@ public sealed class WorkflowErrorsTests
     [InlineData("SND-RECIPE-001", ErrorKind.Invalid)]
     [InlineData("SND-RECIPE-002", ErrorKind.NotFound)]
     [InlineData("SND-RECIPE-010", ErrorKind.NotFound)]
+    [InlineData("SND-RECIPE-012", ErrorKind.Invalid)]
+    [InlineData("SND-RECIPE-013", ErrorKind.Forbidden)]
+    [InlineData("SND-RECIPE-014", ErrorKind.Unavailable)]
+    [InlineData("SND-RECIPE-015", ErrorKind.Unavailable)]
     [InlineData("SND-WF-006", ErrorKind.Invalid)]
     [InlineData("SND-WF-010", ErrorKind.Unavailable)]
     [InlineData("SND-WF-011", ErrorKind.Forbidden)]
