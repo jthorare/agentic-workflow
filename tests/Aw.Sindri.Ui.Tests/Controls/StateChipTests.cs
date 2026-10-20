@@ -22,7 +22,7 @@ public sealed class StateChipTests
         ["CHANGED"] = ChipTone.Attn,
         ["ORPHANED"] = ChipTone.Attn,
         ["DEGRADED"] = ChipTone.Attn,
-        ["DIDN'T WORK OUT"] = ChipTone.Attn,
+        ["DIDN'T WORK OUT"] = ChipTone.Neutral,
         ["FAILED"] = ChipTone.Fail,
         ["RUNNING"] = ChipTone.Ok,
         ["OK"] = ChipTone.Ok,

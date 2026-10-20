@@ -43,7 +43,7 @@ public sealed record StateChip(string Word, ChipTone Tone)
 
     /// <summary>
     /// The chip of an instance: an engine-owned badge decides first, then an open desk answer, then not started, then the terminal
-    /// outcome (failed FAILED/fail, unresolved DIDN'T WORK OUT/attn, cancelled CANCELLED/neutral, any other DONE/neutral; the owner's table, 2026-10-19), then running.
+    /// outcome (failed FAILED/fail, unresolved DIDN'T WORK OUT/neutral, cancelled CANCELLED/neutral, any other DONE/neutral; the owner's table, 2026-10-19), then running.
     /// </summary>
     /// <param name="engineOwned">The engine-owned badge, if any; a taken-over instance arrives here as the "taken-over" badge (the plan's "takenOver" flag).</param>
     /// <param name="deskOpen">Whether a desk answer is open.</param>
@@ -69,7 +69,7 @@ public sealed record StateChip(string Word, ChipTone Tone)
     private static StateChip Ended(OutcomeName outcome) => outcome.Value switch
     {
         "failed" => new StateChip(Failed, ChipTone.Fail),
-        "unresolved" => new StateChip(DidntWorkOut, ChipTone.Attn),
+        "unresolved" => new StateChip(DidntWorkOut, ChipTone.Neutral),
         "cancelled" => new StateChip(Cancelled, ChipTone.Neutral),
         _ => new StateChip(Done, ChipTone.Neutral),
     };
