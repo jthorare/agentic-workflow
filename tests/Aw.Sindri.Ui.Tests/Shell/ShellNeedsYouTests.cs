@@ -75,14 +75,25 @@ public sealed class ShellNeedsYouTests
     }, Token);
 
     [Fact]
-    public Task Deep_link_needs_you_rowId_selects_the_row_and_opens_its_sheet() => UiThread.Run(async () =>
+    public Task Deep_link_needs_you_rowId_selects_the_row_and_opens_the_inbox_on_it() => UiThread.Run(async () =>
     {
         var shell = await Connected();
         shell.ShowNeedsYou(Feed(NeedsYouRows.Park(), NeedsYouRows.Failure()));
 
         shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
 
-        Assert.Equal(("failure:service:index", "failure:service:index", true, false), (shell.NeedsYou.SelectedId, shell.NeedsYou.SheetRowId, shell.IsSheetOpen, shell.IsSheetPlaceholderShown));
+        Assert.Equal(("failure:service:index", true, false), (shell.NeedsYou.SelectedId, shell.IsNeedsYouInbox, shell.IsSheetOpen));
+    }, Token);
+
+    [Fact]
+    public Task The_row_sheet_link_selects_the_row_and_opens_its_sheet_over_the_page() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        shell.ShowNeedsYou(Feed(NeedsYouRows.Park(), NeedsYouRows.Failure()));
+
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
+
+        Assert.Equal(("failure:service:index", "failure:service:index", true, false, false), (shell.NeedsYou.SelectedId, shell.NeedsYou.SheetRowId, shell.IsSheetOpen, shell.IsSheetPlaceholderShown, shell.IsNeedsYouInbox));
         Assert.True(shell.IsNeedsYouSheet);
     }, Token);
 

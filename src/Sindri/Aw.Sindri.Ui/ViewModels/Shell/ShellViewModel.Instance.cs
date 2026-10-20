@@ -54,7 +54,7 @@ internal sealed partial class ShellViewModel
             Instance.Intend(address, intent);
         }
 
-        Navigate(link);
+        Navigate(link, rowSheet: true);   // a row no list knows keeps its own sheet: the answer is there
     }
 
     /// <summary>"Answer in the child" on a strip row: followed like the row's other controls, and the row is where Esc returns.</summary>

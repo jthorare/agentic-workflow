@@ -7,7 +7,16 @@ internal sealed partial class ShellViewModel
 {
     /// <summary>Goes where a deep link points: a page, or the detail sheet with its subject.</summary>
     /// <param name="link">The link.</param>
-    internal void Navigate(DeepLink link)
+    internal void Navigate(DeepLink link) => Navigate(link, rowSheet: false);
+
+    /// <summary>
+    /// Goes where a deep link points, opening a Needs-you row's own sheet over the page instead of the inbox: what the strip's
+    /// Answer does, which keeps its row as the opener the sheet's Esc returns to.
+    /// </summary>
+    /// <param name="link">The link.</param>
+    internal void NavigateToRowSheet(DeepLink link) => Navigate(link, rowSheet: true);
+
+    private void Navigate(DeepLink link, bool rowSheet)
     {
         if (link.Kind == DeepLinkKind.HomeNeedsYou || link.Subject is null)
         {
@@ -16,6 +25,12 @@ internal sealed partial class ShellViewModel
         }
 
         link = Canonical(link);
+        if (link.Kind == DeepLinkKind.NeedsYou && !rowSheet)
+        {
+            OpenNeedsYouInbox(link.Subject);   // a decision row is the decision's own link, so it never gets here
+            return;
+        }
+
         if (PageOf(link.Kind) is { } page)
         {
             GoTo(page);

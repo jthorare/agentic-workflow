@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -79,7 +81,7 @@ public sealed class NeedsYouFramesTests : FrameHost
     {
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
         var failure = shell.NeedsYou.Rows.First(r => r.Details.Count > 0);
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, failure.Id));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, failure.Id));
         Settle(window);
 
         var details = Named<ItemsControl>(window, "SheetRowDetails").GetVisualDescendants().OfType<StackPanel>().Where(p => p.DataContext is ViewModels.NeedsYou.SheetDetail).ToList();
@@ -158,7 +160,7 @@ public sealed class NeedsYouFramesTests : FrameHost
     });
 
     [Fact]
-    public Task Seven_rows_show_five_then_Show_all_draws_them_all() => OnUi(async () =>
+    public Task Seven_rows_show_five_then_Show_all_opens_the_inbox_with_them_all() => OnUi(async () =>
     {
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "large");
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 5);
@@ -168,7 +170,8 @@ public sealed class NeedsYouFramesTests : FrameHost
         Named<Button>(window, "NeedsYouShowAll").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        Assert.Equal(shell.NeedsYou.Count, Rows(window).Count);
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.Equal(shell.NeedsYou.Count, shell.Inbox.Groups.Sum(g => g.Rows.Count));
         Frame(window, "needs-you-show-all");
     });
 
@@ -180,5 +183,79 @@ public sealed class NeedsYouFramesTests : FrameHost
 
         Assert.True(Visible(window, "NeedsYouPanel") && Visible(window, "RunningPanel") && Visible(window, "QueuedPanel"));
         Frame(window, "home-large");
+    });
+
+    // F3 needs-you slice 1: the inbox page (prototype #pending), at the two widths the spec draws.
+    [Theory]
+    [InlineData(1440, "needs-you-inbox-1440")]
+    [InlineData(900, "needs-you-inbox-900")]
+    public Task The_inbox_draws_the_groups_and_the_selected_requests_card(int width, string frame) => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, width: width, height: 800);
+
+        shell.OpenNeedsYouInbox();
+        Settle(window);
+
+        Assert.True(Visible(window, "NeedsYouInbox"));
+        Assert.False(Visible(window, "NeedsYouPanel"));
+        Assert.Equal(["Agent decisions", "Workflow and settings approvals", "Something failed"], Named<Control>(window, "NeedsYouGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("group-header")).Select(b => b.GetVisualDescendants().OfType<TextBlock>().First().Text), StringComparer.Ordinal);
+        Assert.True(Visible(window, "NeedsYouCard"));
+        Assert.Equal(shell.Inbox.Selected?.Title, Named<TextBlock>(window, "NeedsYouCardTitle").Text);
+        Assert.Equal(shell.Inbox.FooterLeft, Named<TextBlock>(window, "NeedsYouFooterLeft").Text);
+        Assert.True(Named<Control>(window, "NeedsYouInbox").Bounds.Width <= window.ClientSize.Width, "the inbox scrolls sideways");
+        Frame(window, frame);
+    });
+
+    [Fact]
+    public Task Escape_leaves_the_inbox_for_Home_with_its_panels() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
+        shell.OpenNeedsYouInbox();
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.False(shell.IsNeedsYouInbox);
+        Assert.True(Visible(window, "NeedsYouPanel") && Visible(window, "RunningPanel") && Visible(window, "QueuedPanel"));
+        Assert.False(Visible(window, "NeedsYouInbox"));
+    });
+
+    [Fact]
+    public Task Show_all_on_Home_opens_the_inbox() => OnUi(async () =>
+    {
+        Server.NeedsYouView = RouteAnswer.Api("needs-you", "large");
+        var (window, shell) = await Connected(s => s.NeedsYou.Count > 5);
+
+        Named<Button>(window, "NeedsYouShowAll").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.True(Visible(window, "NeedsYouInbox"));
+    });
+
+    [Fact]
+    public Task The_inbox_breadcrumb_goes_back_to_Home() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
+        shell.OpenNeedsYouInbox();
+        Settle(window);
+
+        Named<Button>(window, "NeedsYouCrumbHome").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.False(shell.IsNeedsYouInbox);
+    });
+
+    [Fact]
+    public Task An_empty_inbox_says_the_served_sentence_in_the_detail_column() => OnUi(async () =>
+    {
+        Server.NeedsYouView = RouteAnswer.Api("needs-you", "empty");
+        var (window, shell) = await Connected();
+        shell.OpenNeedsYouInbox();
+        Settle(window);
+
+        Assert.Equal((string)GoldenFiles.Node("needs-you", "empty")["empty"]!, Named<TextBlock>(window, "NeedsYouInboxEmpty").Text);
+        Assert.False(Visible(window, "NeedsYouCard"));
     });
 }

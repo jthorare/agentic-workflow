@@ -146,13 +146,14 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
         {
             IsSelected = selected;
             OnChanged(nameof(IsSelected));
+            OnChanged(nameof(InboxName));
         }
     }
 
     private static readonly string[] _content =
     [
         nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
-        nameof(CanOpenItem), nameof(ItemLink), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice),
+        nameof(CanOpenItem), nameof(ItemLink), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
     ];
 
     private bool _rebuilding;
@@ -263,6 +264,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
         if (before.Tint != Tint)
         {
             OnChanged(nameof(AccessibleName));
+            OnChanged(nameof(InboxName));
             OnChanged(nameof(Tint));
             OnChanged(nameof(IsPulsing));
             OnChanged(nameof(IsSteady));

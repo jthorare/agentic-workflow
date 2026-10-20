@@ -125,7 +125,7 @@ public sealed class DecisionsFramesTests : FrameHost
         var (window, shell) = await Connected(width: 1400);
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Failure()], ""));
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
         Settle(window);
 
         Assert.True(Visible(window, "NeedsYouSheet"));
@@ -138,7 +138,7 @@ public sealed class DecisionsFramesTests : FrameHost
         var (window, shell) = await Connected(width: 1400);
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Profile(new NeedsYouSubject("profile", "3f1c09"))], ""));
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "profile:drift"));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "profile:drift"));
         Settle(window);
 
         var row = shell.NeedsYou.Rows.Single();

@@ -122,7 +122,7 @@ internal sealed partial class ShellViewModel
     private void Answer(StripRowViewModel row)
     {
         Strip.Deselect();
-        Navigate(ParkRowFor(row) is { } park ? LinkOf(park.Id) : row.Link);
+        NavigateToRowSheet(ParkRowFor(row) is { } park ? LinkOf(park.Id) : row.Link);
         OpenerStrip = row.Address;
     }
 

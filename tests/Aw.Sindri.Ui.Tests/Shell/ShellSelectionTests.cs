@@ -109,7 +109,7 @@ public sealed class ShellSelectionTests
     {
         var shell = await Connected();
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Decision(), NeedsYouRows.Failure()], ""));
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
         var focused = new List<string>();
         shell.NeedsYou.FocusRequested += (_, e) => focused.Add(e.RowId);
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Decision()], ""));   // the selected row cleared: an automatic move

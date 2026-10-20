@@ -2,7 +2,7 @@ using Aw.Sindri.Ui.Navigation;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
-/// <summary>The detail sheet and its subject (UI spec §3.3, §4.2): open, closed to the edge tab, reopened. <see cref="Navigate"/> opens it.</summary>
+/// <summary>The detail sheet and its subject (UI spec §3.3, §4.2): open, closed to the edge tab, reopened. <see cref="Navigate(DeepLink)"/> opens it.</summary>
 internal sealed partial class ShellViewModel
 {
     /// <summary>True while the detail sheet is open.</summary>

@@ -82,8 +82,37 @@ internal sealed partial class ShellWindow
         }
     }
 
+    // Esc closes the sheet over the page first, then the inbox (back to Home).
+    private static bool EscapeSheetOrInbox(ShellViewModel shell)
+    {
+        if (shell.IsSheetShown)
+        {
+            shell.CloseSheet();
+            return true;
+        }
+
+        return shell.LeaveNeedsYouInbox();
+    }
+
+    // The inbox opened or closed: focus goes to the selected row, on the inbox or back on Home, so it is never lost.
+    private void FollowInbox()
+    {
+        var selected = Shell?.NeedsYou.SelectedId;
+        Dispatcher.UIThread.Post(() => (selected is null ? KeepFocus : (Action)(() => FocusNeedsYouRow(selected)))(), DispatcherPriority.Loaded);
+    }
+
     private void FocusNeedsYouRow(string rowId)
     {
+        if (Shell?.IsNeedsYouInbox == true)
+        {
+            if (!this.Get<NeedsYouPage>("NeedsYouInboxPage").FocusRow(rowId))
+            {
+                KeepFocus();   // the row is not drawn: focus still goes somewhere
+            }
+
+            return;
+        }
+
         var row = this.Get<Border>("Page").GetVisualDescendants().OfType<NeedsYouRow>()
             .FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.RowId, rowId, StringComparison.Ordinal));
         if (row?.IsKeyboardFocusWithin == true)

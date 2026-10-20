@@ -205,7 +205,7 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         var (window, shell) = await WithFeed(feed);
         var hint = Labels.FillInHint(["itemId"]);
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, feed.Rows[0].Id));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, feed.Rows[0].Id));
         Settle(window);
 
         var caption = Assert.Single(SheetHintCaptions(window, hint));
@@ -218,7 +218,7 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         var (feed, _) = FailureFeed(r => r with { Ui = "pending:P9" });
         var (window, shell) = await WithFeed(feed);
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, feed.Rows[0].Id));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, feed.Rows[0].Id));
         Settle(window);
 
         var sheet = window.GetVisualDescendants().OfType<NeedsYouSheet>().Single();

@@ -60,4 +60,84 @@
   <Style Selector="Border.needs-you-row Button.command-control:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Padding" Value="9,1" />
   </Style>
+
+  <!-- The inbox page (needs-you spec §2, slice 1). Tokens only; no side stripe, no shadow, no new colour. The row's urgency tint is
+       the Home row's (the needs-you-row classes above); the selected row adds a one-pixel ring in HairlineStrong over Surface2. -->
+  <Style Selector="TextBlock.attention">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+  </Style>
+  <Style Selector="Border.crumb">
+    <Setter Property="Height" Value="{StaticResource Size.TopBar}" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="Border.inbox-column">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+  </Style>
+  <Style Selector="Border.hairline">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Hairline}" />
+  </Style>
+  <Style Selector="Border.group-header">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,1" />
+  </Style>
+  <Style Selector="Border.inbox-row">
+    <Setter Property="MinHeight" Value="56" />
+    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+  <Style Selector="Border.inbox-row.selected">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+  </Style>
+  <Style Selector="Border.inbox-row:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
+  <Style Selector="Border.kind-tile">
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+  </Style>
+  <Style Selector="Border.kind-tile.large">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+  </Style>
+  <Style Selector="Panel.detail-canvas">
+    <Setter Property="Background" Value="{DynamicResource Brush.Canvas}" />
+  </Style>
+  <Style Selector="Border.request-card">
+    <Setter Property="MaxWidth" Value="760" />
+    <Setter Property="Margin" Value="24" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+  <Style Selector="Border.card-section">
+    <Setter Property="Padding" Value="20,12" />
+  </Style>
+  <Style Selector="Border.card-section.tinted">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
+  <Style Selector="Border.card-footer">
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="20,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+  </Style>
+  <!-- The sticky header over a scrolled group list sits above the rows, and takes no pointer of its own. -->
+  <Style Selector="ContentControl.sticky-header">
+    <Setter Property="ZIndex" Value="1" />
+  </Style>
 </Styles>

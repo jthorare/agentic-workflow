@@ -41,7 +41,7 @@ internal sealed partial class ShellViewModel
             return;
         }
 
-        NeedsYou.Update(feed, HomeFilter == HomeFilter.Decisions ? row => row.DecisionId is not null : null);
+        NeedsYou.Update(feed, HomeFilter == HomeFilter.Decisions && !IsNeedsYouInbox ? row => row.DecisionId is not null : null);   // the inbox lists every row, whatever Home's filter says
         FollowDecision();
     }
 
@@ -160,6 +160,11 @@ internal sealed partial class ShellViewModel
         if (inSheet || !IsHome)
         {
             return false;
+        }
+
+        if (IsNeedsYouInbox)
+        {
+            return InboxKeyPressed(key);
         }
 
         return string.Equals(key, "J", StringComparison.Ordinal) || string.Equals(key, "K", StringComparison.Ordinal) ? MoveOnHome(string.Equals(key, "J", StringComparison.Ordinal) ? 1 : -1) : named is { } k && NeedsYou.SelectedId is not null && NeedsYou.Press(k);

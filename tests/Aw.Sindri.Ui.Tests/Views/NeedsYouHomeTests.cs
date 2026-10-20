@@ -138,9 +138,9 @@ public sealed class NeedsYouHomeTests : IDisposable
     });
 
     [Fact]
-    public Task Seven_rows_show_five_then_Show_all_expands_in_place() => OnUi(async () =>
+    public Task Seven_rows_show_five_then_Show_all_opens_the_inbox_with_all_seven() => OnUi(async () =>
     {
-        var (window, _) = await WithRows(7);
+        var (window, shell) = await WithRows(7);
         Assert.Equal(5, Rows(window).Count);
 
         var showAll = Named<Button>(window, "NeedsYouShowAll");
@@ -148,8 +148,9 @@ public sealed class NeedsYouHomeTests : IDisposable
         showAll.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        Assert.Equal(7, Rows(window).Count);
-        Assert.False(showAll.IsEffectivelyVisible);
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.Equal(7, shell.Inbox.Groups.Sum(g => g.Rows.Count));
+        Assert.False(showAll.IsEffectivelyVisible);   // Home's panel is behind the inbox
     });
 
     [Fact]
@@ -157,7 +158,7 @@ public sealed class NeedsYouHomeTests : IDisposable
     {
         var (window, shell) = await WithRows(2);
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "park:ITM-1"));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "park:ITM-1"));
         Settle(window);
 
         Assert.True(Named<Control>(window, "NeedsYouSheet").IsEffectivelyVisible);
@@ -165,14 +166,14 @@ public sealed class NeedsYouHomeTests : IDisposable
     });
 
     [Fact]
-    public Task Clicking_a_rows_title_selects_it_and_opens_its_sheet() => OnUi(async () =>
+    public Task Clicking_a_rows_title_selects_it_and_opens_the_inbox_on_it() => OnUi(async () =>
     {
         var (window, shell) = await WithRows(2);
 
         Named<Button>(Rows(window)[1], "NeedsYouTitle").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        Assert.Equal(("park:ITM-1", true), (shell.NeedsYou.SelectedId, shell.IsSheetOpen));
+        Assert.Equal(("park:ITM-1", true, false), (shell.NeedsYou.SelectedId, shell.IsNeedsYouInbox, shell.IsSheetOpen));
     });
 
     [Fact]
@@ -241,7 +242,7 @@ public sealed class NeedsYouHomeTests : IDisposable
     {
         var (window, shell) = await Connected(width: 1400);
         shell.ShowNeedsYou(new ViewModels.NeedsYou.NeedsYouFeed([NeedsYouRows.Failure()], ""));
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
+        shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, "failure:service:index"));
         Settle(window);
 
         window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);

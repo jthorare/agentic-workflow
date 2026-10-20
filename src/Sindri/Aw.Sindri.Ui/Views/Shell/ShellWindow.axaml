@@ -195,9 +195,9 @@
             </Border>
 
             <!-- The pages (§3.3), each shown by the view model's page flag. -->
-            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPageVisible}">
+            <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
-                <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHome}" />
+                <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
                 <Panel IsVisible="{Binding IsWorkflows}"><wfv:WorkflowsPage x:Name="WorkflowsPage" DataContext="{Binding Workflows}" /></Panel>
                 <queue:QueuePage x:Name="QueuePage" IsVisible="{Binding IsWork}" />
                 <views:PlaceholderPage x:Name="RecipesPage" Title="{Binding Text.Recipes}" Note="{Binding Text.ArrivesRecipes}" IsVisible="{Binding IsRecipes}" />
@@ -220,6 +220,10 @@
                 </ContentControl>
               </Panel>
             </ScrollViewer>
+            <!-- The Needs-you inbox (F3 needs-you spec §2): over Home's panels while Home stays the page; it scrolls its own list and card, so it sits beside the pages' scroller. -->
+            <Panel x:Name="NeedsYouInboxLayer" IsVisible="{Binding IsInboxShown}">
+              <ny:NeedsYouPage x:Name="NeedsYouInboxPage" DataContext="{Binding Inbox}" />
+            </Panel>
           </Panel>
         </Border>
 

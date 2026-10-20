@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ny="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.NeedsYou.NeedsYouInboxRow"
+             x:DataType="ny:NeedsYouRowViewModel">
+  <!-- One row of the Needs-you inbox (needs-you spec §2): a 24 px kind tile, the title and one muted line, and how long it has waited.
+       Selecting is the focus: the row draws its own ring (the selected row's), like the Home row. The urgency is the tint, as on Home (never a side stripe). -->
+  <Grid RowDefinitions="Auto,1">
+    <Border x:Name="InboxRowFrame" Classes="inbox-row needs-you-row" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}"
+            Classes.slides-in="{Binding SlidesIn}" Classes.stale="{Binding IsStale}" Focusable="True"
+            AutomationProperties.Name="{Binding InboxName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">
+        <Border x:Name="InboxRowTile" Classes="kind-tile" VerticalAlignment="Top">
+          <icons:StateIcon Glyph="Profile" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Attention}" />
+        </Border>
+        <StackPanel Grid.Column="1" Spacing="1">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock x:Name="InboxRowTitle" Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock x:Name="InboxRowNew" Grid.Column="1" Classes="caption" Text="{Binding NewWord}" IsVisible="{Binding HasNewWord}" Margin="8,0,0,0" AutomationProperties.AccessibilityView="Raw" />
+          </Grid>
+          <TextBlock x:Name="InboxRowLine" Classes="caption muted" Text="{Binding InboxLine}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
+        <TextBlock Grid.Column="2" Classes="caption subtle mono" Text="{Binding Age}" VerticalAlignment="Top" AutomationProperties.AccessibilityView="Raw" />
+      </Grid>
+    </Border>
+    <Border Grid.Row="1" Classes="hairline" />
+  </Grid>
+</UserControl>

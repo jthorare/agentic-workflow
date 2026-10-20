@@ -152,9 +152,8 @@ internal sealed partial class ShellWindow : Window
             return true;
         }
 
-        if (shell.IsSheetShown)
+        if (EscapeSheetOrInbox(shell))
         {
-            shell.CloseSheet();
             return true;
         }
 
@@ -218,6 +217,9 @@ internal sealed partial class ShellWindow : Window
                 break;
             case nameof(ShellViewModel.CurrentPage):
                 OnPageChanged();
+                break;
+            case nameof(ShellViewModel.IsNeedsYouInbox):
+                FollowInbox();
                 break;
             case nameof(ShellViewModel.IsSheetShown):
                 CoverPage();
