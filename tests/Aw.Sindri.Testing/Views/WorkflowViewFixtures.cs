@@ -455,8 +455,8 @@ public static class WorkflowViewFixtures
     // ---- the instance views (E-20) -----------------------------------------------------------------------------------
 
     private static InstanceDetail Detail(InstanceSummary row, string title, PathOrdering ordering, CurrentState current, IReadOnlyList<FactRow> facts,
-        IReadOnlyList<ChildGroup> children, ViewCounts counts, ParentRef? parent = null) =>
-        new(row.Address, row.Id, parent, row.ItemId, title, row.Recipe, row.State, row.Since, row.EngineOwned, row.Subject, ordering, row.States, current, facts, children, counts, row.Actions, Now);
+        IReadOnlyList<ChildGroup> children, ViewCounts counts, ParentRef? parent = null, IReadOnlyList<StepRun>? stepRuns = null) =>
+        new(row.Address, row.Id, parent, row.ItemId, title, row.Recipe, row.State, row.Since, row.EngineOwned, row.Subject, ordering, row.States, current, facts, children, counts, row.Actions, stepRuns ?? [], Now);
 
     private static FactRow Fake(RecipeShape recipe, string key, FactStatus status, string summary, DateTimeOffset? at = null, string? by = null, FactRef? reference = null, Progress? progress = null, FactPending? pending = null) =>
         recipe.Fact(key, status, summary, at, by, reference, progress, pending);
@@ -594,7 +594,11 @@ public static class WorkflowViewFixtures
                 new DeskForm(RunToken.From("3.1"), [new DeskOutput("fact:output", FactType.File, true)], ["output.file"], Act("CompleteStep")), status),
             _step.Facts(Produced(_step, "fact:spec", "spec.md", At(10, 12, 12, 20), "service:item", Ref(name: "spec.md", hash: Hash("1c0e5a77")))),
             [], Counts(6, 0, 0),
-            new ParentRef(WorkflowInstanceId.Of(InstanceAddress.From("ITM-01JE7/item/1")), InstanceAddress.From("ITM-01JE7/item/1"), "ITM-01JE7 · Add needs-you ack route", null, null));
+            new ParentRef(WorkflowInstanceId.Of(InstanceAddress.From("ITM-01JE7/item/1")), InstanceAddress.From("ITM-01JE7/item/1"), "ITM-01JE7 · Add needs-you ack route", null, null),
+            [
+                new StepRun("1.1", "produce", Attempt: 1, MaxAttempts: 3, StepRunState.Refused, StepRuntime.Desk, Today(10, 5), Today(10, 50), DurationMs: 2_700_000, Outcome: "done", Tokens: null, Actor: "human:cli"),
+                new StepRun("3.1", "produce", Attempt: 2, MaxAttempts: 3, StepRunState.Running, StepRuntime.Desk, Today(12, 20), EndedAt: null, DurationMs: null, Outcome: null, Tokens: null, Actor: null),
+            ]);
     }
 
     /// <summary>The desk-round-trip dev recipe, desk open on its export (round 1 of 2): the P11 signal fixture.</summary>

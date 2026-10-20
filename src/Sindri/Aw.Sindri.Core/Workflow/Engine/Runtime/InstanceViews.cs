@@ -119,6 +119,7 @@ public static partial class InstanceViews
             view.ChildGroups,
             context.Counts,
             [.. status.Commands.Select(static c => c.ActionId)],
+            context.StepRuns ?? [],
             context.AsOf);
     }
 

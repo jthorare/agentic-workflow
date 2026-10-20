@@ -17,8 +17,8 @@ public sealed class GetInstanceServiceTests
 {
     private const string ItemA = "ITM-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    private static GetInstanceService Service(SomeInstances instances, DetailViews? views = null, FixedRepos? repos = null, CallerContext? caller = null) =>
-        new(instances, instances, views ?? new DetailViews(), repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()), new FakeTimeProvider(StatusCases.Now));
+    private static GetInstanceService Service(SomeInstances instances, DetailViews? views = null, FixedRepos? repos = null, CallerContext? caller = null, StepRunEvents? stepRuns = null, StepRunRecipes? recipes = null) =>
+        new(instances, instances, views ?? new DetailViews(), repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()), new FakeTimeProvider(StatusCases.Now), new StepRunReader(stepRuns ?? new StepRunEvents(), recipes ?? new StepRunRecipes()));
 
     [Fact]
     public async Task Serves_the_detail_with_title_parent_and_counts()
@@ -34,6 +34,39 @@ public sealed class GetInstanceServiceTests
         var detail = result.Value;
         Assert.Equal(("T-1/step/1/step.4", "Offline sync", new ViewCounts(7, 2, 1, Context: null), StatusCases.Now), (detail.Address.Value, detail.Title, detail.Counts, detail.AsOf));
         Assert.Equal(("T-1/step/1", parent.Id), (detail.Parent!.Address.Value, detail.Parent.Id));
+    }
+
+    [Fact]
+    public async Task Serves_the_step_runs_folded_from_the_instances_ledger_events()
+    {
+        var view = StatusCases.View("done");
+        var events = new StepRunEvents(StepRunFixtures.Started("produce", "1.1"), StepRunFixtures.Completed("produce", "checks", "1.1", "done", tokens: 1_200, minutes: 5));
+
+        var result = await Service(new SomeInstances(view), stepRuns: events).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        var run = Assert.Single(result.Value.StepRuns);
+        Assert.Equal(("1.1", "produce", StepRunState.Passed, 1_200, TimeSpan.FromMinutes(5).TotalMilliseconds), (run.Token, run.Step, run.State, run.Tokens, (double)run.DurationMs!));
+        Assert.Equal(view.Address, events.Asked);
+    }
+
+    [Fact]
+    public async Task An_instance_with_no_events_serves_no_step_runs()
+    {
+        var view = StatusCases.View("done");
+
+        var result = await Service(new SomeInstances(view)).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.Empty(result.Value.StepRuns);
+    }
+
+    [Fact]
+    public async Task A_ledger_that_cannot_be_read_fails_the_read_with_its_error()
+    {
+        var view = StatusCases.View("done");
+
+        var result = await Service(new SomeInstances(view), stepRuns: StepRunEvents.Failing()).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.True(result.IsError);
     }
 
     [Fact]

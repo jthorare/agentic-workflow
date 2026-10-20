@@ -7,4 +7,5 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Parent">The parent instance, when this is a child.</param>
 /// <param name="Counts">The timeline, decision and request counts from the ledger.</param>
 /// <param name="AsOf">When the read happened; the composer never reads a clock.</param>
-public sealed record InstanceDetailContext(string Title, ParentRef? Parent, ViewCounts Counts, DateTimeOffset AsOf);
+/// <param name="StepRuns">The Step runs folded from the instance's ledger events; none when not given.</param>
+public sealed record InstanceDetailContext(string Title, ParentRef? Parent, ViewCounts Counts, DateTimeOffset AsOf, IReadOnlyList<StepRun>? StepRuns = null);

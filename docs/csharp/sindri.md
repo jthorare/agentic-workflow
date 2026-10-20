@@ -227,7 +227,7 @@ foreign browser `Origin` a 403):
 | `POST /sindri/workflow/recipes/{id}@{hash}/approve` | `ApproveRecipe` (body `{challenge, typed}`; protected): the hash as `sha256:…` or its 64 digits |
 | `POST /sindri/workflow/recipes/{id}@{hash}/revoke` | `RevokeRecipe` (body `{challenge, typed}`; protected) |
 | `GET /sindri/workflow/instances?address=&item=&state=&needsMe=` | `ListInstances` (a query): the `InstanceList` of the instances matching the search attributes (rows with their `WFI-` `id`, counts over the root set, the `empty` sentence); `address=` resolves one address, a bare item or an id (§6.1) to its one-row list; `needsMe=true` keeps what needs you, a mirrored parent once under its child (the CLI groups Decisions and Tasks) |
-| `GET /sindri/workflow/instances/{instanceId}` | `GetInstance` (a query): one instance's `InstanceDetail`; the route takes only a `WFI-` id (anything else is a 400); an unknown id, or another repo's for a session, is SND-ITEM-404 |
+| `GET /sindri/workflow/instances/{instanceId}` | `GetInstance` (a query): one instance's `InstanceDetail`, including `stepRuns[]` (one entry per Step run in start order, folded from the instance's own ledger rows by `StepRuns.Fold`: token, step, attempt and `maxAttempts`, state `running|passed|failed|refused|cancelled|abandoned`, runtime, start, end, `durationMs`, outcome, tokens, closing actor; API spec §3.8); the route takes only a `WFI-` id (anything else is a 400); an unknown id, or another repo's for a session, is SND-ITEM-404 |
 | `GET /sindri/workflow/instances/{instanceId}/events?after=N` | `GetInstanceEvents` (a query): the ledger rows the instance mirrored after sequence N (default 0); an unknown instance is SND-WF-001 |
 | `POST /sindri/workflow/instances` | `StartInstance` (desk): starts a recipe on an item with its input facts sent by content; answers the instance's view, or finds the live one |
 | `POST /sindri/workflow/instances/{instanceId}/nonce` | `IssueNonce` (an issue; sessions may ask): a nonce for one command on that instance |
@@ -791,7 +791,7 @@ an address is the typed `InstanceAddress`), plus
 | Route | Slice | Shape |
 |---|---|---|
 | `GET /workflow/instances?root=&open=&recipe=&subject=&state=&needsMe=` (also `item`, `urgency`, `query`, and `address=` for the one-row list that resolves an address to its id) | `ListInstances` (engine) | `InstanceList` |
-| `GET /workflow/instances/{id}` | `GetInstance` (engine) | `InstanceDetail` |
+| `GET /workflow/instances/{id}` | `GetInstance` (engine) | `InstanceDetail` (with `stepRuns[]`, the Step runs folded from the instance's ledger rows) |
 | `GET /workflow/instances/{id}/facts/{key}` | `GetInstanceFact` | `FactView` |
 | `GET /workflow/instances/{id}/scoping` | `GetInstanceScoping` (scoping, API2) | `ScopingView` (docs/csharp/sindri-scoping.md) |
 | `GET /workflow/instances/{id}/packets/{hash}/files/{name}` | `GetPacketFile` (scoping, API9) | the file as JSON or text (docs/csharp/sindri-scoping.md) |
