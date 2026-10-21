@@ -26,6 +26,8 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 | S-9a context side | feat/s9a (the push to feat/ctx-s9a was rejected) | none | 9c52457ec | y | ICodeSymbolSource, the lens and file map reading it as of the map's commit, docs; drafts in `.handoff-drafts/` | finish the doc section after S-CL, build, gates, PR (base trunk) |
 | CI-10a reads (api lane) | feat/sindri-codeidx-reads | #547 draft | api's | y | stacked on feat/ci-1 | waits for the CI-1 coverage sha; retarget to trunk after #542 merges |
 
+**Before any of ci-3, ci-4 or s9a opens a PR:** move what's needed out of `.handoff-drafts/`, then delete the folder in its own commit. No PR may carry `.handoff-drafts/`.
+
 ## Notes the next units need
 
 - **CI-9:**
