@@ -1,6 +1,6 @@
 # meta — handoff
 
-main: `b45275e` (#550, #551, #553 merged by the owner; #542 CI-1 and #554 by meta).
+main: `0cbf9a4` (#550, #551, #553, #555 merged by the owner; #542 CI-1 and #554 by meta). #555 carried #497's branch (BS-2, BS-2b), so #497 is merged too and out of the queue.
 
 ## Merged since 2026-10-21 01:30Z
 
@@ -26,7 +26,6 @@ Every lane stopped all its builders and pushed all its work; nothing is uncommit
 | #532 E1 recipe displayName/versions (carries ui's stage names, why text, transition labels) | engine | builder e1m merging ccddefc, resolving versions (higher +1), re-pinning | wait for `ready #532 <sha>`; ui's Workflows and run canvas need it |
 | #545 PB-R babysitter/docs-sync/prove-recheck recipes | ideas | conflicts with main after #541; being rebased | re-ready; BS-11 also touches step.docs.check (second to merge re-pins) |
 | #535 BS-7 scope evidence | ideas | needs a fresh ready on new main | re-ready |
-| #497 BS-2/2b design and plan steps | engine | conflicted; builder merging main | re-ready |
 | #528 AddRepo (setup slice 4) | api | 9f5ca765a pushed (ccddefc merged, conflict resolved); checks not finished | finish checks, ready; api's hook needs the owner to type `go` in its pane for pushes/readies |
 | #544 needs-you setup rows (draft) | api | 375005304 pushed (test fix + ccddefc); checks not run | as above |
 | #546 wf rows, #547 CI-10a reads | api | open, not ready yet | ready follows |
