@@ -15,8 +15,8 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 
 | Unit | Branch | PR | Head | Pushed | State | What's left |
 |---|---|---|---|---|---|---|
-| CI-0b profile keys | feat/ci-0b | #549 | 1514fdf2e | y | ready sent; meta re-gating on ccddefc (aot-smoke serve-10s flake) | merge; don't move the head while it gates |
-| CI-1 scaffold and contracts | feat/ci-1 | #542 | c05579b88 | y | review fix (coverage on Callers/Callees rows and answers) coded; CodeIndex unit lane green (54); trunk ccddefc5b merged | **#542 still needs:** solution build `-warnaserror`, `Aw.Architecture.Tests`, scoped format, `check-deps` on c05579b88 (I started them; result unknown at handoff). Then a fresh re-review of the coverage change, `ready #542 <sha>`, and send the sha to the api lane (the #547 builder waits on it to carry `coverage`). The red commit a153a3ca8 carries an extra Claude-Session trailer; it can't be amended, so mention it in the PR |
+| CI-0b profile keys | feat/ci-0b | #549 | 1514fdf2e | y | ready withdrawn: aot-smoke failed twice on ccddefc (`SND-CLI-002 sindri serve didn't answer within 10 s`) | investigate (next step 1) |
+| CI-1 scaffold and contracts | feat/ci-1 | #542 | bb3c6a3ce | y | **green, ready sent**: review fix (coverage on Callers/Callees rows and answers) done; trunk ccddefc5b merged; solution build 0 warnings, Aw.Architecture.Tests 130/130 (the first run hit ARCH-CYCLE-001, fixed by moving CallCoverage into Facade), CodeIndex unit 54/54, scoped format clean, check-deps ok. The lead read the fix diff (the Sonnet re-review was blocked by the usage limit) | merge via meta. The red commit a153a3ca8 carries an extra Claude-Session trailer; it can't be amended, so mention it in the PR |
 | CI-2 repo snapshot | feat/ci-2 | none | 474edf366 | y | checkpoint: InputRules, GitRepoSnapshot (Infrastructure/Snapshot), ArrangedSnapshot; was building | build, RepoSnapshotContract over the fake and a temp repo, gates, PR (base feat/ci-1) |
 | CI-3 index store | feat/ci-3 | none | 1bf3caf35 | y | red BuildPlanner/StructureStamp stubs only; **the real SqliteIndexStore, fake and contract are in `.handoff-drafts/impl/`** (the CI-2 drafts are mixed in there too) | move the drafts into place, delete `.handoff-drafts/`, red then green, IndexStoreContract (fake and SQLite), gates, PR. Approved choice: `IndexDirectory` added to CodeIndexStateSettings (a CI-1 contract change) |
 | CI-4 parser and resolver | feat/ci-4 | none | 8658f6506 | y | CallResolver green (2520048e8, with a Sonnet trailer; can't amend); parser walker split for the analyzer caps, quarantine port, Roslyn VersionOverride in the checkpoint; drafts in `.handoff-drafts/` | build, golden symbols and edges, hostile-parse tests, print precision and recall on the 50 pairs, gates, PR. Spec gap: newest Roslyn = 5.9.0 = the central pin, so VersionOverride pins the same version |
@@ -52,6 +52,6 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 ## Next step
 
 After the usage reset, on the new box:
-1. Finish #542's checks, re-review it and send `ready`.
-2. Send the CI-1 sha to the api lane.
+1. #549: run `bash src/Sindri/aot-smoke/run.sh` on its head and read serve.log; the `sindri serve` 10 s timeout failed twice in a row on ccddefc and may be real (the new profile keys are read at serve start). Fix it or prove it's the flake before sending ready again.
+2. The api lane has the CI-1 sha bb3c6a3ce (for #547).
 3. Start one Sonnet builder per checkpointed unit ("continue from the checkpoint", plus its brief and the row above), up to what memory allows. Priority: F1P-a and F1P-b1 (they unlock F1P-b2), then CI-2, CI-3 and CI-4 (they unlock CI-6), then S-9a, then CI-5.
