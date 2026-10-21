@@ -6,6 +6,14 @@ main: `ccddefc` (2026-10-21 14:38Z; #550 and #551 merged by the owner).
 
 #538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), then #550 and #551 (owner).
 
+## Where the team stopped (2026-10-21 ~15:00Z)
+
+Every lane stopped all its builders and pushed all its work; nothing is uncommitted or only on the old box. All five lane files are in this PR. Lanes hit the shared usage limit ~04:00Z; nothing ran 04:00–14:40Z.
+- Branches named `wip/...` hold unfinished or ungated work; never merge them as they are. `wip/sindri-ui-lane-state` holds ui's digests and briefs, so never merge it at all.
+- engine left each PR head at its last gated sha; newer work is on `wip/handoff-2026-10-21/<branch>`.
+- context's ci-3, ci-4 and s9a carry `.handoff-drafts/`, which must be deleted before their PRs open.
+- #549's re-gate on ccddefc was still building when the box stopped. Re-gate it on the new box.
+
 ## Merge queue (aw-meta order) and state
 
 | PR | Lane | State | Next |
@@ -15,8 +23,8 @@ main: `ccddefc` (2026-10-21 14:38Z; #550 and #551 merged by the owner).
 | #545 PB-R babysitter/docs-sync/prove-recheck recipes | ideas | conflicts with main after #541; being rebased | re-ready; BS-11 also touches step.docs.check (second to merge re-pins) |
 | #535 BS-7 scope evidence | ideas | needs a fresh ready on new main | re-ready |
 | #497 BS-2/2b design and plan steps | engine | conflicted; builder merging main | re-ready |
-| #528 AddRepo (setup slice 4) | api | conflict in Ui GoldenContractTests.cs; checks running | owner must type `go` in the api pane before api pushes/readies |
-| #544 needs-you setup rows (draft) | api | on 93ad5f6, green | owner `go` as above |
+| #528 AddRepo (setup slice 4) | api | 9f5ca765a pushed (ccddefc merged, conflict resolved); checks not finished | finish checks, ready; api's hook needs the owner to type `go` in its pane for pushes/readies |
+| #544 needs-you setup rows (draft) | api | 375005304 pushed (test fix + ccddefc); checks not run | as above |
 | #542 CI-1 Aw.CodeIndex scaffold | context | review fix in progress | ready follows |
 | #546 wf rows, #547 CI-10a reads | api | open, not ready yet | ready follows |
 
