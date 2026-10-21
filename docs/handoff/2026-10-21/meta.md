@@ -1,10 +1,10 @@
 # meta — handoff
 
-main: `ccddefc` (2026-10-21 14:38Z; #550 and #551 merged by the owner).
+main: `332aedd` (#542 CI-1 merged by meta after #550 and #551, which the owner merged at 14:38Z).
 
 ## Merged since 2026-10-21 01:30Z
 
-#538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), then #550 and #551 (owner).
+#538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), #550 and #551 (owner), #542 (CI-1 Aw.CodeIndex scaffold).
 
 ## Where the team stopped (2026-10-21 ~15:00Z)
 
@@ -25,7 +25,6 @@ Every lane stopped all its builders and pushed all its work; nothing is uncommit
 | #497 BS-2/2b design and plan steps | engine | conflicted; builder merging main | re-ready |
 | #528 AddRepo (setup slice 4) | api | 9f5ca765a pushed (ccddefc merged, conflict resolved); checks not finished | finish checks, ready; api's hook needs the owner to type `go` in its pane for pushes/readies |
 | #544 needs-you setup rows (draft) | api | 375005304 pushed (test fix + ccddefc); checks not run | as above |
-| #542 CI-1 Aw.CodeIndex scaffold | context | review fix in progress | ready follows |
 | #546 wf rows, #547 CI-10a reads | api | open, not ready yet | ready follows |
 
 ## Known problems
