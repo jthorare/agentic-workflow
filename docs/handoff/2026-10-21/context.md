@@ -15,7 +15,7 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 
 | Unit | Branch | PR | Head | Pushed | State | What's left |
 |---|---|---|---|---|---|---|
-| CI-0b profile keys | feat/ci-0b | #549 | 1514fdf2e | y | ready withdrawn: aot-smoke failed twice on ccddefc (`SND-CLI-002 sindri serve didn't answer within 10 s`) | investigate (next step 1) |
+| CI-0b profile keys | feat/ci-0b | #549 → #556 | 1514fdf2e | y | **MERGED** by the owner as #556 (trunk 76df7cc); worktree removed | the owner checks the aot-smoke `sindri serve` 10 s question on the other computer |
 | CI-1 scaffold and contracts | feat/ci-1 | #542 | bb3c6a3ce | y | **MERGED** (trunk 332aedd); worktree removed | none. CI-2..CI-5 merge trunk 332aedd (merge, not rebase: the lane rules forbid rebase) and open their PRs against trunk |
 | CI-2 repo snapshot | feat/ci-2 | none | 474edf366 | y | checkpoint: InputRules, GitRepoSnapshot (Infrastructure/Snapshot), ArrangedSnapshot; was building | build, RepoSnapshotContract over the fake and a temp repo, gates, PR (base feat/ci-1) |
 | CI-3 index store | feat/ci-3 | none | 1bf3caf35 | y | red BuildPlanner/StructureStamp stubs only; **the real SqliteIndexStore, fake and contract are in `.handoff-drafts/impl/`** (the CI-2 drafts are mixed in there too) | move the drafts into place, delete `.handoff-drafts/`, red then green, IndexStoreContract (fake and SQLite), gates, PR. Approved choice: `IndexDirectory` added to CodeIndexStateSettings (a CI-1 contract change) |
@@ -54,6 +54,6 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 ## Next step
 
 After the usage reset, on the new box:
-1. #549: run `bash src/Sindri/aot-smoke/run.sh` on its head and read serve.log; the `sindri serve` 10 s timeout failed twice in a row on ccddefc and may be real (the new profile keys are read at serve start). Fix it or prove it's the flake before sending ready again.
+1. (owner) CI-0b merged as #556; if aot-smoke stays red, run `bash src/Sindri/aot-smoke/run.sh` on its head and read serve.log; the `sindri serve` 10 s timeout failed twice in a row on ccddefc and may be real (the new profile keys are read at serve start). Fix it or prove it's the flake before sending ready again.
 2. The api lane has the CI-1 sha bb3c6a3ce (for #547).
 3. Start one Sonnet builder per checkpointed unit ("continue from the checkpoint", plus its brief and the row above), up to what memory allows. Priority: F1P-a and F1P-b1 (they unlock F1P-b2), then CI-2, CI-3 and CI-4 (they unlock CI-6), then S-9a, then CI-5.
