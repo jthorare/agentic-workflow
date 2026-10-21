@@ -49,6 +49,8 @@ internal sealed partial class SetupViewModel
         if (error.Kind == ErrorKind.NotFound)
         {
             IsNotServed = true;
+            _rows.Clear();   // a Sindri without the route shows only that, never the rows of an earlier read
+            Steps.Clear();
         }
         else if (string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal))
         {

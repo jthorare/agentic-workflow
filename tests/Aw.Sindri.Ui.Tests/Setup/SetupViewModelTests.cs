@@ -239,6 +239,17 @@ public sealed class SetupViewModelTests
     }
 
     [Fact]
+    public async Task A_404_after_steps_were_shown_drops_the_stale_rows_and_shows_only_the_not_available_text()
+    {
+        var setup = await ReadWith("first-run");
+        _f.Server.SetupAnswer = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-API-004", "The API answered without an error code");
+
+        await setup.Refresh(Url, Token);
+
+        Assert.Equal((true, 0, false, false), (setup.IsNotServed, setup.Steps.Count, setup.HasSteps, setup.IsHomeLineShown));
+    }
+
+    [Fact]
     public async Task A_list_in_a_shape_this_build_cannot_read_is_unreadable()
     {
         _f.Server.SetupAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"steps\":\"nope\"}");
