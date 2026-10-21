@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sindri: workflow redesign prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Tokens: SuperPlane dark factory theme (VISUAL-LANGUAGE.md section 1). Each colour is defined once. */
+:root{
+  --bg:#14120b; --fg:#edecec; --card:#17191c; --card-warm:#1b1913; --muted:#26251e; --muted-fg:#a3a3a3; --faint:#8a8f98;
+  --border:#33312b; --field:#221f18; --ring:#8a8578; --wire:#4a4740;
+  --panel:#101113; --panel-card:#17191c; --panel-border:#2e3138; --panel-hover:#1f2125;
+  --seg:#2a2c2f; --seg-on:#101113;
+  --lane-run:rgba(29,78,216,.08); --lane-idle:rgba(255,255,255,.02); --lane-head:rgba(0,0,0,.25);
+  --hover:rgba(255,255,255,.04); --focus:rgba(255,255,255,.07); --select:rgba(255,255,255,.1);
+  --run-fg:#93c5fd; --run-bg:rgba(29,78,216,.16); --run-bd:rgba(59,130,246,.4); --run-dot:#60a5fa;
+  --wait-fg:#fcd34d; --wait-bg:rgba(180,83,9,.18); --wait-bd:rgba(245,158,11,.4); --wait-dot:#f59e0b;
+  --done-fg:#86efac; --done-bg:rgba(21,128,61,.18); --done-bd:rgba(74,222,128,.35); --done-dot:#4ade80;
+  --fail-fg:#fca5a5; --fail-bg:rgba(185,28,28,.18); --fail-bd:rgba(248,113,113,.35); --fail-dot:#f87171;
+  --you-fg:#c4b5fd; --you-bg:rgba(109,40,217,.18); --you-bd:rgba(139,92,246,.4); --you-dot:#a78bfa;
+  --idle-fg:#a1a1aa; --idle-bg:#26251e; --idle-bd:#33312b; --idle-dot:#71717a;
+  --annot:#f59e0b; --annot-ink:#1a1200;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 13px/19.5px var(--font);font-feature-settings:"cv02","cv03","cv04","cv11";-webkit-font-smoothing:antialiased;overflow:hidden;letter-spacing:-.01em}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:inherit;text-decoration:none}
+svg{display:block;flex:none}
+.ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:0}
+.tnum{font-variant-numeric:tabular-nums}
+kbd{font:500 11px/16px var(--mono);letter-spacing:0;border:1px solid var(--border);border-radius:4px;padding:0 5px;height:18px;display:inline-flex;align-items:center;color:var(--muted-fg);background:var(--field)}
+
+/* ---------- App frame ---------- */
+.app{display:flex;height:100vh;min-width:900px}
+.rail{width:56px;flex:none;background:var(--card-warm);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px}
+.rail .ws{width:32px;height:32px;border-radius:8px;background:var(--fg);color:var(--bg);font:700 13px/32px var(--font);text-align:center;margin-bottom:12px}
+.rail a{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);position:relative}
+.rail a svg{width:20px;height:20px}
+.rail a:hover{background:var(--hover);color:var(--fg)}
+.rail a[aria-current]{background:var(--muted);color:var(--fg);box-shadow:inset 0 0 0 1px var(--border)}
+.rail a .tip{position:absolute;left:48px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font:500 12px/18px var(--font);color:var(--fg);white-space:nowrap;display:none;z-index:30}
+.rail a:hover .tip{display:block}
+.rail .sp{flex:1}
+.rail .me{width:28px;height:28px;border-radius:50%;background:var(--seg);font:600 11px/28px var(--font);text-align:center;color:var(--muted-fg)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.work{flex:1;min-height:0;display:flex}
+.page{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* ---------- Top bar ---------- */
+.top{height:56px;flex:none;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--border)}
+.top h1{font:600 22px/33px var(--font);letter-spacing:-.02em;margin:0;white-space:nowrap}
+.search{position:relative;flex:1;max-width:360px;min-width:120px;margin-left:8px}
+.search svg{position:absolute;left:10px;top:8px;width:16px;height:16px;color:var(--muted-fg)}
+.search input{width:100%;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--field);padding:0 40px 0 34px;outline:none;font-size:13px}
+.search input::placeholder{color:var(--muted-fg)}
+.search input:focus{border-color:var(--ring)}
+.search kbd{position:absolute;right:8px;top:7px}
+.top .sp{flex:1}
+.cmdk{display:inline-flex;align-items:center;gap:6px;color:var(--muted-fg);font-size:12px;height:28px;padding:0 8px;border-radius:6px;border:1px solid var(--border)}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted-fg);height:28px;cursor:pointer;user-select:none}
+.switch i{width:28px;height:16px;border-radius:8px;background:var(--seg);position:relative;transition:background .2s}
+.switch i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--muted-fg);transition:transform .2s}
+.switch[aria-checked=true] i{background:var(--annot)}
+.switch[aria-checked=true] i::after{transform:translateX(12px);background:var(--annot-ink)}
+
+.main{overflow:auto}
+.doc{max-width:760px;width:100%;margin:0 auto;padding:40px 24px 96px}
+.doc .lead{font-size:15px;line-height:24px;color:var(--muted-fg);margin:0 0 20px}
+.cta{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px;border-radius:6px;background:var(--fg);color:var(--bg);font:600 13px/20px var(--font)}
+.cta:hover{background:#fff}
+.doc h2{font:600 15px/24px var(--font);margin:40px 0 4px}
+.sub{font-size:13px;line-height:20px;color:var(--muted-fg);margin:0 0 12px}
+.stops{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}
+.stops li{border-bottom:1px solid var(--border)}
+.stop{display:flex;align-items:center;gap:14px;min-height:52px;padding:8px 8px}
+.stop:hover{background:var(--hover)}
+.num{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--field);font:600 12px/22px var(--font);text-align:center;color:var(--muted-fg);flex:none}
+.st{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+.st b{font:500 13px/20px var(--font)}
+.st span{font-size:13px;line-height:20px;color:var(--muted-fg)}
+.go{color:var(--faint);flex:none}
+.note{display:flex;gap:10px;align-items:flex-start;margin-top:32px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.note p{margin:0;font-size:13px;line-height:20px;color:var(--muted-fg)}
+.note b{color:var(--fg);font-weight:500}
+.refs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px}
+.chip{height:22px;padding:0 8px;border-radius:4px;border:1px solid var(--border);background:var(--field);font:500 12px/20px var(--font);color:var(--muted-fg)}
+body.annot [data-gap]{outline:1px dashed var(--annot);outline-offset:2px;position:relative}
+body.annot [data-gap]::after{content:attr(data-gap);position:absolute;top:-10px;left:4px;z-index:40;background:var(--annot);color:var(--annot-ink);font:600 11px/14px var(--font);padding:0 4px;border-radius:3px;pointer-events:none;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Sindri pages">
+    <div class="ws" aria-hidden="true">S</div>
+    <a href="needs-you.html" aria-label="Home"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="tip">Home</span></a>
+    <a href="not-mocked.html?page=Work" aria-label="Work"><svg class="ico" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg><span class="tip">Work</span></a>
+    <a href="workflows.html" aria-label="Workflows"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 9v3a3 3 0 003 3H14"/></svg><span class="tip">Workflows</span></a>
+    <a href="context.html" aria-label="Context"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l8 1M7 8l4 8M17 10.5l-4 5.5"/></svg><span class="tip">Context</span></a>
+    <a href="not-mocked.html?page=Agents" aria-label="Agents"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M2 13v2M22 13v2"/></svg><span class="tip">Agents</span></a>
+    <a href="not-mocked.html?page=System" aria-label="System"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="tip">System</span></a>
+    <a href="setup.html" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">Settings</span></a>
+    <div class="sp"></div>
+    <a href="questions.html" aria-label="Questions for the owner"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1-1.5 2M12 17h.01"/></svg><span class="tip">Questions for the owner</span></a>
+    <div class="me" aria-hidden="true">You</div>
+  </nav>
+  <div class="main">
+    <header class="top">
+      <h1>Sindri: workflow redesign prototype</h1>
+      <span class="sp"></span>
+      <button class="switch" id="annot" role="switch" aria-checked="false"><i></i>Annotations</button>
+    </header>
+    <main class="doc">
+      <p class="lead">A clickable model of the new Sindri screens, filled with real Sindri data and written in plain words. The look copies SuperPlane for the workflow canvas, Linear for dense lists and HumanLayer for approvals. Nothing here is saved: every button only shows what would happen.</p>
+      <div class="refs" aria-label="Looks copied from"><span class="chip">SuperPlane: canvas and frame</span><span class="chip">Linear: lists</span><span class="chip">HumanLayer: approvals</span></div>
+      <a class="cta" href="workflows.html?tour=1">Start the tour <span aria-hidden="true">→</span></a>
+      <h2>Guided tour</h2>
+      <p class="sub">Twelve stops, about five minutes. Each stop has a Next button at the bottom of the screen.</p>
+      <ol class="stops">
+<li><a class="stop" href="workflows.html?tour=1"><span class="num">1</span><span class="st"><b>Board</b><span>See every run in its stage. Waiting runs say so on the card, and the filter above counts them.</span></span><span class="go mono">workflows.html</span></a></li>
+<li><a class="stop" href="workflows.html?view=list&tour=2"><span class="num">2</span><span class="st"><b>List</b><span>The same runs as dense rows, grouped by workflow, in Linear's style.</span></span><span class="go mono">workflows.html</span></a></li>
+<li><a class="stop" href="run-canvas.html?run=ITM-01JM8/line/1/design.1&tour=3"><span class="num">3</span><span class="st"><b>Open a run</b><span>The run as a canvas of stages. The side panel explains the selected step and why it matters.</span></span><span class="go mono">run-canvas.html</span></a></li>
+<li><a class="stop" href="run-canvas.html?run=ITM-01JQ7/line/1&tour=4"><span class="num">4</span><span class="st"><b>A failed run</b><span>Where it stopped, what the reviewer found, and what nothing reached.</span></span><span class="go mono">run-canvas.html</span></a></li>
+<li><a class="stop" href="run-canvas.html?run=ITM-01K7H/line/1&tour=5"><span class="num">5</span><span class="st"><b>Didn't work out, and Cancelled</b><span>Ended without a result is neutral, not red. The Dark mode toggle run shows Cancelled.</span></span><span class="go mono">run-canvas.html</span></a></li>
+<li><a class="stop" href="needs-you.html?state=pending&tour=6"><span class="num">6</span><span class="st"><b>Needs you: approve the scope</b><span>The whole request in one place, then approve, send back or drop.</span></span><span class="go mono">needs-you.html</span></a></li>
+<li><a class="stop" href="needs-you.html?state=sendback&tour=7"><span class="num">7</span><span class="st"><b>Send back with a reason</b><span>Sending back needs a reason. Ctrl+Enter sends it.</span></span><span class="go mono">needs-you.html</span></a></li>
+<li><a class="stop" href="needs-you.html?state=takeover&tour=8"><span class="num">8</span><span class="st"><b>Take over and hand back</b><span>Take over pauses the clock. Hand back resumes it.</span></span><span class="go mono">needs-you.html</span></a></li>
+<li><a class="stop" href="context.html?tour=9"><span class="num">9</span><span class="st"><b>Context map</b><span>What Sindri knows around this item, and why each part is in the map.</span></span><span class="go mono">context.html</span></a></li>
+<li><a class="stop" href="context.html?tour=10#files"><span class="num">10</span><span class="st"><b>File map</b><span>The same context as files and folders.</span></span><span class="go mono">context.html</span></a></li>
+<li><a class="stop" href="setup.html?tour=11#approveall"><span class="num">11</span><span class="st"><b>Setup: the two approvals</b><span>Approve your settings, then hold to approve all new workflows.</span></span><span class="go mono">setup.html</span></a></li>
+<li><a class="stop" href="questions.html?tour=12"><span class="num">12</span><span class="st"><b>Questions for the owner</b><span>Every open decision, with the recommended answer and the app it copies.</span></span><span class="go mono">questions.html</span></a></li>
+      </ol>
+      <div class="note"><svg class="ico" viewBox="0 0 24 24" style="margin-top:2px;color:var(--annot)"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><p><b data-gap="demo of an outline">Annotations</b> (top right, on every screen) outlines what needs new data from Sindri. Turn it on to see which parts of a screen the API does not serve yet.</p></div>
+    </main>
+  </div>
+</div>
+<script>
+document.getElementById('annot').onclick=function(e){var on=e.currentTarget.getAttribute('aria-checked')!=='true';e.currentTarget.setAttribute('aria-checked',on);document.body.classList.toggle('annot',on)};
+</script>
+</body>
+</html>
