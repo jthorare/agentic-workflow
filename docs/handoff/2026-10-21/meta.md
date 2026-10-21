@@ -6,6 +6,10 @@ main: `332aedd` (#542 CI-1 merged by meta after #550 and #551, which the owner m
 
 #538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), #550 and #551 (owner), #542 (CI-1 Aw.CodeIndex scaffold).
 
+## MAIN IS RED (fix first)
+
+main `2e92a71`: #553 (merged without the meta gate) fails `dotnet build -warnaserror` in `src/Context/Aw.Context.Core/Engine/SettingsReader.cs`: IDE1006 (~line 101, `MaxCodeDeadline` needs a `_` prefix) and CA1502 (line 63, `Check` complexity 12 > 11). Reported by api's #547 builder after merging main. Every PR that merges main inherits it, so fix main (context's code) before gating anything.
+
 ## Where the team stopped (2026-10-21 ~15:00Z)
 
 Every lane stopped all its builders and pushed all its work; nothing is uncommitted or only on the old box. All five lane files are in this PR. Lanes hit the shared usage limit ~04:00Z; nothing ran 04:00–14:40Z.
