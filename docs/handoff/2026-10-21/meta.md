@@ -12,7 +12,7 @@ Every lane stopped all its builders and pushed all its work; nothing is uncommit
 - Branches named `wip/...` hold unfinished or ungated work; never merge them as they are. `wip/sindri-ui-lane-state` holds ui's digests and briefs, so never merge it at all.
 - engine left each PR head at its last gated sha; newer work is on `wip/handoff-2026-10-21/<branch>`.
 - context's ci-3, ci-4 and s9a carry `.handoff-drafts/`, which must be deleted before their PRs open.
-- #549's re-gate on ccddefc was still building when the box stopped. Re-gate it on the new box.
+- #549 (CI-0b) failed aot-smoke twice in a row (run 1 on 69a7c6a, run 2 on ccddefc), both times `SND-CLI-002 'sindri serve' didn't answer within 10 s`; every other step passed. Two in a row on the same PR may be real: CI-0b adds profile keys, and serve reads the profile at start. context should run `bash src/Sindri/aot-smoke/run.sh` on #549's head and read `serve.log` before it re-readies.
 
 ## Merge queue (aw-meta order) and state
 
