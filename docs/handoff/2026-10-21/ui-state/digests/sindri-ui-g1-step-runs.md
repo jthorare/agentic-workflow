@@ -1,0 +1,2 @@
+# step-runs: done, PR open (see PR for number). Gate green on merged 492e535: build 0 warn; Ui unit 2224/0 failed; Ui integration 683 (673 ok, 10 skipped, 0 failed); Rendering 21; Architecture 128; scoped format + IDE0001 ok. Script /tmp/sr-full.sh. Left: nothing (self-review nits in PR body).
+# step-runs review fixes (S1,S2,S4): fixed at 8f0db6f33, main merged, pushed head 7d0f5f3cd. Gate: build 0 warn; Ui unit 2231/0 failed; integration 683 (673 ok, 10 skipped, 0 failed); Rendering 21; Architecture 128; scoped format + IDE0001 ok. Left: nothing.

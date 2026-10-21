@@ -1,0 +1,82 @@
+{
+  "pr": 540,
+  "head": "e06475971",
+  "round": 1,
+  "findings": [
+    {
+      "id": "S1",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Shell/HomePage.axaml",
+      "line": 20,
+      "summary": "Home line shows only 'Finish setting up Sindri' + '2 of 6 done'. Spec 2.4 says it also names the first not-done step's title and has a 'Continue' control; neither exists (no VM property, no label, no test).",
+      "fix": "Add SetupViewModel.HomeLineStep (title of first non-finished step) and a Continue label in the line; extend the HomeLine name and the frames test.",
+      "resolution": "to fix"
+    },
+    {
+      "id": "S2",
+      "severity": "issue",
+      "file": "tests/Aw.Sindri.Ui.Tests/Setup/SetupActionTests.cs",
+      "line": 116,
+      "summary": "Retry_starts_the_refresh_once_... calls RefreshMap once, so it never proves 'one press sends once'. A read already in flight when Retry is pressed lands after ShowWorking, clears the override and brings the button back (second POST possible; only the 409 path saves it).",
+      "fix": "Test two overlapping RefreshMap calls (gate the fake) expecting RefreshContextMapCalls==1, and a read landing mid-flight; or keep the override until the read that follows the POST.",
+      "resolution": "to fix"
+    },
+    {
+      "id": "S3",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.cs",
+      "line": 18,
+      "summary": "RunningRefusal matches any SND-JOB-409; spec says 409 WITH runningJob means already running. A 409 without runningJob (e.g. job ended) is shown as 'Already building' and the job is not followed.",
+      "fix": "Check the runningJob extension if the UI Error carries it; otherwise say the refusal in words.",
+      "resolution": "to fix (promoted: only a 409 WITH runningJob reads as already building; others are errors)"
+    },
+    {
+      "id": "S4",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Labels.Setup.cs",
+      "line": 0,
+      "summary": "SetupCodeField 'Error code' duplicates Labels.JobCodeField; SetupNotRunning duplicates SindriNotRunning text.",
+      "fix": "Reuse the existing labels.",
+      "resolution": "to fix (promoted: reuse JobCodeField and SindriNotRunning)"
+    },
+    {
+      "id": "S5",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupChecklist.axaml",
+      "line": 50,
+      "summary": "Spec states: Loading is a six-row skeleton; Working chip has PrimaryHover tone and spinner. Build has plain 'Reading setup...' text and Working uses ChipTone.Neutral (same look as To do, word only).",
+      "fix": "Add a Working tone/glyph (static under reduced motion) and a skeleton, or record as deferred.",
+      "resolution": "in writing: skeleton and Working spinner with the F3 polish pass"
+    },
+    {
+      "id": "S6",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupStepRow.axaml",
+      "line": 13,
+      "summary": "Spec 5 keys: Up/Down move between rows; not implemented (only Expander's own Enter/Space). Header content is all Raw, so the Expander's toggle part may be unnamed to AT beside the Expander's own name.",
+      "fix": "Add Up/Down handling in SetupChecklist or defer explicitly; check the toggle's name in the automation tree.",
+      "resolution": "in writing: Up/Down between rows comes with the keys pass"
+    },
+    {
+      "id": "S7",
+      "severity": "nit",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.Read.cs",
+      "line": 62,
+      "summary": "OpenTheFirstStep opens the first unfinished row on any first read, e.g. a running map in running-progress; spec opens only needs-you/failed (and row 1 on a true first run). Also NotFound with existing steps shows 'not available' text above the old rows.",
+      "fix": "Limit to the first-run case; clear steps (or hide the panel) when IsNotServed.",
+      "resolution": "in writing: opening a running first step is fine"
+    },
+    {
+      "id": "S8",
+      "severity": "nit",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.Setup.cs",
+      "line": 24,
+      "summary": "OpensInApp('ApproveProfile') looks in NeedsYou.Seen.Rows, which Home's Decisions filter trims; profile:drift has no DecisionId so the button flips to terminal copy under that filter.",
+      "fix": "Look in the unfiltered feed.",
+      "resolution": "to fix (promoted: OpensInApp must read the unfiltered rows)"
+    }
+  ],
+  "fixed_at": "204f8be9d",
+  "red_commit": "23c6ac594",
+  "gate": "unit 2428, integration 760/10 skipped/0, Rendering 30, Arch 130, scoped format + IDE0001 clean"
+}

@@ -1,0 +1,123 @@
+diff --git a/src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.Read.cs b/src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.Read.cs
+index 1373285bc..484b2f780 100644
+--- a/src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.Read.cs
++++ b/src/Sindri/Aw.Sindri.Ui/ViewModels/Setup/SetupViewModel.Read.cs
+@@ -49,6 +49,8 @@ internal sealed partial class SetupViewModel
+         if (error.Kind == ErrorKind.NotFound)
+         {
+             IsNotServed = true;
++            _rows.Clear();   // a Sindri without the route shows only that, never the rows of an earlier read
++            Steps.Clear();
+         }
+         else if (string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal))
+         {
+diff --git a/src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupStepRow.axaml.cs b/src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupStepRow.axaml.cs
+index 10c79171d..6f8e4af86 100644
+--- a/src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupStepRow.axaml.cs
++++ b/src/Sindri/Aw.Sindri.Ui/Views/Setup/SetupStepRow.axaml.cs
+@@ -1,14 +1,56 @@
++using System.ComponentModel;
++using Avalonia.Automation;
+ using Avalonia.Controls;
++using Avalonia.Controls.Primitives;
++using Avalonia.VisualTree;
++using Aw.Sindri.Ui.ViewModels.Setup;
+ 
+ namespace Aw.Sindri.Ui.Views.Setup;
+ 
+ #pragma warning disable MA0182 // why: the checklist's row template places it in XAML, which the analyzer can't see
+-/// <summary>One step of the checklist: it draws the step view model and holds no logic.</summary>
++/// <summary>One step of the checklist: it draws the step view model and holds no logic beyond naming the header's toggle.</summary>
+ internal sealed partial class SetupStepRow : UserControl
+ {
++    private SetupStepViewModel? _step;
++    private ToggleButton? _toggle;
++
+     public SetupStepRow()
+     {
+         InitializeComponent();
++        SetupStepExpander.TemplateApplied += OnTemplateApplied;
++    }
++
++    /// <inheritdoc />
++    protected override void OnDataContextChanged(EventArgs e)
++    {
++        base.OnDataContextChanged(e);
++        _step?.PropertyChanged -= OnStepChanged;
++        _step = DataContext as SetupStepViewModel;
++        _step?.PropertyChanged += OnStepChanged;
++        NameToggle();
++    }
++
++    // The header's toggle is the row's one control and its content is raw (the lines are read once, in the row's name), so it takes that name: the title first.
++    private void OnTemplateApplied(object? sender, TemplateAppliedEventArgs e)
++    {
++        _toggle = SetupStepExpander.GetVisualDescendants().OfType<ToggleButton>().FirstOrDefault();
++        NameToggle();
++    }
++
++    private void OnStepChanged(object? sender, PropertyChangedEventArgs e)
++    {
++        if (string.Equals(e.PropertyName, nameof(SetupStepViewModel.Name), StringComparison.Ordinal))
++        {
++            NameToggle();
++        }
++    }
++
++    private void NameToggle()
++    {
++        if (_toggle is not null)
++        {
++            AutomationProperties.SetName(_toggle, _step?.Name);
++        }
+     }
+ }
+ #pragma warning restore MA0182
+diff --git a/tests/Aw.Sindri.Ui.Tests/Setup/SetupFramesTests.cs b/tests/Aw.Sindri.Ui.Tests/Setup/SetupFramesTests.cs
+index 055aeae2a..094e37058 100644
+--- a/tests/Aw.Sindri.Ui.Tests/Setup/SetupFramesTests.cs
++++ b/tests/Aw.Sindri.Ui.Tests/Setup/SetupFramesTests.cs
+@@ -56,6 +56,21 @@ public sealed class SetupFramesTests : FrameHost
+         Frame(window, string.Create(CultureInfo.InvariantCulture, $"setup-first-run-{width}"), prefix: "f3-");
+     });
+ 
++    [Fact]
++    public Task Every_row_and_its_toggle_are_named_and_the_toggle_starts_with_the_step_title() => OnUi(async () =>
++    {
++        var (window, _) = await OnSettings("first-run", 1440);
++
++        foreach (var row in Rows(window))
++        {
++            var title = ((ViewModels.Setup.SetupStepViewModel)row.DataContext!).Title;
++            var heard = Heard.Tree(Expander(row));
++
++            var toggle = heard.First(h => h.Type == Avalonia.Automation.Peers.AutomationControlType.Button);
++            Assert.StartsWith(title, toggle.Name, StringComparison.Ordinal);
++        }
++    });
++
+     [Fact]
+     public Task The_checklist_is_the_first_section_and_This_app_comes_below_it() => OnUi(async () =>
+     {
+diff --git a/tests/Aw.Sindri.Ui.Tests/Setup/SetupViewModelTests.cs b/tests/Aw.Sindri.Ui.Tests/Setup/SetupViewModelTests.cs
+index 32a720632..16ecdd179 100644
+--- a/tests/Aw.Sindri.Ui.Tests/Setup/SetupViewModelTests.cs
++++ b/tests/Aw.Sindri.Ui.Tests/Setup/SetupViewModelTests.cs
+@@ -238,6 +238,17 @@ public sealed class SetupViewModelTests
+         Assert.Equal("Setup isn't available in this build yet.", setup.NotServedText);
+     }
+ 
++    [Fact]
++    public async Task A_404_after_steps_were_shown_drops_the_stale_rows_and_shows_only_the_not_available_text()
++    {
++        var setup = await ReadWith("first-run");
++        _f.Server.SetupAnswer = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-API-004", "The API answered without an error code");
++
++        await setup.Refresh(Url, Token);
++
++        Assert.Equal((true, 0, false, false), (setup.IsNotServed, setup.Steps.Count, setup.HasSteps, setup.IsHomeLineShown));
++    }
++
+     [Fact]
+     public async Task A_list_in_a_shape_this_build_cannot_read_is_unreadable()
+     {

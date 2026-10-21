@@ -1,0 +1,106 @@
+{
+  "branch": "feat/sindri-ui-needs-you",
+  "head": "f91483b4d94cf6345581678ff189202c130a38e5",
+  "round": 1,
+  "findings": [
+    {
+      "id": "N1",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/NeedsYou/NeedsYouPageViewModel.cs",
+      "line": 67,
+      "summary": "The inbox reads _list.Seen.Rows, which is the Home list after Home's filter (NeedsYouViewModel.Apply: _filter, set to decisions-only by G D, ShellViewModel.Home.cs:44). Open 'all N' after G D and the inbox shows only decisions, with wrong group counts and 'N waiting'. Spec says it lists every row.",
+      "fix": "Give the page the unfiltered feed rows (or have OpenNeedsYouInbox clear HomeFilter / a filter-free row set). Add a test: HomeFilter.Decisions then OpenNeedsYouInbox shows every group.",
+      "resolution": "to fix"
+    },
+    {
+      "id": "N2",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/NeedsYou/NeedsYouViewModel.cs",
+      "line": 214,
+      "summary": "When the selected row clears while its card is open, the list moves the selection and the card silently becomes the next request, including its primary/controls in the same place (card carries Controls in slice 1). A click aimed at request A can land on B. The Labels.Cleared announcement is never shown on the inbox page. Spec section 3: the cleared row keeps its text and disables, focus moves on. Test A_row_that_clears_moves_the_selection_to_the_next_row pins the silent swap.",
+      "fix": "Keep the cleared row's card (text, controls disabled, Labels.Cleared line in a live region) until the user moves or presses Esc, then select the next; or at least show and announce Announcement on the page and disable controls for the swap. Replace the test.",
+      "resolution": "to fix"
+    },
+    {
+      "id": "N3",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/StickyGroupList.cs",
+      "line": 103,
+      "summary": "The sticky header is an opaque 32 px overlay but J/K focus uses Focus(NavigationMethod.Tab) bring-into-view, which aligns the row to the viewport top edge. Moving up with K puts the selected row under the sticky header (also clicks pass through to it: IsHitTestVisible=false). The selected row is hidden exactly when the owner is navigating.",
+      "fix": "Give the ScrollViewer content a top inset equal to the header height for bring-into-view (or after FocusRow, scroll so row.Top >= offset + header height). Add a StickyGroupList test: scrolled list, select the previous row, row is fully below the sticky header.",
+      "resolution": "to fix"
+    },
+    {
+      "id": "N4",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/NeedsYou/NeedsYouPage.axaml",
+      "line": 15,
+      "summary": "Breadcrumb button shows 'Home' but its accessible name is 'Back to Home'. Guide: the visible words must start the name (WCAG 2.5.3); voice control 'click Home' fails.",
+      "fix": "Name it 'Home, back to Home' / or just 'Home' with HelpText 'Back to Home' (change Labels.NeedsYouCrumbHomeName and its test).",
+      "resolution": "to fix"
+    },
+    {
+      "id": "N5",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/NeedsYou/NeedsYouPage.axaml",
+      "line": 149,
+      "summary": "Status footer: both TextBlocks are AccessibilityView=Raw and the Border has no name or Control view, so the wait time ('waiting 5h 51m') is invisible to a screen reader. Same for the key-hint row (intentional) but not the footer. Also the selected row exposes no selected state (ListItem peer without selection), so AT cannot tell which request the card shows.",
+      "fix": "Border wrapper pattern: name the footer Border 'Waiting for you, waiting 5h 51m' with Control view; expose IsSelected on the row frame (SelectionItem or name suffix 'selected').",
+      "resolution": "to fix (promoted)"
+    },
+    {
+      "id": "N6",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/NeedsYou/NeedsYouPage.axaml",
+      "line": 29,
+      "summary": "Several bare TextBlocks carry AutomationProperties.Name = their own Text (title, count, banner, why, request, reference, cli, empty). That is the TextBlock-peer problem the Border wrapper pattern exists for, and Name can drift from Text. The sticky header copy sits in a Raw ContentControl but its template root Border sets AccessibilityView=Control, so a child marked Control can still surface a duplicate header to AT.",
+      "fix": "Drop the redundant Names (TextBlock peers already read Text) or wrap in a named Border with children Raw; make the template root of the sticky copy non-Control (set it Raw in the sticky clone, e.g. style .sticky-header Border.group-header) and cover it in StickyGroupListTests.",
+      "resolution": "in writing: tidy later with the action-bar slice"
+    },
+    {
+      "id": "N7",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Shell/ShellViewModel.Links.cs",
+      "line": 30,
+      "summary": "Deep link needs-you/<row> for a row not in the list (cleared, or held back) used to open the row's sheet with its cleared text; now NeedsYou.Select ignores the unknown id and the inbox opens on the first row, so a link to request A shows request B's card and controls with no notice.",
+      "fix": "If the id is not listed, keep the old sheet path (rowSheet) or open the inbox with no selection and the cleared sentence.",
+      "resolution": "in writing: the deep-link notice comes with slice 4 (pending rows)"
+    },
+    {
+      "id": "N8",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/NeedsYou/NeedsYouPageViewModel.cs",
+      "line": 131,
+      "summary": "FooterRight is computed from the clock but only reported on Rows/SelectedId changes, so 'waiting 26m' stays frozen on an open card while the row Age on the list ticks. Also the sticky header, rows and groups for a list that is empty at open never get a selection when rows arrive later (SelectFirst runs only on open): card stays blank and the empty text is hidden.",
+      "fix": "Re-report FooterRight where the rows' Age is refreshed, and call SelectFirst after a Rows update while the inbox is open and nothing is selected. Test both.",
+      "resolution": "to fix (promoted)"
+    },
+    {
+      "id": "N9",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/NeedsYou/NeedsYouPage.axaml",
+      "line": 38,
+      "summary": "Every group header and every row tile uses the same Profile glyph in Attention. The four kinds are told apart by heading text only; the spec's 'four kinds distinct' (kind tile glyph) and Frames tests do not catch it. Failures use the same amber as approvals, though the prior rule keeps failure red.",
+      "fix": "Add a glyph per NeedsYouGroupKind on the group and row VM (Failures in the fail tone) and assert it in NeedsYouGroupingTests.",
+      "resolution": "in writing: icons per kind come with the F3 icon pass; Failures in the inbox are needs-you items, so amber is right"
+    },
+    {
+      "id": "N10",
+      "severity": "nit",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Labels.NeedsYouPage.cs",
+      "line": 24,
+      "summary": "'1 waiting, 1 runs' reads wrong (the VM doc even quotes it). StickyGroupList also uses ItemsControl in a StackPanel (no virtualization) where the spec says ItemsRepeater; fine for the fixture, slow for the 'large' golden.",
+      "fix": "Pluralise 'run(s)' in the label; note or test the large golden.",
+      "resolution": "plural to fix; ItemsControl vs ItemsRepeater resolved in writing: ItemsControl is fine at inbox sizes"
+    },
+    {
+      "id": "N11",
+      "severity": "nit",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/StickyGroupList.cs",
+      "line": 86,
+      "summary": "The control subscribes to Groups.CollectionChanged and the page VM to the list's PropertyChanged with no removal. Both live as long as the shell, so no leak today; StickyGroupList should unwatch in OnDetachedFromVisualTree.",
+      "fix": "Unwatch on detach, rewatch on attach.",
+      "resolution": "in writing: shell-lifetime objects, no leak"
+    }
+  ]
+}

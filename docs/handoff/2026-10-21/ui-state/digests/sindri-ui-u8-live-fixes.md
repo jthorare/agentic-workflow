@@ -1,0 +1,18 @@
+# Sindri UI U8 live-proof fixes (PR #274)
+
+Branch feat/sindri-ui-u8, all pushed. Each item: red test commit, then fix commit. origin/main merged (#281, #271, #289 in the last merge).
+
+- L1 done: header Version = `current.status.header.version` (the instance's concurrency version `workflow status` prints), not `recipe.version`. Test: golden copy where they differ (InstanceFrameViewModelTests). The existing header test now reads header.version. Engine confirmed the field; no API question.
+- L2 done (changed shape): the live AT-SPI dump showed the row's two ItemsControls with an empty ItemsPresenter (no panel). The headless peer-tree walk (Heard.Tree, GetChildren from the row down) reached the cells even before the fix, so headless could not reproduce it; the likely cause is that the list's items are materialized after the row's AT-SPI node was built. Fix: each column is one static wrapper Border (WorkflowRowInputs, WorkflowRowStages: Control view, Text type) named by the new InstanceRowViewModel.InputsName / StagesName (all cell names joined); the ItemsControl inside and its cells are Raw. The red test (WorkflowsFramesTests.AssistiveNames) walks the tree from WorkflowRowFrame and asserts the two wrappers are reached and the cells are not read twice. NOT verified on a live AT-SPI session by me: the proof lane should re-dump the Workflows page. Per-cell names are no longer separate AT nodes (one stop per column).
+- L3 done: Home strip's open set also drops rows whose chip is DONE (a cancelled root's state need not be a terminal cell in `states`, which is why it passed the old rule); "... N more" is then open-only. Test: golden copy with two cancelled rows.
+- L4 done: ShellViewModel.HasTrail drives `Button.back.trail` visible at any width (SheetBack). Test folded into ChildrenFramesTests stacked/Back test at 1600 px (asserts hidden with no trail, shown after stacking).
+- L5 done: ChildrenPanelViewModel.EmptyText is Labels.NoChildrenYet ("No children yet.") when any state has child:true, else NoChildren. Tests in ChildrenPanelViewModelTests (incident-loop vs dev-desk-round-trip).
+- L6 done (wording option): the A-to-Copy plumbing needs a new FrameFocus/intent, not cheap. Legend now reads "A answers a decision or a desk task" (text and screen-reader name). The spec's legend line (screens design doc) still says "A answer"; not edited.
+- L7 not taken: the edge tab reopens the last closed sheet of any kind (docs/csharp/sindri-ui.md, sheet section); the frame of an ended instance is still readable and shows the done note, so reopening it is valid. No spec text says it should vanish.
+- L8 done (interim, from the coordinator): ExpandedStateViewModel.ServedCommands replaces a command whose actionId is exactly `ApplyCommand:answer` with `status.answer.cli` (drawn and copied), and drops it when `answer` is null. Variant entries keep their own cli. Remove once the engine PR re-records goldens with per-variant entries. Tests in ExpandedStateViewModelTests.
+- BUG-2: not touched (engine lane).
+
+## Gate
+See the report appended below.
+
+Final head 28d56cfd4 (contains origin/main e1f40b2, i.e. #281, #271, #289, #293). Build -warnaserror 0/0 (2m34 incl. heavy lock); Ui.Tests unit 1578/0; integration 582 (572 passed, 10 skipped, 0 failed), wall 81.3 s here, 67.9 s and 77.9 s on the previous head (two runs); Rendering 21/21; Architecture 117/117; format 0; check-deps 0; sync-rules --check 0; check-rules 0 (previous head). Aw.Sindri.Tests (previous head, pre-#289): 4864, 0 failed (1 skipped), 4m19; GoldenContractTests after #289: 2/2. Aw.Sindri.Tests not re-run on e1f40b2 (no UI change in that merge).

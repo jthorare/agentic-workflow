@@ -1,0 +1,5 @@
+{"pr":548,"branch":"feat/sindri-ui-run-canvas","head":"692b78400","round":1,"reviewer":"lead (small diff: 150 lines, 5 source files)",
+"findings":[
+{"id":"RC1","severity":"nit","file":"src/Sindri/Aw.Sindri.Ui/Views/Controls/GraphEdgesControl.cs","line":9,"summary":"The MA0182 suppression comment now says 'until a page places the control'; context slice 2 places it and should drop the pragma.","resolution":"in writing: context slice 2 removes it"},
+{"id":"RC2","severity":"nit","file":"src/Sindri/Aw.Sindri.Ui/Views/Controls/EdgeRoute.cs","line":234,"summary":"Normal()'s default arm can't be reached with a defined PortSide; fine as a guard.","resolution":"in writing"}],
+"counts":{"issues":0,"suggestions":0,"nits":2}}

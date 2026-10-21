@@ -1,0 +1,73 @@
+{
+  "pr": null,
+  "branch": "feat/sindri-ui-confirm-controls",
+  "head": "a23c84084",
+  "round": 1,
+  "findings": [
+    {
+      "id": "CC1",
+      "severity": "issue",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/HoldButton.cs",
+      "line": 42,
+      "summary": "PointerCaptureLost is subscribed with RoutingStrategies.Tunnel. In Avalonia that event is registered Direct-only, and a subscription is only invoked for a route it lists, so OnLetGo most likely never runs. Spec 2.2 names capture-lost as a cancel path.",
+      "failure_scenario": "The hold is under the pointer, then the capture is taken away without a PointerReleased reaching Part (window deactivated, a popup or menu opens, a touch gesture is cancelled, another control captures). Nothing cancels the hold: the timer keeps stepping, reaches the served time with the person no longer pressing, and Held fires, so the approval is sent after they let go. This is the same class of bug as the earlier round's missed release.",
+      "suggested_fix": "Subscribe with RoutingStrategies.Direct (or override OnPointerCaptureLost on a Button subclass, as ZoomBorder.Pointer.cs does), and ignore the lost-capture event raised by our own ReleaseCapture() / Capture(Part). Pin it with a headless test that does e.Pointer.Capture(null) mid-hold and asserts IsHolding false and that no Held fires after the clock advances past minHoldMs.",
+      "resolution": "to fix (verified by the lead: PointerCaptureLost is Direct-only)"
+    },
+    {
+      "id": "CC2",
+      "severity": "issue",
+      "file": "tests/Aw.Sindri.Ui.Tests/Controls/HoldButtonTests.cs",
+      "line": 1,
+      "summary": "HoldButtonTests only drive the view model (Begin/Tick/Cancel called directly). Spec 7 requires key-up and capture-lost cancel and auto-repeat ignored; none of the view wiring (pointer capture, capture-lost, Space/Enter down and up, repeated key-down, LostFocus, timer stop) is exercised. Only the existing dialog test covers a release off the button.",
+      "failure_scenario": "A regression in the key or capture-lost handlers (CC1 is one) passes every test. Keyboard hold has no test: Space held then released early, a repeated key-down, or focus leaving mid-hold could send an approval or leave a hold running and nothing would fail.",
+      "suggested_fix": "Add headless HoldButton tests with a fake clock: Space down, repeat down (no second Started), key-up before the time sends no Held; key held past the time raises Held once; Enter the same; capture lost mid-hold cancels; LostFocus cancels; Held raised once and timer stopped after completion.",
+      "resolution": "to fix (tests for key-up, capture-lost and repeat-ignored wiring)"
+    },
+    {
+      "id": "CC3",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Labels.Approvals.cs",
+      "line": 111,
+      "summary": "The hold button's accessible name 'Hold to approve 3 workflows, 1.5 seconds' does not contain the visible words 'Hold to approve, 1.5 seconds', so it does not start with what is shown (voice-control 'click Hold to approve' fails). The name was already like this before the slice.",
+      "failure_scenario": "A speech-control user says the visible label and the button is not found.",
+      "suggested_fix": "Make the name begin with the visible text, e.g. 'Hold to approve, 1.5 seconds, 3 workflows'.",
+      "resolution": "promoted, to fix (a11y: the name starts with the visible text)"
+    },
+    {
+      "id": "CC4",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/TypedConfirmBox.axaml",
+      "line": 24,
+      "summary": "The match tick is hidden from assistive tech (AccessibilityView Raw) and Labels.TypedMatches ('Matches') is defined but never used, so a screen-reader user gets no cue that the phrase matched other than the button becoming enabled.",
+      "failure_scenario": "A screen-reader user types the phrase and hears nothing; the field's border colour and the glyph are visual only.",
+      "suggested_fix": "Give the field a help text or name suffix from TypedMatches while Matches is true, or announce it through Live once on the transition to a match; otherwise delete the unused label.",
+      "resolution": "promoted, to fix (a11y: announce the match through Labels.TypedMatches)"
+    },
+    {
+      "id": "CC5",
+      "severity": "suggestion",
+      "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/HoldButton.cs",
+      "line": 31,
+      "summary": "No OnDetachedFromVisualTree: if the control leaves the tree mid-hold (dialog closed by Esc or the scrim), the 50 ms timer keeps its tick handler until the next step and the pointer capture is not released explicitly. The view also keeps the model's PropertyChanged subscription until the DataContext changes.",
+      "failure_scenario": "Closing the dialog mid-hold leaves a live timer for one more tick; a model that outlives the view keeps the control alive. Benign today because Tick returns null once Reset, but it depends on the host resetting the model.",
+      "suggested_fix": "Override OnDetachedFromVisualTree to call Release() and unhook _model; resubscribe in OnAttachedToVisualTree.",
+      "resolution": "promoted, to fix (a leak on detach)"
+    },
+    {
+      "id": "CC6",
+      "severity": "nit",
+      "file": "src/Sindri/Aw.Sindri.Ui/ViewModels/Approvals/ApproveAllViewModel.Answer.cs",
+      "line": 41,
+      "summary": "Held() returns without calling Busy() or Reset() when there is no challenge, or Redeem returns early because IsSending is already set, so the button stays on 'Keep holding, 1.5 of 1.5 seconds' with the hold complete and no fill, until something else resets it. Not reachable today because the gate requires a challenge.",
+      "failure_scenario": "If a challenge is cleared mid-hold, the words stay stuck on the last count.",
+      "suggested_fix": "Call Hold.Reset() on the early-return path.",
+      "resolution": "in writing: not reachable today; revisit if Held gains callers"
+    }
+  ],
+  "counts": {
+    "issues": 2,
+    "suggestions": 3,
+    "nits": 1
+  }
+}

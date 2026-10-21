@@ -1,0 +1,1 @@
+# followups: done. PR open from feat/sindri-ui-followups (head ca885d29b). Gate: build -warnaserror ok; Ui.Tests unit 2109 pass; integration 662 pass/10 skip; Rendering 21; Architecture 128; scoped format clean. Left: nothing.

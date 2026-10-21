@@ -1,0 +1,106 @@
+{
+ "pr": 522,
+ "head": "4ec06e46c862a87569e6d5c3385dc24773b8af7a",
+ "round": 1,
+ "findings": [
+  {
+   "id": "C1",
+   "severity": "issue",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomBorder.cs",
+   "line": 35,
+   "summary": "WorldSize change before first layout runs Keep() with Bounds 0: Kept clamps X to max(lo, 0-120) = -120, so the map is shoved 120 px off the stage's left/top and never recovers (no Fit on first layout). Run-canvas FitBounds will hit this the same way.",
+   "fix": "Skip Keep() (and Kept) while Bounds is empty; re-apply on the first non-empty Bounds change. Add a test that sets WorldSize before Show.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C2",
+   "severity": "issue",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomBorder.cs",
+   "line": 0,
+   "summary": "No OnPointerCaptureLost: if capture is lost (window deactivates, touch cancel, popup opens) _drag stays set and later pointer moves with no button down keep panning. OnPointerMoved also never checks the left button is still down.",
+   "fix": "Override OnPointerCaptureLost to clear _drag; in OnPointerMoved drop the drag when !IsLeftButtonPressed. Test with Pointer.Capture(null) mid-drag.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C3",
+   "severity": "issue",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ContextEdgesControl.cs",
+   "line": 102,
+   "summary": "Ports are deduped by point in the same loop that applies per-edge dimming/highlight. If a dimmed edge is drawn first, a port shared with an undimmed or highlighted edge is drawn at 42% and in Wire; ports are also overpainted by the next edge's stroke.",
+   "fix": "Draw ports in a second pass after all strokes; for each point use full opacity if any edge using it is not dimmed, and WireHi if any is lit. Add a render test.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C4",
+   "severity": "issue",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomView.cs",
+   "line": 17,
+   "summary": "Min/Max/KeepVisible are consts, and Clamp, Fit, ZoomAt use them statically; Fit takes a Size so the world origin is fixed at 0,0. Run-canvas needs per-instance MinZoom/MaxZoom (0.30-1.50) and FitBounds as a Rect with any origin and scale > 1; this shape forces a rewrite of ZoomView and all its tests.",
+   "fix": "Make the range a value (record ZoomRange(Min,Max), default 0.62-1.0) passed to Clamp/Fit/ZoomAt/Kept, expose MinZoom/MaxZoom styled properties on ZoomBorder, and change Fit/Kept/WorldSize to take a Rect (origin included) now while there is one caller.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C5",
+   "severity": "suggestion",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/MapEdge.cs",
+   "line": 1,
+   "summary": "MapEdge carries only Key, Route, Dashed. Run-canvas needs PortSide on both ends, a stroke brush key, dash pattern and hit width per edge; brush keys Brush.Wire/WireHi/Surface1, the 12 px hit width and the 40 px handle are hard-coded in ContextEdgesControl and EdgeRoute.Curve (which is vertical-only and has no 110 cap).",
+   "fix": "Add optional Stroke/Highlight brush keys and HitWidth to MapEdge now, and give EdgeRoute.Curve (from, fromSide, to, toSide, min, max) before the rename. Dimmed/Highlighted keys stay.",
+   "resolution": "in writing: run-canvas slice 1 adds PortSide, brush key, hit width and the horizontal curve with the 110 cap"
+  },
+  {
+   "id": "C6",
+   "severity": "suggestion",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ContextEdgesControl.cs",
+   "line": 82,
+   "summary": "EdgeAt calls Route.DistanceTo, which re-Flattens (allocates a point list, 24+ chords per curve) for every edge on every pointer move; ICustomHitTest runs it on each hit test over the whole layer.",
+   "fix": "Cache the polyline per edge in Rebuild and prefilter by an inflated bounding box. Render also allocates a Pen, DashStyle and array per edge per frame; build them once.",
+   "resolution": "in writing: perf is fine at map sizes; revisit with run-canvas"
+  },
+  {
+   "id": "C7",
+   "severity": "suggestion",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomBorder.cs",
+   "line": 0,
+   "summary": "Not keyboard or assistive-tech reachable: Focusable false, no AutomationProperties name or role, and the only zoom entry points are methods. Spec 'Keys' (+ - 0) land in slice 2 on the page, but the control gives the page nothing to name the canvas.",
+   "fix": "Give the stage an automation name/peer (e.g. 'Context map, pannable') and make the +,-,0 key handling a ZoomBorder method (HandleZoomKey) so slice 2 and the run page share it.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C8",
+   "severity": "suggestion",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomBorder.cs",
+   "line": 95,
+   "summary": "Frame/Settle: a control detached mid-transition leaves _move set (IsMoving true, view stuck mid-way); and Settle then MoveTo leaves the old animation-frame callback alive beside the new one, so two Frame chains run until done.",
+   "fix": "Settle() in OnDetachedFromVisualTree; carry a generation counter in _move and ignore callbacks from an older one.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C9",
+   "severity": "suggestion",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ZoomBorder.cs",
+   "line": 214,
+   "summary": "Dots brush is cached and its HairlineStrong colour is resolved once; CoverageStrip does the same for the bar brushes. A theme-variant or text-scale change leaves them stale.",
+   "fix": "Clear _dots and Rebuild on ActualThemeVariantChanged.",
+   "resolution": "fixed in 55881f937"
+  },
+  {
+   "id": "C10",
+   "severity": "nit",
+   "file": "src/Sindri/Aw.Sindri.Ui/Views/Controls/ContextEdgesControl.cs",
+   "line": 50,
+   "summary": "The 12 px hit stroke is in world pixels, so at the 0.62 floor it is 7.4 screen px, under the intent of an easy target.",
+   "fix": "Divide HitWidth by the parent's scale, or note it as accepted.",
+   "resolution": "in writing: keep world px; revisit if hit testing feels small at 0.62"
+  },
+  {
+   "id": "C11",
+   "severity": "nit",
+   "file": "tests/Aw.Sindri.Ui.Tests/Views/ZoomBorderTests.cs",
+   "line": 15,
+   "summary": "Reduced motion is tested by setting Motion.Base = 0 on the control's own Resources, which proves the control reads the key but not that the real Motion service writes zero under reduced motion.",
+   "fix": "Add one test using the app's Motion apply with reduced motion on.",
+   "resolution": "in writing: acceptable for slice 1"
+  }
+ ]
+}
