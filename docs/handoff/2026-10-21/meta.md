@@ -1,14 +1,14 @@
 # meta — handoff
 
-main: `332aedd` (#542 CI-1 merged by meta after #550 and #551, which the owner merged at 14:38Z).
+main: `b45275e` (#550, #551, #553 merged by the owner; #542 CI-1 and #554 by meta).
 
 ## Merged since 2026-10-21 01:30Z
 
-#538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), #550 and #551 (owner), #542 (CI-1 Aw.CodeIndex scaffold).
+#538 (LN-WF3 heavy-slot allocator), #534 (services follow-ups), #541 (BS-12 review loop typed escalation), #540 (ui setup checklist), #548 (ui run-canvas graph controls), #550 and #551 (owner), #542 (CI-1 Aw.CodeIndex scaffold), #553 (owner), #554 (main build fix).
 
-## MAIN IS RED (fix first)
+## Main
 
-main `2e92a71`: #553 (merged without the meta gate) fails `dotnet build -warnaserror` in `src/Context/Aw.Context.Core/Engine/SettingsReader.cs`: IDE1006 (~line 101, `MaxCodeDeadline` needs a `_` prefix) and CA1502 (line 63, `Check` complexity 12 > 11). Reported by api's #547 builder after merging main. Every PR that merges main inherits it, so fix main (context's code) before gating anything. The fix is #554 (context); its first gate found a real red: `ContextApiGoldenTests.Api_answer_matches_its_golden_file(slug: "context-code", scenario: "deadline-152")` times out at the test's 10 s HttpClient limit, likely because #553's 60 s code-lens deadline now outlasts it. context is fixing it in #554.
+main `b45275e` builds again: #553 (merged by the owner outside the gate) broke `-warnaserror`; #554 (context) fixed it and its deadline golden, gated and merged.
 
 ## Where the team stopped (2026-10-21 ~15:00Z)
 
