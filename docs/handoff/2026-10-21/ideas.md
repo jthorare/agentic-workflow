@@ -33,7 +33,7 @@ Nothing is uncommitted. Three branches end in a `wip: handoff snapshot` commit (
 ## What's left, per unit
 
 - **#535 BS-7:** re-run surface checks on the head, then send meta `ready #535 <sha>`. It moves no recipe hashes.
-- **#545 PB-R:** finish the re-pin after the #541 merge, then run surface checks (build, Sindri and Ui unit lanes, recipe
+- **#545 PB-R:** NOTE: the owner opened #557 from the same branch (`feat/pb-recipes-pbr`). Don't push #545 further unless the owner says so; the steps below apply to whichever PR the owner keeps. Finish the re-pin after the #541 merge, then run surface checks (build, Sindri and Ui unit lanes, recipe
   validate and eval on all shipped recipes, scoped format). Push, then send `ready #545 <sha>` with the final hashes.
   Hashes at 953946f60 (they may move with the #541 merge):
   - `workflow.pr-babysitter` sha256:77bc5d78990c0b35e0fea00b52701e559a51b3fd0d70f9d2fb53d105390db434
