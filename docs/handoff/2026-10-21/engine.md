@@ -27,7 +27,7 @@ Box-local detail (it doesn't travel): `~/.agentic-workflow/digests/sindri-engine
 | **BS-8** ship.pack + ship.freeze | feat/sindri-blocks-ship-pack | none | — | **ea5043ade** (main merged on top of gate-green 45b85f1b0) | Gate green (Sindri unit 7789, integration 1652, Engine 441, Ui 3108, Arch 130) | Re-gate after the main merge, draft PR, review, ready. Body desk items: fact:review is assumed `{hash, dir}` with review.json `head` and `rounds[]`; fact:green is assumed to carry a sha. Base branch is `lineContext.stackParent` → `baseBranch` → `main`. Freeze compares recorded shas only, so effect.pr.open must re-check the head. step.ship.pack hash → 187d0835…. |
 | **BS-2c** a redesign edits the previous design | feat/sindri-design-revise-edits (stacked on #497) | none | — | **5759907fc** | Gate green (Sindri unit 7358, Arch 128, Engine 155, Ui 2244, Sindri integration 1565, Engine integration 260 with 1 known flake) | #497 has landed (#555): merge main (0cbf9a4 or later). workflow.design → v3 (main's v2 + 1), workflow.line → v2. Re-pin, gate, PR, review, ready. The first pass passes the literal "First pass: no previous design." because recipe inputs can't be optional. |
 | **CI-red autofix** (ci-fix-brief.md) | feat/sindri-ci-fix | none | — | **54ddcce1e** | Ports (IPullRequests, IWorkspaceChanges, ISecretScan, IAgentStepInstructions), the agent-launch seam (opt-in for step.pr.ci-fix only, marker `ci-fix-agent-workspace`), stubs, fakes and tests. Red build not yet clean (PublicAPI) | Red build clean → red commit → green, descriptors (step.pr.ci-log, step.pr.ci-fix, effect.pr.push, gates diff-scope/secret-scan/autofix-cap), babysitter v3, event pr.pushed, new profile key `workflow.pr.autofixCap`, docs, gate, PR. |
-| **aot-smoke serve flake** (`'sindri serve' didn't answer within 10 s`, hit #540/#541/#549) | fix/sindri-smoke-serve-ready | none | — | **ccedd556a** (one test edit, red not confirmed) | Just started | Pick (a) raise the StartCommand readiness `Budget` (src/Sindri/Aw.Sindri.Host/Commands/StartCommand.cs:134) or (b) make the smoke poll status. Red, green, smoke twice, PR. Meta wants it right after #532. |
+| **aot-smoke serve flake** (`'sindri serve' didn't answer within 10 s`, hit #540/#541/#549) | fix/sindri-smoke-serve-ready | none | — | **ccedd556a** (one test edit, red not confirmed) | **SUPERSEDED** by #560 (merged: sindri start waits 30 s). Drop branch fix/sindri-smoke-serve-ready | Nothing. (Old plan: pick (a) raise the StartCommand readiness `Budget` (src/Sindri/Aw.Sindri.Host/Commands/StartCommand.cs:134) or (b) make the smoke poll status. Red, green, smoke twice, PR. Meta wants it right after #532.) |
 
 ## Merge order and dependencies
 
@@ -35,7 +35,6 @@ Box-local detail (it doesn't travel): `~/.agentic-workflow/digests/sindri-engine
 2. ~~#497~~ merged as #555. BS-2c now builds on main.
 3. **#463**, which unblocks BS-9.
 4. BS-8, BS-6b, BS-13 and the CI fix in any order.
-5. The smoke fix as soon as it's ready.
 
 ## Not started (engine)
 
@@ -88,6 +87,5 @@ The profile re-approval is for the new key `workflow.pr.autofixCap` (CI fix). Te
 Start a Sonnet builder on #532's version merge from `wip/handoff-2026-10-21/feat/sindri-recipe-display-name` (f3beb4d41). Push it to the PR branch, then `ready #532`. In parallel:
 
 - #463 decision A from its `wip/…` ref;
-- the smoke fix.
 
 Then resume BS-6b, BS-13, BS-8, the CI fix and BS-2c, each from the head in the table.
