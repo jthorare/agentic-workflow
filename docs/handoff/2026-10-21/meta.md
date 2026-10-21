@@ -1,6 +1,6 @@
 # meta — handoff
 
-main: `0cbf9a4` (#550, #551, #553, #555 merged by the owner; #542 CI-1 and #554 by meta). #555 carried #497's branch (BS-2, BS-2b), so #497 is merged too and out of the queue.
+main: `76df7cc` (#550, #551, #553, #555, #556 merged by the owner; #542 CI-1 and #554 by meta). #555 carried #497's branch (BS-2, BS-2b) and #556 carried #549 (CI-0b), so both are merged and out of the queue. #557 (owner) is the same PB-R work as #545.
 
 ## Merged since 2026-10-21 01:30Z
 
