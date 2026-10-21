@@ -8,7 +8,7 @@ main: `332aedd` (#542 CI-1 merged by meta after #550 and #551, which the owner m
 
 ## MAIN IS RED (fix first)
 
-main `2e92a71`: #553 (merged without the meta gate) fails `dotnet build -warnaserror` in `src/Context/Aw.Context.Core/Engine/SettingsReader.cs`: IDE1006 (~line 101, `MaxCodeDeadline` needs a `_` prefix) and CA1502 (line 63, `Check` complexity 12 > 11). Reported by api's #547 builder after merging main. Every PR that merges main inherits it, so fix main (context's code) before gating anything.
+main `2e92a71`: #553 (merged without the meta gate) fails `dotnet build -warnaserror` in `src/Context/Aw.Context.Core/Engine/SettingsReader.cs`: IDE1006 (~line 101, `MaxCodeDeadline` needs a `_` prefix) and CA1502 (line 63, `Check` complexity 12 > 11). Reported by api's #547 builder after merging main. Every PR that merges main inherits it, so fix main (context's code) before gating anything. The fix is #554 (context); its first gate found a real red: `ContextApiGoldenTests.Api_answer_matches_its_golden_file(slug: "context-code", scenario: "deadline-152")` times out at the test's 10 s HttpClient limit, likely because #553's 60 s code-lens deadline now outlasts it. context is fixing it in #554.
 
 ## Where the team stopped (2026-10-21 ~15:00Z)
 
