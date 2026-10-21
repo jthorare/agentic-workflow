@@ -8,7 +8,7 @@ Lane: ideas (session `sindri-ideas`). Running log `~/.agentic-workflow/digests/s
 review.record, LN-PK lite, STEPRUN-EV, PB-R and BF-S. Engine owns everything else (#497, #532, #538, #463, BS-6b, BS-13,
 BS-8, BS-2c, the CI-red autofix, BS-9, the forge wiring). The full LN-PK comes after LN-PK lite. SC-E is paused.
 
-**Update (after handoff):** the owner merged PB-R through #557 and #545 (main f018e5d). PB-R is done; the step.docs.check re-pin now falls on BS-11. STEPRUN-EV landed as #564 (2020871). BS-11 landed as #566 (e00f903); its docs.scope follow-up still waits on engine's IPullRequests. review.record landed as #577 (27757ce). BS-7 landed as #579 (09bfb59; #535 is superseded, close it). Still open: BF-S, LN-PK lite (SC-E paused).
+**Update (after handoff):** the owner merged PB-R through #557 and #545 (main f018e5d). PB-R is done; the step.docs.check re-pin now falls on BS-11. STEPRUN-EV landed as #564 (2020871). BS-11 landed as #566 (e00f903); its docs.scope follow-up still waits on engine's IPullRequests. review.record landed as #577 (27757ce). BS-7 landed as #579 and #535 (same branch, 09bfb59). Still open: BF-S, LN-PK lite (SC-E paused).
 
 **Merged since 2026-10-20:** #523, #526, #529, #530 (BS-10), #539 (flake), #541 (BS-12). main was at `ccddefc` at handoff.
 
