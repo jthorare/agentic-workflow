@@ -28,6 +28,8 @@ Spec: `docs/superpowers/specs/2026-10-19-sindri-code-index-design.md` rev 4 on t
 
 **Before any of ci-3, ci-4 or s9a opens a PR:** move what's needed out of `.handoff-drafts/`, then delete the folder in its own commit. No PR may carry `.handoff-drafts/`.
 
+**Merged since the handoff:** #554 (trunk build fix after #553, trunk b45275e). S-9a will conflict with #553 in the code lens files: re-verify the Context projects after merging trunk.
+
 ## Notes the next units need
 
 - **CI-9:**
