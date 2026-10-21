@@ -8,6 +8,8 @@ Lane: ideas (session `sindri-ideas`). Running log `~/.agentic-workflow/digests/s
 review.record, LN-PK lite, STEPRUN-EV, PB-R and BF-S. Engine owns everything else (#497, #532, #538, #463, BS-6b, BS-13,
 BS-8, BS-2c, the CI-red autofix, BS-9, the forge wiring). The full LN-PK comes after LN-PK lite. SC-E is paused.
 
+**Update (after handoff):** the owner merged PB-R through #557 and #545 (main f018e5d). PB-R is done; the step.docs.check re-pin now falls on BS-11.
+
 **Merged since 2026-10-20:** #523, #526, #529, #530 (BS-10), #539 (flake), #541 (BS-12). main was at `ccddefc` at handoff.
 
 **How the stop happened:** every builder hit the account usage limit around 03:59Z. Nothing ran from 04:00 to 14:40Z.
@@ -55,7 +57,7 @@ Nothing is uncommitted. Three branches end in a `wip: handoff snapshot` commit (
 
 ## Cross-PR coordination
 
-- **step.docs.check re-pin, #545 vs BS-11:** both change the `step.docs.check` descriptor. Whichever merges second merges
+- **step.docs.check re-pin, #545 vs BS-11 (#545 has merged, so BS-11 merges main and re-pins):** both change the `step.docs.check` descriptor. Whichever merges second merges
   main and re-pins `step.docs.check` (and any recipe that pins it) against the other. Meta knows and flags it on the merge.
 - **#532 E1 (engine) recipe versions:** E1 bumps every recipe version. Whoever merges second keeps the higher version, plus
   one if both changed the recipe. This applies to #545, BS-11, LN-PK lite and review.record.
