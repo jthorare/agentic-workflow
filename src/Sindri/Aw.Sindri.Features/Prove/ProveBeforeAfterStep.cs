@@ -37,71 +37,70 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
             return BlockStepResult.Failed("step.prove.before-after needs the instance's address and repo, fact:phasePacket (with its dir), fact:built (with its head) and fact:workspace");
         }
 
+        var (phase, checkout, failure) = await Load(inputs, cancellationToken).ConfigureAwait(false);
+        if (phase is null || checkout is null)
+        {
+            return BlockStepResult.Failed(failure!);   // why: a null phase comes with its reason
+        }
+
+        var planned = Signals(phase).ToList();
+        var (rows, unrunnable) = planned.Exists(static p => p.Script is not null)
+            ? await RunInScratch(inputs.Address, checkout, phase, planned, workspace, cancellationToken).ConfigureAwait(false)
+            : (planned.Select(static p => (JsonNode)Row(p, "missing", "missing")).ToList(), (string?)null);
+        if (unrunnable is not null)
+        {
+            return BlockStepResult.Failed(unrunnable);
+        }
+
+        var holds = rows.OfType<JsonObject>().All(static r => (string?)r["base"] == "missing" || ((string?)r["base"] == "fail" && (string?)r["head"] == "pass"));   // why: a signal with no runnable script is recorded, not failed (the demo can't block on a field nobody writes)
+        return StepFacts.Done(holds ? "pass" : "fail", ("fact:beforeAfter", new JsonObject { ["commit"] = inputs.Head, ["results"] = new JsonArray([.. rows]) }));
+    }
+
+    private async ValueTask<(PhaseFiles? Phase, string? Checkout, string? Failure)> Load(EvidenceInputs inputs, CancellationToken cancellationToken)
+    {
         var checkout = await checkouts.Of(inputs.Repo, cancellationToken).ConfigureAwait(false);
         if (checkout.IsError)
         {
-            return BlockStepResult.Failed($"step.prove.before-after has no checkout of {inputs.Repo.Value}: {checkout.Error.Message}");
+            return (null, null, $"step.prove.before-after has no checkout of {inputs.Repo.Value}: {checkout.Error.Message}");
         }
 
         var dir = PhaseDir.Of(inputs.Dir, checkout.Value);
         var (phase, failure) = await PhaseFiles.Load(files, dir, cancellationToken).ConfigureAwait(false);
-        if (phase is null)
-        {
-            return BlockStepResult.Failed($"step.prove.before-after can't load the phase packet {dir}: {failure}");
-        }
-
-        var planned = Signals(phase).ToList();
-        var results = new JsonArray();
-        if (planned.Any(static p => p.Script is not null))
-        {
-            var scratch = area.PathFor(inputs.Address, "before-after/base");
-            if (scratch.IsError)
-            {
-                return BlockStepResult.Failed($"step.prove.before-after can't place the scratch worktree: {scratch.Error.Message}");
-            }
-
-            var made = await worktrees.Create(new WorktreeRequest(checkout.Value, phase.BaseSha, "sindri/before-after/" + phase.Id, scratch.Value), cancellationToken).ConfigureAwait(false);
-            if (made.IsError)
-            {
-                return BlockStepResult.Failed($"step.prove.before-after can't make the scratch worktree at the base {phase.BaseSha}: {made.Error.Code} {made.Error.Message}");
-            }
-
-            try
-            {
-                var (rows, unrunnable) = await RunAll(planned, workspace, made.Value.Path, cancellationToken).ConfigureAwait(false);
-                if (unrunnable is not null)
-                {
-                    return BlockStepResult.Failed(unrunnable);
-                }
-
-                results = rows;
-            }
-            finally
-            {
-                _ = await worktrees.Remove(made.Value.Path, CancellationToken.None).ConfigureAwait(false);   // why: a tree that can't be removed (SND-WT-004) is left as it is; the result stands
-            }
-        }
-        else
-        {
-            foreach (var p in planned)
-            {
-                results.Add((JsonNode)Row(p, "missing", "missing"));
-            }
-        }
-
-        var fact = new JsonObject { ["commit"] = inputs.Head, ["results"] = results };
-        var holds = results.OfType<JsonObject>().All(static r => (string?)r["base"] == "missing" || ((string?)r["base"] == "fail" && (string?)r["head"] == "pass"));   // why: a signal with no runnable script is recorded, not failed (the demo can't block on a field nobody writes)
-        return StepFacts.Done(holds ? "pass" : "fail", ("fact:beforeAfter", fact));
+        return phase is null ? (null, null, $"step.prove.before-after can't load the phase packet {dir}: {failure}") : (phase, checkout.Value, null);
     }
 
-    private async ValueTask<(JsonArray Rows, string? Unrunnable)> RunAll(List<Planned> planned, string workspace, string baseTree, CancellationToken cancellationToken)
+    private async ValueTask<(List<JsonNode> Rows, string? Unrunnable)> RunInScratch(string address, string checkout, PhaseFiles phase, List<Planned> planned, string workspace, CancellationToken cancellationToken)
     {
-        var rows = new JsonArray();
+        var scratch = area.PathFor(address, "before-after/base");
+        if (scratch.IsError)
+        {
+            return ([], $"step.prove.before-after can't place the scratch worktree: {scratch.Error.Message}");
+        }
+
+        var made = await worktrees.Create(new WorktreeRequest(checkout, phase.BaseSha, "sindri/before-after/" + phase.Id, scratch.Value), cancellationToken).ConfigureAwait(false);
+        if (made.IsError)
+        {
+            return ([], $"step.prove.before-after can't make the scratch worktree at the base {phase.BaseSha}: {made.Error.Code} {made.Error.Message}");
+        }
+
+        try
+        {
+            return await RunAll(planned, workspace, made.Value.Path, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _ = await worktrees.Remove(made.Value.Path, CancellationToken.None).ConfigureAwait(false);   // why: a tree that can't be removed (SND-WT-004) is left as it is; the result stands
+        }
+    }
+
+    private async ValueTask<(List<JsonNode> Rows, string? Unrunnable)> RunAll(List<Planned> planned, string workspace, string baseTree, CancellationToken cancellationToken)
+    {
+        var rows = new List<JsonNode>();
         foreach (var p in planned)
         {
             if (p.Script is null)
             {
-                rows.Add((JsonNode)Row(p, "missing", "missing"));
+                rows.Add(Row(p, "missing", "missing"));
                 continue;
             }
 
@@ -113,7 +112,7 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
                 return (rows, $"step.prove.before-after can't run {p.Script} for {p.Item} {p.Signal} at the {(atBase is null ? "base" : "head")}: no shell, no such file or a timeout");
             }
 
-            rows.Add((JsonNode)Row(p, atBase == 0 ? "pass" : "fail", atHead == 0 ? "pass" : "fail"));
+            rows.Add(Row(p, atBase == 0 ? "pass" : "fail", atHead == 0 ? "pass" : "fail"));
         }
 
         return (rows, null);
