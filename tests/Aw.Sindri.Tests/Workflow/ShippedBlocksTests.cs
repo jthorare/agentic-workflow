@@ -101,7 +101,7 @@ public sealed class ShippedBlocksTests
         await using var provider = Composed();
         await using var scope = provider.CreateAsyncScope();
 
-        Assert.Equal([typeof(BudgetAvailableGate), typeof(RouteStartableGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
+        Assert.Equal([typeof(PrBaseIsDefaultGate), typeof(BudgetAvailableGate), typeof(RouteStartableGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub; the PR babysitter's base gate registers with its station
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
         Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
