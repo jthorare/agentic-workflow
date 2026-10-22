@@ -20,7 +20,7 @@ states:
   slot:       { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
                 next: "Waiting for a heavy-job slot for {item}'s builder." }
   red:        { displayName: "Write failing tests", why: "Writes one failing test for each point of done, committed before any code.", kind: active, step: step.build.red, loop: tests, budget: { tokens: 300k }, timeout: { after: 3h, then: park },
-                next: "Write a failing test for each of {item}'s acceptance items (try {loop.tests}/{loop.tests.cap})." }
+                next: "Write a failing test for each of {item}'s acceptance items (try {loop.tests}/{loop.tests.cap}). For a signal that runs at base+head, also write the script its 'script' path names and commit it with the tests: it must fail at the base and pass at the head." }
   red-check:  { kind: active, step: step.build.red-check, timeout: { after: 1h, then: park },
                 next: "Run {item}'s red tests on the red commit: each must fail." }
   green:      { displayName: "Write the code", why: "Implements the change in small commits inside the allowed files.", kind: active, step: step.build.green, loop: revisions, budget: { tokens: 600k }, timeout: { after: 6h, then: park },

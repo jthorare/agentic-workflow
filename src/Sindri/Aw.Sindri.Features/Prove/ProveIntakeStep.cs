@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Prove;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -78,9 +79,9 @@ internal sealed class ProveIntakeStep(IBriefFiles files, IRepoCheckouts checkout
         {
             var id = (string?)item["id"] ?? string.Empty;
             var own = new JsonArray();
-            foreach (var signal in (signals?["signals"]?[id] as JsonArray ?? []).Where(static s => s is not null))
+            foreach (var signal in PhaseSignals.Of(signals, id))
             {
-                own.Add(signal!.DeepClone()); // why: Where drops the nulls
+                own.Add((JsonNode)signal);
             }
 
             items.Add((JsonNode)new JsonObject { ["id"] = id, ["text"] = (string?)item["text"] ?? string.Empty, ["signals"] = own, ["artifacts"] = new JsonArray() });

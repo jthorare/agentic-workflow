@@ -27,12 +27,22 @@ internal static partial class DesignChecks
             }
         }
 
+        foreach (var signal in signals.Where(static s => string.Equals(LineJson.Str(s, "runs"), "base+head", StringComparison.Ordinal) && !HasWorkspaceScript(s)))
+        {
+            var item = LineJson.Str(signal, "item");
+            yield return DesignContext.Fail("DSN-ACC-001", item, $"the base+head signal for {item ?? "an item"} names no script inside the workspace", "Give it a 'script': a relative path (no '..', not absolute) of the file that fails at the base and passes at the head.");
+        }
+
         foreach (var signal in signals.Where(Unmeasurable))
         {
             var item = LineJson.Str(signal, "item");
             yield return DesignContext.Fail("DSN-ACC-002", item, $"the signal for {item ?? "an item"} says \"{LineJson.Str(signal, "statement")}\" without a number or a reference artifact", "State a number (a limit, a count, a size) or name the reference artifact it is compared with.");
         }
     }
+
+    // The before/after Step runs this one file in both trees, so it is a path inside the workspace.
+    private static bool HasWorkspaceScript(JsonNode signal) =>
+        LineJson.Str(signal, "script") is { } path && !string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path) && !path.Split('/', '\\').Contains("..", StringComparer.Ordinal);
 
     private static bool IsComplete(JsonNode signal) =>
         LineJson.Str(signal, "kind") is { Length: > 0 } kind && KebabCase.IsMatch(kind)

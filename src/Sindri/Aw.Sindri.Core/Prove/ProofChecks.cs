@@ -104,7 +104,7 @@ public static partial class ProofChecks
     }
 
     private static IEnumerable<(string Item, string Signal)> BaseAndHead(ProofFacts facts) =>
-        LiveItems(facts.Acceptance).SelectMany(id => (facts.Signals?["signals"]?[id] as JsonArray ?? []).OfType<JsonObject>()
+        LiveItems(facts.Acceptance).SelectMany(id => PhaseSignals.Of(facts.Signals, id)
             .Where(static s => (string?)s["runsAt"] == "base+head").Select(s => (id, (string?)s["id"] ?? string.Empty)));
 
     private const string RedShape = "expected {\"tests\": [id or {id, path}], \"appOnly\": {signal}} or a list of test ids";

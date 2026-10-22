@@ -131,7 +131,7 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
     };
 
     private static IEnumerable<Planned> Signals(PhaseFiles phase) =>
-        ProofChecks.LiveItems(phase.Acceptance).SelectMany(item => (phase.Signals?["signals"]?[item] as JsonArray ?? []).OfType<JsonObject>()
+        ProofChecks.LiveItems(phase.Acceptance).SelectMany(item => PhaseSignals.Of(phase.Signals, item)
             .Where(static s => (string?)s["runsAt"] == "base+head")
             .Select(s => new Planned(item, (string?)s["id"] ?? string.Empty, Script((string?)s["script"]))));
 

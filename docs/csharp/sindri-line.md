@@ -19,7 +19,7 @@ A rule whose files are absent is **not run** and names them; it never fails a dr
 |---|---|---|
 | `DSN-COV-001` | draft | a scope surface is in no section's `covers` and not excluded with a reason, a `coverage.json` row disagrees with the sections, or a section covers an id the scope map lacks |
 | `DSN-COV-002` | draft | a scope question is not answered at the scope stage, not carried by a decision or section citing it, and not deferred in `coverage.json` with an owner and a `buildMayAssume` |
-| `DSN-ACC-001` | draft | a live item has no signal, or a signal has an unknown evidence kind, an unknown `runsAt` or no statement |
+| `DSN-ACC-001` | draft | a live item has no signal, or a signal has an unknown evidence kind, an unknown `runsAt`, no statement, or a `base+head` signal with no `script` (a relative path inside the workspace, no `..`) |
 | `DSN-ACC-002` | draft | a signal uses an unmeasurable term (`fast`, `quick`, `clean`, `intuitive`, `easy`, `seamless`, `robust`, `user-friendly`, `smooth`, `simple`, `snappy`) or names no number and quotes no reference |
 | `DSN-ACC-003` | evidence | a scope item is gone or its text changed, an item is `passing`, a superseded item has no successor, or an added item cites no section or decision. A supersession is a warning: stop 2 confirms it |
 | `DSN-DEC-001` | draft | a decision has fewer than 2 or more than 3 options, not exactly one recommended, an option with no trade-offs, no citations, or nothing affected, or an affected section lacks the `assumes` marker in `sections.json` or `spec.md` (the chosen option once answered, else the recommended one) |
