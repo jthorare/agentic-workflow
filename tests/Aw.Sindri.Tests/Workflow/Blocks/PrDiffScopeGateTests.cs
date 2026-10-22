@@ -127,6 +127,6 @@ public sealed class PrDiffScopeGateTests
             facts[key] = value;
         }
 
-        return await new PrDiffScopeGate(paths, content).Evaluate(Context("gate.pr.diff-scope", arguments, facts), TestContext.Current.CancellationToken);
+        return await new PrDiffScopeGate(paths, content).Evaluate(GateOf("gate.pr.diff-scope", arguments, facts), TestContext.Current.CancellationToken);
     }
 }

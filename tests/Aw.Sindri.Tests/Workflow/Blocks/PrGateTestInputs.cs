@@ -11,7 +11,7 @@ internal static class PrGateTestInputs
 
     internal static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
 
-    internal static GateContext Context(string gate, Dictionary<string, JsonElement> arguments, Dictionary<FactKey, JsonElement>? facts = null) =>
+    internal static GateContext GateOf(string gate, Dictionary<string, JsonElement> arguments, Dictionary<FactKey, JsonElement>? facts = null) =>
         new(BlockId.From(gate), arguments, facts ?? [], Threshold: null);
 
     internal static Dictionary<string, JsonElement> Arguments(params (string Name, string Json)[] values) =>

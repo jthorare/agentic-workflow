@@ -46,7 +46,7 @@ public sealed class PrSecretScanGateTests
     {
         var gate = new PrSecretScanGate(new FakeDiffContent(), new MarkingScrubber());
 
-        var result = await gate.Evaluate(Context("gate.pr.secret-scan", Arguments(("since", PrState()))), TestContext.Current.CancellationToken);
+        var result = await gate.Evaluate(GateOf("gate.pr.secret-scan", Arguments(("since", PrState()))), TestContext.Current.CancellationToken);
 
         Assert.Equal(GateVerdict.Fail, result.Verdict);
     }
@@ -61,7 +61,7 @@ public sealed class PrSecretScanGateTests
 
     private static async Task<GateResult> Evaluate(FakeDiffContent content, string? prState = null) =>
         await new PrSecretScanGate(content, new MarkingScrubber()).Evaluate(
-            Context("gate.pr.secret-scan", Arguments(("workspace", $"\"{Workspace}\""), ("since", prState ?? PrState()))), TestContext.Current.CancellationToken);
+            GateOf("gate.pr.secret-scan", Arguments(("workspace", $"\"{Workspace}\""), ("since", prState ?? PrState()))), TestContext.Current.CancellationToken);
 
     /// <summary>Changes any line that holds the test token, as the shared scrubber changes a secret.</summary>
     private sealed class MarkingScrubber : ITextScrubber
