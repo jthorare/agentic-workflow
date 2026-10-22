@@ -82,6 +82,16 @@ public sealed class PrCommentQueueStepTests
         Assert.Equal("comment", result.Result?.Outcome.Value);
     }
 
+    [Fact]
+    public async Task A_thread_without_editedAt_and_a_null_self_still_matches_its_mark()
+    {
+        var handled = Thread("thread:1", extra: ",\"mark\":{\"outcome\":\"fixed\",\"editedAt\":\"2026-10-20T10:00:00Z\"}");
+
+        var result = await Next(handled, ",\"self\":null");
+
+        Assert.Equal("drained", result.Result?.Outcome.Value);
+    }
+
     [Theory]
     [InlineData("", "drained")]
     [InlineData(",\"workspaceAhead\":true", "drainedUnpushed")]

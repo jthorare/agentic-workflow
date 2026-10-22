@@ -143,9 +143,9 @@ internal sealed class PrCommentQueue
         (_self is not null && string.Equals(Str(entry["author"]), _self, StringComparison.OrdinalIgnoreCase))
         || (entry["markers"] as JsonArray ?? []).Select(Str).Any(static m => m is not null && m.StartsWith("sindri", StringComparison.Ordinal));
 
-    // The mark that still counts: an edited comment is unhandled again (§5.4).
+    // The mark that still counts: an edited comment is unhandled again (§5.4); a thread without editedAt (the forge shape today) matches any mark.
     private static JsonObject? Mark(JsonObject entry) =>
-        entry["mark"] is JsonObject mark && string.Equals(Str(mark["editedAt"]), Str(entry["editedAt"]), StringComparison.Ordinal) ? mark : null;
+        entry["mark"] is JsonObject mark && (Str(entry["editedAt"]) is not { } edited || string.Equals(Str(mark["editedAt"]), edited, StringComparison.Ordinal)) ? mark : null;
 
     // A comment re-held after the walk started is left for the next walk, so the walk does not loop on it.
     private bool BeforeWalk(JsonObject mark) =>
