@@ -110,7 +110,7 @@ public sealed class PrCommentQueueStepTests
 
         var result = await Next(long8);
 
-        Assert.True(result.Result!.Outputs.Single().Value.GetProperty("body").GetString()!.Length == 8192);
+        Assert.Equal(8192, result.Result!.Outputs.Single().Value.GetProperty("body").GetString()!.Length);
     }
 
     [Fact]
