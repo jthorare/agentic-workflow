@@ -49,7 +49,7 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(OwnerSteps.Decide)
         .AddScopingBlocks()
         .AddLineBlocks().AddLineDesignBlocks()
-        .AddBlockDescriptor(EvidenceProviders.Check)
+        .AddEvidence<EvidenceCheckProvider>()   // DT-B: the frozen check re-run through bugfix-state
         .AddGate<BudgetAvailableGate>()
         .AddGate<RouteStartableGate>()     // engine P7 unit U1: a stub over the profile's workflow.route
         .AddEffect<ClaimRefEffect>()      // engine P6 unit (d)
