@@ -95,6 +95,25 @@ internal sealed partial class FakeSindriApi
     internal Task<Result<QueueView>> Queue(Uri api, long? sequence, CancellationToken cancellationToken) =>
         View<QueueView>(api, "/sindri/queue", QueueView, sequence, QueueGate, cancellationToken);
 
+    /// <summary>The body GET /sindri/items?state= answers, by state; null serves an empty list.</summary>
+    public Func<string, RouteAnswer?>? ListItemsBody { get; set; }
+
+    /// <summary>The states ListItems was asked for, in order.</summary>
+    public IReadOnlyList<string> ListedStates { get { lock (_gate) { return [.. _listed]; } } }
+
+    private readonly List<string> _listed = [];
+
+    public Task<Result<ItemListView>> ListItems(Uri api, string state, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _listed.Add(state);
+        }
+
+        var answer = ListItemsBody?.Invoke(state) ?? new RouteAnswer(System.Net.HttpStatusCode.OK, """{"items":[],"empty":null,"asOf":{"cursor":1,"ledgerHead":1,"projectedAt":null,"rebuilding":false,"stalled":false}}""");
+        return View<ItemListView>(api, "/sindri/items", answer, sequence: null, gate: null, cancellationToken);
+    }
+
     public Task<Result<ItemView>> Item(Uri api, string itemId, CancellationToken cancellationToken) => Item(api, itemId, sequence: null, cancellationToken);
 
     /// <summary>An item read that carries <paramref name="sequence"/> as X-Sindri-After.</summary>

@@ -125,6 +125,12 @@ internal sealed partial class ItemSheetViewModel(ISindriApi api, CatalogViewMode
     /// <summary>True when the item has actions to show.</summary>
     public bool HasActions => Actions.Count > 0;
 
+    /// <summary>True when the item has a decision waiting: the sheet shows it as a callout that points to Needs you, where it is answered.</summary>
+    public bool HasOpenDecision => Needs.HasDecisions;
+
+    /// <summary>The item the open decision belongs to (the callout's link to Needs you); empty when none is waiting.</summary>
+    public string NeedsYouItem => HasOpenDecision ? ItemId : string.Empty;
+
     /// <summary>The timeline entries read so far, in the API's order.</summary>
     public ObservableCollection<TimelineRow> Timeline { get; } = [];
 

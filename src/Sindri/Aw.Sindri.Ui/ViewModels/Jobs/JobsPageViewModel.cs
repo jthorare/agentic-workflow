@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Jobs;
 /// how it ended and Cancel while it runs. The sentence for an empty list is the API's. The page reads while it is the page shown, on every event
 /// (job.started, job.progress, job.finished and job.cancelled all arrive on the stream), and keeps its rows by id across reads.
 /// </summary>
-internal sealed class JobsPageViewModel : ObservableObject, IDisposable
+internal sealed partial class JobsPageViewModel : ObservableObject, IDisposable
 {
     private readonly Dictionary<string, JobRowViewModel> _rows = new(StringComparer.Ordinal);
     private int _reads;
@@ -175,7 +175,7 @@ internal sealed class JobsPageViewModel : ObservableObject, IDisposable
     private async Task Read(Uri url, CancellationToken cancellationToken)
     {
         var read = ++_reads;
-        var list = await Api.Jobs(url, new JobQuery(), cancellationToken).ConfigureAwait(true);
+        var list = await Api.Jobs(url, Query(), cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
             return;   // a newer read was asked for since, or the page was left: its answer is the one to show
@@ -212,7 +212,9 @@ internal sealed class JobsPageViewModel : ObservableObject, IDisposable
         Patch.To(Rows, rows);
         Head = Labels.JobsHead(list.Jobs.Count(j => string.Equals(j.State, "running", StringComparison.Ordinal)), list.Jobs.Count);
         (IsEmpty, EmptyText) = (rows.Count == 0, rows.Count == 0 ? list.Empty ?? string.Empty : string.Empty);
+        IsNoneRunning = rows.Count > 0 && !rows.Exists(r => r.IsRunning);
         OnChanged(nameof(HeadName));
+        NoteKinds(list.Jobs);
     }
 
     private JobRowViewModel Row(JobRowView served)

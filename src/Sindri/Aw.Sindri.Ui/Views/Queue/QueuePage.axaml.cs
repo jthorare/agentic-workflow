@@ -44,6 +44,22 @@ internal sealed partial class QueuePage : UserControl
         }
     }
 
+    private void OnSegmentAll(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.Filter(ViewModels.Queue.QueueFilter.All);
+
+    private void OnSegmentRunning(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.Filter(ViewModels.Queue.QueueFilter.Running);
+
+    private void OnRepoChosen(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { SelectedItem: string repo } && DataContext is ShellViewModel shell)
+        {
+            shell.Queue.ChooseRepo(repo);
+        }
+    }
+
+    private void OnClosedToggle(object? sender, RoutedEventArgs e) => _ = (DataContext as ShellViewModel)?.ToggleClosed(CancellationToken.None);
+
+    private void OnClearFilter(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ClearFilter();
+
     private void OnCreate(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Create.Open();
 
     private void OnShowHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ShowHeld(ViewModels.Queue.QueueScope.Page);

@@ -37,6 +37,10 @@ internal static class ContextRows
             "POST", "/sindri/context/map/proposals", ShellRows.Form("sindri context map propose <file>"), "ready"),
         JobRows.Job("BuildContextMap", typeof(BuildContextMapRequest), "/sindri/context/map/build", "sindri context map build"),
         JobRows.Job("RefreshContextMap", typeof(RefreshContextMapRequest), "/sindri/context/map/refresh", "sindri context map refresh"),
+        // PublishContextMap has no route and no verb of its own (code index spec 6.4): the context-map-refresh service starts it as itself, so the row names the verb that runs that service.
+        new(ActionId.From("PublishContextMap"), typeof(PublishContextMapRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
         new(ActionId.From("ImportContextMap"), typeof(ImportContextMapRequest), Variant: null, ActionClass.Protected, ServiceGrants: [],
             NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "cli-only:typed-confirmation"),

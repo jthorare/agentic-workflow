@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Aw.Sindri.Ui.ViewModels.Recipes;
 using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Recipes;
@@ -13,4 +14,6 @@ internal sealed partial class RecipeSheetView : UserControl
     }
 
     private void OnBack(object? sender, RoutedEventArgs e) => (TopLevel.GetTopLevel(this)?.DataContext as ShellViewModel)?.Back();
+
+    private void OnCopyApprove(object? sender, RoutedEventArgs e) => _ = (DataContext as RecipeSheetViewModel)?.CopyApprove(CancellationToken.None);
 }

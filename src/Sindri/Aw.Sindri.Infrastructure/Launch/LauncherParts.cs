@@ -31,6 +31,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>Records the end of the launch's session (exit) when the launch is live; Stop calls it after the host stopped the session.</summary>
     public Func<LaunchId, CancellationToken, ValueTask> EndLive { get; init; } = static (_, _) => ValueTask.CompletedTask;
 
+    /// <summary>Marks a Step's working directory trusted for the agent CLI that asks (claude-code), before it starts; nothing by default.</summary>
+    public IAgentTrust Trust { get; init; } = new NoAgentTrust();
+
     /// <summary>Finds an agent CLI the way the login shell does; null when it doesn't resolve.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
 }

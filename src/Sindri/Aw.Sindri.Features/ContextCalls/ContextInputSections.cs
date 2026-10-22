@@ -4,6 +4,7 @@ using System.Text.Json.Serialization.Metadata;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Results;
 using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Features.ContextCalls;
@@ -107,6 +108,21 @@ internal static class ContextInputSections
     {
         ArgumentNullException.ThrowIfNull(view);
         return view with { AsOf = AsOf(view.Coverage), Coverage = Stable(view.Coverage), Searched = Stable(view.Searched) };
+    }
+
+    /// <summary>The query answer without its clock-relative values: a fixed query id, the Unix epoch for 'asOf' and each degraded source's 'since', and every citation unchecked.</summary>
+    /// <param name="result">The answer.</param>
+    /// <returns>The same stored state, the same bytes at any clock and for any query id.</returns>
+    internal static ContextResult Stable(ContextResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return result with
+        {
+            QueryId = QueryId.From("q_input"),
+            AsOf = DateTimeOffset.UnixEpoch,
+            Degraded = [.. result.Degraded.Select(static d => d with { Since = DateTimeOffset.UnixEpoch })],
+            Cites = result.Cites.OrderBy(static c => c.Key, StringComparer.Ordinal).ToDictionary(static c => c.Key, static c => c.Value with { State = CitationState.Unchecked }, StringComparer.Ordinal),
+        };
     }
 
     private static DateTimeOffset AsOf(LensCoverage coverage) => coverage.Map?.Created ?? DateTimeOffset.UnixEpoch;

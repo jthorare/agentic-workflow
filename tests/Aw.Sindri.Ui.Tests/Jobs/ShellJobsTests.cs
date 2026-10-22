@@ -160,6 +160,6 @@ public sealed class ShellJobsTests
         shell.ReopenSheet();
         await Until(() => shell.JobSheet.Cancel is null);
 
-        Assert.StartsWith("✓ DONE", shell.JobSheet.StateLine, StringComparison.Ordinal);
+        Assert.StartsWith("✓ Done", shell.JobSheet.StateLine, StringComparison.Ordinal);
     }, Token);
 }

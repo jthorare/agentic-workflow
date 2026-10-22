@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
@@ -133,7 +134,7 @@ internal static class ServeCommand
             // a stop request, a signal or a lost lease
         }
 
-        await OnyxServeHooks.Stop(app, onyx, Console.Error).ConfigureAwait(false);   // a managed Onyx stops before the record and the lease go, bounded
+        await StopLaunchedAndOnyx(app, onyx).ConfigureAwait(false);   // launched sessions end (each recorded) and a managed Onyx stops, before the record and the lease go
         await runtime.WaitForWorker(CancellationToken.None).ConfigureAwait(false);   // bounded, and a worker fault is the worker's to log
 
         if (app.Services.GetRequiredService<HeldLease>().Current is not null)
@@ -146,6 +147,33 @@ internal static class ServeCommand
         await DropToken(app).ConfigureAwait(false);
         await app.StopAsync(CancellationToken.None).ConfigureAwait(false);
         return app.Services.GetRequiredService<IExitCode>().Code;
+    }
+
+    private static async Task StopLaunchedAndOnyx(WebApplication app, Task onyx)
+    {
+        await EndLaunchedSessions(app).ConfigureAwait(false);
+        await OnyxServeHooks.Stop(app, onyx, Console.Error).ConfigureAwait(false);
+    }
+
+    /// <summary>Ends the sessions this serve launched on the sindri-launch tmux socket, so none outlives it (bounded; a failure is logged, never fatal).</summary>
+    private static async Task EndLaunchedSessions(WebApplication app)
+    {
+        using var bound = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            using (app.Services.GetRequiredService<ICallerContextAccessor>().EnterService("host"))
+            {
+                var ended = await app.Services.GetRequiredService<ILaunchShutdown>().StopAll(bound.Token).ConfigureAwait(false);
+                if (ended > 0)
+                {
+                    await Console.Error.WriteLineAsync(string.Create(CultureInfo.InvariantCulture, $"sindri: ended {ended} launched session(s) on stop")).ConfigureAwait(false);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            await Console.Error.WriteLineAsync("sindri: ending the launched sessions overran 20 s; the heartbeat sweep marks the rest lost").ConfigureAwait(false);
+        }
     }
 
     /// <summary>

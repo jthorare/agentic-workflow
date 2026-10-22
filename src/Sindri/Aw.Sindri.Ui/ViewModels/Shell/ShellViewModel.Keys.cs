@@ -28,7 +28,7 @@ internal sealed partial class ShellViewModel
             return true;
         }
 
-        return StripKeyPressed(key, inSheet) || NeedsYouKeyPressed(key, inSheet) || WorkflowsKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
+        return StripKeyPressed(key, inSheet) || NeedsYouKeyPressed(key, inSheet) || WorkflowsKeyPressed(key, inSheet) || AgentsKeyPressed(key, inSheet) || RecipesKeyPressed(key, inSheet) || Single(key, inSheet) || RowKey(key, inSheet);
     }
 
     // Y copies the selected row's CLI (§8); / opens the Queue page's filter.

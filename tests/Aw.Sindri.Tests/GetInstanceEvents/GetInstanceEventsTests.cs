@@ -44,6 +44,19 @@ public sealed class GetInstanceEventsTests
     }
 
     [Fact]
+    public async Task Reading_an_instance_by_address_touches_only_its_rows()
+    {
+        var h = await Ledger();
+        var counting = new RecordingLedgerReader(h.Store);
+        var instances = Instances();
+
+        var read = (await new GetInstanceEventsService(counting, h.Events, instances, instances).Handle(new GetInstanceEventsRequest(_address.Value), TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal([2L, 4L], read.Events.Select(static e => e.Sequence));
+        Assert.Equal((5L, 2), (read.Cursor, counting.RowsRead));
+    }
+
+    [Fact]
     public async Task After_the_cursor_there_are_no_events_and_status_says_so()
     {
         var h = await Ledger();

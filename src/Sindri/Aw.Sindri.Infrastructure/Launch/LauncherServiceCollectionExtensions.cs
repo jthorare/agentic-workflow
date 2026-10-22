@@ -30,7 +30,10 @@ internal static class LauncherServiceCollectionExtensions
             .AddScoped<LaunchStopEnd>()
             .AddSingleton(_ => Options(environment, settings))
             .AddSingleton<ILaunchFiles>(static sp => new LaunchFileStore(sp.GetRequiredService<LauncherOptions>()))
-            .AddSingleton<ILauncher>(sp => new Launcher(Parts(sp, BuiltinHash)))
+            .AddSingleton<IAgentTrust>(new ClaudeCodeTrust(ClaudeCodeTrust.PathFor(environment)))
+            .AddSingleton(sp => new Launcher(Parts(sp, BuiltinHash)))
+            .AddSingleton<ILauncher>(static sp => sp.GetRequiredService<Launcher>())
+            .AddSingleton<ILaunchShutdown>(static sp => sp.GetRequiredService<Launcher>())
             .AddSingleton<ILaunchSetup>(sp => new LauncherInit(new LauncherInitParts(sp.GetRequiredService<ReloadingAgentCatalog>(), Detection(sp, environment))
             {
                 BuiltinHash = BuiltinHash,
@@ -55,6 +58,7 @@ internal static class LauncherServiceCollectionExtensions
             Approved = Approved(sp),
             McpFor = McpTargetFor(sp),
             Config = () => catalog.Current,
+            Trust = sp.GetRequiredService<IAgentTrust>(),
             EndLive = async (launch, cancellationToken) =>
             {
                 var scope = sp.CreateAsyncScope();

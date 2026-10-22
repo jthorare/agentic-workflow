@@ -44,6 +44,7 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddScoped<IScopeRunProposals, ScopeRunProposals>()
             .AddStepInput<ContextLensesInput>()
             .AddStepInput<ContextHistoryInput>()
+            .AddStepInput<ContextRetrieveInput>()
             .AddStepInput<ContextCodeInput>()
             .AddSingleton<IHeavyJobLock>(static sp => new SindriHeavyJobLock(sp.GetRequiredService<IHeavySlots>(), SindriHeavyJobLock.DefaultWait));
         _ = services.AddScoped<IValidator<PromoteContextMapRequest>, AcceptAllValidator<PromoteContextMapRequest>>().AddCommand<PromoteContextMapRequest, PromoteContextMapResponse, PromoteContextMapService>();

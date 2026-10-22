@@ -23,6 +23,11 @@ internal sealed partial class Launcher
             return foreign;
         }
 
+        if (await Trust(request, entry, workDir, cancellationToken).ConfigureAwait(false) is { } untrusted)
+        {
+            return untrusted;
+        }
+
         try
         {
             var composed = await Compose(request, entry, workDir, cancellationToken).ConfigureAwait(false);
@@ -42,6 +47,18 @@ internal sealed partial class Launcher
         {
             return KernelErrors.Unavailable.With($"the launch's files could not be written: {e.Message}");
         }
+    }
+
+    /// <summary>A claude-code Step's worktree is marked trusted before the CLI starts: it would stop at "do you trust this project?" with no one to answer. Other entries and human opens need nothing.</summary>
+    private async ValueTask<Error?> Trust(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
+    {
+        if (request.Attended || !string.Equals(entry.Id.Value, "claude-code", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var trusted = await parts.Trust.Trust(workDir, cancellationToken).ConfigureAwait(false);
+        return trusted.IsError ? trusted.Error : null;
     }
 
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)

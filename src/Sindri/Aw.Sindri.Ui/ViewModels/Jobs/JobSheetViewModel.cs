@@ -55,6 +55,9 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
     /// <summary>The state line: chip, when, who started it.</summary>
     public string StateLine { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the job failed: the sheet shows its summary in a red callout.</summary>
+    public bool IsFailedJob { get; private set => Set(ref field, value); }
+
     /// <summary>How it ended, as served; empty while it runs.</summary>
     public string SummaryText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -215,9 +218,10 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
         var running = string.Equals(job.State, "running", StringComparison.Ordinal);
         var (glyph, word) = Labels.JobChip(job.State);
         var age = _clock.GetUtcNow() - (running ? job.StartedAt : job.EndedAt ?? job.StartedAt);
-        Heading = Labels.Action(job.Kind);
+        Heading = Labels.JobKind(job.Kind);
         StateLine = string.Join(" · ", glyph + " " + word, Labels.JobWhen(running, age), "by " + Labels.JobStartedBy(job.StartedBy));
         SummaryText = job.Summary ?? string.Empty;
+        IsFailedJob = string.Equals(job.State, "failed", StringComparison.Ordinal);
         OnChanged(nameof(HasSummary));
         _last = job;
         Cancel = job.Actions.Contains("CancelJob", StringComparer.Ordinal) ? Cancel ?? CancelFor(job) : null;

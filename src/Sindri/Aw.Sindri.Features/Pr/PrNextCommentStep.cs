@@ -1,0 +1,34 @@
+using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Ids;
+
+namespace Aw.Sindri.Features.Pr;
+
+/// <summary>
+/// 'step.pr.next-comment' on the block runtime (babysitter spec §5.2): the oldest unhandled thread of the snapshot's queue, as 'fact:comment'. Authorship is checked before
+/// content: 'untrusted', then 'bot', then 'comment'; an empty queue is 'drainedUnpushed' when the workspace holds commits the PR head lacks, else 'drained'.
+/// </summary>
+internal sealed class PrNextCommentStep : IBlockStep, IBlockStepId
+{
+    /// <inheritdoc/>
+    public static BlockId Id { get; } = BlockId.From("step.pr.next-comment");
+
+    /// <inheritdoc/>
+    public ValueTask<BlockStepResult> Run(StepContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (PrCommentQueue.Parse(StepFacts.Read(context, "fact:prState")) is not { } queue)
+        {
+            return ValueTask.FromResult(BlockStepResult.Failed("step.pr.next-comment needs fact:prState, an object, which the instance does not hold"));
+        }
+
+        if (queue.NextUnhandled() is not { } entry)
+        {
+            return ValueTask.FromResult(StepFacts.Done(queue.WorkspaceAhead ? "drainedUnpushed" : "drained"));
+        }
+
+        var bots = context.Arguments.TryGetValue("bots", out var argument) ? PrCommentQueue.Bots(JsonNode.Parse(argument.GetRawText())) : [];
+        return ValueTask.FromResult(StepFacts.Done(PrCommentQueue.Classify(entry, bots), ("fact:comment", PrCommentQueue.ToFact(entry))));
+    }
+}

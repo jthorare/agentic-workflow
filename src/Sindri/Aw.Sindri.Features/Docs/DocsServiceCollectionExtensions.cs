@@ -10,5 +10,6 @@ internal static class DocsServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddDocsSlices(this IServiceCollection services) => services
-        .AddBlockRuntime<DocsCheckStep>();
+        .AddBlockRuntime<DocsCheckStep>()
+        .AddBlockRuntime<DocsScopeStep>();
 }

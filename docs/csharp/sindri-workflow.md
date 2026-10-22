@@ -226,6 +226,13 @@ A generated recipe whose base was revoked after it was registered is refused too
 id and version are registered with other content (edited without raising its version), the CLI refuses before the preview
 with the register call's `SND-RECIPE-007` and its `RCP-VERSION-001` line.
 
+`sindri recipe approve-all [--json]` is the same hold for every shipped recipe at once (setup-once spec §5.3): it reads
+`GET /sindri/workflow/recipes/approve-all`, asks `POST /sindri/workflow/challenges` for `approve-all <digest6>`, prints the
+plan (each recipe and version in the order approval happens, children first, then the recipes approved one at a time), reads
+the typed phrase and posts it to `POST /sindri/workflow/recipes/approve-all`, which starts the `ApproveAllRecipes` job; the
+CLI prints the job id and `sindri jobs show <id>` (`--json`: the started job). A session or a CLI without a terminal gets
+`SND-AUTH-002`, a wrong phrase `SND-RECIPE-009`, and an empty plan prints its sentence, asks nothing and exits 2.
+
 `sindri recipe revoke <id@hash>` (the hash by 8 or more digits) previews the instances that will park, the takeovers it
 ends, the generated recipes approved from it (revoked with it, recursively) and the parents pinning it as a child
 (marked `child-stale`), asks for `revoke <id>@<hash12>`, and prints `revoked …; N instances parked` (N counts the running instances
@@ -638,7 +645,7 @@ Steps of `workflow.design` and `workflow.plan` (line spec §4-§6, LN-Y1; all de
 | `step.plan.review` | desk, human-only | `planPacket`, `design` | `approve`, `reviseDesign`, `revisePlan`, `drop` | `answers` on reviseDesign and revisePlan |
 | `step.plan.freeze` | block | `planPacket`, `design`, `plan`, `holdoutSets` | `frozen`, `mismatch` | `planPacket`, `phasePackets` on frozen; `findings` on mismatch |
 
-The Step inputs `input.context.lenses`, `input.context.code` and `input.context.history` are real Step inputs (parameters `anchors`, `depth`, `hops`, `window`; "The context inputs (S-LB2)" below), so the recipe validates and approves. The output schemas are `schemas/scoping/` (`node scripts/check-scoping-schemas.mjs`).
+The Step inputs `input.context.lenses`, `input.context.code` and `input.context.history` are real Step inputs, with `input.context.retrieve` as the fourth (parameters `anchors`, `depth`, `hops`, `window`; `q`, `node`, `symbol`, `budget`; "The context inputs (S-LB2)" below), so the recipe validates and approves. The output schemas are `schemas/scoping/` (`node scripts/check-scoping-schemas.mjs`).
 
 ### Design and plan stations on the block runtime (BS-2, BS-2b)
 
@@ -1047,6 +1054,7 @@ The `--json` output is the served body as the CLI's serializer prints it: `list`
   whose only way out is an approval or a cancel (revoked, child revoked, drift) offers no `answer`. An open park or escalation serves one `answer` entry per fitting variant, each under its catalog id (`answer-text`, `answer-resume`, `answer-grant`, `answer-grant-tokens`, `answer-accept`, `answer-reject`), the status line's own variant first, each with the full command that runs it (the status line itself may keep its hint form, such as `--resume [--text <answer>]`; `--text <answer>` stays a template because the text is the person's). A suspension that mirrors a child serves only the variants its reason alone fixes (rounds, no-progress, timeout, no-runtime). An escalation from a child and a mirrored needs-answer, budget or spec-conflict park serve none, and their status `answer` line points at the child (`sindri workflow answer <address> <the child's answer>`, `(forwarded to <child>)`, action id `answer-text`) and is marked explicitly: `via: "child"` and `child: <the child's address>` on the status answer record (both omitted on every other answer; `child` is present only when the served view lists the mirrored child, matched by its instance id, and a parent's view lists its live children, each with the state that child answers now (engine P7); a child the status read cannot reach shows the state `unreachable`, never its last known one); the needs-you row carries the same `via` marker, so a client never reads the cli text to tell a pointer from a form. A budget grant's amount is whole `k` or `M` when exact, else the plain integer, so it parses (`TokenCounts.Format`) whenever a cap exists to halve; a budget park with no cap (a `gate.budget` refusal on a recipe with no budget) serves no `answer-grant-tokens` entry, and its status line keeps the `--grant-tokens <n>` hint. The one table of which variants fit is `AnswerVariants.Fitting`, shared by the answer check and the served list.
 - **Layout** (`StatusLayout`): the labels take 12 columns, `next` wraps at 120, and the lines come in a fixed order:
   next, child, inputs, drift, timeout, paused, budget (beside an open desk task, as §6.4 shows it), answer, commands.
+  `takenOverAt` (ISO time, written only while the instance is taken over: the time it entered `taken-over`, which is the header's `since`) lets a client say "took over at 14:05 (2h 35m ago)".
   An input's digest prints as its first four hex digits and `...` (ASCII for §6.4's ellipsis). The answer note is set
   off by five spaces. Golden files pin the six §6.4 layouts and one per §3.8 row P4 reaches
   (`tests/Aw.Sindri.Tests/GetInstance/Golden/`).
@@ -1160,6 +1168,7 @@ The scoping recipe's `gather` Step names three real inputs, so `sindri recipe ap
 | `input.context.lenses {anchors, depth?, hops?}` | `lenses` | `LensesSetView` (schema 2) | `IContextEngine` lenses on the current map |
 | `input.context.history {anchors, window?}` | `history` | `HistoryView` (no live sync marker: a fill depends on the stored state only) | `IContextEngine` history; `window` is `{since?, before?}` (RFC 3339 or a date) or a bare string meaning `since` |
 | `input.context.code {anchors}` | `code` | `CodeView` | `IContextEngine` code on the current map |
+| `input.context.retrieve {q? \| node? \| symbol?, depth?, budget?}` | `context` | `ContextResult` (S-10; no query id, `asOf` is the Unix epoch, degraded `since` likewise, every citation `unchecked`) | `IContextEngine.Query` on the current map: one question, the readable answer with `[Cn]` markers, `DEGRADED` and `CONFLICT` lines and a `sources:` list (the run receipt's citations); record text arrives fenced by the engine and is not wrapped again; a Step with none of `q`, `node`, `symbol` gets an unavailable section |
 
 - **`service:engine`, the instance's repo.** Each call runs as the engine's service caller with a scope cut to the one repo of the instance's item (`StepInputContext.Repo`, from the ledger), never from a caller (`ContextInputScopes`).
 - **Honest sections.** An empty anchor list, a bad window, an item with no repo, a repo outside the approved profile, no approved profile, and any refusal from the engine (`SND-CONTEXT-*`) become one section ("The context lenses are unavailable for this Step (code: message); it runs without them.") with no typed result. They never throw; a degraded source stays visible in the view's `searched` rows.

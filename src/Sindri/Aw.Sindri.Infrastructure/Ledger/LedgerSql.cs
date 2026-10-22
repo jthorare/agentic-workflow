@@ -1,6 +1,8 @@
 using System.Globalization;
 using Aw.Kernel.Data;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Workflow.Engine;
+using Microsoft.Data.Sqlite;
 
 namespace Aw.Sindri.Infrastructure.Ledger;
 
@@ -39,7 +41,9 @@ internal static class LedgerSql
     /// <summary>
     /// The filtered read: rows after the cursor, no further than the scan limit, that the filter keeps, oldest first. Each glob is a
     /// bound parameter ('type = $t0' or "type LIKE $t1 ESCAPE '\'"); no text from a caller reaches the SQL string. The walk is over
-    /// the primary key, so it needs no index.
+    /// the primary key, so it needs no index. An instance filter is a key range on the idempotency_key's unique index
+    /// ('workflow:{address}:' up to the next character after its ':'), so it reads the instance's rows alone; the planner may
+    /// walk the index in key order, hence no row limit past the cursor and an ORDER BY seq on the few rows found.
     /// </summary>
     internal static SqlStatement ScanAfter(long sequence, int max, LedgerFilter filter)
     {
@@ -47,7 +51,7 @@ internal static class LedgerSql
         var types = globs.Count == 0
             ? string.Empty
             : " AND (" + string.Join(" OR ", globs.Select(static (g, i) => IsPrefix(g) ? "type LIKE " + TypeParam(i) + " ESCAPE '\\'" : "type = " + TypeParam(i))) + ")";
-        var sql = "SELECT " + EventColumns + " FROM events WHERE seq > $seq AND seq <= $upper" + types +
+        var sql = "SELECT " + EventColumns + " FROM events WHERE " + Window(filter) + types +
             (filter.Item is null ? string.Empty : " AND item = $item") + " ORDER BY seq LIMIT $max";
         return new SqlStatement(sql, c =>
         {
@@ -57,11 +61,27 @@ internal static class LedgerSql
                 _ = c.Bind("$item", item.Value);
             }
 
+            BindInstance(c, filter.Instance);
+
             for (var i = 0; i < globs.Count; i++)
             {
                 _ = c.Bind(TypeParam(i), IsPrefix(globs[i]) ? EscapeLike(globs[i][..^1]) + "%" : globs[i]);
             }
         });
+    }
+
+    // why: with an instance the key range must drive the query, so the cursor is a unary-plus term (SQLite never uses an index for '+seq') and there is no upper bound; else the planner walks the primary key past every other instance's rows
+    private static string Window(LedgerFilter filter) => filter.Instance is null
+        ? "seq > $seq AND seq <= $upper"
+        : "+seq > $seq AND idempotency_key >= $keyFrom AND idempotency_key < $keyTo";
+
+    private static void BindInstance(SqliteCommand command, InstanceAddress? instance)
+    {
+        if (instance is { } address)
+        {
+            var prefix = LedgerFilter.InstanceKeyPrefix(address);
+            _ = command.Bind("$keyFrom", prefix).Bind("$keyTo", string.Concat(prefix.AsSpan(0, prefix.Length - 1), ";"));   // ';' is the character after ':'
+        }
     }
 
     private static string TypeParam(int index) => "$t" + index.ToString(CultureInfo.InvariantCulture);

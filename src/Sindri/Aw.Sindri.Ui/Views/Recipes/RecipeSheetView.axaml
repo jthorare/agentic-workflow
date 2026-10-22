@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:rec="using:Aw.Sindri.Ui.ViewModels.Recipes"
              xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Recipes.RecipeSheetView"
              x:DataType="rec:RecipeSheetViewModel">
   <!-- The recipe sheet (screens spec §4.3, U10a), read-only, inside the shell's sheet: the header (id@hash, version, urgency, the name template),
@@ -16,7 +17,30 @@
       <StackPanel Spacing="4">
         <TextBlock x:Name="RecipeTitle" Classes="detail-title" Text="{Binding Title}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Title}" />
         <TextBlock x:Name="RecipeNote" Classes="body-strong" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Note}" />
+        <TextBlock x:Name="RecipeDescription" Classes="body muted" Text="{Binding Description}" IsVisible="{Binding HasDescription}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Description}" />
+        <ctl:StateChipView x:Name="RecipeStanding" Chip="{Binding StandingChip}" HorizontalAlignment="Left" />
       </StackPanel>
+      <!-- Where the workflow stands (recipes spec §2): a callout for Not approved, Revoked or Out of date, why it is out of date, and the terminal command that approves it
+           (the app approves nothing here: it copies the command). Shown only once the list has answered. -->
+      <Border x:Name="RecipeCallout" Classes="frame-panel" IsVisible="{Binding HasCallout}">
+        <StackPanel Spacing="6">
+          <TextBlock x:Name="RecipeCalloutText" Classes="body-strong" Text="{Binding CalloutText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding CalloutText}" />
+          <ItemsControl x:Name="RecipeStaleReasons" ItemsSource="{Binding StaleReasons}" IsVisible="{Binding HasStaleReasons}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel x:Name="RecipeApprove" Spacing="4" IsVisible="{Binding NeedsApproval}">
+            <TextBlock Classes="caption subtle" Text="{Binding ApproveHint}" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock x:Name="RecipeApproveCommand" Classes="caption mono" Text="{Binding ApproveCommand}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ApproveCommand}" />
+              <Button x:Name="RecipeApproveCopy" Classes="copy" Content="{Binding CopyLabel}" Click="OnCopyApprove" AutomationProperties.Name="{Binding CopyLabel}" />
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
       <Panel IsVisible="{Binding States, Converter={x:Static ObjectConverters.IsNotNull}}">
         <rv:RecipeStatesBand x:Name="RecipeStates" DataContext="{Binding States}" />
       </Panel>

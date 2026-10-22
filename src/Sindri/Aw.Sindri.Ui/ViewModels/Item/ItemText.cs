@@ -15,6 +15,12 @@ internal sealed class ItemText
     /// <summary><see cref="Labels.CopyItemId"/>.</summary>
     public string CopyItemId { get; } = Labels.CopyItemId;
 
+    /// <summary>The callout's link to Needs you.</summary>
+    public string OpenNeedsYou { get; } = Labels.OpenNeedsYou;
+
+    /// <summary>The repo chip's accessible name.</summary>
+    public string RepoChip { get; } = Labels.RepoChipName;
+
     /// <summary><see cref="Labels.ColumnTitle"/>.</summary>
     public string ColumnTitle { get; } = Labels.ColumnTitle;
 

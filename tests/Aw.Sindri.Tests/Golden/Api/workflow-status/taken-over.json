@@ -44,5 +44,6 @@
     }
   ],
   "text": "ITM-01JA1/step/1  workflow.step@d39861bd1222  v3  taken-over  since 12:01 (25m)\n  next      With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.\n  budget    tokens 40k / 200k (state), 40k / 400k (instance)\n  paused    timeout 40s left\n  commands  handback, cancel\n",
+  "takenOverAt": "2026-10-12T12:01:00.0000000Z",
   "injection": []
 }

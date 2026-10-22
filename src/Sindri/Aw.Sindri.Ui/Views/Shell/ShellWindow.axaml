@@ -200,7 +200,7 @@
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
                 <Panel IsVisible="{Binding IsWorkflows}"><wfv:WorkflowsPage x:Name="WorkflowsPage" DataContext="{Binding Workflows}" /></Panel>
                 <queue:QueuePage x:Name="QueuePage" IsVisible="{Binding IsWork}" />
-                <views:PlaceholderPage x:Name="RecipesPage" Title="{Binding Text.Recipes}" Note="{Binding Text.ArrivesRecipes}" IsVisible="{Binding IsRecipes}" />
+                <Panel IsVisible="{Binding IsRecipes}"><rv:RecipesPage x:Name="RecipesPage" DataContext="{Binding RecipesPage}" /></Panel>
                 <Panel IsVisible="{Binding IsContext}"><ctxv:ContextPage x:Name="ContextPage" DataContext="{Binding Context}" /></Panel>
                 <Panel IsVisible="{Binding IsAgents}"><agv:AgentsPage x:Name="AgentsPage" DataContext="{Binding Agents}" /></Panel>
                 <!-- System hosts the control plane's health until U12 builds the rest (screens spec §4.6). -->
@@ -216,7 +216,7 @@
                 <Panel IsVisible="{Binding IsJobs}"><jv:JobsPage x:Name="JobsPage" DataContext="{Binding Jobs}" /></Panel>
                 <!-- Settings (⌘,): SindriApp puts Settings' view here at start-up; the placeholder shows where nothing does (view tests). -->
                 <ContentControl x:Name="SettingsSlot" IsVisible="{Binding IsSettings}">
-                  <views:PlaceholderPage Title="{Binding Text.Settings}" />
+                  <views:PlaceholderPage x:Name="SettingsPlaceholder" Title="{Binding Text.Settings}" />
                 </ContentControl>
               </Panel>
             </ScrollViewer>

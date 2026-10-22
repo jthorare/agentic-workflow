@@ -9,28 +9,28 @@
        wrapper (a TextBlock's peer ignores AutomationProperties.Name). The row draws its own focus border (item-row), not the adorner. -->
   <Border x:Name="JobRowFrame" Classes="item-row job-row" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="130,*,Auto" VerticalAlignment="Top">
-      <Border x:Name="JobRowChip" Margin="0,0,8,0" VerticalAlignment="Top" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
-      <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,8,0">
+    <Grid ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" VerticalAlignment="Center" MinHeight="36">
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,8,0" VerticalAlignment="Center">
         <Button x:Name="JobRowOpen" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
           <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         </Button>
-        <Border x:Name="JobRowWhen" AutomationProperties.Name="{Binding WhenText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
-            <TextBlock Classes="caption subtle" Text="{Binding WhenText}" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock Classes="caption subtle" Text="{Binding ByText}" AutomationProperties.AccessibilityView="Raw" />
-          </StackPanel>
-        </Border>
-        <Border x:Name="JobRowSummary" IsVisible="{Binding HasSummary}" AutomationProperties.Name="{Binding SummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
-            <TextBlock Classes="caption" Text="{Binding SummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock Classes="caption mono subtle" Text="{Binding CodeText}" IsVisible="{Binding HasCode}" AutomationProperties.AccessibilityView="Raw" />
-          </StackPanel>
-        </Border>
+        <TextBlock Classes="caption mono subtle" Text="{Binding KeyText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       </StackPanel>
-      <Panel Grid.Column="2" VerticalAlignment="Top" IsVisible="{Binding HasCancel}">
+      <Border x:Name="JobRowChip" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="JobRowWhen" Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding WhenText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding WhenText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding ByText}" Margin="0,0,8,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      <Border x:Name="JobRowSummary" Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding HasSummary}" AutomationProperties.Name="{Binding SummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Classes="caption" Text="{Binding SummaryText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock Classes="caption mono subtle" Text="{Binding CodeText}" IsVisible="{Binding HasCode}" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
+      </Border>
+      <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding RoundsText}" VerticalAlignment="Center" />
+      <Panel Grid.Column="6" VerticalAlignment="Center" IsVisible="{Binding HasCancel}">
         <controls:CommandControl x:Name="JobRowCancel" DataContext="{Binding Cancel}" />
       </Panel>
     </Grid>

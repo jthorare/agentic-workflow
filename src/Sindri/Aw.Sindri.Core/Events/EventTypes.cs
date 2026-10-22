@@ -62,6 +62,15 @@ public static class EventTypes
     /// <summary>A refresh job built, cleaned up and promoted the map with no human step (owner F1, 2026-10-19).</summary>
     public const string ContextMapRefreshed = "context.map.refreshed";
 
+    /// <summary>A refreshed map draft was held until the code index catches up (code index spec 6.4).</summary>
+    public const string ContextMapHeld = "context.map.held";
+
+    /// <summary>A map went ahead of the code index wait, or with nothing to wait for (code index spec 6.4); follows 'context.map.promoted'.</summary>
+    public const string ContextMapPublished = "context.map.published";
+
+    /// <summary>A hold ended without a promote: a rebuild replaced the draft, or it was already current (code index spec 6.4).</summary>
+    public const string ContextMapHoldDropped = "context.map.hold.dropped";
+
     /// <summary>The owner approved a scope packet (scoping spec §3, SC3); written by the freeze Step.</summary>
     public const string ScopingApproved = "scoping.approved";
 

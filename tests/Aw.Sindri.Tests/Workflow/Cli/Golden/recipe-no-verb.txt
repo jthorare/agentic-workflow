@@ -2,4 +2,4 @@ $ sindri recipe
 exit 2
 --- stdout
 --- stderr
-SND-CLI-001 'recipe' is not a sindri command (usage: sindri recipe validate <file> [--json] [--against <manifest.json>]; usage: sindri recipe eval <file> [--json] | --shipped [--json] | --scaffold <file> [--out <dir>] | --record <address> --out <file>; usage: sindri recipe manifest <dir> [--json]; usage: sindri recipe register <file>; usage: sindri recipe show <id|id@hash> [--json]; usage: sindri recipe list [--stale] [--json]; usage: sindri recipe approve <file|id@hash>; usage: sindri recipe revoke <id@hash>)
+SND-CLI-001 'recipe' is not a sindri command (usage: sindri recipe validate <file> [--json] [--against <manifest.json>]; usage: sindri recipe eval <file> [--json] | --shipped [--json] | --scaffold <file> [--out <dir>] | --record <address> --out <file>; usage: sindri recipe manifest <dir> [--json]; usage: sindri recipe register <file>; usage: sindri recipe show <id|id@hash> [--json]; usage: sindri recipe list [--stale] [--json]; usage: sindri recipe approve <file|id@hash>; usage: sindri recipe approve-all [--json]; usage: sindri recipe revoke <id@hash>)

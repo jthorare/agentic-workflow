@@ -23,6 +23,13 @@
       </StackPanel>
     </Grid>
 
+    <!-- F3 spec work §2: the toolbar: All and Running with counts, the repo chip, then the text filter below. -->
+    <StackPanel x:Name="QueueToolbar" Orientation="Horizontal" Spacing="8">
+      <Button x:Name="SegmentAll" Classes="segment" Classes.selected="{Binding !Queue.IsRunningSegment}" Content="{Binding Queue.AllSegment}" Click="OnSegmentAll" AutomationProperties.Name="{Binding Queue.AllSegment}" />
+      <Button x:Name="SegmentRunning" Classes="segment" Classes.selected="{Binding Queue.IsRunningSegment}" Content="{Binding Queue.RunningSegment}" Click="OnSegmentRunning" AutomationProperties.Name="{Binding Queue.RunningSegment}" />
+      <ComboBox x:Name="QueueRepo" ItemsSource="{Binding Queue.RepoChoices}" SelectedIndex="0" SelectionChanged="OnRepoChosen" MinWidth="140" Height="28" AutomationProperties.Name="{Binding Text.Items.RepoChip}" />
+    </StackPanel>
+
     <!-- §4.1: a first read that failed says what the API said (the skeleton ends); a later failure marks the rows shown stale. -->
     <StackPanel x:Name="QueueProblem" Orientation="Horizontal" Spacing="6" IsVisible="{Binding Queue.HasProblem}">
       <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
@@ -68,8 +75,14 @@
           <Grid Classes="skrow" ColumnDefinitions="*,60"><Border Classes="skeleton" Width="420" /><Border Grid.Column="1" Classes="skeleton" Width="40" /></Grid>
         </StackPanel>
 
-        <TextBlock x:Name="QueueEmpty" Classes="caption quiet" Text="{Binding Queue.EmptyText}" IsVisible="{Binding Queue.IsEmpty}"
-                   AutomationProperties.Name="{Binding Queue.EmptyText}" />
+        <StackPanel x:Name="QueueNothing" IsVisible="{Binding Queue.ShowsNothing}" Spacing="4" Margin="16,12">
+          <TextBlock Classes="body-strong" Text="{Binding Queue.NothingTitle}" AutomationProperties.Name="{Binding Queue.NothingTitle}" />
+          <TextBlock x:Name="QueueEmpty" Classes="caption quiet" Text="{Binding Queue.EmptyText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Queue.EmptyText}" />
+        </StackPanel>
+        <StackPanel x:Name="QueueNoMatch" IsVisible="{Binding Queue.ShowsNoMatch}" Spacing="8" Margin="16,12">
+          <TextBlock Classes="body-strong" Text="{Binding Queue.NoMatchTitle}" AutomationProperties.Name="{Binding Queue.NoMatchTitle}" />
+          <Button x:Name="QueueClearFilter" Content="{Binding Queue.ClearFilterText}" Click="OnClearFilter" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Queue.ClearFilterText}" />
+        </StackPanel>
 
         <ItemsControl x:Name="QueueGroups" ItemsSource="{Binding Queue.Groups}">
           <ItemsControl.ItemTemplate>
@@ -96,5 +109,21 @@
         </ItemsControl>
       </StackPanel>
     </Border>
+    <StackPanel x:Name="QueueClosed">
+      <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Classes="caption subtle" Text="▸" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedHeader}" />
+        </StackPanel>
+      </ToggleButton>
+      <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="queue:ItemRowViewModel">
+            <rows:ItemRow />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+    <TextBlock x:Name="QueueFooter" Classes="caption subtle" Text="{Binding Queue.FooterText}" AutomationProperties.Name="{Binding Queue.FooterText}" />
   </StackPanel>
 </UserControl>

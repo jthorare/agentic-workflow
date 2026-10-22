@@ -70,6 +70,7 @@
         </ItemsControl>
       </StackPanel>
 
+      <Border x:Name="ItemDecisionsCallout" Classes.callout="{Binding HasOpenDecision}">
       <StackPanel x:Name="ItemDecisions" Spacing="6">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Decisions}" />
         <TextBlock x:Name="ItemDecisionsEmpty" Classes="body muted" Text="{Binding Needs.DecisionsEmpty}" TextWrapping="Wrap"
@@ -102,9 +103,12 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <Button x:Name="ItemOpenNeedsYou" Content="{Binding Text.OpenNeedsYou}" Click="OnOpenNeedsYou" HorizontalAlignment="Left" IsVisible="{Binding HasOpenDecision}"
+                AutomationProperties.Name="{Binding Text.OpenNeedsYou}" />
         <TextBlock x:Name="ItemDecisionRefusal" Classes="caption" Text="{Binding Needs.Refusal}" TextWrapping="Wrap"
                    IsVisible="{Binding Needs.Refusal, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
       </StackPanel>
+      </Border>
 
       <StackPanel x:Name="ItemRequests" Spacing="6">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Requests}" />

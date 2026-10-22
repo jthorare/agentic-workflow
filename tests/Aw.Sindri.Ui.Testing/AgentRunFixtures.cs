@@ -18,7 +18,7 @@ internal static class AgentRunFixtures
     internal const string Address = "ITM-01JM3/step/1";
 
     /// <summary>The launch id OpenItem's requested golden answers with.</summary>
-    internal const string Requested = "LCH-00000000000000000000000000000015";
+    internal const string Requested = "LCH-00000000000000000000000000000016";
 
     /// <summary>The status of an instance an agent session runs.</summary>
     /// <returns>The status as P8 serves it.</returns>

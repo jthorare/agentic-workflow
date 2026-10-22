@@ -25,6 +25,7 @@ internal static partial class Labels
         ["ApproveRecipe"] = "Approve recipe",
         ["BuildContextMap"] = "Build map",
         ["RefreshContextMap"] = "Refresh map",
+        ["PublishContextMap"] = "Publish map",
         ["RunContextBacktest"] = "Run map backtest",
         ["CancelJob"] = "Cancel job",
         ["CloseItem:cancelled"] = "Close as cancelled",

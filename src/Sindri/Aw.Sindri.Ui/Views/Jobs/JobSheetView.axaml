@@ -7,6 +7,13 @@
   <!-- The job sheet (API P6), read-only, inside the shell's sheet (F3): the job in words, its state line and how it ended, Cancel while it runs, then what it has said so far.
        What it produced and the technical fields (the id, the kind as served, the key, the code) wait behind closed disclosures. Every named line is a Border the screen
        reader reads as one text; the TextBlocks inside are Raw (a TextBlock's peer reads its Text and ignores a Name). -->
+  <UserControl.Styles>
+    <Style Selector="Border.job-callout.failed">
+      <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
+      <Setter Property="Padding" Value="8" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel x:Name="JobSheet" Spacing="{StaticResource Space.MD}">
     <TextBlock x:Name="JobLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
     <TextBlock x:Name="JobProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding IsProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
@@ -28,7 +35,7 @@
         <Border x:Name="JobState" AutomationProperties.Name="{Binding StateLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body mono" Text="{Binding StateLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Border x:Name="JobSummary" IsVisible="{Binding HasSummary}" AutomationProperties.Name="{Binding SummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="JobSummary" IsVisible="{Binding HasSummary}" Classes.failed="{Binding IsFailedJob}" Classes="job-callout" AutomationProperties.Name="{Binding SummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding SummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>

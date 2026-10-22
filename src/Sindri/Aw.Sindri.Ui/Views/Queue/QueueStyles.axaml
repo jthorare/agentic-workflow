@@ -97,4 +97,26 @@
   <Style Selector="Button.command-control.destructive">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
   </Style>
+  <!-- A stage the app has no plain name for shows as served, grey. -->
+  <Style Selector="Border.item-row TextBlock.raw">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+  </Style>
+  <!-- The All / Running segments. -->
+  <Style Selector="Button.segment">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="Padding" Value="12,4" />
+    <Setter Property="Height" Value="28" />
+  </Style>
+  <Style Selector="Button.segment.selected">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+  </Style>
+  <!-- An open decision on the item sheet: an amber callout. -->
+  <Style Selector="Border.callout">
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    <Setter Property="Padding" Value="12" />
+  </Style>
 </Styles>

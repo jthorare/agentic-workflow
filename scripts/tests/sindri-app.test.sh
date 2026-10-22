@@ -26,6 +26,30 @@ mkdir -p "$HOME"
 CALLS="$WORK/calls"; : > "$CALLS"
 export CALLS
 
+# The stub sindri: prints its arguments, and answers the publish's recipe steps: `recipe manifest <dir> --json` (the digest is a
+# checksum of the directory's files) and `recipe eval --shipped --json` (EVAL_FAIL=1 fails it; EVAL_COUNT_DELTA shifts the embedded count).
+cat > "$WORK/stub-sindri" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1 $2" = "recipe manifest" ]; then
+  echo "manifest-call" >> "$CALLS"
+  echo "{\"recipes\":[],\"invalid\":[],\"digest\":\"sha256:$(find "$3" -type f | LC_ALL=C sort | xargs cat | cksum | tr -d ' ')\"}"
+  exit 0
+fi
+if [ "$1 $2" = "recipe eval" ]; then
+  echo "eval-call" >> "$CALLS"
+  c=$(( $(cat "$(dirname "$0")/embedded-count") + ${EVAL_COUNT_DELTA:-0} )); recs=""; i=0
+  while [ "$i" -lt "$c" ]; do recs="$recs{},"; i=$((i+1)); done
+  echo "{\"passed\":$([ "${EVAL_FAIL:-0}" = 1 ] && echo false || echo true),\"recipes\":[${recs%,}]}"
+  [ "${EVAL_FAIL:-0}" = 1 ] && { echo "workflow.a@1: happy fail" >&2; exit 1; }
+  exit 0
+fi
+echo "sindri $*"
+echo "root=$DOTNET_ROOT" >&2
+echo "sindri $*" >> "$CALLS"
+case "$1" in mcp) echo "codex: registered" ; exit "${MCP_EXIT:-0}" ;; esac
+EOF
+export STUB_SINDRI="$WORK/stub-sindri"
+
 # The fake dotnet: the pinned SDK is installed; publish -o DIR writes the sindri stub there (FAIL_PUBLISH=1 fails it).
 mkdir -p "$WORK/fakebin"
 cat > "$WORK/fakebin/dotnet" <<'EOF'
@@ -41,9 +65,13 @@ case "$1" in
       [ -f "$f" ] && echo "has $f" >> "$CALLS"
     done
     [ "${FAIL_PUBLISH:-0}" = 1 ] && { echo "error CS0001: boom"; exit 1; }
+    rd=""; for a in "$@"; do case "$a" in -p:AwRecipesDir=*) rd="${a#-p:AwRecipesDir=}" ;; esac; done
     out=""; while [ $# -gt 0 ]; do [ "$1" = -o ] && out="$2"; shift; done
     mkdir -p "$out"
-    printf '#!/usr/bin/env bash\necho "sindri $*"\necho "root=$DOTNET_ROOT" >&2\necho "sindri $*" >> "$CALLS"\ncase "$1" in mcp) echo "codex: registered" ; exit "${MCP_EXIT:-0}" ;; esac\n' > "$out/sindri"; chmod +x "$out/sindri" ;;
+    # The embedded count is the *.yaml files of the recipes dir the build was told to embed (-p:AwRecipesDir).
+    n=0; [ -n "$rd" ] && [ -d "$rd" ] && n="$(find "$rd" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
+    echo "$n" > "$out/embedded-count"
+    cp "$STUB_SINDRI" "$out/sindri"; chmod +x "$out/sindri" ;;
 esac
 EOF
 chmod +x "$WORK/fakebin/dotnet"
@@ -291,6 +319,40 @@ check "stamp: the commit is part of it" "$(publishes):$([ "$S_B" != "$S_C" ] && 
 : > "$CALLS"
 OUT="$(bash "$R/scripts/sindri-app.sh" status 2>/dev/null)"
 check "no flag: arguments go to sindri" "$OUT" "sindri status"
+
+# The eval step: after the publish, the published binary's `recipe eval --shipped` runs when the recipes manifest digest differs from
+# the last successful publish's. A failing eval fails the publish (no new build, no digest recorded); an unchanged digest skips it;
+# an embedded count that differs from the staged recipes/sindri/*.yaml count fails it.
+DG="$B/recipes-digest"
+ccommit() { git -C "$R" -c user.email=t@t -c user.name=t commit -q "$@" >/dev/null 2>&1; }
+echo 'id: a3' > "$R/recipes/sindri/a.yaml"; ccommit -am "recipe 3"
+BEFORE="$(cat "$B/current")"; D_BEFORE="$(cat "$DG" 2>/dev/null || true)"; : > "$CALLS"
+EVAL_FAIL=1 bash "$R/scripts/sindri-app.sh" --publish-only >/dev/null 2>"$WORK/err"; RC=$?
+check "eval: a failing eval fails the publish (exit 1, the sentence, the eval's output)" \
+  "$RC:$(grep -c 'recipe evals failed' "$WORK/err"):$(grep -c 'workflow.a@1: happy fail' "$WORK/err")" "1:1:1"
+check "eval: a failed eval leaves the last build current and the digest as it was" \
+  "$([ "$(cat "$B/current")" = "$BEFORE" ] && echo same):$([ "$(cat "$DG" 2>/dev/null || true)" = "$D_BEFORE" ] && echo same):$(test -d "$B/.lock" || echo unlocked)" "same:same:unlocked"
+check "eval: a failed eval leaves no build for the stamp" "$(builds)" "2"
+
+: > "$CALLS"
+bash "$R/scripts/sindri-app.sh" --publish-only >/dev/null 2>"$WORK/err"; RC=$?
+check "eval: the same source passes when the evals do, and runs them once" "$RC:$(grep -c '^eval-call$' "$CALLS")" "0:1"
+check "eval: the digest is recorded next to the stamp" "$([ -s "$DG" ] && [ "$(cat "$DG")" != "$D_BEFORE" ] && echo recorded)" "recorded"
+
+ccommit --allow-empty -m "empty again"
+S_D="$(cat "$B/current")"; : > "$CALLS"
+EVAL_FAIL=1 bash "$R/scripts/sindri-app.sh" --publish-only >/dev/null 2>"$WORK/err"; RC=$?
+check "eval: an unchanged digest skips the evals (they would fail), the build still publishes" \
+  "$RC:$(grep -c '^eval-call$' "$CALLS"):$(grep -c '^manifest-call$' "$CALLS"):$(publishes):$([ "$(cat "$B/current")" != "$S_D" ] && echo new)" "0:0:1:1:new"
+
+echo 'id: a4' > "$R/recipes/sindri/a.yaml"; ccommit -am "recipe 4"
+echo 'id: b' > "$R/recipes/sindri/b.yaml"; git -C "$R" add -A; ccommit -m "recipe b"
+BEFORE="$(cat "$B/current")"; D_BEFORE="$(cat "$DG")"; : > "$CALLS"
+EVAL_COUNT_DELTA=1 bash "$R/scripts/sindri-app.sh" --publish-only >/dev/null 2>"$WORK/err"; RC=$?
+check "eval: an embedded count that differs from the staged yaml count fails (2 staged, 3 embedded)" \
+  "$RC:$(grep -c 'embeds 3 recipes but recipes/sindri has 2' "$WORK/err"):$([ "$(cat "$B/current")" = "$BEFORE" ] && [ "$(cat "$DG")" = "$D_BEFORE" ] && echo unchanged)" "1:1:unchanged"
+bash "$R/scripts/sindri-app.sh" --publish-only >/dev/null 2>&1; RC=$?
+check "eval: with the right count the same commit publishes" "$RC:$([ "$(cat "$B/current")" != "$BEFORE" ] && echo new)" "0:new"
 
 # A tree that is not a git checkout cannot be published.
 NG="$WORK/nogit"; mkdir -p "$NG/scripts/lib" "$NG/src/Sindri/Aw.Sindri.Host"

@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Workflow.Engine.Triggers;
 namespace Aw.Sindri.Features.GetInstanceEvents;
 
 /// <summary>
-/// Reads the ledger after the cursor to its head and keeps the instance's events (<see cref="InstanceEvents.Belongs(LedgerEvent, InstanceAddress)"/>):
+/// Reads the instance's events (<see cref="InstanceEvents.Belongs(LedgerEvent, InstanceAddress)"/>) after the cursor to the ledger's head: through the ledger's instance filter (only its rows are read) for an address, row by row for an id:
 /// Temporal's own history is never read (engine spec §5.6). An opaque id is matched against the addresses in the ledger's own
 /// keys, so an ended instance's trail reads after Temporal has dropped it (visibility lag, retention); an address or bare item
 /// is resolved through the directory. A first read (no cursor) that finds nothing checks that the instance exists, so a
@@ -32,19 +32,19 @@ internal sealed class GetInstanceEventsService(ILedgerReader ledger, EventFactor
             return selected.Error;
         }
 
-        var (belongs, address) = selected.Value;
+        var (read, address) = selected.Value;
         var found = new List<InstanceEventView>();
         var cursor = Math.Max(request.After, 0);
         while (true)
         {
-            var page = await ledger.ReadAfter(cursor, Page, cancellationToken).ConfigureAwait(false);
+            var page = await read(cursor, cancellationToken).ConfigureAwait(false);
             if (page.IsError)
             {
                 return page.Error;
             }
 
-            found.AddRange(page.Value.Where(belongs).Select(View));
-            if (page.Value.Count < Page)
+            found.AddRange(page.Value.Events.Select(View));
+            if (!page.Value.Full)
             {
                 if (found.Count == 0 && request.After <= 0)
                 {
@@ -55,25 +55,48 @@ internal sealed class GetInstanceEventsService(ILedgerReader ledger, EventFactor
                     }
                 }
 
-                return new GetInstanceEventsResponse(found, page.Value.Count > 0 ? page.Value[^1].Sequence : cursor);
+                return new GetInstanceEventsResponse(found, page.Value.Next);
             }
 
-            cursor = page.Value[^1].Sequence;
+            cursor = page.Value.Next;
         }
     }
 
-    /// <summary>Which ledger events are the instance's: by the ledger's own keys for an id, by the resolved address otherwise (whose address is then known).</summary>
-    private async ValueTask<Result<(Func<LedgerEvent, bool> Belongs, InstanceAddress? Address)>> Select(string reference, CancellationToken cancellationToken)
+    /// <summary>One read of the ledger past a cursor: the instance's rows, where the next read starts, and whether the page filled.</summary>
+    private delegate ValueTask<Result<Rows>> ReadPage(long cursor, CancellationToken cancellationToken);
+
+    private sealed record Rows(IReadOnlyList<LedgerEvent> Events, long Next, bool Full);
+
+    /// <summary>How to read the instance's rows: by the ledger's own keys for an id (every row is read and tested), through the ledger's instance filter for an address (only its rows are read).</summary>
+    private async ValueTask<Result<(ReadPage Read, InstanceAddress? Address)>> Select(string reference, CancellationToken cancellationToken)
     {
         if (WorkflowInstanceId.TryFrom(reference, out var id))
         {
-            return (e => InstanceEvents.Belongs(e, id), null);
+            return ((cursor, token) => ReadAll(cursor, e => InstanceEvents.Belongs(e, id), token), null);
         }
 
         var resolved = await directory.Resolve(reference, cancellationToken).ConfigureAwait(false);
-        return resolved.IsError
-            ? resolved.Error
-            : (e => InstanceEvents.Belongs(e, resolved.Value), resolved.Value);
+        if (resolved.IsError)
+        {
+            return resolved.Error;
+        }
+
+        var filter = new LedgerFilter(Types: null, Item: null, Instance: resolved.Value);
+        return ((cursor, token) => ReadInstance(cursor, filter, token), resolved.Value);
+    }
+
+    private async ValueTask<Result<Rows>> ReadAll(long cursor, Func<LedgerEvent, bool> belongs, CancellationToken cancellationToken)
+    {
+        var page = await ledger.ReadAfter(cursor, Page, cancellationToken).ConfigureAwait(false);
+        return page.IsError
+            ? page.Error
+            : new Rows([.. page.Value.Where(belongs)], page.Value.Count > 0 ? page.Value[^1].Sequence : cursor, page.Value.Count >= Page);
+    }
+
+    private async ValueTask<Result<Rows>> ReadInstance(long cursor, LedgerFilter filter, CancellationToken cancellationToken)
+    {
+        var scan = await ledger.Scan(cursor, Page, filter, cancellationToken).ConfigureAwait(false);
+        return scan.IsError ? scan.Error : new Rows(scan.Value.Events, scan.Value.ScannedTo, scan.Value.Events.Count >= Page);
     }
 
     /// <summary>An instance with no rows yet exists in Temporal, else the reference is SND-WF-001.</summary>

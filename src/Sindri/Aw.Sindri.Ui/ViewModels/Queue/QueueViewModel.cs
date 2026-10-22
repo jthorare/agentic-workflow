@@ -106,6 +106,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <returns>A task that completes when the view is shown.</returns>
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
+        LastUrl = url;
         var answer = await api.Queue(url, cancellationToken).ConfigureAwait(true);
         if (answer.IsError)
         {
@@ -164,10 +165,12 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         _rows = fresh;
         Patch.To(Groups, [.. view.Groups.Select(g => Group(g, all[g.Group]))]);
         Total = all.Values.Sum(r => r.Count);
-        var unmatched = FilterText.Length > 0 && !Visible().Any();
+        var unmatched = (FilterText.Length > 0 || SelectedRepo.Length > 0) && !Visible().Any();
         IsEmpty = (Showing == QueueFilter.All && Total == 0) || unmatched;
         EmptyText = unmatched ? Labels.NoMatches : IsEmpty ? view.Empty ?? string.Empty : string.Empty;
         Panels(all);
+        Toolbar(all);
+        States(view);
         Mark();
     }
 
@@ -204,7 +207,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
             shown = _groups[group.Group] = new QueueGroupViewModel(group.Group);
         }
 
-        shown.Update([.. all.Where(r => Matches(r.Id, r.Title, r.Repo))], group.Empty, picked, filtered: picked && Showing != QueueFilter.All);
+        shown.Update([.. all.Where(r => Matches(r.Id, r.Title, r.Repo))], EmptyLine(group), picked, filtered: picked && Showing != QueueFilter.All);
         return shown;
     }
 

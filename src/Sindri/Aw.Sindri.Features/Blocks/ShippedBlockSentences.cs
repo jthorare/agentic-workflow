@@ -35,6 +35,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["input.context.code"] = "Gives the AI agent the code it needs from the map of the repo",
         ["input.context.history"] = "Gives the AI agent the history of the files it will change",
         ["input.context.lenses"] = "Gives the AI agent the map of the product, seen from several angles",
+        ["input.context.retrieve"] = "Gives the AI agent cited answers from the knowledge of the product and its code",
         ["input.handoff-note"] = "Gives the AI agent the notes left by the last fix",
         ["input.phase-packet"] = "Gives the AI agent the phase's plan and what done means",
         ["input.pr.context"] = "Gives the AI agent the pull request's title, description, changes, failing checks and comments",

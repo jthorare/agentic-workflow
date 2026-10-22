@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Worktrees;
 using Aw.Sindri.Infrastructure.Workflow;
 
@@ -12,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Worktrees;
 /// 'git worktree list --porcelain': the path is already a worktree of that branch with HEAD at the base. Each git call is
 /// bounded to 30 s.
 /// </summary>
-internal sealed class GitWorktrees : IWorktrees
+internal sealed class GitWorktrees(IAgentTrust? trust = null) : IWorktrees
 {
     private const string HeadsPrefix = "refs/heads/";
 
@@ -61,6 +62,17 @@ internal sealed class GitWorktrees : IWorktrees
     }
 
     public async ValueTask<Result<Unit>> Remove(string path, CancellationToken cancellationToken)
+    {
+        var removed = await RemoveWorktree(path, cancellationToken).ConfigureAwait(false);
+        if (removed.IsSuccess && trust is not null)
+        {
+            _ = await trust.Untrust(path, cancellationToken).ConfigureAwait(false);   // the agent CLI's trust entry goes with the worktree; a file that can't be edited is left, the worktree is gone either way
+        }
+
+        return removed;
+    }
+
+    private async ValueTask<Result<Unit>> RemoveWorktree(string path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(path);
         if (!Path.IsPathRooted(path))

@@ -34,8 +34,29 @@ internal readonly record struct ContextMapEvents(ILedgerStore Ledger, EventFacto
     /// <summary>Appends 'context.map.refreshed' for a finished refresh.</summary>
     internal async ValueTask<Result<LedgerAppend>> Refreshed(RefreshContextMapResult result, CancellationToken cancellationToken)
     {
-        var payload = new ContextMapRefreshed(result.Repo, result.Version, result.Heads, result.Accepted, result.Removed, result.Dropped, result.Cleanup);
+        var payload = new ContextMapRefreshed(result.Repo, result.Version, result.Heads, result.Accepted, result.Removed, result.Dropped, result.Cleanup, result.Held);
         var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapRefreshed}:{result.Repo}:v{result.Version}");
         return await Ledger.Append(Events.Entry(EventTypes.ContextMapRefreshed, payload, key), Grant, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'context.map.held' for a draft held for the code index.</summary>
+    internal async ValueTask<Result<LedgerAppend>> HeldFor(ContextMapHeld payload, CancellationToken cancellationToken)
+    {
+        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapHeld}:{payload.Repo}:v{payload.Version}");
+        return await Ledger.Append(Events.Entry(EventTypes.ContextMapHeld, payload, key), Grant, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'context.map.published' for a map that went ahead, after its 'context.map.promoted'.</summary>
+    internal async ValueTask<Result<LedgerAppend>> Published(ContextMapPublished payload, CancellationToken cancellationToken)
+    {
+        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapPublished}:{payload.Repo}:v{payload.Version}");
+        return await Ledger.Append(Events.Entry(EventTypes.ContextMapPublished, payload, key), Grant, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'context.map.hold.dropped' for a hold that ended with no promote; <paramref name="attempt"/> keeps one drop apart from another of the same version.</summary>
+    internal async ValueTask<Result<LedgerAppend>> HoldDropped(string repo, int version, string reason, string attempt, CancellationToken cancellationToken)
+    {
+        var key = string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ContextMapHoldDropped}:{repo}:v{version}:{attempt}");
+        return await Ledger.Append(Events.Entry(EventTypes.ContextMapHoldDropped, new ContextMapHoldDropped(version, reason), key), Grant, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -94,4 +94,70 @@ ln -s "$WORK/elsewhere" "$T/link"
 TMPDIR="$T" guard_scratch "$T/link" 2>/dev/null; check "a link out of TMPDIR is refused" "$?" "2"
 TMPDIR="$T" guard_scratch "$T/missing" 2>/dev/null; check "a missing dir is refused" "$?" "2"
 
+# generate_map: the shape the context import accepts (keys follow the grammar, every implements/tests edge has evidence for a
+# file that exists), over a throwaway git repo
+G="$WORK/gitrepo"; mkdir -p "$G/docs/sindri" "$G/src/A" "$G/tests/T"
+printf '# readme\n' > "$G/docs/sindri/README.md"; printf 'class A {}\n' > "$G/src/A/A.cs"; printf 'class B {}\n' > "$G/src/A/B.cs"
+printf 'class ATests {}\n' > "$G/tests/T/ATests.cs"
+git -C "$G" init -q && git -C "$G" add -A && git -C "$G" -c user.name=t -c user.email=t@t commit -qm init
+printf '# Feature\nTouches `src/A/A.cs` and `src/A/B.cs`, tested by `tests/T/ATests.cs`; not `src/none.cs`.\n' > "$G/docs/f.md"
+REPO="$G" FEATURE_REL="docs/f.md" CODE_FILE=""
+feature_title() { echo "A feature"; }
+generate_map "$WORK/map.yaml"
+map="$(cat "$WORK/map.yaml")"
+contains "map: feature node" "$map" 'key: "feature:sandbox"'
+contains "map: names the code files" "$map" 'key: "code:src/A/B.cs"'
+contains "map: names the test file" "$map" 'key: "code:tests/T/ATests.cs"'
+contains "map: tests edge" "$map" 'type: tests, evidence: [{key: "repo:repo/tests/T/ATests.cs"}]'
+contains "map: mentions edge" "$map" 'type: mentions'
+check "map: a file that does not exist is not used" "$(grep -c 'none.cs' "$WORK/map.yaml")" "0"
+check "map: two surfaces part-of the feature" "$(grep -c 'type: part-of' "$WORK/map.yaml")" "2"
+bad=0
+for k in $(grep -oE 'key: "(surface|feature|code|record):[^"]*"' "$WORK/map.yaml" | sed 's/key: "//; s/"$//'); do
+  case "$k" in
+    surface:api/* | surface:command/* | surface:dialog/* | surface:flag/* | surface:job/* | surface:keybinding/* | surface:menu/* | surface:notification/* | surface:pane/* | surface:permission/* | surface:report/* | surface:route/* | surface:screen/* | surface:setting/*) ;;
+    surface:*) echo "  bad surface kind: $k"; bad=1 ;;
+  esac
+done
+check "map: every surface uses a valid kind" "$bad" "0"
+bad=0; impl=0
+while IFS= read -r line; do
+  case "$line" in *"type: implements"* | *"type: tests"*) ;; *) continue ;; esac
+  impl=$((impl + 1))
+  ev="$(printf '%s\n' "$line" | sed -n 's/.*evidence: \[{key: "repo:repo\/\([^"]*\)"}\].*/\1/p')"
+  from="$(printf '%s\n' "$line" | sed -n 's/.*from: "code:\([^"]*\)".*/\1/p')"
+  { [ -n "$ev" ] && [ -f "$G/$ev" ] && [ "$ev" = "$from" ]; } || { echo "  bad edge: $line"; bad=1; }
+done < "$WORK/map.yaml"
+check "map: every implements/tests edge has evidence for an existing file" "$bad" "0"
+check "map: at least two implements edges and one tests edge" "$([ "$impl" -ge 3 ] && echo yes)" "yes"
+CODE_FILE="docs/sindri/README.md"; generate_map "$WORK/map2.yaml"
+contains "map: --code leads" "$(cat "$WORK/map2.yaml")" 'key: "code:docs/sindri/README.md"'
+check "map: --code pads to two implements edges" "$(grep -c 'type: implements' "$WORK/map2.yaml")" "2"
+CODE_FILE=""
+printf '# Feature with nothing named\n' > "$G/docs/g.md"; FEATURE_REL="docs/g.md"; generate_map "$WORK/map3.yaml"
+check "map: fallback gives two implements edges" "$(grep -c 'type: implements' "$WORK/map3.yaml")" "2"
+
+# kill_launched_sessions: only the sessions whose pane process tree has this home's AW_SINDRI_HOME
+KILLED="$WORK/killed"; : > "$KILLED"
+launch_tmux() {
+  case "$1" in
+    list-sessions) printf 'snd-LCH-mine\nsnd-LCH-theirs\nsnd-LCH-deep\nother-session\n' ;;
+    list-panes) case "$3" in =snd-LCH-mine) echo 100 ;; =snd-LCH-theirs) echo 200 ;; =snd-LCH-deep) echo 300 ;; esac ;;
+    kill-session) echo "$3" >> "$KILLED" ;;
+  esac
+}
+proc_children() { case "$1" in 300) echo 301 ;; 301) echo 302 ;; esac; }
+proc_environ() {
+  case "$1" in
+    100) printf 'PATH=/bin\nAW_SINDRI_HOME=/scratch/mine\n' ;;
+    200) printf 'AW_SINDRI_HOME=/scratch/mine-not\nAW_SINDRI_HOME2=/scratch/mine\n' ;;
+    302) printf 'AW_SINDRI_HOME=/scratch/mine\n' ;;
+    *) printf 'PATH=/bin\n' ;;
+  esac
+}
+kill_launched_sessions /scratch/mine 2>/dev/null
+check "cleanup: ends this home's sessions, a child's too, and no other" "$(sort "$KILLED" | tr '\n' ' ')" "=snd-LCH-deep =snd-LCH-mine "
+: > "$KILLED"; kill_launched_sessions "" 2>/dev/null
+check "cleanup: no home kills nothing" "$(wc -c < "$KILLED" | tr -d ' ')" "0"
+
 exit "$fail"

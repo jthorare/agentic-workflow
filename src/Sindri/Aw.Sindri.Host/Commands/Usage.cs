@@ -82,6 +82,7 @@ internal static class Usage
         "       sindri recipe show <id|id@hash> [--json]  the recipe's keys, urgency, inputs, outputs, path order and loops (a bare id is the approved version); --json: the served RecipeView",
         "       sindri recipe list [--stale] [--json]    one line per registered recipe; --stale: approved ones that drifted or pin a stale child",
         "       sindri recipe approve <file|id@hash>     preview, then type 'approve <id> <version>' at a terminal: 'approved <id>@<hash12>'",
+        "       sindri recipe approve-all [--json]       the plan (each recipe and version, children first), then type 'approve-all <digest6>' at a terminal: starts the job that approves them; --json: the started job",
         "       sindri recipe revoke <id@hash>           preview (parks, cascade, parents), then type 'revoke <id>@<hash12>' at a terminal",
         "       sindri scoping check (<address> | --facts <dir>) [--draft <dir>] [--stage draft|evidence] [--json]   the scoping rules over an instance's facts (through serve) or a directory of fact files; --draft overlays draft files (never inside a git worktree); exit 0 pass, 1 findings, 2 usage, tool error or serve not running",
         "       sindri scoping show (<address> | --facts <dir>) [--json]   the stop view: nine sections, the coverage header and every recorded limit with its fix line",

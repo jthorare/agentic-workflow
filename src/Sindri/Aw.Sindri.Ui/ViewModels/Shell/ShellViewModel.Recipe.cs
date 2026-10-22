@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Recipes;
 
@@ -8,6 +9,9 @@ internal sealed partial class ShellViewModel
 {
     /// <summary>The recipe sheet.</summary>
     public RecipeSheetViewModel Recipe { get; }
+
+    /// <summary>The Recipes page's list (shown to people as workflows).</summary>
+    public RecipesPageViewModel RecipesPage { get; private set; }
 
     /// <summary>The Workflows group whose Recipe button opened the sheet (its recipe id), where Esc returns focus; null when it was opened some other way.</summary>
     internal string? OpenerRecipeGroup { get; private set; }
@@ -32,8 +36,20 @@ internal sealed partial class ShellViewModel
         }
     }
 
+    [MemberNotNull(nameof(RecipesPage))]
     private void InitRecipe()
     {
+        RecipesPage = new RecipesPageViewModel(_api);
+        Health.Follow(RecipesPage.Refresh);
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(IsRecipes), StringComparison.Ordinal))
+            {
+                RecipesPage.SetShown(IsRecipes);
+            }
+        };
+        RecipesPage.OpenRequested += (_, e) => OpenSheet(e.Link);
+        RecipesPage.ApproveNewRequested += (_, _) => Navigate(DeepLink.Setup);   // Setup's held approve-all: the app approves nothing from here
         Health.Follow((url, token) => IsRecipeSheet ? Recipe.Refresh(url, token) : Task.CompletedTask);
 
         // The frame's link stacks the recipe on it (Back returns to the frame); a group head's button opens the approved version over the page it is on.
@@ -48,4 +64,7 @@ internal sealed partial class ShellViewModel
             OpenerRecipeGroup = e.Subject;   // Esc comes back to this group's button
         };
     }
+
+    // The Recipes page's own keys (J / K, Enter) belong to the page and never to the sheet.
+    private bool RecipesKeyPressed(string key, bool inSheet) => !inSheet && IsRecipes && RecipesPage.Press(key);
 }

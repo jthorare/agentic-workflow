@@ -32,6 +32,12 @@ internal sealed class JobRowViewModel : ObservableObject
     /// <summary>The kind in words, and what it works on: "Run service · heartbeat".</summary>
     public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The job's key, shown in grey beside the kind.</summary>
+    public string KeyText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>"3 rounds".</summary>
+    public string RoundsText { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The chip: glyph and word.</summary>
     public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -83,7 +89,8 @@ internal sealed class JobRowViewModel : ObservableObject
     {
         var (glyph, word) = Labels.JobChip(Row.State);
         ChipText = glyph + " " + word;
-        TitleText = TitleOf(Row);
+        TitleText = Labels.JobKind(Row.Kind);
+        (KeyText, RoundsText) = (Row.Key, Labels.JobRounds(Row.Rounds));
         WhenText = When();
         ByText = "by " + Labels.JobStartedBy(Row.StartedBy);
         (SummaryText, CodeText) = (Row.Summary ?? string.Empty, Row.Code ?? string.Empty);
@@ -98,12 +105,4 @@ internal sealed class JobRowViewModel : ObservableObject
     private string When() => IsRunning
         ? Labels.JobWhen(running: true, _clock.GetUtcNow() - Row.StartedAt)
         : Labels.JobWhen(running: false, _clock.GetUtcNow() - (Row.EndedAt ?? Row.StartedAt));
-
-    // The kind as the catalog words an action ("Run service"), and what the job works on when it says: the service, the item or the repo.
-    private static string TitleOf(JobRowView row)
-    {
-        var kind = Labels.Action(row.Kind);
-        var on = row.Service ?? row.Item ?? row.Repo;
-        return on is { Length: > 0 } ? kind + " · " + on : kind;
-    }
 }

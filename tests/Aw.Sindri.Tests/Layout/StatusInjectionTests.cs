@@ -52,6 +52,15 @@ public sealed class StatusInjectionTests
     }
 
     [Fact]
+    public void Status_fields_carry_the_takeover_time_only_while_taken_over()
+    {
+        var taken = StatusRecords.Of(StatusCases.View("taken-over"), StatusCases.Now);
+
+        Assert.Equal(taken.Header.Since, taken.TakenOverAt);
+        Assert.Null(StatusRecords.Of(StatusCases.View("desk-task"), StatusCases.Now).TakenOverAt);
+    }
+
+    [Fact]
     public void The_injection_row_is_a_public_catalogued_event()
     {
         var entry = Assert.Single(EventCatalog.All, static e => e.Type == EventTypes.WorkflowInjection);

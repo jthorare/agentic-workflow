@@ -12,11 +12,13 @@ public static class AgentStepBrief
     /// <summary>Renders the brief; deterministic for the same run and descriptor.</summary>
     /// <param name="run">The run: the instance, the run token and the Step.</param>
     /// <param name="descriptor">The Step's descriptor, or null when the catalog doesn't know it.</param>
+    /// <param name="instructions">What the Step is told to do (<see cref="IAgentStepInstructions.Lines"/>), after the first line; none for a Step that has no instructions.</param>
     /// <returns>The brief.</returns>
-    public static string Render(AgentStepRun run, BlockDescriptor? descriptor)
+    public static string Render(AgentStepRun run, BlockDescriptor? descriptor, IReadOnlyList<string>? instructions = null)
     {
         ArgumentNullException.ThrowIfNull(run);
         var lines = new List<string> { $"Sindri Step brief. Instance {run.Address.Value}, run {run.Run.Value}, state {run.Step.State}." };
+        lines.AddRange(instructions ?? []);
         if (descriptor is { Inputs.Count: > 0 })
         {
             lines.Add("You read: " + string.Join(", ", descriptor.Inputs.Select(static i => i.Value)) + ".");

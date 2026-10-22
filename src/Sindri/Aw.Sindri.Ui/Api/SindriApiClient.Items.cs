@@ -11,6 +11,10 @@ internal sealed partial class SindriApiClient
     public Task<Result<QueueView>> Queue(Uri api, CancellationToken cancellationToken) => Get<QueueView>(api, "/sindri/queue", cancellationToken, view: true);
 
     /// <inheritdoc />
+    public Task<Result<ItemListView>> ListItems(Uri api, string state, CancellationToken cancellationToken) =>
+        Get<ItemListView>(api, "/sindri/items?state=" + Uri.EscapeDataString(state), cancellationToken, view: true);
+
+    /// <inheritdoc />
     public Task<Result<ItemView>> Item(Uri api, string itemId, CancellationToken cancellationToken) =>
         Get<ItemView>(api, "/sindri/items/" + Uri.EscapeDataString(itemId), cancellationToken, view: true);
 

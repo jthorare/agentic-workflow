@@ -214,6 +214,7 @@ public static class WorkflowViewFixtures
             Commands(row, lines.Answer, open), string.Empty)
         {
             Run = lines.Run,
+            TakenOverAt = lines.TakenOverAt,
         };
         var name = FixtureRecipes.All.SingleOrDefault(r => r.Id == recipe.Id.Value)?.Name is null ? null : row.Subject.Label;
         return fields with { Text = StatusText.Render(fields, Now, name) };
@@ -321,6 +322,8 @@ public static class WorkflowViewFixtures
 
         public StatusPaused? Paused { get; init; }
 
+        public DateTimeOffset? TakenOverAt { get; init; }
+
         public StatusRun? Run { get; init; }
     }
 
@@ -389,7 +392,7 @@ public static class WorkflowViewFixtures
     /// <summary>Layout 5: a taken-over instance with its timeout paused.</summary>
     public static StatusFields StatusTakenOver() => Status(_takenOver, null,
         "With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.", new OpenWork(),
-        new StatusLines { Paused = new StatusPaused(40), Budget = new StatusBudget("state", 40_000, 200_000, new BudgetFigures(40_000, 400_000)) });
+        new StatusLines { Paused = new StatusPaused(40), TakenOverAt = _takenOver.Since, Budget = new StatusBudget("state", 40_000, 200_000, new BudgetFigures(40_000, 400_000)) });
 
     /// <summary>Layout 6: a finished instance, the header only.</summary>
     public static StatusFields StatusDone() => Status(_sentry8809, "resolved", null, new OpenWork());

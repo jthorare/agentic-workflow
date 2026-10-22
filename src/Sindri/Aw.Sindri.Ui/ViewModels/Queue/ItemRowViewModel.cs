@@ -32,7 +32,13 @@ internal sealed class ItemRowViewModel : ObservableObject
     public string StateWord { get; private set => Set(ref field, value); }
 
     /// <summary>The engine step, or empty before S2.</summary>
-    public string Step { get; private set { Set(ref field, value); OnChanged(nameof(HasStep)); } }
+    public string Step { get; private set { Set(ref field, value); OnChanged(nameof(HasStep)); OnChanged(nameof(Stage)); OnChanged(nameof(StageIsRaw)); } }
+
+    /// <summary>The stage in plain words, or "Not started".</summary>
+    public string Stage => Labels.StageName(Step).Name;
+
+    /// <summary>True when the stage shows the served step because the app has no plain name for it.</summary>
+    public bool StageIsRaw => Labels.StageName(Step).Raw;
 
     /// <summary>True when the API names a step.</summary>
     public bool HasStep => Step.Length > 0;

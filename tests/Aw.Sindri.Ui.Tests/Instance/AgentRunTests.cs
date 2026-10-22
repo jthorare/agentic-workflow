@@ -107,7 +107,7 @@ public sealed class AgentRunTests
     public void Attach_waits_with_the_served_reason_and_never_the_P10a_words()
     {
         var running = AgentRunFixtures.Golden<ItemView>("items-id", "running");
-        var starting = AgentRunFixtures.Item(l => l["inFlight"] = "LCH-00000000000000000000000000000015");
+        var starting = AgentRunFixtures.Item(l => l["inFlight"] = AgentRunFixtures.Requested);
         var blocked = AgentRunFixtures.Item(l => l["blockers"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["code"] = "SND-LAUNCH-002", ["detail"] = "No viewer is set up (fix: run `sindri doctor`)" }));
 
         Assert.Equal(Labels.AttachNoLiveSession, RunWords.PendingReason(running, unreadable: false));

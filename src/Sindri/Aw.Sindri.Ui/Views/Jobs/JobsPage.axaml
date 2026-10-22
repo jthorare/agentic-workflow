@@ -18,6 +18,11 @@
       <TextBlock Classes="body muted" Text="{Binding Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
 
+    <StackPanel x:Name="JobsToolbar" Orientation="Horizontal" Spacing="8">
+      <ComboBox x:Name="JobsStateFilter" ItemsSource="{Binding StateChoices}" SelectedItem="{Binding SelectedState}" MinWidth="140" AutomationProperties.Name="Status filter" />
+      <ComboBox x:Name="JobsKindFilter" ItemsSource="{Binding KindChoices}" SelectedItem="{Binding SelectedKind}" MinWidth="180" AutomationProperties.Name="Kind filter" />
+    </StackPanel>
+
     <StackPanel x:Name="JobsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
       <TextBlock Classes="caption subtle" Text="{Binding StaleText}" VerticalAlignment="Center" />
@@ -40,6 +45,17 @@
         <Border x:Name="JobsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="JobsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Border x:Name="JobsNoneRunningName" Margin="16,8" IsVisible="{Binding IsNoneRunning}" AutomationProperties.Name="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Grid x:Name="JobsHeader" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" Margin="16,6" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Grid.Column="0" Classes="caption subtle" Text="{Binding Columns[0]}" />
+          <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns[1]}" />
+          <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns[2]}" />
+          <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Columns[3]}" />
+          <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Columns[4]}" />
+          <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns[5]}" />
+        </Grid>
         <ItemsControl x:Name="JobRows" ItemsSource="{Binding Rows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="jb:JobRowViewModel">

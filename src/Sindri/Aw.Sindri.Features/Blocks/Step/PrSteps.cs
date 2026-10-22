@@ -24,11 +24,11 @@ internal static class PrSteps
     public static BlockDescriptor ReadyCheck { get; } = BlockStep("step.pr.ready-check", Capability.Network).Takes(Text("pr"), Text("at")).Reports("same", "changed").Writes();
 
     /// <summary>'step.pr.next-comment': takes the oldest unhandled thread; authorship is checked before content.</summary>
-    public static BlockDescriptor NextComment { get; } = BlockStep("step.pr.next-comment", Capability.Network).Takes(Text("pr"), Text("bots"))
+    public static BlockDescriptor NextComment { get; } = BlockStep("step.pr.next-comment", Capability.Network).Takes(Text("pr"), Text("bots")).Reads("fact:prState")
         .Reports("untrusted", "bot", "comment", "drainedUnpushed", "drained").Writes(On("fact:comment", "untrusted", "bot", "comment"));
 
     /// <summary>'step.pr.held-comment': takes the oldest held thread for the owner's walk.</summary>
-    public static BlockDescriptor HeldComment { get; } = BlockStep("step.pr.held-comment", Capability.Network).Takes(Text("pr"))
+    public static BlockDescriptor HeldComment { get; } = BlockStep("step.pr.held-comment", Capability.Network).Takes(Text("pr")).Reads("fact:prState")
         .Reports("comment", "drainedUnpushed", "drained").Writes(On("fact:comment", "comment"));
 
     /// <summary>'step.pr.ci-fix': an agent fixes the failing checks in the workspace; Sindri pushes.</summary>

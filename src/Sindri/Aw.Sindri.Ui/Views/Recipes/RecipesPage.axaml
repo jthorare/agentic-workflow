@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rec="using:Aw.Sindri.Ui.ViewModels.Recipes"
+             xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Recipes.RecipesPage"
+             x:DataType="rec:RecipesPageViewModel">
+  <!-- The Recipes page (recipes spec), shown to people as workflows: the title with its caption and Approve new workflows (it only goes to Setup), the toolbar (All and
+       Needs approval with their counts, and the search), the table of workflows, and the footer saying the usage figures are not served. Every named line is a Border
+       wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <Style Selector="Button.segment">
+      <Setter Property="Height" Value="{StaticResource Size.Control}" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter x:Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="Button.segment.chosen /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel Spacing="{StaticResource Size.PanelGap}">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel x:Name="RecipesHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+        <Border x:Name="RecipesCaptionName" AutomationProperties.Name="{Binding Caption}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
+          <TextBlock x:Name="RecipesCaption" Classes="caption subtle" Text="{Binding Caption}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+      <Button x:Name="RecipesApproveNew" Grid.Column="1" Classes="command-control primary" Content="{Binding ApproveNewText}" Click="OnApproveNew" AutomationProperties.Name="{Binding ApproveNewText}" />
+    </Grid>
+
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <StackPanel x:Name="RecipesFilters" Orientation="Horizontal" Spacing="2">
+        <Button x:Name="RecipesFilterAll" Classes="segment" Classes.chosen="{Binding IsAllFilter}" Content="{Binding AllText}" Click="OnAll" AutomationProperties.Name="{Binding AllText}" />
+        <Button x:Name="RecipesFilterNeeds" Classes="segment" Classes.chosen="{Binding IsNeedsFilter}" Content="{Binding NeedsText}" Click="OnNeeds" AutomationProperties.Name="{Binding NeedsText}" />
+      </StackPanel>
+      <TextBox x:Name="RecipesSearch" Text="{Binding Query, Mode=TwoWay}" PlaceholderText="{Binding SearchHint}" MinWidth="220" AutomationProperties.Name="{Binding SearchHint}" />
+    </StackPanel>
+
+    <StackPanel x:Name="RecipesStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
+      <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
+      <TextBlock Classes="caption subtle" Text="{Binding StaleText}" VerticalAlignment="Center" />
+    </StackPanel>
+
+    <Border x:Name="RecipesPanel" Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel>
+        <Border x:Name="RecipesReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="RecipesUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding UnreadableText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel x:Name="RecipesFailed" Margin="16,8" Spacing="8" IsVisible="{Binding IsFailed}">
+          <Border x:Name="RecipesFailedName" AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="RecipesRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
+        </StackPanel>
+        <Border x:Name="RecipesEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock x:Name="RecipesEmpty" Classes="caption quiet" Text="{Binding EmptyText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="RecipesNoMatchName" Margin="16,8" IsVisible="{Binding IsNoMatch}" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock x:Name="RecipesNoMatch" Classes="caption quiet" Text="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Grid x:Name="RecipesHeader" ColumnDefinitions="2*,70,170,80,90,100" Margin="16,6" IsVisible="{Binding IsTableShown}">
+          <TextBlock Classes="eyebrow" Text="{Binding ColWorkflow}" />
+          <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColVersion}" />
+          <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColStanding}" />
+          <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding ColSize}" />
+          <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding ColFlow}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Grid.Column="5" Classes="eyebrow" Text="{Binding ColFingerprint}" />
+        </Grid>
+        <ItemsControl x:Name="RecipeRows" ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="rec:RecipeRowViewModel">
+              <rv:RecipeRow />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Border x:Name="RecipesFooterName" AutomationProperties.Name="{Binding FooterText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock x:Name="RecipesFooter" Classes="caption subtle" Text="{Binding FooterText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+  </StackPanel>
+</UserControl>

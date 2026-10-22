@@ -20,7 +20,7 @@ public static class InstanceEvents
     public static bool Belongs(LedgerEvent recorded, InstanceAddress address)
     {
         ArgumentNullException.ThrowIfNull(recorded);
-        return recorded.IdempotencyKey.StartsWith($"workflow:{address.Value}:", StringComparison.Ordinal);
+        return recorded.IdempotencyKey.StartsWith(LedgerFilter.InstanceKeyPrefix(address), StringComparison.Ordinal);
     }
 
     /// <summary>Whether <paramref name="recorded"/> was mirrored by the instance whose id is <paramref name="id"/>: the id is read from the ledger's own keys, so it needs no Temporal.</summary>

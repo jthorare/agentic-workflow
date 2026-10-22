@@ -1,0 +1,4 @@
+{"start":{"inputs":{"fact:pr":"https://example.test/pr/1","fact:handoff":{"head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:lineContext":{"base":"origin/main"},"fact:workspace":"/work/phase-1"}}}
+{"trigger":{"kind":"step.completed","outcome":"seeded","outputs":{"fact:workspace":"/work/phase-1","fact:decision":{},"fact:ownerNote":"","fact:handoffNote":{"done":"","next":"","risks":[],"files":[]},"fact:fix":{},"fact:reply":"","fact:recheck":{}}},"expect":{"state":"snapshot"}}
+{"trigger":{"kind":"step.completed","outcome":"ciRed","outputs":{"fact:prState":{"state":"ciRed","head":{"sha":"abc123"}}}},"expect":{"state":"ci-fix"}}
+{"trigger":{"kind":"step.completed","outcome":"flaky","outputs":{"fact:handoffNote":{"done":"","next":"","risks":[],"files":[]}}},"expect":{"state":"await"}}

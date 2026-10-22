@@ -1,6 +1,13 @@
 {
   "types": [
     {
+      "type": "context.map.published",
+      "keyShape": "context.map.published:<repo>:v<version>",
+      "invalidates": [
+        "jobs"
+      ]
+    },
+    {
       "type": "context.map.refreshed",
       "keyShape": "context.map.refreshed:<repo>:v<version>",
       "invalidates": [

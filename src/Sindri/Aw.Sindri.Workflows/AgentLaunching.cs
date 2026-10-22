@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -14,7 +15,11 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="catalog">The blocks' descriptors, for the Step's brief.</param>
-internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, BlockCatalog catalog)
+/// <param name="instructions">What each Step that has instructions is told to do.</param>
+/// <param name="contents">Reads a stored 'fact:workspace' back.</param>
+internal sealed class AgentLaunching(
+    ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, BlockCatalog catalog,
+    IEnumerable<IAgentStepInstructions> instructions, IFactContents contents)
 {
     /// <summary>Launches the run's session.</summary>
     /// <param name="run">The run.</param>
@@ -29,7 +34,15 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
             return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));   // nothing was asked of the launcher, so there is no outcome to record
         }
 
-        var request = AgentLaunches.RequestFor(run.Run, target.Value, catalog.Find(BlockId.From(run.Run.Step.Block)));
+        var workspace = await WorkspaceOf(run, cancellationToken).ConfigureAwait(false);
+        if (workspace.IsError)
+        {
+            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, workspace.Error.Code, workspace.Error.Message));
+        }
+
+        var block = BlockId.From(run.Run.Step.Block);
+        var told = instructions.FirstOrDefault(i => i.Step == block)?.Lines;
+        var request = AgentLaunches.RequestFor(run.Run, target.Value, catalog.Find(block), told, workspace.Value);
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
         switch (result)
         {
@@ -43,5 +56,23 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
             default:
                 throw new InvalidOperationException($"the launcher answered {result.GetType().Name}");
         }
+    }
+
+    /// <summary>The worktree path the stored 'fact:workspace' holds; null when the Step reads none.</summary>
+    private async Task<Result<string?>> WorkspaceOf(AgentLaunchRun run, CancellationToken cancellationToken)
+    {
+        if (run.Workspace is not { } stored)
+        {
+            return (string?)null;
+        }
+
+        var read = await contents.Read(stored, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error;
+        }
+
+        var text = System.Text.Encoding.UTF8.GetString(read.Value.Span).Trim();
+        return text.Length >= 2 && text[0] == '"' && text[^1] == '"' ? System.Text.Json.JsonSerializer.Deserialize<string>(text) : text;
     }
 }

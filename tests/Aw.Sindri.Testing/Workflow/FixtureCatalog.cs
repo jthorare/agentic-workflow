@@ -19,7 +19,8 @@ public static class FixtureCatalog
         _ = services.AddRecipeBlocks()
             .AddBlockDescriptor(ContextLensesInput.Descriptor)
             .AddBlockDescriptor(ContextHistoryInput.Descriptor)
-            .AddBlockDescriptor(ContextCodeInput.Descriptor);
+            .AddBlockDescriptor(ContextCodeInput.Descriptor)
+            .AddBlockDescriptor(ContextRetrieveInput.Descriptor);
         return services;
     }
 

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.pr-babysitter
-version: 2
+version: 3
 description: "The line's last station for one PR: fix red CI, handle each comment by its type, re-prove when the source changes, sync the docs once, then stop at ready-to-merge for the owner's merge or rework."
 displayName: "Watch the pull request until you merge it"
 inputs:
@@ -389,6 +389,8 @@ evals:
   - evals/workflow.pr-babysitter/uncertain-held.jsonl
   - evals/workflow.pr-babysitter/ci-red-fixed.jsonl
   - evals/workflow.pr-babysitter/ci-red-cap.jsonl
+  - evals/workflow.pr-babysitter/ci-red-cannot-fix.jsonl
+  - evals/workflow.pr-babysitter/ci-red-flaky.jsonl
   - evals/workflow.pr-babysitter/autofix-cap-refused.jsonl
   - evals/workflow.pr-babysitter/source-fix-recheck-broken.jsonl
   - evals/workflow.pr-babysitter/foreign-source-push.jsonl

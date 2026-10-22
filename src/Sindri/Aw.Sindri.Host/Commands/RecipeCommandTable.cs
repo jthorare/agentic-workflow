@@ -18,6 +18,7 @@ internal static partial class RecipeCommandTable
     private const string ValidateUsage = "usage: sindri recipe validate <file> [--json] [--against <manifest.json>]";
     private const string EvalUsage = "usage: sindri recipe eval <file> [--json] | --shipped [--json] | --scaffold <file> [--out <dir>] | --record <address> --out <file>";
     private const string ApproveUsage = "usage: sindri recipe approve <file|id@hash>";
+    private const string ApproveAllUsage = "usage: sindri recipe approve-all [--json]";
     private const string RevokeUsage = "usage: sindri recipe revoke <id@hash>";
     private const string RegisterUsage = "usage: sindri recipe register <file>";
     private const string ShowUsage = "usage: sindri recipe show <id|id@hash> [--json]";
@@ -46,11 +47,14 @@ internal static partial class RecipeCommandTable
         ["show", ..] => output.Error(SindriErrors.InvalidInput.With($"recipe show needs one id or id@hash and takes only --json ({ShowUsage})")),
         ["list", .. var flags] when ListFlags(flags) is { } list && desk is not null => new RecipeRegistryCommands(desk, services, output).List(list.Stale, list.Json, ct),
         ["list", ..] => output.Error(SindriErrors.InvalidInput.With($"recipe list takes only --stale and --json ({ListUsage})")),
+        ["approve-all"] when desk is not null => new ApproveAllCommand(desk, output).Run(json: false, ct),
+        ["approve-all", "--json"] when desk is not null => new ApproveAllCommand(desk, output).Run(json: true, ct),
+        ["approve-all", ..] => output.Error(SindriErrors.InvalidInput.With($"recipe approve-all takes only --json ({ApproveAllUsage})")),
         ["approve", var target] when !IsFlag(target) && desk is not null => new RecipeDeskCommands(desk, services, output).Approve(target, ct),
         ["approve", ..] => output.Error(SindriErrors.InvalidInput.With($"recipe approve needs one recipe file or id@hash ({ApproveUsage})")),
         ["revoke", var target] when target.Contains('@', StringComparison.Ordinal) && desk is not null => new RecipeDeskCommands(desk, services, output).Revoke(target, ct),
         ["revoke", ..] => output.Error(SindriErrors.InvalidInput.With($"recipe revoke needs one id@hash ({RevokeUsage})")),
-        _ => output.Error(SindriErrors.UnknownVerb.With($"'{string.Join(' ', ["recipe", .. args])}' is not a sindri command ({ValidateUsage}; {EvalUsage}; {ManifestUsage}; {RegisterUsage}; {ShowUsage}; {ListUsage}; {ApproveUsage}; {RevokeUsage})")),
+        _ => output.Error(SindriErrors.UnknownVerb.With($"'{string.Join(' ', ["recipe", .. args])}' is not a sindri command ({ValidateUsage}; {EvalUsage}; {ManifestUsage}; {RegisterUsage}; {ShowUsage}; {ListUsage}; {ApproveUsage}; {ApproveAllUsage}; {RevokeUsage})")),
     };
 
     private static Task<int> RunEval(string[] args, IServiceProvider services, Output output, CancellationToken ct) => args switch

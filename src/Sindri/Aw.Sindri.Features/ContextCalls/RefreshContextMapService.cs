@@ -5,35 +5,33 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
 using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Jobs;
-using Aw.Sindri.Core.Lease;
-using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Scheduling;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
-/// The work of a refresh job (owner F1, 2026-10-19): reads the mapped repos' heads, builds the draft, lets the cleanup agent settle its review queue,
-/// promotes through the engine (not the protected command: the owner decided the service promotes, as the job's caller) and records 'context.map.built',
-/// 'context.map.promoted' and 'context.map.refreshed'. Any step's error fails the job with the later steps not run; a built draft stays.
+/// The work of a refresh job (owner F1, 2026-10-19; the publish gate, owner decision 2026-10-20): reads the mapped repos' heads, builds the draft, lets the cleanup agent settle its review queue, then asks
+/// <see cref="MapPublishDecision"/> whether the draft goes ahead. On publish it promotes through the engine (not the protected command: the owner decided the service promotes, as the job's caller) and records
+/// 'context.map.built', 'context.map.promoted' and 'context.map.published'; on wait it stores a hold next to the draft and records 'context.map.held'. Either way it ends with 'context.map.refreshed'.
+/// Any step's error fails the job with the later steps not run; a built draft stays.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">The context engine.</param>
-/// <param name="held">The lease the events are fenced by.</param>
-/// <param name="ledger">Appends the events.</param>
-/// <param name="events">Builds the entries.</param>
+/// <param name="outlooks">The code index's side of the publish gate.</param>
+/// <param name="source">Opens the recorder of the map's events under the held lease.</param>
 /// <param name="jobs">The running job: its progress takes the step lines.</param>
-/// <param name="clock">Dates the build's slot.</param>
-internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEngine engine, HeldLease held, ILedgerStore ledger, EventFactory events, IJobContextAccessor jobs, TimeProvider clock)
+/// <param name="clock">Dates the build's slot and the start of a wait.</param>
+internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEngine engine, IIndexOutlooks outlooks, MapEventSource source, IJobContextAccessor jobs, TimeProvider clock)
     : IService<RefreshContextMapRequest, RefreshContextMapResult>
 {
     public async ValueTask<Result<RefreshContextMapResult>> Handle(RefreshContextMapRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (held.Current is not { } grant)
+        var opened = source.Open();
+        if (opened.IsError)
         {
-            return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
+            return opened.Error;
         }
 
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
@@ -49,28 +47,28 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
             return heads.Error;
         }
 
-        var recorder = new ContextMapEvents(ledger, events, grant);
+        var recorder = opened.Value;
         var built = await Build(recorder, progress, scope.Value, cancellationToken).ConfigureAwait(false);
         if (built.IsError)
         {
             return built.Error;
         }
 
-        var settled = await CleanAndPromote(recorder, progress, scope.Value, cancellationToken).ConfigureAwait(false);
+        var settled = await CleanAndGate(recorder, progress, scope.Value, built.Value, cancellationToken).ConfigureAwait(false);
         if (settled.IsError)
         {
             return settled.Error;
         }
 
-        var (version, report) = settled.Value;
-        var result = new RefreshContextMapResult(version.Repo.Value, version.Number,
+        var (repo, version, report, held) = settled.Value;
+        var result = new RefreshContextMapResult(repo, version,
             heads.Value.ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal),
-            report.Accepted, report.Removed, report.Dropped, Mode(report.Mode));
+            report.Accepted, report.Removed, report.Dropped, Mode(report.Mode), held);
         var refreshed = await recorder.Refreshed(result, cancellationToken).ConfigureAwait(false);
         return refreshed.IsError ? refreshed.Error : result;
     }
 
-    private async ValueTask<Result<Unit>> Build(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken)
+    private async ValueTask<Result<MapBuildReport>> Build(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken)
     {
         var slot = clock.GetUtcNow();
         progress?.Report("building");
@@ -81,10 +79,35 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         }
 
         var recorded = await recorder.Built(built.Value, slot, cancellationToken).ConfigureAwait(false);
-        return recorded.IsError ? recorded.Error : Unit.Value;
+        return recorded.IsError ? recorded.Error : built.Value;
     }
 
-    private async ValueTask<Result<(MapVersion Version, CleanupReport Report)>> CleanAndPromote(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken)
+    private async ValueTask<Result<Settled>> CleanAndGate(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, MapBuildReport report, CancellationToken cancellationToken)
+    {
+        var cleaned = await Clean(progress, scope, report.Draft.Number, cancellationToken).ConfigureAwait(false);
+        if (cleaned.IsError)
+        {
+            return cleaned.Error;
+        }
+
+        var gate = await new RefreshGate(engine, outlooks, clock).Run(recorder, scope, report, cancellationToken).ConfigureAwait(false);
+        if (gate.IsError)
+        {
+            return gate.Error;
+        }
+
+        if (gate.Value.Publish is not { } publish)
+        {
+            progress?.Report("held for the code index");
+            return new Settled(report.Draft.Repo.Value, report.Draft.Number, cleaned.Value, Held: true);
+        }
+
+        progress?.Report("promoting");
+        var promoted = await Promote(recorder, scope, publish, gate.Value, cancellationToken).ConfigureAwait(false);
+        return promoted.IsError ? promoted.Error : new Settled(promoted.Value.Repo.Value, promoted.Value.Number, cleaned.Value, Held: false);
+    }
+
+    private async ValueTask<Result<CleanupReport>> Clean(IProgress<string>? progress, ContextScope scope, int draft, CancellationToken cancellationToken)
     {
         var queue = await engine.ReviewQueue(limit: null, scope, cancellationToken).ConfigureAwait(false);
         if (queue.IsError)
@@ -93,21 +116,25 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         }
 
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"cleaning up: {queue.Value.Undecided} to decide"));
-        var cleaned = await engine.CleanDraft(scope, cancellationToken).ConfigureAwait(false);
-        if (cleaned.IsError)
-        {
-            return cleaned.Error;
-        }
+        return await engine.CleanDraft(scope, cancellationToken, draft).ConfigureAwait(false);
+    }
 
-        progress?.Report("promoting");
-        var promoted = await engine.Promote(scope, cancellationToken).ConfigureAwait(false);
+    private async ValueTask<Result<MapVersion>> Promote(ContextMapEvents recorder, ContextScope scope, MapPublish publish, RefreshGate.Outcome gate, CancellationToken cancellationToken)
+    {
+        var promoted = await engine.Promote(scope, cancellationToken, gate.Hold.Version).ConfigureAwait(false);
         if (promoted.IsError)
         {
             return promoted.Error;
         }
 
         var appended = await recorder.Promoted(promoted.Value, cancellationToken).ConfigureAwait(false);
-        return appended.IsError ? appended.Error : (promoted.Value.Version, cleaned.Value);
+        if (appended.IsError)
+        {
+            return appended.Error;
+        }
+
+        var published = await recorder.Published(MapGate.Published(promoted.Value.Version, publish, "refresh", gate.Hold, gate.Now), cancellationToken).ConfigureAwait(false);
+        return published.IsError ? published.Error : promoted.Value.Version;
     }
 
     private static string Mode(CleanupMode mode) => mode switch
@@ -118,4 +145,6 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         CleanupMode.Unavailable => "unavailable",
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, message: null),
     };
+
+    private sealed record Settled(string Repo, int Version, CleanupReport Report, bool Held);
 }

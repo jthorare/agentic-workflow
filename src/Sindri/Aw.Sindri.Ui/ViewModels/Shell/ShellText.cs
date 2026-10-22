@@ -75,9 +75,6 @@ internal sealed class ShellText
     /// <summary>What the Work page waits for (<see cref="Labels.ArrivesWith"/>).</summary>
     public string ArrivesWork { get; } = Labels.ArrivesWork;
 
-    /// <summary>What the Recipes page waits for (<see cref="Labels.ArrivesWith"/>).</summary>
-    public string ArrivesRecipes { get; } = Labels.ArrivesRecipes;
-
     /// <summary>What the Context page waits for (<see cref="Labels.ArrivesWith"/>).</summary>
     public string ArrivesContext { get; } = Labels.ArrivesContext;
 

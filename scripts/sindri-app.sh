@@ -29,6 +29,10 @@
 # directory first) and the host build embeds that directory (AwRecipesDir, Aw.Sindri.Host.csproj), so an edited or untracked
 # working-tree recipe is never embedded. The stamp carries the commit and the git tree hash of recipes/sindri at HEAD, and
 # the build dir holds them in `build-info`. A dirty tree publishes and says so; a tree that is not a git checkout does not.
+# The recipe evals: before the build becomes current, the published binary runs `recipe manifest --json` over the staged
+# copy and, when its digest differs from the last successful publish's ($base/recipes-digest), `recipe eval --shipped --json`;
+# a failing eval, or an embedded recipe count that differs from the staged recipes/sindri/*.yaml count, fails the publish (exit 1,
+# no build for the stamp, the digest not recorded). An unchanged digest skips the evals and the count check (the set was verified).
 # Progress goes to stderr, so stdout is only sindri's (`sindri-app status --json` stays parseable).
 #
 # Every run also: installs the .NET SDK global.json pins into $DOTNET_ROOT (default: where the pinned SDK is found, else ~/.dotnet) when missing, with
@@ -219,13 +223,35 @@ else
       -p:AwRecipesDir="$tree/recipes/sindri" -o "$stage") </dev/null >>"$log" 2>&1 || { tail -20 "$log" >&2; die "publishing sindri failed"; }
     (cd "$root" && ${pre[@]+"${pre[@]}"} bash "$root/src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh" "$stage") </dev/null >>"$log" 2>&1 \
       || { tail -20 "$log" >&2; die "publishing sindri-ui failed"; }
-    # The copy is done with: the final exec skips EXIT traps, so it goes here.
-    rm -rf "$tree"; tree=""
     [ -x "$stage/sindri" ] || die "the publish left no sindri in $stage"
     [ -x "$stage/sindri-ui" ] || die "the publish left no sindri-ui in $stage"
+    # The recipe evals (setup-once spec §5.3), with the published binary over the staged set, before the build becomes current:
+    # run when the manifest digest differs from the last successful publish's, skipped when it matches. The embedded count must
+    # equal the staged recipes/sindri/*.yaml count. A failure leaves no build for the stamp and no digest recorded.
+    digest=""
+    if [ -n "$recipes_tree" ]; then
+      manifest="$("$stage/sindri" recipe manifest "$tree/recipes/sindri" --json 2>>"$log" </dev/null)" \
+        || { tail -20 "$log" >&2; die "reading the shipped recipes' manifest failed"; }
+      digest="$(printf '%s' "$manifest" | jq -r '.digest // empty' 2>/dev/null || true)"
+      [ -n "$digest" ] || die "the shipped recipes' manifest has no digest (a recipe does not read)"
+      if [ "$digest" = "$(cat "$base/recipes-digest" 2>/dev/null || true)" ]; then
+        say "the shipped recipes are unchanged since the last publish; evals skipped"
+      else
+        say "running the shipped recipes' evals"
+        evals="$("$stage/sindri" recipe eval --shipped --json 2>>"$log" </dev/null)" \
+          || { printf '%s\n' "$evals" >&2; tail -20 "$log" >&2; die "recipe evals failed; the build was not made current (sindri recipe eval --shipped)"; }
+        staged_count="$(find "$tree/recipes/sindri" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
+        embedded_count="$(printf '%s' "$evals" | jq -r '.recipes | length' 2>/dev/null || true)"
+        [ "$embedded_count" = "$staged_count" ] \
+          || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir)"
+      fi
+    fi
+    # The copy is done with: the final exec skips EXIT traps, so it goes here.
+    rm -rf "$tree"; tree=""
     printf 'commit=%s\nrecipes-tree=%s\n' "$commit" "$recipes_tree" > "$stage/build-info"
     rm -rf "$base/$stamp"
     mv "$stage" "$base/$stamp"
+    if [ -n "$digest" ]; then printf '%s\n' "$digest" > "$base/recipes-digest"; fi
     make_current "$stamp"
     say "built $base/$stamp"
     # A control plane already running keeps its build: bare sindri finds it rather than starting this one.

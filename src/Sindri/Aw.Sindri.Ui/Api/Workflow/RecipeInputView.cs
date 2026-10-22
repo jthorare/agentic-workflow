@@ -5,12 +5,12 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="Label">Label, as served.</param>
 /// <param name="Type">Type, as served.</param>
 /// <param name="Kind">Kind, as served.</param>
-/// <param name="Required">Required, as served.</param>
+/// <param name="Required">Required, as served; the recipe list serves inputs without it (read as false).</param>
 /// <param name="Generate">The generate template as written, or null.</param>
 internal sealed record RecipeInputView(
     string Key,
     string? Label,
     FactType Type,
     string Kind,
-    bool Required,
-    string? Generate);
+    bool Required = false,
+    string? Generate = null);

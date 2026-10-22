@@ -1,9 +1,8 @@
 using System.Globalization;
-using System.Text.Json;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Map;
 using Aw.Kernel;
-using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
@@ -15,19 +14,20 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
-/// The 'context-map-refresh' background service (owner F1, 2026-10-19): when a mapped repo's checkout moves along its default branch it starts a RefreshContextMap job as
-/// 'service:context-map-refresh' (the command chain: gate, audit and authorization; never the runner), so the map keeps itself current. A tick reads the mapped repos' heads from the engine
-/// and the refresh jobs from the 'jobs' view, then decides in <see cref="MainMoveDecision"/>: a running refresh is never doubled, the heads are compared with the ones the last successful refresh
-/// mapped, and failures back off 5, 10, 20, 40, then 60 minutes. A repo on a feature branch is left out and named in the quiet run's summary. Three failed refreshes in a row fail the run
-/// (needs-you 'failure:service:context-map-refresh'), while the backoff holds the next start and while its retry runs; a success resets it.
+/// The 'context-map-refresh' background service (owner F1, 2026-10-19; the publish gate, owner decision 2026-10-20): one service, two job kinds. A tick, in order: (1) scope; (2) with a held draft, reads the code
+/// index's outlooks and asks <see cref="MapPublishDecision"/>; a publish or drop starts 'PublishContextMap' as 'service:context-map-refresh' when none runs and its backoff (5, 10, 20, 40, then 60 minutes over the newest
+/// publish failures) isn't holding; (3) the move check: when a mapped repo's checkout moved along its default branch past the heads in <see cref="MappedHeads"/> (the held draft's, else the current version's) it starts a
+/// 'RefreshContextMap', never while either kind runs, with the refresh backoff over refresh jobs only; (4) the alarm, the one step that merges the kinds: the newest 8 ended jobs of both give the failure count, and three
+/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
-/// <param name="engine">The context engine: the mapped repos' heads.</param>
+/// <param name="engine">The context engine: the mapped repos' heads and the stored publish state.</param>
 /// <param name="jobs">The 'jobs' view.</param>
-/// <param name="start">The RefreshContextMap command chain.</param>
-/// <param name="clock">Dates the backoff.</param>
-/// <param name="logger">Logs a 409 that is not "the refresh is already running".</param>
-internal sealed partial class ContextMapRefreshService(ContextScopes scopes, IContextEngine engine, IJobViews jobs, IService<RefreshContextMapRequest, JobStartedResponse> start, TimeProvider clock, ILogger<ContextMapRefreshService> logger) : IScheduledService
+/// <param name="outlooks">The code index's side of the publish gate.</param>
+/// <param name="starts">The RefreshContextMap and PublishContextMap command chains.</param>
+/// <param name="clock">Dates the backoff and the wait.</param>
+/// <param name="logger">Logs a 409 that is not "the job is already running".</param>
+internal sealed partial class ContextMapRefreshService(ContextScopes scopes, IContextEngine engine, IJobViews jobs, IIndexOutlooks outlooks, MapJobStarts starts, TimeProvider clock, ILogger<ContextMapRefreshService> logger) : IScheduledService
 {
     // The wait caps at 60 minutes from the fifth failure in a row, and the failure alarm needs three: the newest few runs decide both.
     private const int RecentRuns = 8;
@@ -35,9 +35,11 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     internal static JobKind RefreshKind { get; } = JobKind.From("RefreshContextMap");
 
+    internal static JobKind PublishKind { get; } = JobKind.From("PublishContextMap");
+
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-map-refresh");
 
-    /// <summary>Runs without a profile entry, every minute: a tick is one heads read and one jobs read.</summary>
+    /// <summary>Runs without a profile entry, every minute: a tick is one heads read, one state read and two jobs reads.</summary>
     internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
 
     public ServiceName Identity() => ServiceId;
@@ -52,39 +54,131 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
-        var heads = await engine.MapHeads(scope.Value, cancellationToken).ConfigureAwait(false);
-        if (heads.IsError)
-        {
-            return heads.Error;
-        }
-
-        var elsewhere = heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal).ToArray();
-        var recent = await jobs.List(state: null, RefreshKind, cancellationToken).ConfigureAwait(false);
-        return recent.IsError ? recent.Error : await Decide(heads.Value, recent.Value, elsewhere, cancellationToken).ConfigureAwait(false);
+        var tick = await Read(scope.Value, cancellationToken).ConfigureAwait(false);
+        return tick.IsError ? tick.Error : await RunTick(scope.Value, tick.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<ScheduledResult>> Decide(IReadOnlyList<RepoHead> heads, IReadOnlyList<JobRow> recent, string[] elsewhere, CancellationToken cancellationToken)
+    private async ValueTask<Result<Tick>> Read(ContextScope scope, CancellationToken cancellationToken)
     {
-        var onDefault = heads.Where(static h => h.OnDefault).ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal);
-        var finishedJobs = recent.Where(static j => j.State != JobState.Running && j.EndedAt is not null).OrderByDescending(static j => j.EndedAt).Take(RecentRuns).ToArray();
-        IReadOnlyList<SyncAttempt> finished = [.. finishedJobs.Select(static j => new SyncAttempt(j.State == JobState.Failed, j.EndedAt ?? default))];
-        var last = finishedJobs.FirstOrDefault(static j => j.State == JobState.Succeeded);
-        var action = MainMoveDecision.Decide(onDefault, last is null ? null : HeadsOf(last), recent.Any(static j => j.State == JobState.Running), finished, clock.GetUtcNow());
-        var failures = MainMoveDecision.FailedInARow(finished);
-        if (failures < FailuresToAlarm || action == MainMoveAction.Nothing)
+        var heads = await engine.MapHeads(scope, cancellationToken).ConfigureAwait(false);
+        var state = await engine.Held(scope, cancellationToken).ConfigureAwait(false);
+        var refreshes = await jobs.List(state: null, RefreshKind, cancellationToken).ConfigureAwait(false);
+        var publishes = await jobs.List(state: null, PublishKind, cancellationToken).ConfigureAwait(false);
+        if (heads.IsError || state.IsError)
+        {
+            return heads.IsError ? heads.Error : state.Error;
+        }
+
+        if (refreshes.IsError || publishes.IsError)
+        {
+            return refreshes.IsError ? refreshes.Error : publishes.Error;
+        }
+
+        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)]);
+    }
+
+    private async ValueTask<Result<ScheduledResult>> RunTick(ContextScope scope, Tick tick, CancellationToken cancellationToken)
+    {
+        var publish = await PublishStep(scope, tick, cancellationToken).ConfigureAwait(false);
+        var tail = await MoveAndAlarm(tick, publish.Started, cancellationToken).ConfigureAwait(false);
+        if (publish.Error is { } carried)
+        {
+            return carried;   // the move check and the alarm ran first: a failing outlooks read never freezes a replacing refresh
+        }
+
+        if (tail.IsError)
+        {
+            return tail;
+        }
+
+        var notes = new[] { publish.Note, tail.Value.Summary }.Where(static n => n is not null);
+        return new ScheduledResult(tail.Value.Idle && !publish.Started, notes.Any() ? string.Join("; ", notes) : null);
+    }
+
+    // Step 2: with a hold, ask the gate and start the publish when it says go (or drop) and nothing stops it.
+    private async ValueTask<PublishOutcome> PublishStep(ContextScope scope, Tick tick, CancellationToken cancellationToken)
+    {
+        if (MapGate.HoldOf(tick.State) is not { } hold)
+        {
+            return default;
+        }
+
+        var wait = MapGate.Wait(scope);
+        var read = await outlooks.Read(hold, cancellationToken).ConfigureAwait(false);
+        if (wait.IsError || read.IsError)
+        {
+            return new PublishOutcome(Started: false, Note: null, wait.IsError ? wait.Error : read.Error);
+        }
+
+        var action = MapPublishDecision.Decide(MapGate.Input(tick.State, hold, read.Value, wait.Value), clock.GetUtcNow());
+        if (action is MapWait)
+        {
+            return new PublishOutcome(Started: false, string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} held for the code index"), Error: null);
+        }
+
+        return Stands(action, tick) ? default : await StartPublish(cancellationToken).ConfigureAwait(false);
+    }
+
+    // The refresh that is running replaces a gone draft, and a running publish or its backoff means the start waits.
+    private bool Stands(MapPublishAction action, Tick tick) =>
+        (action is MapDrop { Reason: MapDropReason.Gone } && tick.Refreshes.Any(static j => j.State == JobState.Running))
+        || tick.Publishes.Any(static j => j.State == JobState.Running)
+        || PublishBackoffHolds(tick);
+
+    private async ValueTask<PublishOutcome> StartPublish(CancellationToken cancellationToken)
+    {
+        var started = await starts.Publish(cancellationToken).ConfigureAwait(false);
+        if (started.IsError)
+        {
+            if (started.Error.Code != SindriErrors.JobConflict.Code)
+            {
+                return new PublishOutcome(Started: false, Note: null, started.Error);
+            }
+
+            _ = Conflict(started.Error);   // 409: the same publish is running (quiet), or another refusal that is logged and not retried this tick
+            return default;
+        }
+
+        return new PublishOutcome(Started: true, $"ok: publish {started.Value.JobId.Value} started", Error: null);
+    }
+
+    private bool PublishBackoffHolds(Tick tick)
+    {
+        var finished = Finished(tick.Publishes).ToArray();
+        var failures = MainMoveDecision.FailedInARow(Attempts(finished));
+        return failures > 0 && clock.GetUtcNow() < finished[0].EndedAt + SyncGapDecision.Wait(failures);
+    }
+
+    // Steps 3 and 4: the move check over the stored map's heads, then the alarm over both kinds.
+    private async ValueTask<Result<ScheduledResult>> MoveAndAlarm(Tick tick, bool publishStarted, CancellationToken cancellationToken)
+    {
+        var onDefault = tick.Heads.Where(static h => h.OnDefault).ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal);
+        var refreshed = Finished(tick.Refreshes).ToArray();
+        var running = publishStarted || tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running);
+        var action = MainMoveDecision.Decide(onDefault, MapGate.Mapped(tick.State), running, Attempts(refreshed), clock.GetUtcNow());
+        var both = Finished([.. tick.Refreshes, .. tick.Publishes]).ToArray();
+        var failures = MainMoveDecision.FailedInARow(Attempts(both));
+        var pending = action != MainMoveAction.Nothing || tick.State.Hold is not null;   // a failing publish keeps the alarm up while its draft is still held
+        if (failures < FailuresToAlarm || !pending)
         {
             return action == MainMoveAction.Start
-                ? await Start(elsewhere, cancellationToken).ConfigureAwait(false)
-                : new ScheduledResult(Idle: true, Left(elsewhere));
+                ? await Start(tick.Elsewhere, cancellationToken).ConfigureAwait(false)
+                : new ScheduledResult(Idle: true, Left(tick.Elsewhere));
         }
 
-        return await Alarm(action, failures, finishedJobs[0].Code, elsewhere, cancellationToken).ConfigureAwait(false);
+        return await Alarm(action, failures, both[0].Code, tick.Elsewhere, cancellationToken).ConfigureAwait(false);
     }
 
-    // The alarm stays up until a refresh succeeds or the heads are back at the last mapped ones, and the backoff still retries under it.
+    private static JobRow[] Finished(IEnumerable<JobRow> jobs) =>
+        [.. jobs.Where(static j => j.State != JobState.Running && j.EndedAt is not null).OrderByDescending(static j => j.EndedAt).Take(RecentRuns)];
+
+    private static IReadOnlyList<SyncAttempt> Attempts(JobRow[] finished) =>
+        [.. finished.Select(static j => new SyncAttempt(j.State == JobState.Failed, j.EndedAt ?? default))];
+
+    // The alarm stays up until a job succeeds or nothing is left to do, and the backoff still retries under it.
     private async ValueTask<Result<ScheduledResult>> Alarm(MainMoveAction action, int failures, string? code, string[] elsewhere, CancellationToken cancellationToken)
     {
-        var alarm = string.Create(CultureInfo.InvariantCulture, $"{ServiceId.Value}: the last {failures} map refreshes failed ({code ?? "no code"})");
+        var alarm = string.Create(CultureInfo.InvariantCulture, $"{ServiceId.Value}: the last {failures} map refreshes or publishes failed ({code ?? "no code"})");
         if (action != MainMoveAction.Start)
         {
             return SindriErrors.ServiceFailed.With(alarm + "; the next try backs off");
@@ -94,23 +188,12 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
         return retried.IsError ? retried.Error : SindriErrors.ServiceFailed.With(alarm + "; " + (retried.Value.Summary ?? "the next try backs off"));
     }
 
-    // The heads the last successful refresh mapped; a result that kept none (or an unreadable one) counts as no heads, so the next tick starts one.
-    private static Dictionary<string, string>? HeadsOf(JobRow job)
-    {
-        if (job.Result is not { ValueKind: JsonValueKind.Object } result || !result.TryGetProperty("heads", out var heads) || heads.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        return heads.EnumerateObject().Where(static p => p.Value.ValueKind == JsonValueKind.String).ToDictionary(static p => p.Name, static p => p.Value.GetString() ?? string.Empty, StringComparer.Ordinal);
-    }
-
     private static string? Left(string[] elsewhere) =>
         elsewhere.Length == 0 ? null : "not on trunk, left out: " + string.Join(", ", elsewhere);
 
     private async ValueTask<Result<ScheduledResult>> Start(string[] elsewhere, CancellationToken cancellationToken)
     {
-        var started = await start.Handle(new RefreshContextMapRequest(), cancellationToken).ConfigureAwait(false);
+        var started = await starts.Refresh(cancellationToken).ConfigureAwait(false);
         if (started.IsError)
         {
             return started.Error.Code != SindriErrors.JobConflict.Code ? started.Error : Conflict(started.Error);
@@ -133,4 +216,8 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "context-map-refresh: the refresh was refused with {Code} and is not retried this tick: {Detail}")]
     private static partial void LogConflict(ILogger logger, string code, string? detail);
+
+    private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, string[] Elsewhere);
+
+    private readonly record struct PublishOutcome(bool Started, string? Note, Error? Error);
 }

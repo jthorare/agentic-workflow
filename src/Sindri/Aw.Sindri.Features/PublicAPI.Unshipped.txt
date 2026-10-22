@@ -3647,9 +3647,7 @@ static Aw.Sindri.Features.ContextCalls.RefreshContextMapRequest.operator ==(Aw.S
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Cleanup.init -> void
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RefreshContextMapResult!
-Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Deconstruct(out string! Repo, out int Version, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, out int Accepted, out int Removed, out int Dropped, out string! Cleanup) -> void
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Equals(Aw.Sindri.Features.ContextCalls.RefreshContextMapResult? other) -> bool
-Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.RefreshContextMapResult(string! Repo, int Version, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, int Accepted, int Removed, int Dropped, string! Cleanup) -> void
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Repo.get -> string!
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Repo.init -> void
 Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Version.get -> int
@@ -4213,6 +4211,35 @@ Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.<Clone>$() -> Aw.Sindri.Fe
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.Deconstruct(out string! Directory) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusResponse.GetRepoStatusResponse(Aw.Sindri.Core.Profile.RepoStatus! Status) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.GetRepoStatusRequest(string! Directory) -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapRequest
+Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.PublishContextMapRequest!
+Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.Equals(Aw.Sindri.Features.ContextCalls.PublishContextMapRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.PublishContextMapRequest() -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.PublishContextMapResult!
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Code.get -> string?
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Code.init -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Deconstruct(out int Version, out string! Reason, out string? Code) -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Equals(Aw.Sindri.Features.ContextCalls.PublishContextMapResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.PublishContextMapResult(int Version, string! Reason, string? Code) -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Reason.get -> string!
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Reason.init -> void
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Version.get -> int
+Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Version.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Deconstruct(out string! Repo, out int Version, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, out int Accepted, out int Removed, out int Dropped, out string! Cleanup, out bool Held) -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Held.get -> bool
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.Held.init -> void
+Aw.Sindri.Features.ContextCalls.RefreshContextMapResult.RefreshContextMapResult(string! Repo, int Version, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Heads, int Accepted, int Removed, int Dropped, string! Cleanup, bool Held) -> void
+override Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.ToString() -> string!
+override Aw.Sindri.Features.ContextCalls.PublishContextMapResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.PublishContextMapResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.PublishContextMapResult.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.operator !=(Aw.Sindri.Features.ContextCalls.PublishContextMapRequest? left, Aw.Sindri.Features.ContextCalls.PublishContextMapRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.PublishContextMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.PublishContextMapRequest? left, Aw.Sindri.Features.ContextCalls.PublishContextMapRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.PublishContextMapResult.operator !=(Aw.Sindri.Features.ContextCalls.PublishContextMapResult? left, Aw.Sindri.Features.ContextCalls.PublishContextMapResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.PublishContextMapResult.operator ==(Aw.Sindri.Features.ContextCalls.PublishContextMapResult? left, Aw.Sindri.Features.ContextCalls.PublishContextMapResult? right) -> bool
 Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest
 Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.<Clone>$() -> Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest!
 Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Deconstruct(out string? Repo) -> void

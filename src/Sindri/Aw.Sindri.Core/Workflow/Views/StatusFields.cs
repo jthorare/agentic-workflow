@@ -34,6 +34,10 @@ public sealed record StatusFields(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public StatusRun? Run { get; init; }
 
+    /// <summary>When a person took the instance over (the time it entered 'taken-over'); null (not written) when it is not taken over.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? TakenOverAt { get; init; }
+
     /// <summary>The open run's injection sections (metadata only), never null; empty without inputs.</summary>
     public IReadOnlyList<StatusInjection> Injection { get; init; } = Injection ?? [];
 }

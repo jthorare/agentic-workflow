@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Workflow.Engine;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -110,6 +111,28 @@ public abstract class LedgerReaderContract
 
         Expect.Sequence(["k1", "k4"], scan.Events.Select(e => e.IdempotencyKey));
         Expect.True(scan.Events.All(e => e.Item == mine.Value));
+    }
+
+    /// <summary>A scan with an instance keeps the rows that instance mirrored (not its children's or another's), looks at the whole ledger whatever the scan limit, and ends at the head.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Scan_filters_by_instance_and_ignores_the_scan_limit()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        _ = await ledger.Append(Entry("workflow.started", "workflow:T-1/step/1:run-a:1"), grant, Token);
+        _ = await ledger.Append(Entry("workflow.started", "workflow:T-1/step/1/step.2:run-b:1"), grant, Token);
+        _ = await ledger.Append(Entry("workflow.started", "workflow:T-2/step/1:run-c:1"), grant, Token);
+        _ = await ledger.Append(Entry("service.heartbeat", "workflow-not:T-1/step/1:x"), grant, Token);
+        _ = await ledger.Append(Entry("workflow.transition", "workflow:T-1/step/1:run-a:3"), grant, Token);
+        var filter = new LedgerFilter(Types: null, Item: null, ScanLimit: 2, Instance: InstanceAddress.From("T-1/step/1"));
+
+        var scan = (await Reader().Scan(0, 10, filter, Token)).Value;
+        var after = (await Reader().Scan(1, 10, filter, Token)).Value;
+
+        Expect.Sequence(["workflow:T-1/step/1:run-a:1", "workflow:T-1/step/1:run-a:3"], scan.Events.Select(e => e.IdempotencyKey));
+        Expect.Equal(5L, scan.ScannedTo);
+        Expect.Sequence(["workflow:T-1/step/1:run-a:3"], after.Events.Select(e => e.IdempotencyKey));
     }
 
     /// <summary>A scan looks at no more than its scan limit of rows past the cursor and says how far it got, so a sparse filter pages on.</summary>

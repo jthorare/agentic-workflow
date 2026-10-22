@@ -2,13 +2,13 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Instance;
-using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Recipes;
 
 /// <summary>The recipe sheet (screens spec §4.3, U10a): one recipe read by id, and by a hash when the link names one. Read-only.</summary>
-internal sealed class RecipeSheetViewModel(ISindriApi api) : ObservableObject
+internal sealed partial class RecipeSheetViewModel(ISindriApi api, IClipboard? clipboard = null) : ObservableObject
 {
     private Uri? _url;
     private string _subject = string.Empty;
@@ -109,7 +109,8 @@ internal sealed class RecipeSheetViewModel(ISindriApi api) : ObservableObject
             Clear();
             _subject = subject;
             Id = Split(subject).Recipe;
-            Title = WorkflowNames.Of(Id, displayName: null);
+            Title = RecipeNames.Of(Id, displayName: null);
+            Description = RecipeNames.Does(Id);
             Phase = FramePhase.Loading;
         }
     }
@@ -148,6 +149,7 @@ internal sealed class RecipeSheetViewModel(ISindriApi api) : ObservableObject
         if (answer.IsSuccess)
         {
             Show(answer.Value);
+            await ReadStanding(url, recipe, hash, generation, cancellationToken).ConfigureAwait(true);
         }
         else
         {
@@ -158,7 +160,8 @@ internal sealed class RecipeSheetViewModel(ISindriApi api) : ObservableObject
     private void Show(RecipeView recipe)
     {
         Id = recipe.Id;
-        Title = WorkflowNames.Of(recipe.Id, recipe.DisplayName);
+        Title = RecipeNames.Of(recipe.Id, recipe.DisplayName);
+        Description = RecipeNames.Does(recipe.Id);
         Identity = string.Create(CultureInfo.InvariantCulture, $"{recipe.Id}@{Labels.Hash12(recipe.Hash)} · v{recipe.Version} · {Labels.UrgencyWord(recipe.Urgency)}");
         Name = recipe.Name ?? string.Empty;
         States = new RecipeStatesViewModel(recipe);
@@ -197,7 +200,8 @@ internal sealed class RecipeSheetViewModel(ISindriApi api) : ObservableObject
     private void Clear()
     {
         _generation++;
-        (Id, Title, Identity, Name, Note, ProblemText) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (Id, Title, Identity, Name, Note, ProblemText, Description) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (States, Facts) = (null, null);
+        ClearStanding();
     }
 }

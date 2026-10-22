@@ -661,6 +661,24 @@
       "confirm": null
     },
     {
+      "action": "PublishContextMap",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-map-refresh",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RebuildViews",
       "class": "desk",
       "allowedCallers": [

@@ -85,7 +85,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Start = InitStart(api, window);
         Instance = new InstanceFrameViewModel(api, clipboard, clock, catalog: Health.Catalog, launcher: window.Launcher);
         InitInstance();
-        Recipe = new RecipeSheetViewModel(api);
+        Recipe = new RecipeSheetViewModel(api, clipboard);
         InitRecipe();
         InitAgents(clipboard);
         InitContext(api, clipboard);

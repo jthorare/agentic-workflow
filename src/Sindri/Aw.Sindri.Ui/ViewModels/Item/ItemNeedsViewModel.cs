@@ -57,7 +57,10 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     };
 
     /// <summary>The item's pending decisions, in the API's order.</summary>
-    internal IReadOnlyList<ItemDecisionRow> Decisions { get; private set => Set(ref field, value); } = [];
+    internal IReadOnlyList<ItemDecisionRow> Decisions { get; private set { Set(ref field, value); OnChanged(nameof(HasDecisions)); } } = [];
+
+    /// <summary>True when the item has a decision waiting.</summary>
+    internal bool HasDecisions => Decisions.Count > 0;
 
     /// <summary>The requests filed against the item, in the API's order.</summary>
     internal IReadOnlyList<ItemRequestRow> Requests { get; private set => Set(ref field, value); } = [];

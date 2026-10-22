@@ -1,15 +1,19 @@
 using System.Reflection;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Map;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
-/// <summary>An <see cref="IContextEngine"/> that answers only the mapped repos' heads, counts the asks and refuses every other call.</summary>
+/// <summary>An <see cref="IContextEngine"/> that answers only the mapped repos' heads and the map's publish state, counts the asks and refuses every other call.</summary>
 public class HeadsEngineProxy : DispatchProxy
 {
     /// <summary>What the heads call answers.</summary>
     public IReadOnlyList<RepoHead> Heads { get; set; } = [];
+
+    /// <summary>What the publish-state call answers: no hold, no draft, no current version.</summary>
+    public MapPublishState State { get; set; } = new(Hold: null, LatestDraft: null, Current: null, CurrentHeads: []);
 
     /// <summary>When set, the heads call fails with it.</summary>
     public Error? Failure { get; set; }
@@ -24,6 +28,11 @@ public class HeadsEngineProxy : DispatchProxy
 
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
+        if (targetMethod?.Name == nameof(IContextEngine.Held))
+        {
+            return new ValueTask<Result<MapPublishState>>(State);
+        }
+
         if (targetMethod?.Name != nameof(IContextEngine.MapHeads))
         {
             throw new NotSupportedException(targetMethod?.Name);

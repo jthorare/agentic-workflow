@@ -39,19 +39,36 @@ internal static partial class Labels
     /// <summary>The Queue table's column headings (queue.html); the title leads, the raw id is in the sheet's Details.</summary>
 
     /// <summary>The title column.</summary>
-    internal const string ColumnTitle = "TITLE";
+    internal const string ColumnTitle = "Title";
 
     /// <summary>The repo column.</summary>
-    internal const string ColumnRepo = "REPO";
+    internal const string ColumnRepo = "Repo";
 
     /// <summary>The state column.</summary>
-    internal const string ColumnState = "STATUS";
+    internal const string ColumnState = "Status";
 
     /// <summary>The step column.</summary>
-    internal const string ColumnStep = "STAGE";
+    internal const string ColumnStep = "Stage";
 
     /// <summary>The since column.</summary>
-    internal const string ColumnSince = "AGE";
+    internal const string ColumnSince = "Age";
+
+    /// <summary>The stage of an item that has no step yet.</summary>
+    internal const string NotStarted = "Not started";
+
+    /// <summary>An item's step in plain words (F3 spec work §4): the line's five stages; any other step shows as served.</summary>
+    /// <param name="step">The served step, or null.</param>
+    /// <returns>The plain name and whether it is the served word.</returns>
+    internal static (string Name, bool Raw) StageName(string? step) => step switch
+    {
+        null or "" => (NotStarted, false),
+        "scoping" => ("Scoping", false),
+        "design" => ("Design", false),
+        "plan" => ("Plan", false),
+        "phase" => (WorkflowsLaneBuild, false),
+        "merge" => ("Merge", false),
+        _ => (step, true),
+    };
 
     /// <summary>The top bar's hint while the G chord waits (§8).</summary>
     internal const string ChordHint = "G …";

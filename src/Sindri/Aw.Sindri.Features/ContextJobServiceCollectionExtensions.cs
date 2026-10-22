@@ -5,6 +5,7 @@ using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,12 +21,17 @@ internal static class ContextJobServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddScoped<MapEventSource>()
+            .AddScoped<MapJobStarts>()
+            .AddSingleton<IIndexOutlooks, NoIndexOutlooks>()   // until CI-9 composes the code index: every repo absent, so the map publishes at once
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
             .AddJob<BuildContextMapRequest, BuildContextMapResult, BuildContextMapService>(
                 static _ => JobKey.From("build"), static r => string.Create(CultureInfo.InvariantCulture, $"draft v{r.Draft}: {r.Proposed} proposed"))
             .AddJob<RefreshContextMapRequest, RefreshContextMapResult, RefreshContextMapService>(
                 static _ => JobKey.From("refresh"), static r => RefreshSummary(r))
+            .AddJob<PublishContextMapRequest, PublishContextMapResult, PublishContextMapService>(
+                static _ => JobKey.From("map-publish"), static r => PublishSummary(r))
             .AddJob<RunContextBacktestRequest, RunContextBacktestResult, RunContextBacktestService>(
                 static _ => JobKey.From("backtest"), static r => BacktestSummary(r), PrecheckBacktest);
     }
@@ -37,8 +43,18 @@ internal static class ContextJobServiceCollectionExtensions
         return string.Create(CultureInfo.InvariantCulture, $"{result.Sources.Count} source(s) synced, {linked} linked{(failed > 0 ? $", {failed} with a code" : string.Empty)}");
     }
 
-    private static string RefreshSummary(RefreshContextMapResult result) =>
-        string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Accepted} kept, {result.Removed} removed{(result.Cleanup == "unavailable" ? ", cleanup unavailable" : string.Empty)}");
+    private static string RefreshSummary(RefreshContextMapResult result) => result.Held
+        ? string.Create(CultureInfo.InvariantCulture, $"held: map v{result.Version} waits for the code index")
+        : string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Accepted} kept, {result.Removed} removed{(result.Cleanup == "unavailable" ? ", cleanup unavailable" : string.Empty)}");
+
+    private static string PublishSummary(PublishContextMapResult result) => result switch
+    {
+        { Code: not null } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was replaced before it could be published ({result.Code})"),
+        { Reason: "NotHeld" } => "no map is held",
+        { Reason: "Waiting" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} still waits for the code index"),
+        { Reason: "Gone" or "AlreadyCurrent" } => string.Create(CultureInfo.InvariantCulture, $"hold on map v{result.Version} dropped ({result.Reason})"),
+        _ => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} promoted · {result.Reason}"),
+    };
 
     private static string BacktestSummary(RunContextBacktestResult result)
     {

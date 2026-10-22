@@ -13,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// 4 s, then the viewer window), refuses what SL8 and the config gate refuse, and is idempotent per launch id: a second Launch
 /// returns the first one's <see cref="StartedLaunch"/>.
 /// </summary>
-internal sealed partial class Launcher(LauncherParts parts) : ILauncher
+internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunchShutdown
 {
     private static readonly TimeSpan _viewerGrace = TimeSpan.FromSeconds(1);
     private static readonly System.Text.Json.JsonSerializerOptions _captureJson = AwJson.CreateOptions(LauncherJsonContext.Default);
@@ -52,6 +52,21 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher
 
         Cleanup(launch);
         return stopped;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> StopAll(CancellationToken cancellationToken)
+    {
+        var ended = 0;
+        foreach (var (launch, started) in _started.ToArray())
+        {
+            if (started.Host.Kind == HostKind.Tmux && (await Stop(launch, cancellationToken).ConfigureAwait(false)).IsSuccess)   // only sessions on Sindri's own tmux socket; a host that can't be asked leaves its row to the sweep
+            {
+                ended++;
+            }
+        }
+
+        return ended;
     }
 
     /// <inheritdoc/>

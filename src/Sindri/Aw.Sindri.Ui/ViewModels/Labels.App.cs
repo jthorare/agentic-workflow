@@ -70,9 +70,6 @@ internal static partial class Labels
     /// <summary>Work's placeholder.</summary>
     internal const string ArrivesWork = "arrives with U3' and the workflow routes (API P11)";
 
-    /// <summary>Recipes' placeholder.</summary>
-    internal const string ArrivesRecipes = "arrives with U10 and the recipe stats (API P12)";
-
     /// <summary>Context's placeholder.</summary>
     internal const string ArrivesContext = "arrives with U9 and the context lens routes (CTX phase 4)";
 
@@ -82,9 +79,8 @@ internal static partial class Labels
     internal static string? ArrivesWith(PageId page) => page switch
     {
         PageId.Work => ArrivesWork,
-        PageId.Recipes => ArrivesRecipes,
         PageId.Context => ArrivesContext,
-        PageId.Home or PageId.Workflows or PageId.Agents or PageId.System or PageId.Jobs or PageId.Settings => null,
+        PageId.Home or PageId.Workflows or PageId.Recipes or PageId.Agents or PageId.System or PageId.Jobs or PageId.Settings => null,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
 

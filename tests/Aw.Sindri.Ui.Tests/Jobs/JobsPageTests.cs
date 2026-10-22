@@ -20,7 +20,7 @@ public sealed class JobsPageTests
         var page = await _f.Shown(Token);
 
         var row = Assert.Single(page.Rows);
-        Assert.Equal(("Echo job", "● RUNNING", "Started 5m ago", "by Sindri", string.Empty), (row.TitleText, row.ChipText, row.WhenText, row.ByText, row.SummaryText));
+        Assert.Equal(("Echo job", "● Running", "Started 5m ago", "by Sindri", string.Empty), (row.TitleText, row.ChipText, row.WhenText, row.ByText, row.SummaryText));
         Assert.Equal("1 running · 1 job", page.Head);
         Assert.Equal("Jobs, 1 running · 1 job", page.HeadName);
         Assert.Equal(("Cancel job", true), (row.Cancel?.Label, row.HasCancel));
@@ -35,7 +35,7 @@ public sealed class JobsPageTests
 
         var row = Assert.Single((await _f.Shown(Token)).Rows);
 
-        Assert.Equal(("Run now · heartbeat", "✓ DONE", "Ended 5m ago", "ok: worked"), (row.TitleText, row.ChipText, row.WhenText, row.SummaryText));
+        Assert.Equal(("Run a service", "heartbeat", "✓ Done", "Ended 5m ago", "ok: worked"), (row.TitleText, row.KeyText, row.ChipText, row.WhenText, row.SummaryText));
         Assert.Null(row.Cancel);
         Assert.False(row.IsRunning);
     }
@@ -52,7 +52,7 @@ public sealed class JobsPageTests
 
         var row = Assert.Single((await _f.Shown(Token)).Rows);
 
-        Assert.Equal(("✕ FAILED", "it broke", "SND-SCHED-001", true), (row.ChipText, row.SummaryText, row.CodeText, row.HasCode));
+        Assert.Equal(("✕ Failed", "it broke", "SND-SCHED-001", true), (row.ChipText, row.SummaryText, row.CodeText, row.HasCode));
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class JobsPageTests
 
         var row = Assert.Single((await _f.Shown(Token)).Rows);
 
-        Assert.Equal(("○ CANCELLED", false), (row.ChipText, row.HasCancel));
+        Assert.Equal(("○ Cancelled", false), (row.ChipText, row.HasCancel));
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class JobsPageTests
 
         var row = Assert.Single((await _f.Shown(Token)).Rows);
 
-        Assert.Equal(("Tidy up scratch files", "○ PAUSED"), (row.TitleText, row.ChipText));
+        Assert.Equal(("Tidy up scratch files", "○ Paused"), (row.TitleText, row.ChipText));
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public sealed class JobsPageTests
 
         await page.Refresh(Url, Token);
 
-        Assert.Equal((true, "✓ DONE", "Ended 1m ago", false), (ReferenceEquals(row, page.Rows[0]), row.ChipText, row.WhenText, row.HasCancel));
+        Assert.Equal((true, "✓ Done", "Ended 1m ago", false), (ReferenceEquals(row, page.Rows[0]), row.ChipText, row.WhenText, row.HasCancel));
     }
 
     [Fact]

@@ -58,6 +58,24 @@ public sealed class LedgerStepRunSourceContractTests : StepRunSourceContract, ID
         Assert.Equal("s0 s499 s500 s1000", string.Join(' ', events.Value.Select(static e => e.Frame?.State)));
     }
 
+    [Fact]
+    public async Task The_read_touches_only_the_instances_rows()
+    {
+        var rows = new List<(InstanceAddress, StepRunRow)>();
+        for (var i = 0; i < 700; i++)
+        {
+            rows.Add((i is 3 or 650 ? Mine : Other, StepRunFixtures.Started(string.Create(CultureInfo.InvariantCulture, $"s{i}"), "1.1")));
+        }
+
+        _ = await Create(rows);
+        var counting = new RecordingLedgerReader(new SqliteLedgerReader(_readerDatabase!));
+
+        var events = await new LedgerStepRunSource(counting, _h.Events).EventsOf(Mine, TestContext.Current.CancellationToken);
+
+        Assert.Equal("s3 s650", string.Join(' ', events.Value.Select(static e => e.Frame?.State)));
+        Assert.Equal(2, counting.RowsRead);
+    }
+
     private sealed class UnreadableLedger : ILedgerReader
     {
         private static readonly Error _failure = Core.SindriErrors.LedgerUnavailable.With("ledger.db: database or disk is full");

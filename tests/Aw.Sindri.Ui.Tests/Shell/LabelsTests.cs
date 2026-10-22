@@ -24,7 +24,7 @@ public sealed class LabelsTests
     [Fact]
     public void The_queue_and_item_words_are_plain()
     {
-        Assert.Equal(["TITLE", "REPO", "STATUS", "STAGE", "AGE"], [Labels.ColumnTitle, Labels.ColumnRepo, Labels.ColumnState, Labels.ColumnStep, Labels.ColumnSince], StringComparer.Ordinal);
+        Assert.Equal(["Title", "Repo", "Status", "Stage", "Age"], [Labels.ColumnTitle, Labels.ColumnRepo, Labels.ColumnState, Labels.ColumnStep, Labels.ColumnSince], StringComparer.Ordinal);
         Assert.Equal(("Paused: needs a decision", "Paused", "paused"), (Labels.ItemState("parked"), Labels.Group("parked"), Labels.ParkedBadge));
         Assert.Equal(("History", "Run", "Waiting for"), (Labels.Timeline, Labels.Instance, Labels.WaitingOn));
         Assert.Equal("Cancel run", Labels.Action("ApplyCommand:cancel"));

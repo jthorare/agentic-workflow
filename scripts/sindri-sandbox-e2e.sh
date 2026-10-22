@@ -104,6 +104,39 @@ resolve_sindri() {
 SCRATCH="" SERVE_PID="" HOME_DIR="" REPO="" ITEM="" ADDRESS="" EVENTS_SEEN=0
 DESK_LOG=() FINDINGS=()
 
+# The agent sessions serve launches run in tmux sessions snd-LCH-* on the socket sindri-launch, shared with the owner's Sindri.
+# Only a session whose pane process (or a descendant) has AW_SINDRI_HOME equal to $1 is killed. launch_tmux, proc_children and
+# proc_environ are seams the test overrides.
+launch_tmux() { tmux -L sindri-launch "$@"; }
+proc_children() { pgrep -P "$1" 2>/dev/null || true; }
+proc_environ() { # one NAME=value per line
+  if [ "$(uname -s)" = Darwin ]; then ps eww -p "$1" -o command= 2>/dev/null | tr ' ' '\n'
+  else tr '\0' '\n' < "/proc/$1/environ" 2>/dev/null; fi
+}
+pid_has_home() { # the pid or a descendant (three levels) has AW_SINDRI_HOME=$2
+  local c g
+  proc_environ "$1" | grep -qxF "AW_SINDRI_HOME=$2" && return 0
+  for c in $(proc_children "$1"); do
+    proc_environ "$c" | grep -qxF "AW_SINDRI_HOME=$2" && return 0
+    for g in $(proc_children "$c"); do proc_environ "$g" | grep -qxF "AW_SINDRI_HOME=$2" && return 0; done
+  done
+  return 1
+}
+kill_launched_sessions() {
+  local home="$1" s p
+  [ -n "$home" ] || return 0
+  while IFS= read -r s; do
+    case "$s" in snd-LCH-*) ;; *) continue ;; esac
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      if pid_has_home "$p" "$home"; then
+        launch_tmux kill-session -t "=$s" > /dev/null 2>&1 && say "ended agent session $s"
+        break
+      fi
+    done < <(launch_tmux list-panes -t "=$s" -F '#{pane_pid}' 2>/dev/null)
+  done < <(launch_tmux list-sessions -F '#{session_name}' 2>/dev/null)
+}
+
 cleanup() {
   local rc=$?
   if [ -n "$SCRATCH" ] && [ -n "${AW_SINDRI_HOME:-}" ] && [ "$AW_SINDRI_HOME" = "$HOME_DIR" ]; then
@@ -116,6 +149,9 @@ cleanup() {
         kill -0 "$pid" 2>/dev/null && kill "$pid" 2>/dev/null
       fi
     fi
+    # the agent sessions serve launched outlive it: end this home's, with --keep too (a live agent with no serve is useless)
+    [ "$KEEP" != 1 ] || say "--keep keeps $SCRATCH, but the agent sessions serve launched are ended: they are useless without serve"
+    kill_launched_sessions "$HOME_DIR"
   fi
   if [ -n "$SCRATCH" ]; then
     if [ "$KEEP" = 1 ]; then say "kept $SCRATCH"; else
@@ -216,30 +252,69 @@ approve_recipes() {
   for f in $pending; do id="$(sed -n 's/^id: *//p' "$f" | head -1)"; REFUSED+=("$id"); done
 }
 
-# Writes a small authored map for the feature to $1 (outside any git worktree: the scratch dir).
-generate_map() {
-  local file="$1" code="$CODE_FILE" c
-  if [ -z "$code" ]; then
+# Picks the files the generated map joins to the feature: CODE (up to three, existing, not tests) and TESTF (at most one test
+# file). --code FILE comes first, then the files the feature names in backticks, then fallbacks that exist in the clone.
+is_test_path() { case "$1" in tests/* | */tests/* | */test/* | *Test.* | *Tests.* | *.test.* | *.spec.*) return 0 ;; *) return 1 ;; esac; }
+add_code() {
+  local x
+  for x in "${CODE[@]:-}"; do [ "$x" = "$1" ] && return 0; done
+  [ "${#CODE[@]}" -ge 3 ] || CODE+=("$1")
+  return 0
+}
+pick_map_files() {
+  local c f; CODE=() TESTF=""
+  if [ -n "$CODE_FILE" ]; then
+    [ -f "$REPO/$CODE_FILE" ] || die "the code file $CODE_FILE is not in the clone (--code)"
+    add_code "$CODE_FILE"
+  else
     for c in $(grep -oE '`[A-Za-z0-9_./-]+\.[a-z]+`' "$REPO/$FEATURE_REL" | tr -d '`'); do
-      if [ -f "$REPO/$c" ]; then code="$c"; break; fi
+      [ -f "$REPO/$c" ] || continue
+      if is_test_path "$c"; then [ -n "$TESTF" ] || TESTF="$c"; else add_code "$c"; fi
     done
   fi
-  code="${code:-docs/sindri/README.md}"
-  [ -f "$REPO/$code" ] || die "the code file $code is not in the clone (--code)"
-  cat > "$file" <<EOF
+  if [ "${#CODE[@]}" -lt 2 ]; then
+    [ ! -f "$REPO/docs/sindri/README.md" ] || add_code docs/sindri/README.md
+    while IFS= read -r f; do
+      [ "${#CODE[@]}" -ge 2 ] && break
+      is_test_path "$f" || add_code "$f"
+    done < <(git -C "$REPO" ls-files 'src/*.cs' 2>/dev/null)
+  fi
+  [ "${#CODE[@]}" -ge 1 ] || die "no code file for the map: the clone has none to fall back to (--code)"
+  [ -n "$TESTF" ] || TESTF="$(git -C "$REPO" ls-files 'tests/*Tests.cs' 2>/dev/null | head -1)"
+  return 0
+}
+
+# Writes an authored map for the feature to $1 (outside any git worktree: the scratch dir): a feature, two surfaces that are
+# part-of it, code nodes that implement them, a test file joined by a tests edge, and the record that mentions the feature.
+generate_map() {
+  local file="$1" i=0 c surf
+  pick_map_files
+  {
+    cat <<EOF
 schemaVersion: 1
 kind: authored
 repo: repo
 nodes:
   - {key: "feature:sandbox", label: "Sandbox feature"}
   - {key: "surface:screen/sandbox", label: "The page the feature changes"}
-  - {key: "code:$code", label: "$(basename "$code")", provenance: deterministic}
+  - {key: "surface:report/sandbox-docs", label: "The docs the feature changes"}
+EOF
+    for c in "${CODE[@]}"; do printf '  - {key: "code:%s", label: "%s", provenance: deterministic}\n' "$c" "$(basename "$c")"; done
+    [ -z "$TESTF" ] || printf '  - {key: "code:%s", label: "%s", provenance: deterministic}\n' "$TESTF" "$(basename "$TESTF")"
+    cat <<EOF
   - {key: "record:repo:repo/$FEATURE_REL", label: "$(feature_title)"}
 edges:
-  - {from: "record:repo:repo/$FEATURE_REL", to: "surface:screen/sandbox", type: mentions}
   - {from: "surface:screen/sandbox", to: "feature:sandbox", type: part-of}
-  - {from: "code:$code", to: "surface:screen/sandbox", type: implements, evidence: [{key: "repo:repo/$code"}]}
+  - {from: "surface:report/sandbox-docs", to: "feature:sandbox", type: part-of}
+  - {from: "record:repo:repo/$FEATURE_REL", to: "feature:sandbox", type: mentions}
 EOF
+    for c in "${CODE[@]}"; do
+      surf="surface:screen/sandbox"; [ $((i % 2)) = 1 ] && surf="surface:report/sandbox-docs"
+      printf '  - {from: "code:%s", to: "%s", type: implements, evidence: [{key: "repo:repo/%s"}]}\n' "$c" "$surf" "$c"
+      i=$((i + 1))
+    done
+    [ -z "$TESTF" ] || printf '  - {from: "code:%s", to: "surface:screen/sandbox", type: tests, evidence: [{key: "repo:repo/%s"}]}\n' "$TESTF" "$TESTF"
+  } > "$file"
 }
 
 # Imports the map as the human: the first call types a wrong line (the prompt waits for one; end of input hangs it), which

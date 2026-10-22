@@ -616,6 +616,17 @@ cleanup's counts). It does not go through `map promote` or its typed confirmatio
 terminal, the app or the `context-map-refresh` service may start it; a session may not. Any step's error fails the job (nothing is promoted; a built draft
 stays). The summary reads `map v<N>: <kept> kept, <removed> removed`, plus `, cleanup unavailable` when no model answered.
 
+**Holding a map for the code index.** After the cleanup the refresh asks the publish decision (code index spec 6.4) whether the draft goes ahead.
+With no code index composed yet every repo reads as absent, so it publishes at once as before; the only differences are the new events. When a repo's
+code index is still coming, the job stores a hold next to the draft, ends `succeeded` with `held: map v<N> waits for the code index`, records
+`context.map.held` and promotes nothing: the current map keeps answering. The `context-map-refresh` service's tick re-asks while a hold exists and
+starts `PublishContextMap` (a job of its own, key `map-publish`, with no route or verb; a session may not start it) once the decision says publish or
+drop. That job cleans up once more, promotes the draft it decided about and records `context.map.promoted` then `context.map.published` (the reason, how
+many repos were stale, how long it waited), or drops the hold with `context.map.hold.dropped`. A rebuild that replaced the draft in between is
+`SND-CONTEXT-190`: the job ends `succeeded` with that code and raises nothing; `SND-CONTEXT-046` fails it, keeps the hold and backs it off 5, 10, 20, 40,
+then 60 minutes. The move check compares the checkouts with the held draft's heads (else the current version's), starts no refresh while a publish runs,
+and three failed refreshes or publishes in a row raise the one service row.
+
 A build takes a slot of the box-wide heavy-job lock (`$AW_STATE_DIR/locks/heavy-job.lock`, `.2` for the second slot,
 `AW_HEAVY_SLOTS`; the same directory the shell tools and `ui-evidence` use). If every slot stays held for 60 seconds
 it answers `SND-CONTEXT-040` (exit 75) naming the holder, and writes nothing. A second build keeps every decision you made

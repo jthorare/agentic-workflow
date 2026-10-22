@@ -30,6 +30,7 @@ internal static class StatusRecords
         Injection(view))
     {
         Run = view.AgentRun is { } agent ? new StatusRun("agent", agent.Launch) : null,
+        TakenOverAt = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.Since : null,   // a takeover enters the 'taken-over' state, so Since is the takeover's time
     };
 
     private static List<StatusInjection> Injection(InstanceView view) =>

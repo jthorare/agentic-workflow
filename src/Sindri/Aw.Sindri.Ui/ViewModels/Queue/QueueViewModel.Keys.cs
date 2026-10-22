@@ -169,6 +169,6 @@ internal sealed partial class QueueViewModel
     private string? _spoken;
 
     private bool Matches(string id, string title, string repo) =>
-        FilterText.Length == 0 || id.Contains(FilterText, StringComparison.OrdinalIgnoreCase)
-        || title.Contains(FilterText, StringComparison.OrdinalIgnoreCase) || repo.Contains(FilterText, StringComparison.OrdinalIgnoreCase);
+        RepoMatches(repo) && (FilterText.Length == 0 || id.Contains(FilterText, StringComparison.OrdinalIgnoreCase)
+        || title.Contains(FilterText, StringComparison.OrdinalIgnoreCase) || repo.Contains(FilterText, StringComparison.OrdinalIgnoreCase));
 }

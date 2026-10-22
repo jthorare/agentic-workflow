@@ -22,7 +22,7 @@ public sealed class JobSheetTests
 
         await sheet.Open(Url, Id, Token);
 
-        Assert.Equal((FramePhase.Shown, "Echo job", "● RUNNING · Started 5m ago · by Sindri"), (sheet.Phase, sheet.Heading, sheet.StateLine));
+        Assert.Equal((FramePhase.Shown, "Echo job", "● Running · Started 5m ago · by Sindri"), (sheet.Phase, sheet.Heading, sheet.StateLine));
         Assert.Equal(("Cancel job", true, false), (sheet.Cancel?.Label, sheet.HasNoProgress, sheet.HasSummary));
     }
 
@@ -34,8 +34,9 @@ public sealed class JobSheetTests
 
         await sheet.Open(Url, Id, Token);
 
-        Assert.Equal(("✕ FAILED · Ended 5m ago · by Sindri", "it broke", true), (sheet.StateLine, sheet.SummaryText, sheet.Cancel is null));
+        Assert.Equal(("✕ Failed · Ended 5m ago · by Sindri", "it broke", true), (sheet.StateLine, sheet.SummaryText, sheet.Cancel is null));
         Assert.Contains(sheet.Fields, f => f.Label == Labels.JobCodeField && f.Value == "SND-SCHED-001");
+        Assert.True(sheet.IsFailedJob);
     }
 
     [Fact]
@@ -131,7 +132,7 @@ public sealed class JobSheetTests
 
         await sheet.Refresh(Url, Token);
 
-        Assert.Equal(("✓ DONE · Ended 5m ago · by Sindri", "echoed 2", true), (sheet.StateLine, sheet.SummaryText, sheet.Cancel is null));
+        Assert.Equal(("✓ Done · Ended 5m ago · by Sindri", "echoed 2", true), (sheet.StateLine, sheet.SummaryText, sheet.Cancel is null));
         Assert.Equal("{\n  \"lines\": 2\n}".ReplaceLineEndings("\n"), sheet.ResultText.ReplaceLineEndings("\n"));
     }
 

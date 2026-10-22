@@ -122,7 +122,7 @@ public sealed class QueueFramesTests : IDisposable
         Settle(window);
 
         var page = Named<Control>(window, "QueuePage");
-        var headers = page.GetVisualDescendants().OfType<ToggleButton>().Where(t => t.Classes.Contains("group-head") && t.IsEffectivelyVisible).Select(AutomationProperties.GetName).ToList();
+        var headers = page.GetVisualDescendants().OfType<ToggleButton>().Where(t => t.Classes.Contains("group-head") && t.IsEffectivelyVisible && t.Name != "QueueClosedToggle").Select(AutomationProperties.GetName).ToList();
         Assert.Equal(["Queued 4"], headers, StringComparer.Ordinal);
         var rows = page.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().Where(r => r.IsEffectivelyVisible).Select(r => r.ItemId).ToList();
         Assert.Equal(4, rows.Count);
@@ -159,18 +159,18 @@ public sealed class QueueFramesTests : IDisposable
         Frame(window, "queue-loading");
     });
 
-    // Review 456-3: the title leads each row; the raw id is neither a column nor a header.
+    // F3 spec work §1 Q2: the title leads each row; the id is a small grey string beside it, never a column or a header.
     [Fact]
-    public Task The_queue_leads_with_the_title_and_draws_no_raw_id_column() => OnUi(async () =>
+    public Task The_queue_leads_with_the_title_and_draws_the_id_beside_it_not_as_a_column() => OnUi(async () =>
     {
         var (window, shell) = await Connected(s => !s.Queue.IsLoading);
         shell.GoTo(PageId.Work);
         Settle(window);
 
         var page = Named<Control>(window, "QueuePage");
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Control>(), c => c.Name == "IdText");
+        Assert.Contains(page.GetVisualDescendants().OfType<Control>(), c => c.Name == "IdText");
         var header = page.GetVisualDescendants().OfType<Grid>().First(g => g.Name == "QueueHeader");
-        Assert.Equal(["TITLE", "REPO", "STATUS", "STAGE", "AGE"], header.Children.OfType<TextBlock>().Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Equal(["Title", "Repo", "Status", "Stage", "Age"], header.Children.OfType<TextBlock>().Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(0, Grid.GetColumn(header.Children.OfType<TextBlock>().First()));
     });
 

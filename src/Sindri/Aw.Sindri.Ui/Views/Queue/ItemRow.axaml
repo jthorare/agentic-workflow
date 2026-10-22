@@ -15,7 +15,10 @@
         <ColumnDefinition Width="110" /><ColumnDefinition Width="70" /><ColumnDefinition Width="260" />
       </Grid.ColumnDefinitions>
       <Button x:Name="TitleButton" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
-        <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
+          <TextBlock x:Name="IdText" Classes="mono subtle" Text="{Binding Id}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
       </Button>
       <TextBlock x:Name="RepoText" AutomationProperties.Name="{Binding Repo}" Grid.Column="1" Classes="caption subtle" Text="{Binding Repo}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -24,7 +27,7 @@
           <TextBlock x:Name="BadgeText" Classes="caption" Text="{Binding Badge}" AutomationProperties.Name="{Binding Badge}" />
         </Border>
       </StackPanel>
-      <TextBlock x:Name="StepText" AutomationProperties.Name="{Binding Step}" Grid.Column="3" Classes="mono" Text="{Binding Step}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      <TextBlock x:Name="StepText" AutomationProperties.Name="{Binding Stage}" Grid.Column="3" Classes="body" Classes.raw="{Binding StageIsRaw}" Text="{Binding Stage}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       <TextBlock x:Name="AgeText" AutomationProperties.Name="{Binding Age}" Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" VerticalAlignment="Center" />
       <Panel Grid.Column="5" IsVisible="{Binding HasPrimaryAction}">
         <controls:CommandControl x:Name="PrimaryAction" DataContext="{Binding PrimaryAction}" />
