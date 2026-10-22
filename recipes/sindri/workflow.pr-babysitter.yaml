@@ -214,7 +214,7 @@ transitions:
   # BD9 with PB3: the docs PR is merged on its own only after this instance's click (fact:merge)
   - { from: snapshot, to: docs-merging, on: step.completed, produces: [fact:prState, fact:mergedSha],
       when: { all: [ { outcome: mergedDocsOpen }, { fact: fact:merge, is: present } ] },
-      effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:pr } } }] }
+      effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:docsPr } } }] }
   - { from: snapshot, to: docs-merge-owner, on: step.completed, when: { outcome: mergedDocsOpen }, produces: [fact:prState, fact:mergedSha] }
   - { from: snapshot, to: merged,     on: step.completed, when: { outcome: merged },   produces: [fact:prState, fact:mergedSha] }
   - { from: snapshot, to: closed,     on: step.completed, when: { outcome: closed },   produces: [fact:prState] }
@@ -366,7 +366,7 @@ transitions:
   - { from: docs-merging, to: merged,           on: wait.satisfied, when: { any: [ { outcome: merged }, { outcome: none } ] }, produces: [fact:docsMerge] }
   - { from: docs-merging, to: docs-merge-owner, on: wait.satisfied, when: { outcome: pending }, produces: [fact:docsMerge] }
   - { from: docs-merge-owner, to: docs-merging, on: step.completed, when: { outcome: merge },
-      effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:pr } } }] }
+      effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:docsPr } } }] }
   - { from: docs-merge-owner, to: merged, on: step.completed, when: { any: [ { outcome: done }, { outcome: leave } ] } }
 
   - { from: owner, to: intake,  on: step.completed, when: { outcome: retry } }
