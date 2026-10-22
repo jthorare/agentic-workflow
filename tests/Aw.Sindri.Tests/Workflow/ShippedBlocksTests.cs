@@ -103,7 +103,7 @@ public sealed class ShippedBlocksTests
 
         Assert.Equal([typeof(PrDiffScopeGate), typeof(PrSecretScanGate), typeof(BudgetAvailableGate), typeof(RouteStartableGate), typeof(RevisionBoundGate), typeof(PrAutofixCapGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
-        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrPushEffect), typeof(PrRecordEffect), typeof(PrRerunChecksEffect), typeof(PrMergeEffect), typeof(PrReplyEffect), typeof(PrOpenEffect), typeof(LineReportEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
+        Assert.Equal([typeof(StartPhaseEffect), typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrPushEffect), typeof(PrRecordEffect), typeof(PrRerunChecksEffect), typeof(PrMergeEffect), typeof(PrReplyEffect), typeof(PrOpenEffect), typeof(LineReportEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
 
     [Theory, Trait("Lane", "unit")]
