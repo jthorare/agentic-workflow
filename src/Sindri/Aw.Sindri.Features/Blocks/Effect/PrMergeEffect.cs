@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Profile;
@@ -49,7 +51,24 @@ internal sealed class PrMergeEffect(IPullRequests pulls, IFactContents facts, IF
         }
 
         var merged = await pulls.Merge(new PullMerge(link, method.Value, head), cancellationToken).ConfigureAwait(false);
-        return merged.IsError ? merged.Error : new EffectDone(Outcome(merged.Value.Status), Existed: false);
+        if (merged.IsError)
+        {
+            return merged.Error;
+        }
+
+        return merged.Value.Status == PullMergeStatus.Merged
+            ? await Merged(merged.Value, method.Value, head, cancellationToken).ConfigureAwait(false)
+            : new EffectDone(Outcome(merged.Value.Status), Existed: false);
+    }
+
+    // 'merged' carries fact:merge: what the merge made, for the recipe's later steps (docs merge, the record).
+    private async ValueTask<Result<EffectDone>> Merged(PullMergeOutcome outcome, PullMergeMethod method, string head, CancellationToken cancellationToken)
+    {
+        var fact = new JsonObject { ["mergedSha"] = outcome.MergedSha, ["method"] = method.ToString().ToLowerInvariant(), ["headSha"] = head };
+        var stored = await store.Put(Encoding.UTF8.GetBytes(fact.ToJsonString()), cancellationToken).ConfigureAwait(false);
+        return stored.IsError
+            ? stored.Error
+            : new EffectDone(Outcome(outcome.Status), Existed: false, new Dictionary<FactKey, ReplyFact> { [FactKey.From("fact:merge")] = new(stored.Value.Ref, stored.Value.Sha256, stored.Value.HeadSha) });
     }
 
     private static OutcomeName Outcome(PullMergeStatus status) => OutcomeName.From(status switch

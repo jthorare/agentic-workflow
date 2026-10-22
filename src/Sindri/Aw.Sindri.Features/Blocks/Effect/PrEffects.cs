@@ -28,8 +28,11 @@ internal static class PrEffects
     /// <summary>'effect.pr.create-stacked': opens the stacked docs PR on the source PR's head.</summary>
     public static BlockDescriptor CreateStacked { get; } = Of("effect.pr.create-stacked", humanTrigger: false, "pr", "on", "workspace", "title");
 
-    /// <summary>'effect.pr.merge': merges with the forge's expected-head check; human trigger.</summary>
-    public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method");
+    /// <summary>'effect.pr.merge': merges with the forge's expected-head check; human trigger. Writes 'fact:merge' {mergedSha, method, headSha} on 'merged' (the recipe's merging state produces it from the reply).</summary>
+    public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method") with
+    {
+        Outputs = [new OutputSpec(FactKey.From("fact:merge"), [OutcomeName.From("merged")])],
+    };
 
     /// <summary>'effect.pr.merge-docs': retargets, checks and merges the stacked docs PR; human trigger.</summary>
     public static BlockDescriptor MergeDocs { get; } = Of("effect.pr.merge-docs", humanTrigger: true, "pr");

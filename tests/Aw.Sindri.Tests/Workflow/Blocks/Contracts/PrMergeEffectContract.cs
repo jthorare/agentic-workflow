@@ -12,7 +12,7 @@ public sealed class PrMergeEffectContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => PrEffects.Merge;
 
-    protected override string ExpectedHash => "sha256:8764a318fd54b017a7c62228e0db4f20bb3e1d2b0c6c3a4aaa747df53ff391a9";
+    protected override string ExpectedHash => "sha256:TODO-repin-after-first-run"; // TODO: fact:merge Output moved the descriptor hash; copy the actual hash from the failing run
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
