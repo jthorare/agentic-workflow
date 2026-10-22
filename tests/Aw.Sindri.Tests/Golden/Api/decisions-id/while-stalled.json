@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
   "title": "SND-VIEW-001",
   "status": 503,
-  "detail": "views stalled at 7 (item.created); the command wasn't run (fix: sindri views rebuild)",
+  "detail": "views stalled at 8 (item.created); the command wasn't run (fix: sindri views rebuild)",
   "traceId": "<trace>"
 }

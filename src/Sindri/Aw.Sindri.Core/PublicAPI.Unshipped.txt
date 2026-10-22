@@ -12774,6 +12774,81 @@ override Aw.Sindri.Core.Prove.ProofPackOrigin.ToString() -> string!
 static Aw.Sindri.Core.Prove.ProofPack.Files(Aw.Sindri.Core.Prove.ProofFacts! facts, Aw.Sindri.Core.Prove.ProofReport! report, Aw.Sindri.Core.Prove.ProofPackOrigin! origin) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Aw.Sindri.Core.Prove.ProofPackOrigin.operator !=(Aw.Sindri.Core.Prove.ProofPackOrigin? left, Aw.Sindri.Core.Prove.ProofPackOrigin? right) -> bool
 static Aw.Sindri.Core.Prove.ProofPackOrigin.operator ==(Aw.Sindri.Core.Prove.ProofPackOrigin? left, Aw.Sindri.Core.Prove.ProofPackOrigin? right) -> bool
+Aw.Sindri.Core.Prove.HoldoutFiles
+Aw.Sindri.Core.Prove.HoldoutScenario
+Aw.Sindri.Core.Prove.HoldoutScenario.<Clone>$() -> Aw.Sindri.Core.Prove.HoldoutScenario!
+Aw.Sindri.Core.Prove.HoldoutScenario.Deconstruct(out string! Key, out string? Item, out string! Kind, out System.Collections.Generic.IReadOnlyList<string!>! Steps, out string! Expected, out string? Phrase) -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.Equals(Aw.Sindri.Core.Prove.HoldoutScenario? other) -> bool
+Aw.Sindri.Core.Prove.HoldoutScenario.Expected.get -> string!
+Aw.Sindri.Core.Prove.HoldoutScenario.Expected.init -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.HoldoutScenario(string! Key, string? Item, string! Kind, System.Collections.Generic.IReadOnlyList<string!>! Steps, string! Expected, string? Phrase) -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.IsCanary.get -> bool
+Aw.Sindri.Core.Prove.HoldoutScenario.Item.get -> string?
+Aw.Sindri.Core.Prove.HoldoutScenario.Item.init -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.Key.get -> string!
+Aw.Sindri.Core.Prove.HoldoutScenario.Key.init -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.Kind.get -> string!
+Aw.Sindri.Core.Prove.HoldoutScenario.Kind.init -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.Phrase.get -> string?
+Aw.Sindri.Core.Prove.HoldoutScenario.Phrase.init -> void
+Aw.Sindri.Core.Prove.HoldoutScenario.Steps.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Prove.HoldoutScenario.Steps.init -> void
+Aw.Sindri.Core.Prove.HoldoutSeal
+Aw.Sindri.Core.Prove.HoldoutSeal.<Clone>$() -> Aw.Sindri.Core.Prove.HoldoutSeal!
+Aw.Sindri.Core.Prove.HoldoutSeal.Deconstruct(out string! SetHash, out string! PlanHash) -> void
+Aw.Sindri.Core.Prove.HoldoutSeal.Equals(Aw.Sindri.Core.Prove.HoldoutSeal? other) -> bool
+Aw.Sindri.Core.Prove.HoldoutSeal.HoldoutSeal(string! SetHash, string! PlanHash) -> void
+Aw.Sindri.Core.Prove.HoldoutSeal.PlanHash.get -> string!
+Aw.Sindri.Core.Prove.HoldoutSeal.PlanHash.init -> void
+Aw.Sindri.Core.Prove.HoldoutSeal.SetHash.get -> string!
+Aw.Sindri.Core.Prove.HoldoutSeal.SetHash.init -> void
+Aw.Sindri.Core.Prove.HoldoutSet
+Aw.Sindri.Core.Prove.HoldoutSet.<Clone>$() -> Aw.Sindri.Core.Prove.HoldoutSet!
+Aw.Sindri.Core.Prove.HoldoutSet.Canary.get -> string?
+Aw.Sindri.Core.Prove.HoldoutSet.Deconstruct(out string! Phase, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.HoldoutScenario!>! Scenarios, out string! Hash) -> void
+Aw.Sindri.Core.Prove.HoldoutSet.Equals(Aw.Sindri.Core.Prove.HoldoutSet? other) -> bool
+Aw.Sindri.Core.Prove.HoldoutSet.Hash.get -> string!
+Aw.Sindri.Core.Prove.HoldoutSet.Hash.init -> void
+Aw.Sindri.Core.Prove.HoldoutSet.HoldoutSet(string! Phase, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.HoldoutScenario!>! Scenarios, string! Hash) -> void
+Aw.Sindri.Core.Prove.HoldoutSet.Phase.get -> string!
+Aw.Sindri.Core.Prove.HoldoutSet.Phase.init -> void
+Aw.Sindri.Core.Prove.HoldoutSet.Scenarios.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.HoldoutScenario!>!
+Aw.Sindri.Core.Prove.HoldoutSet.Scenarios.init -> void
+Aw.Sindri.Core.Prove.ICommitText
+Aw.Sindri.Core.Prove.ICommitText.Range(string! checkout, string! baseSha, string! head, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Prove.IHoldoutStore
+Aw.Sindri.Core.Prove.IHoldoutStore.MarkSpent(string! line, string! phase, System.Collections.Generic.IReadOnlyCollection<string!>! scenarios, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Prove.IHoldoutStore.Seal(string! line, string! phase, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Prove.HoldoutSeal!>!>
+Aw.Sindri.Core.Prove.IHoldoutStore.Set(string! line, string! phase, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Prove.HoldoutSet!>!>
+Aw.Sindri.Core.Prove.IHoldoutStore.Spent(string! line, string! phase, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
+const Aw.Sindri.Core.Prove.HoldoutFiles.SealName = "seal.json" -> string!
+const Aw.Sindri.Core.Prove.HoldoutFiles.SetName = "set.json" -> string!
+const Aw.Sindri.Core.Prove.HoldoutFiles.SpentName = "spent.json" -> string!
+const Aw.Sindri.Core.Prove.HoldoutScenario.CanaryKind = "canary" -> string!
+override Aw.Sindri.Core.Prove.HoldoutScenario.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.HoldoutScenario.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.HoldoutScenario.ToString() -> string!
+override Aw.Sindri.Core.Prove.HoldoutSeal.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.HoldoutSeal.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.HoldoutSeal.ToString() -> string!
+override Aw.Sindri.Core.Prove.HoldoutSet.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.HoldoutSet.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.HoldoutSet.ToString() -> string!
+static Aw.Sindri.Core.Prove.HoldoutFiles.IsKey(string? key) -> bool
+static Aw.Sindri.Core.Prove.HoldoutFiles.Hash(string! setText) -> string!
+static Aw.Sindri.Core.Prove.HoldoutFiles.ParseSeal(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Prove.HoldoutSeal!>!
+static Aw.Sindri.Core.Prove.HoldoutFiles.ParseSet(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Prove.HoldoutSet!>!
+static Aw.Sindri.Core.Prove.HoldoutFiles.ParseSpent(string! text) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!
+static Aw.Sindri.Core.Prove.HoldoutFiles.SpentJson(System.Collections.Generic.IEnumerable<string!>! marked) -> string!
+static Aw.Sindri.Core.Prove.HoldoutFiles.Unreadable(string! file, string! why) -> Aw.Kernel.Error!
+static Aw.Sindri.Core.Prove.HoldoutScenario.operator !=(Aw.Sindri.Core.Prove.HoldoutScenario? left, Aw.Sindri.Core.Prove.HoldoutScenario? right) -> bool
+static Aw.Sindri.Core.Prove.HoldoutScenario.operator ==(Aw.Sindri.Core.Prove.HoldoutScenario? left, Aw.Sindri.Core.Prove.HoldoutScenario? right) -> bool
+static Aw.Sindri.Core.Prove.HoldoutSeal.operator !=(Aw.Sindri.Core.Prove.HoldoutSeal? left, Aw.Sindri.Core.Prove.HoldoutSeal? right) -> bool
+static Aw.Sindri.Core.Prove.HoldoutSeal.operator ==(Aw.Sindri.Core.Prove.HoldoutSeal? left, Aw.Sindri.Core.Prove.HoldoutSeal? right) -> bool
+static Aw.Sindri.Core.Prove.HoldoutSet.operator !=(Aw.Sindri.Core.Prove.HoldoutSet? left, Aw.Sindri.Core.Prove.HoldoutSet? right) -> bool
+static Aw.Sindri.Core.Prove.HoldoutSet.operator ==(Aw.Sindri.Core.Prove.HoldoutSet? left, Aw.Sindri.Core.Prove.HoldoutSet? right) -> bool
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.HoldoutSetMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.HoldoutStoreUnavailable -> Aw.Kernel.ErrorDefinition!
 static Aw.Sindri.Core.Prove.ProofChecks.Required.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static readonly Aw.Sindri.Core.SindriErrors.WorktreeInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.WorktreeConflict -> Aw.Kernel.ErrorDefinition!

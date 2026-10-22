@@ -41,7 +41,8 @@ public sealed class NamedControlsTests
     public async Task Every_named_control_is_set_after_construction(string view)
     {
         var names = XDocument.Load(Path.Combine(UiSource.Library, "Views", view + ".axaml"))
-            .Descendants().Select(e => (string?)e.Attribute(_x + "Name")).OfType<string>().ToList();
+            .Descendants().Where(e => !e.Ancestors().Any(a => a.Name.LocalName.EndsWith("Template", StringComparison.Ordinal)))   // a name inside a template (PART_ContentPresenter) belongs to the template's own scope and gets no field
+            .Select(e => (string?)e.Attribute(_x + "Name")).OfType<string>().ToList();
 
         var unset = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(NamedControlsTests).Assembly)
             .Dispatch(() =>

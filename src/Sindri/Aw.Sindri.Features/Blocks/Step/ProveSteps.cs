@@ -25,7 +25,7 @@ internal static class ProveSteps
 
     /// <summary>'step.prove.holdout-log': records the verdicts, marks failures spent and checks the canary; 'passed', 'failed' or 'leaked'.</summary>
     public static BlockDescriptor HoldoutLog { get; } = BlockStep("step.prove.holdout-log", Capability.Tools)
-        .Reads("fact:holdoutResult", "fact:built").Reports("passed", "failed", "leaked")
+        .Reads("fact:holdoutResult", "fact:built", "fact:phasePacket").Reports("passed", "failed", "leaked")
         .Writes(On("fact:holdoutResult", "passed", "failed"), On("fact:findings", "failed", "leaked"));
 
     /// <summary>'step.prove.evidence': the proof checks, then assembles and machine-freezes the proof pack; 'complete' or 'incomplete' with findings.</summary>

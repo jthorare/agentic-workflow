@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-00000000000000000000000000000011",
+      "id": "decision:DEC-00000000000000000000000000000012",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000011"
+        "id": "DEC-00000000000000000000000000000012"
       },
       "item": null,
       "title": "Split the checkout work into two items.",
@@ -21,13 +21,13 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
     }
   ],
-  "empty": "Views are stalled at 7: run `sindri views rebuild`",
+  "empty": "Views are stalled at 8: run `sindri views rebuild`",
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 7,
+    "cursor": 7,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": true

@@ -1,5 +1,5 @@
 {
-  "id": "ITM-0000000000000000000000000000000e",
+  "id": "ITM-0000000000000000000000000000000f",
   "title": "Try the queue",
   "repo": "demo",
   "state": "running",
@@ -11,7 +11,7 @@
   "version": 1,
   "createdBy": "human:cli",
   "waitingOn": null,
-  "instance": "ITM-0000000000000000000000000000000e/step/1",
+  "instance": "ITM-0000000000000000000000000000000f/step/1",
   "createdAt": "2026-01-01T00:00:00.0000000Z",
   "updatedAt": "2026-01-01T00:00:00.0000000Z",
   "body": null,
@@ -26,7 +26,7 @@
     "chosenBy": "lastUsed",
     "attach": {
       "target": "claude-code",
-      "tabTitle": "sindri ITM-0000000000000000000000000000000e",
+      "tabTitle": "sindri ITM-0000000000000000000000000000000f",
       "since": "2026-01-01T00:00:00.0000000Z",
       "argv": [
         "tmux",
@@ -45,7 +45,7 @@
     "lastStarted": {
       "target": "claude-code",
       "at": "2026-01-01T00:00:00.0000000Z",
-      "tabTitle": "sindri ITM-0000000000000000000000000000000e",
+      "tabTitle": "sindri ITM-0000000000000000000000000000000f",
       "viewer": {
         "kind": "none",
         "label": "none",
@@ -74,8 +74,8 @@
     ]
   },
   "asOf": {
-    "cursor": 11,
-    "ledgerHead": 11,
+    "cursor": 12,
+    "ledgerHead": 12,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

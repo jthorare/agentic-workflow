@@ -5,7 +5,7 @@
              x:Class="Aw.Sindri.Ui.Views.Context.Map.MapNodeView"
              x:DataType="vm:MapNodeViewModel"
              Width="{Binding Width}" Height="{Binding Height}"
-             Focusable="True"
+             Focusable="True" Opacity="{Binding Opacity}"
              AutomationProperties.Name="{Binding Name}">
   <!-- One node of the context map (F3 spec 1 §2): a chip or a card on Surface1 with a 1 px hairline, or, for a suggestion nobody
        confirmed, no fill and a dashed Wire outline. The anchor wears a 2 px RingAnchor ring with a 2 px gap and a "Starts here" pill. -->
@@ -14,6 +14,7 @@
             Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" />
     <Rectangle IsVisible="{Binding IsSuggested}" RadiusX="12" RadiusY="12" Stroke="{DynamicResource Brush.Wire}" StrokeThickness="1" StrokeDashArray="8,4" />
     <Border IsVisible="{Binding IsAnchor}" Margin="-4" BorderThickness="2" BorderBrush="{DynamicResource Brush.RingAnchor}" CornerRadius="16" IsHitTestVisible="False" />
+    <Border IsVisible="{Binding IsSelected}" Margin="-6" BorderThickness="4" BorderBrush="{DynamicResource Brush.PrimaryHover}" CornerRadius="18" IsHitTestVisible="False" />
 
     <Grid IsVisible="{Binding IsChip}" ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="10,0" VerticalAlignment="Center">
       <Border Width="24" Height="24" Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}" VerticalAlignment="Top" Margin="0,2,0,0">

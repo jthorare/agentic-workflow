@@ -1,16 +1,16 @@
 {
   "rows": [
     {
-      "id": "park:WFI-4b2ce3bc02838fa3b234ec373586a772",
+      "id": "park:WFI-a247af6d31408f5a959d065aa2563277",
       "kind": "park",
       "label": "park · needs answer",
       "subject": {
         "kind": "instance",
-        "id": "WFI-4b2ce3bc02838fa3b234ec373586a772"
+        "id": "WFI-a247af6d31408f5a959d065aa2563277"
       },
-      "item": "ITM-0000000000000000000000000000000e",
+      "item": "ITM-0000000000000000000000000000000f",
       "title": "Try the engine",
-      "reason": "it needs an answer (ITM-0000000000000000000000000000000e/step/1)",
+      "reason": "it needs an answer (ITM-0000000000000000000000000000000f/step/1)",
       "repo": "demo",
       "urgency": "pulse",
       "since": "2026-01-01T00:00:00.0000000Z",
@@ -21,15 +21,15 @@
       "actions": [
         "ApplyCommand:answer-text"
       ],
-      "cli": "sindri workflow answer ITM-0000000000000000000000000000000e/step/1 <the child's answer>",
+      "cli": "sindri workflow answer ITM-0000000000000000000000000000000f/step/1 <the child's answer>",
       "via": "child",
-      "child": "ITM-0000000000000000000000000000000e/step/1/step.4"
+      "child": "ITM-0000000000000000000000000000000f/step/1/step.4"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 8,
-    "ledgerHead": 8,
+    "cursor": 9,
+    "ledgerHead": 9,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

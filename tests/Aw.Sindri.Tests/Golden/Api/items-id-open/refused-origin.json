@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
   "title": "SND-API-008",
   "status": 403,
-  "detail": "POST /sindri/items/ITM-0000000000000000000000000000000e/open is a command, and commands refuse an Origin header (fix: call it from the sindri CLI or the Sindri app)",
+  "detail": "POST /sindri/items/ITM-0000000000000000000000000000000f/open is a command, and commands refuse an Origin header (fix: call it from the sindri CLI or the Sindri app)",
   "traceId": "<trace>"
 }

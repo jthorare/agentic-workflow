@@ -20,25 +20,25 @@
   ],
   "apiVersion": 1,
   "views": {
-    "cursor": 4,
-    "ledgerHead": 4,
+    "cursor": 5,
+    "ledgerHead": 5,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": true,
     "stalled": false,
     "stalledAt": null,
     "stalledType": null,
-    "text": "Rebuilding views (cursor 4 of 4)…"
+    "text": "Rebuilding views (cursor 5 of 5)…"
   },
   "health": {
     "word": "rebuilding",
     "problems": [
       {
         "code": "SND-API-010",
-        "text": "Rebuilding views (cursor 4 of 4)…",
-        "clause": "the views are replaying (cursor 4 of 4)"
+        "text": "Rebuilding views (cursor 5 of 5)…",
+        "clause": "the views are replaying (cursor 5 of 5)"
       }
     ],
-    "sentence": "Sindri is rebuilding: the views are replaying (cursor 4 of 4)."
+    "sentence": "Sindri is rebuilding: the views are replaying (cursor 5 of 5)."
   },
   "sessions": {
     "live": 0,

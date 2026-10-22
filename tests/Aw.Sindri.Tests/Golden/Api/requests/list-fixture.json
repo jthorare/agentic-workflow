@@ -1,21 +1,21 @@
 {
   "requests": [
     {
-      "id": "REQ-00000000000000000000000000000010",
+      "id": "REQ-00000000000000000000000000000011",
       "kind": "rescope",
       "item": null,
       "repo": "demo",
       "text": "Split the checkout work into two items.",
       "actor": "session:cli",
       "state": "open",
-      "decisionId": "DEC-00000000000000000000000000000011",
+      "decisionId": "DEC-00000000000000000000000000000012",
       "filedAt": "2026-01-01T00:00:00.0000000Z"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 6,
+    "cursor": 7,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

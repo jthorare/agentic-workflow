@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.ViewModels.Context.Layout;
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>One node of the map as the view draws it: its place and its words, composed here so the view binds and draws.</summary>
-internal sealed class MapNodeViewModel
+internal sealed class MapNodeViewModel : ObservableObject
 {
     /// <summary>A node from its layout.</summary>
     /// <param name="layout">Where the node sits and what was served about it.</param>
@@ -32,6 +32,29 @@ internal sealed class MapNodeViewModel
 
     /// <summary>The node's key.</summary>
     public string Key => Layout.Key;
+
+    /// <summary>Whether the inspector shows this node (the view draws the focus ring; the inspector opening is the other cue).</summary>
+    public bool IsSelected
+    {
+        get;
+        private set => Set(ref field, value);
+    }
+
+    /// <summary>1, or the dimmed opacity while the pointer or the selection lights other nodes.</summary>
+    public double Opacity
+    {
+        get;
+        private set => Set(ref field, value);
+    } = 1;
+
+    /// <summary>Sets what the selection and the highlight make of this node.</summary>
+    /// <param name="selected">Whether this node is the selected one.</param>
+    /// <param name="dimmed">Whether the highlight leaves this node out.</param>
+    internal void Apply(bool selected, bool dimmed)
+    {
+        IsSelected = selected;
+        Opacity = dimmed ? MapHighlightStyle.DimmedOpacity : 1;
+    }
 
     /// <summary>The name for assistive technology: the kind word, a colon and the label.</summary>
     public string Name { get; }

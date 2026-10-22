@@ -112,7 +112,8 @@
         <Border x:Name="ContextFilesPanel" IsVisible="{Binding ShowFiles}" Background="{DynamicResource Brush.Surface1}" CornerRadius="{StaticResource Radius.MD}" Padding="16">
           <fv:FileMapTree x:Name="FileMapHost" DataContext="{Binding FileMap}" />
         </Border>
-        <Border x:Name="ContextInspector" IsVisible="False" HorizontalAlignment="Right" Width="480" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
+        <Border x:Name="ContextInspector" IsVisible="{Binding InspectorOpen}" ClipToBounds="True" HorizontalAlignment="Right" Width="480" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
+          <!-- No ScrollViewer here: while the inspector is hidden its template is never applied, so the hosts would not be in the visual tree. -->
           <StackPanel Spacing="{StaticResource Size.PanelGap}">
             <rv:MapReviewPanel x:Name="ReviewHost" DataContext="{Binding Review}" />
             <nv:NodeCard x:Name="NodeHost" DataContext="{Binding Node}" />

@@ -3,5 +3,24 @@
              xmlns:ctx="using:Aw.Sindri.Ui.ViewModels.Context"
              x:Class="Aw.Sindri.Ui.Views.Context.Sources.SourcesPanel"
              x:DataType="ctx:SourcesPanelViewModel">
-  <!-- A seam: the stage that owns this view draws it here (U9 plan §4); nothing until then. -->
+  <!-- The inspector's "Where it comes from" (F3 spec 1 §2 "2e"): the node's source, when it was last read, and how sure the map is. -->
+  <StackPanel IsVisible="{Binding HasRows}" Spacing="4" Margin="20,16,20,20">
+    <TextBlock Classes="eyebrow" Text="{Binding Title}" />
+    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12">
+      <TextBlock Classes="caption subtle" Text="{Binding SourceColumn}" />
+      <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding WhenColumn}" />
+      <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding SureColumn}" />
+    </Grid>
+    <ItemsControl x:Name="SourceRows" ItemsSource="{Binding Rows}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="ctx:SourceRowViewModel">
+          <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" MinHeight="36" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="body" Text="{Binding Source}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding When}" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Classes="caption" Text="{Binding Sure}" VerticalAlignment="Center" TextWrapping="Wrap" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </StackPanel>
 </UserControl>

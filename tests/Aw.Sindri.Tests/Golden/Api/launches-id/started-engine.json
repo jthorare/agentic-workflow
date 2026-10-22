@@ -1,6 +1,6 @@
 {
   "id": "LCH-00000000000000000000000000000001",
-  "item": "ITM-0000000000000000000000000000000e",
+  "item": "ITM-0000000000000000000000000000000f",
   "mode": "open",
   "state": "started",
   "target": "claude-code",
@@ -11,7 +11,7 @@
   "detail": null,
   "stage": null,
   "sessionId": "0a1b2c3d-0000-4000-8000-000000000001",
-  "tabTitle": "sindri ITM-0000000000000000000000000000000e",
+  "tabTitle": "sindri ITM-0000000000000000000000000000000f",
   "viewer": {
     "kind": "none",
     "label": "none",
@@ -32,13 +32,13 @@
   "argvHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "ended": null,
   "step": {
-    "instance": "ITM-0000000000000000000000000000000e/step/1",
+    "instance": "ITM-0000000000000000000000000000000f/step/1",
     "state": "build",
     "attempt": 2
   },
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

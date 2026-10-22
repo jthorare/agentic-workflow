@@ -14,7 +14,7 @@
       "group": "running",
       "items": [
         {
-          "id": "ITM-0000000000000000000000000000000e",
+          "id": "ITM-0000000000000000000000000000000f",
           "title": "Try the engine",
           "repo": "demo",
           "state": "running",
@@ -35,8 +35,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

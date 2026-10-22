@@ -1,7 +1,7 @@
 {
   "decisions": [
     {
-      "id": "DEC-00000000000000000000000000000011",
+      "id": "DEC-00000000000000000000000000000012",
       "kind": "accept-request",
       "class": "decision",
       "label": "decision · re-scope",
@@ -14,13 +14,13 @@
           "id": "accept",
           "label": "Accept",
           "rejectLike": false,
-          "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+          "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
         },
         {
           "id": "decline",
           "label": "Decline",
           "rejectLike": true,
-          "cli": "sindri decide DEC-00000000000000000000000000000011 decline"
+          "cli": "sindri decide DEC-00000000000000000000000000000012 decline"
         }
       ],
       "recommended": "accept",
@@ -36,11 +36,11 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000011 accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
       "cleared": null
     },
     {
-      "id": "DEC-0000000000000000000000000000001b",
+      "id": "DEC-0000000000000000000000000000001c",
       "kind": "accept-request",
       "class": "decision",
       "label": "decision · add task",
@@ -53,13 +53,13 @@
           "id": "accept",
           "label": "Accept",
           "rejectLike": false,
-          "cli": "sindri decide DEC-0000000000000000000000000000001b accept"
+          "cli": "sindri decide DEC-0000000000000000000000000000001c accept"
         },
         {
           "id": "decline",
           "label": "Decline",
           "rejectLike": true,
-          "cli": "sindri decide DEC-0000000000000000000000000000001b decline"
+          "cli": "sindri decide DEC-0000000000000000000000000000001c decline"
         }
       ],
       "recommended": "accept",
@@ -75,14 +75,14 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000001b accept",
+      "cli": "sindri decide DEC-0000000000000000000000000000001c accept",
       "cleared": null
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 8,
-    "ledgerHead": 8,
+    "cursor": 9,
+    "ledgerHead": 9,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

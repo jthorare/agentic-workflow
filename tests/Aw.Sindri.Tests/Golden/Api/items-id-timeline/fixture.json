@@ -1,711 +1,711 @@
 {
   "entries": [
     {
-      "sequence": 5,
+      "sequence": 6,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.created",
       "actor": "human:cli",
       "line": "Created: Try the queue"
     },
     {
-      "sequence": 7,
+      "sequence": 8,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-1"
     },
     {
-      "sequence": 8,
+      "sequence": 9,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-2"
     },
     {
-      "sequence": 9,
+      "sequence": 10,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-3"
     },
     {
-      "sequence": 10,
+      "sequence": 11,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-4"
     },
     {
-      "sequence": 11,
+      "sequence": 12,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-5"
     },
     {
-      "sequence": 12,
+      "sequence": 13,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-6"
     },
     {
-      "sequence": 13,
+      "sequence": 14,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-7"
     },
     {
-      "sequence": 14,
+      "sequence": 15,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-8"
     },
     {
-      "sequence": 15,
+      "sequence": 16,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-9"
     },
     {
-      "sequence": 16,
+      "sequence": 17,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-10"
     },
     {
-      "sequence": 17,
+      "sequence": 18,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-11"
     },
     {
-      "sequence": 18,
+      "sequence": 19,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-12"
     },
     {
-      "sequence": 19,
+      "sequence": 20,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-13"
     },
     {
-      "sequence": 20,
+      "sequence": 21,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-14"
     },
     {
-      "sequence": 21,
+      "sequence": 22,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-15"
     },
     {
-      "sequence": 22,
+      "sequence": 23,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-16"
     },
     {
-      "sequence": 23,
+      "sequence": 24,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-17"
     },
     {
-      "sequence": 24,
+      "sequence": 25,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-18"
     },
     {
-      "sequence": 25,
+      "sequence": 26,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-19"
     },
     {
-      "sequence": 26,
+      "sequence": 27,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-20"
     },
     {
-      "sequence": 27,
+      "sequence": 28,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-21"
     },
     {
-      "sequence": 28,
+      "sequence": 29,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-22"
     },
     {
-      "sequence": 29,
+      "sequence": 30,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-23"
     },
     {
-      "sequence": 30,
+      "sequence": 31,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-24"
     },
     {
-      "sequence": 31,
+      "sequence": 32,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-25"
     },
     {
-      "sequence": 32,
+      "sequence": 33,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-26"
     },
     {
-      "sequence": 33,
+      "sequence": 34,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-27"
     },
     {
-      "sequence": 34,
+      "sequence": 35,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-28"
     },
     {
-      "sequence": 35,
+      "sequence": 36,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-29"
     },
     {
-      "sequence": 36,
+      "sequence": 37,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-30"
     },
     {
-      "sequence": 37,
+      "sequence": 38,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-31"
     },
     {
-      "sequence": 38,
+      "sequence": 39,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-32"
     },
     {
-      "sequence": 39,
+      "sequence": 40,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-33"
     },
     {
-      "sequence": 40,
+      "sequence": 41,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-34"
     },
     {
-      "sequence": 41,
+      "sequence": 42,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-35"
     },
     {
-      "sequence": 42,
+      "sequence": 43,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-36"
     },
     {
-      "sequence": 43,
+      "sequence": 44,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-37"
     },
     {
-      "sequence": 44,
+      "sequence": 45,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-38"
     },
     {
-      "sequence": 45,
+      "sequence": 46,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-39"
     },
     {
-      "sequence": 46,
+      "sequence": 47,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-40"
     },
     {
-      "sequence": 47,
+      "sequence": 48,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-41"
     },
     {
-      "sequence": 48,
+      "sequence": 49,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-42"
     },
     {
-      "sequence": 49,
+      "sequence": 50,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-43"
     },
     {
-      "sequence": 50,
+      "sequence": 51,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-44"
     },
     {
-      "sequence": 51,
+      "sequence": 52,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-45"
     },
     {
-      "sequence": 52,
+      "sequence": 53,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-46"
     },
     {
-      "sequence": 53,
+      "sequence": 54,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-47"
     },
     {
-      "sequence": 54,
+      "sequence": 55,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-48"
     },
     {
-      "sequence": 55,
+      "sequence": 56,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-49"
     },
     {
-      "sequence": 56,
+      "sequence": 57,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-50"
     },
     {
-      "sequence": 57,
+      "sequence": 58,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-51"
     },
     {
-      "sequence": 58,
+      "sequence": 59,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-52"
     },
     {
-      "sequence": 59,
+      "sequence": 60,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-53"
     },
     {
-      "sequence": 60,
+      "sequence": 61,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-54"
     },
     {
-      "sequence": 61,
+      "sequence": 62,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-55"
     },
     {
-      "sequence": 62,
+      "sequence": 63,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-56"
     },
     {
-      "sequence": 63,
+      "sequence": 64,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-57"
     },
     {
-      "sequence": 64,
+      "sequence": 65,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-58"
     },
     {
-      "sequence": 65,
+      "sequence": 66,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-59"
     },
     {
-      "sequence": 66,
+      "sequence": 67,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-60"
     },
     {
-      "sequence": 67,
+      "sequence": 68,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-61"
     },
     {
-      "sequence": 68,
+      "sequence": 69,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-62"
     },
     {
-      "sequence": 69,
+      "sequence": 70,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-63"
     },
     {
-      "sequence": 70,
+      "sequence": 71,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-64"
     },
     {
-      "sequence": 71,
+      "sequence": 72,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-65"
     },
     {
-      "sequence": 72,
+      "sequence": 73,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-66"
     },
     {
-      "sequence": 73,
+      "sequence": 74,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-67"
     },
     {
-      "sequence": 74,
+      "sequence": 75,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-68"
     },
     {
-      "sequence": 75,
+      "sequence": 76,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-69"
     },
     {
-      "sequence": 76,
+      "sequence": 77,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-70"
     },
     {
-      "sequence": 77,
+      "sequence": 78,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-71"
     },
     {
-      "sequence": 78,
+      "sequence": 79,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-72"
     },
     {
-      "sequence": 79,
+      "sequence": 80,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-73"
     },
     {
-      "sequence": 80,
+      "sequence": 81,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-74"
     },
     {
-      "sequence": 81,
+      "sequence": 82,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-75"
     },
     {
-      "sequence": 82,
+      "sequence": 83,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-76"
     },
     {
-      "sequence": 83,
+      "sequence": 84,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-77"
     },
     {
-      "sequence": 84,
+      "sequence": 85,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-78"
     },
     {
-      "sequence": 85,
+      "sequence": 86,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-79"
     },
     {
-      "sequence": 86,
+      "sequence": 87,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-80"
     },
     {
-      "sequence": 87,
+      "sequence": 88,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-81"
     },
     {
-      "sequence": 88,
+      "sequence": 89,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-82"
     },
     {
-      "sequence": 89,
+      "sequence": 90,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-83"
     },
     {
-      "sequence": 90,
+      "sequence": 91,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-84"
     },
     {
-      "sequence": 91,
+      "sequence": 92,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-85"
     },
     {
-      "sequence": 92,
+      "sequence": 93,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-86"
     },
     {
-      "sequence": 93,
+      "sequence": 94,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-87"
     },
     {
-      "sequence": 94,
+      "sequence": 95,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-88"
     },
     {
-      "sequence": 95,
+      "sequence": 96,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-89"
     },
     {
-      "sequence": 96,
+      "sequence": 97,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-90"
     },
     {
-      "sequence": 97,
+      "sequence": 98,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-91"
     },
     {
-      "sequence": 98,
+      "sequence": 99,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-92"
     },
     {
-      "sequence": 99,
+      "sequence": 100,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-93"
     },
     {
-      "sequence": 100,
+      "sequence": 101,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-94"
     },
     {
-      "sequence": 101,
+      "sequence": 102,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-95"
     },
     {
-      "sequence": 102,
+      "sequence": 103,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-96"
     },
     {
-      "sequence": 103,
+      "sequence": 104,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-97"
     },
     {
-      "sequence": 104,
+      "sequence": 105,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-98"
     },
     {
-      "sequence": 105,
+      "sequence": 106,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
       "line": "Linked to linear:issue/abc-99"
     }
   ],
-  "next": 105,
+  "next": 106,
   "empty": null,
   "asOf": {
-    "cursor": 106,
-    "ledgerHead": 106,
+    "cursor": 107,
+    "ledgerHead": 107,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

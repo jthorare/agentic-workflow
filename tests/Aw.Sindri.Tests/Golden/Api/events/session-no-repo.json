@@ -46,8 +46,30 @@
     }
   },
   {
-    "sequence": 9,
-    "id": "00000000-0000-0000-0000-000000000018",
+    "sequence": 4,
+    "id": "00000000-0000-0000-0000-00000000000b",
+    "type": "setup.consent.given",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "human:cli",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-000000000009",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "00000000-0000-0000-0000-000000000008",
+      "steps": [
+        "mcp",
+        "map"
+      ],
+      "profileHash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"
+    }
+  },
+  {
+    "sequence": 10,
+    "id": "00000000-0000-0000-0000-000000000019",
     "type": "service.heartbeat",
     "schemaVersion": 1,
     "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -55,7 +77,7 @@
     "tenant": "local",
     "ring": 0,
     "item": null,
-    "correlationId": "00000000-0000-0000-0000-000000000017",
+    "correlationId": "00000000-0000-0000-0000-000000000018",
     "causationId": null,
     "traceId": null,
     "payload": {

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels.Context;
@@ -18,6 +19,8 @@ internal sealed class ContextMapWorld : Canvas
     /// <summary>The map to draw; null draws nothing.</summary>
     internal static readonly StyledProperty<ContextMapViewModel?> MapProperty = AvaloniaProperty.Register<ContextMapWorld, ContextMapViewModel?>(nameof(Map));
 
+
+    private ContextMapViewModel? _watched;
 
     static ContextMapWorld()
     {
@@ -53,10 +56,14 @@ internal sealed class ContextMapWorld : Canvas
         EdgesLayer = null;
         NodeViews = new Dictionary<string, MapNodeView>(StringComparer.Ordinal);
         PillViews = new Dictionary<string, Control>(StringComparer.Ordinal);
+        _watched?.PropertyChanged -= OnMapChanged;
+        _watched = Map;
         if (Map is not { } map)
         {
             return;
         }
+
+        map.PropertyChanged += OnMapChanged;
 
         Width = map.WorldWidth;
         Height = map.WorldHeight;
@@ -73,8 +80,52 @@ internal sealed class ContextMapWorld : Canvas
             Place(Meta(band), 0, band.Top + 10);
         }
 
-        NodeViews = PlaceAll(map.Nodes, n => n.Key, n => (n.X, n.Y), n => new MapNodeView { DataContext = n });
+        NodeViews = PlaceAll(map.Nodes, n => n.Key, n => (n.X, n.Y), n => Node(map, n));
         PillViews = PlaceAll<MapPillViewModel, Control>(map.Pills, p => p.Key, p => (p.X, p.Y), Pill);
+    }
+
+    // The edges layer lights and dims with the map's highlight.
+    private void OnMapChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (EdgesLayer is not { } edges || Map is not { } map)
+        {
+            return;
+        }
+
+        if (string.Equals(e.PropertyName, nameof(ContextMapViewModel.HighlightedEdges), StringComparison.Ordinal))
+        {
+            edges.Highlighted = map.HighlightedEdges;
+        }
+        else if (string.Equals(e.PropertyName, nameof(ContextMapViewModel.DimmedEdges), StringComparison.Ordinal))
+        {
+            edges.Dimmed = map.DimmedEdges;
+        }
+    }
+
+    // A node: the pointer lights the nodes around it and a press chooses it (the press is handled here, so the canvas does not start a pan from it);
+    // Enter and Space choose the focused one.
+    private static MapNodeView Node(ContextMapViewModel map, MapNodeViewModel node)
+    {
+        var view = new MapNodeView { DataContext = node, Cursor = new Cursor(StandardCursorType.Hand) };
+        view.PointerEntered += (_, _) => map.Hover([node.Key]);
+        view.PointerExited += (_, _) => map.ClearHover();
+        view.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(view).Properties.IsLeftButtonPressed)
+            {
+                e.Handled = true;
+                map.Chosen?.Invoke(node.Key);
+            }
+        };
+        view.KeyDown += (_, e) =>
+        {
+            if (e.Key is Key.Enter or Key.Space)
+            {
+                e.Handled = true;
+                map.Chosen?.Invoke(node.Key);
+            }
+        };
+        return view;
     }
 
     // Builds a view for each item, places it at its point and returns the views by key.
@@ -157,7 +208,14 @@ internal sealed class ContextMapWorld : Canvas
             box.BorderThickness = new Thickness(1);
         }
 
-        box.Opacity = pill.Always ? 1 : 0;
+        box.Opacity = pill.Opacity;
+        pill.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MapPillViewModel.Opacity), StringComparison.Ordinal))
+            {
+                box.Opacity = pill.Opacity;
+            }
+        };
         AutomationProperties.SetName(box, pill.Text);
         AutomationProperties.SetAccessibilityView(box, pill.Always ? AccessibilityView.Control : AccessibilityView.Raw);   // a hover-only label is invisible until hover exists
         AutomationProperties.SetControlTypeOverride(box, Avalonia.Automation.Peers.AutomationControlType.Text);

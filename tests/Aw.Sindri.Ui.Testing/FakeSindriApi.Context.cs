@@ -126,8 +126,11 @@ internal sealed partial class FakeSindriApi
     public Task<Result<MapStatusView>> MapStatus(Uri api, string? anchor, CancellationToken cancellationToken) =>
         Context<MapStatusView>(api, "/sindri/context/map", MapStatusAnswer, MapStatusGate, cancellationToken);
 
-    public Task<Result<NodeView>> Node(Uri api, string key, CancellationToken cancellationToken) =>
-        Context<NodeView>(api, "/sindri/context/node", NodeAnswer, NodeGate, cancellationToken);
+    public Task<Result<NodeView>> Node(Uri api, string key, CancellationToken cancellationToken)
+    {
+        Log("node:" + key);
+        return Context<NodeView>(api, "/sindri/context/node", NodeAnswer, NodeGate, cancellationToken);
+    }
 
     public Task<Result<SourcesView>> Sources(Uri api, CancellationToken cancellationToken) =>
         Context<SourcesView>(api, "/sindri/context/sources", SourcesAnswer, SourcesGate, cancellationToken);

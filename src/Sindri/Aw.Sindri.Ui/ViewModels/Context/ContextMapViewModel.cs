@@ -6,30 +6,37 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <summary>
 /// The context map (F3 spec 1): the lenses answer laid out on the world, as the nodes, edges, label pills and band frames the page
 /// draws, plus the draft mark, the starting points and the coverage words of the control row. Built once per read; selection and
-/// hover are the next stage's.
+/// hover are in ContextMapViewModel.Selection.cs.
 /// </summary>
-internal sealed class ContextMapViewModel : ObservableObject
+internal sealed partial class ContextMapViewModel : ObservableObject
 {
-    private readonly MapLayout _layout;
 
     /// <summary>The map of one answer.</summary>
     /// <param name="view">The lenses answer.</param>
     internal ContextMapViewModel(LensesView view)
     {
         ArgumentNullException.ThrowIfNull(view);
-        _layout = ContextMapLayout.Build(view);
-        Nodes = [.. _layout.Nodes.Select(n => new MapNodeViewModel(n))];
-        Pills = [.. _layout.Edges.Select(e => new MapPillViewModel(e))];
-        Edges = [.. _layout.Edges.Select(e => new MapEdge(e.Key, e.Route, e.Dashed))];
-        Bands = [.. _layout.Bands.Select(b => MapBandViewModel.From(b, WorldWidth))];
-        WorldHeight = _layout.World.Height;
+        Layout = ContextMapLayout.Build(view);
+        Conflicts = view.Conflicts;
+        _links = [.. Layout.Edges.Select(e => new MapLink(e.Key, e.From, e.To, e.Type))];
+        Nodes = [.. Layout.Nodes.Select(n => new MapNodeViewModel(n))];
+        Pills = [.. Layout.Edges.Select(e => new MapPillViewModel(e))];
+        Edges = [.. Layout.Edges.Select(e => new MapEdge(e.Key, e.Route, e.Dashed))];
+        Bands = [.. Layout.Bands.Select(b => MapBandViewModel.From(b, WorldWidth))];
+        WorldHeight = Layout.World.Height;
         Draft = view.Draft;
         Anchors = [.. view.Anchors.Select(a => new MapAnchorViewModel(a.Key, a.Label, a.Kind))];
         (CoverageAreas, CoverageLead, CoverageRest) = CoverageWords.Words(view);
     }
 
+    /// <summary>Gets the layout this map was drawn from.</summary>
+    internal MapLayout Layout { get; }
+
+    /// <summary>The conflicts between decisions, as served.</summary>
+    internal IReadOnlyList<LensConflict> Conflicts { get; }
+
     /// <summary>The world's width, px.</summary>
-    public double WorldWidth => _layout.World.Width;
+    public double WorldWidth => Layout.World.Width;
 
     /// <summary>The world's height, px (taller when a row wrapped).</summary>
     public double WorldHeight { get; }

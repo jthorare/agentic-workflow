@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "SND-DEC-001",
   "status": 400,
-  "detail": "'maybe' isn't an option of DEC-00000000000000000000000000000011 (fix: choose accept or decline)",
+  "detail": "'maybe' isn't an option of DEC-00000000000000000000000000000012 (fix: choose accept or decline)",
   "traceId": "<trace>"
 }

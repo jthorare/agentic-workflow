@@ -1,7 +1,7 @@
 {
   "decisions": [
     {
-      "id": "DEC-00000000000000000000000000000011",
+      "id": "DEC-00000000000000000000000000000012",
       "kind": "accept-request",
       "class": "decision",
       "label": "decision · re-scope",
@@ -14,13 +14,13 @@
           "id": "accept",
           "label": "Accept",
           "rejectLike": false,
-          "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+          "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
         },
         {
           "id": "decline",
           "label": "Decline",
           "rejectLike": true,
-          "cli": "sindri decide DEC-00000000000000000000000000000011 decline"
+          "cli": "sindri decide DEC-00000000000000000000000000000012 decline"
         }
       ],
       "recommended": "accept",
@@ -36,14 +36,14 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000011 accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
       "cleared": null
     }
   ],
-  "empty": "Views are stalled at 7: run `sindri views rebuild`",
+  "empty": "Views are stalled at 8: run `sindri views rebuild`",
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 7,
+    "cursor": 7,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": true

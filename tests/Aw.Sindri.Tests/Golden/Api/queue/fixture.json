@@ -4,7 +4,7 @@
       "group": "waitingOnYou",
       "items": [
         {
-          "id": "ITM-00000000000000000000000000000013",
+          "id": "ITM-00000000000000000000000000000014",
           "title": "Item 2",
           "repo": "demo",
           "state": "needs-decision",
@@ -34,7 +34,7 @@
       "group": "queued",
       "items": [
         {
-          "id": "ITM-0000000000000000000000000000000e",
+          "id": "ITM-0000000000000000000000000000000f",
           "title": "Item 1",
           "repo": "demo",
           "state": "new",
@@ -48,7 +48,7 @@
           "owner": null
         },
         {
-          "id": "ITM-00000000000000000000000000000018",
+          "id": "ITM-00000000000000000000000000000019",
           "title": "Item 3",
           "repo": "demo",
           "state": "new",
@@ -62,7 +62,7 @@
           "owner": null
         },
         {
-          "id": "ITM-0000000000000000000000000000001d",
+          "id": "ITM-0000000000000000000000000000001e",
           "title": "Item 4",
           "repo": "demo",
           "state": "new",
@@ -81,8 +81,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 14,
-    "ledgerHead": 14,
+    "cursor": 15,
+    "ledgerHead": 15,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

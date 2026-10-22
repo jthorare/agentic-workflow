@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   "title": "SND-ITEM-409",
   "status": 409,
-  "detail": "DEC-00000000000000000000000000000016: voided: the item was closed",
+  "detail": "DEC-00000000000000000000000000000017: voided: the item was closed",
   "traceId": "<trace>"
 }

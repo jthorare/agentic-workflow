@@ -62,8 +62,7 @@ internal sealed class ProveFailLogStep : IBlockStep, IBlockStepId
     {
         foreach (var result in (fact?["results"] as JsonArray ?? []).OfType<JsonObject>().Where(static r => (string?)r["verdict"] != "pass"))
         {
-            var item = (string?)result["item"];
-            yield return Finding("PRV-HOLD-001", item, $"{item}: a check you have not seen failed at the head: {(string?)result["observed"]}", "fix what the observed line describes, then run the proof again");
+            yield return HoldoutFindings.Failed((string?)result["item"], (string?)result["observed"]);
         }
     }
 

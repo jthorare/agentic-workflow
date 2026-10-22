@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-0000000000000000000000000000001b",
+      "id": "decision:DEC-0000000000000000000000000000001c",
       "kind": "decision",
       "label": "decision · add task",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000001b"
+        "id": "DEC-0000000000000000000000000000001c"
       },
       "item": null,
       "title": "Add a task for the logout flow.",
@@ -21,13 +21,13 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000001b accept"
+      "cli": "sindri decide DEC-0000000000000000000000000000001c accept"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 10,
-    "ledgerHead": 10,
+    "cursor": 11,
+    "ledgerHead": 11,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

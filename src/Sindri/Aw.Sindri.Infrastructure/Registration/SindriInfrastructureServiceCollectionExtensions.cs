@@ -85,7 +85,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
 
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services, Func<string, string?> environment) =>
         services.AddSingleton<IPackets>(_ => new AwPacketsTool(new ProcessToolRunner(), environment))
-            .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>().AddSingleton<IPacketFiles, DiskPacketFiles>().AddSingleton<IPacketDirectory, DiskPacketDirectory>()
+            .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>().AddSingleton<IPacketFiles, DiskPacketFiles>().AddSingleton<IHoldoutStore, DiskHoldoutStore>().AddSingleton<ICommitText, GitCommitText>().AddSingleton<IPacketDirectory, DiskPacketDirectory>()
             .AddSingleton<IOwnerDecisions, PendingOwnerDecisions>()
             .AddSingleton<IFrozenPackets>(sp => new FrozenPacketRecords(Path.Combine(sp.GetRequiredService<SindriSettings>().StateDirectory, "packets")))
             .AddSingleton<ITrackerSource>(_ => new FileTrackerSource(environment("AW_SINDRI_TRACKER_DIR"))).AddSingleton<IChangeSource, GitChangeSource>();

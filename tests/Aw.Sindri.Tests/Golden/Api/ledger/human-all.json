@@ -71,6 +71,28 @@
     {
       "sequence": 4,
       "id": "00000000-0000-0000-0000-00000000000b",
+      "type": "setup.consent.given",
+      "schemaVersion": 1,
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "human:cli",
+      "tenant": "local",
+      "ring": 0,
+      "item": null,
+      "correlationId": "00000000-0000-0000-0000-000000000009",
+      "causationId": null,
+      "traceId": null,
+      "payload": {
+        "commandId": "00000000-0000-0000-0000-000000000008",
+        "steps": [
+          "mcp",
+          "map"
+        ],
+        "profileHash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"
+      }
+    },
+    {
+      "sequence": 5,
+      "id": "00000000-0000-0000-0000-00000000000c",
       "type": "command.handled",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -91,21 +113,21 @@
       }
     },
     {
-      "sequence": 5,
-      "id": "00000000-0000-0000-0000-00000000000f",
+      "sequence": 6,
+      "id": "00000000-0000-0000-0000-000000000010",
       "type": "item.created",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
       "actor": "human:cli",
       "tenant": "local",
       "ring": 0,
-      "item": "ITM-0000000000000000000000000000000e",
-      "correlationId": "00000000-0000-0000-0000-00000000000d",
+      "item": "ITM-0000000000000000000000000000000f",
+      "correlationId": "00000000-0000-0000-0000-00000000000e",
       "causationId": null,
       "traceId": null,
       "payload": {
-        "commandId": "00000000-0000-0000-0000-00000000000c",
-        "item": "ITM-0000000000000000000000000000000e",
+        "commandId": "00000000-0000-0000-0000-00000000000d",
+        "item": "ITM-0000000000000000000000000000000f",
         "title": "In demo",
         "repo": "demo",
         "link": null,
@@ -114,8 +136,8 @@
       }
     },
     {
-      "sequence": 6,
-      "id": "00000000-0000-0000-0000-000000000010",
+      "sequence": 7,
+      "id": "00000000-0000-0000-0000-000000000011",
       "type": "command.handled",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -123,11 +145,11 @@
       "tenant": "local",
       "ring": 0,
       "item": null,
-      "correlationId": "00000000-0000-0000-0000-00000000000d",
+      "correlationId": "00000000-0000-0000-0000-00000000000e",
       "causationId": null,
       "traceId": null,
       "payload": {
-        "commandId": "00000000-0000-0000-0000-00000000000c",
+        "commandId": "00000000-0000-0000-0000-00000000000d",
         "command": "CreateItem",
         "class": "desk",
         "caller": "human:cli",
@@ -136,21 +158,21 @@
       }
     },
     {
-      "sequence": 7,
-      "id": "00000000-0000-0000-0000-000000000014",
+      "sequence": 8,
+      "id": "00000000-0000-0000-0000-000000000015",
       "type": "item.created",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
       "actor": "human:cli",
       "tenant": "local",
       "ring": 0,
-      "item": "ITM-00000000000000000000000000000013",
-      "correlationId": "00000000-0000-0000-0000-000000000012",
+      "item": "ITM-00000000000000000000000000000014",
+      "correlationId": "00000000-0000-0000-0000-000000000013",
       "causationId": null,
       "traceId": null,
       "payload": {
-        "commandId": "00000000-0000-0000-0000-000000000011",
-        "item": "ITM-00000000000000000000000000000013",
+        "commandId": "00000000-0000-0000-0000-000000000012",
+        "item": "ITM-00000000000000000000000000000014",
         "title": "In other",
         "repo": "other",
         "link": null,
@@ -159,8 +181,8 @@
       }
     },
     {
-      "sequence": 8,
-      "id": "00000000-0000-0000-0000-000000000015",
+      "sequence": 9,
+      "id": "00000000-0000-0000-0000-000000000016",
       "type": "command.handled",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -168,11 +190,11 @@
       "tenant": "local",
       "ring": 0,
       "item": null,
-      "correlationId": "00000000-0000-0000-0000-000000000012",
+      "correlationId": "00000000-0000-0000-0000-000000000013",
       "causationId": null,
       "traceId": null,
       "payload": {
-        "commandId": "00000000-0000-0000-0000-000000000011",
+        "commandId": "00000000-0000-0000-0000-000000000012",
         "command": "CreateItem",
         "class": "desk",
         "caller": "human:cli",
@@ -181,8 +203,8 @@
       }
     },
     {
-      "sequence": 9,
-      "id": "00000000-0000-0000-0000-000000000018",
+      "sequence": 10,
+      "id": "00000000-0000-0000-0000-000000000019",
       "type": "service.heartbeat",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -190,7 +212,7 @@
       "tenant": "local",
       "ring": 0,
       "item": null,
-      "correlationId": "00000000-0000-0000-0000-000000000017",
+      "correlationId": "00000000-0000-0000-0000-000000000018",
       "causationId": null,
       "traceId": null,
       "payload": {

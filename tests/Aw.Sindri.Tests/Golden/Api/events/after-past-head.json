@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "SND-CLI-003",
   "status": 400,
-  "detail": "the cursor 99999 is past the ledger's head 9 (fix: after=9, or leave it out)",
+  "detail": "the cursor 99999 is past the ledger's head 10 (fix: after=10, or leave it out)",
   "traceId": "<trace>"
 }

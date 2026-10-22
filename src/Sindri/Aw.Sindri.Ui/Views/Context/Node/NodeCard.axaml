@@ -1,7 +1,69 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctx="using:Aw.Sindri.Ui.ViewModels.Context"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Context.Node.NodeCard"
              x:DataType="ctx:NodeCardViewModel">
-  <!-- A seam: the stage that owns this view draws it here (U9 plan §4); nothing until then. -->
+  <!-- The inspector's node card (F3 spec 1 §2 "2e"): the node, what it is, why it is in the map, a conflict, what it is connected to, and
+       Accept or Reject on a suggestion. Shown while a node is chosen; the page's inspector border is the 480 px panel around it. -->
+  <StackPanel IsVisible="{Binding IsOpen}" Spacing="16" Margin="20,20,20,0">
+    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+      <Border Width="36" Height="36" Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}" VerticalAlignment="Top">
+        <icons:StateIcon Icon="{Binding KindIcon}" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <StackPanel Grid.Column="1" Spacing="2">
+        <TextBlock x:Name="NodeTitle" Text="{Binding Title}" FontSize="16" LineHeight="22" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink}" />
+        <TextBlock Text="{Binding Caption}" Classes="caption subtle" TextWrapping="Wrap" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Spacing="4">
+      <TextBlock Classes="eyebrow" Text="{Binding WhatTitle}" />
+      <TextBlock Classes="body" Text="{Binding What}" TextWrapping="Wrap" />
+      <TextBlock Classes="caption subtle" Text="{Binding Sure}" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <StackPanel Spacing="4">
+      <TextBlock Classes="eyebrow" Text="{Binding WhyTitle}" />
+      <TextBlock x:Name="NodeWhy" Classes="body" Text="{Binding Why}" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Border x:Name="NodeConflict" IsVisible="{Binding HasConflict}" Padding="12" CornerRadius="{StaticResource Radius.MD}" BorderThickness="1"
+            Background="{DynamicResource Brush.AttentionSoft}" BorderBrush="{DynamicResource Brush.Attention}">
+      <StackPanel Spacing="4">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:StateIcon Icon="Kind.Warn" Foreground="{DynamicResource Brush.Attention}" VerticalAlignment="Center" />
+          <TextBlock Classes="body-strong" Text="{Binding ConflictTitle}" />
+        </StackPanel>
+        <TextBlock Classes="body" Text="{Binding ConflictBody}" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <StackPanel Spacing="4">
+      <TextBlock Classes="eyebrow" Text="{Binding ConnectedTitle}" />
+      <ItemsControl x:Name="NodeConnected" ItemsSource="{Binding Connected}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="ctx:NodeLinkRow">
+            <Border MinHeight="36" Padding="0,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}"
+                    AutomationProperties.Name="{Binding Label}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="caption subtle" Text="{Binding Caption}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock IsVisible="{Binding NoneConnected}" Classes="caption subtle" Text="{Binding ConnectedNone}" />
+    </StackPanel>
+
+    <TextBlock x:Name="NodeProblem" IsVisible="{Binding HasProblem}" Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Attention}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button x:Name="NodeAccept" IsVisible="{Binding CanReview}" Click="OnAccept" Content="{Binding AcceptWord}" AutomationProperties.Name="{Binding AcceptWord}" />
+      <Button x:Name="NodeReject" IsVisible="{Binding CanReview}" Click="OnReject" Content="{Binding RejectWord}" AutomationProperties.Name="{Binding RejectWord}" />
+      <Button x:Name="NodeCopyPath" IsVisible="{Binding CanCopyPath}" Click="OnCopyPath" Content="{Binding CopyPathWord}" AutomationProperties.Name="{Binding CopyPathWord}" />
+    </StackPanel>
+    <TextBlock IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption subtle" Text="{Binding Status}" />
+  </StackPanel>
 </UserControl>

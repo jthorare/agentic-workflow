@@ -20,8 +20,8 @@
   ],
   "cli": "sindri jobs cancel JOB-00000000000000000000000000000001",
   "asOf": {
-    "cursor": 5,
-    "ledgerHead": 6,
+    "cursor": 6,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": true

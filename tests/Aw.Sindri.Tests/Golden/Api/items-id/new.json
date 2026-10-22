@@ -1,5 +1,5 @@
 {
-  "id": "ITM-0000000000000000000000000000000e",
+  "id": "ITM-0000000000000000000000000000000f",
   "title": "Try the queue",
   "repo": "demo",
   "state": "new",
@@ -34,8 +34,8 @@
     "blockers": []
   },
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 6,
+    "cursor": 7,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

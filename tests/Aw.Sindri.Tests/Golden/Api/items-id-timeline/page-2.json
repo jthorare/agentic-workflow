@@ -1,7 +1,7 @@
 {
   "entries": [
     {
-      "sequence": 106,
+      "sequence": 107,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.linked",
       "actor": "service:host",
@@ -11,8 +11,8 @@
   "next": null,
   "empty": null,
   "asOf": {
-    "cursor": 106,
-    "ledgerHead": 106,
+    "cursor": 107,
+    "ledgerHead": 107,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-00000000000000000000000000000011",
+      "id": "decision:DEC-00000000000000000000000000000012",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000011"
+        "id": "DEC-00000000000000000000000000000012"
       },
       "item": null,
       "title": "Request 1 for demo.",
@@ -21,15 +21,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000011 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000001b",
+      "id": "decision:DEC-0000000000000000000000000000001c",
       "kind": "decision",
       "label": "decision · add task",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000001b"
+        "id": "DEC-0000000000000000000000000000001c"
       },
       "item": null,
       "title": "Request 2 for other.",
@@ -44,15 +44,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000001b accept"
+      "cli": "sindri decide DEC-0000000000000000000000000000001c accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000025",
+      "id": "decision:DEC-00000000000000000000000000000026",
       "kind": "decision",
       "label": "decision · note",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000025"
+        "id": "DEC-00000000000000000000000000000026"
       },
       "item": null,
       "title": "Request 3 for demo.",
@@ -67,15 +67,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000025 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000026 accept"
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000002f",
+      "id": "decision:DEC-00000000000000000000000000000030",
       "kind": "decision",
       "label": "decision · hand back",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000002f"
+        "id": "DEC-00000000000000000000000000000030"
       },
       "item": null,
       "title": "Request 4 for other.",
@@ -90,15 +90,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000002f accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000030 accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000039",
+      "id": "decision:DEC-0000000000000000000000000000003a",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000039"
+        "id": "DEC-0000000000000000000000000000003a"
       },
       "item": null,
       "title": "Request 5 for demo.",
@@ -113,15 +113,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000039 accept"
+      "cli": "sindri decide DEC-0000000000000000000000000000003a accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000043",
+      "id": "decision:DEC-00000000000000000000000000000044",
       "kind": "decision",
       "label": "decision · add task",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000043"
+        "id": "DEC-00000000000000000000000000000044"
       },
       "item": null,
       "title": "Request 6 for other.",
@@ -136,15 +136,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000043 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000044 accept"
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000004d",
+      "id": "decision:DEC-0000000000000000000000000000004e",
       "kind": "decision",
       "label": "decision · note",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000004d"
+        "id": "DEC-0000000000000000000000000000004e"
       },
       "item": null,
       "title": "Request 7 for demo.",
@@ -159,15 +159,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000004d accept"
+      "cli": "sindri decide DEC-0000000000000000000000000000004e accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000057",
+      "id": "decision:DEC-00000000000000000000000000000058",
       "kind": "decision",
       "label": "decision · hand back",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000057"
+        "id": "DEC-00000000000000000000000000000058"
       },
       "item": null,
       "title": "Request 8 for other.",
@@ -182,15 +182,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000057 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000058 accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000061",
+      "id": "decision:DEC-00000000000000000000000000000062",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000061"
+        "id": "DEC-00000000000000000000000000000062"
       },
       "item": null,
       "title": "Request 9 for demo.",
@@ -205,15 +205,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000061 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000062 accept"
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000006b",
+      "id": "decision:DEC-0000000000000000000000000000006c",
       "kind": "decision",
       "label": "decision · add task",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000006b"
+        "id": "DEC-0000000000000000000000000000006c"
       },
       "item": null,
       "title": "Request 10 for other.",
@@ -228,15 +228,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000006b accept"
+      "cli": "sindri decide DEC-0000000000000000000000000000006c accept"
     },
     {
-      "id": "decision:DEC-00000000000000000000000000000075",
+      "id": "decision:DEC-00000000000000000000000000000076",
       "kind": "decision",
       "label": "decision · note",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000075"
+        "id": "DEC-00000000000000000000000000000076"
       },
       "item": null,
       "title": "Request 11 for demo.",
@@ -251,15 +251,15 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000075 accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000076 accept"
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000007f",
+      "id": "decision:DEC-00000000000000000000000000000080",
       "kind": "decision",
       "label": "decision · hand back",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000007f"
+        "id": "DEC-00000000000000000000000000000080"
       },
       "item": null,
       "title": "Request 12 for other.",
@@ -274,7 +274,7 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000007f accept"
+      "cli": "sindri decide DEC-00000000000000000000000000000080 accept"
     },
     {
       "id": "failure:service:heartbeat",
@@ -326,8 +326,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 30,
-    "ledgerHead": 30,
+    "cursor": 31,
+    "ledgerHead": 31,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

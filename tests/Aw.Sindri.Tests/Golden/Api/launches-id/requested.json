@@ -1,6 +1,6 @@
 {
   "id": "LCH-00000000000000000000000000000001",
-  "item": "ITM-0000000000000000000000000000000e",
+  "item": "ITM-0000000000000000000000000000000f",
   "mode": "open",
   "state": "requested",
   "target": "claude-code",
@@ -24,8 +24,8 @@
     "attempt": null
   },
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

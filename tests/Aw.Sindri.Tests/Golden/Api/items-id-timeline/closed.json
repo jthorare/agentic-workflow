@@ -1,14 +1,14 @@
 {
   "entries": [
     {
-      "sequence": 5,
+      "sequence": 6,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.created",
       "actor": "human:cli",
       "line": "Created: Try the queue"
     },
     {
-      "sequence": 7,
+      "sequence": 8,
       "time": "2026-01-01T00:00:00.0000000Z",
       "type": "item.state-changed",
       "actor": "human:cli",
@@ -18,8 +18,8 @@
   "next": null,
   "empty": null,
   "asOf": {
-    "cursor": 8,
-    "ledgerHead": 8,
+    "cursor": 9,
+    "ledgerHead": 9,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
