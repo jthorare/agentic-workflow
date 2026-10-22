@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.Build;
 
 /// <summary>
 /// 'step.build.prepare' on the block runtime (line spec §7.2): the phase worktree must be clean at the head it stands on, and the Step seeds
-/// the build's facts (the packet in force is the phase packet; no red tests, no built head, no findings or answers yet). A dirty or missing
+/// the build's facts (the packet in force is the phase packet, with the worktree as its 'repo'; no red tests, no built head, no findings or answers yet). A dirty or missing
 /// worktree fails the Step with the reason, so the instance parks instead of building on someone's half-done work.
 /// </summary>
 /// <param name="diff">Reads the worktree's HEAD and whether it holds changes.</param>
@@ -40,7 +40,19 @@ internal sealed class BuildPrepareStep(IRunDiff diff) : IBlockStep, IBlockStepId
         }
 
         return clean.Value
-            ? StepFacts.Done("ready", ("fact:activePacket", packet.DeepClone()), ("fact:redTests", new JsonObject()), ("fact:built", new JsonObject()), ("fact:change", new JsonObject()), ("fact:findings", new JsonArray()), ("fact:answers", new JsonArray()))
+            ? StepFacts.Done("ready", ("fact:activePacket", InForce(packet, worktree)), ("fact:redTests", new JsonObject()), ("fact:built", new JsonObject()), ("fact:change", new JsonObject()), ("fact:findings", new JsonArray()), ("fact:answers", new JsonObject()))
             : BlockStepResult.Failed($"step.build.prepare: the worktree {worktree} has uncommitted changes (fix: commit or discard them, then resume)");
+    }
+
+    // The packet in force is the phase packet, with the worktree as the repo checkout 'step.build.amend' hands aw-packets (PKT-BASE-001 needs the base commit's repository).
+    private static JsonNode InForce(JsonNode phasePacket, string worktree)
+    {
+        var active = phasePacket.DeepClone();
+        if (active is JsonObject obj)
+        {
+            obj["repo"] = worktree;
+        }
+
+        return active;
     }
 }

@@ -44,7 +44,14 @@ public static class StepFacts
     /// <summary>The 'head' of an object fact, or null.</summary>
     /// <param name="fact">The fact.</param>
     /// <returns>The head sha.</returns>
-    public static string? Head(JsonNode? fact) => fact is JsonObject obj && obj["head"] is JsonValue head && head.TryGetValue<string>(out var sha) ? sha : null;
+    public static string? Head(JsonNode? fact) => Field(fact, "head");
+
+    /// <summary>A non-blank string field of an object fact, or null.</summary>
+    /// <param name="fact">The fact.</param>
+    /// <param name="name">The field's name.</param>
+    /// <returns>The text.</returns>
+    public static string? Field(JsonNode? fact, string name) =>
+        fact is JsonObject obj && obj[name] is JsonValue value && value.TryGetValue<string>(out var text) && !string.IsNullOrWhiteSpace(text) ? text : null;
 
     /// <summary>A completed result with the given outputs.</summary>
     /// <param name="outcome">The outcome.</param>

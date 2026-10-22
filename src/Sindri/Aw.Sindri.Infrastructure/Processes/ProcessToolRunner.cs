@@ -25,6 +25,11 @@ internal sealed class ProcessToolRunner : IToolRunner
             RedirectStandardError = true,
         };
         ApplyEnvironment(start, options?.Environment);
+        if (options?.WorkingDirectory is { } directory)
+        {
+            start.WorkingDirectory = directory;
+        }
+
         Process? process;
         try
         {

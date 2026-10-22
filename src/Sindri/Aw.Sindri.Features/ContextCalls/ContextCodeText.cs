@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Trust;
 
 namespace Aw.Sindri.Features.ContextCalls;

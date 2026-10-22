@@ -1,0 +1,43 @@
+{
+  "instance": "ITM-00000000000000000000000000000001/step/1",
+  "from": "produce",
+  "to": "produce",
+  "trigger": "step.completed",
+  "outcome": null,
+  "run": "3.1",
+  "detail": {
+    "triggerId": "wf:WFI-000000000000000000000000000000a1:run:3.1:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "triggerActor": "human:cli",
+    "sourceSequence": null,
+    "argumentsSha256": null,
+    "reportSha256": null,
+    "answer": null,
+    "amount": null,
+    "reason": null,
+    "gates": [],
+    "evidence": [],
+    "grant": null,
+    "override": null,
+    "refusal": null,
+    "effects": [],
+    "delta": {
+      "frame": {
+        "state": "produce",
+        "entry": 3,
+        "run": "3.1",
+        "child": null,
+        "runtime": "block",
+        "actor": "block",
+        "attempt": 3,
+        "maxAttempts": 3
+      },
+      "suspension": null,
+      "pendingPark": null,
+      "loops": null,
+      "tokensSpent": null,
+      "tokensGranted": null,
+      "facts": null,
+      "outcome": null
+    }
+  }
+}

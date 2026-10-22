@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,7 +11,11 @@ internal static class BuildServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddBuildSlices(this IServiceCollection services) => services
+        .AddSingleton<IBuildCommandSource, ProfileBuildCommands>().AddSingleton<RepoCommandRunner>()
+        .AddBlockRuntime<BuildAmendStep>()
+        .AddBlockRuntime<BuildChecksStep>()
         .AddBlockRuntime<BuildPrepareStep>()
+        .AddBlockRuntime<BuildRedCheckStep>()
         .AddBlockRuntime<PhaseDriftStep>()
         .AddBlockRuntime<PhaseSeedStep>();
 }

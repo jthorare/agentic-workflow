@@ -1,5 +1,3 @@
-using Aw.Context.Core.Lenses;
-
 namespace Aw.Context.Core.Symbols;
 
 /// <summary>The symbols one file defines, with the commit they were read at.</summary>

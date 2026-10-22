@@ -710,6 +710,38 @@ Each round queues the lenses whose `when` holds, in pack order, as `fact:lensQue
 | `step.prove.evidence` | block | `complete`, `incomplete` | `proofPack`; `findings` on incomplete |
 | `step.prove.fail-log` | block | `logged` | `findings` |
 
+### Build and ship Steps on the block runtime: fact shapes
+
+`step.build.prepare`, `step.phase.drift`, `step.ship.return`, `step.build.amend` and `step.ship.freeze` have block runtimes (`Aw.Sindri.Features/Build`, `Ship`); the descriptors above are unchanged. They read these shapes (the line spec does not define them, so these are the contract the desk and the other Steps write to):
+
+| Fact | Shape | Written by |
+|---|---|---|
+| `fact:phasePacket`, `fact:activePacket` | `{ hash, dir, repo? }`: the packet's frozen hash and directory; `repo` is a checkout of the repository it builds on (PKT-BASE-001 needs the base commit), which `step.build.prepare` sets to `fact:workspace` | the phase's seed (`hash`, `dir`), prepare (`repo`), amend (the child's) |
+| `fact:answers` | object `{ allow?: string[], reason?: string, revert?: string[] }`, the shape the shipped `workflow.build` evals use. `allow` holds the granted paths (repo-relative globs or `new: <path>`); amend needs at least one, and takes the owner's `reason` or the stock line `allowed at the scope desk` | prepare seeds `{}`; the scope desk writes it |
+| `fact:handoffDraft` | `{ dir, head, workspace }`: the hand-off packet directory (`pr.json`, `body.md`, `green.json`, `packet.json`, `index.json`), the head it was packed on, and the phase worktree | `step.ship.pack` (at the desk until its fact shapes are settled) |
+| `fact:proofPack`, `fact:review` | each holds `head`, the commit its run covered | `step.prove.evidence`, `step.review.record` |
+| `fact:handoff` | `{ hash, dir }`: the frozen hand-off | freeze |
+| `fact:findings` | array of `{ rule, message }` | `SHIP-SHA-001` on stale |
+
+The build Steps read and write whole packet directories through `IPacketDirectory` (`Read(dir)` returns every file, `Create(address, name, files)` writes a new directory under the run area), a different port from the line Steps' `IPacketFiles`, which reads one named file; the adapters are `DiskPacketDirectory` and `InMemoryPacketDirectory`.
+
+**The three Steps that run the repo's commands** (`step.build.red-check`, `step.build.checks`, `step.ship.green`) run every line of `workflow.build.commands` in the phase worktree under one heavy slot, taken and released inside the Step. Each refuses a dirty worktree before running anything: `BLD-TREE-001` (checks), `SHIP-TREE-001` (green), and for red-check a failure naming the worktree (it also needs HEAD to be the red commit, `BLD-RED-001`).
+
+| Step | Outcome | When | Rule |
+|---|---|---|---|
+| `step.build.red-check` | `red` | at least one command fails on the red commit; it stops at the first failure | |
+| | `vacuous` | every command passes, with one finding (`fact:findings`) naming the items and their tests | `BLD-RED-001` |
+| `step.build.checks` | `pass` | the scope gate and the build rules hold and every command passes | |
+| | `failed` | a command fails, one finding per failing command | `BLD-COMMAND-001` |
+| `step.ship.green` | `green` | every command passes (`fact:green` records the commands run, `fact:green.commands`) | |
+| | `red` | a command fails, one finding per failing command | `SHIP-GREEN-001` |
+
+With **no commands** (no approved profile, or a profile that lists none): red-check fails the Step with the fix (add `workflow.build.commands`) and takes no slot; `step.build.checks` and `step.ship.green` pass, and green records an empty `fact:green.commands`. A command that outlives its own limit is that command's answer (a finding for checks, `red` for green, a failed Step for red-check). Each command may run for at most `workflow.steps.longMax`, and the Step gives the slot wait and all commands one budget: its `maxDuration` of 2 h (the default `longMax`, the cap on what a Step declares; a descriptor is static, so a larger `longMax` does not lengthen it) less 5 min to write its report. A 1 h suite therefore fits even after the longest slot wait (30 min). A batch that runs out of that budget fails the Step (`(fix: make the commands faster, or list fewer of them in workflow.build.commands)`), it is not a command's finding. The states that run these Steps time out after 3 h, longer than the Steps (RCP-TIME-003).
+
+**`step.build.amend`** reads `fact:activePacket` and `fact:answers` only (the descriptor's reads), so the child packet goes in **this instance's** run area, `workflow/runs/<WFI-id>/packets/<parent id>-a<n>/`, not the line's (`fact:lineContext.runArea` is not among its reads). It copies the parent's files, sets `packet.json` to the next id (`-a1`, then `-a2`...), `draft` and a null hash, adds the granted paths to `phase.json`'s `allowedFiles`, writes `amends: { parent, paths, reason, at }` (the parent's hash, this grant's paths only) and sets `index.json`'s parents to the parent's hash. It owner-freezes the child through `aw-packets freeze --kind phase --by owner` and reports `{ hash, dir, repo }` as the packet in force. A grant with no usable `allow`, a missing `repo`, an unreadable parent or a child that fails its checks fails the Step (the rule ids are in the message). The LC-7 escape is a line `{ from: "build", station: "amend", kind: "scopeGrant", id, parent }` appended to the run area's `escapes.jsonl`; the Step reads no ledger, so the `line.escape` row is written from that file.
+
+**`step.ship.freeze`** passes `SHIP-SHA-001` when the draft's, proof's and review's heads and the worktree's HEAD (`IRunDiff.Head(workspace)`) are one sha; it then machine-freezes the hand-off (`aw-packets freeze --kind handoff --by machine`) and reports `frozen`. Any other combination reports `stale` with one `SHIP-SHA-001` finding naming all four shas and freezes nothing. A hand-off that fails its checks, or a missing fact, fails the Step.
+
 #### The prove station's fact shapes (BS-5)
 
 The line spec names the facts but not their fields; these are the shapes the prove Steps on the block runtime read and write (`Aw.Sindri.Features/Prove/`, rules in `Aw.Sindri.Core/Prove/ProofChecks.cs`). They are all JSON, and a fact the instance does not hold is a Step failure or, for an optional one, a rule reported as not run.

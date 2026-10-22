@@ -16,6 +16,7 @@ internal sealed class StepSpec
     private FactKey[] _inputs = [];
     private OutcomeName[] _outcomes = [];
     private ParameterSpec[] _parameters = [];
+    private TimeSpan? _maxDuration;
 
     private StepSpec(string id, BlockRuntime runtime, bool humanOnly, Capability capabilities)
     {
@@ -93,10 +94,22 @@ internal sealed class StepSpec
         return this;
     }
 
+    /// <summary>
+    /// A long block Step (line spec LN-WF7): the engine ends it as step.failed 'timeout' only after <paramref name="maxDuration"/>, not after the two-minute default. The activity heartbeats, so a
+    /// cancel or a takeover still reaches it. The state's own timeout must be longer (RCP-TIME-003).
+    /// </summary>
+    /// <param name="maxDuration">The longest the Step may run; the profile's 'workflow.steps.longMax' (default 2h) is the cap.</param>
+    /// <returns>The builder.</returns>
+    public StepSpec Long(TimeSpan maxDuration)
+    {
+        _maxDuration = maxDuration;
+        return this;
+    }
+
     /// <summary>The facts the Step writes, and the descriptor.</summary>
     /// <param name="outputs">The outputs.</param>
     /// <returns>The descriptor.</returns>
     public BlockDescriptor Writes(params OutputSpec[] outputs) => new(
         _id, BlockKind.Step, Version: 1, _inputs, outputs, _outcomes, _capabilities, Parameters: _parameters, Rung: null, DeskCapable: true,
-        HumanOnly: _humanOnly ? true : null, Runtime: _runtime);
+        HumanOnly: _humanOnly ? true : null, Runtime: _runtime, MaxDuration: _maxDuration);
 }

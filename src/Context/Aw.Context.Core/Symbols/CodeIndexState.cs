@@ -1,3 +1,4 @@
+using Aw.Context.Core.Code;
 namespace Aw.Context.Core.Symbols;
 
 /// <summary>What the code index block says about one repo (code index spec §7.3), in the block's own words; <see cref="CodeIndexReading"/> maps them onto the lens' vocabulary.</summary>

@@ -1,8 +1,8 @@
-using Aw.Context.Core.Code;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Sources;
+using Aw.Context.Core.Symbols;
 
-namespace Aw.Context.Core.Symbols;
+namespace Aw.Context.Core.Code;
 
 /// <summary>Pure rules for reading the code index (code index spec §7.3): the as-of comparison, a head's rows and the lens states the block's states map onto.</summary>
 public static class CodeIndexReading

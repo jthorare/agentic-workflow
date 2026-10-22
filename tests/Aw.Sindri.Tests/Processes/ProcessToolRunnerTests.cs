@@ -18,6 +18,22 @@ public sealed class ProcessToolRunnerTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public void The_working_directory_option_is_where_the_tool_runs()
+    {
+        var directory = Directory.CreateTempSubdirectory("aw-cwd-").FullName;
+        try
+        {
+            var run = _runner.Run("pwd", [], TimeSpan.FromSeconds(5), new ToolRunOptions(WorkingDirectory: directory), TestContext.Current.CancellationToken);
+
+            Assert.Equal(Path.GetFullPath(directory), run.Output.Trim());
+        }
+        finally
+        {
+            Directory.Delete(directory);
+        }
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public void A_non_zero_exit_is_reported()
         => Assert.Equal(3, _runner.Run("sh", ["-c", "exit 3"], TimeSpan.FromSeconds(5), cancellationToken: TestContext.Current.CancellationToken).ExitCode);
 

@@ -35,6 +35,8 @@ public sealed class BuildShipStepTests
 
         Assert.Equal("ready", result.Result!.Outcome.Value);
         Assert.Equal("sha256:aa", (string?)Out(result, "activePacket")["hash"]);
+        Assert.Equal(Tree, (string?)Out(result, "activePacket")["repo"]);   // the checkout step.build.amend gives aw-packets
+        _ = Assert.IsType<JsonObject>(Out(result, "answers"));   // the scope desk writes an object ({ allow: [...] }); amend reads it
         Assert.Equal(["activePacket", "answers", "built", "change", "findings", "redTests"], result.Result.Outputs.Keys.Select(static k => k.Value[5..]).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 

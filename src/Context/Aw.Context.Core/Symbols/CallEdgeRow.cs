@@ -1,5 +1,3 @@
-using Aw.Context.Core.Lenses;
-
 namespace Aw.Context.Core.Symbols;
 
 /// <summary>One caller or callee of a symbol: the symbol at the other end of a call edge, how sure the index is, and the commit it was read at.</summary>

@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Workflow.Blocks;
 using static Aw.Sindri.Features.Blocks.Step.StepSpec;
 
@@ -10,7 +11,7 @@ namespace Aw.Sindri.Features.Blocks.Step;
 internal static class ShipSteps
 {
     /// <summary>'step.ship.green': the local GREEN gate on the head; 'green' or 'red' (with 'fact:findings').</summary>
-    public static BlockDescriptor Green { get; } = BlockStep("step.ship.green", Capability.Tools).Reads("fact:phasePacket", "fact:workspace").Reports("green", "red").Writes(On("fact:green", "green"), On("fact:findings", "red"));
+    public static BlockDescriptor Green { get; } = BlockStep("step.ship.green", Capability.Tools).Reads("fact:phasePacket", "fact:workspace").Reports("green", "red").Long(CommandStepLimits.GreenMaxDuration).Writes(On("fact:green", "green"), On("fact:findings", "red"));
 
     /// <summary>'step.ship.pack': assembles the hand-off draft, the evidence pack as the PR body.</summary>
     public static BlockDescriptor Pack { get; } = BlockStep("step.ship.pack", Capability.Tools).Reads("fact:phasePacket", "fact:proofPack", "fact:review", "fact:lineContext").Reports("packed").Writes(On("fact:handoffDraft", "packed"));

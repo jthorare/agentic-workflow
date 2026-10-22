@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Context.Core.Lenses;
+namespace Aw.Context.Core.Symbols;
 
 /// <summary>Whether the code index can answer for symbols.</summary>
 [JsonConverter(typeof(StrictEnumConverter<SymbolsState>))]

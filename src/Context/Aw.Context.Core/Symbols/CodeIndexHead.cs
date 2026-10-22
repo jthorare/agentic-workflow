@@ -1,3 +1,4 @@
+using Aw.Context.Core.Code;
 namespace Aw.Context.Core.Symbols;
 
 /// <summary>What the index holds for one repo and how it compares with the map's commit: the answer of <see cref="ICodeSymbolSource.Heads"/> and the header of every other answer.</summary>

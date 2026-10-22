@@ -48,6 +48,8 @@ public sealed class LineProfileTests
         ("workflow.build.commands", With(new(Build: new BuildSettings([])))),
         ("workflow.build.commands[1]", With(new(Build: new BuildSettings(["dotnet test", " "])))),
         ("workflow.build.commands[0]", With(new(Build: new BuildSettings(["dotnet test\nrm -rf /"])))),
+        ("workflow.build.commands[1]", With(new(Build: new BuildSettings(["dotnet build", "dotnet test --filter \"Lane=unit"])))),
+        ("workflow.build.commands[0]", With(new(Build: new BuildSettings(["\"\" run"])))),
         ("workflow.steps.longMax", With(new(Steps: new StepsSettings("2")))),
         ("workflow.docs.globs[0]", With(new(Docs: new DocsSettings(["/etc/**"])))),
         ("workflow.docs.globs[1]", With(new(Docs: new DocsSettings(["docs/**", "../secrets"])))),
@@ -76,6 +78,19 @@ public sealed class LineProfileTests
 
         Assert.Equal(SindriErrors.ProfileInvalid.Code, error.Code);
         Assert.StartsWith(key + ":", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_unbalanced_quote_in_a_build_command_is_refused_at_validation_and_a_balanced_one_is_not()
+    {
+        var unbalanced = ProfileRules.Check(With(new(Build: new BuildSettings(["dotnet test --token=hunter2 --filter \"Lane=unit"])))).Error;
+        var balanced = ProfileRules.Check(With(new(Build: new BuildSettings(["dotnet test --filter \"Lane=unit & Fast\""]))));
+
+        Assert.StartsWith("workflow.build.commands[0]:", unbalanced.Message, StringComparison.Ordinal);
+        Assert.Contains("never closed", unbalanced.Message, StringComparison.Ordinal);
+        Assert.Contains("(fix: ", unbalanced.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", unbalanced.Message, StringComparison.Ordinal);   // the index names the line; its text is never echoed
+        Assert.True(balanced.IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]

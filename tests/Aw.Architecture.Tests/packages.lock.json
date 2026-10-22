@@ -643,6 +643,7 @@
           "Aw.CodeIndex.Core": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
           "Aw.Kernel.Data": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.9.0, 5.9.0]",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
         }

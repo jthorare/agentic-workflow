@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.ship
-version: 3
+version: 4
 description: "Block recipe: the GREEN gate on a reviewed, proven head, then the PR opens with its evidence pack as the body. No owner stop."
 displayName: "Open the pull request with its proof"
 inputs:
@@ -17,7 +17,7 @@ initial: slot
 states:
   slot:    { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
              next: "Waiting for a heavy-job slot for {item}'s full suite." }
-  green:   { kind: active, step: step.ship.green, timeout: { after: 2h, then: park },
+  green:   { kind: active, step: step.ship.green, timeout: { after: 3h, then: park },
              next: "Run {item}'s full suite, typecheck and lint on its head." }
   pack:    { kind: active, step: step.ship.pack, timeout: { after: 1h, then: park },
              next: "Assemble {item}'s PR hand-off: the evidence pack becomes the PR body." }

@@ -1,5 +1,3 @@
-using Aw.Context.Core.Lenses;
-
 namespace Aw.Context.Core.Symbols;
 
 /// <summary>A symbol a name search found, with the commit it was read at.</summary>

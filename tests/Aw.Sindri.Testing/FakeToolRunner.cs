@@ -41,12 +41,16 @@ internal sealed class FakeToolRunner : IToolRunner
     /// <summary>Gets the standard input each call was given (null when none), in call order.</summary>
     public List<string?> Inputs { get; } = [];
 
+    /// <summary>Gets the working directory each call was given (null when none), in call order.</summary>
+    public List<string?> WorkingDirectories { get; } = [];
+
     public List<(string FileName, IReadOnlyList<string> Arguments, TimeSpan Timeout, bool HadStderrCallback, IReadOnlyDictionary<string, string?>? Environment)> Calls { get; } = [];
 
     public ToolRun Run(string fileName, IReadOnlyList<string> arguments, TimeSpan timeout, ToolRunOptions? options = null, CancellationToken cancellationToken = default)
     {
         var standardErrorLine = options?.StandardErrorLine;
         Inputs.Add(options?.StandardInput);
+        WorkingDirectories.Add(options?.WorkingDirectory);
         Calls.Add((fileName, [.. arguments], timeout, standardErrorLine is not null, options?.Environment));
         if (cancellationToken.IsCancellationRequested)
         {

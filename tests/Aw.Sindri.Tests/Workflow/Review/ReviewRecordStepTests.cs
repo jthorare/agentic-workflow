@@ -74,7 +74,8 @@ public sealed class ReviewRecordStepTests
         Assert.Equal((PacketKind.Review, PacketFreezer.Machine, "/checkouts/name"), (packet.Kind, by, packet.Repo));
         Assert.Equal(packet.Directory, (string?)fact["dir"]);
         Assert.Equal(InMemoryPackets.HashOf(packet), (string?)fact["hash"]);
-        Assert.Equal(["dir", "hash"], fact.AsObject().Select(static p => p.Key).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(Head, (string?)fact["head"]);   // step.ship.freeze compares it (SHIP-SHA-001)
+        Assert.Equal(["dir", "hash", "head"], fact.AsObject().Select(static p => p.Key).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]

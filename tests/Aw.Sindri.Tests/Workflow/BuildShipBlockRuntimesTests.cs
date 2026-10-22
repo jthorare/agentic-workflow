@@ -24,6 +24,11 @@ public sealed class BuildShipBlockRuntimesTests
 {
     [Theory]
     [InlineData("workflow.build.yaml", "prepare", "step.build.prepare")]
+    [InlineData("workflow.build.yaml", "amend", "step.build.amend")]
+    [InlineData("workflow.build.yaml", "red-check", "step.build.red-check")]
+    [InlineData("workflow.build.yaml", "checks", "step.build.checks")]
+    [InlineData("workflow.ship.yaml", "green", "step.ship.green")]
+    [InlineData("workflow.ship.yaml", "freeze", "step.ship.freeze")]
     [InlineData("workflow.ship.yaml", "return", "step.ship.return")]
     [InlineData("workflow.phase.yaml", "drift", "step.phase.drift")]
     [InlineData("workflow.phase.yaml", "seed", "step.phase.seed")]

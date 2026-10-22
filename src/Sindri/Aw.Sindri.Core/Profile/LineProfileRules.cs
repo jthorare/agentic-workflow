@@ -150,6 +150,11 @@ internal static class LineProfileRules
             {
                 return Invalid(string.Create(CultureInfo.InvariantCulture, $"workflow.build.commands[{i}]"), $"must be one command line of 1 to {MaxCommand} characters, no line break");
             }
+
+            if (!CommandLine.TryParse(commands[i], out _, out var problem))
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"workflow.build.commands[{i}]"), $"{problem} (fix: correct the line)");
+            }
         }
 
         return null;
