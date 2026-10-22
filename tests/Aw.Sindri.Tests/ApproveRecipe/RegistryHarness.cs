@@ -213,5 +213,8 @@ file static class EffectPortRegistrations
         .AddSingleton<Core.Workflow.Engine.Effects.IClaimRefs>(new InMemoryClaimRefs())
         .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
         .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(new InMemoryFactStore())
-        .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices());
+        .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices())
+        .AddSingleton<Core.LensPacks.IChangedPaths>(new Testing.LensPacks.FakeChangedPaths())
+        .AddSingleton<Core.Workflow.Engine.Runtime.IDiffContent>(new FakeDiffContent())
+        .AddSingleton<Core.Scoping.IBriefFiles>(new Testing.Scoping.InMemoryBriefFiles());
 }
