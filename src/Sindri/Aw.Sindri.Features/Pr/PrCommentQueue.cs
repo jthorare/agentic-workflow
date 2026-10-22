@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using Aw.Kernel;
+using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine.Effects;
 
 namespace Aw.Sindri.Features.Pr;
 
@@ -43,6 +46,78 @@ internal sealed class PrCommentQueue
         var entries = (state["comments"] as JsonArray ?? []).OfType<JsonObject>().ToList();
         var walk = state["walkStartedAt"] is JsonValue w && w.TryGetValue<string>(out var text) && DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at) ? at : (DateTimeOffset?)null;
         return new PrCommentQueue(entries, Str(state["self"]), state["workspaceAhead"] is JsonValue a && a.TryGetValue<bool>(out var ahead) && ahead, walk);
+    }
+
+    /// <summary>
+    /// The queue with the current marks laid over the snapshot's: a comment handled since the snapshot (the mark table is newer than 'fact:prState') carries its mark here, so it isn't taken again.
+    /// For an edited comment only a mark of that edit counts; otherwise the latest mark by time.
+    /// </summary>
+    /// <param name="prState">The fact.</param>
+    /// <param name="marks">The pull request's latest marks (one per comment and edit).</param>
+    /// <returns>The queue; null when the fact is not an object.</returns>
+    public static PrCommentQueue? Parse(JsonNode? prState, IReadOnlyList<PrCommentMark> marks)
+    {
+        ArgumentNullException.ThrowIfNull(marks);
+        var queue = Parse(prState);
+        if (queue is null)
+        {
+            return null;
+        }
+
+        foreach (var entry in queue._entries)
+        {
+            var edited = Str(entry["editedAt"]);
+            var current = marks
+                .Where(m => string.Equals(m.CommentId.Value, Str(entry["key"]), StringComparison.Ordinal) && (edited is null || string.Equals(m.EditedAt, edited, StringComparison.Ordinal)))
+                .OrderBy(static m => m.At)
+                .LastOrDefault();
+            if (current is not null)
+            {
+                entry["mark"] = new JsonObject
+                {
+                    ["outcome"] = current.Outcome,
+                    ["reason"] = current.Reason,
+                    ["commit"] = current.Commit,
+                    ["editedAt"] = current.EditedAt,
+                    ["at"] = current.At.ToString("O", CultureInfo.InvariantCulture),
+                };
+            }
+        }
+
+        return queue;
+    }
+
+    /// <summary>The marks of the pull request the Step is about ('fact:pr', else the snapshot's 'url' or 'link', else the 'pr' argument); none when no link is held.</summary>
+    /// <param name="context">The Step's context.</param>
+    /// <param name="marks">The comment marks.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The marks, or the error.</returns>
+    public static async ValueTask<Result<IReadOnlyList<PrCommentMark>>> CurrentMarks(StepContext context, IPrCommentMarks marks, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(marks);
+        return Ref(context) is { } pr ? await marks.Latest(pr, cancellationToken).ConfigureAwait(false) : Results.Success<IReadOnlyList<PrCommentMark>>([]);
+    }
+
+    private static PrRef? Ref(StepContext context)
+    {
+        var fact = StepFacts.Read(context, "fact:pr");
+        var state = StepFacts.Read(context, "fact:prState") as JsonObject;
+        var link = fact switch
+        {
+            JsonValue value => Str(value),
+            JsonObject obj => Str(obj["url"]) ?? Str(obj["link"]),
+            _ => null,
+        } ?? Str(state?["url"]) ?? Str(state?["link"]) ?? (context.Arguments.TryGetValue("pr", out var argument) && argument.ValueKind == System.Text.Json.JsonValueKind.String ? argument.GetString() : null);
+        if (!Uri.TryCreate(link?.Trim(), UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        var parts = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 4 && parts[^2] == "pull" && int.TryParse(parts[^1], NumberStyles.None, CultureInfo.InvariantCulture, out var number)
+            ? new PrRef(uri.Host, $"{parts[^4]}/{parts[^3]}", number)
+            : null;
     }
 
     /// <summary>The 'bots' argument (an array of logins, or one login) as a set.</summary>

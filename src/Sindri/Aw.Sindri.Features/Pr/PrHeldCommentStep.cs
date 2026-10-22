@@ -11,17 +11,23 @@ internal sealed class PrHeldCommentStep(IPrCommentMarks marks) : IBlockStep, IBl
     public static BlockId Id { get; } = BlockId.From("step.pr.held-comment");
 
     /// <inheritdoc/>
-    public ValueTask<BlockStepResult> Run(StepContext context, CancellationToken cancellationToken)
+    public async ValueTask<BlockStepResult> Run(StepContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        if (PrCommentQueue.Parse(StepFacts.Read(context, "fact:prState")) is not { } queue)
+        var current = await PrCommentQueue.CurrentMarks(context, marks, cancellationToken).ConfigureAwait(false);
+        if (current.IsError)
         {
-            return ValueTask.FromResult(BlockStepResult.Failed("step.pr.held-comment needs fact:prState, an object, which the instance does not hold"));
+            return BlockStepResult.Failed($"step.pr.held-comment can't read the comment marks: {current.Error.Message}");
         }
 
-        return ValueTask.FromResult(queue.NextHeld() is { } entry
+        if (PrCommentQueue.Parse(StepFacts.Read(context, "fact:prState"), current.Value) is not { } queue)
+        {
+            return BlockStepResult.Failed("step.pr.held-comment needs fact:prState, an object, which the instance does not hold");
+        }
+
+        return queue.NextHeld() is { } entry
             ? StepFacts.Done("comment", ("fact:comment", PrCommentQueue.ToFact(entry)))
-            : StepFacts.Done(queue.WorkspaceAhead ? "drainedUnpushed" : "drained"));
+            : StepFacts.Done(queue.WorkspaceAhead ? "drainedUnpushed" : "drained");
     }
 }

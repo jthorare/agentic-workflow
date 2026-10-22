@@ -16,21 +16,27 @@ internal sealed class PrNextCommentStep(IPrCommentMarks marks) : IBlockStep, IBl
     public static BlockId Id { get; } = BlockId.From("step.pr.next-comment");
 
     /// <inheritdoc/>
-    public ValueTask<BlockStepResult> Run(StepContext context, CancellationToken cancellationToken)
+    public async ValueTask<BlockStepResult> Run(StepContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        if (PrCommentQueue.Parse(StepFacts.Read(context, "fact:prState")) is not { } queue)
+        var current = await PrCommentQueue.CurrentMarks(context, marks, cancellationToken).ConfigureAwait(false);
+        if (current.IsError)
         {
-            return ValueTask.FromResult(BlockStepResult.Failed("step.pr.next-comment needs fact:prState, an object, which the instance does not hold"));
+            return BlockStepResult.Failed($"step.pr.next-comment can't read the comment marks: {current.Error.Message}");
+        }
+
+        if (PrCommentQueue.Parse(StepFacts.Read(context, "fact:prState"), current.Value) is not { } queue)
+        {
+            return BlockStepResult.Failed("step.pr.next-comment needs fact:prState, an object, which the instance does not hold");
         }
 
         if (queue.NextUnhandled() is not { } entry)
         {
-            return ValueTask.FromResult(StepFacts.Done(queue.WorkspaceAhead ? "drainedUnpushed" : "drained"));
+            return StepFacts.Done(queue.WorkspaceAhead ? "drainedUnpushed" : "drained");
         }
 
         var bots = context.Arguments.TryGetValue("bots", out var argument) ? PrCommentQueue.Bots(JsonNode.Parse(argument.GetRawText())) : [];
-        return ValueTask.FromResult(StepFacts.Done(PrCommentQueue.Classify(entry, bots), ("fact:comment", PrCommentQueue.ToFact(entry))));
+        return StepFacts.Done(PrCommentQueue.Classify(entry, bots), ("fact:comment", PrCommentQueue.ToFact(entry)));
     }
 }
