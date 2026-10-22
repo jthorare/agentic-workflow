@@ -15,7 +15,7 @@ namespace Aw.Sindri.Tests.Workflow.Prove;
 [Lane(TestLane.Unit)]
 public sealed class RecheckStepsTests
 {
-    private const string Address = "T-1/pr-babysitter/1/prove-recheck/1";
+    private const string Address = "T-1/pr-babysitter/1/prove-recheck.1";
     private const string Pack = "/packs/p1";
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
