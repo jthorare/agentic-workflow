@@ -39,7 +39,7 @@ internal sealed class RecheckLogStep(IRunArea area) : IBlockStep, IBlockStepId
             return Verdict("broken", head, "failed", []);
         }
 
-        var results = new JsonArray((ran["results"] as JsonArray ?? []).Where(static r => r is not null).Select(static r => r!.DeepClone()).ToArray());
+        var results = new JsonArray((ran["results"] as JsonArray ?? []).OfType<JsonNode>().Select(static r => r.DeepClone()).ToArray());
         var allPassed = results.OfType<JsonObject>().All(static r => (bool?)r["passed"] == true);
         return Verdict(allPassed ? "held" : "broken", head, "resolved", results);
     }

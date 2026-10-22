@@ -59,7 +59,7 @@ internal sealed class ProveRerunScriptsStep(IScriptRuns scripts, IRunArea area) 
         return await scripts.Run(workspace, script, _budget, cancellationToken).ConfigureAwait(false) switch
         {
             0 => (true, "exit 0"),
-            { } code => (false, $"it exited {code}"),
+            { } code => (false, $"it exited {code.ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
             null => (false, "it could not be run"),
         };
     }

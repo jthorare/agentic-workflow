@@ -32,7 +32,7 @@ internal sealed class RecheckPlanStep(IBriefFiles files, IRunArea area) : IBlock
         var dir = RecheckFacts.Text(handoff?["proofPack"]?["dir"]) ?? RecheckFacts.Text(handoff?["dir"]);
         if (dir is null)
         {
-            return await Done(address, "nothing", new JsonObject { ["planned"] = false, ["headSha"] = head }, null, cancellationToken).ConfigureAwait(false);
+            return await Done(address, "nothing", new JsonObject { ["planned"] = false, ["headSha"] = head }, plan: null, cancellationToken).ConfigureAwait(false);
         }
 
         var workspace = RecheckFacts.Text(RecheckFacts.Argument(context, "workspace"));
