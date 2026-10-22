@@ -46,7 +46,7 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
         var planned = Signals(phase).ToList();
         var (rows, unrunnable) = planned.Exists(static p => p.Script is not null)
             ? await RunInScratch(inputs.Address, (phase, checkout), planned, workspace, cancellationToken).ConfigureAwait(false)
-            : (planned.Select(static p => (JsonNode)Row(p, "missing", "missing")).ToList(), null);
+            : ([.. planned.Select(static p => (JsonNode)Row(p, "missing", "missing"))], null);
         if (unrunnable is not null)
         {
             return BlockStepResult.Failed(unrunnable);
