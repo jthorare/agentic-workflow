@@ -12,12 +12,23 @@ internal sealed class RecordingPulls : IPullRequests
 
     public List<PullReaction> Reactions { get; } = [];
 
+    public List<string> Calls { get; } = [];
+
+    public List<(string Link, string NewBase)> Retargets { get; } = [];
+
+    public Result<PullView> GetAnswer { get; set; } = new PullView("https://forge.example/acme/web/pull/7", PullState.Open, "deadbeef", Mergeable: true, ReviewDecision: null, UnresolvedThreads: 0, new PullChecks(PullChecksState.Passing, "deadbeef", []));
+
+    public Result<string> DefaultBranchAnswer { get; set; } = "main";
+
+    public Result<Unit> RetargetAnswer { get; set; } = Unit.Value;
+
     public Result<PullMergeOutcome> MergeAnswer { get; set; } = new PullMergeOutcome(PullMergeStatus.Merged, "abc123", null);
 
     public PullDelivery Delivery { get; set; } = PullDelivery.Delivered;
 
     public ValueTask<Result<PullMergeOutcome>> Merge(PullMerge request, CancellationToken cancellationToken)
     {
+        Calls.Add("Merge");
         Merges.Add(request);
         return ValueTask.FromResult(MergeAnswer);
     }
@@ -34,7 +45,25 @@ internal sealed class RecordingPulls : IPullRequests
         return ValueTask.FromResult<Result<PullDelivery>>(Delivery);
     }
 
-    public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken)
+    {
+        Calls.Add("Get");
+        return ValueTask.FromResult(GetAnswer);
+    }
+
+    // Engine adds these two to IPullRequests; they are written to its exact signatures.
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken)
+    {
+        Calls.Add("Retarget");
+        Retargets.Add((link, newBase));
+        return ValueTask.FromResult(RetargetAnswer);
+    }
+
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken)
+    {
+        Calls.Add("DefaultBranch");
+        return ValueTask.FromResult(DefaultBranchAnswer);
+    }
 
     public ValueTask<Result<string>> CheckLog(string link, string check, CancellationToken cancellationToken) => throw new NotSupportedException();
 

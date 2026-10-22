@@ -20,6 +20,9 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     /// <summary>Gets the operations called, in order.</summary>
     public IList<string> Calls { get; } = [];
 
+    /// <summary>Gets or sets the default branch that <c>DefaultBranch</c> answers.</summary>
+    public string DefaultBranchName { get; set; } = "main";
+
     /// <summary>Gets the pull requests, with what Open and Update gave them.</summary>
     public IReadOnlyList<FakePull> Pulls => _pulls;
 
@@ -41,6 +44,32 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         Calls.Add("Get");
         return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, Mergeable: true, ReviewDecision: null, UnresolvedThreads: p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), new PullChecks(PullChecksState.None, p.HeadSha, []))));
+    }
+
+    /// <summary>Points a pull request at another base branch (engine's <c>IPullRequests.Retarget</c>).</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="newBase">The new base branch.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Nothing, or why it could not.</returns>
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken)
+    {
+        Calls.Add("Retarget");
+        return Done(Locate(link).Map(p =>
+        {
+            p.Base = newBase;
+            return Unit.Value;
+        }));
+    }
+
+    /// <summary>The repository's default branch (engine's <c>IPullRequests.DefaultBranch</c>).</summary>
+    /// <param name="repo">The repository.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The branch name, or why it could not be read.</returns>
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        Calls.Add("DefaultBranch");
+        return Done(Refuse(repo.Host) is { } refused ? refused : Results.Success(DefaultBranchName));
     }
 
     /// <inheritdoc />

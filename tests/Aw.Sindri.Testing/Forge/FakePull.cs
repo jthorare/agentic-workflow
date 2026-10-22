@@ -37,6 +37,9 @@ public sealed class FakePull(PullRepo repo, int number, string head, string head
     /// <summary>Gets or sets the marker the pull request was opened with.</summary>
     public string? Marker { get; set; }
 
+    /// <summary>Gets or sets the base branch the pull request targets.</summary>
+    public string Base { get; set; } = "main";
+
     /// <summary>Gets the threads, oldest first.</summary>
     public IList<PullThread> Threads { get; } = [];
 

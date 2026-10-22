@@ -103,7 +103,7 @@ public sealed class ShippedBlocksTests
 
         Assert.Equal([typeof(BudgetAvailableGate), typeof(RouteStartableGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
-        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrMergeEffect), typeof(PrReplyEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
+        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrMergeEffect), typeof(PrMergeDocsEffect), typeof(PrReplyEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -124,6 +124,7 @@ public sealed class ShippedBlocksTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("effect.claim.ref", Capability.Effects | Capability.WriteScope)]
     [InlineData("effect.notify.desk", Capability.Effects)]
+    [InlineData("effect.pr.merge-docs", Capability.Effects)]
     [InlineData("gate.budget.available", Capability.None)]
     [InlineData("gate.route.startable", Capability.None)]
     public void Each_block_declares_what_it_reaches(string id, Capability capabilities) =>
