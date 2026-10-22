@@ -50,6 +50,18 @@ public sealed class LineDispatchStepTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_next_phase_carries_its_own_one_packet_not_the_array_of_the_plan()
+    {
+        var first = await Dispatch(await SeededBoard());
+        var second = await Dispatch(Fact(first, "fact:phaseBoard"));   // c: b waits on a
+
+        var next = JsonNode.Parse(Fact(second, "fact:nextPhase"))!;
+
+        Assert.True(next["packet"] is JsonObject);
+        Assert.Equal(("c", "c", "sha256:c", "p/c"), (next["phase"]!.GetValue<string>(), next["packet"]!["phase"]!.GetValue<string>(), next["packet"]!["hash"]!.GetValue<string>(), next["packet"]!["dir"]!.GetValue<string>()));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Dispatch_starts_the_first_ready_phase_and_marks_it_running()
     {
         var result = await Dispatch(await SeededBoard());

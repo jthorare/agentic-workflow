@@ -56,6 +56,7 @@ public sealed class StartPhaseEffectTests
         var start = Assert.Single(_starts.Started);
         Assert.Equal(("p2", 1, "workflow.phase", Line), (start.Phase, start.Attempt, start.Recipe.Value, start.Line.Value));
         var packet = await Content(start.Inputs[FactKey.From("fact:phasePacket")]);
+        Assert.True(packet is JsonObject);   // one packet for this phase, never the plan's array
         Assert.Equal(("p2", "sha256:abc", "dependency-head", "sindri/p1", "p1"),
             (packet!["phase"]!.GetValue<string>(), packet["hash"]!.GetValue<string>(), packet["base"]!["rule"]!.GetValue<string>(), packet["base"]!["ref"]!.GetValue<string>(), packet["stackParent"]!.GetValue<string>()));
         var context = await _facts.Read(start.Inputs[FactKey.From("fact:lineContext")], Token);
