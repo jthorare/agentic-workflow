@@ -3,10 +3,10 @@
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:designPacket":"fact:designPacket from workflow.design (resolved)","fact:design":"fact:design from workflow.design (resolved)","fact:lensRounds":"fact:lensRounds from workflow.design (resolved)"}},"expect":{"state":"plan"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:planPacket":"fact:planPacket from workflow.plan (resolved)","fact:phasePackets":"fact:phasePackets from workflow.plan (resolved)"}},"expect":{"state":"seed"}}
 {"trigger":{"kind":"step.completed","outcome":"seeded","outputs":{"fact:phaseBoard":{"phases":[]},"fact:phaseEvent":{},"fact:boardEdit":{}}},"expect":{"state":"dispatch"}}
-{"trigger":{"kind":"step.completed","outcome":"start","outputs":{"fact:phaseBoard":{"phases":[]},"fact:nextPhase":{"phase":"p","attempt":1}}},"expect":{"state":"starting"}}
+{"trigger":{"kind":"step.completed","outcome":"start","outputs":{"fact:phaseBoard":{"phases":[]},"fact:nextPhase":{"phase":"p","attempt":1},"fact:phaseEvent":{},"fact:boardEdit":{}}},"expect":{"state":"starting"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"started","outputs":{"fact:phaseEvent":{"phase":"p","status":"started"}}},"expect":{"state":"dispatch"}}
-{"trigger":{"kind":"step.completed","outcome":"full","outputs":{"fact:phaseBoard":{"phases":[]}}},"expect":{"state":"building"}}
+{"trigger":{"kind":"step.completed","outcome":"full","outputs":{"fact:phaseBoard":{"phases":[]},"fact:phaseEvent":{},"fact:boardEdit":{}}},"expect":{"state":"building"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"failed","outputs":{"fact:phaseEvent":{"phase":"p","status":"failed"}}},"expect":{"state":"dispatch"}}
-{"trigger":{"kind":"step.completed","outcome":"blocked","outputs":{"fact:phaseBoard":{"phases":[]}}},"expect":{"state":"owner"}}
+{"trigger":{"kind":"step.completed","outcome":"blocked","outputs":{"fact:phaseBoard":{"phases":[]},"fact:phaseEvent":{},"fact:boardEdit":{}}},"expect":{"state":"owner"}}
 {"trigger":{"kind":"step.completed","outcome":"skip","outputs":{"fact:boardEdit":{"edit":"skip","phase":"p"}}},"expect":{"state":"dispatch"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:phaseBoard":{"phases":[]}}},"expect":{"state":"done","outcome":"resolved"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:phaseBoard":{"phases":[]},"fact:phaseEvent":{},"fact:boardEdit":{}}},"expect":{"state":"done","outcome":"resolved"}}

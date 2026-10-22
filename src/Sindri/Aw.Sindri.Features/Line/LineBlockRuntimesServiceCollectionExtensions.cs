@@ -10,7 +10,6 @@ internal static class LineBlockRuntimesServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddLineBlockRuntimes(this IServiceCollection services) => services
-        .AddEffect<StartPhaseEffect>()   // LN-WF1: starts a line's phase as a linked instance
         .AddBlockRuntime<DesignCheckStep>()
         .AddBlockRuntime<DesignEvidenceStep>()
         .AddBlockRuntime<DesignIntakeStep>()

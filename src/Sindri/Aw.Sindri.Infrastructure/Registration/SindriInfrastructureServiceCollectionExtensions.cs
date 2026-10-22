@@ -99,6 +99,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IRecipeWake, NoOpRecipeWake>()
             .AddSingleton<IRecipeStore, SqliteRecipeStore>()
             .AddSingleton<IRecipeApprovals, SqliteRecipeApprovals>()
+            .AddSingleton<IPhaseStarts>(static sp => new PhaseStarts(sp.GetRequiredService<IInstanceRuntime>, sp.GetRequiredService<IRecipeApprovals>(), sp.GetRequiredService<IRecipeStore>(), sp.GetRequiredService<TimeProvider>()))   // LN-WF1: effect.line.start-phase starts the phase as a linked instance
             .AddSingleton<IWorkflowClaims, SqliteWorkflowClaims>()   // engine P6 unit (d): workflow_claims in ledger.db
             .AddSingleton<IClaimRefs, GitClaimRefs>()                // engine P6 unit (d): the claim's marker ref
             .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts

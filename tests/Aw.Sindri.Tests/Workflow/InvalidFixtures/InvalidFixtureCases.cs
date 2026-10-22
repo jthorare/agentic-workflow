@@ -100,7 +100,7 @@ internal static class InvalidFixtureCases
             []),
         ["RCP-EVENT-001"] = new(
             FixtureSetup.Shipped,
-            "RCP-EVENT-001: event 'item.rooted' isn't registered at RCP-EVENT-001.yaml:8:16 (states.triaged.waitFor.event); wait for a registered event: claim.created, item.routed, notify.delivered, pr.changed, pr.docsMerged, pr.mergeResult, pr.pushed, pr.restacked, pr.stacked",
+            "RCP-EVENT-001: event 'item.rooted' isn't registered at RCP-EVENT-001.yaml:8:16 (states.triaged.waitFor.event); wait for a registered event: claim.created, item.routed, line.phaseChanged, notify.delivered, pr.changed, pr.docsMerged, pr.mergeResult, pr.pushed, pr.restacked, pr.stacked",
             []),
         ["RCP-EVID-001"] = new(
             FixtureSetup.Shipped,

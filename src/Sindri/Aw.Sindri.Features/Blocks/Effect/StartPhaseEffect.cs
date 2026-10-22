@@ -11,7 +11,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
 
-namespace Aw.Sindri.Features.Line;
+namespace Aw.Sindri.Features.Blocks.Effect;
 
 /// <summary>
 /// 'effect.line.start-phase' (line spec LN-WF1, §8.2): starts <c language="text">workflow.phase</c> for one phase of the line as a linked instance at
@@ -108,16 +108,19 @@ internal sealed class StartPhaseEffect(IPhaseStarts starts, IFactContents conten
 
     private static Result<Next> Parse(ReadOnlyMemory<byte> content)
     {
-        var node = Read(content);
-        var id = LineJson.Str(node, "phase");
-        var attempt = LineJson.Int(node, "attempt");
-        if (node is not JsonObject obj || id is null || !IdShape(id) || attempt is not >= 1 || obj["packet"] is not JsonObject packet)
+        var node = Read(content) as JsonObject;
+        var id = Text(node, "phase");
+        var attempt = Attempt(node);
+        if (id is null || !IdShape(id) || attempt is not >= 1 || node?["packet"] is not JsonObject packet)
         {
             return WorkflowErrors.NoRuntime.With("fact:nextPhase must be { phase, attempt, packet, base, stackParent } with a lowercase phase id and an attempt from 1");
         }
 
-        return new Next(id, attempt.Value, (JsonObject)packet.DeepClone(), obj["base"]?.DeepClone(), obj["stackParent"]?.DeepClone());
+        return new Next(id, attempt.Value, (JsonObject)packet.DeepClone(), node["base"]?.DeepClone(), node["stackParent"]?.DeepClone());
     }
+
+    private static int? Attempt(JsonObject? node) =>
+        node?["attempt"] is JsonValue number && number.TryGetValue<int>(out var attempt) ? attempt : null;
 
     private static JsonNode? Read(ReadOnlyMemory<byte> content)
     {
@@ -156,6 +159,9 @@ internal sealed class StartPhaseEffect(IPhaseStarts starts, IFactContents conten
 
     private async ValueTask<Result<FactValue>> Put(JsonNode node, CancellationToken cancellationToken) =>
         await store.Put(Encoding.UTF8.GetBytes(node.ToJsonString()), cancellationToken).ConfigureAwait(false);
+
+    private static string? Text(JsonNode? node, string name) =>
+        node is JsonObject fields && fields[name] is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
 
     private static string? Text(EffectContext context, string name) =>
         context.Arguments.TryGetValue(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

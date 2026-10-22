@@ -72,7 +72,7 @@ public sealed class DecisionTreeBlocksTests
     {
         var humanOnly = FixtureCatalog.Shipped().Blocks.Where(b => b.HumanOnly == true).ToList();
 
-        Assert.Equal(["step.babysit.watch", "step.build.scope-desk", "step.design.lens-desk", "step.desk.choose", "step.evidence.desk", "step.interview.answer", "step.lens.ask", "step.owner.decide", "step.phase.decide", "step.plan.review", "step.pr.docs-decide", "step.pr.docs-merge-decide", "step.pr.owner-comment", "step.pr.rework-notes", "step.scope.review", "step.ship.open"], humanOnly.Select(b => b.Id.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["step.babysit.watch", "step.build.scope-desk", "step.design.lens-desk", "step.desk.choose", "step.evidence.desk", "step.interview.answer", "step.lens.ask", "step.line.decide", "step.owner.decide", "step.phase.decide", "step.plan.review", "step.pr.docs-decide", "step.pr.docs-merge-decide", "step.pr.owner-comment", "step.pr.rework-notes", "step.scope.review", "step.ship.open"], humanOnly.Select(b => b.Id.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.All(humanOnly, b => Assert.True(b.DeskCapable));
         Assert.All(humanOnly, b => Assert.NotEqual(BlockRuntime.Agent, b.Runtime));
     }

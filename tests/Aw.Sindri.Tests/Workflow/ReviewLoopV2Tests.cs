@@ -42,7 +42,7 @@ public sealed class ReviewLoopV2Tests
 
         var inputs = phase.States["review"].WaitFor!.Child!.Inputs;   // why: 'review' is the phase's child wait
 
-        Assert.Equal(2, phase.Version);   // 2: passes the empty round log (LN-PK lite)
+        Assert.Equal(3, phase.Version);   // 2: passes the empty round log (LN-PK lite); 3: the owner's stop reports the phase failed to its line (LN-WF1)
         var log = inputs[FactKey.From("fact:lensRounds")];
         Assert.Equal("[]", log.Literal!.Value.GetRawText());
         Assert.Null(log.Fact);

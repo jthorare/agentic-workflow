@@ -112,7 +112,7 @@ public sealed partial class ShippedRecipesTests
                 ("workflow.evidence", "workflow.evidence-other"), ("workflow.evidence", "workflow.evidence-ui"),
                 ("workflow.evidence-all", "workflow.evidence-api"), ("workflow.evidence-all", "workflow.evidence-db"), ("workflow.evidence-all", "workflow.evidence-ui"),
                 ("workflow.item", "workflow.step"),
-                ("workflow.line", "workflow.design"), ("workflow.line", "workflow.design"), ("workflow.line", "workflow.phase"),
+                ("workflow.line", "workflow.design"), ("workflow.line", "workflow.design"),
                 ("workflow.line", "workflow.plan"), ("workflow.line", "workflow.scoping"),
                 ("workflow.phase", "workflow.build"), ("workflow.phase", "workflow.pr-babysitter"), ("workflow.phase", "workflow.prove"),
                 ("workflow.phase", "workflow.review-loop"), ("workflow.phase", "workflow.ship"),

@@ -137,7 +137,7 @@ directory, such as the README, is left alone) and prints one line per recipe, **
 
 ```
 workflow.build@2 → sha256:<64 hex> (3 eval cases)
-workflow.line@2 → sha256:<64 hex> (6 eval cases)
+workflow.line@4 → sha256:<64 hex> (8 eval cases)
 digest sha256:<64 hex>
 ```
 
@@ -614,6 +614,10 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 | `step.phase.drift` | block | `built`, `change`, `workspace` | `same`, `moved` | `built`, `change` on moved |
 | `step.phase.decide` | desk, human-only | `phasePacket` | `rebuild`, `stop` | `buildNotes` on rebuild |
 | `step.babysit.watch` | desk, human-only (stub of `workflow.pr-babysitter`) | `pr`, `handoff`, `phasePacket`, `lineContext`, `workspace` | `merged`, `rework`, `stuck` | `mergedSha` on merged; `reworkNotes` on rework |
+| `step.line.seed` | block | `phasePackets` | `seeded` | `phaseBoard` (one waiting row per phase, plan order), `phaseEvent` and `boardEdit` (empty) |
+| `step.line.dispatch` | block | `phaseBoard`, `phaseEvent`, `boardEdit` | `start`, `full`, `done`, `blocked` | `phaseBoard`, `phaseEvent`, `boardEdit` on every outcome; `nextPhase` on start |
+| `step.line.decide` | desk, human-only | `phaseBoard` | `retry`, `skip`, `stop` | `boardEdit` on retry and skip |
+| `effect.line.start-phase` | effect | `lineContext` | `started` | parameters `recipe` (a literal), `phase` (`fact:nextPhase`); reply `line.phaseChanged` with `fact:phaseEvent` |
 | `effect.line.report` | effect (descriptor only) | - | - | parameters `status`, `line` |
 
 `step.interview.answer` and `step.scope.review` carry no form yet: the answer form built from `fact:questions` and the stop's fixed form (approve, revise, drop) await W2, so at the desk they complete with plain outcomes and outputs. The output schemas, their fact-or-packet-file design and field-name choices are in `schemas/scoping/README.md`.
@@ -1448,3 +1452,13 @@ usage, the measured empty diff, and the stop of the session) before it decides.
 - **No second take inside a held Step:** a block Step's `StepContext.HeavySlotHeld` is true while the instance holds a slot; a Step that runs a build or tests takes none of its own. The agent launch (`AW_SANDBOX_SLOT_HELD=1`, sandbox spec) and BS-3d's check commands read the same fact once they land; `AW_HEAVY_LOCK_HELD` is never put in a session environment.
 - **Ledger:** one `workflow.heavy` row per grant (`heavy.held`) and per release (`heavy.released`), keyed like the other mirrored rows, so a replay writes it once.
 - A history recorded before the `ln-wf3-heavy-slot` marker never takes or grants a slot; an instance waiting on `heavy` from before stays waiting until its timeout parks it, as it did.
+
+## The line dispatcher (LN-WF1)
+
+`workflow.line` starts a plan's phases itself, in parallel and stacked, instead of running one at a time.
+
+- **The board.** `step.line.seed` writes `fact:phaseBoard` after the plan freezes: one row per phase in plan order (state `waiting`, attempt 0, its dependencies). `step.line.dispatch` folds the last `fact:phaseEvent` and the owner's `fact:boardEdit` into it (`PhaseBoard`, pure), then reports `start`, `full`, `done` or `blocked`.
+- **Which phase starts.** The first `waiting` phase in plan order whose dependencies are all merged (built on the default branch), or exactly one of which is unmerged and `shipped` with its head branch known (stacked on that branch). A failed phase blocks the line for the owner. `workflow.line.parallel` (default 2) caps running phases; `workflow.line.maxOpenPrs` (default 4) caps shipped, unmerged ones; at either cap, or with nothing ready while a phase runs, it reports `full` and the line waits in `building`.
+- **Starting.** The `start` transition carries `effect.line.start-phase` with `recipe: workflow.phase`. It starts `workflow.phase` as a linked instance at `{line}/phase.<id>.<attempt>` (idempotent by that address; a retry is the next attempt), pinned and approved with the line like a child, with `fact:phasePacket` (the plan's packet entry plus its `base` and `stackParent`) and the line's `fact:lineContext`. It replies `started`.
+- **Events.** `line.phaseChanged` is routed to the linked parent (`route: parent`; an effect run by the line itself, like the start, answers the line). Outcomes: `started`, `shipped`, `parked`, `resumed`, `merged`, `ended`, `failed`. `fact:phaseEvent` is `{ line, phase, attempt?, status, instance, at }`; the attempt is the instance address's when absent. `effect.line.report` replies `shipped`, `merged` and `failed`; because `merged` is also an outcome of `pr.mergeResult` and `pr.docsMerged`, an effect names its reply event in `EffectDone.Event` when more than one declares its outcome. `workflow.phase` reports `failed` when the owner stops it.
+- **The owner.** A failed phase sends the line to `step.line.decide`: `retry` (the next attempt), `skip` (the phase and, transitively, its dependents) or `stop` (the line ends `failed`). `ticks` (cap 400) bounds the dispatch loop.

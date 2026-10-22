@@ -6,7 +6,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Features.Line;
+using Aw.Sindri.Features.Blocks.Effect;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
 

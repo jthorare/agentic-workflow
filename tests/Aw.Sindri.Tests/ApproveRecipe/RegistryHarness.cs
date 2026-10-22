@@ -211,6 +211,7 @@ file static class EffectPortRegistrations
         .AddSingleton<IApprovedProfile>(h.Profiles)
         .AddSingleton<Core.Workflow.Engine.Effects.IWorkflowClaims>(new InMemoryWorkflowClaims())
         .AddSingleton<Core.Workflow.Engine.Effects.IClaimRefs>(new InMemoryClaimRefs())
+        .AddSingleton<Core.Workflow.Engine.Effects.IPhaseStarts>(new FakePhaseStarts())
         .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
         .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(new InMemoryFactStore())
         .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices())

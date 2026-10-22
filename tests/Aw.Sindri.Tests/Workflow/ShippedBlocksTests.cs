@@ -28,7 +28,7 @@ public sealed class ShippedBlocksTests
 
         Assert.Equal(
             [
-                "effect.claim.ref", "effect.line.report", "effect.notify.desk", "effect.pr.create-stacked", "effect.pr.merge",
+                "effect.claim.ref", "effect.line.report", "effect.line.start-phase", "effect.notify.desk", "effect.pr.create-stacked", "effect.pr.merge",
                 "effect.pr.merge-docs", "effect.pr.push", "effect.pr.record", "effect.pr.reply", "effect.pr.rerun-checks", "effect.pr.restack",
                 "evidence.check", "gate.budget.available", "gate.pr.autofix-cap", "gate.pr.base-is-default", "gate.pr.diff-scope",
                 "gate.pr.secret-scan", "gate.revision-bound", "gate.route.startable", "input.context.code", "input.context.history",
@@ -41,7 +41,7 @@ public sealed class ShippedBlocksTests
                 "step.evidence.api-run", "step.evidence.combine", "step.evidence.db-plan", "step.evidence.db-run", "step.evidence.desk",
                 "step.evidence.none", "step.evidence.ui-plan", "step.evidence.ui-run", "step.handtest.run", "step.intake.ticket",
                 "step.interview.answer", "step.interview.apply", "step.interview.questions", "step.interview.record", "step.judge.choose",
-                "step.lens.ask", "step.lens.log", "step.lens.round", "step.lens.run", "step.owner.decide", "step.phase.decide",
+                "step.lens.ask", "step.lens.log", "step.lens.round", "step.lens.run", "step.line.decide", "step.line.dispatch", "step.line.seed", "step.owner.decide", "step.phase.decide",
                 "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.exec-review", "step.plan.freeze",
                 "step.plan.graph", "step.plan.holdout", "step.plan.intake", "step.plan.questions", "step.plan.review", "step.plan.settle",
                 "step.pr.ci-fix", "step.pr.docs-decide", "step.pr.docs-merge-decide", "step.pr.fix-comment", "step.pr.held-comment",
@@ -103,7 +103,7 @@ public sealed class ShippedBlocksTests
 
         Assert.Equal([typeof(PrDiffScopeGate), typeof(PrSecretScanGate), typeof(BudgetAvailableGate), typeof(RouteStartableGate), typeof(RevisionBoundGate), typeof(PrAutofixCapGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
-        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
+        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(StartPhaseEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -166,10 +166,10 @@ public sealed class ShippedBlocksTests
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());   // no runtime until the block runtime (DT-J)
         // the scoping station's and the design lens loop's Steps listed here are the block runtimes of this build (BS-1, BS-4); the judge's comes with J3 and moves its contract to BlockContract
         Assert.Equal(
-            ["step.brief.seed", "step.bugfix.judge", "step.bugfix.recheck", "step.bugfix.record-candidate", "step.bugfix.start-attempt", "step.build.amend", "step.build.checks", "step.build.prepare", "step.build.red-check", "step.design.check", "step.design.evidence", "step.design.intake", "step.docs.check", "step.docs.scope", "step.evidence.combine", "step.evidence.none", "step.interview.record", "step.lens.log", "step.lens.round", "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.freeze", "step.plan.intake", "step.plan.questions", "step.plan.settle", "step.pr.held-comment", "step.pr.next-comment", "step.prove.before-after", "step.prove.evidence", "step.prove.fail-log", "step.prove.holdout-log", "step.prove.intake", "step.prove.rerun-scripts", "step.recheck.log", "step.recheck.plan", "step.review.log", "step.review.record", "step.review.round", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.evidence", "step.scope.freeze", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor", "step.scope.withdraw", "step.ship.freeze", "step.ship.green", "step.ship.return"],
+            ["step.brief.seed", "step.bugfix.judge", "step.bugfix.recheck", "step.bugfix.record-candidate", "step.bugfix.start-attempt", "step.build.amend", "step.build.checks", "step.build.prepare", "step.build.red-check", "step.design.check", "step.design.evidence", "step.design.intake", "step.docs.check", "step.docs.scope", "step.evidence.combine", "step.evidence.none", "step.interview.record", "step.lens.log", "step.lens.round", "step.line.dispatch", "step.line.seed", "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.freeze", "step.plan.intake", "step.plan.questions", "step.plan.settle", "step.pr.held-comment", "step.pr.next-comment", "step.prove.before-after", "step.prove.evidence", "step.prove.fail-log", "step.prove.holdout-log", "step.prove.intake", "step.prove.rerun-scripts", "step.recheck.log", "step.recheck.plan", "step.review.log", "step.review.record", "step.review.round", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.evidence", "step.scope.freeze", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor", "step.scope.withdraw", "step.ship.freeze", "step.ship.green", "step.ship.return"],
             provider.GetServices<BlockStepRegistration>().Select(static r => r.Step.Value).Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
-        Assert.Equal(56, scope.ServiceProvider.GetServices<IBlockStep>().Count());
+        Assert.Equal(58, scope.ServiceProvider.GetServices<IBlockStep>().Count());
     }
 
     [Fact, Trait("Lane", "unit")]

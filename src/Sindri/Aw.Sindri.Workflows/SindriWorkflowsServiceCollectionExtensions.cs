@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Desk;
-using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
@@ -43,7 +42,6 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IInstanceRuntime, TemporalInstanceRuntime>()
             .AddSingleton<IInstanceReader>(provider => provider.GetRequiredService<IInstanceRuntime>())   // the queries' read port (ARCH-CQRS-002)
             .AddSingleton<IWorkflowInstances, TemporalWorkflowInstances>()
-            .AddSingleton<IPhaseStarts, PhaseStarts>()                 // LN-WF1: effect.line.start-phase starts the phase as a linked instance
             .AddSingleton<ITemporalWorker, SindriWorkerHost>()
             .AddSingleton<HomeFactStore>()
             .AddSingleton<IFactStore>(static sp => sp.GetRequiredService<HomeFactStore>())   // engine P4 unit (c): facts stored 0600 before the report

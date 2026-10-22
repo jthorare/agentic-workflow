@@ -5,18 +5,18 @@ using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Registry;
 
-namespace Aw.Sindri.Infrastructure.Workflows;
+namespace Aw.Sindri.Infrastructure.Workflow;
 
 /// <summary>
 /// <see cref="IPhaseStarts"/> over the instance runtime (line spec LN-WF1): the recipe is the one the line's approval pinned (a linked recipe is pinned and approved
 /// with its parent, as a child is), and the instance is started at '{line}/phase.{id}.{attempt}' with the line as its parent link. The address is the workflow id,
 /// and Start finds a running execution under it, so a repeat reports <see cref="PhaseStarted.Existed"/>.
 /// </summary>
-/// <param name="runtime">Reads the line and starts the linked instance.</param>
+/// <param name="runtime">Reads the line and starts the linked instance; resolved on first use, since a box without the workflow engine has no instance runtime.</param>
 /// <param name="approvals">The line's approval and its pins.</param>
 /// <param name="recipes">The registered recipes, by the pinned hash.</param>
 /// <param name="clock">When the instance starts.</param>
-internal sealed class PhaseStarts(IInstanceRuntime runtime, IRecipeApprovals approvals, IRecipeStore recipes, TimeProvider clock) : IPhaseStarts
+internal sealed class PhaseStarts(Func<IInstanceRuntime> runtime, IRecipeApprovals approvals, IRecipeStore recipes, TimeProvider clock) : IPhaseStarts
 {
     private const string Tenant = "local";
 
@@ -25,7 +25,7 @@ internal sealed class PhaseStarts(IInstanceRuntime runtime, IRecipeApprovals app
     {
         ArgumentNullException.ThrowIfNull(start);
         var address = start.Line.Linked(start.Recipe, start.Phase, start.Attempt);
-        var line = await runtime.Get(start.Line, cancellationToken).ConfigureAwait(false);
+        var line = await runtime().Get(start.Line, cancellationToken).ConfigureAwait(false);
         if (line.IsError)
         {
             return line.Error;
@@ -37,7 +37,7 @@ internal sealed class PhaseStarts(IInstanceRuntime runtime, IRecipeApprovals app
             return pinned.Error;
         }
 
-        var existing = await runtime.Get(address, cancellationToken).ConfigureAwait(false);
+        var existing = await runtime().Get(address, cancellationToken).ConfigureAwait(false);
         var existed = existing.IsSuccess;   // why: an instance that answers a Get is started already; a missing one answers InstanceNotFound and is started below
         var input = new InstanceStart(
             pinned.Value,
@@ -51,7 +51,7 @@ internal sealed class PhaseStarts(IInstanceRuntime runtime, IRecipeApprovals app
             ParentId = WorkflowInstanceId.Of(start.Line),
             StartedAt = clock.GetUtcNow(),
         };
-        var started = await runtime.Start(input, cancellationToken).ConfigureAwait(false);
+        var started = await runtime().Start(input, cancellationToken).ConfigureAwait(false);
         return started.IsError ? started.Error : new PhaseStarted(address, existed);
     }
 

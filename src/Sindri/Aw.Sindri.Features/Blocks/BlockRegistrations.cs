@@ -53,6 +53,7 @@ internal static class BlockRegistrations
         .AddRecipeGates()
         .AddEffect<ClaimRefEffect>()      // engine P6 unit (d)
         .AddEffect<NotifyDeskEffect>()    // engine P6 unit (c)
+        .AddEffect<StartPhaseEffect>()    // LN-WF1: starts a line's phase as a linked instance
         .AddEvent(RecipeEvents.ItemRouted)
         .AddEvent(RecipeEvents.ClaimCreated)
         .AddEvent(RecipeEvents.NotifyDelivered)
