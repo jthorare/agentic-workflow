@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -39,16 +40,26 @@ internal sealed class PrRestackEffect(IPullRequests pulls, IWorkspaceRebase reba
             return moved.Error;
         }
 
-        return moved.Value.Status switch
+        var ended = moved.Value.Status switch
         {
-            RebaseStatus.Conflict => Done("conflict"),
+            RebaseStatus.Conflict => "conflict",
             RebaseStatus.Rebased => await Publish(plan.Value, moved.Value.NewHead!, cancellationToken).ConfigureAwait(false),   // why: a rebased outcome names its tip
             RebaseStatus.Nothing => await Retarget(plan.Value, pushed: false, cancellationToken).ConfigureAwait(false),
-            _ => Done("nothing"),
+            _ => "nothing",
         };
+        return ended.IsError ? ended.Error : await Report(plan.Value, moved.Value, ended.Value, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<EffectDone>> Publish(RestackPlan plan, string newHead, CancellationToken cancellationToken)
+    /// <summary>The reply, with 'fact:restack' ('newHead' after a rebase, 'onto', 'conflicts' on a conflict).</summary>
+    private async ValueTask<Result<EffectDone>> Report(RestackPlan plan, RebaseOutcome moved, string outcome, CancellationToken cancellationToken)
+    {
+        var stored = await store.Put(RestackFact.Content(plan.Onto, moved), cancellationToken).ConfigureAwait(false);
+        return stored.IsError
+            ? stored.Error
+            : new EffectDone(OutcomeName.From(outcome), Existed: false, new Dictionary<FactKey, ReplyFact> { [FactKey.From("fact:restack")] = new(stored.Value.Ref, stored.Value.Sha256, stored.Value.HeadSha) });
+    }
+
+    private async ValueTask<Result<string>> Publish(RestackPlan plan, string newHead, CancellationToken cancellationToken)
     {
         var push = new PullBranchPush(plan.Repo, plan.Workspace, plan.HeadRef, newHead, plan.HeadSha);
         var pushed = await pulls.PushBranch(push, cancellationToken).ConfigureAwait(false);
@@ -59,10 +70,10 @@ internal sealed class PrRestackEffect(IPullRequests pulls, IWorkspaceRebase reba
 
         return pushed.Value == PullPushOutcome.Pushed
             ? await Retarget(plan, pushed: true, cancellationToken).ConfigureAwait(false)
-            : Done("refused");
+            : "refused";
     }
 
-    private async ValueTask<Result<EffectDone>> Retarget(RestackPlan plan, bool pushed, CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Retarget(RestackPlan plan, bool pushed, CancellationToken cancellationToken)
     {
         var changes = !string.Equals(plan.BaseRef, plan.Onto, StringComparison.Ordinal);
         if (changes)
@@ -74,8 +85,6 @@ internal sealed class PrRestackEffect(IPullRequests pulls, IWorkspaceRebase reba
             }
         }
 
-        return Done(pushed || changes ? "restacked" : "nothing");
+        return pushed || changes ? "restacked" : "nothing";
     }
-
-    private static EffectDone Done(string outcome) => new(OutcomeName.From(outcome), Existed: false);
 }

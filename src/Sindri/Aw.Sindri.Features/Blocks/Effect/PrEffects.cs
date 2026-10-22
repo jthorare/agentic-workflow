@@ -23,7 +23,11 @@ internal static class PrEffects
     public static BlockDescriptor RerunChecks { get; } = Of("effect.pr.rerun-checks", humanTrigger: false, "pr", "at");
 
     /// <summary>'effect.pr.restack': restacks the PR onto its new base.</summary>
-    public static BlockDescriptor Restack { get; } = Of("effect.pr.restack", humanTrigger: false, "pr");
+    public static BlockDescriptor Restack { get; } = Of("effect.pr.restack", humanTrigger: false, "pr") with
+    {
+        // The hash moves with this output (TODO: pin the new hash in PrRestackEffectContract once the lane has built it).
+        Outputs = [new OutputSpec(FactKey.From("fact:restack"), [.. new[] { "restacked", "nothing", "conflict", "refused" }.Select(OutcomeName.From)])],
+    };
 
     /// <summary>'effect.pr.create-stacked': opens the stacked docs PR on the source PR's head.</summary>
     public static BlockDescriptor CreateStacked { get; } = Of("effect.pr.create-stacked", humanTrigger: false, "pr", "on", "workspace", "title");

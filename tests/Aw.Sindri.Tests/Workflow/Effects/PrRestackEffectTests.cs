@@ -140,7 +140,7 @@ public sealed class PrRestackEffectTests
     {
         var fact = Assert.Single(done.Facts!).Value;   // why: the assertion before it fails the test if there are none
         Assert.Equal("fact:restack", Assert.Single(done.Facts!).Key.Value);
-        var content = await _facts.Read(new Aw.Sindri.Core.Workflow.Engine.Runtime.FactValue(fact.Ref, fact.Sha256, fact.HeadSha), Token);
+        var content = await _facts.Read(new Aw.Sindri.Core.Workflow.Engine.FactValue(fact.Ref, fact.Sha256, fact.HeadSha), Token);
         return Encoding.UTF8.GetString(content.Value.Span);
     }
 
