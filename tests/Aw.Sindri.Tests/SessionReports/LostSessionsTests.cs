@@ -88,4 +88,19 @@ public sealed class LostSessionsTests
         Assert.Null(await Sweeper().SweepFiles(TimeSpan.FromSeconds(60), Token));
         Assert.Empty(_s.Files.Swept);
     }
+
+    [Fact]
+    public async Task A_limit_ending_is_written_with_its_kind_limit_and_peaks_and_forgets_the_launch()
+    {
+        await _s.Started();
+
+        var ended = await _s.Events().EndByLimit(A.FirstLaunchId, new LimitEnd(LimitKind.Wall, 4_200, 4_200, new LimitPeaks(1_000, 100, 10, 4_200)), Token);
+
+        Assert.True(ended.IsSuccess);
+        var recorded = Assert.Single(_s.Views.Slice.Store.Events);
+        var payload = _s.Views.Slice.Events.Payload<SessionEnded>(recorded).Value;
+        Expect.Equal(($"session.ended:{A.FirstLaunchId.Value}", SessionEndReason.Limit, LimitKind.Wall, 4_200L), (recorded.IdempotencyKey, payload.Reason, payload.Kind, payload.Limit));
+        Expect.Equal(4_200L, payload.Peaks!.WallSeconds);
+        Expect.Equal(A.FirstLaunchId, Assert.Single(_s.Files.Forgotten));
+    }
 }

@@ -14,8 +14,12 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Instance">The workflow instance an engine launch belongs to, or null (attended and click launches, and events recorded before this field).</param>
 /// <param name="State">The Step's state id in that instance, or null.</param>
 /// <param name="Attempt">The Step run's number ('{entry}.{n}' → n), or null.</param>
+/// <param name="Reason">The refusal's reason for a sandbox code (-014 to -021: 'no-bwrap', 'expired', ...), so the engine and the app pick the sentence by (code, reason); left out otherwise.</param>
+/// <param name="Source">The credential source for -017 ('owner-copy' or 'separate-login'); left out otherwise.</param>
 public sealed record LaunchFailed([property: JsonPropertyName("launchId")] LaunchId Launch, ItemId Item, string Code, string Message, LaunchFailureDetail? Detail = null,
-    InstanceAddress? Instance = null, string? State = null, int? Attempt = null)
+    InstanceAddress? Instance = null, string? State = null, int? Attempt = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Reason = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Source = null)
 {
     /// <summary>Where the launch stopped ('host' or 'backstop'), or null for a failure before the launcher ran.</summary>
     [JsonIgnore]
