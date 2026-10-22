@@ -15828,3 +15828,21 @@ Aw.Sindri.Core.Forge.IPullRequests.Merge(Aw.Sindri.Core.Forge.PullMerge! request
 Aw.Sindri.Core.Forge.IPullRequests.Reply(Aw.Sindri.Core.Forge.PullReply! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullDelivery>!>
 Aw.Sindri.Core.Forge.IPullRequests.React(Aw.Sindri.Core.Forge.PullReaction! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullDelivery>!>
 Aw.Sindri.Core.Forge.IPullRequests.PushBranch(Aw.Sindri.Core.Forge.PullBranchPush! push, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullPushOutcome>!>
+Aw.Sindri.Core.Forge.IWatchedPulls
+Aw.Sindri.Core.Forge.IWatchedPulls.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Forge.WatchedPull!>!>!>
+Aw.Sindri.Core.Forge.WatchedPull
+Aw.Sindri.Core.Forge.WatchedPull.<Clone>$() -> Aw.Sindri.Core.Forge.WatchedPull!
+Aw.Sindri.Core.Forge.WatchedPull.Link.get -> string!
+Aw.Sindri.Core.Forge.WatchedPull.Link.init -> void
+Aw.Sindri.Core.Forge.WatchedPull.Item.get -> string!
+Aw.Sindri.Core.Forge.WatchedPull.Item.init -> void
+Aw.Sindri.Core.Forge.WatchedPull.Deconstruct(out string! Link, out string! Item) -> void
+Aw.Sindri.Core.Forge.WatchedPull.Equals(Aw.Sindri.Core.Forge.WatchedPull? other) -> bool
+Aw.Sindri.Core.Forge.WatchedPull.WatchedPull(string! Link, string! Item) -> void
+override Aw.Sindri.Core.Forge.WatchedPull.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Forge.WatchedPull.GetHashCode() -> int
+override Aw.Sindri.Core.Forge.WatchedPull.ToString() -> string!
+static Aw.Sindri.Core.Forge.WatchedPull.operator !=(Aw.Sindri.Core.Forge.WatchedPull? left, Aw.Sindri.Core.Forge.WatchedPull? right) -> bool
+static Aw.Sindri.Core.Forge.WatchedPull.operator ==(Aw.Sindri.Core.Forge.WatchedPull? left, Aw.Sindri.Core.Forge.WatchedPull? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ForgeCredentialRejected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ForgeUnreachable -> Aw.Kernel.ErrorDefinition!

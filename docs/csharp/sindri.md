@@ -780,6 +780,8 @@ together with `SindriErrors`. Retired codes stay reserved in `WorkflowErrors.Ret
 | `SND-FORGE-002` | forbidden | The forge port refused the call: a host outside `workflow.forge.hosts`, a missing or rejected credential, input it doesn't accept |
 | `SND-FORGE-003` | notFound | The forge has no such pull request |
 | `SND-FORGE-004` | unavailable | The forge can't be reached, is rate limiting, or a push failed |
+| `SND-FORGE-005` | forbidden | The `pr-watch` poller's credential was rejected twice; the service is degraded until one works |
+| `SND-FORGE-006` | unavailable | The `pr-watch` poller couldn't reach the forge host in three polls in a row |
 | `SND-WF-001` | notFound | No such instance (`sindri workflow list`) |
 | `SND-WF-002` | — | Retired (engine spec rev 8): Updates serialize per workflow, so there is no version conflict |
 | `SND-WF-003` | conflict | The trigger isn't allowed here (`allowedCommands` in `status`) |

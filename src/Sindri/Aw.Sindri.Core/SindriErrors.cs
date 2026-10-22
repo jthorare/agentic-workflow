@@ -275,6 +275,12 @@ public static class SindriErrors
     /// <summary>SND-FORGE-004: the forge can't be reached, is rate limiting, or a push failed.</summary>
     public static readonly ErrorDefinition ForgeUnavailable = new("SND-FORGE-004", ErrorKind.Unavailable, "The forge is unavailable");
 
+    /// <summary>SND-FORGE-005: the forge rejected the credential the 'pr-watch' poller read again (PR babysitter spec §6.2); the service is degraded until a credential works.</summary>
+    public static readonly ErrorDefinition ForgeCredentialRejected = new("SND-FORGE-005", ErrorKind.Forbidden, "The forge rejected the credential (fix: renew the credential named by workflow.forge, then the next poll recovers)");
+
+    /// <summary>SND-FORGE-006: the 'pr-watch' poller could not reach the forge host in three polls in a row (PR babysitter spec §6.2); it keeps backing off.</summary>
+    public static readonly ErrorDefinition ForgeUnreachable = new("SND-FORGE-006", ErrorKind.Unavailable, "The forge host stayed unreachable for three polls (fix: check the network and the host's status; waiting instances keep their own timeouts)");
+
     /// <summary>Every Sindri error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
@@ -285,6 +291,6 @@ public static class SindriErrors
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
         WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupOnyxCredentialsMissing, SetupOnyxNotWaiting, SetupProfileNotApproved,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, ForgeCredentialRejected, ForgeUnreachable,
     ];
 }
