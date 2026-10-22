@@ -27,10 +27,10 @@ internal static partial class DesignChecks
             }
         }
 
-        foreach (var signal in signals.Where(static s => string.Equals(LineJson.Str(s, "runs"), "base+head", StringComparison.Ordinal) && !HasWorkspaceScript(s)))
+        foreach (var signal in signals.Where(static s => LineJson.Str(s, "script") is not null && !HasWorkspaceScript(s)))
         {
             var item = LineJson.Str(signal, "item");
-            yield return DesignContext.Fail("DSN-ACC-001", item, $"the base+head signal for {item ?? "an item"} names no script inside the workspace", "Give it a 'script': a relative path (no '..', not absolute) of the file that fails at the base and passes at the head.");
+            yield return DesignContext.Fail("DSN-ACC-001", item, $"the signal for {item ?? "an item"} names a script outside the workspace", "Name the script as a relative path (no '..', not absolute) of the file that fails at the base and passes at the head.");
         }
 
         foreach (var signal in signals.Where(Unmeasurable))
@@ -40,7 +40,7 @@ internal static partial class DesignChecks
         }
     }
 
-    // The before/after Step runs this one file in both trees, so it is a path inside the workspace.
+    // The before/after Step runs this one file in both trees, so a script is a path inside the workspace; a signal with none is left to that Step.
     private static bool HasWorkspaceScript(JsonNode signal) =>
         LineJson.Str(signal, "script") is { } path && !string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path) && !path.Split('/', '\\').Contains("..", StringComparer.Ordinal);
 

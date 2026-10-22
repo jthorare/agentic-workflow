@@ -96,7 +96,7 @@ public sealed class DesignChecksTests
     }
 
     [Fact]
-    public void A_fix_signal_that_runs_at_base_and_head_names_a_script_inside_the_workspace()
+    public void A_signal_that_names_a_script_names_one_inside_the_workspace()
     {
         const string Signal = """[{"item":"AC-1","kind":"test","statement":"returns 410","runs":"base+head"%SCRIPT%}]""";
         var none = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", string.Empty, StringComparison.Ordinal)));
@@ -104,7 +104,7 @@ public sealed class DesignChecksTests
         var outside = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", ",\"script\":\"../ac-1.sh\"", StringComparison.Ordinal)));
         var rooted = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", ",\"script\":\"/tmp/ac-1.sh\"", StringComparison.Ordinal)));
 
-        Assert.Equal(["DSN-ACC-001"], Failed(none), StringComparer.Ordinal);
+        Assert.Empty(Failed(none));   // a missing script is the before/after Step's to report
         Assert.Empty(Failed(relative));
         Assert.Equal(["DSN-ACC-001"], Failed(outside), StringComparer.Ordinal);
         Assert.Equal(["DSN-ACC-001"], Failed(rooted), StringComparer.Ordinal);

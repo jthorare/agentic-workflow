@@ -182,7 +182,7 @@
                 "script": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "A signal that runs at base+head names the file that fails at the base and passes at the head: a relative path inside the workspace, no '..'. DSN-ACC-001 requires it there."
+                  "description": "A signal that runs at base+head names the file that fails at the base and passes at the head: a relative path inside the workspace, no '..'. DSN-ACC-001 refuses one that is rooted or has '..'."
                 }
               },
               "required": [
