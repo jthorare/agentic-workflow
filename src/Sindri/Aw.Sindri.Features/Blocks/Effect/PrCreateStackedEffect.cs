@@ -6,6 +6,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 
