@@ -19,8 +19,8 @@ public sealed class FakeDiffContent : IDiffContent
     /// <returns>The same instance.</returns>
     public FakeDiffContent Add(string worktree)
     {
-        _added.TryAdd(worktree, []);
-        _deleted.TryAdd(worktree, new SortedSet<string>(StringComparer.Ordinal));
+        _ = _added.TryAdd(worktree, []);
+        _ = _deleted.TryAdd(worktree, new SortedSet<string>(StringComparer.Ordinal));
         return this;
     }
 
@@ -31,7 +31,7 @@ public sealed class FakeDiffContent : IDiffContent
     /// <returns>The same instance.</returns>
     public FakeDiffContent Adding(string worktree, string path, params string[] lines)
     {
-        Add(worktree);
+        _ = Add(worktree);
         _added[worktree].AddRange(lines.Select((text, i) => (path, i + 1, text)));
         return this;
     }
@@ -42,7 +42,7 @@ public sealed class FakeDiffContent : IDiffContent
     /// <returns>The same instance.</returns>
     public FakeDiffContent Deleting(string worktree, params string[] paths)
     {
-        Add(worktree);
+        _ = Add(worktree);
         _deleted[worktree].UnionWith(paths);
         return this;
     }
