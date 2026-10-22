@@ -45,8 +45,8 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
 
         var planned = Signals(phase).ToList();
         var (rows, unrunnable) = planned.Exists(static p => p.Script is not null)
-            ? await RunInScratch(inputs.Address, checkout, phase, planned, workspace, cancellationToken).ConfigureAwait(false)
-            : (planned.Select(static p => (JsonNode)Row(p, "missing", "missing")).ToList(), (string?)null);
+            ? await RunInScratch(inputs.Address, (phase, checkout), planned, workspace, cancellationToken).ConfigureAwait(false)
+            : (planned.Select(static p => (JsonNode)Row(p, "missing", "missing")).ToList(), null);
         if (unrunnable is not null)
         {
             return BlockStepResult.Failed(unrunnable);
@@ -69,8 +69,9 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
         return phase is null ? (null, null, $"step.prove.before-after can't load the phase packet {dir}: {failure}") : (phase, checkout.Value, null);
     }
 
-    private async ValueTask<(List<JsonNode> Rows, string? Unrunnable)> RunInScratch(string address, string checkout, PhaseFiles phase, List<Planned> planned, string workspace, CancellationToken cancellationToken)
+    private async ValueTask<(List<JsonNode> Rows, string? Unrunnable)> RunInScratch(string address, (PhaseFiles Phase, string Checkout) at, List<Planned> planned, string workspace, CancellationToken cancellationToken)
     {
+        var (phase, checkout) = at;
         var scratch = area.PathFor(address, "before-after/base");
         if (scratch.IsError)
         {
