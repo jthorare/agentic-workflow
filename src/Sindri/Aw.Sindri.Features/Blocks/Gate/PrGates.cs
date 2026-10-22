@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Workflow.Ids;
 namespace Aw.Sindri.Features.Blocks.Gate;
 
 /// <summary>
-/// The PR babysitter's gates (PB spec §10.1): descriptors only, deterministic, until the forge port gives them a runtime.
+/// The PR babysitter's gates (PB spec §10.1): the descriptors; gate.pr.diff-scope and gate.pr.secret-scan have runtimes (PrDiffScopeGate, PrSecretScanGate), the others none until the forge port.
 /// </summary>
 internal static class PrGates
 {

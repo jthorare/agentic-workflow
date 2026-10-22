@@ -15124,3 +15124,6 @@ static Aw.Sindri.Core.Review.ReviewPack.Problems(Aw.Sindri.Core.Review.ReviewFac
 static Aw.Sindri.Core.Review.ReviewPack.Verdict(System.Text.Json.Nodes.JsonNode! review) -> string?
 Aw.Sindri.Core.Prove.IScriptRuns
 Aw.Sindri.Core.Prove.IScriptRuns.Run(string! directory, string! script, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int?>
+Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent
+Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent.AddedLines(string! worktree, string! baseCommit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<(string! Path, int Line, string! Text)>!>!>
+Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent.DeletedPaths(string! worktree, string! baseCommit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
