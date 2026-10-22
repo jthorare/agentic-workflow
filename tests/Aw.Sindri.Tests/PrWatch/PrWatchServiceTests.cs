@@ -1,6 +1,10 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
+using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.PrWatch;
 
@@ -186,5 +190,44 @@ public sealed class PrWatchServiceTests
 
         Assert.True(result.IsError);
         Assert.Empty(_rig.Digests.Calls);
+    }
+
+    [Fact]
+    public async Task An_append_that_fails_keeps_the_old_digest_so_the_change_is_found_again_next_tick()
+    {
+        var facts = new SwitchedFacts();
+        var rig = new PrWatchRig(facts);
+        rig.Watched.Watch(Link, "ITM-1");
+        rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _ = await rig.Poll();
+        rig.Clock.Advance(TimeSpan.FromMinutes(1));
+        rig.Digests.Set(Link, "t2|bbb|pending|0", head: "bbb");
+        facts.Failing = true;
+
+        var failed = await rig.Poll();
+
+        Assert.True(failed.IsError);
+        Assert.Empty(await rig.Changed());
+        Assert.Equal("t1|aaa|pending|0", rig.State.Last.Pulls[Link].Digest);
+
+        facts.Failing = false;
+        rig.Clock.Advance(TimeSpan.FromMinutes(1));
+        var again = await rig.Poll();
+
+        Assert.False(again.Value.Idle);
+        var row = Assert.Single(await rig.Changed());
+        Assert.Equal("updated", PrWatchRig.Outcome(row));
+        Assert.Equal("t2|bbb|pending|0", rig.State.Last.Pulls[Link].Digest);
+    }
+
+    /// <summary>A fact store that refuses every write while <see cref="Failing"/>.</summary>
+    private sealed class SwitchedFacts : IFactStore
+    {
+        private readonly InMemoryFactStore _inner = new();
+
+        public bool Failing { get; set; }
+
+        public ValueTask<Result<FactValue>> Put(ReadOnlyMemory<byte> content, CancellationToken cancellationToken) =>
+            Failing ? ValueTask.FromResult<Result<FactValue>>(SindriErrors.ApiInternal.With("the fact store is full")) : _inner.Put(content, cancellationToken);
     }
 }

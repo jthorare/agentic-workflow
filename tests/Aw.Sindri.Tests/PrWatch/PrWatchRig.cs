@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing.Forge;
 using Aw.Sindri.Testing.Workflow;
@@ -20,9 +21,10 @@ internal sealed class PrWatchRig
     private readonly InMemoryFactStore _facts = new();
     private LeaseGrant? _grant;
 
-    public PrWatchRig()
+    /// <param name="facts">Where 'fact:prEvent' is stored; the in-memory store when null.</param>
+    public PrWatchRig(IFactStore? facts = null)
     {
-        Service = new PrWatchService(Watched, Digests, State, new PrEventWriter(_h.Store, _h.Events, _facts, _h.Clock), Remind, _h.Clock);
+        Service = new PrWatchService(Watched, Digests, State, new PrEventWriter(_h.Store, _h.Events, facts ?? _facts, _h.Clock), Remind, _h.Clock);
     }
 
     public FakeWatchedPulls Watched { get; } = new();
