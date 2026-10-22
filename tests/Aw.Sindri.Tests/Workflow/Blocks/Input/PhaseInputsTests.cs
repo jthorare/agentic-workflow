@@ -93,9 +93,9 @@ public sealed class PhaseInputsTests
     {
         var facts = new ContextInputFixtures.MemoryFacts();
         var packet = facts.Put("{\"dir\":\"" + PacketDir + "\"}");
-        var changed = packet with { Sha256 = new string('a', 64) };
+        facts.Change(packet, "{\"dir\":\"elsewhere\"}");
 
-        var filled = await Packet(facts).Fill(Context(PhasePacketInput.Id, changed), TestContext.Current.CancellationToken);
+        var filled = await Packet(facts).Fill(Context(PhasePacketInput.Id, packet), TestContext.Current.CancellationToken);
 
         Assert.True(filled.IsError);
     }

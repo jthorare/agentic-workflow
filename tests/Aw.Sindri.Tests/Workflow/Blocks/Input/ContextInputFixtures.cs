@@ -46,6 +46,9 @@ internal static class ContextInputFixtures
             return new FactValue("fact:sha256:" + sha, sha, HeadSha: null);
         }
 
+        /// <summary>Overwrites what <paramref name="fact"/> points at, as if the stored content changed after it was recorded.</summary>
+        internal void Change(FactValue fact, string content) => _stored[fact.Sha256] = System.Text.Encoding.UTF8.GetBytes(content);
+
         public ValueTask<Result<ReadOnlyMemory<byte>>> Read(FactValue fact, CancellationToken cancellationToken) =>
             ValueTask.FromResult(_stored.TryGetValue(fact.Sha256, out var bytes)
                 ? (Result<ReadOnlyMemory<byte>>)(ReadOnlyMemory<byte>)bytes
