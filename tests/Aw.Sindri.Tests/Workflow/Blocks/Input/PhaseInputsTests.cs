@@ -31,9 +31,9 @@ public sealed class PhaseInputsTests
     }
 
     private static JsonElement Stored(FactValue fact) =>
-        JsonSerializer.SerializeToElement(new Dictionary<string, string?> { ["ref"] = fact.Ref, ["sha256"] = fact.Sha256, ["headSha"] = fact.HeadSha });
+        JsonSerializer.SerializeToElement(new Dictionary<string, string?>(StringComparer.Ordinal) { ["ref"] = fact.Ref, ["sha256"] = fact.Sha256, ["headSha"] = fact.HeadSha });
 
-    private static PhasePacketInput Packet(ContextInputFixtures.MemoryFacts facts, InMemoryBriefFiles? files = null) =>
+    private static PhasePacketInput Packet(ContextInputFixtures.MemoryFacts facts, Aw.Sindri.Core.Scoping.IBriefFiles? files = null) =>
         new(files ?? new InMemoryBriefFiles().With("phase.json", "{\"goal\":\"ship it\"}").With("design.md", "# Design\nthe plan"), new InMemoryRepoCheckouts().With("web", "/work/web"), facts);
 
     [Fact]
