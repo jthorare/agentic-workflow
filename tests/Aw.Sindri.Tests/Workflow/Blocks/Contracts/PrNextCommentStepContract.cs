@@ -22,5 +22,5 @@ public sealed class PrNextCommentStepContract : BlockContract
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new PrNextCommentStep().Run(BuildShipContexts.Of("step.pr.next-comment", []), cancellationToken);
+        _ = await new PrNextCommentStep(new Aw.Sindri.Testing.Workflow.InMemoryPrCommentMarks()).Run(BuildShipContexts.Of("step.pr.next-comment", []), cancellationToken);
 }

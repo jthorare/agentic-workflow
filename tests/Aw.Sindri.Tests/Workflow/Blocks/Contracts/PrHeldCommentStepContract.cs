@@ -22,5 +22,5 @@ public sealed class PrHeldCommentStepContract : BlockContract
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new PrHeldCommentStep().Run(BuildShipContexts.Of("step.pr.held-comment", []), cancellationToken);
+        _ = await new PrHeldCommentStep(new Aw.Sindri.Testing.Workflow.InMemoryPrCommentMarks()).Run(BuildShipContexts.Of("step.pr.held-comment", []), cancellationToken);
 }

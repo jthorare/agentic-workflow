@@ -1,7 +1,10 @@
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Features.Pr;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
 
 namespace Aw.Sindri.Tests.Workflow.Pr;
@@ -25,11 +28,73 @@ public sealed class PrCommentQueueStepTests
         return BuildShipContexts.Of(step, facts) with { Arguments = arguments };
     }
 
-    private static Task<BlockStepResult> Next(string comments, string state = "", string? bots = null) =>
-        new PrNextCommentStep().Run(Context("step.pr.next-comment", comments, state, bots), TestContext.Current.CancellationToken).AsTask();
+    private static Task<BlockStepResult> Next(string comments, string state = "", string? bots = null, InMemoryPrCommentMarks? marks = null) =>
+        new PrNextCommentStep(marks ?? new InMemoryPrCommentMarks()).Run(Context("step.pr.next-comment", comments, state, bots), TestContext.Current.CancellationToken).AsTask();
 
-    private static Task<BlockStepResult> Held(string comments, string state = "") =>
-        new PrHeldCommentStep().Run(Context("step.pr.held-comment", comments, state), TestContext.Current.CancellationToken).AsTask();
+    private static Task<BlockStepResult> Held(string comments, string state = "", InMemoryPrCommentMarks? marks = null) =>
+        new PrHeldCommentStep(marks ?? new InMemoryPrCommentMarks()).Run(Context("step.pr.held-comment", comments, state), TestContext.Current.CancellationToken).AsTask();
+
+    private const string Url = ",\"url\":\"https://forge.example/acme/web/pull/7\"";
+
+    private static readonly PrRef _pr = new("forge.example", "acme/web", 7);
+
+    private static async Task<InMemoryPrCommentMarks> Marked(string comment, string outcome, string? editedAt = null)
+    {
+        var marks = new InMemoryPrCommentMarks();
+        var mark = new PrCommentMark(_pr, PrCommentId.From(comment), editedAt, InstanceAddress.From("T-3/item/1"), outcome, Reason: null, Commit: null, new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero), "e1");
+        _ = await marks.Write(mark, TestContext.Current.CancellationToken);
+        return marks;
+    }
+
+    [Fact]
+    public async Task A_thread_marked_since_the_snapshot_is_not_taken_again()
+    {
+        var marks = await Marked("thread:1", "fixed");
+
+        var result = await Next(Thread("thread:1") + "," + Thread("thread:2"), Url, marks: marks);
+
+        Assert.Contains("thread:2", result.Result!.Outputs.Single().Value.GetRawText(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_queue_whose_threads_are_all_marked_is_drained()
+    {
+        var marks = await Marked("thread:1", "held");
+
+        var result = await Next(Thread("thread:1"), Url, marks: marks);
+
+        Assert.Equal("drained", result.Result?.Outcome.Value);
+    }
+
+    [Fact]
+    public async Task A_mark_of_an_earlier_edit_does_not_hide_an_edited_thread()
+    {
+        var marks = await Marked("thread:1", "fixed", editedAt: "2026-10-20T10:00:00Z");
+
+        var result = await Next(Thread("thread:1", extra: ",\"editedAt\":\"2026-10-21T10:00:00Z\""), Url, marks: marks);
+
+        Assert.Equal("comment", result.Result?.Outcome.Value);
+    }
+
+    [Fact]
+    public async Task A_thread_held_since_the_snapshot_is_in_the_held_walk()
+    {
+        var marks = await Marked("thread:3", "held");
+
+        var result = await Held(Thread("thread:3"), Url, marks);
+
+        Assert.Equal("comment", result.Result?.Outcome.Value);
+    }
+
+    [Fact]
+    public async Task A_held_thread_answered_since_the_snapshot_leaves_the_held_walk()
+    {
+        var marks = await Marked("thread:3", "thread");
+
+        var result = await Held(Thread("thread:3", extra: ",\"mark\":{\"outcome\":\"held\"}"), Url, marks);
+
+        Assert.Equal("drained", result.Result?.Outcome.Value);
+    }
 
     [Fact]
     public async Task The_oldest_unhandled_thread_is_taken_as_fact_comment()
@@ -116,7 +181,7 @@ public sealed class PrCommentQueueStepTests
     [Fact]
     public async Task No_prState_object_fails_the_Step()
     {
-        var result = await new PrNextCommentStep().Run(BuildShipContexts.Of("step.pr.next-comment", []), TestContext.Current.CancellationToken);
+        var result = await new PrNextCommentStep(new Aw.Sindri.Testing.Workflow.InMemoryPrCommentMarks()).Run(BuildShipContexts.Of("step.pr.next-comment", []), TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Failure);
     }
