@@ -34,6 +34,9 @@ public sealed class FakePull(PullRepo repo, int number, string head, string head
     /// <summary>Gets or sets whether it is a draft.</summary>
     public bool Draft { get; set; }
 
+    /// <summary>Gets or sets the branch the pull request was opened against.</summary>
+    public string Base { get; set; } = string.Empty;
+
     /// <summary>Gets or sets the marker the pull request was opened with.</summary>
     public string? Marker { get; set; }
 

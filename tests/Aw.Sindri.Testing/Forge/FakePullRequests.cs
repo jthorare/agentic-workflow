@@ -180,6 +180,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         pull.Title = request.Title;
         pull.Body = request.Body;
         pull.Draft = request.Draft;
+        pull.Base = request.Base;
         pull.Marker = request.Marker;
         return Done(Results.Success(new OpenedPull(pull.Link, pull.Number)));
     }
