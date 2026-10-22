@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
+namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
 /// <summary>What the interpreter does with its state timer after a change (engine spec §5.5). Engine P5 contract unit.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TimerActionKind>))]

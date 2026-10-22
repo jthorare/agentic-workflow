@@ -2,7 +2,7 @@ using System.Globalization;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Recipes;
 
-namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
+namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
 /// <summary>
 /// The desk runtime's timeout (engine spec W20, §3.4, §3.8): a desk Step's wait is at least the profile's

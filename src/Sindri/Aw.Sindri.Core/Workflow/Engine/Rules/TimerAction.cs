@@ -1,8 +1,8 @@
-namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
+namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
 /// <summary>
 /// What the interpreter does with its timer scopes after one decided change (engine spec §5.5), as the pure
-/// <see cref="Rules.StateTimers.Between"/> reads it from the instance before and after. Every arming is its own
+/// <see cref="StateTimers.Between"/> reads it from the instance before and after. Every arming is its own
 /// 'Workflow.DelayAsync' in its own cancellation scope, so rev 7's 'arm' counter is gone. Engine P5 contract unit.
 /// </summary>
 /// <param name="Kind">What to do.</param>

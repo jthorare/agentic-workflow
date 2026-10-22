@@ -3708,7 +3708,7 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.Step.get -> Aw.Sindri.Core.Workf
 Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.Step.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.TimeoutAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.TimeoutAt.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTimeouts
+Aw.Sindri.Core.Workflow.Engine.Rules.DeskTimeouts
 Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance
 Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance!
 Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance.At.get -> System.DateTimeOffset
@@ -3964,23 +3964,23 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.StateCells
 Aw.Sindri.Core.Workflow.Engine.Runtime.StatusLayout
 Aw.Sindri.Core.Workflow.Engine.Runtime.StatusText
 Aw.Sindri.Core.Workflow.Engine.Runtime.SubjectRefs
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction!
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.After.get -> System.TimeSpan?
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.After.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind Kind, out Aw.Sindri.Core.Workflow.Engine.DeadlineKind? Timer, out System.TimeSpan? After) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction? other) -> bool
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Kind.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Kind.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Timer.get -> Aw.Sindri.Core.Workflow.Engine.DeadlineKind?
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Timer.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.TimerAction(Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind Kind, Aw.Sindri.Core.Workflow.Engine.DeadlineKind? Timer, System.TimeSpan? After) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind.Arm = 2 -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind.Keep = 1 -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind.Pause = 4 -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind.Resume = 5 -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
-Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind.Stop = 3 -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction!
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.After.get -> System.TimeSpan?
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.After.init -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind Kind, out Aw.Sindri.Core.Workflow.Engine.DeadlineKind? Timer, out System.TimeSpan? After) -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Equals(Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Kind.get -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Kind.init -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Timer.get -> Aw.Sindri.Core.Workflow.Engine.DeadlineKind?
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Timer.init -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.TimerAction(Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind Kind, Aw.Sindri.Core.Workflow.Engine.DeadlineKind? Timer, System.TimeSpan? After) -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind.Arm = 2 -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind.Keep = 1 -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind.Pause = 4 -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind.Resume = 5 -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
+Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind.Stop = 3 -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerActionKind
 Aw.Sindri.Core.Workflow.Engine.StepRuntime
 Aw.Sindri.Core.Workflow.Engine.StepRuntime.Agent = 2 -> Aw.Sindri.Core.Workflow.Engine.StepRuntime
 Aw.Sindri.Core.Workflow.Engine.StepRuntime.Desk = 1 -> Aw.Sindri.Core.Workflow.Engine.StepRuntime
@@ -6648,9 +6648,9 @@ override Aw.Sindri.Core.Workflow.Engine.Runtime.RecipeVersion.ToString() -> stri
 override Aw.Sindri.Core.Workflow.Engine.Runtime.ResolvedItem.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Engine.Runtime.ResolvedItem.GetHashCode() -> int
 override Aw.Sindri.Core.Workflow.Engine.Runtime.ResolvedItem.ToString() -> string!
-override Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.GetHashCode() -> int
-override Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.ToString() -> string!
+override Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.ToString() -> string!
 override Aw.Sindri.Core.Workflow.Engine.TriggerKey.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Engine.TriggerKey.GetHashCode() -> int
 override Aw.Sindri.Core.Workflow.Engine.TriggerKey.ToString() -> string!
@@ -7856,7 +7856,7 @@ static Aw.Sindri.Core.Workflow.Engine.LaunchId.operator !=(Aw.Sindri.Core.Workfl
 static Aw.Sindri.Core.Workflow.Engine.LaunchId.operator ==(Aw.Sindri.Core.Workflow.Engine.LaunchId left, Aw.Sindri.Core.Workflow.Engine.LaunchId right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.RefusedEffect.operator !=(Aw.Sindri.Core.Workflow.Engine.RefusedEffect? left, Aw.Sindri.Core.Workflow.Engine.RefusedEffect? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.RefusedEffect.operator ==(Aw.Sindri.Core.Workflow.Engine.RefusedEffect? left, Aw.Sindri.Core.Workflow.Engine.RefusedEffect? right) -> bool
-static Aw.Sindri.Core.Workflow.Engine.Rules.StateTimers.Between(Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! before, Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! after, Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, System.TimeSpan deskFloor) -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction!
+static Aw.Sindri.Core.Workflow.Engine.Rules.StateTimers.Between(Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! before, Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! after, Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, System.TimeSpan deskFloor) -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction!
 static Aw.Sindri.Core.Workflow.Engine.Rules.StateTimers.TakeoverIdle.get -> System.TimeSpan
 static Aw.Sindri.Core.Workflow.Engine.Rules.StateTimers.Timeout(Aw.Sindri.Core.Workflow.Recipes.RecipeState! state, Aw.Sindri.Core.Workflow.Engine.Instances.OpenRun? run, System.TimeSpan deskFloor) -> System.TimeSpan?
 static Aw.Sindri.Core.Workflow.Engine.Rules.TransitionDecision.Decide(Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionInput! input) -> Aw.Sindri.Core.Workflow.Engine.Decisions.Decision!
@@ -7883,8 +7883,8 @@ static Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult.operator !=(Aw.Sindr
 static Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult? left, Aw.Sindri.Core.Workflow.Engine.Runtime.CommandResult? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask? left, Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask? left, Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask? right) -> bool
-static Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTimeouts.DefaultFloor.get -> System.TimeSpan
-static Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTimeouts.Wait(Aw.Sindri.Core.Workflow.Recipes.TimeoutSpec? timeout, System.TimeSpan floor) -> System.TimeSpan
+static Aw.Sindri.Core.Workflow.Engine.Rules.DeskTimeouts.DefaultFloor.get -> System.TimeSpan
+static Aw.Sindri.Core.Workflow.Engine.Rules.DeskTimeouts.Wait(Aw.Sindri.Core.Workflow.Recipes.TimeoutSpec? timeout, System.TimeSpan floor) -> System.TimeSpan
 static Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance? left, Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance? left, Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Runtime.FactRows.Of(Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! instance, Aw.Sindri.Core.Workflow.Engine.Runtime.InterpretedRecipe! interpreted, Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask? task, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.Runtime.FactProvenance!>! provenance, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, string!>? contents = null) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.FactRow!>!
@@ -7941,11 +7941,11 @@ static Aw.Sindri.Core.Workflow.Engine.Runtime.StatusText.Prefixed(string! sha256
 static Aw.Sindri.Core.Workflow.Engine.Runtime.StatusText.Tokens(int tokens) -> string!
 static Aw.Sindri.Core.Workflow.Engine.Runtime.SubjectRefs.NeedsContent(Aw.Sindri.Core.Workflow.Engine.Runtime.InterpretedRecipe! recipe) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Runtime.SubjectRefs.Of(Aw.Sindri.Core.Workflow.Engine.Runtime.InterpretedRecipe! recipe, Aw.Sindri.Core.Workflow.Engine.ItemKey item, string? content = null, string? name = null) -> Aw.Sindri.Core.Workflow.Views.SubjectRef!
-static Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Keep.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction!
-static Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Pause.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction!
-static Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.Stop.get -> Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction!
-static Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction? left, Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction? right) -> bool
-static Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction? left, Aw.Sindri.Core.Workflow.Engine.Runtime.TimerAction? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Keep.get -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction!
+static Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Pause.get -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction!
+static Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.Stop.get -> Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction!
+static Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.operator !=(Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction? left, Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction.operator ==(Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction? left, Aw.Sindri.Core.Workflow.Engine.Rules.TimerAction? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.TriggerKey.For(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId instance, string! part) -> Aw.Sindri.Core.Workflow.Engine.TriggerKey
 static Aw.Sindri.Core.Workflow.Engine.TriggerKey.From(string! value) -> Aw.Sindri.Core.Workflow.Engine.TriggerKey
 static Aw.Sindri.Core.Workflow.Engine.TriggerKey.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Workflow.Engine.TriggerKey

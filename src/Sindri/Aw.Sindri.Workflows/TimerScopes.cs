@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Engine.Rules;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Temporalio.Workflows;
 
@@ -17,7 +17,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// Engine P5 contract unit. Unit (a) owns the state scope (<see cref="Arm"/>, <see cref="Stop"/>, <see cref="Take"/>,
 /// <see cref="FiresAt"/>) and its use in the desk and wait loops; unit (b) owns the takeover's <see cref="Pause"/> and
 /// <see cref="Resume"/> and the 'takeoverIdle' scope. <see cref="Apply"/> is the one seam the loop calls with what
-/// <see cref="Core.Workflow.Engine.Rules.StateTimers.Between"/> decided.
+/// <see cref="StateTimers.Between"/> decided.
 /// </para>
 /// </summary>
 /// <param name="actor">The actor of every <see cref="DeadlineFired"/> ('service:workflow.timers').</param>
@@ -215,7 +215,7 @@ internal sealed class TimerScopes(string actor)
         _idleCancel = scope.Cancel;   // finding F3: Cancel, not CancelAsync, in workflow code
         try
         {
-            await Workflow.DelayAsync(Core.Workflow.Engine.Rules.StateTimers.TakeoverIdle, scope.Token).ConfigureAwait(true);
+            await Workflow.DelayAsync(StateTimers.TakeoverIdle, scope.Token).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
