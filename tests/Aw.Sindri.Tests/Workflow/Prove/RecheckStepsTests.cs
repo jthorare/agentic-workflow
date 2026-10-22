@@ -62,7 +62,7 @@ public sealed class RecheckStepsTests
     [Fact]
     public async Task Plan_lists_each_live_recorded_script_once_on_the_workspace_at_the_head()
     {
-        var result = await new RecheckPlanStep(ProofPackFiles(), new InMemoryRunArea()).Run(PlanContext($$"""{"hash":"sha256:aa","proofPack":{"dir":"{{Pack}}"}}"""), Token);
+        var result = await new RecheckPlanStep(ProofPackFiles(), new InMemoryRunArea()).Run(PlanContext($$$"""{"hash":"sha256:aa","proofPack":{"dir":"{{{Pack}}}"}}"""), Token);
 
         Assert.Equal("planned", result.Result!.Outcome.Value);
         var plan = Out(result, "recheckPlan");
@@ -74,7 +74,7 @@ public sealed class RecheckStepsTests
     [Fact]
     public async Task Plan_fails_when_the_proof_pack_cannot_be_read()
     {
-        var result = await new RecheckPlanStep(new InMemoryBriefFiles(), new InMemoryRunArea()).Run(PlanContext($$"""{"proofPack":{"dir":"{{Pack}}"}}"""), Token);
+        var result = await new RecheckPlanStep(new InMemoryBriefFiles(), new InMemoryRunArea()).Run(PlanContext($$$"""{"proofPack":{"dir":"{{{Pack}}}"}}"""), Token);
 
         Assert.Null(result.Result);
     }
@@ -131,7 +131,7 @@ public sealed class RecheckStepsTests
     public async Task Log_holds_when_the_plan_ran_and_every_script_passed()
     {
         var area = new InMemoryRunArea();
-        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$"""{"proofPack":{"dir":"{{Pack}}"}}"""), Token);
+        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$$"""{"proofPack":{"dir":"{{{Pack}}}"}}"""), Token);
         var plan = """{"headSha":"h2","workspace":"/work/p1","scripts":["proof/ac1.sh","proof/ac2.sh"]}""";
         _ = await new ProveRerunScriptsStep(new FakeScripts(), area).Run(Facts("step.prove.rerun-scripts", ("recheckPlan", plan)), Token);
 
@@ -148,7 +148,7 @@ public sealed class RecheckStepsTests
     public async Task Log_is_broken_when_a_script_failed()
     {
         var area = new InMemoryRunArea();
-        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$"""{"proofPack":{"dir":"{{Pack}}"}}"""), Token);
+        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$$"""{"proofPack":{"dir":"{{{Pack}}}"}}"""), Token);
         var plan = """{"headSha":"h2","workspace":"/work/p1","scripts":["proof/ac1.sh"]}""";
         _ = await new ProveRerunScriptsStep(new FakeScripts("proof/ac1.sh"), area).Run(Facts("step.prove.rerun-scripts", ("recheckPlan", plan)), Token);
 
@@ -161,7 +161,7 @@ public sealed class RecheckStepsTests
     public async Task Log_is_broken_when_the_plan_was_made_but_the_scripts_never_ran()
     {
         var area = new InMemoryRunArea();
-        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$"""{"proofPack":{"dir":"{{Pack}}"}}"""), Token);
+        _ = await new RecheckPlanStep(ProofPackFiles(), area).Run(PlanContext($$$"""{"proofPack":{"dir":"{{{Pack}}}"}}"""), Token);
 
         var result = await new RecheckLogStep(area).Run(Facts("step.recheck.log"), Token);
 
