@@ -16,7 +16,8 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// <param name="pulls">The pull requests port.</param>
 /// <param name="rebase">Rebases the workspace.</param>
 /// <param name="facts">Reads 'fact:prState' and 'fact:workspace' back.</param>
-internal sealed class PrRestackEffect(IPullRequests pulls, IWorkspaceRebase rebase, IFactContents facts) : IEffectKind, IDescribedBlock
+/// <param name="store">Stores 'fact:restack'.</param>
+internal sealed class PrRestackEffect(IPullRequests pulls, IWorkspaceRebase rebase, IFactContents facts, IFactStore store) : IEffectKind, IDescribedBlock
 {
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor => PrEffects.Restack;

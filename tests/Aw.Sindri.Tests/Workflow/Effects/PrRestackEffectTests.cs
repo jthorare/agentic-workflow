@@ -103,7 +103,48 @@ public sealed class PrRestackEffectTests
         Assert.Empty(_rebase.Calls);
     }
 
-    private PrRestackEffect Effect() => new(_pulls, _rebase, _facts);
+    [Fact]
+    public async Task A_restack_reports_its_new_head_and_base_as_fact_restack()
+    {
+        await Seed();
+        _rebase.Script(Workspace, new RebaseOutcome(RebaseStatus.Rebased, "new1", []));
+
+        var done = await Dispatch(onto: "main");
+
+        Assert.Equal("""{"newHead":"new1","onto":"main"}""", await Restack(done));
+    }
+
+    [Fact]
+    public async Task A_conflict_reports_its_paths_as_fact_restack()
+    {
+        await Seed();
+        _rebase.Script(Workspace, new RebaseOutcome(RebaseStatus.Conflict, NewHead: null, ["a.txt", "b.txt"]));
+
+        var done = await Dispatch(onto: "main");
+
+        Assert.Equal("""{"onto":"main","conflicts":["a.txt","b.txt"]}""", await Restack(done));
+    }
+
+    [Fact]
+    public async Task A_refused_push_still_reports_fact_restack()
+    {
+        await Seed(tip: "somebody-elses");
+        _rebase.Script(Workspace, new RebaseOutcome(RebaseStatus.Rebased, "new1", []));
+
+        var done = await Dispatch(onto: "main");
+
+        Assert.Equal("""{"newHead":"new1","onto":"main"}""", await Restack(done));
+    }
+
+    private async Task<string> Restack(EffectDone done)
+    {
+        var fact = Assert.Single(done.Facts!).Value;   // why: the assertion before it fails the test if there are none
+        Assert.Equal("fact:restack", Assert.Single(done.Facts!).Key.Value);
+        var content = await _facts.Read(new Aw.Sindri.Core.Workflow.Engine.Runtime.FactValue(fact.Ref, fact.Sha256, fact.HeadSha), Token);
+        return Encoding.UTF8.GetString(content.Value.Span);
+    }
+
+    private PrRestackEffect Effect() => new(_pulls, _rebase, _facts, _facts);
 
     /// <summary>The pull request, its branch 'feature' at 'old1' on the fake forge (the tip is seeded by a first push; <paramref name="tip"/> differs to move it).</summary>
     private async Task Seed(string tip = "old1")
