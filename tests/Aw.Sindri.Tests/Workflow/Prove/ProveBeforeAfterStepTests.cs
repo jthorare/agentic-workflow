@@ -30,10 +30,10 @@ public sealed class ProveBeforeAfterStepTests
         {
             Files = new InMemoryBriefFiles()
                 .With("acceptance.json", """{"schemaVersion":1,"items":[{"id":"AC-1","text":"one","status":"failing"},{"id":"AC-2","text":"two","status":"superseded"}]}""")
-                .With("signals.json", $$"""{"schemaVersion":1,"signals":{{signals}}}""")
+                .With("signals.json", $$$"""{"schemaVersion":1,"signals":{{{signals}}}}""")
                 .With("phase.json", """{"kind":"fix"}""")
                 .With("holdout.json", """{"schemaVersion":1,"setHash":"sha256:aa","count":2}""")
-                .With("packet.json", $$"""{"schemaVersion":1,"kind":"phase","id":"line-p1","repo":"owner/name","baseSha":"{{Base}}","status":"frozen","hash":null,"links":{}}""");
+                .With("packet.json", $$$"""{"schemaVersion":1,"kind":"phase","id":"line-p1","repo":"owner/name","baseSha":"{{{Base}}}","status":"frozen","hash":null,"links":{}}""");
             Worktrees = new FakeWorktrees().WithRepo("/checkouts/name", Base);
         }
 
@@ -53,8 +53,8 @@ public sealed class ProveBeforeAfterStepTests
     private static StepContext Context(bool workspace = true, bool address = true) =>
         BuildShipContexts.Of("step.prove.before-after", new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["phasePacket"] = $$"""{"hash":"sha256:{{new string('b', 64)}}","dir":"{{Dir}}"}""",
-            ["built"] = $$"""{"head":"{{Head}}"}""",
+            ["phasePacket"] = $$$"""{"hash":"sha256:{{new string('b', 64)}}","dir":"{{{Dir}}}"}""",
+            ["built"] = $$$"""{"head":"{{{Head}}}"}""",
             ["workspace"] = workspace ? $"\"{Workspace}\"" : "null",
         }) with
         { Address = address ? Address : null, Repo = RepoName.From("name") };
