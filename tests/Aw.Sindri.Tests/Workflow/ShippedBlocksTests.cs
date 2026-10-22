@@ -174,6 +174,10 @@ public sealed class ShippedBlocksTests
             provider.GetServices<BlockStepRegistration>().Select(static r => r.Step.Value).Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
         Assert.Equal(45, scope.ServiceProvider.GetServices<IBlockStep>().Count());
+            ["step.brief.seed", "step.bugfix.judge", "step.bugfix.recheck", "step.bugfix.record-candidate", "step.bugfix.start-attempt", "step.build.prepare", "step.design.check", "step.design.evidence", "step.design.intake", "step.docs.check", "step.docs.scope", "step.evidence.combine", "step.evidence.none", "step.interview.record", "step.lens.log", "step.lens.round", "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.freeze", "step.plan.intake", "step.plan.questions", "step.plan.settle", "step.prove.evidence", "step.prove.fail-log", "step.prove.intake", "step.review.log", "step.review.record", "step.review.round", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.evidence", "step.scope.freeze", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor", "step.scope.withdraw", "step.ship.return"],
+            provider.GetServices<BlockStepRegistration>().Select(static r => r.Step.Value).Order(StringComparer.Ordinal),
+            StringComparer.Ordinal);
+        Assert.Equal(44, scope.ServiceProvider.GetServices<IBlockStep>().Count());
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -15127,3 +15127,5 @@ Aw.Sindri.Core.Prove.IScriptRuns.Run(string! directory, string! script, System.T
 Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent
 Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent.AddedLines(string! worktree, string! baseCommit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<(string! Path, int Line, string! Text)>!>!>
 Aw.Sindri.Core.Workflow.Engine.Runtime.IDiffContent.DeletedPaths(string! worktree, string! baseCommit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Sindri.Core.Worktrees.ITrackedFiles
+Aw.Sindri.Core.Worktrees.ITrackedFiles.Paths(string! checkout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
