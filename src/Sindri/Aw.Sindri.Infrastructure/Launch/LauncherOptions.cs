@@ -25,6 +25,9 @@ internal sealed record LauncherOptions(string Home)
     /// <summary>The launcher's own directory: the per-launch MCP config files (<c lang="text">mcp-&lt;id&gt;.json</c>, 0600, no token) sit in it beside the secrets and policy folders.</summary>
     public string LaunchDirectory => Path.Combine(Home, "launch");
 
+    /// <summary>The holdout evaluator's scratch checkouts (<c lang="text">eval-&lt;id&gt;</c>), removed with the launch (LN-LCH2).</summary>
+    public string ScratchDirectory => Path.Combine(Home, "launch", "scratch");
+
     /// <summary>The per-launch Step policy files (0600, deleted with the launch).</summary>
     public string PolicyDirectory => Path.Combine(Home, "launch", "policy");
 }

@@ -14,7 +14,7 @@
       <Setter Property="Opacity" Value="0.6" />
     </Style>
     <Style Selector="Border.dialog">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
@@ -23,7 +23,7 @@
   </UserControl.Styles>
   <Panel>
     <Border Classes="scrim" PointerPressed="OnScrim" />
-    <Border x:Name="CreateCard" Classes="dialog" Width="520" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,96,0,0"
+    <Border x:Name="CreateCard" Classes="dialog" Width="480" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,96,0,0"
             KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.ControlTypeOverride="Window" AutomationProperties.AccessibilityView="Control"
             AutomationProperties.Name="{Binding Text.CreateItem}">
       <StackPanel Spacing="10">

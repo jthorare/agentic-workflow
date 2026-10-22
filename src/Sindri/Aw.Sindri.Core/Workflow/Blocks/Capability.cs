@@ -27,4 +27,7 @@ public enum Capability
 
     /// <summary>Spends a budget.</summary>
     Budget = 32,
+
+    /// <summary>Runs as the holdout evaluator: its own scratch checkout, the phase's hidden set read-only, the evidence CLIs (LN-LCH2).</summary>
+    Evaluator = 64,
 }

@@ -27,8 +27,24 @@ internal static class StepPolicyFile
             directories = [path];
         }
 
-        var deny = policy.DeniedPaths is { Count: > 0 } denied ? denied.SelectMany(p => new[] { $"Read(/{p}/**)", $"Edit(/{p}/**)" }).ToArray() : null;
-        var permissions = new ClaudePermissions(allow) { Deny = deny, DefaultMode = policy.Mode == StepPermissionMode.Default ? null : "plan", AdditionalDirectories = directories };
+        var deny = new List<string>();
+        foreach (var denied in policy.DeniedPaths ?? [])
+        {
+            deny.AddRange([$"Read(/{denied}/**)", $"Edit(/{denied}/**)"]);
+        }
+
+        foreach (var readOnly in policy.ReadOnlyPaths ?? [])
+        {
+            deny.Add($"Edit(/{readOnly}/**)");   // readable through the directory, never edited
+            directories = [.. directories ?? [], readOnly];
+        }
+
+        var permissions = new ClaudePermissions(allow)
+        {
+            Deny = deny.Count == 0 ? null : [.. deny],
+            DefaultMode = policy.Mode == StepPermissionMode.Default ? null : "plan",
+            AdditionalDirectories = directories,
+        };
         return [.. AwJson.Serialize(new ClaudeSettingsDocument(permissions), _json), .. "\n"u8];
     }
 

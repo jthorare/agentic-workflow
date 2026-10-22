@@ -15,6 +15,7 @@ public sealed class LaunchRequestBuilder
     private SessionId? _resume;
     private InstanceAddress? _instance;
     private RunToken? _run;
+    private EvaluatorLaunch? _evaluator;
 
     /// <summary>Sets the launch id.</summary>
     /// <param name="value">The id.</param>
@@ -55,6 +56,15 @@ public sealed class LaunchRequestBuilder
         return this;
     }
 
+    /// <summary>Makes it the holdout evaluator's launch (LN-LCH2).</summary>
+    /// <param name="value">What the evaluator runs against and may touch.</param>
+    /// <returns>This builder.</returns>
+    public LaunchRequestBuilder AsEvaluator(EvaluatorLaunch value)
+    {
+        _evaluator = value;
+        return this;
+    }
+
     /// <summary>Makes it a Resume of this session.</summary>
     /// <param name="value">The session id to resume.</param>
     /// <returns>This builder.</returns>
@@ -68,5 +78,5 @@ public sealed class LaunchRequestBuilder
     /// <summary>Builds the request.</summary>
     /// <returns>The request.</returns>
     public LaunchRequest Build() =>
-        new(_launch, A.FirstItemId, _agent, _mode, _attended, "/work/repo", _instance, Worktree: null, _step, _run, _resume);
+        new(_launch, A.FirstItemId, _agent, _mode, _attended, "/work/repo", _instance, Worktree: null, _step, _run, _resume, _evaluator);
 }

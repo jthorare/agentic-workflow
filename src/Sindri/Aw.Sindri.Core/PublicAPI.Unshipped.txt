@@ -8969,7 +8969,6 @@ static Aw.Sindri.Core.Launch.TargetFacts.operator !=(Aw.Sindri.Core.Launch.Targe
 static Aw.Sindri.Core.Launch.TargetFacts.operator ==(Aw.Sindri.Core.Launch.TargetFacts? left, Aw.Sindri.Core.Launch.TargetFacts? right) -> bool
 Aw.Sindri.Core.Launch.StartedLaunch.Deconstruct(out Aw.Sindri.Core.Launch.HostRef! Host, out Aw.Sindri.Core.Launch.ViewerOutcome! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach, out Aw.Sindri.Core.Launch.CatalogSource CatalogSource, out string! ArgvHash) -> void
 Aw.Sindri.Core.Launch.StartedLaunch.StartedLaunch(Aw.Sindri.Core.Launch.HostRef! Host, Aw.Sindri.Core.Launch.ViewerOutcome! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach, Aw.Sindri.Core.Launch.CatalogSource CatalogSource, string! ArgvHash) -> void
-Aw.Sindri.Core.Launch.StepPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, out Aw.Sindri.Core.Launch.StepPermissionMode Mode, out string? WritablePath, out System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths) -> void
 Aw.Sindri.Core.Launch.StepPolicy.AllowedTools.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Launch.StepPolicy.AllowedTools.init -> void
 Aw.Sindri.Core.Launch.StepPolicy.Mode.get -> Aw.Sindri.Core.Launch.StepPermissionMode
@@ -8978,7 +8977,6 @@ Aw.Sindri.Core.Launch.StepPolicy.WritablePath.get -> string?
 Aw.Sindri.Core.Launch.StepPolicy.WritablePath.init -> void
 Aw.Sindri.Core.Launch.StepPolicy.DeniedPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Launch.StepPolicy.DeniedPaths.init -> void
-Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null) -> void
 Aw.Sindri.Core.Launch.StepPermissionMode
 Aw.Sindri.Core.Launch.StepPermissionMode.ReadOnly = 0 -> Aw.Sindri.Core.Launch.StepPermissionMode
 Aw.Sindri.Core.Launch.StepPermissionMode.Plan = 1 -> Aw.Sindri.Core.Launch.StepPermissionMode
@@ -11783,8 +11781,6 @@ override Aw.Sindri.Core.Launch.TerminalDetail.GetHashCode() -> int
 override Aw.Sindri.Core.Launch.TerminalDetail.ToString() -> string!
 static Aw.Sindri.Core.Launch.TerminalDetail.operator !=(Aw.Sindri.Core.Launch.TerminalDetail? left, Aw.Sindri.Core.Launch.TerminalDetail? right) -> bool
 static Aw.Sindri.Core.Launch.TerminalDetail.operator ==(Aw.Sindri.Core.Launch.TerminalDetail? left, Aw.Sindri.Core.Launch.TerminalDetail? right) -> bool
-Aw.Sindri.Core.Launch.LaunchRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.AgentId Agent, out Aw.Sindri.Core.Launch.LaunchMode Mode, out bool Attended, out string! RepoPath, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? Worktree, out Aw.Sindri.Core.Launch.StepArgs? Step, out Aw.Sindri.Core.Workflow.Engine.RunToken? Run, out Aw.Sindri.Core.Ids.SessionId? Resume) -> void
-Aw.Sindri.Core.Launch.LaunchRequest.LaunchRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.AgentId Agent, Aw.Sindri.Core.Launch.LaunchMode Mode, bool Attended, string! RepoPath, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, string? Worktree, Aw.Sindri.Core.Launch.StepArgs? Step, Aw.Sindri.Core.Workflow.Engine.RunToken? Run, Aw.Sindri.Core.Ids.SessionId? Resume = null) -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Resume.get -> Aw.Sindri.Core.Ids.SessionId?
 Aw.Sindri.Core.Launch.LaunchRequest.Resume.init -> void
 Aw.Sindri.Core.Events.LaunchFailed.Detail.get -> Aw.Sindri.Core.Events.LaunchFailureDetail?
@@ -12066,7 +12062,6 @@ Aw.Sindri.Core.Launch.StepArgs.Brief.get -> string?
 Aw.Sindri.Core.Launch.StepArgs.Brief.init -> void
 Aw.Sindri.Core.Launch.StepArgs.Deconstruct(out string? Model, out Aw.Sindri.Core.Launch.StepPolicy? Policy, out Aw.Sindri.Core.Launch.StepRef! Ref, out string? Brief) -> void
 Aw.Sindri.Core.Launch.StepArgs.StepArgs(string? Model, Aw.Sindri.Core.Launch.StepPolicy? Policy, Aw.Sindri.Core.Launch.StepRef! Ref, string? Brief = null) -> void
-static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunches.RequestFor(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget! target, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor = null, System.Collections.Generic.IReadOnlyList<string!>? instructions = null, string? workspace = null) -> Aw.Sindri.Core.Launch.LaunchRequest!
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Render(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor, System.Collections.Generic.IReadOnlyList<string!>? instructions = null) -> string!
 Aw.Sindri.Core.Scoping.BriefFile
@@ -13615,7 +13610,6 @@ Aw.Sindri.Core.Profile.IndexSettings.Embeddings.get -> Aw.Sindri.Core.Profile.Em
 Aw.Sindri.Core.Profile.IndexSettings.Embeddings.init -> void
 Aw.Sindri.Core.Profile.IndexSettings.Graph.get -> Aw.Sindri.Core.Profile.GraphSettings?
 Aw.Sindri.Core.Profile.IndexSettings.Graph.init -> void
-
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.BlockCatalog(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>! blocks, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>! events, Aw.Sindri.Core.Workflow.Blocks.IBlockSentences? sentences = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.get -> string?
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.init -> void
@@ -16253,6 +16247,11 @@ static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.operator !=(Aw.Sindri.C
 static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? right) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? right) -> bool
+Aw.Sindri.Core.Launch.StepDenials
+const Aw.Sindri.Core.Launch.StepDenials.HoldoutDirectory = "holdout" -> string!
+static Aw.Sindri.Core.Launch.StepDenials.For(string! worktree, System.Collections.Generic.IReadOnlyList<string!>! siblingWorktrees, string? sindriHome) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Workflow.Engine.Runtime.IAgentStepInstructions
+Aw.Sindri.Core.Workflow.Engine.Runtime.IAgentStepInstructions.Lines.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Workflow.Stats.RecipeStats
 Aw.Sindri.Core.Workflow.Stats.RecipeStats.<Clone>$() -> Aw.Sindri.Core.Workflow.Stats.RecipeStats!
 Aw.Sindri.Core.Workflow.Stats.RecipeStats.Recipe.get -> string!
@@ -16549,8 +16548,6 @@ Aw.Sindri.Core.Events.WorkflowEventDelta.Recipe.init -> void
 Aw.Sindri.Core.Events.WorkflowEventDelta.RecipeHash.get -> string?
 Aw.Sindri.Core.Events.WorkflowEventDelta.RecipeHash.init -> void
 Aw.Sindri.Core.Workflow.Registry.RecipeRegistryReader.ChildRecipeIds(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Workflow.Ids.RecipeId>!>!>
-Aw.Sindri.Core.Workflow.Engine.Runtime.IAgentStepInstructions
-Aw.Sindri.Core.Workflow.Engine.Runtime.IAgentStepInstructions.Lines.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Workflow.Stats.IWorkflowStatRows
 Aw.Sindri.Core.Workflow.Stats.IWorkflowStatRows.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Stats.StatEvent!>!>!>
 Aw.Sindri.Core.Forge.PullThread.CreatedAt.get -> System.DateTimeOffset
@@ -16592,9 +16589,6 @@ override Aw.Sindri.Core.LensPacks.PackDirectory.ToString() -> string!
 static Aw.Sindri.Core.LensPacks.PackDirectory.operator !=(Aw.Sindri.Core.LensPacks.PackDirectory? left, Aw.Sindri.Core.LensPacks.PackDirectory? right) -> bool
 static Aw.Sindri.Core.LensPacks.PackDirectory.operator ==(Aw.Sindri.Core.LensPacks.PackDirectory? left, Aw.Sindri.Core.LensPacks.PackDirectory? right) -> bool
 
-Aw.Sindri.Core.Launch.StepDenials
-const Aw.Sindri.Core.Launch.StepDenials.HoldoutDirectory = "holdout" -> string!
-static Aw.Sindri.Core.Launch.StepDenials.For(string! worktree, System.Collections.Generic.IReadOnlyList<string!>! siblingWorktrees, string? sindriHome) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Scheduling.ServiceActions
 const Aw.Sindri.Core.Scheduling.ServiceActions.Pause = "pause" -> string!
 const Aw.Sindri.Core.Scheduling.ServiceActions.Resume = "resume" -> string!
@@ -16678,6 +16672,38 @@ Aw.Sindri.Core.Launch.IAgentTrust.Untrust(string! directory, System.Threading.Ca
 Aw.Sindri.Core.Launch.ILaunchShutdown
 Aw.Sindri.Core.Launch.ILaunchShutdown.StopAll(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 static readonly Aw.Sindri.Core.SindriErrors.LaunchTrustUnavailable -> Aw.Kernel.ErrorDefinition!
+
+
+Aw.Sindri.Core.Launch.EvaluatorLaunch
+Aw.Sindri.Core.Launch.EvaluatorLaunch.<Clone>$() -> Aw.Sindri.Core.Launch.EvaluatorLaunch!
+Aw.Sindri.Core.Launch.EvaluatorLaunch.Deconstruct(out string! HeadSha, out string! HoldoutPath, out string! PhaseWorktree) -> void
+Aw.Sindri.Core.Launch.EvaluatorLaunch.Equals(Aw.Sindri.Core.Launch.EvaluatorLaunch? other) -> bool
+Aw.Sindri.Core.Launch.EvaluatorLaunch.EvaluatorLaunch(string! HeadSha, string! HoldoutPath, string! PhaseWorktree) -> void
+Aw.Sindri.Core.Launch.EvaluatorLaunch.HeadSha.get -> string!
+Aw.Sindri.Core.Launch.EvaluatorLaunch.HeadSha.init -> void
+Aw.Sindri.Core.Launch.EvaluatorLaunch.HoldoutPath.get -> string!
+Aw.Sindri.Core.Launch.EvaluatorLaunch.HoldoutPath.init -> void
+Aw.Sindri.Core.Launch.EvaluatorLaunch.PhaseWorktree.get -> string!
+Aw.Sindri.Core.Launch.EvaluatorLaunch.PhaseWorktree.init -> void
+Aw.Sindri.Core.Launch.IScratchCheckouts
+Aw.Sindri.Core.Launch.IScratchCheckouts.Create(string! repoPath, string! path, string! headSha, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Launch.IScratchCheckouts.Remove(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Launch.LaunchRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.AgentId Agent, out Aw.Sindri.Core.Launch.LaunchMode Mode, out bool Attended, out string! RepoPath, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, out string? Worktree, out Aw.Sindri.Core.Launch.StepArgs? Step, out Aw.Sindri.Core.Workflow.Engine.RunToken? Run, out Aw.Sindri.Core.Ids.SessionId? Resume, out Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator) -> void
+Aw.Sindri.Core.Launch.LaunchRequest.Evaluator.get -> Aw.Sindri.Core.Launch.EvaluatorLaunch?
+Aw.Sindri.Core.Launch.LaunchRequest.Evaluator.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.LaunchRequest(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.AgentId Agent, Aw.Sindri.Core.Launch.LaunchMode Mode, bool Attended, string! RepoPath, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Instance, string? Worktree, Aw.Sindri.Core.Launch.StepArgs? Step, Aw.Sindri.Core.Workflow.Engine.RunToken? Run, Aw.Sindri.Core.Ids.SessionId? Resume = null, Aw.Sindri.Core.Launch.EvaluatorLaunch? Evaluator = null) -> void
+Aw.Sindri.Core.Launch.StepPolicy.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, out Aw.Sindri.Core.Launch.StepPermissionMode Mode, out string? WritablePath, out System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths, out System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths) -> void
+Aw.Sindri.Core.Launch.StepPolicy.ReadOnlyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Launch.StepPolicy.ReadOnlyPaths.init -> void
+Aw.Sindri.Core.Launch.StepPolicy.StepPolicy(System.Collections.Generic.IReadOnlyList<string!>! AllowedTools, Aw.Sindri.Core.Launch.StepPermissionMode Mode, string? WritablePath, System.Collections.Generic.IReadOnlyList<string!>? DeniedPaths = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null) -> void
+Aw.Sindri.Core.Workflow.Blocks.Capability.Evaluator = 64 -> Aw.Sindri.Core.Workflow.Blocks.Capability
+override Aw.Sindri.Core.Launch.EvaluatorLaunch.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.EvaluatorLaunch.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.EvaluatorLaunch.ToString() -> string!
+static Aw.Sindri.Core.Launch.EvaluatorLaunch.operator !=(Aw.Sindri.Core.Launch.EvaluatorLaunch? left, Aw.Sindri.Core.Launch.EvaluatorLaunch? right) -> bool
+static Aw.Sindri.Core.Launch.EvaluatorLaunch.operator ==(Aw.Sindri.Core.Launch.EvaluatorLaunch? left, Aw.Sindri.Core.Launch.EvaluatorLaunch? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunches.EvaluatorRequestFor(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget! target, Aw.Sindri.Core.Launch.EvaluatorLaunch! evaluator, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor = null, System.Collections.Generic.IReadOnlyList<string!>? instructions = null) -> Aw.Sindri.Core.Launch.LaunchRequest!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunches.RequestFor(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget! target, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor = null, System.Collections.Generic.IReadOnlyList<string!>? instructions = null, string? workspace = null) -> Aw.Sindri.Core.Launch.LaunchRequest!
 Aw.Sindri.Core.Forge.PullDigest
 Aw.Sindri.Core.Forge.PullDigest.PullDigest(string! Link, Aw.Sindri.Core.Forge.PullState State, string! HeadSha, Aw.Sindri.Core.Forge.PullChecksState Checks, int CommentCount, string! Version) -> void
 Aw.Sindri.Core.Forge.PullDigest.Link.get -> string!

@@ -9,6 +9,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 public static class AgentLaunches
 {
     private static readonly string[] _report = ["Bash(sindri workflow complete:*)", "Bash(sindri workflow status:*)", "Bash(sindri workflow events:*)"];
+    private static readonly string[] _evidence = ["Bash(ui-evidence:*)"];
     private static readonly string[] _commit = ["Bash(git add:*)", "Bash(git commit:*)", "Bash(git status:*)", "Bash(git diff:*)"];
 
     /// <summary>The launch id of a run: 'LCH-' and the first 32 hex digits of SHA-256 of the instance id, ':' and the run token. A retry or a replay can never start a second session.</summary>
@@ -58,5 +59,22 @@ public static class AgentLaunches
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
             new StepArgs(Model: null, policy, run.Step, AgentStepBrief.Render(run, descriptor, instructions)), run.Run);   // Model null: per-Step models are SC-R
+    }
+
+    /// <summary>The holdout evaluator's request (LN-LCH2): it runs in a scratch checkout at the head sha, reads the holdout set and never writes it, can't touch the phase worktree, and may run the evidence CLIs.</summary>
+    /// <param name="run">The run.</param>
+    /// <param name="target">Where it runs.</param>
+    /// <param name="evaluator">The head sha, the holdout set and the phase worktree to keep out of reach.</param>
+    /// <param name="descriptor">The Step's descriptor, for the brief; null when the catalog doesn't know it.</param>
+    /// <param name="instructions">What the Step is told to do, for the brief; none when it has none.</param>
+    /// <returns>The request.</returns>
+    public static LaunchRequest EvaluatorRequestFor(AgentStepRun run, AgentStepTarget target, EvaluatorLaunch evaluator, BlockDescriptor? descriptor = null, IReadOnlyList<string>? instructions = null)
+    {
+        ArgumentNullException.ThrowIfNull(evaluator);
+        // The launcher fills in the writable path: the scratch checkout it makes. No commit rights: the evaluator reports, it doesn't change the repo.
+        var policy = new StepPolicy([.. _report, .. _evidence], StepPermissionMode.Default, WritablePath: null, ReadOnlyPaths: [evaluator.HoldoutPath], DeniedPaths: [evaluator.PhaseWorktree]);
+        return new LaunchRequest(
+            LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, Worktree: null,
+            new StepArgs(Model: null, policy, run.Step, AgentStepBrief.Render(run, descriptor, instructions)), run.Run, Evaluator: evaluator);
     }
 }

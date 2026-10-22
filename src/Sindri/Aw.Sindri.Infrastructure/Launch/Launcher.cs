@@ -50,7 +50,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             await parts.EndLive(launch, cancellationToken).ConfigureAwait(false);   // the session is over (a session tmux no longer has counts as stopped): the row stops being live now, and the lost sweep never marks it
         }
 
-        Cleanup(launch);
+        await Cleanup(launch).ConfigureAwait(false);
         return stopped;
     }
 
@@ -122,7 +122,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             var prepared = await Prepare(request, entry, cancellationToken).ConfigureAwait(false);
             if (prepared.IsError)
             {
-                Cleanup(request.Launch);
+                await Cleanup(request.Launch).ConfigureAwait(false);
                 return Fail(prepared.Error);
             }
 
@@ -131,7 +131,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         catch (OperationCanceledException)
         {
             _ = await host.Stop(new HostRef(host.Kind, SessionName(request.Launch)), CancellationToken.None).ConfigureAwait(false);   // the caller gave up: nobody will be told a session or its files exist
-            Cleanup(request.Launch);
+            await Cleanup(request.Launch).ConfigureAwait(false);
             throw;
         }
     }
@@ -217,7 +217,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             }
 
             _ = await host.Stop(new HostRef(host.Kind, name), CancellationToken.None).ConfigureAwait(false);   // a start that completes late must leave no orphan
-            Cleanup(request.Launch);
+            await Cleanup(request.Launch).ConfigureAwait(false);
             return Fail(started.Error);
         }
 
@@ -232,7 +232,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         catch (OperationCanceledException)
         {
             _ = await host.Stop(started.Value, CancellationToken.None).ConfigureAwait(false);   // the caller gave up after the session started: nobody will be told it exists
-            Cleanup(request.Launch);
+            await Cleanup(request.Launch).ConfigureAwait(false);
             throw;
         }
 
@@ -251,7 +251,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         }
 
         _ = await host.Stop(none, CancellationToken.None).ConfigureAwait(false);   // a viewer that started a thread before failing
-        Cleanup(request.Launch);
+        await Cleanup(request.Launch).ConfigureAwait(false);
         return Fail(ViewerError(outcome));
     }
 

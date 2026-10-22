@@ -128,6 +128,19 @@ public sealed class CreateItemDialogTests : IDisposable
         Assert.True(Named<Button>(Named<Control>(window, "CreateControl"), "RunButton").IsEffectivelyEnabled);
     });
 
+    [Fact]
+    public Task The_dialog_card_is_480_wide_on_Surface2() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected();
+
+        _ = await OpenFromButton(window, shell);
+
+        var card = Named<Border>(window, "CreateCard");
+        var surface2 = Assert.IsType<Avalonia.Media.ISolidColorBrush>(window.FindResource("Brush.Surface2"), exactMatch: false);
+        var background = Assert.IsType<Avalonia.Media.ISolidColorBrush>(card.Background, exactMatch: false);
+        Assert.Equal((480d, surface2.Color), (card.Width, background.Color));
+    });
+
     // F6, Ctrl+K, Ctrl+, and ? are swallowed while the form is open, as they are over the palette and the ? sheet.
     [Fact]
     public Task The_form_is_modal_F6_Ctrl_K_Ctrl_comma_and_question_mark_do_nothing() => OnUi(async () =>

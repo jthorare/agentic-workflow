@@ -22,6 +22,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The launcher.json as read now (problems, dropped entries), or null when nothing is checked.</summary>
     public Func<LauncherConfig>? Config { get; init; }
 
+    /// <summary>The scratch checkouts the holdout evaluator runs in (LN-LCH2).</summary>
+    public IScratchCheckouts Scratch { get; init; } = new GitScratchCheckouts();
+
     /// <summary>The usage reader a catalog entry's 'usage' field names, or null when there is none: the probe reports the target as limited without one.</summary>
     public Func<string, IUsageReader?> Usage { get; init; } = static _ => null;
 

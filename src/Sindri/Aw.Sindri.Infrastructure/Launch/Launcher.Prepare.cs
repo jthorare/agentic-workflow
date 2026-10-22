@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
@@ -12,12 +13,13 @@ internal sealed partial class Launcher
 {
     private async ValueTask<Result<Prepared>> Prepare(LaunchRequest request, AgentEntry entry, CancellationToken cancellationToken)
     {
-        if (await LaunchWorktree.Ensure(request, cancellationToken).ConfigureAwait(false) is { } missing)
+        var located = await WorkDirectory(request, cancellationToken).ConfigureAwait(false);
+        if (located.IsError)
         {
-            return missing;
+            return located.Error;
         }
 
-        var workDir = request.Worktree ?? request.RepoPath;
+        var workDir = located.Value;
         if (!request.Attended && request.Step is not null && await PrePushGuard.Install(workDir, cancellationToken).ConfigureAwait(false) is { } foreign)
         {
             return foreign;
@@ -41,12 +43,28 @@ internal sealed partial class Launcher
             var hashFile = LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch);
             var prior = File.Exists(hashFile) ? await File.ReadAllBytesAsync(hashFile, cancellationToken).ConfigureAwait(false) : null;   // a live session of this launch may own it
             LaunchSecrets.Write(parts.Options.SecretsDirectory, request.Launch, secret);
-            return new Prepared(workDir, composed.Value.Argv, Environment(request), composed.Value.Session?.Value) { PriorHash = prior };
+            return new Prepared(workDir, composed.Value.Argv, Environment(request, workDir), composed.Value.Session?.Value) { PriorHash = prior };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return KernelErrors.Unavailable.With($"the launch's files could not be written: {e.Message}");
         }
+    }
+
+    /// <summary>Where the session runs: the holdout evaluator's own scratch checkout at the head sha (removed with the launch, LN-LCH2), else the launch's worktree or the repo.</summary>
+    private async ValueTask<Result<string>> WorkDirectory(LaunchRequest request, CancellationToken cancellationToken)
+    {
+        if (request.Evaluator is not { } evaluator)
+        {
+            return await LaunchWorktree.Ensure(request, cancellationToken).ConfigureAwait(false) is { } missing ? missing : request.Worktree ?? request.RepoPath;
+        }
+
+        if (request.Attended || request.Step?.Policy is null)
+        {
+            return SindriErrors.RequestInvalid.With("the holdout evaluator launches unattended and with a policy (fix: build the request with AgentLaunches.EvaluatorRequestFor)");
+        }
+
+        return await parts.Scratch.Create(request.RepoPath, ScratchPath(request.Launch), evaluator.HeadSha, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>A claude-code Step's worktree is marked trusted before the CLI starts: it would stop at "do you trust this project?" with no one to answer. Other entries and human opens need nothing.</summary>
@@ -83,7 +101,19 @@ internal sealed partial class Launcher
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
     private StepArgs? Denying(StepArgs? step, LaunchRequest request, AgentEntry entry, string workDir)
     {
-        if (step?.Policy is not { } stated || entry.PolicyForm != PolicyForm.ClaudeSettingsFile)
+        if (step?.Policy is not { } stated)
+        {
+            return step;
+        }
+
+        if (request.Evaluator is not null)
+        {
+            // The evaluator's scratch checkout is the one path it writes, and its set is the one holdout path it reads: the store is not denied wholesale (no
+            // Sindri home passed), and its policy already names the phase worktree and the set. Another form is refused by the argv builder (SND-LAUNCH-013).
+            return step with { Policy = stated with { WritablePath = workDir } };
+        }
+
+        if (entry.PolicyForm != PolicyForm.ClaudeSettingsFile)
         {
             return step;
         }
@@ -126,7 +156,7 @@ internal sealed partial class Launcher
         OwnerOnly.WriteAtomically(Path.Combine(parts.Options.LaunchesDirectory, LaunchFiles.CaptureName(launch)), AwJson.Serialize(rule, _captureJson));
     }
 
-    private Dictionary<string, string> Environment(LaunchRequest request)
+    private Dictionary<string, string> Environment(LaunchRequest request, string workDir)
     {
         var env = new Dictionary<string, string>(StepEnvironment.For(request), StringComparer.Ordinal)
         {
@@ -147,12 +177,12 @@ internal sealed partial class Launcher
 
         var ghConfig = GhConfigPath(request.Launch);
         _ = Directory.CreateDirectory(ghConfig);   // empty: the Step's gh has no login to find
-        return new Dictionary<string, string>(LaunchEnvironment.Scrub(env, request.Worktree ?? request.RepoPath, ghConfig), StringComparer.Ordinal);
+        return new Dictionary<string, string>(LaunchEnvironment.Scrub(env, workDir, ghConfig), StringComparer.Ordinal);
     }
 
     private string GhConfigPath(LaunchId launch) => Path.Combine(parts.Options.LaunchDirectory, launch.Value + ".gh");
 
-    private void Cleanup(LaunchId launch)
+    private async ValueTask Cleanup(LaunchId launch)
     {
         try
         {
@@ -167,7 +197,10 @@ internal sealed partial class Launcher
         LaunchFileStore.DeleteFlat(parts.Options, launch);
         LaunchFileStore.DeleteIn(parts.Options.PolicyDirectory, StepPolicyFile.PathFor(parts.Options.PolicyDirectory, launch));
         LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
+        _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
     }
+
+    private string ScratchPath(LaunchId launch) => Path.Combine(parts.Options.ScratchDirectory, "eval-" + launch.Value);
 
     private sealed record Prepared(string WorkDir, IReadOnlyList<string> Argv, Dictionary<string, string> Env, string? Session)
     {

@@ -53,6 +53,11 @@ public static class StepForms
             return SindriErrors.RequestInvalid.With("the Step's writable path isn't absolute (fix: pass the Step directory's absolute path)");
         }
 
+        if (entry.PolicyForm != PolicyForm.ClaudeSettingsFile && (policy.ReadOnlyPaths is { Count: > 0 } || policy.DeniedPaths is { Count: > 0 }))
+        {
+            return Unsupported(entry, "policy", "its policy form can't deny a read or keep a path read-only (only claude-settings-file can)");
+        }
+
         return entry.PolicyForm switch
         {
             PolicyForm.ClaudeSettingsFile => settingsPath is { } path && Placeholders.IsAbsolute(path)

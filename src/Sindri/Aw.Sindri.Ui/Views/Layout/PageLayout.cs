@@ -25,14 +25,14 @@ internal static class PageLayout
         [0, 150, 130, 110, 70, 260],
         [0, 150, 130, 0, 0, 260],
         [0, 0, 130, 0, 0, 260],
-        [0, 0, 0, 0, 0, 170],
+        [0, 0, 130, 0, 70, 170],
     ];
 
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>
     /// <returns>The tier.</returns>
     internal static PageTier For(double width) =>
-        width >= 1120 ? PageTier.Wide : width >= 1000 ? PageTier.Mid : width >= 790 ? PageTier.Narrow : PageTier.Tight;
+        width >= 1120 ? PageTier.Wide : width >= 1000 ? PageTier.Mid : width >= 760 ? PageTier.Narrow : PageTier.Tight;
 
     /// <summary>Sets a table's columns (the queue's header and rows) for a tier; the title column (0) stays a star, and a dropped column's cells are hidden.</summary>
     /// <param name="table">The grid with the six queue columns.</param>

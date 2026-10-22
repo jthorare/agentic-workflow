@@ -9,7 +9,7 @@ internal enum PageTier
     /// <summary>1000 up to 1120: since and step go.</summary>
     Mid,
 
-    /// <summary>790 up to 1000: repo goes too, and Home stacks its panels.</summary>
+    /// <summary>760 up to 1000: repo goes too, and Home stacks its panels.</summary>
     Narrow,
 
     /// <summary>Under 790: only id, title and the primary action stay (state is in the row's name and the sheet).</summary>
