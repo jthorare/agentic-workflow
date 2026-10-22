@@ -24,26 +24,20 @@ public sealed class ProveBeforeAfterStepTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private sealed class Rig
+    private sealed class Rig(string signals = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"proof/ac1.sh"}]}""")
     {
-        public Rig(string signals = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"proof/ac1.sh"}]}""")
-        {
-            Files = new InMemoryBriefFiles()
+        public InMemoryBriefFiles Files { get; } = new InMemoryBriefFiles()
                 .With("acceptance.json", """{"schemaVersion":1,"items":[{"id":"AC-1","text":"one","status":"failing"},{"id":"AC-2","text":"two","status":"superseded"}]}""")
                 .With("signals.json", $$$"""{"schemaVersion":1,"signals":{{{signals}}}}""")
                 .With("phase.json", """{"kind":"fix"}""")
                 .With("holdout.json", """{"schemaVersion":1,"setHash":"sha256:aa","count":2}""")
                 .With("packet.json", $$$"""{"schemaVersion":1,"kind":"phase","id":"line-p1","repo":"owner/name","baseSha":"{{{Base}}}","status":"frozen","hash":null,"links":{}}""");
-            Worktrees = new FakeWorktrees().WithRepo("/checkouts/name", Base);
-        }
-
-        public InMemoryBriefFiles Files { get; }
 
         public InMemoryRunArea Area { get; } = new();
 
         public InMemoryRepoCheckouts Checkouts { get; } = new InMemoryRepoCheckouts().With("name", "/checkouts/name");
 
-        public FakeWorktrees Worktrees { get; }
+        public FakeWorktrees Worktrees { get; } = new FakeWorktrees().WithRepo("/checkouts/name", Base);
 
         public FakeScriptRuns Scripts { get; } = new FakeScriptRuns().Exits(BaseTree, 1).Exits(Workspace, 0);
 
@@ -57,7 +51,7 @@ public sealed class ProveBeforeAfterStepTests
             ["built"] = $$$"""{"head":"{{{Head}}}"}""",
             ["workspace"] = workspace ? $"\"{Workspace}\"" : "null",
         }) with
-        { Address = address ? Address : null, Repo = RepoName.From("name") };
+        { Address = address ? Address : null, Repo = RepoName.From("name"), };
 
     private static JsonNode Out(BlockStepResult result) => JsonNode.Parse(result.Result!.Outputs[FactKey.From("fact:beforeAfter")].GetRawText())!;
 
@@ -74,7 +68,7 @@ public sealed class ProveBeforeAfterStepTests
         var row = Assert.Single(fact["results"]!.AsArray())!;
         Assert.Equal(("AC-1", "SG-1a", "fail", "pass", "proof/ac1.sh", "proof/ac1.sh"), ((string?)row["item"], (string?)row["signal"], (string?)row["base"], (string?)row["head"], (string?)row["baseScript"], (string?)row["headScript"]));
         Assert.All(rig.Scripts.Calls, static c => Assert.Equal("/work/head/proof/ac1.sh", c.Script));
-        Assert.Equal([BaseTree, Workspace], rig.Scripts.Calls.Select(static c => c.Directory));
+        Assert.Equal([BaseTree, Workspace], rig.Scripts.Calls.Select(static c => c.Directory), StringComparer.Ordinal);
     }
 
     [Fact]
