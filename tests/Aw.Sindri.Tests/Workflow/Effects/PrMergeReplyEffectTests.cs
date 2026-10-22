@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
@@ -39,10 +40,37 @@ public sealed class PrMergeReplyEffectTests
     {
         var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = "\"" + Link + "\"", ["at"] = """{"headSha":"deadbeef"}""" });
 
-        var done = await new PrMergeEffect(_pulls, _facts, _profiles).Dispatch(context, Token);
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
 
-        Assert.Equal(new EffectDone(OutcomeName.From("merged"), Existed: false), done.Value);
+        Assert.Equal(OutcomeName.From("merged"), done.Value.Reply);
+        Assert.False(done.Value.Existed);
         Assert.Equal(new PullMerge(Link, PullMergeMethod.Squash, "deadbeef"), Assert.Single(_pulls.Merges));
+    }
+
+    [Fact]
+    public async Task A_merge_replies_fact_merge_with_the_merged_sha_the_method_and_the_head()
+    {
+        var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = "\"" + Link + "\"", ["at"] = """{"headSha":"deadbeef"}""", ["method"] = "rebase" });
+
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
+
+        var fact = Assert.Single(done.Value.Facts!);
+        Assert.Equal(FactKey.From("fact:merge"), fact.Key);
+        var stored = JsonNode.Parse(_facts.Stored[fact.Value.Sha256])!;
+        Assert.Equal("abc123", (string?)stored["mergedSha"]);
+        Assert.Equal("rebase", (string?)stored["method"]);
+        Assert.Equal("deadbeef", (string?)stored["headSha"]);
+    }
+
+    [Fact]
+    public async Task A_merge_the_forge_did_not_make_replies_no_fact_merge()
+    {
+        _pulls.MergeAnswer = new PullMergeOutcome(PullMergeStatus.Blocked, MergedSha: null, "why");
+        var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = Link, ["at"] = """{"headSha":"deadbeef"}""" });
+
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
+
+        Assert.True(done.Value.Facts is null or { Count: 0 });
     }
 
     [Fact]
@@ -51,7 +79,7 @@ public sealed class PrMergeReplyEffectTests
         var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = Link, ["at"] = """{"headSha":"deadbeef"}""" });
         context = context with { Arguments = new Dictionary<string, JsonElement>(context.Arguments, StringComparer.Ordinal) { ["method"] = Literal("rebase") } };
 
-        _ = await new PrMergeEffect(_pulls, _facts, _profiles).Dispatch(context, Token);
+        _ = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
 
         Assert.Equal(PullMergeMethod.Rebase, Assert.Single(_pulls.Merges).Method);
     }
@@ -64,7 +92,7 @@ public sealed class PrMergeReplyEffectTests
         _pulls.MergeAnswer = new PullMergeOutcome(status, MergedSha: null, "why");
         var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = Link, ["at"] = """{"headSha":"deadbeef"}""" });
 
-        var done = await new PrMergeEffect(_pulls, _facts, _profiles).Dispatch(context, Token);
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
 
         Assert.Equal(OutcomeName.From(outcome), done.Value.Reply);
         Assert.Single(_pulls.Merges);
@@ -76,7 +104,7 @@ public sealed class PrMergeReplyEffectTests
         _pulls.MergeAnswer = SindriErrors.ForgeUnavailable.With("down");
         var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = Link, ["at"] = """{"headSha":"deadbeef"}""" });
 
-        var done = await new PrMergeEffect(_pulls, _facts, _profiles).Dispatch(context, Token);
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
 
         Assert.True(done.IsError);
     }
@@ -86,7 +114,7 @@ public sealed class PrMergeReplyEffectTests
     {
         var context = await Context("effect.pr.merge", new Dictionary<string, string> { ["pr"] = Link, ["at"] = """{"state":"open"}""" });
 
-        var done = await new PrMergeEffect(_pulls, _facts, _profiles).Dispatch(context, Token);
+        var done = await new PrMergeEffect(_pulls, _facts, _facts, _profiles).Dispatch(context, Token);
 
         Assert.True(done.IsError);
         Assert.Empty(_pulls.Merges);
