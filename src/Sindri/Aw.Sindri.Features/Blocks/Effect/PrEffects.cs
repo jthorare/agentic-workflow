@@ -25,8 +25,12 @@ internal static class PrEffects
     /// <summary>'effect.pr.restack': restacks the PR onto its new base.</summary>
     public static BlockDescriptor Restack { get; } = Of("effect.pr.restack", humanTrigger: false, "pr");
 
-    /// <summary>'effect.pr.create-stacked': opens the stacked docs PR on the source PR's head.</summary>
-    public static BlockDescriptor CreateStacked { get; } = Of("effect.pr.create-stacked", humanTrigger: false, "pr", "on", "workspace", "title");
+    /// <summary>'effect.pr.create-stacked': opens the stacked docs PR on the source PR's head; it has a runtime (<see cref="PrCreateStackedEffect"/>), which replies 'fact:docsPr'.</summary>
+    public static BlockDescriptor CreateStacked { get; } = new(
+        BlockId.From("effect.pr.create-stacked"), BlockKind.Effect, Version: 1, Inputs: [],
+        Outputs: [new OutputSpec(FactKey.From("fact:docsPr"), [OutcomeName.From("opened"), OutcomeName.From("updated")])], Outcomes: [],
+        Capability.Effects, Parameters: [.. new[] { "pr", "on", "workspace", "title" }.Select(static p => new ParameterSpec(p, ParameterType.Text, Required: false, IsCapabilityField: false))],
+        Rung: null, DeskCapable: false);
 
     /// <summary>'effect.pr.merge': merges with the forge's expected-head check; human trigger.</summary>
     public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method");
