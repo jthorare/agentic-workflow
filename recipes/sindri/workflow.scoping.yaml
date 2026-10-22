@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 4
+version: 5
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 urgency: work
@@ -142,7 +142,7 @@ transitions:
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
 loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 2 }, refreeze: { cap: 2 }, revise: { cap: 4 } }
 budget: { tokens: 2500k }
-evals:   # 26 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size
+evals:   # 27 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -162,6 +162,7 @@ evals:   # 26 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/challenge-found-twice.jsonl
   - evals/workflow.scoping/challenge-cap-questions.jsonl
   - evals/workflow.scoping/challenge-cap-size.jsonl
+  - evals/workflow.scoping/e2e-run9-capped.jsonl
   - evals/workflow.scoping/size-uncertain.jsonl
   - evals/workflow.scoping/propose-skipped.jsonl
   - evals/workflow.scoping/evidence-incomplete.jsonl

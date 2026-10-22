@@ -84,7 +84,8 @@ internal sealed class RecordEvalService(ILedgerReader ledger, IApprovedRecipes r
                 return page.Error;
             }
 
-            foreach (var row in page.Value.Where(r => string.Equals(r.Item, item, StringComparison.Ordinal) && r.Envelope.Type.StartsWith("workflow.", StringComparison.Ordinal)))
+            foreach (var row in page.Value.Where(r => string.Equals(r.Item, item, StringComparison.Ordinal) && r.Envelope.Type.StartsWith("workflow.", StringComparison.Ordinal)
+                && !string.Equals(r.Envelope.Type, EventTypes.WorkflowInjection, StringComparison.Ordinal))) // why: the injection row is the engine's own mirror of a run's inputs, not a trigger an eval line names
             {
                 var payload = AwJson.Deserialize<WorkflowEventPayload>(Encoding.UTF8.GetBytes(row.Envelope.Payload), options);
                 if (payload.IsSuccess && string.Equals(payload.Value.Instance, address.Value, StringComparison.Ordinal))
