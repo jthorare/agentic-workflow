@@ -6,7 +6,7 @@
              x:Class="Aw.Sindri.Ui.Views.Recipes.RecipesPage"
              x:DataType="rec:RecipesPageViewModel">
   <!-- The Recipes page (recipes spec), shown to people as workflows: the title with its caption and Approve new workflows (it only goes to Setup), the toolbar (All and
-       Needs approval with their counts, and the search), the table of workflows, and the footer saying the usage figures are not served. Every named line is a Border
+       Needs approval with their counts, the 7, 30 or 90 day window, and the search), the table of workflows, and the footer. Every named line is a Border
        wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
     <Style Selector="Button.segment">
@@ -42,6 +42,18 @@
         <Button x:Name="RecipesFilterAll" Classes="segment" Classes.chosen="{Binding IsAllFilter}" Content="{Binding AllText}" Click="OnAll" AutomationProperties.Name="{Binding AllText}" />
         <Button x:Name="RecipesFilterNeeds" Classes="segment" Classes.chosen="{Binding IsNeedsFilter}" Content="{Binding NeedsText}" Click="OnNeeds" AutomationProperties.Name="{Binding NeedsText}" />
       </StackPanel>
+      <ItemsControl x:Name="RecipesWindows" ItemsSource="{Binding Windows}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="2" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="rec:WindowChoiceViewModel">
+            <Button Classes="segment" Classes.chosen="{Binding IsChosen}" Content="{Binding Text}" Click="OnWindow" AutomationProperties.Name="{Binding Text}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
       <TextBox x:Name="RecipesSearch" Text="{Binding Query, Mode=TwoWay}" PlaceholderText="{Binding SearchHint}" MinWidth="220" AutomationProperties.Name="{Binding SearchHint}" />
     </StackPanel>
 
@@ -70,13 +82,16 @@
         <Border x:Name="RecipesNoMatchName" Margin="16,8" IsVisible="{Binding IsNoMatch}" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="RecipesNoMatch" Classes="caption quiet" Text="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Grid x:Name="RecipesHeader" ColumnDefinitions="2*,70,170,80,90,100" Margin="16,6" IsVisible="{Binding IsTableShown}">
+        <Grid x:Name="RecipesHeader" ColumnDefinitions="2*,70,170,80,90,100,60,90,90" Margin="16,6" IsVisible="{Binding IsTableShown}">
           <TextBlock Classes="eyebrow" Text="{Binding ColWorkflow}" />
           <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColVersion}" />
           <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColStanding}" />
           <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding ColSize}" />
           <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding ColFlow}" TextTrimming="CharacterEllipsis" />
           <TextBlock Grid.Column="5" Classes="eyebrow" Text="{Binding ColFingerprint}" />
+          <TextBlock Grid.Column="6" Classes="eyebrow" Text="{Binding ColRuns}" />
+          <TextBlock Grid.Column="7" Classes="eyebrow" Text="{Binding ColFinished}" />
+          <TextBlock Grid.Column="8" Classes="eyebrow" Text="{Binding ColTypical}" TextTrimming="CharacterEllipsis" />
         </Grid>
         <ItemsControl x:Name="RecipeRows" ItemsSource="{Binding Rows}">
           <ItemsControl.ItemTemplate>

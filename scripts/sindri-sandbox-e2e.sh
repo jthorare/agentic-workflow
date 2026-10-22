@@ -13,7 +13,7 @@
 #   --stall SECONDS  no progress for this long is a stop (default 300)
 #   --max-wait SEC   the whole follow gives up after this long (default 3600)
 #   --auto-desk      answer a desk state with its default outcome (the first the status offers), and a budget park
-#                    with a grant of 300k tokens, recording each
+#                    with a grant of 200k tokens (the most one grant may give), recording each
 #   --map FILE       the context map to import (authored map format, docs/sindri/demo-handoff.md 5b); default: a small
 #                    map generated for the feature (its doc, one surface, one code node)
 #   --code FILE      the repo file the generated map says the feature changes (default: the first repo file the
@@ -496,14 +496,19 @@ follow() {
 
 # Answers a budget park with a token grant of $GRANT_TOKENS (an answer on a parent is forwarded to the parked child).
 # Shares --desk-max with the desk answers; each grant is in the summary's desk list. Returns 1 at --desk-max.
-GRANT_TOKENS=300000
+GRANT_TOKENS=200000   # the most one grant may give (SND-WF-003)
 auto_grant() {
   local addr="$1"
   [ "${#DESK_LOG[@]}" -lt "$DESK_MAX" ] || return 1
   say "auto-desk: $addr grant $GRANT_TOKENS tokens"
   DESK_LOG+=("$addr grant-tokens $GRANT_TOKENS")
-  # a grant is a protected answer: the human types the challenge's action back at the terminal
-  printf 'grant-tokens %s %s\n' "$GRANT_TOKENS" "$addr" | human workflow answer "$addr" --grant-tokens "$GRANT_TOKENS" 2>&1 | tail -2 | sed 's/^/  /' >&2
+  # a grant is a protected answer: the human types the challenge's action back at the terminal. The challenge names the
+  # parked child (an answer on a parent is forwarded), so a first call that types an empty line (refused, nothing
+  # recorded) reads it from the preview. Not </dev/null: the pty never passes the end of input on, so that call waits.
+  local challenge
+  challenge="$(printf '\n' | human workflow answer "$addr" --grant-tokens "$GRANT_TOKENS" 2>&1 | sed -n "s/.*type '\([^']*\)' to confirm.*/\1/p" | head -1)"
+  [ -n "$challenge" ] || challenge="grant-tokens $GRANT_TOKENS $addr"
+  printf '%s\n' "$challenge" | human workflow answer "$addr" --grant-tokens "$GRANT_TOKENS" 2>&1 | tail -2 | sed 's/^/  /' >&2
   return 0
 }
 

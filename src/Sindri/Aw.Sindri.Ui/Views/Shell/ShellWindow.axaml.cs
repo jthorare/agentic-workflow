@@ -125,47 +125,6 @@ internal sealed partial class ShellWindow : Window
         (e.KeyModifiers == KeyModifiers.None && ChordKey(e.Key) is not null)
         || e.Key is Key.LeftShift or Key.RightShift or Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin;
 
-    // Esc closes the sheet when it shows, or Settings over the Not running card (focus then goes from its hidden control
-    // to the page region); otherwise it does nothing here. A sheet hidden while Sindri isn't running stays open, so the
-    // keypress isn't spent on what the user can't see and the sheet is back when Sindri is.
-    private bool Escape()
-    {
-        if (Shell is not { } shell)
-        {
-            return false;
-        }
-
-        if (shell.Palette.IsOpen)
-        {
-            shell.Palette.Close();
-            return true;
-        }
-
-        if (shell.Shortcuts.IsOpen)
-        {
-            shell.Shortcuts.Close();
-            return true;
-        }
-
-        if (EscapeItemLayer(shell))
-        {
-            return true;
-        }
-
-        if (EscapeSheetOrInbox(shell))
-        {
-            return true;
-        }
-
-        if (!shell.LeaveSettings())
-        {
-            return false;
-        }
-
-        Dispatcher.UIThread.Post(KeepFocus, DispatcherPriority.Loaded);
-        return true;
-    }
-
     // Below Size.SheetCoversBelow the sheet covers the page, with a back affordance; otherwise it keeps its width. When
     // an open sheet starts or stops covering (the window narrowed or widened), focus left on the page it now disables
     // moves on (review run 4, accessibility-tester-1).

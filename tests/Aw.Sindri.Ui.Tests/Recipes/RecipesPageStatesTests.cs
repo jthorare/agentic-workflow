@@ -70,13 +70,13 @@ public sealed class RecipesPageStatesTests
     }
 
     [Fact]
-    public async Task The_footer_says_the_usage_figures_are_not_served()
+    public async Task The_footer_says_the_figures_cover_the_window_chosen()
     {
         _f.ServeThree();
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal("Only approved workflows can start a run. Runs, success rate and average time per workflow are not served yet.", page.FooterText);
+        Assert.Equal("Only approved workflows can start a run. The run figures cover the window chosen above.", page.FooterText);
     }
 
     [Fact]

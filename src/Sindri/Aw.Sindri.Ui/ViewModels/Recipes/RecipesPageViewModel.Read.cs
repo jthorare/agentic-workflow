@@ -67,7 +67,7 @@ internal sealed partial class RecipesPageViewModel
     private async Task Read(Uri url, CancellationToken cancellationToken)
     {
         var read = ++_reads;
-        var list = await api.Recipes(url, cancellationToken).ConfigureAwait(true);
+        var list = await api.RecipesAt(url, Window, cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
             return;   // a newer read was asked for since, or the page was left: its answer is the one to show

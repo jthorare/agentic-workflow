@@ -17,7 +17,8 @@ namespace Aw.CodeIndex.Features;
 /// <param name="build">The build slice.</param>
 /// <param name="store">The index files.</param>
 /// <param name="embedder">Embeds a Neighbors query with the model the index was embedded with.</param>
-public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, BuildReport> build, IIndexStore store, IEmbedder embedder) : ICodeIndex
+/// <param name="graph">The graph layer's tool, or null where none is registered.</param>
+public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, BuildReport> build, IIndexStore store, IEmbedder embedder, IGraphRunner? graph = null) : ICodeIndex
 {
     /// <inheritdoc />
     public async ValueTask<Result<BuildReport>> Build(CodeIndexScope scope, RepoName repo, CommitSha commit, IProgress<string> progress, CancellationToken cancellationToken)
@@ -67,15 +68,6 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
         }
 
         return heads;
-    }
-
-    /// <inheritdoc />
-    public ValueTask<Result<IReadOnlyList<LayerProbe>>> ProbeLayers(CodeIndexScope scope, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-
-        // No later layer can be built yet, so nothing is buildable; the graph and embeddings units fill this in.
-        return ValueTask.FromResult<Result<IReadOnlyList<LayerProbe>>>(scope.Repos.Select(r => new LayerProbe(r.Name, [])).ToList());
     }
 
     /// <inheritdoc />

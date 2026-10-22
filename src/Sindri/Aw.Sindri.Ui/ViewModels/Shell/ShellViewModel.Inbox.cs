@@ -27,7 +27,7 @@ internal sealed partial class ShellViewModel
     public bool IsInboxShown => IsNeedsYouInbox && IsPageVisible;
 
     /// <summary>The pages' scrolling region shows: the pages are visible and the inbox, which scrolls itself, does not take their place.</summary>
-    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox;
+    public bool IsPagesShown => IsPageVisible && !IsNeedsYouInbox && !IsRunPageShown;
 
     /// <summary>Opens the inbox, on a row when one is named and listed, else on the first row.</summary>
     /// <param name="rowId">The row to select; null for the first.</param>

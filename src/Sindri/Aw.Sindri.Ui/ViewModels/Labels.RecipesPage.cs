@@ -129,7 +129,7 @@ internal static partial class Labels
     internal const string RecipesNoMatch = "No workflows match";
 
     /// <summary>The line under the table.</summary>
-    internal const string RecipesFooter = "Only approved workflows can start a run. Runs, success rate and average time per workflow are not served yet.";
+    internal const string RecipesFooter = "Only approved workflows can start a run. The run figures cover the window chosen above.";
 
     /// <summary>What the page says when its first read failed.</summary>
     /// <param name="error">The error.</param>

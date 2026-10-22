@@ -547,6 +547,11 @@ edges:
     status: planned
     note: "the bugfix block Steps (step.bugfix.start-attempt, record-candidate, recheck, judge; DT spec 5.5, 6.1) run bugfix-state, which owns the attempt count, the candidate rules, the frozen check and the once-per-candidate verdict; Sindri reaches it through the IBugFixState port and its CLI adapter (AW_BUGFIX_BIN, else bugfix-state on the PATH), since the use cases live in Host and a project edge reaches only Core (spec 4c)"
   - from: Sindri
+    to: Judge
+    kind: cli
+    status: planned
+    note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
+  - from: Sindri
     to: Readiness
     kind: cli
     status: planned

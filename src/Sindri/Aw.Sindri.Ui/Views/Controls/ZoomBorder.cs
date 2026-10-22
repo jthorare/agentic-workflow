@@ -114,6 +114,18 @@ internal sealed partial class ZoomBorder : Border
     /// <param name="rightInset">Width of the panel over the stage's right edge.</param>
     internal void Reveal(Rect target, double rightInset = 0) => MoveTo(View.Reveal(target, Bounds.Size, rightInset));
 
+    /// <summary>Moves to a view (clamped to the zoom range's scale and kept on the stage), animated like the zoom buttons.</summary>
+    /// <param name="view">The wanted view.</param>
+    internal void MoveToView(ZoomView view) => MoveTo(Kept(view with { Scale = Range.Clamp(view.Scale) }));
+
+    /// <summary>Puts the stage on a view now, with no transition (a drag on the minimap).</summary>
+    /// <param name="view">The wanted view.</param>
+    internal void SetView(ZoomView view)
+    {
+        Settle();
+        Apply(Kept(view with { Scale = Range.Clamp(view.Scale) }));
+    }
+
     /// <summary>The zoom keys, one entry point for every page that hosts a stage: plus or equals zooms in, minus out, 0 fits.</summary>
     /// <param name="key">The key pressed.</param>
     /// <returns>True when the key was a zoom key and the stage acted on it.</returns>

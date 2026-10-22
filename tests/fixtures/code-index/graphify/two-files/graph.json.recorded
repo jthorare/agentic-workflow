@@ -1,0 +1,110 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "src_a_f",
+      "label": "f()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "f()",
+      "source_file": "src/a.ts",
+      "source_location": "L2"
+    },
+    {
+      "id": "src_b_g",
+      "label": "g()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "g()",
+      "source_file": "src/b.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_a",
+      "label": "a.ts",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "a.ts",
+      "source_file": "src/a.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_b",
+      "label": "b.ts",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "b.ts",
+      "source_file": "src/b.ts",
+      "source_location": "L1"
+    }
+  ],
+  "links": [
+    {
+      "source": "src_a_f",
+      "target": "src_b_g",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/a.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_a",
+      "target": "src_b_g",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/a.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_a",
+      "target": "src_b",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/a.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_a",
+      "target": "src_a_f",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/a.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_b",
+      "target": "src_b_g",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/b.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

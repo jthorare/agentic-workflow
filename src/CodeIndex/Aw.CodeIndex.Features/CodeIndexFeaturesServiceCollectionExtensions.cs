@@ -17,6 +17,8 @@ public static class CodeIndexFeaturesServiceCollectionExtensions
         return services
             .AddSingleton<StructureWriter>()
             .AddSingleton<EmbeddingsLayer>()
+            .AddSingleton<GraphLayer>()
+            .AddSingleton<BuildLayers>()
             .AddSingleton<IService<BuildCodeIndexRequest, BuildReport>, BuildCodeIndexService>()
             .AddSingleton<ICodeIndex, CodeIndexFacade>();
     }

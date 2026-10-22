@@ -25,7 +25,21 @@ internal sealed class RecipeRowViewModel : ObservableObject
         Fingerprint = Labels.Fingerprint(served.Hash);
         AccessibleName = Labels.RecipeRowName(Name, Id, StandingText, IsOutOfDate, served.Version);
         Link = new DeepLink(DeepLinkKind.Recipe, Standing == RecipeStanding.Approved ? Id : Id + "@" + Labels.Hash12(served.Hash));
-        Signature = SignatureOf(served);
+        (RunsText, FinishedText, TypicalText) = StatsOf(served);
+        Signature = SignatureOf(served) + "|" + RunsText + "|" + FinishedText + "|" + TypicalText;
+    }
+
+    // The served figures in words: a dash for what is not there (a draft has none), a word of its own for a workflow that only runs inside others.
+    private static (string Runs, string Finished, string Typical) StatsOf(RecipeSummaryView served)
+    {
+        if (served.ChildOnly)
+        {
+            return (Labels.StatNone, Labels.StatsChildOnly, Labels.StatNone);
+        }
+
+        return served.Stats is { } stats
+            ? (stats.Runs.ToString(CultureInfo.InvariantCulture), Labels.StatShare(stats.Done, stats.Runs), stats.MedianSeconds is { } seconds ? Labels.Duration(seconds) : Labels.StatNone)
+            : (Labels.StatNone, Labels.StatNone, Labels.StatNone);
     }
 
     private static IReadOnlyList<T> Listed<T>(IReadOnlyList<T>? served) => served ?? [];
@@ -90,6 +104,15 @@ internal sealed class RecipeRowViewModel : ObservableObject
 
     /// <summary>What it needs and produces, "2 in, 4 out".</summary>
     public string FlowText { get; }
+
+    /// <summary>The runs in the window, or a dash.</summary>
+    public string RunsText { get; }
+
+    /// <summary>The share of runs that finished, or a dash (a word of its own for a workflow that only runs inside others).</summary>
+    public string FinishedText { get; }
+
+    /// <summary>The typical run time, or a dash.</summary>
+    public string TypicalText { get; }
 
     /// <summary>The short fingerprint.</summary>
     public string Fingerprint { get; }

@@ -62,6 +62,32 @@ public sealed class SindriApiClientStartTests
         Assert.Equal(((string)GoldenFiles.Node("workflow-recipes", "list")["recipes"]![0]!["id"]!, "approved"), (list.Recipes[0].Id, list.Recipes[0].Standing)); // why: the golden has a row
     }
 
+    [Fact]
+    public async Task Recipes_at_a_window_get_the_list_route_with_the_window_and_read_the_stats_subset()
+    {
+        var recorded = new Recorded(HttpStatusCode.OK, GoldenFiles.Api("workflow-recipes", "list"));
+
+        var list = (await Client(recorded).RecipesAt(_api, "7d", Token)).Value;
+
+        var seen = Assert.Single(recorded.Seen);
+        Assert.Equal((HttpMethod.Get, "/sindri/workflow/recipes", "?window=7d"), (seen.Method, seen.Uri.AbsolutePath, seen.Uri.Query));
+        Assert.Equal(((string)GoldenFiles.Node("workflow-recipes", "list")["window"]!, 0), (list.Window, list.Recipes[0].Stats?.Runs));   // why: the golden is a thirty-day list whose first recipe has no runs
+    }
+
+    [Theory]
+    [InlineData(null, "?window=30d")]
+    [InlineData("e204c3b4ff17", "?window=30d&hash=e204c3b4ff17")]
+    public async Task Recipe_stats_get_the_stats_route_with_the_window_and_the_hash_prefix(string? hash, string query)
+    {
+        var recorded = new Recorded(HttpStatusCode.OK, GoldenFiles.Api("workflow-recipes-id-stats", "workflow-item"));
+
+        var stats = (await Client(recorded).RecipeStats(_api, "workflow.item", "30d", hash, Token)).Value;
+
+        var seen = Assert.Single(recorded.Seen);
+        Assert.Equal((HttpMethod.Get, "/sindri/workflow/recipes/workflow.item/stats", query), (seen.Method, seen.Uri.AbsolutePath, seen.Uri.Query));
+        Assert.Equal((4, 2, 2700L, false), (stats.Runs, stats.Done, stats.MedianSeconds, stats.ChildOnly));   // why: the golden's own figures
+    }
+
     private sealed record Seen(HttpMethod Method, Uri Uri, string? Caller, string? Client, string? Token, byte[] Body);
 
     private sealed class Recorded(HttpStatusCode code, string body) : HttpMessageHandler

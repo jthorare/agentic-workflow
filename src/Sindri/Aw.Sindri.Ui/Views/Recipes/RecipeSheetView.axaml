@@ -7,6 +7,24 @@
              x:DataType="rec:RecipeSheetViewModel">
   <!-- The recipe sheet (screens spec §4.3, U10a), read-only, inside the shell's sheet: the header (id@hash, version, urgency, the name template),
        the states band, then what the recipe declares as inputs and outputs. A refusal or an unreadable answer shows its sentence with Back. -->
+  <UserControl.Styles>
+    <Style Selector="Button.segment">
+      <Setter Property="Height" Value="{StaticResource Size.Control}" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter x:Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="Button.segment.chosen /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel x:Name="RecipeSheet" Spacing="{StaticResource Space.MD}">
     <TextBlock x:Name="RecipeLoading" Classes="body muted" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding LoadingText}" />
     <TextBlock x:Name="RecipeProblem" Classes="body" Text="{Binding ProblemText}" IsVisible="{Binding IsProblem}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
@@ -75,6 +93,37 @@
           </StackPanel>
         </Border>
       </Panel>
+      <!-- How it has run (API P12): the figures of the version shown over a window of 7, 30 or 90 days, or a line saying why there are none. -->
+      <Border x:Name="RecipeStats" Classes="frame-panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="eyebrow" Text="{Binding StatsHeading}" />
+          <ItemsControl x:Name="RecipeStatsWindows" ItemsSource="{Binding StatsWindows}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="2" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="rec:WindowChoiceViewModel">
+                <Button Classes="segment" Classes.chosen="{Binding IsChosen}" Content="{Binding Text}" Click="OnStatsWindow" AutomationProperties.Name="{Binding Text}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="RecipeStatsNote" Classes="body muted" Text="{Binding StatsNote}" IsVisible="{Binding HasStatsNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatsNote}" />
+          <ItemsControl x:Name="RecipeStatLines" ItemsSource="{Binding StatLines}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="rec:RecipeStatLine">
+                <Border Margin="0,0,0,4" AutomationProperties.Name="{Binding Label}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                  <Grid ColumnDefinitions="*,Auto" AutomationProperties.AccessibilityView="Raw">
+                    <TextBlock Classes="body muted" Text="{Binding Label}" />
+                    <TextBlock Grid.Column="1" Classes="body-strong" Text="{Binding Value}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
       <!-- Everything a person does not need to read the workflow: the id, hash, version, urgency, name template, and each input's key and type. Closed until opened. -->
       <Expander x:Name="RecipeDetails" Header="{Binding DetailsText}" IsExpanded="{Binding IsDetailsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding DetailsText}">
         <StackPanel Spacing="4">

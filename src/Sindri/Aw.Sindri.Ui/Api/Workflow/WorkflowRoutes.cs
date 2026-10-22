@@ -44,6 +44,22 @@ internal static class WorkflowRoutes
     /// <summary>GET: the recipe list (every registered recipe).</summary>
     internal static string Recipes => $"{Root}/recipes";
 
+    /// <summary>GET: the recipe list with its stats at a window ('7d', '30d' or '90d').</summary>
+    /// <param name="window">The window.</param>
+    /// <returns>The path with its query.</returns>
+    internal static string RecipesAt(string window) => $"{Recipes}?window={Uri.EscapeDataString(window)}";
+
+    /// <summary>GET: one recipe's stats at a window, optionally only the runs under a hash (a prefix of eight or more digits).</summary>
+    /// <param name="recipe">The recipe id.</param>
+    /// <param name="window">The window.</param>
+    /// <param name="hash">The hash prefix, or null for every version.</param>
+    /// <returns>The path with its query.</returns>
+    internal static string RecipeStats(string recipe, string window, string? hash)
+    {
+        var path = $"{Root}/recipes/{Uri.EscapeDataString(recipe)}/stats?window={Uri.EscapeDataString(window)}";
+        return string.IsNullOrEmpty(hash) ? path : path + "&hash=" + Uri.EscapeDataString(hash);
+    }
+
     /// <summary>POST: start an instance.</summary>
     internal static string Start => $"{Root}/instances";
 

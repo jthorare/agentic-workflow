@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Run"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
+             xmlns:run="using:Aw.Sindri.Ui.Views.Run"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Run.RunPage"
+             x:DataType="vm:RunPageViewModel">
+  <!-- The run page (F3 spec 3 §2): a 52 px header, the runs sidebar, the stage canvas with its zoom pill and minimap, and a host for the
+       inspector (slice 4). Cards and runs are built in code (RunCanvasWorld, RunPage.Runs.cs): each state names its brushes by key. -->
+  <Grid x:Name="RunRoot" RowDefinitions="52,*" ColumnDefinitions="Auto,*,Auto">
+    <Border x:Name="RunHeader" Grid.ColumnSpan="3" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,0,1" Padding="16,0">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="12">
+        <Button x:Name="RunBack" Click="OnBack" Content="{Binding BackText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding BackText}" />
+        <Button x:Name="RunsToggle" Grid.Column="1" Click="OnRunsToggle" Content="{Binding RunsTitle}" IsVisible="False" VerticalAlignment="Center" AutomationProperties.Name="{Binding RunsTitle}" />
+        <TextBlock x:Name="RunTitle" Grid.Column="2" Text="{Binding Title}" FontSize="16" LineHeight="22" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="420"
+                   Foreground="{DynamicResource Brush.Ink}" AutomationProperties.Name="{Binding Title}" />
+        <Border x:Name="RunBadge" Grid.Column="3" CornerRadius="{StaticResource Radius.Pill}" Padding="8,2" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <icons:StateIcon x:Name="RunBadgeIcon" VerticalAlignment="Center" />
+            <TextBlock x:Name="RunBadgeText" Text="{Binding HeaderWord}" FontSize="12" LineHeight="16" FontWeight="Medium" VerticalAlignment="Center" AutomationProperties.Name="{Binding HeaderWord}" />
+          </StackPanel>
+        </Border>
+        <TextBlock x:Name="RunStarted" Grid.Column="4" Text="{Binding StartedText}" FontSize="12" LineHeight="16" VerticalAlignment="Center" Foreground="{DynamicResource Brush.InkSubtle}" AutomationProperties.Name="{Binding StartedText}" />
+        <Button x:Name="RunReference" Grid.Column="5" Click="OnCopyReference" VerticalAlignment="Center" Padding="8,2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}"
+                AutomationProperties.Name="{Binding ReferenceCopy.Label}">
+          <TextBlock Classes="mono" Text="{Binding Reference}" FontSize="11" LineHeight="14" Foreground="{DynamicResource Brush.InkSubtle}" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+        <Panel Grid.Column="7" IsVisible="{Binding Cancel, Converter={x:Static ObjectConverters.IsNotNull}}" VerticalAlignment="Center">
+          <ctl:CommandControl x:Name="RunCancel" DataContext="{Binding Cancel}" />
+        </Panel>
+      </Grid>
+    </Border>
+
+    <!-- The runs of the same workflow (280 px; below 1200 px it hides behind the Runs button and overlays the canvas). -->
+    <Border x:Name="RunsSidebar" Grid.Row="1" Width="280" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,0,1,0">
+      <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12">
+        <TextBlock Classes="eyebrow" Text="{Binding RunsTitle}" Margin="0,0,0,8" AutomationProperties.Name="{Binding RunsTitle}" />
+        <TextBox x:Name="RunsSearchBox" Grid.Row="1" Text="{Binding RunsFilter, Mode=TwoWay}" PlaceholderText="{Binding RunsSearch}" Height="32" Margin="0,0,0,8" AutomationProperties.Name="{Binding RunsSearch}" />
+        <ScrollViewer Grid.Row="2">
+          <ItemsControl x:Name="RunsItems" ItemsSource="{Binding Runs}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </ScrollViewer>
+        <TextBlock x:Name="RunsOpenOnlyText" Grid.Row="3" Classes="caption subtle" Text="{Binding RunsOpenOnly}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.Name="{Binding RunsOpenOnly}" />
+      </Grid>
+    </Border>
+
+    <Grid x:Name="RunStage" Grid.Row="1" Grid.Column="1" ClipToBounds="True">
+      <ctl:ZoomBorder x:Name="RunCanvas" MinZoom="0.30" MaxZoom="1.50" IsVisible="{Binding IsShown}">
+        <run:RunCanvasWorld x:Name="RunWorld" />
+      </ctl:ZoomBorder>
+
+      <StackPanel x:Name="RunLoading" IsVisible="{Binding IsLoading}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+        <Border Classes="skeleton" Width="320" Height="160" />
+        <TextBlock Classes="body subtle" Text="{Binding LoadingText}" AutomationProperties.Name="{Binding LoadingText}" />
+      </StackPanel>
+      <Border x:Name="RunProblem" IsVisible="{Binding IsProblem}" Classes="card state-card" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Classes="body" Text="{Binding ProblemText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
+      </Border>
+
+      <TextBlock x:Name="RunBranchesNote" IsVisible="{Binding HasBranchesNote}" Text="{Binding BranchesNote}" Classes="caption subtle" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,16"
+                 AutomationProperties.Name="{Binding BranchesNote}" />
+
+      <Border x:Name="RunZoom" IsVisible="{Binding IsShown}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="16" Height="28"
+              Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0">
+          <Button x:Name="RunZoomOutButton" Click="OnZoomOut" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Minus" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
+          <TextBlock x:Name="RunZoomValue" Classes="caption" MinWidth="44" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}" />
+          <Button x:Name="RunZoomInButton" Click="OnZoomIn" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Plus" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
+          <Button x:Name="RunZoomFitButton" Click="OnZoomFit" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Fit" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
+          <Button x:Name="RunZoomCentreButton" Click="OnZoomCentre" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Dot" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
+        </StackPanel>
+      </Border>
+
+      <Border x:Name="RunMiniMapFrame" IsVisible="{Binding IsShown}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16" Width="168" Height="132"
+              Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}">
+        <ctl:MiniMapControl x:Name="RunMiniMap" />
+      </Border>
+    </Grid>
+
+    <!-- The inspector's host (slice 4): 480 px at 1200 px and wider, a flex sibling of the canvas; it stays closed and empty until the inspector exists. -->
+    <Border x:Name="RunInspector" Grid.Row="1" Grid.Column="2" Width="480" IsVisible="False" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1,0,0,0">
+      <ContentControl x:Name="RunInspectorHost" />
+    </Border>
+  </Grid>
+</UserControl>

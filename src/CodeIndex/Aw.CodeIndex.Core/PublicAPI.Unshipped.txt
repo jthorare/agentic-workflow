@@ -496,9 +496,11 @@ Aw.CodeIndex.Core.Model.GraphEdge
 Aw.CodeIndex.Core.Model.GraphEdge.<Clone>$() -> Aw.CodeIndex.Core.Model.GraphEdge!
 Aw.CodeIndex.Core.Model.GraphEdge.Confidence.get -> string!
 Aw.CodeIndex.Core.Model.GraphEdge.Confidence.init -> void
-Aw.CodeIndex.Core.Model.GraphEdge.Deconstruct(out string! Source, out string! Target, out string! Relation, out string! Confidence) -> void
+Aw.CodeIndex.Core.Model.GraphEdge.Deconstruct(out string! Source, out string! Target, out string! Relation, out string! Confidence, out int? Line) -> void
 Aw.CodeIndex.Core.Model.GraphEdge.Equals(Aw.CodeIndex.Core.Model.GraphEdge? other) -> bool
-Aw.CodeIndex.Core.Model.GraphEdge.GraphEdge(string! Source, string! Target, string! Relation, string! Confidence) -> void
+Aw.CodeIndex.Core.Model.GraphEdge.GraphEdge(string! Source, string! Target, string! Relation, string! Confidence, int? Line = null) -> void
+Aw.CodeIndex.Core.Model.GraphEdge.Line.get -> int?
+Aw.CodeIndex.Core.Model.GraphEdge.Line.init -> void
 Aw.CodeIndex.Core.Model.GraphEdge.Relation.get -> string!
 Aw.CodeIndex.Core.Model.GraphEdge.Relation.init -> void
 Aw.CodeIndex.Core.Model.GraphEdge.Source.get -> string!
@@ -533,11 +535,13 @@ Aw.CodeIndex.Core.Model.GraphSettings.MaxNodes.get -> int
 Aw.CodeIndex.Core.Model.GraphSettings.MaxNodes.init -> void
 Aw.CodeIndex.Core.Model.GraphSnapshot
 Aw.CodeIndex.Core.Model.GraphSnapshot.<Clone>$() -> Aw.CodeIndex.Core.Model.GraphSnapshot!
-Aw.CodeIndex.Core.Model.GraphSnapshot.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>! Edges) -> void
+Aw.CodeIndex.Core.Model.GraphSnapshot.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>! Edges, out int Dropped) -> void
+Aw.CodeIndex.Core.Model.GraphSnapshot.Dropped.get -> int
+Aw.CodeIndex.Core.Model.GraphSnapshot.Dropped.init -> void
 Aw.CodeIndex.Core.Model.GraphSnapshot.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>!
 Aw.CodeIndex.Core.Model.GraphSnapshot.Edges.init -> void
 Aw.CodeIndex.Core.Model.GraphSnapshot.Equals(Aw.CodeIndex.Core.Model.GraphSnapshot? other) -> bool
-Aw.CodeIndex.Core.Model.GraphSnapshot.GraphSnapshot(System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>! Nodes, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>! Edges) -> void
+Aw.CodeIndex.Core.Model.GraphSnapshot.GraphSnapshot(System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>! Nodes, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>! Edges, int Dropped = 0) -> void
 Aw.CodeIndex.Core.Model.GraphSnapshot.Nodes.get -> System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>!
 Aw.CodeIndex.Core.Model.GraphSnapshot.Nodes.init -> void
 Aw.CodeIndex.Core.Model.IndexCounts
@@ -1367,6 +1371,24 @@ Aw.CodeIndex.Core.Ports.ISymbolParser.Version.get -> string!
 static Aw.CodeIndex.Core.InputRules.MatchesAny(string! path, System.Collections.Generic.IEnumerable<string!>! globs) -> bool
 static Aw.CodeIndex.Core.Planning.LanguageTable.Of(string! path) -> string?
 static Aw.CodeIndex.Core.Planning.ProjectManifests.Directories(System.Collections.Generic.IEnumerable<string!>! paths) -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.CodeIndex.Core.Graph.GraphMerge
+Aw.CodeIndex.Core.Graph.GraphMerged
+Aw.CodeIndex.Core.Graph.GraphMerged.<Clone>$() -> Aw.CodeIndex.Core.Graph.GraphMerged!
+Aw.CodeIndex.Core.Graph.GraphMerged.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.FileRecord!>! Files, out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.EdgeRecord!>! Edges, out int Dropped) -> void
+Aw.CodeIndex.Core.Graph.GraphMerged.Dropped.get -> int
+Aw.CodeIndex.Core.Graph.GraphMerged.Dropped.init -> void
+Aw.CodeIndex.Core.Graph.GraphMerged.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.EdgeRecord!>!
+Aw.CodeIndex.Core.Graph.GraphMerged.Edges.init -> void
+Aw.CodeIndex.Core.Graph.GraphMerged.Equals(Aw.CodeIndex.Core.Graph.GraphMerged? other) -> bool
+Aw.CodeIndex.Core.Graph.GraphMerged.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.FileRecord!>!
+Aw.CodeIndex.Core.Graph.GraphMerged.Files.init -> void
+Aw.CodeIndex.Core.Graph.GraphMerged.GraphMerged(System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.FileRecord!>! Files, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.EdgeRecord!>! Edges, int Dropped) -> void
+override Aw.CodeIndex.Core.Graph.GraphMerged.Equals(object? obj) -> bool
+override Aw.CodeIndex.Core.Graph.GraphMerged.GetHashCode() -> int
+override Aw.CodeIndex.Core.Graph.GraphMerged.ToString() -> string!
+static Aw.CodeIndex.Core.Graph.GraphMerge.Plan(Aw.CodeIndex.Core.Values.RepoName repo, Aw.CodeIndex.Core.Model.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.SnapshotFile!>! files) -> Aw.CodeIndex.Core.Graph.GraphMerged!
+static Aw.CodeIndex.Core.Graph.GraphMerged.operator !=(Aw.CodeIndex.Core.Graph.GraphMerged? left, Aw.CodeIndex.Core.Graph.GraphMerged? right) -> bool
+static Aw.CodeIndex.Core.Graph.GraphMerged.operator ==(Aw.CodeIndex.Core.Graph.GraphMerged? left, Aw.CodeIndex.Core.Graph.GraphMerged? right) -> bool
 Aw.CodeIndex.Core.Embedding.EmbedText
 Aw.CodeIndex.Core.EmbeddingTarget
 static Aw.CodeIndex.Core.Embedding.EmbedText.Of(Aw.CodeIndex.Core.Model.EmbedCandidate! candidate) -> string!

@@ -17,6 +17,7 @@
         xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
         xmlns:apv="using:Aw.Sindri.Ui.Views.Approvals"
         xmlns:ny="using:Aw.Sindri.Ui.Views.NeedsYou"
+        xmlns:runv="using:Aw.Sindri.Ui.Views.Run"
         x:Class="Aw.Sindri.Ui.Views.Shell.ShellWindow"
         x:DataType="shell:ShellViewModel"
         Title="{Binding WindowTitle}"
@@ -223,6 +224,10 @@
             <!-- The Needs-you inbox (F3 needs-you spec §2): over Home's panels while Home stays the page; it scrolls its own list and card, so it sits beside the pages' scroller. -->
             <Panel x:Name="NeedsYouInboxLayer" IsVisible="{Binding IsInboxShown}">
               <ny:NeedsYouPage x:Name="NeedsYouInboxPage" DataContext="{Binding Inbox}" />
+            </Panel>
+            <!-- A line run (F3 run canvas): its canvas over the Workflows page, in place of the detail sheet. -->
+            <Panel x:Name="RunPageLayer" IsVisible="{Binding IsRunPageShown}">
+              <runv:RunPage x:Name="RunPageView" DataContext="{Binding RunPage}" />
             </Panel>
           </Panel>
         </Border>

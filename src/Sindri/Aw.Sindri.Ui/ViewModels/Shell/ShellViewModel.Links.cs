@@ -37,6 +37,12 @@ internal sealed partial class ShellViewModel
             return;
         }
 
+        if (link.Kind == DeepLinkKind.Workflow && IsLineRun(link.Subject))
+        {
+            OpenRunPage(link.Subject!);   // why: IsLineRun is true only for a subject
+            return;
+        }
+
         if (PageOf(link.Kind) is { } page)
         {
             GoTo(page);

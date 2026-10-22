@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
@@ -89,6 +88,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         InitRecipe();
         InitAgents(clipboard);
         InitContext(api, clipboard);
+        InitRunPage(api, clipboard);
         Queue.PropertyChanged += OnQueueChanged;
         InitAnnouncements();
         Attention = AttentionSummary.For(feed: null, State, _clock.GetUtcNow());
@@ -232,6 +232,11 @@ internal sealed partial class ShellViewModel : ObservableObject
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
         }
 
+        if (page != PageId.Workflows || page == CurrentPage)
+        {
+            CloseRunPage();   // any other page, and the Workflows tab again, leaves a run for the list
+        }
+
         if (page == CurrentPage)
         {
             return;
@@ -272,25 +277,4 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <param name="cancellationToken">Stops following.</param>
     /// <returns>A task that ends when cancelled.</returns>
     internal Task Run(CancellationToken cancellationToken) => Health.Run(cancellationToken);
-
-    private void OnHealthChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        switch (e.PropertyName)
-        {
-            case nameof(HealthViewModel.State):
-                Changed(_stateProperties);
-                Reattend();
-                Announce();
-                break;
-            case nameof(HealthViewModel.Reason):
-                OnChanged(e.PropertyName);
-                Announce();
-                break;
-            case nameof(HealthViewModel.ReasonDetail):
-                OnChanged(e.PropertyName);
-                break;
-            default:
-                break;
-        }
-    }
 }

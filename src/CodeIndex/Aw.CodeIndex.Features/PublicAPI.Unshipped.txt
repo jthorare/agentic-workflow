@@ -13,7 +13,7 @@ Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.Progress.init -> void
 Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.Repo.get -> Aw.CodeIndex.Core.Facade.CodeIndexRepo!
 Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.Repo.init -> void
 Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexService
-Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexService.BuildCodeIndexService(Aw.CodeIndex.Core.Ports.IRepoHeads! heads, Aw.CodeIndex.Core.Ports.IRepoSnapshot! snapshot, Aw.CodeIndex.Features.BuildCodeIndex.StructureWriter! structure, Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer! embeddings, Aw.CodeIndex.Core.Ports.IIndexStore! store, Aw.CodeIndex.Core.Ports.IHeavyJobLock! heavy, System.TimeProvider! clock) -> void
+Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexService.BuildCodeIndexService(Aw.CodeIndex.Core.Ports.IRepoHeads! heads, Aw.CodeIndex.Core.Ports.IRepoSnapshot! snapshot, Aw.CodeIndex.Features.BuildCodeIndex.StructureWriter! structure, Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers! layers, Aw.CodeIndex.Core.Ports.IIndexStore! store, Aw.CodeIndex.Core.Ports.IHeavyJobLock! heavy, System.TimeProvider! clock) -> void
 Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexService.Handle(Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.BuildReport!>!>
 Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer
 Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer.EmbeddingsLayer(Aw.CodeIndex.Core.Ports.IEmbedder! embedder, System.TimeProvider! clock) -> void
@@ -27,7 +27,7 @@ Aw.CodeIndex.Features.CodeIndexFacade
 Aw.CodeIndex.Features.CodeIndexFacade.Build(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, Aw.CodeIndex.Core.Values.CommitSha commit, System.IProgress<string!>! progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.BuildReport!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.Callees(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.SymbolRef symbol, Aw.CodeIndex.Core.Facade.CallDepth depth, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.CallsAnswer!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.Callers(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.SymbolRef symbol, Aw.CodeIndex.Core.Facade.CallDepth depth, bool includeImplementations, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.CallsAnswer!>!>
-Aw.CodeIndex.Features.CodeIndexFacade.CodeIndexFacade(Aw.Kernel.Services.IService<Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest!, Aw.CodeIndex.Core.Facade.BuildReport!>! build, Aw.CodeIndex.Core.Ports.IIndexStore! store, Aw.CodeIndex.Core.Ports.IEmbedder! embedder) -> void
+Aw.CodeIndex.Features.CodeIndexFacade.CodeIndexFacade(Aw.Kernel.Services.IService<Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest!, Aw.CodeIndex.Core.Facade.BuildReport!>! build, Aw.CodeIndex.Core.Ports.IIndexStore! store, Aw.CodeIndex.Core.Ports.IEmbedder! embedder, Aw.CodeIndex.Core.Ports.IGraphRunner? graph = null) -> void
 Aw.CodeIndex.Features.CodeIndexFacade.FileSymbols(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, System.Collections.Generic.IReadOnlyList<string!>! paths, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.FileSymbolsAnswer!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.FindSymbols(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Facade.SymbolQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.FindSymbolsAnswer!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.Heads(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Facade.RecordedHead!>!>!>
@@ -40,3 +40,20 @@ override Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.GetHashCode(
 override Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.ToString() -> string!
 static Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.operator !=(Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest? left, Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest? right) -> bool
 static Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.operator ==(Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest? left, Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest? right) -> bool
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.<Clone>$() -> Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers!
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.BuildLayers(Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer! Embeddings, Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer! Graph) -> void
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Deconstruct(out Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer! Embeddings, out Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer! Graph) -> void
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Embeddings.get -> Aw.CodeIndex.Features.BuildCodeIndex.EmbeddingsLayer!
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Embeddings.init -> void
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Equals(Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers? other) -> bool
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Graph.get -> Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer!
+Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Graph.init -> void
+Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer
+Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer.GraphLayer(Aw.CodeIndex.Core.Ports.IRepoSnapshot! snapshot, System.TimeProvider! clock, Aw.CodeIndex.Core.Ports.IGraphRunner? graph = null) -> void
+Aw.CodeIndex.Features.BuildCodeIndex.GraphLayer.Run(Aw.CodeIndex.Core.Ports.IIndexBuild! build, Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest! request, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.SnapshotFile!>! code, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Model.LayerRecord!>!>
+override Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.Equals(object? obj) -> bool
+override Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.GetHashCode() -> int
+override Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.ToString() -> string!
+static Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.operator !=(Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers? left, Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers? right) -> bool
+static Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers.operator ==(Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers? left, Aw.CodeIndex.Features.BuildCodeIndex.BuildLayers? right) -> bool

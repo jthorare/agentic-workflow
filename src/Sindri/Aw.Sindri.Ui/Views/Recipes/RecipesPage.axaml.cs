@@ -29,6 +29,16 @@ internal sealed partial class RecipesPage : UserControl
 
     private void OnNeeds(object? sender, RoutedEventArgs e) => Page?.ShowNeeds();
 
+#pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
+    private async void OnWindow(object? sender, RoutedEventArgs e)
+    {
+        if (Page is { } page && sender is Control { DataContext: WindowChoiceViewModel choice })
+        {
+            await page.ChooseWindow(choice.Window, CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+#pragma warning restore MA0155
+
     private void OnApproveNew(object? sender, RoutedEventArgs e) => Page?.RequestApproveNew();
 
     private void OnOpen(object? sender, RoutedEventArgs e)

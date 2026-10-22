@@ -15544,6 +15544,70 @@ static Aw.Sindri.Core.Review.ReviewPackOrigin.operator !=(Aw.Sindri.Core.Review.
 static Aw.Sindri.Core.Review.ReviewPackOrigin.operator ==(Aw.Sindri.Core.Review.ReviewPackOrigin? left, Aw.Sindri.Core.Review.ReviewPackOrigin? right) -> bool
 static Aw.Sindri.Core.Review.ReviewPack.Problems(Aw.Sindri.Core.Review.ReviewFacts! facts) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Review.ReviewPack.Verdict(System.Text.Json.Nodes.JsonNode! review) -> string?
+Aw.Sindri.Core.Judge.ChooseOption
+Aw.Sindri.Core.Judge.ChooseOption.Name.get -> string!
+Aw.Sindri.Core.Judge.ChooseOption.Name.init -> void
+Aw.Sindri.Core.Judge.ChooseOption.Criterion.get -> string!
+Aw.Sindri.Core.Judge.ChooseOption.Criterion.init -> void
+Aw.Sindri.Core.Judge.ChooseOption.ChooseOption(string! Name, string! Criterion) -> void
+Aw.Sindri.Core.Judge.ChooseOption.<Clone>$() -> Aw.Sindri.Core.Judge.ChooseOption!
+Aw.Sindri.Core.Judge.ChooseOption.Deconstruct(out string! Name, out string! Criterion) -> void
+Aw.Sindri.Core.Judge.ChooseOption.Equals(Aw.Sindri.Core.Judge.ChooseOption? other) -> bool
+override Aw.Sindri.Core.Judge.ChooseOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Judge.ChooseOption.GetHashCode() -> int
+override Aw.Sindri.Core.Judge.ChooseOption.ToString() -> string!
+static Aw.Sindri.Core.Judge.ChooseOption.operator !=(Aw.Sindri.Core.Judge.ChooseOption? left, Aw.Sindri.Core.Judge.ChooseOption? right) -> bool
+static Aw.Sindri.Core.Judge.ChooseOption.operator ==(Aw.Sindri.Core.Judge.ChooseOption? left, Aw.Sindri.Core.Judge.ChooseOption? right) -> bool
+Aw.Sindri.Core.Judge.ChooseRequest
+Aw.Sindri.Core.Judge.ChooseRequest.Prompt.get -> string!
+Aw.Sindri.Core.Judge.ChooseRequest.Prompt.init -> void
+Aw.Sindri.Core.Judge.ChooseRequest.Choices.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Judge.ChooseOption!>!
+Aw.Sindri.Core.Judge.ChooseRequest.Choices.init -> void
+Aw.Sindri.Core.Judge.ChooseRequest.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Judge.ChooseRequest.Facts.init -> void
+Aw.Sindri.Core.Judge.ChooseRequest.Threshold.get -> double
+Aw.Sindri.Core.Judge.ChooseRequest.Threshold.init -> void
+Aw.Sindri.Core.Judge.ChooseRequest.Providers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Judge.ChooseRequest.Providers.init -> void
+Aw.Sindri.Core.Judge.ChooseRequest.ChooseRequest(string! Prompt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Judge.ChooseOption!>! Choices, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Facts, double Threshold, System.Collections.Generic.IReadOnlyList<string!>! Providers) -> void
+Aw.Sindri.Core.Judge.ChooseRequest.<Clone>$() -> Aw.Sindri.Core.Judge.ChooseRequest!
+Aw.Sindri.Core.Judge.ChooseRequest.Deconstruct(out string! Prompt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Judge.ChooseOption!>! Choices, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Facts, out double Threshold, out System.Collections.Generic.IReadOnlyList<string!>! Providers) -> void
+Aw.Sindri.Core.Judge.ChooseRequest.Equals(Aw.Sindri.Core.Judge.ChooseRequest? other) -> bool
+override Aw.Sindri.Core.Judge.ChooseRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Judge.ChooseRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Judge.ChooseRequest.ToString() -> string!
+static Aw.Sindri.Core.Judge.ChooseRequest.operator !=(Aw.Sindri.Core.Judge.ChooseRequest? left, Aw.Sindri.Core.Judge.ChooseRequest? right) -> bool
+static Aw.Sindri.Core.Judge.ChooseRequest.operator ==(Aw.Sindri.Core.Judge.ChooseRequest? left, Aw.Sindri.Core.Judge.ChooseRequest? right) -> bool
+Aw.Sindri.Core.Judge.ChooseAnswer
+Aw.Sindri.Core.Judge.ChooseAnswer.Status.get -> Aw.Sindri.Core.Judge.ChooseStatus
+Aw.Sindri.Core.Judge.ChooseAnswer.Status.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Choice.get -> string?
+Aw.Sindri.Core.Judge.ChooseAnswer.Choice.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Reason.get -> string!
+Aw.Sindri.Core.Judge.ChooseAnswer.Reason.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Confidence.get -> double?
+Aw.Sindri.Core.Judge.ChooseAnswer.Confidence.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Provider.get -> string?
+Aw.Sindri.Core.Judge.ChooseAnswer.Provider.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.DecisionRef.get -> string?
+Aw.Sindri.Core.Judge.ChooseAnswer.DecisionRef.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>?
+Aw.Sindri.Core.Judge.ChooseAnswer.Probabilities.init -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.ChooseAnswer(Aw.Sindri.Core.Judge.ChooseStatus Status, string? Choice, string! Reason, double? Confidence = null, string? Provider = null, string? DecisionRef = null, System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities = null) -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.<Clone>$() -> Aw.Sindri.Core.Judge.ChooseAnswer!
+Aw.Sindri.Core.Judge.ChooseAnswer.Deconstruct(out Aw.Sindri.Core.Judge.ChooseStatus Status, out string? Choice, out string! Reason, out double? Confidence, out string? Provider, out string? DecisionRef, out System.Collections.Generic.IReadOnlyDictionary<string!, double>? Probabilities) -> void
+Aw.Sindri.Core.Judge.ChooseAnswer.Equals(Aw.Sindri.Core.Judge.ChooseAnswer? other) -> bool
+override Aw.Sindri.Core.Judge.ChooseAnswer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Judge.ChooseAnswer.GetHashCode() -> int
+override Aw.Sindri.Core.Judge.ChooseAnswer.ToString() -> string!
+static Aw.Sindri.Core.Judge.ChooseAnswer.operator !=(Aw.Sindri.Core.Judge.ChooseAnswer? left, Aw.Sindri.Core.Judge.ChooseAnswer? right) -> bool
+static Aw.Sindri.Core.Judge.ChooseAnswer.operator ==(Aw.Sindri.Core.Judge.ChooseAnswer? left, Aw.Sindri.Core.Judge.ChooseAnswer? right) -> bool
+Aw.Sindri.Core.Judge.ChooseStatus
+Aw.Sindri.Core.Judge.ChooseStatus.Decided = 1 -> Aw.Sindri.Core.Judge.ChooseStatus
+Aw.Sindri.Core.Judge.ChooseStatus.Escalated = 2 -> Aw.Sindri.Core.Judge.ChooseStatus
+Aw.Sindri.Core.Judge.ChooseStatus.Failed = 3 -> Aw.Sindri.Core.Judge.ChooseStatus
+Aw.Sindri.Core.Judge.IJudgeChoice
+Aw.Sindri.Core.Judge.IJudgeChoice.Choose(Aw.Sindri.Core.Judge.ChooseRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Judge.ChooseAnswer!>
 Aw.Sindri.Core.Onyx.IOnyxLoginHand
 Aw.Sindri.Core.Onyx.IOnyxLoginSlots
 Aw.Sindri.Core.Onyx.OnyxJobPhase
