@@ -5,6 +5,7 @@ using Aw.Sindri.Features.Blocks.Step;
 using Aw.Sindri.Features.Docs;
 using Aw.Sindri.Testing.LensPacks;
 using Aw.Sindri.Testing.Scoping;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Testing.Worktrees;
 
 namespace Aw.Sindri.Tests.Workflow.Blocks.Contracts;
