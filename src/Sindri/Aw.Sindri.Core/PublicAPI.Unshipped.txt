@@ -2456,11 +2456,13 @@ Aw.Sindri.Core.Workflow.Blocks.EffectContext.Text.get -> string?
 Aw.Sindri.Core.Workflow.Blocks.EffectContext.Text.init -> void
 Aw.Sindri.Core.Workflow.Blocks.EffectDone
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.<Clone>$() -> Aw.Sindri.Core.Workflow.Blocks.EffectDone!
-Aw.Sindri.Core.Workflow.Blocks.EffectDone.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.OutcomeName? Reply, out bool Existed, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Blocks.ReplyFact!>? Facts) -> void
-Aw.Sindri.Core.Workflow.Blocks.EffectDone.EffectDone(Aw.Sindri.Core.Workflow.Ids.OutcomeName? Reply, bool Existed, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Blocks.ReplyFact!>? Facts = null) -> void
+Aw.Sindri.Core.Workflow.Blocks.EffectDone.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.OutcomeName? Reply, out bool Existed, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Blocks.ReplyFact!>? Facts, out Aw.Sindri.Core.Workflow.Ids.EventKind? Event) -> void
+Aw.Sindri.Core.Workflow.Blocks.EffectDone.EffectDone(Aw.Sindri.Core.Workflow.Ids.OutcomeName? Reply, bool Existed, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Blocks.ReplyFact!>? Facts = null, Aw.Sindri.Core.Workflow.Ids.EventKind? Event = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.Equals(Aw.Sindri.Core.Workflow.Blocks.EffectDone? other) -> bool
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.Existed.get -> bool
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.Existed.init -> void
+Aw.Sindri.Core.Workflow.Blocks.EffectDone.Event.get -> Aw.Sindri.Core.Workflow.Ids.EventKind?
+Aw.Sindri.Core.Workflow.Blocks.EffectDone.Event.init -> void
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Blocks.ReplyFact!>?
 Aw.Sindri.Core.Workflow.Blocks.EffectDone.Facts.init -> void
 Aw.Sindri.Core.Workflow.Blocks.ReplyFact
@@ -15845,3 +15847,42 @@ Aw.Sindri.Core.Workflow.Recipes.RecipeChildren
 const Aw.Sindri.Core.Workflow.Recipes.RecipeChildren.StartPhase = "effect.line.start-phase" -> string!
 static Aw.Sindri.Core.Workflow.Recipes.RecipeChildren.Linked(Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe) -> System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Ids.RecipeId>!
 static Aw.Sindri.Core.Workflow.Recipes.RecipeChildren.Of(Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe) -> System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Ids.RecipeId>!
+Aw.Sindri.Core.Workflow.Blocks.EventRoute.Parent = 3 -> Aw.Sindri.Core.Workflow.Blocks.EventRoute
+Aw.Sindri.Core.Workflow.Engine.Effects.IPhaseStarts
+Aw.Sindri.Core.Workflow.Engine.Effects.IPhaseStarts.Start(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart! start, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted!>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart!
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Attempt.get -> int
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Attempt.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Line, out Aw.Sindri.Core.Workflow.Ids.RecipeId Recipe, out string! Phase, out int Attempt, out Aw.Sindri.Core.Workflow.Engine.ItemKey Item, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Inputs) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>!
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Inputs.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Item.get -> Aw.Sindri.Core.Workflow.Engine.ItemKey
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Item.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Line.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Line.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Phase.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Phase.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.PhaseStart(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Line, Aw.Sindri.Core.Workflow.Ids.RecipeId Recipe, string! Phase, int Attempt, Aw.Sindri.Core.Workflow.Engine.ItemKey Item, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Inputs) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Recipe.get -> Aw.Sindri.Core.Workflow.Ids.RecipeId
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Recipe.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted!
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Address.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Address.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, out bool Existed) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Existed.get -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Existed.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.PhaseStarted(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, bool Existed) -> void
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.ToString() -> string!
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStart? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? left, Aw.Sindri.Core.Workflow.Engine.Effects.PhaseStarted? right) -> bool

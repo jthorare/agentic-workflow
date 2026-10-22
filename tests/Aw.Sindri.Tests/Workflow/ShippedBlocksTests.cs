@@ -58,7 +58,7 @@ public sealed class ShippedBlocksTests
             ],
             catalog.Blocks.Select(b => b.Id.Value).Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
-        Assert.Equal(["claim.created", "item.routed", "notify.delivered", "pr.changed", "pr.docsMerged", "pr.mergeResult", "pr.pushed", "pr.restacked", "pr.stacked"], catalog.Events.Select(e => e.Kind.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["claim.created", "item.routed", "line.phaseChanged", "notify.delivered", "pr.changed", "pr.docsMerged", "pr.mergeResult", "pr.pushed", "pr.restacked", "pr.stacked"], catalog.Events.Select(e => e.Kind.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     /// <summary>Engine P8 Q4: the produce Step runs on an agent session when the build has the runtime, and stays deskCapable so a box with no agent target runs it at the desk (D7).</summary>

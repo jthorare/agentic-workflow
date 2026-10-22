@@ -14,6 +14,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
     {
         ["effect.claim.ref"] = "Reserves a work item so no other run starts on it",
         ["effect.line.report"] = "Writes progress lines into the workflow log",
+        ["effect.line.start-phase"] = "Starts one phase of the line as its own run, on the branch it builds on",
         ["effect.notify.desk"] = "Puts a question or notice in your Needs you list",
         ["effect.pr.create-stacked"] = "Opens the documentation pull request on top of the code pull request",
         ["effect.pr.merge"] = "Merges the pull request once you say so, if its code has not changed",
@@ -85,6 +86,9 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["step.lens.round"] = "Lines up the reviews for one review pass",
         ["step.lens.run"] = "Starts an AI agent session that reviews from one angle",
         ["step.owner.decide"] = "Asks you whether to retry or stop",
+        ["step.line.decide"] = "Asks you whether to retry a failed phase, skip it and what depends on it, or stop the line",
+        ["step.line.dispatch"] = "Picks the next phases of the line that are ready to start, within the limits you set",
+        ["step.line.seed"] = "Lists the plan's phases on the line's board, none started",
         ["step.phase.decide"] = "Asks you whether to rebuild the phase with your notes or stop it",
         ["step.phase.drift"] = "Checks the code did not change after it was proven",
         ["step.phase.seed"] = "Prepares the working copy and the starting values for one phase",

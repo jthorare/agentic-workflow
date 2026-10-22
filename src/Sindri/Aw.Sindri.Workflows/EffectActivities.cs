@@ -139,7 +139,7 @@ internal sealed class EffectActivities(
         var at = await Append(dispatched, cancel).ConfigureAwait(false);
         if (done.Value.Reply is { } outcome)
         {
-            _ = await Append(Reply(run, outcome, dispatched.Envelope.Id, done.Value.Facts), cancel).ConfigureAwait(false);
+            _ = await Append(Reply(run, outcome, dispatched.Envelope.Id, done.Value.Facts, done.Value.Event), cancel).ConfigureAwait(false);
         }
 
         return new EffectRunResult(at.Sequence, done.Value.Reply?.Value, done.Value.Existed || at.AlreadyRecorded);
@@ -164,9 +164,9 @@ internal sealed class EffectActivities(
     /// The reply event a block's <paramref name="outcome"/> names (spec §2, §12): the one causation-routed event that
     /// declares it, from that event's producer, caused by the dispatched row so the bridge routes it to this instance only.
     /// </summary>
-    private LedgerEntry Reply(EffectRun run, OutcomeName outcome, Guid causation, IReadOnlyDictionary<FactKey, ReplyFact>? facts)
+    private LedgerEntry Reply(EffectRun run, OutcomeName outcome, Guid causation, IReadOnlyDictionary<FactKey, ReplyFact>? facts, EventKind? kind)
     {
-        var replies = RepliesTo(outcome);
+        var replies = RepliesTo(outcome, kind);
         if (replies is not [{ } reply])
         {
             throw new ApplicationFailureException(
@@ -178,8 +178,9 @@ internal sealed class EffectActivities(
         return entry with { Envelope = entry.Envelope with { Actor = reply.Producer, CausationId = causation } };
     }
 
-    private List<EventDescriptor> RepliesTo(OutcomeName outcome) =>
-        [.. catalog.Events.Where(e => e.Route == EventRoute.Causation && e.Outcomes.Contains(outcome))];
+    /// <summary>The reply events that declare <paramref name="outcome"/>; with <paramref name="kind"/> (the effect's own reply event, for an outcome several declare) only that one.</summary>
+    private List<EventDescriptor> RepliesTo(OutcomeName outcome, EventKind? kind) =>
+        [.. catalog.Events.Where(e => e.Route is EventRoute.Causation or EventRoute.Parent && e.Outcomes.Contains(outcome) && (kind is null || e.Kind == kind))];
 
     private static Dictionary<string, FactValue>? ReplyFactsOf(IReadOnlyDictionary<FactKey, ReplyFact>? facts) =>
         facts is { Count: > 0 } ? facts.ToDictionary(static f => f.Key.Value, static f => new FactValue(f.Value.Ref, f.Value.Sha256, f.Value.HeadSha), StringComparer.Ordinal) : null;
@@ -198,7 +199,7 @@ internal sealed class EffectActivities(
         }
 
         var declared = catalog.Find(run.Command.Effect)?.Outputs.Select(static o => o.Fact).ToHashSet() ?? [];
-        var received = done.Reply is { } outcome && RepliesTo(outcome) is [{ } reply] ? reply.Facts.ToHashSet() : [];
+        var received = done.Reply is { } outcome && RepliesTo(outcome, done.Event) is [{ } reply] ? reply.Facts.ToHashSet() : [];
         var refused = facts.Keys.Where(k => !run.ReplyFacts || !declared.Contains(k) || !received.Contains(k)).Select(static k => k.Value).Order(StringComparer.Ordinal).ToList();
         if (refused.Count > 0)
         {

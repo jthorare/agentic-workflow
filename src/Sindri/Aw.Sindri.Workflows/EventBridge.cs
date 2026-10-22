@@ -158,7 +158,7 @@ internal sealed partial class EventBridge(
             return sent.Error;
         }
 
-        if (descriptor.Route != EventRoute.Causation && recorded.Item is { Length: > 0 } item && ItemKey.TryFrom(item, out _))
+        if (descriptor.Route == EventRoute.Item && recorded.Item is { Length: > 0 } item && ItemKey.TryFrom(item, out _))
         {
             items.Hold(item, trigger, targets.Value);
         }
@@ -218,7 +218,7 @@ internal sealed partial class EventBridge(
     /// <summary>The instances <paramref name="recorded"/> routes to (spec §5.4): its item's live instances, or its command's instance.</summary>
     private async ValueTask<Result<IReadOnlyList<InstanceAddress>>> Targets(EventDescriptor descriptor, LedgerEvent recorded, CancellationToken cancellationToken)
     {
-        if (descriptor.Route == EventRoute.Causation)
+        if (descriptor.Route is EventRoute.Causation or EventRoute.Parent)
         {
             var causer = await origins.CauserOf(recorded, cancellationToken).ConfigureAwait(false);
             if (causer.IsError)
@@ -228,7 +228,7 @@ internal sealed partial class EventBridge(
 
             if (causer.Value is { } address)
             {
-                return new[] { address };
+                return new[] { descriptor.Route == EventRoute.Parent ? address.LinkedParent() ?? address : address };   // LN-WF1: a linked instance's event goes to its line
             }
 
             NoRoute(logger, recorded.Sequence, recorded.Envelope.Type, "its causation names no instance's command");

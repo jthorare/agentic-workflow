@@ -35,6 +35,9 @@ public sealed class LineBlocksTests
     [InlineData("step.plan.settle", BlockRuntime.Block, false, "fact:design,fact:answers,fact:answerLog", "assumed,changed,replan", "", "fact:designRevision=changed", Capability.None)]
     [InlineData("step.plan.review", BlockRuntime.Desk, true, "fact:planPacket,fact:design", "approve,reviseDesign,revisePlan,drop", "", "fact:answers=reviseDesign,revisePlan", Capability.None)]
     [InlineData("step.plan.freeze", BlockRuntime.Block, false, "fact:planPacket,fact:design,fact:plan,fact:holdoutSets", "frozen,mismatch", "", "fact:planPacket=frozen;fact:phasePackets=frozen;fact:findings=mismatch", Capability.Tools)]
+    [InlineData("step.line.seed", BlockRuntime.Block, false, "fact:phasePackets", "seeded", "", "fact:phaseBoard=seeded;fact:phaseEvent=seeded;fact:boardEdit=seeded", Capability.None)]
+    [InlineData("step.line.dispatch", BlockRuntime.Block, false, "fact:phaseBoard,fact:phaseEvent,fact:boardEdit", "start,full,done,blocked", "fact:phaseBoard,fact:phaseEvent,fact:boardEdit", "fact:nextPhase=start", Capability.None)]
+    [InlineData("step.line.decide", BlockRuntime.Desk, true, "fact:phaseBoard", "retry,skip,stop", "", "fact:boardEdit=retry,skip", Capability.None)]
     public void Each_line_step_declares_what_it_runs_reads_reports_and_writes(
         string id, BlockRuntime runtime, bool humanOnly, string inputs, string outcomes, string every, string required, Capability capabilities)
     {

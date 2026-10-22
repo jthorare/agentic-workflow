@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.phase
-version: 2
+version: 3
 description: "The per-phase child of the line: build, prove, review and ship one phase as one PR, then babysit it (docs sync inside) to the owner's ready-to-merge stop and the merge."
 displayName: "Build, prove and ship one phase"
 urgency: work
@@ -73,7 +73,8 @@ transitions:
   - { from: babysit, to: owner,   on: wait.satisfied, when: { outcome: unresolved } }
   - { from: babysit, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
   - { label: "rebuild with your notes", from: owner, to: build,   on: step.completed, when: { outcome: rebuild }, produces: [fact:buildNotes] }
-  - { from: owner, to: dropped, on: step.completed, when: { outcome: stop } }
+  - { label: "you stopped it: tell the line it failed", from: owner, to: dropped, on: step.completed, when: { outcome: stop },
+      effects: [{ use: effect.line.report, with: { status: failed, line: { fact: fact:lineContext } } }] }   # LN-WF1: the line shows the phase failed and stops its dependents (or retries)
 loops: { stage: { cap: 3 }, reprove: { cap: 3 } }
 evals:
   - evals/workflow.phase/happy.jsonl

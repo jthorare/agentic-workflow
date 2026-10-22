@@ -83,7 +83,11 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(PhaseSteps.Drift)
         .AddBlockDescriptor(PhaseSteps.Decide)
         .AddBlockDescriptor(BabysitSteps.Watch)
-        .AddBlockDescriptor(LineEffects.Report);
+        .AddBlockDescriptor(LineSteps.Seed)
+        .AddBlockDescriptor(LineSteps.Dispatch)
+        .AddBlockDescriptor(LineSteps.Decide)
+        .AddBlockDescriptor(LineEffects.Report)
+        .AddEvent(RecipeEvents.LinePhaseChanged);
 
     /// <summary>Registers the line's build and prove stations' Steps (line spec §7.2, §7.3), descriptors only.</summary>
     /// <param name="services">The service collection.</param>

@@ -1,7 +1,7 @@
 schema: 1
 id: workflow.line
-version: 3
-description: "Spec-to-proven-PR, end to end. Sequential stations (LN-WF8): scoping, design, plan and one workflow.phase child; parallel phase dispatch comes with LN-WF1."
+version: 4
+description: "Spec-to-proven-PR, end to end. Scoping, design and plan, then a dispatcher (LN-WF1) that starts every ready phase as its own workflow.phase run, up to the profile's parallel limit (default 2), stacking a phase on the open pull request it depends on, until every phase is merged or skipped."
 displayName: "Idea to merged pull request"
 urgency: work
 inputs:
@@ -11,7 +11,7 @@ outputs:
   - { key: fact:scopePacket,  label: "Scope packet",  type: packet, from: scoping }
   - { key: fact:designPacket, label: "Design packet", type: packet, from: design }
   - { key: fact:planPacket,   label: "Plan graph",    type: packet, from: plan }
-  - { key: fact:pr,           label: "Pull request",  type: link,   from: phase }
+  - { key: fact:phaseBoard,   label: "Phase board",   type: payload, from: dispatch }
 initial: scoping
 states:
   scoping: { displayName: "Scope", why: "Decides exactly what will change before any design or code, so nobody builds the wrong thing.", kind: wait, timeout: { after: 30d, then: park },
@@ -26,12 +26,19 @@ states:
   plan: { displayName: "Plan", why: "Splits the design into buildable pull-request-sized phases.", kind: wait, timeout: { after: 30d, then: park },
              waitFor: { child: { recipe: workflow.plan, onParked: propagate, inputs: { "fact:scopePacket": { fact: fact:scopePacket }, "fact:designPacket": { fact: fact:designPacket } } } },
              next: "Waiting for {child}: {item}'s plan graph, ending at your after-design stop." }
-  phase: { displayName: "Build, prove and ship one phase", why: "Builds, proves, reviews and opens the pull request for one phase, then waits for your merge.", kind: wait, timeout: { after: 14d, then: park },
-             waitFor: { child: { recipe: workflow.phase, onParked: propagate, inputs: { "fact:phasePacket": { fact: fact:phasePackets }, "fact:lineContext": { fact: fact:lineContext } } } },
-             next: "Waiting for {child}: building, proving and shipping {item}'s phase, ending at your merge stop." }
+  seed: { kind: active, step: step.line.seed, timeout: { after: 1h, then: park },
+             next: "List {item}'s phases on the line's board." }
+  dispatch: { kind: active, step: step.line.dispatch, loop: ticks, timeout: { after: 1h, then: park },
+             next: "Pick {item}'s next ready phase, or wait for one to move." }
+  starting: { displayName: "Starting a phase", why: "Starts the next phase as its own run, on the branch it builds on.", kind: wait, waitFor: { event: line.phaseChanged }, timeout: { after: 1h, then: park },
+             next: "Waiting for {item}'s next phase to start." }
+  building: { displayName: "Phases running", why: "Phases build, prove and ship on their own; the line starts the next ready one when one ships, parks or merges.", kind: wait, waitFor: { event: line.phaseChanged }, timeout: { after: 14d, then: escalate },
+             next: "Waiting for {item}'s running phases to ship, park or merge." }
+  owner: { kind: active, step: step.line.decide, timeout: { after: 7d, then: park },
+             next: "A phase of {item} failed: retry it, skip it and what depends on it, or stop the line." }
   done:    { displayName: "Merged", kind: terminal, outcome: resolved }
   dropped: { displayName: "Dropped", kind: terminal, outcome: unresolved }
-  stuck:   { displayName: "Stuck", kind: terminal, outcome: unresolved }
+  stopped: { displayName: "Stopped", kind: terminal, outcome: failed }
 transitions:
   - { from: scoping, to: design, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:scopePacket] }
   - { from: scoping, to: dropped, on: wait.satisfied, when: { outcome: unresolved } }
@@ -42,19 +49,27 @@ transitions:
   - { from: redesign, to: plan, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:designPacket] }
   - { from: redesign, to: dropped, on: wait.satisfied, when: { outcome: unresolved } }
   - { from: redesign, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: plan, to: phase, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:planPacket, fact:phasePackets] }
+  - { from: plan, to: seed, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:planPacket, fact:phasePackets] }
+  - { from: seed, to: dispatch, on: step.completed, when: { outcome: seeded }, produces: [fact:phaseBoard, fact:phaseEvent, fact:boardEdit] }
   - { label: "planning found design problems: redesign", from: plan, to: redesign, on: wait.satisfied, when: { outcome: unresolved }, produces: [fact:designRevision] }
   - { from: plan, to: dropped, on: wait.satisfied, when: { outcome: failed } }
   - { from: plan, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: phase, to: done, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:pr, fact:handoff, fact:proofPack, fact:mergedSha] }
-  - { label: "phase didn't work out", from: phase, to: stuck, on: wait.satisfied, when: { outcome: unresolved } }
-  - { from: phase, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-loops: { redesign: { cap: 2 } }
+  - { label: "start the next ready phase", from: dispatch, to: starting, on: step.completed, when: { outcome: start }, produces: [fact:nextPhase, fact:phaseBoard],
+      effects: [{ use: effect.line.start-phase, with: { recipe: workflow.phase, phase: { fact: fact:nextPhase } } }] }
+  - { label: "phases running: wait for one to move", from: dispatch, to: building, on: step.completed, when: { outcome: full }, produces: [fact:phaseBoard] }
+  - { label: "every phase merged or skipped", from: dispatch, to: done, on: step.completed, when: { outcome: done }, produces: [fact:phaseBoard] }
+  - { label: "a phase failed: you decide", from: dispatch, to: owner, on: step.completed, when: { outcome: blocked }, produces: [fact:phaseBoard] }
+  - { label: "a phase moved: dispatch again", from: [starting, building], to: dispatch, on: wait.satisfied,
+      when: { any: [ { outcome: started }, { outcome: shipped }, { outcome: parked }, { outcome: resumed }, { outcome: merged }, { outcome: ended }, { outcome: failed } ] }, produces: [fact:phaseEvent] }
+  - { label: "retry or skip the failed phase", from: owner, to: dispatch, on: step.completed, when: { any: [ { outcome: retry }, { outcome: skip } ] }, produces: [fact:boardEdit] }
+  - { from: owner, to: stopped, on: step.completed, when: { outcome: stop } }
+loops: { redesign: { cap: 2 }, ticks: { cap: 400 } }
 evals:
   - evals/workflow.line/happy.jsonl
+  - evals/workflow.line/parallel-and-stacked.jsonl
+  - evals/workflow.line/failure-stops-dependents.jsonl
+  - evals/workflow.line/failure-stop.jsonl
   - evals/workflow.line/design-unresolved.jsonl
-  - evals/workflow.line/phase-unresolved.jsonl
   - evals/workflow.line/plan-failed.jsonl
   - evals/workflow.line/plan-redesign.jsonl
   - evals/workflow.line/scoping-unresolved.jsonl
-

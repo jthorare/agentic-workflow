@@ -22,6 +22,13 @@ internal static class RecipeEvents
     public static EventDescriptor NotifyDelivered { get; } = new(
         EventKind.From("notify.delivered"), Dispatcher, EventRoute.Causation, [OutcomeName.From("delivered")], []);
 
+    /// <summary>
+    /// 'line.phaseChanged' (line spec LN-WF1): a phase of a line changed state; the line waits on it to start the next ready phases. Its start reply, 'started', answers
+    /// the line's own 'effect.line.start-phase'; the phase's 'effect.line.report' appends 'shipped', 'merged' and 'failed', and the engine the rest. Routed to the linked parent of the instance that caused it.
+    /// </summary>
+    public static EventDescriptor LinePhaseChanged { get; } = new(
+        EventKind.From("line.phaseChanged"), Dispatcher, EventRoute.Parent, Outcomes("started", "shipped", "parked", "resumed", "merged", "ended", "failed"), [FactKey.From("fact:phaseEvent")]);
+
     /// <summary>'pr.changed', from the PR watcher (PB spec §6.1): the forge changed the PR; the outcome is the first change in this order, 'idle' after a quiet period.</summary>
     public static EventDescriptor PrChanged { get; } = new(
         EventKind.From("pr.changed"), "service:pr-watch", EventRoute.Item, Outcomes("merged", "closed", "updated", "review", "ci", "idle"), [FactKey.From("fact:prEvent")]);
