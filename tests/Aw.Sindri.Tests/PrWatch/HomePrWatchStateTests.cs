@@ -26,14 +26,14 @@ public sealed class HomePrWatchStateTests : IDisposable
     public async Task What_is_written_is_read_back()
     {
         var file = new PrWatchFile(
-            new Dictionary<string, PrWatchEntry>(StringComparer.Ordinal) { [PrWatchRig.Link] = new("t1|aaa|pending|0", "aaa", "Open", _at) },
+            new Dictionary<string, PrWatchEntry>(StringComparer.Ordinal) { [PrWatchRig.Link] = new("t1", "aaa", "Open", "Pending", 3, _at) },
             new Dictionary<string, PrWatchHost>(StringComparer.Ordinal) { ["forge.test"] = new(2, _at.AddMinutes(2)) });
         var written = await State().Write(file, TestContext.Current.CancellationToken);
 
         var read = await State().Read(TestContext.Current.CancellationToken);
 
         Assert.False(written.IsError);
-        Assert.Equal(new PrWatchEntry("t1|aaa|pending|0", "aaa", "Open", _at), read.Value.Pulls[PrWatchRig.Link]);
+        Assert.Equal(new PrWatchEntry("t1", "aaa", "Open", "Pending", 3, _at), read.Value.Pulls[PrWatchRig.Link]);
         Assert.Equal(new PrWatchHost(2, _at.AddMinutes(2)), read.Value.Hosts["forge.test"]);
     }
 
@@ -43,7 +43,7 @@ public sealed class HomePrWatchStateTests : IDisposable
         var ct = TestContext.Current.CancellationToken;
         var state = State();
         var path = new WorkflowsHome(_home.Path).PrWatchFile;
-        _ = await state.Write(new PrWatchFile(new Dictionary<string, PrWatchEntry>(StringComparer.Ordinal) { ["a"] = new("d1", "h", "Open", _at) }, PrWatchFile.Empty.Hosts), ct);
+        _ = await state.Write(new PrWatchFile(new Dictionary<string, PrWatchEntry>(StringComparer.Ordinal) { ["a"] = new("d1", "h", "Open", "None", 0, _at) }, PrWatchFile.Empty.Hosts), ct);
 
         _ = await state.Write(PrWatchFile.Empty, ct);
 

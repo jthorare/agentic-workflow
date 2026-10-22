@@ -28,23 +28,23 @@ public sealed class PrWatchServiceTests
     public async Task A_pull_request_seen_first_is_recorded_and_writes_no_event()
     {
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
 
         var result = await _rig.Poll();
 
         Assert.True(result.Value.Idle);
         Assert.Empty(await _rig.Changed());
-        Assert.Equal("t1|aaa|pending|0", _rig.State.Last.Pulls[Link].Digest);
+        Assert.Equal("t1", _rig.State.Last.Pulls[Link].Version);
     }
 
     [Fact]
     public async Task A_moved_head_appends_one_updated_event_for_the_waiting_item_with_the_instances_link_as_subject()
     {
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
         _ = await _rig.Poll();
         _rig.Clock.Advance(TimeSpan.FromMinutes(1));
-        _rig.Digests.Set(Link, "t2|bbb|pending|0", head: "bbb");
+        _rig.Digests.Set(Link, "t2", head: "bbb");
 
         var result = await _rig.Poll();
 
@@ -59,7 +59,7 @@ public sealed class PrWatchServiceTests
     public async Task An_unchanged_pull_request_writes_nothing_on_later_polls()
     {
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
 
         _ = await _rig.Poll();
         _rig.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -73,9 +73,9 @@ public sealed class PrWatchServiceTests
     public async Task A_merge_outranks_the_other_changes_and_all_are_listed()
     {
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
         _ = await _rig.Poll();
-        _rig.Digests.Set(Link, "t2|bbb|success|0", PullState.Merged, "bbb");
+        _rig.Digests.Set(Link, "t2", PullState.Merged, "bbb", PullChecksState.Passing);
 
         _ = await _rig.Poll();
 
@@ -90,7 +90,7 @@ public sealed class PrWatchServiceTests
     {
         _rig.Remind.After = TimeSpan.FromHours(1);
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
         _ = await _rig.Poll();
 
         _rig.Clock.Advance(TimeSpan.FromMinutes(59));
@@ -149,7 +149,7 @@ public sealed class PrWatchServiceTests
         _ = await _rig.Poll();
         _rig.Clock.Advance(TimeSpan.FromMinutes(2));
         _rig.Digests.Failure = null;
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
 
         _ = await _rig.Poll();
 
@@ -172,7 +172,7 @@ public sealed class PrWatchServiceTests
     public async Task A_pull_request_nobody_waits_on_any_more_is_forgotten()
     {
         _rig.Watched.Watch(Link, "ITM-1");
-        _rig.Digests.Set(Link, "t1|aaa|pending|0");
+        _rig.Digests.Set(Link, "t1");
         _ = await _rig.Poll();
 
         _rig.Watched.Unwatch(Link);
@@ -198,17 +198,17 @@ public sealed class PrWatchServiceTests
         var facts = new SwitchedFacts();
         var rig = new PrWatchRig(facts);
         rig.Watched.Watch(Link, "ITM-1");
-        rig.Digests.Set(Link, "t1|aaa|pending|0");
+        rig.Digests.Set(Link, "t1");
         _ = await rig.Poll();
         rig.Clock.Advance(TimeSpan.FromMinutes(1));
-        rig.Digests.Set(Link, "t2|bbb|pending|0", head: "bbb");
+        rig.Digests.Set(Link, "t2", head: "bbb");
         facts.Failing = true;
 
         var failed = await rig.Poll();
 
         Assert.True(failed.IsError);
         Assert.Empty(await rig.Changed());
-        Assert.Equal("t1|aaa|pending|0", rig.State.Last.Pulls[Link].Digest);
+        Assert.Equal("t1", rig.State.Last.Pulls[Link].Version);
 
         facts.Failing = false;
         rig.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -217,7 +217,7 @@ public sealed class PrWatchServiceTests
         Assert.False(again.Value.Idle);
         var row = Assert.Single(await rig.Changed());
         Assert.Equal("updated", PrWatchRig.Outcome(row));
-        Assert.Equal("t2|bbb|pending|0", rig.State.Last.Pulls[Link].Digest);
+        Assert.Equal("t2", rig.State.Last.Pulls[Link].Version);
     }
 
     /// <summary>A fact store that refuses every write while <see cref="Failing"/>.</summary>

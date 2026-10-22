@@ -80,7 +80,8 @@ internal sealed class FakeDigests : IPullDigests
     /// <summary>The error every call answers, or null.</summary>
     public Error? Failure { get; set; }
 
-    public void Set(string link, string digest, PullState state = PullState.Open, string head = "aaa") => _rows[link] = new PullDigestRow(link, digest, state, head);
+    public void Set(string link, string version, PullState state = PullState.Open, string head = "aaa", PullChecksState checks = PullChecksState.Pending, int comments = 0) =>
+        _rows[link] = new PullDigestRow(link, state, head, checks, comments, version);
 
     public ValueTask<Result<IReadOnlyList<PullDigestRow>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken)
     {
