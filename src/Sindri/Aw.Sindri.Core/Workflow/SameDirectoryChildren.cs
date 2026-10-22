@@ -73,5 +73,5 @@ public sealed class SameDirectoryChildren : IChildRecipeResolver
     }
 
     private static IEnumerable<RecipeId> ChildIds(Recipe recipe) =>
-        recipe.States.Values.Select(static s => s.WaitFor?.Child?.Recipe).OfType<RecipeId>();
+        RecipeChildren.Of(recipe);
 }

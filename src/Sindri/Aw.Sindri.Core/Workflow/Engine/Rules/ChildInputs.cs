@@ -27,7 +27,7 @@ internal static class ChildInputs
     public static IReadOnlyDictionary<RecipeId, RecipeHash> Pins(Recipe recipe, IChildRecipeResolver pinned)
     {
         var pins = new Dictionary<RecipeId, RecipeHash>();
-        foreach (var id in recipe.States.Values.Select(static s => s.WaitFor?.Child?.Recipe).OfType<RecipeId>())
+        foreach (var id in RecipeChildren.Of(recipe))
         {
             if (pinned.Resolve(id) is { } grandchild)
             {

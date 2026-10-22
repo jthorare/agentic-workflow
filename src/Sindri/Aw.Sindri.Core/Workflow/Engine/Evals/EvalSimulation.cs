@@ -42,7 +42,7 @@ internal sealed record EvalSimulation(
     {
         ArgumentNullException.ThrowIfNull(evalCase);
         var id = WorkflowInstanceId.For(Guid(evalCase.Name + ":" + recipe.Id.Value));
-        var pins = recipe.States.Values.Select(static s => s.WaitFor?.Child?.Recipe).OfType<RecipeId>().Distinct()
+        var pins = RecipeChildren.Of(recipe)
             .Select(c => (Id: c, Child: children.Resolve(c))).Where(static c => c.Child is not null)
             .ToDictionary(static c => c.Id, static c => c.Child!.Hash); // why: the Where keeps resolved children only
         var request = new StartRequest(

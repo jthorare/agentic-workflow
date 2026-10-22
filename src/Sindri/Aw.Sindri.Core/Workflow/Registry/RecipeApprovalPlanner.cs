@@ -241,10 +241,7 @@ public sealed class RecipeApprovalPlanner(IRecipeStore store, IRecipeApprovals a
     /// </summary>
     private Result<RecipePins> Pins(RegisteredRecipe recipe, Recipe parsed, IReadOnlyList<RecipeApproval> current)
     {
-        var unpinned = parsed.States.Values
-            .Select(static s => s.WaitFor?.Child?.Recipe)
-            .OfType<RecipeId>()
-            .Distinct()
+        var unpinned = RecipeChildren.Of(parsed)
             .Where(child => !current.Any(a => a.Id == child))
             .OrderBy(static c => c.Value, StringComparer.Ordinal)
             .Cast<RecipeId?>()

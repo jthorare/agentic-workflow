@@ -69,10 +69,7 @@ public static class PinRules
         var approvals = current.ToList();
         return
         [
-            .. recipe.States.Values
-                .Select(s => s.WaitFor?.Child?.Recipe)
-                .OfType<RecipeId>()
-                .Distinct()
+            .. RecipeChildren.Of(recipe)
                 .Select(child => approvals.Where(a => a.Id == child).MaxBy(a => a.Version))
                 .OfType<RecipeApproval>()
                 .OrderBy(a => a.Id.Value, StringComparer.Ordinal)

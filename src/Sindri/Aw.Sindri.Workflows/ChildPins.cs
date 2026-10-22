@@ -21,5 +21,5 @@ internal sealed class ChildPins(IReadOnlyList<LoadedChild> loaded)
     /// <param name="recipe">The instance's recipe.</param>
     /// <returns>The pins by child recipe id.</returns>
     public IReadOnlyDictionary<RecipeId, RecipeHash> Of(Recipe recipe) =>
-        recipe.States.Values.Select(static s => s.WaitFor?.Child?.Recipe).OfType<RecipeId>().Distinct().Where(id => loaded.Any(c => c.Id == id)).ToDictionary(static id => id, id => loaded.First(c => c.Id == id).Hash);
+        RecipeChildren.Of(recipe).Where(id => loaded.Any(c => c.Id == id)).ToDictionary(static id => id, id => loaded.First(c => c.Id == id).Hash);
 }

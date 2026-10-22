@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Workflow.Engine.Rules;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Workflow.Recipes;
 using Temporalio.Common;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
@@ -63,7 +64,7 @@ internal sealed partial class RecipeWorkflow
     /// <summary>The pinned children of the recipe ('LoadChildren', a local activity); none for a recipe with no child wait or a history from before engine P7.</summary>
     private async Task<ChildPins> LoadChildPins(LoadedRecipe loaded)
     {
-        if (!_children || !loaded.Recipe.States.Values.Any(static s => s.WaitFor?.Child is not null))
+        if (!_children || !RecipeChildren.Of(loaded.Recipe).Any())
         {
             return ChildPins.None;
         }
