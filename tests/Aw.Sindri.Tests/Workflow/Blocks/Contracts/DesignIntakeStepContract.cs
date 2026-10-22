@@ -17,7 +17,7 @@ public sealed class DesignIntakeStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => DesignSteps.Intake;
 
-    protected override string ExpectedHash => "sha256:b0c4f38d67e08b76df6a95f8317542d801e458ca58e6c2a31d97b9cb91ec62ed";
+    protected override string ExpectedHash => "sha256:fc0e7bb00676667d29486e193b739963e88051e65efd36b237ab1c6bb6c2f17a";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

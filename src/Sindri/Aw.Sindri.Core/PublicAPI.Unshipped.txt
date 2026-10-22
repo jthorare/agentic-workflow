@@ -9415,6 +9415,7 @@ Aw.Sindri.Core.Ids.SessionId.IsInitialized() -> bool
 Aw.Sindri.Core.Ids.SessionId.SessionId() -> void
 Aw.Sindri.Core.Ids.SessionId.ToString(System.IFormatProvider? provider) -> string!
 Aw.Sindri.Core.Ids.SessionId.Value.get -> string!
+Aw.Sindri.Core.Sessions.PsStartTime
 Aw.Sindri.Core.Sessions.SessionLiveness
 Aw.Sindri.Core.Sessions.SessionProblem
 Aw.Sindri.Core.Sessions.SessionProblem.<Clone>$() -> Aw.Sindri.Core.Sessions.SessionProblem!
@@ -9610,6 +9611,7 @@ static Aw.Sindri.Core.Ids.SessionId.operator ==(Aw.Sindri.Core.Ids.SessionId lef
 static Aw.Sindri.Core.Ids.SessionId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.SessionId
 static Aw.Sindri.Core.Ids.SessionId.TryFrom(string? value, out Aw.Sindri.Core.Ids.SessionId vo) -> bool
 static Aw.Sindri.Core.Ids.SessionId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.SessionId result) -> bool
+static Aw.Sindri.Core.Sessions.PsStartTime.ToEpochSeconds(string? text) -> long?
 static Aw.Sindri.Core.Sessions.SessionLiveness.Matches(string? procStart, long actualTicks) -> bool
 static Aw.Sindri.Core.Sessions.SessionProblem.operator !=(Aw.Sindri.Core.Sessions.SessionProblem? left, Aw.Sindri.Core.Sessions.SessionProblem? right) -> bool
 static Aw.Sindri.Core.Sessions.SessionProblem.operator ==(Aw.Sindri.Core.Sessions.SessionProblem? left, Aw.Sindri.Core.Sessions.SessionProblem? right) -> bool

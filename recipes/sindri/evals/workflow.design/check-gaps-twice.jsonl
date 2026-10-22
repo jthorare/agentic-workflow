@@ -1,4 +1,4 @@
-{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:designRevision":{}}}}
+{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:priorDesignPacket":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","fact:designRevision":{}}}}
 {"trigger":{"kind":"step.completed","outcome":"fresh","outputs":{"fact:scope":{"surfaces":[]},"fact:packs":{"style":"s1","lenses":["l1"]},"fact:design":{"sections":[]},"fact:findings":[],"fact:lensRounds":[],"fact:changedSections":[],"fact:answers":[],"fact:accepted":[]}},"expect":{"state":"draft"}}
 {"trigger":{"kind":"step.completed","outcome":"drafted","outputs":{"fact:design":{"sections":[{"id":"D1","text":"Expiry"}]}}},"expect":{"state":"check"}}
 {"trigger":{"kind":"step.completed","outcome":"gaps","outputs":{"fact:findings":[{"rule":"DSN-COV-001","item":"S1","message":"surface S2 uncovered","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"draft"}}

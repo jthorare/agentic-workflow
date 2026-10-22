@@ -10,6 +10,8 @@ internal static class SessionFixtures
 
     public static string Proc => Path.Combine(Root, "tests", "fixtures", "sessions", "proc");
 
+    public static string Macos => Path.Combine(Root, "tests", "fixtures", "sessions", "macos");
+
     public static string ClaudeSessions => Path.Combine(Root, "tests", "fixtures", "sessions", "claude-sessions");
 
     public static string Fleet => Path.Combine(Root, "tests", "fixtures", "fleet");

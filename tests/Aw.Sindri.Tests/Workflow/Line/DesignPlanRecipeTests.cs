@@ -45,7 +45,7 @@ public sealed class DesignPlanRecipeTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("workflow.design", "check-gaps-twice;evidence-incomplete;fresh-happy;lens-cap-accept;lens-cap-drop;lens-escalates;lens-escalation-stop;lens-findings-revise;revise-after-caps;revise-mode;two-lens-pack")]
+    [InlineData("workflow.design", "check-gaps-twice;evidence-incomplete;fresh-happy;lens-cap-accept;lens-cap-drop;lens-escalates;lens-escalation-stop;lens-findings-revise;revise-after-caps;revise-edits-prior;revise-mode;two-lens-pack")]
     [InlineData("workflow.plan", "assumed-happy;changed-decision;drop;evidence-incomplete;freeze-mismatch;no-questions;objections;revise-cap;revise-plan")]
     public void The_recipe_lists_the_seven_cases_of_appendix_b1_and_two_more(string id, string cases)
     {

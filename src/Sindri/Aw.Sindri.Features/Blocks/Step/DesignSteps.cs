@@ -12,15 +12,15 @@ internal static class DesignSteps
 {
     private static readonly string[] _fromScope = ["fresh", "revise"];
 
-    /// <summary>'step.design.intake': loads the frozen scope packet and the style and lens packs; 'fresh' or 'revise' (a revision from stop 2); every outcome carries the eight round-1 seeds.</summary>
+    /// <summary>'step.design.intake': loads the frozen scope packet and the style and lens packs; 'fresh' or 'revise' (a revision from stop 2, which also loads the previous design packet into 'fact:design'); every outcome carries the eight round-1 seeds.</summary>
     public static BlockDescriptor Intake { get; } = BlockStep("step.design.intake", Capability.None)
-        .Reads("fact:scopePacket", "fact:designRevision").Reports(_fromScope)
+        .Reads("fact:scopePacket", "fact:designRevision", "fact:priorDesignPacket").Reports(_fromScope)
         .Writes(Seeds());
 
-    /// <summary>'step.design.draft': one spec draft in the house style; 'drafted'.</summary>
+    /// <summary>'step.design.draft': one spec draft in the house style; 'drafted'. After a revision it also reads the owner's picks ('designRevision', 'answers'), so a redraft keeps them.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Draft { get; } = AgentStep("step.design.draft", Capability.Tools)
-        .Reads("fact:scope", "fact:packs", "fact:design", "fact:findings", "fact:changedSections").Reports("drafted")
+        .Reads("fact:scope", "fact:packs", "fact:design", "fact:findings", "fact:changedSections", "fact:designRevision", "fact:answers").Reports("drafted")
         .Takes(Bundle())
         .Writes(On("fact:design", "drafted"));
 

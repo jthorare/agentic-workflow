@@ -1,0 +1,8 @@
+{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:priorDesignPacket":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","fact:designRevision":{"answers":[{"question":"D3","pick":"b"}]}}}}
+{"trigger":{"kind":"step.completed","outcome":"revise","outputs":{"fact:scope":{"surfaces":[]},"fact:packs":{"style":"s1","lenses":["l1"]},"fact:design":{"sections":[{"id":"D1","text":"Expiry on read"},{"id":"D3","text":"Retention"}]},"fact:findings":[],"fact:lensRounds":[],"fact:changedSections":[],"fact:answers":[],"fact:accepted":[]}},"expect":{"state":"apply"}}
+{"trigger":{"kind":"step.completed","outcome":"applied","outputs":{"fact:design":{"sections":[{"id":"D1","text":"Expiry on read"},{"id":"D3","text":"Retention, nightly"}]},"fact:changedSections":["D3"]}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"round"}}
+{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:lensQueue":["l1"],"fact:lensRounds":[]}},"expect":{"state":"lens"}}
+{"trigger":{"kind":"step.completed","outcome":"reviewed","outputs":{"fact:lensReport":{"lens":"l1","findings":[]}}},"expect":{"state":"lens-log"}}
+{"trigger":{"kind":"step.completed","outcome":"clean","outputs":{"fact:lensRounds":[{"round":1}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:designPacket":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","fact:design":{"sections":[{"id":"D1","text":"Expiry"}]},"fact:lensRounds":[{"round":1}]}},"expect":{"state":"designed","outcome":"resolved"}}

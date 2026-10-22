@@ -15,10 +15,20 @@ public sealed class DesignIntakeStepTests
 {
     private static readonly string[] _seeds = ["accepted", "answers", "changedSections", "design", "findings", "lensRounds", "packs", "scope"];
 
-    private static async Task<BlockStepResult> Run(LineStation station, string? scopePacket = null, string revision = "First pass: no revision yet.") =>
-        await station.DesignIntake().Run(
-            LineStation.Context("step.design.intake", LineStation.DesignAddress, new ScopingFacts { ["scopePacket"] = scopePacket ?? LineStation.ScopePacket, ["designRevision"] = revision }),
-            TestContext.Current.CancellationToken);
+    private static async Task<BlockStepResult> Run(LineStation station, string? scopePacket = null, string revision = "First pass: no revision yet.", string? prior = null)
+    {
+        var facts = new ScopingFacts { ["scopePacket"] = scopePacket ?? LineStation.ScopePacket, ["designRevision"] = revision };
+        if (prior is not null)
+        {
+            facts["priorDesignPacket"] = prior;
+        }
+
+        return await station.DesignIntake().Run(LineStation.Context("step.design.intake", LineStation.DesignAddress, facts), TestContext.Current.CancellationToken);
+    }
+
+    private const string Revision = """{"decisions":[{"id":"D1","pick":"D1.b"}],"notes":[]}""";
+
+    private static async Task<string> PriorPacket(LineStation station) => LineStation.Fact(await station.DesignEvidenceRun(), "designPacket");
 
     [Fact]
     public async Task A_first_pass_is_fresh_and_writes_the_eight_seeds_with_the_loaded_scope()
@@ -49,9 +59,9 @@ public sealed class DesignIntakeStepTests
     [Fact]
     public async Task A_revision_from_stop_two_is_revise_and_seeds_the_answers_with_it()
     {
-        const string revision = """{"decisions":[{"id":"D1","pick":"D1.b"}],"notes":[]}""";
+        var station = new LineStation();
 
-        var result = await Run(new LineStation(), revision: revision);
+        var result = await Run(station, revision: Revision, prior: await PriorPacket(station));
 
         Assert.Equal("revise", result.Result!.Outcome.Value);
         Assert.Equal("D1", (string?)JsonNode.Parse(LineStation.Fact(result, "answers"))![0]!["decisions"]![0]!["id"]);
@@ -63,7 +73,9 @@ public sealed class DesignIntakeStepTests
     {
         const string revision = """{"decisions":[],"notes":["owner asked for a revision, no text"]}""";
 
-        var result = await Run(new LineStation(), revision: revision);
+        var station = new LineStation();
+
+        var result = await Run(station, revision: revision, prior: await PriorPacket(station));
 
         Assert.Equal("revise", result.Result!.Outcome.Value);
     }
@@ -114,6 +126,53 @@ public sealed class DesignIntakeStepTests
 
         Assert.Null(result.Result);
         Assert.Contains("not a readable packet", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_revision_with_a_prior_packet_loads_that_design_not_an_empty_one()
+    {
+        var station = new LineStation();
+        var prior = await PriorPacket(station);
+
+        var result = await Run(station, revision: Revision, prior: prior);
+
+        Assert.Equal("revise", result.Result!.Outcome.Value);
+        var design = JsonNode.Parse(LineStation.Fact(result, "design"))!;
+        Assert.Equal("# Design\n\n## Summary\nB holds.\n\n## Detail\nMore.\n", (string?)design["spec"]);
+        Assert.Equal(["sec-1", "sec-2"], design["sections"]!.AsArray().Select(static s => (string?)s!["id"]), StringComparer.Ordinal);
+        Assert.Equal("AC-1", (string?)design["acceptance"]!["items"]![0]!["id"]);
+        Assert.StartsWith("sha256:", (string?)design["acceptanceHash"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_revision_with_no_prior_packet_fails_the_Step_with_the_fix_and_never_seeds_an_empty_design()
+    {
+        var result = await Run(new LineStation(), revision: Revision);
+
+        Assert.Null(result.Result);
+        Assert.Contains("priorDesignPacket", result.Failure, StringComparison.Ordinal);
+        Assert.Contains("fix:", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_revision_whose_prior_packet_hash_moved_fails_with_SND_LINE_001()
+    {
+        var station = new LineStation();
+        var prior = (await PriorPacket(station)).Replace("sha256:", "sha256:00", StringComparison.Ordinal);
+
+        var result = await Run(station, revision: Revision, prior: prior);
+
+        Assert.Null(result.Result);
+        Assert.Contains("SND-LINE-001", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_first_pass_ignores_a_prior_packet_text_and_stays_fresh_with_an_empty_design()
+    {
+        var result = await Run(new LineStation(), prior: "First pass: no previous design.");
+
+        Assert.Equal("fresh", result.Result!.Outcome.Value);
+        Assert.Equal("{}", LineStation.Fact(result, "design"));
     }
 
     private static string ScopeHash() => InMemoryPackets.HashOf(new PacketRef(PacketKind.Scoping, LineStation.ScopeDirectory));

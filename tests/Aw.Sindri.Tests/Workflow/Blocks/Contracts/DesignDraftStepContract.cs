@@ -12,7 +12,7 @@ public sealed class DesignDraftStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => DesignSteps.Draft;
 
-    protected override string ExpectedHash => "sha256:9fd25cb616ed75f51ef9b83a52a8fd4b14f50ef7e171569f1748c37be71f5225";
+    protected override string ExpectedHash => "sha256:d15118eb1c7141ddbdd24239f8234879e6cb6c6d5451a4fc950418fc0bc9738f";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

@@ -1,4 +1,4 @@
-{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:designRevision":{"answers":[{"question":"D3","pick":"b"}]}}}}
+{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:priorDesignPacket":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","fact:designRevision":{"answers":[{"question":"D3","pick":"b"}]}}}}
 {"trigger":{"kind":"step.completed","outcome":"revise","outputs":{"fact:scope":{"surfaces":[]},"fact:packs":{"style":"s1","lenses":["l1"]},"fact:design":{"sections":[]},"fact:findings":[],"fact:lensRounds":[],"fact:changedSections":[],"fact:answers":[],"fact:accepted":[]}},"expect":{"state":"apply"}}
 {"trigger":{"kind":"step.completed","outcome":"applied","outputs":{"fact:design":{"sections":[{"id":"D1","text":"Expiry"}]},"fact:changedSections":["D3"]}},"expect":{"state":"check"}}
 {"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"round"}}

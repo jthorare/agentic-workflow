@@ -14,8 +14,8 @@ public sealed class LineBlocksTests
 
     [Theory, Trait("Lane", "unit")]
     //            id, runtime, humanOnly, inputs, outcomes, every, requiredOn "fact=outcome,outcome", capabilities
-    [InlineData("step.design.intake", BlockRuntime.Block, false, "fact:scopePacket,fact:designRevision", "fresh,revise", "", "SEEDS", Capability.None)]
-    [InlineData("step.design.draft", BlockRuntime.Agent, false, "fact:scope,fact:packs,fact:design,fact:findings,fact:changedSections", "drafted", "", "fact:design=drafted", Capability.Tools)]
+    [InlineData("step.design.intake", BlockRuntime.Block, false, "fact:scopePacket,fact:designRevision,fact:priorDesignPacket", "fresh,revise", "", "SEEDS", Capability.None)]
+    [InlineData("step.design.draft", BlockRuntime.Agent, false, "fact:scope,fact:packs,fact:design,fact:findings,fact:changedSections,fact:designRevision,fact:answers", "drafted", "", "fact:design=drafted", Capability.Tools)]
     [InlineData("step.design.apply", BlockRuntime.Agent, false, "fact:scope,fact:packs,fact:design,fact:designRevision,fact:answers", "applied", "", "fact:design=applied;fact:changedSections=applied", Capability.Tools)]
     [InlineData("step.design.check", BlockRuntime.Block, false, "fact:scope,fact:packs,fact:design", "pass,gaps", "", "fact:findings=gaps", Capability.Tools)]
     [InlineData("step.design.revise", BlockRuntime.Agent, false, "fact:scope,fact:packs,fact:design,fact:findings,fact:answers", "revised", "", "fact:design=revised;fact:changedSections=revised", Capability.Tools)]

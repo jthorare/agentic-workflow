@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -123,6 +124,27 @@ public sealed class DesignPlanBlockRuntimesTests
         Assert.Equal("questions", Next(Enter(plan, planContext, "evidence"), plan, planContext, planEvidence), StringComparer.Ordinal);
         Assert.Equal("planned", Next(Enter(plan, planContext, "freeze"), plan, planContext, freeze), StringComparer.Ordinal);
         Assert.Equal("evidence", Next(Enter(plan, planContext, "freeze"), plan, planContext, refused), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_revise_walk_loads_the_prior_design_and_apply_edits_it_in_place()
+    {
+        await using var provider = ShippedComposition.Compose();
+        var line = new LineStation();
+        var ct = TestContext.Current.CancellationToken;
+        var (design, designContext) = Station(provider, "workflow.design");
+        var prior = LineStation.Fact(await line.DesignEvidenceRun(), "designPacket");
+
+        var intake = await line.DesignIntake().Run(LineStation.Context("step.design.intake", LineStation.DesignAddress, new ScopingFacts
+        {
+            ["scopePacket"] = LineStation.ScopePacket,
+            ["designRevision"] = """{"decisions":[{"id":"D1","pick":"D1.b"}],"notes":[]}""",
+            ["priorDesignPacket"] = prior,
+        }), ct);
+
+        Assert.Equal("apply", Next(Enter(design, designContext, "intake"), design, designContext, intake), StringComparer.Ordinal);
+        var loaded = JsonNode.Parse(LineStation.Fact(intake, "design"))!;
+        Assert.Equal(2, loaded["sections"]!.AsArray().Count);
     }
 
     private static WorkflowInstance Enter(Recipe recipe, DecisionContext context, string state) => StateEntry.Enter(EngineFixture.At(recipe, state), recipe, state, context);

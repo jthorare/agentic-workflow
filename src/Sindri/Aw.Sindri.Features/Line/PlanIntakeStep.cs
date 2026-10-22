@@ -1,6 +1,4 @@
 using System.Text.Json.Nodes;
-using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -30,7 +28,7 @@ internal sealed class PlanIntakeStep(IPackets packets, IPacketFiles files) : IBl
             return BlockStepResult.Failed($"{Id.Value}: {scope.Error.Message}");
         }
 
-        var design = await LoadDesign(StepFacts.Read(context, "fact:designPacket"), LineJson.Str(scope.Value, "hash"), cancellationToken).ConfigureAwait(false);
+        var design = await LoadedDesign.Load(packets, files, StepFacts.Read(context, "fact:designPacket"), (LineJson.Str(scope.Value, "hash"), "designPacket"), cancellationToken).ConfigureAwait(false);
         return design.IsError
             ? BlockStepResult.Failed($"{Id.Value}: {design.Error.Message}")
             : StepFacts.Done(
@@ -55,48 +53,5 @@ internal sealed class PlanIntakeStep(IPackets packets, IPacketFiles files) : IBl
             .OfType<string>()
             .Distinct(StringComparer.Ordinal);
         return LineJson.ToArray(keys);
-    }
-
-    private async ValueTask<Result<JsonObject>> LoadDesign(JsonNode? fact, string? scopeHash, CancellationToken cancellationToken)
-    {
-        var packet = PacketFact.Of(fact, "designPacket");
-        if (packet.IsError)
-        {
-            return packet.Error;
-        }
-
-        var verified = await LinePackets.Verify(packets, PacketKind.Design, packet.Value, cancellationToken).ConfigureAwait(false);
-        if (verified.IsError)
-        {
-            return verified.Error;
-        }
-
-        var texts = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var name in DesignPacket.FileNames.Append("index.json"))
-        {
-            var read = await files.Read(packet.Value.Directory, name, cancellationToken).ConfigureAwait(false);
-            if (read.IsError)
-            {
-                return read.Error;
-            }
-
-            texts[name] = read.Value;
-        }
-
-        return NamesParent(texts["index.json"], scopeHash)
-            ? DesignPacket.FromFiles(texts, packet.Value)
-            : SindriErrors.InvalidInput.With($"SND-LINE-001: the design packet's index.json does not name the scope packet {scopeHash} as a parent (fix: re-run the design station on the frozen scope packet)");
-    }
-
-    private static bool NamesParent(string index, string? scopeHash)
-    {
-        try
-        {
-            return scopeHash is not null && LineJson.Strings(JsonNode.Parse(index), "parents").Contains(scopeHash, StringComparer.Ordinal);
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return false;   // boundary: a packet file is text a model wrote
-        }
     }
 }

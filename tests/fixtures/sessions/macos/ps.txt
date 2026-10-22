@@ -1,0 +1,12 @@
+    1     0     0 Ss   ??       Wed Oct 21 15:12:13 2026     /sbin/launchd
+  404     1   501 Ss   ??       Wed Oct 21 15:12:45 2026     /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow
+  620     1   501 S    ??       Wed Oct 21 15:12:48 2026     /usr/sbin/distnoted
+  669     1     0 ?s   ??       Wed Oct 21 15:12:49 2026     /Applications/SentinelOne/SentinelOne Extensions.app/Contents/MacOS/SentinelOne Extensions
+  675     1   501 S    ??       Wed Oct 21 15:12:50 2026     /Applications/Warp.app/Contents/MacOS/stable
+  759   675   501 Z    ??       Wed Oct 21 15:12:52 2026     /Applications/Warp.app/Contents/MacOS/stable
+ 5390  8155   501 Ss   ??       Wed Oct 21 18:50:30 2026     /bin/zsh
+ 6368  8454   501 Ss   ??       Wed Oct 21 18:43:44 2026     /bin/zsh
+ 7869  7868   501 Ss+  ttys000  Wed Oct 21 15:15:58 2026     bash
+ 8184  7869   501 S+   ttys000  Wed Oct 21 15:15:58 2026     claude
+10075  8184   501 S+   ttys000  Wed Oct 21 15:16:06 2026     npm exec xcodebuildmcp@2.3.0 mcp
+10076  8184   501 S+   ttys000  Wed Oct 21 15:16:06 2026     /opt/homebrew/Cellar/node/26.8.1/bin/node

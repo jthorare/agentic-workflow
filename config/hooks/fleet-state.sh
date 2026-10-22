@@ -7,7 +7,7 @@
 # Stores no free text: never tool_input, the notification message, the prompt or a response.
 # Writes nothing when AW_FLEET_DISABLE=1 (a session the human wants unseen) or AW_JUDGE_CHILD is set (the toolkit's own claude -p).
 # Provider: AW_HOOK_PROVIDER (set by the Codex and Cursor adapters; unset or claude is Claude Code) -> the catalog's AgentId.
-# Bounded: no network and no CLI calls; one jq run, one mktemp, one mv (a PostToolUse or Notification may also fork a grep). PostToolUse (every tool call) exits before jq unless the
+# Bounded: no network and no CLI calls (macOS: a ps per ancestor step, to find the agent's pid and start time); one jq run, one mktemp, one mv (a PostToolUse or Notification may also fork a grep). PostToolUse (every tool call) exits before jq unless the
 # file says asking.
 exec 2>/dev/null
 export LC_ALL=C
@@ -72,6 +72,22 @@ case "$EVENT" in
 esac
 
 # The agent process: the first ancestor (at most 8 steps from the hook's parent) whose name is the provider's agent.
+# Linux reads /proc. macOS has none: one 'ps -p <pid>' per step (about 8 ms each, where a listing of every process takes 130 ms or more) gives the
+# parent, the start time and the name; the start time is ps's lstart read in UTC, as epoch seconds, which is the start ticks the collector keeps on macOS.
+MAC_EPOCH=""
+mac_epoch() { # <Mon> <day> <HH:MM:SS> <year>, UTC -> MAC_EPOCH (days from civil, no process started)
+  local m d y hh mm ss era yoe doy
+  case "$1" in
+    Jan) m=1 ;; Feb) m=2 ;; Mar) m=3 ;; Apr) m=4 ;; May) m=5 ;; Jun) m=6 ;; Jul) m=7 ;; Aug) m=8 ;; Sep) m=9 ;; Oct) m=10 ;; Nov) m=11 ;; Dec) m=12 ;; *) return 1 ;;
+  esac
+  case "$2$4" in ''|*[!0-9]*) return 1 ;; esac
+  IFS=: read -r hh mm ss <<< "$3"
+  case "$hh$mm$ss" in ''|*[!0-9]*) return 1 ;; esac
+  d=$((10#$2)); y=$((10#$4))
+  [ "$m" -le 2 ] && y=$((y - 1))
+  era=$((y / 400)); yoe=$((y - era * 400)); doy=$(( (153 * ((m + 9) % 12) + 2) / 5 + d - 1 ))
+  MAC_EPOCH=$(( (era * 146097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719468) * 86400 + 10#$hh * 3600 + 10#$mm * 60 + 10#$ss ))
+}
 PID=null
 TICKS=null
 if [ -r /proc/self/stat ]; then
@@ -99,6 +115,30 @@ if [ -r /proc/self/stat ]; then
       break
     fi
     p="${f[1]:-0}"
+  done
+elif [ -x /bin/ps ]; then
+  p="${PPID:-0}"
+  for _ in 1 2 3 4 5 6 7 8; do
+    [ "$p" -gt 1 ] 2>/dev/null || break
+    row="$(TZ=UTC /bin/ps -p "$p" -o ppid=,lstart=,comm=)" || break
+    [ -n "$row" ] || break
+    read -r parent _ mon day clock year comm <<< "$row"
+    base="${comm##*/}"
+    hit=0
+    case "$PROVIDER" in
+      claude-code) case "$base:$comm" in claude:*|*:*/claude/versions/*) hit=1 ;; esac ;;
+      codex) [ "$base" = codex ] && hit=1 ;;
+      cursor)
+        case "$base:$comm" in
+          cursor-agent:*) hit=1 ;;
+          agent:*cursor*) hit=1 ;;
+        esac ;;
+    esac
+    if [ "$hit" = 1 ]; then
+      if mac_epoch "$mon" "$day" "$clock" "$year"; then PID="$p"; TICKS="$MAC_EPOCH"; fi
+      break
+    fi
+    p="${parent:-0}"
   done
 fi
 

@@ -1,12 +1,13 @@
 schema: 1
 id: workflow.design
-version: 3
+version: 4
 description: "Station 2 of the line: one spec draft from a frozen scope packet, in the repo's style pack, reviewed by the repo's design lens pack on another model until no CRITICAL or HIGH finding is left; ends with a hashed candidate design packet."
 displayName: "Turn the scope into a design"
 urgency: work
 inputs:
   - { key: fact:scopePacket,    label: "Scope packet (frozen)", type: packet, kind: packet }
   - { key: fact:designRevision, label: "Revision from stop 2",  type: payload, kind: payload }
+  - { key: fact:priorDesignPacket, label: "Previous design packet", type: packet, kind: packet }
 outputs:
   - { key: fact:designPacket, label: "Design packet (candidate)", type: packet,  from: evidence }
   - { key: fact:design,       label: "Design",                    type: payload, from: evidence }
@@ -80,5 +81,6 @@ evals:   # the 7 cases of Appendix B.1 (plan's happy-assumed is assumed-happy: t
   - evals/workflow.design/lens-escalation-stop.jsonl
   - evals/workflow.design/lens-findings-revise.jsonl
   - evals/workflow.design/revise-after-caps.jsonl
+  - evals/workflow.design/revise-edits-prior.jsonl
   - evals/workflow.design/revise-mode.jsonl
   - evals/workflow.design/two-lens-pack.jsonl

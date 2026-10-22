@@ -192,13 +192,32 @@ if [ -r /proc/self/stat ]; then
   check "no claude ancestor: schema-valid" "$(valid "$FILE")" "valid"
 fi
 
+# --- agent pid and start time on macOS: no /proc, so one ps per ancestor step; the start is ps's lstart in UTC as epoch seconds ---
+if [ ! -r /proc/self/stat ] && [ -x /bin/ps ]; then
+  fresh
+  # A process named claude (exec -a) that runs the hook as its child and then reports its own pid and start (ps lstart, UTC).
+  ( exec -a claude bash -c "bash '$HOOK' < '$FIX/session-start.json'; echo \$\$ > '$WORK/agent-pid'; TZ=UTC /bin/ps -p \$\$ -o lstart= > '$WORK/agent-lstart'; true" )
+  expected="$(date -j -u -f '%a %b %e %T %Y' "$(cat "$WORK/agent-lstart")" +%s)"
+  check "macOS: agentPid is the claude ancestor" "$(field .agentPid)" "$(cat "$WORK/agent-pid")"
+  check "macOS: agentStartTicks is its lstart in epoch seconds" "$(field .agentStartTicks)" "$expected"
+  check "macOS: ancestor found: schema-valid" "$(valid "$FILE")" "valid"
+  fresh
+  # Orphaned (its parent exits, so launchd adopts it), so the test passes even when it runs inside a Claude session.
+  ( bash -c "sleep 0.3; bash '$HOOK' < '$FIX/session-start.json'; echo done > '$WORK/orphan-done'" < /dev/null > /dev/null 2>&1 & )
+  for _ in $(seq 1 50); do [ -f "$WORK/orphan-done" ] && break; sleep 0.1; done
+  check "macOS: no claude ancestor: pid and ticks are null" "$(field '[.agentPid, .agentStartTicks] | @json')" "[null,null]"
+  check "macOS: no claude ancestor: schema-valid" "$(valid "$FILE")" "valid"
+fi
+
 # --- under 100 ms per invocation (best of 5, every event) ---
+# bash 5 has EPOCHREALTIME; macOS's bash 3.2 doesn't, so perl's clock stands in there.
+now_us() { if [ -n "${EPOCHREALTIME:-}" ]; then echo "${EPOCHREALTIME/./}"; else perl -MTime::HiRes=time -e 'printf "%d\n", time * 1000000'; fi; }
 fresh
 slowest=0
 for f in session-start prompt-submit permission-request notification-permission post-tool-use stop session-end; do
   best=999999
   for _ in 1 2 3 4 5; do
-    s=${EPOCHREALTIME/./}; bash "$HOOK" < "$FIX/$f.json"; e=${EPOCHREALTIME/./}
+    s="$(now_us)"; bash "$HOOK" < "$FIX/$f.json"; e="$(now_us)"
     ms=$(( (e - s) / 1000 )); [ "$ms" -lt "$best" ] && best=$ms
   done
   [ "$best" -gt "$slowest" ] && slowest=$best
