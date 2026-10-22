@@ -578,6 +578,17 @@ edges:
     kind: compose
     status: current
     note: "Sindri's Host calls AddJudgeInfrastructure (and nothing else from that project), in a container of its own: Judge's stores and ids never join Sindri's container (Host/Models/JudgeCatalog)"
+  # ---- Sindri's pull-request port (PR babysitter spec §10.2, BD1) ----
+  - from: Sindri
+    to: Forge
+    kind: project
+    status: current
+    note: "Sindri's Host adapts IForge and its DTOs in Aw.Forge.Core as Sindri's own IPullRequests port (Host/Forge/ForgePullRequests); Core and Features never see a forge type"
+  - from: Sindri
+    to: Forge
+    kind: compose
+    status: current
+    note: "Sindri's Host calls AddForgeFileInfrastructure or AddForgeGitHubInfrastructure (and nothing else from that project), whichever the approved profile's workflow.forge.adapter names, in a container of its own (Host/Forge/ForgeAdapters)"
   - from: Sindri
     to: SindriUi
     kind: cli

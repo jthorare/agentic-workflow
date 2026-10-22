@@ -776,6 +776,10 @@ together with `SindriErrors`. Retired codes stay reserved in `WorkflowErrors.Ret
 | `SND-RECIPE-010` | notFound | The recipe file can't be read |
 | `SND-RECIPE-011` | conflict | A recipe is not one this build ships (its `id@hash` is not in the embedded set); approve it on its own |
 | `SND-SETUP-007` | conflict | The approve-all plan or its challenge is asked for before a profile is approved |
+| `SND-FORGE-001` | conflict | A pull-request call while the approved profile names no forge (`workflow.forge.adapter`) |
+| `SND-FORGE-002` | forbidden | The forge port refused the call: a host outside `workflow.forge.hosts`, a missing or rejected credential, input it doesn't accept |
+| `SND-FORGE-003` | notFound | The forge has no such pull request |
+| `SND-FORGE-004` | unavailable | The forge can't be reached, is rate limiting, or a push failed |
 | `SND-WF-001` | notFound | No such instance (`sindri workflow list`) |
 | `SND-WF-002` | — | Retired (engine spec rev 8): Updates serialize per workflow, so there is no version conflict |
 | `SND-WF-003` | conflict | The trigger isn't allowed here (`allowedCommands` in `status`) |

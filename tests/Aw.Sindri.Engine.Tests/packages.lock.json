@@ -586,6 +586,23 @@
           "xunit.v3.extensibility.core": "[4.0.1, 4.0.1]"
         }
       },
+      "aw.forge.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Vogen": "[8.0.7, 8.0.7]"
+        }
+      },
+      "aw.forge.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Forge.Core": "[1.0.0, )",
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.Redaction": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
       "aw.judge.core": {
         "type": "Project",
         "dependencies": {
@@ -697,6 +714,8 @@
           "Aw.Context.Core": "[1.0.0, )",
           "Aw.Context.Features": "[1.0.0, )",
           "Aw.Context.Infrastructure": "[1.0.0, )",
+          "Aw.Forge.Core": "[1.0.0, )",
+          "Aw.Forge.Infrastructure": "[1.0.0, )",
           "Aw.Judge.Core": "[1.0.0, )",
           "Aw.Judge.Infrastructure": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",

@@ -263,6 +263,18 @@ public static class SindriErrors
     /// <summary>SND-SETUP-007: the approve-all plan, or its challenge, was asked for before a profile is approved (setup-once spec §7.6).</summary>
     public static readonly ErrorDefinition SetupProfileNotApproved = new("SND-SETUP-007", ErrorKind.Conflict, "No profile is approved yet (fix: approve the profile first)");
 
+    /// <summary>SND-FORGE-001: a pull-request call while the approved profile names no forge ('workflow.forge.adapter' is absent).</summary>
+    public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile and approve it)");
+
+    /// <summary>SND-FORGE-002: the forge port refused the call: a host outside 'workflow.forge.hosts', a missing or rejected credential, input the forge doesn't accept.</summary>
+    public static readonly ErrorDefinition ForgeRefused = new("SND-FORGE-002", ErrorKind.Forbidden, "The forge refused the call");
+
+    /// <summary>SND-FORGE-003: the forge has no such pull request.</summary>
+    public static readonly ErrorDefinition ForgeNotFound = new("SND-FORGE-003", ErrorKind.NotFound, "The forge has no such pull request");
+
+    /// <summary>SND-FORGE-004: the forge can't be reached, is rate limiting, or a push failed.</summary>
+    public static readonly ErrorDefinition ForgeUnavailable = new("SND-FORGE-004", ErrorKind.Unavailable, "The forge is unavailable");
+
     /// <summary>Every Sindri error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
     [
@@ -273,5 +285,6 @@ public static class SindriErrors
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
         WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupOnyxCredentialsMissing, SetupOnyxNotWaiting, SetupProfileNotApproved,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable,
     ];
 }

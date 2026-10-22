@@ -17,7 +17,7 @@ public sealed class ProveEvidenceStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ProveSteps.Evidence;
 
-    protected override string ExpectedHash => "sha256:83e90ae94716b9b0b2ae681483adc3f6ea1ece5d5ebf357d9ee26f0ac09e080d";
+    protected override string ExpectedHash => "sha256:5f7170da2696e94e8d468c87b60f16c97dcaae5a4d9051548171976460eecab7";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

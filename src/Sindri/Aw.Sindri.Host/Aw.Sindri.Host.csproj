@@ -32,6 +32,9 @@
     <!-- the labeler's model port (Host/Models): Sindri adapts Judge's provider catalog; compose edge in deps.yaml -->
     <ProjectReference Include="../../Judge/Aw.Judge.Core/Aw.Judge.Core.csproj" />
     <ProjectReference Include="../../Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj" />
+    <!-- Sindri's pull-request port over the forge (Host/Forge): Core is used for the ports; the compose edge in deps.yaml covers the file and GitHub adapters -->
+    <ProjectReference Include="../../Forge/Aw.Forge.Core/Aw.Forge.Core.csproj" />
+    <ProjectReference Include="../../Forge/Aw.Forge.Infrastructure/Aw.Forge.Infrastructure.csproj" />
     <ProjectReference Include="../Aw.Sindri.Workflows/Aw.Sindri.Workflows.csproj" />
     <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
     <ProjectReference Include="../../Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />

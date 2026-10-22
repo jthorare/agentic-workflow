@@ -20,6 +20,8 @@
     <ProjectReference Include="../../src/Sindri/Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj" />
     <ProjectReference Include="../../src/Sindri/Aw.Sindri.Workflows/Aw.Sindri.Workflows.csproj" />
+    <!-- Forge/: ForgePullRequests over the forge package's file-backed adapter -->
+    <ProjectReference Include="../../src/Forge/Aw.Forge.Core/Aw.Forge.Core.csproj" />
     <ProjectReference Include="../Aw.Sindri.Testing/Aw.Sindri.Testing.csproj" />
     <ProjectReference Include="../Aw.Context.Testing/Aw.Context.Testing.csproj" />
     <ProjectReference Include="../Aw.CodeIndex.Testing/Aw.CodeIndex.Testing.csproj" />

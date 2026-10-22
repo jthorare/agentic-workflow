@@ -889,6 +889,8 @@
           "Aw.Context.Core": "[1.0.0, )",
           "Aw.Context.Features": "[1.0.0, )",
           "Aw.Context.Infrastructure": "[1.0.0, )",
+          "Aw.Forge.Core": "[1.0.0, )",
+          "Aw.Forge.Infrastructure": "[1.0.0, )",
           "Aw.Judge.Core": "[1.0.0, )",
           "Aw.Judge.Infrastructure": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",

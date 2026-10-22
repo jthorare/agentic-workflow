@@ -197,4 +197,13 @@ public sealed class ProveEvidenceStepTests
         Assert.Null(result.Result);
         Assert.Contains(Dir, result.Failure, StringComparison.Ordinal);
     }
+
+    /// <summary>The runner hands a Step only the facts its descriptor reads, and the proof checks (PRV-ACC-001, PRV-SHA-001) need fact:proof; without it every phase parks at the evidence Step.</summary>
+    [Fact, Trait("Lane", "unit")]
+    public void The_descriptor_declares_every_fact_the_step_reads()
+    {
+        var inputs = Aw.Sindri.Features.Blocks.Step.ProveSteps.Evidence.Inputs.Select(static k => k.Value).ToList();
+
+        Assert.Equal(["fact:phasePacket", "fact:built", "fact:proof", "fact:redTests", "fact:beforeAfter", "fact:holdoutResult"], inputs);
+    }
 }
