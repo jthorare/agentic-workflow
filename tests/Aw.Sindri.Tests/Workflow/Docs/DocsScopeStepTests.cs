@@ -21,6 +21,8 @@ public sealed class DocsScopeStepTests
     private const string Head = "2222222222222222222222222222222222222222";
     private const string Tree = "/repos/dev/.claude/worktrees/sindri-docs-T-1-docs-sync-1";
 
+    private static readonly string[] _globs = ["docs/**", "*.md"];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private sealed class Rig
@@ -54,7 +56,7 @@ public sealed class DocsScopeStepTests
             Address = "T-1/docs-sync/1",
             Arguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
             {
-                ["paths"] = JsonSerializer.SerializeToElement(new[] { "docs/**", "*.md" }),
+                ["paths"] = JsonSerializer.SerializeToElement(_globs),
                 ["enabled"] = JsonSerializer.SerializeToElement(enabled),
             },
         };
@@ -66,7 +68,7 @@ public sealed class DocsScopeStepTests
     public async Task Lists_the_docs_that_mention_a_changed_path_and_cuts_its_own_worktree()
     {
         var rig = new Rig();
-        rig.Changed.With(Checkout, Base, Head, "src/App.cs");
+        _ = rig.Changed.With(Checkout, Base, Head, "src/App.cs");
 
         var result = await rig.Step().Run(Context(), Token);
 
@@ -86,8 +88,8 @@ public sealed class DocsScopeStepTests
     public async Task A_doc_the_design_names_is_listed_and_marked_even_when_nothing_mentions_a_changed_path()
     {
         var rig = new Rig();
-        rig.Changed.With(Checkout, Base, Head, "src/App.cs");
-        rig.Files.With("design.md", "# Design\nThe change updates docs/other.md and docs/guide.md.\n");
+        _ = rig.Changed.With(Checkout, Base, Head, "src/App.cs");
+        _ = rig.Files.With("design.md", "# Design\nThe change updates docs/other.md and docs/guide.md.\n");
 
         var result = await rig.Step().Run(Context(packet: """{"hash":"sha256:aa","dir":"/packets/p1"}"""), Token);
 
@@ -101,7 +103,7 @@ public sealed class DocsScopeStepTests
     public async Task Reports_none_and_writes_no_workspace_when_no_doc_is_listed()
     {
         var rig = new Rig();
-        rig.Changed.With(Checkout, Base, Head, "src/Unmentioned.cs");
+        _ = rig.Changed.With(Checkout, Base, Head, "src/Unmentioned.cs");
 
         var result = await rig.Step().Run(Context(), Token);
 
@@ -114,8 +116,8 @@ public sealed class DocsScopeStepTests
     public async Task A_changed_doc_is_not_a_reason_to_list_another_doc()
     {
         var rig = new Rig();
-        rig.Changed.With(Checkout, Base, Head, "docs/guide.md");
-        rig.Files.With("docs/other.md", "# Other\nSee docs/guide.md.\n");
+        _ = rig.Changed.With(Checkout, Base, Head, "docs/guide.md");
+        _ = rig.Files.With("docs/other.md", "# Other\nSee docs/guide.md.\n");
 
         var result = await rig.Step().Run(Context(), Token);
 
