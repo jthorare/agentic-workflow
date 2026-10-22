@@ -18,5 +18,5 @@ internal static class PrGateTestInputs
         values.ToDictionary(static v => v.Name, static v => Json(v.Json), StringComparer.Ordinal);
 
     /// <summary>fact:prState as the snapshot writes it, reduced to the shas the gates read.</summary>
-    internal static string PrState(string baseSha = "b0", string headSha = "h1") => $$"""{"base":{"sha":"{{baseSha}}"},"head":{"sha":"{{headSha}}"}}""";
+    internal static string PrState(string baseSha = "b0", string headSha = "h1") => $$$"""{"base":{"sha":"{{{baseSha}}}"},"head":{"sha":"{{{headSha}}}"}}""";
 }
