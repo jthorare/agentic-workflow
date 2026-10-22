@@ -48,7 +48,7 @@ internal sealed class DocsScopeStep(IRepoCheckouts checkouts, IWorktrees worktre
             return Result("notOpen");
         }
 
-        if (!IsSha(pull.Head) || pull.BaseRef is null || context.Repo is not { } repo)
+        if (pull.Head is not { } head || !IsSha(head) || pull.BaseRef is null || context.Repo is not { } repo)
         {
             return BlockStepResult.Failed("step.docs.scope needs fact:pr with a head commit sha and a base, and the instance's repo");
         }
@@ -59,7 +59,7 @@ internal sealed class DocsScopeStep(IRepoCheckouts checkouts, IWorktrees worktre
             return BlockStepResult.Failed($"step.docs.scope has no checkout of {repo.Value}: {checkout.Error.Message}");
         }
 
-        return await Scope(context, checkout.Value, pull.BaseRef, pull.Head!, cancellationToken).ConfigureAwait(false);
+        return await Scope(context, checkout.Value, pull.BaseRef, head, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<BlockStepResult> Scope(StepContext context, string checkout, string baseRef, string head, CancellationToken cancellationToken)
@@ -140,7 +140,7 @@ internal sealed class DocsScopeStep(IRepoCheckouts checkouts, IWorktrees worktre
         var scope = new JsonObject
         {
             ["base"] = head,
-            ["paths"] = new JsonArray([.. globs.Select(static g => (JsonNode)JsonValue.Create(g)!)]),
+            ["paths"] = new JsonArray([.. globs.Select(static g => (JsonNode)JsonValue.Create(g))]),
             ["candidates"] = new JsonArray([.. candidates.Select(static c => (JsonNode)new JsonObject { ["path"] = c.Path, ["designNamed"] = c.DesignNamed })]),
         };
         return StepFacts.Done(
@@ -169,20 +169,41 @@ internal sealed class DocsScopeStep(IRepoCheckouts checkouts, IWorktrees worktre
         var pr = StepFacts.Read(context, "fact:pr") as JsonObject;
         var state = StepFacts.Read(context, "fact:prState") as JsonObject;
         return new Pull(
-            Text(pr?["state"]) ?? Text(state?["state"]),
-            Text(pr?["base"]?["sha"]) ?? Text(pr?["base"]?["ref"]) ?? Text(state?["base"]?["sha"]) ?? Text(state?["base"]?["ref"]),
-            Text(pr?["head"]?["sha"]) ?? Text(pr?["headSha"]) ?? Text(state?["head"]?["sha"]));
+            First(Dig(pr, "state"), Dig(state, "state")),
+            First(Dig(pr, "base", "sha"), Dig(pr, "base", "ref"), Dig(state, "base", "sha"), Dig(state, "base", "ref")),
+            First(Dig(pr, "head", "sha"), Dig(pr, "headSha"), Dig(state, "head", "sha")));
+    }
+
+    private static string? First(params string?[] values) => values.FirstOrDefault(static v => v is not null);
+
+    private static string? Dig(JsonNode? node, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            node = node is JsonObject obj ? obj[key] : null;
+        }
+
+        return Text(node);
     }
 
     private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) && text.Length > 0 ? text : null;
 
     // The profile's 'workflow.docs.sync' is 'on' or 'off'; a recipe may also pass a bool. Absent means on.
-    private static bool Enabled(StepContext context) => !context.Arguments.TryGetValue("enabled", out var value) || value.ValueKind switch
+    private static bool Enabled(StepContext context)
     {
-        JsonValueKind.False => false,
-        JsonValueKind.String => !string.Equals(value.GetString(), "off", StringComparison.OrdinalIgnoreCase) && !string.Equals(value.GetString(), "false", StringComparison.OrdinalIgnoreCase),
-        _ => true,
-    };
+        if (!context.Arguments.TryGetValue("enabled", out var value))
+        {
+            return true;
+        }
+
+        if (value.ValueKind == JsonValueKind.False)
+        {
+            return false;
+        }
+
+        var text = value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        return !string.Equals(text, "off", StringComparison.OrdinalIgnoreCase) && !string.Equals(text, "false", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static List<string> Globs(StepContext context)
     {
@@ -191,12 +212,16 @@ internal sealed class DocsScopeStep(IRepoCheckouts checkouts, IWorktrees worktre
             return [.. _defaultGlobs];
         }
 
-        List<string> globs = value.ValueKind switch
+        var globs = new List<string>();
+        if (value.ValueKind == JsonValueKind.String && value.GetString() is { } single)
         {
-            JsonValueKind.Array => [.. value.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.String).Select(static e => e.GetString()!)],
-            JsonValueKind.String => [value.GetString()!],
-            _ => [],
-        };
+            globs.Add(single);
+        }
+        else if (value.ValueKind == JsonValueKind.Array)
+        {
+            globs.AddRange(value.EnumerateArray().Select(static e => e.ValueKind == JsonValueKind.String ? e.GetString() : null).OfType<string>());
+        }
+
         return globs.Count == 0 ? [.. _defaultGlobs] : globs;
     }
 
