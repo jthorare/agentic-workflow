@@ -2502,11 +2502,13 @@ Aw.Sindri.Core.Workflow.Blocks.EventRoute.Causation = 1 -> Aw.Sindri.Core.Workfl
 Aw.Sindri.Core.Workflow.Blocks.EventRoute.Item = 2 -> Aw.Sindri.Core.Workflow.Blocks.EventRoute
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.<Clone>$() -> Aw.Sindri.Core.Workflow.Blocks.EvidenceContext!
+Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Address.get -> string?
+Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Address.init -> void
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.At.get -> Aw.Sindri.Core.Workflow.Recipes.EvidencePoint
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.At.init -> void
-Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Provider, out string! Kind, out Aw.Sindri.Core.Workflow.Recipes.EvidencePoint At, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.Text.Json.JsonElement>! Facts) -> void
+Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Provider, out string! Kind, out Aw.Sindri.Core.Workflow.Recipes.EvidencePoint At, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.Text.Json.JsonElement>! Facts, out string? Address) -> void
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Equals(Aw.Sindri.Core.Workflow.Blocks.EvidenceContext? other) -> bool
-Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.EvidenceContext(Aw.Sindri.Core.Workflow.Ids.BlockId Provider, string! Kind, Aw.Sindri.Core.Workflow.Recipes.EvidencePoint At, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.Text.Json.JsonElement>! Facts) -> void
+Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.EvidenceContext(Aw.Sindri.Core.Workflow.Ids.BlockId Provider, string! Kind, Aw.Sindri.Core.Workflow.Recipes.EvidencePoint At, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.Text.Json.JsonElement>! Facts, string? Address = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.Text.Json.JsonElement>!
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Facts.init -> void
 Aw.Sindri.Core.Workflow.Blocks.EvidenceContext.Kind.get -> string!
