@@ -214,7 +214,7 @@
     },
     {
       "type": "repo.added",
-      "keyShape": "repo.added:<commandId>",
+      "keyShape": "repo.added:<repo>",
       "invalidates": [
         "setup"
       ]

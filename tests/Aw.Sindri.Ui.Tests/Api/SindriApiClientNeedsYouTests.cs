@@ -86,6 +86,24 @@ public sealed class SindriApiClientNeedsYouTests
     }
 
     [Fact]
+    public async Task NeedsYou_reads_the_stop_and_the_timeout_of_a_desk_row_and_the_timeout_of_a_park_row()
+    {
+        var (client, server, _) = Reach();
+        var desk = GoldenFiles.Node("needs-you", "desk-with-stop")["rows"]![0]!;
+        var park = GoldenFiles.Node("needs-you", "park-with-timeout")["rows"]![0]!;
+
+        server.NeedsYouView = RouteAnswer.Api("needs-you", "desk-with-stop");
+        var deskRow = (await client.NeedsYou(_api, Token)).Value.Rows[0];
+        server.NeedsYouView = RouteAnswer.Api("needs-you", "park-with-timeout");
+        var parkRow = (await client.NeedsYou(_api, Token)).Value.Rows[0];
+
+        Assert.Equal(((int)desk["stop"]!["n"]!, (int)desk["stop"]!["of"]!), (deskRow.Stop!.N, deskRow.Stop.Of));
+        Assert.Equal(((long)desk["timeout"]!["inSeconds"]!, (string)desk["timeout"]!["on"]!), (deskRow.Timeout!.InSeconds, deskRow.Timeout.On));
+        Assert.Null(parkRow.Stop);
+        Assert.Equal(((long)park["timeout"]!["inSeconds"]!, (string)park["timeout"]!["on"]!), (parkRow.Timeout!.InSeconds, parkRow.Timeout.On));
+    }
+
+    [Fact]
     public async Task Decisions_sends_pending_and_item_as_query_parameters()
     {
         var (client, server, handler) = Reach();

@@ -53,6 +53,9 @@ public sealed class UsageTests
     [InlineData(new[] { "services", "run", "heartbeat", "--detach" }, false)]
     [InlineData(new[] { "services" }, false)]
     [InlineData(new[] { "jobs", "show", "x" }, false)]
+    [InlineData(new[] { "repo", "add", "/work/demo" }, true)]
+    [InlineData(new[] { "repo", "add", "/work/demo", "--detach" }, false)]
+    [InlineData(new[] { "repo", "status", "--nudge" }, false)]
     public void Only_a_following_run_takes_a_second_ctrl_c(string[] args, bool follows) => Assert.Equal(follows, Interrupt.FollowsJob(args));
 
     [Fact, Trait("Lane", "unit")]

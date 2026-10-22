@@ -1,0 +1,40 @@
+{
+  "rows": [
+    {
+      "id": "park:WFI-95a5c2820bd88ec39379892be8909567",
+      "kind": "park",
+      "label": "park · rounds",
+      "subject": {
+        "kind": "instance",
+        "id": "WFI-95a5c2820bd88ec39379892be8909567"
+      },
+      "item": "ITM-11111111111111111111111111111111",
+      "title": "the item",
+      "reason": "the rounds are used up (T-3/step/1)",
+      "repo": "agentic-workflow",
+      "urgency": "pulse",
+      "since": "2026-10-16T08:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": "grant",
+      "primaryAction": "ApplyCommand:answer-grant",
+      "actions": [
+        "ApplyCommand:answer-grant"
+      ],
+      "cli": "sindri workflow answer T-3/step/1 --grant 1",
+      "timeout": {
+        "kind": "parks",
+        "inSeconds": 168480,
+        "on": "produce"
+      }
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-10-16T08:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

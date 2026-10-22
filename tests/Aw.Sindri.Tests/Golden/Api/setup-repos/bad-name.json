@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-SETUP-002",
+  "status": 409,
+  "detail": "'my repo' is not a repo name (fix: use 1 to 100 letters, digits, '.', '_' or '-', starting with a letter or digit)",
+  "traceId": "<trace>"
+}

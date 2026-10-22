@@ -11952,8 +11952,8 @@ Aw.Sindri.Core.Events.SuspensionSummary.MirrorsAddress.init -> void
 Aw.Sindri.Core.Events.SuspensionSummary.SuspensionSummary(Aw.Sindri.Core.Workflow.Engine.Instances.SuspensionKind Kind, Aw.Sindri.Core.Workflow.Engine.ParkReason? Reason, Aw.Sindri.Core.Workflow.Engine.ParkKind? ParkKind, Aw.Sindri.Core.Workflow.Engine.EscalationKind? Escalation, string? Mirrors, string? MirrorsAddress = null) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Child.get -> string?
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Child.init -> void
-Aw.Sindri.Core.NeedsYou.NeedsYouRow.Deconstruct(out Aw.Sindri.Core.Ids.NeedsYouRowId Id, out Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, out string! Label, out Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, out Aw.Sindri.Core.Ids.ItemId? Item, out string! Title, out string! Reason, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.NeedsYou.Urgency Urgency, out System.DateTimeOffset Since, out bool RecordedOnly, out string? Notice, out Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string! Cli, out string? Via, out string? Child) -> void
-Aw.Sindri.Core.NeedsYou.NeedsYouRow.NeedsYouRow(Aw.Sindri.Core.Ids.NeedsYouRowId Id, Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, string! Label, Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, Aw.Sindri.Core.Ids.ItemId? Item, string! Title, string! Reason, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.NeedsYou.Urgency Urgency, System.DateTimeOffset Since, bool RecordedOnly, string? Notice, Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string! Cli, string? Via = null, string? Child = null) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Deconstruct(out Aw.Sindri.Core.Ids.NeedsYouRowId Id, out Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, out string! Label, out Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, out Aw.Sindri.Core.Ids.ItemId? Item, out string! Title, out string! Reason, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.NeedsYou.Urgency Urgency, out System.DateTimeOffset Since, out bool RecordedOnly, out string? Notice, out Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string! Cli, out string? Via, out string? Child, out Aw.Sindri.Core.NeedsYou.NeedsYouStop? Stop, out Aw.Sindri.Core.Workflow.Views.StatusTimeout? Timeout) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.NeedsYouRow(Aw.Sindri.Core.Ids.NeedsYouRowId Id, Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, string! Label, Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, Aw.Sindri.Core.Ids.ItemId? Item, string! Title, string! Reason, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.NeedsYou.Urgency Urgency, System.DateTimeOffset Since, bool RecordedOnly, string? Notice, Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string! Cli, string? Via = null, string? Child = null, Aw.Sindri.Core.NeedsYou.NeedsYouStop? Stop = null, Aw.Sindri.Core.Workflow.Views.StatusTimeout? Timeout = null) -> void
 Aw.Sindri.Core.Workflow.Engine.Evals.EvalLedgerRecorder
 static Aw.Sindri.Core.Workflow.Engine.Evals.EvalLedgerRecorder.ContentOf(System.ReadOnlySpan<byte> content) -> System.Text.Json.JsonElement
 static Aw.Sindri.Core.Workflow.Engine.Evals.EvalLedgerRecorder.Record(string! name, Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, Aw.Sindri.Core.Workflow.Validation.IChildRecipeResolver! children, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.WorkflowEventPayload!>! events, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! contents) -> Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Engine.Evals.EvalCase!>!
@@ -14659,6 +14659,73 @@ Aw.Sindri.Core.Events.SetupStepChanged.Deconstruct(out Aw.Sindri.Core.Ids.Comman
 Aw.Sindri.Core.Events.SetupStepChanged.SetupStepChanged(Aw.Sindri.Core.Ids.CommandId CommandId, string! Step, string! State, string? Code = null) -> void
 Aw.Sindri.Core.Events.SetupStepChanged.Step.get -> string!
 Aw.Sindri.Core.Events.SetupStepChanged.Step.init -> void
+Aw.Sindri.Core.Setup.IProfileRepoWriter
+Aw.Sindri.Core.Setup.IProfileRepoWriter.Append(Aw.Sindri.Core.Profile.RepoEntry! repo, System.Collections.Generic.IReadOnlyCollection<string!>! defaultEffects, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoAppended>!>
+Aw.Sindri.Core.Setup.IRepoInspector
+Aw.Sindri.Core.Setup.IRepoInspector.Facts(string! checkout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoGit!>!>
+Aw.Sindri.Core.Setup.IRepoInspector.Inspect(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.InspectedRepo!>!>
+Aw.Sindri.Core.Setup.IShippedEffects
+Aw.Sindri.Core.Setup.IShippedEffects.Kinds() -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.InspectedRepo
+Aw.Sindri.Core.Setup.InspectedRepo.<Clone>$() -> Aw.Sindri.Core.Setup.InspectedRepo!
+Aw.Sindri.Core.Setup.InspectedRepo.Checkout.get -> string!
+Aw.Sindri.Core.Setup.InspectedRepo.Checkout.init -> void
+Aw.Sindri.Core.Setup.InspectedRepo.Deconstruct(out string! Checkout, out Aw.Sindri.Core.Setup.RepoGit! Git) -> void
+Aw.Sindri.Core.Setup.InspectedRepo.Equals(Aw.Sindri.Core.Setup.InspectedRepo? other) -> bool
+Aw.Sindri.Core.Setup.InspectedRepo.Git.get -> Aw.Sindri.Core.Setup.RepoGit!
+Aw.Sindri.Core.Setup.InspectedRepo.Git.init -> void
+Aw.Sindri.Core.Setup.InspectedRepo.InspectedRepo(string! Checkout, Aw.Sindri.Core.Setup.RepoGit! Git) -> void
+Aw.Sindri.Core.Setup.NoShippedEffects
+Aw.Sindri.Core.Setup.NoShippedEffects.Kinds() -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.NoShippedEffects.NoShippedEffects() -> void
+Aw.Sindri.Core.Setup.RepoAppended
+Aw.Sindri.Core.Setup.RepoAppended.AlreadyThere = 2 -> Aw.Sindri.Core.Setup.RepoAppended
+Aw.Sindri.Core.Setup.RepoAppended.Appended = 1 -> Aw.Sindri.Core.Setup.RepoAppended
+Aw.Sindri.Core.Setup.RepoAppended.Created = 0 -> Aw.Sindri.Core.Setup.RepoAppended
+Aw.Sindri.Core.Setup.RepoGit
+Aw.Sindri.Core.Setup.RepoGit.<Clone>$() -> Aw.Sindri.Core.Setup.RepoGit!
+Aw.Sindri.Core.Setup.RepoGit.Deconstruct(out string? DefaultBranch, out string? Head) -> void
+Aw.Sindri.Core.Setup.RepoGit.DefaultBranch.get -> string?
+Aw.Sindri.Core.Setup.RepoGit.DefaultBranch.init -> void
+Aw.Sindri.Core.Setup.RepoGit.Equals(Aw.Sindri.Core.Setup.RepoGit? other) -> bool
+Aw.Sindri.Core.Setup.RepoGit.Head.get -> string?
+Aw.Sindri.Core.Setup.RepoGit.Head.init -> void
+Aw.Sindri.Core.Setup.RepoGit.RepoGit(string? DefaultBranch, string? Head) -> void
+Aw.Sindri.Core.Setup.DefaultProfile
+Aw.Sindri.Core.Setup.RepoFolders
+Aw.Sindri.Core.Setup.ShippedEffects
+override Aw.Sindri.Core.Setup.InspectedRepo.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.InspectedRepo.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.InspectedRepo.ToString() -> string!
+override Aw.Sindri.Core.Setup.RepoGit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.RepoGit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.RepoGit.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForSetupRepo(string! sentence, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
+static Aw.Sindri.Core.Setup.InspectedRepo.operator !=(Aw.Sindri.Core.Setup.InspectedRepo? left, Aw.Sindri.Core.Setup.InspectedRepo? right) -> bool
+static Aw.Sindri.Core.Setup.InspectedRepo.operator ==(Aw.Sindri.Core.Setup.InspectedRepo? left, Aw.Sindri.Core.Setup.InspectedRepo? right) -> bool
+static Aw.Sindri.Core.Setup.RepoGit.operator !=(Aw.Sindri.Core.Setup.RepoGit? left, Aw.Sindri.Core.Setup.RepoGit? right) -> bool
+static Aw.Sindri.Core.Setup.RepoGit.operator ==(Aw.Sindri.Core.Setup.RepoGit? left, Aw.Sindri.Core.Setup.RepoGit? right) -> bool
+static Aw.Sindri.Core.Setup.DefaultProfile.Quote(string! value) -> string!
+static Aw.Sindri.Core.Setup.DefaultProfile.Text(string! user, System.Collections.Generic.IReadOnlyCollection<string!>! effects) -> string!
+static Aw.Sindri.Core.Setup.RepoFolders.KeyOf(string! resolvedPath) -> Aw.Sindri.Core.Ids.JobKey
+static Aw.Sindri.Core.Setup.RepoFolders.NameOf(string! path) -> string!
+static Aw.Sindri.Core.Setup.RepoFolders.Refuse(string! resolvedPath, string! userHome, string! sindriHome) -> string?
+static Aw.Sindri.Core.Setup.ShippedEffects.Union(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Recipes.Recipe!>! recipes) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.KnownRepoEvents
+Aw.Sindri.Core.Setup.KnownRepoEvents.Add(string! name) -> void
+Aw.Sindri.Core.Setup.KnownRepoEvents.Has(string! name) -> bool
+Aw.Sindri.Core.Setup.KnownRepoEvents.KnownRepoEvents() -> void
+Aw.Sindri.Core.Setup.RepoAddedBackfill
+Aw.Sindri.Core.Setup.RepoAddedBackfill.Ensure(Aw.Sindri.Core.Profile.RepoEntry! entry, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Setup.RepoAddedBackfill.Ensure(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>! entries, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Setup.RepoAddedBackfill.RepoAddedBackfill(Aw.Sindri.Core.Setup.RepoEvents! recorder, Aw.Sindri.Core.Ledger.ILedgerReader! reader, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Setup.RepoGitCache! git, Aw.Sindri.Core.Setup.KnownRepoEvents! known) -> void
+Aw.Sindri.Core.Setup.RepoEvents
+Aw.Sindri.Core.Setup.RepoEvents.RepoEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Setup.RepoGitCache
+Aw.Sindri.Core.Setup.RepoGitCache.Invalidate() -> void
+Aw.Sindri.Core.Setup.RepoGitCache.Of(string! checkout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Setup.RepoGit?>
+Aw.Sindri.Core.Setup.RepoGitCache.RepoGitCache(Aw.Sindri.Core.Setup.IRepoInspector! inspector, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Setup.RepoEvents.CanRecord() -> bool
 Aw.Sindri.Core.Auth.ProverLabel.Deconstruct(out bool Allowed, out bool MayConfirm) -> void
 Aw.Sindri.Core.Auth.ProverLabel.MayConfirm.get -> bool
 Aw.Sindri.Core.Auth.ProverLabel.MayConfirm.init -> void
@@ -14733,6 +14800,26 @@ static Aw.Sindri.Core.Profile.RepoStatus.operator ==(Aw.Sindri.Core.Profile.Repo
 static Aw.Sindri.Core.Profile.RepoStatusRules.ExitCode(Aw.Sindri.Core.Profile.RepoStatus! status) -> int
 static Aw.Sindri.Core.Profile.RepoStatusRules.NudgeLine(Aw.Sindri.Core.Profile.RepoStatus! status) -> string!
 static Aw.Sindri.Core.Profile.RepoStatusRules.Text(Aw.Sindri.Core.Profile.RepoStatus! status) -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Stop.get -> Aw.Sindri.Core.NeedsYou.NeedsYouStop?
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Stop.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Timeout.get -> Aw.Sindri.Core.Workflow.Views.StatusTimeout?
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Timeout.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouStop!
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.Deconstruct(out int N, out int Of) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouStop? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.N.get -> int
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.N.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.NeedsYouStop(int N, int Of) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.Of.get -> int
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.Of.init -> void
+override Aw.Sindri.Core.NeedsYou.NeedsYouStop.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouStop.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouStop.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouStop.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouStop? left, Aw.Sindri.Core.NeedsYou.NeedsYouStop? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouStop.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouStop? left, Aw.Sindri.Core.NeedsYou.NeedsYouStop? right) -> bool
+Aw.Sindri.Core.Setup.RepoEvents.Added(Aw.Sindri.Core.Ids.RepoName repo, string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static Aw.Sindri.Core.Setup.RepoEvents.KeyOf(Aw.Sindri.Core.Ids.RepoName repo) -> string!
 Aw.Sindri.Core.BugFix.AttemptMode
 Aw.Sindri.Core.BugFix.AttemptMode.Split = 2 -> Aw.Sindri.Core.BugFix.AttemptMode
 Aw.Sindri.Core.BugFix.AttemptMode.Whole = 1 -> Aw.Sindri.Core.BugFix.AttemptMode

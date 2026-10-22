@@ -33,6 +33,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
         ("workflow-instances", "start-item-mismatch"), ("workflow-instances", "start-earlier-attempt-live"),
         ("workflow-instances", "start-recipe-legacy"), ("workflow-instances", "start-recipe-revoked"), ("workflow-instances", "start-recipe-drifted"),
         ("workflow-instance-scoping", "expiry-stop"),   // recorded by ScopingShowTests (API2 serves that view as is)
+        ("needs-you", "desk-with-stop"), ("needs-you", "park-with-timeout"),   // recorded by NeedsYouJoinsTests (the read-time joins of GetNeedsYou)
         ("workflow-instance-design-stop", "gold-stop"),   // recorded by DesignStopViewTests (LN-API2 serves that view as is)
     ];
 

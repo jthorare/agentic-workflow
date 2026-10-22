@@ -29,7 +29,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
         Registry = new RegistryHarness();
         _scope = Registry.Services.CreateAsyncScope();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, Profiles),
+            new ProfileSetupReader(Profiles, Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
             _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
             new OnyxStatusReader(Onyx.Pins, new OnyxFacts(Onyx.Runtime, Onyx.Probes, new FakeSindriHome(OnyxUpRig.Home)), Onyx.Health, Onyx.Workspace),
             new McpSetupReader(Profiles, Host),
@@ -37,6 +37,10 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     }
 
     internal InMemoryProfiles Profiles { get; } = new();
+
+    internal FakeRepoInspector Inspector { get; } = new();
+
+    internal Microsoft.Extensions.Time.Testing.FakeTimeProvider Clock { get; } = new(Kernel.Testing.KnownInstants.Epoch);
 
     internal FakeProviderHost Host { get; }
 

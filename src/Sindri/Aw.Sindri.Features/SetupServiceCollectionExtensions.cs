@@ -18,6 +18,6 @@ internal static class SetupServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services.AddScoped<IValidator<GetSetupRequest>, AcceptAllValidator<GetSetupRequest>>().AddQuery<GetSetupRequest, GetSetupResponse, GetSetupService>()
-            .AddScoped<ISetupFacts, SetupFacts>().AddScoped<ProfileSetupReader>().AddScoped<McpSetupReader>().AddScoped<MapSetupReader>().AddScoped<OnyxStatusReader>();
+            .AddScoped<ISetupFacts, SetupFacts>().AddScoped<GetNeedsYou.SetupNotices>().AddScoped<ProfileSetupReader>().AddScoped<McpSetupReader>().AddScoped<MapSetupReader>().AddScoped<OnyxStatusReader>();
     }
 }

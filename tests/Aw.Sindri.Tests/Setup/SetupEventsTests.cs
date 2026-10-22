@@ -12,7 +12,7 @@ public sealed class SetupEventsTests
     public static TheoryData<string, string> Keys => new()
     {
         { "setup.step.changed", "setup.step.changed:<id>:<state>:<n>" },
-        { "repo.added", "repo.added:<commandId>" },
+        { "repo.added", "repo.added:<repo>" },
         { "repo.onboarded", "repo.onboarded:<repo>:<hash>" },
         { "recipe.registration.completed", "recipe.registration.completed:<epoch>" },
         { "mcp.registered", "mcp.registered:<commandId>" },

@@ -37,7 +37,7 @@ internal static class ApiScenarios
         ["Streams"] = StreamScenarios.All,
         ["Jobs"] = [.. JobScenarios.All, .. JobScopeScenarios.All],
         ["Launches"] = [.. LaunchScenarios.All, .. WrapSessionScenarios.All],
-        ["Setup"] = SetupScenarios.All,
+        ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All],
         ["Recipes"] = ApproveAllScenarios.All,
         ["CodeIndex"] = CodeIndexScenarios.All,
     };
@@ -54,8 +54,8 @@ internal static class ApiScenarios
             ? await CodeIndexScenarios.Start(ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
-            : SetupScenarios.Handles(slug, scenario)
-            ? await SetupScenarios.Start(scenario, ct)
+            : IsSetup(slug, scenario)
+            ? await SetupHost(slug, scenario, ct)
             : JobScenarios.Handles(slug, scenario) || JobScopeScenarios.Handles(slug, scenario)
             ? await Jobs.JobHost.Start(ct, pump: false)
             : LaunchScenarios.Handles(slug, scenario)
@@ -67,6 +67,14 @@ internal static class ApiScenarios
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
+
+    /// <summary>Whether the scenario is a setup one (the steps, or adding a repo).</summary>
+    private static bool IsSetup(string slug, string scenario) =>
+        SetupScenarios.Handles(slug, scenario) || SetupRepoScenarios.Handles(slug, scenario);
+
+    /// <summary>The host of a setup scenario (the steps, or adding a repo).</summary>
+    private static Task<GoldenHost> SetupHost(string slug, string scenario, CancellationToken ct) =>
+        SetupScenarios.Handles(slug, scenario) ? SetupScenarios.Start(scenario, ct) : SetupRepoScenarios.Start(scenario, ct);
 
     /// <summary>The live profile the scenario's host starts with: the item scenarios need two repos.</summary>
     public static string ProfileYaml(string slug, string scenario) => SessionScenarios.Handles(slug, scenario) ? SessionScenarios.ProfileYaml : ItemScenarios.Handles(slug, scenario) || ParkScenarios.Handles(slug, scenario) || RequestScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
@@ -126,6 +134,7 @@ internal static class ApiScenarios
     /// <summary>The body of an approve-all (recipes), collector (sessions) or wrap (launch) session scenario, else null.</summary>
     private static Func<Task<string>>? SessionBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         ApproveAllScenarios.Handles(slug, scenario) ? () => ApproveAllScenarios.Body(host, slug, scenario, ct)
+        : SetupRepoScenarios.Handles(slug, scenario) ? () => SetupRepoScenarios.Body(host, scenario)
         : SessionScenarios.Handles(slug, scenario) ? () => SessionScenarios.Body(host, slug, scenario, ct)
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
         : null;

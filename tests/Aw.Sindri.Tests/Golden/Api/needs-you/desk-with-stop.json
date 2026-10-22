@@ -1,0 +1,44 @@
+{
+  "rows": [
+    {
+      "id": "desk:WFI-95a5c2820bd88ec39379892be8909567",
+      "kind": "park",
+      "label": "desk task",
+      "subject": {
+        "kind": "instance",
+        "id": "WFI-95a5c2820bd88ec39379892be8909567"
+      },
+      "item": "ITM-11111111111111111111111111111111",
+      "title": "the item",
+      "reason": "a desk task is open (T-3/step/1)",
+      "repo": "agentic-workflow",
+      "urgency": "colour",
+      "since": "2026-10-16T08:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "CompleteStep",
+      "actions": [
+        "CompleteStep"
+      ],
+      "cli": "sindri workflow status T-3/step/1",
+      "stop": {
+        "n": 2,
+        "of": 3
+      },
+      "timeout": {
+        "kind": "parks",
+        "inSeconds": 168480,
+        "on": "produce"
+      }
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-10-16T08:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

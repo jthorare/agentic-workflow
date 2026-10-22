@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-SETUP-002",
+  "status": 409,
+  "detail": "the name Demo is taken by another repo (fix: give a different name)",
+  "traceId": "<trace>"
+}

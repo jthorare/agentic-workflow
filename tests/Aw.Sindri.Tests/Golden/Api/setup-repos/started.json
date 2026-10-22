@@ -1,0 +1,12 @@
+{
+  "accepted": {
+    "commandId": "00000000-0000-0000-0000-000000000004",
+    "sequence": 2
+  },
+  "jobId": "JOB-00000000000000000000000000000006",
+  "links": {
+    "job": "/sindri/jobs/JOB-00000000000000000000000000000006",
+    "cancel": "/sindri/jobs/JOB-00000000000000000000000000000006/cancel",
+    "events": "/sindri/events?after=1&types=job.*"
+  }
+}

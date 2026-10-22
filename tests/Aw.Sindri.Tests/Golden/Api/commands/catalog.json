@@ -2,16 +2,17 @@
   "rows": [
     {
       "action": "AddRepo",
-      "class": "desk",
+      "class": "job",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "service"
       ],
       "terminal": false,
       "method": "POST",
       "route": "/sindri/setup/repos",
       "cli": "sindri repo add <path>",
-      "ui": "pending:SO-A3",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

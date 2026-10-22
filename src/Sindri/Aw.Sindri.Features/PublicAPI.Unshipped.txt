@@ -4013,6 +4013,34 @@ static Aw.Sindri.Features.GetSetup.GetSetupRequest.operator !=(Aw.Sindri.Feature
 static Aw.Sindri.Features.GetSetup.GetSetupRequest.operator ==(Aw.Sindri.Features.GetSetup.GetSetupRequest? left, Aw.Sindri.Features.GetSetup.GetSetupRequest? right) -> bool
 static Aw.Sindri.Features.GetSetup.GetSetupResponse.operator !=(Aw.Sindri.Features.GetSetup.GetSetupResponse? left, Aw.Sindri.Features.GetSetup.GetSetupResponse? right) -> bool
 static Aw.Sindri.Features.GetSetup.GetSetupResponse.operator ==(Aw.Sindri.Features.GetSetup.GetSetupResponse? left, Aw.Sindri.Features.GetSetup.GetSetupResponse? right) -> bool
+Aw.Sindri.Features.AddRepo.AddRepoRequest
+Aw.Sindri.Features.AddRepo.AddRepoRequest.<Clone>$() -> Aw.Sindri.Features.AddRepo.AddRepoRequest!
+Aw.Sindri.Features.AddRepo.AddRepoRequest.AddRepoRequest(string! Path, string? Name = null) -> void
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Deconstruct(out string! Path, out string? Name) -> void
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Equals(Aw.Sindri.Features.AddRepo.AddRepoRequest? other) -> bool
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Name.get -> string?
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Name.init -> void
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Path.get -> string!
+Aw.Sindri.Features.AddRepo.AddRepoRequest.Path.init -> void
+Aw.Sindri.Features.AddRepo.AddedRepo
+Aw.Sindri.Features.AddRepo.AddedRepo.<Clone>$() -> Aw.Sindri.Features.AddRepo.AddedRepo!
+Aw.Sindri.Features.AddRepo.AddedRepo.AddedRepo(Aw.Sindri.Core.Ids.RepoName Repo, bool Created) -> void
+Aw.Sindri.Features.AddRepo.AddedRepo.Created.get -> bool
+Aw.Sindri.Features.AddRepo.AddedRepo.Created.init -> void
+Aw.Sindri.Features.AddRepo.AddedRepo.Deconstruct(out Aw.Sindri.Core.Ids.RepoName Repo, out bool Created) -> void
+Aw.Sindri.Features.AddRepo.AddedRepo.Equals(Aw.Sindri.Features.AddRepo.AddedRepo? other) -> bool
+Aw.Sindri.Features.AddRepo.AddedRepo.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Features.AddRepo.AddedRepo.Repo.init -> void
+override Aw.Sindri.Features.AddRepo.AddRepoRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddRepo.AddRepoRequest.GetHashCode() -> int
+override Aw.Sindri.Features.AddRepo.AddRepoRequest.ToString() -> string!
+override Aw.Sindri.Features.AddRepo.AddedRepo.Equals(object? obj) -> bool
+override Aw.Sindri.Features.AddRepo.AddedRepo.GetHashCode() -> int
+override Aw.Sindri.Features.AddRepo.AddedRepo.ToString() -> string!
+static Aw.Sindri.Features.AddRepo.AddRepoRequest.operator !=(Aw.Sindri.Features.AddRepo.AddRepoRequest? left, Aw.Sindri.Features.AddRepo.AddRepoRequest? right) -> bool
+static Aw.Sindri.Features.AddRepo.AddRepoRequest.operator ==(Aw.Sindri.Features.AddRepo.AddRepoRequest? left, Aw.Sindri.Features.AddRepo.AddRepoRequest? right) -> bool
+static Aw.Sindri.Features.AddRepo.AddedRepo.operator !=(Aw.Sindri.Features.AddRepo.AddedRepo? left, Aw.Sindri.Features.AddRepo.AddedRepo? right) -> bool
+static Aw.Sindri.Features.AddRepo.AddedRepo.operator ==(Aw.Sindri.Features.AddRepo.AddedRepo? left, Aw.Sindri.Features.AddRepo.AddedRepo? right) -> bool
 Aw.Sindri.Features.CodeIndexReads.CodeCallRow
 Aw.Sindri.Features.CodeIndexReads.CodeCallRow.<Clone>$() -> Aw.Sindri.Features.CodeIndexReads.CodeCallRow!
 Aw.Sindri.Features.CodeIndexReads.CodeCallRow.Basis.get -> Aw.CodeIndex.Core.Model.EdgeBasis

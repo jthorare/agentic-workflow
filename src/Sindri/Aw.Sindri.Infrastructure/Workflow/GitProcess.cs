@@ -8,9 +8,14 @@ internal static class GitProcess
 {
     private static readonly TimeSpan _budget = TimeSpan.FromSeconds(30);
 
-    internal static async Task<GitRun> Run(string repository, string[] args, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs git in <paramref name="repository"/>. <paramref name="hardened"/> is for a folder the owner just picked and Sindri has not trusted: no fsmonitor and no hooks path ('-c core.fsmonitor= -c core.hooksPath=/dev/null') and no
+    /// system config, so reading it runs nothing the folder brings.
+    /// </summary>
+    internal static async Task<GitRun> Run(string repository, string[] args, CancellationToken cancellationToken, bool hardened = false)
     {
-        var start = new ProcessStartInfo("git", ["-C", repository, .. args])
+        string[] guard = hardened ? ["-c", "core.fsmonitor=", "-c", "core.hooksPath=/dev/null"] : [];
+        var start = new ProcessStartInfo("git", ["-C", repository, .. guard, .. args])
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -18,6 +23,11 @@ internal static class GitProcess
         };
         start.Environment["LC_ALL"] = "C";   // git's messages are matched in English
         start.Environment["GIT_TERMINAL_PROMPT"] = "0";   // never wait for a credential
+        if (hardened)
+        {
+            start.Environment["GIT_CONFIG_NOSYSTEM"] = "1";
+        }
+
         Process? git;
         try
         {
