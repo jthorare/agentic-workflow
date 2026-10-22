@@ -28,6 +28,7 @@ public sealed class BuildShipBlockRuntimesTests
     [InlineData("workflow.phase.yaml", "drift", "step.phase.drift")]
     [InlineData("workflow.phase.yaml", "seed", "step.phase.seed")]
     [InlineData("workflow.prove.yaml", "intake", "step.prove.intake")]
+    [InlineData("workflow.prove.yaml", "before-after", "step.prove.before-after")]
     [InlineData("workflow.prove.yaml", "fail-log", "step.prove.fail-log")]
     [InlineData("workflow.prove.yaml", "evidence-pack", "step.prove.evidence")]
     public void The_Step_opens_a_block_run_not_a_desk_task(string file, string state, string step)
