@@ -11,6 +11,8 @@ namespace Aw.Sindri.Features.Scoping;
 /// </summary>
 internal sealed class ScopeGatherStep() : ScopingCodeStep(Id), IBlockStepId, IRepoStep
 {
+    private const string Marker = "are unavailable for this Step (";
+
     private static readonly (string Input, string View)[] _views =
     [
         ("input.context.lenses", "lensesView"), ("input.context.code", "codeView"), ("input.context.history", "historyView"),
@@ -25,11 +27,27 @@ internal sealed class ScopeGatherStep() : ScopingCodeStep(Id), IBlockStepId, IRe
         ArgumentNullException.ThrowIfNull(context);
         if (!context.InputResults.ContainsKey(_views[0].Input))
         {
-            // As a block the lenses come from its input, not a --lenses file: say which input gave nothing, and where its section says why.
+            // As a block the lenses come from its input, not a --lenses file: say which input gave nothing and why, from the section the input injected.
             return ValueTask.FromResult<Result<IReadOnlyDictionary<string, string>>>(SindriErrors.InvalidInput.With(
-                "gather needs the lenses view, and input.context.lenses gave no typed result: the lenses were unavailable or their typed result was over 256 KiB (its injected section says which)"));
+                "gather needs the lenses view, and input.context.lenses gave no typed result: " + Why(context.Injection)));
         }
 
         return ValueTask.FromResult(Facts(_views.Where(v => context.InputResults.ContainsKey(v.Input)).ToDictionary(static v => v.View, v => Text(context.InputResults[v.Input]), StringComparer.Ordinal)));
+    }
+
+    // The reason the input's own section gives ("The context lenses are unavailable for this Step (<why>); it runs without them."), else the two reasons a typed result can be missing.
+    private static string Why(InjectionSections injection)
+    {
+        if (injection.Sections.TryGetValue("lenses", out var section) && section.IndexOf(Marker, StringComparison.Ordinal) is var at and >= 0)
+        {
+            var start = at + Marker.Length;
+            var end = section.IndexOf(");", start, StringComparison.Ordinal);
+            if (end > start)
+            {
+                return "the lenses were unavailable (" + section[start..end] + ")";
+            }
+        }
+
+        return "the lenses were unavailable or their typed result was over 256 KiB (its injected section says which)";
     }
 }

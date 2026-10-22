@@ -59,6 +59,15 @@
         <Border x:Name="AgentsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="AgentsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Border x:Name="AgentsColumns" Padding="16,4" IsVisible="{Binding HasColumns}" AutomationProperties.AccessibilityView="Raw">
+          <Grid ColumnDefinitions="150,2*,2*,2*,56">
+            <TextBlock Classes="caption subtle" Text="{Binding Columns.Status}" />
+            <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns.Agent}" />
+            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns.Where}" />
+            <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Columns.Doing}" />
+            <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
+          </Grid>
+        </Border>
         <ItemsControl x:Name="AgentGroups" ItemsSource="{Binding Groups}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="ag:SessionGroupViewModel">

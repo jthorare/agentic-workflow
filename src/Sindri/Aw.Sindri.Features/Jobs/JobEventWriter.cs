@@ -41,6 +41,34 @@ internal sealed class JobEventWriter(ILedgerStore ledger, HeldLease held, EventF
         return Append(start, EventTypes.JobProgress, payload, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.JobProgress}:{start.Job.Value}:{round}"), cancellationToken);
     }
 
+    /// <summary>Records that the job parked on <paramref name="signal"/> (its <paramref name="ordinal"/>th wait).</summary>
+    /// <param name="start">The job.</param>
+    /// <param name="signal">The signal's name.</param>
+    /// <param name="ordinal">Which wait of the job, from 1.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Success, or why the wait was not recorded.</returns>
+    public ValueTask<Result<Unit>> Waiting(JobStart start, string signal, int ordinal, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(signal);
+        var payload = new JobWaiting(start.Caller.CommandId, start.Job, signal, Item: null, start.Repo);
+        return Append(start, EventTypes.JobWaiting, payload, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.JobWaiting}:{start.Job.Value}:{ordinal}"), cancellationToken);
+    }
+
+    /// <summary>Records that the signal came and the job runs again.</summary>
+    /// <param name="start">The job.</param>
+    /// <param name="signal">The signal's name.</param>
+    /// <param name="ordinal">Which wait of the job, from 1.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Success, or why it was not recorded.</returns>
+    public ValueTask<Result<Unit>> Resumed(JobStart start, string signal, int ordinal, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(signal);
+        var payload = new JobResumed(start.Caller.CommandId, start.Job, signal, Item: null, start.Repo);
+        return Append(start, EventTypes.JobResumed, payload, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.JobResumed}:{start.Job.Value}:{ordinal}"), cancellationToken);
+    }
+
     /// <summary>Records how the job ended.</summary>
     /// <param name="start">The job.</param>
     /// <param name="work">How its work ended.</param>

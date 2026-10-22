@@ -17,8 +17,9 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
     private NeedsYouRowViewModel? _lastRow;   // the row the card last showed as selected
     private NeedsYouRowViewModel? _cleared;   // that row, once it left the list under the card, until the user moves on
 
-    internal NeedsYouPageViewModel(NeedsYouViewModel list, TimeProvider clock, IClipboard clipboard, DeskReporter desk, NeedsYouConfirm? confirm = null)
+    internal NeedsYouPageViewModel(NeedsYouViewModel list, TimeProvider clock, IClipboard clipboard, DeskReporter desk, NeedsYouConfirm? confirm = null, PausedAnswerViewModel? answer = null, TakeoverViewModel? takeover = null)
     {
+        (Answer, Takeover) = (answer, takeover);
         _list = list;
         _clock = clock;
         _clipboard = clipboard;
@@ -213,7 +214,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static readonly string[] _cardProperties =
     [
-        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight),
+        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons),
     ];
 
     private static readonly string[] _listProperties =
@@ -273,6 +274,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         {
             Bar.Show(Card);   // before the card's words are read: another request starts a fresh bar
             Bar.Enabled = !IsCleared;
+            ShowPausedRun();
         }
 
         foreach (var name in names)
@@ -280,7 +282,6 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
             OnChanged(name);
         }
     }
-
 
     // The groups are kept by (kind, heading) so a group that stays keeps its controls; its rows are the list's own row view models.
     private void Rebuild()

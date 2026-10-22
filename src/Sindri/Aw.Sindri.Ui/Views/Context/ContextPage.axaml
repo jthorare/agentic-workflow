@@ -37,6 +37,24 @@
     <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     </Style>
+    <!-- The refusal banner and the two overlays (F3 spec 1 §3): a refusal draws an Attention outline with its glyph and words, never colour alone. -->
+    <Style Selector="Border.refusal">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Border.overlay">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Padding" Value="24" />
+    </Style>
+    <Style Selector="Border.skeleton">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Height" Value="56" />
+    </Style>
   </UserControl.Styles>
 
   <!-- The Context page (F3 spec 1 §2): the head, a control row (starting points, as of, Map or Files, coverage), and the stage, which
@@ -86,8 +104,11 @@
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="8">
       <StackPanel Spacing="8">
-        <Border x:Name="ContextProblem" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Text="{Binding Problem}" TextWrapping="Wrap" />
+        <Border x:Name="ContextProblem" Classes="refusal" IsVisible="{Binding HasProblem}" AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <icons:StateIcon Glyph="Down" VerticalAlignment="Top" Margin="0,2,0,0" />
+            <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
+          </StackPanel>
         </Border>
         <StackPanel x:Name="ContextChoices" IsVisible="{Binding HasChoices}">
           <Border AutomationProperties.Name="{Binding ChoicesName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -108,6 +129,32 @@
       <Panel x:Name="ContextStageHost" Grid.Row="1" MinHeight="420">
         <Panel x:Name="LensStackHost" IsVisible="{Binding MapVisible}">
           <mv:ContextMapView x:Name="ContextStack" />
+        </Panel>
+        <!-- The Building and No map overlays cover the map view only; the Files view has its own states. -->
+        <Panel x:Name="ContextOverlays" IsVisible="{Binding ShowMap}">
+          <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingTitle}" AutomationProperties.AccessibilityView="Control">
+            <StackPanel Spacing="16" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+              <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                <icons:StateIcon Icon="Spinner" Spins="True" VerticalAlignment="Center" />
+                <TextBlock x:Name="ContextBuildingTitle" Classes="detail-title" Text="{Binding BuildingTitle}" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock x:Name="ContextBuildingBody" Classes="body subtle" Text="{Binding BuildingBody}" TextWrapping="Wrap" TextAlignment="Center" />
+              <StackPanel Spacing="8" AutomationProperties.AccessibilityView="Raw">
+                <Border Classes="skeleton" />
+                <Border Classes="skeleton" />
+                <Border Classes="skeleton" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+          <Border x:Name="ContextEmpty" Classes="overlay" IsVisible="{Binding ShowEmpty}" AutomationProperties.Name="{Binding EmptyTitle}" AutomationProperties.AccessibilityView="Control">
+            <StackPanel Spacing="12" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+              <TextBlock x:Name="ContextEmptyTitle" Classes="detail-title" Text="{Binding EmptyTitle}" TextAlignment="Center" />
+              <TextBlock x:Name="ContextEmptyBody" Classes="body subtle" Text="{Binding EmptyBody}" TextWrapping="Wrap" TextAlignment="Center" />
+              <Panel IsVisible="{Binding BuildControl, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <ctl:CommandControl x:Name="ContextBuild" DataContext="{Binding BuildControl}" HorizontalAlignment="Center" />
+              </Panel>
+            </StackPanel>
+          </Border>
         </Panel>
         <Border x:Name="ContextFilesPanel" IsVisible="{Binding ShowFiles}" Background="{DynamicResource Brush.Surface1}" CornerRadius="{StaticResource Radius.MD}" Padding="16">
           <fv:FileMapTree x:Name="FileMapHost" DataContext="{Binding FileMap}" />

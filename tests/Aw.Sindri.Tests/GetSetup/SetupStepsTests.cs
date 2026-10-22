@@ -53,6 +53,18 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void Profile_carries_the_preview_it_was_given_and_none_without_one()
+    {
+        SetupPreviewLine[] lines = [new("repo", "Works in demo (/work/demo).")];
+
+        var with = SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved) { Preview = lines }, Repos("demo"));
+        var without = SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), Repos("demo"));
+
+        Assert.Equal(lines, with.Preview);
+        Assert.Null(without.Preview);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Recipes_wait_for_an_approved_profile_then_count_what_waits()
     {
         var none = SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: true);
@@ -62,8 +74,8 @@ public sealed class SetupStepsTests
 
         Assert.Equal((SetupState.Todo, null), (none.State, none.Action));
         Assert.Equal((SetupState.Todo, null, null, "After the profile is approved.", "26 workflows registered."), (early.State, early.Action, early.Progress, early.Why, early.Detail));
-        Assert.Equal((SetupState.NeedsYou, SetupActions.ApproveAllRecipes, new SetupProgress(20, 26), "6 workflows wait for your approval."), (waiting.State, waiting.Action, waiting.Progress, waiting.Why));
-        Assert.Equal((SetupState.Done, null, new SetupProgress(26, 26)), (done.State, done.Action, done.Progress));
+        Assert.Equal((SetupState.NeedsYou, SetupActions.ApproveAllRecipes, new SetupProgress(20, 26, "workflows"), "6 workflows wait for your approval."), (waiting.State, waiting.Action, waiting.Progress, waiting.Why));
+        Assert.Equal((SetupState.Done, null, new SetupProgress(26, 26, "workflows")), (done.State, done.Action, done.Progress));
         Assert.Equal("1 workflow waits for your approval.", SetupSteps.Recipes(new RecipesFact(3, 2), profileApproved: true).Why);
     }
 
@@ -79,7 +91,7 @@ public sealed class SetupStepsTests
         Assert.Equal((SetupState.Todo, null, "Install Claude Code, Codex or Cursor."), (noProvider.State, noProvider.Action, noProvider.Why));
         Assert.Equal((SetupState.Todo, null, "Waits for an approved profile with a repo."), (waiting.State, waiting.Action, waiting.Why));
         Assert.Equal((SetupState.Todo, SetupActions.RegisterMcp, null), (todo.State, todo.Action, todo.Progress));
-        Assert.Equal((SetupState.Todo, SetupActions.RegisterMcp, new SetupProgress(1, 3)), (some.State, some.Action, some.Progress));
+        Assert.Equal((SetupState.Todo, SetupActions.RegisterMcp, new SetupProgress(1, 3, "repos")), (some.State, some.Action, some.Progress));
         Assert.Equal((SetupState.Done, null), (done.State, done.Action));
     }
 
@@ -92,14 +104,14 @@ public sealed class SetupStepsTests
             SetupSteps.Map(new MapFact(MapPhase.Waiting)),
             SetupSteps.Map(new MapFact(MapPhase.NotBuilt)),
             SetupSteps.Map(new MapFact(MapPhase.Building) { Items = line }),
-            SetupSteps.Map(new MapFact(MapPhase.Building, new SetupProgress(40, 100))),
+            SetupSteps.Map(new MapFact(MapPhase.Building, new SetupProgress(40, 100, "files"))),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040")),
             SetupSteps.Map(new MapFact(MapPhase.Built)),
         };
 
         Assert.Equal([SetupState.Todo, SetupState.Todo, SetupState.Running, SetupState.Running, SetupState.Failed, SetupState.Done], steps.Select(static s => s.State));
         Assert.All(steps, static s => Assert.Null(s.Action));
-        Assert.Equal(new SetupProgress(40, 100), steps[3].Progress);
+        Assert.Equal(new SetupProgress(40, 100, "files"), steps[3].Progress);
         Assert.Equal("40 of 100 done.", steps[3].Detail);
         Assert.Equal("Sindri is mapping demo.", steps[2].Why);
         Assert.Equal("Waits for an approved profile with a repo.", steps[0].Why);

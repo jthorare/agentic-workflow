@@ -32,7 +32,10 @@ public static class PacketsErrors
     /// <summary>AW-PACKETS-009: the sizes file 'validate --sizes' names is missing, unreadable, malformed or not schemaVersion 1.</summary>
     public static readonly ErrorDefinition SizesUnusable = new("AW-PACKETS-009", ErrorKind.Unavailable, "Sizes file unusable");
 
+    /// <summary>AW-PACKETS-010: the seal file 'validate --seal' names is missing, unreadable, malformed or not schemaVersion 1.</summary>
+    public static readonly ErrorDefinition SealUnusable = new("AW-PACKETS-010", ErrorKind.Unavailable, "Seal file unusable");
+
     /// <summary>Every Packets error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NotFound, Malformed, UnsupportedSchema, CommitNotFound, RepoUnavailable, FreezeLogUnavailable, Unreadable, SizesUnusable];
+        [Invalid, NotFound, Malformed, UnsupportedSchema, CommitNotFound, RepoUnavailable, FreezeLogUnavailable, Unreadable, SizesUnusable, SealUnusable];
 }

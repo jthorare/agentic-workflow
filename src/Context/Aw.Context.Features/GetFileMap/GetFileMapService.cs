@@ -2,6 +2,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Symbols;
@@ -32,27 +33,13 @@ internal sealed class GetFileMapService(MapReader reader, IRepoReader repos, ICo
         return built.IsError ? built.Error : built.Value with { Symbols = await Symbols(repo.Value, map.Value.Snapshot.Version, built.Value, cancellationToken).ConfigureAwait(false) };
     }
 
-    // The symbols column (S-9a): what the code index says about the files this listing shows, as of the map version's commit. A directory row has none; a read that fails is a column that says so, never an error of the route.
-    private async ValueTask<LensSymbols> Symbols(ContextRepo repo, MapVersion version, FileMapView view, CancellationToken cancellationToken)
+    // The symbols column (S-9a, links in Phase 9): what the code index says about the files this listing shows, as of the map version's commit. A directory row has none.
+    private ValueTask<LensSymbols> Symbols(ContextRepo repo, MapVersion version, FileMapView view, CancellationToken cancellationToken)
     {
-        var asOf = repo.Name == version.Repo && CodeIndexReading.IsCommit(version.Commit) ? version.Commit : null;
-        var head = await symbols.Heads(repo.Name, asOf, cancellationToken).ConfigureAwait(false);
-        if (head.IsError)
-        {
-            return Down(head.Error.Code);
-        }
-
-        var paths = view.Entries.Where(e => e.Type == FileEntryType.File).Select(e => e.Path).Take(CodeRules.MaxSymbolFiles).ToList();
-        if (paths.Count == 0 || !CodeIndexReading.Readable(head.Value))
-        {
-            return CodeIndexReading.FileMap(head.Value, []);
-        }
-
-        var files = await symbols.FileSymbols(repo.Name, paths, asOf, cancellationToken).ConfigureAwait(false);
-        return files.IsError ? Down(files.Error.Code) : CodeIndexReading.FileMap(files.Value.Head, files.Value.Rows);
+        var files = view.Entries.Where(e => e.Type == FileEntryType.File).ToList();
+        var links = files.Select(e => (e.Path, (IReadOnlyList<NodeKey>)[.. e.Features.Where(f => f.Edge == EdgeType.Implements).Select(f => f.Key)])).Where(l => l.Item2.Count > 0).ToList();
+        return SymbolColumn.Read(symbols, new SymbolColumnReading(repo, version, [.. files.Select(e => e.Path)], links), cancellationToken);
     }
-
-    private static LensSymbols Down(string code) => LensSymbols.Unavailable with { Reason = "index unavailable", Code = code };
 
     private static Result<ContextRepo> Addressed(ContextScope scope, ContextRepoName name)
     {

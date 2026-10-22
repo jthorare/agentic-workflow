@@ -9,4 +9,5 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Body">The body, without the marker.</param>
 /// <param name="Draft">Whether it opens as a draft.</param>
 /// <param name="Marker">The marker added to the body so Find recognises the pull request, or null for none.</param>
-public sealed record OpenPull(PullRepo Repo, string Head, string Base, string HeadSha, string Title, string Body, bool Draft, string? Marker);
+/// <param name="Labels">Labels to put on it, or null for none. A label the forge refuses does not fail the open; <see cref="PullView.Labels"/> shows what landed.</param>
+public sealed record OpenPull(PullRepo Repo, string Head, string Base, string HeadSha, string Title, string Body, bool Draft, string? Marker, IReadOnlyList<string>? Labels = null);

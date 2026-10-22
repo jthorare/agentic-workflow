@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.prove
-version: 3
+version: 4
 description: "Block recipe: prove every acceptance item of one phase on its head commit: a hand test and the verify journey in the running app, the evidence route, before and after for fixes, and the hidden scenarios; ends with a frozen proof pack."
 displayName: "Prove a phase works in the running app"
 inputs:
@@ -27,6 +27,8 @@ states:
                    waitFor: { child: { recipe: workflow.evidence, onParked: propagate,
                                        inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } } } },
                    next: "Waiting for {child}: the evidence that proves {item}." }
+  collect:       { kind: active, step: step.prove.collect, timeout: { after: 1h, then: park },
+                   next: "Hash the files {item}'s hand test, verify and evidence name, and add them to its proof." }
   slot:          { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
                    next: "Waiting for a heavy-job slot for {item}'s before/after and hidden-scenario runs." }
   before-after:  { kind: active, step: step.prove.before-after, timeout: { after: 2h, then: park },
@@ -50,9 +52,10 @@ transitions:
   - { from: verify, to: evidence, on: wait.satisfied, when: { outcome: resolved },   produces: [fact:evidencePack] }
   - { from: verify, to: fail-log, on: wait.satisfied, when: { outcome: unresolved }, produces: [fact:evidencePack] }
   - { from: verify, to: failed,   on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: evidence, to: slot,         on: wait.satisfied, when: { outcome: resolved },   produces: [fact:evidenceSummary, fact:decision] }
+  - { from: evidence, to: collect,      on: wait.satisfied, when: { outcome: resolved },   produces: [fact:evidenceSummary, fact:decision] }
   - { from: evidence, to: fail-log,     on: wait.satisfied, when: { outcome: unresolved } }
   - { from: evidence, to: failed,       on: wait.satisfied, when: { outcome: cancelled } }
+  - { from: collect, to: slot, on: step.completed, when: { outcome: collected }, produces: [fact:proof] }
   - { from: slot, to: before-after, on: wait.satisfied }
   - { from: before-after, to: holdout,  on: step.completed, when: { outcome: pass }, produces: [fact:beforeAfter] }
   - { from: before-after, to: fail-log, on: step.completed, when: { outcome: fail }, produces: [fact:beforeAfter] }
@@ -74,4 +77,6 @@ evals:
   - evals/workflow.prove/holdout-failed.jsonl
   - evals/workflow.prove/incomplete.jsonl
   - evals/workflow.prove/leaked.jsonl
+  - evals/workflow.prove/missing-item.jsonl
+  - evals/workflow.prove/stale-artifact.jsonl
   - evals/workflow.prove/verify-failed.jsonl

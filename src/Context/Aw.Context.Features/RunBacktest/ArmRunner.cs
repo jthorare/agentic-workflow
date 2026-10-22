@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 
@@ -29,15 +30,18 @@ internal sealed class ArmRunner(IArmQuery planner, TimeProvider clock)
             Arm.Docs => (empty, docs, null),
             Arm.Graph => (inputs.AsOfMap, [], null),
             Arm.GraphReviewed => (null, [], null),   // the ceiling: today's map with every review decision
-            Arm.All => (inputs.AsOfMap, docs, null),
+            Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => (inputs.AsOfMap, docs, null),   // the ranker arms read what 'all' reads and differ only in the ranker stages
             Arm.Linear or Arm.Onyx or Arm.Code => throw new ArgumentOutOfRangeException(nameof(arm), "that arm is not available yet"),
             _ => throw new ArgumentOutOfRangeException(nameof(arm)),
         };
         var (map, sources, depth) = setup;
         var query = new ContextQuery(inputs.BriefText, Depth: depth);
-        var answer = await planner.Ask(new ArmQuestion(inputs.Scope, query, map, sources, inputs.Sample.CreatedAt), cancellationToken).ConfigureAwait(false);
+        var answer = await planner.Ask(new ArmQuestion(inputs.Scope, query, map, sources, inputs.Sample.CreatedAt, Ranker(arm)), cancellationToken).ConfigureAwait(false);
         return answer.IsSuccess ? answer.Value : Nothing(query);
     }
+
+    // The other arms run the profile's ranker (off unless a person turned it on).
+    private static RankerMode? Ranker(Arm arm) => arm == Arm.RankerRrf ? RankerMode.Rrf : arm == Arm.RankerFeatures ? RankerMode.Features : arm == Arm.RankerRerank ? RankerMode.Rerank : null;
 
     private ContextResult Nothing(ContextQuery query) =>
         new(ContextResult.CurrentSchemaVersion, QueryId.From("q_backtest"), query, [], MapVersion: null, clock.GetUtcNow(), [], [], [], [], Truncated: false,

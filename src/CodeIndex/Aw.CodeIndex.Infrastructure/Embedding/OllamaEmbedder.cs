@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using Aw.CodeIndex.Core;
-using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
 using Aw.Kernel;

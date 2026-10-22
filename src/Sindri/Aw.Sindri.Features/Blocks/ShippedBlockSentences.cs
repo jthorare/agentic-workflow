@@ -117,6 +117,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["step.pr.snapshot"] = "Reads the pull request's checks, comments, base and proof, and picks what to do next",
         ["step.produce"] = "Starts an AI agent session that produces the step's output",
         ["step.prove.before-after"] = "Checks each fix fails before the change and passes after it",
+        ["step.prove.collect"] = "Hashes the files the proof checks produced into the proof record",
         ["step.prove.evidence"] = "Runs the proof checks and assembles the proof package",
         ["step.prove.fail-log"] = "Writes down what failed so the builder can fix it",
         ["step.prove.holdout"] = "Starts an AI agent session that runs the hidden tests against the running app",

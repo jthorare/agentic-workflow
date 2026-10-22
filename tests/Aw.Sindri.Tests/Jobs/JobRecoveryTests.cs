@@ -31,6 +31,21 @@ public sealed class JobRecoveryTests
     }
 
     [Fact]
+    public async Task Recovery_ends_a_waiting_job_failed_too_because_a_wait_does_not_survive_a_restart()
+    {
+        var rig = new RecoveryRig();
+        _ = await rig.H.HoldLease();
+        var job = await rig.Left(A.FirstJobId, service: null, JobState.Waiting);
+        rig.Caught();
+
+        var ended = await rig.Recovery.Run(Token);
+
+        Expect.Equal(1, ended.Value);
+        var finished = Assert.Single(rig.Of(EventTypes.JobFinished));
+        Expect.Equal((job.Id, JobOutcome.Failed, SindriErrors.JobInterrupted.Code), (finished.Payload.Value.Job, finished.Payload.Value.Outcome, finished.Payload.Value.Code));
+    }
+
+    [Fact]
     public async Task Recovery_is_idempotent()
     {
         var rig = new RecoveryRig();

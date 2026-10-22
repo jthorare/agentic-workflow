@@ -177,11 +177,19 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The catalog as the API at <paramref name="url"/> served it; the stalled banner's Rebuild views follows it.</summary>
     /// <param name="url">Where the API answered.</param>
     /// <param name="catalog">The catalog.</param>
-    internal void ShowCatalog(Uri url, CommandList catalog) => Catalog.Show(url, api, catalog);
+    internal void ShowCatalog(Uri url, CommandList catalog)
+    {
+        Catalog.Show(url, api, catalog);
+        ReconnectServiceControls();
+    }
 
     /// <summary>The services view (API P2) for the banners; null when it isn't served or failed, which hides them.</summary>
     /// <param name="view">The view, or null.</param>
-    internal void ShowViews(ServiceList? view) => Banner.Show(view, Catalog.For("RebuildViews"));
+    internal void ShowViews(ServiceList? view)
+    {
+        Banner.Show(view, Catalog.For("RebuildViews"));
+        ShowServices(view);
+    }
 
     /// <summary>
     /// A failed call: SND-UI-002 (nothing answered) is Not running, led by its sentence with the address on its own line
@@ -259,6 +267,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health);
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
         Sentence = SentenceFor(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix);
+        ShowSystemState();
     }
 
     // §4.1 Stale: "After 3 failed refreshes: Sindri not responding: run sindri doctor".

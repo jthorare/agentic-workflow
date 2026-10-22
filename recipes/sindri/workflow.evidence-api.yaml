@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-api
-version: 3
+version: 4
 description: "Block recipe: An API or CLI contract run: plan, then run."
 displayName: "Prove the API or command line contract"
 inputs:
@@ -13,7 +13,7 @@ states:
   plan:   { kind: active, step: step.evidence.api-plan, timeout: { after: 4h, then: park },
             next: "Plan the API evidence for {item} from the phase packet and the built change." }
   run:    { kind: active, step: step.evidence.api-run, timeout: { after: 4h, then: park },
-            next: "Run the planned API evidence for {item} and record the summary." }
+            next: "Run the planned API evidence for {item} and record the summary. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (screenshots, logs, notes); name no hash." }
   passed: { kind: terminal, outcome: resolved }
   skipped: { kind: terminal, outcome: resolved }
   failed: { kind: terminal, outcome: unresolved }

@@ -4,4 +4,5 @@ namespace Aw.Sindri.Core.Onyx;
 /// <param name="Title">One line.</param>
 /// <param name="Reason">Why, with no secret in it.</param>
 /// <param name="Command">The command to run.</param>
-public sealed record OnyxNotice(string Title, string Reason, string Command);
+/// <param name="Action">The catalog action the app offers instead ('SetupOnyx', or 'ConnectOnyx' while the setup waits for the login), or null when there is none.</param>
+public sealed record OnyxNotice(string Title, string Reason, string Command, string? Action = null);

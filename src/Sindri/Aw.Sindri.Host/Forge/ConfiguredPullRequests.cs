@@ -32,6 +32,9 @@ internal sealed class ConfiguredPullRequests(IApprovedProfile approved, Func<str
     public ValueTask<Result<int>> RerunChecks(string link, string sha, CancellationToken cancellationToken)
         => Call(pulls => pulls.RerunChecks(link, sha, cancellationToken), cancellationToken);
 
+    public ValueTask<Result<string>> Self(CancellationToken cancellationToken)
+        => Call(pulls => pulls.Self(cancellationToken), cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<PullThread>>> Threads(string link, CancellationToken cancellationToken)
         => Call(pulls => pulls.Threads(link, cancellationToken), cancellationToken);
 
@@ -55,6 +58,15 @@ internal sealed class ConfiguredPullRequests(IApprovedProfile approved, Func<str
 
     public ValueTask<Result<Unit>> Update(string link, string? title, string? body, CancellationToken cancellationToken)
         => Call(pulls => pulls.Update(link, title, body, cancellationToken), cancellationToken);
+
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken)
+        => Call(pulls => pulls.Retarget(link, newBase, cancellationToken), cancellationToken);
+
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken)
+        => Call(pulls => pulls.DefaultBranch(repo, cancellationToken), cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken)
+        => Call(pulls => pulls.Digest(links, cancellationToken), cancellationToken);
 
     private async ValueTask<Result<T>> Call<T>(Func<IPullRequests, ValueTask<Result<T>>> call, CancellationToken cancellationToken)
     {

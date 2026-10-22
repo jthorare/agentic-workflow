@@ -230,6 +230,20 @@ public sealed class LauncherTests : IDisposable
     }
 
     [Fact]
+    public async Task A_Claude_Step_policy_file_denies_the_holdout_store_under_the_Sindri_home()
+    {
+        var options = new LauncherOptions(_home) { SindriHome = "/sindri/home" };
+        var launcher = new Launcher(new LauncherParts(new AgentCatalog([AgentEntries.ClaudeCode]), _ => _host, _viewer, options, _clock) { ResolveBin = static (_, _) => ValueTask.FromResult<string?>(null) });
+        var request = A.LaunchRequest().Unattended(Step(new StepPolicy(["Read"], StepPermissionMode.ReadOnly, WritablePath: null))).Build();
+
+        _ = await launcher.Launch(request, CancellationToken.None);
+
+        var argv = _host.Started.Single().Argv;
+        var text = await File.ReadAllTextAsync(argv[argv.ToList().IndexOf("--settings") + 1], TestContext.Current.CancellationToken);
+        Expect.True(text.Contains("Read(//sindri/home/holdout/**)", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_Step_brief_is_appended_to_the_seed()
     {
         var request = A.LaunchRequest().Unattended(Step() with { Brief = "Report with: sindri workflow complete X." }).Build();

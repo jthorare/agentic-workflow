@@ -31,7 +31,8 @@ internal static class JobRoute
         "succeeded" => JobState.Succeeded,
         "failed" => JobState.Failed,
         "cancelled" => JobState.Cancelled,
-        _ => SindriErrors.InvalidInput.With("'" + Echo(state) + "' isn't a job state (running, succeeded, failed or cancelled)"),
+        "waiting" => JobState.Waiting,
+        _ => SindriErrors.InvalidInput.With("'" + Echo(state) + "' isn't a job state (running, waiting, succeeded, failed or cancelled)"),
     };
 
     /// <summary>The '?kind=' filter, or null when absent.</summary>

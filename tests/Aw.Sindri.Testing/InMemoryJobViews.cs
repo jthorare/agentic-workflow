@@ -30,8 +30,13 @@ public sealed class InMemoryJobViews : IJobViews
         }
     }
 
-    public ValueTask<Result<IReadOnlyList<JobRow>>> Running(CancellationToken cancellationToken) =>
-        Select(JobState.Running, kind: null, oldestFirst: true);
+    public ValueTask<Result<IReadOnlyList<JobRow>>> Running(CancellationToken cancellationToken)
+    {
+        lock (_rows)
+        {
+            return ValueTask.FromResult(Results.Success(JobOrder.OldestFirst(_rows.Values.Where(static r => JobStates.IsActive(r.State)))));
+        }
+    }
 
     public ValueTask<Result<IReadOnlyList<JobRow>>> List(JobState? state, JobKind? kind, CancellationToken cancellationToken) =>
         Select(state, kind, oldestFirst: false);

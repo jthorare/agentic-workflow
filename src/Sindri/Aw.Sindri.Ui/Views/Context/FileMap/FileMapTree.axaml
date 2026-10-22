@@ -3,5 +3,78 @@
              xmlns:ctx="using:Aw.Sindri.Ui.ViewModels.Context"
              x:Class="Aw.Sindri.Ui.Views.Context.FileMap.FileMapTree"
              x:DataType="ctx:FileMapViewModel">
-  <!-- A seam: the stage that owns this view draws it here (U9 plan §4); nothing until then. -->
+  <UserControl.Resources>
+    <!-- A suggested row is hatched, so it is told apart by more than colour; its words say "Suggested" and how sure the tool is. -->
+    <LinearGradientBrush x:Key="Brush.FileHatch" StartPoint="0,0" EndPoint="8,8" SpreadMethod="Repeat">
+      <GradientStop Offset="0" Color="{StaticResource Color.AttentionSoft}" />
+      <GradientStop Offset="0.5" Color="{StaticResource Color.AttentionSoft}" />
+      <GradientStop Offset="0.5" Color="Transparent" />
+      <GradientStop Offset="1" Color="Transparent" />
+    </LinearGradientBrush>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="Border.file-row">
+      <Setter Property="Height" Value="{StaticResource Size.Row}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style Selector="Border.file-row.suggested">
+      <Setter Property="Background" Value="{StaticResource Brush.FileHatch}" />
+    </Style>
+    <Style Selector="Button.file-open">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- The Files view (F3 spec 1 §2): one folder at a time, 36 px rows, a suggested row hatched. A folder opens; a file is a row. -->
+  <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+    <Grid ColumnDefinitions="Auto,*,Auto">
+      <Button x:Name="FilesUp" Click="OnUp" IsEnabled="{Binding CanGoUp}" AutomationProperties.Name="{Binding UpWord}">
+        <TextBlock Classes="button" Text="{Binding UpWord}" />
+      </Button>
+      <TextBlock x:Name="FilesPath" Grid.Column="1" Classes="body-strong" Text="{Binding PathText}" Margin="12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+      <TextBlock x:Name="FilesTotals" Grid.Column="2" Classes="caption subtle" Text="{Binding TotalsText}" VerticalAlignment="Center" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="2*,3*,2*" Margin="8,0" AutomationProperties.AccessibilityView="Raw">
+      <TextBlock Classes="eyebrow" Text="{Binding ColFile}" />
+      <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColFor}" />
+      <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColIntent}" />
+    </Grid>
+
+    <Panel Grid.Row="2">
+      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}" IsVisible="{Binding HasRows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="ctx:FileRowViewModel">
+            <Border Classes="file-row" Classes.suggested="{Binding IsSuggested}" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control">
+              <Grid ColumnDefinitions="2*,3*,2*" Margin="8,0">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <Button Classes="file-open" IsVisible="{Binding IsDirectory}" Click="OnOpen" AutomationProperties.Name="{Binding Name}">
+                    <TextBlock Classes="body-strong" Text="{Binding Name}" />
+                  </Button>
+                  <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding IsFile}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding FilesText}" IsVisible="{Binding IsDirectory}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding StatusWord}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="body" Text="{Binding ForText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Grid.Column="2" Classes="body" Text="{Binding IntentText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock x:Name="FilesLoading" Classes="body subtle" Text="{Binding LoadingWord}" IsVisible="{Binding IsLoading}" Margin="8,0" />
+      <TextBlock x:Name="FilesEmpty" Classes="body subtle" Text="{Binding EmptyWord}" IsVisible="{Binding IsEmptyFolder}" Margin="8,0" />
+      <Border x:Name="FilesProblem" IsVisible="{Binding HasProblem}" BorderBrush="{DynamicResource Brush.Attention}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" Padding="12,8" VerticalAlignment="Top"
+              AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
+      </Border>
+    </Panel>
+
+    <TextBlock x:Name="FilesNote" Grid.Row="3" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,0" />
+  </Grid>
 </UserControl>

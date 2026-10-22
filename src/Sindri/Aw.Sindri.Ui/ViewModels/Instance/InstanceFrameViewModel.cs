@@ -20,6 +20,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
 {
     private readonly ILauncher _launcher = launcher ?? NullLauncher.Instance;
     private Uri? _url;
+    private NeedsYou.InstanceCommander? _commander;
     private string? _id;
     private int _generation;
     private (string Address, FrameIntent Intent, string? Key)? _intent;
@@ -258,7 +259,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
 
         ShowPanels(detail);
         ShowStepRuns(detail);
-        var expanded = new ExpandedStateViewModel(detail.Current, detail.Address, clipboard, clock);
+        var expanded = new ExpandedStateViewModel(detail.Current, detail.Address, clipboard, clock) { Commander = _commander ??= new NeedsYou.InstanceCommander(api, () => _url), InstanceId = detail.Id };
         if (Expanded is null || !string.Equals(Expanded.Signature, expanded.Signature, StringComparison.Ordinal))
         {
             expanded.ChildRequested += (_, e) => OpenRequested?.Invoke(this, e);

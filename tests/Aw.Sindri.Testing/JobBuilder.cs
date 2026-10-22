@@ -44,7 +44,7 @@ public sealed class JobBuilder
     /// <returns>This builder.</returns>
     public JobBuilder Ended(JobState state)
     {
-        _row = _row with { State = state, EndedAt = _row.StartedAt.AddMinutes(1), Summary = state switch { JobState.Succeeded => "succeeded", JobState.Failed => "failed", JobState.Cancelled => "cancelled", JobState.Running => null, _ => null } };
+        _row = _row with { State = state, EndedAt = _row.StartedAt.AddMinutes(1), Summary = state switch { JobState.Succeeded => "succeeded", JobState.Failed => "failed", JobState.Cancelled => "cancelled", JobState.Running => null, JobState.Waiting => null, _ => null } };
         return this;
     }
 

@@ -14,6 +14,7 @@ internal sealed partial class FakeSindriApi
     private readonly List<AppChallengeRequest> _challenges = [];
     private readonly List<ApproveAllRequest> _approvals = [];
     private readonly List<ApproveProfileRequest> _profileApprovals = [];
+    private readonly List<RecipeApprovalSent> _recipeApprovals = [];
     private int _planCalls;
     private int _approveAllJobCalls;
 
@@ -28,6 +29,12 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>POST /sindri/profile/approve's answer.</summary>
     public RouteAnswer ApproveProfileAnswer { get; set; } = RouteAnswer.Api("profile-approve", "approved");
+
+    /// <summary>POST /sindri/workflow/recipes/{id}@{hash}/approve's answer.</summary>
+    public RouteAnswer ApproveRecipeAnswer { get; set; } = RouteAnswer.SpecShaped("recipe-approve", "approved");
+
+    /// <summary>Every recipe approval received, in order.</summary>
+    public IReadOnlyList<RecipeApprovalSent> RecipeApprovals { get { lock (_gate) { return [.. _recipeApprovals]; } } }
 
     /// <summary>Held open until set: the profile approval waits for it (the app is sending meanwhile).</summary>
     public TaskCompletionSource? ApproveProfileGate { get; set; }
@@ -125,5 +132,20 @@ internal sealed partial class FakeSindriApi
 
         await WaitFor(ApproveProfileGate, cancellationToken).ConfigureAwait(false);
         return Answer<ProfileApproved>(api, "/sindri/profile/approve", ApproveProfileAnswer);
+    }
+
+    public Task<Result<RecipeApproved>> ApproveRecipe(Uri api, string id, string hash, ProfileAnswer answer, CancellationToken cancellationToken)
+    {
+        if (NotReceived<RecipeApproved>(api) is { } unanswered)
+        {
+            return Task.FromResult(unanswered);
+        }
+
+        lock (_gate)
+        {
+            _recipeApprovals.Add(new RecipeApprovalSent(id, hash, answer));
+        }
+
+        return Task.FromResult(Answer<RecipeApproved>(api, WorkflowRoutes.ApproveRecipe(id, hash), ApproveRecipeAnswer));
     }
 }

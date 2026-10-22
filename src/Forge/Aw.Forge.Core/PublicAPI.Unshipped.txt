@@ -93,9 +93,9 @@ Aw.Forge.Core.Pulls.ForgeThread.Author.init -> void
 Aw.Forge.Core.Pulls.ForgeThread.Body.get -> string!
 Aw.Forge.Core.Pulls.ForgeThread.Body.init -> void
 Aw.Forge.Core.Pulls.ForgeThread.<Clone>$() -> Aw.Forge.Core.Pulls.ForgeThread!
-Aw.Forge.Core.Pulls.ForgeThread.Deconstruct(out string! Key, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out bool Resolved, out bool Outdated, out string? Path, out string! Body, out System.Collections.Generic.IReadOnlyList<string!>! Markers) -> void
+Aw.Forge.Core.Pulls.ForgeThread.Deconstruct(out string! Key, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out bool Resolved, out bool Outdated, out string? Path, out string! Body, out System.Collections.Generic.IReadOnlyList<string!>! Markers, out System.DateTimeOffset CreatedAt, out int? Line, out System.DateTimeOffset? EditedAt, out string? Url) -> void
 Aw.Forge.Core.Pulls.ForgeThread.Equals(Aw.Forge.Core.Pulls.ForgeThread? other) -> bool
-Aw.Forge.Core.Pulls.ForgeThread.ForgeThread(string! Key, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, bool Resolved, bool Outdated, string? Path, string! Body, System.Collections.Generic.IReadOnlyList<string!>! Markers) -> void
+Aw.Forge.Core.Pulls.ForgeThread.ForgeThread(string! Key, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, bool Resolved, bool Outdated, string? Path, string! Body, System.Collections.Generic.IReadOnlyList<string!>! Markers, System.DateTimeOffset CreatedAt, int? Line, System.DateTimeOffset? EditedAt, string? Url) -> void
 Aw.Forge.Core.Pulls.ForgeThread.IsBot.get -> bool
 Aw.Forge.Core.Pulls.ForgeThread.IsBot.init -> void
 Aw.Forge.Core.Pulls.ForgeThread.Key.get -> string!
@@ -157,7 +157,7 @@ Aw.Forge.Core.Pulls.OpenPullRequest.Base.init -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.Body.get -> string!
 Aw.Forge.Core.Pulls.OpenPullRequest.Body.init -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.<Clone>$() -> Aw.Forge.Core.Pulls.OpenPullRequest!
-Aw.Forge.Core.Pulls.OpenPullRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRepo! Repo, out string! Head, out string! Base, out string! HeadSha, out string! Title, out string! Body, out bool Draft) -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRepo! Repo, out string! Head, out string! Base, out string! HeadSha, out string! Title, out string! Body, out bool Draft, out System.Collections.Generic.IReadOnlyList<string!>? Labels) -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.Draft.get -> bool
 Aw.Forge.Core.Pulls.OpenPullRequest.Draft.init -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.Equals(Aw.Forge.Core.Pulls.OpenPullRequest? other) -> bool
@@ -165,7 +165,7 @@ Aw.Forge.Core.Pulls.OpenPullRequest.Head.get -> string!
 Aw.Forge.Core.Pulls.OpenPullRequest.Head.init -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.HeadSha.get -> string!
 Aw.Forge.Core.Pulls.OpenPullRequest.HeadSha.init -> void
-Aw.Forge.Core.Pulls.OpenPullRequest.OpenPullRequest(Aw.Forge.Core.Refs.ForgeRepo! Repo, string! Head, string! Base, string! HeadSha, string! Title, string! Body, bool Draft) -> void
+Aw.Forge.Core.Pulls.OpenPullRequest.OpenPullRequest(Aw.Forge.Core.Refs.ForgeRepo! Repo, string! Head, string! Base, string! HeadSha, string! Title, string! Body, bool Draft, System.Collections.Generic.IReadOnlyList<string!>? Labels = null) -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.Repo.get -> Aw.Forge.Core.Refs.ForgeRepo!
 Aw.Forge.Core.Pulls.OpenPullRequest.Repo.init -> void
 Aw.Forge.Core.Pulls.OpenPullRequest.Title.get -> string!
@@ -195,7 +195,7 @@ Aw.Forge.Core.Pulls.PullSnapshot.Base.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Checks.get -> Aw.Forge.Core.Pulls.ChecksSummary!
 Aw.Forge.Core.Pulls.PullSnapshot.Checks.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.<Clone>$() -> Aw.Forge.Core.Pulls.PullSnapshot!
-Aw.Forge.Core.Pulls.PullSnapshot.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out string! Url, out string! Title, out string! Author, out Aw.Forge.Core.Pulls.PullStatus Status, out bool Draft, out Aw.Forge.Core.Pulls.BaseBranch! Base, out Aw.Forge.Core.Pulls.HeadBranch! Head, out bool? Mergeable, out string? ReviewDecision, out Aw.Forge.Core.Pulls.ChecksSummary! Checks) -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Ref, out string! Url, out string! Title, out string! Author, out Aw.Forge.Core.Pulls.PullStatus Status, out bool Draft, out Aw.Forge.Core.Pulls.BaseBranch! Base, out Aw.Forge.Core.Pulls.HeadBranch! Head, out bool? Mergeable, out string? ReviewDecision, out Aw.Forge.Core.Pulls.ChecksSummary! Checks, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Draft.get -> bool
 Aw.Forge.Core.Pulls.PullSnapshot.Draft.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Equals(Aw.Forge.Core.Pulls.PullSnapshot? other) -> bool
@@ -203,7 +203,7 @@ Aw.Forge.Core.Pulls.PullSnapshot.Head.get -> Aw.Forge.Core.Pulls.HeadBranch!
 Aw.Forge.Core.Pulls.PullSnapshot.Head.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.get -> bool?
 Aw.Forge.Core.Pulls.PullSnapshot.Mergeable.init -> void
-Aw.Forge.Core.Pulls.PullSnapshot.PullSnapshot(Aw.Forge.Core.Refs.ForgeRef! Ref, string! Url, string! Title, string! Author, Aw.Forge.Core.Pulls.PullStatus Status, bool Draft, Aw.Forge.Core.Pulls.BaseBranch! Base, Aw.Forge.Core.Pulls.HeadBranch! Head, bool? Mergeable, string? ReviewDecision, Aw.Forge.Core.Pulls.ChecksSummary! Checks) -> void
+Aw.Forge.Core.Pulls.PullSnapshot.PullSnapshot(Aw.Forge.Core.Refs.ForgeRef! Ref, string! Url, string! Title, string! Author, Aw.Forge.Core.Pulls.PullStatus Status, bool Draft, Aw.Forge.Core.Pulls.BaseBranch! Base, Aw.Forge.Core.Pulls.HeadBranch! Head, bool? Mergeable, string? ReviewDecision, Aw.Forge.Core.Pulls.ChecksSummary! Checks, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
 Aw.Forge.Core.Pulls.PullSnapshot.Ref.get -> Aw.Forge.Core.Refs.ForgeRef!
 Aw.Forge.Core.Pulls.PullSnapshot.Ref.init -> void
 Aw.Forge.Core.Pulls.PullSnapshot.ReviewDecision.get -> string?
@@ -283,7 +283,7 @@ Aw.Forge.Core.Pulls.SeedThreadRequest.Author.init -> void
 Aw.Forge.Core.Pulls.SeedThreadRequest.Body.get -> string!
 Aw.Forge.Core.Pulls.SeedThreadRequest.Body.init -> void
 Aw.Forge.Core.Pulls.SeedThreadRequest.<Clone>$() -> Aw.Forge.Core.Pulls.SeedThreadRequest!
-Aw.Forge.Core.Pulls.SeedThreadRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out string? Path, out string! Body) -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Deconstruct(out Aw.Forge.Core.Refs.ForgeRef! Pull, out Aw.Forge.Core.Pulls.CommentKind Kind, out string! Author, out string! Association, out bool IsBot, out string? Path, out string! Body, out System.DateTimeOffset? CreatedAt, out int? Line, out System.DateTimeOffset? EditedAt) -> void
 Aw.Forge.Core.Pulls.SeedThreadRequest.Equals(Aw.Forge.Core.Pulls.SeedThreadRequest? other) -> bool
 Aw.Forge.Core.Pulls.SeedThreadRequest.IsBot.get -> bool
 Aw.Forge.Core.Pulls.SeedThreadRequest.IsBot.init -> void
@@ -293,7 +293,7 @@ Aw.Forge.Core.Pulls.SeedThreadRequest.Path.get -> string?
 Aw.Forge.Core.Pulls.SeedThreadRequest.Path.init -> void
 Aw.Forge.Core.Pulls.SeedThreadRequest.Pull.get -> Aw.Forge.Core.Refs.ForgeRef!
 Aw.Forge.Core.Pulls.SeedThreadRequest.Pull.init -> void
-Aw.Forge.Core.Pulls.SeedThreadRequest.SeedThreadRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, string? Path, string! Body) -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.SeedThreadRequest(Aw.Forge.Core.Refs.ForgeRef! Pull, Aw.Forge.Core.Pulls.CommentKind Kind, string! Author, string! Association, bool IsBot, string? Path, string! Body, System.DateTimeOffset? CreatedAt = null, int? Line = null, System.DateTimeOffset? EditedAt = null) -> void
 Aw.Forge.Core.Pulls.UpdatePullRequest
 Aw.Forge.Core.Pulls.UpdatePullRequest.Body.get -> string?
 Aw.Forge.Core.Pulls.UpdatePullRequest.Body.init -> void
@@ -456,3 +456,22 @@ static readonly Aw.Forge.Core.ForgeErrors.RateLimited -> Aw.Kernel.ErrorDefiniti
 static readonly Aw.Forge.Core.ForgeErrors.Rejected -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.Unauthorized -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Forge.Core.ForgeErrors.Unavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Forge.Core.Pulls.ForgeThread.CreatedAt.get -> System.DateTimeOffset
+Aw.Forge.Core.Pulls.ForgeThread.CreatedAt.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Line.get -> int?
+Aw.Forge.Core.Pulls.ForgeThread.Line.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.EditedAt.get -> System.DateTimeOffset?
+Aw.Forge.Core.Pulls.ForgeThread.EditedAt.init -> void
+Aw.Forge.Core.Pulls.ForgeThread.Url.get -> string?
+Aw.Forge.Core.Pulls.ForgeThread.Url.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.CreatedAt.get -> System.DateTimeOffset?
+Aw.Forge.Core.Pulls.SeedThreadRequest.CreatedAt.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.Line.get -> int?
+Aw.Forge.Core.Pulls.SeedThreadRequest.Line.init -> void
+Aw.Forge.Core.Pulls.SeedThreadRequest.EditedAt.get -> System.DateTimeOffset?
+Aw.Forge.Core.Pulls.SeedThreadRequest.EditedAt.init -> void
+Aw.Forge.Core.Ports.IForge.Self(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Forge.Core.Pulls.OpenPullRequest.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Forge.Core.Pulls.OpenPullRequest.Labels.init -> void
+Aw.Forge.Core.Pulls.PullSnapshot.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Forge.Core.Pulls.PullSnapshot.Labels.init -> void

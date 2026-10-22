@@ -105,8 +105,9 @@ internal static partial class Labels
     internal static string SetupCount(int done, int total) =>
         done == total && total > 0 ? string.Create(CultureInfo.InvariantCulture, $"All {total} done") : string.Create(CultureInfo.InvariantCulture, $"{done} of {total} done");
 
-    /// <summary>"40 of 100" for a counted step.</summary>
-    internal static string SetupProgress(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"{done} of {total}");
+    /// <summary>"40 of 100 files" for a counted step ("40 of 100" when the server names no unit).</summary>
+    internal static string SetupProgress(int done, int total, string? unit = null) =>
+        string.IsNullOrWhiteSpace(unit) ? string.Create(CultureInfo.InvariantCulture, $"{done} of {total}") : string.Create(CultureInfo.InvariantCulture, $"{done} of {total} {unit}");
 
     /// <summary>The app's title for a step; a step this build doesn't know keeps the API's.</summary>
     /// <param name="id">The step's id.</param>

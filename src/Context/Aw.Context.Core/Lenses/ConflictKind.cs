@@ -10,7 +10,7 @@ public enum ConflictKind
     [JsonStringEnumMemberName("supersedes")]
     Supersedes,
 
-    /// <summary>A decision disagrees with a cited record (arrives with S-CF).</summary>
+    /// <summary>A decision disagrees with a cited record (intent against intent, or a decision citing a file that implements something else, S-CF).</summary>
     [JsonStringEnumMemberName("contradicts")]
     Contradicts,
 }

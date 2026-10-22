@@ -1,19 +1,26 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
 /// What the setup list reads of the per-repo MCP registration: for each repo the approved profile names, whether each installed provider's local registration exists for its checkout (Claude Code's local-scope entry, Codex's and Cursor's project files).
+/// Each line also carries the installed providers' own states: connected (the entry exists), connecting (a RegisterMcp job for the repo is queued or running), failed (the newest such job failed) or not started.
 /// Only local scope counts; a user-wide entry is never looked for here (doctor warns on that) and a file that can't be read is no entry. It starts nothing.
 /// </summary>
 /// <param name="approvals">The approved profile (the repos and their checkouts).</param>
 /// <param name="host">Reads the providers' config files and says which are installed.</param>
-internal sealed class McpSetupReader(IApprovedProfile approvals, IProviderHost host)
+/// <param name="jobs">The 'jobs' view (the RegisterMcp jobs).</param>
+/// <param name="queue">The setup service's job queue (a job waiting for its turn is connecting too).</param>
+internal sealed class McpSetupReader(IApprovedProfile approvals, IProviderHost host, IJobViews jobs, ISetupJobSlots queue)
 {
-    private static readonly (ProviderFile Provider, string Name)[] _providers = [(ProviderFile.Claude, "Claude Code"), (ProviderFile.Codex, "Codex"), (ProviderFile.Cursor, "Cursor")];
+    private static readonly JobKind _register = JobKind.From("RegisterMcp");
+    private static readonly (ProviderFile Provider, string Name, string Id)[] _providers = [(ProviderFile.Claude, "Claude Code", "claude"), (ProviderFile.Codex, "Codex", "codex"), (ProviderFile.Cursor, "Cursor", "cursor")];
 
     internal async ValueTask<Result<McpFact>> Read(CancellationToken cancellationToken)
     {
@@ -32,27 +39,51 @@ internal sealed class McpSetupReader(IApprovedProfile approvals, IProviderHost h
         }
 
         var claude = installed.Exists(static p => p.Provider == ProviderFile.Claude) ? await Text(host.UserConfigPath(ProviderFile.Claude), cancellationToken).ConfigureAwait(false) : null;
+        var recent = await jobs.List(state: null, _register, cancellationToken).ConfigureAwait(false);
         var lines = new List<SetupItem>();
         foreach (var repo in repos)
         {
-            lines.Add(await Line(installed, claude, repo, cancellationToken).ConfigureAwait(false));
+            lines.Add(await Line(installed, claude, repo, recent.IsSuccess ? recent.Value : [], cancellationToken).ConfigureAwait(false));
         }
 
         return new McpFact(repos.Count, lines.Count(static l => l.State == SetupState.Done), names) { Items = new SetupItems(lines) };
     }
 
-    private async ValueTask<SetupItem> Line(List<(ProviderFile Provider, string Name)> installed, string? claude, RepoEntry repo, CancellationToken cancellationToken)
+    private async ValueTask<SetupItem> Line(List<(ProviderFile Provider, string Name, string Id)> installed, string? claude, RepoEntry repo, IReadOnlyList<JobRow> recent, CancellationToken cancellationToken)
     {
         var registeredIn = new List<string>();
-        foreach (var (provider, name) in installed)
+        var states = new List<McpProviderState>();
+        var (otherState, otherDetail) = Elsewhere(repo, recent);
+        foreach (var (provider, name, id) in installed)
         {
             if (await IsRegistered(provider, claude, repo, cancellationToken).ConfigureAwait(false))
             {
                 registeredIn.Add(name);
+                states.Add(new McpProviderState(id, McpConnection.Connected));
+            }
+            else
+            {
+                states.Add(new McpProviderState(id, otherState, otherDetail));
             }
         }
 
-        return new SetupItem(repo.Name, registeredIn.Count == installed.Count ? SetupState.Done : SetupState.Todo, registeredIn.Count == 0 ? null : string.Join(", ", registeredIn));
+        return new SetupItem(repo.Name, registeredIn.Count == installed.Count ? SetupState.Done : SetupState.Todo, registeredIn.Count == 0 ? null : string.Join(", ", registeredIn)) { Providers = states };
+    }
+
+    // What a provider without the entry stands at: a job queued or running for the repo is connecting; else the newest ended job says whether the last try failed.
+    private (McpConnection State, string? Detail) Elsewhere(RepoEntry repo, IReadOnlyList<JobRow> recent)
+    {
+        var key = McpJobKeys.For(RepoName.From(repo.Name));
+        var mine = recent.Where(j => j.Key == key).ToList();
+        var queued = queue.Holds(_register, key);
+        if (queued || mine.Exists(static j => j.State == JobState.Running))
+        {
+            return (McpConnection.Connecting, null);
+        }
+
+        return mine.FirstOrDefault(static j => j.State != JobState.Cancelled) is { State: JobState.Failed } failed
+            ? (McpConnection.Failed, failed.Summary)
+            : (McpConnection.NotStarted, null);
     }
 
     private async ValueTask<bool> IsRegistered(ProviderFile provider, string? claude, RepoEntry repo, CancellationToken cancellationToken) => provider switch

@@ -6,5 +6,5 @@ using Aw.Redaction;
 namespace Aw.Forge.Infrastructure;
 
 /// <summary>The file-backed forge: the world in one JSON file under a directory, pushes through real git. Used by tests, proofs and the aw-forge-fake tool.</summary>
-internal sealed class FileForge(ForgeHosts hosts, string directory, IRedactor redactor)
-    : WorldForge(ForgeKind.File, hosts, new FileWorldStore(directory), redactor, new GitPusher(redactor));
+internal sealed class FileForge(ForgeHosts hosts, string directory, IRedactor redactor, string actingLogin = "sindri", TimeProvider? clock = null)
+    : WorldForge(ForgeKind.File, hosts, new FileWorldStore(directory), redactor, new GitPusher(redactor), actingLogin, clock);

@@ -48,7 +48,24 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
     /// <returns>The pointer to the stored token, or SND-ONYX-007, 008 or 009.</returns>
     internal async ValueTask<Result<string>> Mint(int port, CancellationToken cancellationToken)
     {
-        var password = await Prepare(port, cancellationToken).ConfigureAwait(false);
+        var email = await prompts.Ask(LoginPrompt, cancellationToken).ConfigureAwait(false);
+        var password = email is { Length: > 0 } ? await prompts.AskSecret("The password of that account (not shown, not stored): ", cancellationToken).ConfigureAwait(false) : null;
+        if (email is not { Length: > 0 } || password is not { Length: > 0 })
+        {
+            return SindriErrors.OnyxKeyFailed.With("no Onyx login was given; run `sindri onyx up` again and enter the email and password of the account you created");
+        }
+
+        return await Mint(port, new OnyxLogin(email, new OnyxSecret(password)), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Makes the dedicated user and its token with a login that was already given (the app's form), and stores the token.</summary>
+    /// <param name="port">Onyx's loopback port.</param>
+    /// <param name="login">The owner's own Onyx admin login.</param>
+    /// <param name="cancellationToken">Cancels the requests.</param>
+    /// <returns>The pointer to the stored token, or SND-ONYX-007, 008 or 009.</returns>
+    internal async ValueTask<Result<string>> Mint(int port, OnyxLogin login, CancellationToken cancellationToken)
+    {
+        var password = await Prepare(port, login, cancellationToken).ConfigureAwait(false);
         if (password.IsError)
         {
             return password.Error;
@@ -65,21 +82,15 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
     }
 
     // The owner's session: the dedicated user exists, has a password only this call knows, and is an admin.
-    private async ValueTask<Result<string>> Prepare(int port, CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Prepare(int port, OnyxLogin login, CancellationToken cancellationToken)
     {
-        var email = await prompts.Ask(LoginPrompt, cancellationToken).ConfigureAwait(false);
-        var password = email is { Length: > 0 } ? await prompts.AskSecret("The password of that account (not shown, not stored): ", cancellationToken).ConfigureAwait(false) : null;
-        if (email is not { Length: > 0 } || password is not { Length: > 0 })
-        {
-            return SindriErrors.OnyxKeyFailed.With("no Onyx login was given; run `sindri onyx up` again and enter the email and password of the account you created");
-        }
-
+        var email = login.Email;
         if (IsSindriAddress(email))
         {
             return SindriErrors.OnyxKeyFailed.With($"{email.Trim()} is the address of Sindri's own Onyx user, which Sindri creates itself; nothing was sent to Onyx. Enter your own Onyx admin login, the account you signed up with at Onyx's sign-up page, and run `sindri onyx up` again");
         }
 
-        var signedIn = await provisioning.SignIn(port, email, password, cancellationToken).ConfigureAwait(false);
+        var signedIn = await provisioning.SignIn(port, email, login.Password.Reveal(), cancellationToken).ConfigureAwait(false);
         if (signedIn.IsError)
         {
             return signedIn.Error;

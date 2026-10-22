@@ -79,7 +79,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
         .AddSingleton<BlockStepRunner>().AddSingleton<AgentStepSelection>()
         .AddSingleton<GateDispatch>(static provider => (gate, context, ct) => RunGateScoped(provider, gate, context, ct))   // engine P7: EvaluateGates runs a scoped gate by id
         .AddSingleton<GateActivities>()                            // engine P7: EvaluateGates
-        .AddSingleton<CleanupActivities>()                         // engine P7: ReleaseClaim
+        .AddSingleton<PhaseWorkspaceRemoval>()                     // LN-WF2: the ended phase's worktree
+        .AddSingleton<CleanupActivities>()                         // engine P7: ReleaseClaim, LN-WF2: RemovePhaseWorkspace
         .AddSingleton<ChildActivities>()                           // engine P7: LoadChildren
         .AddSingleton<HeavyLeases>().AddSingleton<HeavyActivities>()   // LN-WF3: TakeHeavy, ReleaseHeavy over IHeavySlots; the leases a worker holds
         .AddSingleton<EngineActivities>()

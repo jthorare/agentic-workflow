@@ -39,8 +39,11 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
     /// <summary>True for Cancel, which asks first.</summary>
     public bool IsCancel => Verb == StatusVerb.Cancel;
 
-    /// <summary>True when the words stand as text: a protected command has the lock button, Cancel its own button.</summary>
-    public bool ShowsLabel => Protected is null && !IsCancel;
+    /// <summary>True for Hand back on a command the app may send (not a protected one), which has its own button.</summary>
+    public bool IsHandBack => Verb == StatusVerb.Handback && Protected is null;
+
+    /// <summary>True when the words stand as text: a protected command has the lock button, Cancel and Hand back their own buttons.</summary>
+    public bool ShowsLabel => Protected is null && !IsCancel && !IsHandBack;
 
     /// <summary>The served CLI line, or empty when it can't be shown.</summary>
     public string Cli { get; }

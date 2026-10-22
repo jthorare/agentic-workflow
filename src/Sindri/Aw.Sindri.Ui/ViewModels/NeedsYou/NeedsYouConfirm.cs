@@ -9,13 +9,13 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
-/// The confirmations the inbox's action bar hosts (F3 needs-you spec §8.3): for a drifted profile the typed box, for approve-all the hold button
+/// The confirmations the inbox's action bar hosts (F3 needs-you spec §8.3): for a drifted profile or a changed workflow the typed box, for approve-all the hold button
 /// (the approve-all dialog's own <see cref="ApproveAllViewModel"/>: its plan, challenge and redeem, not a second copy), and for anything else the
 /// terminal copy. The bar offers a control only when the catalog lets the app confirm that action; a single workflow's approve stays the terminal
 /// copy until its typed approve lands. Nothing is sent without the person's typed text or hold, a challenge is asked for once a row shows and again
 /// only after it ran out or was used up, and an answer is sent once.
 /// </summary>
-internal sealed class NeedsYouConfirm : ObservableObject
+internal sealed partial class NeedsYouConfirm : ObservableObject
 {
     private const string ProfileAction = "ApproveProfile";
     private const string RecipeAction = "ApproveRecipe";
@@ -28,7 +28,11 @@ internal sealed class NeedsYouConfirm : ObservableObject
     private readonly TimeProvider _clock;
     private AppChallengeView? _challenge;
     private string _hash = "";
-    private bool _profileDone;
+    private bool _typedDone;   // the typed approval (profile or workflow) went through
+    private readonly TypedConfirmBoxViewModel _profileBox;
+    private readonly TypedConfirmBoxViewModel _recipeBox;
+    private bool _recipeShown;
+    private RecipeSummaryView? _recipe;
     private bool _sending;
     private string ProfileRefusal { get; set; } = "";
     private NeedsYouRowViewModel? _row;
@@ -44,7 +48,8 @@ internal sealed class NeedsYouConfirm : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(catalog);
         (_catalog, _url, _api, _clock) = (catalog, url, api, clock);
-        TypedBox = new TypedConfirmBoxViewModel(ProfileAction, catalog, clock);
+        _profileBox = new TypedConfirmBoxViewModel(ProfileAction, catalog, clock);
+        _recipeBox = new TypedConfirmBoxViewModel(RecipeAction, catalog, clock);
         All = new ApproveAllViewModel(catalog, url, api, clock, reducedMotion);
         All.PropertyChanged += OnAllChanged;
         catalog.PropertyChanged += OnCatalogChanged;
@@ -53,8 +58,8 @@ internal sealed class NeedsYouConfirm : ObservableObject
     /// <summary>Raised when what the bar shows of the confirmation changed: the kind, a refusal, or an approval that went through.</summary>
     internal event EventHandler? Changed;
 
-    /// <summary>The typed box of a drifted profile's approval.</summary>
-    internal TypedConfirmBoxViewModel TypedBox { get; }
+    /// <summary>The typed box of the shown row's approval: a drifted profile's, or a changed workflow's.</summary>
+    internal TypedConfirmBoxViewModel TypedBox => _recipeShown ? _recipeBox : _profileBox;
 
     /// <summary>The approve-all dialog's view model, which also serves the bar's hold.</summary>
     internal ApproveAllViewModel All { get; }
@@ -69,7 +74,7 @@ internal sealed class NeedsYouConfirm : ObservableObject
     internal string Refusal => Kind == NeedsYouConfirmKind.Hold ? (All.HasError ? All.Error : All.Notice) : ProfileRefusal;
 
     /// <summary>True once the approval went through.</summary>
-    internal bool Done => Kind == NeedsYouConfirmKind.Hold ? All.IsDone : _profileDone;
+    internal bool Done => Kind == NeedsYouConfirmKind.Hold ? All.IsDone : _typedDone;
 
     /// <summary>True when the row's primary is one of the three approvals the app confirms.</summary>
     /// <param name="entry">The row.</param>
@@ -88,19 +93,22 @@ internal sealed class NeedsYouConfirm : ObservableObject
         _session++;
         _row = row;
         All.Close();
-        (_challenge, _hash, _profileDone, _sending) = (null, "", false, false);
+        (_challenge, _hash, _typedDone, _sending) = (null, "", false, false);
         ProfileRefusal = "";
-        TypedBox.Clear();
+        _profileBox.Clear();
+        _recipeBox.Clear();
+        (_recipe, _recipeShown) = (null, false);
         Kind = KindOf(row);
         if (Kind == NeedsYouConfirmKind.Typed)
         {
-            _hash = row!.Entry.Subject!.Id;   // why: the kind is Typed only for a row with a profile subject
+            _hash = row!.Entry.Subject!.Id;   // why: the kind is Typed only for a row with a profile or recipe subject (the id is the hash or the recipe's id)
+            _recipeShown = IsRecipe(row);
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
         return Kind switch
         {
-            NeedsYouConfirmKind.Typed => AskProfile(_session),
+            NeedsYouConfirmKind.Typed => Ask(_session),
             NeedsYouConfirmKind.Hold => All.Open(CancellationToken.None),
             NeedsYouConfirmKind.None or NeedsYouConfirmKind.Terminal => Task.CompletedTask,
             _ => throw new InvalidOperationException("a kind the bar doesn't know"),
@@ -112,7 +120,7 @@ internal sealed class NeedsYouConfirm : ObservableObject
     /// <returns>A task that completes when the answer came.</returns>
     internal async Task SubmitTyped(string typed)
     {
-        if (Kind != NeedsYouConfirmKind.Typed || _sending || _profileDone || _challenge is not { } challenge || _url() is not { } api)
+        if (Kind != NeedsYouConfirmKind.Typed || _sending || _typedDone || _challenge is not { } challenge || _url() is not { } api)
         {
             return;
         }
@@ -126,23 +134,23 @@ internal sealed class NeedsYouConfirm : ObservableObject
         if (challenge.ExpiresAt <= _clock.GetUtcNow())
         {
             ProfileRefusal = Labels.NeedsYouTypedExpired;
-            await AskProfile(session).ConfigureAwait(true);
+            await Ask(session).ConfigureAwait(true);
             return;
         }
 
-        await SendProfile(api, challenge, typed, session).ConfigureAwait(true);
+        await Send(api, challenge, typed, session).ConfigureAwait(true);
     }
 
     // The answer goes once: the guard is set before the first await, and the challenge is used up by any answer.
-    private async Task SendProfile(Uri api, AppChallengeView challenge, string typed, int session)
+    private async Task Send(Uri api, AppChallengeView challenge, string typed, int session)
     {
         (_sending, ProfileRefusal) = (true, "");
         TypedBox.SetSending(sending: true);
         Changed?.Invoke(this, EventArgs.Empty);
-        Result<ProfileApproved> sent;
+        (Error? Refused, bool Approved) outcome;
         try
         {
-            sent = await _api.ApproveProfile(api, new ApproveProfileRequest(_hash, new ProfileAnswer(challenge.Challenge, typed)), CancellationToken.None).ConfigureAwait(true);
+            outcome = await Approve(api, challenge, typed).ConfigureAwait(true);
         }
         finally
         {
@@ -155,25 +163,24 @@ internal sealed class NeedsYouConfirm : ObservableObject
 
         if (session == _session)
         {
-            await Settle(sent, session).ConfigureAwait(true);
+            await Settle(outcome.Refused, outcome.Approved, session).ConfigureAwait(true);
         }
     }
 
     // What the server said: an approval is the row's end; anything else, a refusal in words, and (but for an agent session) a fresh challenge.
-    private async Task Settle(Result<ProfileApproved> sent, int session)
+    private async Task Settle(Error? refused, bool approved, int session)
     {
-        if (sent.IsSuccess && sent.Value.Approved)
+        if (approved)
         {
-            _profileDone = true;
+            _typedDone = true;
             Changed?.Invoke(this, EventArgs.Empty);
             return;
         }
 
-        var refused = sent.IsError ? sent.Error : null;
         ProfileRefusal = refused is null ? Labels.NeedsYouNotApproved : Words(refused);
         if (refused is null || !string.Equals(refused.Code, SessionRefusal, StringComparison.Ordinal))
         {
-            await AskProfile(session).ConfigureAwait(true);   // a fresh challenge: asking again helps unless every session is refused
+            await Ask(session).ConfigureAwait(true);   // a fresh challenge: asking again helps unless every session is refused
         }
         else
         {
@@ -195,14 +202,15 @@ internal sealed class NeedsYouConfirm : ObservableObject
         }
 
         var action = row.Entry.PrimaryAction;
-        if (string.Equals(action, RecipeAction, StringComparison.Ordinal) || !AppConfirm.IsReady(_catalog, action))
+        if (!AppConfirm.IsReady(_catalog, action))
         {
             return NeedsYouConfirmKind.Terminal;
         }
 
-        return string.Equals(action, ProfileAction, StringComparison.Ordinal)
-            ? row.Entry.Subject is { Id.Length: > 0 } subject && string.Equals(subject.Kind, NeedsYouKinds.Profile, StringComparison.Ordinal) ? NeedsYouConfirmKind.Typed : NeedsYouConfirmKind.Terminal
-            : NeedsYouConfirmKind.Hold;
+        return string.Equals(action, RecipeAction, StringComparison.Ordinal) ? RecipeKind(row)
+            : string.Equals(action, ProfileAction, StringComparison.Ordinal)
+                ? row.Entry.Subject is { Id.Length: > 0 } subject && string.Equals(subject.Kind, NeedsYouKinds.Profile, StringComparison.Ordinal) ? NeedsYouConfirmKind.Typed : NeedsYouConfirmKind.Terminal
+                : NeedsYouConfirmKind.Hold;
     }
 
     // The challenge for 'approve profile <hash6>'; its served text is what the box shows and the person types.

@@ -125,6 +125,12 @@ public static class EventTypes
     /// <summary>A human or service cancelled a running job (API P6).</summary>
     public const string JobCancelled = "job.cancelled";
 
+    /// <summary>A running job parked on a named signal (setup-once spec §5.6).</summary>
+    public const string JobWaiting = "job.waiting";
+
+    /// <summary>A waiting job's signal came (setup-once spec §5.6).</summary>
+    public const string JobResumed = "job.resumed";
+
     /// <summary>A human paused a background service (API P6).</summary>
     public const string ServicePaused = "service.paused";
 

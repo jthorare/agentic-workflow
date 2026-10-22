@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Setup;
 
 /// <summary>One step of the setup list, as GET /sindri/setup answers it. Every text is plain words.</summary>
@@ -13,4 +15,8 @@ public sealed record SetupStep(SetupStepId Id, string Title, SetupState State, s
 {
     /// <summary>One line per repo with its own state, for a step that counts repos; empty otherwise.</summary>
     public IReadOnlyList<SetupItem> Items { get; init; } = [];
+
+    /// <summary>What the profile allows in plain words (the profile step only); null, and left out of the JSON, for every other step and when there is no profile to read.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<SetupPreviewLine>? Preview { get; init; }
 }

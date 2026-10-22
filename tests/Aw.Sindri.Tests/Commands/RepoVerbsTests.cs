@@ -53,6 +53,75 @@ public sealed class RepoVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Onboard_posts_the_path_to_the_onboard_route_and_with_detach_prints_the_job()
+    {
+        var api = new ScriptedApi((HttpStatusCode.OK, StartedBody));
+
+        var exit = await Run(api, "onboard", "/work/demo", "--detach");
+
+        Assert.True(exit == 0, _error.ToString());
+        var (method, route, body) = Assert.Single(api.Calls);
+        Assert.Equal(("POST", "/sindri/setup/repos/onboard"), (method, route));
+        Assert.Equal("/work/demo", JsonDocument.Parse(body).RootElement.GetProperty("path").GetString());
+        Assert.Equal("job JOB-0000000000000000000000000000000e started\n", _out.ToString().ReplaceLineEndings("\n"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Onboard_without_a_path_takes_the_working_directory()
+    {
+        var api = new ScriptedApi((HttpStatusCode.OK, StartedBody));
+
+        var exit = await Run(api, "onboard", "--detach");
+
+        Assert.Equal(0, exit);
+        Assert.Equal(Path.GetFullPath("."), BodyPath(api));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("onboard", "/a", "/b")]
+    [InlineData("onboard", "/a", "--name", "x")]
+    [InlineData("onboard", "/a", "--bogus")]
+    public async Task Onboard_with_anything_else_is_the_usage_error_and_posts_nothing(params string[] args)
+    {
+        var api = new ScriptedApi((HttpStatusCode.OK, StartedBody));
+
+        var exit = await Run(api, args);
+
+        Assert.Equal(2, exit);
+        Assert.Empty(api.Calls);
+        Assert.Contains(RepoVerbs.Usage, _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_refused_onboard_is_exit_2_with_the_code()
+    {
+        var api = new ScriptedApi((HttpStatusCode.Conflict, """{"type":"x","title":"SND-SETUP-004","status":409,"detail":"that folder is not in a repo the approved profile names (fix: sindri repo add <path>)"}"""));
+
+        var exit = await Run(api, "onboard", "/work/demo");
+
+        Assert.Equal(2, exit);
+        Assert.Contains("SND-SETUP-004", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Onboard_without_detach_follows_the_job_and_says_what_the_hook_step_said()
+    {
+        var result = JsonDocument.Parse("""{"repo":"demo","hooks":"No secret-check hook yet: add it when the installer ships"}""").RootElement.Clone();
+        var api = new JobApi().Ok("POST", "/sindri/setup/repos/onboard", Body(Started)).Ok("GET", "/sindri/jobs/" + Id, View(JobState.Succeeded, rounds: 2, summary: "onboarded demo", result: result));
+        var verbs = new RepoVerbs(Client(api), _rig.Output(), _rig.Follower(api));
+        var run = Task.Run(() => verbs.Run(["onboard", "/work/demo"], _rig.Interrupted, _rig.Again), Token);
+        await api.Until(() => api.Streams == 1);
+
+        await api.Frame(11, "job.progress", Progress(1, "onboarding"));
+        await api.Frame(12, "job.finished", Finished("succeeded", "onboarded demo"));
+
+        Assert.Equal(0, await Finished(run));
+        var text = _rig.Out.ToString().ReplaceLineEndings("\n");
+        Assert.Contains("onboarding\n", text, StringComparison.Ordinal);
+        Assert.Contains("onboarded demo; No secret-check hook yet: add it when the installer ships\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_relative_path_is_made_absolute_from_the_working_directory()
     {
         var api = new ScriptedApi((HttpStatusCode.OK, StartedBody));

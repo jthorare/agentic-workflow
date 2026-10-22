@@ -82,7 +82,7 @@ public sealed class SetupOnyxTests
     [Fact]
     public async Task Without_a_ready_catalog_row_the_step_is_the_command_to_copy_and_nothing_else()
     {
-        var (_, onyx, step) = await Open(Golden("first-run"), new SetupFixture());   // SetupOnyx is pending in the served catalog
+        var (_, onyx, step) = await Open(Golden("first-run"), new SetupFixture("extra-onyx-pending"));   // the served catalog with SetupOnyx, ConnectOnyx and DeferOnyx still pending (all three are ready since api SO-A5)
 
         Assert.Equal((false, false, false, "sindri onyx up"), (onyx.ShowStart, onyx.ShowDefer, onyx.ShowForm, step.Action?.Cli?.Cli));
     }
@@ -90,7 +90,7 @@ public sealed class SetupOnyxTests
     [Fact]
     public async Task A_waiting_login_without_a_ready_row_is_the_terminal_command_not_a_form()
     {
-        var (_, onyx, step) = await Open(Waiting(), new SetupFixture());
+        var (_, onyx, step) = await Open(Waiting(), new SetupFixture("extra-onyx-pending"));
 
         Assert.Equal((false, "sindri onyx connect"), (onyx.ShowForm, step.Action?.Cli?.Cli));
     }

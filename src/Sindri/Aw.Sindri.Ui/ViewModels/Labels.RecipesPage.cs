@@ -1,6 +1,5 @@
 using System.Globalization;
 using Aw.Kernel;
-using Aw.Sindri.Ui.ViewModels.Recipes;
 
 namespace Aw.Sindri.Ui.ViewModels;
 

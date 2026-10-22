@@ -31,4 +31,26 @@ public abstract partial class SindriApiContract
 
         Expect.Equal(("SND-WF-040", "That run is not open. Read the instance again."), (result.Error.Code, result.Error.Message));
     }
+
+    [Fact]
+    public async Task ApplyCommand_sends_the_kind_and_the_answer_to_the_instance()
+    {
+        var server = new FakeSindriApi();
+
+        var accepted = (await Reach(server).ApplyCommand(_api, DeskInstance, new ApplyCommandBody(DeskInstance, CommandKind.Answer, AnswerVariant.Text, "focus on the retry"), Token)).Value;
+
+        Expect.Equal(expected: false, accepted.AlreadyApplied);
+        var (instance, sent) = server.CommandCalls.Single();
+        Expect.Equal((DeskInstance, CommandKind.Answer, AnswerVariant.Text, "focus on the retry"), (instance, sent.Kind, sent.Answer, sent.Text));
+    }
+
+    [Fact]
+    public async Task ApplyCommand_refused_is_a_problem_with_the_served_words_not_an_exception()
+    {
+        var server = new FakeSindriApi { CommandAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-WF-041", "That run has moved on. Read the instance again.") };
+
+        var result = await Reach(server).ApplyCommand(_api, DeskInstance, new ApplyCommandBody(DeskInstance, CommandKind.Handback), Token);
+
+        Expect.Equal(("SND-WF-041", "That run has moved on. Read the instance again."), (result.Error.Code, result.Error.Message));
+    }
 }

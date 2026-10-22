@@ -156,6 +156,22 @@ public sealed class ListServicesTests
         Assert.Null(list.Services.Single(s => s.Name.Value == "digest").Job);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Actions_name_what_the_server_would_allow_for_each_service()
+    {
+        await Approve(("heartbeat", "30s"), ("digest", "5m"));
+        _builtIns.Add(new BuiltInService(ServiceName.From("workflow-events"), new Cadence(TimeSpan.FromSeconds(5))));
+        await _v.Fold(EventTypes.ServicePaused, new ServicePaused(_v.Slice.Ids.New<CommandId>(), ServiceName.From("digest")));
+        _jobs.Put(A.Job().Build());   // a running RunService job for heartbeat
+
+        var list = (await Service().Handle(new ListServicesRequest(), Token)).Value;
+
+        Assert.Equal(
+            ["digest: run,resume", "heartbeat: pause", "workflow-events: run"],
+            list.Services.Select(s => $"{s.Name.Value}: {string.Join(',', s.Actions)}"),
+            StringComparer.Ordinal);
+    }
+
     private ListServicesService Service() => new(_v.Slice.Profiles, _v.Views, _v.Progress, _jobs, _builtIns);
 
     private async Task Approve(params (string Name, string Every)[] services) =>

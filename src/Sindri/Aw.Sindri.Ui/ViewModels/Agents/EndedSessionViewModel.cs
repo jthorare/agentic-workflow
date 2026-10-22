@@ -26,6 +26,9 @@ internal sealed class EndedSessionViewModel : ObservableObject
     /// <summary>The provider and title.</summary>
     public string TitleText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The status word of a session that ended.</summary>
+    public string StatusText { get; } = Labels.EndedStatus;
+
     /// <summary>"ended 4m ago".</summary>
     public string EndedText { get; private set => Set(ref field, value); } = string.Empty;
 

@@ -41,7 +41,7 @@ internal sealed class RunServiceAdmission(IApprovedProfile approvals, IEnumerabl
             return approved.Error;
         }
 
-        if (approved.Value?.Profile.Services?.ContainsKey(name.Value) != true && !builtIns.Any(b => b.Name == name))
+        if (!ServiceActions.CanRun(approved.Value?.Profile.Services?.ContainsKey(name.Value) == true, builtIns.Any(b => b.Name == name)))
         {
             return SindriErrors.ServiceNotFound.With($"The approved profile has no service '{name.Value}' (fix: sindri services)");
         }

@@ -2,7 +2,8 @@
 {"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:findings":[],"fact:proof":{},"fact:holdoutResult":{},"fact:beforeAfter":{}}},"expect":{"state":"hand-test"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:manualTest":"walked"}},"expect":{"state":"verify"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidencePack":"pack"}},"expect":{"state":"evidence"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ok","fact:decision":"ui"}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ok","fact:decision":"ui"}},"expect":{"state":"collect"}}
+{"trigger":{"kind":"step.completed","outcome":"collected","outputs":{"fact:proof":{}}},"expect":{"state":"slot"}}
 {"trigger":{"kind":"wait.satisfied"},"expect":{"state":"before-after"}}
 {"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:beforeAfter":{"ok":false}}},"expect":{"state":"fail-log"}}
 {"trigger":{"kind":"step.completed","outcome":"logged","outputs":{"fact:findings":"item i1 passed at base"}},"expect":{"state":"failed","outcome":"unresolved"}}

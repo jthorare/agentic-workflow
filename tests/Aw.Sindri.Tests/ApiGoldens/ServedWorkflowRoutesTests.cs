@@ -28,7 +28,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
     /// <summary>The goldens this class records from the served routes (the rest of 'Golden/Api/workflow-*' is the fixtures' in <see cref="WorkflowViewGoldenTests"/>).</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> Goldens { get; } =
     [
-        ("workflow-instance", "not-found"), ("workflow-instance-fact", "not-found"), ("workflow-recipes", "list"),
+        ("workflow-instance", "not-found"), ("workflow-instance-fact", "not-found"), ("workflow-recipes", "list"), ("workflow-recipes-id-stats", "workflow-item"),   // the stats golden is recorded by RecipeStatsRouteTests
         ("workflow-instances-start", "request"), ("workflow-instances-start", "started"), ("workflow-instances", "start-item-malformed"), ("workflow-instances", "start-missing-input"),
         ("workflow-instances", "start-item-mismatch"), ("workflow-instances", "start-earlier-attempt-live"),
         ("workflow-instances", "start-recipe-legacy"), ("workflow-instances", "start-recipe-revoked"), ("workflow-instances", "start-recipe-drifted"),
@@ -194,7 +194,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
 
         var body = await Read(served, "/sindri/workflow/recipes");
 
-        ApiGolden.Match(body, _harness.Home, "workflow-recipes", "list", _drawn);
+        ApiGolden.Match(body, _harness.Home, "workflow-recipes", "list", [.. _drawn, new NormalizationRule("weekStart", "\"weekStart\": \"\\d{4}-\\d{2}-\\d{2}\"", "\"weekStart\": \"<week>\"")]);   // the stats buckets start on the Mondays before the read
     }
 
     [Fact(Timeout = 120_000)]

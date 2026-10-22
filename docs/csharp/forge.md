@@ -17,7 +17,8 @@
 |---|---|
 | `Parse(link)` | A pull request link to a `ForgeRef`; refuses, naming the part, a link that is not https, carries credentials or a port, or whose host is not allowed. Sends nothing |
 | `GetPull`, `GetPullDigest` | The snapshot (status, draft, base, head, mergeable, review decision, checks) and the poller's cheap digest with a version that changes when the pull changes |
-| `ListThreads` | Threads, review bodies and top-level comments with association, bot, resolved and outdated flags. Text from the forge is untrusted |
+| `ListThreads` | Threads, review bodies and top-level comments, oldest first across all three kinds (by `CreatedAt`, then `Key`), with association, bot, resolved and outdated flags, the line an inline thread sits on, when it was written and last edited, and its link. Text from the forge is untrusted |
+| `Self` | The login the credential acts as: GitHub reads `GET /user` once and keeps it; the file adapter answers `AW_FORGE_LOGIN` (default `sindri`) |
 | `CheckLog` | A check's log tail, capped at `ForgeLimits.LogExcerptCharacters` and scrubbed |
 | `Reply`, `React` | One reply or reaction per idempotency marker (`ForgeMarker`); a second call with the marker returns `AlreadyDelivered` and sends nothing |
 | `Push` | An explicit sha to the profile's URL with a lease on the branch tip: `Pushed` or `HeadMoved` |
@@ -113,7 +114,7 @@ The write side is a second test, `GitHubForgeWriteContractTests`, and runs only 
 
 ## Sindri's port
 
-Sindri does not hand `IForge` to its steps and effects. `Aw.Sindri.Core.Forge.IPullRequests` is Sindri's own port, with Sindri's records (`PullView`, `PullChecks`, `PullPush`, `FindPull`, `OpenPull`, `OpenedPull`) and no `Aw.Forge` type in Core or Features. Its members are `Get`, `CheckLog`, `Push`, `RerunChecks`, `Find`, `Open` and `Update`; every one answers a `Result<T>` and never throws.
+Sindri does not hand `IForge` to its steps and effects. `Aw.Sindri.Core.Forge.IPullRequests` is Sindri's own port, with Sindri's records (`PullView`, `PullChecks`, `PullPush`, `FindPull`, `OpenPull`, `OpenedPull`) and no `Aw.Forge` type in Core or Features. Its members are `Get`, `CheckLog`, `Push`, `PushBranch`, `RerunChecks`, `Find`, `Open`, `Update`, `Threads` (oldest first, with each thread's time, line, edit time and link), `Self` (the login Sindri acts as), `Merge`, `Reply` and `React`; every one answers a `Result<T>` and never throws.
 
 The adapter lives in `Aw.Sindri.Host/Forge` (the one project that references this package):
 

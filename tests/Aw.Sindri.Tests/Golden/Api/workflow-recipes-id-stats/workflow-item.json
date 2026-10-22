@@ -1,0 +1,82 @@
+{
+  "recipe": "workflow.item",
+  "hash": null,
+  "window": "30d",
+  "childOnly": false,
+  "runs": 4,
+  "done": 2,
+  "failed": 1,
+  "cancelled": 1,
+  "outcomes": {
+    "doneWithoutHuman": 1,
+    "doneAfterPark": 1,
+    "doneAfterTakeover": 0
+  },
+  "humanRate": 0.25,
+  "medianSeconds": 2700,
+  "tokens": {
+    "p50": 1000,
+    "p90": 1000
+  },
+  "budgetHits": 0,
+  "humanTime": {
+    "parksAnswered": {
+      "n": 1,
+      "medianSeconds": 1800
+    },
+    "escalationsDecided": {
+      "n": 0,
+      "medianSeconds": null
+    },
+    "takeovers": {
+      "n": 0,
+      "medianSeconds": null
+    }
+  },
+  "byState": [
+    {
+      "state": "produce",
+      "medianSeconds": 1800,
+      "parks": [
+        {
+          "reason": "no-progress",
+          "n": 1
+        }
+      ],
+      "escalations": [],
+      "takeovers": 0,
+      "gateRefusals": null
+    },
+    {
+      "state": "verify",
+      "medianSeconds": 1800,
+      "parks": [],
+      "escalations": [],
+      "takeovers": 0,
+      "gateRefusals": null
+    }
+  ],
+  "buckets": [
+    {
+      "weekStart": "2025-12-29",
+      "runs": 4,
+      "humanRate": 0.25
+    },
+    {
+      "weekStart": "2026-01-05",
+      "runs": 0,
+      "humanRate": null
+    },
+    {
+      "weekStart": "2026-01-12",
+      "runs": 0,
+      "humanRate": null
+    },
+    {
+      "weekStart": "2026-01-19",
+      "runs": 0,
+      "humanRate": null
+    }
+  ],
+  "asOf": "2026-01-20T00:00:00.0000000Z"
+}

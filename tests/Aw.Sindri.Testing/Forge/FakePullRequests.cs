@@ -20,6 +20,18 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     /// <summary>Gets the operations called, in order.</summary>
     public IList<string> Calls { get; } = [];
 
+    /// <summary>Gets or sets the error <see cref="Self"/> answers, or null for the login.</summary>
+    public Error? SelfError { get; set; }
+
+    /// <summary>Gets or sets a task <see cref="Self"/> awaits first (a test makes the forge hang with it).</summary>
+    public Func<CancellationToken, Task>? BeforeSelf { get; set; }
+
+    /// <summary>Gets the default branch per repository; a repository not listed has "main".</summary>
+    public IDictionary<PullRepo, string> DefaultBranches { get; } = new Dictionary<PullRepo, string>();
+
+    /// <summary>Gets how many links each <see cref="Digest"/> call carried, in order.</summary>
+    public IList<int> DigestSizes { get; } = [];
+
     /// <summary>Gets the pull requests, with what Open and Update gave them.</summary>
     public IReadOnlyList<FakePull> Pulls => _pulls;
 
@@ -40,7 +52,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken)
     {
         Calls.Add("Get");
-        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, Mergeable: true, ReviewDecision: null, UnresolvedThreads: p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : PullChecksState.None, p.HeadSha, [.. p.FailingChecks]))));
+        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, Mergeable: true, ReviewDecision: null, UnresolvedThreads: p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : PullChecksState.None, p.HeadSha, [.. p.FailingChecks]), p.Labels, p.Base)));
     }
 
     /// <inheritdoc />
@@ -82,8 +94,20 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         var pull = Locate(link).Value;
         var key = string.Create(CultureInfo.InvariantCulture, $"thread-{pull.Threads.Count + 1}");
-        pull.Threads.Add(new PullThread(key, PullCommentKind.Thread, "reviewer", "MEMBER", IsBot: false, Resolved: false, Outdated: false, "src/a.cs", body, []));
+        pull.Threads.Add(new PullThread(key, PullCommentKind.Thread, "reviewer", "MEMBER", IsBot: false, Resolved: false, Outdated: false, "src/a.cs", body, [], new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero).AddMinutes(pull.Threads.Count), Line: 12, EditedAt: null, $"{pull.Link}#{key}"));
         return key;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<string>> Self(CancellationToken cancellationToken)
+    {
+        Calls.Add("Self");
+        if (BeforeSelf is { } wait)
+        {
+            await wait(cancellationToken).ConfigureAwait(false);
+        }
+
+        return SelfError is { } error ? error : "sindri";
     }
 
     /// <inheritdoc />
@@ -180,7 +204,9 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         pull.Title = request.Title;
         pull.Body = request.Body;
         pull.Draft = request.Draft;
+        pull.Labels = [.. request.Labels ?? []];
         pull.Marker = request.Marker;
+        pull.Base = request.Base;
         return Done(Results.Success(new OpenedPull(pull.Link, pull.Number)));
     }
 
@@ -194,6 +220,52 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
             p.Body = body ?? p.Body;
             return Unit.Value;
         }));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken)
+    {
+        Calls.Add("Retarget");
+        return Done(Locate(link).Map(p =>
+        {
+            p.Base = newBase;
+            return Unit.Value;
+        }));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        Calls.Add("DefaultBranch");
+        return Done(Refuse(repo.Host) is { } refused ? refused : Results.Success(DefaultBranches.TryGetValue(repo, out var branch) ? branch : "main"));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(links);
+        Calls.Add("Digest");
+        var digests = new List<PullDigest>(links.Count);
+        foreach (var link in links)
+        {
+            var located = Locate(link);
+            if (located.IsError)
+            {
+                return Done<IReadOnlyList<PullDigest>>(located.Error);
+            }
+
+            var p = located.Value;
+            var checks = p.FailingChecks.Count > 0 ? PullChecksState.Failing : PullChecksState.None;
+            digests.Add(new PullDigest(p.Link, p.State, p.HeadSha, checks, p.Threads.Count, $"{p.HeadSha}|{p.State}|{checks}|{p.Threads.Count}|{p.Base}"));
+        }
+
+        for (var from = 0; from < links.Count; from += IPullRequests.DigestBatchSize)
+        {
+            DigestSizes.Add(Math.Min(IPullRequests.DigestBatchSize, links.Count - from));
+        }
+
+        return Done(Results.Success<IReadOnlyList<PullDigest>>(digests));
     }
 
     private PullDelivery Deliver(string key) => _delivered.Add(key) ? PullDelivery.Delivered : PullDelivery.AlreadyDelivered;

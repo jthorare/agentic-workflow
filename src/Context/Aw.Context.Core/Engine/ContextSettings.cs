@@ -79,4 +79,7 @@ public sealed record ContextSettings
 
     /// <summary>'context.publish': when a refreshed map becomes the current one (retrieval spec §8.7a).</summary>
     public PublishSettings Publish { get; init; } = new();
+
+    /// <summary>'context.ranker': the feature stage and the rerank arm of the query (Phase 8). Both off by default.</summary>
+    public RankerSettings Ranker { get; init; } = new();
 }

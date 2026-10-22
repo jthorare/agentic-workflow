@@ -86,6 +86,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddBacktest()
         .AddHistory()
         .AddScoped<IService<QueryContextRequest, ContextResult>, QueryContextService>()
+        .AddScoped<LiveInputs>()
         .AddScoped<IService<SourcesStatusRequest, SourcesView>, SourcesStatusService>()
         .AddScoped<IService<RefreshDocsRequest, RefreshReport>, RefreshDocsService>()
         .AddScoped<IService<SyncSourcesRequest, SyncReport>, SyncSourcesService>()

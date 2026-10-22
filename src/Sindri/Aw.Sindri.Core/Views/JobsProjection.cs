@@ -20,7 +20,9 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         string.Equals(eventType, EventTypes.JobStarted, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobProgress, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobFinished, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.JobCancelled, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.JobCancelled, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.JobWaiting, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.JobResumed, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -31,6 +33,8 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             EventTypes.JobStarted => await Started(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.JobProgress => await Change<JobProgress>(recorded, rows, static p => p.Job, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.JobFinished => await Change<JobFinished>(recorded, rows, static f => f.Job, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.JobWaiting => await Change<JobWaiting>(recorded, rows, static w => w.Job, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.JobResumed => await Change<JobResumed>(recorded, rows, static r => r.Job, Fold, cancellationToken).ConfigureAwait(false),
             _ => await Change<JobCancelled>(recorded, rows, static c => c.Job, Fold, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -86,7 +90,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(progress);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Running
+        return !JobStates.IsActive(row.State)
             ? row
             : row with
             {
@@ -106,7 +110,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(finished);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Running
+        return !JobStates.IsActive(row.State)
             ? row
             : row with
             {
@@ -119,6 +123,32 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             };
     }
 
+    /// <summary>The row after a 'job.waiting': waiting, when it was running. Anything else (it already ended, or waits) is as it was.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="waiting">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static JobRow Fold(JobRow row, JobWaiting waiting, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(waiting);
+        ArgumentNullException.ThrowIfNull(recorded);
+        return row.State != JobState.Running ? row : row with { State = JobState.Waiting, Sequence = recorded.Sequence };
+    }
+
+    /// <summary>The row after a 'job.resumed': running again, when it was waiting.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="resumed">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static JobRow Fold(JobRow row, JobResumed resumed, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(resumed);
+        ArgumentNullException.ThrowIfNull(recorded);
+        return row.State != JobState.Waiting ? row : row with { State = JobState.Running, Sequence = recorded.Sequence };
+    }
+
     /// <summary>The row after a 'job.cancelled': cancelled, by whom. A job that ended ignores it (D5).</summary>
     /// <param name="row">The row so far.</param>
     /// <param name="cancelled">The payload.</param>
@@ -129,7 +159,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(cancelled);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Running
+        return !JobStates.IsActive(row.State)
             ? row
             : row with { State = JobState.Cancelled, EndedAt = recorded.Envelope.OccurredAt, Summary = "cancelled", CancelledBy = cancelled.By, Sequence = recorded.Sequence };
     }

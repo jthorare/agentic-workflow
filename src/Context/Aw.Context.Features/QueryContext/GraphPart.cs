@@ -1,4 +1,5 @@
 using Aw.Context.Core.Packing;
+using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 
 namespace Aw.Context.Features.QueryContext;
@@ -20,6 +21,9 @@ internal sealed record GraphPart(IReadOnlyList<PackCandidate> Candidates, IReadO
 
     /// <summary>The keys of the records the answer's nodes are linked to, to tell whether any still waits for decision extraction.</summary>
     internal IReadOnlyList<string> LinkedRecords { get; init; } = [];
+
+    /// <summary>What the map says about each record the answer's nodes are linked to, by the record's canonical key, for the ranker's features.</summary>
+    internal IReadOnlyDictionary<string, RecordSignals> RecordSignals { get; init; } = new Dictionary<string, RecordSignals>(StringComparer.Ordinal);
 
     /// <summary>The code units the component hop skipped for the fan-out cap (scrubbed); empty without the hop.</summary>
     internal IReadOnlyList<SkippedComponent> SkippedComponents { get; init; } = [];

@@ -231,7 +231,7 @@ internal sealed class SetupStepViewModel : ObservableObject
 
     private void DeriveProgress() =>
         (ProgressText, ProgressFraction) = Step.Progress is { Total: > 0 } progress
-            ? (Labels.SetupProgress(progress.Done, progress.Total), Math.Clamp((double)progress.Done / progress.Total, 0, 1))
+            ? (Labels.SetupProgress(progress.Done, progress.Total, progress.Unit), Math.Clamp((double)progress.Done / progress.Total, 0, 1))
             : (string.Empty, 0);
 
     private void DeriveParts()

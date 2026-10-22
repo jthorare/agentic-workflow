@@ -37,6 +37,11 @@ public interface IPullRequests
     /// <returns>How many checks were asked to run again, or the error.</returns>
     public ValueTask<Result<int>> RerunChecks(string link, string sha, CancellationToken cancellationToken);
 
+    /// <summary>The login Sindri acts as on the forge.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The login, or the error.</returns>
+    public ValueTask<Result<string>> Self(CancellationToken cancellationToken);
+
     /// <summary>Lists the pull request's review threads, review bodies and top-level comments, oldest first. The texts are untrusted.</summary>
     /// <param name="link">The pull request's link.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -89,4 +94,29 @@ public interface IPullRequests
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Success, or the error.</returns>
     public ValueTask<Result<Unit>> Update(string link, string? title, string? body, CancellationToken cancellationToken);
+
+    /// <summary>Points a pull request at another base branch.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="newBase">The branch name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success, or the error.</returns>
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken);
+
+    /// <summary>Reads a repository's default branch name.</summary>
+    /// <param name="repo">The repository.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The branch name, or the error.</returns>
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads the cheap digest of many pull requests, in order. The adapter sends them to the forge at most <see cref="DigestBatchSize"/> at a time, so a long
+    /// list is several calls; one link the forge refuses or can't find fails the whole read.
+    /// </summary>
+    /// <param name="links">The pull requests' links.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One digest per link, in order, or the error.</returns>
+    public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken);
+
+    /// <summary>The most pull requests one forge call carries in <see cref="Digest"/>.</summary>
+    public const int DigestBatchSize = 20;
 }

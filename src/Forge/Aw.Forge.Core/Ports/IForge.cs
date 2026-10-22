@@ -102,6 +102,11 @@ public interface IForge
     /// <returns>How many checks were re-run.</returns>
     public ValueTask<Result<int>> RerunChecks(ForgeRef pull, string sha, CancellationToken cancellationToken);
 
+    /// <summary>The login the credential acts as, as the forge reports it (GitHub: GET /user, read once and kept).</summary>
+    /// <param name="cancellationToken">Cancellation.</param>
+    /// <returns>The login.</returns>
+    public ValueTask<Result<string>> Self(CancellationToken cancellationToken);
+
     /// <summary>Reads a repository's default branch.</summary>
     /// <param name="repo">The repository.</param>
     /// <param name="cancellationToken">Cancellation.</param>

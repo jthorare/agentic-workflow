@@ -1,5 +1,6 @@
 using Aw.Packets.Core.Checks;
 using Aw.Packets.Core.Model;
+using Aw.Packets.Core.Values;
 
 namespace Aw.Packets.Core.Kinds.Line;
 
@@ -7,4 +8,5 @@ namespace Aw.Packets.Core.Kinds.Line;
 /// <param name="Read">The manifest as read.</param>
 /// <param name="Tree">The base commit's files; null when the manifest is unreadable.</param>
 /// <param name="Sizes">The sizes file; null leaves PKT-SIZE-001 unchecked.</param>
-internal sealed record LineInputs(ManifestRead Read, BaseTree? Tree, SizesFile? Sizes);
+/// <param name="SealedSet">The set hash the seal names; null leaves PKT-HOLD-003 unchecked.</param>
+internal sealed record LineInputs(ManifestRead Read, BaseTree? Tree, SizesFile? Sizes, PacketHash? SealedSet = null);

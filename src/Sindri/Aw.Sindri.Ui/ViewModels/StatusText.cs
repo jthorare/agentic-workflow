@@ -149,7 +149,7 @@ internal static class StatusText
     }
 
     // Times in the viewer's local time, as the mockups show them (§4.8).
-    private static string Time(DateTimeOffset t) => t.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+    internal static string Time(DateTimeOffset t) => t.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture);
 
     private static string Short(string? hash) => hash is { Length: >= 6 } ? hash[..6] : hash ?? "none";
 }

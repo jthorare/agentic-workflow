@@ -151,8 +151,8 @@ public sealed class SizeChecksTests
     {
         var sizes = new InMemorySizesSource().With(SizesPath, SizesBuilder.Bytes(A.Sizes() with { Sizes = A.Sizes().Sizes with { Small = SizesBuilder.Limit(files: 1, items: 4, tokens: 150_000, turns: 60, wallMinutes: 90) } }));
         var repo = new InMemoryRepoSnapshot().With(PacketBuilder.BaseSha, PacketBuilder.BaseFiles);
-        var plan = new ValidateLinePacketService(new LinePacketInspector(new InMemoryLinePacketSource().With("pkt", A.LinePacket(PacketKinds.Plan).Build()), repo, PacketFiles.Json), sizes);
-        var review = new ValidateLinePacketService(new LinePacketInspector(new InMemoryLinePacketSource().With("pkt", A.LinePacket(PacketKinds.Review).Build()), repo, PacketFiles.Json), sizes);
+        var plan = new ValidateLinePacketService(new LinePacketInspector(new InMemoryLinePacketSource().With("pkt", A.LinePacket(PacketKinds.Plan).Build()), repo, PacketFiles.Json), sizes, new InMemorySealSource());
+        var review = new ValidateLinePacketService(new LinePacketInspector(new InMemoryLinePacketSource().With("pkt", A.LinePacket(PacketKinds.Review).Build()), repo, PacketFiles.Json), sizes, new InMemorySealSource());
 
         var planned = await plan.Handle(new ValidateLinePacketRequest("plan", "pkt", SizesFile: SizesPath), CancellationToken.None);
         var unsized = await plan.Handle(new ValidateLinePacketRequest("plan", "pkt"), CancellationToken.None);

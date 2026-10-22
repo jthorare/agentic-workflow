@@ -38,7 +38,8 @@
       "action": null,
       "progress": {
         "done": 12,
-        "total": 26
+        "total": 26,
+        "unit": "workflows"
       },
       "items": []
     },
@@ -69,7 +70,8 @@
       "action": null,
       "progress": {
         "done": 40,
-        "total": 100
+        "total": 100,
+        "unit": "files"
       },
       "items": [
         {

@@ -627,10 +627,8 @@ Aw.Context.Core.Eval.Backtest.ArmPassLine.Tokens.get -> string!
 Aw.Context.Core.Eval.Backtest.ArmPassLine.Tokens.init -> void
 Aw.Context.Core.Eval.Backtest.ArmQuestion
 Aw.Context.Core.Eval.Backtest.ArmQuestion.<Clone>$() -> Aw.Context.Core.Eval.Backtest.ArmQuestion!
-Aw.Context.Core.Eval.Backtest.ArmQuestion.ArmQuestion(Aw.Context.Core.Engine.ContextScope! Scope, Aw.Context.Core.Engine.ContextQuery! Query, Aw.Context.Core.Map.VisibleMap? Map, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.IContextSource!>! Sources, System.DateTimeOffset AsOf) -> void
 Aw.Context.Core.Eval.Backtest.ArmQuestion.AsOf.get -> System.DateTimeOffset
 Aw.Context.Core.Eval.Backtest.ArmQuestion.AsOf.init -> void
-Aw.Context.Core.Eval.Backtest.ArmQuestion.Deconstruct(out Aw.Context.Core.Engine.ContextScope! Scope, out Aw.Context.Core.Engine.ContextQuery! Query, out Aw.Context.Core.Map.VisibleMap? Map, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.IContextSource!>! Sources, out System.DateTimeOffset AsOf) -> void
 Aw.Context.Core.Eval.Backtest.ArmQuestion.Equals(Aw.Context.Core.Eval.Backtest.ArmQuestion? other) -> bool
 Aw.Context.Core.Eval.Backtest.ArmQuestion.Map.get -> Aw.Context.Core.Map.VisibleMap?
 Aw.Context.Core.Eval.Backtest.ArmQuestion.Map.init -> void
@@ -6390,3 +6388,139 @@ static readonly Aw.Context.Core.ContextErrors.UnknownArm -> Aw.Kernel.ErrorDefin
 ~override Aw.Context.Core.Map.MapRead.ToString() -> string
 ~override Aw.Context.Core.Map.MapVersionRef.Equals(object obj) -> bool
 ~override Aw.Context.Core.Map.MapVersionRef.ToString() -> string
+Aw.Context.Core.Engine.ContextSettings.Ranker.get -> Aw.Context.Core.Engine.RankerSettings!
+Aw.Context.Core.Engine.ContextSettings.Ranker.init -> void
+Aw.Context.Core.Engine.RankerSettings
+Aw.Context.Core.Engine.RankerSettings.<Clone>$() -> Aw.Context.Core.Engine.RankerSettings!
+Aw.Context.Core.Engine.RankerSettings.Equals(Aw.Context.Core.Engine.RankerSettings? other) -> bool
+Aw.Context.Core.Engine.RankerSettings.Features.get -> bool
+Aw.Context.Core.Engine.RankerSettings.Features.init -> void
+Aw.Context.Core.Engine.RankerSettings.RankerSettings() -> void
+Aw.Context.Core.Engine.RankerSettings.Rerank.get -> bool
+Aw.Context.Core.Engine.RankerSettings.Rerank.init -> void
+Aw.Context.Core.Engine.RankerSettings.RerankTop.get -> int
+Aw.Context.Core.Engine.RankerSettings.RerankTop.init -> void
+Aw.Context.Core.Engine.RankerSettings.Weights.get -> Aw.Context.Core.Ranking.FeatureWeights!
+Aw.Context.Core.Engine.RankerSettings.Weights.init -> void
+Aw.Context.Core.Eval.Backtest.Arm.RankerFeatures = 9 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.RankerRerank = 10 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.RankerRrf = 8 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Ranking.FeatureRanker
+Aw.Context.Core.Ranking.FeatureWeights
+Aw.Context.Core.Ranking.FeatureWeights.<Clone>$() -> Aw.Context.Core.Ranking.FeatureWeights!
+Aw.Context.Core.Ranking.FeatureWeights.CascadeDistance.get -> double
+Aw.Context.Core.Ranking.FeatureWeights.CascadeDistance.init -> void
+Aw.Context.Core.Ranking.FeatureWeights.EdgeType.get -> double
+Aw.Context.Core.Ranking.FeatureWeights.EdgeType.init -> void
+Aw.Context.Core.Ranking.FeatureWeights.Equals(Aw.Context.Core.Ranking.FeatureWeights? other) -> bool
+Aw.Context.Core.Ranking.FeatureWeights.FeatureWeights() -> void
+Aw.Context.Core.Ranking.FeatureWeights.Provenance.get -> double
+Aw.Context.Core.Ranking.FeatureWeights.Provenance.init -> void
+Aw.Context.Core.Ranking.FeatureWeights.Recency.get -> double
+Aw.Context.Core.Ranking.FeatureWeights.Recency.init -> void
+Aw.Context.Core.Ranking.FeatureWeights.Supersession.get -> double
+Aw.Context.Core.Ranking.FeatureWeights.Supersession.init -> void
+Aw.Context.Core.Ranking.RankFeatures
+Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Ranking.RankerMode.Features = 1 -> Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Ranking.RankerMode.Rerank = 2 -> Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Ranking.RankerMode.Rrf = 0 -> Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Ranking.RecordSignals
+Aw.Context.Core.Ranking.RecordSignals.<Clone>$() -> Aw.Context.Core.Ranking.RecordSignals!
+Aw.Context.Core.Ranking.RecordSignals.CascadeDistance.get -> int?
+Aw.Context.Core.Ranking.RecordSignals.CascadeDistance.init -> void
+Aw.Context.Core.Ranking.RecordSignals.Deconstruct(out int? CascadeDistance, out Aw.Context.Core.Graph.EdgeType? Edge, out Aw.Context.Core.Results.Provenance? Provenance, out bool Superseded, out System.DateTimeOffset? Linked) -> void
+Aw.Context.Core.Ranking.RecordSignals.Edge.get -> Aw.Context.Core.Graph.EdgeType?
+Aw.Context.Core.Ranking.RecordSignals.Edge.init -> void
+Aw.Context.Core.Ranking.RecordSignals.Equals(Aw.Context.Core.Ranking.RecordSignals? other) -> bool
+Aw.Context.Core.Ranking.RecordSignals.Linked.get -> System.DateTimeOffset?
+Aw.Context.Core.Ranking.RecordSignals.Linked.init -> void
+Aw.Context.Core.Ranking.RecordSignals.Provenance.get -> Aw.Context.Core.Results.Provenance?
+Aw.Context.Core.Ranking.RecordSignals.Provenance.init -> void
+Aw.Context.Core.Ranking.RecordSignals.RecordSignals(int? CascadeDistance, Aw.Context.Core.Graph.EdgeType? Edge, Aw.Context.Core.Results.Provenance? Provenance, bool Superseded, System.DateTimeOffset? Linked) -> void
+Aw.Context.Core.Ranking.RecordSignals.Superseded.get -> bool
+Aw.Context.Core.Ranking.RecordSignals.Superseded.init -> void
+Aw.Context.Core.Ranking.RerankOrder
+const Aw.Context.Core.Engine.RankerSettings.MaxRerankTop = 50 -> int
+const Aw.Context.Core.Ranking.FeatureWeights.MaxWeight = 10 -> double
+const Aw.Context.Core.Ranking.RankFeatures.RecencyHalfLifeDays = 90 -> double
+const Aw.Context.Core.Ranking.RerankOrder.DefaultTop = 30 -> int
+override Aw.Context.Core.Engine.RankerSettings.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.RankerSettings.GetHashCode() -> int
+override Aw.Context.Core.Engine.RankerSettings.ToString() -> string!
+override Aw.Context.Core.Ranking.FeatureWeights.Equals(object? obj) -> bool
+override Aw.Context.Core.Ranking.FeatureWeights.GetHashCode() -> int
+override Aw.Context.Core.Ranking.FeatureWeights.ToString() -> string!
+override Aw.Context.Core.Ranking.RecordSignals.Equals(object? obj) -> bool
+override Aw.Context.Core.Ranking.RecordSignals.GetHashCode() -> int
+override Aw.Context.Core.Ranking.RecordSignals.ToString() -> string!
+static Aw.Context.Core.Engine.RankerSettings.operator !=(Aw.Context.Core.Engine.RankerSettings? left, Aw.Context.Core.Engine.RankerSettings? right) -> bool
+static Aw.Context.Core.Engine.RankerSettings.operator ==(Aw.Context.Core.Engine.RankerSettings? left, Aw.Context.Core.Engine.RankerSettings? right) -> bool
+static Aw.Context.Core.Eval.Backtest.Arms.Ranker.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.Arm>!
+static Aw.Context.Core.Ranking.FeatureRanker.Apply(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! items, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Ranking.RecordSignals!>! signals, Aw.Context.Core.Ranking.FeatureWeights! weights, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
+static Aw.Context.Core.Ranking.FeatureRanker.Boost(Aw.Context.Core.Ranking.RecordSignals! signals, Aw.Context.Core.Ranking.FeatureWeights! weights, System.DateTimeOffset now) -> double
+static Aw.Context.Core.Ranking.FeatureWeights.operator !=(Aw.Context.Core.Ranking.FeatureWeights? left, Aw.Context.Core.Ranking.FeatureWeights? right) -> bool
+static Aw.Context.Core.Ranking.FeatureWeights.operator ==(Aw.Context.Core.Ranking.FeatureWeights? left, Aw.Context.Core.Ranking.FeatureWeights? right) -> bool
+static Aw.Context.Core.Ranking.RankFeatures.Cascade(int? distance) -> double
+static Aw.Context.Core.Ranking.RankFeatures.Edge(Aw.Context.Core.Graph.EdgeType? edge) -> double
+static Aw.Context.Core.Ranking.RankFeatures.Recency(System.DateTimeOffset? linked, System.DateTimeOffset now) -> double
+static Aw.Context.Core.Ranking.RankFeatures.Source(Aw.Context.Core.Results.Provenance? provenance) -> double
+static Aw.Context.Core.Ranking.RankFeatures.Standing(bool superseded) -> double
+static Aw.Context.Core.Ranking.RecordSignals.None.get -> Aw.Context.Core.Ranking.RecordSignals!
+static Aw.Context.Core.Ranking.RecordSignals.operator !=(Aw.Context.Core.Ranking.RecordSignals? left, Aw.Context.Core.Ranking.RecordSignals? right) -> bool
+static Aw.Context.Core.Ranking.RecordSignals.operator ==(Aw.Context.Core.Ranking.RecordSignals? left, Aw.Context.Core.Ranking.RecordSignals? right) -> bool
+static Aw.Context.Core.Ranking.RerankOrder.Apply(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! items, int top, System.Collections.Generic.IReadOnlyList<int>! order) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
+static Aw.Context.Core.Ranking.RerankOrder.Parse(string! answer, int asked) -> System.Collections.Generic.IReadOnlyList<int>?
+Aw.Context.Core.Eval.Backtest.ArmQuestion.ArmQuestion(Aw.Context.Core.Engine.ContextScope! Scope, Aw.Context.Core.Engine.ContextQuery! Query, Aw.Context.Core.Map.VisibleMap? Map, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.IContextSource!>! Sources, System.DateTimeOffset AsOf, Aw.Context.Core.Ranking.RankerMode? Ranker = null) -> void
+Aw.Context.Core.Eval.Backtest.ArmQuestion.Deconstruct(out Aw.Context.Core.Engine.ContextScope! Scope, out Aw.Context.Core.Engine.ContextQuery! Query, out Aw.Context.Core.Map.VisibleMap? Map, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.IContextSource!>! Sources, out System.DateTimeOffset AsOf, out Aw.Context.Core.Ranking.RankerMode? Ranker) -> void
+Aw.Context.Core.Eval.Backtest.ArmQuestion.Ranker.get -> Aw.Context.Core.Ranking.RankerMode?
+Aw.Context.Core.Eval.Backtest.ArmQuestion.Ranker.init -> void
+static readonly Aw.Context.Core.ContextErrors.RerankUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Lenses.LensSymbols.Implements.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Symbols.SymbolImplements!>?
+Aw.Context.Core.Lenses.LensSymbols.Implements.init -> void
+Aw.Context.Core.Symbols.SymbolImplements
+Aw.Context.Core.Symbols.SymbolImplements.<Clone>$() -> Aw.Context.Core.Symbols.SymbolImplements!
+Aw.Context.Core.Symbols.SymbolImplements.Confidence.get -> double
+Aw.Context.Core.Symbols.SymbolImplements.Confidence.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.Deconstruct(out Aw.Context.Core.Graph.NodeKey Node, out string! Ref, out string! Name, out string! Path, out int StartLine, out double Confidence) -> void
+Aw.Context.Core.Symbols.SymbolImplements.Equals(Aw.Context.Core.Symbols.SymbolImplements? other) -> bool
+Aw.Context.Core.Symbols.SymbolImplements.Name.get -> string!
+Aw.Context.Core.Symbols.SymbolImplements.Name.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.Node.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Symbols.SymbolImplements.Node.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.Path.get -> string!
+Aw.Context.Core.Symbols.SymbolImplements.Path.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.Ref.get -> string!
+Aw.Context.Core.Symbols.SymbolImplements.Ref.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.StartLine.get -> int
+Aw.Context.Core.Symbols.SymbolImplements.StartLine.init -> void
+Aw.Context.Core.Symbols.SymbolImplements.SymbolImplements(Aw.Context.Core.Graph.NodeKey Node, string! Ref, string! Name, string! Path, int StartLine, double Confidence) -> void
+Aw.Context.Core.Symbols.SymbolLinks
+const Aw.Context.Core.Symbols.SymbolLinks.MaxPerLink = 5 -> int
+const Aw.Context.Core.Symbols.SymbolLinks.NameMatch = 0.9 -> double
+override Aw.Context.Core.Symbols.SymbolImplements.Equals(object? obj) -> bool
+override Aw.Context.Core.Symbols.SymbolImplements.GetHashCode() -> int
+override Aw.Context.Core.Symbols.SymbolImplements.ToString() -> string!
+static Aw.Context.Core.Symbols.SymbolImplements.operator !=(Aw.Context.Core.Symbols.SymbolImplements? left, Aw.Context.Core.Symbols.SymbolImplements? right) -> bool
+static Aw.Context.Core.Symbols.SymbolImplements.operator ==(Aw.Context.Core.Symbols.SymbolImplements? left, Aw.Context.Core.Symbols.SymbolImplements? right) -> bool
+static Aw.Context.Core.Symbols.SymbolLinks.For(System.Collections.Generic.IReadOnlyList<(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Nodes)>! links, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Symbols.FileSymbolsRow!>! rows) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Symbols.SymbolImplements!>!
+Aw.Context.Core.Code.SymbolColumn
+Aw.Context.Core.Code.SymbolColumnReading
+Aw.Context.Core.Code.SymbolColumnReading.<Clone>$() -> Aw.Context.Core.Code.SymbolColumnReading!
+Aw.Context.Core.Code.SymbolColumnReading.Deconstruct(out Aw.Context.Core.Engine.ContextRepo! Repo, out Aw.Context.Core.Map.MapVersion! Version, out System.Collections.Generic.IReadOnlyList<string!>! Paths, out System.Collections.Generic.IReadOnlyList<(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Nodes)>! Links) -> void
+Aw.Context.Core.Code.SymbolColumnReading.Equals(Aw.Context.Core.Code.SymbolColumnReading? other) -> bool
+Aw.Context.Core.Code.SymbolColumnReading.Links.get -> System.Collections.Generic.IReadOnlyList<(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Nodes)>!
+Aw.Context.Core.Code.SymbolColumnReading.Links.init -> void
+Aw.Context.Core.Code.SymbolColumnReading.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Code.SymbolColumnReading.Paths.init -> void
+Aw.Context.Core.Code.SymbolColumnReading.Repo.get -> Aw.Context.Core.Engine.ContextRepo!
+Aw.Context.Core.Code.SymbolColumnReading.Repo.init -> void
+Aw.Context.Core.Code.SymbolColumnReading.SymbolColumnReading(Aw.Context.Core.Engine.ContextRepo! Repo, Aw.Context.Core.Map.MapVersion! Version, System.Collections.Generic.IReadOnlyList<string!>! Paths, System.Collections.Generic.IReadOnlyList<(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Nodes)>! Links) -> void
+Aw.Context.Core.Code.SymbolColumnReading.Version.get -> Aw.Context.Core.Map.MapVersion!
+Aw.Context.Core.Code.SymbolColumnReading.Version.init -> void
+override Aw.Context.Core.Code.SymbolColumnReading.Equals(object? obj) -> bool
+override Aw.Context.Core.Code.SymbolColumnReading.GetHashCode() -> int
+override Aw.Context.Core.Code.SymbolColumnReading.ToString() -> string!
+static Aw.Context.Core.Code.SymbolColumn.Read(Aw.Context.Core.Symbols.ICodeSymbolSource! source, Aw.Context.Core.Code.SymbolColumnReading! reading, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Lenses.LensSymbols!>
+static Aw.Context.Core.Code.SymbolColumnReading.operator !=(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool
+static Aw.Context.Core.Code.SymbolColumnReading.operator ==(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool

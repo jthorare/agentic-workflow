@@ -22,7 +22,7 @@ public sealed class SetupServedStatesTests
     {
         var map = await StepOf("map-retrying", "map");
 
-        Assert.Equal(("Working", "Retrying in 5 minutes: the code index was busy.", "0 of 1", false), (map.ChipWord, map.DetailText, map.ProgressText, map.HasAction));
+        Assert.Equal(("Working", "Retrying in 5 minutes: the code index was busy.", "0 of 1 files", false), (map.ChipWord, map.DetailText, map.ProgressText, map.HasAction));
     }
 
     [Fact]

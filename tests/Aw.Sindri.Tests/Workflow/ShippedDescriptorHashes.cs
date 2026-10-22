@@ -6,7 +6,7 @@ internal static class ShippedDescriptorHashes
     public static IReadOnlyDictionary<string, string> Pinned { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["effect.claim.ref"] = "sha256:2a44426d862b3721014969dfcc03a7851f56551f2b9bec9f340e500353a9abd3",
-        ["effect.line.report"] = "sha256:65a1762c3446a41b81b3d8206e1307e8264b9b7085514a673efd02ce49990950",
+        ["effect.line.report"] = "sha256:7e5951377422c5c199863a5b9669d8ba5895100a52a87f876bf1fd56d174d63b",
         ["effect.notify.desk"] = "sha256:c3cb05f7d73c6c539b05acb87c15185c4a9b81d12fb27626b59f12b94e157b07",
         ["evidence.check"] = "sha256:5e8052c5aaf078f6a487a5822fa63d9821a011fa480205fe5bbc8e9f07092d62",
         ["gate.budget.available"] = "sha256:2e11428fb8765eb8e43f62db6dce8dd654cddd1b6685e6c61080037174408135",
@@ -76,6 +76,7 @@ internal static class ShippedDescriptorHashes
         ["step.plan.settle"] = "sha256:79c9a702f5e5badfdbbb19f594c9779fa07a7cd8459051983f09f1392ddc5d39",
         ["step.produce"] = "sha256:f3641bb5fd611951f4f20b0fc6f85cbec50025d199f3eb8721d2cdd3bf2baf51",
         ["step.prove.before-after"] = "sha256:262fd4a9557d27a21e413eeffc1365cf76f1b9c8ea6dec3a6caa3095b01c5ce0",
+        ["step.prove.collect"] = "sha256:c67b2ae514c786d44d3c2a5d2edab74fcdae626dd7a7bc81710237e3cfa8b073",
         ["step.prove.evidence"] = "sha256:5f7170da2696e94e8d468c87b60f16c97dcaae5a4d9051548171976460eecab7",
         ["step.prove.fail-log"] = "sha256:e8a23a1cf1890c120978d51ae3f160bbcd77e1e2852897df49171deb4941632f",
         ["step.prove.holdout"] = "sha256:03afc64c804a3f055d9933c0edd4168b2ae6e224494ce23bda4b5b35422c2493",

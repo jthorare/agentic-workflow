@@ -6,7 +6,10 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run"
+      ]
     },
     {
       "name": "context-sync-gaps",
@@ -14,7 +17,10 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run"
+      ]
     },
     {
       "name": "heartbeat",
@@ -27,7 +33,11 @@
         "ranAt": "2026-01-01T00:00:00.0000000Z"
       },
       "nextSlot": "2025-12-31T23:59:05.0000000Z",
-      "job": null
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ]
     },
     {
       "name": "phantom",
@@ -35,7 +45,11 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ]
     },
     {
       "name": "router-stub",
@@ -43,7 +57,10 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run"
+      ]
     },
     {
       "name": "setup",
@@ -51,7 +68,10 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run"
+      ]
     },
     {
       "name": "stuck",
@@ -59,7 +79,11 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ]
     },
     {
       "name": "workflow-events",
@@ -67,7 +91,10 @@
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
-      "job": null
+      "job": null,
+      "actions": [
+        "run"
+      ]
     }
   ],
   "empty": null,

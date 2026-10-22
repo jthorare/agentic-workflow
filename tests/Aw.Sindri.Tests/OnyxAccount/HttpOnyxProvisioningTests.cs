@@ -440,4 +440,21 @@ public sealed class HttpOnyxProvisioningTests
             return base.SendAsync(request, cancellationToken);
         }
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_refused_login_names_no_part_of_the_password_and_the_password_goes_only_in_the_login_request_body()
+    {
+        const string Typed = "typed-login-value-31c7e2";
+        var script = new Script { Answer = static sent => (HttpStatusCode.BadRequest, "{\"detail\": \"LOGIN_BAD_CREDENTIALS " + sent.Body + "\"}") };
+
+        var refused = await Adapter(script).SignIn(3000, "owner@example.com", Typed, Token);
+
+        Assert.True(refused.IsError);
+        Assert.DoesNotContain(Typed, refused.Error.Message, StringComparison.Ordinal);   // Onyx's own answer here quotes the request: it is never passed on
+        Assert.DoesNotContain(Typed, refused.Error.ToString(), StringComparison.Ordinal);
+        var login = Assert.Single(script.Requests, static r => string.Equals(r.PathAndQuery, "/api/auth/login", StringComparison.Ordinal));
+        Assert.Contains(Typed, login.Body, StringComparison.Ordinal);   // the one place it goes: a request body
+        Assert.DoesNotContain(Typed, string.Concat(script.Requests.Select(static r => r.PathAndQuery + r.Authorization)), StringComparison.Ordinal);
+        Assert.DoesNotContain(Typed, string.Concat(script.Requests.Where(static r => !string.Equals(r.PathAndQuery, "/api/auth/login", StringComparison.Ordinal)).Select(static r => r.Body)), StringComparison.Ordinal);
+    }
 }

@@ -57,11 +57,13 @@ internal sealed class ProfileSetupReader(IProfileSource live, IApprovedProfile a
             return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new ProfileFact(approved.Value is null ? ProfilePresence.Missing : ProfilePresence.Approved);
         }
 
+        var preview = ProfilePreview.Lines(loaded.Value.Profile);
         if (approved.Value is not { } saved)
         {
-            return new ProfileFact(ProfilePresence.Unapproved);
+            return new ProfileFact(ProfilePresence.Unapproved) { Preview = preview };
         }
 
-        return new ProfileFact(string.Equals(saved.Hash.Value, loaded.Value.Hash.Value, StringComparison.Ordinal) ? ProfilePresence.Approved : ProfilePresence.Drifted);
+        var same = string.Equals(saved.Hash.Value, loaded.Value.Hash.Value, StringComparison.Ordinal);
+        return new ProfileFact(same ? ProfilePresence.Approved : ProfilePresence.Drifted) { Preview = preview };
     }
 }

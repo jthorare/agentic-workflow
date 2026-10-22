@@ -2,12 +2,13 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.GetJob;
+using Aw.Sindri.Features.OnboardRepo;
 
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri repo add &lt;path&gt; [--name &lt;name&gt;] [--detach] [--json]' (setup-once spec §7.4; 'sindri-app repo add …' passes it through): the terminal form of the app's Add repo, which calls the same route. A relative path is made
-/// absolute from the working directory (the route takes only absolute paths). It starts the AddRepo job and follows it as 'context map build' does (Ctrl-C cancels the job, a second Ctrl-C leaves);
+/// 'sindri repo add &lt;path&gt; [--name &lt;name&gt;] [--detach] [--json]' and 'sindri repo onboard [&lt;path&gt;] [--detach] [--json]' (setup-once spec §7.4; 'sindri-app repo add …' passes it through): the terminal form of the app's Add repo, which calls the same route. A relative path is made
+/// absolute from the working directory (the route takes only absolute paths); 'onboard' takes the working directory when no path is given and never approves the profile. It starts the AddRepo job and follows it as 'context map build' does (Ctrl-C cancels the job, a second Ctrl-C leaves);
 /// --detach prints the job id and returns. Exit codes are the follower's: 0 added, 1 failed, cancelled, left or Sindri not running, 2 refused or invalid (SND-SETUP-001 and 002 are refusals).
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -15,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="follower">Follows the job the start answers.</param>
 internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFollower follower)
 {
-    internal const string Usage = "repo add <path> [--name <name>] [--detach] [--json]";
+    internal const string Usage = "repo add <path> [--name <name>] [--detach] [--json] | repo onboard [<path>] [--detach] [--json]";
 
     internal async Task<int> Run(string[] args, CancellationToken interrupt, CancellationToken again)
     {
@@ -26,7 +27,9 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
             return await output.Error(SindriErrors.InvalidInput.With($"'repo {string.Join(' ', args)}' isn't this command: {Usage}")).ConfigureAwait(false);
         }
 
-        var started = await client.Post<AddRepoRequest, JobStartedResponse>("/sindri/setup/repos", new AddRepoRequest(line.Path, line.Name), interrupt).ConfigureAwait(false);
+        var started = line.Onboard
+            ? await client.Post<OnboardRepoRequest, JobStartedResponse>("/sindri/setup/repos/onboard", new OnboardRepoRequest(line.Path), interrupt).ConfigureAwait(false)
+            : await client.Post<AddRepoRequest, JobStartedResponse>("/sindri/setup/repos", new AddRepoRequest(line.Path, line.Name), interrupt).ConfigureAwait(false);
         if (started.IsError)
         {
             return await output.Error(started.Error).ConfigureAwait(false);
@@ -35,7 +38,7 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
         var answer = started.Value;
         if (!line.Detach)
         {
-            return await follower.Follow(answer.Value, line.Json, interrupt, again, Describe).ConfigureAwait(false);
+            return await follower.Follow(answer.Value, line.Json, interrupt, again, line.Onboard ? DescribeOnboarded : Describe).ConfigureAwait(false);
         }
 
         return line.Json
@@ -55,17 +58,31 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
         return read.IsSuccess ? $"added {read.Value.Repo.Value}; your profile waits for your approval: sindri profile approve\n" : null;
     }
 
-    // add <path> and the flags, in any order; null for anything else.
-    private static RepoLine? Parse(string[] args)
+    /// <summary>The final onboard job's one line: the repo is onboarded, and what the hook step said (never a silent green); nothing when the result isn't there or doesn't read.</summary>
+    private string? DescribeOnboarded(JobView job)
     {
-        if (args is not ["add", .. var rest])
+        if (job.Result is not { } result)
         {
             return null;
         }
 
+        var read = output.Read<OnboardedRepo>(System.Text.Encoding.UTF8.GetBytes(result.GetRawText()));
+        return read.IsSuccess ? $"onboarded {read.Value.Repo.Value}; {read.Value.Hooks}\n" : null;
+    }
+
+    // add <path> or onboard [<path>] and the flags, in any order; null for anything else.
+    private static RepoLine? Parse(string[] args)
+    {
+        if (args is not ([("add" or "onboard") and var verb, .. var rest]))
+        {
+            return null;
+        }
+
+        var onboard = string.Equals(verb, "onboard", StringComparison.Ordinal);
         var (words, flags, name) = Split(rest);
-        return words.Count == 1 && flags.TrueForAll(Known)
-            ? new RepoLine(Absolute(words[0]), name, flags.Contains("--detach", StringComparer.Ordinal), flags.Contains("--json", StringComparer.Ordinal))
+        var wanted = onboard ? words.Count <= 1 && name is null : words.Count == 1;
+        return wanted && flags.TrueForAll(Known)
+            ? new RepoLine(Absolute(words.Count == 1 ? words[0] : "."), name, flags.Contains("--detach", StringComparer.Ordinal), flags.Contains("--json", StringComparer.Ordinal), onboard)
             : null;
     }
 
@@ -101,5 +118,5 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
             ? Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + path[1..])
             : Path.GetFullPath(path);
 
-    private sealed record RepoLine(string Path, string? Name, bool Detach, bool Json);
+    private sealed record RepoLine(string Path, string? Name, bool Detach, bool Json, bool Onboard);
 }

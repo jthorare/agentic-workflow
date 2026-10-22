@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "SND-CLI-003",
   "status": 400,
-  "detail": "'NoSuchJob' isn't a job kind (fix: AddRepo, ApproveAllRecipes, BuildContextMap, EchoJob, ProbeLaunchTargets, PublishContextMap, RefreshContextMap, RegisterMcp, RunContextBacktest, RunService, SyncSources)",
+  "detail": "'NoSuchJob' isn't a job kind (fix: AddRepo, ApproveAllRecipes, BuildContextMap, EchoJob, OnboardRepo, ProbeLaunchTargets, PublishContextMap, RefreshContextMap, RegisterMcp, RunContextBacktest, RunService, SetupOnyx, SyncSources)",
   "traceId": "<trace>"
 }

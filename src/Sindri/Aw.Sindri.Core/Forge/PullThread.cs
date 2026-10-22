@@ -11,4 +11,8 @@ namespace Aw.Sindri.Core.Forge;
 /// <param name="Path">The file an inline thread is on, or null.</param>
 /// <param name="Body">The text.</param>
 /// <param name="Markers">The reply markers already in it.</param>
-public sealed record PullThread(string Key, PullCommentKind Kind, string Author, string Association, bool IsBot, bool Resolved, bool Outdated, string? Path, string Body, IReadOnlyList<string> Markers);
+/// <param name="CreatedAt">When it was written. Threads come oldest first by this.</param>
+/// <param name="Line">The line an inline thread sits on, or null.</param>
+/// <param name="EditedAt">When it was last edited, or null.</param>
+/// <param name="Url">Its link on the forge, or null.</param>
+public sealed record PullThread(string Key, PullCommentKind Kind, string Author, string Association, bool IsBot, bool Resolved, bool Outdated, string? Path, string Body, IReadOnlyList<string> Markers, DateTimeOffset CreatedAt, int? Line, DateTimeOffset? EditedAt, string? Url);

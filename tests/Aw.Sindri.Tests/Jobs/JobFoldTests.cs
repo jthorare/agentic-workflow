@@ -55,6 +55,48 @@ public sealed class JobFoldTests
         return JobsProjection.Fold(row, _h.Events.Payload<JobCancelled>(recorded).Value, recorded);
     }
 
+    private JobRow Waiting(JobRow row)
+    {
+        var recorded = Event(EventTypes.JobWaiting, new JobWaiting(Command, A.FirstJobId, "onyx-account"));
+        return JobsProjection.Fold(row, _h.Events.Payload<JobWaiting>(recorded).Value, recorded);
+    }
+
+    private JobRow Resumed(JobRow row)
+    {
+        var recorded = Event(EventTypes.JobResumed, new JobResumed(Command, A.FirstJobId, "onyx-account"));
+        return JobsProjection.Fold(row, _h.Events.Payload<JobResumed>(recorded).Value, recorded);
+    }
+
+    [Fact]
+    public void A_waiting_job_is_waiting_and_resumes_to_running()
+    {
+        var waiting = Waiting(Started());
+
+        Expect.Equal(JobState.Waiting, waiting.State);
+        Expect.Equal(JobState.Running, Resumed(waiting).State);
+    }
+
+    [Fact]
+    public void A_waiting_job_still_takes_progress_and_each_way_to_end()
+    {
+        var waiting = Waiting(Started());
+
+        Expect.Equal(1, Progress(waiting, 1, "needs you").Rounds);
+        Expect.Equal(JobState.Failed, Finished(waiting, JobOutcome.Failed, "ran out", "SND-SETUP-006").State);
+        Expect.Equal(JobState.Succeeded, Finished(waiting, JobOutcome.Succeeded, "ok").State);
+        Expect.Equal(JobState.Cancelled, Cancelled(waiting, "human:cli").State);
+    }
+
+    [Fact]
+    public void A_wait_or_a_resume_on_an_ended_job_changes_nothing()
+    {
+        var ended = Finished(Started(), JobOutcome.Succeeded, "ok");
+
+        Expect.Equal(JobState.Succeeded, Waiting(ended).State);
+        Expect.Equal(JobState.Succeeded, Resumed(ended).State);
+        Expect.Equal(JobState.Running, Resumed(Started()).State);   // not waiting: nothing to resume
+    }
+
     [Fact]
     public void Started_makes_a_running_row()
     {

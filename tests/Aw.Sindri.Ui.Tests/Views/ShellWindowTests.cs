@@ -346,7 +346,6 @@ public sealed class ShellWindowTests : IDisposable
         var profile = Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<StateIcon>().Single(i => i.IsEffectivelyVisible);
         Assert.Equal(Brush("Success"), profile.Foreground);
         shell.GoTo(PageId.System);
-        shell.Health.DetailsOpen = true;   // the per-service detail waits behind a closed Details
         Settle(window);
         Assert.Equal(Brush("Success"), Named<StateIcon>(window, "ProfileHeadGlyph").Foreground);
 
@@ -390,7 +389,6 @@ public sealed class ShellWindowTests : IDisposable
         _server.Push(A.Event(3));
         var (window, shell) = await Show(s => s.State == ShellState.Normal && s.Health.LastEvent.EndsWith("#3", StringComparison.Ordinal));
         shell.GoTo(PageId.System);
-        shell.Health.DetailsOpen = true;   // the label/value rows wait behind a closed Details
         Settle(window);
 
         static double Baseline(TextBlock t, Window w) => t.TranslatePoint(default, w)!.Value.Y + t.TextLayout.Baseline; // why: in the window
@@ -1263,7 +1261,6 @@ public sealed class ShellWindowTests : IDisposable
         _records.Write(A.Record());
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
         shell.GoTo(PageId.System);
-        shell.Health.DetailsOpen = true;   // the control plane's glyph and word wait behind a closed Details
         _server.FailPing = true;
         _clock.Advance(ShellViewModel.StaleAfter);
         await Until(() => shell.State == ShellState.Stale);
@@ -1286,8 +1283,6 @@ public sealed class ShellWindowTests : IDisposable
 
         Assert.Equal(PageId.System, shell.CurrentPage);
         Assert.True(Visible(window, "HealthPage"));
-        Assert.False(shell.Health.DetailsOpen);
-        shell.Health.DetailsOpen = true;   // the card's rows wait behind a closed Details
         Settle(window);
 
         // I5 (services-health.html HEALTH): label/value rows at Body size under section heads that carry the state's
@@ -1302,14 +1297,14 @@ public sealed class ShellWindowTests : IDisposable
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
         Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13 && !t.Classes.Contains("page-title"));
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + A.Noon.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));
+        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + DateTimeOffset.Parse("2026-01-01T00:00:55Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));   // the Services card reads the services view
         EveryControlIsNamed(window);
         Frame(window, "health");
     });
 
     // F3 review (456-1): what the person must act on stays up front; only the per-service detail waits behind Details.
     [Fact]
-    public Task The_profile_fix_and_the_actions_are_reachable_while_Details_is_closed() => OnUi(async () =>
+    public Task The_profile_fix_and_the_actions_are_up_front_with_the_cards() => OnUi(async () =>
     {
         _records.Write(A.Record());
         _server.Current = A.Status(profile: A.ChangedProfile());
@@ -1317,11 +1312,9 @@ public sealed class ShellWindowTests : IDisposable
         shell.GoTo(PageId.System);
         Settle(window);
 
-        Assert.False(shell.Health.DetailsOpen);
-        Assert.False(Named<Expander>(window, "HealthDetails").IsExpanded);
         Assert.True(Visible(window, "ProfileFixText"));
         Assert.True(Visible(window, "ActionsSection"));
-        Assert.False(Visible(window, "ProcessRows"));
+        Assert.True(Visible(window, "ProcessRows"));
     });
 
     [Fact]

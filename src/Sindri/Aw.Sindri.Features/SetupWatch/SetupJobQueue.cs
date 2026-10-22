@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.SetupWatch;
 
@@ -11,7 +12,7 @@ namespace Aw.Sindri.Features.SetupWatch;
 /// A start the runner refuses for the limit (SND-JOB-002, a race with a job started elsewhere) stays at the head; any other refusal drops that job and goes to its submitter.
 /// </summary>
 /// <param name="running">How many jobs the runner has now.</param>
-internal sealed class SetupJobQueue(Func<int> running) : IDisposable
+internal sealed class SetupJobQueue(Func<int> running) : ISetupJobSlots, IDisposable
 {
     private readonly SemaphoreSlim _turn = new(1, 1);
     private readonly Lock _state = new();
@@ -20,6 +21,9 @@ internal sealed class SetupJobQueue(Func<int> running) : IDisposable
 
     /// <inheritdoc/>
     public void Dispose() => _turn.Dispose();
+
+    /// <inheritdoc/>
+    public bool Holds(JobKind kind, JobKey key) => Slot == (kind, key) || Waiting.Any(w => w == (kind, key));
 
     /// <summary>The job holding the slot, or null.</summary>
     internal (JobKind Kind, JobKey Key)? Slot

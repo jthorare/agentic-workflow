@@ -15,6 +15,9 @@ internal static partial class Labels
     /// <summary>Said when Sindri answered but did not approve the profile.</summary>
     internal const string NeedsYouNotApproved = "Sindri did not approve it. Ask again from the box.";
 
+    /// <summary>Said when the workflow a row names is not in the list Sindri serves any more.</summary>
+    internal const string NeedsYouRecipeGone = "Sindri doesn't list that workflow any more. Reload and try again.";
+
     /// <summary>The secondary action of a request.</summary>
     internal const string NeedsYouSendBack = "Send back";
 

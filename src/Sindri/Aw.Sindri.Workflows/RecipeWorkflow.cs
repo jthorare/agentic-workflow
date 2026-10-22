@@ -79,12 +79,12 @@ internal sealed partial class RecipeWorkflow
         {
             await ReleaseHeavyDetached().ConfigureAwait(true);   // LN-WF3: a cancel gives the slot back too
             await DropTexts(instance.Address.Value).ConfigureAwait(true);   // a Step's texts still in memory go too (any runtime)
-            await Cleanup().ConfigureAwait(true);   // the workflow itself was cancelled: the claim is still released (detached scope)
+            await Cleanup(_instance ?? instance).ConfigureAwait(true);   // the workflow itself was cancelled: the claim is still released (detached scope)
             throw;
         }
 
         await CancelChildren(instance).ConfigureAwait(true);   // engine P7: a child still live when this ends is cancelled, so it frees its own claim
-        await Cleanup().ConfigureAwait(true);   // engine P7: the item's claim goes with the instance, whatever the ending
+        await Cleanup(instance).ConfigureAwait(true);   // engine P7: the item's claim goes with the instance, whatever the ending
         return new RecipeResult(instance.State, instance.Outcome?.Value, OutputsOf(instance));
     }
 

@@ -207,18 +207,24 @@ internal sealed class RegistryHarness : IAsyncDisposable
 /// <summary>The effect blocks' ports, in memory (engine P6): the approved allowlist, the claim, its marker ref, liveness, fact contents and the desk's notices.</summary>
 file static class EffectPortRegistrations
 {
-    public static IServiceCollection AddEffectPorts(this IServiceCollection services, SliceHarness h) => services
-        .AddSingleton<IApprovedProfile>(h.Profiles)
-        .AddSingleton<Core.Workflow.Engine.Effects.IWorkflowClaims>(new InMemoryWorkflowClaims())
-        .AddSingleton<Core.Workflow.Engine.Effects.IClaimRefs>(new InMemoryClaimRefs())
-        .AddSingleton<Core.Workflow.Engine.Effects.IPhaseStarts>(new FakePhaseStarts())
-        .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
-        .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(new InMemoryFactStore())
-        .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices())
-        .AddSingleton<Core.LensPacks.IChangedPaths>(new Testing.LensPacks.FakeChangedPaths())
-        .AddSingleton<Core.Workflow.Engine.Runtime.IDiffContent>(new FakeDiffContent())
-        .AddSingleton<Core.Scoping.IBriefFiles>(new Testing.Scoping.InMemoryBriefFiles())
-        .AddSingleton<Core.Scoping.IRepoCheckouts>(new Testing.Scoping.InMemoryRepoCheckouts())
-        .AddSingleton<Core.Forge.IPullRequests>(new Testing.Forge.FakePullRequests(["forge.test"]))
-        .AddSingleton<Core.Text.ITextScrubber>(new Testing.PassThroughScrubber());
+    public static IServiceCollection AddEffectPorts(this IServiceCollection services, SliceHarness h)
+    {
+        var facts = new InMemoryFactStore();
+        return services
+            .AddSingleton<IApprovedProfile>(h.Profiles)
+            .AddSingleton<Core.Workflow.Engine.Effects.IWorkflowClaims>(new InMemoryWorkflowClaims())
+            .AddSingleton<Core.Workflow.Engine.Effects.IClaimRefs>(new InMemoryClaimRefs())
+            .AddSingleton<Core.Workflow.Engine.Effects.IPhaseStarts>(new FakePhaseStarts())
+            .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
+            .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(facts)
+            .AddSingleton<Core.Workflow.Engine.Runtime.IFactStore>(facts)
+            .AddSingleton<Core.Workflow.Blocks.IRunArea>(new Testing.Scoping.InMemoryRunArea())
+            .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices())
+            .AddSingleton<Core.Scoping.IBriefFiles>(new Testing.Scoping.InMemoryBriefFiles())
+            .AddSingleton<Core.Scoping.IRepoCheckouts>(new Testing.Scoping.InMemoryRepoCheckouts())
+            .AddSingleton<Core.Forge.IPullRequests>(new Testing.Forge.FakePullRequests(["forge.test"]))
+            .AddSingleton<Core.LensPacks.IChangedPaths>(new Testing.LensPacks.FakeChangedPaths())
+            .AddSingleton<Core.Workflow.Engine.Runtime.IDiffContent>(new FakeDiffContent())
+            .AddSingleton<Core.Text.ITextScrubber>(new Testing.PassThroughScrubber());
+    }
 }

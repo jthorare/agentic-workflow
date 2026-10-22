@@ -74,11 +74,13 @@ internal sealed partial class ContextPageViewModel
         if (result.IsSuccess)
         {
             Show(result.Value, choices: [], fromQuestion);
+            NoteRead();
         }
         else
         {
             Show(view: null, choices: Suggestions(result.Error));
             Problem = result.Error.Message;
+            await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
         Refresh();

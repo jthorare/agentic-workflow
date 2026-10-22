@@ -4,150 +4,303 @@
              xmlns:shell="using:Aw.Sindri.Ui.ViewModels.Shell"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              xmlns:controls="using:Aw.Sindri.Ui.ViewModels.Controls"
+             xmlns:api="using:Aw.Sindri.Ui.Api"
              xmlns:ccontrols="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Shell.HealthPage"
              x:DataType="shell:HealthViewModel">
-  <!-- Health (UI spec §4.8, services-health.html HEALTH): one panel of sections, each an eyebrow with the state's glyph
-       and word at its right (on the eyebrow's baseline, S2: .head-eyebrow), over label/value rows at Body size. The same
-       status 'sindri status' prints. -->
+  <UserControl.Styles>
+    <!-- The tabs: a Surface2 track, the chosen segment on Surface3 (as the Context page's view switch). -->
+    <Style Selector="RadioButton.segment">
+      <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
+      <Setter Property="Height" Value="{StaticResource Size.Control}" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter x:Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
+    <!-- The headline: one card; the border takes the tone (amber: something needs a look, red: stalled or not running). -->
+    <Style Selector="Border.headline">
+      <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="Border.headline.warn">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    </Style>
+    <Style Selector="Border.headline.bad">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- System (system spec): a title, two tabs, then Overview (the headline, what needs a look, the cards) or Services
+       (each scheduled service with Run now and Pause or Resume). The words are the same status 'sindri status' prints. -->
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.System}" AutomationProperties.Name="{Binding Text.System}" />
 
-    <!-- F3: the page leads with one sentence ("Everything is running." or what is wrong); the per-service detail waits behind Details. -->
-    <TextBlock x:Name="HealthSentence" Classes="body-strong" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Sentence}" />
+    <Border x:Name="SystemTabs" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" HorizontalAlignment="Left"
+            AutomationProperties.Name="{Binding TabsName}">
+      <StackPanel Orientation="Horizontal">
+        <RadioButton x:Name="OverviewTab" GroupName="SystemTab" Classes="segment" IsChecked="{Binding ShowOverview, Mode=TwoWay}"
+                     Content="{Binding OverviewTabLabel}" AutomationProperties.Name="{Binding OverviewTabLabel}" />
+        <RadioButton x:Name="ServicesTab" GroupName="SystemTab" Classes="segment" IsChecked="{Binding ShowServicesTab, Mode=TwoWay}"
+                     Content="{Binding ServicesTabLabel}" AutomationProperties.Name="{Binding ServicesTabLabel}" />
+      </StackPanel>
+    </Border>
 
-    <!-- Review 456-1: what the person must act on (the profile's approve command, the actions) stays up front; only per-service detail waits behind Details. -->
-    <Border Classes="panel" IsVisible="{Binding HasProfileFix}">
-      <Border Classes="section last">
-        <Border Classes="command" IsVisible="{Binding HasProfileFix}">
-          <TextBlock x:Name="ProfileFixText" Classes="mono" Text="{Binding ProfileFix}"
-                     AutomationProperties.Name="{Binding ProfileFix}" />
+    <StackPanel x:Name="OverviewPanel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding ShowOverview}">
+      <!-- The headline: the state's glyph and word, then the one sentence ("Everything is running." or what is wrong). -->
+      <Border x:Name="Headline" Classes="panel headline" Classes.warn="{Binding ToneWarn}" Classes.bad="{Binding ToneError}">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <icons:StateIcon x:Name="HeadlineGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
+          <TextBlock x:Name="HealthSentence" Classes="body-strong" Text="{Binding Sentence}" TextWrapping="Wrap" VerticalAlignment="Center"
+                     AutomationProperties.Name="{Binding Sentence}" />
+        </StackPanel>
+      </Border>
+
+      <!-- What the person must act on stays up front: the profile's approve command, and the problems with their codes. -->
+      <Border Classes="panel" IsVisible="{Binding HasProfileFix}">
+        <Border Classes="section last" IsVisible="{Binding HasProfileFix}">
+          <Border Classes="command" IsVisible="{Binding HasProfileFix}">
+            <TextBlock x:Name="ProfileFixText" Classes="mono" Text="{Binding ProfileFix}"
+                       AutomationProperties.Name="{Binding ProfileFix}" />
+          </Border>
         </Border>
       </Border>
-    </Border>
-    <Border Classes="panel">
-    <!-- The catalog (§4.8): its pending rows by the phase that ships them, then the actions that stay at a terminal
-         (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
-    <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
-      <StackPanel Spacing="{StaticResource Space.XS}">
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock x:Name="ActionsEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}"
-                     AutomationProperties.Name="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}" />
-          <TextBlock x:Name="PendingSummaryText" Grid.Column="1" Classes="body subtle" Text="{Binding PendingSummary}"
-                     AutomationProperties.Name="{Binding PendingSummary}" />
-        </Grid>
-        <ItemsControl x:Name="PendingPhases" ItemsSource="{Binding Pending}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="controls:PendingPhase">
-              <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
-                <TextBlock Classes="caption subtle" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-                <ItemsControl ItemsSource="{Binding Controls}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="controls:ControlViewModel">
-                      <ccontrols:CommandControl Margin="0,0,0,6" />
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <ItemsControl x:Name="CliOnlyActions" ItemsSource="{Binding CliOnly}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="controls:ControlViewModel">
-              <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
-                <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
-                <ccontrols:CommandControl />
-              </StackPanel>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </Border>
-
-    </Border>
-
-    <Expander x:Name="HealthDetails" Header="{Binding DetailsHeading}" IsExpanded="{Binding DetailsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding DetailsHeading}">
-    <Border Classes="panel">
-      <StackPanel>
-        <!-- The control plane: its state is the pill's glyph and word (✓ Running, ⌛ stale, ✕ Not running). -->
-        <Border Classes="section">
-          <StackPanel Spacing="{StaticResource Space.XS}">
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock x:Name="ControlPlaneEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ControlPlaneCard}"
-                         AutomationProperties.Name="{Binding Text.ControlPlaneCard}" />
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
-                <TextBlock x:Name="ProcessWord" Classes="body-strong" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
-              </StackPanel>
-            </Grid>
-            <ItemsControl x:Name="ProcessRows" ItemsSource="{Binding Detail.Process}" AutomationProperties.Name="{Binding Text.ControlPlaneCard}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:HealthCell">
-                  <Grid Classes="row" ColumnDefinitions="140,*" AutomationProperties.Name="{Binding Label}">
-                    <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
-                    <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextTrimming="CharacterEllipsis"
-                               AutomationProperties.Name="{Binding Value}" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <Border Classes="section">
-          <StackPanel Spacing="{StaticResource Space.XS}">
-            <TextBlock Classes="eyebrow" Text="{Binding Text.ServicesCard}" AutomationProperties.Name="{Binding Text.ServicesCard}" />
-            <ItemsControl x:Name="ServicesList" ItemsSource="{Binding Services}" AutomationProperties.Name="{Binding Text.Services}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:ServiceRow">
-                  <Grid Classes="row" ColumnDefinitions="140,*,Auto" AutomationProperties.Name="{Binding Name}">
-                    <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
-                    <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Cadence}" AutomationProperties.Name="{Binding Cadence}" />
-                    <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Classes="body subtle" Text="{Binding Text.NoServices}" IsVisible="{Binding !HasServices}"
-                       AutomationProperties.Name="{Binding Text.NoServices}" />
-          </StackPanel>
-        </Border>
-
-        <Border Classes="section">
-          <StackPanel Spacing="{StaticResource Space.XS}">
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock x:Name="ProfileEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ProfileCard}"
-                         AutomationProperties.Name="{Binding Text.ProfileCard}" />
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                <icons:StateIcon x:Name="ProfileHeadGlyph" Glyph="{Binding Detail.ProfileGlyph}" VerticalAlignment="Center" />
-                <TextBlock x:Name="ProfileHeadText" Classes="body-strong" Text="{Binding Detail.ProfileHead}"
-                           AutomationProperties.Name="{Binding Detail.ProfileHead}" />
-              </StackPanel>
-            </Grid>
-            <ItemsControl x:Name="ProfileRows" ItemsSource="{Binding Detail.Profile}" AutomationProperties.Name="{Binding Text.ProfileCard}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:HealthCell">
-                  <Grid Classes="row" ColumnDefinitions="140,*" AutomationProperties.Name="{Binding Label}">
-                    <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
-                    <!-- S3: a path (the profile's file) is mono, as the Not running card's path is; other values are Body. -->
-                    <TextBlock Grid.Column="1" Classes.body="{Binding !IsPath}" Classes.mono="{Binding IsPath}" Text="{Binding Value}"
-                               TextTrimming="PrefixCharacterEllipsis" AutomationProperties.Name="{Binding Value}" ToolTip.Tip="{Binding Value}" />
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
+      <Border x:Name="ProblemsCard" Classes="panel" IsVisible="{Binding HasProblemLines}">
         <Border Classes="section last">
-          <Grid Classes="row" ColumnDefinitions="140,*">
-            <TextBlock Classes="eyebrow row-label on-mono" Text="{Binding Text.LastEventCard}" AutomationProperties.Name="{Binding Text.LastEventCard}" />
-            <TextBlock x:Name="LastEventText" Grid.Column="1" Classes="mono" Text="{Binding LastEvent}" AutomationProperties.Name="{Binding LastEvent}" />
-          </Grid>
+          <StackPanel Spacing="{StaticResource Space.XS}">
+            <TextBlock Classes="eyebrow" Text="{Binding NeedsALookHeading}" AutomationProperties.Name="{Binding NeedsALookHeading}" />
+            <ItemsControl x:Name="ProblemLines" ItemsSource="{Binding ProblemLines}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="api:HealthProblemView">
+                  <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" AutomationProperties.Name="{Binding Text}">
+                    <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="1" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}" />
+                    <TextBlock Grid.Column="2" Classes="mono subtle" Text="{Binding Code}" Margin="12,0,0,0" AutomationProperties.Name="{Binding Code}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
         </Border>
+      </Border>
+
+      <WrapPanel x:Name="SystemCards" Orientation="Horizontal">
+        <!-- The control plane: its state is the pill's glyph and word (running, stale, not running). -->
+        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="ControlPlaneEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ControlPlaneCard}"
+                           AutomationProperties.Name="{Binding Text.ControlPlaneCard}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                  <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ProcessWord" Classes="body-strong" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
+                </StackPanel>
+              </Grid>
+              <ItemsControl x:Name="ProcessRows" ItemsSource="{Binding Detail.Process}" AutomationProperties.Name="{Binding Text.ControlPlaneCard}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HealthCell">
+                    <Grid Classes="row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
+                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                      <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextTrimming="CharacterEllipsis"
+                                 AutomationProperties.Name="{Binding Value}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Grid Classes="row" ColumnDefinitions="130,*">
+                <TextBlock Classes="eyebrow row-label on-mono" Text="{Binding Text.LastEventCard}" AutomationProperties.Name="{Binding Text.LastEventCard}" />
+                <TextBlock x:Name="LastEventText" Grid.Column="1" Classes="mono" Text="{Binding LastEvent}" AutomationProperties.Name="{Binding LastEvent}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="ProfileEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ProfileCard}"
+                           AutomationProperties.Name="{Binding Text.ProfileCard}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                  <icons:StateIcon x:Name="ProfileHeadGlyph" Glyph="{Binding Detail.ProfileGlyph}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="ProfileHeadText" Classes="body-strong" Text="{Binding Detail.ProfileHead}"
+                             AutomationProperties.Name="{Binding Detail.ProfileHead}" />
+                </StackPanel>
+              </Grid>
+              <ItemsControl x:Name="ProfileRows" ItemsSource="{Binding Detail.Profile}" AutomationProperties.Name="{Binding Text.ProfileCard}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HealthCell">
+                    <Grid Classes="row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
+                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                      <!-- S3: a path (the profile's file) is mono, as the Not running card's path is; other values are Body. -->
+                      <TextBlock Grid.Column="1" Classes.body="{Binding !IsPath}" Classes.mono="{Binding IsPath}" Text="{Binding Value}"
+                                 TextTrimming="PrefixCharacterEllipsis" AutomationProperties.Name="{Binding Value}" ToolTip.Tip="{Binding Value}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Border x:Name="ViewsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Classes="eyebrow head-eyebrow" Text="{Binding ViewsCardName}" AutomationProperties.Name="{Binding ViewsCardName}" />
+                <TextBlock x:Name="ViewsWordText" Grid.Column="1" Classes="body-strong" Text="{Binding ViewsWord}" AutomationProperties.Name="{Binding ViewsWord}" />
+              </Grid>
+              <ItemsControl x:Name="ViewsRows" ItemsSource="{Binding ViewsRows}" AutomationProperties.Name="{Binding ViewsCardName}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HealthCell">
+                    <Grid Classes="row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
+                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                      <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" AutomationProperties.Name="{Binding Value}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <ccontrols:CommandControl x:Name="ViewsFixControl" DataContext="{Binding ViewsFix}"
+                                        IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <TextBlock Classes="eyebrow head-eyebrow" Text="{Binding AgentsCardName}" AutomationProperties.Name="{Binding AgentsCardName}" />
+              <ItemsControl x:Name="AgentsRows" ItemsSource="{Binding AgentsRows}" AutomationProperties.Name="{Binding AgentsCardName}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HealthCell">
+                    <Grid Classes="row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
+                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                      <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" AutomationProperties.Name="{Binding Value}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Classes="eyebrow head-eyebrow" Text="{Binding Text.ServicesCard}" AutomationProperties.Name="{Binding Text.ServicesCard}" />
+                <TextBlock x:Name="ServicesScheduledText" Grid.Column="1" Classes="body subtle" Text="{Binding ServicesScheduled}"
+                           AutomationProperties.Name="{Binding ServicesScheduled}" />
+              </Grid>
+              <ItemsControl x:Name="ServicesList" ItemsSource="{Binding ServiceCard}" AutomationProperties.Name="{Binding Text.Services}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="shell:ServiceRowViewModel">
+                    <Grid Classes="row" ColumnDefinitions="140,*,Auto" AutomationProperties.Name="{Binding Name}">
+                      <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                      <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
+                      <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Classes="body subtle" Text="{Binding Text.NoServices}" IsVisible="{Binding !HasServices}"
+                         AutomationProperties.Name="{Binding Text.NoServices}" />
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+          <!-- The catalog (§4.8): its pending rows by the phase that ships them, then the actions that stay at a terminal
+             (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
+        <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
+          <StackPanel Spacing="{StaticResource Space.XS}">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock x:Name="ActionsEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}"
+                         AutomationProperties.Name="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}" />
+              <TextBlock x:Name="PendingSummaryText" Grid.Column="1" Classes="body subtle" Text="{Binding PendingSummary}"
+                         AutomationProperties.Name="{Binding PendingSummary}" />
+            </Grid>
+            <TextBlock x:Name="ActionCountsText" Classes="body subtle" Text="{Binding Counts}" TextWrapping="Wrap"
+                       AutomationProperties.Name="{Binding Counts}" />
+            <ccontrols:CommandControl x:Name="StopControl" DataContext="{Binding Stop}"
+                                      IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <ItemsControl x:Name="PendingPhases" ItemsSource="{Binding Pending}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="controls:PendingPhase">
+                  <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
+                    <TextBlock Classes="caption subtle" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
+                    <ItemsControl ItemsSource="{Binding Controls}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="controls:ControlViewModel">
+                          <ccontrols:CommandControl Margin="0,0,0,6" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl x:Name="CliOnlyActions" ItemsSource="{Binding CliOnly}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="controls:ControlViewModel">
+                  <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
+                    <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                    <ccontrols:CommandControl />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        </Border>
+
+      </WrapPanel>
+    </StackPanel>
+
+    <!-- The Services tab: each scheduled service, what it does, and its own Run now and Pause or Resume. -->
+    <Border x:Name="ServicesPanel" Classes="panel" IsVisible="{Binding ShowServicesTab}">
+      <StackPanel>
+        <Grid Classes="row" ColumnDefinitions="180,90,140,*,130,250" Margin="16,8,16,0">
+          <TextBlock Classes="eyebrow" Text="{Binding ServiceColumns[0]}" />
+          <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ServiceColumns[1]}" />
+          <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ServiceColumns[2]}" />
+          <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding ServiceColumns[3]}" />
+          <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding ServiceColumns[4]}" />
+        </Grid>
+        <ItemsControl x:Name="ServiceTable" ItemsSource="{Binding ServiceTable}" AutomationProperties.Name="{Binding Text.Services}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="shell:ServiceRowViewModel">
+              <Border Classes="section" Padding="16,8">
+                <Grid ColumnDefinitions="180,90,140,*,130,250" AutomationProperties.Name="{Binding Name}">
+                  <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                  <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Every}" />
+                  <TextBlock Grid.Column="2" Classes="body" Classes.error="{Binding HasFailed}" Text="{Binding Status}" VerticalAlignment="Center"
+                             AutomationProperties.Name="{Binding Status}" />
+                  <TextBlock Grid.Column="3" Classes="body muted" Text="{Binding What}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"
+                             AutomationProperties.Name="{Binding What}" />
+                  <TextBlock Grid.Column="4" Classes="body subtle" Text="{Binding LastRun}" VerticalAlignment="Center" AutomationProperties.Name="{Binding LastRun}" />
+                  <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Panel IsVisible="{Binding RunShown}"><ccontrols:CommandControl DataContext="{Binding Run}" /></Panel>
+                    <Panel IsVisible="{Binding ToggleShown}"><ccontrols:CommandControl DataContext="{Binding Toggle}" /></Panel>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Classes="body subtle" Margin="16" Text="{Binding Text.NoServices}" IsVisible="{Binding !HasServices}"
+                   AutomationProperties.Name="{Binding Text.NoServices}" />
       </StackPanel>
     </Border>
-    </Expander>
   </StackPanel>
 </UserControl>

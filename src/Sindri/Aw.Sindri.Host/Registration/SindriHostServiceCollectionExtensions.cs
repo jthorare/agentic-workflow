@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Workflow.Shipped;
@@ -28,7 +29,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<CodeIndex.Core.Facade.ICodeIndex, CodeIndexHost.UnbuiltCodeIndex>()   // no index store yet: every read answers 'no index' until CI-9 registers the real facade
         .AddScoped<CodeIndexHost.ICodeIndexScopeSource, CodeIndexHost.ProfileCodeIndexScopeSource>()
         .AddScoped<Context.Core.Symbols.ICodeSymbolSource, CodeIndexHost.CodeIndexSymbolSource>()   // Context reads the index through the facade above (S-9); replaces the no-index default (TryAdd in AddContextFeatures)
-        .AddSingleton<IOnyxProgress>(static _ => new ConsoleOnyxProgress(Console.Error));   // `onyx up`'s lines and dots on standard error
+        .AddSingleton<IOnyxProgress>(static sp => new JobOnyxProgress(new ConsoleOnyxProgress(Console.Error), sp.GetRequiredService<IJobContextAccessor>()));   // `onyx up`'s lines and dots on standard error, or the Onyx setup job's own lines
 
     /// <summary>
     /// Adds what only 'sindri serve' runs: the port it chooses before it binds (and the check that refuses to start without

@@ -40,7 +40,7 @@ internal sealed class GetJobService(IJobViews jobs, IProjectorStatus status, ICa
             return SindriErrors.JobNotFound.With(JobRules.NoSuchJob);
         }
 
-        var running = row.State == JobState.Running;
+        var running = JobStates.IsActive(row.State);   // a waiting job can be cancelled too
         string? cli = null;
         if (running)
         {

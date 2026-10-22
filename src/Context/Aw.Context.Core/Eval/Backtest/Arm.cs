@@ -26,4 +26,13 @@ public enum Arm
 
     /// <summary>Every available input: the as-of graph and the repo docs at the cut.</summary>
     All,
+
+    /// <summary>The ranker comparison's baseline (S-8): every input, fused by reciprocal rank fusion alone.</summary>
+    RankerRrf,
+
+    /// <summary>The ranker comparison's second row (S-8): every input, fusion plus the feature scores.</summary>
+    RankerFeatures,
+
+    /// <summary>The ranker comparison's third row (S-8): every input, fusion plus features plus the model rerank of the top items.</summary>
+    RankerRerank,
 }

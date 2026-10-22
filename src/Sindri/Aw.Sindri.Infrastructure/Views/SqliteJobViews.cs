@@ -14,8 +14,9 @@ internal sealed class SqliteJobViews(IViewReader reader) : IJobViews
 
     public async ValueTask<Result<IReadOnlyList<JobRow>>> Running(CancellationToken cancellationToken)
     {
-        var rows = await reader.Where<JobRow>(ViewNames.Jobs, ViewColumn.State, JobStateNames.Of(JobState.Running), cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : Results.Success(JobOrder.OldestFirst(rows.Value));
+        var running = await reader.Where<JobRow>(ViewNames.Jobs, ViewColumn.State, JobStateNames.Of(JobState.Running), cancellationToken).ConfigureAwait(false);
+        var waiting = running.IsError ? running : await reader.Where<JobRow>(ViewNames.Jobs, ViewColumn.State, JobStateNames.Of(JobState.Waiting), cancellationToken).ConfigureAwait(false);
+        return running.IsError ? running.Error : waiting.IsError ? waiting.Error : Results.Success(JobOrder.OldestFirst([.. running.Value, .. waiting.Value]));
     }
 
     public async ValueTask<Result<IReadOnlyList<JobRow>>> List(JobState? state, JobKind? kind, CancellationToken cancellationToken)

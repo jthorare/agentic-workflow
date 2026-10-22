@@ -30,7 +30,7 @@ public sealed class SetupViewModelTests
         var failed = Step(await ReadWith("failed"), "map");
         var building = Step(await ReadWith("running-progress"), "map");
         Assert.Equal((true, "Retry"), (failed.HasAction, failed.Action?.Label));
-        Assert.Equal((true, 0.4, "40 of 100", false), (building.HasProgress, building.ProgressFraction, building.ProgressText, building.IsMeterFailed));   // a meter, not a button
+        Assert.Equal((true, 0.4, "40 of 100 files", false), (building.HasProgress, building.ProgressFraction, building.ProgressText, building.IsMeterFailed));   // a meter, not a button
         Assert.Equal(Labels.SetupMapRetries, failed.HintText);   // and a line that it also retries on its own
         Assert.Equal(string.Empty, building.HintText);
     }
@@ -38,11 +38,11 @@ public sealed class SetupViewModelTests
     [Fact]
     public async Task A_failed_map_that_counted_shows_where_it_stopped_on_a_meter_in_the_error_colour()
     {
-        _f.Serve(WithProgress(Golden("failed"), "map", 40, 100));
+        _f.Serve(WithProgress(Golden("failed"), "map", 40, 100, "files"));
 
         var map = Step(await _f.Read(Token), "map");
 
-        Assert.Equal((true, true, 0.4, "40 of 100"), (map.HasProgress, map.IsMeterFailed, map.ProgressFraction, map.ProgressText));
+        Assert.Equal((true, true, 0.4, "40 of 100 files"), (map.HasProgress, map.IsMeterFailed, map.ProgressFraction, map.ProgressText));
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class SetupViewModelTests
     {
         var map = Step(await ReadWith("running-progress"), "map");
 
-        Assert.Equal(("Working", "40 of 100", 0.4), (map.ChipWord, map.ProgressText, map.ProgressFraction));
+        Assert.Equal(("Working", "40 of 100 files", 0.4), (map.ChipWord, map.ProgressText, map.ProgressFraction));
         var line = Assert.Single(map.Items);
         Assert.Equal(("demo", "Working"), (line.Repo, line.ChipText));
     }

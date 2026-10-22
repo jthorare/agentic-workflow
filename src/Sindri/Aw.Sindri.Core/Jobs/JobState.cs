@@ -21,4 +21,8 @@ public enum JobState
     /// <summary>Ended with 'job.cancelled'.</summary>
     [JsonStringEnumMemberName("cancelled")]
     Cancelled,
+
+    /// <summary>Parked on a named signal by 'job.waiting' until 'job.resumed' (setup-once spec §5.6: the Onyx setup waits for the owner's login). It holds no job slot, and a restart ends it as failed.</summary>
+    [JsonStringEnumMemberName("waiting")]
+    Waiting,
 }

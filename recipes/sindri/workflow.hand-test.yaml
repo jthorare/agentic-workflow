@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.hand-test
-version: 2
+version: 3
 description: "Block recipe: use the change by hand in the running app; record what was done, expected and seen."
 displayName: "Try the change by hand in the running app"
 inputs:
@@ -11,7 +11,7 @@ outputs:
 initial: handtest
 states:
   handtest: { kind: active, step: step.handtest.run, timeout: { after: 4h, then: park },
-              next: "Use the change for {item} by hand in the running app; record what you did, expected and saw." }
+              next: "Use the change for {item} by hand in the running app; record what you did, expected and saw. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (screenshots, logs, notes); name no hash." }
   works:    { kind: terminal, outcome: resolved }
   broken:   { kind: terminal, outcome: unresolved }
 transitions:

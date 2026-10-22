@@ -214,6 +214,7 @@ the executability review, hidden scenarios, the PR) stays in Sindri's `DesignPac
 | `PKT-PHS-008` | `phase.json` matches its schema: `goal`, `kind` (`feature`, `fix`, `refactor`, `docs`, `config`), `deps`, `size`, `base` (`rule` `default-branch` or `dependency-head`, and its `ref`, which for `dependency-head` is one of `deps`), `allowedFiles` (non-empty, each a relative glob or `new: <path>`, the write-scope syntax), `testChange[]` (`path` and `reason`), `readSeeds`, `budget`; an optional `amends`; no unknown field |
 | `PKT-PHS-009` | `phase.json` has `amends` exactly when the id ends `-a<n>`; an amendment's `paths` are non-empty write-scope entries and its `reason` is not blank |
 | `PKT-PHS-012` | `holdout.json` is `{schemaVersion, setHash, count}`: the hash and size of the hidden set, never its text |
+| `PKT-HOLD-003` | A phase packet's `holdout.json` `setHash` is the one its seal names (LN-PKT4, line spec §9.1): `validate --kind phase --seal <file>`, where the file is the `seal.json` the holdout store writes, `{schemaVersion, phase, setHash, planHash}`, of which only `schemaVersion` (1) and `setHash` are read. `unchecked` without `--seal` or when `holdout.json` can't be read; only the phase kind has the rule, and `validate` reads the seal file and writes nothing |
 | `PKT-HND-007` | `pr.json` matches its schema: `base`, `headBranch`, `headSha` (a full sha), `stackParent` (a branch or null), `title`, `labels` (each once) |
 
 `PKT-xxx-007` and above that name a file check are `unchecked` when the file is missing or not well formed; `P-005` and
@@ -252,7 +253,7 @@ its `baseSha`). A failed check freezes nothing (exit 1); the same hash again say
 |---|---|
 | 0 | Every implemented check passed (and, for `freeze`, the hash is recorded; for `verify`, the hash is verified) |
 | 1 | A check failed, or the packet is malformed (`AW-PACKETS-003`, `-004`) |
-| 2 | A usage error, or the tool couldn't do its job: no packet (`AW-PACKETS-002`), an unreadable repository (`-006`) or packet file (`-008`), an unwritable freeze log (`-007`), an unusable sizes file (`-009`) |
+| 2 | A usage error, or the tool couldn't do its job: no packet (`AW-PACKETS-002`), an unreadable repository (`-006`) or packet file (`-008`), an unwritable freeze log (`-007`), an unusable sizes file (`-009`) or seal file (`-010`) |
 
 Errors go to stderr as `aw-packets: <code> <message>` (with `--json`, the `Error` record).
 
@@ -263,6 +264,7 @@ Errors go to stderr as `aw-packets: <code> <message>` (with `--json`, the `Error
 | `IPacketSource` | `FileSystemPacketSource` | `InMemoryPacketSource`, `PacketSourceContract` |
 | `IScopingPacketSource` | `FileSystemScopingPacketSource` (the twelve listed files, a symbolic link refused; the other top-level names, never their content) | `InMemoryScopingPacketSource`, `ScopingPacketSourceContract` |
 | `ILinePacketSource` | `FileSystemLinePacketSource` (a line kind's listed files and every file under its linked directories, at most 2,000 of them; a symbolic link, linked file or directory, is refused; the other top-level names, never their content) | `InMemoryLinePacketSource`, `LinePacketSourceContract` |
+| `ISealSource` | `FileSystemSealSource` (a regular file of at most 16 KiB; `SealReader` parses it) | `InMemorySealSource`, `SealSourceContract` |
 | `IRepoSnapshot` | `GitRepoSnapshot` (`git ls-tree -r -z`, 30 s limit per run) | `InMemoryRepoSnapshot`, `RepoSnapshotContract` |
 | `IFreezeLog` | `FileFreezeLog` (temp file, then move) | `InMemoryFreezeLog`, `FreezeLogContract` |
 | `TimeProvider` (BCL) | `TimeProvider.System` | `FakeTimeProvider` |
@@ -275,7 +277,7 @@ errors are the same whatever supplies the bytes; `PacketSourceContract` checks t
 - **Size classes (`PKT-SIZE-001`)** are answered by LN-PKT3 (above): the values live in the profile's `workflow.plan.sizes`,
   Sindri writes the sizes file, and a task over a limit is a failure. Not decided here: which lens a packet-time budget
   uses (the file has one budget per size).
-- **Holdout store (`PKT-HOLD-002` checks the packet side today):** addendum §17.19 puts held-out examples in
+- **Holdout store (`PKT-HOLD-002` checks the packet side; `PKT-HOLD-003` compares a phase's set hash with a seal file it is given):** addendum §17.19 puts held-out examples in
   sindri-private state with a canary per set. What is that store's path and format, and how does a packet name a set
   (by example id, as now)? The store side and the canary are checked once the store exists.
 - **Workflow coverage (`PKT-FLOW-001`)** is not an open question: §17.4's Workflow part is the frozen output of

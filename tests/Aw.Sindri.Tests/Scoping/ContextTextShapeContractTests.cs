@@ -41,5 +41,16 @@ public sealed class ContextTextShapeContractTests : ScopingTextShapeContract, IA
         _fixture.Dispose();
     }
 
+    /// <summary>A text that uses a node's whole label anchors on that node: the engine resolves it, so it is not left out for being no suggestion.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_text_naming_a_nodes_label_gets_that_node_as_an_anchor()
+    {
+        var anchors = await Create().Anchors(Repo, "How does the Tab manager restore a layout?", TestContext.Current.CancellationToken);
+
+        Assert.True(anchors.IsSuccess);
+        Assert.Contains("feature:tabs.tab-manager", anchors.Value, StringComparer.Ordinal);
+    }
+
     protected override IScopingTextShape Create() => _scope.ServiceProvider.GetRequiredService<IScopingTextShape>();
 }

@@ -1,4 +1,3 @@
-using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Model;
 using Aw.Kernel;
 

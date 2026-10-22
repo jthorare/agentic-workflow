@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Ports;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetSetup;

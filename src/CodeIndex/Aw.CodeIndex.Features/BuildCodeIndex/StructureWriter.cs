@@ -4,6 +4,7 @@ using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Planning;
 using Aw.CodeIndex.Core.Ports;
+using Aw.CodeIndex.Core.Similarity;
 using Aw.CodeIndex.Core.Values;
 using Aw.Kernel;
 
@@ -166,10 +167,11 @@ public sealed class StructureWriter
 
             var s = symbols[i];
             var body = StoredBody(repo.Settings, s);
+            var minHash = Clones.Signature(s.Tokens);
             records.Add(new SymbolRecord(
                 reference, s.Name, s.Qualified, s.Kind, s.Arity, s.StartLine, s.EndLine, s.Exported, utility,
                 _scrubber.Scrub(s.Signature, CodeIndexRules.SignatureMaxCharacters), s.ShapeHash, s.Tokens.Count, s.Complexity,
-                ReadOnlyMemory<byte>.Empty, [], body, s.CallSites));
+                minHash, Clones.BandKeys(minHash), body, s.CallSites));
         }
 
         return records;

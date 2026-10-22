@@ -1,9 +1,12 @@
 using Aw.Context.Core;
+using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.SetupSources;
 
@@ -37,6 +40,19 @@ public sealed class SetupFactsTests
         var drifted = (await rig.Facts.Profile(Token)).Value.Presence;
 
         Assert.Equal([ProfilePresence.Missing, ProfilePresence.Unapproved, ProfilePresence.Approved, ProfilePresence.Drifted], [missing, unapproved, approved, drifted]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Profile_preview_says_what_the_live_profile_allows_and_is_absent_without_one()
+    {
+        await using var rig = new SetupFactsRig();
+        var none = (await rig.Facts.Profile(Token)).Value.Preview;
+        rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
+
+        var preview = (await rig.Facts.Profile(Token)).Value.Preview;
+
+        Assert.Null(none);
+        Assert.Equal([new SetupPreviewLine("repo", "Works in demo (/work/demo)."), new SetupPreviewLine("allows", "Workflows may not change anything outside Sindri.")], preview);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -111,7 +127,7 @@ public sealed class SetupFactsTests
     [Fact, Trait("Lane", "unit")]
     public async Task Mcp_counts_a_repo_registered_only_when_every_installed_provider_has_it_and_lists_where()
     {
-        var host = new Testing.FakeProviderHost();
+        var host = new FakeProviderHost();
         var withAll = new SetupFactsRig(host);
         await using (withAll)
         {
@@ -125,6 +141,71 @@ public sealed class SetupFactsTests
             Assert.Equal(("Claude Code, Codex, Cursor", 0, "Claude Code, Cursor"), (partial.Providers, partial.Registered, partial.Items.Lines[0].Detail));
             Assert.Equal((1, "Claude Code, Codex, Cursor", SetupState.Done), (all.Registered, all.Items.Lines[0].Detail, all.Items.Lines[0].State));
         }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mcp_item_lists_each_installed_provider_as_connected_or_not_started()
+    {
+        var host = new Testing.FakeProviderHost();
+        await using var rig = new SetupFactsRig(host);
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.ClaudeHas((SetupFactsRig.Checkout, "demo"));
+
+        var item = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0];
+
+        Assert.Equal(
+            [new McpProviderState("claude", McpConnection.Connected), new McpProviderState("codex", McpConnection.NotStarted), new McpProviderState("cursor", McpConnection.NotStarted)],
+            item.Providers);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mcp_item_lists_only_the_installed_providers()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+
+        var item = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0];
+
+        Assert.Equal([new McpProviderState("claude", McpConnection.NotStarted)], item.Providers);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mcp_item_is_connecting_while_a_register_job_for_the_repo_runs()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.RegisterJob("demo", JobState.Running);
+
+        var providers = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0].Providers;
+
+        Assert.Equal([new McpProviderState("claude", McpConnection.Connecting)], providers);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mcp_item_is_connecting_while_a_register_job_for_the_repo_waits_in_the_queue()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        _ = await rig.Queue.Submit(JobKind.From("RegisterMcp"), McpJobKeys.For(RepoName.From("demo")), static _ => ValueTask.FromResult<Result<Unit>>(SindriErrors.JobsRateLimited.With("full")), Token);
+
+        var providers = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0].Providers;
+
+        Assert.Equal([new McpProviderState("claude", McpConnection.Connecting)], providers);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Mcp_item_is_failed_when_the_newest_register_job_failed_and_not_started_after_a_cancel_or_a_success()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithRepos());
+        rig.RegisterJob("demo", JobState.Failed, "Couldn't register with Claude Code");
+        rig.RegisterJob("demo", JobState.Cancelled);
+        var failed = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0].Providers;
+        rig.RegisterJob("demo", JobState.Succeeded);
+        var succeededButUnregistered = (await rig.Facts.Mcp(Token)).Value.Items.Lines[0].Providers;
+
+        Assert.Equal([new McpProviderState("claude", McpConnection.Failed, "Couldn't register with Claude Code")], failed);
+        Assert.Equal([new McpProviderState("claude", McpConnection.NotStarted)], succeededButUnregistered);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -173,7 +254,7 @@ public sealed class SetupFactsTests
 
         Assert.Equal(MapPhase.NotBuilt, notBuilt.Phase);
         Assert.Equal((MapPhase.Failed, "SND-CONTEXT-040", null), (failed.Phase, failed.FailureCode, failed.Progress));
-        Assert.Equal((MapPhase.Building, new SetupProgress(40, 100)), (running.Phase, running.Progress));
+        Assert.Equal((MapPhase.Building, new SetupProgress(40, 100, "files")), (running.Phase, running.Progress));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -222,5 +303,29 @@ public sealed class SetupFactsTests
 
         Assert.Equal(("SND-ONYX-001", false), (blocked.BlockedByCode, blocked.Unreachable));
         Assert.True(silent.Unreachable);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task Onyx_is_deferred_when_the_latest_choice_in_the_ledger_says_so(bool latest, bool expected)
+    {
+        await using var rig = new SetupFactsRig();
+        _ = await rig.Slice.HoldLease();
+        using var entered = rig.Slice.Callers.Enter(A.Caller().Human().Build());
+        await rig.Choose(deferred: true);
+        await rig.Choose(latest);
+
+        var fact = (await rig.Facts.Onyx(Token)).Value;
+
+        Assert.Equal(expected, fact.Deferred);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Onyx_is_not_deferred_before_any_choice()
+    {
+        await using var rig = new SetupFactsRig();
+
+        Assert.False((await rig.Facts.Onyx(Token)).Value.Deferred);
     }
 }

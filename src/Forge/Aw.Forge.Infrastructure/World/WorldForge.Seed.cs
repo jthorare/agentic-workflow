@@ -23,6 +23,9 @@ internal partial class WorldForge
                     IsBot = request.IsBot,
                     Path = request.Path,
                     Body = request.Body,
+                    CreatedAt = request.CreatedAt ?? _clock.GetUtcNow(),
+                    Line = request.Line,
+                    EditedAt = request.EditedAt,
                 });
                 return Results.Success(key);
             });
@@ -70,7 +73,8 @@ internal partial class WorldForge
             new HeadBranch(p.HeadRef, p.HeadSha, p.Fork),
             p.Mergeable,
             p.ReviewDecision,
-            new ChecksSummary(p.Checks, p.ChecksSha, [.. p.Failing]));
+            new ChecksSummary(p.Checks, p.ChecksSha, [.. p.Failing]),
+            [.. p.Labels]);
     }
 
     private static PullDigest Digest(ForgeRef pull, WorldPull p) =>
@@ -78,9 +82,10 @@ internal partial class WorldForge
 
     private static string Key(WorldPull p) => new ForgeRepo(p.Host, p.Owner, p.Repo).Key;
 
-    private static ForgeThread ToThread(WorldThread t) =>
+    private static ForgeThread ToThread(ForgeKind kind, WorldPull p, WorldThread t) =>
         new(t.Key, t.Kind, t.Author, t.Association, t.IsBot, t.Resolved, t.Outdated, t.Path, t.Body,
-            [.. ForgeMarker.Of(t.Body).Concat(t.Replies.SelectMany(r => ForgeMarker.Of(r)))]);
+            [.. ForgeMarker.Of(t.Body).Concat(t.Replies.SelectMany(r => ForgeMarker.Of(r)))],
+            t.CreatedAt, t.Line, t.EditedAt, new ForgeRef(kind, p.Host, p.Owner, p.Repo, p.Number).Link + "#" + t.Key);
 
     private string Excerpt(string log)
     {
@@ -104,6 +109,7 @@ internal partial class WorldForge
                 Author = actingLogin,
                 Association = "OWNER",
                 Body = ForgeMarker.Append(request.Text, request.Marker),
+                CreatedAt = _clock.GetUtcNow(),
             });
             return Delivery.Delivered;
         }

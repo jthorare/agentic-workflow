@@ -19,4 +19,21 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 /// <param name="Loops">The loop edges of the path walk (spec §3.10).</param>
 /// <param name="Name">The recipe's name template as written, or null (spec §3.11).</param>
 public sealed record RecipeSummary(RecipeId Id, int Version, RecipeHash Hash, RecipeStanding Standing, ApprovalVia? Via, IReadOnlyList<StaleReason> Stale, IReadOnlyList<RecipeInput> Inputs, string Urgency, IReadOnlyList<RecipeOutput> Outputs, string OrderedBy, IReadOnlyList<StatePlace> States, IReadOnlyList<PathLoop> Loops, string? Name = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? DisplayName = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? DisplayName = null)
+{
+    /// <summary>The list's status word (API spec §3.8, E-25): 'approved', 'changed', 'draft' or 'revoked'; set by the list, null and left out of the JSON elsewhere.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Status { get; init; }
+
+    /// <summary>What changed, for a 'changed' recipe; left out of the JSON otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? StatusDetail { get; init; }
+
+    /// <summary>True for a recipe that only ever runs as a child; set by the list, left out of the JSON elsewhere.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ChildOnly { get; init; }
+
+    /// <summary>The recipe's stats at the list's window; left out of the JSON for a draft, a child-only recipe and a list read without them.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Stats.RecipeListStats? Stats { get; init; }
+}

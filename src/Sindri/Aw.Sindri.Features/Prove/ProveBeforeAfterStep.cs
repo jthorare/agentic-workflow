@@ -1,4 +1,8 @@
+using System.Globalization;
+using System.Text;
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Prove;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -20,7 +24,8 @@ namespace Aw.Sindri.Features.Prove;
 /// <param name="checkouts">Where the repo is checked out.</param>
 /// <param name="worktrees">Makes and removes the scratch worktree.</param>
 /// <param name="scripts">Runs a script in a checkout.</param>
-internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRepoCheckouts checkouts, IWorktrees worktrees, IScriptRuns scripts) : IBlockStep, IBlockStepId, IRepoStep
+/// <param name="commands">The profile's commands, which a script written from the red tests runs.</param>
+internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRepoCheckouts checkouts, IWorktrees worktrees, IScriptRuns scripts, RepoCommandRunner commands) : IBlockStep, IBlockStepId, IRepoStep
 {
     private static readonly TimeSpan _scriptTimeout = TimeSpan.FromMinutes(20);
 
@@ -43,7 +48,7 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
             return BlockStepResult.Failed(failure!);   // why: a null phase comes with its reason
         }
 
-        var planned = Signals(phase).ToList();
+        var planned = await WithRedTestScripts([.. Signals(phase)], (inputs.Address, workspace), StepFacts.Read(context, "fact:redTests"), cancellationToken).ConfigureAwait(false);
         var (rows, unrunnable) = planned.Exists(static p => p.Script is not null)
             ? await RunInScratch(inputs.Address, (phase, checkout), planned, workspace, cancellationToken).ConfigureAwait(false)
             : ([.. planned.Select(static p => (JsonNode)Row(p, "missing", "missing"))], null);
@@ -105,7 +110,7 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
                 continue;
             }
 
-            var script = Path.Combine(workspace, p.Script);
+            var script = p.Path ?? Path.Combine(workspace, p.Script);
             var atBase = await scripts.Run(baseTree, script, _scriptTimeout, cancellationToken).ConfigureAwait(false);
             var atHead = await scripts.Run(workspace, script, _scriptTimeout, cancellationToken).ConfigureAwait(false);
             if (atBase is null || atHead is null)
@@ -139,5 +144,70 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
     private static string? Script(string? path) =>
         !string.IsNullOrWhiteSpace(path) && !Path.IsPathRooted(path) && !path.Split('/', '\\').Contains("..", StringComparer.Ordinal) ? path : null;
 
-    private sealed record Planned(string Item, string Signal, string? Script);
+    private sealed record Planned(string Item, string Signal, string? Script, string? Path = null);
+
+    // A signal that records no script is proven by its item's red tests (the check that failed before the fix and passes after it): the Step writes one script in the run area that copies the item's red
+    // test files into the checkout it runs in (the base tree does not have them yet) and runs the profile's commands there. It is one file, so base and head are by the same script.
+    private async ValueTask<List<Planned>> WithRedTestScripts(List<Planned> planned, (string Address, string Workspace) at, JsonNode? redTests, CancellationToken cancellationToken)
+    {
+        if (!planned.Exists(static p => p.Script is null))
+        {
+            return planned;
+        }
+
+        var listed = await commands.For(cancellationToken).ConfigureAwait(false);
+        if (listed.IsError || listed.Value.Commands.Count == 0)
+        {
+            return planned;
+        }
+
+        var set = listed.Value;
+
+        var resolved = new List<Planned>();
+        foreach (var p in planned)
+        {
+            resolved.Add(p.Script is null && TestPaths(redTests, p.Item) is { Count: > 0 } paths
+                ? await Written(p, at, RunScript(at.Workspace, paths, set.Commands), cancellationToken).ConfigureAwait(false)
+                : p);
+        }
+
+        return resolved;
+    }
+
+    private async ValueTask<Planned> Written(Planned p, (string Address, string Workspace) at, string content, CancellationToken cancellationToken)
+    {
+        var name = "before-after/" + string.Concat(p.Item.Select(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' ? c : '_')) + ".sh";
+        var path = area.PathFor(at.Address, name);
+        if (path.IsError || (await area.Write(at.Address, name, content, append: false, cancellationToken).ConfigureAwait(false)).IsError)
+        {
+            return p;
+        }
+
+        return p with { Script = name, Path = path.Value };
+    }
+
+    private static List<string> TestPaths(JsonNode? redTests, string item) =>
+        redTests?["items"]?[item]?["tests"] is JsonArray listed
+            ? [.. listed.OfType<JsonObject>().Select(static t => Script((string?)t["path"])).OfType<string>().Distinct(StringComparer.Ordinal)]
+            : [];
+
+    private static string RunScript(string workspace, List<string> paths, IReadOnlyList<BuildCommand> profile)
+    {
+        var script = new StringBuilder("#!/usr/bin/env bash\nws=").Append(Quote(workspace)).Append('\n');
+        foreach (var path in paths)
+        {
+            var file = Quote(path);
+            _ = script.Append(CultureInfo.InvariantCulture, $"[ {file} -ef \"$ws\"/{file} ] || {{ mkdir -p -- \"$(dirname -- {file})\" && cp -- \"$ws\"/{file} {file}; }}\n");
+        }
+
+        _ = script.Append("rc=0\n");
+        foreach (var command in profile)
+        {
+            _ = script.AppendJoin(' ', command.Run.Select(Quote)).Append(" || rc=$?\n");
+        }
+
+        return script.Append("exit $rc\n").ToString();
+    }
+
+    private static string Quote(string text) => "'" + text.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 }

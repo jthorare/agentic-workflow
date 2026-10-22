@@ -12,6 +12,6 @@ internal sealed class ArmQuery(QueryPipeline pipeline, MapReader live) : IArmQue
     {
         ArgumentNullException.ThrowIfNull(question);
         IMapProvider map = question.Map is { } fixedMap ? new FixedMap(fixedMap) : new LiveMap(live);
-        return pipeline.Run(new QueryContextRequest(question.Query, question.Scope), new PipelineInputs(map, new FixedSources(question.Sources), question.AsOf), cancellationToken);
+        return pipeline.Run(new QueryContextRequest(question.Query, question.Scope), new PipelineInputs(map, new FixedSources(question.Sources), question.AsOf, Ranker: question.Ranker), cancellationToken);
     }
 }

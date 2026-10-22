@@ -34,6 +34,9 @@ internal static class WorkflowRoutes
     /// <summary>POST: the report for an open desk run.</summary>
     internal static string Complete(string id, string run) => $"{Instance(id)}/runs/{Uri.EscapeDataString(run)}/complete";
 
+    /// <summary>POST: a command on the instance (an answer, a cancel, a hand back).</summary>
+    internal static string Commands(string id) => $"{Instance(id)}/commands";
+
     internal static string Events(string id) => $"{Instance(id)}/events";
 
     internal static string Fact(string id, string key) => $"{Instance(id)}/facts/{Uri.EscapeDataString(key)}";
@@ -58,6 +61,9 @@ internal static class WorkflowRoutes
         var path = new StringBuilder(Root).Append("/recipes/").Append(Uri.EscapeDataString(recipe));
         return (string.IsNullOrEmpty(hash) ? path : path.Append('@').Append(Uri.EscapeDataString(hash))).ToString();
     }
+
+    /// <summary>POST: approve one recipe hash (a protected command; the body is the challenge and its typed text).</summary>
+    internal static string ApproveRecipe(string recipe, string hash) => Recipe(recipe, hash) + "/approve";
 
     private static void Add(List<string> parts, string name, string? value)
     {

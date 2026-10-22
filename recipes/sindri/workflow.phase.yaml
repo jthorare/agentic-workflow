@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.phase
-version: 3
+version: 4
 description: "The per-phase child of the line: build, prove, review and ship one phase as one PR, then babysit it (docs sync inside) to the owner's ready-to-merge stop and the merge."
 displayName: "Build, prove and ship one phase"
 urgency: work
@@ -28,7 +28,7 @@ states:
              next: "Waiting for {child}: proving {item} on its head." }
   review:  { displayName: "Code review", why: "Reviewers check the code, and fixes repeat until no blocking issues remain.", kind: wait, timeout: { after: 3d, then: park },
              waitFor: { child: { recipe: workflow.review-loop, onParked: propagate,
-                                 inputs: { "fact:change": { fact: fact:change }, "fact:phasePacket": { fact: fact:phasePacket }, "fact:lensRounds": [] } } },
+                                 inputs: { "fact:change": { fact: fact:change }, "fact:phasePacket": { fact: fact:phasePacket }, "fact:workspace": { fact: fact:workspace }, "fact:lensRounds": [] } } },
              next: "Waiting for {child}: {item}'s review to zero blocking and issue findings." }
   drift:   { kind: active, step: step.phase.drift, loop: reprove, timeout: { after: 1h, then: park },
              next: "Check that {item}'s review left the proven head unchanged." }
@@ -64,11 +64,13 @@ transitions:
   - { from: review, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
   - { from: drift, to: ship,  on: step.completed, when: { outcome: same } }
   - { label: "code changed after proof: prove again", from: drift, to: prove, on: step.completed, when: { outcome: moved }, produces: [fact:built, fact:change] }
-  - { from: ship, to: babysit, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:pr, fact:handoff] }   # line report effect: restore with LN-WF1 when effect.line.report has a runtime
+  - { from: ship, to: babysit, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:pr, fact:handoff],
+      effects: [{ use: effect.line.report, with: { status: shipped, line: { fact: fact:lineContext } } }] }
   - { label: "final checks failed: back to build", from: ship, to: build,   on: wait.satisfied, when: { outcome: unresolved }, produces: [{ fact: fact:buildNotes, from: fact:returnNotes }] }
   - { from: ship, to: owner,   on: wait.satisfied, when: { outcome: failed } }
   - { from: ship, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: babysit, to: merged,  on: wait.satisfied, when: { outcome: resolved }, produces: [fact:mergedSha] }   # line report effect: restore with LN-WF1 when effect.line.report has a runtime
+  - { from: babysit, to: merged,  on: wait.satisfied, when: { outcome: resolved }, produces: [fact:mergedSha],
+      effects: [{ use: effect.line.report, with: { status: merged, line: { fact: fact:lineContext } } }] }
   - { label: "needs rework: back to build", from: babysit, to: build,   on: wait.satisfied, when: { outcome: failed },   produces: [{ fact: fact:buildNotes, from: fact:reworkNotes }] }
   - { from: babysit, to: owner,   on: wait.satisfied, when: { outcome: unresolved } }
   - { from: babysit, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }

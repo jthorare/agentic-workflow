@@ -66,6 +66,7 @@ public sealed class AgentsPageKeysTests
         var page = await _f.Shown(Token);
         AgentFocusEventArgs? focus = null;
         page.FocusRequested += (_, e) => focus = e;
+        _ = page.Press("J");   // the launched row comes first and O opens its run
         _ = page.Press("J");
 
         Assert.True(page.Press("O"));

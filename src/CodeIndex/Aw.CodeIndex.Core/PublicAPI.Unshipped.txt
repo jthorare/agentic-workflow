@@ -1368,7 +1368,7 @@ static Aw.CodeIndex.Core.InputRules.MatchesAny(string! path, System.Collections.
 static Aw.CodeIndex.Core.Planning.LanguageTable.Of(string! path) -> string?
 static Aw.CodeIndex.Core.Planning.ProjectManifests.Directories(System.Collections.Generic.IEnumerable<string!>! paths) -> System.Collections.Generic.IReadOnlySet<string!>!
 Aw.CodeIndex.Core.Embedding.EmbedText
-Aw.CodeIndex.Core.Embedding.EmbeddingTarget
+Aw.CodeIndex.Core.EmbeddingTarget
 static Aw.CodeIndex.Core.Embedding.EmbedText.Of(Aw.CodeIndex.Core.Model.EmbedCandidate! candidate) -> string!
-static Aw.CodeIndex.Core.Embedding.EmbeddingTarget.Check(Aw.CodeIndex.Core.Model.EmbeddingsSettings! settings) -> Aw.Kernel.Error?
-static Aw.CodeIndex.Core.Embedding.EmbeddingTarget.IsLoopbackUrl(string! url) -> bool
+static Aw.CodeIndex.Core.EmbeddingTarget.Check(Aw.CodeIndex.Core.Model.EmbeddingsSettings! settings) -> Aw.Kernel.Error?
+static Aw.CodeIndex.Core.EmbeddingTarget.IsLoopbackUrl(string! url) -> bool

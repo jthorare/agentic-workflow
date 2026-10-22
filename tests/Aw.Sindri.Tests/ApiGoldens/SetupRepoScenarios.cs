@@ -18,6 +18,7 @@ internal static class SetupRepoScenarios
     [
         ("setup-repos", "started"), ("setup-repos", "refused-session"), ("setup-repos", "not-a-checkout"), ("setup-repos", "not-absolute"),
         ("setup-repos", "already-added"), ("setup-repos", "name-taken"), ("setup-repos", "bad-name"),
+        ("setup-repos-onboard", "refused-session"), ("setup-repos-onboard", "not-approved"),   // POST /setup/repos/onboard (§5.1): a session is refused, no approved profile is 409
         ("setup-mcp", "not-in-profile"), ("setup-mcp", "refused-session"),   // POST /setup/mcp (§5.4): a repo the approved profile does not name is 409, a session is refused
     ];
 
@@ -42,6 +43,11 @@ internal static class SetupRepoScenarios
             return await Mcp(host, scenario);
         }
 
+        if (string.Equals(slug, "setup-repos-onboard", StringComparison.Ordinal))
+        {
+            return await Onboard(host, scenario);
+        }
+
         return (await host.Http.Ask(scenario switch
         {
             "started" => Post(route, "{\"path\":\"/work/demo\"}", human),
@@ -52,6 +58,17 @@ internal static class SetupRepoScenarios
             "name-taken" => Post(route, "{\"path\":\"/work/other\",\"name\":\"Demo\"}", human),
             "bad-name" => Post(route, "{\"path\":\"/work/demo\",\"name\":\"my repo\"}", human),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such add-repo scenario"),
+        })).Body;
+    }
+
+    private static async Task<string> Onboard(GoldenHost host, string scenario)
+    {
+        const string route = "/sindri/setup/repos/onboard";
+        return (await host.Http.Ask(scenario switch
+        {
+            "not-approved" => Post(route, "{\"path\":\"/work/demo\"}", Human(host.Token.Value)),
+            "refused-session" => Post(route, "{\"path\":\"/work/demo\"}", [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli")]),
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such setup-repos-onboard scenario"),
         })).Body;
     }
 

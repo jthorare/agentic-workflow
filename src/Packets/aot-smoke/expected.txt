@@ -105,7 +105,7 @@ aw-packets verify: scoping packet idea-3 — verified sha256:<hex>, frozen by ow
 aw-packets verify: scoping packet idea-9 — NOT FROZEN: no freeze record for sha256:<hex> (looked at packets/example/repo/idea-9/frozen/<hex>.json)
 exit 1
 ## no arguments
-usage: aw-packets validate|freeze|hash|verify <packet-dir> [--kind build|scoping|design|plan|phase|proof|review|handoff] [--json] (build and the line kinds design, plan, phase, proof, review, handoff: validate and freeze take [--repo <dir>]; validate takes [--sizes <file>] (build and plan), freeze takes [--by owner|machine]; verify takes --hash <sha256:hex> [--candidate]; scoping: freeze takes --repo-slug <owner/name> --instance <slug> [--by owner|machine])
+usage: aw-packets validate|freeze|hash|verify <packet-dir> [--kind build|scoping|design|plan|phase|proof|review|handoff] [--json] (build and the line kinds design, plan, phase, proof, review, handoff: validate and freeze take [--repo <dir>]; validate takes [--sizes <file>] (build and plan) and [--seal <file>] (phase), freeze takes [--by owner|machine]; verify takes --hash <sha256:hex> [--candidate]; scoping: freeze takes --repo-slug <owner/name> --instance <slug> [--by owner|machine])
 exit 2
 ## state files
 ./packets/example/repo/aot-smoke/frozen/<hex>.json

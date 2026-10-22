@@ -120,7 +120,7 @@ public sealed class HealthViewModelTests : IDisposable
     }
 
     [Fact]
-    public void The_details_are_closed_until_asked_for() => Assert.False(_vm.DetailsOpen);
+    public void The_page_opens_on_overview() => Assert.True(_vm.ShowOverview);
 
     // API §6, §3.6 and the orchestrator's decision (PR #184): a call refused even after its one retry (SND-AUTH-001, a
     // missing or stale token) is the Unreadable banner with Sindri's code and detail as they are, never "nothing

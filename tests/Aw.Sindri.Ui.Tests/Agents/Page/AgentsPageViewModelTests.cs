@@ -43,7 +43,7 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        var outside = page.Groups[0];
+        var outside = page.Groups[1];
         Assert.Equal(Labels.OutsideWorkflow, outside.Name);
         Assert.Equal([Claude, Codex], Providers(outside.Rows), StringComparer.Ordinal);
         Assert.Equal(Labels.GroupHeader(Labels.OutsideWorkflow, 2), outside.Header);
@@ -54,7 +54,7 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        var launched = page.Groups[1];
+        var launched = page.Groups[0];
         Assert.Equal(Labels.StartedBySindri, launched.Name);
         var row = Assert.Single(launched.Rows);
         Assert.Equal(Labels.LaunchLine, row.LaneText);
@@ -68,7 +68,7 @@ public sealed class AgentsPageViewModelTests
 
         var row = RowOf(page, Codex);
 
-        Assert.Equal("◐ ASKING YOU", row.ChipText);
+        Assert.Equal("◐ Asking you", row.ChipText);
         Assert.Equal(Labels.AskingDetail((string)served["reason"]!, (string)served["tool"]!), row.AskingText);
         Assert.Contains(row.AskingText, row.Name, StringComparison.Ordinal);
         Assert.Contains("asking", row.Name, StringComparison.Ordinal);
@@ -281,7 +281,7 @@ public sealed class AgentsPageViewModelTests
     public async Task A_row_that_leaves_moves_selection_to_its_neighbour()
     {
         var page = await _f.Shown(Token);
-        var neighbour = RowOf(page, Cursor).Ref;
+        var neighbour = RowOf(page, Claude).Ref;
         _ = page.Select(RowOf(page, Codex).Ref);
 
         _f.Serve(Edited(l => Remove(l, Codex)));
@@ -371,5 +371,19 @@ public sealed class AgentsPageViewModelTests
         Assert.True(page.IsStale);
         Assert.False(page.IsUnreadable);
         Assert.Equal(2, page.Groups.Count);
+    }
+
+    [Fact]
+    public async Task The_column_captions_show_only_when_there_are_rows()
+    {
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.HasColumns);
+        Assert.Equal(("Status", "Agent", "Where it runs", "What it is doing", "For"), (page.Columns.Status, page.Columns.Agent, page.Columns.Where, page.Columns.Doing, page.Columns.For));
+
+        _f.Serve("empty");
+        var empty = await _f.Shown(Token);
+
+        Assert.False(empty.HasColumns);
     }
 }

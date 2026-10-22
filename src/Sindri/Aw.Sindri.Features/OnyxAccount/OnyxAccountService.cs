@@ -13,7 +13,14 @@ namespace Aw.Sindri.Features.OnyxAccount;
 internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts prompts, IBrowser browser, OnyxKeyMinter minter, IOnyxProfileWriter profile, IOnyxProgress progress)
     : IService<OnyxAccountRequest, OnyxAccountResponse>
 {
-    public async ValueTask<Result<OnyxAccountResponse>> Handle(OnyxAccountRequest request, CancellationToken cancellationToken)
+    public ValueTask<Result<OnyxAccountResponse>> Handle(OnyxAccountRequest request, CancellationToken cancellationToken) => Handle(request, login: null, cancellationToken);
+
+    /// <summary>Steps 6-9 with the login the app's form gave: nothing is asked at a terminal, the sign-up is taken as done (the owner says so by sending the login) and the login is used for the key and forgotten.</summary>
+    /// <param name="request">Onyx's port and release.</param>
+    /// <param name="login">The owner's Onyx admin login, or null to ask at the terminal as `sindri onyx up` does.</param>
+    /// <param name="cancellationToken">Cancels the waiting and the requests.</param>
+    /// <returns>What the steps did, or the error that stopped them.</returns>
+    internal async ValueTask<Result<OnyxAccountResponse>> Handle(OnyxAccountRequest request, OnyxLogin? login, CancellationToken cancellationToken)
     {
         // The same workspace lock `up` and `down` take: a second `up` or a `down` can't run while this one waits for the owner at a prompt.
         var lockAttempt = workspace.TryLock();
@@ -28,10 +35,10 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
             return SindriErrors.CommandBusy.With("another `sindri onyx` command is running; wait for it to finish, then run this again");
         }
 
-        return await Run(request, cancellationToken).ConfigureAwait(false);
+        return await Run(request, login, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<Result<OnyxAccountResponse>> Run(OnyxAccountRequest request, CancellationToken cancellationToken)
+    private async ValueTask<Result<OnyxAccountResponse>> Run(OnyxAccountRequest request, OnyxLogin? login, CancellationToken cancellationToken)
     {
         var url = string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{request.Port}");
         var state = workspace.ReadState() ?? new OnyxSetupState(request.Port, new Dictionary<string, string>(StringComparer.Ordinal));
@@ -39,7 +46,7 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
         var pointer = state.KeyPointer;
         List<OnyxStepResult> results = [];
 
-        var signup = await Signup(url, steps, cancellationToken).ConfigureAwait(false);
+        var signup = await Signup(url, steps, login is not null, cancellationToken).ConfigureAwait(false);
         results.Add(new OnyxStepResult(OnyxSteps.Signup, signup));
         Save(state, request.Port, steps, pointer);
         if (signup == OnyxStepOutcome.NeedsHuman)
@@ -47,7 +54,7 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
             return new OnyxAccountResponse(url, pointer, ProfileChanged: false, results);
         }
 
-        var key = await Key(request.Port, steps, pointer, cancellationToken).ConfigureAwait(false);
+        var key = await Key(request.Port, steps, pointer, login, cancellationToken).ConfigureAwait(false);
         if (key.IsError)
         {
             return key.Error;
@@ -73,12 +80,18 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
         return new OnyxAccountResponse(url, pointer, written.Value, results);
     }
 
-    private async ValueTask<OnyxStepOutcome> Signup(string url, Dictionary<string, string> steps, CancellationToken cancellationToken)
+    private async ValueTask<OnyxStepOutcome> Signup(string url, Dictionary<string, string> steps, bool loginGiven, CancellationToken cancellationToken)
     {
         if (steps.ContainsKey(OnyxSteps.Signup))
         {
             progress.Line("signup: already done");
             return OnyxStepOutcome.Skipped;
+        }
+
+        if (loginGiven)
+        {
+            steps[OnyxSteps.Signup] = OnyxSteps.Stamp("signup");   // the login in hand is the owner saying they signed up
+            return OnyxStepOutcome.Ran;
         }
 
         if (!prompts.Interactive)
@@ -98,7 +111,7 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
         return OnyxStepOutcome.Ran;
     }
 
-    private async ValueTask<Result<(string? Pointer, OnyxStepOutcome Outcome)>> Key(int port, Dictionary<string, string> steps, string? pointer, CancellationToken cancellationToken)
+    private async ValueTask<Result<(string? Pointer, OnyxStepOutcome Outcome)>> Key(int port, Dictionary<string, string> steps, string? pointer, OnyxLogin? login, CancellationToken cancellationToken)
     {
         if (steps.ContainsKey(OnyxSteps.Key))
         {
@@ -111,13 +124,13 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
             progress.Line($"key: the recorded key no longer works. {OnyxKeyMinter.LeftoverNote}");
         }
 
-        if (!prompts.Interactive)
+        if (login is null && !prompts.Interactive)
         {
             progress.Line("key: needs you at a terminal to ask for your Onyx login; run `sindri onyx up` there");
             return (null, OnyxStepOutcome.NeedsHuman);
         }
 
-        var minted = await minter.Mint(port, cancellationToken).ConfigureAwait(false);
+        var minted = login is null ? await minter.Mint(port, cancellationToken).ConfigureAwait(false) : await minter.Mint(port, login, cancellationToken).ConfigureAwait(false);
         if (minted.IsError)
         {
             return minted.Error;

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-db
-version: 3
+version: 4
 description: "Block recipe: A persisted-state run: plan, then a read-only run."
 displayName: "Prove what is stored in the database"
 inputs:
@@ -13,7 +13,7 @@ states:
   plan:   { kind: active, step: step.evidence.db-plan, timeout: { after: 4h, then: park },
             next: "Plan the database evidence for {item} from the phase packet and the built change." }
   run:    { kind: active, step: step.evidence.db-run, timeout: { after: 4h, then: park },
-            next: "Run the planned database evidence for {item} and record the summary." }
+            next: "Run the planned database evidence for {item} and record the summary. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (screenshots, logs, notes); name no hash." }
   passed: { kind: terminal, outcome: resolved }
   skipped: { kind: terminal, outcome: resolved }
   failed: { kind: terminal, outcome: unresolved }

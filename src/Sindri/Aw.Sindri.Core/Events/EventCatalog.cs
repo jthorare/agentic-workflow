@@ -47,6 +47,8 @@ public static class EventCatalog
         new(EventTypes.JobStarted, Public: true, typeof(JobStarted), "job.started:<jobId>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Services, ApiViews.ContextLenses, ApiViews.ContextHistory] },
         new(EventTypes.JobProgress, Public: true, typeof(JobProgress), "job.progress:<jobId>:<n>") { Invalidates = [ApiViews.Job, ApiViews.Jobs] },
         new(EventTypes.JobFinished, Public: true, typeof(JobFinishedPublic), "job.finished:<jobId>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Services, ApiViews.ContextLenses, ApiViews.ContextHistory] },
+        new(EventTypes.JobWaiting, Public: true, typeof(JobWaiting), "job.waiting:<jobId>:<n>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Setup] },
+        new(EventTypes.JobResumed, Public: true, typeof(JobResumed), "job.resumed:<jobId>:<n>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Setup] },
         new(EventTypes.JobCancelled, Public: true, typeof(JobCancelled), "job.cancelled:<jobId>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Services, ApiViews.ContextLenses, ApiViews.ContextHistory] },
         new(EventTypes.ServicePaused, Public: true, typeof(ServicePaused), "service.paused:<name>:<commandId>") { Invalidates = [ApiViews.Services, ApiViews.Status] },
         new(EventTypes.ServiceResumed, Public: true, typeof(ServiceResumed), "service.resumed:<name>:<commandId>") { Invalidates = [ApiViews.Services, ApiViews.Status] },

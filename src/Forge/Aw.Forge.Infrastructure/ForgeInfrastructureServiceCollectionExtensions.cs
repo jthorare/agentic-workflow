@@ -24,7 +24,7 @@ public static class ForgeInfrastructureServiceCollectionExtensions
         var settings = SettingsFromEnvironment.Read(environment);
         return services
             .AddSingleton(settings)
-            .AddSingleton(_ => new FileForge(hosts, Path.Combine(settings.StateDirectory, "file"), Redactor.Default))
+            .AddSingleton(provider => new FileForge(hosts, Path.Combine(settings.StateDirectory, "file"), Redactor.Default, settings.Login, provider.GetService<TimeProvider>()))
             .AddSingleton<IForge>(provider => provider.GetRequiredService<FileForge>())
             .AddSingleton<IForgeSeed>(provider => provider.GetRequiredService<FileForge>());
     }

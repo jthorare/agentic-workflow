@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
-using Aw.CodeIndex.Core.Embedding;
+using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
 using Aw.Kernel;

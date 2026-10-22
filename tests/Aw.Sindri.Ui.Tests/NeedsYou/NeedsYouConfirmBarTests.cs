@@ -120,17 +120,99 @@ public sealed class NeedsYouConfirmBarTests
         Assert.Empty(_server.Approvals);
     }
 
+    private const string StepHash = "sha256:d39861bd12222fcc4b74432567eabfd7b58660c4b8d714be71528b6a1353ba2a";   // workflow.step v3 in the served recipe list
+
+    private void ServeRecipeChallenge() => _server.AppChallengeAnswer = RouteAnswer.SpecShaped("challenges-app", "recipe");
+
     [Fact]
-    public async Task A_single_workflows_approve_is_the_terminal_copy_only_even_when_the_catalog_says_ready()
+    public async Task A_single_workflows_row_shows_the_terminal_copy_until_the_catalog_is_ready()
     {
-        var bar = await Bar(NeedsYouRows.Recipe());
+        ServeRecipeChallenge();
+        var bar = await Bar(NeedsYouRows.Recipe(), ui: "cli-only");
 
         Assert.Equal((true, true, false), (bar.HasBar, bar.ShowsTerminal, bar.ShowsConfirm));
-        Assert.Empty(_server.Challenges);
+        Assert.Equal((0, 0), (_server.Challenges.Count, _server.RecipesCalls));   // nothing is asked for while the app may not confirm
 
         await bar.CopyTerminal();
-
         Assert.Equal("sindri recipe approve workflow.step", _fixture.Clipboard.Text);
+
+        AppConfirmFixture.Reread(_catalog, "ready");
+        await bar.Loaded;
+
+        Assert.Equal((false, true), (bar.ShowsTerminal, bar.ShowsTyped));
+    }
+
+    [Fact]
+    public async Task A_ready_single_workflow_shows_the_typed_box_with_the_servers_challenge_for_the_served_version()
+    {
+        ServeRecipeChallenge();
+
+        var bar = await Bar(NeedsYouRows.Recipe());
+
+        Assert.Equal("approve workflow.step 3", Assert.Single(_server.Challenges).Action);
+        Assert.Equal((true, false, false, "approve workflow.step 3"), (bar.ShowsTyped, bar.ShowsHold, bar.ShowsTerminal, bar.TypedBox!.Phrase));
+        Assert.Empty(_server.RecipeApprovals);   // showing the box approves nothing
+    }
+
+    [Fact]
+    public async Task Typing_the_phrase_sends_the_served_hash_with_the_answer_once_and_approves_the_row()
+    {
+        ServeRecipeChallenge();
+        var bar = await Bar(NeedsYouRows.Recipe());
+        bar.TypedBox!.Text = "approve workflow.step 3";
+
+        await bar.SubmitTyped(bar.TypedBox.Submit()!);
+        await bar.SubmitTyped("approve workflow.step 3");   // a second press while approved sends nothing
+
+        var sent = Assert.Single(_server.RecipeApprovals);
+        Assert.Equal(("workflow.step", StepHash, "CHL-00000000000000000000000000000007", "approve workflow.step 3"), (sent.Id, sent.Hash, sent.Answer.Challenge, sent.Answer.Typed));
+        Assert.Empty(_server.ProfileApprovals);
+        Assert.True(bar.IsApproved);
+    }
+
+    [Fact]
+    public async Task Text_that_is_not_the_workflows_phrase_sends_nothing()
+    {
+        ServeRecipeChallenge();
+        var bar = await Bar(NeedsYouRows.Recipe());
+
+        await bar.SubmitTyped("approve workflow.step 2");
+
+        Assert.Empty(_server.RecipeApprovals);
+        Assert.False(bar.IsApproved);
+    }
+
+    [Fact]
+    public async Task A_refused_workflow_approval_shows_the_words_and_leaves_the_row_open()
+    {
+        ServeRecipeChallenge();
+        _server.ApproveRecipeAnswer = RouteAnswer.Problem("profile-approve", "refused-session");
+        var bar = await Bar(NeedsYouRows.Recipe());
+
+        await bar.SubmitTyped("approve workflow.step 3");
+
+        Assert.Equal((false, true, Labels.ApproveSessionRefused), (bar.IsApproved, bar.HasRefusal, bar.Refusal));
+    }
+
+    [Fact]
+    public async Task A_workflow_the_list_does_not_name_gets_no_box_and_no_challenge()
+    {
+        ServeRecipeChallenge();
+        var bar = await Bar(NeedsYouRows.Recipe("workflow.gone"));
+
+        Assert.Equal((0, Labels.NeedsYouRecipeGone), (_server.Challenges.Count, bar.Refusal));
+        Assert.Empty(_server.RecipeApprovals);
+    }
+
+    [Fact]
+    public void The_version_waiting_for_approval_is_the_one_asked_for()
+    {
+        var approved = new Aw.Sindri.Ui.Api.Workflow.RecipeSummaryView("workflow.step", 4, "sha256:aa", "approved", Name: null);
+        var waiting = new Aw.Sindri.Ui.Api.Workflow.RecipeSummaryView("workflow.step", 3, "sha256:bb", "unapproved", Name: null);
+        var other = new Aw.Sindri.Ui.Api.Workflow.RecipeSummaryView("workflow.other", 9, "sha256:cc", "unapproved", Name: null);
+
+        Assert.Same(waiting, NeedsYouConfirm.Pick([approved, waiting, other], "workflow.step"));
+        Assert.Null(NeedsYouConfirm.Pick([other], "workflow.step"));
     }
 
     [Fact]

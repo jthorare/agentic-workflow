@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Models;
 using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
@@ -21,10 +22,12 @@ namespace Aw.Context.Features.QueryContext;
 /// items fetched and cleaned once at the ingest boundary, one batched version check per source, then packing,
 /// citations and per-field egress scrubbing (<see cref="ResultAssembly"/>). Ingest and egress both use this call's
 /// scrubbers, built from the approved profile's extra patterns, and so does the map's text. A text question asked with no
-/// map (or by a session whose repo implements none of it) is answered from the sources alone. No model is called.
+/// map (or by a session whose repo implements none of it) is answered from the sources alone. No model is called unless 'context.ranker.rerank' is on (Phase 8: <see cref="RankerStage"/>).
 /// </summary>
-internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents)
+internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents, IModelPort model)
 {
+    private readonly RankerStage _ranker = new(model, clock);
+
     /// <summary>The most fused items fetched (and so cited) per query.</summary>
     internal const int MaxItems = 20;
 
@@ -65,7 +68,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         var degraded = searched.Degraded.ToList();
-        var fused = RankFusion.Fuse(searched.Answers).Take(MaxItems).ToList();
+        var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker)), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
         var fetched = await Fetch(fused, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
         if (miss is not null && !Answers(fetched, miss.Item.Trim()))
         {

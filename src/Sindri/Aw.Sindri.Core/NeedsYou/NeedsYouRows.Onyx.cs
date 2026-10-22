@@ -37,8 +37,8 @@ public static partial class NeedsYouRows
             RecordedOnly: false,
             Notice: null,
             AnswerKind: null,
-            PrimaryAction: null,
-            [],
+            notice.Action is null ? null : ActionId.From(notice.Action),
+            notice.Action is null ? [] : [ActionId.From(notice.Action)],
             cli.Value.Text);
     }
 }

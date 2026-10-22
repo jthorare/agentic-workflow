@@ -1334,3 +1334,24 @@ static readonly Aw.Packets.Core.PacketsErrors.SizesUnusable -> Aw.Kernel.ErrorDe
 static readonly Aw.Packets.Core.PacketsErrors.Unreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Packets.Core.PacketsErrors.UnsupportedSchema -> Aw.Kernel.ErrorDefinition!
 virtual Aw.Packets.Core.PacketReader.FileReader.Invoke(string! relativePath) -> Aw.Kernel.Result<System.ReadOnlyMemory<byte>?>!
+Aw.Packets.Core.ISealSource
+Aw.Packets.Core.ISealSource.Read(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Packets.Core.Values.PacketHash>!>
+Aw.Packets.Core.SealReader
+Aw.Packets.Core.Kinds.Line.LinePacketInspector.Inspect(Aw.Packets.Core.Kinds.PacketKind! kind, string! packetDirectory, string! repoDirectory, Aw.Packets.Core.Kinds.Line.LineInspectOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Packets.Core.Kinds.Line.LineInspection!>!>
+static Aw.Packets.Core.SealReader.Parse(string! name, System.ReadOnlyMemory<byte> bytes) -> Aw.Kernel.Result<Aw.Packets.Core.Values.PacketHash>!
+static readonly Aw.Packets.Core.PacketsErrors.SealUnusable -> Aw.Kernel.ErrorDefinition!
+const Aw.Packets.Core.Checks.PacketRules.HoldoutSealed = "PKT-HOLD-003" -> string!
+Aw.Packets.Core.Kinds.Line.LineInspectOptions
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.<Clone>$() -> Aw.Packets.Core.Kinds.Line.LineInspectOptions!
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.Deconstruct(out Aw.Packets.Core.Model.SizesFile? Sizes, out Aw.Packets.Core.Values.PacketHash? SealedSet) -> void
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.Equals(Aw.Packets.Core.Kinds.Line.LineInspectOptions? other) -> bool
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.LineInspectOptions(Aw.Packets.Core.Model.SizesFile? Sizes, Aw.Packets.Core.Values.PacketHash? SealedSet) -> void
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.SealedSet.get -> Aw.Packets.Core.Values.PacketHash?
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.SealedSet.init -> void
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.Sizes.get -> Aw.Packets.Core.Model.SizesFile?
+Aw.Packets.Core.Kinds.Line.LineInspectOptions.Sizes.init -> void
+override Aw.Packets.Core.Kinds.Line.LineInspectOptions.Equals(object? obj) -> bool
+override Aw.Packets.Core.Kinds.Line.LineInspectOptions.GetHashCode() -> int
+override Aw.Packets.Core.Kinds.Line.LineInspectOptions.ToString() -> string!
+static Aw.Packets.Core.Kinds.Line.LineInspectOptions.operator !=(Aw.Packets.Core.Kinds.Line.LineInspectOptions? left, Aw.Packets.Core.Kinds.Line.LineInspectOptions? right) -> bool
+static Aw.Packets.Core.Kinds.Line.LineInspectOptions.operator ==(Aw.Packets.Core.Kinds.Line.LineInspectOptions? left, Aw.Packets.Core.Kinds.Line.LineInspectOptions? right) -> bool

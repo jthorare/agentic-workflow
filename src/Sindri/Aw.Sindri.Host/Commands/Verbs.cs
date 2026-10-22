@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
+using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.RebuildViews;
@@ -85,6 +86,20 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         return json
             ? await output.Json(valid.Value, valid.Value.Approved ? 0 : 1).ConfigureAwait(false)
             : await output.Text($"Profile valid: {valid.Value.Source}\nhash {valid.Value.Hash.Value}, {state}\n", valid.Value.Approved ? 0 : 1).ConfigureAwait(false);
+    }
+
+    /// <summary>'profile init [--json]': writes the default profile when none exists and says what comes next; local, like validate. It never approves and never replaces a file.</summary>
+    internal async Task<int> InitProfile(bool json, CancellationToken ct)
+    {
+        var written = await scope.GetRequiredService<IService<InitProfileRequest, InitProfileResponse>>().Handle(new InitProfileRequest(), ct).ConfigureAwait(false);
+        if (written.IsError)
+        {
+            return await output.Error(written.Error).ConfigureAwait(false);
+        }
+
+        return json
+            ? await output.Json(written.Value, 0).ConfigureAwait(false)
+            : await output.Text($"Profile written: {written.Value.Path}\nnext: sindri repo add <path>, then sindri profile approve\n", 0).ConfigureAwait(false);
     }
 
     internal async Task<int> Doctor(bool json, CancellationToken ct, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>? harnesses = null)

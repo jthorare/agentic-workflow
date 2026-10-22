@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Eval.Backtest;
@@ -10,4 +11,5 @@ namespace Aw.Context.Core.Eval.Backtest;
 /// <param name="Map">The map the arm reads, or null for the live current map (the ceiling arm).</param>
 /// <param name="Sources">The only sources the question may search; empty for the graph arms.</param>
 /// <param name="AsOf">The time every source is asked to cut to: the issue's creation.</param>
-public sealed record ArmQuestion(ContextScope Scope, ContextQuery Query, VisibleMap? Map, IReadOnlyList<IContextSource> Sources, DateTimeOffset AsOf);
+/// <param name="Ranker">The ranker stages the arm forces (the ranker arms), or null for the profile's.</param>
+public sealed record ArmQuestion(ContextScope Scope, ContextQuery Query, VisibleMap? Map, IReadOnlyList<IContextSource> Sources, DateTimeOffset AsOf, RankerMode? Ranker = null);

@@ -194,7 +194,6 @@ public sealed class RealFontTextFitTests : IDisposable
         _server.Push(A.Event(3));
         var (window, shell) = await Show(900, s => s.State == ShellState.Normal && s.Health.LastEvent.EndsWith("#3", StringComparison.Ordinal));
         shell.GoTo(PageId.System);
-        shell.Health.DetailsOpen = true;   // F3: the rows sit behind Details
         Settle(window);
 
         static double Baseline(TextBlock t, Window w) => t.TranslatePoint(default, w)!.Value.Y + t.TextLayout.Baseline; // why: in the window

@@ -7,8 +7,6 @@ namespace Aw.CodeIndex.Tests.Build;
 
 public sealed class CodeIndexFacadeTests
 {
-    private static readonly SymbolRef _run = SymbolRef.From("api:src/A.cs#A.Run");
-
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static async Task<BuildHarness> Built()
@@ -145,15 +143,5 @@ public sealed class CodeIndexFacadeTests
 
         Assert.Equal("SND-CODEIDX-013", found.Error.Code);
         Assert.Null(await harness.Header());
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Similar_answers_not_built_until_the_clones_layer_is_written_not_an_empty_list()
-    {
-        var harness = await Built();
-
-        var similar = await harness.Facade.Similar(harness.Scope, _run, Token);
-
-        Assert.Equal("SND-CODEIDX-013", similar.Error.Code);
     }
 }

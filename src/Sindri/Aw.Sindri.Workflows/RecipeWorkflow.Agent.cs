@@ -31,10 +31,12 @@ internal sealed partial class RecipeWorkflow
     private AgentRunning? _held;   // the launched run whose session is still live, so the interpreter loop can stop it when the instance ends or the run is replaced while it is parked or taken over (D11)
     private (string Token, AgentLaunched Launched)? _agent;   // the open run's launch, kept across a park or a takeover so the watch resumes without a second launch
 
-    private static readonly BlockId _ciFix = BlockId.From("step.pr.ci-fix");   // the one Step that launches in 'fact:workspace' (opt-in); every other agent Step launches as it always did
+    private static readonly BlockId _ciFix = BlockId.From("step.pr.ci-fix");   // launches in 'fact:workspace' on its own marker; every other agent Step does on the phase-workspace marker (LN-WF2)
     private static readonly FactKey _workspaceKey = FactKey.From("fact:workspace");
     private bool? _agentWorkspace;
     private bool AgentWorkspace => _agentWorkspace ??= Workflow.Patched("ci-fix-agent-workspace");   // read only for ci-fix, after every other marker
+    private bool? _phaseWorkspace;
+    private bool PhaseWorkspaceLaunch => _phaseWorkspace ??= Workflow.Patched("ln-wf2-phase-workspace-launch");   // LN-WF2: read for every other agent Step; a history without it launched them in their own worktrees
 
     private enum AgentEnd
     {
@@ -89,7 +91,7 @@ internal sealed partial class RecipeWorkflow
         using var cancel = new CancellationTokenSource();
         var run = AgentRunOf(instance, open, step);
         var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
-        var workspace = step.Use == _ciFix && AgentWorkspace && instance.Facts.TryGetValue(_workspaceKey, out var held) ? held : null;
+        var workspace = (step.Use == _ciFix ? AgentWorkspace : PhaseWorkspaceLaunch) && instance.Facts.TryGetValue(_workspaceKey, out var held) ? held : null;   // LN-WF2: an instance that holds a workspace (the phase's worktree, or docs sync's own) runs its agent Steps there
         var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(new AgentLaunchRun(run, item, workspace)), AgentOptions(_launchCall, open, state, cancel.Token));
         var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
         if (end == AgentEnd.Over)

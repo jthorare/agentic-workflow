@@ -25,10 +25,10 @@ internal static class LinePacketChecks
 
     internal static IReadOnlyList<CheckResult> Run(PacketKind kind, LinePacketFiles files, LineInputs inputs, JsonSerializerOptions json)
     {
-        var (read, tree, sizes) = inputs;
+        var (read, tree, sizes, sealedSet) = inputs;
         var rules = LineRules.For(kind) ?? throw new ArgumentException($"'{kind.Name}' is not a line kind.", nameof(kind));
         var checks = new CheckList();
-        var context = new LineContext(kind, rules, files, read, json, checks);
+        var context = new LineContext(kind, rules, files, read, json, checks) { SealedSet = sealedSet };
         context.Common();
         var plan = context.KindRules();
         if (plan is not null && tree is not null && context.Manifest is { } manifest)

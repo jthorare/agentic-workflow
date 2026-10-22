@@ -28,12 +28,6 @@ internal sealed partial class HealthViewModel
         _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
     };
 
-    /// <summary>The Details expander's heading.</summary>
-    public string DetailsHeading { get; } = Labels.SystemDetails;
-
-    /// <summary>True while the Details expander is open; closed until asked for.</summary>
-    public bool DetailsOpen { get; set => Set(ref field, value); }
-
     /// <summary>Home's health strip's accessible name (R3): the health line, then "stale" while the views are stale.</summary>
     public string StripName { get; private set => Set(ref field, value); } = Labels.Connecting;
 

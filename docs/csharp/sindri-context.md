@@ -674,6 +674,7 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 | `SND-CONTEXT-081` | Unavailable (503) | 1 | No configured source can supply issue briefs |
 | `SND-CONTEXT-082` | Invalid (400) | 1 | `--arms` names an unknown arm (the message lists the arms and which are not available yet) |
 | `SND-CONTEXT-083` | degraded | 0 | Adjudication stopped at the 1.5M-token cap |
+| `SND-CONTEXT-090` | degraded | 0 | The rerank (`context.ranker.rerank`, or the `ranker-rerank` backtest arm) could not order the items: the answer lists `rerank` as degraded and keeps the feature or fusion order |
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 
@@ -803,3 +804,12 @@ each actor may do is the retrieval spec §8.7a. This section is the as-built rec
 `MapPublishStoreContract` (`tests/Aw.Context.Testing/Map`, run against `FakeGraphStore` and the SQLite store): heads in order, an import's one commit, invalid commits refused everywhere, the hold and its read, 190 for a wrong draft, the chain surviving a
 rebuild and clamped to now, promote and import clearing the hold and the chain, replacement and open copying heads, retention, release, `expectedDraft`. `MapPublishTests`, `MapHoldTests`, `PublishSettingsTests` and `MapPublishMigrationTests`
 (an old store opens and gets the tables) in `tests/Aw.Context.Tests`.
+
+
+## S-8: the ranker stages and the ranker arms
+
+The query's fusion (`RankFusion`, reciprocal rank fusion) is followed by two optional stages, both **off by default** (`context.ranker`, `docs/csharp/sindri-profile.md`); the profile enables a stage only after a backtest shows it helps, or the owner decides below 30 samples.
+
+- **Features** (`Aw.Context.Core.Ranking.FeatureRanker`, pure). Five scores from 0 to 1 per fused record, from how the map links it to the nodes the answer reached (`GraphPart.RecordSignals`, read by `RecordLinks`): cascade distance (`1 / (1 + steps)`), edge type (decides 1, quotes 0.7, mentions 0.4, other 0.2), provenance (human 1, deterministic 0.7, model 0.4), supersession (a record whose decision a later one replaced scores 0, otherwise 1) and recency (halves every 90 days from the link's date). The boost is the weights' mean of the five, and the item's fusion score is multiplied by `1 + boost`: features can at most double a score, so they reorder neighbours and never overturn the fusion's lead wholesale. Weights start equal.
+- **Rerank** (`RankerStage`, `RerankOrder`). Only for the top `rerankTop` items (default 30, at most 50) and only when there are two or more: the scrubbed, fenced titles go to the model port with purpose `rerank` (a budgeted call, 20 seconds, 4 tokens per item), and the answer is read as a JSON array of the item numbers. Numbers out of range and repeats are skipped and items the model left out keep their order after the named ones. A model that is unavailable or answers no order leaves the order as it was and the answer lists `rerank` as degraded (SND-CONTEXT-090). A local cross-encoder adapter is not built: the port is the model port, and a cross-encoder would be another `IModelPort` adapter, not a new stage.
+- **The ranker arms.** `context eval backtest --arms ranker` runs `ranker-rrf`, `ranker-features` and `ranker-rerank` over the same inputs as `all` (the as-of map and the docs at the cut) with the stage set forced by the arm (`ArmQuestion.Ranker`, never reachable from the query API or MCP); each row has dimension `ranker`. `--arms all` does not run them, because the rerank row asks a model. The rerank row's model calls are not counted against the adjudicator's token cap.

@@ -8,14 +8,21 @@ namespace Aw.Sindri.Tests.Catalog;
 public sealed class SetupRowTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData("SetupOnyx", "POST", "/onyx/setup", "sindri onyx up", "pending:SO-A5")]
-    [InlineData("ConnectOnyx", "POST", "/onyx/account", "sindri onyx connect", "pending:SO-A5")]
-    [InlineData("DeferOnyx", "POST", "/onyx/defer", "sindri onyx defer", "pending:SO-A5")]
-    public void Each_desk_action_has_a_pending_row_with_its_route_and_cli_form(string action, string method, string route, string cli, string ui)
+    [InlineData("ConnectOnyx", "POST", "/onyx/account", "sindri onyx connect", "ready")]
+    [InlineData("DeferOnyx", "POST", "/onyx/defer", "sindri onyx defer", "ready")]
+    public void Each_desk_action_has_a_row_with_its_route_and_cli_form(string action, string method, string route, string cli, string ui)
     {
         var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == action);
 
         Assert.Equal((ActionClass.Desk, method, "/sindri" + route, cli, ui, false, false), (row.Class, row.Method, row.Route, row.Cli.Text, row.Ui, row.NeedsTerminal, row.Destructive));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_Onyx_setup_is_a_ready_job_row()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "SetupOnyx");
+
+        Assert.Equal((ActionClass.Job, "POST", "/sindri/onyx/setup", "sindri onyx up", "ready"), (row.Class, row.Method, row.Route, row.Cli.Text, row.Ui));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -27,6 +34,26 @@ public sealed class SetupRowTests
         Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Session().Build(), row).Refusal);
         Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().AtTerminal().Build(), row).Refusal);
         Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().Build(), row).Refusal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void OnboardRepo_is_a_ready_job_row_the_terminal_and_app_start_and_a_session_is_refused()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "OnboardRepo");
+
+        Assert.Equal((ActionClass.Job, "POST", "/sindri/setup/repos/onboard", "sindri repo onboard [<path>]", "ready", false, false), (row.Class, row.Method, row.Route, row.Cli.Text, row.Ui, row.NeedsTerminal, row.Destructive));
+        Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Session().Build(), row).Refusal);
+        Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().AtTerminal().Build(), row).Refusal);
+        Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().Build(), row).Refusal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void InitProfile_is_a_cli_only_local_row()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "InitProfile");
+
+        Assert.Equal((ActionClass.Local, "sindri profile init", "cli-only:local"), (row.Class, row.Cli.Text, row.Ui));
+        Assert.Null(row.Route);
     }
 
     [Fact, Trait("Lane", "unit")]

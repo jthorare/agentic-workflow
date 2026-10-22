@@ -44,7 +44,7 @@ internal static class JobFrames
         ArgumentNullException.ThrowIfNull(view);
         return view.State switch
         {
-            JobState.Running => null,
+            JobState.Running or JobState.Waiting => null,
             JobState.Cancelled => new JobSignal(Round: 0, "cancelled", Exit: 1, Ended: true),
             JobState.Succeeded => End(JobOutcome.Succeeded, view.Summary ?? string.Empty, view.Code),
             JobState.Failed => End(JobOutcome.Failed, view.Summary ?? string.Empty, view.Code),

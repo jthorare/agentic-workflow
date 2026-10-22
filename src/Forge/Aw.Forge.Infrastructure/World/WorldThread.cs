@@ -23,6 +23,12 @@ internal sealed class WorldThread
 
     public string Body { get; set; } = string.Empty;
 
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public int? Line { get; set; }
+
+    public DateTimeOffset? EditedAt { get; set; }
+
     public List<string> Replies { get; set; } = [];
 
     public List<string> Reactions { get; set; } = [];

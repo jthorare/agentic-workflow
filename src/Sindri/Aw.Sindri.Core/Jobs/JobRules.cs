@@ -14,7 +14,7 @@ public static class JobRules
     public static Result<Unit> CanCancel(JobRow? row) => row switch
     {
         null => SindriErrors.JobNotFound.With(NoSuchJob),
-        { State: JobState.Running } => Unit.Value,
+        { State: JobState.Running or JobState.Waiting } => Unit.Value,
         _ => SindriErrors.JobConflict.With($"The job already ended (fix: run `sindri jobs show {row.Id.Value}` to see how)"),
     };
 }

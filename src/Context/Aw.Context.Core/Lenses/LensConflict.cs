@@ -2,7 +2,7 @@ using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Core.Lenses;
 
-/// <summary>Two items that disagree, on one decided node. Only 'supersedes' exists in S-4 ('contradicts' comes with S-CF).</summary>
+/// <summary>Two items that disagree, on one decided node. 'supersedes', or 'contradicts' (a checked decision pair, or a decision citing a file the map says implements something else).</summary>
 /// <param name="Kind">Supersedes or contradicts.</param>
 /// <param name="Node">The decided node in the own scope.</param>
 /// <param name="Decision">The superseding decision.</param>

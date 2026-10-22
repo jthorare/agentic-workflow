@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Profile;
 
@@ -11,5 +12,6 @@ internal static class PullRequestsServiceCollectionExtensions
     /// <param name="environment">Reads an environment variable.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddPullRequests(this IServiceCollection services, Func<string, string?> environment) => services
-        .AddSingleton<IPullRequests>(sp => new ConfiguredPullRequests(sp.GetRequiredService<IApprovedProfile>(), environment, sp.GetRequiredService<TimeProvider>()));
+        .AddSingleton<IPullRequests>(sp => new ConfiguredPullRequests(sp.GetRequiredService<IApprovedProfile>(), environment, sp.GetRequiredService<TimeProvider>()))
+        .AddScoped<IDoctorChecks>(sp => new ForgeDoctorChecks(sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<IPullRequests>(), environment, TimeSpan.FromSeconds(5)));
 }

@@ -75,7 +75,8 @@ internal sealed class RealJobRuntime : IJobRuntimeSubject
             .AddSingleton(static sp => new JobEventWriter(sp.GetRequiredService<ILedgerStore>(), sp.GetRequiredService<HeldLease>(), sp.GetRequiredService<EventFactory>(),
                 sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<ICallerContextAccessor>()))
             .AddSingleton(static sp => new JobRunner(() => { var scope = sp.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope(); return new JobScope(scope.ServiceProvider.GetRequiredService, scope); }, sp.GetRequiredService<IJobContextAccessor>(),
-                sp.GetRequiredService<ICallerContextAccessor>(), sp.GetRequiredService<JobEventWriter>(), sp.GetRequiredService<JobRegistry>(), sp.GetRequiredService<IShutdown>()))
+                sp.GetRequiredService<ICallerContextAccessor>(), sp.GetRequiredService<JobEventWriter>(), sp.GetRequiredService<JobRegistry>(), sp.GetRequiredService<IShutdown>(), sp.GetRequiredService<JobWaits>()))
+            .AddSingleton<JobWaits>().AddSingleton<IJobSignals>(static sp => sp.GetRequiredService<JobWaits>())
             .AddSingleton<IJobRunner>(static sp => sp.GetRequiredService<JobRunner>()).AddSingleton<IJobCancellation>(static sp => sp.GetRequiredService<JobRunner>())
             .AddJob<EchoJobRequest, EchoReport, EchoJobService>(static _ => JobKey.From("echo"), static r => string.Create(CultureInfo.InvariantCulture, $"echoed {r.Lines}"))
             .AddScoped<IValidator<FixtureCommand>, FixtureValidator>().AddCommand<FixtureCommand, CommandAccepted, FixtureService>()
@@ -156,6 +157,23 @@ internal sealed class RealJobRuntime : IJobRuntimeSubject
     {
         using var entered = H.Callers.Enter(caller);
         await using var scope = _provider.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<IService<TRequest, TResponse>>().Handle(request, TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>Runs a registered command through its chain as <paramref name="caller"/> in a scope the test gets to prepare first (the Onyx login's per-request hand-over lives in one).</summary>
+    /// <typeparam name="TRequest">The request.</typeparam>
+    /// <typeparam name="TResponse">The response.</typeparam>
+    /// <param name="request">The request.</param>
+    /// <param name="caller">The caller.</param>
+    /// <param name="prepare">Called with the scope's provider before the command runs.</param>
+    /// <returns>The answer.</returns>
+    public async Task<Result<TResponse>> RunPrepared<TRequest, TResponse>(TRequest request, CallerContext caller, Action<IServiceProvider> prepare)
+        where TRequest : notnull
+    {
+        ArgumentNullException.ThrowIfNull(prepare);
+        using var entered = H.Callers.Enter(caller);
+        await using var scope = _provider.CreateAsyncScope();
+        prepare(scope.ServiceProvider);
         return await scope.ServiceProvider.GetRequiredService<IService<TRequest, TResponse>>().Handle(request, TestContext.Current.CancellationToken);
     }
 

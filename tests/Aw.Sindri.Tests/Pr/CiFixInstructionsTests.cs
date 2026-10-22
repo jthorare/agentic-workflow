@@ -22,7 +22,11 @@ public sealed class CiFixInstructionsTests
     private static string All => string.Join('\n', new CiFixInstructions().Lines);
 
     [Fact]
-    public void The_instructions_are_for_the_ci_fix_Step() => Assert.Equal(BlockId.From("step.pr.ci-fix"), new CiFixInstructions().Step);
+    public void The_instructions_are_for_the_ci_fix_Step_only()
+    {
+        Assert.True(new CiFixInstructions().IsFor(BlockId.From("step.pr.ci-fix")));
+        Assert.False(new CiFixInstructions().IsFor(BlockId.From("step.pr.ci-log")));
+    }
 
     [Theory]
     [InlineData("reproduce")]

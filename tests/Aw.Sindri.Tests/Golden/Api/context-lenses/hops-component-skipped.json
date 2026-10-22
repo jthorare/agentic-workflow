@@ -65,7 +65,8 @@
       "symbols": {
         "state": "unavailable",
         "reason": "index not built",
-        "items": []
+        "items": [],
+        "code": "SND-CODEIDX-013"
       },
       "counts": {
         "files": 1,

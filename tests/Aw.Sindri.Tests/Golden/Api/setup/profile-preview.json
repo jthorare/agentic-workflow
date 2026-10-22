@@ -1,0 +1,101 @@
+{
+  "steps": [
+    {
+      "id": "repo",
+      "title": "Add your repo",
+      "state": "done",
+      "why": "A repo is in your profile.",
+      "detail": "demo",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Approve the profile",
+      "state": "needs-you",
+      "why": "You added demo. Sindri waits for you to approve the profile before it uses it.",
+      "detail": null,
+      "error": null,
+      "action": "ApproveProfile",
+      "progress": null,
+      "items": [],
+      "preview": [
+        {
+          "kind": "repo",
+          "text": "Works in demo (/work/demo)."
+        },
+        {
+          "kind": "service",
+          "text": "Runs the observe service every 1h."
+        },
+        {
+          "kind": "allows",
+          "text": "Workflows may: pr.open, pr.comment."
+        },
+        {
+          "kind": "limit",
+          "text": "Warns you when an agent has used 80% of its daily budget."
+        }
+      ]
+    },
+    {
+      "id": "recipes",
+      "title": "Approve the workflows",
+      "state": "todo",
+      "why": "After the profile is approved.",
+      "detail": "26 workflows registered.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
+      "id": "mcp",
+      "title": "Connect your agents",
+      "state": "todo",
+      "why": "Waits for an approved profile with a repo.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
+      "id": "map",
+      "title": "Build the map",
+      "state": "todo",
+      "why": "Waits for an approved profile with a repo.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
+      "id": "onyx",
+      "title": "Set up Onyx",
+      "state": "todo",
+      "why": "Docker is ready. Set up Onyx when you want search.",
+      "detail": "Onyx isn't set up yet.",
+      "error": null,
+      "action": "SetupOnyx",
+      "progress": null,
+      "items": []
+    }
+  ],
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false
+  }
+}

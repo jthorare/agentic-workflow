@@ -148,6 +148,7 @@ public sealed class AgentsPageTests : FrameHost
     {
         var (window, shell) = await OnAgents();
         Press(window, Key.J);
+        Press(window, Key.J);   // the launched row comes first; O on it opens its run
         Settle(window);
 
         Press(window, Key.O);

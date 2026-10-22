@@ -231,16 +231,8 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     /// <summary>Keeps the instance: closes the confirm.</summary>
     public void Keep() => IsConfirmingCancel = false;
 
-    /// <summary>Goes ahead with the cancel the confirm asked about. The app sends nothing yet: it says so, and the Cancel command's CLI is above to copy.</summary>
-    public void ConfirmCancel()
-    {
-        if (IsConfirmingCancel)
-        {
-            IsConfirmingCancel = false;
-            PendingNote = Labels.SendingArrivesNote;
-            PendingVoice.Say(Labels.SendingArrivesNote);
-        }
-    }
+    /// <summary>Goes ahead with the cancel the confirm asked about: sends it when the frame can (see <see cref="ConfirmCancelAsync"/>), else says the send arrives later.</summary>
+    public void ConfirmCancel() => _ = ConfirmCancelAsync();
 
     /// <summary>Copies the engine's status text, whole.</summary>
     /// <param name="cancellationToken">Cancels the write.</param>

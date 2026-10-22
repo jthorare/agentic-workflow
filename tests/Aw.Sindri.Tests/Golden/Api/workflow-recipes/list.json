@@ -53,7 +53,40 @@
           "to": "produce"
         }
       ],
-      "name": null
+      "name": null,
+      "status": "approved",
+      "childOnly": false,
+      "stats": {
+        "runs": 0,
+        "done": 0,
+        "failed": 0,
+        "humanRate": null,
+        "medianSeconds": null,
+        "tokensP50": null,
+        "buckets": [
+          {
+            "weekStart": "<week>",
+            "runs": 0,
+            "humanRate": null
+          },
+          {
+            "weekStart": "<week>",
+            "runs": 0,
+            "humanRate": null
+          },
+          {
+            "weekStart": "<week>",
+            "runs": 0,
+            "humanRate": null
+          },
+          {
+            "weekStart": "<week>",
+            "runs": 0,
+            "humanRate": null
+          }
+        ]
+      }
     }
-  ]
+  ],
+  "window": "30d"
 }

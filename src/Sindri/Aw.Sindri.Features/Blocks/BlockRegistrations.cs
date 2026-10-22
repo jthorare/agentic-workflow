@@ -53,7 +53,7 @@ internal static class BlockRegistrations
         .AddRecipeGates()
         .AddEffect<ClaimRefEffect>()      // engine P6 unit (d)
         .AddEffect<NotifyDeskEffect>()    // engine P6 unit (c)
-        .AddEffect<StartPhaseEffect>()    // LN-WF1: starts a line's phase as a linked instance
+        .AddEffect<LineReportEffect>()    // LN-WF1: a phase's shipped and merged, recorded for its line
         .AddEvent(RecipeEvents.ItemRouted)
         .AddEvent(RecipeEvents.ClaimCreated)
         .AddEvent(RecipeEvents.NotifyDelivered)
@@ -92,10 +92,16 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(PhaseSteps.Drift)
         .AddBlockDescriptor(PhaseSteps.Decide)
         .AddBlockDescriptor(BabysitSteps.Watch)
+        .AddDispatchBlocks();
+
+    /// <summary>Registers the line's dispatcher Steps and the event the line waits on to start its next phases (line spec §8.2, LN-WF1), descriptors only.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same collection.</returns>
+    private static IServiceCollection AddDispatchBlocks(this IServiceCollection services) => services
+        .AddEffect<StartPhaseEffect>()    // the runtime starts a line's phase as a linked instance
         .AddBlockDescriptor(LineSteps.Seed)
         .AddBlockDescriptor(LineSteps.Dispatch)
         .AddBlockDescriptor(LineSteps.Decide)
-        .AddBlockDescriptor(LineEffects.Report)
         .AddEvent(RecipeEvents.LinePhaseChanged);
 
     /// <summary>Registers the line's build and prove stations' Steps (line spec §7.2, §7.3), descriptors only.</summary>
@@ -113,6 +119,7 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(ProveSteps.BeforeAfter)
         .AddBlockDescriptor(ProveSteps.Holdout)
         .AddBlockDescriptor(ProveSteps.HoldoutLog)
+        .AddBlockDescriptor(ProveSteps.Collect)
         .AddBlockDescriptor(ProveSteps.Evidence)
         .AddBlockDescriptor(ProveSteps.FailLog);
 

@@ -107,6 +107,15 @@
       ]
     },
     {
+      "type": "job.resumed",
+      "keyShape": "job.resumed:<jobId>:<n>",
+      "invalidates": [
+        "job",
+        "jobs",
+        "setup"
+      ]
+    },
+    {
       "type": "job.started",
       "keyShape": "job.started:<jobId>",
       "invalidates": [
@@ -115,6 +124,15 @@
         "services",
         "context-lenses",
         "context-history"
+      ]
+    },
+    {
+      "type": "job.waiting",
+      "keyShape": "job.waiting:<jobId>:<n>",
+      "invalidates": [
+        "job",
+        "jobs",
+        "setup"
       ]
     },
     {

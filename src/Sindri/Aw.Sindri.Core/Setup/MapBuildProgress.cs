@@ -13,7 +13,7 @@ public static partial class MapBuildProgress
         ArgumentNullException.ThrowIfNull(line);
         return Shape.Match(line) is { Success: true } m
             && int.TryParse(m.Groups["done"].ValueSpan, out var done) && int.TryParse(m.Groups["total"].ValueSpan, out var total) && total > 0 && done <= total
-            ? new SetupProgress(done, total)
+            ? new SetupProgress(done, total, "files")
             : null;
     }
 

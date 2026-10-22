@@ -140,6 +140,24 @@ public sealed class ScopingPureStepTests
     }
 
     [Fact]
+    public async Task Gather_without_the_lenses_view_names_why_the_lenses_input_gave_none()
+    {
+        var context = ScopingStepContexts.Of("step.scope.gather", new ScopingFacts { ["anchors"] = ScopingFacts.Expiry()["anchors"] }) with
+        {
+            Injection = new InjectionSections(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["lenses"] = "note: anchors is not a list of text, so it was ignored\nThe context lenses are unavailable for this Step (this Step named no anchors); it runs without them.\n",
+            }),
+        };
+
+        var result = await new ScopeGatherStep().Run(context, TestContext.Current.CancellationToken);
+
+        Assert.Null(result.Result);
+        Assert.Contains("this Step named no anchors", result.Failure, StringComparison.Ordinal);
+        Assert.Contains("input.context.lenses", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_cancelled_token_stops_a_Step()
     {
         using var cancelled = new CancellationTokenSource();

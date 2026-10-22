@@ -86,6 +86,7 @@ internal partial class WorldForge
             Body = request.Body,
             Author = actingLogin,
             Draft = request.Draft,
+            Labels = [.. request.Labels ?? []],
             BaseRef = request.Base,
             HeadRef = request.Head,
             HeadSha = request.HeadSha,

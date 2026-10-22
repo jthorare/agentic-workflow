@@ -70,10 +70,10 @@ internal sealed class SetupFixture
     }
 
     /// <summary>The golden with one step's error and progress set (a failed step that also counts).</summary>
-    internal static JsonNode WithProgress(JsonNode list, string step, int done, int total)
+    internal static JsonNode WithProgress(JsonNode list, string step, int done, int total, string? unit = null)
     {
         var served = list["steps"]!.AsArray().Single(s => (string)s!["id"]! == step)!;
-        served["progress"] = new JsonObject { ["done"] = done, ["total"] = total };
+        served["progress"] = new JsonObject { ["done"] = done, ["total"] = total, ["unit"] = unit };
         return list;
     }
 

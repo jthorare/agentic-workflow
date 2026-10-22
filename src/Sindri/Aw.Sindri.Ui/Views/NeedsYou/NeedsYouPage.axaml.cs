@@ -179,6 +179,28 @@ internal sealed partial class NeedsYouPage : UserControl
 
     private void OnCancel(object? sender, RoutedEventArgs e) => _page?.Bar.Cancel();
 
+    private void OnAnswerMoreTries(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.MoreTries);
+
+    private void OnAnswerHint(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.Hint);
+
+    private void OnAnswerStop(object? sender, RoutedEventArgs e) => _page?.Answer?.Choose(PausedAnswerOption.Stop);
+
+    private void OnAnswerFewer(object? sender, RoutedEventArgs e) => _page?.Answer?.Decrease();
+
+    private void OnAnswerMore(object? sender, RoutedEventArgs e) => _page?.Answer?.Increase();
+
+    private void OnAnswerSend(object? sender, RoutedEventArgs e) => _ = _page?.Answer?.Send();
+
+    private void OnHandBack(object? sender, RoutedEventArgs e) => _ = _page?.Takeover?.HandBack();
+
+    private void OnNotYet(object? sender, RoutedEventArgs e) => _page?.Takeover?.NotYet();
+
+    private void OnCancelRun(object? sender, RoutedEventArgs e) => _page?.Takeover?.AskCancel();
+
+    private void OnCancelConfirm(object? sender, RoutedEventArgs e) => _ = _page?.Takeover?.ConfirmCancel();
+
+    private void OnCancelBackOut(object? sender, RoutedEventArgs e) => _page?.Takeover?.BackOutOfCancel();
+
     private void OnDropItem(object? sender, RoutedEventArgs e) => _ = _page?.Bar.RequestDrop();
 
     private void OnDropConfirm(object? sender, RoutedEventArgs e) => _ = _page?.Bar.ConfirmDrop();

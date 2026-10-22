@@ -44,7 +44,12 @@ internal sealed class ProfileLensPacks(IApprovedProfile approved, ILensPackSourc
             return SindriErrors.InvalidInput.With($"the lens pack '{id}' is not a built-in pack (built in: {string.Join(", ", source.Ids())}; fix: set workflow.packs.lenses.{Loop(kind)} to one of them)");
         }
 
-        var pack = LensPackReader.Read(id, files);
+        if (!LensPackId.TryFrom(id, out var packId))
+        {
+            return SindriErrors.InvalidInput.With($"the lens pack '{id}' is not a pack id (a lowercase letter, then lowercase letters, digits or '-', 2 to 40 characters)");
+        }
+
+        var pack = LensPackReader.Read(packId, files);
         return pack.IsError || pack.Value.Applies == kind
             ? pack
             : SindriErrors.InvalidInput.With($"the lens pack '{id}' serves the {Loop(pack.Value.Applies)} loop, not the {Loop(kind)} one (fix: name a pack that applies to {Loop(kind)})");

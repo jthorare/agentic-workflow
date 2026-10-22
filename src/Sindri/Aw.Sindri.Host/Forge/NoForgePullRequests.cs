@@ -15,6 +15,8 @@ internal sealed class NoForgePullRequests : IPullRequests
 
     public ValueTask<Result<int>> RerunChecks(string link, string sha, CancellationToken cancellationToken) => None<int>();
 
+    public ValueTask<Result<string>> Self(CancellationToken cancellationToken) => None<string>();
+
     public ValueTask<Result<IReadOnlyList<PullThread>>> Threads(string link, CancellationToken cancellationToken) => None<IReadOnlyList<PullThread>>();
 
     public ValueTask<Result<PullMergeOutcome>> Merge(PullMerge request, CancellationToken cancellationToken) => None<PullMergeOutcome>();
@@ -30,6 +32,12 @@ internal sealed class NoForgePullRequests : IPullRequests
     public ValueTask<Result<OpenedPull>> Open(OpenPull request, CancellationToken cancellationToken) => None<OpenedPull>();
 
     public ValueTask<Result<Unit>> Update(string link, string? title, string? body, CancellationToken cancellationToken) => None<Unit>();
+
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken) => None<Unit>();
+
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken) => None<string>();
+
+    public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken) => None<IReadOnlyList<PullDigest>>();
 
     private static ValueTask<Result<T>> None<T>() => ValueTask.FromResult<Result<T>>(SindriErrors.NoForge.With("the approved profile has no workflow.forge.adapter"));
 }

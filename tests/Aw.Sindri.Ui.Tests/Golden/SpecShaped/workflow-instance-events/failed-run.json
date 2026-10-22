@@ -1,0 +1,48 @@
+{
+  "events": [
+    {
+      "sequence": 41,
+      "type": "workflow.started",
+      "occurredAt": "2026-10-19T08:10:00.0000000Z",
+      "actor": "human:cli",
+      "transition": {
+        "from": null,
+        "to": "draft",
+        "trigger": "start",
+        "outcome": null,
+        "run": null
+      }
+    },
+    {
+      "sequence": 44,
+      "type": "workflow.transition",
+      "occurredAt": "2026-10-19T08:41:00.0000000Z",
+      "actor": "agent:session",
+      "transition": {
+        "from": "draft",
+        "to": "review",
+        "trigger": "step.completed",
+        "outcome": "scoped",
+        "run": "draft.1",
+        "via": "agent",
+        "tokens": 61000
+      }
+    },
+    {
+      "sequence": 47,
+      "type": "workflow.transition",
+      "occurredAt": "2026-10-19T09:02:00.0000000Z",
+      "actor": "agent:session",
+      "transition": {
+        "from": "review",
+        "to": "review",
+        "trigger": "step.failed",
+        "outcome": null,
+        "run": "review.1",
+        "via": "agent",
+        "reason": "exit"
+      }
+    }
+  ],
+  "cursor": 47
+}

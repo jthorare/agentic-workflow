@@ -15,6 +15,11 @@ internal static class ProveSteps
         .Reads("fact:phasePacket", "fact:built", "fact:workspace", "fact:redTests").Reports("ready")
         .Writes(On("fact:findings", "ready"), On("fact:proof", "ready"), On("fact:holdoutResult", "ready"), On("fact:beforeAfter", "ready"));
 
+    /// <summary>'step.prove.collect': hashes the files the hand test, verify and evidence children name and appends them to fact:proof as artifacts on the head; 'collected'.</summary>
+    public static BlockDescriptor Collect { get; } = BlockStep("step.prove.collect", Capability.Tools)
+        .Reads("fact:proof", "fact:built", "fact:workspace", "fact:manualTest", "fact:evidencePack", "fact:evidenceSummary").Reports("collected")
+        .Writes(On("fact:proof", "collected"));
+
     /// <summary>'step.prove.before-after': each fix item's recorded script must fail at the base and pass at the head; 'pass' or 'fail', the result on both.</summary>
     public static BlockDescriptor BeforeAfter { get; } = BlockStep("step.prove.before-after", Capability.Tools)
         .Reads("fact:phasePacket", "fact:built", "fact:workspace").Reports("pass", "fail").Writes(Every("fact:beforeAfter"));

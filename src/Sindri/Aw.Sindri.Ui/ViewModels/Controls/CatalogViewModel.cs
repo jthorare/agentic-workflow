@@ -33,6 +33,15 @@ internal sealed class CatalogViewModel(IClipboard clipboard, TimeProvider clock)
     /// <summary>The cli-only rows (copy blocks).</summary>
     public IReadOnlyList<ControlViewModel> CliOnly { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>The Rebuild views control, or null before the catalog is read.</summary>
+    public ControlViewModel? Rebuild { get; private set => Set(ref field, value); }
+
+    /// <summary>The Stop Sindri control (destructive: it asks first), or null before the catalog is read.</summary>
+    public ControlViewModel? Stop { get; private set => Set(ref field, value); }
+
+    /// <summary>"49 in this app, 14 at a terminal on purpose, 4 arriving later", or empty before the catalog is read.</summary>
+    public string Counts { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The control for an action id, or null when the catalog has no such row.</summary>
     /// <param name="action">The action id.</param>
     /// <returns>The control.</returns>
@@ -64,13 +73,16 @@ internal sealed class CatalogViewModel(IClipboard clipboard, TimeProvider clock)
         Pending = [.. pending.GroupBy(c => c.Stage, StringComparer.Ordinal).Select(g => new PendingPhase(Labels.Arrives(g.Key), [.. g]))];
         PendingSummary = pending.Count == 0 ? string.Empty : Labels.PendingSummary(pending.Count);
         CliOnly = [.. Controls.Where(c => c.IsCliOnly)];
+        (Rebuild, Stop) = (For("RebuildViews"), For("StopProcess"));
+        Counts = Labels.ActionCounts(Controls.Count(c => c.IsReady), CliOnly.Count, pending.Count);
     }
 
-    // The actions U1 can send. Every other ready row waits for the phase that gives it a form or a confirm (StopProcess:
-    // Health's confirm, U4).
+    // The actions the catalog's own list can send. A service's actions are per row (On); every other ready row waits
+    // for the phase that gives it a form. StopProcess is destructive: its control asks first.
     private static Func<CancellationToken, Task<Result<CommandAcceptedView>>>? Sender(Uri api, ISindriApi client, string action) => action switch
     {
         "RebuildViews" => ct => client.RebuildViews(api, ct),
+        "StopProcess" => async ct => (await client.StopSindri(api, ct).ConfigureAwait(true)).Map(stopped => new CommandAcceptedView("stop", stopped.Sequence)),
         _ => null,
     };
 }

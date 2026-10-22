@@ -20,6 +20,9 @@ internal static class NeedsYouKinds
     /// <summary>The profile (a drift row): a subject's kind and a row's kind.</summary>
     internal const string Profile = "profile";
 
+    /// <summary>A changed workflow (a recipe awaiting its own approval): a subject's kind; its id is the recipe's.</summary>
+    internal const string Recipe = "recipe";
+
     /// <summary>A failure: a row's kind.</summary>
     internal const string Failure = "failure";
 

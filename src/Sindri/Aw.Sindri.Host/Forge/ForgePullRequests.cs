@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Aw.Forge.Core;
 using Aw.Forge.Core.Ports;
 using Aw.Forge.Core.Pulls;
@@ -6,7 +7,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Forge;
 using Results = Aw.Kernel.Results;
-using System.Diagnostics;
 
 namespace Aw.Sindri.Host.Forge;
 
@@ -15,7 +15,7 @@ namespace Aw.Sindri.Host.Forge;
 /// records meet the forge's refs and DTOs. The forge checks every link and repository against the profile's host list before it sends anything.
 /// </summary>
 /// <param name="forge">The adapter the profile's 'workflow.forge.adapter' names.</param>
-internal sealed class ForgePullRequests(IForge forge) : IPullRequests
+internal sealed partial class ForgePullRequests(IForge forge) : IPullRequests
 {
     public async ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken)
     {
@@ -40,7 +40,7 @@ internal sealed class ForgePullRequests(IForge forge) : IPullRequests
 
         var s = snapshot.Value;
         var open = threads.Value.Count(static t => t.Kind == CommentKind.Thread && !t.Resolved);
-        return new PullView(pull.Link, State(s.Status), s.Head.Sha, s.Mergeable, s.ReviewDecision, open, new PullChecks(Checks(s.Checks.State), s.Checks.Sha, s.Checks.Failing));
+        return new PullView(pull.Link, State(s.Status), s.Head.Sha, s.Mergeable, s.ReviewDecision, open, new PullChecks(Checks(s.Checks.State), s.Checks.Sha, s.Checks.Failing), s.Labels, s.Base.Ref);
     }
 
     public async ValueTask<Result<string>> CheckLog(string link, string check, CancellationToken cancellationToken)
@@ -135,6 +135,12 @@ internal sealed class ForgePullRequests(IForge forge) : IPullRequests
         return count.IsError ? PullErrors.From(count.Error) : count.Value;
     }
 
+    public async ValueTask<Result<string>> Self(CancellationToken cancellationToken)
+    {
+        var login = await forge.Self(cancellationToken).ConfigureAwait(false);
+        return login.IsError ? PullErrors.From(login.Error) : login.Value;
+    }
+
     public async ValueTask<Result<IReadOnlyList<PullThread>>> Threads(string link, CancellationToken cancellationToken)
     {
         var pull = forge.Parse(link);
@@ -146,7 +152,7 @@ internal sealed class ForgePullRequests(IForge forge) : IPullRequests
         var threads = await forge.ListThreads(pull.Value, cancellationToken).ConfigureAwait(false);
         return threads.IsError
             ? PullErrors.From(threads.Error)
-            : Results.Success<IReadOnlyList<PullThread>>([.. threads.Value.Select(static t => new PullThread(t.Key, Kind(t.Kind), t.Author, t.Association, t.IsBot, t.Resolved, t.Outdated, t.Path, t.Body, t.Markers))]);
+            : Results.Success<IReadOnlyList<PullThread>>([.. threads.Value.Select(static t => new PullThread(t.Key, Kind(t.Kind), t.Author, t.Association, t.IsBot, t.Resolved, t.Outdated, t.Path, t.Body, t.Markers, t.CreatedAt, t.Line, t.EditedAt, t.Url))]);
     }
 
     public async ValueTask<Result<OpenedPull?>> Find(FindPull query, CancellationToken cancellationToken)
@@ -174,7 +180,7 @@ internal sealed class ForgePullRequests(IForge forge) : IPullRequests
             body = ForgeMarker.Append(body, marker);
         }
 
-        var opened = await forge.OpenPull(new OpenPullRequest(Repo(request.Repo), request.Head, request.Base, request.HeadSha, request.Title, body, request.Draft), cancellationToken).ConfigureAwait(false);
+        var opened = await forge.OpenPull(new OpenPullRequest(Repo(request.Repo), request.Head, request.Base, request.HeadSha, request.Title, body, request.Draft, request.Labels), cancellationToken).ConfigureAwait(false);
         return opened.IsError ? PullErrors.From(opened.Error) : new OpenedPull(opened.Value.Link, opened.Value.Number);
     }
 

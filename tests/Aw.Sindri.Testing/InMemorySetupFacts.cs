@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Core.Ports;
 using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Testing;
@@ -36,7 +35,7 @@ public sealed class InMemorySetupFacts : ISetupFacts
         RepoAnswer = OneRepo,
         ProfileAnswer = new ProfileFact(ProfilePresence.Approved),
         RecipesAnswer = new RecipesFact(26, 26),
-        McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code")]) },
+        McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
         OnyxAnswer = new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null),
     };

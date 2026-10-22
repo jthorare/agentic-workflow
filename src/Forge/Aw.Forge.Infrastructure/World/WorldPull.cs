@@ -23,6 +23,8 @@ internal sealed class WorldPull
 
     public bool Draft { get; set; }
 
+    public List<string> Labels { get; set; } = [];
+
     public string BaseRef { get; set; } = string.Empty;
 
     public string BaseSha { get; set; } = string.Empty;

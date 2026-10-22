@@ -15,13 +15,21 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="claims">The 'workflow_claims' table.</param>
 /// <param name="refs">Deletes the marker ref.</param>
 /// <param name="profile">The approved profile: the user and the repo's path.</param>
-internal sealed class CleanupActivities(IWorkflowClaims claims, IClaimRefs refs, IApprovedProfile profile)
+/// <param name="workspaces">Removes an ended phase's worktree.</param>
+internal sealed class CleanupActivities(IWorkflowClaims claims, IClaimRefs refs, IApprovedProfile profile, PhaseWorkspaceRemoval workspaces)
 {
     /// <summary>The activity: <see cref="Release"/> under the activity's cancellation.</summary>
     /// <param name="run">The ended instance and its item.</param>
     /// <returns>True when the claim was freed now.</returns>
     [Activity("ReleaseClaim")]
     public Task<bool> ReleaseClaimAsync(ReleaseRun run) => Release(run, ActivityExecutionContext.Current.CancellationToken);
+
+    /// <summary>The activity: removes the phase worktree an ended 'workflow.phase' instance owns (LN-WF2).</summary>
+    /// <param name="workspace">The stored 'fact:workspace'.</param>
+    /// <returns>True when the worktree is gone; false when it was left as it is.</returns>
+    [Activity("RemovePhaseWorkspace")]
+    public async Task<bool> RemovePhaseWorkspaceAsync(FactValue workspace) =>
+        await workspaces.Remove(workspace, ActivityExecutionContext.Current.CancellationToken).ConfigureAwait(false);
 
     /// <summary>Frees the claim <paramref name="run"/>'s instance holds on its item.</summary>
     /// <param name="run">The ended instance and its item.</param>

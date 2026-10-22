@@ -69,7 +69,8 @@
       "action": null,
       "progress": {
         "done": 40,
-        "total": 100
+        "total": 100,
+        "unit": "files"
       },
       "items": [
         {

@@ -22,6 +22,7 @@ namespace Aw.Sindri.Tests.Workflows;
 public sealed class AgentChildLaunchTests : IDisposable
 {
     private const string Repo = "/work/app";
+    private const string PhaseWorktree = "/work/app/.claude/worktrees/sindri-line-p1";
     private const string ItemKeyText = "ITM-00000000000000000000000000000007";
     private readonly WorkflowsHarness _harness = new();
     private readonly FakeLauncher _launcher = new();
@@ -57,6 +58,56 @@ public sealed class AgentChildLaunchTests : IDisposable
             Assert.Equal((ItemKeyText, Repo), (request.Item.Value, request.RepoPath));
             await parent.TerminateAsync("test over");
         }, ct);
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_childs_agent_step_launches_in_the_phase_worktree_it_is_handed()
+    {
+        var request = await LaunchedWith(workspace: PhaseWorktree, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal(PhaseWorktree, request.Worktree);
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_childs_agent_step_without_a_phase_worktree_gets_the_per_run_worktree_as_before()
+    {
+        var request = await LaunchedWith(workspace: null, ct: TestContext.Current.CancellationToken);
+
+        Assert.StartsWith(Repo + "/.claude/worktrees/sindri-", request.Worktree, StringComparison.Ordinal);
+    }
+
+    private async Task<LaunchRequest> LaunchedWith(string? workspace, CancellationToken ct)
+    {
+        _harness.Replacing = Register;
+        _ = _harness.Approve(workspace is null ? _child : _workspaceChild);
+        _ = _harness.Approve(workspace is null ? _parent : _workspaceParent);
+        await using var server = new SindriTimeSkippingServer();
+        await server.InitializeAsync();
+        await using var sindri = _harness.Sindri(_harness.Replacing);
+        await WorkflowsHarness.HoldLease(sindri, ct);
+        await ApproveTarget(sindri, ct);
+        using var worker = new TemporalWorker(server.Environment.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
+        LaunchRequest? seen = null;
+        await worker.ExecuteAsync(async () =>
+        {
+            var start = await WorkflowsHarness.RecipeStart(sindri, workspace is null ? "workflow.t-agent-parent" : "workflow.t-ws-parent", ItemKeyText, ct);
+            var item = _harness.Fact(JsonSerializer.Serialize(new { id = ItemKeyText, repo = "app", spec = (string?)null }));
+            var inputs = new Dictionary<FactKey, InputFact>
+            {
+                [FactKey.From("fact:item")] = new InputFact("item.json", item),
+                [FactKey.From("fact:request")] = new InputFact("request.txt", _harness.Fact("Fix it.")),
+            };
+            if (workspace is not null)
+            {
+                inputs[FactKey.From("fact:workspace")] = new InputFact("workspace.txt", _harness.Fact(workspace));
+            }
+
+            var parent = await WorkflowsHarness.Start(server.Environment.Client, start with { Inputs = inputs });
+            await WaitFor(() => _launcher.Requests.Count > 0, ct);
+            seen = Assert.Single(_launcher.Requests);
+            await parent.TerminateAsync("test over");
+        }, ct);
+        return seen!;
     }
 
     private static async Task WaitFor(Func<bool> condition, CancellationToken ct)
@@ -128,4 +179,14 @@ public sealed class AgentChildLaunchTests : IDisposable
         "  done: { kind: terminal, outcome: resolved }",
         "transitions:",
         "  - { from: run, to: done, on: wait.satisfied, when: { outcome: resolved } }");
+
+    private static readonly string _workspaceChild = _child
+        .Replace("workflow.t-agent-child", "workflow.t-ws-child", StringComparison.Ordinal)
+        .Replace("  - { key: fact:request, label: \"Request\", type: text, kind: text }", "  - { key: fact:request, label: \"Request\", type: text, kind: text }\n  - { key: fact:workspace, label: \"Phase worktree\", type: text, kind: text }", StringComparison.Ordinal);
+
+    private static readonly string _workspaceParent = _parent
+        .Replace("workflow.t-agent-parent", "workflow.t-ws-parent", StringComparison.Ordinal)
+        .Replace("workflow.t-agent-child", "workflow.t-ws-child", StringComparison.Ordinal)
+        .Replace("  - { key: fact:request, label: \"Request\", type: text, kind: text }", "  - { key: fact:request, label: \"Request\", type: text, kind: text }\n  - { key: fact:workspace, label: \"Phase worktree\", type: text, kind: text }", StringComparison.Ordinal)
+        .Replace("inputs: { \"fact:request\": { fact: fact:request } }", "inputs: { \"fact:request\": { fact: fact:request }, \"fact:workspace\": { fact: fact:workspace } }", StringComparison.Ordinal);
 }

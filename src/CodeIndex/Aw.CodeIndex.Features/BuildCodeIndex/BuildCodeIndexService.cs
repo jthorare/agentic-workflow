@@ -10,7 +10,7 @@ namespace Aw.CodeIndex.Features.BuildCodeIndex;
 
 /// <summary>
 /// The build slice (spec §5.7): a heavy slot, the snapshot, the incremental plan, the structure write in batches, the syntax
-/// edges and the publish. The graph, clones and deps layers plug in later; the embeddings layer is built here; until then each is recorded as unavailable
+/// edges and the publish. The graph and deps layers plug in later; the clones rows are written with the structure; the embeddings layer is built here; until then each is recorded as unavailable
 /// with its reason, so a reader never mistakes a layer that was not built for one that is empty.
 /// </summary>
 /// <param name="heads">Whether a commit is still on the default branch.</param>
@@ -22,7 +22,7 @@ namespace Aw.CodeIndex.Features.BuildCodeIndex;
 /// <param name="clock">The time source.</param>
 public sealed partial class BuildCodeIndexService(IRepoHeads heads, IRepoSnapshot snapshot, StructureWriter structure, EmbeddingsLayer embeddings, IIndexStore store, IHeavyJobLock heavy, TimeProvider clock) : IService<BuildCodeIndexRequest, BuildReport>
 {
-    private static readonly LayerName[] _laterLayers = [LayerName.Clones, LayerName.Deps, LayerName.Graph];
+    private static readonly LayerName[] _laterLayers = [LayerName.Deps, LayerName.Graph];
 
     /// <summary>A build in progress: its file, its request and what the snapshot found.</summary>
     private sealed record BuildContext(IIndexBuild Build, BuildCodeIndexRequest Request, SnapshotInventory Inventory, string DefaultBranch, long Started);
@@ -145,6 +145,13 @@ public sealed partial class BuildCodeIndexService(IRepoHeads heads, IRepoSnapsho
         if (first.IsError)
         {
             return first.Error;
+        }
+
+        // Clone rows are written with each file's symbols, so the layer is current whenever the structure is.
+        var clones = await build.SetLayer(new LayerRecord(LayerName.Clones, stamp, LayerState.Ok, Code: null, "ok", now), cancellationToken).ConfigureAwait(false);
+        if (clones.IsError)
+        {
+            return clones.Error;
         }
 
         foreach (var layer in _laterLayers)

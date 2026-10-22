@@ -13,11 +13,11 @@ public sealed class ReviewLoopV2Tests
     private static Recipe Load() => RecipeComposition.ReadClean(ShippedRecipes.Read(Path), "workflow.review-loop.yaml").Recipe;
 
     [Fact, Trait("Lane", "unit")]
-    public void The_recipe_is_version_4_and_validates_against_the_shipped_catalog()
+    public void The_recipe_is_version_5_and_validates_against_the_shipped_catalog()
     {
         var document = RecipeComposition.ReadClean(ShippedRecipes.Read(Path), "workflow.review-loop.yaml");
 
-        Assert.Equal(4, document.Recipe.Version);   // 4: the round log is an input, so round 1 holds fact:lensRounds (LN-PK lite); the typed escalation (BS-12) and the display fields (SO-E1) came with it
+        Assert.Equal(5, document.Recipe.Version);   // 5: the phase worktree is an input (LN-WF2); 4: the round log is an input, so round 1 holds fact:lensRounds (LN-PK lite); the typed escalation (BS-12) and the display fields (SO-E1) came with it
         Assert.Empty(RecipeComposition.Errors(document, FixtureCatalog.Shipped(), new InMemoryChildRecipes()));
     }
 
@@ -32,8 +32,8 @@ public sealed class ReviewLoopV2Tests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_inputs_are_the_change_the_phase_packet_and_the_round_log_so_round_one_holds_it()
-        => Assert.Equal(["fact:change", "fact:phasePacket", "fact:lensRounds"], Load().Inputs.Select(static i => i.Key.Value), StringComparer.Ordinal);
+    public void The_inputs_are_the_change_the_phase_packet_the_round_log_and_the_phase_worktree()
+        => Assert.Equal(["fact:change", "fact:phasePacket", "fact:lensRounds", "fact:workspace"], Load().Inputs.Select(static i => i.Key.Value), StringComparer.Ordinal);
 
     [Fact, Trait("Lane", "unit")]
     public void The_phase_starts_each_review_with_an_empty_round_log()
@@ -42,10 +42,11 @@ public sealed class ReviewLoopV2Tests
 
         var inputs = phase.States["review"].WaitFor!.Child!.Inputs;   // why: 'review' is the phase's child wait
 
-        Assert.Equal(3, phase.Version);   // 2: passes the empty round log (LN-PK lite); 3: the owner's stop reports the phase failed to its line (LN-WF1)
+        Assert.Equal(4, phase.Version);   // 4: the owner's stop reports the phase failed to its line (LN-WF1); 3: passes the phase worktree (LN-WF2); 2: passes the empty round log (LN-PK lite)
         var log = inputs[FactKey.From("fact:lensRounds")];
         Assert.Equal("[]", log.Literal!.Value.GetRawText());
         Assert.Null(log.Fact);
+        Assert.Equal(FactKey.From("fact:workspace"), inputs[FactKey.From("fact:workspace")].Fact);   // the loop's agent Steps launch in the phase worktree
     }
 
     [Fact, Trait("Lane", "unit")]

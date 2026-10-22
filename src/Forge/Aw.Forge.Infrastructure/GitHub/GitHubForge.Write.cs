@@ -54,9 +54,35 @@ internal sealed partial class GitHubForge
             return reply.Error;
         }
 
-        return reply.Value.Ok
-            ? new ForgeRef(ForgeKind.GitHub, request.Repo.Host, request.Repo.Owner, request.Repo.Name, (int)reply.Value.Body.Long("number"))
-            : GitHubApi.Fail(reply.Value);
+        if (!reply.Value.Ok)
+        {
+            return GitHubApi.Fail(reply.Value);
+        }
+
+        var opened = new ForgeRef(ForgeKind.GitHub, request.Repo.Host, request.Repo.Owner, request.Repo.Name, (int)reply.Value.Body.Long("number"));
+        if (request.Labels is { Count: > 0 } labels)
+        {
+            await ApplyLabels(opened, labels, cancellationToken).ConfigureAwait(false);
+        }
+
+        return opened;
+    }
+
+    // why: the pull request exists now, so a label that GitHub refuses (an unknown name without push access, a rate limit) must not fail the open and
+    // make a retry open a second one. The adapter has no logger; the snapshot's Labels shows what landed.
+    private async ValueTask ApplyLabels(ForgeRef pull, IReadOnlyList<string> labels, CancellationToken cancellationToken)
+    {
+        var body = J.Object(w =>
+        {
+            w.WriteStartArray("labels");
+            foreach (var label in labels)
+            {
+                w.WriteStringValue(label);
+            }
+
+            w.WriteEndArray();
+        });
+        _ = await _api.Call(pull.Host, HttpMethod.Post, Inv.S($"{RepoPath(pull)}/issues/{pull.Number}/labels"), body, cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<Result<Unit>> UpdatePull(UpdatePullRequest request, CancellationToken cancellationToken)

@@ -1,13 +1,17 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.Prove;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Checks;
 using Aw.Sindri.Testing.Scoping;
 using Aw.Sindri.Testing.Worktrees;
 using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
+using Aw.Sindri.Tests.Workflow.BuildShip;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Workflow.Prove;
 
@@ -24,7 +28,7 @@ public sealed class ProveBeforeAfterStepTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private sealed class Rig(string signals = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"proof/ac1.sh"}]}""")
+    private sealed class Rig(string[]? commands = null, string signals = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"proof/ac1.sh"}]}""")
     {
         public InMemoryBriefFiles Files { get; } = new InMemoryBriefFiles()
                 .With("acceptance.json", """{"schemaVersion":1,"items":[{"id":"AC-1","text":"one","status":"failing"},{"id":"AC-2","text":"two","status":"superseded"}]}""")
@@ -41,15 +45,17 @@ public sealed class ProveBeforeAfterStepTests
 
         public FakeScriptRuns Scripts { get; } = new FakeScriptRuns().Exits(BaseTree, 1).Exits(Workspace, 0);
 
-        public ProveBeforeAfterStep Step() => new(Files, Area, Checkouts, Worktrees, Scripts);
+        public ProveBeforeAfterStep Step() => new(Files, Area, Checkouts, Worktrees, Scripts,
+            new RepoCommandRunner(new StubCommandSource(commands ?? ["dotnet test --filter Fix"], TimeSpan.FromMinutes(5)), new InMemoryCheckCommands(), new StepRig.CountingSlots(), new FakeTimeProvider(KnownInstants.Epoch)));
     }
 
-    private static StepContext Context(bool workspace = true, bool address = true) =>
+    private static StepContext Context(bool workspace = true, bool address = true, string? redTests = null) =>
         BuildShipContexts.Of("step.prove.before-after", new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["phasePacket"] = $$$"""{"hash":"sha256:{{new string('b', 64)}}","dir":"{{{Dir}}}"}""",
             ["built"] = $$$"""{"head":"{{{Head}}}"}""",
             ["workspace"] = workspace ? $"\"{Workspace}\"" : "null",
+            ["redTests"] = redTests ?? "{}",
         }) with
         { Address = address ? Address : null, Repo = RepoName.From("name"), };
 
@@ -98,7 +104,7 @@ public sealed class ProveBeforeAfterStepTests
     [Fact]
     public async Task A_base_and_head_signal_with_no_recorded_script_is_recorded_missing_with_a_note_and_passes_without_running_anything()
     {
-        var rig = new Rig("""{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head"}]}""");
+        var rig = new Rig(signals: """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head"}]}""");
 
         var result = await rig.Step().Run(Context(), Token);
 
@@ -111,7 +117,7 @@ public sealed class ProveBeforeAfterStepTests
     [Fact]
     public async Task A_script_path_that_leaves_the_checkout_is_not_run()
     {
-        var rig = new Rig("""{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"../../etc/x.sh"}]}""");
+        var rig = new Rig(signals: """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head","script":"../../etc/x.sh"}]}""");
 
         var result = await rig.Step().Run(Context(), Token);
 
@@ -122,7 +128,7 @@ public sealed class ProveBeforeAfterStepTests
     [Fact]
     public async Task Head_only_signals_and_superseded_items_are_not_run_and_a_phase_with_nothing_to_run_passes_with_no_results()
     {
-        var rig = new Rig("""{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"head","script":"a.sh"}],"AC-2":[{"id":"SG-2a","kind":"test","statement":"s","runsAt":"base+head","script":"b.sh"}]}""");
+        var rig = new Rig(signals: """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"head","script":"a.sh"}],"AC-2":[{"id":"SG-2a","kind":"test","statement":"s","runsAt":"base+head","script":"b.sh"}]}""");
 
         var result = await rig.Step().Run(Context(), Token);
 
@@ -164,6 +170,70 @@ public sealed class ProveBeforeAfterStepTests
 
         Assert.Null((await rig.Step().Run(Context(workspace: false), Token)).Result);
         Assert.Null((await rig.Step().Run(Context(address: false), Token)).Result);
+        Assert.Empty(rig.Scripts.Calls);
+    }
+
+    private const string NoScript = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head"}]}""";
+    private const string RedTests = """{"commit":"abc1234","items":{"AC-1":{"tests":[{"id":"Fix_works","path":"tests/FixTests.cs"}]}}}""";
+    private const string Generated = "/run/T-1/prove/1/before-after/AC-1.sh";
+
+    [Fact]
+    public async Task A_signal_with_no_script_runs_a_script_the_Step_writes_from_the_items_red_tests_and_the_profile_commands_at_base_and_head()
+    {
+        var rig = new Rig(signals: NoScript);
+
+        var result = await rig.Step().Run(Context(redTests: RedTests), Token);
+
+        Assert.Equal("pass", result.Result!.Outcome.Value);
+        var row = Out(result)["results"]![0]!;
+        Assert.Equal(("fail", "pass", "before-after/AC-1.sh", "before-after/AC-1.sh"), ((string?)row["base"], (string?)row["head"], (string?)row["baseScript"], (string?)row["headScript"]));
+        Assert.Equal([(BaseTree, Generated), (Workspace, Generated)], rig.Scripts.Calls);
+        var script = rig.Area.ReadLocation(Generated)!;
+        Assert.Contains("tests/FixTests.cs", script, StringComparison.Ordinal);   // copied into the base tree, where the red test does not exist yet
+        Assert.Contains("'dotnet' 'test' '--filter' 'Fix'", script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_recorded_script_is_run_in_preference_to_the_red_tests()
+    {
+        var rig = new Rig();
+
+        _ = await rig.Step().Run(Context(redTests: RedTests), Token);
+
+        Assert.All(rig.Scripts.Calls, static c => Assert.Equal("/work/head/proof/ac1.sh", c.Script));
+        Assert.Null(rig.Area.ReadLocation(Generated));
+    }
+
+    [Fact]
+    public async Task A_signal_with_no_script_and_no_red_test_path_is_recorded_missing()
+    {
+        var rig = new Rig(signals: NoScript);
+
+        var result = await rig.Step().Run(Context(redTests: """{"items":{"AC-1":{"appOnly":{"signal":"SG-1a"}}}}"""), Token);
+
+        Assert.Equal("missing", (string?)Out(result)["results"]![0]!["base"]);
+        Assert.Empty(rig.Scripts.Calls);
+    }
+
+    [Fact]
+    public async Task A_red_test_path_that_leaves_the_checkout_is_not_used()
+    {
+        var rig = new Rig(signals: NoScript);
+
+        var result = await rig.Step().Run(Context(redTests: """{"items":{"AC-1":{"tests":[{"id":"x","path":"../../etc/passwd"}]}}}"""), Token);
+
+        Assert.Equal("missing", (string?)Out(result)["results"]![0]!["base"]);
+        Assert.Empty(rig.Scripts.Calls);
+    }
+
+    [Fact]
+    public async Task A_signal_with_red_tests_but_no_profile_commands_is_recorded_missing()
+    {
+        var rig = new Rig(commands: [], signals: NoScript);
+
+        var result = await rig.Step().Run(Context(redTests: RedTests), Token);
+
+        Assert.Equal("missing", (string?)Out(result)["results"]![0]!["base"]);
         Assert.Empty(rig.Scripts.Calls);
     }
 }

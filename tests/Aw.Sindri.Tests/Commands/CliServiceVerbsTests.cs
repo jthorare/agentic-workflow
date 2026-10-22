@@ -2,6 +2,7 @@ using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.ListServices;
 using static Aw.Sindri.Tests.Commands.JobRig;
@@ -18,9 +19,9 @@ public sealed class CliServiceVerbsTests : IDisposable
 
     private static string List() => Body(new ListServicesResponse(
     [
-        new ServiceView(ServiceName.From("heartbeat"), "5s", Paused: false, new LastRun(KnownInstants.Epoch, ServiceOutcome.Ok, Code: null, KnownInstants.Epoch), KnownInstants.Epoch.AddSeconds(5)),
-        new ServiceView(ServiceName.From("sync"), "1h", Paused: true, new LastRun(KnownInstants.Epoch, ServiceOutcome.Failed, "SND-SCHED-001", KnownInstants.Epoch), NextSlot: null, JobId.From(Id)),
-        new ServiceView(ServiceName.From("fresh"), "24h", Paused: false, LastRun: null, NextSlot: null),
+        new ServiceView(ServiceName.From("heartbeat"), "5s", Paused: false, new LastRun(KnownInstants.Epoch, ServiceOutcome.Ok, Code: null, KnownInstants.Epoch), KnownInstants.Epoch.AddSeconds(5), Job: null, Actions: [ServiceActions.Run, ServiceActions.Pause]),
+        new ServiceView(ServiceName.From("sync"), "1h", Paused: true, new LastRun(KnownInstants.Epoch, ServiceOutcome.Failed, "SND-SCHED-001", KnownInstants.Epoch), NextSlot: null, JobId.From(Id), Actions: [ServiceActions.Resume]),
+        new ServiceView(ServiceName.From("fresh"), "24h", Paused: false, LastRun: null, NextSlot: null, Job: null, Actions: [ServiceActions.Run, ServiceActions.Pause]),
     ], Empty: null, _fresh));
 
     [Fact, Trait("Lane", "unit")]

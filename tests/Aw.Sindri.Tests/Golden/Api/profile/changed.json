@@ -13,5 +13,23 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "packs": [
+    {
+      "kind": "lenses.design",
+      "id": "design-five",
+      "source": "built-in",
+      "hash": "sha256:e879e404ea4cd241eeea00fbbfc56d3ce3723aa309a5734cc10ced343c633f8c",
+      "pin": "built-in",
+      "status": "ok"
+    },
+    {
+      "kind": "lenses.review",
+      "id": "code-review",
+      "source": "built-in",
+      "hash": "sha256:7de3b885d80450ba24683bafdffc5d966c90e5f3e402309c1d06a4ff4e45704c",
+      "pin": "built-in",
+      "status": "ok"
+    }
+  ]
 }

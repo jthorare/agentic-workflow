@@ -6,13 +6,12 @@
   <!-- One session that ended recently: what it was, when, and the command that resumes it, with Copy. -->
   <Border x:Name="EndedRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Top">
-      <StackPanel Spacing="2">
-        <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock Classes="caption subtle" Text="{Binding EndedText}" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock Classes="caption mono" Text="{Binding ResumeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-      </StackPanel>
-      <Button x:Name="EndedCopy" Grid.Column="1" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" VerticalAlignment="Center" AutomationProperties.Name="{Binding CopyName}">
+    <Grid ColumnDefinitions="150,2*,2*,56,Auto" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+      <TextBlock Classes="body-strong" Text="{Binding StatusText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock Grid.Column="1" Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock Grid.Column="2" Classes="caption mono" Text="{Binding ResumeText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding EndedText}" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <Button x:Name="EndedCopy" Grid.Column="4" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding CopyName}">
         <TextBlock Classes="caption" Text="{Binding CopyLabel}" />
       </Button>
     </Grid>

@@ -63,7 +63,7 @@ internal sealed partial class Launcher
 
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
     {
-        var step = request.Attended ? null : request.Step;
+        var step = Denying(request.Attended ? null : request.Step, request, entry, workDir);
         var policyPath = step?.Policy is { } policy && entry.PolicyForm == PolicyForm.ClaudeSettingsFile
             ? StepPolicyFile.Write(parts.Options.PolicyDirectory, request.Launch, policy)
             : null;
@@ -78,6 +78,32 @@ internal sealed partial class Launcher
 
         IReadOnlyList<string> argv = [.. built.Value, .. mcpArguments];
         return (argv, session);
+    }
+
+    /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
+    private StepArgs? Denying(StepArgs? step, LaunchRequest request, AgentEntry entry, string workDir)
+    {
+        if (step?.Policy is not { } stated || entry.PolicyForm != PolicyForm.ClaudeSettingsFile)
+        {
+            return step;
+        }
+
+        var siblings = request.Worktree is null ? [] : SiblingWorktrees(workDir);
+        return step with { Policy = stated with { DeniedPaths = [.. stated.DeniedPaths ?? [], .. StepDenials.For(workDir, siblings, parts.Options.SindriHome)] } };
+    }
+
+    /// <summary>The Sindri worktrees beside <paramref name="workDir"/> ('sindri-*' under the same parent), which a Step must not read.</summary>
+    private static string[] SiblingWorktrees(string workDir)
+    {
+        var parent = Path.GetDirectoryName(workDir.TrimEnd('/', '\\'));
+        try
+        {
+            return parent is not null && Directory.Exists(parent) ? [.. Directory.EnumerateDirectories(parent, "sindri-*")] : [];
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];   // nothing readable beside it to name
+        }
     }
 
     /// <summary>What an unattended launch adds to the seed: which Step it is, then the Step's brief when it has one (engine P8 F13).</summary>

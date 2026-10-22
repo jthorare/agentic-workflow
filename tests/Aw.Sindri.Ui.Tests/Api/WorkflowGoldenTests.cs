@@ -255,4 +255,31 @@ public sealed class WorkflowGoldenTests
         var value = AwJson.Deserialize<T>(body, SindriApiClient.Json);
         return value.IsError ? value.Error : AwJson.Serialize(value.Value, SindriApiClient.Json);
     }
+
+    [Fact]
+    public void The_failed_run_events_read_with_the_reason_of_the_failed_step()
+    {
+        var events = Read<InstanceEventsView>(JsonNode.Parse(GoldenFiles.SpecShaped("workflow-instance-events", "failed-run"))!); // why: the golden is a JSON object
+
+        Assert.Equal(47, events.Cursor);
+        var failed = Assert.Single(events.Events, e => e.Transition?.Trigger == "step.failed");
+        Assert.Equal(("exit", "agent"), (failed.Transition!.Reason, failed.Transition.Via));
+        Assert.Equal(61000, events.Events.Select(e => e.Transition?.Tokens).Single(t => t is not null));
+    }
+
+    [Fact]
+    public void A_block_run_frame_reads_its_actor_and_attempt_and_writes_back_without_the_fields_it_lacks()
+    {
+        var opened = FrameOf("workflow.transition-block-run-attempt-3-of-3");
+        var quiet = FrameOf("workflow.transition-nothing-open");
+
+        Assert.Equal(("produce", "block", "block", 3, 3), (opened.State, opened.Runtime, opened.Actor, opened.Attempt, opened.MaxAttempts));
+        Assert.Equal((null, null, null, null), (quiet.Runtime, quiet.Actor, quiet.Attempt, quiet.MaxAttempts));
+        var written = JsonNode.Parse(AwJson.Serialize(quiet, SindriApiClient.Json))!.AsObject(); // why: a record writes a JSON object
+        Assert.Equal(["state", "entry", "run", "child"], written.Select(p => p.Key), StringComparer.Ordinal);
+    }
+
+    // The frame sits at detail.delta.frame of the engine's ledger row.
+    private static FrameSummary FrameOf(string row) =>
+        AwJson.Deserialize<FrameSummary>(Encoding.UTF8.GetBytes(GoldenFiles.Ledger(row)["detail"]!["delta"]!["frame"]!.ToJsonString()), SindriApiClient.Json).Value;
 }

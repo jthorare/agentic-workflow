@@ -43,7 +43,7 @@ internal sealed class PauseServiceService(IApprovedProfile approvals, ILedgerSto
             return approved.Error;
         }
 
-        if (approved.Value?.Profile.Services?.ContainsKey(request.Name.Value) != true)
+        if (!ServiceActions.CanPauseOrResume(approved.Value?.Profile.Services?.ContainsKey(request.Name.Value) == true))
         {
             return SindriErrors.ServiceNotFound.With(BuiltInService.Is(request.Name, namedByProfile: false, builtIns)
                 ? $"{request.Name.Value} is a built-in service and can't be paused or resumed."

@@ -8,10 +8,10 @@ namespace Aw.Sindri.Ui.Tests.Agents;
 public sealed class SessionChipsTests
 {
     [Theory]
-    [InlineData("running", "●", "WORKING")]
-    [InlineData("asking", "◐", "ASKING YOU")]
-    [InlineData("idle", "○", "IDLE")]
-    [InlineData("unknown", "○", "UNKNOWN")]
+    [InlineData("running", "●", "Working")]
+    [InlineData("asking", "◐", "Asking you")]
+    [InlineData("idle", "○", "Idle")]
+    [InlineData("unknown", "○", "Unknown")]
     public void Each_state_maps_to_its_glyph_and_word(string state, string glyph, string word)
     {
         var chip = SessionChips.For(state);
@@ -24,7 +24,7 @@ public sealed class SessionChipsTests
     {
         var chip = SessionChips.For("dozing");
 
-        Assert.Equal(("○", "DOZING"), (chip.Glyph, chip.Word));
+        Assert.Equal(("○", "dozing"), (chip.Glyph, chip.Word));
         Assert.Equal("dozing", SessionChips.Word("dozing"));
     }
 }

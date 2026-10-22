@@ -1,2 +1,2 @@
-{"start":{"inputs":{"fact:change":{"repo":"r","branch":"b","base":"m","head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:lensRounds":[]}}}
+{"start":{"inputs":{"fact:change":{"repo":"r","branch":"b","base":"m","head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:workspace":"/w","fact:lensRounds":[]}}}
 {"trigger":{"kind":"step.completed","outcome":"noLens"},"expect":{"state":"stuck","outcome":"unresolved"}}

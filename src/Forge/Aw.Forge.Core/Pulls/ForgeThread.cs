@@ -11,6 +11,10 @@ namespace Aw.Forge.Core.Pulls;
 /// <param name="Path">The file an inline thread is on.</param>
 /// <param name="Body">The opening text.</param>
 /// <param name="Markers">The idempotency markers found anywhere in the thread, replies included.</param>
+/// <param name="CreatedAt">When it was written. ListThreads returns threads ordered by this, then by <paramref name="Key"/>.</param>
+/// <param name="Line">The line an inline thread sits on (its current line, else its original one), or null.</param>
+/// <param name="EditedAt">When it was last edited, or null when it was never edited.</param>
+/// <param name="Url">Its link on the forge, or null.</param>
 public sealed record ForgeThread(
     string Key,
     CommentKind Kind,
@@ -21,4 +25,8 @@ public sealed record ForgeThread(
     bool Outdated,
     string? Path,
     string Body,
-    IReadOnlyList<string> Markers);
+    IReadOnlyList<string> Markers,
+    DateTimeOffset CreatedAt,
+    int? Line,
+    DateTimeOffset? EditedAt,
+    string? Url);

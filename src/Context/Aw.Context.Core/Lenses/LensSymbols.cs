@@ -16,6 +16,10 @@ public sealed record LensSymbols(SymbolsState State, string? Reason, IReadOnlyLi
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<FileSymbolsRow>? Files { get; init; }
 
+    /// <summary>The symbols that implement the map's nodes, the file-level links refined (Phase 9); null when the index cannot answer, so the links stay file-level and 'state' says why.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<SymbolImplements>? Implements { get; init; }
+
     /// <summary>The commit the symbols were read at, or null when none were.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Commit { get; init; }

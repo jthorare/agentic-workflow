@@ -51,6 +51,30 @@ public sealed class RecipeRegistryReader(IRecipeStore store, IRecipeApprovals ap
         return lines;
     }
 
+    /// <summary>The ids of the registered recipes some registered recipe starts as a child (a 'waitFor: { child }').</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The ids; empty when no recipe has a child.</returns>
+    public async ValueTask<Result<IReadOnlySet<RecipeId>>> ChildRecipeIds(CancellationToken cancellationToken)
+    {
+        var all = await store.All(cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
+        {
+            return all.Error;
+        }
+
+        var ids = new HashSet<RecipeId>();
+        foreach (var registered in all.Value)
+        {
+            var parsed = Parse(registered);
+            if (parsed.IsSuccess)
+            {
+                ids.UnionWith(parsed.Value.States.Values.Select(static s => s.WaitFor?.Child?.Recipe).OfType<RecipeId>());
+            }
+        }
+
+        return Results.Success<IReadOnlySet<RecipeId>>(ids);
+    }
+
     /// <summary>The line of <paramref name="recipe"/>.</summary>
     /// <param name="recipe">A registered recipe.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>

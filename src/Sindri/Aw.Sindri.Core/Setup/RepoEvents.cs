@@ -38,4 +38,26 @@ public sealed class RepoEvents(HeldLease held, ILedgerStore ledger, EventFactory
         var appended = await ledger.Append(events.Entry(EventTypes.RepoAdded, new RepoAdded(caller.CommandId, repo, path), KeyOf(repo)), grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : Unit.Value;
     }
+
+    /// <summary>The idempotency key of a repo's 'repo.onboarded': one per repo and approved hash, so a tick and the OnboardRepo job cannot both record it.</summary>
+    /// <param name="repo">The repo's name.</param>
+    /// <param name="approved">The approved profile that names it.</param>
+    /// <returns>'repo.onboarded:&lt;name&gt;:&lt;hash&gt;'.</returns>
+    public static string OnboardedKeyOf(RepoName repo, ProfileHash approved) => $"repo.onboarded:{repo.Value}:{approved.Value}";
+
+    /// <summary>Appends 'repo.onboarded' under <see cref="OnboardedKeyOf"/>; recording it again is a no-op.</summary>
+    /// <param name="repo">The repo's name.</param>
+    /// <param name="approved">The approved profile that names it.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Success, or SND-API-001 when this process holds no lease or no call is running, or the ledger's error.</returns>
+    public async ValueTask<Result<Unit>> Onboarded(RepoName repo, ProfileHash approved, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant || callers.Current is not { } caller)
+        {
+            return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
+        }
+
+        var appended = await ledger.Append(events.Entry(EventTypes.RepoOnboarded, new RepoOnboarded(caller.CommandId, repo, approved), OnboardedKeyOf(repo, approved)), grant, cancellationToken).ConfigureAwait(false);
+        return appended.IsError ? appended.Error : Unit.Value;
+    }
 }

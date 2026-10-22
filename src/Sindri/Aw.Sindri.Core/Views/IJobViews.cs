@@ -13,7 +13,7 @@ public interface IJobViews
     /// <returns>The row, or null when there is none.</returns>
     public ValueTask<Result<JobRow?>> Get(JobId job, CancellationToken cancellationToken);
 
-    /// <summary>Every running job.</summary>
+    /// <summary>Every job that has not ended: running or waiting on a signal.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The rows, oldest first.</returns>
     public ValueTask<Result<IReadOnlyList<JobRow>>> Running(CancellationToken cancellationToken);

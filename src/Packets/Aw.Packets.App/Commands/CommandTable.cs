@@ -9,7 +9,7 @@ internal static class CommandTable
 {
     internal static readonly string Usage =
         $"validate|freeze|hash|verify <packet-dir> [--kind {string.Join('|', PacketKinds.All.Select(static k => k.Name))}] [--json] "
-        + "(build and the line kinds design, plan, phase, proof, review, handoff: validate and freeze take [--repo <dir>]; validate takes [--sizes <file>] (build and plan), freeze takes [--by owner|machine]; verify takes --hash <sha256:hex> [--candidate]; scoping: freeze takes --repo-slug <owner/name> --instance <slug> [--by owner|machine])";
+        + "(build and the line kinds design, plan, phase, proof, review, handoff: validate and freeze take [--repo <dir>]; validate takes [--sizes <file>] (build and plan) and [--seal <file>] (phase), freeze takes [--by owner|machine]; verify takes --hash <sha256:hex> [--candidate]; scoping: freeze takes --repo-slug <owner/name> --instance <slug> [--by owner|machine])";
 
     internal static async Task<int> Run(string[] args, IServiceProvider provider)
     {

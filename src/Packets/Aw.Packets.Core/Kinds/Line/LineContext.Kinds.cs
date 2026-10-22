@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Aw.Packets.Core.Checks;
 using Aw.Packets.Core.Model;
 
 namespace Aw.Packets.Core.Kinds.Line;
@@ -44,7 +45,30 @@ internal sealed partial class LineContext
         var phase = Schema<PhaseFile>(_rules.Number(LineRules.PhaseSchema), "phase.json", "phase", "phase.json matches its schema", LineProblems.Phase);
         AmendsRule(phase);
         Acceptance(LineRules.PhaseAcceptanceSchema, allowPassing: false);
-        _ = Schema<PhaseHoldout>(_rules.Number(LineRules.PhaseHoldout), "holdout.json", "phase-holdout", "holdout.json matches its schema", LineProblems.Holdout);
+        HoldoutSealRule(Schema<PhaseHoldout>(_rules.Number(LineRules.PhaseHoldout), "holdout.json", "phase-holdout", "holdout.json matches its schema", LineProblems.Holdout));
+    }
+
+    // PKT-HOLD-003: the set the evaluator runs is the set that was sealed with the plan.
+    private void HoldoutSealRule(PhaseHoldout? holdout)
+    {
+        if (holdout is null)
+        {
+            _checks.Unchecked(PacketRules.HoldoutSealed, "holdout.json is missing or doesn't match its schema, so its set hash is unknown");
+            return;
+        }
+
+        if (SealedSet is not { } sealedSet)
+        {
+            _checks.Unchecked(PacketRules.HoldoutSealed, "no seal file was given (--seal), so the set hash was not compared with a seal");
+            return;
+        }
+
+        _checks.Rule(
+            PacketRules.HoldoutSealed,
+            "the holdout set hash matches its seal",
+            holdout.SetHash == sealedSet
+                ? []
+                : [("holdout.json setHash", $"setHash {holdout.SetHash.Value} is not the sealed set {sealedSet.Value}", "Re-freeze the phase from the sealed set, or re-seal the set and the plan.")]);
     }
 
     private void PhaseId()

@@ -42,6 +42,12 @@ public static class PacketRules
     /// </summary>
     public const string HoldoutStored = "PKT-HOLD-002";
 
+    /// <summary>
+    /// A phase packet's holdout set hash is the one its seal names (line spec LN-PKT4, §9.1): the set the evaluator runs is the set the owner froze with the plan.
+    /// Unchecked until a seal is given ('validate --kind phase --seal &lt;file&gt;').
+    /// </summary>
+    public const string HoldoutSealed = "PKT-HOLD-003";
+
     /// <summary>Every task fits its size class's budget (unchecked until the budgets are defined).</summary>
     public const string SizeBudget = "PKT-SIZE-001";
 

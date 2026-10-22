@@ -7,6 +7,7 @@ using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Scoping;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Testing.Worktrees;
+using Aw.Sindri.Tests.Workflow.BuildShip;
 
 namespace Aw.Sindri.Tests.Workflow.Blocks.Contracts;
 
@@ -25,5 +26,5 @@ public sealed class ProveBeforeAfterStepContract : BlockContract
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new ProveBeforeAfterStep(new InMemoryBriefFiles(), new InMemoryRunArea(), new InMemoryRepoCheckouts(), new FakeWorktrees(), new FakeScriptRuns()).Run(BuildShipContexts.Of("step.prove.before-after", []), cancellationToken);
+        _ = await new ProveBeforeAfterStep(new InMemoryBriefFiles(), new InMemoryRunArea(), new InMemoryRepoCheckouts(), new FakeWorktrees(), new FakeScriptRuns(), new StepRig("dotnet test").Runner).Run(BuildShipContexts.Of("step.prove.before-after", []), cancellationToken);
 }

@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.RegisterMcp;
+using Aw.Sindri.Features.SetupWatch;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
@@ -21,7 +22,7 @@ internal static class RegisterMcpServiceCollectionExtensions
         var resolved = new ResolvedMcpRepos();
         return services
             .AddSingleton(resolved)
-            .AddScoped<McpEvents>().AddScoped<IMcpJobStarter, McpJobStarter>().AddScoped<IMcpNeed, McpNeed>()
+            .AddScoped<McpEvents>().AddScoped<IMcpJobStarter, McpJobStarter>().AddScoped<McpNeed>().AddScoped<IMcpNeed>(static sp => new ChangedMcpNeed(sp.GetRequiredService<McpNeed>(), sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<IEndpointFile>(), sp.GetRequiredService<McpAutoMemory>()))
             .AddScoped(static sp => new AutomaticMcpRegistration(new RegisterMcpService(sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<IRepoLocator>(), sp.GetRequiredService<IEndpointFile>(), sp.GetRequiredService<IClaudeCli>(), sp.GetRequiredService<IProviderHost>()) { WriteCodexTrust = false }))
             .AddScoped<IJobAdmission<RegisterMcpJobRequest>, RegisterMcpAdmission>()
             .AddJob<RegisterMcpJobRequest, RegisterMcpResponse, RegisterMcpJobService>(resolved.KeyOf, static r => "registered in " + r.Repo.Value, repo: static r => r.Repo is { } named && RepoName.TryFrom(named, out var name) ? name : null);

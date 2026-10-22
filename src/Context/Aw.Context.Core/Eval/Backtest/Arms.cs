@@ -8,6 +8,9 @@ public static class Arms
     /// <summary>The arms this build runs, in report order.</summary>
     public static IReadOnlyList<Arm> Available { get; } = [Arm.Brief, Arm.Docs, Arm.Graph, Arm.GraphReviewed, Arm.All];
 
+    /// <summary>The ranker comparison's arms (S-8), in report order: only '--arms ranker' (or each by name) runs them, never 'all', because the rerank row asks a model.</summary>
+    public static IReadOnlyList<Arm> Ranker { get; } = [Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerRerank];
+
     /// <summary>The arms that print "not available", in report order.</summary>
     public static IReadOnlyList<Arm> NotAvailable { get; } = [Arm.Linear, Arm.Onyx, Arm.Code];
 
@@ -24,6 +27,9 @@ public static class Arms
         Arm.Onyx => "onyx",
         Arm.Code => "code",
         Arm.All => "all",
+        Arm.RankerRrf => "ranker-rrf",
+        Arm.RankerFeatures => "ranker-features",
+        Arm.RankerRerank => "ranker-rerank",
         _ => throw new ArgumentOutOfRangeException(nameof(arm)),
     };
 
@@ -35,7 +41,7 @@ public static class Arms
         Arm.Linear => "S-6",
         Arm.Onyx => "S-7B",
         Arm.Code => "S-9",
-        Arm.Brief or Arm.Docs or Arm.Graph or Arm.GraphReviewed or Arm.All => null,
+        Arm.Brief or Arm.Docs or Arm.Graph or Arm.GraphReviewed or Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => null,
         _ => throw new ArgumentOutOfRangeException(nameof(arm)),
     };
 
@@ -56,10 +62,12 @@ public static class Arms
             return Available.ToList();
         }
 
+        names = [.. names.SelectMany(static n => string.Equals(n, "ranker", StringComparison.Ordinal) ? Ranker.Select(Name) : [n])];
+
         var parsed = new List<Arm>();
         foreach (var name in names)
         {
-            var arm = Available.Concat(NotAvailable).Where(a => string.Equals(Name(a), name, StringComparison.Ordinal)).Cast<Arm?>().FirstOrDefault();
+            var arm = Available.Concat(Ranker).Concat(NotAvailable).Where(a => string.Equals(Name(a), name, StringComparison.Ordinal)).Cast<Arm?>().FirstOrDefault();
             if (arm is not { } found)
             {
                 return Unknown(name);
@@ -68,16 +76,13 @@ public static class Arms
             parsed.Add(found);
         }
 
-        return Available.Concat(NotAvailable).Where(parsed.Contains).ToList();
+        return Available.Concat(Ranker).Concat(NotAvailable).Where(parsed.Contains).ToList();
     }
 
     private static Error Unknown(string name)
     {
-        var ranker = string.Equals(name, "ranker", StringComparison.Ordinal);
-        var listed = string.Join(", ", Available.Select(Name)) + "; not available yet: " + string.Join(", ", NotAvailable.Select(a => $"{Name(a)} ({PendingStage(a)})"));
-        return ContextErrors.UnknownArm.With(ranker
-            ? $"the ranker arms arrive with S-8 (arms: {listed}); fix: use a listed arm or 'all'"
-            : $"'{Printable(name)}' is not an arm (arms: {listed}); fix: use a listed arm or 'all'");
+        var listed = string.Join(", ", Available.Concat(Ranker).Select(Name)) + " ('ranker' runs the three ranker arms); not available yet: " + string.Join(", ", NotAvailable.Select(a => $"{Name(a)} ({PendingStage(a)})"));
+        return ContextErrors.UnknownArm.With($"'{Printable(name)}' is not an arm (arms: {listed}); fix: use a listed arm or 'all'");
     }
 
     private static string Printable(string text) => new([.. text.Where(c => !char.IsControl(c)).Take(40)]);

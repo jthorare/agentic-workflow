@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-ui
-version: 3
+version: 4
 description: "Block recipe: A ui-evidence run: plan, run, lint and critique; one repair when a selector is broken."
 displayName: "Prove the screens work in a browser"
 inputs:
@@ -13,7 +13,7 @@ states:
   plan:   { kind: active, step: step.evidence.ui-plan, timeout: { after: 4h, then: park },
             next: "Plan the UI evidence for {item} from the phase packet and the built change." }
   run:    { kind: active, step: step.evidence.ui-run, loop: repairs, timeout: { after: 4h, then: park },
-            next: "Run the planned UI evidence for {item} and record the summary." }
+            next: "Run the planned UI evidence for {item} and record the summary. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (screenshots, logs, notes); name no hash." }
   passed: { kind: terminal, outcome: resolved }
   skipped: { kind: terminal, outcome: resolved }
   failed: { kind: terminal, outcome: unresolved }

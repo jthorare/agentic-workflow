@@ -10,4 +10,7 @@ namespace Aw.Forge.Core.Pulls;
 /// <param name="IsBot">Whether the author is a bot.</param>
 /// <param name="Path">The file, for an inline thread.</param>
 /// <param name="Body">The text.</param>
-public sealed record SeedThreadRequest(ForgeRef Pull, CommentKind Kind, string Author, string Association, bool IsBot, string? Path, string Body);
+/// <param name="CreatedAt">When it was written; the forge's clock at seeding when null.</param>
+/// <param name="Line">The line, for an inline thread.</param>
+/// <param name="EditedAt">When it was last edited, or null.</param>
+public sealed record SeedThreadRequest(ForgeRef Pull, CommentKind Kind, string Author, string Association, bool IsBot, string? Path, string Body, DateTimeOffset? CreatedAt = null, int? Line = null, DateTimeOffset? EditedAt = null);

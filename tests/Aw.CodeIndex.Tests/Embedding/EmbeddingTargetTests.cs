@@ -1,5 +1,4 @@
 using Aw.CodeIndex.Core;
-using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Model;
 
 namespace Aw.CodeIndex.Tests.Embedding;

@@ -23,6 +23,12 @@ public sealed class UsageTests
     public void Help_lists_the_short_form_of_takeover_and_handback(string verb) =>
         Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <item-or-address>", StringComparison.Ordinal));
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("sindri repo onboard ", "never approves the profile")]
+    [InlineData("sindri profile init ", "refuses when one exists")]
+    public void Help_lists_repo_onboard_and_profile_init(string start, string says) =>
+        Assert.Contains(says, Assert.Single(Lines(), l => l.StartsWith(start, StringComparison.Ordinal)), StringComparison.Ordinal);
+
     [Fact, Trait("Lane", "unit")]
     public void Help_describes_mcp_register_for_all_three_providers_with_the_providers_flag()
     {
@@ -55,6 +61,8 @@ public sealed class UsageTests
     [InlineData(new[] { "jobs", "show", "x" }, false)]
     [InlineData(new[] { "repo", "add", "/work/demo" }, true)]
     [InlineData(new[] { "repo", "add", "/work/demo", "--detach" }, false)]
+    [InlineData(new[] { "repo", "onboard" }, true)]
+    [InlineData(new[] { "repo", "onboard", "--detach" }, false)]
     [InlineData(new[] { "repo", "status", "--nudge" }, false)]
     public void Only_a_following_run_takes_a_second_ctrl_c(string[] args, bool follows) => Assert.Equal(follows, Interrupt.FollowsJob(args));
 

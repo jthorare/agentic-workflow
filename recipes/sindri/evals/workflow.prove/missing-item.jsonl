@@ -1,0 +1,12 @@
+{"start":{"inputs":{"fact:phasePacket":{"hash":"sha256:aa","dir":"packets/p1"},"fact:built":{"head":"h1"},"fact:workspace":"/work/p1","fact:redTests":{"i1":["T1"]}}}}
+{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:findings":[],"fact:proof":{},"fact:holdoutResult":{},"fact:beforeAfter":{}}},"expect":{"state":"hand-test"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:manualTest":"walked"}},"expect":{"state":"verify"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidencePack":"pack"}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ok","fact:decision":"ui"}},"expect":{"state":"collect"}}
+{"trigger":{"kind":"step.completed","outcome":"collected","outputs":{"fact:proof":{}}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"wait.satisfied"},"expect":{"state":"before-after"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:beforeAfter":{"ok":true}}},"expect":{"state":"holdout"}}
+{"trigger":{"kind":"step.completed","outcome":"ran","outputs":{"fact:holdoutResult":{"verdicts":[]}}},"expect":{"state":"holdout-log"}}
+{"trigger":{"kind":"step.completed","outcome":"passed","outputs":{"fact:holdoutResult":{"verdicts":[]}}},"expect":{"state":"evidence-pack"}}
+{"trigger":{"kind":"step.completed","outcome":"incomplete","outputs":{"fact:findings":"PRV-ACC-001 i2: no passing evidence ran on the head"}},"expect":{"state":"fail-log"}}
+{"trigger":{"kind":"step.completed","outcome":"logged","outputs":{"fact:findings":"PRV-ACC-001 i2: no passing evidence ran on the head"}},"expect":{"state":"failed","outcome":"unresolved"}}

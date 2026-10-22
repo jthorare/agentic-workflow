@@ -15,7 +15,7 @@ using Aw.Sindri.Tests.Workflows.Inputs;
 
 namespace Aw.Sindri.Tests.Workflows;
 
-/// <summary>'step.prove.evidence' as the runner hands it its facts (BS-5, LN7): only what its descriptor reads reaches it, so a proof that needs 'fact:proof' parks instead of completing.</summary>
+/// <summary>'step.prove.evidence' as the runner hands it its facts (BS-5, LN7): its descriptor reads 'fact:proof' (#624, #670), so the proof the collect Step wrote reaches it.</summary>
 [Lane(TestLane.Unit)]
 public sealed class ProveEvidenceRunnerTests
 {
@@ -71,15 +71,14 @@ public sealed class ProveEvidenceRunnerTests
     }
 
     [Fact]
-    public async Task The_instance_holds_fact_proof_but_the_Step_is_not_given_it_so_the_proof_parks_instead_of_completing()
+    public async Task The_Step_is_given_the_instances_fact_proof_and_completes()
     {
         var run = new BlockStepRun(Address, "prove", "1.1", ProveSteps.Evidence.Id, new Dictionary<string, WithValue>(StringComparer.Ordinal), await Facts(), "name");
 
         var outcome = await Runner().Run(run, Token);
 
-        Assert.DoesNotContain(FactKey.From("fact:proof"), _seen!.Facts.Keys);   // the descriptor does not name it, so the runner does not read it
-        Assert.Null(outcome.Outcome);
-        Assert.Contains("PRV-ACC-001", outcome.Failure, StringComparison.Ordinal);
-        Assert.Contains("PRV-SHA-001", outcome.Failure, StringComparison.Ordinal);
+        Assert.Contains(FactKey.From("fact:proof"), _seen!.Facts.Keys);   // the descriptor names it, so the runner reads it
+        Assert.Null(outcome.Failure);
+        Assert.Equal("complete", outcome.Outcome?.Value);
     }
 }

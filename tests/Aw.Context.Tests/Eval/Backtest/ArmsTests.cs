@@ -29,12 +29,11 @@ public sealed class ArmsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_ranker_arms_name_S8()
+    public void The_ranker_name_expands_to_the_three_ranker_arms()
     {
         var parsed = Arms.Parse("ranker");
 
-        Assert.Equal(ContextErrors.UnknownArm.Code, parsed.Error.Code);
-        Assert.Contains("S-8", parsed.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(Arms.Ranker, parsed.Value);
     }
 
     [Fact, Trait("Lane", "unit")]

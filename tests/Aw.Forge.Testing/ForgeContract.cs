@@ -43,6 +43,53 @@ public abstract class ForgeContract : ForgeReadContract
         Expect.That(otherMarker is null && otherHead is null, "a different marker or head finds nothing");
     }
 
+    /// <summary>ListThreads returns threads, review bodies and comments oldest first whatever order they were added in, each with its time, line, edit time and link.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Threads_come_oldest_first_across_kinds_with_their_fields()
+    {
+        var (run, pull) = await Open();
+        var at = new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero);
+        var review = Expect.Ok(run.Seed!.SeedThread(new SeedThreadRequest(pull, CommentKind.Review, "reviewer", "MEMBER", IsBot: false, Path: null, Body: "Looks fine", CreatedAt: at.AddHours(1))), "SeedThread review");
+        var comment = Expect.Ok(run.Seed.SeedThread(new SeedThreadRequest(pull, CommentKind.Comment, "reviewer", "MEMBER", IsBot: false, Path: null, Body: "Thanks", CreatedAt: at.AddHours(2))), "SeedThread comment");
+        var inline = Expect.Ok(run.Seed.SeedThread(new SeedThreadRequest(pull, CommentKind.Thread, "reviewer", "MEMBER", IsBot: false, Path: "src/a.cs", Body: "Please fix this", CreatedAt: at, Line: 12, EditedAt: at.AddMinutes(30))), "SeedThread inline");
+
+        var threads = Expect.Ok(await run.Forge.ListThreads(pull, Ct), "ListThreads");
+
+        Expect.That(threads.Select(t => t.Key).SequenceEqual([inline, review, comment], StringComparer.Ordinal), "oldest first across kinds, not in the order added");
+        var first = threads[0];
+        Expect.That(first.CreatedAt == at && first.Line == 12 && first.EditedAt == at.AddMinutes(30), "the thread carries its time, line and edit time");
+        Expect.That(threads[1].Line is null && threads[1].EditedAt is null, "a review body has no line and was not edited");
+        Expect.That(threads.All(t => t.Url is not null && t.Url.StartsWith(pull.Link, StringComparison.Ordinal) && t.Url.EndsWith(t.Key, StringComparison.Ordinal)), "each links to the pull request");
+    }
+
+    /// <summary>Labels given to OpenPull are on the snapshot; none given means none.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Opened_labels_read_back()
+    {
+        var run = Create();
+        var labelled = Expect.Ok(await run.Forge.OpenPull(new OpenPullRequest(run.Repo, Feature, "main", Sha('a'), "T", "B", Draft: false, Labels: ["area:forge", "size:S"]), Ct), "OpenPull with labels");
+        var plain = Expect.Ok(await run.Forge.OpenPull(new OpenPullRequest(run.Repo, "feature/plain", "main", Sha('a'), "T", "B", Draft: false), Ct), "OpenPull without labels");
+
+        var withLabels = Expect.Ok(await run.Forge.GetPull(labelled, Ct), "GetPull").Labels;
+        var without = Expect.Ok(await run.Forge.GetPull(plain, Ct), "GetPull").Labels;
+
+        Expect.That(withLabels.Order(StringComparer.Ordinal).SequenceEqual(["area:forge", "size:S"], StringComparer.Ordinal) && without.Count == 0, "the labels given are the labels read, none by default");
+    }
+
+    /// <summary>Self names the login the forge acts as.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Self_names_the_acting_login()
+    {
+        var run = Create();
+
+        var login = Expect.Ok(await run.Forge.Self(Ct), "Self");
+
+        Expect.That(login.Length > 0, "a login");
+    }
+
     /// <summary>UpdatePull changes the fields it is given and keeps the others; Retarget moves the base.</summary>
     /// <returns>A task.</returns>
     [Fact]

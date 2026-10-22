@@ -11,5 +11,6 @@ namespace Aw.Sindri.Features.GetProfile;
 /// <param name="Changed">True when the live profile differs from the approved one.</param>
 /// <param name="ChangedPaths">The key paths that differ.</param>
 /// <param name="AsOf">How fresh the answer is.</param>
+/// <param name="Packs">The lens packs the profile resolves (line spec LN-API8), one per kind and id.</param>
 public sealed record GetProfileResponse(ProfileHash? Approved, DateTimeOffset? ApprovedAt, ProfileHash? Live, DateTimeOffset? CheckedAt,
-    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf);
+    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf, IReadOnlyList<ProfilePack> Packs);

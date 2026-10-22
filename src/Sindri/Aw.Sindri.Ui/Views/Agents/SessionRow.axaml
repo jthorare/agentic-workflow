@@ -9,33 +9,31 @@
        draws its own focus border (item-row), not the adorner. -->
   <Border x:Name="SessionRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <StackPanel Spacing="4">
-      <Grid ColumnDefinitions="150,*,Auto" VerticalAlignment="Top">
-        <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <StackPanel Spacing="2" AutomationProperties.AccessibilityView="Raw">
-            <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock Classes="caption mono" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" AutomationProperties.AccessibilityView="Raw" />
-          </StackPanel>
-        </Border>
-        <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,8,0">
-          <Button x:Name="SessionRowOpen" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
-            <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
-              <TextBlock Classes="caption subtle" Text="{Binding Provider}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-              <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-            </StackPanel>
-          </Button>
-          <Border x:Name="SessionRowWhere" AutomationProperties.Name="{Binding WhereText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <TextBlock Classes="caption mono subtle" Text="{Binding WhereText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-          </Border>
-          <Button x:Name="SessionRowStep" Classes="row-title" Click="OnOpenFrame" HorizontalAlignment="Left" IsVisible="{Binding HasStep}" AutomationProperties.Name="{Binding StepName}">
-            <TextBlock Classes="caption mono" Text="{Binding StepText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-          </Button>
+    <Grid ColumnDefinitions="150,2*,2*,2*,56" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+      <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Classes="body-strong" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>
-        <Border x:Name="SessionRowSince" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="{Binding SinceText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="caption subtle" Text="{Binding SinceText}" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
-      </Grid>
-    </StackPanel>
+      </Border>
+      <Button x:Name="SessionRowOpen" Grid.Column="1" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}">
+        <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock Classes="caption subtle" Text="{Binding Provider}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
+      </Button>
+      <Border x:Name="SessionRowWhere" Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding WhereText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding WhereText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <StackPanel Grid.Column="3" Margin="0,0,8,0" VerticalAlignment="Center">
+        <TextBlock Classes="caption" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        <Button x:Name="SessionRowStep" Classes="row-title" Click="OnOpenFrame" HorizontalAlignment="Left" IsVisible="{Binding HasStep}" AutomationProperties.Name="{Binding StepName}">
+          <TextBlock Classes="caption" Text="{Binding StepText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+      </StackPanel>
+      <Border x:Name="SessionRowSince" Grid.Column="4" VerticalAlignment="Center" AutomationProperties.Name="{Binding SinceText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding SinceText}" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+    </Grid>
   </Border>
 </UserControl>

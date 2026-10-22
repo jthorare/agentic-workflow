@@ -9,6 +9,18 @@ internal static partial class Labels
     internal const string SessionsUnreadable = "The agent list can't be read from this Sindri.";
 
     /// <summary>The fold of sessions that ended.</summary>
+    internal const string EndedStatus = "Ended";
+
+    internal const string ColumnStatus = "Status";
+
+    internal const string ColumnAgent = "Agent";
+
+    internal const string ColumnWhere = "Where it runs";
+
+    internal const string ColumnDoing = "What it is doing";
+
+    internal const string ColumnFor = "For";
+
     internal const string RecentlyEnded = "Recently ended";
 
     /// <summary>An ended session with no known way back.</summary>

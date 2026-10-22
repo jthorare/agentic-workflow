@@ -43,7 +43,7 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
         var runs = rows.Value.Where(r => named.ContainsKey(r.Name.Value) || own.ContainsKey(r.Name.Value)).ToDictionary(r => r.Name.Value, StringComparer.Ordinal);
         IReadOnlyList<ServiceView> services = [.. named.Select(s => (Name: s.Key, s.Value.Every)).Concat(own.Select(s => (Name: s.Key, Every: s.Value)))
             .OrderBy(s => s.Name, StringComparer.Ordinal)
-            .Select(s => View(s.Name, s.Every, runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => j.Service?.Value == s.Name)?.Id))];
+            .Select(s => View(s.Name, s.Every, runs.GetValueOrDefault(s.Name), running.Value.FirstOrDefault(j => j.Service?.Value == s.Name)?.Id, named.ContainsKey(s.Name)))];
         return new ListServicesResponse(services, EmptyText.For(current, services.Count == 0, EmptyText.Services), asOf);
     }
 
@@ -51,11 +51,11 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
     /// One service; the approved profile was checked, so its cadence parses (an unparseable one shows no next slot). The next slot is the scheduler's last
     /// slot plus the cadence, so a manual run does not move it, and there is none while the service is paused.
     /// </summary>
-    private static ServiceView View(string name, string every, ServiceRow? row, JobId? job)
+    private static ServiceView View(string name, string every, ServiceRow? row, JobId? job, bool namedByProfile)
     {
         var cadence = Cadence.Parse(every);
         var paused = row?.Paused == true;
         DateTimeOffset? next = !paused && row?.ScheduledSlot is { } slot && cadence.IsSuccess ? slot + cadence.Value.Interval : null;
-        return new ServiceView(ServiceName.From(name), every, paused, row?.LastRun, next, job);
+        return new ServiceView(ServiceName.From(name), every, paused, row?.LastRun, next, job, ServiceActions.Allowed(namedByProfile, builtIn: !namedByProfile, paused, job is not null));
     }
 }

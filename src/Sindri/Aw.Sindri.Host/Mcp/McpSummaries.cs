@@ -169,6 +169,7 @@ internal static class McpSummaries
         JobState.Succeeded => "succeeded",
         JobState.Failed => "failed",
         JobState.Cancelled => "cancelled",
+        JobState.Waiting => "waiting",
         _ => throw new ArgumentOutOfRangeException(nameof(state), state, "not a job state"),
     };
 

@@ -47,9 +47,10 @@ internal static class JobHost
     /// <param name="idScope">The scope of the ids; a restart takes another.</param>
     /// <param name="pump">Whether the views follow the ledger by themselves (the goldens drive the projector step by step instead).</param>
     /// <returns>The started host.</returns>
-    public static async Task<GoldenHost> Start(CancellationToken ct, string? home = null, uint idScope = 0, bool pump = true)
+    /// <param name="more">More registrations (a test replaces a port with its fake), made after the host's own.</param>
+    public static async Task<GoldenHost> Start(CancellationToken ct, string? home = null, uint idScope = 0, bool pump = true, Action<IServiceCollection>? more = null)
     {
-        var host = await GoldenHost.Start(temporary: true, ct, ProfileYaml, extra: Register, map: Map, home: home, idScope: idScope);
+        var host = await GoldenHost.Start(temporary: true, ct, ProfileYaml, extra: services => { Register(services); more?.Invoke(services); }, map: Map, home: home, idScope: idScope);
         if (pump)
         {
             host.Own(new ViewsPump(host));

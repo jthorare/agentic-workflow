@@ -11,6 +11,7 @@ internal sealed class JobRun(JobStart start, CancellationToken parent)
     private volatile bool _recorded;
     private volatile bool _ended;
     private volatile TaskCompletionSource<bool>? _pending;
+    private volatile bool _waiting;
 
     public JobStart Start { get; } = start;
 
@@ -29,6 +30,9 @@ internal sealed class JobRun(JobStart start, CancellationToken parent)
 
     /// <summary>The job has settled its cancel and decided how it ends (set under the run's lock); a cancel mark that comes later is too late to change that.</summary>
     public bool Ended { get => _ended; set => _ended = value; }
+
+    /// <summary>The work is parked on a signal: the job holds no job slot while it waits.</summary>
+    public bool Waiting { get => _waiting; set => _waiting = value; }
 
     public Error? WriteFailure { get; set; }
 

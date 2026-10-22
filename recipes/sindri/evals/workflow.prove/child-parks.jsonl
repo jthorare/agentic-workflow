@@ -4,7 +4,8 @@
 {"trigger":{"kind":"child.resumed"},"expect":{"state":"hand-test"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:manualTest":"walked"}},"expect":{"state":"verify"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidencePack":"pack"}},"expect":{"state":"evidence"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ok","fact:decision":"ui"}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"ok","fact:decision":"ui"}},"expect":{"state":"collect"}}
+{"trigger":{"kind":"step.completed","outcome":"collected","outputs":{"fact:proof":{}}},"expect":{"state":"slot"}}
 {"trigger":{"kind":"wait.satisfied"},"expect":{"state":"before-after"}}
 {"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:beforeAfter":{"ok":true}}},"expect":{"state":"holdout"}}
 {"trigger":{"kind":"step.completed","outcome":"ran","outputs":{"fact:holdoutResult":{"verdicts":[]}}},"expect":{"state":"holdout-log"}}

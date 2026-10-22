@@ -67,7 +67,7 @@ internal sealed partial class RecipeWorkflow
 
     /// <summary>
     /// The workflow.started detail with what the ledger alone must show (spec, P4c amendment 'When name is rendered'): the subject with
-    /// the rendered name as its label, and each fact's producer, 'engine:generate' for an input the start generated.
+    /// the rendered name as its label, each fact's producer ('engine:generate' for an input the start generated), and the recipe's id and hash (the recipe stats' key).
     /// </summary>
     private WorkflowEventDetail Named(WorkflowEventDetail detail, InstanceStart start) =>
         detail with
@@ -75,6 +75,8 @@ internal sealed partial class RecipeWorkflow
             Delta = detail.Delta with
             {
                 Subject = _subject is { } s ? new EventSubject(s.Kind, s.Key, s.Label.Length > 0 ? s.Label : start.WorkflowId().Value) : null,
+                Recipe = start.Recipe.Id.Value,
+                RecipeHash = start.Recipe.Hash.Value,
                 Producers = detail.Delta.Facts?.Keys.ToDictionary(
                     static k => k,
                     k => start.Inputs.TryGetValue(FactKey.From(k), out var input) && input.Generated ? GenerateActor : detail.TriggerActor,

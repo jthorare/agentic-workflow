@@ -89,9 +89,6 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string Percent(double scale) => string.Create(CultureInfo.InvariantCulture, $"{Math.Round(scale * 100, MidpointRounding.AwayFromZero):0}%");
 
-    /// <summary>The System page's disclosure heading: the control plane, services, profile, commands and last event.</summary>
-    internal const string SystemDetails = "Details";
-
     /// <summary>The System page's sentence while everything is running.</summary>
     internal const string AllRunning = "Everything is running.";
 

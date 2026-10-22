@@ -28,6 +28,12 @@ internal static class GoldenFiles
     /// <returns>The body.</returns>
     internal static string SpecShaped(string slug, string scenario) => File.ReadAllText(Path.Combine(Root, "SpecShaped", slug, scenario + ".json"));
 
+    /// <summary>A ledger row golden recorded by Sindri's tests (a workflow transition row, as the audit read serves it).</summary>
+    /// <param name="name">The file name without the extension ('workflow.transition-nothing-open').</param>
+    /// <returns>The row, parsed.</returns>
+    internal static System.Text.Json.Nodes.JsonNode Ledger(string name) =>
+        System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(Root, "Ledger", name + ".json")))!;
+
     /// <summary>Every golden in the output: its kind ('Api' or 'SpecShaped'), slug, scenario and body.</summary>
     /// <returns>The goldens.</returns>
     internal static IEnumerable<(string Kind, string Slug, string Scenario, string Body)> All() =>

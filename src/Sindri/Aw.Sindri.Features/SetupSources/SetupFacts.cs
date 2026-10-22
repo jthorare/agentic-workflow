@@ -1,6 +1,4 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Core.Ports;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Workflow.Registry;
 
@@ -12,10 +10,10 @@ namespace Aw.Sindri.Features.SetupSources;
 /// </summary>
 /// <param name="profile">The profile reads.</param>
 /// <param name="recipes">The recipe registry.</param>
-/// <param name="onyx">The Onyx status.</param>
+/// <param name="onyx">The Onyx status, the owner's "Not now" and the setup job.</param>
 /// <param name="mcp">The MCP registration read.</param>
 /// <param name="map">The map read.</param>
-internal sealed class SetupFacts(ProfileSetupReader profile, RecipeRegistryReader recipes, OnyxStatusReader onyx, McpSetupReader mcp, MapSetupReader map) : ISetupFacts
+internal sealed class SetupFacts(ProfileSetupReader profile, RecipeRegistryReader recipes, OnyxSetupReader onyx, McpSetupReader mcp, MapSetupReader map) : ISetupFacts
 {
     public ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken) => profile.Repos(cancellationToken);
 
@@ -28,6 +26,5 @@ internal sealed class SetupFacts(ProfileSetupReader profile, RecipeRegistryReade
 
     public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => map.Read(cancellationToken);
 
-    public async ValueTask<Result<OnyxFact>> Onyx(CancellationToken cancellationToken) =>
-        (await onyx.Read(cancellationToken).ConfigureAwait(false)).Map(OnyxFact.From);
+    public ValueTask<Result<OnyxFact>> Onyx(CancellationToken cancellationToken) => onyx.Read(cancellationToken);
 }

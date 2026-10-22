@@ -41,7 +41,7 @@ internal sealed class AgentLaunching(
         }
 
         var block = BlockId.From(run.Run.Step.Block);
-        var told = instructions.FirstOrDefault(i => i.Step == block)?.Lines;
+        var told = instructions.FirstOrDefault(i => i.IsFor(block))?.Lines;
         var request = AgentLaunches.RequestFor(run.Run, target.Value, catalog.Find(block), told, workspace.Value);
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
         switch (result)
@@ -66,13 +66,7 @@ internal sealed class AgentLaunching(
             return (string?)null;
         }
 
-        var read = await contents.Read(stored, cancellationToken).ConfigureAwait(false);
-        if (read.IsError)
-        {
-            return read.Error;
-        }
-
-        var text = System.Text.Encoding.UTF8.GetString(read.Value.Span).Trim();
-        return text.Length >= 2 && text[0] == '"' && text[^1] == '"' ? System.Text.Json.JsonSerializer.Deserialize<string>(text) : text;
+        var path = await PhaseWorkspace.PathOf(contents, stored, cancellationToken).ConfigureAwait(false);
+        return path.IsError ? path.Error : path.Value;
     }
 }

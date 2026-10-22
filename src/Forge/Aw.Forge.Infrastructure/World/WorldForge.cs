@@ -16,8 +16,9 @@ namespace Aw.Forge.Infrastructure.World;
 /// reaction lands once per marker, a merge checks the expected head, and every change moves the pull request's version stamp.
 /// A push goes through git when a <see cref="GitPusher"/> is given, otherwise it is simulated against the world's branch tips.
 /// </summary>
-internal partial class WorldForge(ForgeKind kind, ForgeHosts hosts, IWorldStore store, IRedactor redactor, GitPusher? git, string actingLogin = "aw-bot") : IForge, IForgeSeed
+internal partial class WorldForge(ForgeKind kind, ForgeHosts hosts, IWorldStore store, IRedactor redactor, GitPusher? git, string actingLogin = "sindri", TimeProvider? clock = null) : IForge, IForgeSeed
 {
+    private readonly TimeProvider _clock = clock ?? TimeProvider.System;
     private int _requests;
 
     /// <summary>How many calls got past the host check and touched the store.</summary>
@@ -48,7 +49,9 @@ internal partial class WorldForge(ForgeKind kind, ForgeHosts hosts, IWorldStore 
     }
 
     public ValueTask<Result<IReadOnlyList<ForgeThread>>> ListThreads(ForgeRef pull, CancellationToken cancellationToken) =>
-        Done(Guard(pull.Host) ?? Read(pull, (_, p) => Results.Success<IReadOnlyList<ForgeThread>>([.. p.Threads.Select(ToThread)])));
+        Done(Guard(pull.Host) ?? Read(pull, (_, p) => Results.Success<IReadOnlyList<ForgeThread>>([.. p.Threads.Select(t => ToThread(kind, p, t)).OrderBy(t => t.CreatedAt).ThenBy(t => t.Key, StringComparer.Ordinal)])));
+
+    public ValueTask<Result<string>> Self(CancellationToken cancellationToken) => Done(Results.Success(actingLogin));
 
     public ValueTask<Result<string>> CheckLog(ForgeRef pull, string check, CancellationToken cancellationToken) =>
         Done(Guard(pull.Host) ?? Read(pull, (_, p) => p.Logs.TryGetValue(check, out var log)

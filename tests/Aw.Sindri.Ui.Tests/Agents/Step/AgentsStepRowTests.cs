@@ -66,7 +66,7 @@ public sealed class AgentsStepRowTests
         var page = await _f.Shown(Token);
         SessionFrameRequestedEventArgs? asked = null;
         page.FrameRequested += (_, e) => asked = e;
-        _ = page.Press("K");   // the last row is the launched one
+        _ = page.Press("J");   // the first row is the launched one
         FocusAsked(page, out var focus);
 
         Assert.True(page.Press("O"));
@@ -82,7 +82,7 @@ public sealed class AgentsStepRowTests
         var page = await _f.Shown(Token);
         var opened = false;
         page.FrameRequested += (_, _) => opened = true;
-        _ = page.Press("K");
+        _ = page.Press("J");
         FocusAsked(page, out var focus);
 
         Assert.True(page.Press("O"));
@@ -111,7 +111,7 @@ public sealed class AgentsStepRowTests
         var page = await _f.Shown(Token);
         var asked = new List<SessionFrameRequestedEventArgs>();
         page.FrameRequested += (_, e) => asked.Add(e);
-        _ = page.Press("K");
+        _ = page.Press("J");
         var row = page.Groups.SelectMany(g => g.Rows).Single(r => r.Ref.StartsWith("cursor/", StringComparison.Ordinal));
 
         row.OpenFrame();

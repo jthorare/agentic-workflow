@@ -6,6 +6,8 @@ namespace Aw.Sindri.Features.Pr;
 /// <summary>What 'step.pr.ci-fix' is told (PR babysitter spec Appendix A.1): the seed's goal, how to work and what never to do, as lines the launch puts after the brief's first line.</summary>
 internal sealed class CiFixInstructions : IAgentStepInstructions
 {
+    private static readonly BlockId _step = BlockId.From("step.pr.ci-fix");
+
     private static readonly string[] _lines =
     [
         "Goal: the smallest change that makes the failing required checks pass on this pull request's head, or an honest report that it can't be done here.",
@@ -20,7 +22,7 @@ internal sealed class CiFixInstructions : IAgentStepInstructions
     ];
 
     /// <inheritdoc/>
-    public BlockId Step { get; } = BlockId.From("step.pr.ci-fix");
+    public bool IsFor(BlockId step) => step == _step;
 
     /// <inheritdoc/>
     public IReadOnlyList<string> Lines => _lines;

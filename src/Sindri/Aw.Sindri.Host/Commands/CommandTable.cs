@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// the same Compose, so the CLI and the API share one composition. The CLI classes itself first (API spec §6): that sets
 /// its caller headers and whether it may start the control plane (§7).
 /// </summary>
-internal static class CommandTable
+internal static partial class CommandTable
 {
     /// <summary>Runs one verb as Program does.</summary>
     /// <param name="args">The command line.</param>
@@ -101,9 +101,7 @@ internal static class CommandTable
             ["status", .. var rest] when Follow(rest) is { } json => await new FollowVerbs(client, probe, output, services.GetRequiredService<TimeProvider>()).Run(json, ct).ConfigureAwait(false),
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["stop"] => await verbs.Stop(ct).ConfigureAwait(false),
-            ["profile", "validate", .. var rest] when Json(rest) is { } json => await verbs.Validate(json, ct).ConfigureAwait(false),
-            ["profile", "approve", .. var rest] when Approval(rest) is { } a => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c))
-                .Approve(a.Hash, Interactive(), Console.In, ct).ConfigureAwait(false),
+            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), output, ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
@@ -118,20 +116,12 @@ internal static class CommandTable
             ["onyx", .. var rest] => await Onyx(rest, verbs, new OnyxVerbs(services, output, session, (hash, to, c) => new Verbs(client, probe, to, services, e => start.EnsureRunning(launch: true, e)).Approve(hash, Interactive(), Console.In, c)), output, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output, session).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
-            ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "outbox" or "takeover" or "handback", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
+            ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
+            ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
-
-    /// <summary>'sindri agents|setup|code-index …': the read-only verbs that only call the control plane.</summary>
-    private static async Task<int> ReadVerbs(string[] args, ControlPlaneClient client, Output output, CancellationToken ct) => args switch
-    {
-        ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-        ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-        ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-        _ => await UnknownVerb(args, output).ConfigureAwait(false),
-    };
 
     /// <summary>'sindri recipe|workflow|scoping|outbox|takeover|handback …': the recipe family, one arm per verb.</summary>
     private static async Task<int> Workflows(string[] args, ScopingCommandTable.Host host, CancellationToken ct)
@@ -143,6 +133,7 @@ internal static class CommandTable
             ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
             ["scoping", .. var rest] => await ScopingCommandTable.Run(rest, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
             ["design" or "plan" or "line", ..] => await LineCommandTable.Run(args, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
+            ["pack", .. var rest] => await PackCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["outbox", .. var rest] => await OutboxCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
@@ -210,7 +201,7 @@ internal static class CommandTable
     private static async Task<int> Repo(string[] args, ControlPlaneClient client, Output output, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>
         args switch
         {
-            ["repo", "add", .. var rest] => await new RepoVerbs(client, output, new JobFollower(client, output, services.GetRequiredService<TimeProvider>())).Run(["add", .. rest], signals.Interrupt, signals.Again).ConfigureAwait(false),
+            ["repo", "add" or "onboard", ..] => await new RepoVerbs(client, output, new JobFollower(client, output, services.GetRequiredService<TimeProvider>())).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false),
             ["repo", "status", .. var rest] => await new RepoStatusVerb(services, output).Run(rest, signals.Interrupt).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };

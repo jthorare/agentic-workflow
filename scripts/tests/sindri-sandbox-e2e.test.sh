@@ -160,4 +160,43 @@ check "cleanup: ends this home's sessions, a child's too, and no other" "$(sort 
 : > "$KILLED"; kill_launched_sessions "" 2>/dev/null
 check "cleanup: no home kills nothing" "$(wc -c < "$KILLED" | tr -d ' ')" "0"
 
+
+# auto-desk: a choice outcome takes doneAsking where offered, else its first; fact:answers gets [] and any other {}
+SCRATCH="$WORK/desk-scratch"; DESK_MAX=5; DESK_LOG=(); COMPLETED="$WORK/completed"; mkdir -p "$SCRATCH"
+say() { :; }
+human() { printf '%s\n' "$*" >> "$COMPLETED"; }
+DESK_NEXT='Answer the questions, then run: sindri workflow complete A/1 --run 7.1 --outcome
+<answered|doneAsking> --output fact:answers=<file>'
+status_json() { jq -n --arg n "$DESK_NEXT" '{next: $n}'; }
+auto_desk A/1 2>/dev/null
+check "auto-desk: an interview's choice closes it" "$(cat "$COMPLETED")" "workflow complete A/1 --run 7.1 --outcome doneAsking --output fact:answers=$SCRATCH/desk/0-answers.json"
+check "auto-desk: fact:answers is an empty list" "$(cat "$SCRATCH/desk/0-answers.json")" "[]"
+: > "$COMPLETED"; DESK_NEXT='run: sindri workflow complete B/1 --run 2.1 --outcome <pass|fail> --output fact:verdict=<file>'
+auto_desk B/1 2>/dev/null
+check "auto-desk: another choice takes its first" "$(cat "$COMPLETED")" "workflow complete B/1 --run 2.1 --outcome pass --output fact:verdict=$SCRATCH/desk/1-verdict.json"
+check "auto-desk: another fact is an empty object" "$(cat "$SCRATCH/desk/1-verdict.json")" "{}"
+# auto-desk: a refusal that names a required output gets that output's placeholder and one more try
+: > "$COMPLETED"; DESK_LOG=()
+human() {
+  printf '%s\n' "$*" >> "$COMPLETED"
+  case "$*" in
+    *interviewClosed*) echo "completed" ;;
+    *) echo "SND-WF-008 step.interview.answer reported 'doneAsking' without fact:interviewClosed (fix: include the required output fact:interviewClosed)" ;;
+  esac
+}
+DESK_NEXT='run: sindri workflow complete C/1 --run 7.1 --outcome <answered|doneAsking> --output fact:answers=<file>'
+auto_desk C/1 2>/dev/null
+check "auto-desk: the retry adds the required output" "$(tail -1 "$COMPLETED")" "workflow complete C/1 --run 7.1 --outcome doneAsking --output fact:answers=$SCRATCH/desk/0-answers.json --output fact:interviewClosed=$SCRATCH/desk/0-interviewClosed.json"
+check "auto-desk: two calls in all" "$(wc -l < "$COMPLETED" | tr -d ' ')" "2"
+check "auto-desk: the log shows the outputs sent last" "${DESK_LOG[0]}" "C/1 run 7.1 -> doneAsking --output fact:answers=$SCRATCH/desk/0-answers.json --output fact:interviewClosed=$SCRATCH/desk/0-interviewClosed.json"
+# auto-grant: a budget park gets a token grant, logged with the desk answers, and stops at --desk-max
+: > "$COMPLETED"; DESK_LOG=(); DESK_MAX=2
+human() { printf '%s\n' "$*" >> "$COMPLETED"; cat > "$WORK/typed"; }
+auto_grant P/1 2>/dev/null
+check "auto-grant: types the challenge's action" "$(cat "$WORK/typed")" "grant-tokens 300000 P/1"
+check "auto-grant: answers with a token grant" "$(cat "$COMPLETED")" "workflow answer P/1 --grant-tokens 300000"
+check "auto-grant: logged" "${DESK_LOG[0]}" "P/1 grant-tokens 300000"
+auto_grant P/1 2>/dev/null
+auto_grant P/1 2>/dev/null; rc=$?
+check "auto-grant: stops at --desk-max" "$rc $(wc -l < "$COMPLETED" | tr -d ' ')" "1 2"
 exit "$fail"

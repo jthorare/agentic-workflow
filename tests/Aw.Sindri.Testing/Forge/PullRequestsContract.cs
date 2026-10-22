@@ -86,9 +86,53 @@ public abstract class PullRequestsContract
         Expect.Equal(PullCommentKind.Thread, thread.Kind);
         Expect.Equal("reviewer", thread.Author);
         Expect.Equal("Please fix this", thread.Body);
+        Expect.True(thread.CreatedAt > DateTimeOffset.MinValue);
+        Expect.True(thread.Url is not null && thread.Url.StartsWith(opened.Link, StringComparison.Ordinal));
         Expect.True(!thread.Resolved && !thread.IsBot);
         Expect.Equal(1, view.UnresolvedThreads);
         Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.Threads(MissingLink(run), Ct)));
+    }
+
+    /// <summary>Self names the login Sindri acts as, and the same one every time.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Self_names_the_acting_login()
+    {
+        var run = Create();
+
+        var first = Ok(await run.Pulls.Self(Ct), "Self");
+        var again = Ok(await run.Pulls.Self(Ct), "Self again");
+
+        Expect.True(first.Length > 0);
+        Expect.Equal(first, again);
+    }
+
+    /// <summary>Threads come oldest first, whatever order they were written in.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Threads_come_oldest_first()
+    {
+        var (run, opened) = await Open();
+
+        var first = run.SeedThread(opened.Link, "one");
+        var second = run.SeedThread(opened.Link, "two");
+        var threads = Ok(await run.Pulls.Threads(opened.Link, Ct), "Threads");
+
+        Expect.Sequence([first, second], threads.Select(t => t.Key));
+        Expect.True(threads[0].CreatedAt <= threads[1].CreatedAt);
+    }
+
+    /// <summary>Labels given to Open show on the pull request when it is read back.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Labels_given_to_open_read_back()
+    {
+        var run = Create();
+
+        var opened = Ok(await run.Pulls.Open(Request(run) with { Labels = ["area:forge", "size:S"] }, Ct), "Open");
+        var view = Ok(await run.Pulls.Get(opened.Link, Ct), "Get");
+
+        Expect.Sequence(["area:forge", "size:S"], view.Labels.Order(StringComparer.Ordinal));
     }
 
     /// <summary>A merge with the right head lands and reads back merged; a stale head is HeadMoved and changes nothing.</summary>
@@ -193,6 +237,53 @@ public abstract class PullRequestsContract
         Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.Open(Request(run) with { Repo = foreign }, Ct)));
         Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.Get("not a link", Ct)));
         Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.PushBranch(new PullBranchPush(foreign, "/unused", Feature, Sha('a'), LeaseSha: null), Ct)));
+    }
+
+    /// <summary>A pull request reads back with its base branch, Retarget moves it, and a missing one is SND-FORGE-003.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Retarget_moves_the_base_and_refuses_a_missing_pull_request()
+    {
+        var (run, opened) = await Open();
+        Expect.Equal("main", Ok(await run.Pulls.Get(opened.Link, Ct), "Get").Base);
+
+        _ = Ok(await run.Pulls.Retarget(opened.Link, "develop", Ct), "Retarget");
+        var missing = await run.Pulls.Retarget(MissingLink(run), "develop", Ct);
+
+        Expect.Equal("develop", Ok(await run.Pulls.Get(opened.Link, Ct), "Get after").Base);
+        Expect.Equal("SND-FORGE-003", Failure(missing));
+    }
+
+    /// <summary>DefaultBranch names the repository's default branch and refuses a host outside the list.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task DefaultBranch_names_the_branch_and_refuses_a_foreign_host()
+    {
+        var run = Create();
+
+        Expect.Equal("main", Ok(await run.Pulls.DefaultBranch(run.Repo, Ct), "DefaultBranch"));
+        Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.DefaultBranch(new PullRepo(run.ForeignHost, run.Repo.Owner, run.Repo.Name), Ct)));
+    }
+
+    /// <summary>Digest answers one entry per link in order, an empty list answers none, and a missing or foreign link fails the read.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Digest_answers_each_link_in_order_and_fails_on_a_bad_one()
+    {
+        var (run, first) = await Open();
+        var second = Ok(await run.Pulls.Open(Request(run) with { Head = "feature/second" }, Ct), "Open second");
+
+        var digests = Ok(await run.Pulls.Digest([second.Link, first.Link], Ct), "Digest");
+        var none = Ok(await run.Pulls.Digest([], Ct), "Digest empty");
+
+        Expect.Equal(2, digests.Count);
+        Expect.Equal(second.Link, digests[0].Link);
+        Expect.Equal(first.Link, digests[1].Link);
+        Expect.Equal(PullState.Open, digests[0].State);
+        Expect.Equal(Sha('a'), digests[0].HeadSha);
+        Expect.Equal(0, none.Count);
+        Expect.Equal("SND-FORGE-003", Failure(await run.Pulls.Digest([first.Link, MissingLink(run)], Ct)));
+        Expect.Equal("SND-FORGE-002", Failure(await run.Pulls.Digest(["not a link"], Ct)));
     }
 
     private static string Sha(char c) => new(c, 40);

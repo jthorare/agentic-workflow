@@ -42,7 +42,7 @@ public static class SetupSteps
         }
 
         var added = repos.Items.Lines.Count > 0 ? "You added " + string.Join(", ", repos.Items.Lines.Select(static i => i.Repo)) + ". " : string.Empty;
-        return fact.Presence switch
+        var step = fact.Presence switch
         {
             ProfilePresence.Approved => new SetupStep(SetupStepId.Profile, ProfileTitle, SetupState.Done, "Your profile is approved.", Detail: null, Error: null, Action: null, Progress: null),
             ProfilePresence.Unapproved => new SetupStep(SetupStepId.Profile, ProfileTitle, SetupState.NeedsYou, added + "Sindri waits for you to approve the profile before it uses it.", Detail: null, Error: null, SetupActions.ApproveProfile, Progress: null),
@@ -50,6 +50,7 @@ public static class SetupSteps
             ProfilePresence.Missing => new SetupStep(SetupStepId.Profile, ProfileTitle, SetupState.Todo, "There is no profile yet.", Detail: null, Error: null, Action: null, Progress: null),
             _ => throw new ArgumentOutOfRangeException(nameof(fact), fact.Presence, "Not a profile presence"),
         };
+        return step with { Preview = fact.Preview };
     }
 
     /// <summary>The recipes step: it waits for an approved profile, then done when every recipe is approved, the human's while some wait.</summary>
@@ -69,7 +70,7 @@ public static class SetupSteps
             return new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Todo, "After the profile is approved.", Counted(fact.Total, "workflow", "workflows") + " registered.", Error: null, Action: null, Progress: null);
         }
 
-        var progress = new SetupProgress(fact.Approved, fact.Total);
+        var progress = new SetupProgress(fact.Approved, fact.Total, "workflows");
         var waiting = fact.Total - fact.Approved;
         return waiting <= 0
             ? new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Done, "Every workflow that ships with Sindri is approved.", Counted(fact.Total, "workflow", "workflows") + ".", Error: null, Action: null, progress)
@@ -101,7 +102,7 @@ public static class SetupSteps
         var detail = fact.Repos == 1
             ? "Your agent doesn't know where Sindri is yet."
             : string.Create(CultureInfo.InvariantCulture, $"Your agent knows where Sindri is in {fact.Registered} of {fact.Repos} repositories.");
-        return new SetupStep(SetupStepId.Mcp, McpTitle, SetupState.Todo, "Sindri is not registered in every repo yet.", detail, Error: null, SetupActions.RegisterMcp, fact.Repos == 1 ? null : new SetupProgress(fact.Registered, fact.Repos)) { Items = fact.Items.Lines };
+        return new SetupStep(SetupStepId.Mcp, McpTitle, SetupState.Todo, "Sindri is not registered in every repo yet.", detail, Error: null, SetupActions.RegisterMcp, fact.Repos == 1 ? null : new SetupProgress(fact.Registered, fact.Repos, "repos")) { Items = fact.Items.Lines };
     }
 
     /// <summary>The map step: it builds on its own, so it has no action.</summary>
@@ -132,6 +133,11 @@ public static class SetupSteps
     public static SetupStep Onyx(OnyxFact fact)
     {
         ArgumentNullException.ThrowIfNull(fact);
+        if (OnyxJobStep(fact) is { } job)
+        {
+            return job;
+        }
+
         if (fact.State == OnyxState.Running)
         {
             return fact.Unreachable
@@ -161,6 +167,17 @@ public static class SetupSteps
         return new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Todo, "Docker is ready. Set up Onyx when you want search.",
             fact.State == OnyxState.Stopped ? "Onyx is set up but stopped." : "Onyx isn't set up yet.", Error: null, SetupActions.SetupOnyx, Progress: null);
     }
+
+    // The Onyx setup job's own states win over what Docker shows: the stack is up while the job still waits for the owner's login, and that is not "done".
+    private static SetupStep? OnyxJobStep(OnyxFact fact) => fact.Job switch
+    {
+        OnyxJobPhase.Working => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Running, "Sindri is setting up Onyx.", fact.JobLine ?? "Starting Onyx.", Error: null, Action: null, Progress: null),
+        OnyxJobPhase.WaitingForLogin => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.NeedsYou, "Create your Onyx account in the browser, then enter your login here.",
+            "Sign up at " + OnyxSetupJob.SignupUrl(fact.Port), Error: null, SetupActions.ConnectOnyx, Progress: null),
+        OnyxJobPhase.Failed when fact.JobFailure is { } failure => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Failed, failure.Sentence, Detail: null, new SetupError(failure.Code, failure.Sentence), SetupActions.SetupOnyx, Progress: null),
+        OnyxJobPhase.None or OnyxJobPhase.Failed => null,
+        _ => null,
+    };
 
     /// <summary>The step for a source that couldn't be read: failed, with one plain sentence and the error's code.</summary>
     /// <param name="id">Which step.</param>

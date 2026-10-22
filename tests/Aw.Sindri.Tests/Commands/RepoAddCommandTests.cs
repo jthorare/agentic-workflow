@@ -40,6 +40,15 @@ public sealed class RepoAddCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Repo_onboard_with_no_control_plane_is_exit_1_and_says_sindri_is_not_running()
+    {
+        var code = await Run("repo", "onboard", "/work/demo", "--detach");
+
+        Assert.Equal(1, code);
+        Assert.Contains("SND-API-001", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Repo_add_without_a_path_is_the_usage_error()
     {
         var code = await Run("repo", "add");

@@ -1,4 +1,4 @@
-{"start":{"inputs":{"fact:change":{"repo":"r","branch":"b","base":"m","head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:lensRounds":[]}}}
+{"start":{"inputs":{"fact:change":{"repo":"r","branch":"b","base":"m","head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:workspace":"/w","fact:lensRounds":[]}}}
 {"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:lensQueue":["correctness","security"],"fact:lensRounds":[]}},"expect":{"state":"lens"}}
 {"trigger":{"kind":"step.completed","outcome":"reviewed","outputs":{"fact:lensReport":{"lens":"correctness","findings":[]}}},"expect":{"state":"lens-log"}}
 {"trigger":{"kind":"step.completed","outcome":"findings","outputs":{"fact:lensRounds":[{"lens":"correctness"}],"fact:review":{"blocking":2}}},"expect":{"state":"fix"}}

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 3
+version: 4
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 urgency: work
@@ -40,7 +40,7 @@ states:
         - { use: input.context.history, with: { anchors: { fact: fact:anchors }, window: { profile: workflow.scoping.historyWindow } } }
     timeout: { after: 30m, then: park }
     next: "Run the four lenses for {item}: product surfaces and related features, code, then history (pass {loop.rescope}/{loop.rescope.cap})."
-  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 300k }, timeout: { after: 2h, then: park },
+  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
   check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1h, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
@@ -81,7 +81,7 @@ states:
                   next: "Propose {item}'s new surfaces to the draft map and record each surface's graph status." }
   evidence:     { displayName: "Assemble the proof", why: "Packs every check into the document you approve.", kind: active, step: step.scope.evidence, timeout: { after: 1h, then: park },
                   next: "Check {item}'s evidence and assemble the packet: citations, four coverage rows, a failing acceptance list, a clean challenge." }
-  stop:         { displayName: "Approve the scope", why: "Last chance to change the scope before it is locked in.", kind: active, step: step.scope.review, timeout: { after: 7d, then: park },
+  stop:         { displayName: "Approve the scope", why: "Last chance to change the scope before it is locked in.", kind: active, step: step.scope.review, loop: revise, timeout: { after: 7d, then: park },
                   next: "Your stop: read the scope packet (`sindri scoping show {instance}` or the stop view), then answer the stop's form: approve, revise with notes, or drop." }
   freeze:       { displayName: "Lock in the scope", why: "Locks the approved scope so later stages build exactly what you approved.", kind: active, step: step.scope.freeze, loop: refreeze, timeout: { after: 1h, then: park },
                   next: "Re-check {item}'s packet, confirm its hash, and freeze it." }
@@ -106,9 +106,11 @@ transitions:
   - { label: "gaps found: draft again", from: check,  to: draft,     on: step.completed, when: { outcome: gaps },     produces: [fact:findings] }
   - { from: check,  to: questions, on: step.completed,
       when: { all: [ { outcome: pass }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] } }
-  - { from: check,  to: challenge, on: step.completed, when: { outcome: pass } }
+  - { from: check,  to: challenge, on: step.completed, when: { all: [ { outcome: pass }, { loop: challenge, below: cap } ] } }
+  - { label: "the second opinion is spent: size it", from: check,  to: size, on: step.completed, when: { outcome: pass } }
   - { from: questions, to: interview, on: step.completed, when: { outcome: asked }, produces: [fact:questions, fact:openQuestions] }
-  - { from: questions, to: challenge, on: step.completed, when: { outcome: none },  produces: [fact:openQuestions] }
+  - { from: questions, to: challenge, on: step.completed, when: { all: [ { outcome: none }, { loop: challenge, below: cap } ] },  produces: [fact:openQuestions] }
+  - { label: "the second opinion is spent: size it", from: questions, to: size, on: step.completed, when: { outcome: none },  produces: [fact:openQuestions] }
   - { from: interview, to: record, on: step.completed, when: { outcome: answered },    produces: [fact:answers] }
   - { from: interview, to: record, on: step.completed, when: { outcome: doneAsking }, produces: [fact:answers, fact:interviewClosed] }
   - { from: record, to: apply, on: step.completed, when: { outcome: recorded }, produces: [fact:answerLog] }
@@ -118,7 +120,11 @@ transitions:
   - { from: challenge, to: challenge-log, on: step.completed, when: { outcome: nothingNew }, produces: [fact:challengeRound] }
   - { from: challenge, to: challenge-log, on: step.completed, when: { outcome: found },      produces: [fact:challengeRound] }
   - { from: challenge-log, to: size,  on: step.completed, when: { outcome: nothingNew }, produces: [fact:challenge] }
-  - { label: "second opinion found gaps: draft again", from: challenge-log, to: draft, on: step.completed, when: { outcome: found },      produces: [fact:challenge, fact:findings] }
+  - { label: "second opinion found gaps: draft again", from: challenge-log, to: draft, on: step.completed,
+      when: { all: [ { outcome: found }, { loop: challenge, below: cap } ] }, produces: [fact:challenge, fact:findings] }
+  - { label: "gaps remain: you answer them", from: challenge-log, to: questions, on: step.completed,
+      when: { all: [ { outcome: found }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] }, produces: [fact:challenge, fact:findings] }
+  - { label: "gaps remain, nothing to ask: size it, findings open", from: challenge-log, to: size, on: step.completed, when: { outcome: found }, produces: [fact:challenge, fact:findings] }
   - { from: [size, size-desk], to: propose, on: step.completed,
       when: { any: [ { outcome: xs }, { outcome: s }, { outcome: m }, { outcome: l }, { outcome: xl } ] }, produces: [fact:decision] }
   - { label: "AI wasn't sure: you pick the size", from: size, to: size-desk, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }
@@ -134,9 +140,9 @@ transitions:
   - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
-loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 4 }, refreeze: { cap: 2 } }
+loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 2 }, refreeze: { cap: 2 }, revise: { cap: 4 } }
 budget: { tokens: 2500k }
-evals:   # 25 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced) and idea-child-unresolved
+evals:   # 26 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -154,7 +160,8 @@ evals:   # 25 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/done-asking.jsonl
   - evals/workflow.scoping/answer-log-citations-survive.jsonl
   - evals/workflow.scoping/challenge-found-twice.jsonl
-  - evals/workflow.scoping/challenge-cap-parks.jsonl
+  - evals/workflow.scoping/challenge-cap-questions.jsonl
+  - evals/workflow.scoping/challenge-cap-size.jsonl
   - evals/workflow.scoping/size-uncertain.jsonl
   - evals/workflow.scoping/propose-skipped.jsonl
   - evals/workflow.scoping/evidence-incomplete.jsonl

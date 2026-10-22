@@ -37,5 +37,9 @@ internal sealed partial class NeedsYouPageViewModel
             OnChanged(nameof(ShowsRequest));
             OnChanged(nameof(IsDone));
         }
+        else if (string.Equals(e.PropertyName, nameof(NeedsYouBarViewModel.ShowsActions), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(ShowsBarButtons));
+        }
     }
 }

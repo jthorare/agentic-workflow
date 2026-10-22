@@ -13,6 +13,7 @@ namespace Aw.Sindri.Ui.Api.Setup;
 /// <param name="Action">The catalog action that moves it forward, or null when it runs on its own or waits on another step.</param>
 /// <param name="Progress">How far a counted step is, or null.</param>
 /// <param name="Items">One line per repo for a step that counts repos; null or empty otherwise (an older Sindri sends none).</param>
+/// <param name="Preview">What the profile allows in plain words (the profile step only); null otherwise, and for an older Sindri.</param>
 internal sealed record SetupStepView(
     string Id,
     string Title,
@@ -22,4 +23,5 @@ internal sealed record SetupStepView(
     SetupErrorView? Error,
     string? Action,
     SetupProgressView? Progress,
-    IReadOnlyList<SetupItemView>? Items = null);
+    IReadOnlyList<SetupItemView>? Items = null,
+    IReadOnlyList<SetupPreviewLineView>? Preview = null);

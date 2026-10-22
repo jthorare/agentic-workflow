@@ -11,7 +11,7 @@ internal static class ReportAssembly
         var kept = collected.Kept;
         var briefScore = collected.Scores.TryGetValue(Arm.Brief, out var brief) ? BacktestScoring.Aggregate(brief, tokens: 0) : null;
         var rows = new List<ArmReport>();
-        foreach (var arm in Arms.Available.Where(request.Arms.Contains).Concat(Arms.NotAvailable))   // the arms not available yet always print their row (spec §9.3)
+        foreach (var arm in Arms.Available.Concat(Arms.Ranker).Where(request.Arms.Contains).Concat(Arms.NotAvailable))   // the arms not available yet always print their row (spec §9.3)
         {
             if (Arms.PendingStage(arm) is { } stage)
             {
@@ -21,7 +21,7 @@ internal static class ReportAssembly
 
             var scores = collected.Scores[arm];
             var score = BacktestScoring.Aggregate(scores, collected.Tokens.GetValueOrDefault(arm));
-            rows.Add(new ArmReport(Arms.Name(arm), "source", arm == Arm.GraphReviewed, NotAvailable: null, score, PassLine.Evaluate(score, arm == Arm.Brief ? null : briefScore, kept.Count), scores));
+            rows.Add(new ArmReport(Arms.Name(arm), Arms.Ranker.Contains(arm) ? "ranker" : "source", arm == Arm.GraphReviewed, NotAvailable: null, score, PassLine.Evaluate(score, arm == Arm.Brief ? null : briefScore, kept.Count), scores));
         }
 
         var overall = PassLine.Overall(rows);

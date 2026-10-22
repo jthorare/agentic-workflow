@@ -8,6 +8,9 @@ internal static class JobRoutes
     /// <summary>The map refresh's start (a job route; the map step's Retry).</summary>
     internal const string RefreshContextMap = "/sindri/context/map/refresh";
 
+    /// <summary>The map build's start (a job route; the Context page's "Build the map").</summary>
+    internal const string BuildContextMap = "/sindri/context/map/build";
+
     internal static string List(JobQuery query)
     {
         var parts = new List<string>();

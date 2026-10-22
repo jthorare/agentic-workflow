@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Packets.Core.Checks;
+using Aw.Packets.Core.Values;
 
 namespace Aw.Packets.Core.Kinds.Line;
 
@@ -32,6 +33,9 @@ internal sealed partial class LineContext
     }
 
     internal LineManifest? Manifest { get; }
+
+    /// <summary>The set hash the seal names; null when no seal was given.</summary>
+    internal PacketHash? SealedSet { get; init; }
 
     internal void Append(IEnumerable<CheckResult> results) => _checks.AddRange(results);
 

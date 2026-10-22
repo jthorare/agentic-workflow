@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, maxBudget, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, maxBudget, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -90,6 +90,7 @@ public static partial class SettingsReader
                     Adjudicator = Adjudicates(section.Eval),
                     Recognizers = Recognizers(section.Extract),
                     Publish = Publish(section.Publish),
+                    Ranker = RankerRules.Read(section.Ranker),
                 },
                 section.Code,
                 codeDeadline.Value),
@@ -229,7 +230,7 @@ public static partial class SettingsReader
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 4 steps"),
         { CascadeComponentFanOut: < 1 or > 50 } => Invalid("context.cascadeComponentFanOut", "is 1 to 50 features"),
-        _ => CodeProblem(section.Code),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -242,7 +243,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

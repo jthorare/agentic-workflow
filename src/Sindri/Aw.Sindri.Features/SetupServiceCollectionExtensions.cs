@@ -1,6 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Core.Ports;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Features.SetupSources;
@@ -18,6 +18,6 @@ internal static class SetupServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services.AddScoped<IValidator<GetSetupRequest>, AcceptAllValidator<GetSetupRequest>>().AddQuery<GetSetupRequest, GetSetupResponse, GetSetupService>()
-            .AddScoped<ISetupFacts, SetupFacts>().AddScoped<GetNeedsYou.SetupNotices>().AddScoped<ProfileSetupReader>().AddScoped<McpSetupReader>().AddScoped<MapSetupReader>().AddScoped<OnyxStatusReader>();
+            .AddScoped<ISetupFacts, SetupFacts>().AddScoped<GetNeedsYou.SetupNotices>().AddScoped<ProfileSetupReader>().AddScoped<McpSetupReader>().AddScoped<MapSetupReader>().AddScoped<OnyxStatusReader>().AddScoped<OnyxSetupReader>();
     }
 }

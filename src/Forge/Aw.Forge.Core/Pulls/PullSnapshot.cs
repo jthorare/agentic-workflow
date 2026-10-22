@@ -14,6 +14,7 @@ namespace Aw.Forge.Core.Pulls;
 /// <param name="Mergeable">Whether the forge says it merges cleanly; null while it computes.</param>
 /// <param name="ReviewDecision">APPROVED, CHANGES_REQUESTED or null.</param>
 /// <param name="Checks">The checks on the head.</param>
+/// <param name="Labels">The labels on it, by name.</param>
 public sealed record PullSnapshot(
     ForgeRef Ref,
     string Url,
@@ -25,4 +26,5 @@ public sealed record PullSnapshot(
     HeadBranch Head,
     bool? Mergeable,
     string? ReviewDecision,
-    ChecksSummary Checks);
+    ChecksSummary Checks,
+    IReadOnlyList<string> Labels);
