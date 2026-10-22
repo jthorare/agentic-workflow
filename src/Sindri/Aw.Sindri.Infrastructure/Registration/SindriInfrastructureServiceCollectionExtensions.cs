@@ -87,6 +87,21 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IFrozenPackets>(sp => new FrozenPacketRecords(Path.Combine(sp.GetRequiredService<SindriSettings>().StateDirectory, "packets")))
             .AddSingleton<ITrackerSource>(_ => new FileTrackerSource(environment("AW_SINDRI_TRACKER_DIR"))).AddSingleton<IChangeSource, GitChangeSource>();
 
+    /// <summary>The recipe store, approvals, claims and the worktree and script adapters the blocks use.</summary>
+    private static IServiceCollection AddRecipeAdapters(this IServiceCollection services, Func<string, string?> environment) => services
+            .AddSingleton<IRecipeReader, YamlRecipeReader>()
+            .AddSingleton<IRecipeFiles, FileRecipeFiles>()
+            .AddSingleton<IRecipeDirectories, FileRecipeDirectories>()
+            .AddSingleton(CreateSecretPointers(environment))
+            .AddSingleton<IRecipeWake, NoOpRecipeWake>()
+            .AddSingleton<IRecipeStore, SqliteRecipeStore>()
+            .AddSingleton<IRecipeApprovals, SqliteRecipeApprovals>()
+            .AddSingleton<IWorkflowClaims, SqliteWorkflowClaims>()   // engine P6 unit (d): workflow_claims in ledger.db
+            .AddSingleton<IClaimRefs, GitClaimRefs>()                // engine P6 unit (d): the claim's marker ref
+            .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
+            .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
+            .AddSingleton<IWorktrees, GitWorktrees>();              // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
+
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {
         return services
@@ -111,18 +126,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
             .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
-            .AddSingleton<IRecipeReader, YamlRecipeReader>()
-            .AddSingleton<IRecipeFiles, FileRecipeFiles>()
-            .AddSingleton<IRecipeDirectories, FileRecipeDirectories>()
-            .AddSingleton(CreateSecretPointers(environment))
-            .AddSingleton<IRecipeWake, NoOpRecipeWake>()
-            .AddSingleton<IRecipeStore, SqliteRecipeStore>()
-            .AddSingleton<IRecipeApprovals, SqliteRecipeApprovals>()
-            .AddSingleton<IWorkflowClaims, SqliteWorkflowClaims>()   // engine P6 unit (d): workflow_claims in ledger.db
-            .AddSingleton<IClaimRefs, GitClaimRefs>()                // engine P6 unit (d): the claim's marker ref
-            .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
-            .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
-            .AddSingleton<IWorktrees, GitWorktrees>()               // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
+            .AddRecipeAdapters(environment)
             .AddSingleton<IChallenges, ProcessChallenges>()
             .AddSingleton(sp => HeavyLockSettings.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<IHeavySlots, DirectoryHeavySlots>()
