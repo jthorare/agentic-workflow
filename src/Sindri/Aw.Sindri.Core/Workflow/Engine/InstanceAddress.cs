@@ -54,7 +54,7 @@ public readonly partial struct InstanceAddress : ITypedId<InstanceAddress, strin
     [GeneratedRegex("^[A-Z][A-Z0-9]*-[A-Za-z0-9]+/[a-z][a-z0-9]*(-[a-z0-9]+)*/[1-9][0-9]*(/[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z0-9][a-z0-9-]*)?\\.[1-9][0-9]*)*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 
-    [GeneratedRegex("^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z0-9][a-z0-9-]*\\.[1-9][0-9]*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z0-9][a-z0-9-]*\\.[1-9][0-9]*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex LinkedShape { get; }
 
     private static string NormalizeInput(string input) => input.Length > 256 ? string.Empty : input;

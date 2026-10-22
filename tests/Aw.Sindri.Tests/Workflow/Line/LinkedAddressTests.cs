@@ -29,16 +29,12 @@ public sealed class LinkedAddressTests
     [InlineData("T-3/line/1/scoping.2")]
     [InlineData("T-3/line/1/phase.p2.1/build.4")]
     public void A_root_or_a_child_is_linked_to_nothing(string address)
-    {
-        Assert.Null(InstanceAddress.From(address).LinkedParent());
-    }
+        => Assert.Null(InstanceAddress.From(address).LinkedParent());
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("T-3/line/1/phase.P2.1")]
     [InlineData("T-3/line/1/phase.p2.0")]
     [InlineData("T-3/line/1/phase..1")]
     public void An_address_with_a_bad_phase_id_or_attempt_is_refused(string address)
-    {
-        Assert.False(InstanceAddress.TryFrom(address, out _));
-    }
+        => Assert.False(InstanceAddress.TryFrom(address, out _));
 }
