@@ -209,7 +209,7 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(RecheckSteps.RerunScripts)
         .AddBlockDescriptor(RecheckSteps.Log)
         .AddBlockDescriptor(PrGates.RevisionBound)
-        .AddBlockDescriptor(PrGates.BaseIsDefault)
+        .AddGate<PrBaseIsDefaultGate>()
         .AddBlockDescriptor(PrGates.AutofixCap)
         .AddBlockDescriptor(PrGates.DiffScope)
         .AddBlockDescriptor(PrGates.SecretScan)
