@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -66,7 +67,18 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<RouterStubCursor>()                          // engine P7: the stub's cursor file
             .AddScoped<ItemRouter>()
             .AddScoped<IScheduledService, RouterStub>()                // engine P7 unit U3: the router stub (spec §12), 'item.routed' for each workflow.item that starts
-            .AddSingleton(RouterStub.BuiltIn);
+            .AddSingleton(RouterStub.BuiltIn)
+            .AddPrWatch();
+
+    /// <summary>The 'pr-watch' poller (PR babysitter spec §6.2): follows the pull requests live instances wait on and appends 'pr.changed'; runs every 60 s without a profile entry.</summary>
+    private static IServiceCollection AddPrWatch(this IServiceCollection services) => services
+            .AddSingleton<IWatchedPulls, InstanceWatchedPulls>()      // reads the open instances that wait on pr.changed and hold a fact:pr
+            .AddSingleton<IPullDigests, ForgePullDigests>()           // the one caller of the forge port's digest
+            .AddSingleton<IPrWatchState, HomePrWatchState>()          // <home>/workflow/pr-watch.json
+            .AddSingleton<IPrRemindAfter, ProfilePrRemindAfter>()     // workflow.pr.remindAfter
+            .AddScoped<PrEventWriter>()
+            .AddScoped<IScheduledService, PrWatchService>()
+            .AddSingleton(PrWatchService.BuiltIn);
 
     /// <summary>The activities the interpreter runs (RunStep, RecordEvent, ReadItemRepo, the effect activities, EvaluateGates) and the Step, effect and gate dispatchers they run blocks through.</summary>
     private static IServiceCollection AddInterpreterActivities(this IServiceCollection services) => services
