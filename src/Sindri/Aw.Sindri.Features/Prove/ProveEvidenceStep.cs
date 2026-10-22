@@ -62,10 +62,10 @@ internal sealed class ProveEvidenceStep(IBriefFiles files, IRunArea area, IPacke
         }
 
         var origin = new ProofPackOrigin(phase.Id + "-proof", phase.Repo, phase.BaseSha, inputs.PacketHash, ProofPack.Sha256(phase.AcceptanceText));
-        return await Freeze(inputs.Address, ProofPack.Files(facts, report, origin), checkout.Value, cancellationToken).ConfigureAwait(false);
+        return await Freeze(inputs.Address, ProofPack.Files(facts, report, origin), checkout.Value, inputs.Head, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<BlockStepResult> Freeze(string address, IReadOnlyDictionary<string, string> pack, string checkout, CancellationToken cancellationToken)
+    private async ValueTask<BlockStepResult> Freeze(string address, IReadOnlyDictionary<string, string> pack, string checkout, string head, CancellationToken cancellationToken)
     {
         foreach (var (name, text) in pack)
         {
@@ -89,7 +89,7 @@ internal sealed class ProveEvidenceStep(IBriefFiles files, IRunArea area, IPacke
         }
 
         return frozen.Value is { Frozen: true, Hash: { } hash }
-            ? StepFacts.Done("complete", ("fact:proofPack", new JsonObject { ["hash"] = hash, ["dir"] = dir.Value }))
+            ? StepFacts.Done("complete", ("fact:proofPack", new JsonObject { ["hash"] = hash, ["dir"] = dir.Value, ["head"] = head }))
             : BlockStepResult.Failed($"step.prove.evidence: aw-packets refused the proof pack Sindri assembled, which the builder can't fix: {string.Join("; ", frozen.Value.Failures.Select(static f => $"{f.Rule} {f.Subject}: {f.Message}"))}");
     }
 

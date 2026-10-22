@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.Review;
 
 /// <summary>
 /// 'step.review.record' on the block runtime (line spec §7.4, DTC4): writes the review result packet (<see cref="ReviewPack"/>) to the instance's run area ('review-pack/') and machine-freezes it through aw-packets
-/// (kind review): 'recorded' for a clean review, 'recordedWrong' for a behaviour-wrong one, each with <c language="text">review = {hash, dir}</c>. The Step fails (an unrouted failure parks the instance for the owner)
+/// (kind review): 'recorded' for a clean review, 'recordedWrong' for a behaviour-wrong one, each with <c language="text">review = {hash, dir, head}</c>. The Step fails (an unrouted failure parks the instance for the owner)
 /// when the review holds no verdict a result is recorded under or says clean with blocking or issue findings left, when aw-packets refuses the packet Sindri assembled (its failed checks, PKT codes included, are the message,
 /// and nothing is frozen), when a run area cannot be written or a tool cannot run, or when the address, repo, checkout or the phase packet is missing. A relative
 /// <c language="text">phasePacket.dir</c> is read under the repo's checkout.
@@ -56,10 +56,10 @@ internal sealed class ReviewRecordStep(IBriefFiles files, IRunArea area, IPacket
 
         var origin = new ReviewPackOrigin(phase.Id + "-review", phase.Repo, phase.BaseSha, inputs.PacketHash, ProofPack.Sha256(phase.AcceptanceText));
         var outcome = string.Equals(ReviewPack.Verdict(inputs.Facts.Review), "clean", StringComparison.Ordinal) ? "recorded" : "recordedWrong";
-        return await Freeze(inputs.Address, ReviewPack.Files(inputs.Facts, origin), checkout.Value, outcome, cancellationToken).ConfigureAwait(false);
+        return await Freeze(inputs.Address, ReviewPack.Files(inputs.Facts, origin), checkout.Value, outcome, inputs.Facts.Head, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<BlockStepResult> Freeze(string address, IReadOnlyDictionary<string, string> pack, string checkout, string outcome, CancellationToken cancellationToken)
+    private async ValueTask<BlockStepResult> Freeze(string address, IReadOnlyDictionary<string, string> pack, string checkout, string outcome, string head, CancellationToken cancellationToken)
     {
         foreach (var (name, text) in pack)
         {
@@ -83,7 +83,7 @@ internal sealed class ReviewRecordStep(IBriefFiles files, IRunArea area, IPacket
         }
 
         return frozen.Value is { Frozen: true, Hash: { } hash }
-            ? StepFacts.Done(outcome, ("fact:review", new JsonObject { ["hash"] = hash, ["dir"] = dir.Value }))
+            ? StepFacts.Done(outcome, ("fact:review", new JsonObject { ["hash"] = hash, ["dir"] = dir.Value, ["head"] = head }))
             : BlockStepResult.Failed($"step.review.record: aw-packets refused the review packet Sindri assembled, which nothing can fix by retrying: {string.Join("; ", frozen.Value.Failures.Select(static f => $"{f.Rule} {f.Subject}: {f.Message}"))}");
     }
 }
