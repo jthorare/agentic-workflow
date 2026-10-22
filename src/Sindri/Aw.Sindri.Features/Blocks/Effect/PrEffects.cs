@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Workflow.Ids;
 namespace Aw.Sindri.Features.Blocks.Effect;
 
 /// <summary>
-/// The PR babysitter's and docs sync's effects (PB spec §10.1): descriptors only until the forge port gives them a runtime; a served
+/// The PR babysitter's and docs sync's effects (PB spec §10.1): descriptors, of which merge and reply have a runtime (PrMergeEffect, PrReplyEffect) and the rest none yet; a served
 /// instance's dispatch of one is refused as an effect with no runtime. 'effect.pr.merge' and 'effect.pr.merge-docs' act with a
 /// human's authority (W23, RCP-HUMAN-001).
 /// </summary>

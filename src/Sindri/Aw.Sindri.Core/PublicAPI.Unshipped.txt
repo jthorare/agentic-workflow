@@ -15690,6 +15690,71 @@ static readonly Aw.Sindri.Core.SindriErrors.NoForge -> Aw.Kernel.ErrorDefinition
 static readonly Aw.Sindri.Core.SindriErrors.ForgeRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ForgeNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ForgeUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Effects.PrRef!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Forge.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Forge.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Repo.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Repo.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Number.get -> int
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Number.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Deconstruct(out string! Forge, out string! Repo, out int Number) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.PrRef(string! Forge, string! Repo, int Number) -> void
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef? left, Aw.Sindri.Core.Workflow.Engine.Effects.PrRef? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrRef.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef? left, Aw.Sindri.Core.Workflow.Engine.Effects.PrRef? right) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Pr.get -> Aw.Sindri.Core.Workflow.Engine.Effects.PrRef!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Pr.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.CommentId.get -> Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.CommentId.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.EditedAt.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.EditedAt.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Instance.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Outcome.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Outcome.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Reason.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Reason.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Commit.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Commit.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.At.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Effect.get -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Effect.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Effects.PrRef! Pr, out Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId CommentId, out string? EditedAt, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out string! Outcome, out string? Reason, out string? Commit, out System.DateTimeOffset At, out string! Effect) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.PrCommentMark(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef! Pr, Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId CommentId, string? EditedAt, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, string! Outcome, string? Reason, string? Commit, System.DateTimeOffset At, string! Effect) -> void
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark? left, Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark? left, Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark? right) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.IPrCommentMarks
+Aw.Sindri.Core.Workflow.Engine.Effects.IPrCommentMarks.Write(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark! mark, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.IPrCommentMarks.Latest(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef! pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentMark!>!>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.IPrCommentMarks.Purge(Aw.Sindri.Core.Workflow.Engine.Effects.PrRef! pr, bool anotherInstanceNamesPr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.PrCommentId() -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId>! comparer) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.IsInitialized() -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.Value.get -> string!
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.From(string! value) -> Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.TryFrom(string? value, out Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId vo) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId result) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId left, Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId left, Aw.Sindri.Core.Workflow.Engine.Effects.PrCommentId right) -> bool
 Aw.Sindri.Core.Forge.PullThread
 Aw.Sindri.Core.Forge.PullThread.<Clone>$() -> Aw.Sindri.Core.Forge.PullThread!
 Aw.Sindri.Core.Forge.PullThread.Key.get -> string!
