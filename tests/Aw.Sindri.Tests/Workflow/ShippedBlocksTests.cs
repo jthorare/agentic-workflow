@@ -29,7 +29,7 @@ public sealed class ShippedBlocksTests
         Assert.Equal(
             [
                 "effect.claim.ref", "effect.line.report", "effect.notify.desk", "effect.pr.create-stacked", "effect.pr.merge",
-                "effect.pr.merge-docs", "effect.pr.push", "effect.pr.record", "effect.pr.reply", "effect.pr.rerun-checks", "effect.pr.restack",
+                "effect.pr.merge-docs", "effect.pr.purge-marks", "effect.pr.push", "effect.pr.record", "effect.pr.reply", "effect.pr.rerun-checks", "effect.pr.restack",
                 "evidence.check", "gate.budget.available", "gate.pr.autofix-cap", "gate.pr.base-is-default", "gate.pr.diff-scope",
                 "gate.pr.secret-scan", "gate.revision-bound", "gate.route.startable", "input.context.code", "input.context.history",
                 "input.context.lenses", "input.handoff-note", "input.phase-packet", "input.pr.context", "step.babysit.watch",
@@ -103,7 +103,7 @@ public sealed class ShippedBlocksTests
 
         Assert.Equal([typeof(BudgetAvailableGate), typeof(RouteStartableGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
-        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrMergeEffect), typeof(PrReplyEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
+        Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect), typeof(PrMergeEffect), typeof(PrReplyEffect), typeof(PrPurgeMarksEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
 
     [Theory, Trait("Lane", "unit")]

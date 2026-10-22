@@ -216,8 +216,10 @@ transitions:
       when: { all: [ { outcome: mergedDocsOpen }, { fact: fact:merge, is: present } ] },
       effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:pr } } }] }
   - { from: snapshot, to: docs-merge-owner, on: step.completed, when: { outcome: mergedDocsOpen }, produces: [fact:prState, fact:mergedSha] }
-  - { from: snapshot, to: merged,     on: step.completed, when: { outcome: merged },   produces: [fact:prState, fact:mergedSha] }
-  - { from: snapshot, to: closed,     on: step.completed, when: { outcome: closed },   produces: [fact:prState] }
+  - { from: snapshot, to: merged,     on: step.completed, when: { outcome: merged },   produces: [fact:prState, fact:mergedSha],
+      effects: [{ use: effect.pr.purge-marks, with: { pr: { fact: fact:pr } } }] }
+  - { from: snapshot, to: closed,     on: step.completed, when: { outcome: closed },   produces: [fact:prState],
+      effects: [{ use: effect.pr.purge-marks, with: { pr: { fact: fact:pr } } }] }
   - { from: snapshot, to: restacking, on: step.completed, when: { outcome: restack },  produces: [fact:prState],
       effects: [{ use: effect.pr.restack, with: { pr: { fact: fact:pr } } }] }
   - { from: snapshot, to: owner,      on: step.completed, when: { outcome: conflict }, produces: [fact:prState] }
@@ -363,11 +365,13 @@ transitions:
   - { from: merging, to: snapshot, on: wait.satisfied, when: { outcome: merged }, produces: [fact:merge] }
   - { from: merging, to: snapshot, on: wait.satisfied, when: { outcome: headMoved } }
   - { from: merging, to: owner,    on: wait.satisfied, when: { outcome: blocked } }
-  - { from: docs-merging, to: merged,           on: wait.satisfied, when: { any: [ { outcome: merged }, { outcome: none } ] }, produces: [fact:docsMerge] }
+  - { from: docs-merging, to: merged,           on: wait.satisfied, when: { any: [ { outcome: merged }, { outcome: none } ] }, produces: [fact:docsMerge],
+      effects: [{ use: effect.pr.purge-marks, with: { pr: { fact: fact:pr } } }] }
   - { from: docs-merging, to: docs-merge-owner, on: wait.satisfied, when: { outcome: pending }, produces: [fact:docsMerge] }
   - { from: docs-merge-owner, to: docs-merging, on: step.completed, when: { outcome: merge },
       effects: [{ use: effect.pr.merge-docs, with: { pr: { fact: fact:pr } } }] }
-  - { from: docs-merge-owner, to: merged, on: step.completed, when: { any: [ { outcome: done }, { outcome: leave } ] } }
+  - { from: docs-merge-owner, to: merged, on: step.completed, when: { any: [ { outcome: done }, { outcome: leave } ] },
+      effects: [{ use: effect.pr.purge-marks, with: { pr: { fact: fact:pr } } }] }
 
   - { from: owner, to: intake,  on: step.completed, when: { outcome: retry } }
   - { from: owner, to: stopped, on: step.completed, when: { outcome: stop } }

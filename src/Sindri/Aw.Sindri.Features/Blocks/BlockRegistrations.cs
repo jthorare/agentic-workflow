@@ -56,6 +56,7 @@ internal static class BlockRegistrations
         .AddEffect<NotifyDeskEffect>()    // engine P6 unit (c)
         .AddEffect<PrMergeEffect>()       // PB-E: the merge, expected-head checked
         .AddEffect<PrReplyEffect>()       // PB-E: replies, reactions and marks
+        .AddEffect<PrPurgeMarksEffect>()  // PB-E: W26's terminal cleanup of a PR's marks
         .AddEvent(RecipeEvents.ItemRouted)
         .AddEvent(RecipeEvents.ClaimCreated)
         .AddEvent(RecipeEvents.NotifyDelivered)
