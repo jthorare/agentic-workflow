@@ -37,12 +37,16 @@ internal sealed class PrAutofixCapGate : IGate, IDescribedBlock
             return DefaultCap;
         }
 
-        var parsed = value.ValueKind switch
+        var parsed = DefaultCap;
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
         {
-            JsonValueKind.Number when value.TryGetInt32(out var number) => number,
-            JsonValueKind.String when int.TryParse(value.GetString(), NumberStyles.None, CultureInfo.InvariantCulture, out var number) => number,
-            _ => DefaultCap,
-        };
+            parsed = number;
+        }
+        else if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), NumberStyles.None, CultureInfo.InvariantCulture, out var text))
+        {
+            parsed = text;
+        }
+
         return parsed < 1 ? DefaultCap : parsed;
     }
 

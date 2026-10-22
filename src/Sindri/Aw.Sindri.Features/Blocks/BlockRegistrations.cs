@@ -50,16 +50,22 @@ internal static class BlockRegistrations
         .AddScopingBlocks()
         .AddLineBlocks().AddLineDesignBlocks()
         .AddBlockDescriptor(EvidenceProviders.Check)
-        .AddGate<BudgetAvailableGate>()
-        .AddGate<RouteStartableGate>()     // engine P7 unit U1: a stub over the profile's workflow.route
-        .AddGate<RevisionBoundGate>()
-        .AddGate<PrAutofixCapGate>()
+        .AddRecipeGates()
         .AddEffect<ClaimRefEffect>()      // engine P6 unit (d)
         .AddEffect<NotifyDeskEffect>()    // engine P6 unit (c)
         .AddEvent(RecipeEvents.ItemRouted)
         .AddEvent(RecipeEvents.ClaimCreated)
         .AddEvent(RecipeEvents.NotifyDelivered)
         .AddPrEvents();
+
+    /// <summary>Registers the gates that have runtimes in this build.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same collection.</returns>
+    private static IServiceCollection AddRecipeGates(this IServiceCollection services) => services
+        .AddGate<BudgetAvailableGate>()
+        .AddGate<RouteStartableGate>()     // engine P7 unit U1: a stub over the profile's workflow.route
+        .AddGate<RevisionBoundGate>()
+        .AddGate<PrAutofixCapGate>();
 
     /// <summary>Registers the PR babysitter's and docs sync's events (PB spec §6.1, W25).</summary>
     /// <param name="services">The service collection.</param>

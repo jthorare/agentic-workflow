@@ -54,8 +54,8 @@ internal sealed class RevisionBoundGate : IGate, IDescribedBlock
         if (at.TryGetProperty("mergeBlockedBy", out var blockers) && blockers.ValueKind == JsonValueKind.Array)
         {
             reasons.AddRange(blockers.EnumerateArray()
-                .Where(static b => b.ValueKind == JsonValueKind.String)
-                .Select(static b => b.GetString()!)
+                .Select(static b => b.ValueKind == JsonValueKind.String ? b.GetString() : null)
+                .OfType<string>()
                 .Where(b => heldBlocks || !string.Equals(b, Held, StringComparison.Ordinal))
                 .Select(static b => $"the merge is blocked by {b}"));
         }
