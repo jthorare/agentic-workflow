@@ -16,9 +16,11 @@ internal interface IPullDigests
     public ValueTask<Result<IReadOnlyList<PullDigestRow>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken);
 }
 
-/// <summary>One pull request's digest: equal digests mean nothing the poller watches has changed.</summary>
+/// <summary>One pull request's digest: the typed fields the poller classifies a change by, and an opaque version token.</summary>
 /// <param name="Link">The pull request's link.</param>
-/// <param name="Digest">The forge's version text for the pull request.</param>
 /// <param name="State">Open, closed or merged.</param>
 /// <param name="HeadSha">The head's tip.</param>
-internal sealed record PullDigestRow(string Link, string Digest, PullState State, string HeadSha);
+/// <param name="Checks">The required checks as one word.</param>
+/// <param name="CommentCount">How many comments the pull request has.</param>
+/// <param name="Version">The forge's change token: compared for equality only, never parsed.</param>
+internal sealed record PullDigestRow(string Link, PullState State, string HeadSha, PullChecksState Checks, int CommentCount, string Version);

@@ -4,8 +4,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// What changed on a pull request between two polls (PR babysitter spec §6.1): the outcome is the first change in the table's order, and every change is listed.
-/// The forge's digest text is 'updated|head|checks|comments' ('|'-separated); a digest in another shape that moved is read as a 'review' change, since nothing
-/// more is known.
+/// Changes are read from the digest's typed fields (state, head, checks, comment count); the version token is compared for equality only, so a move
+/// of it that none of those explain is a 'review' change, since nothing more is known.
 /// </summary>
 internal static class PrChanges
 {
@@ -31,8 +31,20 @@ internal static class PrChanges
         return [.. _order.Where(found.Contains)];
     }
 
+    /// <summary>What the poller keeps of a digest.</summary>
+    /// <param name="now">The digest.</param>
+    /// <param name="at">When the pull request last changed.</param>
+    /// <returns>The entry.</returns>
+    public static PrWatchEntry Entry(PullDigestRow now, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(now);
+        return new PrWatchEntry(now.Version, now.HeadSha, now.State.ToString(), now.Checks.ToString(), now.CommentCount, at);
+    }
+
     private static bool Moved(PrWatchEntry before, PullDigestRow now) =>
-        !string.Equals(before.Digest, now.Digest, StringComparison.Ordinal)
+        !string.Equals(before.Version, now.Version, StringComparison.Ordinal)
+        || !string.Equals(before.Checks, now.Checks.ToString(), StringComparison.Ordinal)
+        || before.CommentCount != now.CommentCount
         || !string.Equals(before.HeadSha, now.HeadSha, StringComparison.Ordinal)
         || !string.Equals(before.State, now.State.ToString(), StringComparison.Ordinal);
 
@@ -52,7 +64,16 @@ internal static class PrChanges
             _ = found.Add("updated");
         }
 
-        Digest(before.Digest, now.Digest, found);
+        if (!string.Equals(before.Checks, now.Checks.ToString(), StringComparison.Ordinal))
+        {
+            _ = found.Add("ci");
+        }
+
+        if (before.CommentCount != now.CommentCount)
+        {
+            _ = found.Add("review");
+        }
+
         if (found.Count == 0)
         {
             _ = found.Add("review");
@@ -68,26 +89,6 @@ internal static class PrChanges
         else if (state == PullState.Closed)
         {
             _ = found.Add("closed");
-        }
-    }
-
-    private static void Digest(string before, string now, HashSet<string> found)
-    {
-        var was = before.Split('|');
-        var current = now.Split('|');
-        if (was.Length != 4 || current.Length != 4)
-        {
-            return;
-        }
-
-        if (!string.Equals(was[2], current[2], StringComparison.Ordinal))
-        {
-            _ = found.Add("ci");
-        }
-
-        if (!string.Equals(was[3], current[3], StringComparison.Ordinal))
-        {
-            _ = found.Add("review");
         }
     }
 }

@@ -15,6 +15,6 @@ internal sealed class ForgePullDigests(IPullRequests pulls) : IPullDigests
         var read = await pulls.Digest(links, cancellationToken).ConfigureAwait(false);
         return read.IsError
             ? read.Error
-            : Results.Success<IReadOnlyList<PullDigestRow>>([.. read.Value.Select(static v => new PullDigestRow(v.Link, v.Digest, v.State, v.HeadSha))]);
+            : Results.Success<IReadOnlyList<PullDigestRow>>([.. read.Value.Select(static v => new PullDigestRow(v.Link, v.State, v.HeadSha, v.Checks, v.CommentCount, v.Version))]);
     }
 }

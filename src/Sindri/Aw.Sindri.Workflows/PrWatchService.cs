@@ -145,13 +145,13 @@ internal sealed class PrWatchService(IWatchedPulls watched, IPullDigests digests
         var changes = PrChanges.Between(before, row);
         if (changes.Count > 0)
         {
-            var key = string.Create(CultureInfo.InvariantCulture, $"pr-watch:{pull.Item}:{pull.Link}:{row.State}:{row.HeadSha}:{row.Digest}");
-            return await Emit(pass, new PrChange(pull, changes[0], changes, row.HeadSha, key), new PrWatchEntry(row.Digest, row.HeadSha, row.State.ToString(), pass.Now), cancellationToken).ConfigureAwait(false);
+            var key = string.Create(CultureInfo.InvariantCulture, $"pr-watch:{pull.Item}:{pull.Link}:{row.State}:{row.HeadSha}:{row.Version}");
+            return await Emit(pass, new PrChange(pull, changes[0], changes, row.HeadSha, key), PrChanges.Entry(row, pass.Now), cancellationToken).ConfigureAwait(false);
         }
 
         if (before is null)
         {
-            pass.Pulls[pull.Link] = new PrWatchEntry(row.Digest, row.HeadSha, row.State.ToString(), pass.Now);
+            pass.Pulls[pull.Link] = PrChanges.Entry(row, pass.Now);
             return null;
         }
 

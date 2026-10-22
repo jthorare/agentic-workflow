@@ -27,11 +27,13 @@ internal sealed record PrWatchFile(IReadOnlyDictionary<string, PrWatchEntry> Pul
 }
 
 /// <summary>What the poller saw of one pull request the last time it changed (or first appeared).</summary>
-/// <param name="Digest">The forge's version text.</param>
+/// <param name="Version">The forge's opaque change token.</param>
 /// <param name="HeadSha">The head's tip.</param>
 /// <param name="State">The pull request's state, by name ('Open', 'Closed', 'Merged').</param>
+/// <param name="Checks">The required checks, by name ('None', 'Pending', 'Passing', 'Failing').</param>
+/// <param name="CommentCount">How many comments it had.</param>
 /// <param name="QuietSince">When the pull request last changed, or last reminded; the 'idle' period counts from here.</param>
-internal sealed record PrWatchEntry(string Digest, string HeadSha, string State, DateTimeOffset QuietSince);
+internal sealed record PrWatchEntry(string Version, string HeadSha, string State, string Checks, int CommentCount, DateTimeOffset QuietSince);
 
 /// <summary>A failing host: how many polls in a row failed and when it is tried again.</summary>
 /// <param name="Failures">Consecutive failed polls.</param>
