@@ -85,6 +85,7 @@ public sealed class ProveEvidenceStepTests
         Assert.Equal((PacketKind.Proof, PacketFreezer.Machine, "/checkouts/name"), (packet.Kind, by, packet.Repo));
         Assert.Equal(packet.Directory, (string?)pack["dir"]);
         Assert.Equal(InMemoryPackets.HashOf(packet), (string?)pack["hash"]);
+        Assert.Equal(Head, (string?)pack["head"]);   // step.ship.freeze compares it (SHIP-SHA-001)
     }
 
     [Fact]
