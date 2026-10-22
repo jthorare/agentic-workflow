@@ -96,12 +96,12 @@ public sealed class ShippedBlocksTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_two_gates_and_the_two_effects_have_runtimes_and_the_desk_steps_run_on_the_desk()
+    public async Task The_gates_and_the_two_effects_have_runtimes_and_the_desk_steps_run_on_the_desk()
     {
         await using var provider = Composed();
         await using var scope = provider.CreateAsyncScope();
 
-        Assert.Equal([typeof(BudgetAvailableGate), typeof(RouteStartableGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
+        Assert.Equal([typeof(BudgetAvailableGate), typeof(RouteStartableGate), typeof(RevisionBoundGate), typeof(PrAutofixCapGate)], scope.ServiceProvider.GetServices<IGate>().Select(static g => g.GetType()));   // engine P7 adds the route stub
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());
         Assert.Equal([typeof(ClaimRefEffect), typeof(NotifyDeskEffect)], scope.ServiceProvider.GetServices<IEffectKind>().Select(static e => e.GetType()));   // engine P6
     }
