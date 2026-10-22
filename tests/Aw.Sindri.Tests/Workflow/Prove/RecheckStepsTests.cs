@@ -68,7 +68,7 @@ public sealed class RecheckStepsTests
         var plan = Out(result, "recheckPlan");
         Assert.Equal("h2", (string?)plan["headSha"]);
         Assert.Equal("/work/p1", (string?)plan["workspace"]);
-        Assert.Equal(["proof/ac1.sh", "proof/ac2.sh"], plan["scripts"]!.AsArray().Select(static s => (string?)s));
+        Assert.Equal(["proof/ac1.sh", "proof/ac2.sh"], plan["scripts"]!.AsArray().Select(static s => (string?)s), StringComparer.Ordinal);
     }
 
     [Fact]
