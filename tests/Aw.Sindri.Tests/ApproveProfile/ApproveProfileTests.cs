@@ -61,6 +61,21 @@ public sealed class ApproveProfileTests
         Assert.Equal(recorded.Sequence, approved.Sequence);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Approving_the_profile_also_records_the_consent_to_the_automatic_setup_steps_for_that_hash()
+    {
+        var live = SliceHarness.Profile("5s");
+        _h.Profiles.Live = live;
+        _ = await _h.HoldLease();
+        using var caller = _h.Callers.EnterService("test");
+
+        _ = await Service().Handle(new ApproveProfileRequest(live.Hash, _h.Confirm(live.Hash)), Token);
+
+        var consent = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.SetupConsentGiven);
+        Assert.Equal($"setup.consent.given:{live.Hash.Value}", consent.IdempotencyKey);
+        Assert.Contains("\"mcp\"", consent.Envelope.Payload, StringComparison.Ordinal);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("wrong-hash", true, "SND-PROFILE-003")]
     [InlineData("live", false, "SND-PROFILE-004")]

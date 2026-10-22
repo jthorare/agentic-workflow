@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 
 /// <summary>The human's rows that are read at request time and not folded from events: the managed Onyx's notice and the setup rows (the repo step's failure, and the approve-all plan's rows). All are the human's to act on, so a session gets none.</summary>
 /// <param name="onyx">The managed Onyx's notice (not set up, or serve could not start it); it is a repo-less row, shown to a human caller only.</param>
-/// <param name="setup">The setup rows that are computed (the repo step's failure, and the approve-all plan's 'setup:recipes' and 'recipe:' rows).</param>
+/// <param name="setup">The setup rows that are computed (the repo step's failure, the 'setup:mcp' need, and the approve-all plan's 'setup:recipes' and 'recipe:' rows).</param>
 /// <param name="scrubber">Scrubs the rows' text.</param>
 /// <param name="clock">Stamps the rows.</param>
 internal sealed class NeedsYouLiveRows(IOnyxNotices onyx, SetupNotices setup, ITextScrubber scrubber, TimeProvider clock)
@@ -28,8 +28,9 @@ internal sealed class NeedsYouLiveRows(IOnyxNotices onyx, SetupNotices setup, IT
         }
 
         var repo = await setup.Repo(cancellationToken).ConfigureAwait(false);
+        var mcp = await setup.Mcp(cancellationToken).ConfigureAwait(false);
         var recipes = await setup.Recipes(cancellationToken).ConfigureAwait(false);
-        return repo is { } row ? [row, .. recipes] : recipes;
+        return [.. new[] { repo, mcp }.OfType<NeedsYouRow>(), .. recipes];
     }
 
     // The managed Onyx's row: it is the human's to act on, so a session doesn't see it.

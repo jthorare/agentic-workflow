@@ -21,6 +21,18 @@ internal sealed class SetupJobQueue(Func<int> running) : IDisposable
     /// <inheritdoc/>
     public void Dispose() => _turn.Dispose();
 
+    /// <summary>The job holding the slot, or null.</summary>
+    internal (JobKind Kind, JobKey Key)? Slot
+    {
+        get
+        {
+            lock (_state)
+            {
+                return _slot;
+            }
+        }
+    }
+
     /// <summary>The jobs waiting, in the order they will start.</summary>
     internal IReadOnlyList<(JobKind Kind, JobKey Key)> Waiting
     {

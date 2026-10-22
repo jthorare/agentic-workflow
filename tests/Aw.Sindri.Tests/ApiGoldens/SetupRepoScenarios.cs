@@ -18,6 +18,7 @@ internal static class SetupRepoScenarios
     [
         ("setup-repos", "started"), ("setup-repos", "refused-session"), ("setup-repos", "not-a-checkout"), ("setup-repos", "not-absolute"),
         ("setup-repos", "already-added"), ("setup-repos", "name-taken"), ("setup-repos", "bad-name"),
+        ("setup-mcp", "not-in-profile"), ("setup-mcp", "refused-session"),   // POST /setup/mcp (§5.4): a repo the approved profile does not name is 409, a session is refused
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -32,10 +33,15 @@ internal static class SetupRepoScenarios
     public static FakeRepoInspector Inspector() => new FakeRepoInspector().Has("/work/demo").Has("/work/other");
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
-    public static async Task<string> Body(GoldenHost host, string scenario)
+    public static async Task<string> Body(GoldenHost host, string slug, string scenario)
     {
         var human = Human(host.Token.Value);
         const string route = "/sindri/setup/repos";
+        if (string.Equals(slug, "setup-mcp", StringComparison.Ordinal))
+        {
+            return await Mcp(host, scenario);
+        }
+
         return (await host.Http.Ask(scenario switch
         {
             "started" => Post(route, "{\"path\":\"/work/demo\"}", human),
@@ -46,6 +52,17 @@ internal static class SetupRepoScenarios
             "name-taken" => Post(route, "{\"path\":\"/work/other\",\"name\":\"Demo\"}", human),
             "bad-name" => Post(route, "{\"path\":\"/work/demo\",\"name\":\"my repo\"}", human),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such add-repo scenario"),
+        })).Body;
+    }
+
+    private static async Task<string> Mcp(GoldenHost host, string scenario)
+    {
+        const string route = "/sindri/setup/mcp";
+        return (await host.Http.Ask(scenario switch
+        {
+            "not-in-profile" => Post(route, "{\"repo\":\"demo\"}", Human(host.Token.Value)),
+            "refused-session" => Post(route, "{\"repo\":\"demo\"}", [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli")]),
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such setup-mcp scenario"),
         })).Body;
     }
 }

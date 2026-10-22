@@ -4,11 +4,10 @@ using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Catalog;
 
-/// <summary>The setup-once catalog rows (spec §7.4): listed with their class, route and CLI form while the units that serve them are pending (AddRepo is ready); ApproveAllRecipes and the profile rows are already there.</summary>
+/// <summary>The setup-once catalog rows (spec §7.4): listed with their class, route and CLI form while the units that serve them are pending (AddRepo and RegisterMcp are ready); ApproveAllRecipes and the profile rows are already there.</summary>
 public sealed class SetupRowTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData("RegisterMcp", "POST", "/setup/mcp", "sindri mcp register --apply", "pending:SO-A4")]
     [InlineData("SetupOnyx", "POST", "/onyx/setup", "sindri onyx up", "pending:SO-A5")]
     [InlineData("ConnectOnyx", "POST", "/onyx/account", "sindri onyx connect", "pending:SO-A5")]
     [InlineData("DeferOnyx", "POST", "/onyx/defer", "sindri onyx defer", "pending:SO-A5")]
@@ -27,6 +26,16 @@ public sealed class SetupRowTests
         Assert.Equal((ActionClass.Job, "POST", "/sindri/setup/repos", "sindri repo add <path>", "ready", false, false), (row.Class, row.Method, row.Route, row.Cli.Text, row.Ui, row.NeedsTerminal, row.Destructive));
         Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Session().Build(), row).Refusal);
         Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().AtTerminal().Build(), row).Refusal);
+        Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().Build(), row).Refusal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void RegisterMcp_is_a_ready_job_row_the_app_starts_and_a_session_is_refused()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "RegisterMcp");
+
+        Assert.Equal((ActionClass.Job, "POST", "/sindri/setup/mcp", "sindri mcp register --apply", "ready"), (row.Class, row.Method, row.Route, row.Cli.Text, row.Ui));
+        Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Session().Build(), row).Refusal);
         Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().Build(), row).Refusal);
     }
 

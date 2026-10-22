@@ -28,7 +28,12 @@ public sealed class GetNeedsYouTests
     private readonly InMemoryJobViews _jobs = new();
     private IShippedRecipes _shipped = new FakeShippedRecipes([]);
 
-    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(_onyx, new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System), new PassThroughScrubber(), TimeProvider.System), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(_onyx, new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs)), new PassThroughScrubber(), TimeProvider.System), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+
+    private sealed class NoSwitch : Core.Setup.IMcpAutoSwitch
+    {
+        public bool Off => false;
+    }
 
     private async Task<GetNeedsYouResponse> Get() => (await Service().Handle(A.GetNeedsYouRequest().Build(), RequestQueryHarness.Token)).Value;
 
@@ -50,8 +55,8 @@ public sealed class GetNeedsYouTests
         }
     }
 
-    private void AddRepoJob(JobState state, string? summary = null, int n = 1) =>
-        _jobs.Put(new JobRow(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), JobKind.From("AddRepo"), JobKey.From("a" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)), Item: null, Repo: null, Service: null, state, "human:app",
+    private void AddRepoJob(JobState state, string? summary = null, int n = 1, string kind = "AddRepo") =>
+        _jobs.Put(new JobRow(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), JobKind.From(kind), JobKey.From("a" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)), Item: null, Repo: null, Service: null, state, "human:app",
             KnownInstants.Epoch.AddMinutes(n), state == JobState.Running ? null : KnownInstants.Epoch.AddMinutes(n + 1), [], 0, summary, state == JobState.Failed ? "SND-SETUP-001" : null, Result: null, CancelledBy: null, Sequence: n));
 
     [Fact]
@@ -66,6 +71,35 @@ public sealed class GetNeedsYouTests
         Expect.Equal("sindri repo add <path>", row.Cli);
         Expect.True(row.Reason.Contains("pick the repo's top folder", StringComparison.Ordinal));
         Expect.Equal(KnownInstants.Epoch.AddMinutes(2), row.Since);
+    }
+
+    [Fact]
+    public async Task A_failed_RegisterMcp_job_is_the_setup_mcp_row_with_its_own_sentence_and_RegisterMcp_to_try_again()
+    {
+        AddRepoJob(JobState.Failed, "Couldn't register with Claude: claude exited 1 (fix: run it by hand)", kind: "RegisterMcp");
+        using var entered = _q.Human();
+
+        var row = Assert.Single((await Get()).Rows);
+
+        Expect.Equal(("setup:mcp", NeedsYouKind.Setup, Urgency.Colour, "RegisterMcp"), (row.Id.Value, row.Kind, row.Urgency, row.PrimaryAction!.Value.Value));
+        Expect.Equal("sindri mcp register --apply", row.Cli);
+        Expect.True(row.Reason.Contains("run it by hand", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_RegisterMcp_job_that_is_running_or_that_a_session_asks_about_has_no_setup_mcp_row()
+    {
+        AddRepoJob(JobState.Running, kind: "RegisterMcp");
+        using (_q.Human())
+        {
+            Assert.Empty((await Get()).Rows);
+        }
+
+        AddRepoJob(JobState.Failed, "no", n: 2, kind: "RegisterMcp");
+        using (_q.Session(repo: null))
+        {
+            Assert.Empty((await Get()).Rows);
+        }
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Setup;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.SetupWatch;
@@ -12,6 +13,7 @@ internal static class SetupWatchServiceCollectionExtensions
     internal static IServiceCollection AddSetupWatch(this IServiceCollection services, Func<IServiceProvider, int> running) =>
         services
             .AddScoped<IScheduledService, SetupService>()
+            .AddScoped<McpAutoGate>().AddScoped<McpAutoRegister>()
             .AddSingleton(SetupService.BuiltIn)   // runs without a profile entry, so PauseService refuses it
             .AddSingleton(sp => new SetupJobQueue(() => running(sp)));
 }

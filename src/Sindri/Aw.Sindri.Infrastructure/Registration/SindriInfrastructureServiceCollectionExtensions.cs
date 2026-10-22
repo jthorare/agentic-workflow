@@ -141,6 +141,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
         => services
             .AddSingleton(McpSettings.Read(environment))
             .AddSingleton<IClaudeCli, ProcessClaudeCli>()
+            .AddSingleton<IMcpAutoSwitch>(new EnvironmentMcpSwitch(environment))
             .AddSingleton<IProviderHost, ProviderHost>()
             .AddSingleton<IProviderFiles, ProviderConfigFiles>();
 

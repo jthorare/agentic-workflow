@@ -74,6 +74,12 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
         var entry = events.Entry(EventTypes.ProfileApproved, new ProfileApproved(asked, changes),
             string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ProfileApproved}:{asked.Value}:after:{recorded?.Sequence ?? 0}"));
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+        if (appended.IsSuccess && events.CurrentCommandId() is { } command)
+        {
+            // setup-once spec §5.4: approving the profile is the consent to the automatic steps; a lost append only means the owner is asked once, by the "Turn on for your repos" row
+            _ = await ledger.Append(events.Entry(EventTypes.SetupConsentGiven, new SetupConsentGiven(command, ["mcp", "map"], asked), "setup.consent.given:" + asked.Value), grant, cancellationToken).ConfigureAwait(false);
+        }
+
         return appended.IsError ? appended.Error : appended.Value.Sequence;
     }
 

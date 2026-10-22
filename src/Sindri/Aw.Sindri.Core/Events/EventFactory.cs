@@ -5,6 +5,7 @@ using Aw.Kernel.Events;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 
 namespace Aw.Sindri.Core.Events;
@@ -40,6 +41,10 @@ public sealed class EventFactory(EventScope scope, TimeProvider clock, IIdGenera
 
     /// <summary>The scope the process acts in when no caller is set: what the other overloads record.</summary>
     public EventScope Scope { get; } = scope;
+
+    /// <summary>The id of the command in force.</summary>
+    /// <returns>The id, or null outside a command.</returns>
+    public CommandId? CurrentCommandId() => callers.Current?.CommandId;
 
     /// <summary>
     /// An entry of <paramref name="type"/> about <paramref name="item"/> as <paramref name="on"/> says (its actor, tenant and ring), for an event

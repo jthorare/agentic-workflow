@@ -697,17 +697,17 @@
     },
     {
       "action": "RegisterMcp",
-      "class": "desk",
+      "class": "job",
       "allowedCallers": [
         "human+terminal",
         "human",
-        "service:setup"
+        "service"
       ],
       "terminal": false,
       "method": "POST",
       "route": "/sindri/setup/mcp",
       "cli": "sindri mcp register --apply",
-      "ui": "pending:SO-A4",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

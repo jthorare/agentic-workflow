@@ -4213,3 +4213,15 @@ Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.<Clone>$() -> Aw.Sindri.Fe
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.Deconstruct(out string! Directory) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusResponse.GetRepoStatusResponse(Aw.Sindri.Core.Profile.RepoStatus! Status) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.GetRepoStatusRequest(string! Directory) -> void
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.<Clone>$() -> Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest!
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Deconstruct(out string? Repo) -> void
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Equals(Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest? other) -> bool
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.RegisterMcpJobRequest(string? Repo) -> void
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Repo.get -> string?
+Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Repo.init -> void
+override Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.GetHashCode() -> int
+override Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.ToString() -> string!
+static Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.operator !=(Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest? left, Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest? right) -> bool
+static Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest.operator ==(Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest? left, Aw.Sindri.Features.RegisterMcp.RegisterMcpJobRequest? right) -> bool

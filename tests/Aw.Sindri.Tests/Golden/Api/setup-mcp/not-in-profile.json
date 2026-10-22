@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-SETUP-004",
+  "status": 409,
+  "detail": "'demo' is not a repo the approved profile names (fix: add the repo, approve the profile, then try again)",
+  "traceId": "<trace>"
+}

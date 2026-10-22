@@ -86,6 +86,37 @@ public sealed class RegisterMcpTests
         Assert.Equal("/work/demo", run.Directory);
     }
 
+    [Theory]
+    [InlineData("/work/my demo")]
+    [InlineData("/work/-rf")]
+    [InlineData("/work/a;b$(touch x)`id`&|\"'")]
+    public async Task A_checkout_path_with_spaces_dashes_or_shell_characters_is_only_the_working_directory_never_an_argument(string checkout)
+    {
+        await Approve(apiPort: 7444, checkout);
+
+        var applied = (await Service().Handle(new RegisterMcpRequest(Directory: string.Empty, "demo", Apply: true), Token)).Value;
+
+        var run = Assert.Single(_claude.Runs);
+        Assert.Equal(checkout, run.Directory);
+        Assert.Equal(["mcp", "add", "--transport", "http", "--scope", "local", "sindri", "http://127.0.0.1:7444/sindri/mcp", "--header", "X-Sindri-Repo: demo"], run.Arguments);   // why: the argv is fixed; only the validated repo name varies
+        Assert.DoesNotContain(run.Arguments, a => a.Contains(checkout, StringComparison.Ordinal));
+        Assert.Equal(run.Arguments, applied.Arguments);
+    }
+
+    [Theory]
+    [InlineData("a-b")]
+    [InlineData("a.b_c-9")]
+    public void The_repo_name_is_the_only_variable_argument_and_cannot_lead_with_a_dash_or_hold_a_space(string name)
+    {
+        var arguments = McpRegistration.Arguments(RepoName.From(name), 7495);
+
+        Assert.Equal("X-Sindri-Repo: " + name, arguments[^1]);
+        Assert.Equal(10, arguments.Count);
+        Assert.False(RepoName.TryFrom("-rf", out _));
+        Assert.False(RepoName.TryFrom("a b", out _));
+        Assert.False(RepoName.TryFrom("a;b", out _));
+    }
+
     [Fact]
     public async Task A_failing_or_missing_claude_is_a_failed_result_with_a_fix()
     {

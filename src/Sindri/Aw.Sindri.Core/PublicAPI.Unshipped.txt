@@ -15142,6 +15142,27 @@ Aw.Sindri.Core.Workflow.Engine.Heavy.HeavyMove.Release = 3 -> Aw.Sindri.Core.Wor
 Aw.Sindri.Core.Workflow.Engine.Events.WorkflowEventType.Heavy = 8 -> Aw.Sindri.Core.Workflow.Engine.Events.WorkflowEventType
 static Aw.Sindri.Core.Workflow.Engine.Heavy.HeavyHold.Of(Aw.Sindri.Core.Workflow.Engine.Instances.WorkflowInstance! instance, Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, bool inPhase, bool leased) -> Aw.Sindri.Core.Workflow.Engine.Heavy.HeavyMove
 const Aw.Sindri.Core.Events.EventTypes.WorkflowHeavy = "workflow.heavy" -> string!
+Aw.Sindri.Core.Setup.McpEvents
+Aw.Sindri.Core.Setup.McpEvents.McpEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Setup.McpEvents.Registered(Aw.Sindri.Core.Ids.RepoName repo, int port, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.McpProviderOutcome!>! providers, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Events.EventFactory.CurrentCommandId() -> Aw.Sindri.Core.Ids.CommandId?
+Aw.Sindri.Core.Setup.IMcpAutoSwitch
+Aw.Sindri.Core.Setup.IMcpAutoSwitch.Off.get -> bool
+Aw.Sindri.Core.Setup.McpEvents.ConsentGiven(Aw.Sindri.Core.Ids.ProfileHash profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Setup.McpEvents.ConsentOnHumanPress(Aw.Sindri.Core.Ids.ProfileHash profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForSetupMcp(string! sentence, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber, string! headline = "Connect your agents") -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForTurnOnMcp(System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
+Aw.Sindri.Core.Setup.IMcpJobStarter
+Aw.Sindri.Core.Setup.IMcpJobStarter.Start(Aw.Sindri.Core.Ids.RepoName repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Setup.IMcpNeed
+Aw.Sindri.Core.Setup.IMcpNeed.Needed(Aw.Sindri.Core.Ids.RepoName repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Setup.McpAutoGate
+Aw.Sindri.Core.Setup.McpAutoGate.McpAutoGate(Aw.Sindri.Core.Profile.IApprovedProfile! approvals, Aw.Sindri.Core.Setup.McpEvents! facts, Aw.Sindri.Core.Setup.IMcpAutoSwitch! environment, Aw.Sindri.Core.Views.IJobViews! jobs) -> void
+Aw.Sindri.Core.Setup.McpAutoGate.Ready(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Profile.LoadedProfile?>
+Aw.Sindri.Core.Setup.McpAutoGate.RecentlyFailed(Aw.Sindri.Core.Ids.RepoName repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Setup.McpAutoGate.TurnOnNeeded(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Setup.McpJobKeys
+static Aw.Sindri.Core.Setup.McpJobKeys.For(Aw.Sindri.Core.Ids.RepoName repo) -> Aw.Sindri.Core.Ids.JobKey
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateStep!>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.Steps.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ItemTitles.ItemTitles(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! titles) -> void

@@ -21,7 +21,7 @@
   "apiVersion": 1,
   "views": {
     "cursor": 0,
-    "ledgerHead": 4,
+    "ledgerHead": 5,
     "projectedAt": null,
     "rebuilding": false,
     "stalled": false,

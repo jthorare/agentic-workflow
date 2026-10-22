@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.ApproveAll;
@@ -17,18 +18,33 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="plans">The approve-all plan, which the 'setup:recipes' and 'recipe:' rows are read from; a plan that can't be read drops those rows only.</param>
 /// <param name="scrubber">Scrubs the text.</param>
 /// <param name="clock">Stamps the recipe rows.</param>
-internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock)
+/// <param name="mcp">Says whether the owner is to be asked once to turn the automatic registration on.</param>
+internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
 {
     private static readonly JobKind _addRepo = JobKind.From("AddRepo");
+    private static readonly JobKind _registerMcp = JobKind.From("RegisterMcp");
 
     internal async ValueTask<NeedsYouRow?> Repo(CancellationToken cancellationToken)
     {
-        if (await LastFailed(cancellationToken).ConfigureAwait(false) is not { } failed || await HasRepo(cancellationToken).ConfigureAwait(false))
+        if (await LastFailed(_addRepo, cancellationToken).ConfigureAwait(false) is not { } failed || await HasRepo(cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
 
         var row = NeedsYouRows.ForSetupRepo(failed.Summary ?? "The last folder you picked could not be added. Pick the repo's top folder.", failed.EndedAt ?? failed.StartedAt, scrubber);
+        return row.IsSuccess ? row.Value : null;
+    }
+
+    // 'setup:mcp' stands while the newest RegisterMcp job failed and none is running: the job's own sentence, the provider's fix in it. A new run clears it; a success replaces the failed job as the newest.
+    internal async ValueTask<NeedsYouRow?> Mcp(CancellationToken cancellationToken)
+    {
+        if (await LastFailed(_registerMcp, cancellationToken).ConfigureAwait(false) is not { } failed)
+        {
+            var turnOn = await mcp.TurnOnNeeded(cancellationToken).ConfigureAwait(false) ? NeedsYouRows.ForTurnOnMcp(clock.GetUtcNow(), scrubber) : null;
+            return turnOn is { IsSuccess: true } ? turnOn.Value : null;
+        }
+
+        var row = NeedsYouRows.ForSetupMcp(failed.Summary ?? "Sindri could not register itself with your agents. Press Connect again.", failed.EndedAt ?? failed.StartedAt, scrubber);
         return row.IsSuccess ? row.Value : null;
     }
 
@@ -55,12 +71,12 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
         }
     }
 
-    // The newest AddRepo job when it failed and none is running now; else null.
-    private async ValueTask<JobRow?> LastFailed(CancellationToken cancellationToken)
+    // The newest job of a kind when it failed and none of that kind is running now; else null.
+    private async ValueTask<JobRow?> LastFailed(JobKind kind, CancellationToken cancellationToken)
     {
         var running = await jobs.Running(cancellationToken).ConfigureAwait(false);
-        var latest = await jobs.List(state: null, _addRepo, cancellationToken).ConfigureAwait(false);
-        if (running.IsError || latest.IsError || running.Value.Any(static j => j.Kind == _addRepo))
+        var latest = await jobs.List(state: null, kind, cancellationToken).ConfigureAwait(false);
+        if (running.IsError || latest.IsError || running.Value.Any(j => j.Kind == kind))
         {
             return null;
         }
