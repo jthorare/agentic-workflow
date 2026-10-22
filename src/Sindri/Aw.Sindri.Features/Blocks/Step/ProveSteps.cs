@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Workflow.Blocks;
 using static Aw.Sindri.Features.Blocks.Step.StepSpec;
 
@@ -22,7 +23,7 @@ internal static class ProveSteps
 
     /// <summary>'step.prove.before-after': each fix item's recorded script must fail at the base and pass at the head; 'pass' or 'fail', the result on both.</summary>
     public static BlockDescriptor BeforeAfter { get; } = BlockStep("step.prove.before-after", Capability.Tools)
-        .Reads("fact:phasePacket", "fact:built", "fact:workspace").Reports("pass", "fail").Writes(Every("fact:beforeAfter"));
+        .Reads("fact:phasePacket", "fact:built", "fact:workspace").Reports("pass", "fail").Long(CommandStepLimits.ProveMaxDuration).Writes(Every("fact:beforeAfter"));
 
     /// <summary>'step.prove.holdout': runs the hidden scenarios against the head in the running app; 'ran' with the verdicts.</summary>
     public static BlockDescriptor Holdout { get; } = AgentStep("step.prove.holdout", Capability.Tools | Capability.WriteScope)

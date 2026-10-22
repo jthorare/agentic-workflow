@@ -22,12 +22,16 @@ public sealed class LongBlockStepsTests
         { "step.build.red-check", "workflow.build.yaml", "red-check" },
         { "step.build.checks", "workflow.build.yaml", "checks" },
         { "step.ship.green", "workflow.ship.yaml", "green" },
+        { "step.prove.before-after", "workflow.prove.yaml", "before-after" },
     };
 
     public static TheoryData<string> Ids => ["step.build.red-check", "step.build.checks", "step.ship.green"];
 
+    // before-after runs the recorded scripts (20 minutes each, at the base and at the head) rather than the repo's commands, so it has no command budget and its own limit
+    public static TheoryData<string> AllLongIds => ["step.build.red-check", "step.build.checks", "step.ship.green", "step.prove.before-after"];
+
     [Theory]
-    [MemberData(nameof(Ids))]
+    [MemberData(nameof(AllLongIds))]
     public void A_long_Step_runs_on_the_block_runtime_with_a_maxDuration_above_the_default_and_within_the_cap(string step)
     {
         using var provider = ShippedComposition.Compose();
@@ -47,6 +51,15 @@ public sealed class LongBlockStepsTests
 
         Assert.Equal(step, recipe.States[state].Step!.Use.Value);
         Assert.True(recipe.States[state].Timeout!.After.Span > BlockLimits.MaxDuration(descriptor));
+    }
+
+    [Fact]
+    public void Before_after_may_run_two_of_its_scripts_end_to_end_in_one_run()
+    {
+        using var provider = ShippedComposition.Compose();
+        var max = BlockLimits.MaxDuration(provider.GetRequiredService<BlockCatalog>().Find(BlockId.From("step.prove.before-after"))!);
+
+        Assert.True(max >= (2 * TimeSpan.FromMinutes(20)) + TimeSpan.FromMinutes(1));   // one signal: its script at the base and at the head, each up to the script timeout
     }
 
     [Theory]

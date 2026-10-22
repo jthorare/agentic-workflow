@@ -44,6 +44,7 @@ public sealed class ShellInstanceFocusTests : FrameHost
         var address = FixtureInstances.Detail(scenario).Address;
         var (window, shell) = await Connected(s => s.Workflows.Groups.Count > 0, width: width, height: 1000);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         Settle(window);
         Assert.True(shell.Workflows.Select(address));
         Press(window, Key.Enter);

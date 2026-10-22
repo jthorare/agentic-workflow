@@ -1,13 +1,11 @@
 using Avalonia;
-using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Workflows;
-using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
 
-/// <summary>One row of the Workflows list: it passes a title click and focus arriving up to the page as routed events.</summary>
+/// <summary>One row of the Workflows list: it passes a title click and focus arriving up to the page as routed events, and keeps the columns the list gives it.</summary>
 internal sealed partial class InstanceRow : UserControl
 {
     /// <summary>A title click: open the instance.</summary>
@@ -26,47 +24,32 @@ internal sealed partial class InstanceRow : UserControl
     internal string Address => (DataContext as InstanceRowViewModel)?.Address ?? string.Empty;
 
     /// <inheritdoc />
-    protected override void OnDataContextChanged(EventArgs e)
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        base.OnDataContextChanged(e);
-        // A row with no inputs has nothing to name: its wrapper leaves the control view rather than stand as a nameless stop (review run 5, r5-1).
-        if (this.FindControl<Control>("WorkflowRowInputs") is { } inputs && DataContext is InstanceRowViewModel row)
-        {
-            AutomationProperties.SetAccessibilityView(inputs, row.HasInputs ? AccessibilityView.Control : AccessibilityView.Raw);
-        }
+        base.OnAttachedToVisualTree(e);
+        Fit(GetValue(ListBands.ColumnsProperty));
     }
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == PageLayout.TierProperty)
+        if (change.Property == ListBands.ColumnsProperty)
         {
-            Compact(change.GetNewValue<PageTier>() >= PageTier.Narrow);
+            Fit(change.GetNewValue<ListColumns>());
         }
     }
 
-    // Behind a sheet (UI spec §3.2) the columns don't fit: the row keeps its workflow, item and stage.
-    private void Compact(bool compact)
+    // The list narrowed or widened: the columns it keeps are the row's (the mono reference under the title goes at the narrowest).
+    private void Fit(ListColumns columns)
     {
-        if (this.FindControl<Grid>("WorkflowRowGrid") is not { } grid)
+        if (this.FindControl<Grid>("WorkflowRowGrid") is { } grid)
         {
-            return;
+            ListBands.Apply(grid, columns);
         }
 
-        var hidden = new GridLength(0);   // the hidden columns keep their place
-        grid.ColumnDefinitions = compact
-            ? [new ColumnDefinition(GridLength.Star), new ColumnDefinition(hidden), new ColumnDefinition(hidden)]
-            : [new ColumnDefinition(GridLength.Star), new ColumnDefinition(new GridLength(220)), new ColumnDefinition(GridLength.Star)];
-        foreach (var name in (string[])["WorkflowRowAside", "WorkflowRowNow", "WorkflowRowDetails"])
-        {
-            this.FindControl<Control>(name)?.IsVisible = !compact;
-        }
-
-        this.FindControl<Control>("WorkflowRowCompact")?.IsVisible = compact;
+        this.FindControl<Control>("WorkflowRowReference")?.IsVisible = columns.ShowsReference;
     }
-
-    private void OnCopy(object? sender, RoutedEventArgs e) => _ = (DataContext as InstanceRowViewModel)?.CopyAddress(CancellationToken.None);
 
     private void OnOpen(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenEvent, this));
 }

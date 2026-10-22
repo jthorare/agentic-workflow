@@ -16,9 +16,14 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
 {
     private readonly Dictionary<string, RecipeGroupViewModel> _groups = new(StringComparer.Ordinal);
     private readonly Dictionary<string, InstanceRowViewModel> _rows = new(StringComparer.Ordinal);
+    private InstanceList? _list;
+    private List<InstanceRowViewModel> _loaded = [];
     private Uri? Url { get; set; }
+    private static readonly TimeSpan _timeTick = TimeSpan.FromMinutes(1);
     private int _reads;
     private int _doneReads;
+    private readonly UiContext _ui = new();
+    private ITimer? _ticker;
 
     /// <summary>Raised when a row asks to open its instance.</summary>
     internal event EventHandler<OpenRequestedEventArgs>? OpenRequested;
@@ -137,6 +142,7 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
     internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
         Url = url;
+        _ticker ??= clock.CreateTimer(_ => _ui.PostOrInline(TickTimes), state: null, _timeTick, _timeTick);
         var read = ++_reads;
         _doneReads++;   // a finished read for the filter before this one (or from before this refresh) is no longer wanted
         var list = await api.Instances(url, new InstanceQuery(Root: true, Open: true, Recipe: RecipeFilter, Subject: SubjectFilter), cancellationToken).ConfigureAwait(true);
@@ -148,9 +154,13 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
         if (list.IsSuccess)
         {
             Show(list.Value);
-            if (IsDoneExpanded)
+            if (IsDoneExpanded || ViewMode == WorkflowViewMode.Board)
             {
                 await ReadDone(cancellationToken).ConfigureAwait(true);
+            }
+            else
+            {
+                _doneFor = null;   // the finished rows are left behind by this refresh; the board reads them when it is shown
             }
         }
         else if (string.Equals(list.Error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal) && list.Error.Kind == ErrorKind.Invalid)
@@ -192,6 +202,7 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
         else
         {
             _doneReads++;   // a read on its way is no longer wanted
+            _doneFor = null;
             DoneRows.Clear();
         }
     }
@@ -234,6 +245,13 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
     private void Show(InstanceList list)
     {
         Drawn++;
+        _list = list;
+        Render(list);
+    }
+
+    // Draws the loaded list through the filter and the search; a change of either draws again without a read.
+    private void Render(InstanceList list)
+    {
         var before = WalkAddresses();
         IsUnreadable = false;
         OnChanged(nameof(UnreadableText));
@@ -242,18 +260,22 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
         var rows = list.Instances.Select(Row).ToList();
         _rows.Clear();
         rows.ForEach(r => _rows[r.Address] = r);
-        var shown = rows.GroupBy(r => r.Recipe, StringComparer.Ordinal).Select(g => Group(g.Key, [.. g])).ToList();
-        Patch.To(Groups, shown);
+        _loaded = rows;
+        var every = rows.GroupBy(r => r.Recipe, StringComparer.Ordinal).Select(g => Group(g.Key, [.. g.Where(Passes)])).ToList();
+        Patch.To(Groups, [.. every.Where(g => g.Count > 0)]);
         if (RecipeFilter is null && SubjectFilter is null)
         {
-            ReplaceIfChanged(KnownRecipes, [.. shown.Select(g => g.Recipe)]);
-            _choiceIds = ChoicesFor(shown);
+            ReplaceIfChanged(KnownRecipes, [.. every.Select(g => g.Recipe)]);
+            _choiceIds = ChoicesFor(every);
             ReplaceIfChanged(RecipeChoices, [Labels.AllRecipes, .. _choiceIds.Keys]);
         }
 
+        RebuildBoard();
         Reselect(before);
         IsEmpty = rows.Count == 0;
         EmptyText = IsEmpty ? list.Empty ?? Labels.NoWorkflowsMatch : string.Empty;
+        BoardEmptyText = IsEmpty ? EmptyText : Labels.WorkflowsNothingHere;
+        NotifyBoardStates();
     }
 
     // A choice list the human is picking from keeps its items (and the control its selection) unless the recipes themselves changed.
@@ -269,28 +291,5 @@ internal sealed partial class WorkflowsViewModel(ISindriApi api, IClipboard clip
         {
             list.Add(item);
         }
-    }
-
-    private RecipeGroupViewModel Group(string recipe, List<InstanceRowViewModel> rows)
-    {
-        if (!_groups.TryGetValue(recipe, out var group))
-        {
-            group = new RecipeGroupViewModel(recipe);
-            group.RecipeRequested += (_, e) => RecipeRequested?.Invoke(this, e);
-            _groups[recipe] = group;
-        }
-
-        group.Show(rows);
-        return group;
-    }
-
-    // A re-read serves the same row again: it stays (so does the control with focus) unless something it draws changed.
-    private InstanceRowViewModel Row(InstanceSummary summary)
-    {
-        var row = new InstanceRowViewModel(summary, clipboard, clock);
-        var old = Groups.SelectMany(g => g.Rows).FirstOrDefault(r => string.Equals(r.Address, row.Address, StringComparison.Ordinal));
-        var kept = old is not null && string.Equals(old.Signature, row.Signature, StringComparison.Ordinal) ? old : row;
-        kept.SetStale(IsStale);
-        return kept;
     }
 }

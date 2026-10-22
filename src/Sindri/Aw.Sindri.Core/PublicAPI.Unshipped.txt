@@ -12377,6 +12377,7 @@ Aw.Sindri.Core.Checks.PhaseScope.TestChange.init -> void
 Aw.Sindri.Core.Checks.CommandStepLimits
 static Aw.Sindri.Core.Checks.CommandStepLimits.BuildBudget.get -> System.TimeSpan
 static Aw.Sindri.Core.Checks.CommandStepLimits.BuildMaxDuration.get -> System.TimeSpan
+static Aw.Sindri.Core.Checks.CommandStepLimits.ProveMaxDuration.get -> System.TimeSpan
 static Aw.Sindri.Core.Checks.CommandStepLimits.GreenBudget.get -> System.TimeSpan
 static Aw.Sindri.Core.Checks.CommandStepLimits.GreenMaxDuration.get -> System.TimeSpan
 Aw.Sindri.Core.Checks.RepoCommandRunner
@@ -16446,20 +16447,20 @@ override Aw.Sindri.Core.Workflow.Stats.RecipeListStats.GetHashCode() -> int
 override Aw.Sindri.Core.Workflow.Stats.RecipeListStats.ToString() -> string!
 static Aw.Sindri.Core.Workflow.Stats.RecipeListStats.operator !=(Aw.Sindri.Core.Workflow.Stats.RecipeListStats? left, Aw.Sindri.Core.Workflow.Stats.RecipeListStats? right) -> bool
 static Aw.Sindri.Core.Workflow.Stats.RecipeListStats.operator ==(Aw.Sindri.Core.Workflow.Stats.RecipeListStats? left, Aw.Sindri.Core.Workflow.Stats.RecipeListStats? right) -> bool
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.<Clone>$() -> Aw.Sindri.Core.Workflow.Stats.RecipeStatus!
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Word.get -> string!
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Word.init -> void
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Detail.get -> string?
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Detail.init -> void
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Deconstruct(out string! Word, out string? Detail) -> void
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Equals(Aw.Sindri.Core.Workflow.Stats.RecipeStatus? other) -> bool
-Aw.Sindri.Core.Workflow.Stats.RecipeStatus.RecipeStatus(string! Word, string? Detail) -> void
-override Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Workflow.Stats.RecipeStatus.GetHashCode() -> int
-override Aw.Sindri.Core.Workflow.Stats.RecipeStatus.ToString() -> string!
-static Aw.Sindri.Core.Workflow.Stats.RecipeStatus.operator !=(Aw.Sindri.Core.Workflow.Stats.RecipeStatus? left, Aw.Sindri.Core.Workflow.Stats.RecipeStatus? right) -> bool
-static Aw.Sindri.Core.Workflow.Stats.RecipeStatus.operator ==(Aw.Sindri.Core.Workflow.Stats.RecipeStatus? left, Aw.Sindri.Core.Workflow.Stats.RecipeStatus? right) -> bool
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.<Clone>$() -> Aw.Sindri.Core.Workflow.Registry.RecipeStatus!
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Word.get -> string!
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Word.init -> void
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Detail.get -> string?
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Detail.init -> void
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Deconstruct(out string! Word, out string? Detail) -> void
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Equals(Aw.Sindri.Core.Workflow.Registry.RecipeStatus? other) -> bool
+Aw.Sindri.Core.Workflow.Registry.RecipeStatus.RecipeStatus(string! Word, string? Detail) -> void
+override Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Registry.RecipeStatus.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Registry.RecipeStatus.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Registry.RecipeStatus.operator !=(Aw.Sindri.Core.Workflow.Registry.RecipeStatus? left, Aw.Sindri.Core.Workflow.Registry.RecipeStatus? right) -> bool
+static Aw.Sindri.Core.Workflow.Registry.RecipeStatus.operator ==(Aw.Sindri.Core.Workflow.Registry.RecipeStatus? left, Aw.Sindri.Core.Workflow.Registry.RecipeStatus? right) -> bool
 Aw.Sindri.Core.Workflow.Stats.StatGate
 Aw.Sindri.Core.Workflow.Stats.StatGate.<Clone>$() -> Aw.Sindri.Core.Workflow.Stats.StatGate!
 Aw.Sindri.Core.Workflow.Stats.StatGate.Gate.get -> string!
@@ -16516,7 +16517,7 @@ static Aw.Sindri.Core.Workflow.Stats.StatEvent.operator !=(Aw.Sindri.Core.Workfl
 static Aw.Sindri.Core.Workflow.Stats.StatEvent.operator ==(Aw.Sindri.Core.Workflow.Stats.StatEvent? left, Aw.Sindri.Core.Workflow.Stats.StatEvent? right) -> bool
 static Aw.Sindri.Core.Workflow.Stats.RecipeStats.ForChildOnly(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe, string? hash, Aw.Sindri.Core.Workflow.Stats.StatsWindow! window, System.DateTimeOffset asOf) -> Aw.Sindri.Core.Workflow.Stats.RecipeStats!
 static Aw.Sindri.Core.Workflow.Stats.RecipeListStats.Of(Aw.Sindri.Core.Workflow.Stats.RecipeStats! stats) -> Aw.Sindri.Core.Workflow.Stats.RecipeListStats!
-static Aw.Sindri.Core.Workflow.Stats.RecipeStatus.Of(Aw.Sindri.Core.Workflow.Registry.RecipeSummary! line) -> Aw.Sindri.Core.Workflow.Stats.RecipeStatus!
+static Aw.Sindri.Core.Workflow.Registry.RecipeStatus.Of(Aw.Sindri.Core.Workflow.Registry.RecipeSummary! line) -> Aw.Sindri.Core.Workflow.Registry.RecipeStatus!
 Aw.Sindri.Core.Workflow.Stats.StatsWindow
 Aw.Sindri.Core.Workflow.Stats.StatsWindow.<Clone>$() -> Aw.Sindri.Core.Workflow.Stats.StatsWindow!
 Aw.Sindri.Core.Workflow.Stats.StatsWindow.Equals(Aw.Sindri.Core.Workflow.Stats.StatsWindow? other) -> bool

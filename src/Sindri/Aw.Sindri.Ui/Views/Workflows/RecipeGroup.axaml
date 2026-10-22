@@ -7,6 +7,7 @@
   <!-- One workflow's group (screens spec §4.2): a header with the workflow's name and its run count, which collapses the rows ("show all" brings them
        back), then the rows. -->
   <StackPanel>
+    <Border Classes="group-row">
     <Grid ColumnDefinitions="*,Auto">
       <Button x:Name="WorkflowGroupToggle" Classes="group-toggle" Click="OnToggle" AutomationProperties.Name="{Binding ToggleName}">
         <Grid ColumnDefinitions="*,Auto">
@@ -21,6 +22,7 @@
       <Button x:Name="WorkflowGroupRecipe" Grid.Column="1" Content="{Binding RecipeLinkText}" Click="OnRecipe" VerticalAlignment="Center" Margin="8,0,0,0"
               AutomationProperties.Name="{Binding RecipeLinkName}" />
     </Grid>
+    </Border>
     <ItemsControl x:Name="WorkflowGroupRows" ItemsSource="{Binding Rows}" IsVisible="{Binding IsExpanded}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="wf:InstanceRowViewModel">

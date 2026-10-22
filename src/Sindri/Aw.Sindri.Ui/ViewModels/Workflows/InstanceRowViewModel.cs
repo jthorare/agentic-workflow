@@ -9,16 +9,17 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// One row of the Workflows list (screens §4.2): the subject, the inputs, a cell per state, and the served now and chip. It decides
 /// nothing: every word is the row's own.
 /// </summary>
-internal sealed class InstanceRowViewModel : ObservableObject
+internal sealed partial class InstanceRowViewModel : ObservableObject
 {
     private const string CancelCommand = "ApplyCommand:cancel";
 
     private readonly InstanceSummary _row;
     private readonly IClipboard _clipboard;
+    private readonly TimeProvider _clock;
 
     internal InstanceRowViewModel(InstanceSummary row, IClipboard clipboard, TimeProvider clock)
     {
-        (_row, _clipboard) = (row, clipboard);
+        (_row, _clipboard, _clock) = (row, clipboard, clock);
         var blocked = row.Inputs.Any(i => i is { Required: true, Present: false });
         Inputs = [.. row.Inputs.Select(i => new InputCellViewModel(i))];
         var missing = row.Inputs.Count(i => !i.Present);
@@ -84,6 +85,14 @@ internal sealed class InstanceRowViewModel : ObservableObject
 
     /// <summary>The one status the board, the list and the run drawer show for this run (F3 workflows spec §4).</summary>
     public RunStatus Status => RunStatus.From(_row.Chip);
+
+    /// <summary>How long the run has been in its stage ("in stage 1h 30m"), or how long ago it ended ("ended 5h 20m ago"); the time is the served since.</summary>
+    public string TimeText => IsFinished ? Labels.WorkflowsEndedAgo(Age) : Labels.WorkflowsInStage(Age);
+
+    private TimeSpan Age => _clock.GetUtcNow() - _row.Since;
+
+    /// <summary>The served line stage: the state id of the root line instance the run belongs to; null when its root is not a line run.</summary>
+    public string? LineStage => _row.LineStage;
 
     /// <summary>The served now sentence, unchanged.</summary>
     public string Now => _row.Now;
@@ -165,7 +174,10 @@ internal sealed class InstanceRowViewModel : ObservableObject
     public bool IsStale { get; private set => Set(ref field, value); }
 
     /// <summary>Everything the row draws: two rows with the same signature look the same.</summary>
-    internal string Signature => string.Join('|', Address, DisplayName, Who, MissingInputsText, Subject, Chip, Now, string.Join(',', Inputs.Select(i => i.Name)), string.Join(',', Stages.Select(s => s.Name)), StateWord, Chip.Word, Protected?.Cli, ChildAnswer?.Target, ChildAnswer?.Intent, CanAnswerAtDesk, CanCancel);
+    internal string Signature => string.Join('|', Address, StageName, _row.Since.UtcTicks, DisplayName, Who, MissingInputsText, Subject, Chip, Now, string.Join(',', Inputs.Select(i => i.Name)), string.Join(',', Stages.Select(s => s.Name)), StateWord, Chip.Word, Protected?.Cli, ChildAnswer?.Target, ChildAnswer?.Intent, CanAnswerAtDesk, CanCancel);
+
+    /// <summary>Reads the time in stage anew.</summary>
+    internal void Tick() => OnChanged(nameof(TimeText));
 
     /// <summary>Sets what the list knows of the row.</summary>
     /// <param name="stale">The views are stalled or rebuilding.</param>

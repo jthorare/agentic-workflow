@@ -155,5 +155,6 @@ internal sealed partial class RunPageViewModel
         }
 
         OnChanged(nameof(SelectionName));
+        RefreshInspector();
     }
 }

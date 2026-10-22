@@ -6,6 +6,7 @@ using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -38,6 +39,7 @@ public sealed class WorkflowsKeysTests
         _ = shell.Run(Token);
         await ShellWait.Until(shell, () => shell.State == ShellState.Normal && shell.Workflows.Groups.Count > 0, Token);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list: the keys walk its groups
         return shell;
     }
 
@@ -245,6 +247,7 @@ public sealed class WorkflowsKeysTests
         Assert.Equal(string.Empty, shell.Workflows.KeyNote);
 
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list: the keys walk its groups
         Assert.True(shell.Press("B"));
         shell.OpenInstance(Detail(Plain).Address, Detail(Plain).Id);
 

@@ -157,7 +157,7 @@ internal static class WorkflowAnswers
 
     // An empty filter narrows nothing, as an absent one does. An address is the instance's address, its item id or its id (the CLI's forms).
     private static bool Keeps(JsonNode row, InstanceQuery query) =>
-        (!query.Open || IsOpen(row))
+        (query.Open is not { } open || open == IsOpen(row))
         && Narrows(query.Recipe, row["recipe"]!["id"])
         && Narrows(query.Subject, row["subject"]!["label"], row["subject"]!["key"])
         && Narrows(query.Address, row["address"], row["itemId"], row["id"]);

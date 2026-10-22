@@ -6,83 +6,35 @@
              xmlns:comp="using:Aw.Sindri.Ui.Views.Components"
              x:Class="Aw.Sindri.Ui.Views.Workflows.InstanceRow"
              x:DataType="wf:InstanceRowViewModel">
-  <!-- One row of the Workflows list (screens spec §4.2, F3/F4): the one thing a person comes for is the item (a button: it opens the run), the
-       workflow it belongs to, the stage it is in and who is on it. The served now sentence is quiet text beside them. Everything else (the
-       inputs, every stage, the workflow type's id and the run's address with Copy) sits in a Details expander, closed until opened. The name
-       is the workflow, the item, the stage and who is on it. The row draws its own focus border (item-row), not the adorner. -->
+  <!-- One row of the Workflows list (F3 workflows spec §2 "List"): six columns, Item (the title is a button that opens the run, the mono
+       reference under it), Stage, Status (the one status badge), Step, Waiting on and Updated. The list hides columns as it narrows
+       (ListBands); a hidden cell keeps its place at width 0. Everything else about a run (inputs, every stage, the address with Copy) waits
+       in the run's drawer. The name is the item, the workflow, the status, the stage and who is on it. The row draws its own focus border
+       (item-row), not the adorner. -->
   <Border x:Name="WorkflowRowFrame" Classes="item-row workflow-row" Classes.selected="{Binding IsSelected}" Classes.stale="{Binding IsStale}" Focusable="True"
+          MinHeight="{StaticResource Size.Row}"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <StackPanel Spacing="4">
-      <Grid x:Name="WorkflowRowGrid" ColumnDefinitions="*,220,*" VerticalAlignment="Top">
-        <StackPanel Spacing="4" Margin="0,0,8,0">
-          <Button x:Name="WorkflowRowOpen" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
-            <TextBlock Classes="body-strong" Text="{Binding Subject}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-          </Button>
-          <TextBlock x:Name="WorkflowRowWorkflow" Classes="caption subtle" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-          <wf2:ChildAnswerButton x:Name="WorkflowChildAnswer" DataContext="{Binding ChildAnswer}"
-                                 IsVisible="{Binding $parent[UserControl].((wf:InstanceRowViewModel)DataContext).ChildAnswer, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <!-- A protected answer is the lock, here in the row so A (and a click) reach its popover even where the columns are hidden. -->
-          <comp:ProtectedActionButton x:Name="WorkflowProtected" DataContext="{Binding Protected}" HorizontalAlignment="Left"
-                                      IsVisible="{Binding $parent[UserControl].((wf:InstanceRowViewModel)DataContext).Protected, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <!-- Behind a sheet the page is narrow: the row keeps the workflow, the item (the button above) and the stage. -->
-          <TextBlock x:Name="WorkflowRowCompact" Classes="caption subtle" Text="{Binding Compact}" IsVisible="False" TextTrimming="CharacterEllipsis"
-                     AutomationProperties.AccessibilityView="Raw" />
-        </StackPanel>
-        <StackPanel x:Name="WorkflowRowAside" Grid.Column="1" Spacing="4" Margin="0,0,8,0">
-          <ctl:StateChipView x:Name="WorkflowRowChip" Chip="{Binding Chip}" HorizontalAlignment="Left" />
-          <TextBlock x:Name="WorkflowRowStage" Classes="caption" Text="{Binding Stage}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock x:Name="WorkflowRowWho" Classes="caption subtle" Text="{Binding Who}" TextWrapping="Wrap" IsVisible="{Binding Who, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock x:Name="WorkflowRowMissing" Classes="caption" Text="{Binding MissingInputsText}" IsVisible="{Binding HasMissingInputs}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-        </StackPanel>
-        <TextBlock x:Name="WorkflowRowNow" Grid.Column="2" Classes="caption subtle" Text="{Binding Now}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
-                   AutomationProperties.Name="{Binding Now}" />
-      </Grid>
-      <Expander x:Name="WorkflowRowDetails" Header="{Binding DetailsText}" AutomationProperties.Name="{Binding DetailsText}" IsExpanded="{Binding IsDetailsOpen, Mode=TwoWay}">
-        <StackPanel Spacing="6">
-          <!-- Each list is one static wrapper that names all its cells: a list's cells are materialized after the row's accessibility node
-               was built, and AT-SPI never saw them (live proof, BUG-3). The cells inside are drawn only. -->
-          <TextBlock Classes="eyebrow" Text="{Binding InputsHeading}" IsVisible="{Binding HasInputs}" />
-          <Border x:Name="WorkflowRowInputs" Margin="0,0,8,0" AutomationProperties.Name="{Binding InputsName}"
-                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <ItemsControl ItemsSource="{Binding Inputs}" AutomationProperties.AccessibilityView="Raw">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="wf:InputCellViewModel">
-                  <TextBlock Classes="caption" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw">
-                    <Run Text="{Binding Label}" /><Run Text=" " /><Run Text="{Binding Mark}" />
-                  </TextBlock>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Border>
-          <TextBlock Classes="eyebrow" Text="{Binding StagesHeading}" />
-          <Border x:Name="WorkflowRowStages" AutomationProperties.Name="{Binding StagesName}"
-                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <ItemsControl ItemsSource="{Binding Stages}" AutomationProperties.AccessibilityView="Raw">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="wf:StageCellViewModel">
-                  <!-- A fixed cell width; one line, never wrapped mid-word; the full words are the tooltip. -->
-                  <Border Name="WorkflowStageCell" Width="{DynamicResource Size.StageCell}" ToolTip.Tip="{Binding Name}">
-                    <TextBlock Classes="caption mono" Classes.current="{Binding IsCurrent}" Text="{Binding Text}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,0,6,0"
-                               AutomationProperties.AccessibilityView="Raw" />
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Border>
-          <TextBlock Classes="eyebrow" Text="{Binding RecipeHeading}" />
-          <TextBlock x:Name="WorkflowRowRecipeId" Classes="caption mono subtle" Text="{Binding Recipe}" TextWrapping="Wrap" />
-          <TextBlock Classes="eyebrow" Text="{Binding AddressHeading}" />
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock x:Name="WorkflowRowAddress" Classes="caption mono subtle" Text="{Binding Address}" VerticalAlignment="Center" />
-            <Button x:Name="WorkflowRowCopy" Classes="command-control" Click="OnCopy" AutomationProperties.Name="{Binding CopyName}">
-              <TextBlock Classes="button" Text="{Binding CopyText}" AutomationProperties.AccessibilityView="Raw" />
-            </Button>
-          </StackPanel>
-        </StackPanel>
-      </Expander>
-    </StackPanel>
+    <Grid x:Name="WorkflowRowGrid" ColumnDefinitions="2.2*,128,148,1.8*,124,80" VerticalAlignment="Center">
+      <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,12,0">
+        <Button x:Name="WorkflowRowOpen" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
+          <TextBlock Classes="body-strong" Text="{Binding Subject}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+        <TextBlock x:Name="WorkflowRowReference" Classes="caption mono subtle" Text="{Binding Reference}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        <wf2:ChildAnswerButton x:Name="WorkflowChildAnswer" DataContext="{Binding ChildAnswer}"
+                               IsVisible="{Binding $parent[UserControl].((wf:InstanceRowViewModel)DataContext).ChildAnswer, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <!-- A protected answer is the lock, here in the row so A (and a click) reach its popover even where the columns are hidden. -->
+        <comp:ProtectedActionButton x:Name="WorkflowProtected" DataContext="{Binding Protected}" HorizontalAlignment="Left"
+                                    IsVisible="{Binding $parent[UserControl].((wf:InstanceRowViewModel)DataContext).Protected, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+      <TextBlock x:Name="WorkflowRowStage" Grid.Column="1" Classes="caption" Text="{Binding StageName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"
+                 AutomationProperties.AccessibilityView="Raw" />
+      <ctl:StatusBadge x:Name="WorkflowRowStatus" Grid.Column="2" Status="{Binding Status}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,0" />
+      <TextBlock x:Name="WorkflowRowNow" Grid.Column="3" Classes="caption subtle" Text="{Binding Now}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"
+                 AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="WorkflowRowWho" Grid.Column="4" Classes="caption subtle" Text="{Binding WaitingOn}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"
+                 AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="WorkflowRowUpdated" Grid.Column="5" Classes="caption subtle" Text="{Binding UpdatedText}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                 AutomationProperties.AccessibilityView="Raw" />
+    </Grid>
   </Border>
 </UserControl>

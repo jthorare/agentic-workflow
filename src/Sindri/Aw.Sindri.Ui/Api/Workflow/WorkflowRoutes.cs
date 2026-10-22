@@ -18,9 +18,9 @@ internal static class WorkflowRoutes
             parts.Add("root=true");
         }
 
-        if (query.Open)
+        if (query.Open is { } open)
         {
-            parts.Add("open=true");
+            parts.Add(open ? "open=true" : "open=false");
         }
 
         Add(parts, "recipe", query.Recipe);

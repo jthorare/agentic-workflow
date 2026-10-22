@@ -6,6 +6,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -35,6 +36,7 @@ public sealed class WorkflowsReselectTests
         _ = shell.Run(Token);
         await ShellWait.Until(shell, () => shell.State == ShellState.Normal && shell.Workflows.Groups.Count > 0, Token);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list: the keys walk its groups
         return shell;
     }
 

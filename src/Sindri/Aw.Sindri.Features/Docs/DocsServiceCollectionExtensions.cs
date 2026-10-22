@@ -1,3 +1,4 @@
+using Aw.Kernel.Services;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,5 +12,6 @@ internal static class DocsServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddDocsSlices(this IServiceCollection services) => services
         .AddBlockRuntime<DocsCheckStep>()
-        .AddBlockRuntime<DocsScopeStep>();
+        .AddBlockRuntime<DocsScopeStep>()
+        .AddScoped<IService<DocsCheckRequest, DocsCheckResponse>, DocsCheckService>();
 }

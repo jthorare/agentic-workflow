@@ -21,4 +21,13 @@ internal sealed partial class WorkflowsViewModel
         var row = Groups.SelectMany(g => g.Rows).Concat(DoneRows).FirstOrDefault(r => string.Equals(r.Address, change.Instance, StringComparison.Ordinal));
         return row is null || string.Equals(row.StateWord, change.State, StringComparison.Ordinal);   // no row: a child, or one the filters leave out; nothing to wait for
     }
+
+    // Time passes between reads: the "in stage" and "ended ago" words are read anew from the clock.
+    private void TickTimes()
+    {
+        foreach (var row in _loaded.Concat(DoneRows))
+        {
+            row.Tick();
+        }
+    }
 }

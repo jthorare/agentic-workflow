@@ -42,6 +42,7 @@ public sealed class WorkflowsKeysViewTests : FrameHost
     {
         var (window, shell) = await Connected(s => s.Workflows.Groups.Count > 0);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         Settle(window);
         _ = window.Get<Control>("Page").Focus(NavigationMethod.Tab);
         return (window, shell);

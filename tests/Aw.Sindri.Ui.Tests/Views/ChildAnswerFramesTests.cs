@@ -9,6 +9,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Instance;
 
@@ -74,6 +75,7 @@ public sealed class ChildAnswerFramesTests : FrameHost
         Assert.DoesNotContain("StripAnswer", shown, StringComparer.Ordinal);
 
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         await Until(window, () => shell.Workflows.Groups.Count > 0 && Pointers(window).Count > 0);
         Frame(window, "workflows-list", Prefix);
         var listed = Pointers(window)[0];

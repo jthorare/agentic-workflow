@@ -31,6 +31,7 @@ public sealed class WorkflowsViewModelTests
     private async Task<WorkflowsViewModel> Shown()
     {
         var list = new WorkflowsViewModel(_server, new FakeClipboard(), new FakeTimeProvider(A.Noon));
+        list.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         await list.Refresh(_api, Token);
         return list;
     }
@@ -148,7 +149,7 @@ public sealed class WorkflowsViewModelTests
         var finished = Served("root").Where(r => r!["states"]!.AsArray().Any(s => Text(s!["id"]) == Text(r["state"]) && (bool)s["terminal"]!)).Select(r => Text(r!["address"]));
         Assert.True(list.IsDoneExpanded);
         Expect.Sequence(finished, list.DoneRows.Select(r => r.Address));
-        Assert.Equal(new InstanceQuery(Root: true), _server.LastInstancesQuery);
+        Assert.Equal(new InstanceQuery(Root: true, Open: false), _server.LastInstancesQuery);
 
         await list.ToggleDone(Token);
         Assert.Equal((false, 0), (list.IsDoneExpanded, list.DoneRows.Count));
@@ -307,7 +308,7 @@ public sealed class WorkflowsViewModelTests
     public Task Expanding_then_collapsing_the_finished_line_does_not_refill_it() => UiThread.Run(async () =>
     {
         var list = await Shown();
-        var late = Hold(new InstanceQuery(Root: true));
+        var late = Hold(new InstanceQuery(Root: true, Open: false));
         var expanding = list.ToggleDone(Token);
 
         await list.ToggleDone(Token);

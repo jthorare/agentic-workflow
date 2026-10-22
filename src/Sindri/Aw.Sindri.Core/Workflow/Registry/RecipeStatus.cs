@@ -1,6 +1,4 @@
-using Aw.Sindri.Core.Workflow.Registry;
-
-namespace Aw.Sindri.Core.Workflow.Stats;
+namespace Aw.Sindri.Core.Workflow.Registry;
 
 /// <summary>The status word the recipe list shows (API spec §3.8, E-25): the registry's word with what changed.</summary>
 /// <param name="Word">'approved', 'changed', 'draft' or 'revoked'.</param>

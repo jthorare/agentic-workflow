@@ -17,8 +17,10 @@
 #
 # The build is one directory, $AW_STATE_DIR/bin/sindri-app/<stamp>/: `sindri` framework-dependent (the Temporal .NET SDK
 # can't be trimmed; .agents/rules/csharp.md "AOT scope") and `sindri-ui` NativeAOT for this RID with its native
-# libraries (src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh <dir>), side by side, which is where bare `sindri` looks for
-# `sindri-ui` (docs/csharp/sindri-ui.md "Launching"). <stamp> hashes the content of every tracked and untracked file
+# libraries (src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh <dir>), and the C# `judge` NativeAOT for this RID with its e_sqlite3
+# (published as src/Judge/aot-smoke/run.sh does), side by side. Bare `sindri` looks for `sindri-ui` there
+# (docs/csharp/sindri-ui.md "Launching"), and sindri-app runs sindri with AW_SINDRI_JUDGE=<build>/judge unless the caller
+# set it: step.judge.choose needs `judge choose`, and the `judge` on the PATH is the TypeScript one, which has none. <stamp> hashes the content of every tracked and untracked file
 # under the paths the host build reads, the pinned SDK and the platform, so a source change, committed or not, rebuilds
 # and nothing else does. The newest two builds are kept, and any build a running control plane executes (its pid in control.json, alive, with the
 # build dir in its command line) is neither pruned nor rebuilt: --rebuild of it is declined until `sindri-app stop`. A build
@@ -143,7 +145,7 @@ git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SINDRI_BUI
 [ -s "$inputs" ] || die "no build inputs found under $root"
 stamp="$( { printf '%s\n' "$sdk" "$platform" "$commit" "$recipes_tree"; cat "$inputs"; (cd "$root" && git hash-object --stdin-paths < "$inputs"); } | sha256 | cut -c1-16)"
 current="$(cat "$base/current" 2>/dev/null || true)"
-built() { [ -x "$base/$1/sindri" ] && [ -x "$base/$1/sindri-ui" ]; }
+built() { [ -x "$base/$1/sindri" ] && [ -x "$base/$1/sindri-ui" ] && [ -x "$base/$1/judge" ]; }
 # A build a running control plane executes is never replaced or pruned: the pid in control.json, alive, whose command line
 # (ps) names the build dir. (A plain pid check, no lock file the plane would have to keep.)
 control="${AW_SINDRI_HOME:-$state/sindri-app}/control.json"
@@ -192,7 +194,7 @@ else
   echo $$ > "$lock/pid"
   tree=""
   stage="$base/.stage.$$"
-  trap 'rm -f "$inputs"; rm -rf "$lock" "$stage"; [ -z "$tree" ] || rm -rf "$tree"' EXIT
+  trap 'rm -f "$inputs"; rm -rf "$lock" "$stage" "$stage.judge"; [ -z "$tree" ] || rm -rf "$tree"' EXIT
   current="$(cat "$base/current" 2>/dev/null || true)"
   # Another run may have published this stamp while this one waited.
   if [ "$rebuild" = 1 ] || ! built "$stamp"; then
@@ -223,6 +225,17 @@ else
       -p:AwRecipesDir="$tree/recipes/sindri" -o "$stage") </dev/null >>"$log" 2>&1 || { tail -20 "$log" >&2; die "publishing sindri failed"; }
     (cd "$root" && ${pre[@]+"${pre[@]}"} bash "$root/src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh" "$stage") </dev/null >>"$log" 2>&1 \
       || { tail -20 "$log" >&2; die "publishing sindri-ui failed"; }
+    # The C# judge, NativeAOT, on the build copy (restore adds the RID's packs to the copy's lock files, never the checkout's).
+    # It goes to its own directory first; only the binary and its bundled e_sqlite3 are copied into the stage.
+    say "publishing judge (NativeAOT, $platform)"
+    jstage="$stage.judge"
+    rm -rf "$jstage"
+    (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj" -c Release -r "$platform" \
+      -p:RestoreLockedMode=false -o "$jstage") </dev/null >>"$log" 2>&1 || { tail -20 "$log" >&2; die "publishing judge failed"; }
+    [ -x "$jstage/judge" ] || die "the publish left no judge in $jstage"
+    cp "$jstage/judge" "$stage/judge"
+    for f in "$jstage"/libe_sqlite3.*; do if [ -f "$f" ]; then cp "$f" "$stage/"; fi; done
+    rm -rf "$jstage"
     [ -x "$stage/sindri" ] || die "the publish left no sindri in $stage"
     [ -x "$stage/sindri-ui" ] || die "the publish left no sindri-ui in $stage"
     # The recipe evals (setup-once spec §5.3), with the published binary over the staged set, before the build becomes current:
@@ -290,4 +303,6 @@ register_hint() { # waits up to 2 minutes for a live control plane, then prints 
 if [ "${AW_SINDRI_APP_NO_MCP:-0}" != 1 ] && { [ $# -eq 0 ] || [ "${1:-}" = serve ]; }; then
   register_hint >&2 </dev/null &
 fi
+# step.judge.choose runs the judge published with this build, unless the caller named one.
+export AW_SINDRI_JUDGE="${AW_SINDRI_JUDGE:-$base/$stamp/judge}"
 exec "$base/$stamp/sindri" "$@"

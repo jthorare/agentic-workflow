@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.BoardView"
+             x:DataType="wf:WorkflowsViewModel">
+  <!-- The board (F3 workflows spec §2): six lanes side by side, the host scrolling sideways when the window is narrower than they need.
+       A lane keeps its place when empty and says why. -->
+  <ScrollViewer x:Name="WorkflowsBoardScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+    <ItemsControl x:Name="WorkflowsBoardLanes" ItemsSource="{Binding Lanes}" MinWidth="{StaticResource Size.BoardMin}" Margin="16,16,16,12">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate><wfv:LaneGrid /></ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="wf:BoardLaneViewModel">
+          <Border Classes="lane" Classes.last="{Binding IsLast}" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control"
+                  AutomationProperties.ControlTypeOverride="Group">
+            <DockPanel>
+              <Border DockPanel.Dock="Top" Classes="lane-head">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="detail-title" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding CountText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                </Grid>
+              </Border>
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8">
+                <StackPanel Spacing="8">
+                  <ItemsControl ItemsSource="{Binding Cards}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="wf:InstanceRowViewModel">
+                        <wfv:RunCard />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <!-- Border has no dash, so the box is a dashed rectangle behind its words. -->
+                  <Panel IsVisible="{Binding IsEmpty}">
+                    <Rectangle Stroke="{DynamicResource Brush.HairlineStrong}" StrokeThickness="1" StrokeDashArray="4,3" RadiusX="6" RadiusY="6" IsHitTestVisible="False" />
+                    <StackPanel Classes="lane-empty" Spacing="4" HorizontalAlignment="Center">
+                      <TextBlock Classes="body-strong" Text="{Binding EmptyTitle}" HorizontalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Classes="caption muted" Text="{Binding EmptyBody}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                    </StackPanel>
+                  </Panel>
+                </StackPanel>
+              </ScrollViewer>
+            </DockPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </ScrollViewer>
+</UserControl>

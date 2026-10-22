@@ -31,7 +31,9 @@ internal sealed partial class WorkflowsViewModel
     // Every row the page holds, and the rows J / K walk: those drawn (a collapsed group's are not).
     private IEnumerable<InstanceRowViewModel> Shown => Groups.SelectMany(g => g.Rows).Concat(DoneRows);
 
-    private List<InstanceRowViewModel> Walk => [.. Groups.Where(g => g.IsExpanded).SelectMany(g => g.Rows), .. IsDoneExpanded ? DoneRows : []];
+    private List<InstanceRowViewModel> Walk => ViewMode == WorkflowViewMode.Board
+        ? [.. Lanes.SelectMany(l => l.Cards)]
+        : [.. Groups.Where(g => g.IsExpanded).SelectMany(g => g.Rows), .. IsDoneExpanded ? DoneRows : []];
 
     /// <summary>Selects a row by its address.</summary>
     /// <param name="address">The instance's address.</param>
@@ -91,7 +93,23 @@ internal sealed partial class WorkflowsViewModel
                 Say(Labels.HandBackArrives);   // never a dead key: the note says where hand-back is
                 return true;
             default:
-                return SelectedRow is { } row && PressOn(row, key);
+                return PressOnPage(key) || (SelectedRow is { } row && PressOn(row, key));
+        }
+    }
+
+    // V switches the view and / goes to the search box: keys of the page, whatever is selected.
+    private bool PressOnPage(string key)
+    {
+        switch (key)
+        {
+            case "V":
+                ToggleView();
+                return true;
+            case "/":
+                SearchFocusRequested?.Invoke(this, EventArgs.Empty);
+                return true;
+            default:
+                return false;
         }
     }
 

@@ -189,14 +189,20 @@ auto_desk C/1 2>/dev/null
 check "auto-desk: the retry adds the required output" "$(tail -1 "$COMPLETED")" "workflow complete C/1 --run 7.1 --outcome doneAsking --output fact:answers=$SCRATCH/desk/0-answers.json --output fact:interviewClosed=$SCRATCH/desk/0-interviewClosed.json"
 check "auto-desk: two calls in all" "$(wc -l < "$COMPLETED" | tr -d ' ')" "2"
 check "auto-desk: the log shows the outputs sent last" "${DESK_LOG[0]}" "C/1 run 7.1 -> doneAsking --output fact:answers=$SCRATCH/desk/0-answers.json --output fact:interviewClosed=$SCRATCH/desk/0-interviewClosed.json"
-# auto-grant: a budget park gets a token grant, logged with the desk answers, and stops at --desk-max
+# auto-grant: a budget park gets a token grant, logged with the desk answers, and stops at --desk-max. The first call
+# types an empty line and reads the challenge from the preview (it names the parked child); the second types it back
 : > "$COMPLETED"; DESK_LOG=(); DESK_MAX=2
-human() { printf '%s\n' "$*" >> "$COMPLETED"; cat > "$WORK/typed"; }
+human() {
+  local typed; typed="$(cat)"
+  printf '%s\n' "$*" >> "$COMPLETED"
+  if [ -z "$typed" ]; then echo "    type 'grant-tokens 200000 P/1/child.1' to confirm: "; else printf '%s\n' "$typed" > "$WORK/typed"; fi
+}
 auto_grant P/1 2>/dev/null
-check "auto-grant: types the challenge's action" "$(cat "$WORK/typed")" "grant-tokens 300000 P/1"
-check "auto-grant: answers with a token grant" "$(cat "$COMPLETED")" "workflow answer P/1 --grant-tokens 300000"
-check "auto-grant: logged" "${DESK_LOG[0]}" "P/1 grant-tokens 300000"
+check "auto-grant: types the challenge the preview names" "$(cat "$WORK/typed")" "grant-tokens 200000 P/1/child.1"
+check "auto-grant: answers with a token grant, preview first" "$(sort -u "$COMPLETED")" "workflow answer P/1 --grant-tokens 200000"
+check "auto-grant: two calls per grant" "$(wc -l < "$COMPLETED" | tr -d ' ')" "2"
+check "auto-grant: logged" "${DESK_LOG[0]}" "P/1 grant-tokens 200000"
 auto_grant P/1 2>/dev/null
 auto_grant P/1 2>/dev/null; rc=$?
-check "auto-grant: stops at --desk-max" "$rc $(wc -l < "$COMPLETED" | tr -d ' ')" "1 2"
+check "auto-grant: stops at --desk-max" "$rc $(wc -l < "$COMPLETED" | tr -d ' ')" "1 4"
 exit "$fail"

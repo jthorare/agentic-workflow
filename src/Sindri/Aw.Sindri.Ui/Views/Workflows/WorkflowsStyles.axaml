@@ -18,6 +18,22 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
   </Style>
+  <!-- The list's group row (F3 workflows spec §2 "List"): 32 high on Surface2, a hairline under it. Its toggle and recipe link sit inside. -->
+  <Style Selector="Border.group-row">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,1,0,1" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="0,0,16,0" />
+  </Style>
+  <Style Selector="Border.group-row Button.group-toggle">
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="16,6" />
+  </Style>
+  <!-- A list row: hover on Surface2; selected is the shared item-row look. -->
+  <Style Selector="Border.workflow-row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+  </Style>
   <Style Selector="Button.group-toggle">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
@@ -26,6 +42,72 @@
     <Setter Property="Padding" Value="16,8" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+  <!-- The board (F3 workflows spec §2): lanes on Surface1 (Merge and Done on the canvas), a Surface2 head on a hairline; a run card on Surface2
+       that lifts its border under the pointer, and when selected sits on Surface3 with a PrimaryHover border (not colour alone: the focus ring is
+       2 px). The empty box is dashed in HairlineStrong. Tokens only. -->
+  <Style Selector="Border.lane">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+  <Style Selector="Border.lane.last">
+    <Setter Property="Background" Value="{DynamicResource Brush.Canvas}" />
+  </Style>
+  <Style Selector="Border.lane-head">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="12,10,12,8" />
+  </Style>
+  <Style Selector="StackPanel.lane-empty">
+    <Setter Property="Margin" Value="12,20" />
+  </Style>
+  <Style Selector="Border.run-card">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    <Setter Property="Padding" Value="10" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Border.run-card:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+  </Style>
+  <Style Selector="Border.run-card.selected">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
+  <Style Selector="Border.run-card:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Padding" Value="9" />
+  </Style>
+  <Style Selector="Border.run-card.stale">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+  </Style>
+  <!-- The view switch and the filter segments: a Surface2 track, 28 px items, the chosen one on Surface3 with a hairline. -->
+  <Style Selector="ListBox.segmented">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ListBox.segmented > ListBoxItem">
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ListBox.segmented > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
   </Style>
   <Style Selector="TextBlock.current">
     <Setter Property="FontWeight" Value="SemiBold" />

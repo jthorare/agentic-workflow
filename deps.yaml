@@ -550,7 +550,7 @@ edges:
     to: Judge
     kind: cli
     status: planned
-    note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
+    note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, set by sindri-app and the sandbox e2e to the C# judge published next to sindri, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
   - from: Sindri
     to: Readiness
     kind: cli

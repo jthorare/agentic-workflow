@@ -276,7 +276,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         return new InstanceQuery(
             Root: query["root"] == "true",
-            Open: query["open"] == "true",
+            Open: query["open"] switch { "true" => true, "false" => false, _ => null },
             Recipe: query["recipe"],
             Subject: query["subject"],
             Address: query["address"]);

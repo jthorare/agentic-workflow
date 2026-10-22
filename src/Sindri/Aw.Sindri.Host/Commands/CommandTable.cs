@@ -117,6 +117,7 @@ internal static partial class CommandTable
             ["mcp", .. var rest] => await new McpVerbs(services, output, session).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
+            ["docs", .. var rest] => await DocsCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),

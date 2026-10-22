@@ -136,6 +136,7 @@ internal sealed partial class RunPage : UserControl
         RunsSidebar.HorizontalAlignment = _narrow ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Stretch;
         RunsSidebar.ZIndex = _narrow ? 5 : 0;
         RunsSidebar.IsVisible = !_narrow || _runsOpen;
+        ArrangeInspector();
     }
 
     private void OnPageChanged(object? sender, PropertyChangedEventArgs e)
@@ -153,6 +154,9 @@ internal sealed partial class RunPage : UserControl
                 break;
             case nameof(RunPageViewModel.SelectedKey):
                 RefreshMiniMap();
+                break;
+            case nameof(RunPageViewModel.Inspector):
+                OnInspectorChanged();
                 break;
             case nameof(RunPageViewModel.HeaderWord) or nameof(RunPageViewModel.HeaderBrush):
                 PaintBadge(_page);
@@ -183,7 +187,7 @@ internal sealed partial class RunPage : UserControl
     {
         if (_page is { } page && RunCanvas.Bounds.Width > 0 && RunCanvas.Bounds.Height > 0)
         {
-            page.SetViewport(RunCanvas.Bounds.Width, RunCanvas.Bounds.Height, RunInspector.IsVisible ? RunInspector.Bounds.Width : 0);
+            page.SetViewport(RunCanvas.Bounds.Width, RunCanvas.Bounds.Height, InspectorInset);
         }
     }
 }

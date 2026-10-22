@@ -73,7 +73,14 @@ internal sealed partial class FakeSindriApi
     /// <summary>What GET /workflow/instances answers for a query.</summary>
     /// <param name="query">The query.</param>
     /// <returns>The answer.</returns>
-    internal RouteAnswer InstancesAnswer(InstanceQuery query) => InstancesBody ?? WorkflowAnswer ?? WorkflowAnswers.Instances(query);
+    internal RouteAnswer InstancesAnswer(InstanceQuery query)
+    {
+        var answer = InstancesBody ?? WorkflowAnswer ?? WorkflowAnswers.Instances(query);
+        return InstancesRewrite is { } rewrite ? answer with { Body = rewrite(answer.Body) } : answer;
+    }
+
+    /// <summary>When set, the body of every instance-list answer passes through it (a test turns the golden's rows into the line workflow's).</summary>
+    public Func<string, string>? InstancesRewrite { get; set; }
 
     /// <summary>What GET /workflow/instances/{id} answers.</summary>
     /// <param name="id">The id.</param>

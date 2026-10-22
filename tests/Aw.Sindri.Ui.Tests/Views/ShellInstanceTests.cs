@@ -72,27 +72,20 @@ public sealed class ShellInstanceTests : FrameHost
     });
 
     [Fact]
-    public Task Behind_a_sheet_the_list_reflows_to_workflow_title_state() => OnUi(async () =>
+    public Task Behind_a_sheet_the_list_drops_its_Stage_and_Waiting_on_columns() => OnUi(async () =>
     {
         var (window, shell) = await Connected(s => s.Workflows.Groups.Count > 0, width: 1300, height: 900);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);
         Settle(window);
-        Assert.False(Visible(window, "WorkflowRowCompact"));
-        Assert.False(Visible(window, "WorkflowRowInputs"));   // closed Details: a wide page shows the same primary line
-        shell.Workflows.Groups.SelectMany(g => g.Rows).First().ToggleDetails();
-        Settle(window);
-        Assert.True(Visible(window, "WorkflowRowInputs"));
+        bool Shown(string name) => window.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Name == name && t.IsEffectivelyVisible);
+        Assert.Equal((true, true, true), (Shown("WorkflowRowStage"), Shown("WorkflowRowNow"), Shown("WorkflowRowReference")));   // a wide page keeps all six columns
 
         shell.Navigate(new DeepLink(DeepLinkKind.Workflow, Address()));
         await Until(window, () => shell.Instance.Phase == FramePhase.Shown);
 
         var row = shell.Workflows.Groups.SelectMany(g => g.Rows).First();
-        var compact = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "WorkflowRowCompact" && t.IsEffectivelyVisible);
-        Assert.Contains(row.DisplayName, compact.Text, StringComparison.Ordinal);
-        Assert.DoesNotContain(row.Address, compact.Text, StringComparison.Ordinal);
-        Assert.Contains(row.StateWord, compact.Text, StringComparison.Ordinal);
-        Assert.False(Visible(window, "WorkflowRowInputs"));
-        Assert.False(Visible(window, "WorkflowRowStages"));
+        Assert.Equal((false, false), (Shown("WorkflowRowStage"), Shown("WorkflowRowWho")));   // behind the sheet the page is under 960 wide: Stage and Waiting on go
         Assert.Equal(row.Subject, ((InstanceRowViewModel)window.GetVisualDescendants().OfType<Button>().First(b => b.Name == "WorkflowRowOpen" && b.IsEffectivelyVisible).DataContext!).Subject);
     });
 
@@ -119,6 +112,7 @@ public sealed class ShellInstanceTests : FrameHost
         var served = FixtureInstances.Details.Select(d => d.Detail.Address).ToList();
         var (window, shell) = await Connected(s => s.Workflows.Groups.Count > 0);
         shell.GoTo(PageId.Workflows);
+        shell.Workflows.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         Settle(window);
         var open = window.GetVisualDescendants().OfType<Button>().First(b => b.Name == "WorkflowRowOpen" && b.DataContext is InstanceRowViewModel r && served.Contains(r.Address));
         Assert.True(open.Focus(NavigationMethod.Tab));

@@ -52,6 +52,7 @@ using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.DeferOnyx;
+using Aw.Sindri.Features.Docs;
 using Aw.Sindri.Features.EvalRecipe;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetEventCatalog;
@@ -73,6 +74,7 @@ using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
+using Aw.Sindri.Features.LineHoldout;
 using Aw.Sindri.Features.ListCommands;
 using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListItems;
@@ -81,7 +83,6 @@ using Aw.Sindri.Features.ListOutbox;
 using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
-using Aw.Sindri.Features.LineHoldout;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Features.OnyxAccount;
@@ -155,6 +156,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(RecipeValidationView)), JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
 [JsonSerializable(typeof(ScopingApproved)), JsonSerializable(typeof(ScopingEscape)), JsonSerializable(typeof(ScopingView)), JsonSerializable(typeof(ScopingCheckResponse)), JsonSerializable(typeof(ScopingDeskReport))]   // SC-K: the scoping verbs
 [JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView))]   // LN-K: the line verbs
+[JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(OnyxSetupState))]
 [JsonSerializable(typeof(OnyxUpResponse))]

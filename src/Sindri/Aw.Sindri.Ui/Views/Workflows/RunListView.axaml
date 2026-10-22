@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.RunListView"
+             x:DataType="wf:WorkflowsViewModel">
+  <!-- The list (F3 workflows spec §2 "List"): a sticky column head (outside the scrolled rows), then the open runs in a group row per workflow, the
+       finished-runs line and the key line. The list measures its own width and hands the columns it keeps down to the head and every row
+       (ListBands); under 960 Stage and Waiting on go, under 560 Step, Updated and the reference go too. -->
+  <Border x:Name="WorkflowsPanel" Classes="panel" AutomationProperties.Name="Workflows" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+    <Grid RowDefinitions="Auto,*">
+      <Border x:Name="WorkflowColumnHead" Classes="column-heads" IsVisible="{Binding !IsEmpty}" AutomationProperties.AccessibilityView="Raw">
+        <Grid x:Name="WorkflowColumnHeadGrid" ColumnDefinitions="2.2*,128,148,1.8*,124,80">
+          <TextBlock Grid.Column="0" Classes="caption subtle" Text="{Binding ColItemText}" />
+          <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding ColStageText}" />
+          <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding ColStatusText}" />
+          <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding ColStepText}" />
+          <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding ColWaitingOnText}" />
+          <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding ColUpdatedText}" HorizontalAlignment="Right" />
+        </Grid>
+      </Border>
+      <ScrollViewer x:Name="WorkflowsListScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <TextBlock x:Name="WorkflowsPageEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,8" TextWrapping="Wrap"
+                     IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" />
+          <TextBlock x:Name="WorkflowsPageUnreadable" Classes="caption quiet" Text="{Binding UnreadableText}" Margin="16,8" TextWrapping="Wrap"
+                     IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" />
+          <ItemsControl x:Name="WorkflowGroups" ItemsSource="{Binding Groups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="wf:RecipeGroupViewModel">
+                <wfv:RecipeGroup />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button x:Name="WorkflowsDoneToggle" Classes="group-toggle" Click="OnDoneToggle" IsVisible="{Binding HasDone}" AutomationProperties.Name="{Binding DoneToggleName}">
+            <TextBlock Classes="caption subtle" Text="{Binding DoneText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <ItemsControl x:Name="WorkflowDoneRows" ItemsSource="{Binding DoneRows}" IsVisible="{Binding IsDoneExpanded}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="wf:InstanceRowViewModel">
+                <wfv:InstanceRow />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Expander x:Name="WorkflowsKey" Margin="16,8" Header="{Binding LegendHeader}" IsExpanded="{Binding IsLegendOpen, Mode=TwoWay}">
+            <Border x:Name="WorkflowsLegendName" AutomationProperties.Name="{Binding LegendName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock x:Name="WorkflowsLegend" Classes="caption subtle" Text="{Binding LegendText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+          </Expander>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Border>
+</UserControl>

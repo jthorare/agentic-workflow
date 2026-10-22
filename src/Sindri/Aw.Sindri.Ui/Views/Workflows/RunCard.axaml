@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.RunCard"
+             x:DataType="wf:InstanceRowViewModel">
+  <!-- One run on the board (F3 workflows spec §2): its title, its one status with the time in stage, and the step it is on. Focus arriving
+       selects it; a double click or Enter opens the run. The card draws its own focus ring (run-card), like the list rows. -->
+  <Border x:Name="WorkflowCardFrame" Classes="run-card" Classes.selected="{Binding IsSelected}" Classes.stale="{Binding IsStale}" Focusable="True"
+          AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+    <StackPanel Spacing="6">
+      <TextBlock x:Name="WorkflowCardTitle" Classes="body-strong" Text="{Binding Subject}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+      <Grid ColumnDefinitions="Auto,*">
+        <ctl:StatusBadge x:Name="WorkflowCardStatus" Status="{Binding Status}" />
+        <TextBlock x:Name="WorkflowCardTime" Grid.Column="1" Classes="caption muted" Text="{Binding TimeText}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+      </Grid>
+      <TextBlock x:Name="WorkflowCardStep" Classes="caption muted" Text="{Binding Now}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
+                 IsVisible="{Binding Now, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.AccessibilityView="Raw" />
+    </StackPanel>
+  </Border>
+</UserControl>

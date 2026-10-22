@@ -24,6 +24,7 @@ public sealed class WorkflowsCatchTests
     private async Task<WorkflowsViewModel> Shown()
     {
         var list = new WorkflowsViewModel(_server, new FakeClipboard(), new FakeTimeProvider(A.Noon));
+        list.SetViewMode(WorkflowViewMode.List);   // the grouped list; the board has its own tests
         await list.Refresh(_api, Token);
         return list;
     }

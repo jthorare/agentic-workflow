@@ -53,9 +53,15 @@ internal sealed partial class WorkflowsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         List?.FocusRequested -= OnFocusRequested;
+        List?.SearchFocusRequested -= OnSearchFocusRequested;
         base.OnDataContextChanged(e);
         List?.FocusRequested += OnFocusRequested;
+        List?.SearchFocusRequested += OnSearchFocusRequested;
     }
+
+    // The "/" key: the search box takes focus.
+    private void OnSearchFocusRequested(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(() => _ = this.FindControl<TextBox>("SubjectFilter")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
     // A key moved the selection onto a row, or a re-read changed the rows under it: the row's frame takes focus, on the keyboard's ring, and
     // scrolls into view. A re-read only takes it when focus was lost with the old rows (a reorder drops the containers), never from a control
@@ -65,18 +71,27 @@ internal sealed partial class WorkflowsPage : UserControl
 
     private void FocusRow(WorkflowFocusEventArgs request)
     {
-        var row = this.GetVisualDescendants().OfType<InstanceRow>().FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.Address, request.Address, StringComparison.Ordinal));
+        var row = DrawnRow(request.Address);
         if (row is null || row.IsKeyboardFocusWithin || (request.OnlyIfLost && (HasUsableFocus() || !_focusWasHere)))
         {
             return;   // not drawn, or focus is already in the row (a click or its control), or a re-read must leave a usable focus alone, and a focus that was elsewhere (the sheet)
         }
 
-        if (row.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, "WorkflowRowFrame", StringComparison.Ordinal)) is { } frame)
+        if (FrameOf(row) is { } frame)
         {
             _ = frame.Focus(NavigationMethod.Tab);
             frame.BringIntoView();
         }
     }
+
+    // The list row or the board card drawn for an address.
+    private Control? DrawnRow(string address) =>
+        (Control?)this.GetVisualDescendants().OfType<InstanceRow>().FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.Address, address, StringComparison.Ordinal))
+        ?? this.GetVisualDescendants().OfType<RunCard>().FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.Address, address, StringComparison.Ordinal));
+
+    // The border that takes keyboard focus in a row or a card.
+    private static Border? FrameOf(Control row) =>
+        row.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, "WorkflowRowFrame", StringComparison.Ordinal) || string.Equals(b.Name, "WorkflowCardFrame", StringComparison.Ordinal));
 
     // Focus on a control that is still in the tree, shown and enabled.
     private bool HasUsableFocus() =>
@@ -85,17 +100,25 @@ internal sealed partial class WorkflowsPage : UserControl
     // Focus arriving on a row, or a control in it, selects it: the keys act on the row the human is on.
     private void OnSelect(object? sender, RoutedEventArgs e)
     {
-        if (e.Source is InstanceRow { Address.Length: > 0 } row)
+        if (AddressOf(e.Source) is { Length: > 0 } address)
         {
-            _ = List?.Select(row.Address);
+            _ = List?.Select(address);
         }
     }
 
+    // The run a list row or a board card stands for.
+    private static string? AddressOf(object? source) => source switch
+    {
+        InstanceRow row => row.Address,
+        RunCard card => card.Address,
+        _ => null,
+    };
+
     private void OnOpen(object? sender, RoutedEventArgs e)
     {
-        if (e.Source is InstanceRow { Address.Length: > 0 } row)
+        if (AddressOf(e.Source) is { Length: > 0 } address)
         {
-            List?.Open(row.Address);
+            List?.Open(address);
         }
     }
 
@@ -123,7 +146,8 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private void OnStart(object? sender, RoutedEventArgs e) => List?.RequestStart();
+    // Typing narrows what is loaded as it goes; Enter (above) asks the API.
+    private void OnSubjectTyped(object? sender, TextChangedEventArgs e) => List?.SetSearch((sender as TextBox)?.Text);
 
-    private void OnDoneToggle(object? sender, RoutedEventArgs e) => _ = List?.ToggleDone(CancellationToken.None);
+    private void OnStart(object? sender, RoutedEventArgs e) => List?.RequestStart();
 }
