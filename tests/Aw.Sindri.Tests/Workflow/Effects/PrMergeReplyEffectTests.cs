@@ -93,6 +93,37 @@ public sealed class PrMergeReplyEffectTests
     }
 
     [Fact]
+    public async Task Purge_marks_deletes_the_marks_of_the_pr_the_link_names_and_keeps_another_prs()
+    {
+        var other = new PrRef("forge.example", "acme/web", 8);
+        _ = await _marks.Write(Mark(_pr, "t9", "id-1"), Token);
+        _ = await _marks.Write(Mark(other, "t1", "id-2"), Token);
+        var context = await Context("effect.pr.purge-marks", new Dictionary<string, string> { ["pr"] = "\"" + Link + "\"" });
+
+        var done = await new PrPurgeMarksEffect(_facts, _marks).Dispatch(context, Token);
+
+        Assert.True(done.IsSuccess);
+        Assert.Null(done.Value.Reply);
+        Assert.Empty((await _marks.Latest(_pr, Token)).Value);
+        Assert.Single((await _marks.Latest(other, Token)).Value);
+    }
+
+    [Fact]
+    public async Task Purge_marks_without_a_pull_request_link_is_an_error_and_deletes_nothing()
+    {
+        _ = await _marks.Write(Mark(_pr, "t9", "id-1"), Token);
+        var context = await Context("effect.pr.purge-marks", new Dictionary<string, string> { ["pr"] = "\"not a link\"" });
+
+        var done = await new PrPurgeMarksEffect(_facts, _marks).Dispatch(context, Token);
+
+        Assert.True(done.IsError);
+        Assert.Single((await _marks.Latest(_pr, Token)).Value);
+    }
+
+    private static PrCommentMark Mark(PrRef pr, string comment, string effect) =>
+        new(pr, PrCommentId.From(comment), EditedAt: null, InstanceAddress.From("T-4/pr/1"), "thread", Reason: null, Commit: null, KnownInstants.Epoch, effect);
+
+    [Fact]
     public async Task A_thread_reply_posts_the_drafted_text_with_a_marker_derived_from_the_identity()
     {
         var context = await Context("effect.pr.reply", new Dictionary<string, string> { ["form"] = "thread", ["comment"] = """{"id":"c1","key":"t9"}""", ["body"] = "\"Done, thanks.\"" });

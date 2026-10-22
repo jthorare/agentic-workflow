@@ -31,6 +31,9 @@ internal static class PrEffects
     /// <summary>'effect.pr.merge': merges with the forge's expected-head check; human trigger.</summary>
     public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method");
 
+    /// <summary>'effect.pr.purge-marks' (W26, IDEA-033): a babysitter's terminal cleanup, deleting the PR's comment marks.</summary>
+    public static BlockDescriptor PurgeMarks { get; } = Of("effect.pr.purge-marks", humanTrigger: false, "pr");
+
     /// <summary>'effect.pr.merge-docs': retargets, checks and merges the stacked docs PR; human trigger.</summary>
     public static BlockDescriptor MergeDocs { get; } = Of("effect.pr.merge-docs", humanTrigger: true, "pr");
 
