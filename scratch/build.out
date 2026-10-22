@@ -1,0 +1,58 @@
+heavy: waiting for the box-wide lock (4 slot(s), /home/thor/.agentic-workflow/locks/heavy-job.lock)
+  Determining projects to restore...
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Sindri/Aw.Sindri.Workflows/Aw.Sindri.Workflows.csproj (in 986 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj (in 986 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.Sindri.Testing/Aw.Sindri.Testing.csproj (in 989 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.Kernel.Testing/Aw.Kernel.Testing.csproj (in 17 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.Sindri.Tests/Aw.Sindri.Tests.csproj (in 1.03 sec).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.Context.Testing/Aw.Context.Testing.csproj (in 17 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/CodeIndex/Aw.CodeIndex.Features/Aw.CodeIndex.Features.csproj (in 16 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.CodeIndex.Testing/Aw.CodeIndex.Testing.csproj (in 24 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/CodeIndex/Aw.CodeIndex.Core/Aw.CodeIndex.Core.csproj (in 11 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/tests/Aw.Kernel.Telemetry.Testing/Aw.Kernel.Telemetry.Testing.csproj (in 87 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Aw.Kernel/Aw.Kernel.csproj (in 7 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj (in 22 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Aw.Kernel.Data/Aw.Kernel.Data.csproj (in 9 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Sindri/Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj (in 19 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Sindri/Aw.Sindri.Features/Aw.Sindri.Features.csproj (in 11 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Sindri/Aw.Sindri.Core/Aw.Sindri.Core.csproj (in 6 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Redaction/Aw.Redaction/Aw.Redaction.csproj (in 2 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Aw.Analyzers/Aw.Analyzers.csproj (in 61 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj (in 37 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Forge/Aw.Forge.Infrastructure/Aw.Forge.Infrastructure.csproj (in 8 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Forge/Aw.Forge.Core/Aw.Forge.Core.csproj (in 8 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Judge/Aw.Judge.Core/Aw.Judge.Core.csproj (in 18 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Context/Aw.Context.Features/Aw.Context.Features.csproj (in 4 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Context/Aw.Context.Core/Aw.Context.Core.csproj (in 9 ms).
+  Restored /home/thor/repos/aw-wt/engine-mainchk/src/Context/Aw.Context.Infrastructure/Aw.Context.Infrastructure.csproj (in 19 ms).
+  Aw.Analyzers -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Analyzers/debug/Aw.Analyzers.dll
+  Aw.Redaction -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Redaction/debug/Aw.Redaction.dll
+  Aw.Kernel -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Kernel/debug/Aw.Kernel.dll
+  Aw.Kernel.Testing -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Kernel.Testing/debug/Aw.Kernel.Testing.dll
+  Aw.Kernel.Data -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Kernel.Data/debug/Aw.Kernel.Data.dll
+  Aw.CodeIndex.Core -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.CodeIndex.Core/debug/Aw.CodeIndex.Core.dll
+  Aw.Forge.Core -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Forge.Core/debug/Aw.Forge.Core.dll
+  Aw.Judge.Core -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Judge.Core/debug/Aw.Judge.Core.dll
+  Aw.Forge.Infrastructure -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Forge.Infrastructure/debug/Aw.Forge.Infrastructure.dll
+  Aw.Kernel.Telemetry -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Kernel.Telemetry/debug/Aw.Kernel.Telemetry.dll
+  Aw.Context.Core -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Context.Core/debug/Aw.Context.Core.dll
+  Aw.Context.Features -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Context.Features/debug/Aw.Context.Features.dll
+  Aw.Context.Testing -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Context.Testing/debug/Aw.Context.Testing.dll
+  Aw.Kernel.Telemetry.Testing -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Kernel.Telemetry.Testing/debug/Aw.Kernel.Telemetry.Testing.dll
+  Aw.Sindri.Core -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Core/debug/Aw.Sindri.Core.dll
+  Aw.CodeIndex.Features -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.CodeIndex.Features/debug/Aw.CodeIndex.Features.dll
+  Aw.Context.Infrastructure -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Context.Infrastructure/debug/Aw.Context.Infrastructure.dll
+  Aw.CodeIndex.Testing -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.CodeIndex.Testing/debug/Aw.CodeIndex.Testing.dll
+  Aw.Sindri.Workflows -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Workflows/debug/Aw.Sindri.Workflows.dll
+  Aw.Sindri.Infrastructure -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Infrastructure/debug/Aw.Sindri.Infrastructure.dll
+  Aw.Sindri.Features -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Features/debug/Aw.Sindri.Features.dll
+  Aw.Judge.Infrastructure -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Judge.Infrastructure/debug/Aw.Judge.Infrastructure.dll
+  Aw.Sindri.Testing -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Testing/debug/Aw.Sindri.Testing.dll
+  Aw.Sindri.Host -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Host/debug/sindri.dll
+  Aw.Sindri.Tests -> /home/thor/repos/aw-wt/engine-mainchk/artifacts/bin/Aw.Sindri.Tests/debug/Aw.Sindri.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:04:23.96

@@ -3331,6 +3331,8 @@ Aw.Sindri.Core.Workflow.Engine.InstanceAddress
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.Child(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe, int entry) -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.Equals(Aw.Sindri.Core.Workflow.Engine.InstanceAddress other) -> bool
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.Equals(Aw.Sindri.Core.Workflow.Engine.InstanceAddress other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Workflow.Engine.InstanceAddress>! comparer) -> bool
+Aw.Sindri.Core.Workflow.Engine.InstanceAddress.Linked(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe, string! id, int attempt) -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Workflow.Engine.InstanceAddress.LinkedParent() -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.GetTypeCode() -> System.TypeCode
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.InstanceAddress() -> void
 Aw.Sindri.Core.Workflow.Engine.InstanceAddress.IsInitialized() -> bool
