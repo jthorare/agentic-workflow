@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -40,9 +41,9 @@ internal sealed class PrSecretScanGate(IDiffContent content, ITextScrubber scrub
             return new GateResult(GateVerdict.Pass, Score: null, Reasons: []);
         }
 
-        var named = string.Join(", ", hits.Take(MaxNamed).Select(static h => $"{h.Path}:{h.Line}"));
-        var more = hits.Count > MaxNamed ? $" and {hits.Count - MaxNamed} more" : string.Empty;
-        return Refused($"SHIP-SECRET-001: {hits.Count} added line(s) hold a secret: {named}{more}; remove it and amend before the push");
+        var named = string.Join(", ", hits.Take(MaxNamed).Select(static h => $"{h.Path}:{h.Line.ToString(CultureInfo.InvariantCulture)}"));
+        var more = hits.Count > MaxNamed ? $" and {(hits.Count - MaxNamed).ToString(CultureInfo.InvariantCulture)} more" : string.Empty;
+        return Refused($"SHIP-SECRET-001: {hits.Count.ToString(CultureInfo.InvariantCulture)} added line(s) hold a secret: {named}{more}; remove it and amend before the push");
     }
 
     private static GateResult Refused(string reason) => new(GateVerdict.Fail, Score: null, [reason]);

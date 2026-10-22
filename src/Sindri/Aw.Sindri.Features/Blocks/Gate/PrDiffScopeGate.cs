@@ -1,10 +1,10 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Features.Docs;
 
 namespace Aw.Sindri.Features.Blocks.Gate;
 
@@ -48,19 +48,7 @@ internal sealed class PrDiffScopeGate(IChangedPaths paths, IDiffContent content)
             return Refused(allowed.Error.Message);
         }
 
-        List<string> reasons = [];
-        foreach (var path in changed.Value)
-        {
-            if (IsCiConfig(path))
-            {
-                reasons.Add($"{path} is CI configuration; a push never changes it");
-            }
-            else if (!(allowed.Value.TestsAllowed && IsTest(path)) && !allowed.Value.Matches(path))
-            {
-                reasons.Add($"{path} is outside the allowed scope");
-            }
-        }
-
+        List<string> reasons = [.. OutOfScope(changed.Value, allowed.Value)];
         var weakened = await Weakened(workspace, since, cancellationToken).ConfigureAwait(false);
         if (weakened.IsError)
         {
@@ -71,17 +59,26 @@ internal sealed class PrDiffScopeGate(IChangedPaths paths, IDiffContent content)
         return reasons.Count == 0 ? new GateResult(GateVerdict.Pass, Score: null, Reasons: []) : new GateResult(GateVerdict.Fail, Score: null, reasons);
     }
 
+    private static IEnumerable<string> OutOfScope(IReadOnlyList<string> changed, Scope allowed)
+    {
+        foreach (var path in changed)
+        {
+            if (IsCiConfig(path))
+            {
+                yield return $"{path} is CI configuration; a push never changes it";
+            }
+            else if (!(allowed.TestsAllowed && IsTest(path)) && !allowed.Matches(path))
+            {
+                yield return $"{path} is outside the allowed scope";
+            }
+        }
+    }
+
     private async ValueTask<Result<Scope>> Allowed(GateContext context, string workspace, CancellationToken cancellationToken)
     {
-        var docs = context.Arguments.TryGetValue("scope", out var scope) && scope.ValueKind == JsonValueKind.String && string.Equals(scope.GetString(), "docs", StringComparison.Ordinal);
-        if (docs)
+        if (IsDocsScope(context))
         {
-            var globs = Strings(context.Arguments.GetValueOrDefault("paths"));
-            IEnumerable<string> named = PrGateInputs.Fact(context, "fact:docsScope") is { ValueKind: JsonValueKind.Object } docsScope && docsScope.TryGetProperty("candidates", out var candidates) && candidates.ValueKind == JsonValueKind.Array
-                ? candidates.EnumerateArray().Where(static c => c.ValueKind == JsonValueKind.Object && c.TryGetProperty("designNamed", out var flag) && flag.ValueKind == JsonValueKind.True)
-                    .Select(static c => c.TryGetProperty("path", out var path) && path.ValueKind == JsonValueKind.String ? path.GetString() : null).OfType<string>()
-                : [];
-            return new Scope([.. globs], [.. named], TestsAllowed: false);
+            return DocsScope(context);
         }
 
         var phase = context.Arguments.GetValueOrDefault("phase");
@@ -106,6 +103,27 @@ internal sealed class PrDiffScopeGate(IChangedPaths paths, IDiffContent content)
         return new Scope([], [.. own.Value], TestsAllowed: true);
     }
 
+    private static bool IsDocsScope(GateContext context) =>
+        context.Arguments.TryGetValue("scope", out var scope) && scope.ValueKind == JsonValueKind.String && string.Equals(scope.GetString(), "docs", StringComparison.Ordinal);
+
+    private static Scope DocsScope(GateContext context)
+    {
+        var globs = Strings(context.Arguments.GetValueOrDefault("paths"));
+        return new Scope([.. globs], [.. DesignNamed(PrGateInputs.Fact(context, "fact:docsScope"))], TestsAllowed: false);
+    }
+
+    private static IEnumerable<string> DesignNamed(JsonElement? docsScope)
+    {
+        if (Property(docsScope, "candidates") is not { ValueKind: JsonValueKind.Array } candidates)
+        {
+            return [];
+        }
+
+        return candidates.EnumerateArray()
+            .Where(static c => Property(c, "designNamed") is { ValueKind: JsonValueKind.True })
+            .Select(static c => Property(c, "path") is { ValueKind: JsonValueKind.String } path ? path.GetString() : null).OfType<string>();
+    }
+
     private async ValueTask<Result<IReadOnlyList<string>>> Weakened(string workspace, string since, CancellationToken cancellationToken)
     {
         var deleted = await content.DeletedPaths(workspace, since, cancellationToken).ConfigureAwait(false);
@@ -121,7 +139,7 @@ internal sealed class PrDiffScopeGate(IChangedPaths paths, IDiffContent content)
         }
 
         List<string> reasons = [.. deleted.Value.Where(IsTest).Select(static p => $"{p} is a deleted test (BLD-TEST-001)")];
-        reasons.AddRange(added.Value.Where(line => IsTest(line.Path) && Array.Exists(_skips, skip => line.Text.Contains(skip, StringComparison.Ordinal))).Select(static l => $"{l.Path}:{l.Line} skips a test (BLD-TEST-001)"));
+        reasons.AddRange(added.Value.Where(line => IsTest(line.Path) && Array.Exists(_skips, skip => line.Text.Contains(skip, StringComparison.Ordinal))).Select(static l => $"{l.Path}:{l.Line.ToString(CultureInfo.InvariantCulture)} skips a test (BLD-TEST-001)"));
         return Results.Success<IReadOnlyList<string>>(reasons);
     }
 
@@ -150,6 +168,6 @@ internal sealed class PrDiffScopeGate(IChangedPaths paths, IDiffContent content)
     /// <summary>The paths a push may touch: globs, exact files, and (a phase's scope, not the docs') tests by convention.</summary>
     private sealed record Scope(IReadOnlyList<string> Globs, IReadOnlyList<string> Files, bool TestsAllowed)
     {
-        internal bool Matches(string path) => Files.Contains(path, StringComparer.Ordinal) || Globs.Any(g => DocGlob.Matches(g, path));
+        internal bool Matches(string path) => Files.Contains(path, StringComparer.Ordinal) || Globs.Any(g => PrScopeGlob.Matches(g, path));
     }
 }
