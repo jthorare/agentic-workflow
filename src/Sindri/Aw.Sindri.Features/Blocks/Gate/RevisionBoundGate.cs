@@ -36,6 +36,14 @@ internal sealed class RevisionBoundGate : IGate, IDescribedBlock
         return context.Facts.TryGetValue(FactKey.From("fact:prState"), out var fact) && fact.ValueKind == JsonValueKind.Object ? fact : null;
     }
 
+    private static string? NotGreen(JsonElement at)
+    {
+        var state = at.TryGetProperty("state", out var s) && s.ValueKind == JsonValueKind.String ? s.GetString() : null;
+        return string.Equals(state, "green", StringComparison.Ordinal)
+            ? null
+            : $"the checks are not green on the head (state {state ?? "unknown"}); check the pull request again";
+    }
+
     private static List<string> ReasonsOf(JsonElement? snapshot)
     {
         var reasons = new List<string>();
@@ -45,9 +53,9 @@ internal sealed class RevisionBoundGate : IGate, IDescribedBlock
             return reasons;
         }
 
-        if (!at.TryGetProperty("state", out var state) || state.ValueKind != JsonValueKind.String || !string.Equals(state.GetString(), "green", StringComparison.Ordinal))
+        if (NotGreen(at) is { } notGreen)
         {
-            reasons.Add($"the checks are not green on the head (state {(state.ValueKind == JsonValueKind.String ? state.GetString() : "unknown")}); check the pull request again");
+            reasons.Add(notGreen);
         }
 
         var heldBlocks = at.TryGetProperty("heldBlocksMerge", out var held) && held.ValueKind == JsonValueKind.True;
