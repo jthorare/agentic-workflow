@@ -13,6 +13,7 @@ XDG_RUNTIME_DIR # per-user runtime dir (OS); sindri doctor reports it and masks 
 DISPLAY # the X11 session sets it; --init-launcher uses it to tell a GUI session from a headless box
 TERM_PROGRAM # the terminal sets it; aw-meta-launch --init-launcher picks the viewer by it
 WAYLAND_DISPLAY # the Wayland session sets it; --init-launcher uses it to tell a GUI session from a headless box
+SSH_CONNECTION # sshd sets it; setup.sh --with-sindri uses it to tell a desktop session from a remote one
 
 # Owned by another tool; the code only reports or forwards it.
 NODE_OPTIONS # Node's own option variable; sindri doctor checks it for --use-env-proxy

@@ -600,6 +600,17 @@ if [[ " $PROVIDERS " == *" claude "* ]]; then
   aw_claude_bypass "$CLAUDE_DIR/settings.json"
 fi
 
+# --- Sindri app (with --with-sindri; setup-once spec §9, SO-A7a): published right after the provider installs, as its own step,
+# then started detached when a desktop session exists (a failed publish stops setup; a start that doesn't answer fails it at the end).
+# The Onyx step below and the MCP register hint stay as they are until A7b ---
+SINDRI_APP_RC=0
+if [ "$WITH_SINDRI" = "1" ]; then
+  # shellcheck source=config/lib/setup-sindri-app-step.sh
+  source "$SCRIPT_DIR/config/lib/setup-sindri-app-step.sh"
+  aw_setup_sindri_app_publish "$SCRIPT_DIR" || exit 1
+  aw_setup_sindri_app_start "$SCRIPT_DIR" || SINDRI_APP_RC=1
+fi
+
 # --- Meta harness (opt-in: ./setup.sh --with-meta; owner decision 2026-10-14). After install-deps (its NativeAOT publish
 # needs clang and zlib) and after the provider install (its hooks merge into the settings that install copies from the
 # template). Each selected provider gets its own hooks: Claude Code the meta gates, Codex and Cursor the lane hooks for
@@ -708,6 +719,7 @@ case " $PROVIDERS " in *" claude "*)
   echo "Claude plugins:     github, superpowers, compound-engineering, playwright" ;;
 esac
 echo "Custom agents:      run ./setup.sh --install-agents to install lean agent types"
+if [ "$SINDRI_APP_RC" != "0" ]; then exit "$SINDRI_APP_RC"; fi
 # The meta step's failure (if any) comes last, after everything else has been installed.
 if [ "$WITH_META" = "1" ]; then aw_setup_meta_finish "$META_RC" || exit "$?"; fi
 # The Onyx step's failure (if any) comes last too. 3 is a skip with its warning already printed, not a failure.
