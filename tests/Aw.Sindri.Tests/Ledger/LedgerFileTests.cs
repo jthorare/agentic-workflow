@@ -32,10 +32,10 @@ public sealed class LedgerFileTests : IDisposable
         }
 
         // S1-D9 (engine spec §7.2): S1's two files, then the outbox at 3, then Sindri's own files from 4 up.
-        Assert.Equal(["1 events", "2 lease", "3 outbox_commands", "4 recipes", "5 temporal_event_id", "6 workflow_claims"],
+        Assert.Equal(["1 events", "2 lease", "3 outbox_commands", "4 recipes", "5 temporal_event_id", "6 workflow_claims", "7 pr_comment_marks"],
             LedgerDatabase.Migrations.Select(m => string.Create(CultureInfo.InvariantCulture, $"{m.Version} {m.Name}")), StringComparer.Ordinal);
         Assert.Equal(SqliteOutboxSchema.CreateMigration(3).Checksum, LedgerDatabase.Migrations[2].Checksum);
-        Assert.Equal(["events", "lease", "outbox_commands", "recipe_approvals", "recipes", "workflow_claims"], Tables(path));
+        Assert.Equal(["events", "lease", "outbox_commands", "recipe_approvals", "pr_comment_marks", "recipes", "workflow_claims"], Tables(path));
     }
 
     [Fact, Trait("Lane", "integration")]

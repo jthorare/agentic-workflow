@@ -23,8 +23,8 @@ states:
              next: "Assemble {item}'s PR hand-off: the evidence pack becomes the PR body." }
   freeze:  { kind: active, step: step.ship.freeze, timeout: { after: 1h, then: park },
              next: "Check that {item}'s proof, review and hand-off agree on one head, and freeze the hand-off." }
-  opening: { kind: active, step: step.ship.open, timeout: { after: 1d, then: park },
-             next: "Open {item}'s pull request from the frozen hand-off (or refuse it). Nothing reaches the forge by itself." }
+  opening: { kind: wait, waitFor: { event: pr.opened }, timeout: { after: 1h, then: park },
+             next: "Waiting for {item}'s pull request to open from the frozen hand-off." }
   return:  { kind: active, step: step.ship.return, timeout: { after: 1h, then: park },
              next: "Write why {item} goes back to build." }
   shipped:  { kind: terminal, outcome: resolved }
@@ -35,10 +35,11 @@ transitions:
   - { from: green, to: pack, on: step.completed, when: { outcome: green }, produces: [fact:green] }
   - { from: green, to: return, on: step.completed, when: { outcome: red }, produces: [fact:findings] }
   - { from: pack, to: freeze, on: step.completed, when: { outcome: packed }, produces: [fact:handoffDraft] }
-  - { from: freeze, to: opening, on: step.completed, when: { outcome: frozen }, produces: [fact:handoff] }
+  - { from: freeze, to: opening, on: step.completed, when: { outcome: frozen }, produces: [fact:handoff],
+      effects: [{ use: effect.pr.open, with: { handoff: { fact: fact:handoff }, workspace: { fact: fact:workspace } } }] }
   - { from: freeze, to: return, on: step.completed, when: { outcome: stale }, produces: [fact:findings] }
-  - { from: opening, to: shipped, on: step.completed, when: { any: [ { outcome: opened }, { outcome: updated } ] }, produces: [fact:pr] }
-  - { from: opening, to: refused, on: step.completed, when: { outcome: refused } }
+  - { from: opening, to: shipped, on: wait.satisfied, when: { any: [ { outcome: opened }, { outcome: updated } ] }, produces: [fact:pr] }
+  - { from: opening, to: refused, on: wait.satisfied, when: { outcome: refused } }
   - { from: return, to: returned, on: step.completed, when: { outcome: noted }, produces: [fact:returnNotes] }
 evals:
   - evals/workflow.ship/happy.jsonl

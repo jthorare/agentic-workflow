@@ -122,6 +122,27 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <ItemsControl x:Name="RecipeStatGroups" ItemsSource="{Binding StatGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="rec:RecipeStatGroup">
+                <StackPanel Spacing="4" Margin="0,8,0,0">
+                  <TextBlock Classes="eyebrow" Text="{Binding Heading}" />
+                  <ItemsControl ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="rec:RecipeStatLine">
+                        <Border Margin="0,0,0,4" AutomationProperties.Name="{Binding Label}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <Grid ColumnDefinitions="Auto,*" AutomationProperties.AccessibilityView="Raw">
+                            <TextBlock Classes="body muted" Text="{Binding Label}" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Classes="body-strong" Text="{Binding Value}" HorizontalAlignment="Right" TextWrapping="Wrap" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
       </Border>
       <!-- Everything a person does not need to read the workflow: the id, hash, version, urgency, name template, and each input's key and type. Closed until opened. -->

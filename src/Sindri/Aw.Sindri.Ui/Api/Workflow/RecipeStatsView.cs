@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Ui.Api.Workflow;
 
-/// <summary>GET /sindri/workflow/recipes/{id}/stats?window=&amp;hash= (API P12, E-24): one recipe's run figures. The per-state breakdown and the human-time figures are not read yet.</summary>
+/// <summary>GET /sindri/workflow/recipes/{id}/stats?window=&amp;hash= (API P12, E-24): one recipe's run figures.</summary>
 /// <param name="Recipe">The recipe id.</param>
 /// <param name="Hash">The hash the figures are scoped to, as asked; null for every version.</param>
 /// <param name="Window">'7d', '30d' or '90d'.</param>
@@ -14,7 +14,9 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="MedianSeconds">The typical run time in seconds; null when no run finished.</param>
 /// <param name="Tokens">The tokens the runs used.</param>
 /// <param name="BudgetHits">Runs that hit their budget.</param>
+/// <param name="HumanTime">Where a person came in and how long it took them.</param>
+/// <param name="ByState">One row per step.</param>
 /// <param name="Buckets">Four weekly buckets, oldest first.</param>
 /// <param name="AsOf">When the figures were counted.</param>
 internal sealed record RecipeStatsView(string Recipe, string? Hash, string Window, bool ChildOnly, int? Runs, int? Done, int? Failed, int? Cancelled, StatsOutcomesView? Outcomes, double? HumanRate,
-    long? MedianSeconds, StatsTokensView? Tokens, int? BudgetHits, IReadOnlyList<StatsBucketView>? Buckets, string? AsOf);
+    long? MedianSeconds, StatsTokensView? Tokens, int? BudgetHits, StatsHumanTimeView? HumanTime, IReadOnlyList<StateStatsView>? ByState, IReadOnlyList<StatsBucketView>? Buckets, string? AsOf);

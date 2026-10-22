@@ -1,3 +1,5 @@
+using Aw.Context.Core.Engine;
+
 namespace Aw.Context.Core.Ranking;
 
 /// <summary>Stage 5 of the query (spec §8.2): re-scores the fused items with the features. Pure.</summary>

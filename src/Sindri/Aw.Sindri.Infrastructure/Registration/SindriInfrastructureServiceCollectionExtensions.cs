@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -32,6 +33,7 @@ using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Worktrees;
 using Aw.Sindri.Infrastructure.Auth;
+using Aw.Sindri.Infrastructure.Forge;
 using Aw.Sindri.Infrastructure.BugFix;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
@@ -91,12 +93,13 @@ public static class SindriInfrastructureServiceCollectionExtensions
 
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services, Func<string, string?> environment) =>
         services.AddSingleton<IPackets>(_ => new AwPacketsTool(new ProcessToolRunner(), environment))
+            .AddSingleton<IForgeRepos>(sp => new GitForgeRepos(new ProcessToolRunner(), sp.GetRequiredService<IApprovedProfile>()))
             .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>().AddSingleton<IPacketFiles, DiskPacketFiles>().AddSingleton<IHoldoutStore, DiskHoldoutStore>().AddSingleton<ICommitText, GitCommitText>().AddSingleton<IArtifactFiles, DiskArtifactFiles>().AddSingleton<IPacketDirectory, DiskPacketDirectory>()
             .AddSingleton<IOwnerDecisions, PendingOwnerDecisions>()
             .AddSingleton<IFrozenPackets>(sp => new FrozenPacketRecords(Path.Combine(sp.GetRequiredService<SindriSettings>().StateDirectory, "packets")))
             .AddSingleton<ITrackerSource>(_ => new FileTrackerSource(environment("AW_SINDRI_TRACKER_DIR"))).AddSingleton<IChangeSource, GitChangeSource>();
 
-    /// <summary>The recipe store, approvals, claims and the worktree and script adapters the blocks use.</summary>
+    /// <summary>The recipe store, approvals, claims, the worktree and script adapters the blocks use, and the PR comment marks.</summary>
     private static IServiceCollection AddRecipeAdapters(this IServiceCollection services, Func<string, string?> environment) => services
             .AddSingleton<IRecipeReader, YamlRecipeReader>()
             .AddSingleton<IRecipeFiles, FileRecipeFiles>()
@@ -110,7 +113,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IClaimRefs, GitClaimRefs>()                // engine P6 unit (d): the claim's marker ref
             .AddSingleton<IScriptRuns>(_ => new BashScriptRuns(new ProcessToolRunner()))   // the prove station's before/after scripts
             .AddSingleton<ITrackedFiles, GitTrackedFiles>()          // the docs-sync scope's file list
-            .AddSingleton<IWorktrees, GitWorktrees>();              // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
+            .AddSingleton<IWorktrees, GitWorktrees>()               // per-run and phase worktrees (engine spec §6.5); nothing calls it until BS-10
+            .AddSingleton<IPrCommentMarks, SqlitePrCommentMarks>(); // the PR babysitter's comment marks (W26): pr_comment_marks in ledger.db
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
     {

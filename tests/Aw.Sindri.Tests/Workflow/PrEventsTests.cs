@@ -18,6 +18,7 @@ public sealed class PrEventsTests
         { "pr.restacked", "system:dispatcher", EventRoute.Causation, "restacked nothing conflict refused", "fact:restack" },
         { "pr.mergeResult", "system:dispatcher", EventRoute.Causation, "merged blocked headMoved", "fact:merge" },
         { "pr.docsMerged", "system:dispatcher", EventRoute.Causation, "merged pending none", "fact:docsMerge" },
+        { "pr.opened", "system:dispatcher", EventRoute.Causation, "opened updated refused", "fact:pr" },
         { "pr.stacked", "system:dispatcher", EventRoute.Causation, "opened updated rejected", "fact:docsPr" },
     };
 

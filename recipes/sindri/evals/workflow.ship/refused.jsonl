@@ -3,4 +3,4 @@
 {"trigger":{"kind":"step.completed","outcome":"green","outputs":{"fact:green":{"head":"abc123"}}},"expect":{"state":"pack"}}
 {"trigger":{"kind":"step.completed","outcome":"packed","outputs":{"fact:handoffDraft":{"head":"abc123"}}},"expect":{"state":"freeze"}}
 {"trigger":{"kind":"step.completed","outcome":"frozen","outputs":{"fact:handoff":{"hash":"h1"}}},"expect":{"state":"opening"}}
-{"trigger":{"kind":"step.completed","outcome":"refused"},"expect":{"state":"refused","outcome":"failed"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"refused"},"expect":{"state":"refused","outcome":"failed"}}

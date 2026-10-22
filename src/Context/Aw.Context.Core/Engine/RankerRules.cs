@@ -1,4 +1,3 @@
-using Aw.Context.Core.Ranking;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Engine;
@@ -13,7 +12,7 @@ internal static class RankerRules
     {
         Features = section?.Features ?? false,
         Rerank = section?.Rerank ?? false,
-        RerankTop = section?.RerankTop ?? RerankOrder.DefaultTop,
+        RerankTop = section?.RerankTop ?? RankerSettings.DefaultRerankTop,
         Weights = Weights(section?.Weights),
     };
 

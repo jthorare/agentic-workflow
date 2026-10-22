@@ -243,6 +243,7 @@ internal sealed partial class RunPageViewModel(ISindriApi api, CatalogViewModel 
         if (generation == _generation)
         {
             Show(line, recipe, children, runs);
+            await ReadWhatWentWrong(url, _failureAt, cancellationToken).ConfigureAwait(true);
         }
     }
 

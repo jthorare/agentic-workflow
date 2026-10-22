@@ -67,7 +67,7 @@ public sealed class RecipeSheetStatsTests
     [Fact]
     public async Task A_window_with_no_runs_says_so_instead_of_listing_zeros()
     {
-        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":0,"done":0,"failed":0,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"buckets":[],"asOf":null}""");
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":0,"done":0,"failed":0,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");
 
         var sheet = await Opened();
 
@@ -77,7 +77,7 @@ public sealed class RecipeSheetStatsTests
     [Fact]
     public async Task A_workflow_that_only_runs_inside_others_says_so()
     {
-        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":true,"runs":null,"done":null,"failed":null,"cancelled":null,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"buckets":[],"asOf":null}""");
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":true,"runs":null,"done":null,"failed":null,"cancelled":null,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");
 
         var sheet = await Opened();
 
@@ -92,6 +92,37 @@ public sealed class RecipeSheetStatsTests
         var sheet = await Opened();
 
         Assert.Equal((true, "Couldn't read how this workflow has run."), (sheet.IsShown, sheet.StatsNote));
+    }
+
+    [Fact]
+    public async Task The_groups_read_where_a_person_came_in_each_step_and_each_week_with_runs()
+    {
+        var sheet = await Opened();
+
+        Assert.Equal(["Where a person came in", "By step", "By week"], sheet.StatGroups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal([("Parks answered", "1 \u00b7 30m")], sheet.StatGroups[0].Lines.Select(l => (l.Label, l.Value)));   // why: escalations and takeovers are zero, so their lines are left out
+        Assert.Equal([("produce", "30m \u00b7 parked 1 (no progress)"), ("verify", "30m")], sheet.StatGroups[1].Lines.Select(l => (l.Label, l.Value)));
+        Assert.Equal([("Week of 29 Dec", "4 runs \u00b7 25% needed a person")], sheet.StatGroups[2].Lines.Select(l => (l.Label, l.Value)));   // why: the other three weeks have no runs
+    }
+
+    [Fact]
+    public async Task A_window_with_no_runs_has_no_groups()
+    {
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":0,"done":0,"failed":0,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");
+
+        var sheet = await Opened();
+
+        Assert.Empty(sheet.StatGroups);
+    }
+
+    [Fact]
+    public async Task A_step_says_its_gate_refusals_takeovers_and_escalations()
+    {
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":3,"done":3,"failed":0,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[{"state":"checks","medianSeconds":null,"parks":[],"escalations":[{"reason":"budget-hit","n":2}],"takeovers":1,"gateRefusals":{"refused":2,"evaluated":5}}],"buckets":[],"asOf":null}""");
+
+        var sheet = await Opened();
+
+        Assert.Equal([("checks", "escalated 2 (budget hit) \u00b7 taken over 1 \u00b7 gate refused 2 of 5")], sheet.StatGroups.Single().Lines.Select(l => (l.Label, l.Value)));
     }
 
     private static RouteAnswer Served(string body) => new(HttpStatusCode.OK, body);

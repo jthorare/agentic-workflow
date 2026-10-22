@@ -14,7 +14,7 @@ internal sealed partial class RunPageViewModel
 
     private void Show(InstanceDetail line, RecipeView? recipe, IReadOnlyDictionary<string, InstanceDetail> children, IReadOnlyList<InstanceSummary> runs)
     {
-        var graph = RunGraphBuilder.Build(line, recipe, children);
+        var graph = RunEndStates.Apply(RunGraphBuilder.Build(line, recipe, children));
         Layout = RunCanvasLayout.Of(graph, graph.Nodes.ToDictionary(n => n.Id, RunCardSizes.Of, StringComparer.Ordinal));
         var active = ActiveOf(graph);
         var stages = graph.Nodes.Where(n => n.Kind == RunNodeKind.Stage).ToList();
@@ -26,6 +26,7 @@ internal sealed partial class RunPageViewModel
         BranchesNote = graph.BranchesServed ? string.Empty : Labels.RunBranchesNotServed;
         OnChanged(nameof(HasBranchesNote));
         Header(line, graph, runs);
+        EndStates(line, graph, children);
         ShowRuns(runs, line.Address);
         Cards = cards;   // last of the drawn parts: the canvas redraws when the cards change, and reads the rest then
         _watched = new HashSet<string>([line.Address, .. children.Values.Select(c => c.Address), .. graph.Nodes.Select(n => n.ChildAddress).OfType<string>()], StringComparer.Ordinal);

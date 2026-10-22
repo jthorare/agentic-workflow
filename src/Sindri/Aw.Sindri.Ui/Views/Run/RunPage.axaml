@@ -61,6 +61,27 @@
         <TextBlock Classes="body" Text="{Binding ProblemText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ProblemText}" />
       </Border>
 
+      <!-- The end states (spec §8.5): what went wrong, in words, and what to do next (only what the server serves). -->
+      <StackPanel x:Name="RunEnding" IsVisible="{Binding HasEnded}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0" Spacing="8" MaxWidth="560">
+        <Border x:Name="RunFailure" IsVisible="{Binding HasFailure}" Classes="card" Padding="12" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" Background="{DynamicResource Brush.Surface2}">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="eyebrow" Text="{Binding FailureTitle}" AutomationProperties.Name="{Binding FailureTitle}" />
+            <TextBlock x:Name="RunFailureStep" Classes="body" FontWeight="SemiBold" Text="{Binding FailureStep}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FailureStep}" />
+            <TextBlock x:Name="RunFailureText" Classes="body subtle" Text="{Binding FailureText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FailureText}" />
+          </StackPanel>
+        </Border>
+        <ItemsControl x:Name="RunNextOptions" ItemsSource="{Binding NextOptions}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:RunNextOption">
+              <Button Click="OnNextOption" Content="{Binding Text}" AutomationProperties.Name="{Binding Text}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
       <TextBlock x:Name="RunBranchesNote" IsVisible="{Binding HasBranchesNote}" Text="{Binding BranchesNote}" Classes="caption subtle" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,16"
                  AutomationProperties.Name="{Binding BranchesNote}" />
 

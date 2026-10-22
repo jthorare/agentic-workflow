@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Recipes;
+using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Recipes;
 
@@ -11,6 +13,16 @@ internal sealed partial class RecipesPage : UserControl
     {
         InitializeComponent();
         AddHandler(RecipeRow.OpenEvent, OnOpen);
+    }
+
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == PageLayout.TierProperty && this.FindControl<Grid>("RecipesHeader") is { } header)
+        {
+            RecipeColumns.Apply(header, change.GetNewValue<PageTier>());
+        }
     }
 
     private RecipesPageViewModel? Page => DataContext as RecipesPageViewModel;

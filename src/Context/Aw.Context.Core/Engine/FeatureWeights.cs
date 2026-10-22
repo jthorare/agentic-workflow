@@ -1,4 +1,4 @@
-namespace Aw.Context.Core.Ranking;
+namespace Aw.Context.Core.Engine;
 
 /// <summary>The weight of each ranker feature ('context.ranker.weights', spec §8.2 step 5); they start equal, at 1. A weight of 0 turns its feature off.</summary>
 public sealed record FeatureWeights

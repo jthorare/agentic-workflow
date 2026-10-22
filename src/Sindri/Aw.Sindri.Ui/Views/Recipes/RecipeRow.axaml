@@ -9,7 +9,7 @@
        focus border (item-row), not the adorner. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <Border x:Name="RecipeRowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="2*,70,170,80,90,100,60,90,90" VerticalAlignment="Center">
+    <Grid x:Name="RecipeRowGrid" ColumnDefinitions="2*,70,170,80,90,100,60,90,90" VerticalAlignment="Center">
       <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,8,0">
         <Button x:Name="RecipeRowOpen" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding AccessibleName}">
           <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />

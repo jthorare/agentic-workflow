@@ -112,6 +112,9 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_claims' (engine spec §5.9; engine P6 unit (d)); reads of an older file find no claim.</summary>
     internal const int ClaimsVersion = 6;
 
+    /// <summary>The first migration with 'pr_comment_marks' (PR babysitter spec §5.4, W26); reads of an older file find no mark.</summary>
+    internal const int PrCommentMarksVersion = 7;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;

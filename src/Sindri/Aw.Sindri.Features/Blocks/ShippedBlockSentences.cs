@@ -19,6 +19,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["effect.pr.create-stacked"] = "Opens the documentation pull request on top of the code pull request",
         ["effect.pr.merge"] = "Merges the pull request once you say so, if its code has not changed",
         ["effect.pr.merge-docs"] = "Merges the documentation pull request once you say so",
+        ["effect.pr.open"] = "Opens the pull request with its proof, or updates the one already open",
         ["effect.pr.push"] = "Pushes the fix to the pull request without overwriting anyone else's commits",
         ["effect.pr.record"] = "Adds a line about the new proof or the docs to the merge record",
         ["effect.pr.reply"] = "Answers a review comment, reacts to it, or holds it for you",

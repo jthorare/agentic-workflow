@@ -25,6 +25,9 @@ internal sealed partial class RecipeSheetViewModel
     /// <summary>The figures, in order; empty before the first answer and when there is a note instead.</summary>
     public IReadOnlyList<RecipeStatLine> StatLines { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>The groups after the figures: where a person came in, the steps and the weeks; empty when there is nothing to say.</summary>
+    public IReadOnlyList<RecipeStatGroup> StatGroups { get; private set => Set(ref field, value); } = [];
+
     /// <summary>A line instead of the figures (no runs, only runs inside others, or the figures can't be read); empty when the figures show.</summary>
     public string StatsNote { get; private set { Set(ref field, value); OnChanged(nameof(HasStatsNote)); } } = string.Empty;
 
@@ -62,7 +65,7 @@ internal sealed partial class RecipeSheetViewModel
 
         if (!answer.IsSuccess)
         {
-            (StatLines, StatsNote) = ([], Labels.StatsUnavailable);
+            (StatLines, StatGroups, StatsNote) = ([], [], Labels.StatsUnavailable);
             return;
         }
 
@@ -73,15 +76,15 @@ internal sealed partial class RecipeSheetViewModel
     {
         if (stats.ChildOnly)
         {
-            (StatLines, StatsNote) = ([], Labels.StatsChildOnlyNote);
+            (StatLines, StatGroups, StatsNote) = ([], [], Labels.StatsChildOnlyNote);
         }
         else if ((stats.Runs ?? 0) == 0)
         {
-            (StatLines, StatsNote) = ([], Labels.StatsNoRuns);
+            (StatLines, StatGroups, StatsNote) = ([], [], Labels.StatsNoRuns);
         }
         else
         {
-            (StatLines, StatsNote) = (Lines(stats), string.Empty);
+            (StatLines, StatGroups, StatsNote) = (Lines(stats), RecipeStatGroup.Of(stats), string.Empty);
         }
     }
 
@@ -114,5 +117,5 @@ internal sealed partial class RecipeSheetViewModel
         }
     }
 
-    private void ClearStats() => (StatLines, StatsNote, _shownHash) = ([], string.Empty, string.Empty);
+    private void ClearStats() => (StatLines, StatGroups, StatsNote, _shownHash) = ([], [], string.Empty, string.Empty);
 }

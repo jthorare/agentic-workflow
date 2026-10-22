@@ -53,5 +53,9 @@ internal static class RecipeEvents
     public static EventDescriptor PrStacked { get; } = new(
         EventKind.From("pr.stacked"), Dispatcher, EventRoute.Causation, Outcomes("opened", "updated", "rejected"), [FactKey.From("fact:docsPr")]);
 
+    /// <summary>'pr.opened', answering 'effect.pr.open'.</summary>
+    public static EventDescriptor PrOpened { get; } = new(
+        EventKind.From("pr.opened"), Dispatcher, EventRoute.Causation, Outcomes("opened", "updated", "refused"), [FactKey.From("fact:pr")]);
+
     private static OutcomeName[] Outcomes(params string[] names) => [.. names.Select(OutcomeName.From)];
 }

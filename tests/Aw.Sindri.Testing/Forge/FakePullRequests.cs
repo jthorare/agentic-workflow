@@ -17,8 +17,29 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     private readonly Dictionary<string, string> _tips = new(StringComparer.Ordinal);
     private readonly HashSet<string> _delivered = new(StringComparer.Ordinal);
 
+    /// <summary>Gets or sets an error that Find, Open, Update and PushBranch answer when set.</summary>
+    public Error? Failure { get; set; }
+
+    /// <summary>Gets the requests Open received, in order.</summary>
+    public IList<OpenPull> Opened { get; } = [];
+
+    /// <summary>Gets the branch pushes PushBranch received, in order.</summary>
+    public IList<PullBranchPush> Pushed { get; } = [];
+
+    /// <summary>Gets or sets what PushBranch answers when the lease holds.</summary>
+    public PullPushOutcome PushOutcome { get; set; } = PullPushOutcome.Pushed;
+
+    /// <summary>Gets the (link, title, body) triples Update received, in order.</summary>
+    public IList<(string Link, string? Title, string? Body)> Updated { get; } = [];
+
     /// <summary>Gets the operations called, in order.</summary>
     public IList<string> Calls { get; } = [];
+
+    /// <summary>Gets the pushes asked for, in order.</summary>
+    public IList<PullPush> Pushes { get; } = [];
+
+    /// <summary>Gets the re-runs asked for (link and commit), in order.</summary>
+    public IList<(string Link, string Sha)> Reruns { get; } = [];
 
     /// <summary>Gets or sets the error <see cref="Self"/> answers, or null for the login.</summary>
     public Error? SelfError { get; set; }
@@ -48,11 +69,28 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         return pull;
     }
 
+    /// <summary>Puts an open pull request on the fake forge, as if the request had opened it.</summary>
+    /// <param name="request">What it was opened with.</param>
+    /// <returns>The pull request.</returns>
+    public OpenedPull Seed(OpenPull request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var pull = Add(request.Repo, request.Head, request.HeadSha);
+        pull.Title = request.Title;
+        pull.Body = request.Body;
+        pull.Draft = request.Draft;
+        pull.Labels = [.. request.Labels ?? []];
+        pull.Marker = request.Marker;
+        pull.Base = request.Base;
+        _tips[$"{request.Repo.Host}/{request.Repo.Owner}/{request.Repo.Name}#{request.Head}"] = request.HeadSha;
+        return new OpenedPull(pull.Link, pull.Number);
+    }
+
     /// <inheritdoc />
     public ValueTask<Result<PullView>> Get(string link, CancellationToken cancellationToken)
     {
         Calls.Add("Get");
-        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, Mergeable: true, ReviewDecision: null, UnresolvedThreads: p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : PullChecksState.None, p.HeadSha, [.. p.FailingChecks]), p.Labels, p.Base)));
+        return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, p.Mergeable, p.ReviewDecision, p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), p.Checks ?? new PullChecks(p.FailingChecks.Count > 0 ? PullChecksState.Failing : p.ChecksState, p.ChecksSha ?? p.HeadSha, [.. p.FailingChecks]), p.Labels, p.Base)));
     }
 
     /// <inheritdoc />
@@ -67,6 +105,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         ArgumentNullException.ThrowIfNull(push);
         Calls.Add("Push");
+        Pushes.Add(push);
         return Done(Locate(push.Link).Map(p =>
         {
             if (p.HeadSha != push.LeaseSha)
@@ -83,6 +122,7 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     public ValueTask<Result<int>> RerunChecks(string link, string sha, CancellationToken cancellationToken)
     {
         Calls.Add("RerunChecks");
+        Reruns.Add((link, sha));
         return Done(Locate(link).Map(_ => 0));
     }
 
@@ -160,6 +200,12 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         ArgumentNullException.ThrowIfNull(push);
         Calls.Add("PushBranch");
+        Pushed.Add(push);
+        if (Failure is { } failure)
+        {
+            return Done<PullPushOutcome>(failure);
+        }
+
         if (Refuse(push.Repo.Host) is { } refused)
         {
             return Done<PullPushOutcome>(refused);
@@ -172,6 +218,11 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
             return Done(Results.Success(PullPushOutcome.HeadMoved));
         }
 
+        if (PushOutcome != PullPushOutcome.Pushed)
+        {
+            return Done(Results.Success(PushOutcome));
+        }
+
         _tips[key] = push.Sha;
         return Done(Results.Success(PullPushOutcome.Pushed));
     }
@@ -181,6 +232,11 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         ArgumentNullException.ThrowIfNull(query);
         Calls.Add("Find");
+        if (Failure is { } failure)
+        {
+            return Done<OpenedPull?>(failure);
+        }
+
         if (Refuse(query.Repo.Host) is { } refused)
         {
             return Done<OpenedPull?>(refused);
@@ -200,20 +256,20 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
             return Done<OpenedPull>(refused);
         }
 
-        var pull = Add(request.Repo, request.Head, request.HeadSha);
-        pull.Title = request.Title;
-        pull.Body = request.Body;
-        pull.Draft = request.Draft;
-        pull.Labels = [.. request.Labels ?? []];
-        pull.Marker = request.Marker;
-        pull.Base = request.Base;
-        return Done(Results.Success(new OpenedPull(pull.Link, pull.Number)));
+        Opened.Add(request);
+        return Done(Results.Success(Seed(request)));
     }
 
     /// <inheritdoc />
     public ValueTask<Result<Unit>> Update(string link, string? title, string? body, CancellationToken cancellationToken)
     {
         Calls.Add("Update");
+        if (Failure is { } failure)
+        {
+            return Done<Unit>(failure);
+        }
+
+        Updated.Add((link, title, body));
         return Done(Locate(link).Map(p =>
         {
             p.Title = title ?? p.Title;

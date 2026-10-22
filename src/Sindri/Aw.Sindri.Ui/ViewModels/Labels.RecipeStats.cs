@@ -88,4 +88,51 @@ internal static partial class Labels
     /// <param name="n">The count.</param>
     /// <returns>"12,400".</returns>
     internal static string StatCount(long n) => n.ToString("N0", CultureInfo.InvariantCulture);
+
+    /// <summary>The heading over where a person came into the runs.</summary>
+    internal const string StatsHumanHeading = "Where a person came in";
+
+    /// <summary>The heading over the per-step figures.</summary>
+    internal const string StatsStepsHeading = "By step";
+
+    /// <summary>The heading over the weekly figures.</summary>
+    internal const string StatsWeeksHeading = "By week";
+
+    /// <summary>The label of the answered-parks line.</summary>
+    internal const string StatParksAnswered = "Parks answered";
+
+    /// <summary>The label of the decided-escalations line.</summary>
+    internal const string StatEscalationsDecided = "Escalations decided";
+
+    /// <summary>The label of the takeovers line.</summary>
+    internal const string StatTakeovers = "Takeovers";
+
+    /// <summary>A count and the typical wait for it.</summary>
+    /// <param name="n">How many times.</param>
+    /// <param name="seconds">The typical wait, or null.</param>
+    /// <returns>"3 · 30m", or just "3" when there is no wait.</returns>
+    internal static string StatCountAndWait(int n, long? seconds) => seconds is { } s ? $"{StatCount(n)} \u00b7 {Duration(s)}" : StatCount(n);
+
+    /// <summary>One step's figures in words.</summary>
+    /// <param name="parts">The parts that apply (the typical time, the parks, the escalations, the takeovers, the gate), already in words.</param>
+    /// <returns>The parts joined, or the none word when there are none.</returns>
+    internal static string StatStepLine(IReadOnlyList<string> parts) => parts.Count == 0 ? StatNone : string.Join(" \u00b7 ", parts);
+
+    /// <summary>A park or escalation reason in words.</summary>
+    /// <param name="reason">The reason as served.</param>
+    /// <returns>"no progress" for "no-progress".</returns>
+    internal static string StatReason(string reason) => reason.Replace('-', ' ');
+
+    /// <summary>A week's label.</summary>
+    /// <param name="weekStart">The Monday as served, yyyy-MM-dd.</param>
+    /// <returns>"Week of 29 Dec"; a date this build can't read is shown as served.</returns>
+    internal static string StatWeek(string weekStart) =>
+        "Week of " + (DateOnly.TryParseExact(weekStart, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day) ? day.ToString("d MMM", CultureInfo.InvariantCulture) : weekStart);
+
+    /// <summary>A week's figures in words.</summary>
+    /// <param name="runs">Runs that started that week.</param>
+    /// <param name="humanRate">The share that needed a person, or null.</param>
+    /// <returns>"4 runs · 25% needed a person".</returns>
+    internal static string StatWeekLine(int runs, double? humanRate) =>
+        $"{StatCount(runs)} {(runs == 1 ? "run" : "runs")}" + (humanRate is { } rate ? $" \u00b7 {Percent(rate)} needed a person" : string.Empty);
 }

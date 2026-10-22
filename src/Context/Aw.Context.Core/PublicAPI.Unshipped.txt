@@ -6400,26 +6400,26 @@ Aw.Context.Core.Engine.RankerSettings.Rerank.get -> bool
 Aw.Context.Core.Engine.RankerSettings.Rerank.init -> void
 Aw.Context.Core.Engine.RankerSettings.RerankTop.get -> int
 Aw.Context.Core.Engine.RankerSettings.RerankTop.init -> void
-Aw.Context.Core.Engine.RankerSettings.Weights.get -> Aw.Context.Core.Ranking.FeatureWeights!
+Aw.Context.Core.Engine.RankerSettings.Weights.get -> Aw.Context.Core.Engine.FeatureWeights!
 Aw.Context.Core.Engine.RankerSettings.Weights.init -> void
 Aw.Context.Core.Eval.Backtest.Arm.RankerFeatures = 9 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.RankerRerank = 10 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.RankerRrf = 8 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Ranking.FeatureRanker
-Aw.Context.Core.Ranking.FeatureWeights
-Aw.Context.Core.Ranking.FeatureWeights.<Clone>$() -> Aw.Context.Core.Ranking.FeatureWeights!
-Aw.Context.Core.Ranking.FeatureWeights.CascadeDistance.get -> double
-Aw.Context.Core.Ranking.FeatureWeights.CascadeDistance.init -> void
-Aw.Context.Core.Ranking.FeatureWeights.EdgeType.get -> double
-Aw.Context.Core.Ranking.FeatureWeights.EdgeType.init -> void
-Aw.Context.Core.Ranking.FeatureWeights.Equals(Aw.Context.Core.Ranking.FeatureWeights? other) -> bool
-Aw.Context.Core.Ranking.FeatureWeights.FeatureWeights() -> void
-Aw.Context.Core.Ranking.FeatureWeights.Provenance.get -> double
-Aw.Context.Core.Ranking.FeatureWeights.Provenance.init -> void
-Aw.Context.Core.Ranking.FeatureWeights.Recency.get -> double
-Aw.Context.Core.Ranking.FeatureWeights.Recency.init -> void
-Aw.Context.Core.Ranking.FeatureWeights.Supersession.get -> double
-Aw.Context.Core.Ranking.FeatureWeights.Supersession.init -> void
+Aw.Context.Core.Engine.FeatureWeights
+Aw.Context.Core.Engine.FeatureWeights.<Clone>$() -> Aw.Context.Core.Engine.FeatureWeights!
+Aw.Context.Core.Engine.FeatureWeights.CascadeDistance.get -> double
+Aw.Context.Core.Engine.FeatureWeights.CascadeDistance.init -> void
+Aw.Context.Core.Engine.FeatureWeights.EdgeType.get -> double
+Aw.Context.Core.Engine.FeatureWeights.EdgeType.init -> void
+Aw.Context.Core.Engine.FeatureWeights.Equals(Aw.Context.Core.Engine.FeatureWeights? other) -> bool
+Aw.Context.Core.Engine.FeatureWeights.FeatureWeights() -> void
+Aw.Context.Core.Engine.FeatureWeights.Provenance.get -> double
+Aw.Context.Core.Engine.FeatureWeights.Provenance.init -> void
+Aw.Context.Core.Engine.FeatureWeights.Recency.get -> double
+Aw.Context.Core.Engine.FeatureWeights.Recency.init -> void
+Aw.Context.Core.Engine.FeatureWeights.Supersession.get -> double
+Aw.Context.Core.Engine.FeatureWeights.Supersession.init -> void
 Aw.Context.Core.Ranking.RankFeatures
 Aw.Context.Core.Ranking.RankerMode
 Aw.Context.Core.Ranking.RankerMode.Features = 1 -> Aw.Context.Core.Ranking.RankerMode
@@ -6441,26 +6441,27 @@ Aw.Context.Core.Ranking.RecordSignals.RecordSignals(int? CascadeDistance, Aw.Con
 Aw.Context.Core.Ranking.RecordSignals.Superseded.get -> bool
 Aw.Context.Core.Ranking.RecordSignals.Superseded.init -> void
 Aw.Context.Core.Ranking.RerankOrder
+const Aw.Context.Core.Engine.RankerSettings.DefaultRerankTop = 30 -> int
 const Aw.Context.Core.Engine.RankerSettings.MaxRerankTop = 50 -> int
-const Aw.Context.Core.Ranking.FeatureWeights.MaxWeight = 10 -> double
+const Aw.Context.Core.Engine.FeatureWeights.MaxWeight = 10 -> double
 const Aw.Context.Core.Ranking.RankFeatures.RecencyHalfLifeDays = 90 -> double
 const Aw.Context.Core.Ranking.RerankOrder.DefaultTop = 30 -> int
 override Aw.Context.Core.Engine.RankerSettings.Equals(object? obj) -> bool
 override Aw.Context.Core.Engine.RankerSettings.GetHashCode() -> int
 override Aw.Context.Core.Engine.RankerSettings.ToString() -> string!
-override Aw.Context.Core.Ranking.FeatureWeights.Equals(object? obj) -> bool
-override Aw.Context.Core.Ranking.FeatureWeights.GetHashCode() -> int
-override Aw.Context.Core.Ranking.FeatureWeights.ToString() -> string!
+override Aw.Context.Core.Engine.FeatureWeights.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.FeatureWeights.GetHashCode() -> int
+override Aw.Context.Core.Engine.FeatureWeights.ToString() -> string!
 override Aw.Context.Core.Ranking.RecordSignals.Equals(object? obj) -> bool
 override Aw.Context.Core.Ranking.RecordSignals.GetHashCode() -> int
 override Aw.Context.Core.Ranking.RecordSignals.ToString() -> string!
 static Aw.Context.Core.Engine.RankerSettings.operator !=(Aw.Context.Core.Engine.RankerSettings? left, Aw.Context.Core.Engine.RankerSettings? right) -> bool
 static Aw.Context.Core.Engine.RankerSettings.operator ==(Aw.Context.Core.Engine.RankerSettings? left, Aw.Context.Core.Engine.RankerSettings? right) -> bool
 static Aw.Context.Core.Eval.Backtest.Arms.Ranker.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.Arm>!
-static Aw.Context.Core.Ranking.FeatureRanker.Apply(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! items, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Ranking.RecordSignals!>! signals, Aw.Context.Core.Ranking.FeatureWeights! weights, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
-static Aw.Context.Core.Ranking.FeatureRanker.Boost(Aw.Context.Core.Ranking.RecordSignals! signals, Aw.Context.Core.Ranking.FeatureWeights! weights, System.DateTimeOffset now) -> double
-static Aw.Context.Core.Ranking.FeatureWeights.operator !=(Aw.Context.Core.Ranking.FeatureWeights? left, Aw.Context.Core.Ranking.FeatureWeights? right) -> bool
-static Aw.Context.Core.Ranking.FeatureWeights.operator ==(Aw.Context.Core.Ranking.FeatureWeights? left, Aw.Context.Core.Ranking.FeatureWeights? right) -> bool
+static Aw.Context.Core.Ranking.FeatureRanker.Apply(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! items, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Ranking.RecordSignals!>! signals, Aw.Context.Core.Engine.FeatureWeights! weights, System.DateTimeOffset now) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
+static Aw.Context.Core.Ranking.FeatureRanker.Boost(Aw.Context.Core.Ranking.RecordSignals! signals, Aw.Context.Core.Engine.FeatureWeights! weights, System.DateTimeOffset now) -> double
+static Aw.Context.Core.Engine.FeatureWeights.operator !=(Aw.Context.Core.Engine.FeatureWeights? left, Aw.Context.Core.Engine.FeatureWeights? right) -> bool
+static Aw.Context.Core.Engine.FeatureWeights.operator ==(Aw.Context.Core.Engine.FeatureWeights? left, Aw.Context.Core.Engine.FeatureWeights? right) -> bool
 static Aw.Context.Core.Ranking.RankFeatures.Cascade(int? distance) -> double
 static Aw.Context.Core.Ranking.RankFeatures.Edge(Aw.Context.Core.Graph.EdgeType? edge) -> double
 static Aw.Context.Core.Ranking.RankFeatures.Recency(System.DateTimeOffset? linked, System.DateTimeOffset now) -> double

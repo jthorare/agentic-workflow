@@ -6,7 +6,7 @@ namespace Aw.Context.Core.Ranking;
 public static class RerankOrder
 {
     /// <summary>The most items the model is asked to order.</summary>
-    public const int DefaultTop = 30;
+    public const int DefaultTop = Engine.RankerSettings.DefaultRerankTop;
 
     /// <summary>Reads a JSON array of the numbers 1..<paramref name="asked"/>, best first, e.g. [3,1,2].</summary>
     /// <param name="answer">The model's text (untrusted).</param>
