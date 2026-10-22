@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.Blocks.Gate;
+using Aw.Sindri.Testing.Forge;
 using Aw.Sindri.Testing.Workflow;
 
 namespace Aw.Sindri.Tests.Workflow.Blocks.Contracts;
@@ -22,7 +23,7 @@ public sealed class PrBaseIsDefaultGateContract : BlockContract
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new PrBaseIsDefaultGate(new FakeDefaultBranch()).Evaluate(
+        _ = await new PrBaseIsDefaultGate(new FakePullRequests(["github.com"])).Evaluate(
             new GateContext(BlockId.From("gate.pr.base-is-default"), new Dictionary<string, JsonElement>(StringComparer.Ordinal), new Dictionary<FactKey, JsonElement>(), Threshold: null),
             cancellationToken);
 }

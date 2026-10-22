@@ -214,5 +214,5 @@ file static class EffectPortRegistrations
         .AddSingleton<Core.Workflow.Engine.Runtime.IInstanceLiveness>(new FakeInstanceLiveness())
         .AddSingleton<Core.Workflow.Engine.Runtime.IFactContents>(new InMemoryFactStore())
         .AddSingleton<Core.Workflow.Engine.Effects.IDeskNotices>(new InMemoryDeskNotices())
-        .AddSingleton<Core.Workflow.Engine.Runtime.IDefaultBranch>(new FakeDefaultBranch());
+        .AddSingleton<Core.Forge.IPullRequests>(new Testing.Forge.FakePullRequests([]));
 }

@@ -23,6 +23,9 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     /// <summary>Gets the pull requests, with what Open and Update gave them.</summary>
     public IReadOnlyList<FakePull> Pulls => _pulls;
 
+    /// <summary>Gets or sets the default branch the fake answers for any repository on an allowed host.</summary>
+    public string DefaultBranchName { get; set; } = "main";
+
     /// <summary>Adds an open pull request.</summary>
     /// <param name="repo">The repository.</param>
     /// <param name="head">The head branch.</param>
@@ -41,6 +44,14 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
     {
         Calls.Add("Get");
         return Done(Locate(link).Map(p => new PullView(p.Link, p.State, p.HeadSha, Mergeable: true, ReviewDecision: null, UnresolvedThreads: p.Threads.Count(static t => t.Kind == PullCommentKind.Thread && !t.Resolved), new PullChecks(PullChecksState.None, p.HeadSha, []))));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<string>> DefaultBranch(PullRepo repo, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        Calls.Add("DefaultBranch");
+        return Done(Refuse(repo.Host) is { } refused ? refused : Results.Success(DefaultBranchName));
     }
 
     /// <inheritdoc />
