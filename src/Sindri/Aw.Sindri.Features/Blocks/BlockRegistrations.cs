@@ -55,6 +55,7 @@ internal static class BlockRegistrations
         .AddEffect<ClaimRefEffect>()      // engine P6 unit (d)
         .AddEffect<NotifyDeskEffect>()    // engine P6 unit (c)
         .AddEffect<PrMergeEffect>()       // PB-E: the merge, expected-head checked
+        .AddEffect<PrMergeDocsEffect>()   // PB-E: the docs PR, retargeted and merged after the click (BD9)
         .AddEffect<PrReplyEffect>()       // PB-E: replies, reactions and marks
         .AddEvent(RecipeEvents.ItemRouted)
         .AddEvent(RecipeEvents.ClaimCreated)
@@ -220,7 +221,6 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(PrEffects.RerunChecks)
         .AddBlockDescriptor(PrEffects.Restack)
         .AddBlockDescriptor(PrEffects.CreateStacked)
-        .AddBlockDescriptor(PrEffects.MergeDocs)
         .AddBlockDescriptor(PrInputs.Context)
         .AddBlockDescriptor(PrInputs.PhasePacket)
         .AddBlockDescriptor(PrInputs.HandoffNote);

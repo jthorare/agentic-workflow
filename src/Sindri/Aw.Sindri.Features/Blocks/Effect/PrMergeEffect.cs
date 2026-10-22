@@ -41,7 +41,7 @@ internal sealed class PrMergeEffect(IPullRequests pulls, IFactContents facts, IA
             return WorkflowErrors.NoRuntime.With($"effect.pr.merge of {context.Instance} needs the pull request's link ('pr') and the head the snapshot saw ('at': headSha)");
         }
 
-        var method = await Method(context, cancellationToken).ConfigureAwait(false);
+        var method = await Method(context, profile, cancellationToken).ConfigureAwait(false);
         if (method.IsError)
         {
             return method.Error;
@@ -59,7 +59,8 @@ internal sealed class PrMergeEffect(IPullRequests pulls, IFactContents facts, IA
         _ => "blocked",   // a status this build doesn't know is not a merge
     });
 
-    private async ValueTask<Result<PullMergeMethod>> Method(EffectContext context, CancellationToken cancellationToken)
+    /// <summary>The merge method: the recipe's 'method' argument, else the approved profile's, else squash. Shared with 'effect.pr.merge-docs'.</summary>
+    internal static async ValueTask<Result<PullMergeMethod>> Method(EffectContext context, IApprovedProfile profile, CancellationToken cancellationToken)
     {
         var named = context.Arguments.TryGetValue("method", out var literal) ? PrReplyFacts.Text(literal) : null;
         if (named is null)
