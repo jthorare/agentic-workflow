@@ -25,6 +25,9 @@ public sealed class FakePull(PullRepo repo, int number, string head, string head
     /// <summary>Gets or sets where the pull request is in its life.</summary>
     public PullState State { get; set; } = PullState.Open;
 
+    /// <summary>Gets or sets the base branch.</summary>
+    public string Base { get; set; } = "main";
+
     /// <summary>Gets or sets the title.</summary>
     public string Title { get; set; } = string.Empty;
 

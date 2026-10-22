@@ -196,6 +196,21 @@ public sealed class FakePullRequests(IEnumerable<string> hosts) : IPullRequests
         }));
     }
 
+    /// <summary>Retargets a pull request onto another base branch. Engine's 'IPullRequests.Retarget' has this signature; until it lands the effect and this fake agree on it by name.</summary>
+    /// <param name="link">The pull request's link.</param>
+    /// <param name="newBase">The new base branch.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success, or the error.</returns>
+    public ValueTask<Result<Unit>> Retarget(string link, string newBase, CancellationToken cancellationToken)
+    {
+        Calls.Add("Retarget");
+        return Done(Locate(link).Map(p =>
+        {
+            p.Base = newBase;
+            return Unit.Value;
+        }));
+    }
+
     private PullDelivery Deliver(string key) => _delivered.Add(key) ? PullDelivery.Delivered : PullDelivery.AlreadyDelivered;
 
     private static ValueTask<Result<T>> Done<T>(Result<T> result) => ValueTask.FromResult(result);

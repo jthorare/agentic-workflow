@@ -15828,3 +15828,25 @@ Aw.Sindri.Core.Forge.IPullRequests.Merge(Aw.Sindri.Core.Forge.PullMerge! request
 Aw.Sindri.Core.Forge.IPullRequests.Reply(Aw.Sindri.Core.Forge.PullReply! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullDelivery>!>
 Aw.Sindri.Core.Forge.IPullRequests.React(Aw.Sindri.Core.Forge.PullReaction! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullDelivery>!>
 Aw.Sindri.Core.Forge.IPullRequests.PushBranch(Aw.Sindri.Core.Forge.PullBranchPush! push, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Forge.PullPushOutcome>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.IWorkspaceRebase
+Aw.Sindri.Core.Workflow.Engine.Effects.IWorkspaceRebase.Rebase(string! workspace, string! onto, string? oldBase, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome!>!>
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus.Rebased = 1 -> Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus.Conflict = 2 -> Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus.Nothing = 3 -> Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome!
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Status.get -> Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Status.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.NewHead.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.NewHead.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Conflicts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Conflicts.init -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus Status, out string? NewHead, out System.Collections.Generic.IReadOnlyList<string!>! Conflicts) -> void
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Equals(Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.RebaseOutcome(Aw.Sindri.Core.Workflow.Engine.Effects.RebaseStatus Status, string? NewHead, System.Collections.Generic.IReadOnlyList<string!>! Conflicts) -> void
+override Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.operator !=(Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome? left, Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome.operator ==(Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome? left, Aw.Sindri.Core.Workflow.Engine.Effects.RebaseOutcome? right) -> bool
