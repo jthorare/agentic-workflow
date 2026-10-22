@@ -96,6 +96,21 @@ public sealed class DesignChecksTests
     }
 
     [Fact]
+    public void A_fix_signal_that_runs_at_base_and_head_names_a_script_inside_the_workspace()
+    {
+        const string Signal = """[{"item":"AC-1","kind":"test","statement":"returns 410","runs":"base+head"%SCRIPT%}]""";
+        var none = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", string.Empty, StringComparison.Ordinal)));
+        var relative = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", ",\"script\":\"proofs/ac-1.sh\"", StringComparison.Ordinal)));
+        var outside = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", ",\"script\":\"../ac-1.sh\"", StringComparison.Ordinal)));
+        var rooted = Check((_, d) => d["signals"] = JsonNode.Parse(Signal.Replace("%SCRIPT%", ",\"script\":\"/tmp/ac-1.sh\"", StringComparison.Ordinal)));
+
+        Assert.Equal(["DSN-ACC-001"], Failed(none), StringComparer.Ordinal);
+        Assert.Empty(Failed(relative));
+        Assert.Equal(["DSN-ACC-001"], Failed(outside), StringComparer.Ordinal);
+        Assert.Equal(["DSN-ACC-001"], Failed(rooted), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public void An_unmeasurable_signal_is_refused_unless_it_carries_a_number_or_a_reference()
     {
         var vague = Check((_, d) => d["signals"]![0]!["statement"] = "The page feels fast and clean.");
