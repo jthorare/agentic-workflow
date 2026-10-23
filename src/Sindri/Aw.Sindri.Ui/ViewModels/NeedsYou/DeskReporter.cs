@@ -2,6 +2,7 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
@@ -10,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// report is sent once and never retried by the app. A press while a report for the same instance is in flight does nothing; a refusal
 /// leaves it pressable (the user may press again).
 /// </summary>
-internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl)
+internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher? launcher = null)
 {
     private const string AnswersKey = "fact:answers";
     private readonly HashSet<string> _inFlight = new(StringComparer.Ordinal);
@@ -34,7 +35,21 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl)
         var complete = read.Value.Current.Status.Commands.FirstOrDefault(c => c.Verb == StatusVerb.Complete);
         var recipe = await api.Recipe(url, read.Value.Recipe.Id, hash: null, CancellationToken.None).ConfigureAwait(true);
         var state = recipe.IsSuccess ? recipe.Value.States.FirstOrDefault(s => string.Equals(s.State, read.Value.Current.State, StringComparison.Ordinal)) : null;
-        return new DeskTarget(instanceId, desk.Run, complete, state?.Why, OutcomeText(state, "approve"), OutcomeText(state, "revise"), desk.Recommended);
+        var card = read.Value.Facts.Any(f => string.Equals(f.Key, PrStatusReader.Key, StringComparison.Ordinal)) ? await MergeCard(url, instanceId).ConfigureAwait(true) : null;
+        return new DeskTarget(instanceId, desk.Run, complete, state?.Why, OutcomeText(state, "approve"), OutcomeText(state, "revise"), desk.Recommended, card);
+    }
+
+    // The merge stop's pull request, when the instance lists it and it reads; a fact that cannot be read leaves the card out, never the request.
+    private async Task<MergeCardViewModel?> MergeCard(Uri url, string instanceId)
+    {
+        var fact = await api.InstanceFact(url, instanceId, PrStatusReader.Key, CancellationToken.None).ConfigureAwait(true);
+        if (fact.IsError)
+        {
+            return null;
+        }
+
+        var status = PrStatusReader.Of(fact.Value);
+        return status.IsSuccess ? new MergeCardViewModel(status.Value, launcher) : null;
     }
 
     // What the state says an outcome does: the outcome named exactly, or (for send back) the first one that starts with the word, as the recipe words it.

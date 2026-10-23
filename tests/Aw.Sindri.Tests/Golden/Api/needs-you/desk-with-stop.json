@@ -24,7 +24,8 @@
       "cli": "sindri workflow status T-3/step/1",
       "stop": {
         "n": 2,
-        "of": 3
+        "of": 3,
+        "state": "checks"
       },
       "timeout": {
         "kind": "parks",

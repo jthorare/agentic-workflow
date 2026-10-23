@@ -53,9 +53,12 @@ public static class WorkflowViewFixtures
         EngineOwnedBadge? owned, SubjectRef subject, IReadOnlyList<StateCell> cells, string now, params string[] actions)
     {
         var states = cells.Select(c => owned is not null && c.State == state && c.Badge is null ? c with { Badge = owned } : c).ToList();
+        var deskOpen = states.Exists(c => c.Desk && c.Glyph == StateGlyph.Active);
+        var outcome = states.Exists(c => c.Terminal && c.Glyph == StateGlyph.Done && c.State == state) ? (OutcomeName?)OutcomeName.From("resolved") : null;
+        var chip = StateChip.For(owned, deskOpen, outcome);
         return new(InstanceAddress.From(address), WorkflowInstanceId.Of(InstanceAddress.From(address)), ItemKey.From(address[..address.IndexOf('/', StringComparison.Ordinal)]), shape.Stamp, state,
-            StateChip.For(owned, states.Exists(c => c.Desk && c.Glyph == StateGlyph.Active), states.Exists(c => c.Terminal && c.Glyph == StateGlyph.Done && c.State == state) ? OutcomeName.From("resolved") : null),
-            since, owned, subject, shape.InputRows(), states, now.Length > 80 ? now[..79] + "…" : now, null, Acts(actions));
+            chip, since, owned, subject, shape.InputRows(), states, now.Length > 80 ? now[..79] + "…" : now, null, Acts(actions),
+            WaitingOn: Aw.Sindri.Core.Workflow.Views.WaitingOn.Of(chip, deskOpen, agentRunOpen: false, ended: outcome is not null));
     }
 
     private static InstanceSummary DoneTriage(string address, string label, DateTimeOffset since) =>
@@ -215,6 +218,7 @@ public static class WorkflowViewFixtures
         {
             Run = lines.Run,
             TakenOverAt = lines.TakenOverAt,
+            TakenOverBy = lines.TakenOverBy,
         };
         var name = FixtureRecipes.All.SingleOrDefault(r => r.Id == recipe.Id.Value)?.Name is null ? null : row.Subject.Label;
         return fields with { Text = StatusText.Render(fields, Now, name) };
@@ -324,6 +328,8 @@ public static class WorkflowViewFixtures
 
         public DateTimeOffset? TakenOverAt { get; init; }
 
+        public string? TakenOverBy { get; init; }
+
         public StatusRun? Run { get; init; }
     }
 
@@ -392,7 +398,7 @@ public static class WorkflowViewFixtures
     /// <summary>Layout 5: a taken-over instance with its timeout paused.</summary>
     public static StatusFields StatusTakenOver() => Status(_takenOver, null,
         "With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.", new OpenWork(),
-        new StatusLines { Paused = new StatusPaused(40), TakenOverAt = _takenOver.Since, Budget = new StatusBudget("state", 40_000, 1_000_000, new BudgetFigures(40_000, null)) });
+        new StatusLines { Paused = new StatusPaused(40), TakenOverAt = _takenOver.Since, TakenOverBy = "human:thor", Budget = new StatusBudget("state", 40_000, 1_000_000, new BudgetFigures(40_000, null)) });
 
     /// <summary>Layout 6: a finished instance, the header only.</summary>
     public static StatusFields StatusDone() => Status(_sentry8809, "resolved", null, new OpenWork());

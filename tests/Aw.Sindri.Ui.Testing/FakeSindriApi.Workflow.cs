@@ -91,7 +91,10 @@ internal sealed partial class FakeSindriApi
     /// <param name="id">The id.</param>
     /// <param name="key">The key.</param>
     /// <returns>The answer.</returns>
-    internal RouteAnswer FactAnswer(string id, string key) => WorkflowAnswer ?? WorkflowAnswers.Fact(id, key);
+    internal RouteAnswer FactAnswer(string id, string key) => FactBody?.Invoke(id, key) ?? WorkflowAnswer ?? WorkflowAnswers.Fact(id, key);
+
+    /// <summary>When set, answers a fact read before the shared workflow answer does; return null to fall through.</summary>
+    public Func<string, string, RouteAnswer?>? FactBody { get; set; }
 
     /// <summary>What GET /workflow/recipes/{recipe} answers.</summary>
     /// <param name="recipe">The recipe id.</param>

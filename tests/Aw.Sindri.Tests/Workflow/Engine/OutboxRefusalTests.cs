@@ -73,6 +73,24 @@ public sealed class OutboxRefusalTests
         Assert.Equal(_claim, Assert.Single(resumed.Effects).Identity);
     }
 
+    /// <summary>The park's transition records the refusal (code and message) so the needs-you row can say why.</summary>
+    [Fact, Trait("Lane", "unit")]
+    public void A_refusal_park_records_the_code_and_message_as_the_transitions_reason()
+    {
+        const string Cause = "fact:nextPhase must be { phase, attempt, packet, base, stackParent } with a lowercase phase id and an attempt from 1";
+        var applied = Assert.IsType<Applied>(Decide(Claimed(), Item, new OutboxRefused(Dispatcher, _claimRef, "SND-WF-010", Sequence: 95, Cause), rules: EngineRules.Default));
+
+        Assert.Equal("SND-WF-010: " + Cause, applied.Changes[0].Event.Trigger.Reason);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_refusal_park_without_a_message_records_just_the_code()
+    {
+        var applied = Assert.IsType<Applied>(Decide(Claimed(), Item, Refused("SND-WF-011"), rules: EngineRules.Default));
+
+        Assert.Equal("SND-WF-011", applied.Changes[0].Event.Trigger.Reason);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Resume_on_a_dispatch_park_reemits_the_effect_under_its_identity()
     {

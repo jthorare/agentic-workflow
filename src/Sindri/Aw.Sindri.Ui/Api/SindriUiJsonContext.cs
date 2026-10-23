@@ -26,6 +26,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Workflow.InstanceList))]
 [JsonSerializable(typeof(Workflow.InstanceDetail))]
 [JsonSerializable(typeof(Workflow.FactView))]
+[JsonSerializable(typeof(Workflow.PrStatusView))]
 [JsonSerializable(typeof(Workflow.RecipeView))]
 [JsonSerializable(typeof(Workflow.StatusFields))]
 [JsonSerializable(typeof(Workflow.StatusInjection))]

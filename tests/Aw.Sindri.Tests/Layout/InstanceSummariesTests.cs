@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Tests.GetInstance;
 
@@ -44,6 +45,17 @@ public sealed class InstanceSummariesTests
         Assert.Equal("human:prover", row.StartedBy);
         Assert.Equal(started, row.StartedAt);
         Assert.Equal("ITM-7/step/1", row.RootAddress);
+    }
+
+    [Fact]
+    public void The_row_says_who_the_instance_waits_on()
+    {
+        var context = new InstanceSummaryContext(StatusCases.Now);
+        var agent = StatusCases.View("desk-task") with { Task = null, AgentRun = new OpenRun(RunToken.For(1, 1), StepRuntime.Agent, "LCH-1", Task: null) };
+
+        Assert.Equal("you", InstanceSummaries.Of(StatusCases.View("desk-task"), context).WaitingOn);
+        Assert.Equal("agent", InstanceSummaries.Of(agent, context).WaitingOn);
+        Assert.Null(InstanceSummaries.Of(StatusCases.View("done"), context).WaitingOn);
     }
 
     [Fact]

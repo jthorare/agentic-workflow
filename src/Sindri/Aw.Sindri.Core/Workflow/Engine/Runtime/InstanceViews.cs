@@ -84,6 +84,7 @@ public static partial class InstanceViews
             StartedBy = context.StartedBy,
             Again = context.Again,
             Paused = instance.Suspension is { Kind: SuspensionKind.Takeover, Remaining: { } paused } ? paused.Left : null,
+            TakenOverBy = instance.Suspension is { Kind: SuspensionKind.Takeover } taken ? taken.Actor : null,
         };
         return WithLayout(view, new Layout(instance, recipe, task, words), context);
     }

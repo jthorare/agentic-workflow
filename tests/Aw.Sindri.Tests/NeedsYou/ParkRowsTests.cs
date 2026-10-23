@@ -24,7 +24,7 @@ public sealed class ParkRowsTests
     [Fact]
     public void Park_row_carries_the_engines_action_id_and_answer_kind()
     {
-        var row = NeedsYouRows.ForPark(Item(), _address, Park(ParkReason.Rounds, ParkKind.Loop), _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.Rounds, ParkKind.Loop)), _since, _plain);
 
         Assert.Equal((NeedsYouKind.Park, SubjectKind.Instance, WorkflowInstanceId.Of(_address).Value), (row.Kind, row.Subject.Kind, row.Subject.Id.Value));
         Assert.Equal(("park:" + WorkflowInstanceId.Of(_address).Value, AnswerKind.Grant, ActionId.From("ApplyCommand:answer-grant"), Urgency.Pulse), (row.Id.Value, row.AnswerKind, row.PrimaryAction, row.Urgency));
@@ -49,7 +49,7 @@ public sealed class ParkRowsTests
         var suspension = instance.Suspension!;
         var summary = new SuspensionSummary(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors?.Value);
 
-        var row = NeedsYouRows.ForPark(Item(), instance.Address, summary, _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(instance.Address, summary), _since, _plain);
 
         var line = StatusCases.View(name).AnswerLine!;
         Assert.Equal((line.ActionId, line.Cli, line.Kind, line.Via), (row.PrimaryAction, row.Cli, row.AnswerKind, row.Via));
@@ -61,7 +61,7 @@ public sealed class ParkRowsTests
         var child = "ITM-11111111111111111111111111111111/step/1/workflow.step.1";
         var summary = new SuspensionSummary(SuspensionKind.Park, ParkReason.NeedsAnswer, ParkKind.Step, Escalation: null, Mirrors: "WFI-22222222222222222222222222222222", MirrorsAddress: child);
 
-        var row = NeedsYouRows.ForPark(Item(), _address, summary, _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, summary), _since, _plain);
 
         Assert.Equal(("child", child), (row.Via, row.Child));
     }
@@ -69,7 +69,7 @@ public sealed class ParkRowsTests
     [Fact]
     public void A_park_the_engine_answers_itself_names_no_child()
     {
-        var row = NeedsYouRows.ForPark(Item(), _address, Park(ParkReason.Rounds, ParkKind.Loop), _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.Rounds, ParkKind.Loop)), _since, _plain);
 
         Assert.Null(row.Child);
     }
@@ -84,7 +84,7 @@ public sealed class ParkRowsTests
         var suspension = StatusCases.Instance(name).Suspension!;
         var summary = new SuspensionSummary(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors?.Value);
 
-        var row = NeedsYouRows.ForPark(Item(), _address, summary, _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, summary), _since, _plain);
 
         Assert.EndsWith("<the child's answer>", row.Cli, StringComparison.Ordinal);
         Assert.Equal(ActionId.From("ApplyCommand:answer-text"), row.PrimaryAction);
@@ -96,7 +96,7 @@ public sealed class ParkRowsTests
     {
         var suspension = new SuspensionSummary(SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Gate, Mirrors: null);
 
-        var row = NeedsYouRows.ForPark(Item(), _address, suspension, _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, suspension), _since, _plain);
 
         Assert.Equal((AnswerKind.Accept, ActionId.From("ApplyCommand:answer-accept"), "sindri workflow answer " + _address.Value + " --accept"), (row.AnswerKind, row.PrimaryAction, row.Cli));
     }
@@ -122,10 +122,39 @@ public sealed class ParkRowsTests
     [Fact]
     public void Drift_park_row_has_no_answer_kind()
     {
-        var row = NeedsYouRows.ForPark(Item(), _address, Park(ParkReason.SpecConflict, ParkKind.Drift), _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, ParkKind.Drift)), _since, _plain);
 
         Assert.Null(row.AnswerKind);
         Assert.Equal(Urgency.Pulse, row.Urgency);
+    }
+
+    [Fact]
+    public void A_dispatch_park_row_says_the_refusal_not_drift()
+    {
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, ParkKind.Dispatch), Refusal: "SND-WF-010: fact:nextPhase must be a phase"), _since, _plain);
+
+        Assert.Equal("park · dispatch refused", row.Label);
+        Assert.Contains("SND-WF-010: fact:nextPhase must be a phase", row.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("drifted", row.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_dispatch_park_row_with_no_recorded_refusal_says_an_effect_was_refused()
+    {
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, ParkKind.Dispatch)), _since, _plain);
+
+        Assert.Contains("an effect was refused", row.Reason, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(ParkKind.Drift, "its recipe drifted since approval")]
+    [InlineData(ParkKind.Revoked, "its recipe was revoked")]
+    [InlineData(ParkKind.ChildRevoked, "a child's recipe was revoked")]
+    public void The_other_spec_conflict_parks_keep_their_words_even_with_a_refusal(ParkKind kind, string words)
+    {
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, kind), Refusal: "SND-WF-010: x"), _since, _plain);
+
+        Assert.Contains(words, row.Reason, StringComparison.Ordinal);
     }
 
     public static TheoryData<ParkReason, ParkKind> Parks()
@@ -145,14 +174,14 @@ public sealed class ParkRowsTests
     [Theory]
     [MemberData(nameof(Parks))]
     public void Every_park_shape_row_names_actions_the_catalog_has_and_a_primary_among_them(ParkReason reason, ParkKind kind) =>
-        AssertCatalogued(NeedsYouRows.ForPark(Item(), _address, Park(reason, kind), _since, _plain));
+        AssertCatalogued(NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(reason, kind)), _since, _plain));
 
     [Theory]
     [InlineData(EscalationKind.Gate)]
     [InlineData(EscalationKind.Timeout)]
     [InlineData(EscalationKind.Child)]
     public void Every_escalation_row_names_actions_the_catalog_has_and_a_primary_among_them(EscalationKind escalation) =>
-        AssertCatalogued(NeedsYouRows.ForPark(Item(), _address, new SuspensionSummary(SuspensionKind.Escalation, Reason: null, ParkKind: null, escalation, Mirrors: null), _since, _plain));
+        AssertCatalogued(NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, new SuspensionSummary(SuspensionKind.Escalation, Reason: null, ParkKind: null, escalation, Mirrors: null)), _since, _plain));
 
     [Fact]
     public void Desk_task_and_idle_takeover_rows_name_actions_the_catalog_has()
@@ -166,7 +195,7 @@ public sealed class ParkRowsTests
     [InlineData(ParkKind.ChildRevoked)]
     public void A_drift_or_revoked_child_park_row_offers_approve_first_and_then_cancel(ParkKind kind)
     {
-        var row = NeedsYouRows.ForPark(Item(), _address, Park(ParkReason.SpecConflict, kind), _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, kind)), _since, _plain);
 
         Assert.Equal(ActionId.From("ApproveRecipe"), row.PrimaryAction);
         Assert.Equal([ActionId.From("ApproveRecipe"), ActionId.From("ApplyCommand:cancel")], row.Actions);

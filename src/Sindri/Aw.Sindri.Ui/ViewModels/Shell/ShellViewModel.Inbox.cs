@@ -70,10 +70,10 @@ internal sealed partial class ShellViewModel
         return true;
     }
 
-    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard)
+    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
         var commands = new InstanceCommander(api, Health.ApiUrl);
-        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, new DeskReporter(api, Health.ApiUrl), new NeedsYouConfirm(Health.Catalog, Health.ApiUrl, api, _clock, () => NeedsYou.Seen.ReducedMotion),
+        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, new DeskReporter(api, Health.ApiUrl, launcher), new NeedsYouConfirm(Health.Catalog, Health.ApiUrl, api, _clock, () => NeedsYou.Seen.ReducedMotion),
             new PausedAnswerViewModel(commands, clipboard, _clock), new TakeoverViewModel(api, Health.ApiUrl, commands, _clock));
         inbox.LeaveRequested += (_, _) => LeaveNeedsYouInbox();
         inbox.Bar.DecisionRequested += (_, e) => e.Settled = AnswerDecision(e.RowId, e.OptionId, e.Note);

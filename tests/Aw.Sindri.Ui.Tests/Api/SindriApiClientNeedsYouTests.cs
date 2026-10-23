@@ -97,7 +97,7 @@ public sealed class SindriApiClientNeedsYouTests
         server.NeedsYouView = RouteAnswer.Api("needs-you", "park-with-timeout");
         var parkRow = (await client.NeedsYou(_api, Token)).Value.Rows[0];
 
-        Assert.Equal(((int)desk["stop"]!["n"]!, (int)desk["stop"]!["of"]!), (deskRow.Stop!.N, deskRow.Stop.Of));
+        Assert.Equal(((int)desk["stop"]!["n"]!, (int)desk["stop"]!["of"]!, (string)desk["stop"]!["state"]!), (deskRow.Stop!.N, deskRow.Stop.Of, deskRow.Stop.State));
         Assert.Equal(((long)desk["timeout"]!["inSeconds"]!, (string)desk["timeout"]!["on"]!), (deskRow.Timeout!.InSeconds, deskRow.Timeout.On));
         Assert.Null(parkRow.Stop);
         Assert.Equal(((long)park["timeout"]!["inSeconds"]!, (string)park["timeout"]!["on"]!), (parkRow.Timeout!.InSeconds, parkRow.Timeout.On));

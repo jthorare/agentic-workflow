@@ -11,7 +11,8 @@ namespace Aw.Sindri.Core.NeedsYou;
 /// <summary>
 /// The 'park' rows (API spec section 3.6, API P11): an engine park or escalation, an open desk task and an idle takeover, each keyed
 /// by the instance's opaque id. The title is the item's (already scrubbed), the reason is words for the park's reason: the ledger
-/// holds no question text, so none reaches a row.
+/// holds no question text, so none reaches a row. A dispatch park's row carries the recorded refusal (code and message), which is
+/// the effect's own error, not question text.
 /// </summary>
 public static partial class NeedsYouRows
 {
@@ -20,21 +21,34 @@ public static partial class NeedsYouRows
     private static readonly ActionId _cancel = ActionId.From("ApplyCommand:cancel");
     private static readonly ActionId _approveRecipe = ActionId.From("ApproveRecipe");
 
-    /// <summary>The 'park' row of a root instance's park or escalation.</summary>
+    /// <summary>The 'park' row of a root instance's park or escalation, or of its deepest parked descendant (<see cref="ParkRowInput.Descendant"/>).</summary>
     /// <param name="item">The item's row, for its title, repo and id.</param>
-    /// <param name="address">The instance's address.</param>
-    /// <param name="suspension">The suspension the ledger row shows. A budget park's grant is a placeholder (the ledger row has no recipe in the fold to halve the state's budget from), so its row carries the answer kind and action, and the status line has the real amount.</param>
+    /// <param name="park">The instance, its suspension and the refusal or descendant that shape the row.</param>
     /// <param name="since">When the row appeared.</param>
     /// <param name="scrubber">Scrubs the text the row stores.</param>
     /// <returns>The row.</returns>
-    public static NeedsYouRow ForPark(ItemRow item, InstanceAddress address, SuspensionSummary suspension, DateTimeOffset since, ITextScrubber scrubber)
+    public static NeedsYouRow ForPark(ItemRow item, ParkRowInput park, DateTimeOffset since, ITextScrubber scrubber)
     {
-        ArgumentNullException.ThrowIfNull(suspension);
-        var answer = ParkAnswers.For(new ParkShape(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors is not null), address, child: suspension.MirrorsAddress);
-        var (label, words) = Words(suspension);
-        var shape = new EngineRow("park:", label, $"{words} ({address.Value})", Urgency.Pulse, answer?.Kind,
-            answer?.ActionId ?? _approveRecipe, answer is null ? [_approveRecipe, _cancel] : [answer.ActionId], answer?.Cli ?? Status(address), answer?.Via, answer?.Child);
-        return Row(item, address, shape, since, scrubber);
+        ArgumentNullException.ThrowIfNull(park);
+        var suspension = park.Suspension;
+        var at = park.Descendant ?? park.Address;
+        var answer = AnswerOf(park);
+        var (label, words) = Words(suspension, park.Refusal);
+        var shape = new EngineRow("park:", label, $"{words} ({at.Value})", Urgency.Pulse, answer?.Kind,
+            answer?.ActionId ?? _approveRecipe, answer is null ? [_approveRecipe, _cancel] : [answer.ActionId], answer?.Cli ?? Status(at), answer?.Via, answer?.Child);
+        return Row(item, park.Address, shape, since, scrubber);
+    }
+
+    /// <summary>The answer a park row offers: a pointer to the descendant that decides, or the instance's own.</summary>
+    private static Workflow.Views.StatusAnswer? AnswerOf(ParkRowInput park)
+    {
+        if (park.Descendant is { } descendant)
+        {
+            return ParkAnswers.For(new ParkShape(SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Child, Mirrors: false), descendant, child: descendant.Value);   // the descendant decides: a pointer to it
+        }
+
+        var suspension = park.Suspension;
+        return ParkAnswers.For(new ParkShape(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors is not null), park.Address, child: suspension.MirrorsAddress);
     }
 
     /// <summary>The 'park' row of an open desk task.</summary>
@@ -85,7 +99,7 @@ public static partial class NeedsYouRows
             shape.Child);
     }
 
-    private static (string Label, string Words) Words(SuspensionSummary s) => s switch
+    private static (string Label, string Words) Words(SuspensionSummary s, string? refusal) => s switch
     {
         { Kind: SuspensionKind.Escalation, Escalation: EscalationKind.Gate } => ("escalated · gate", "a gate escalated: accept or reject"),
         { Kind: SuspensionKind.Escalation, Escalation: EscalationKind.Timeout } => ("escalated · timeout", "a timeout escalated"),
@@ -97,6 +111,7 @@ public static partial class NeedsYouRows
         { Reason: ParkReason.Timeout } => ("park · timeout", "it ran past its time"),
         { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Revoked } => ("park · spec conflict", "its recipe was revoked"),
         { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.ChildRevoked } => ("park · spec conflict", "a child's recipe was revoked"),
+        { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Dispatch } => ("park · dispatch refused", refusal ?? "an effect was refused"),
         { Reason: ParkReason.SpecConflict } => ("park · spec conflict", "its recipe drifted since approval"),
         { Reason: ParkReason.NoRuntime } => ("park · no runtime", "no runtime runs its step"),
         _ => ("park", "it is parked"),

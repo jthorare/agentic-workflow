@@ -1830,10 +1830,30 @@ Aw.Sindri.Core.NeedsYou.NeedsYouRow.Title.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Urgency.get -> Aw.Sindri.Core.NeedsYou.Urgency
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Urgency.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord
+Aw.Sindri.Core.NeedsYou.NestedPark
+override Aw.Sindri.Core.NeedsYou.NestedPark.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NestedPark.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NestedPark.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.NestedPark.operator !=(Aw.Sindri.Core.NeedsYou.NestedPark? left, Aw.Sindri.Core.NeedsYou.NestedPark? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NestedPark.operator ==(Aw.Sindri.Core.NeedsYou.NestedPark? left, Aw.Sindri.Core.NeedsYou.NestedPark? right) -> bool
+Aw.Sindri.Core.NeedsYou.NestedPark.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NestedPark!
+Aw.Sindri.Core.NeedsYou.NestedPark.Address.get -> string!
+Aw.Sindri.Core.NeedsYou.NestedPark.Address.init -> void
+Aw.Sindri.Core.NeedsYou.NestedPark.Deconstruct(out string! Address, out Aw.Sindri.Core.Events.SuspensionSummary! Suspension, out string? Refusal, out long Sequence) -> void
+Aw.Sindri.Core.NeedsYou.NestedPark.Equals(Aw.Sindri.Core.NeedsYou.NestedPark? other) -> bool
+Aw.Sindri.Core.NeedsYou.NestedPark.NestedPark(string! Address, Aw.Sindri.Core.Events.SuspensionSummary! Suspension, string? Refusal, long Sequence) -> void
+Aw.Sindri.Core.NeedsYou.NestedPark.Refusal.get -> string?
+Aw.Sindri.Core.NeedsYou.NestedPark.Refusal.init -> void
+Aw.Sindri.Core.NeedsYou.NestedPark.Sequence.get -> long
+Aw.Sindri.Core.NeedsYou.NestedPark.Sequence.init -> void
+Aw.Sindri.Core.NeedsYou.NestedPark.Suspension.get -> Aw.Sindri.Core.Events.SuspensionSummary!
+Aw.Sindri.Core.NeedsYou.NestedPark.Suspension.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Deconstruct(out Aw.Sindri.Core.NeedsYou.NeedsYouRow! Row, out long Sequence, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NestedPark!>? Nested) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Nested.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NestedPark!>?
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Nested.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.NeedsYouRowRecord(Aw.Sindri.Core.NeedsYou.NeedsYouRow! Row, long Sequence, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NestedPark!>? Nested = null) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord!
-Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Deconstruct(out Aw.Sindri.Core.NeedsYou.NeedsYouRow! Row, out long Sequence) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord? other) -> bool
-Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.NeedsYouRowRecord(Aw.Sindri.Core.NeedsYou.NeedsYouRow! Row, long Sequence) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Row.get -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Row.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.Sequence.get -> long
@@ -8979,7 +8999,25 @@ static Aw.Sindri.Core.Views.EngineItemPart.operator ==(Aw.Sindri.Core.Views.Engi
 Aw.Sindri.Core.Workflow.Engine.Runtime.ParkAnswers
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForDeskTask(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForIdleTakeover(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForPark(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, Aw.Sindri.Core.Events.SuspensionSummary! suspension, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForPark(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.NeedsYou.ParkRowInput! park, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+Aw.Sindri.Core.NeedsYou.ParkRowInput
+override Aw.Sindri.Core.NeedsYou.ParkRowInput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.ParkRowInput.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.ParkRowInput.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.ParkRowInput.operator !=(Aw.Sindri.Core.NeedsYou.ParkRowInput? left, Aw.Sindri.Core.NeedsYou.ParkRowInput? right) -> bool
+static Aw.Sindri.Core.NeedsYou.ParkRowInput.operator ==(Aw.Sindri.Core.NeedsYou.ParkRowInput? left, Aw.Sindri.Core.NeedsYou.ParkRowInput? right) -> bool
+Aw.Sindri.Core.NeedsYou.ParkRowInput.<Clone>$() -> Aw.Sindri.Core.NeedsYou.ParkRowInput!
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Address.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Address.init -> void
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, out Aw.Sindri.Core.Events.SuspensionSummary! Suspension, out string? Refusal, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Descendant) -> void
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Descendant.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Descendant.init -> void
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Equals(Aw.Sindri.Core.NeedsYou.ParkRowInput? other) -> bool
+Aw.Sindri.Core.NeedsYou.ParkRowInput.ParkRowInput(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, Aw.Sindri.Core.Events.SuspensionSummary! Suspension, string? Refusal = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Descendant = null) -> void
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Refusal.get -> string?
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Refusal.init -> void
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Suspension.get -> Aw.Sindri.Core.Events.SuspensionSummary!
+Aw.Sindri.Core.NeedsYou.ParkRowInput.Suspension.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ParkShape
 Aw.Sindri.Core.Workflow.Engine.Runtime.ParkShape.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.ParkShape!
 Aw.Sindri.Core.Workflow.Engine.Runtime.ParkShape.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.Instances.SuspensionKind Kind, out Aw.Sindri.Core.Workflow.Engine.ParkReason? Reason, out Aw.Sindri.Core.Workflow.Engine.ParkKind? ParkKind, out Aw.Sindri.Core.Workflow.Engine.EscalationKind? Escalation, out bool Mirrors) -> void
@@ -15245,11 +15283,13 @@ Aw.Sindri.Core.NeedsYou.NeedsYouRow.Timeout.get -> Aw.Sindri.Core.Workflow.Views
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Timeout.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouStop
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouStop!
-Aw.Sindri.Core.NeedsYou.NeedsYouStop.Deconstruct(out int N, out int Of) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.Deconstruct(out int N, out int Of, out string! State) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouStop? other) -> bool
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.N.get -> int
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.N.init -> void
-Aw.Sindri.Core.NeedsYou.NeedsYouStop.NeedsYouStop(int N, int Of) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.NeedsYouStop(int N, int Of, string! State) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.State.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouStop.State.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.Of.get -> int
 Aw.Sindri.Core.NeedsYou.NeedsYouStop.Of.init -> void
 override Aw.Sindri.Core.NeedsYou.NeedsYouStop.Equals(object? obj) -> bool
@@ -15444,6 +15484,8 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.StartedAt.get -> Syst
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.StartedAt.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.StartedBy.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.StartedBy.init -> void
+Aw.Sindri.Core.Workflow.Views.InstanceSummary.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Id, out Aw.Sindri.Core.Workflow.Engine.ItemKey? ItemId, out Aw.Sindri.Core.Workflow.Views.InstanceRecipe! Recipe, out string! State, out Aw.Sindri.Core.Workflow.Views.StateChip! Chip, out System.DateTimeOffset Since, out Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? EngineOwned, out Aw.Sindri.Core.Workflow.Views.SubjectRef! Subject, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.InputPresence!>! Inputs, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateCell!>! States, out string! Now, out Aw.Sindri.Core.Workflow.Views.StatusAnswer? Answer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? StartedBy, out System.DateTimeOffset? StartedAt, out string? LineStage, out string? RootAddress, out string? WaitingOn, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Again) -> void
+Aw.Sindri.Core.Workflow.Views.InstanceSummary.InstanceSummary(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Id, Aw.Sindri.Core.Workflow.Engine.ItemKey? ItemId, Aw.Sindri.Core.Workflow.Views.InstanceRecipe! Recipe, string! State, Aw.Sindri.Core.Workflow.Views.StateChip! Chip, System.DateTimeOffset Since, Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? EngineOwned, Aw.Sindri.Core.Workflow.Views.SubjectRef! Subject, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.InputPresence!>! Inputs, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateCell!>! States, string! Now, Aw.Sindri.Core.Workflow.Views.StatusAnswer? Answer, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? StartedBy = null, System.DateTimeOffset? StartedAt = null, string? LineStage = null, string? RootAddress = null, string? WaitingOn = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Again = null) -> void
 Aw.Sindri.Core.Workflow.Views.InstanceSummary.LineStage.get -> string?
 Aw.Sindri.Core.Workflow.Views.InstanceSummary.LineStage.init -> void
 Aw.Sindri.Core.Workflow.Views.InstanceSummary.RootAddress.get -> string?
@@ -17301,6 +17343,17 @@ static Aw.Sindri.Core.Scheduling.IndexBuildWords.Waiting(System.Collections.Gene
 Aw.Sindri.Core.Workflow.Stats.RecipeStatsSource
 Aw.Sindri.Core.Workflow.Stats.RecipeStatsSource.Of(Aw.Sindri.Core.Workflow.Ids.RecipeId recipe, string? hash, Aw.Sindri.Core.Workflow.Stats.StatsWindow! window, bool pinned, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Stats.RecipeStats!>!>
 Aw.Sindri.Core.Workflow.Stats.RecipeStatsSource.RecipeStatsSource(Aw.Sindri.Core.Workflow.Stats.IWorkflowStatRows! rows, System.TimeProvider! clock, Aw.Sindri.Core.Workflow.Stats.IRecipeStatsCache? cache = null) -> void
+Aw.Sindri.Core.Workflow.Views.StatusFields.TakenOverBy.get -> string?
+Aw.Sindri.Core.Workflow.Views.StatusFields.TakenOverBy.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.TakenOverBy.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.TakenOverBy.init -> void
+Aw.Sindri.Core.Workflow.Views.WaitingOn
+const Aw.Sindri.Core.Workflow.Views.WaitingOn.Agent = "agent" -> string!
+const Aw.Sindri.Core.Workflow.Views.WaitingOn.Engine = "engine" -> string!
+const Aw.Sindri.Core.Workflow.Views.WaitingOn.You = "you" -> string!
+static Aw.Sindri.Core.Workflow.Views.WaitingOn.Of(Aw.Sindri.Core.Workflow.Views.StateChip! chip, bool deskOpen, bool agentRunOpen, bool ended) -> string?
+Aw.Sindri.Core.Workflow.Views.InstanceSummary.WaitingOn.get -> string?
+Aw.Sindri.Core.Workflow.Views.InstanceSummary.WaitingOn.init -> void
 Aw.Sindri.Core.Workflow.Blocks.DeskOutputs
 static Aw.Sindri.Core.Workflow.Blocks.DeskOutputs.ByOutcome(Aw.Sindri.Core.Workflow.Blocks.BlockCatalog! catalog, string! block) -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.Sindri.Core.Setup.IRepoInspector.Weight(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.RepoWeight!>!>
@@ -17487,8 +17540,6 @@ Aw.Sindri.Core.Workflow.Views.InstanceDetail.Deconstruct(out Aw.Sindri.Core.Work
 Aw.Sindri.Core.Workflow.Views.InstanceDetail.InstanceDetail(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Id, Aw.Sindri.Core.Workflow.Views.ParentRef? Parent, Aw.Sindri.Core.Workflow.Engine.ItemKey? ItemId, string! Title, Aw.Sindri.Core.Workflow.Views.InstanceRecipe! Recipe, string! State, System.DateTimeOffset Since, Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? EngineOwned, Aw.Sindri.Core.Workflow.Views.SubjectRef! Subject, Aw.Sindri.Core.Workflow.Views.PathOrdering OrderedBy, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateCell!>! States, Aw.Sindri.Core.Workflow.Views.CurrentState! Current, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.FactRow!>! Facts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.ChildGroup!>! Children, Aw.Sindri.Core.Workflow.Views.ViewCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StepRun!>! StepRuns, System.DateTimeOffset AsOf, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateStep!>? Steps = null, string? StartedBy = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Again = null) -> void
 Aw.Sindri.Core.Workflow.Views.InstanceSummary.Again.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress?
 Aw.Sindri.Core.Workflow.Views.InstanceSummary.Again.init -> void
-Aw.Sindri.Core.Workflow.Views.InstanceSummary.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Id, out Aw.Sindri.Core.Workflow.Engine.ItemKey? ItemId, out Aw.Sindri.Core.Workflow.Views.InstanceRecipe! Recipe, out string! State, out Aw.Sindri.Core.Workflow.Views.StateChip! Chip, out System.DateTimeOffset Since, out Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? EngineOwned, out Aw.Sindri.Core.Workflow.Views.SubjectRef! Subject, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.InputPresence!>! Inputs, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateCell!>! States, out string! Now, out Aw.Sindri.Core.Workflow.Views.StatusAnswer? Answer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? StartedBy, out System.DateTimeOffset? StartedAt, out string? LineStage, out string? RootAddress, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Again) -> void
-Aw.Sindri.Core.Workflow.Views.InstanceSummary.InstanceSummary(Aw.Sindri.Core.Workflow.Engine.InstanceAddress Address, Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Id, Aw.Sindri.Core.Workflow.Engine.ItemKey? ItemId, Aw.Sindri.Core.Workflow.Views.InstanceRecipe! Recipe, string! State, Aw.Sindri.Core.Workflow.Views.StateChip! Chip, System.DateTimeOffset Since, Aw.Sindri.Core.Workflow.Views.EngineOwnedBadge? EngineOwned, Aw.Sindri.Core.Workflow.Views.SubjectRef! Subject, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.InputPresence!>! Inputs, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StateCell!>! States, string! Now, Aw.Sindri.Core.Workflow.Views.StatusAnswer? Answer, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? StartedBy = null, System.DateTimeOffset? StartedAt = null, string? LineStage = null, string? RootAddress = null, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? Again = null) -> void
 override Aw.Sindri.Core.Workflow.Views.DeskRecommendation.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Workflow.Views.DeskRecommendation.GetHashCode() -> int
 override Aw.Sindri.Core.Workflow.Views.DeskRecommendation.ToString() -> string!

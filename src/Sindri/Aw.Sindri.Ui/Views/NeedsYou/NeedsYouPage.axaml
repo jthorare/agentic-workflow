@@ -128,6 +128,23 @@
                 </Border>
               </UniformGrid>
               <Border Classes="hairline" />
+              <Border x:Name="NeedsYouMergeCard" Classes="card-section" IsVisible="{Binding Bar.HasMergeCard}">
+                <StackPanel Spacing="4">
+                  <TextBlock Classes="eyebrow" Text="{Binding Bar.MergeCard.Heading}" />
+                  <Button x:Name="NeedsYouMergePr" Classes="row-title" HorizontalAlignment="Left" Click="OnOpenPr" IsEnabled="{Binding Bar.MergeCard.CanOpen}"
+                          Content="{Binding Bar.MergeCard.PrText}" AutomationProperties.Name="{Binding Bar.MergeCard.PrName}" />
+                  <ItemsControl x:Name="NeedsYouMergeLines" ItemsSource="{Binding Bar.MergeCard.Lines}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="ny:MergeCardLine">
+                        <Grid ColumnDefinitions="90,*" AutomationProperties.Name="{Binding Name}">
+                          <TextBlock Classes="caption subtle" Text="{Binding Name}" AutomationProperties.AccessibilityView="Raw" />
+                          <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
               <Border x:Name="NeedsYouRequest" Classes="card-section" IsVisible="{Binding Question, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                 <StackPanel Spacing="4">
                   <TextBlock Classes="eyebrow" Text="{Binding RequestCaption}" />

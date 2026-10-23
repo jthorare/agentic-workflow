@@ -22,8 +22,8 @@ internal static class StatusRecords
         view.ChildPark,
         view.DriftNote,
         [.. view.Task?.Inputs.Select(static i => new StatusInput(i.Key.Value, i.Value.Name, Hash: StatusText.Prefixed(i.Value.Value.Sha256))) ?? []],
-        view.Task?.TimeoutAt is { } at ? new StatusTimeout(TimeoutKind.Parks, Seconds(at - now), view.Task.State) : null,
-        view is { Task: not null, Budget: { } budget } ? new StatusBudget("state", budget.State, budget.StateCap, new BudgetFigures(budget.Instance, budget.InstanceCap)) : null,
+        Timeout(view, now),
+        Budget(view),
         view.Paused is { } left ? new StatusPaused(Seconds(left)) : null,
         Commands(view),
         StatusLayout.Render(view, now),
@@ -31,7 +31,14 @@ internal static class StatusRecords
     {
         Run = view.AgentRun is { } agent ? new StatusRun("agent", agent.Launch) : null,
         TakenOverAt = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.Since : null,   // a takeover enters the 'taken-over' state, so Since is the takeover's time
+        TakenOverBy = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.TakenOverBy : null,
     };
+
+    private static StatusTimeout? Timeout(InstanceView view, DateTimeOffset now) =>
+        view.Task?.TimeoutAt is { } at ? new StatusTimeout(TimeoutKind.Parks, Seconds(at - now), view.Task.State) : null;
+
+    private static StatusBudget? Budget(InstanceView view) =>
+        view is { Task: not null, Budget: { } budget } ? new StatusBudget("state", budget.State, budget.StateCap, new BudgetFigures(budget.Instance, budget.InstanceCap)) : null;
 
     private static List<StatusInjection> Injection(InstanceView view) =>
         [.. view.Task?.Injection.Select(static i => new StatusInjection(i.Section, i.Input.Value, i.Bytes, StatusText.Prefixed(i.Sha256), i.Replaced?.Value)) ?? []];

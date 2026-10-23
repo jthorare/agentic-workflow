@@ -42,7 +42,7 @@ public sealed class NeedsYouJoinsTests
         var joined = Assert.Single(await Join([row], new SomeInstances(checks)));
 
         var desks = EngineFixture.Step.States.Where(s => s.Value.Step is not null && EngineFixture.Catalog.Find(s.Value.Step.Use) is { DeskCapable: true }).Select(static s => s.Key).ToList();
-        Expect.Equal(new NeedsYouStop(desks.IndexOf("verify") + 1, desks.Count), joined.Stop);
+        Expect.Equal(new NeedsYouStop(desks.IndexOf("verify") + 1, desks.Count, "verify"), joined.Stop);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public sealed class NeedsYouJoinsTests
     {
         await Register();
         var view = StatusCases.View("desk-task");
-        var row = NeedsYouRows.ForPark(Item(view), view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null), _since, _plain);
+        var row = NeedsYouRows.ForPark(Item(view), new ParkRowInput(view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null)), _since, _plain);
 
         var joined = Assert.Single(await Join([row], new SomeInstances(view)));
 
@@ -124,7 +124,7 @@ public sealed class NeedsYouJoinsTests
         var reader = new CountingReader(view);
         var joins = Joins(reader, reader);
 
-        var joined = await joins.Apply([Desk(view), NeedsYouRows.ForPark(Item(view), view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null), _since, _plain)], StatusCases.Now, TestContext.Current.CancellationToken);
+        var joined = await joins.Apply([Desk(view), NeedsYouRows.ForPark(Item(view), new ParkRowInput(view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null)), _since, _plain)], StatusCases.Now, TestContext.Current.CancellationToken);
 
         Expect.Equal(2, joined.Count);
         Expect.Equal(1, reader.Gets);
@@ -144,7 +144,7 @@ public sealed class NeedsYouJoinsTests
     {
         await Register();
         var view = StatusCases.View("desk-task");
-        var park = NeedsYouRows.ForPark(Item(view), view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null), _since, _plain);
+        var park = NeedsYouRows.ForPark(Item(view), new ParkRowInput(view.Address, new SuspensionSummary(SuspensionKind.Park, ParkReason.Rounds, ParkKind.Loop, Escalation: null, Mirrors: null)), _since, _plain);
 
         Golden(await Join([park], new SomeInstances(view)), "park-with-timeout");
     }

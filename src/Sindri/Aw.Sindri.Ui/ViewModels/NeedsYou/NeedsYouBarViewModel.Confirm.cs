@@ -29,6 +29,12 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>False while the request has left the list under the card: the controls go quiet.</summary>
     public bool ConfirmEnabled => Enabled;
 
+    /// <summary>The merge stop's pull request card; null when the request has none.</summary>
+    public MergeCardViewModel? MergeCard => _target?.MergeCard;
+
+    /// <summary>True when the card shows.</summary>
+    public bool HasMergeCard => MergeCard is not null;
+
     /// <summary>The step's served why for the shown desk request; empty when none is served.</summary>
     public string DeskWhy => _target?.Why ?? "";
 

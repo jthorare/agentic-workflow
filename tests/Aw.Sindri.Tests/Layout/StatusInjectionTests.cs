@@ -61,6 +61,13 @@ public sealed class StatusInjectionTests
     }
 
     [Fact]
+    public void Status_fields_name_who_took_the_instance_over_only_while_taken_over()
+    {
+        Assert.Equal("human:thor", StatusRecords.Of(StatusCases.View("taken-over"), StatusCases.Now).TakenOverBy);
+        Assert.Null(StatusRecords.Of(StatusCases.View("desk-task"), StatusCases.Now).TakenOverBy);
+    }
+
+    [Fact]
     public void The_injection_row_is_a_public_catalogued_event()
     {
         var entry = Assert.Single(EventCatalog.All, static e => e.Type == EventTypes.WorkflowInjection);

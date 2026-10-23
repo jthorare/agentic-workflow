@@ -169,6 +169,8 @@ internal sealed partial class NeedsYouPage : UserControl
         }
     }
 
+    private void OnOpenPr(object? sender, RoutedEventArgs e) => _ = _page?.Bar.MergeCard?.Open(CancellationToken.None);
+
     private void OnApprove(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressApprove();
 
     private void OnTerminal(object? sender, RoutedEventArgs e) => _ = _page?.Bar.CopyTerminal();

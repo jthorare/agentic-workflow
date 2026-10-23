@@ -118,7 +118,7 @@ internal sealed class NeedsYouJoins(IInstanceDirectory directory, IInstanceReade
     {
         var desk = recipe.States.Where(s => s.Value is { Kind: StateKind.Active, Step: { } step } && catalog.Find(step.Use) is { DeskCapable: true }).Select(static s => s.Key).ToList();
         var at = desk.FindIndex(s => string.Equals(s, state, StringComparison.Ordinal));
-        return at < 0 ? null : new NeedsYouStop(at + 1, desk.Count);
+        return at < 0 ? null : new NeedsYouStop(at + 1, desk.Count, desk[at]);
     }
 
     private static T? Safely<T>(Func<T?> read)

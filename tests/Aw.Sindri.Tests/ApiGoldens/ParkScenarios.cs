@@ -17,7 +17,7 @@ internal static class ParkScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("queue", "running"), ("queue", "parked"), ("items-id", "running"),
-        ("needs-you", "park"), ("needs-you", "park-mirrored-child"), ("needs-you", "desk-task"), ("needs-you", "idle-takeover"),
+        ("needs-you", "park"), ("needs-you", "park-mirrored-child"), ("needs-you", "park-nested"), ("needs-you", "park-nested-refused"), ("needs-you", "desk-task"), ("needs-you", "idle-takeover"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -49,6 +49,9 @@ internal static class ParkScenarios
                 var mirrored = new SuspensionSummary(SuspensionKind.Park, ParkReason.NeedsAnswer, ParkKind.Step, Escalation: null, Mirrors: WorkflowInstanceId.Of(InstanceAddress.From(childAddress)).Value, MirrorsAddress: childAddress);
                 await Append(host, item, EventTypes.WorkflowTransition, Row(address, "running", "child.parked", frame: null, mirrored), "parked", ct);
                 break;
+            case "park-nested" or "park-nested-refused":
+                await ParkNested(host, item, address, refused: scenario == "park-nested-refused", ct);
+                break;
             default:   // 'idle-takeover'
                 await Append(host, item, EventTypes.WorkflowStarted, Row(address, "produce", "start", Desk(), suspension: null), "started", ct);
                 var takeover = new SuspensionSummary(SuspensionKind.Takeover, Reason: null, ParkKind: null, Escalation: null, Mirrors: null);
@@ -60,6 +63,17 @@ internal static class ParkScenarios
         await ViewScenarios.CatchUp(host, ct);
         var route = slug == "items-id" ? "/sindri/items/" + item : "/sindri/" + slug;
         return (await host.Http.Ask(Get(route, ItemScenarios.Human(host)))).Body;
+    }
+
+    // The root runs; a descendant parks (needs-answer, or a refused effect), and the root's row points at it.
+    private static async Task ParkNested(GoldenHost host, string item, string address, bool refused, CancellationToken ct)
+    {
+        await Append(host, item, EventTypes.WorkflowStarted, Row(address, "running", "start", new FrameSummary("running", 1, Run: null, Child: null), suspension: null), "started", ct);
+        var nested = refused
+            ? new SuspensionSummary(SuspensionKind.Park, ParkReason.SpecConflict, ParkKind.Dispatch, Escalation: null, Mirrors: null)
+            : new SuspensionSummary(SuspensionKind.Park, ParkReason.NeedsAnswer, ParkKind.Step, Escalation: null, Mirrors: null);
+        var refusal = refused ? "SND-WF-010: fact:nextPhase must be { phase, attempt, packet, base, stackParent } with a lowercase phase id and an attempt from 1" : null;
+        await Append(host, item, EventTypes.WorkflowTransition, Row(address + "/phase.p1.1", "running", "step.completed", frame: null, nested, refusal), "nested-parked", ct);
     }
 
     /// <summary>Starts the item's instance in 'triaged', as the 'running' scenario does.</summary>
@@ -74,11 +88,11 @@ internal static class ParkScenarios
     private static Task Append(GoldenHost host, string item, string type, WorkflowEventPayload payload, string key, CancellationToken ct) =>
         ItemScenarios.AppendFor(host, item, type, payload, $"{type}:golden:{key}", ct);
 
-    private static WorkflowEventPayload Row(string address, string to, string trigger, FrameSummary? frame, SuspensionSummary? suspension)
+    private static WorkflowEventPayload Row(string address, string to, string trigger, FrameSummary? frame, SuspensionSummary? suspension, string? reason = null)
     {
         var delta = new WorkflowEventDelta(frame, suspension, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
         var detail = new WorkflowEventDetail(TriggerKey.For(WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli", SourceSequence: null, ArgumentsSha256: null, ReportSha256: null,
-            Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
+            Answer: null, Amount: null, Reason: reason, [], [], Grant: null, Override: null, Refusal: null, [], delta);
         return new WorkflowEventPayload(address, "from", to, trigger, Outcome: null, Run: null, detail);
     }
 }
