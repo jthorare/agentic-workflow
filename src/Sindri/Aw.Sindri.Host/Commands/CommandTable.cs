@@ -168,13 +168,14 @@ internal static partial class CommandTable
             c => Onyx(["up"], new Verbs(wire.Client, wire.Probe, wire.Output, services), new OnyxVerbs(services, wire.Output, session, (hash, to, a) => Approve(services, session, (wire.Client, wire.Probe, to), hash, a)), wire.Output, c),
             Console.Error).Run(ct);
 
-    /// <summary>'sindri onyx status|up|down [--json]'.</summary>
+    /// <summary>'sindri onyx status|up|down [--json]' and 'sindri onyx attach &lt;url&gt; [--json]'.</summary>
     private static async Task<int> Onyx(string[] rest, Verbs verbs, OnyxVerbs onyx, Output output, CancellationToken ct) =>
         rest switch
         {
             ["status", .. var flags] when Json(flags) is { } json => await verbs.OnyxStatus(json, ct).ConfigureAwait(false),
             ["up", .. var flags] when Json(flags) is { } json => await onyx.Up(json, ct).ConfigureAwait(false),
             ["down", .. var flags] when Json(flags) is { } json => await onyx.Down(json, ct).ConfigureAwait(false),
+            ["attach", var url, .. var flags] when Json(flags) is { } json => await onyx.Attach(url, json, ct).ConfigureAwait(false),
             ["open"] => await onyx.Open(ct).ConfigureAwait(false),
             _ => await UnknownVerb(["onyx", .. rest], output).ConfigureAwait(false),
         };

@@ -239,6 +239,22 @@
       "confirm": "typed"
     },
     {
+      "action": "AttachOnyx",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal"
+      ],
+      "terminal": true,
+      "method": null,
+      "route": null,
+      "cli": "sindri onyx attach <url>",
+      "ui": "cli-only:terminal",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "BuildCodeIndex",
       "class": "job",
       "allowedCallers": [

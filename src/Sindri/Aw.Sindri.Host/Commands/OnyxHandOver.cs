@@ -31,8 +31,22 @@ internal sealed class OnyxHandOver(IServiceProvider services, Output output, Fun
             return await OnyxVerbs.Fail(output, account.Error).ConfigureAwait(false);
         }
 
-        var (next, code) = await Tail(account.Value, json, ct).ConfigureAwait(false);
+        var (next, code) = await Tail(account.Value, json, openConnectors: true, ct).ConfigureAwait(false);
         return await Print(up, account.Value, next, code, json).ConfigureAwait(false);
+    }
+
+    /// <summary>The hand-over of `onyx attach`: the account stage's answer, the inline approval and the connector checklist. Nothing opens a browser: the address is the cluster's, not this machine's.</summary>
+    /// <param name="stage">What the account stage did.</param>
+    /// <param name="json">Print one JSON document.</param>
+    /// <param name="ct">Cancels the approval.</param>
+    /// <returns>The exit code.</returns>
+    internal async Task<int> FinishAttach(OnyxAccountStageResult stage, bool json, CancellationToken ct)
+    {
+        var done = new OnyxAccountResponse(stage.Url, stage.KeyPointer, stage.ProfileChanged, stage.Steps);
+        var (next, code) = await Tail(done, json, openConnectors: false, ct).ConfigureAwait(false);
+        return json
+            ? await output.Json(done, code).ConfigureAwait(false)
+            : await output.Text($"{"url",-10}{done.Url}\n{next}\n", code).ConfigureAwait(false);
     }
 
     private async Task<int> Print(OnyxUpResponse up, OnyxAccountResponse? account, string next, int code, bool json)
@@ -40,7 +54,7 @@ internal sealed class OnyxHandOver(IServiceProvider services, Output output, Fun
             ? await output.Json(new OnyxUpSummary(up, account), code).ConfigureAwait(false)
             : await output.Text($"{"url",-10}{up.Url}\n{"version",-10}{up.Version}\n{"ran",-10}{OnyxVerbs.Steps(up.Ran)}\n{"skipped",-10}{OnyxVerbs.Steps(up.Skipped)}\n{next}\n", code).ConfigureAwait(false);
 
-    private async Task<(string Text, int ExitCode)> Tail(OnyxAccountResponse done, bool json, CancellationToken ct)
+    private async Task<(string Text, int ExitCode)> Tail(OnyxAccountResponse done, bool json, bool openConnectors, CancellationToken ct)
     {
         if (done.NeedsHuman)
         {
@@ -49,7 +63,11 @@ internal sealed class OnyxHandOver(IServiceProvider services, Output output, Fun
         }
 
         var approved = approve is null || await ApproveInline(approve, json ? output.OnStandardError() : output, ct).ConfigureAwait(false);
-        _ = services.GetRequiredService<IBrowser>().Open(new Uri(done.Url + "/admin/add-connector"));
+        if (openConnectors)
+        {
+            _ = services.GetRequiredService<IBrowser>().Open(new Uri(done.Url + "/admin/add-connector"));
+        }
+
         var key = $"{"key",-10}{done.KeyPointer} (a pointer; the key itself is in the store)\n";
         var profile = approved ? string.Empty : "The profile section is written but not approved yet: run `sindri profile approve`.\n";
         return (key + profile + ConnectorChecklist, approved ? 0 : 1);

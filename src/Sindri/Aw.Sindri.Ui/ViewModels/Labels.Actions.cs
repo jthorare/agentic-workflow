@@ -36,6 +36,7 @@ internal static partial class Labels
         ["CloseItem:done"] = "Close item",
         ["CompleteStep"] = "Complete",
         ["CompleteStep:report"] = "Report agent run",
+        ["AttachOnyx"] = "Attach Onyx",
         ["ConnectOnyx"] = "Connect Onyx",
         ["CreateItem"] = "Create item",
         ["DeferOnyx"] = "Not now",

@@ -3345,9 +3345,7 @@ static Aw.Sindri.Features.Scoping.ScopingView.operator !=(Aw.Sindri.Features.Sco
 static Aw.Sindri.Features.Scoping.ScopingView.operator ==(Aw.Sindri.Features.Scoping.ScopingView? left, Aw.Sindri.Features.Scoping.ScopingView? right) -> bool
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.<Clone>$() -> Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest!
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Deconstruct(out int Port, out string! Version) -> void
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Equals(Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? other) -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.OnyxAccountRequest(int Port, string! Version) -> void
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Port.get -> int
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Port.init -> void
 Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Version.get -> string!
@@ -4622,3 +4620,21 @@ static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.operator !=(Aw.Sin
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.operator ==(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest? right) -> bool
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.operator !=(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? right) -> bool
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.operator ==(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? right) -> bool
+
+Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Cluster.get -> System.Uri?
+Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Cluster.init -> void
+Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Deconstruct(out int Port, out string! Version, out System.Uri? Cluster) -> void
+Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.OnyxAccountRequest(int Port, string! Version, System.Uri? Cluster = null) -> void
+Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Origin.get -> Aw.Sindri.Core.Onyx.OnyxOrigin
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.<Clone>$() -> Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest!
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.Deconstruct(out string! Url) -> void
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.Equals(Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest? other) -> bool
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.OnyxAttachRequest(string! Url) -> void
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.Url.get -> string!
+Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.Url.init -> void
+override Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.GetHashCode() -> int
+override Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.ToString() -> string!
+static Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.operator !=(Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest? left, Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest? right) -> bool
+static Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest.operator ==(Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest? left, Aw.Sindri.Features.OnyxAttach.OnyxAttachRequest? right) -> bool

@@ -16,7 +16,9 @@ internal sealed class YamlOnyxProfileWriter(SindriSettings settings) : IOnyxProf
     /// <inheritdoc />
     public Result<bool> SetOnyx(string url, string token, string version)
     {
-        var entry = $"onyx: {{ url: {Quote(url)}, token: {Quote(token)}, version: {Quote(version)}, managed: true }}";
+        // The managed stack is on 127.0.0.1 and Sindri's own; an Onyx at any other address is an attached one (`onyx attach`, pod mode): network: cluster, not managed.
+        var attached = !Uri.TryCreate(url, UriKind.Absolute, out var parsed) || !parsed.IsLoopback;
+        var entry = $"onyx: {{ url: {Quote(url)}, token: {Quote(token)}, version: {Quote(version)}, {(attached ? "managed: false, network: cluster" : "managed: true")} }}";
         var path = settings.ProfilePath;
         string? before;
         try

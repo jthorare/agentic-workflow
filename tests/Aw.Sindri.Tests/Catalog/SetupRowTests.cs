@@ -18,6 +18,17 @@ public sealed class SetupRowTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void AttachOnyx_is_a_terminal_only_desk_row_with_no_route_and_a_session_is_refused()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "AttachOnyx");
+
+        Assert.Equal((ActionClass.Desk, null, "sindri onyx attach <url>", "cli-only:terminal", true), (row.Class, row.Route, row.Cli.Text, row.Ui, row.NeedsTerminal));
+        Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Session().Build(), row).Refusal);
+        Assert.NotNull(Authorization.Decide(row.Class, A.Caller().Human().Build(), row).Refusal);
+        Assert.Null(Authorization.Decide(row.Class, A.Caller().Human().AtTerminal().Build(), row).Refusal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_Onyx_setup_is_a_ready_job_row()
     {
         var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "SetupOnyx");

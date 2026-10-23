@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
@@ -40,7 +39,8 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
 
     private async ValueTask<Result<OnyxAccountResponse>> Run(OnyxAccountRequest request, OnyxLogin? login, CancellationToken cancellationToken)
     {
-        var url = string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{request.Port}");
+        var origin = request.Origin;
+        var url = origin.Text;
         var state = workspace.ReadState() ?? new OnyxSetupState(request.Port, new Dictionary<string, string>(StringComparer.Ordinal));
         var steps = new Dictionary<string, string>(state.Steps, StringComparer.Ordinal);
         var pointer = state.KeyPointer;
@@ -54,7 +54,7 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
             return new OnyxAccountResponse(url, pointer, ProfileChanged: false, results);
         }
 
-        var key = await Key(request.Port, steps, pointer, login, cancellationToken).ConfigureAwait(false);
+        var key = await Key(origin, steps, pointer, login, cancellationToken).ConfigureAwait(false);
         if (key.IsError)
         {
             return key.Error;
@@ -111,11 +111,11 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
         return OnyxStepOutcome.Ran;
     }
 
-    private async ValueTask<Result<(string? Pointer, OnyxStepOutcome Outcome)>> Key(int port, Dictionary<string, string> steps, string? pointer, OnyxLogin? login, CancellationToken cancellationToken)
+    private async ValueTask<Result<(string? Pointer, OnyxStepOutcome Outcome)>> Key(OnyxOrigin origin, Dictionary<string, string> steps, string? pointer, OnyxLogin? login, CancellationToken cancellationToken)
     {
         if (steps.ContainsKey(OnyxSteps.Key))
         {
-            if (await minter.Stands(port, pointer, cancellationToken).ConfigureAwait(false))
+            if (await minter.Stands(origin, pointer, cancellationToken).ConfigureAwait(false))
             {
                 progress.Line("key: already done");
                 return (pointer, OnyxStepOutcome.Skipped);
@@ -130,7 +130,7 @@ internal sealed class OnyxAccountService(IOnyxWorkspace workspace, IOnyxPrompts 
             return (null, OnyxStepOutcome.NeedsHuman);
         }
 
-        var minted = login is null ? await minter.Mint(port, cancellationToken).ConfigureAwait(false) : await minter.Mint(port, login, cancellationToken).ConfigureAwait(false);
+        var minted = login is null ? await minter.Mint(origin, cancellationToken).ConfigureAwait(false) : await minter.Mint(origin, login, cancellationToken).ConfigureAwait(false);
         if (minted.IsError)
         {
             return minted.Error;

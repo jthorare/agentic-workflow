@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -10,7 +9,7 @@ using Aw.Sindri.Core.Onyx;
 namespace Aw.Sindri.Infrastructure.Onyx;
 
 /// <summary>
-/// IOnyxProvisioning over HTTP to http://127.0.0.1:&lt;port&gt; only (spec §5.2). Ten requests are allowed (nine exact routes and one delete pattern) and nothing else; one that isn't on the list is refused before anything is sent (<see cref="Allowed"/>).
+/// IOnyxProvisioning over HTTP to the origin it is given (spec §5.2): http://127.0.0.1:&lt;port&gt; for the managed stack, or the cluster address `onyx attach` has already checked against the environment. Ten requests are allowed (nine exact routes and one delete pattern) and nothing else; one that isn't on the list is refused before anything is sent (<see cref="Allowed"/>).
 /// The login cookie lives in the session's own container and goes with the session; no password and no token is put in an error message or a log. Not used by the query adapter, and it does not use it.
 /// Why these ten (docs/sindri/onyx.md section 7): Onyx's Community Edition gates `/admin/api-key` and `/manage/admin/user-group` at the Business tier (`backend/ee/onyx/configs/license_enforcement_config.py`,
 /// `PATH_PREFIX_MIN_TIER`), so Sindri can't have a service-account key. It gets a dedicated admin user and a personal access token of that user instead, through routes the tiers leave open.
@@ -75,9 +74,9 @@ internal sealed class HttpOnyxProvisioning : IOnyxProvisioning
 
     /// <inheritdoc />
 #pragma warning disable CA2000 // the session owns its client and disposes both when the caller disposes the session
-    public async ValueTask<Result<IOnyxSession>> SignIn(int port, string email, string password, CancellationToken cancellationToken)
+    public async ValueTask<Result<IOnyxSession>> SignIn(OnyxOrigin origin, string email, string password, CancellationToken cancellationToken)
     {
-        var session = new OnyxSession(NewClient(), Origin(port), _logout, _request);
+        var session = new OnyxSession(NewClient(), origin.Url, _logout, _request);
         using var body = new FormUrlEncodedContent(new Dictionary<string, string>(StringComparer.Ordinal) { ["username"] = email, ["password"] = password });
         var sent = await session.Send(HttpMethod.Post, "/api/auth/login", body, cancellationToken).ConfigureAwait(false);
         if (sent.IsError || !sent.Value.Success)
@@ -94,12 +93,12 @@ internal sealed class HttpOnyxProvisioning : IOnyxProvisioning
 #pragma warning restore CA2000
 
     /// <inheritdoc />
-    public async ValueTask<Result<bool>> TokenIsAdmin(int port, string token, string email, CancellationToken cancellationToken)
+    public async ValueTask<Result<bool>> TokenIsAdmin(OnyxOrigin origin, string token, string email, CancellationToken cancellationToken)
     {
         using var client = NewClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 #pragma warning disable CA2000 // a session only borrows the client, which the using above disposes
-        var session = new OnyxSession(client, Origin(port), _logout, _request);
+        var session = new OnyxSession(client, origin.Url, _logout, _request);
 #pragma warning restore CA2000
         var sent = await session.Send(HttpMethod.Get, "/api/me", content: null, cancellationToken).ConfigureAwait(false);
         if (sent.IsError)
@@ -120,5 +119,4 @@ internal sealed class HttpOnyxProvisioning : IOnyxProvisioning
 
     private HttpClient NewClient() => new(_handler(), disposeHandler: true) { Timeout = _request + TimeSpan.FromSeconds(5) };
 
-    private static Uri Origin(int port) => new(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}"));
 }

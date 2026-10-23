@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Onyx;
@@ -6,7 +5,7 @@ using Aw.Sindri.Core.Onyx;
 namespace Aw.Sindri.Infrastructure.Onyx;
 
 /// <summary>
-/// IOnyxHealth over HTTP to http://127.0.0.1:&lt;port&gt; only (the address is built here from a port, never from input): the health route, then the version route once health answers,
+/// IOnyxHealth over HTTP to the origin it is given: http://127.0.0.1:&lt;port&gt; for the managed stack, or the cluster address `onyx attach` has already checked against the environment: the health route, then the version route once health answers,
 /// each with its own 3 s timeout. A refused connection, a timeout, a non-2xx or an answer that isn't the expected JSON is "not healthy" or a null version, never an exception.
 /// </summary>
 internal sealed class HttpOnyxHealth : IOnyxHealth
@@ -38,15 +37,15 @@ internal sealed class HttpOnyxHealth : IOnyxHealth
 #pragma warning restore CA2000
 
     /// <inheritdoc />
-    public async ValueTask<OnyxProbe> Probe(int port, CancellationToken cancellationToken)
+    public async ValueTask<OnyxProbe> Probe(OnyxOrigin origin, CancellationToken cancellationToken)
     {
-        var origin = new Uri(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}"));
-        if (await Get(new Uri(origin, OnyxRoutes.Health), cancellationToken).ConfigureAwait(false) is null)
+        var baseUrl = origin.Url;
+        if (await Get(new Uri(baseUrl, OnyxRoutes.Health), cancellationToken).ConfigureAwait(false) is null)
         {
             return new OnyxProbe(Healthy: false, BackendVersion: null);
         }
 
-        var body = await Get(new Uri(origin, OnyxRoutes.Version), cancellationToken).ConfigureAwait(false);
+        var body = await Get(new Uri(baseUrl, OnyxRoutes.Version), cancellationToken).ConfigureAwait(false);
         var version = body is null ? null : AwJson.Deserialize<OnyxVersionWire>(System.Text.Encoding.UTF8.GetBytes(body), _json);
         return new OnyxProbe(Healthy: true, version is { IsSuccess: true } read ? read.Value.BackendVersion : null);
     }

@@ -288,12 +288,12 @@ public sealed class OnyxDedicatedUserTests
     // A provisioning whose login as the dedicated user is refused while the owner's works.
     private sealed class FailDedicatedLogin(FakeOnyxProvisioning inner) : IOnyxProvisioning
     {
-        public ValueTask<Kernel.Result<IOnyxSession>> SignIn(int port, string email, string password, CancellationToken cancellationToken)
+        public ValueTask<Kernel.Result<IOnyxSession>> SignIn(OnyxOrigin origin, string email, string password, CancellationToken cancellationToken)
             => string.Equals(email, OnyxAccounts.DedicatedEmail, StringComparison.Ordinal)
                 ? ValueTask.FromResult<Kernel.Result<IOnyxSession>>(SindriErrors.OnyxKeyFailed.With("Onyx refused that login (HTTP 400)"))
-                : inner.SignIn(port, email, password, cancellationToken);
+                : inner.SignIn(origin, email, password, cancellationToken);
 
-        public ValueTask<Kernel.Result<bool>> TokenIsAdmin(int port, string token, string email, CancellationToken cancellationToken)
-            => inner.TokenIsAdmin(port, token, email, cancellationToken);
+        public ValueTask<Kernel.Result<bool>> TokenIsAdmin(OnyxOrigin origin, string token, string email, CancellationToken cancellationToken)
+            => inner.TokenIsAdmin(origin, token, email, cancellationToken);
     }
 }

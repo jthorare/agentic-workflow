@@ -56,6 +56,9 @@ public sealed class FakeOnyxProvisioning : IOnyxProvisioning
     /// <summary>Makes Onyx forget every token it made (a stored token that no longer works).</summary>
     public void RevokeAll() => _tokens.Clear();
 
+    /// <summary>Gets the origins the sign-ins and token checks were aimed at, in order.</summary>
+    public IList<OnyxOrigin> Origins { get; } = [];
+
     /// <summary>Gets the number of sign-ins.</summary>
     public int SignIns { get; private set; }
 
@@ -72,9 +75,10 @@ public sealed class FakeOnyxProvisioning : IOnyxProvisioning
     public IList<string> Targets { get; } = [];
 
     /// <inheritdoc />
-    public ValueTask<Result<IOnyxSession>> SignIn(int port, string email, string password, CancellationToken cancellationToken)
+    public ValueTask<Result<IOnyxSession>> SignIn(OnyxOrigin origin, string email, string password, CancellationToken cancellationToken)
     {
         SignIns++;
+        Origins.Add(origin);
         if (SignInError is { } error)
         {
             return ValueTask.FromResult<Result<IOnyxSession>>(error);
@@ -89,7 +93,7 @@ public sealed class FakeOnyxProvisioning : IOnyxProvisioning
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<bool>> TokenIsAdmin(int port, string token, string email, CancellationToken cancellationToken)
+    public ValueTask<Result<bool>> TokenIsAdmin(OnyxOrigin origin, string token, string email, CancellationToken cancellationToken)
         => ValueTask.FromResult<Result<bool>>(_tokens.TryGetValue(token, out var owner) && string.Equals(owner.Email, email, StringComparison.Ordinal) && Admins.Contains(email) && !Deactivated.Contains(email) && TokenIsAdminAnswer);
 
     private sealed class Session(FakeOnyxProvisioning onyx, string email) : IOnyxSession

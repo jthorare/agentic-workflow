@@ -44,6 +44,19 @@ public sealed class YamlOnyxProfileWriterTests : IDisposable
     }
 
     [Fact]
+    public void An_onyx_at_a_cluster_address_is_written_unmanaged_with_network_cluster()
+    {
+        const string cluster = "http://onyx-api-service.sindri.svc:8080";
+
+        Assert.True(Writer().SetOnyx(cluster, Token, "v4.9.0").Value);
+
+        Assert.Contains(
+            $"    onyx: {{ url: \"{cluster}\", token: \"{Token}\", version: \"v4.9.0\", managed: false, network: cluster }}\n",
+            File.ReadAllText(ProfilePath),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_section_is_added_under_existing_sources_and_every_comment_and_key_stays()
     {
         _ = Write("# my profile\nschemaVersion: 1\nuser: me   # who\ncontext:\n  sources:\n    linear: { teams: [ENG] }   # teams\nrepos:\n  - name: a\n");

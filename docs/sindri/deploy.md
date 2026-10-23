@@ -24,6 +24,7 @@ All set by the image; override with `docker run -e` or the chart's values.
 | Variable | Image value | Meaning |
 |---|---|---|
 | `AW_SINDRI_DEPLOY` | `pod` | The pod-mode switch. Unset (any desktop install) is today's behaviour; `sindri doctor` echoes `deploy:mode` in pod mode. Nothing else keys on it yet |
+| `AW_SINDRI_ONYX_HOSTS` | (the chart sets it) | The Onyx host names this pod may reach at a cluster address. Only read in pod mode; see "Onyx by its cluster address" |
 | `AW_STATE_DIR` | `/data/state` | State root; Temporal's binary is seeded under `cache/bin/` |
 | `AW_SINDRI_HOME` | `/data/state/sindri-app` | Ledger, views, approvals, endpoint record, token |
 | `HOME`, `XDG_CACHE_HOME`, `UV_CACHE_DIR` | under `/data/home` | The git, uv and graphify caches; a read-only root with uid 10001 has no other writable home |
@@ -66,3 +67,12 @@ the lease at once). It needs Docker access and is not part of any PR gate's unit
 checks its shape and that the `Dockerfile` names only pinned images (`bash scripts/tests/images-lock.test.sh`). Onyx's chart
 images are `todo` rows until the charts phase (K-C1) resolves them. To bump a base image: look the new digests up with
 `docker buildx imagetools inspect <repository>:<tag>`, change the lock rows and the `Dockerfile` `FROM`, run the check.
+
+## Onyx by its cluster address
+
+In a pod Sindri does not start Onyx; it connects to the Onyx release that runs beside it. Two things decide whether it may:
+
+- The environment: `AW_SINDRI_DEPLOY=pod` and the Onyx Service's host name in `AW_SINDRI_ONYX_HOSTS`. A profile cannot widen this. Outside pod mode, or for a host not in the list, a cluster address is refused (`SND-CONTEXT-055`) and `context_query` answers with its code and docs hits and a note that Onyx is unavailable.
+- The profile: `context.sources.onyx` with `network: cluster`, `managed: false` and the Service URL (`http` is allowed; the traffic stays inside the namespace).
+
+`sindri onyx attach <url>` sets this up: the URL must answer `/api/health` and report the release `context/onyx.lock` pins; then the same account steps as `sindri onyx up` run against it (your sign-up, Sindri's dedicated user and token, the profile section). It is the human's verb: run it at a terminal in the pod (`sindri-pod.sh connect --onyx` does). The Onyx on the same machine is `sindri onyx up`'s, and `attach` refuses a loopback address.

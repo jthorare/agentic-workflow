@@ -67,6 +67,7 @@ using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.OnyxAccount;
+using Aw.Sindri.Features.OnyxAttach;
 using Aw.Sindri.Features.OnyxDown;
 using Aw.Sindri.Features.OnyxEnsure;
 using Aw.Sindri.Features.OnyxStatus;
@@ -260,6 +261,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IOnyxNotices, OnyxNotices>()
         .AddScoped<IService<OnyxEnsureRequest, OnyxEnsureResponse>, OnyxEnsureService>()
         .AddScoped<OnyxKeyMinter>()
+        .AddScoped<IService<OnyxAttachRequest, OnyxAccountStageResult>, OnyxAttachService>()   // Onyx at a cluster address (pod mode): the health and version check, then the account stage
+        .AddScoped<IOnyxAccountStage, OnyxAccountStage>()
         .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
         .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();
 

@@ -21,6 +21,15 @@ public sealed record OnyxPins(
     private static readonly char[] _controls = ['\r', '\v', '\f'];
     private static readonly string[] _platforms = ["linux/arm64", "linux/amd64"];
 
+    /// <summary>Compares the release a running Onyx reports with the pinned one.</summary>
+    /// <param name="reported">What `GET /api/version` returned as `backend_version`.</param>
+    /// <returns>True when they name the same release (a leading 'v' on either side is ignored).</returns>
+    public bool IsPinnedRelease(string reported)
+    {
+        ArgumentNullException.ThrowIfNull(reported);
+        return string.Equals(reported.TrimStart('v'), Version.TrimStart('v'), StringComparison.Ordinal);
+    }
+
     /// <summary>Reads the text of a lock file.</summary>
     /// <param name="text">The file's text: `#` comments and blank lines are ignored, the other rows are `version`, `file`, `image` and `need`.</param>
     /// <returns>The pins, or SND-ONYX-004 naming the first row that is malformed.</returns>

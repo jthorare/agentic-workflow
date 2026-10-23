@@ -25,7 +25,7 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
     /// <summary>The prompt for the owner's login: it names whose account it wants, so Sindri's own address isn't typed in.</summary>
     internal const string LoginPrompt = "Your own Onyx admin login (the account you signed up with; Sindri creates its own user from it): ";
 
-    internal async ValueTask<bool> Stands(int port, string? pointer, CancellationToken cancellationToken)
+    internal async ValueTask<bool> Stands(OnyxOrigin origin, string? pointer, CancellationToken cancellationToken)
     {
         if (pointer is null || SecretPointer.Parse(pointer) is not { IsSuccess: true } parsed)
         {
@@ -38,15 +38,15 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
             return false;
         }
 
-        var admin = await provisioning.TokenIsAdmin(port, key.Value, OnyxAccounts.DedicatedEmail, cancellationToken).ConfigureAwait(false);
+        var admin = await provisioning.TokenIsAdmin(origin, key.Value, OnyxAccounts.DedicatedEmail, cancellationToken).ConfigureAwait(false);
         return admin is { IsSuccess: true, Value: true };
     }
 
     /// <summary>Makes the dedicated user and its token, and stores the token.</summary>
-    /// <param name="port">Onyx's loopback port.</param>
+    /// <param name="origin">Where Onyx answers.</param>
     /// <param name="cancellationToken">Cancels the asking and the requests.</param>
     /// <returns>The pointer to the stored token, or SND-ONYX-007, 008 or 009.</returns>
-    internal async ValueTask<Result<string>> Mint(int port, CancellationToken cancellationToken)
+    internal async ValueTask<Result<string>> Mint(OnyxOrigin origin, CancellationToken cancellationToken)
     {
         var email = await prompts.Ask(LoginPrompt, cancellationToken).ConfigureAwait(false);
         var password = email is { Length: > 0 } ? await prompts.AskSecret("The password of that account (not shown, not stored): ", cancellationToken).ConfigureAwait(false) : null;
@@ -55,23 +55,23 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
             return SindriErrors.OnyxKeyFailed.With("no Onyx login was given; run `sindri onyx up` again and enter the email and password of the account you created");
         }
 
-        return await Mint(port, new OnyxLogin(email, new OnyxSecret(password)), cancellationToken).ConfigureAwait(false);
+        return await Mint(origin, new OnyxLogin(email, new OnyxSecret(password)), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Makes the dedicated user and its token with a login that was already given (the app's form), and stores the token.</summary>
-    /// <param name="port">Onyx's loopback port.</param>
+    /// <param name="origin">Where Onyx answers.</param>
     /// <param name="login">The owner's own Onyx admin login.</param>
     /// <param name="cancellationToken">Cancels the requests.</param>
     /// <returns>The pointer to the stored token, or SND-ONYX-007, 008 or 009.</returns>
-    internal async ValueTask<Result<string>> Mint(int port, OnyxLogin login, CancellationToken cancellationToken)
+    internal async ValueTask<Result<string>> Mint(OnyxOrigin origin, OnyxLogin login, CancellationToken cancellationToken)
     {
-        var password = await Prepare(port, login, cancellationToken).ConfigureAwait(false);
+        var password = await Prepare(origin, login, cancellationToken).ConfigureAwait(false);
         if (password.IsError)
         {
             return password.Error;
         }
 
-        var minted = await Token(port, password.Value, cancellationToken).ConfigureAwait(false);
+        var minted = await Token(origin, password.Value, cancellationToken).ConfigureAwait(false);
         if (minted.IsError)
         {
             return minted.Error;
@@ -82,7 +82,7 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
     }
 
     // The owner's session: the dedicated user exists, has a password only this call knows, and is an admin.
-    private async ValueTask<Result<string>> Prepare(int port, OnyxLogin login, CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Prepare(OnyxOrigin origin, OnyxLogin login, CancellationToken cancellationToken)
     {
         var email = login.Email;
         if (IsSindriAddress(email))
@@ -90,7 +90,7 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
             return SindriErrors.OnyxKeyFailed.With($"{email.Trim()} is the address of Sindri's own Onyx user, which Sindri creates itself; nothing was sent to Onyx. Enter your own Onyx admin login, the account you signed up with at Onyx's sign-up page, and run `sindri onyx up` again");
         }
 
-        var signedIn = await provisioning.SignIn(port, email, login.Password.Reveal(), cancellationToken).ConfigureAwait(false);
+        var signedIn = await provisioning.SignIn(origin, email, login.Password.Reveal(), cancellationToken).ConfigureAwait(false);
         if (signedIn.IsError)
         {
             return signedIn.Error;
@@ -144,9 +144,9 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
     }
 
     // The dedicated user's own session: log in with the password just made, mint the token, check it. The token exists in Onyx from the moment it is made.
-    private async ValueTask<Result<string>> Token(int port, string password, CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Token(OnyxOrigin origin, string password, CancellationToken cancellationToken)
     {
-        var signedIn = await provisioning.SignIn(port, OnyxAccounts.DedicatedEmail, password, cancellationToken).ConfigureAwait(false);
+        var signedIn = await provisioning.SignIn(origin, OnyxAccounts.DedicatedEmail, password, cancellationToken).ConfigureAwait(false);
         if (signedIn.IsError)
         {
             return SindriErrors.OnyxKeyFailed.With($"Onyx didn't let Sindri's own user {OnyxAccounts.DedicatedEmail} log in right after setting it up (if it was deactivated in Admin → Users, activate it again): {signedIn.Error.Message}");
@@ -172,7 +172,7 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
                 return Leftover(made.Error);   // a timeout can come after Onyx made the token
             }
 
-            var verified = await Verified(port, made.Value, cancellationToken).ConfigureAwait(false);
+            var verified = await Verified(origin, made.Value, cancellationToken).ConfigureAwait(false);
             return verified.IsError ? Leftover(verified.Error) : verified;
         }
     }
@@ -182,9 +182,9 @@ internal sealed class OnyxKeyMinter(IOnyxPrompts prompts, IOnyxProvisioning prov
 
     private static Error Leftover(Error error) => error with { Message = $"{error.Message}. {LeftoverNote}" };
 
-    private async ValueTask<Result<string>> Verified(int port, string token, CancellationToken cancellationToken)
+    private async ValueTask<Result<string>> Verified(OnyxOrigin origin, string token, CancellationToken cancellationToken)
     {
-        var admin = await provisioning.TokenIsAdmin(port, token, OnyxAccounts.DedicatedEmail, cancellationToken).ConfigureAwait(false);
+        var admin = await provisioning.TokenIsAdmin(origin, token, OnyxAccounts.DedicatedEmail, cancellationToken).ConfigureAwait(false);
         if (admin.IsError)
         {
             return admin.Error;

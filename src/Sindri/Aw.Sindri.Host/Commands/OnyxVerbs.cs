@@ -2,13 +2,14 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Features.OnyxAttach;
 using Aw.Sindri.Features.OnyxDown;
 using Aw.Sindri.Features.OnyxUp;
 
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri onyx up' and 'sindri onyx down': they run Docker and write Onyx's files under the Sindri home, so only a human at a terminal runs them (an agent
+/// 'sindri onyx up', 'sindri onyx down' and 'sindri onyx attach': they run Docker and write Onyx's files under the Sindri home (attach writes Sindri's key and profile section), so only a human at a terminal runs them (an agent
 /// session or a non-terminal gets SND-AUTH-002, exit 1, like 'mcp register --apply'). Local: they run in this process, need no control plane, and change
 /// nothing for a refused caller. Progress is on standard error (lines and dots, through IOnyxProgress); standard output carries only the summary.
 /// </summary>
@@ -48,6 +49,31 @@ internal sealed class OnyxVerbs(IServiceProvider services, Output output, AgentS
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
             return Interrupted("interrupted; run `sindri onyx up` again to resume");
+        }
+    }
+
+    /// <summary>'sindri onyx attach &lt;url&gt;': the Onyx at a cluster address instead of the stack `up` runs, then the same account stage and hand-over. The human's verb like `up`.</summary>
+    /// <param name="url">Onyx's base URL.</param>
+    /// <param name="json">Print one JSON document.</param>
+    /// <param name="ct">Cancels the verb.</param>
+    /// <returns>The exit code.</returns>
+    internal async Task<int> Attach(string url, bool json, CancellationToken ct)
+    {
+        if (!session.Human)
+        {
+            return await Refused("attach", "writes Sindri's Onyx key and the profile's Onyx section").ConfigureAwait(false);
+        }
+
+        try
+        {
+            var answer = await services.GetRequiredService<IService<OnyxAttachRequest, OnyxAccountStageResult>>().Handle(new OnyxAttachRequest(url), ct).ConfigureAwait(false);
+            return answer.IsError
+                ? await Fail(output, answer.Error).ConfigureAwait(false)
+                : await new OnyxHandOver(services, output, approve).FinishAttach(answer.Value, json, ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return Interrupted("interrupted; run `sindri onyx attach` again to resume");
         }
     }
 

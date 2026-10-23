@@ -13,6 +13,9 @@ public sealed class FakeOnyxHealth : IOnyxHealth
     /// <summary>Gets the ports probed, in order.</summary>
     public IList<int> Probed { get; } = [];
 
+    /// <summary>Gets the origins probed, in order.</summary>
+    public IList<OnyxOrigin> ProbedOrigins { get; } = [];
+
     /// <summary>Queues probes the next calls answer, one each.</summary>
     /// <param name="probes">The probes.</param>
     public void Enqueue(params OnyxProbe[] probes)
@@ -24,9 +27,10 @@ public sealed class FakeOnyxHealth : IOnyxHealth
     }
 
     /// <inheritdoc />
-    public ValueTask<OnyxProbe> Probe(int port, CancellationToken cancellationToken)
+    public ValueTask<OnyxProbe> Probe(OnyxOrigin origin, CancellationToken cancellationToken)
     {
-        Probed.Add(port);
+        Probed.Add(origin.Port);
+        ProbedOrigins.Add(origin);
         return ValueTask.FromResult(_answers.Count > 0 ? _answers.Dequeue() : Default);
     }
 }

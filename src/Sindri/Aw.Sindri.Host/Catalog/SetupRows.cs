@@ -21,6 +21,9 @@ internal static class SetupRows
         JobRows.Job("OnboardRepo", typeof(OnboardRepoRequest), "/sindri/setup/repos/onboard", "sindri repo onboard [<path>]"),   // a job-class row like AddRepo: the terminal and the app start it, a session is refused; the setup service onboards on its own after an approval
         JobRows.Job("RegisterMcp", typeof(RegisterMcpJobRequest), "/sindri/setup/mcp", "sindri mcp register --apply") with { ServiceGrants = ["setup"] },
         JobRows.Job("SetupOnyx", typeof(SetupOnyxRequest), "/sindri/onyx/setup", "sindri onyx up"),
+        // `sindri onyx attach <url>`: the human's verb at a terminal (it asks for the Onyx login), run in the CLI's process like `onyx up`, so it has no route; the app reaches it through the pod's `sindri-pod.sh connect --onyx`.
+        new(ActionId.From("AttachOnyx"), CommandType: null, Variant: null, ActionClass.Desk, ServiceGrants: [], NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false,
+            Shortcut: null, Method: null, Route: null, ShellRows.Form("sindri onyx attach <url>"), "cli-only:terminal"),
         Ready("ConnectOnyx", typeof(ConnectOnyxRequest), "/sindri/onyx/account", "sindri onyx connect"),
         Ready("DeferOnyx", typeof(DeferOnyxRequest), "/sindri/onyx/defer", "sindri onyx defer"),
     ];
