@@ -14,7 +14,7 @@ internal sealed class YamlProfileSource(SindriSettings settings, JsonSerializerO
         if (!File.Exists(path))
         {
             return SindriErrors.ProfileMissing.With(
-                $"{path} doesn't exist (fix: create it with 'schemaVersion: 1' and 'user: <you>'; keys are in docs/csharp/sindri.md)");
+                $"{path} doesn't exist (fix: run 'sindri profile init', then 'sindri repo add <path>' and 'sindri profile approve'; keys are in docs/csharp/sindri.md)");
         }
 
         string yaml;

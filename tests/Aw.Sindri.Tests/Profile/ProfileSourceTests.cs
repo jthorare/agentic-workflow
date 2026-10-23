@@ -79,7 +79,8 @@ public sealed class ProfileSourceTests : IDisposable
         var error = (await _files.Source.Load(Token)).Error;
 
         Assert.Equal(SindriErrors.ProfileMissing.Code, error.Code);
-        Assert.Contains("schemaVersion: 1", error.Message, StringComparison.Ordinal);
+        Assert.Contains("sindri profile init", error.Message, StringComparison.Ordinal);
+        Assert.Contains("sindri profile approve", error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
