@@ -260,6 +260,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
 
         ShowPanels(detail);
         ShowStepRuns(detail);
+        ShowOpen(detail);
         var expanded = new ExpandedStateViewModel(detail.Current, detail.Address, clipboard, clock) { Commander = _commander ??= new NeedsYou.InstanceCommander(api, () => _url), InstanceId = detail.Id };
         if (Expanded is null || !string.Equals(Expanded.Signature, expanded.Signature, StringComparison.Ordinal))
         {
@@ -272,6 +273,8 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         {
             Expanded.Update(detail.Current);
         }
+
+        Expanded.OpenServed = HasOpen;
     }
 
     private void Clear()
@@ -280,6 +283,7 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         (Title, Recipe, Hash12, Version, StateText, Detail, SinceText, Identity, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (WorkflowName, DetailsText, AddressCopy) = (string.Empty, string.Empty, null);
         (Subject, Band, Expanded, StepRuns) = (null, null, null, null);
+        ShowOpenCleared();
         (Grant, _grantSignature) = (null, string.Empty);
         ClearPanels();
         (_eventsFor, _eventRows) = (null, []);

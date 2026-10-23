@@ -47,6 +47,8 @@
       <Panel IsVisible="{Binding Band, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:StatesBand x:Name="Band" DataContext="{Binding Band}" />
       </Panel>
+      <Button x:Name="InstanceOpen" Content="{Binding OpenText}" IsVisible="{Binding HasOpen}" Click="OnOpenServed" HorizontalAlignment="Left"
+              AutomationProperties.Name="{Binding OpenText}" />
       <Panel IsVisible="{Binding Expanded, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:ExpandedStateView x:Name="Expanded" DataContext="{Binding Expanded}" />
       </Panel>

@@ -136,6 +136,7 @@ internal sealed partial class ShellViewModel
             SheetStacked?.Invoke(this, EventArgs.Empty);
         };
         Instance.WorkRequested += (_, _) => OpenWork();
+        Instance.LinkRequested += (_, e) => Stacked(() => Navigate(e.Link), push: true);
     }
 
     // The instance part of opening the sheet (OnSheetOpened): the frame names its instance at once and reads it; the id is the one a row or

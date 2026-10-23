@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class NeedsYouMergeCardViewTests : FrameHost
 {
-    private async Task<Window> MergeInbox(bool listed)
+    private async Task<Window> MergeInbox(bool listed, string needsYou = "desk-task")
     {
         var instance = JsonNode.Parse(GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"))!;
         foreach (var command in instance["current"]!["status"]!["commands"]!.AsArray().Where(c => c!["verb"]!.GetValue<string>() == "complete"))
@@ -26,7 +26,7 @@ public sealed class NeedsYouMergeCardViewTests : FrameHost
             instance["facts"]!.AsArray().Add(row);
         }
 
-        Server.NeedsYouView = RouteAnswer.Api("needs-you", "desk-task");
+        Server.NeedsYouView = RouteAnswer.Api("needs-you", needsYou);
         Server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, instance.ToJsonString());
         Server.FactBody = (_, key) => string.Equals(key, "fact:prStatus", StringComparison.Ordinal) ? new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("workflow-instance-fact", "pr-status")) : null;
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, width: 1440, height: 900);
@@ -57,5 +57,15 @@ public sealed class NeedsYouMergeCardViewTests : FrameHost
         var window = await MergeInbox(listed: false);
 
         Assert.False(Visible(window, "NeedsYouMergeCard"));
+    });
+
+    [Fact]
+    public Task An_owner_stop_lands_under_approvals_with_the_merge_card_and_an_open_pr_action() => OnUi(async () =>
+    {
+        var window = await MergeInbox(listed: true, needsYou: "owner-stop");
+
+        Assert.True(Visible(window, "NeedsYouMergeCard"));
+        Assert.True(Visible(window, "NeedsYouCardPr"));
+        Assert.Equal("Open PR #42", Assert.IsType<Button>(Named<Button>(window, "NeedsYouCardPr")).GetVisualDescendants().OfType<TextBlock>().First().Text);
     });
 }

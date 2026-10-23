@@ -40,6 +40,10 @@ public sealed class NeedsYouGroupingTests
     }
 
     [Fact]
+    public void An_owner_stop_is_your_approval() =>
+        Assert.Equal([(NeedsYouGroupKind.Approvals, "Your approvals", 1)], Shape(Golden("owner-stop")));
+
+    [Fact]
     public void A_desk_task_is_your_approval() =>
         Assert.Equal([(NeedsYouGroupKind.Approvals, "Your approvals", 1)], Shape(Golden("desk-task")));
 

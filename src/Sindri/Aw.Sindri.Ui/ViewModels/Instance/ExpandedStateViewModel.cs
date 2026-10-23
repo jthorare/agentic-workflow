@@ -115,7 +115,18 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     public ChildPointerViewModel? Child { get; }
 
     /// <summary>True when the answer is a pointer to a child that decides it: the state shows "Answer in the child" and no answer form.</summary>
-    public bool AnswersInChild => AnswerChild is not null;
+    public bool AnswersInChild => AnswerChild is not null && !OpenServed;
+
+    /// <summary>True while the frame shows the served open button, which then carries the same words (api q65); set by the frame on each read.</summary>
+    internal bool OpenServed
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(AnswersInChild));
+        }
+    }
 
     private StatusAnswer? AnswerChild { get; }
 

@@ -121,6 +121,8 @@ internal sealed partial class InstanceFrameView : UserControl
 
     private void OnRecipe(object? sender, RoutedEventArgs e) => _frame?.OpenRecipe();
 
+    private void OnOpenServed(object? sender, RoutedEventArgs e) => _frame?.OpenServed();
+
     private void OnCopyAddress(object? sender, RoutedEventArgs e) => _ = _frame?.CopyAddress(CancellationToken.None);
 
     private void OnOpenIn(object? sender, RoutedEventArgs e) => _ = (DataContext as InstanceFrameViewModel)?.Subject?.OpenIn(CancellationToken.None);
