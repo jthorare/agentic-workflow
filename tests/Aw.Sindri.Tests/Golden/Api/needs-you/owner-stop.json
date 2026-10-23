@@ -1,0 +1,43 @@
+{
+  "rows": [
+    {
+      "id": "desk:WFI-95a5c2820bd88ec39379892be8909567",
+      "kind": "park",
+      "label": "ready to merge",
+      "subject": {
+        "kind": "instance",
+        "id": "WFI-95a5c2820bd88ec39379892be8909567"
+      },
+      "item": "ITM-11111111111111111111111111111111",
+      "title": "An item",
+      "reason": "Ready to merge ITM-11111111111111111111111111111111's pull request: CI green on the head, the docs settled (see the view). Merge it, or send it back with rework notes, in the app or with `sindri workflow command T-3/step/1 merge`.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-10-11T10:48:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "ApplyCommand:command",
+      "actions": [
+        "ApplyCommand:command"
+      ],
+      "cli": "sindri workflow status T-3/step/1",
+      "open": {
+        "route": "workflow/T-3/step/1",
+        "label": "Review and act",
+        "pr": {
+          "url": "https://github.com/o/r/pull/42",
+          "number": 42
+        }
+      }
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-10-11T10:48:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

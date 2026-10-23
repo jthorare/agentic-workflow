@@ -24,6 +24,7 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="StepRuns">The Step runs, in start order; null from a server that predates them.</param>
 /// <param name="Steps">What each Step state reads and produces; null from a server that predates them.</param>
 /// <param name="StartedBy">Who started the instance; null when nobody is recorded.</param>
+/// <param name="Open">Where the owner acts on this instance (q65), its needs-you row's open; null (omitted) when no row waits on it.</param>
 /// <param name="DisplayName">The workflow's display name when the instance view serves it; null otherwise.</param>
 internal sealed record InstanceDetail(
     string Address,
@@ -49,4 +50,5 @@ internal sealed record InstanceDetail(
     IReadOnlyList<StateStep>? Steps = null,
     string? StartedBy = null,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Again = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<AllowedCommandView>? AllowedCommands = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<AllowedCommandView>? AllowedCommands = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] NeedsYouOpenView? Open = null);

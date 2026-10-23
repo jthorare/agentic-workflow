@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
@@ -54,7 +55,7 @@ public static partial class NeedsYouRows
             _decide,
             [_decide],
             cli.Value.Text,
-            new NeedsYouOpen("decision/" + decision.Id.Value, "Review and decide"));
+            new NeedsYouOpen(NeedsYouRoutes.Decision(decision.Id), "Review and decide"));
     }
 
     /// <summary>The row for a service whose last run failed.</summary>
@@ -97,7 +98,7 @@ public static partial class NeedsYouRows
             unknown ? null : _runService,
             unknown ? [_pauseService] : builtIn ? [_runService] : [_runService, _pauseService],   // a built-in can't be paused
             cli.Value.Text,
-            new NeedsYouOpen("service/" + name, "Open the service"));
+            new NeedsYouOpen(NeedsYouRoutes.Service(name), "Open the service"));
     }
 
     /// <summary>The row for a live profile that drifted from the approved one.</summary>
@@ -137,7 +138,7 @@ public static partial class NeedsYouRows
             _approveProfile,
             [_approveProfile],
             cli.Value.Text,
-            new NeedsYouOpen("needs-you/profile:drift", "Approve the profile")));
+            new NeedsYouOpen(NeedsYouRoutes.Row(NeedsYouRowId.From("profile:drift")), "Approve the profile")));
     }
 
     private static Result<CliForm> Cli<TId>(string form, string placeholder, TId id)

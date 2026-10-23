@@ -1,10 +1,12 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Views;
+using Aw.Sindri.Core;
 using Aw.Sindri.Features.GetInstance;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -143,6 +145,80 @@ public sealed class GetInstanceServiceTests
         Assert.Equal(string.Join(", ", status.Commands.Where(static c => c.Verb != StatusVerb.Approve).Select(static c => StatusVerbNames.Of(c.Verb)).Distinct(StringComparer.Ordinal)), parsed);   // one word per verb: an answer with two variants is still "answer"
         Assert.All(status.Commands.Where(static c => c.Verb == StatusVerb.Approve), c => Assert.Contains(Words(c.Cli), Words(status.Text), StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task A_parked_root_opens_where_its_needs_you_row_opens()
+    {
+        var view = StatusCases.View("done");
+        var open = new NeedsYouOpen("workflow/" + view.Address.Value + "/step.6", "Answer in the child");
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Park(view.Address), open)]);
+
+        var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.Equal(open, result.Value.Open);
+    }
+
+    [Fact]
+    public async Task A_child_with_an_open_desk_opens_its_desk_row()
+    {
+        var view = StatusCases.View("desk-task") with { Address = InstanceAddress.From("T-1/step/1/step.4"), Id = WorkflowInstanceId.Of(InstanceAddress.From("T-1/step/1/step.4")) };
+        var open = new NeedsYouOpen("workflow/T-1/step/1/step.4", "Answer the question");
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Desk(view.Address), open)]);
+
+        var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
+
+        Assert.Equal(open, result.Value.Open);
+    }
+
+    [Fact]
+    public async Task An_idle_takeover_opens_its_takeover_row()
+    {
+        var view = StatusCases.View("done");
+        var open = new NeedsYouOpen("workflow/" + view.Address.Value, "Hand back or cancel");
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Takeover(view.Address), open)]);
+
+        var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.Equal(open, result.Value.Open);
+    }
+
+    [Fact]
+    public async Task A_park_row_wins_over_a_desk_row_of_the_same_instance()
+    {
+        var view = StatusCases.View("done");
+        var park = new NeedsYouOpen("workflow/" + view.Address.Value + "/step.6", "Answer in the child");
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Desk(view.Address), new NeedsYouOpen("workflow/" + view.Address.Value, "Answer the question")), Row(NeedsYouRowIds.Park(view.Address), park)]);
+
+        var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.Equal(park, result.Value.Open);
+    }
+
+    [Fact]
+    public async Task An_instance_no_row_waits_on_has_no_open()
+    {
+        var view = StatusCases.View("done");
+        var other = InstanceAddress.From("T-9/step/1");
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Park(other), new NeedsYouOpen("workflow/" + other.Value, "Open the workflow"))]);
+
+        var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.Open);
+    }
+
+    [Fact]
+    public async Task A_needs_you_view_that_cannot_be_read_leaves_open_off_and_serves_the_detail()
+    {
+        var view = StatusCases.View("done");
+
+        var result = await Service(new SomeInstances(view), new DetailViews(needsYouFails: true)).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Null(result.Value.Open);
+    }
+
+    private static NeedsYouRow Row(NeedsYouRowId id, NeedsYouOpen open) => new NeedsYouRowBuilder().Build() with { Id = id, Open = open };
 
     /// <summary>The text with every run of whitespace as one space: the layout wraps long lines.</summary>
     private static string Words(string text) => string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));

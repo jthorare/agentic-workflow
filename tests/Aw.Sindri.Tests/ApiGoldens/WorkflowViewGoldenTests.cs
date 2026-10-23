@@ -100,20 +100,6 @@ public sealed class WorkflowViewGoldenTests : IAsyncLifetime
         ("workflow-instance", "project-many-children") => Json(WorkflowViewFixtures.ProjectManyChildren(), options),
         ("workflow-instance", "transition-list") => Json(WorkflowViewFixtures.TransitionList(), options),
         ("workflow-instance", "done") => Json(WorkflowViewFixtures.Done(), options),
-        ("workflow-status", "parked-child") => Json(WorkflowViewFixtures.StatusParkedChild(), options),
-        ("workflow-status", "unreachable-child") => Json(WorkflowViewFixtures.StatusUnreachableChild(), options),
-        ("workflow-status", "escalated-child") => Json(WorkflowViewFixtures.StatusEscalatedChild(), options),
-        ("workflow-status", "mirrored-budget-no-child") => Json(WorkflowViewFixtures.StatusMirroredBudgetNoChild(), options),
-        ("workflow-status", "mirrored-budget") => Json(WorkflowViewFixtures.StatusMirroredBudget(), options),
-        ("workflow-status", "desk-task") => Json(WorkflowViewFixtures.StatusDeskTask(), options),
-        ("workflow-status", "parked-budget") => Json(WorkflowViewFixtures.StatusParkedBudget(), options),
-        ("workflow-status", "escalated-gate") => Json(WorkflowViewFixtures.StatusEscalatedGate(), options),
-        ("workflow-status", "taken-over") => Json(WorkflowViewFixtures.StatusTakenOver(), options),
-        ("workflow-status", "done") => Json(WorkflowViewFixtures.StatusDone(), options),
-        ("workflow-status", "agent-run") => Json(WorkflowViewFixtures.StatusAgentRun(), options),
-        ("workflow-status", "parked-drift") => Json(WorkflowViewFixtures.StatusParkedDrift(), options),
-        ("workflow-status", "needs-answer-step") => Json(WorkflowViewFixtures.StatusNeedsAnswerStep(), options),
-        ("workflow-status", "needs-answer-wait") => Json(WorkflowViewFixtures.StatusNeedsAnswerWait(), options),
         ("workflow-instance", "f5-rerun-failed") => Json(WorkflowViewFixtures.F5RerunFailed(), options),
         ("workflow-instance", "f5-desk-recommended") => Json(WorkflowViewFixtures.F5DeskRecommended(), options),
         ("workflow-instance", "lens-ask-multi") => Json(WorkflowViewFixtures.LensAskMulti(), options),
@@ -122,7 +108,27 @@ public sealed class WorkflowViewGoldenTests : IAsyncLifetime
         ("workflow-instance", "f5-state-times") => Json(WorkflowViewFixtures.F5StateTimes(), options),
         ("workflow-recipe", var id) when FixtureRecipes.All.Any(r => r.Id == id) => Json(WorkflowViewFixtures.Recipe(id), options),
         ("workflow-instance-fact", _) => Json(WorkflowViewFixtures.Fact(scenario), options),
+        ("workflow-status", _) => Json(Status(scenario), options),
         _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such workflow view scenario"),
+    };
+
+    private static StatusFields Status(string scenario) => scenario switch
+    {
+        "parked-child" => WorkflowViewFixtures.StatusParkedChild(),
+        "unreachable-child" => WorkflowViewFixtures.StatusUnreachableChild(),
+        "escalated-child" => WorkflowViewFixtures.StatusEscalatedChild(),
+        "mirrored-budget-no-child" => WorkflowViewFixtures.StatusMirroredBudgetNoChild(),
+        "mirrored-budget" => WorkflowViewFixtures.StatusMirroredBudget(),
+        "desk-task" => WorkflowViewFixtures.StatusDeskTask(),
+        "parked-budget" => WorkflowViewFixtures.StatusParkedBudget(),
+        "escalated-gate" => WorkflowViewFixtures.StatusEscalatedGate(),
+        "taken-over" => WorkflowViewFixtures.StatusTakenOver(),
+        "done" => WorkflowViewFixtures.StatusDone(),
+        "agent-run" => WorkflowViewFixtures.StatusAgentRun(),
+        "parked-drift" => WorkflowViewFixtures.StatusParkedDrift(),
+        "needs-answer-step" => WorkflowViewFixtures.StatusNeedsAnswerStep(),
+        "needs-answer-wait" => WorkflowViewFixtures.StatusNeedsAnswerWait(),
+        _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such workflow status scenario"),
     };
 
     private static string Json<T>(T value, JsonSerializerOptions options) =>

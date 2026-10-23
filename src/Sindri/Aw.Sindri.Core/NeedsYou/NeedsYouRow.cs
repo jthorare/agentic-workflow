@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Workflow.Views;
 
 namespace Aw.Sindri.Core.NeedsYou;

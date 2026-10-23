@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Workflow.Views;
@@ -50,4 +51,12 @@ public sealed record InstanceDetail(
     DateTimeOffset AsOf,
     IReadOnlyList<StateStep>? Steps = null,
     string? StartedBy = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] InstanceAddress? Again = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] InstanceAddress? Again = null)
+{
+    /// <summary>
+    /// Where the owner acts on this instance (q65): the 'open' of its own needs-you row ('park:', else 'desk:', else 'takeover:'), joined at read time, so the
+    /// detail opens where the row does (a parked descendant's park opens that child). Null (left out of the JSON) when no row waits on it, or the join can't be read now.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NeedsYouOpen? Open { get; init; }
+}

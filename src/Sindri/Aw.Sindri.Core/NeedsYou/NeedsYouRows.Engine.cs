@@ -1,10 +1,11 @@
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.NeedsYou;
 
@@ -17,6 +18,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 public static partial class NeedsYouRows
 {
     private static readonly ActionId _completeStep = ActionId.From("CompleteStep");
+    private static readonly ActionId _command = ActionId.From("ApplyCommand:command");
     private static readonly ActionId _handback = ActionId.From("ApplyCommand:handback");
     private static readonly ActionId _cancel = ActionId.From("ApplyCommand:cancel");
     private static readonly ActionId _approveRecipe = ActionId.From("ApproveRecipe");
@@ -40,9 +42,10 @@ public static partial class NeedsYouRows
     }
 
     /// <summary>Where a park row opens: a parked descendant, or a mirrored child that decides, opens that instance; any other park its own.</summary>
-    private static NeedsYouOpen OpenOf(Workflow.Views.StatusAnswer? answer, InstanceAddress at) => answer?.Child is { } child
-        ? new NeedsYouOpen("workflow/" + child, "Answer in the child")
-        : new NeedsYouOpen(WorkflowRoute(at), "Open the workflow");
+    /// <remarks>A child that isn't an address (never served, but a fold must not throw) opens the park's own instance.</remarks>
+    private static NeedsYouOpen OpenOf(Workflow.Views.StatusAnswer? answer, InstanceAddress at) => answer?.Child is { } child && InstanceAddress.TryFrom(child, out var deepest)
+        ? new NeedsYouOpen(NeedsYouRoutes.Park(at, deepest), "Answer in the child")
+        : new NeedsYouOpen(NeedsYouRoutes.Park(at, deepest: null), "Open the workflow");
 
     /// <summary>
     /// The answer a park row offers: the instance's own, or for a parked descendant a pointer to it (`via: "child"`) whose cli is
@@ -70,7 +73,21 @@ public static partial class NeedsYouRows
     /// <returns>The row.</returns>
     public static NeedsYouRow ForDeskTask(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
         Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
-            new NeedsYouOpen(WorkflowRoute(address), "Answer the question")), since, scrubber);
+            new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Answer the question")), since, scrubber);
+
+    /// <summary>The 'desk:' row of an instance that waits on the owner at a human-verb wait: a wait state with a 'command.&lt;verb&gt;' exit whose effect acts with a human's authority (read at request time, from the pinned recipe).</summary>
+    /// <param name="item">The item's row.</param>
+    /// <param name="address">The instance's address.</param>
+    /// <param name="wait">What the wait says: its label, its reason and the pull request it is about.</param>
+    /// <param name="since">When the instance entered the wait.</param>
+    /// <param name="scrubber">Scrubs the text the row stores.</param>
+    /// <returns>The row.</returns>
+    public static NeedsYouRow ForOwnerStop(ItemRow item, InstanceAddress address, OwnerStopInput wait, DateTimeOffset since, ITextScrubber scrubber)
+    {
+        ArgumentNullException.ThrowIfNull(wait);
+        return Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), wait.Label, wait.Reason, Urgency.Colour, AnswerKind: null, _command, [_command], Status(address),
+            new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Review and act", wait.Pr)), since, scrubber);
+    }
 
     /// <summary>The 'park' row of a takeover that went idle.</summary>
     /// <param name="item">The item's row.</param>
@@ -80,9 +97,7 @@ public static partial class NeedsYouRows
     /// <returns>The row.</returns>
     public static NeedsYouRow ForIdleTakeover(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
         Row(item, address, new EngineRow(NeedsYouRowIds.Takeover(address), "taken over", $"a takeover is idle ({address.Value})", Urgency.Calm, AnswerKind: null, _handback, [_handback, _cancel], $"sindri handback {address.Value}",
-            new NeedsYouOpen(WorkflowRoute(address), "Hand back or cancel")), since, scrubber);
-
-    private static string WorkflowRoute(InstanceAddress address) => "workflow/" + address.Value;
+            new NeedsYouOpen(NeedsYouRoutes.Workflow(address), "Hand back or cancel")), since, scrubber);
 
     private static string Status(InstanceAddress address) => $"sindri workflow status {address.Value}";
 

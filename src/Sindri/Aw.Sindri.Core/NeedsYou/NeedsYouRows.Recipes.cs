@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.ApproveAll;
@@ -76,7 +77,7 @@ public static partial class NeedsYouRows
             _approveAllRecipes,
             [_approveAllRecipes],
             cli.Value.Text,
-            new NeedsYouOpen("setup", "Open setup"));
+            new NeedsYouOpen(NeedsYouRoutes.Setup, "Open setup"));
     }
 
     private static Result<NeedsYouRow> OwnRow(OwnApprovalRow own, DateTimeOffset since, ITextScrubber scrubber)
@@ -104,6 +105,6 @@ public static partial class NeedsYouRows
             _approveRecipe,
             [_approveRecipe],
             cli.Value.Text,
-            new NeedsYouOpen("recipe/" + own.Id.Value, "Review the workflow change"));
+            new NeedsYouOpen(NeedsYouRoutes.Recipe(own.Id), "Review the workflow change"));
     }
 }

@@ -36,7 +36,10 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
             return records.Error;
         }
 
-        var rows = await joins.Apply(NeedsYouOrder.Sort([.. records.Value.Select(static r => r.Row).Where(r => ItemScope.VisibleOrRepoless(caller, r.Repo)), .. await live.Read(caller, cancellationToken).ConfigureAwait(false)]), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        var folded = records.Value.Select(static r => r.Row).Where(r => ItemScope.VisibleOrRepoless(caller, r.Repo)).ToList();
+        var ids = folded.Select(static r => r.Id.Value).ToHashSet(StringComparer.Ordinal);
+        var computed = (await live.Read(caller, cancellationToken).ConfigureAwait(false)).Where(r => !ids.Contains(r.Id.Value));   // a folded row of the same id wins
+        var rows = await joins.Apply(NeedsYouOrder.Sort([.. folded, .. computed]), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         var empty = current.Text;
         if (empty is null && rows.Count == 0)
         {
