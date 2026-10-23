@@ -1,7 +1,7 @@
 #pragma warning disable MA0003, MA0127 // fixture records are positional; their literals are named by the record
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
