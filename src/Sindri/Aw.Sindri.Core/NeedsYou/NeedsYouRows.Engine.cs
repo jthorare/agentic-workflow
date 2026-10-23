@@ -17,6 +17,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 public static partial class NeedsYouRows
 {
     private static readonly ActionId _completeStep = ActionId.From("CompleteStep");
+    private static readonly ActionId _command = ActionId.From("ApplyCommand:command");
     private static readonly ActionId _handback = ActionId.From("ApplyCommand:handback");
     private static readonly ActionId _cancel = ActionId.From("ApplyCommand:cancel");
     private static readonly ActionId _approveRecipe = ActionId.From("ApproveRecipe");
@@ -82,7 +83,9 @@ public static partial class NeedsYouRows
     /// <returns>The row.</returns>
     public static NeedsYouRow ForOwnerStop(ItemRow item, InstanceAddress address, OwnerStopInput wait, DateTimeOffset since, ITextScrubber scrubber)
     {
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(wait);
+        return Row(item, address, new EngineRow(NeedsYouRowId.Desk(address), wait.Label, wait.Reason, Urgency.Colour, AnswerKind: null, _command, [_command], Status(address),
+            new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Review and act", wait.Pr)), since, scrubber);
     }
 
     /// <summary>The 'park' row of a takeover that went idle.</summary>

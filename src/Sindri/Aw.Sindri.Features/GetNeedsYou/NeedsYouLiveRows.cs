@@ -13,17 +13,16 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="clock">Stamps the rows.</param>
 internal sealed class NeedsYouLiveRows(IOnyxNotices onyx, SetupNotices setup, NeedsYouOwnerStops ownerStops, ITextScrubber scrubber, TimeProvider clock)
 {
-    /// <summary>The Onyx row and the setup rows for <paramref name="caller"/>, in that order.</summary>
+    /// <summary>The Onyx row, the setup rows and the owner-stop rows for <paramref name="caller"/>, in that order.</summary>
     /// <param name="caller">The caller.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>The rows; empty for a session or when a source can't be read.</returns>
+    /// <returns>The rows; a session gets only its repo's owner-stop rows, and a source that can't be read adds none.</returns>
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CallerContext caller, CancellationToken cancellationToken) =>
-        [.. await OnyxRows(caller, cancellationToken).ConfigureAwait(false), .. await SetupRows(caller, cancellationToken).ConfigureAwait(false)];
+        [.. await OnyxRows(caller, cancellationToken).ConfigureAwait(false), .. await SetupRows(caller, cancellationToken).ConfigureAwait(false), .. await ownerStops.Read(caller, cancellationToken).ConfigureAwait(false)];
 
     // The setup rows that are computed, not folded: the human's to act on, so a session doesn't see them.
     private async ValueTask<IReadOnlyList<NeedsYouRow>> SetupRows(CallerContext caller, CancellationToken cancellationToken)
     {
-        _ = ownerStops;   // red stub: the implementation commit reads the owner-stop rows
         if (caller.Class != CallerClass.Human)
         {
             return [];
