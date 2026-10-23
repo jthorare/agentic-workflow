@@ -18,6 +18,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 public static partial class NeedsYouRows
 {
     private static readonly ActionId _completeStep = ActionId.From("CompleteStep");
+    private static readonly ActionId _command = ActionId.From("ApplyCommand:command");
     private static readonly ActionId _handback = ActionId.From("ApplyCommand:handback");
     private static readonly ActionId _cancel = ActionId.From("ApplyCommand:cancel");
     private static readonly ActionId _approveRecipe = ActionId.From("ApproveRecipe");
@@ -73,6 +74,20 @@ public static partial class NeedsYouRows
     public static NeedsYouRow ForDeskTask(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
         Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
             new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Answer the question")), since, scrubber);
+
+    /// <summary>The 'desk:' row of an instance that waits on the owner at a human-verb wait: a wait state with a 'command.&lt;verb&gt;' exit whose effect acts with a human's authority (read at request time, from the pinned recipe).</summary>
+    /// <param name="item">The item's row.</param>
+    /// <param name="address">The instance's address.</param>
+    /// <param name="wait">What the wait says: its label, its reason and the pull request it is about.</param>
+    /// <param name="since">When the instance entered the wait.</param>
+    /// <param name="scrubber">Scrubs the text the row stores.</param>
+    /// <returns>The row.</returns>
+    public static NeedsYouRow ForOwnerStop(ItemRow item, InstanceAddress address, OwnerStopInput wait, DateTimeOffset since, ITextScrubber scrubber)
+    {
+        ArgumentNullException.ThrowIfNull(wait);
+        return Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), wait.Label, wait.Reason, Urgency.Colour, AnswerKind: null, _command, [_command], Status(address),
+            new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Review and act", wait.Pr)), since, scrubber);
+    }
 
     /// <summary>The 'park' row of a takeover that went idle.</summary>
     /// <param name="item">The item's row.</param>
