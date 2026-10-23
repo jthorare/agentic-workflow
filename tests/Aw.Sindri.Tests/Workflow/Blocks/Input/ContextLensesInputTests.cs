@@ -5,6 +5,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
@@ -38,6 +39,8 @@ public sealed class ContextLensesInputTests
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, int? depth, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

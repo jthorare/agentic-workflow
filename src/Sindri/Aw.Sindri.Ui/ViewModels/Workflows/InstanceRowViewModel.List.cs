@@ -9,8 +9,18 @@ internal sealed partial class InstanceRowViewModel
     /// <summary>The mono reference under the title: the run's address.</summary>
     public string Reference => _row.Address;
 
-    /// <summary>The Waiting on column: you (it needs you, or you took it over), the AI agent (it is working), nobody once it ended or has not started.</summary>
-    public string WaitingOn => Status.Kind switch
+    /// <summary>The Waiting on column, from the served waitingOn (you, the AI agent, Sindri); nobody once the run ended.</summary>
+    public string WaitingOn => _row.WaitingOn switch
+    {
+        "you" => Labels.WorkflowsWaitYou,
+        "agent" => Labels.WorkflowsWaitAgent,
+        "engine" => Labels.WorkflowsWaitEngine,
+        { Length: > 0 } other => other,
+        _ => WaitingOnFromStatus,
+    };
+
+    // A server that does not serve waitingOn yet: it is worked out from the status, as before.
+    private string WaitingOnFromStatus => Status.Kind switch
     {
         RunStatusKind.WaitingForYou or RunStatusKind.Paused or RunStatusKind.TookOver => Labels.WorkflowsWaitYou,
         RunStatusKind.Running => Labels.WorkflowsWaitAgent,

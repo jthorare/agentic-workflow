@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-CONTEXT-120",
+  "status": 404,
+  "detail": "map version v99 isn't held (current: v1; no earlier version is retained) (fix: read the current map, or name a version in that range)",
+  "traceId": "<trace>"
+}

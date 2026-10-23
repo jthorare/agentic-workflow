@@ -6,6 +6,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.FindPath;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetLenses;
@@ -49,6 +50,9 @@ internal sealed class ContextGraph(
 
     public ValueTask<Result<SubgraphView>> Subgraph(SubgraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.Subgraph(query, scope, cancellationToken);
+
+    public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        codeHistory.WholeMap(query, scope, cancellationToken);
 
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         fileMap.Handle(new GetFileMapRequest(query, scope), cancellationToken);

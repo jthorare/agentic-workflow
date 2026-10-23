@@ -27,6 +27,7 @@ internal sealed partial class ShellViewModel
         AgentSheet.Wire(Health.Catalog, _clock);
         Health.Follow((url, token) => IsSessionSheet && IsSheetOpen ? AgentSheet.Refresh(url, token) : Task.CompletedTask);
         InitAgentStep();
+        AgentSheet.EndedResumeOf = Agents.ResumeOf;
         Agents.WorkflowsRequested += (_, _) => GoTo(PageId.Workflows);
         Agents.OpenRequested += (_, e) =>
         {

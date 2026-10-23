@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
+using Aw.Context.Core.WholeMap;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
 using Aw.Context.Testing.Fixtures;
@@ -32,6 +33,8 @@ internal static class ContextApiScenarios
     internal const string SubgraphBody = """{"nodes":["surface:command/switch-tab","code:src/tabs/TabManager.ts","decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b","feature:nope.x"]}""";   // a real mixed set: a surface, a code file, a decision, one absent key
 
     private static string Subgraph(string query) => "/sindri/context/subgraph?" + query;
+
+    private static string WholeRoute(string? query = null) => "/sindri/context/map/whole" + (query is null ? string.Empty : "?" + query);
 
     private delegate Task<string> Run(Scenario scenario, CancellationToken ct);
 
@@ -87,6 +90,20 @@ internal static class ContextApiScenarios
         ("context-lenses", "hops-component", async (s, ct) => await s.Fetch("/sindri/context/lenses?anchor=feature%3Ashare.sharing&depth=1&hops=state,dependency,flow,component", ct)),
         ("context-lenses", "hops-component-skipped", async (s, ct) => await s.Fetch("/sindri/context/lenses?anchor=feature%3Autil.u0&depth=1&hops=component", ct)),
         ("context-lenses", "hops-bogus-140", async (s, ct) => await s.Fetch("/sindri/context/lenses?anchor=feature%3Ashare.sharing&hops=bogus", ct)),
+        ("context-whole", "nodes-small", async (s, ct) => await s.Fetch(WholeRoute(), ct)),
+        ("context-whole", "areas-over-budget", async (s, ct) => await s.Fetch(WholeRoute(), ct)),
+        ("context-whole", "area-open", async (s, ct) => await s.Fetch(WholeRoute("area=feature%3Atabs.tab-groups"), ct)),
+        ("context-whole", "area-truncated", async (s, ct) => await s.Fetch(WholeRoute("area=feature%3Atabs.tab-groups"), ct)),
+        ("context-whole", "area-unknown-200", async (s, ct) => await s.Fetch(WholeRoute("area=feature%3Anope"), ct)),
+        ("context-whole", "locate", async (s, ct) => await s.Fetch(WholeRoute("locate=surface%3Acommand%2Fswitch-tab&locate=feature%3Anope.x"), ct)),
+        ("context-whole", "draft", async (s, ct) => await s.FetchAfterDraft(WholeRoute("draft=true"), ct)),
+        ("context-whole", "no-map-030", async (s, ct) => await s.Fetch(WholeRoute(), ct)),
+        ("context-whole", "no-draft-044", async (s, ct) => await s.Fetch(WholeRoute("draft=true"), ct)),
+        ("context-whole", "map-version-v1", async (s, ct) => await s.FetchAfterSecondMap(WholeRoute("mapVersion=v1"), ct)),
+        ("context-whole", "map-version-not-retained-120", async (s, ct) => await s.Fetch(WholeRoute("mapVersion=v99"), ct)),
+        ("context-whole", "bad-detail-006", async (s, ct) => await s.Fetch(WholeRoute("detail=everything"), ct)),
+        ("context-whole", "session-own-repo", async (s, ct) => await s.FetchAsSession(WholeRoute(), ct)),
+        ("context-whole", "session-other-repo-045", async (s, ct) => await s.FetchAsSession(WholeRoute("repo=elsewhere"), ct)),
         ("context-eval", "map-tabs", async (s, ct) => await s.Fetch("/sindri/context/eval/map", ct)),
         ("context-filemap", "root", async (s, ct) => await s.Fetch($"/sindri/context/filemap?repo={Repo}", ct)),
         ("context-filemap", "src", async (s, ct) => await s.Fetch($"/sindri/context/filemap?repo={Repo}&path=src/", ct)),
@@ -145,14 +162,14 @@ internal static class ContextApiScenarios
         var locks = Directory.CreateTempSubdirectory("aw-golden-locks-");
         IDisposable repo = bulk ? FixtureRepo.Build() : MapTabsRepo.Build();
         var path = repo is FixtureRepo fixture ? fixture.Path : ((MapTabsRepo)repo).Path;
-        var host = await ContextHosts.Approved(path, sessions: true, ct, Wiring(Path.Combine(locks.FullName, "heavy-job.lock")), bulk ? "split-panes" : Repo);
+        var host = await ContextHosts.Approved(path, sessions: true, ct, Wiring(Path.Combine(locks.FullName, "heavy-job.lock"), scenario), bulk ? "split-panes" : Repo);
         host.Own(repo);
         host.Own(new Deleted(locks.FullName));
         if (bulk)
         {
             await Rebuild(host, ct);
         }
-        else
+        else if ((slug, scenario) != ("context-whole", "no-map-030"))
         {
             await ContextMapApiTests.Import(host, ImportFile(host, slug, scenario));
         }
@@ -274,8 +291,14 @@ internal static class ContextApiScenarios
         return file;
     }
 
-    private static Action<IServiceCollection> Wiring(string lockPath) => services =>
+    private static Action<IServiceCollection> Wiring(string lockPath, string scenario = "") => services =>
     {
+        if (string.Equals(scenario, "areas-over-budget", StringComparison.Ordinal) || string.Equals(scenario, "area-truncated", StringComparison.Ordinal))
+        {
+            _ = services.RemoveAll<WholeMapRules>();
+            _ = services.AddSingleton(string.Equals(scenario, "area-truncated", StringComparison.Ordinal) ? new WholeMapRules(AreaCap: 5) : new WholeMapRules(NodeBudget: 5));   // the tabs map is a few more nodes than either
+        }
+
         _ = services.RemoveAll<IClusterSource>();
         _ = services.AddSingleton<IClusterSource>(new FakeClusterSource());
         _ = services.RemoveAll<ICurrentUser>();

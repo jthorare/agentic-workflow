@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jthorare/agentic-workflow/schemas/line/escalation.json",
   "title": "A typed escalation (fact:escalation; a finding's escalate)",
-  "description": "BS-12 (owner, 2026-10-19: review loops run without requesting human intervention unless there is ambiguity as to how to solve / a product question). The only way a lens loop or its fixer reaches a human: an agent's typed report, per finding, escalate { kind, question, options? }. 'step.lens.log' and 'step.review.log' copy the first valid one (adding the finding's lens and id) into fact:escalation and report needsOwner; 'step.review.fix' reports needsOwner with fact:escalation itself. A finding that only says 'please decide', or has any other kind, is not an escalation and stays in the loop.",
+  "description": "BS-12 (owner, 2026-10-19: review loops run without requesting human intervention unless there is ambiguity as to how to solve / a product question). The only way a lens loop or its fixer reaches a human: an agent's typed report, per finding, escalate { kind, question, options? }. 'step.review.log' copies the first valid one (adding the finding's lens and id) into fact:escalation and reports needsOwner; 'step.lens.log' (the design review, owner 2026-10-23) copies EVERY valid one of the round, in order and with no limit, as an array of these objects, so the owner answers them all in one desk; 'step.review.fix' reports needsOwner with fact:escalation itself. A finding that only says 'please decide', or has any other kind, is not an escalation and stays in the loop.",
   "type": "object",
   "properties": {
     "kind": {
@@ -27,6 +27,11 @@
       "type": "string",
       "minLength": 1,
       "description": "Added by the log Step: the lens whose finding escalated."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Added by step.lens.log in the list form: q1, q2... in round order, unique within the round; an answer echoes it."
     },
     "finding": {
       "type": "string",

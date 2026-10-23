@@ -4622,3 +4622,25 @@ static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.operator !=(Aw.Sin
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.operator ==(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest? right) -> bool
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.operator !=(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? right) -> bool
 static Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.operator ==(Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? left, Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult? right) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest!
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Detail.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Detail.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Draft.get -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Draft.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Locate.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Locate.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.MapVersion.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Repo.init -> void
+override Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest? left, Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest? left, Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Area.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Area.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Deconstruct(out string? Detail, out System.Collections.Generic.IReadOnlyList<string!>? Locate, out bool Draft, out string? MapVersion, out string? Repo, out string? Area) -> void
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.GetContextWholeMapRequest(string? Detail = null, System.Collections.Generic.IReadOnlyList<string!>? Locate = null, bool Draft = false, string? MapVersion = null, string? Repo = null, string? Area = null) -> void

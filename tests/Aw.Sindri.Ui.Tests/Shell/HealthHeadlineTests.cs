@@ -1,3 +1,4 @@
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
@@ -72,5 +73,21 @@ public sealed class HealthHeadlineTests
         _ = system.Vm.NotRunning("nothing answered");
 
         Assert.Equal((false, true), (system.Vm.ToneWarn, system.Vm.ToneError));
+    }
+
+    [Fact]
+    public async Task A_stale_code_index_is_named_in_the_headline_and_listed_with_its_text_and_code()
+    {
+        var status = AwJson.Deserialize<StatusView>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("status", "code-index-stale")), SindriApiClient.Json).Value;
+        var served = Assert.Single(status.Health!.Problems);
+        var system = new SystemTestHarness();
+
+        await system.Show(status);
+
+        Assert.StartsWith("Sindri is degraded: ", system.Vm.Sentence, StringComparison.Ordinal);
+        Assert.Contains(served.Clause!, system.Vm.Sentence, StringComparison.Ordinal);
+        var line = Assert.Single(system.Vm.ProblemLines);
+        Assert.Equal((served.Code, served.Text), (line.Code, line.Text));
+        Assert.Equal((true, false), (system.Vm.ToneWarn, system.Vm.ToneError));
     }
 }

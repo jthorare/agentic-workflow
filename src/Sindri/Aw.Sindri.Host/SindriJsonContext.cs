@@ -9,6 +9,7 @@ using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
@@ -208,7 +209,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ContextChallenge)), JsonSerializable(typeof(ReviewContextMapRequest)), JsonSerializable(typeof(ReviewContextMapResponse)), JsonSerializable(typeof(PromoteContextMapRequest))]
 [JsonSerializable(typeof(PromoteContextMapResponse)), JsonSerializable(typeof(ProposeContextMapRequest)), JsonSerializable(typeof(ProposeContextMapResponse)), JsonSerializable(typeof(ReviewQueueView))]
 [JsonSerializable(typeof(ReviewHistoryView)), JsonSerializable(typeof(ReviewExported)), JsonSerializable(typeof(ReviewResult)), JsonSerializable(typeof(ProposalsView))]
-[JsonSerializable(typeof(LensesView)), JsonSerializable(typeof(LensesSetView)), JsonSerializable(typeof(HistoryView)), JsonSerializable(typeof(CodeView)), JsonSerializable(typeof(SubgraphView)), JsonSerializable(typeof(GetContextSubgraphRequest)), JsonSerializable(typeof(FileMapView)), JsonSerializable(typeof(ContextMapReviewed)), JsonSerializable(typeof(ContextMapPromoted))]
+[JsonSerializable(typeof(LensesView)), JsonSerializable(typeof(LensesSetView)), JsonSerializable(typeof(HistoryView)), JsonSerializable(typeof(CodeView)), JsonSerializable(typeof(SubgraphView)), JsonSerializable(typeof(GetContextSubgraphRequest)), JsonSerializable(typeof(FileMapView)), JsonSerializable(typeof(WholeMapView)), JsonSerializable(typeof(ContextMapReviewed)), JsonSerializable(typeof(ContextMapPromoted))]
 [JsonSerializable(typeof(ContextMapProposed)), JsonSerializable(typeof(ContextMapBuilt))]
 [JsonSerializable(typeof(FleetChanged))]
 [JsonSerializable(typeof(ItemOpenRequested)), JsonSerializable(typeof(LaunchStarted)), JsonSerializable(typeof(LaunchStartedPublic)), JsonSerializable(typeof(LaunchFailed))]   // API P10a (U0)

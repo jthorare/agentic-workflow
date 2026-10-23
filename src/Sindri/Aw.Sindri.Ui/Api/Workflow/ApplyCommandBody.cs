@@ -10,8 +10,15 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="Text">The answer's text (a hint); null otherwise.</param>
 /// <param name="Amount">The tokens granted, for a grant; null otherwise.</param>
 /// <param name="Challenge">The challenge and its answer, for a grant; null otherwise.</param>
-internal sealed record ApplyCommandBody(string Instance, CommandKind Kind, AnswerVariant? Answer = null, string? Text = null, int? Amount = null, ChallengeAnswerBody? Challenge = null)
+/// <param name="Verb">The recipe verb, for a "command"; null otherwise.</param>
+internal sealed record ApplyCommandBody(string Instance, CommandKind Kind, AnswerVariant? Answer = null, string? Text = null, int? Amount = null, ChallengeAnswerBody? Challenge = null, string? Verb = null)
 {
+    /// <summary>A recipe verb (merge, check, rework …) on <paramref name="instance"/>.</summary>
+    /// <param name="instance">The instance's id.</param>
+    /// <param name="verb">The verb, as the instance's allowedCommands name it.</param>
+    /// <returns>The body.</returns>
+    internal static ApplyCommandBody ForVerb(string instance, string verb) => new(instance, CommandKind.Command, Verb: verb);
+
     /// <summary>The token grant of <paramref name="amount"/> on <paramref name="address"/>.</summary>
     /// <param name="address">The instance's address.</param>
     /// <param name="amount">The tokens.</param>

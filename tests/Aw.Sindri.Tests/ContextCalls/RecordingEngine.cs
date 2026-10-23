@@ -12,6 +12,7 @@ using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -153,6 +154,9 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<LensesSetView>> LensesOf(IReadOnlyList<string> anchors, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) =>
         inner.LensesOf(anchors, read, range, scope, cancellationToken);
+
+    public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        inner.WholeMap(query, scope, cancellationToken);
 
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         inner.FileMap(query, scope, cancellationToken);

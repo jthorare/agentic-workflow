@@ -14,10 +14,10 @@ public static class HealthSummary
     /// <param name="running">Whether this process holds the lease.</param>
     /// <param name="views">The projector's status.</param>
     /// <param name="services">The services view's rows, or null when the views can't be read.</param>
-    /// <param name="profileNeedsApproval">True when no profile is approved.</param>
-    /// <param name="profileChanged">True when the live profile changed since approval.</param>
+    /// <param name="profile">Where the profile stands against its approval.</param>
+    /// <param name="codeIndex">The code index's problems, one per repo at most; they follow the services' and come before the profile's.</param>
     /// <returns>The health.</returns>
-    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, bool profileNeedsApproval, bool profileChanged)
+    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, IReadOnlyList<HealthProblem>? codeIndex = null)
     {
         ArgumentNullException.ThrowIfNull(views);
         List<HealthProblem> problems = [];
@@ -33,17 +33,22 @@ public static class HealthSummary
         }
 
         problems.AddRange((services ?? []).Where(s => s.LastRun is { Outcome: ServiceOutcome.Failed }).Select(s => Failed(s.Name, s.LastRun)));
-        if (profileChanged)
-        {
-            problems.Add(new("SND-PROFILE-003", "The live profile changed since approval: run `sindri profile approve`", "the profile changed since approval"));
-        }
-        else if (profileNeedsApproval)
-        {
-            problems.Add(new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved"));
-        }
-
+        problems.AddRange(codeIndex ?? []);
+        problems.AddRange(Profile(profile));
         var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
         return new HealthReport(word, [.. problems], Sentence(word, problems));
+    }
+
+    private static IEnumerable<HealthProblem> Profile(ProfileApproval profile)
+    {
+        if (profile == ProfileApproval.Changed)
+        {
+            yield return new("SND-PROFILE-003", "The live profile changed since approval: run `sindri profile approve`", "the profile changed since approval");
+        }
+        else if (profile == ProfileApproval.NeedsApproval)
+        {
+            yield return new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved");
+        }
     }
 
     private static IEnumerable<HealthProblem> Views(ViewsStatus views)

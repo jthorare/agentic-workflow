@@ -12,15 +12,24 @@ internal sealed class StageCellViewModel
 {
     private readonly StateCell _cell;
 
-    internal StageCellViewModel(StateCell cell, bool isCurrent, bool isBlocked)
+    /// <summary>A cell of a row.</summary>
+    /// <param name="cell">The served cell.</param>
+    /// <param name="isCurrent">True for the state the instance is in.</param>
+    /// <param name="isBlocked">True when a required input is missing and this is the state the instance waits in.</param>
+    /// <param name="names">The recipes' state names; null names the state by its id.</param>
+    /// <param name="recipeId">The recipe the cell belongs to, for <paramref name="names"/>.</param>
+    internal StageCellViewModel(StateCell cell, bool isCurrent, bool isBlocked, StateNames? names = null, string recipeId = "")
     {
         _cell = cell;
+        StateName = names is null ? cell.State : names.Of(recipeId, cell.State);
         IsCurrent = isCurrent;
         IsBlocked = isBlocked;
         var badge = cell.Badge is { } b ? Labels.CellBadge(b.Kind, b.Reason) : string.Empty;
         Glyph = isBlocked ? Labels.BlockedMark : badge.Length > 0 ? badge : Mark(cell.Glyph);
         Detail = string.Join(' ', new[] { isBlocked ? badge : string.Empty, Parts(cell) }.Where(p => p.Length > 0));
     }
+
+    private string StateName { get; }
 
     /// <summary>The state this cell is.</summary>
     public string State => _cell.State;
@@ -40,8 +49,8 @@ internal sealed class StageCellViewModel
     /// <summary>True for the state the instance is in.</summary>
     public bool IsCurrent { get; }
 
-    /// <summary>The name screen readers hear: the state, what the cell says in words, and "current" for the state the instance is in.</summary>
-    public string Name => $"{_cell.State}, {Words()}{(IsCurrent ? ", " + Labels.StageCurrent : string.Empty)}";
+    /// <summary>The name screen readers hear: the state in the recipe's words (its id when no names are known), what the cell says in words, and "current" for the state the instance is in.</summary>
+    public string Name => $"{StateName}, {Words()}{(IsCurrent ? ", " + Labels.StageCurrent : string.Empty)}";
 
     internal static string Mark(Api.Workflow.StateGlyph glyph) => glyph switch
     {

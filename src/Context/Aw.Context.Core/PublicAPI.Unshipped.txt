@@ -6550,3 +6550,300 @@ override Aw.Context.Core.Code.SymbolColumnReading.ToString() -> string!
 static Aw.Context.Core.Code.SymbolColumn.Read(Aw.Context.Core.Symbols.ICodeSymbolSource! source, Aw.Context.Core.Code.SymbolColumnReading! reading, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Lenses.LensSymbols!>
 static Aw.Context.Core.Code.SymbolColumnReading.operator !=(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool
 static Aw.Context.Core.Code.SymbolColumnReading.operator ==(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool
+Aw.Context.Core.Facade.IContextLenses.WholeMap(Aw.Context.Core.WholeMap.WholeMapQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.WholeMap.WholeMapView!>!>
+Aw.Context.Core.WholeMap.AreaIndex
+Aw.Context.Core.WholeMap.AreaIndex.<Clone>$() -> Aw.Context.Core.WholeMap.AreaIndex!
+Aw.Context.Core.WholeMap.AreaIndex.AreaIndex(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.WholeMap.NodeArea!>! ByNode) -> void
+Aw.Context.Core.WholeMap.AreaIndex.ByNode.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.WholeMap.NodeArea!>!
+Aw.Context.Core.WholeMap.AreaIndex.ByNode.init -> void
+Aw.Context.Core.WholeMap.AreaIndex.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.WholeMap.NodeArea!>! ByNode) -> void
+Aw.Context.Core.WholeMap.AreaIndex.Equals(Aw.Context.Core.WholeMap.AreaIndex? other) -> bool
+Aw.Context.Core.WholeMap.MapAreas
+Aw.Context.Core.WholeMap.NodeArea
+Aw.Context.Core.WholeMap.NodeArea.<Clone>$() -> Aw.Context.Core.WholeMap.NodeArea!
+Aw.Context.Core.WholeMap.NodeArea.AlsoIn.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.NodeArea.AlsoIn.init -> void
+Aw.Context.Core.WholeMap.NodeArea.Area.get -> string!
+Aw.Context.Core.WholeMap.NodeArea.Area.init -> void
+Aw.Context.Core.WholeMap.NodeArea.Deconstruct(out string! Area, out System.Collections.Generic.IReadOnlyList<string!>! AlsoIn) -> void
+Aw.Context.Core.WholeMap.NodeArea.Equals(Aw.Context.Core.WholeMap.NodeArea? other) -> bool
+Aw.Context.Core.WholeMap.NodeArea.NodeArea(string! Area, System.Collections.Generic.IReadOnlyList<string!>! AlsoIn) -> void
+Aw.Context.Core.WholeMap.WholeMapArea
+Aw.Context.Core.WholeMap.WholeMapArea.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapArea!
+Aw.Context.Core.WholeMap.WholeMapArea.ByKind.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.WholeMap.WholeMapArea.ByKind.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Deconstruct(out string! Key, out string! Label, out Aw.Context.Core.Results.Trust Trust, out int Members, out System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByKind, out bool Unassigned) -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Equals(Aw.Context.Core.WholeMap.WholeMapArea? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapArea.Key.get -> string!
+Aw.Context.Core.WholeMap.WholeMapArea.Key.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Label.get -> string!
+Aw.Context.Core.WholeMap.WholeMapArea.Label.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Members.get -> int
+Aw.Context.Core.WholeMap.WholeMapArea.Members.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Trust.get -> Aw.Context.Core.Results.Trust
+Aw.Context.Core.WholeMap.WholeMapArea.Trust.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.Unassigned.get -> bool
+Aw.Context.Core.WholeMap.WholeMapArea.Unassigned.init -> void
+Aw.Context.Core.WholeMap.WholeMapArea.WholeMapArea(string! Key, string! Label, Aw.Context.Core.Results.Trust Trust, int Members, System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByKind, bool Unassigned) -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapAreaEdge!
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Confirmed.get -> int
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Confirmed.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Count.get -> int
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Count.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Deconstruct(out string! From, out string! To, out Aw.Context.Core.Graph.EdgeType Type, out int Count, out int Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Equals(Aw.Context.Core.WholeMap.WholeMapAreaEdge? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.From.get -> string!
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.From.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.To.get -> string!
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.To.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Type.get -> Aw.Context.Core.Graph.EdgeType
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.Type.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaEdge.WholeMapAreaEdge(string! From, string! To, Aw.Context.Core.Graph.EdgeType Type, int Count, int Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapAreaInfo!
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Counts.get -> Aw.Context.Core.WholeMap.WholeMapCounts!
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Counts.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Deconstruct(out string! Key, out bool Truncated, out Aw.Context.Core.WholeMap.WholeMapCounts! Counts) -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Equals(Aw.Context.Core.WholeMap.WholeMapAreaInfo? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Key.get -> string!
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Key.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Truncated.get -> bool
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.Truncated.init -> void
+Aw.Context.Core.WholeMap.WholeMapAreaInfo.WholeMapAreaInfo(string! Key, bool Truncated, Aw.Context.Core.WholeMap.WholeMapCounts! Counts) -> void
+Aw.Context.Core.WholeMap.WholeMapCounts
+Aw.Context.Core.WholeMap.WholeMapCounts.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapCounts!
+Aw.Context.Core.WholeMap.WholeMapCounts.ByKind.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.WholeMap.WholeMapCounts.ByKind.init -> void
+Aw.Context.Core.WholeMap.WholeMapCounts.Deconstruct(out int Nodes, out int Edges, out System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByKind) -> void
+Aw.Context.Core.WholeMap.WholeMapCounts.Edges.get -> int
+Aw.Context.Core.WholeMap.WholeMapCounts.Edges.init -> void
+Aw.Context.Core.WholeMap.WholeMapCounts.Equals(Aw.Context.Core.WholeMap.WholeMapCounts? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapCounts.Nodes.get -> int
+Aw.Context.Core.WholeMap.WholeMapCounts.Nodes.init -> void
+Aw.Context.Core.WholeMap.WholeMapCounts.WholeMapCounts(int Nodes, int Edges, System.Collections.Generic.IReadOnlyDictionary<string!, int>! ByKind) -> void
+Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapDetail.Areas = 2 -> Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapDetail.Auto = 0 -> Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapDetail.Nodes = 1 -> Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapEdge
+Aw.Context.Core.WholeMap.WholeMapEdge.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapEdge!
+Aw.Context.Core.WholeMap.WholeMapEdge.Confidence.get -> double
+Aw.Context.Core.WholeMap.WholeMapEdge.Confidence.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Confirmed.get -> bool
+Aw.Context.Core.WholeMap.WholeMapEdge.Confirmed.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Deconstruct(out Aw.Context.Core.Graph.NodeKey From, out Aw.Context.Core.Graph.NodeKey To, out Aw.Context.Core.Graph.EdgeType Type, out Aw.Context.Core.Graph.LinkId Link, out Aw.Context.Core.Results.Provenance Provenance, out double Confidence, out bool Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Equals(Aw.Context.Core.WholeMap.WholeMapEdge? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapEdge.From.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.WholeMap.WholeMapEdge.From.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Link.get -> Aw.Context.Core.Graph.LinkId
+Aw.Context.Core.WholeMap.WholeMapEdge.Link.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Provenance.get -> Aw.Context.Core.Results.Provenance
+Aw.Context.Core.WholeMap.WholeMapEdge.Provenance.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.To.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.WholeMap.WholeMapEdge.To.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.Type.get -> Aw.Context.Core.Graph.EdgeType
+Aw.Context.Core.WholeMap.WholeMapEdge.Type.init -> void
+Aw.Context.Core.WholeMap.WholeMapEdge.WholeMapEdge(Aw.Context.Core.Graph.NodeKey From, Aw.Context.Core.Graph.NodeKey To, Aw.Context.Core.Graph.EdgeType Type, Aw.Context.Core.Graph.LinkId Link, Aw.Context.Core.Results.Provenance Provenance, double Confidence, bool Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapLocated
+Aw.Context.Core.WholeMap.WholeMapLocated.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapLocated!
+Aw.Context.Core.WholeMap.WholeMapLocated.Area.get -> string?
+Aw.Context.Core.WholeMap.WholeMapLocated.Area.init -> void
+Aw.Context.Core.WholeMap.WholeMapLocated.Deconstruct(out string! Key, out string? Area) -> void
+Aw.Context.Core.WholeMap.WholeMapLocated.Equals(Aw.Context.Core.WholeMap.WholeMapLocated? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapLocated.Key.get -> string!
+Aw.Context.Core.WholeMap.WholeMapLocated.Key.init -> void
+Aw.Context.Core.WholeMap.WholeMapLocated.WholeMapLocated(string! Key, string? Area) -> void
+Aw.Context.Core.WholeMap.WholeMapNode
+Aw.Context.Core.WholeMap.WholeMapNode.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapNode!
+Aw.Context.Core.WholeMap.WholeMapNode.AlsoIn.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapNode.AlsoIn.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Area.get -> string!
+Aw.Context.Core.WholeMap.WholeMapNode.Area.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Confidence.get -> double
+Aw.Context.Core.WholeMap.WholeMapNode.Confidence.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Confirmed.get -> bool
+Aw.Context.Core.WholeMap.WholeMapNode.Confirmed.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out string! Label, out Aw.Context.Core.Graph.NodeKind Kind, out string! Area, out System.Collections.Generic.IReadOnlyList<string!>! AlsoIn, out Aw.Context.Core.Results.Trust Trust, out Aw.Context.Core.Results.Provenance Provenance, out double Confidence, out bool Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Equals(Aw.Context.Core.WholeMap.WholeMapNode? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapNode.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.WholeMap.WholeMapNode.Key.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Kind.get -> Aw.Context.Core.Graph.NodeKind
+Aw.Context.Core.WholeMap.WholeMapNode.Kind.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Label.get -> string!
+Aw.Context.Core.WholeMap.WholeMapNode.Label.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Provenance.get -> Aw.Context.Core.Results.Provenance
+Aw.Context.Core.WholeMap.WholeMapNode.Provenance.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Trust.get -> Aw.Context.Core.Results.Trust
+Aw.Context.Core.WholeMap.WholeMapNode.Trust.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.WholeMapNode(Aw.Context.Core.Graph.NodeKey Key, string! Label, Aw.Context.Core.Graph.NodeKind Kind, string! Area, System.Collections.Generic.IReadOnlyList<string!>! AlsoIn, Aw.Context.Core.Results.Trust Trust, Aw.Context.Core.Results.Provenance Provenance, double Confidence, bool Confirmed) -> void
+Aw.Context.Core.WholeMap.WholeMapQuery
+Aw.Context.Core.WholeMap.WholeMapQuery.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapQuery!
+Aw.Context.Core.WholeMap.WholeMapQuery.Detail.get -> string?
+Aw.Context.Core.WholeMap.WholeMapQuery.Detail.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Equals(Aw.Context.Core.WholeMap.WholeMapQuery? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapQuery.Locate.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapQuery.Locate.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Read.get -> Aw.Context.Core.Map.MapRead
+Aw.Context.Core.WholeMap.WholeMapQuery.Read.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Repo.get -> string?
+Aw.Context.Core.WholeMap.WholeMapQuery.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapRules
+Aw.Context.Core.WholeMap.WholeMapRules.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapRules!
+Aw.Context.Core.WholeMap.WholeMapRules.AreaCap.get -> int
+Aw.Context.Core.WholeMap.WholeMapRules.AreaCap.init -> void
+Aw.Context.Core.WholeMap.WholeMapRules.AreasCap.get -> int
+Aw.Context.Core.WholeMap.WholeMapRules.AreasCap.init -> void
+Aw.Context.Core.WholeMap.WholeMapRules.Deconstruct(out int NodeBudget, out int AreaCap, out int AreasCap) -> void
+Aw.Context.Core.WholeMap.WholeMapRules.Equals(Aw.Context.Core.WholeMap.WholeMapRules? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.get -> int
+Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.init -> void
+Aw.Context.Core.WholeMap.WholeMapRules.WholeMapRules(int NodeBudget = 500, int AreaCap = 500, int AreasCap = 500) -> void
+Aw.Context.Core.WholeMap.WholeMapView
+Aw.Context.Core.WholeMap.WholeMapView.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapView!
+Aw.Context.Core.WholeMap.WholeMapView.Area.get -> Aw.Context.Core.WholeMap.WholeMapAreaInfo?
+Aw.Context.Core.WholeMap.WholeMapView.Area.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.AreaEdges.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>!
+Aw.Context.Core.WholeMap.WholeMapView.AreaEdges.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Areas.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>!
+Aw.Context.Core.WholeMap.WholeMapView.Areas.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.AsOf.get -> System.DateTimeOffset
+Aw.Context.Core.WholeMap.WholeMapView.AsOf.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Counts.get -> Aw.Context.Core.WholeMap.WholeMapCounts!
+Aw.Context.Core.WholeMap.WholeMapView.Counts.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Detail.get -> Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapView.Detail.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Draft.get -> bool
+Aw.Context.Core.WholeMap.WholeMapView.Draft.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapEdge!>?
+Aw.Context.Core.WholeMap.WholeMapView.Edges.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Equals(Aw.Context.Core.WholeMap.WholeMapView? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapView.Fallback.get -> string?
+Aw.Context.Core.WholeMap.WholeMapView.Fallback.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Located.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapLocated!>?
+Aw.Context.Core.WholeMap.WholeMapView.Located.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.MapCommit.get -> string?
+Aw.Context.Core.WholeMap.WholeMapView.MapCommit.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.MapVersion.get -> string!
+Aw.Context.Core.WholeMap.WholeMapView.MapVersion.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Nodes.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapNode!>?
+Aw.Context.Core.WholeMap.WholeMapView.Nodes.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Repo.get -> string?
+Aw.Context.Core.WholeMap.WholeMapView.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.SchemaVersion.get -> int
+Aw.Context.Core.WholeMap.WholeMapView.SchemaVersion.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Truncated.get -> bool
+Aw.Context.Core.WholeMap.WholeMapView.Truncated.init -> void
+const Aw.Context.Core.WholeMap.AreaIndex.UnassignedKey = "area:unassigned" -> string!
+const Aw.Context.Core.WholeMap.AreaIndex.UnassignedLabel = "Not linked to a feature yet" -> string!
+const Aw.Context.Core.WholeMap.WholeMapRules.MaxLocate = 100 -> int
+override Aw.Context.Core.WholeMap.AreaIndex.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.AreaIndex.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.AreaIndex.ToString() -> string!
+override Aw.Context.Core.WholeMap.NodeArea.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.NodeArea.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.NodeArea.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapArea.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapArea.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapArea.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapAreaEdge.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapAreaEdge.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapAreaEdge.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapAreaInfo.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapAreaInfo.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapAreaInfo.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapCounts.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapCounts.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapEdge.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapEdge.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapEdge.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapLocated.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapLocated.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapLocated.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapNode.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapNode.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapNode.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapQuery.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapQuery.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapQuery.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapRules.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapRules.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapRules.ToString() -> string!
+override Aw.Context.Core.WholeMap.WholeMapView.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapView.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapView.ToString() -> string!
+static Aw.Context.Core.WholeMap.AreaIndex.operator !=(Aw.Context.Core.WholeMap.AreaIndex? left, Aw.Context.Core.WholeMap.AreaIndex? right) -> bool
+static Aw.Context.Core.WholeMap.AreaIndex.operator ==(Aw.Context.Core.WholeMap.AreaIndex? left, Aw.Context.Core.WholeMap.AreaIndex? right) -> bool
+static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.WholeMap.AreaIndex!
+static Aw.Context.Core.WholeMap.NodeArea.operator !=(Aw.Context.Core.WholeMap.NodeArea? left, Aw.Context.Core.WholeMap.NodeArea? right) -> bool
+static Aw.Context.Core.WholeMap.NodeArea.operator ==(Aw.Context.Core.WholeMap.NodeArea? left, Aw.Context.Core.WholeMap.NodeArea? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapArea.operator !=(Aw.Context.Core.WholeMap.WholeMapArea? left, Aw.Context.Core.WholeMap.WholeMapArea? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapArea.operator ==(Aw.Context.Core.WholeMap.WholeMapArea? left, Aw.Context.Core.WholeMap.WholeMapArea? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapAreaEdge.operator !=(Aw.Context.Core.WholeMap.WholeMapAreaEdge? left, Aw.Context.Core.WholeMap.WholeMapAreaEdge? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapAreaEdge.operator ==(Aw.Context.Core.WholeMap.WholeMapAreaEdge? left, Aw.Context.Core.WholeMap.WholeMapAreaEdge? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapAreaInfo.operator !=(Aw.Context.Core.WholeMap.WholeMapAreaInfo? left, Aw.Context.Core.WholeMap.WholeMapAreaInfo? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapAreaInfo.operator ==(Aw.Context.Core.WholeMap.WholeMapAreaInfo? left, Aw.Context.Core.WholeMap.WholeMapAreaInfo? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapCounts.operator !=(Aw.Context.Core.WholeMap.WholeMapCounts? left, Aw.Context.Core.WholeMap.WholeMapCounts? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapCounts.operator ==(Aw.Context.Core.WholeMap.WholeMapCounts? left, Aw.Context.Core.WholeMap.WholeMapCounts? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapEdge.operator !=(Aw.Context.Core.WholeMap.WholeMapEdge? left, Aw.Context.Core.WholeMap.WholeMapEdge? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapEdge.operator ==(Aw.Context.Core.WholeMap.WholeMapEdge? left, Aw.Context.Core.WholeMap.WholeMapEdge? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapLocated.operator !=(Aw.Context.Core.WholeMap.WholeMapLocated? left, Aw.Context.Core.WholeMap.WholeMapLocated? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapLocated.operator ==(Aw.Context.Core.WholeMap.WholeMapLocated? left, Aw.Context.Core.WholeMap.WholeMapLocated? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapNode.operator !=(Aw.Context.Core.WholeMap.WholeMapNode? left, Aw.Context.Core.WholeMap.WholeMapNode? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapNode.operator ==(Aw.Context.Core.WholeMap.WholeMapNode? left, Aw.Context.Core.WholeMap.WholeMapNode? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapQuery.operator !=(Aw.Context.Core.WholeMap.WholeMapQuery? left, Aw.Context.Core.WholeMap.WholeMapQuery? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapQuery.operator ==(Aw.Context.Core.WholeMap.WholeMapQuery? left, Aw.Context.Core.WholeMap.WholeMapQuery? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapRules.Default.get -> Aw.Context.Core.WholeMap.WholeMapRules!
+static Aw.Context.Core.WholeMap.WholeMapRules.operator !=(Aw.Context.Core.WholeMap.WholeMapRules? left, Aw.Context.Core.WholeMap.WholeMapRules? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapRules.operator ==(Aw.Context.Core.WholeMap.WholeMapRules? left, Aw.Context.Core.WholeMap.WholeMapRules? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapView.operator !=(Aw.Context.Core.WholeMap.WholeMapView? left, Aw.Context.Core.WholeMap.WholeMapView? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapView.operator ==(Aw.Context.Core.WholeMap.WholeMapView? left, Aw.Context.Core.WholeMap.WholeMapView? right) -> bool
+Aw.Context.Core.WholeMap.WholeMapBasis
+Aw.Context.Core.WholeMap.WholeMapBasis.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapBasis!
+Aw.Context.Core.WholeMap.WholeMapBasis.AsOf.get -> System.DateTimeOffset
+Aw.Context.Core.WholeMap.WholeMapBasis.AsOf.init -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.Deconstruct(out string! MapVersion, out string? MapCommit, out bool Draft, out System.DateTimeOffset AsOf, out string? Repo) -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.Draft.get -> bool
+Aw.Context.Core.WholeMap.WholeMapBasis.Draft.init -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.Equals(Aw.Context.Core.WholeMap.WholeMapBasis? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapBasis.MapCommit.get -> string?
+Aw.Context.Core.WholeMap.WholeMapBasis.MapCommit.init -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.MapVersion.get -> string!
+Aw.Context.Core.WholeMap.WholeMapBasis.MapVersion.init -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.Repo.get -> string?
+Aw.Context.Core.WholeMap.WholeMapBasis.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapBasis.WholeMapBasis(string! MapVersion, string? MapCommit, bool Draft, System.DateTimeOffset AsOf, string? Repo) -> void
+Aw.Context.Core.WholeMap.WholeMapBuilder
+override Aw.Context.Core.WholeMap.WholeMapBasis.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapBasis.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapBasis.ToString() -> string!
+static Aw.Context.Core.WholeMap.WholeMapBasis.operator !=(Aw.Context.Core.WholeMap.WholeMapBasis? left, Aw.Context.Core.WholeMap.WholeMapBasis? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapBasis.operator ==(Aw.Context.Core.WholeMap.WholeMapBasis? left, Aw.Context.Core.WholeMap.WholeMapBasis? right) -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk
+Aw.Context.Core.WholeMap.WholeMapAsk.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapAsk!
+Aw.Context.Core.WholeMap.WholeMapAsk.Basis.get -> Aw.Context.Core.WholeMap.WholeMapBasis!
+Aw.Context.Core.WholeMap.WholeMapAsk.Basis.init -> void
+Aw.Context.Core.WholeMap.WholeMapAsk.Detail.get -> Aw.Context.Core.WholeMap.WholeMapDetail
+Aw.Context.Core.WholeMap.WholeMapAsk.Detail.init -> void
+Aw.Context.Core.WholeMap.WholeMapAsk.Equals(Aw.Context.Core.WholeMap.WholeMapAsk? other) -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.Locate.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.Locate.init -> void
+override Aw.Context.Core.WholeMap.WholeMapAsk.Equals(object? obj) -> bool
+override Aw.Context.Core.WholeMap.WholeMapAsk.GetHashCode() -> int
+override Aw.Context.Core.WholeMap.WholeMapAsk.ToString() -> string!
+static Aw.Context.Core.WholeMap.WholeMapAsk.operator !=(Aw.Context.Core.WholeMap.WholeMapAsk? left, Aw.Context.Core.WholeMap.WholeMapAsk? right) -> bool
+static Aw.Context.Core.WholeMap.WholeMapAsk.operator ==(Aw.Context.Core.WholeMap.WholeMapAsk? left, Aw.Context.Core.WholeMap.WholeMapAsk? right) -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.Area.get -> string?
+Aw.Context.Core.WholeMap.WholeMapAsk.Area.init -> void
+Aw.Context.Core.WholeMap.WholeMapAsk.Deconstruct(out Aw.Context.Core.WholeMap.WholeMapBasis! Basis, out Aw.Context.Core.WholeMap.WholeMapDetail Detail, out System.Collections.Generic.IReadOnlyList<string!>! Locate, out string? Area) -> void
+Aw.Context.Core.WholeMap.WholeMapAsk.WholeMapAsk(Aw.Context.Core.WholeMap.WholeMapBasis! Basis, Aw.Context.Core.WholeMap.WholeMapDetail Detail, System.Collections.Generic.IReadOnlyList<string!>! Locate, string? Area = null) -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Area.get -> string?
+Aw.Context.Core.WholeMap.WholeMapQuery.Area.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.Deconstruct(out string? Detail, out System.Collections.Generic.IReadOnlyList<string!>! Locate, out Aw.Context.Core.Map.MapRead Read, out string? Repo, out string? Area) -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.WholeMapQuery(string? Detail, System.Collections.Generic.IReadOnlyList<string!>! Locate, Aw.Context.Core.Map.MapRead Read, string? Repo = null, string? Area = null) -> void
+static Aw.Context.Core.WholeMap.WholeMapBuilder.Build(Aw.Context.Core.WholeMap.WholeMapAsk! ask, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.WholeMap.AreaIndex! areas, Aw.Context.Core.WholeMap.WholeMapRules! rules, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.WholeMap.WholeMapView!>!
+static readonly Aw.Context.Core.ContextErrors.AreaUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.WholeMap.WholeMapView.Deconstruct(out int SchemaVersion, out string! MapVersion, out bool Draft, out System.DateTimeOffset AsOf, out string? Repo, out Aw.Context.Core.WholeMap.WholeMapDetail Detail, out Aw.Context.Core.WholeMap.WholeMapCounts! Counts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, out bool Truncated) -> void
+Aw.Context.Core.WholeMap.WholeMapView.WholeMapView(int SchemaVersion, string! MapVersion, bool Draft, System.DateTimeOffset AsOf, string? Repo, Aw.Context.Core.WholeMap.WholeMapDetail Detail, Aw.Context.Core.WholeMap.WholeMapCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, bool Truncated) -> void
+static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph, int areaCap) -> Aw.Context.Core.WholeMap.AreaIndex!

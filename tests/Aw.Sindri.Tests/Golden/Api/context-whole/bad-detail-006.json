@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONTEXT-006",
+  "status": 400,
+  "detail": "'detail' is auto, nodes or areas (fix: use one of the three)",
+  "traceId": "<trace>"
+}

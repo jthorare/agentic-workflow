@@ -1,0 +1,32 @@
+{
+  "key": "fact:escalation",
+  "type": "payload",
+  "body": [
+    {
+      "kind": "productQuestion",
+      "question": "Keep the legacy flow?",
+      "options": [
+        "keep the queue",
+        "drop the queue"
+      ],
+      "lens": "product",
+      "finding": "P1",
+      "id": "q1"
+    },
+    {
+      "kind": "ambiguousFix",
+      "question": "Which table owns expiry?",
+      "lens": "arch",
+      "finding": "A2",
+      "id": "q2"
+    },
+    {
+      "kind": "productQuestion",
+      "question": "Who is the expiry for?",
+      "lens": "product",
+      "finding": "P3",
+      "id": "q3"
+    }
+  ],
+  "truncated": false
+}

@@ -18,6 +18,7 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="Facts">Facts, as served.</param>
 /// <param name="Children">Children, as served.</param>
 /// <param name="Counts">Counts, as served.</param>
+/// <param name="AllowedCommands">The commands it accepts now with each recipe verb; read as optional (an older Sindri serves none here).</param>
 /// <param name="Actions">Actions, as served.</param>
 /// <param name="AsOf">AsOf, as served.</param>
 /// <param name="StepRuns">The Step runs, in start order; null from a server that predates them.</param>
@@ -47,4 +48,5 @@ internal sealed record InstanceDetail(
     IReadOnlyList<StepRun>? StepRuns = null,
     IReadOnlyList<StateStep>? Steps = null,
     string? StartedBy = null,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Again = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Again = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<AllowedCommandView>? AllowedCommands = null);

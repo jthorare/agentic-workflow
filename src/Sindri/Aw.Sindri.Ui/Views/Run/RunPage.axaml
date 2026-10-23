@@ -21,7 +21,11 @@
             <TextBlock x:Name="RunBadgeText" Text="{Binding HeaderWord}" FontSize="12" LineHeight="16" FontWeight="Medium" VerticalAlignment="Center" AutomationProperties.Name="{Binding HeaderWord}" />
           </StackPanel>
         </Border>
-        <TextBlock x:Name="RunStarted" Grid.Column="4" Text="{Binding StartedText}" FontSize="12" LineHeight="16" VerticalAlignment="Center" Foreground="{DynamicResource Brush.InkSubtle}" AutomationProperties.Name="{Binding StartedText}" />
+        <StackPanel Grid.Column="4" VerticalAlignment="Center">
+          <TextBlock x:Name="RunStarted" Text="{Binding StartedText}" FontSize="12" LineHeight="16" Foreground="{DynamicResource Brush.InkSubtle}" AutomationProperties.Name="{Binding StartedText}" />
+          <TextBlock x:Name="RunTakenOver" Text="{Binding TakenOverText}" FontSize="12" LineHeight="16" Foreground="{DynamicResource Brush.InkSubtle}" IsVisible="{Binding TakenOverText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     AutomationProperties.Name="{Binding TakenOverText}" />
+        </StackPanel>
         <Button x:Name="RunReference" Grid.Column="5" Click="OnCopyReference" VerticalAlignment="Center" Padding="8,2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}"
                 AutomationProperties.Name="{Binding ReferenceCopy.Label}">
           <TextBlock Classes="mono" Text="{Binding Reference}" FontSize="11" LineHeight="14" Foreground="{DynamicResource Brush.InkSubtle}" AutomationProperties.AccessibilityView="Raw" />

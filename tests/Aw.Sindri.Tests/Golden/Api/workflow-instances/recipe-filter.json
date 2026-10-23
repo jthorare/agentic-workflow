@@ -102,7 +102,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": "you"
+      "waitingOn": "you",
+      "takenOverBy": null
     },
     {
       "address": "ITM-01JK6/triage-alert/1",
@@ -219,7 +220,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": "you"
+      "waitingOn": "you",
+      "takenOverBy": null
     },
     {
       "address": "ITM-01JKA/triage-alert/1",
@@ -319,7 +321,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": null
+      "waitingOn": null,
+      "takenOverBy": null
     },
     {
       "address": "ITM-01JK9/triage-alert/1",
@@ -419,7 +422,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": null
+      "waitingOn": null,
+      "takenOverBy": null
     },
     {
       "address": "ITM-01JK8/triage-alert/1",
@@ -519,7 +523,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": null
+      "waitingOn": null,
+      "takenOverBy": null
     },
     {
       "address": "ITM-01JK7/triage-alert/1",
@@ -619,7 +624,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": null
+      "waitingOn": null,
+      "takenOverBy": null
     }
   ],
   "counts": {

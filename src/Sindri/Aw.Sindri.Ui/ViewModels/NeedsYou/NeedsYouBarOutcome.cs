@@ -17,4 +17,7 @@ internal enum NeedsYouBarOutcome
 
     /// <summary>Dropped from the card's More menu.</summary>
     Drop,
+
+    /// <summary>The ask step's answers sent (the step's outcome "done").</summary>
+    Answer,
 }

@@ -13,6 +13,10 @@
             AutomationProperties.Name="{Binding EndedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="body-strong" Text="{Binding EndedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
+    <Border x:Name="SessionEndedResume" IsVisible="{Binding EndedResumeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            AutomationProperties.Name="{Binding EndedResumeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding EndedResumeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
     <Border x:Name="SessionNote" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
             AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="body muted" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -26,34 +30,59 @@
         <Border x:Name="SessionState" AutomationProperties.Name="{Binding StateLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body mono" Text="{Binding StateLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Border x:Name="SessionInStatus" IsVisible="{Binding InStatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding InStatusText}"
+                AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding InStatusText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="SessionRefCopy" Classes="copy" Click="OnCopyRef" HorizontalAlignment="Left" IsVisible="{Binding RefCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                AutomationProperties.Name="{Binding RefCopy.Announcement}">
+          <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
       </StackPanel>
+
+      <Border x:Name="SessionAskingCallout" Classes="callout attn" IsVisible="{Binding IsAsking}" AutomationProperties.Name="{Binding CalloutText}"
+              AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Text="{Binding CalloutText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
 
       <Button x:Name="SessionOpenStep" Content="{Binding OpenFrameLabel}" Click="OnOpenFrame" IsVisible="{Binding HasStep}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenFrameName}" />
 
       <!-- The technical detail (F3): closed by default. The fields, the host, the history and Watch the agent are for the person who needs them. -->
       <Expander x:Name="SessionDetails" Header="{Binding DetailsLabel}" IsExpanded="False" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding DetailsLabel}">
         <StackPanel Spacing="{StaticResource Space.MD}">
-          <ItemsControl x:Name="SessionFields" ItemsSource="{Binding Fields}">
+          <!-- The fields in captioned groups (agents spec §2): a caps caption, then rows with the label in a 150 px column. -->
+          <ItemsControl x:Name="SessionFields" ItemsSource="{Binding Sections}">
             <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="ag:SessionFieldViewModel">
-                <Border Name="SessionField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                  <StackPanel Spacing="1" AutomationProperties.AccessibilityView="Raw">
-                    <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
-                    <TextBlock Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-                  </StackPanel>
-                </Border>
+              <DataTemplate x:DataType="ag:SessionSectionViewModel">
+                <StackPanel Spacing="4" Margin="0,0,0,8">
+                  <TextBlock Classes="eyebrow" Text="{Binding Heading}" AutomationProperties.AccessibilityView="Raw" />
+                  <ItemsControl ItemsSource="{Binding Fields}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="ag:SessionFieldViewModel">
+                        <Border Name="SessionField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <Grid ColumnDefinitions="150,*" AutomationProperties.AccessibilityView="Raw">
+                            <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+                            <TextBlock Grid.Column="1" Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+
+          <TextBlock x:Name="SessionHostHeading" Classes="eyebrow" Text="{Binding HostHeading}" IsVisible="{Binding HostFields.Count}" AutomationProperties.AccessibilityView="Raw" />
 
           <ItemsControl x:Name="SessionHostFields" ItemsSource="{Binding HostFields}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="ag:SessionFieldViewModel">
                 <Border Name="SessionHostField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                  <StackPanel Spacing="1" AutomationProperties.AccessibilityView="Raw">
+                  <Grid ColumnDefinitions="150,*" AutomationProperties.AccessibilityView="Raw">
                     <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
-                    <TextBlock Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-                  </StackPanel>
+                    <TextBlock Grid.Column="1" Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  </Grid>
                 </Border>
               </DataTemplate>
             </ItemsControl.ItemTemplate>

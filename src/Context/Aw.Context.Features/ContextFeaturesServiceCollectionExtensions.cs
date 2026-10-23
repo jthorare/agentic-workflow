@@ -15,6 +15,7 @@ using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Symbols;
+using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
@@ -33,6 +34,7 @@ using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetSubgraph;
+using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
 using Aw.Context.Features.HoldMap;
 using Aw.Context.Features.ImportMap;
@@ -71,6 +73,7 @@ public static class ContextFeaturesServiceCollectionExtensions
     public static IServiceCollection AddContextFeatures(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.TryAddSingleton(WholeMapRules.Default);   // a host or a test may register other limits
         services.TryAddSingleton<ICodeSymbolSource, NoCodeSymbolSource>();   // the host that wires the code index (Sindri's Host adapter) replaces it
         services.TryAddSingleton<ILabeler, DisabledLabeler>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<IHeavyJobLock, UnconfiguredHeavyJobLock>();   // a host that wires the box-wide lock replaces it
@@ -146,6 +149,8 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetLensesRequest, LensesView>, GetLensesService>()
         .AddScoped<IService<GetLensesSetRequest, LensesSetView>, GetLensesSetService>()
         .AddScoped<IService<GetSubgraphRequest, SubgraphView>, GetSubgraphService>()
+        .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
+        .AddSingleton<WholeMapCache>()
         .AddScoped<LensBasisReader>()
         .AddScoped<ContextCodeHistory>()
         .AddScoped<IService<GetCodeRequest, CodeView>, GetCodeService>()

@@ -102,6 +102,31 @@ public sealed class StatusViewsHealthTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_code_indexs_problems_for_the_approved_profile_are_health_problems()
+    {
+        await RunningAndApproved();
+        var codeIndex = new FixedCodeIndexHealth(new HealthProblem("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"));
+        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress, new HealthServiceRows(_v.Views, [], codeIndex), new InMemorySessionSnapshot());
+
+        var status = (await service.Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal(["SND-CODEIDX-014"], status.Health!.Problems.Select(p => p.Code), StringComparer.Ordinal);
+        Assert.Equal("Sindri is degraded: the code index for demo is behind main.", status.Health.Sentence);
+        Assert.Equal(H.Profiles.Live.Value.Hash, codeIndex.AskedWith?.Hash);
+    }
+
+    private sealed class FixedCodeIndexHealth(params HealthProblem[] problems) : ICodeIndexHealth
+    {
+        public LoadedProfile? AskedWith { get; private set; }
+
+        public ValueTask<IReadOnlyList<HealthProblem>> Problems(LoadedProfile? approved, CancellationToken cancellationToken)
+        {
+            AskedWith = approved;
+            return ValueTask.FromResult<IReadOnlyList<HealthProblem>>(problems);
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_failed_service_the_approval_dropped_does_not_degrade_health()
     {
         await RunningAndApproved();

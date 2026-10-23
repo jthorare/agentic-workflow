@@ -2,5 +2,5 @@ T-3/step/1  workflow.step@f039848fd714  v4  parked: needs-answer (child)  since 
   next      Parked (needs-answer) in T-3/step/1/step.4: the child's step failed.
             Answer with --text; the Step runs again with your answer.
   child     T-3/step/1/step.4  parked: needs-answer
-  answer    sindri workflow answer T-3/step/1 <the child's answer>     (forwarded to T-3/step/1/step.4)
+  answer    sindri workflow answer T-3/step/1/step.4 --text <answer>     (the child's own; T-3/step/1 forwards it)
   commands  takeover, cancel

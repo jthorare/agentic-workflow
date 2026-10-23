@@ -20,8 +20,8 @@ public sealed class HealthSummaryTests
         new(ServiceName.From(name), new LastRun(_slot, outcome, code, _slot), Paused: false, Sequence: 1);
 
     private static HealthReport For(bool running = true, ViewsStatus? views = null, IReadOnlyList<ServiceRow>? services = null,
-        bool needsApproval = false, bool changed = false) =>
-        HealthSummary.For(running, views ?? Fresh(), services ?? [], needsApproval, changed);
+        bool needsApproval = false, bool changed = false, IReadOnlyList<HealthProblem>? codeIndex = null) =>
+        HealthSummary.For(running, views ?? Fresh(), services ?? [], changed ? ProfileApproval.Changed : needsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved, codeIndex);
 
     [Fact, Trait("Lane", "unit")]
     public void Nothing_wrong_is_healthy_with_no_problems_and_no_sentence()
@@ -46,6 +46,25 @@ public sealed class HealthSummaryTests
         IReadOnlyList<ServiceRow> services = failedService ? [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")] : [];
 
         Assert.Equal(expected, For(running, views, services).Word);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Code_index_problems_follow_the_services_and_come_before_the_profile()
+    {
+        HealthProblem[] index = [new("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main"), new("SND-CODEIDX-010", "other: code index is damaged; it rebuilds on the next check", "the code index for other is damaged")];
+
+        var health = For(services: [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], needsApproval: true, codeIndex: index);
+
+        Assert.Equal(["SND-SCHED-001", "SND-CODEIDX-014", "SND-CODEIDX-010", "SND-PROFILE-005"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
+        Assert.Equal(HealthWord.Degraded, health.Word);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_code_index_problem_alone_degrades_health_and_reads_in_the_sentence()
+    {
+        var health = For(codeIndex: [new("SND-CODEIDX-014", "demo: code index is behind main; rebuild it from the System page", "the code index for demo is behind main")]);
+
+        Assert.Equal("Sindri is degraded: the code index for demo is behind main.", health.Sentence);
     }
 
     [Fact, Trait("Lane", "unit")]

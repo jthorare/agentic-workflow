@@ -1,5 +1,5 @@
-using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core;
+using Aw.CodeIndex.Core.Embedding;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;

@@ -6,7 +6,7 @@ namespace Aw.Sindri.Features.LensLoops;
 
 /// <summary>
 /// 'step.lens.log', on the block runtime (line spec §4.1): at the round's end 'clean' (0 CRITICAL, 0 HIGH), else 'findings' with those findings as 'fact:findings', or 'needsOwner' (the same findings
-/// and the question as 'fact:escalation') when one of them carries a typed escalation (<see cref="Escalation"/>).
+/// and every question of the round, all at once, as the list 'fact:escalation') when any of them carries a typed escalation (<see cref="Escalation"/>).
 /// </summary>
 internal sealed class LensLogStep() : RoundLogStep(LensScale.Design), IBlockStepId
 {
@@ -23,7 +23,7 @@ internal sealed class LensLogStep() : RoundLogStep(LensScale.Design), IBlockStep
         }
 
         var findings = new JsonArray([.. stopping]);
-        return Escalation.First(stopping) is { } escalation
+        return Escalation.All(stopping) is { Count: > 0 } escalation
             ? Done("needsOwner", ("lensRounds", log.Rounds), ("findings", findings), ("escalation", escalation))
             : Done("findings", ("lensRounds", log.Rounds), ("findings", findings));
     }

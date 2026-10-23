@@ -81,6 +81,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextCode();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();
+        _ = queries.MapGetContextWholeMap();
         _ = queries.MapGetMapPublishStatus();
         _ = queries.MapGetContextProposals();
         _ = queries.MapGetContextReview();

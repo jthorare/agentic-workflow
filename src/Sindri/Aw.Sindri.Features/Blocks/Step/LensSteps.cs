@@ -16,7 +16,8 @@ internal static class LensSteps
 
     /// <summary>
     /// 'step.lens.ask': the one human wait of the lens and review loops (owner, 2026-10-19): an agent's typed escalation ('fact:escalation': an ambiguous fix or a product question, with its question and options)
-    /// is put to the owner. Human-only. 'answered' carries the answer as 'fact:answers' for the fixer; 'stop' ends the loop.
+    /// is put to the owner. 'fact:escalation' is one question (the review loop's) or a list of every question of the round (the design review's, all in this one desk, no limit).
+    /// Human-only. 'answered' carries an answer per question as 'fact:answers' for the fixer; 'stop' ends the loop.
     /// </summary>
     public static BlockDescriptor Ask { get; } = HumanDeskStep("step.lens.ask", Capability.None)
         .Reads("fact:escalation").Reports("answered", "stop").Writes(On("fact:answers", "answered"));

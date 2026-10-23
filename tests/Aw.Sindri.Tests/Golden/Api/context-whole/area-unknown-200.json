@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-CONTEXT-200",
+  "status": 404,
+  "detail": "that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)",
+  "traceId": "<trace>"
+}

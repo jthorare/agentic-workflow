@@ -81,6 +81,26 @@ public static class FixtureRecipes
             S("merge", 3, timeout: T(Hour, TimeoutAction.Park), agent: true), S("done", 4, terminal: true)], [],
         [In("fact:request", "Request", FactType.Text, "text")], []);
 
+    /// <summary>
+    /// workflow.design v7 (recipes/sindri/workflow.design.yaml): the same states, orders, branches, loops, inputs and outputs as the file (the recipe golden is held to them by
+    /// RecipeViewsTests), not in <see cref="All"/> because the fixture's blocks and 'next' texts are not the file's. The lens log's 'needsOwner' leaves every question of the round in
+    /// fact:escalation (a list) and the ask desk collects fact:answers, one entry per question; fact:answers is no declared output of the shipped recipe, so the instance fixture lists it as a pending fake.
+    /// </summary>
+    public static RecipeShape Design { get; } = new("workflow.design", 7, "e975aac7", RecipeUrgency.Work,
+        [S("intake", 1, timeout: T(Hour, TimeoutAction.Park)), S("draft", 2, timeout: T(3 * Hour, TimeoutAction.Park), tokens: 1_000_000), S("check", 3, timeout: T(Hour, TimeoutAction.Park)),
+            S("round", 4, timeout: T(Hour, TimeoutAction.Park)), S("lens", 5, timeout: T(2 * Hour, TimeoutAction.Park), tokens: 1_000_000), S("lens-log", 6, timeout: T(Hour, TimeoutAction.Park)),
+            S("evidence", 7, timeout: T(Hour, TimeoutAction.Park)),
+            S("ask", null, "lens-log", desk: true, timeout: T(7 * Day, TimeoutAction.Park), block: "step.lens.ask"),
+            S("revise", null, "lens-log", timeout: T(3 * Hour, TimeoutAction.Park), tokens: 1_000_000),
+            S("lens-desk", null, "lens-log", desk: true, timeout: T(7 * Day, TimeoutAction.Park), block: "step.design.lens-desk"),
+            S("apply", null, "intake", timeout: T(2 * Hour, TimeoutAction.Park), tokens: 1_000_000),
+            S("designed", 8, terminal: true), S("dropped", 9, terminal: true)],
+        [new ShapeLoop("rounds", "check", "draft", 5), new ShapeLoop("lens-runs", "lens-log", "lens", 40), new ShapeLoop("rounds", "evidence", "draft", 5)],
+        [In("fact:scopePacket", "Scope packet (frozen)", FactType.Packet, "packet"), In("fact:designRevision", "Revision from stop 2", FactType.Payload, "payload"),
+            In("fact:priorDesignPacket", "Previous design packet", FactType.Packet, "packet")],
+        [Out("fact:designPacket", "Design packet (candidate)", FactType.Packet, "evidence"), Out("fact:design", "Design", FactType.Payload, "evidence"),
+            Out("fact:lensRounds", "Lens rounds", FactType.Payload, "evidence"), Out("fact:escalation", "Questions for you", FactType.Payload, "lens-log")]);
+
     /// <summary>Every shape.</summary>
     public static IReadOnlyList<RecipeShape> All { get; } = [Step, Item, DevDesk, DevTriage, Incident, Triage, Project, Intake, Fork];
 }

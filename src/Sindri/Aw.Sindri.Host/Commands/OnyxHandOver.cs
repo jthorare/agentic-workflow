@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="approve">Runs `profile approve [hash]` the way the CLI does, writing to the given output (standard error with --json, so standard output stays one document); null skips the approval offer.</param>
 internal sealed class OnyxHandOver(IServiceProvider services, Output output, Func<string?, Output, CancellationToken, Task<int>>? approve)
 {
-    private const string ConnectorChecklist = "Connect your sources in Onyx (OAuth is yours, and so is the company's sign-off):\n  Linear: the product's teams, with a start date that covers the backtests\n  Slack: the product's channels\nThen `sindri doctor` shows context:onyx and onyx:stack.";
+    private const string ConnectorChecklist = "Connect your sources in Onyx (the logins and tokens are yours, and so is the company's sign-off):\n  Linear: the product's teams, with a start date that covers the backtests\n  Slack: the product's channels\n  GitHub: the product's repositories, issues on, with a read-only personal access token\nThen `sindri doctor` shows context:onyx and onyx:stack.";
 
     internal async Task<int> Finish(OnyxUpResponse up, bool json, CancellationToken ct)
     {

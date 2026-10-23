@@ -31,6 +31,9 @@ internal sealed partial class RunPageViewModel
     /// <summary>What the person can do next: only what the server serves, and the run's context.</summary>
     public IReadOnlyList<RunNextOption> NextOptions { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>"Taken over by you at 11:04" while the run is with a person; empty otherwise.</summary>
+    public string TakenOverText { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>Run again, when the run ended and lists the command; null otherwise. A run that starts opens its page.</summary>
     public ControlViewModel? Rerun { get; private set => Set(ref field, value); }
 

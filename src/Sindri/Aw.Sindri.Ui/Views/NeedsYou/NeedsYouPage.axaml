@@ -290,6 +290,35 @@
        <!-- The action bar (F3 needs-you spec §2, §5): fixed under the card, outside it, always in view. A and D reach the same methods as its buttons. -->
        <Border x:Name="NeedsYouActionBar" Grid.Row="1" Classes="action-bar" IsVisible="{Binding Bar.HasBar}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group" AutomationProperties.Name="{Binding Bar.BarName}">
         <StackPanel MaxWidth="760" Spacing="8">
+          <!-- The ask step (engine 817): every question with its answer field, options as choices; Send answers waits for them all. -->
+          <StackPanel x:Name="NeedsYouQuestions" Spacing="8" IsVisible="{Binding Bar.HasQuestions}">
+            <TextBlock Classes="body-strong" Text="{Binding Bar.QuestionsHeading}" />
+            <ItemsControl x:Name="NeedsYouQuestionList" ItemsSource="{Binding Bar.Questions}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ny:DeskQuestionViewModel">
+                  <StackPanel Spacing="4" Margin="0,0,0,8">
+                    <TextBlock x:Name="NeedsYouQuestionPrompt" Classes="body" Text="{Binding Prompt}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption subtle" Text="{Binding Context}" IsVisible="{Binding HasContext}" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding Options}" IsVisible="{Binding HasOptions}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="ny:DeskQuestionOptionViewModel">
+                          <Button Classes="bar-button" Margin="0,0,6,4" Content="{Binding Text}" Click="OnChooseOption" AutomationProperties.Name="{Binding Text}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBox x:Name="NeedsYouQuestionAnswer" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" MaxHeight="96" Text="{Binding Answer, Mode=TwoWay}"
+                             PlaceholderText="{Binding AnswerPlaceholder}" AutomationProperties.Name="{Binding AnswerName}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="NeedsYouQuestionsHint" Classes="caption muted" Text="{Binding Bar.QuestionsHint}" />
+          </StackPanel>
           <WrapPanel x:Name="NeedsYouBarButtons" Orientation="Horizontal" ItemSpacing="8" LineSpacing="6" IsVisible="{Binding ShowsBarButtons}">
             <Button x:Name="NeedsYouApprove" Classes="bar-button primary" Classes.asking="{Binding Bar.IsAsking}" IsVisible="{Binding Bar.ShowsPrimary}" IsEnabled="{Binding Bar.PrimaryEnabled}"
                     Click="OnApprove" AutomationProperties.Name="{Binding Bar.ApproveName}">
@@ -314,6 +343,27 @@
                 <Border Classes="kbd"><TextBlock Classes="kbd" Text="D" /></Border>
               </StackPanel>
             </Button>
+            <!-- One button per recipe verb the instance accepts now (stop 3); the merge asks first, in the Destructive style. -->
+            <ItemsControl x:Name="NeedsYouVerbs" ItemsSource="{Binding Bar.Verbs}" IsVisible="{Binding Bar.HasVerbs}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" ItemSpacing="8" LineSpacing="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ny:DeskVerbViewModel">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="NeedsYouVerb" Classes="bar-button" Classes.destructive="{Binding IsDestructive}" IsVisible="{Binding ShowsButton}" IsEnabled="{Binding IsEnabled}"
+                            Click="OnVerb" AutomationProperties.Name="{Binding Name}">
+                      <TextBlock Text="{Binding Label}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
+                    <StackPanel x:Name="NeedsYouVerbAsk" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConfirming}">
+                      <TextBlock x:Name="NeedsYouVerbQuestion" Classes="body" Text="{Binding Question}" VerticalAlignment="Center" />
+                      <Button x:Name="NeedsYouVerbConfirm" Classes="bar-button destructive" Click="OnVerbConfirm" IsEnabled="{Binding IsEnabled}" Content="{Binding ConfirmLabel}" />
+                      <Button x:Name="NeedsYouVerbKeep" Classes="bar-button" Click="OnVerbKeep" Content="{Binding KeepLabel}" />
+                    </StackPanel>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <!-- A feature that is not built yet: a dashed chip, not a control (no focus, no key). -->
             <Panel x:Name="NeedsYouEditChip" IsVisible="{Binding Bar.ShowsEditChip}" Focusable="False" AutomationProperties.AccessibilityView="Content">
               <Rectangle Classes="chip-dash" RadiusX="6" RadiusY="6" />

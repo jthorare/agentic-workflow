@@ -28,7 +28,7 @@ internal sealed partial class InstanceRowViewModel : ObservableObject
         Stages = [.. row.States.Select(s =>
         {
             var current = string.Equals(s.State, row.State, StringComparison.Ordinal);
-            return new StageCellViewModel(s, current, blocked && current);
+            return new StageCellViewModel(s, current, blocked && current, names, row.Recipe.Id);
         })];
         if (InstanceRules.IsChildPointer(row.Answer))
         {
@@ -68,7 +68,7 @@ internal sealed partial class InstanceRowViewModel : ObservableObject
     }
 
     /// <summary>True when a person started the run (the served starter begins with "human:").</summary>
-    // TODO(#754): "Mine" also means runs you took over; that is served as takenOverBy once api #754 merges, until then the WITH YOU chip stands in.
+    // "Mine" also means runs you took over. takenOverBy (api #754) is served on the instance status only, not on the list rows, so the WITH YOU chip stands in for it here.
     public bool StartedByYou => _row.StartedBy?.StartsWith("human:", StringComparison.Ordinal) == true;
 
     /// <summary>The state the instance is in, in words: the recipe's displayName for it once the recipe is read, else its id as served.</summary>

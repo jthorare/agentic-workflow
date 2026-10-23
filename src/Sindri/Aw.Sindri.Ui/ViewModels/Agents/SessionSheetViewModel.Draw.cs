@@ -37,6 +37,7 @@ internal sealed partial class SessionSheetViewModel
         History = [.. history.Select((entry, i) => new StateHistoryEntryViewModel(SessionChips.For(entry.State), EntryWords(entry, isNow: i == history.Count - 1), IsNow: i == history.Count - 1))];
         (IsEnded, EndedText, EndedDetail, ProblemText, Note) = (false, string.Empty, string.Empty, string.Empty, string.Empty);
         Phase = FramePhase.Shown;
+        DrawSections(session);
         DrawFocus();
     }
 

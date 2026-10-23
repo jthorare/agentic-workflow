@@ -1,0 +1,148 @@
+{
+  "id": "workflow.design",
+  "hash": "sha256:e975aac700000000000000000000000000000000000000000000000000000000",
+  "version": 7,
+  "name": null,
+  "inputs": [
+    {
+      "key": "fact:scopePacket",
+      "label": "Scope packet (frozen)",
+      "type": "packet",
+      "kind": "packet",
+      "required": true,
+      "generate": null
+    },
+    {
+      "key": "fact:designRevision",
+      "label": "Revision from stop 2",
+      "type": "payload",
+      "kind": "payload",
+      "required": true,
+      "generate": null
+    },
+    {
+      "key": "fact:priorDesignPacket",
+      "label": "Previous design packet",
+      "type": "packet",
+      "kind": "packet",
+      "required": true,
+      "generate": null
+    }
+  ],
+  "outputs": [
+    {
+      "key": "fact:designPacket",
+      "label": "Design packet (candidate)",
+      "type": "packet",
+      "from": "evidence"
+    },
+    {
+      "key": "fact:design",
+      "label": "Design",
+      "type": "payload",
+      "from": "evidence"
+    },
+    {
+      "key": "fact:lensRounds",
+      "label": "Lens rounds",
+      "type": "payload",
+      "from": "evidence"
+    },
+    {
+      "key": "fact:escalation",
+      "label": "Questions for you",
+      "type": "payload",
+      "from": "lens-log"
+    }
+  ],
+  "urgency": "work",
+  "orderedBy": "transition-list",
+  "states": [
+    {
+      "id": "intake",
+      "order": 1,
+      "branchOf": null
+    },
+    {
+      "id": "draft",
+      "order": 2,
+      "branchOf": null
+    },
+    {
+      "id": "check",
+      "order": 3,
+      "branchOf": null
+    },
+    {
+      "id": "round",
+      "order": 4,
+      "branchOf": null
+    },
+    {
+      "id": "lens",
+      "order": 5,
+      "branchOf": null
+    },
+    {
+      "id": "lens-log",
+      "order": 6,
+      "branchOf": null
+    },
+    {
+      "id": "evidence",
+      "order": 7,
+      "branchOf": null
+    },
+    {
+      "id": "ask",
+      "order": null,
+      "branchOf": "lens-log"
+    },
+    {
+      "id": "revise",
+      "order": null,
+      "branchOf": "lens-log"
+    },
+    {
+      "id": "lens-desk",
+      "order": null,
+      "branchOf": "lens-log"
+    },
+    {
+      "id": "apply",
+      "order": null,
+      "branchOf": "intake"
+    },
+    {
+      "id": "designed",
+      "order": 8,
+      "branchOf": null
+    },
+    {
+      "id": "dropped",
+      "order": 9,
+      "branchOf": null
+    }
+  ],
+  "loops": [
+    {
+      "name": "rounds",
+      "from": "check",
+      "to": "draft",
+      "cap": 5
+    },
+    {
+      "name": "lens-runs",
+      "from": "lens-log",
+      "to": "lens",
+      "cap": 40
+    },
+    {
+      "name": "rounds",
+      "from": "evidence",
+      "to": "draft",
+      "cap": 5
+    }
+  ],
+  "displayName": "Design"
+}

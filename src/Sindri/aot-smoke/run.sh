@@ -116,6 +116,19 @@ human() { # the human at a terminal; stdin passed through (the typed confirmatio
   with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
+human_run_service() { # $1 = service: `human services run`, retried while a scheduled run is in flight (SND-JOB-409; heartbeat
+  # runs every 5 s, so the manual run can land on one). Bounded by wall time like settle; only the last attempt is printed
+  echo "## sindri services run $1 (human, terminal)"
+  local out rc deadline=$((SECONDS + 60))
+  while :; do
+    rc=0
+    out="$(with_tty "${alarm[@]}" "$bin" services run "$1" </dev/null)" || rc=$?
+    [[ "$out" == *SND-JOB-409* ]] && ((SECONDS < deadline)) || break
+    sleep 0.5
+  done
+  [ -z "$out" ] || printf '%s\n' "$out"
+  exit_line "$rc"
+}
 session() { # an agent session (CLAUDECODE set), no terminal
   echo "## sindri $* (session)"
   local rc=0
@@ -217,7 +230,7 @@ session_tty() { # an agent session at a terminal (the CLI's own terminal check p
   curl -s -m 30 -o /dev/null -w 'post http=%{http_code}\n' -X POST "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}'
   echo "## sindri services --json | jq (name, every, paused, job)"
   bounded "$bin" services --json </dev/null | jq -c '[.services[] | {name, every, paused, job}]'
-  human services run heartbeat </dev/null
+  human_run_service heartbeat
   settle
   session services run heartbeat
   job="$(bounded "$bin" jobs --json </dev/null | jq -r '.jobs[0].id')"

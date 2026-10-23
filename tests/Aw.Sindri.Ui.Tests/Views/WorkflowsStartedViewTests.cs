@@ -34,4 +34,27 @@ public sealed class WorkflowsStartedViewTests : FrameHost
         Assert.NotEmpty(cards);
         Assert.All(cards, c => Assert.Equal("Started 11:02 by you", Named<TextBlock>(c, "WorkflowCardStarted").Text));
     });
+
+    [Fact]
+    public Task A_card_names_who_the_run_waits_on() => OnUi(async () =>
+    {
+        Server.InstancesRewrite = body =>
+        {
+            var list = System.Text.Json.Nodes.JsonNode.Parse(LineGolden.AsLine(body))!;
+            foreach (var row in list["instances"]!.AsArray().Select(r => r!.AsObject()))
+            {
+                row["waitingOn"] = "agent";
+            }
+
+            return list.ToJsonString();
+        };
+        var (window, shell) = await Connected(s => s.Workflows.Lanes.Sum(l => l.Cards.Count) > 0, 1440, 900);
+        shell.GoTo(PageId.Workflows);
+        Settle(window);
+
+        var cards = window.GetVisualDescendants().OfType<RunCard>().Where(c => c.IsEffectivelyVisible).ToList();
+
+        Assert.NotEmpty(cards);
+        Assert.All(cards, c => Assert.Equal("AI agent", Named<TextBlock>(c, "WorkflowCardWho").Text));
+    });
 }

@@ -17,7 +17,10 @@ internal sealed partial class FakeSindriApi
     /// <param name="provider">The provider.</param>
     /// <param name="id">The session id.</param>
     /// <returns>The answer.</returns>
-    internal RouteAnswer SessionOneAnswer(string provider, string id) => SessionAnswer ?? SessionAnswers.One(provider, id);
+    internal RouteAnswer SessionOneAnswer(string provider, string id) => SessionOneBody?.Invoke(provider, id) ?? SessionAnswer ?? SessionAnswers.One(provider, id);
+
+    /// <summary>When set, answers a one-session read before the shared answer does; return null to fall through.</summary>
+    public Func<string, string, RouteAnswer?>? SessionOneBody { get; set; }
 
     private int _sessionsCalls;
     private int _sessionCalls;

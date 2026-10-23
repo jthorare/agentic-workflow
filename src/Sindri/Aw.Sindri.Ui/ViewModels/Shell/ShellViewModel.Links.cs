@@ -33,6 +33,11 @@ internal sealed partial class ShellViewModel
         link = Canonical(link);
         if (link.Kind == DeepLinkKind.NeedsYou && !rowSheet)
         {
+            if (OpenChildOf(link.Subject))
+            {
+                return;   // the tray and a needs-you link take a nested park to its child, as a click on its row does
+            }
+
             OpenNeedsYouInbox(link.Subject);   // a decision row is the decision's own link, so it never gets here
             return;
         }

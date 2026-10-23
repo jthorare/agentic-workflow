@@ -24,6 +24,11 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>True when there are no sessions at all: the line offers the Workflows page.</summary>
     public bool ShowsOpenWorkflows => IsEmpty && _list is { Sessions.Count: 0 };
 
+    /// <summary>What resumes a recently ended session, for its sheet.</summary>
+    /// <param name="reference">The session's ref.</param>
+    /// <returns>Null when the ref is not a recently ended session; empty when it has no resume command; else the command.</returns>
+    internal string? ResumeOf(string reference) => _ended.TryGetValue(reference, out var ended) ? ended.ResumeCommand : null;
+
     /// <summary>Raised when the empty page's button asks for the Workflows page.</summary>
     internal event EventHandler? WorkflowsRequested;
 

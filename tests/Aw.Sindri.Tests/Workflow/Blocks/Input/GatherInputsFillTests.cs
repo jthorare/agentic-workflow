@@ -6,6 +6,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
@@ -70,6 +71,8 @@ public sealed class GatherInputsFillTests : IDisposable
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, int? depth, ContextScope scope, CancellationToken cancellationToken) => _lenses.Lenses(anchor, read, depth, scope, cancellationToken);
 
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) => _lenses.Lenses(anchor, read, range, scope, cancellationToken);
+
+        public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) => _lenses.WholeMap(query, scope, cancellationToken);
 
         public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) => _lenses.FileMap(query, scope, cancellationToken);
 

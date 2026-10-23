@@ -82,6 +82,13 @@ internal sealed class Scenario(GoldenHost host)
         return (await host.Http.Ask(Post("/sindri/context/map/review", Review("accept", link: _link), (SindriHeaders.Caller, "session"), (SindriHeaders.Repo, "aw-split-panes")))).Body;
     }
 
+    /// <summary>The draft is built, then GET as the app.</summary>
+    public async Task<string> FetchAfterDraft(string route, CancellationToken ct)
+    {
+        await Draft(ct);
+        return await Fetch(route, ct);
+    }
+
     /// <summary>The draft, then the queue.</summary>
     public async Task<string> MapTabsDraft(CancellationToken ct)
     {

@@ -74,6 +74,16 @@ internal sealed partial class NeedsYouBarViewModel
     // The first A on a request not read to the end only asks; the second, or one on a request read to the end, reports it.
     private async Task ApproveDesk()
     {
+        if (HasQuestions)
+        {
+            if (AllAnswered)
+            {
+                await Report(NeedsYouBarOutcome.Answer, DeskReporter.AnswersJson(Questions.Select(q => (q.Question.Id, q.Question.Question, q.Answer.Trim())))).ConfigureAwait(true);
+            }
+
+            return;   // every answer is needed; the question box is the consent, so there is no "read to the end" step
+        }
+
         if (!ReadToEnd && Mode != NeedsYouBarMode.Confirming)
         {
             Mode = NeedsYouBarMode.Confirming;
@@ -213,6 +223,7 @@ internal sealed partial class NeedsYouBarViewModel
         NeedsYouBarOutcome.Revise => "revise",
         NeedsYouBarOutcome.Rework => "rework",
         NeedsYouBarOutcome.Drop => "drop",
+        NeedsYouBarOutcome.Answer => "done",
         NeedsYouBarOutcome.None => throw new InvalidOperationException("no outcome to send"),
         _ => throw new InvalidOperationException("an outcome the bar doesn't know"),
     };

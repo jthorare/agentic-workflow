@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "v1",
+  "draft": false,
+  "asOf": "2026-01-01T00:00:00.0000000Z",
+  "repo": "aw-split-panes",
+  "detail": "areas",
+  "fallback": "over-budget",
+  "counts": {
+    "nodes": 14,
+    "edges": 15,
+    "byKind": {
+      "feature": 2,
+      "surface": 2,
+      "action": 2,
+      "thing": 1,
+      "flow": 0,
+      "decision": 2,
+      "record": 3,
+      "code": 2
+    }
+  },
+  "areas": [
+    {
+      "key": "area:unassigned",
+      "label": "Not linked to a feature yet",
+      "trust": "trusted",
+      "members": 8,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "thing": 1,
+        "record": 3,
+        "code": 1
+      },
+      "unassigned": true
+    },
+    {
+      "key": "feature:tabs.tab-groups",
+      "label": "Tab groups",
+      "trust": "trusted",
+      "members": 6,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "decision": 2,
+        "code": 1
+      },
+      "unassigned": false
+    }
+  ],
+  "areaEdges": [
+    {
+      "from": "feature:tabs.tab-groups",
+      "to": "area:unassigned",
+      "type": "part-of",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:tabs.tab-groups",
+      "to": "area:unassigned",
+      "type": "quotes",
+      "count": 2,
+      "confirmed": 0
+    }
+  ],
+  "truncated": false
+}

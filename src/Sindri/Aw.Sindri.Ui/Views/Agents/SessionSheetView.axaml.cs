@@ -14,6 +14,14 @@ internal sealed partial class SessionSheetView : UserControl
 
     private void OnOpenFrame(object? sender, RoutedEventArgs e) => (DataContext as SessionSheetViewModel)?.OpenFrame();
 
+    private void OnCopyRef(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is SessionSheetViewModel sheet)
+        {
+            _ = sheet.CopyRef(CancellationToken.None);
+        }
+    }
+
     private void OnCopyFocus(object? sender, RoutedEventArgs e)
     {
         if (DataContext is SessionSheetViewModel sheet)

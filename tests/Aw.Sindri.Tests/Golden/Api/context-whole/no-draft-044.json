@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-CONTEXT-044",
+  "status": 404,
+  "detail": "there is no draft map (fix: sindri context map build, sindri context map propose <file>, or name context-rebuild under services: in the profile, then retry; or drop --draft)",
+  "traceId": "<trace>"
+}

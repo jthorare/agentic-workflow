@@ -8,7 +8,8 @@
 #   scripts/context-first-run.sh down [--dry-run]
 #
 # up   0. Preflight: git, jq, ollama (server and the pinned embedding model), the code-index graphify, a sandbox for it (bwrap
-#         on Linux), the pinned temporal binary, and that the repo's checkout is on main. Missing tools are printed with the
+#         on Linux), the pinned temporal binary, and that the repo's checkout is clean and its HEAD is contained in origin/main
+#         or main (a detached worktree of origin/main is the intended place; any dirty tree is refused). Missing tools are printed with the
 #         install command; nothing is installed. `sindri onyx status` is optional (Onyx isn't needed) and only reported.
 #      1. Scratch home: AW_SINDRI_HOME=$AW_STATE_DIR/sindri-app-firstrun (0700, marker .first-run-scratch), port 7481.
 #      2. Profile: `sindri profile init`, then this repo as the one repo, the context-docs-refresh service, and the
@@ -32,7 +33,8 @@
 #   AW_STATE_DIR              default ~/.agentic-workflow
 #   FIRST_RUN_HOME            default $AW_STATE_DIR/sindri-app-firstrun; its name must start with sindri-app-firstrun
 #   FIRST_RUN_PORT            default 7481 (owner-check.sh uses 7480, the real instance 7410)
-#   FIRST_RUN_REPO_PATH       the checkout to index; default this repo's main checkout (also from a linked worktree)
+#   FIRST_RUN_REPO_PATH       the checkout to index; default the checkout this script runs from (the shared main checkout is never derived)
+#   FIRST_RUN_REPO_NAME       the repo's name in the profile, items and code index; default the basename of its origin URL (.git stripped), else of the path
 #   FIRST_RUN_BRIEF           the repo-relative file the scoping run reads; default docs/sindri/README.md
 #   FIRST_RUN_INDEX_TIMEOUT   seconds to wait for the first build; default 1800
 #   FIRST_RUN_MAP_POLL_SECONDS  seconds between map status reads while it is held; default 10
@@ -85,13 +87,21 @@ real_home="$state/sindri-app"
 self="scripts/context-first-run.sh"
 
 repo_path="${FIRST_RUN_REPO_PATH:-}"
-if [ -z "$repo_path" ]; then
-  # The main checkout, also from a linked worktree (whose own directory is not the repo's).
-  common="$(git -C "$root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
-  repo_path="$(dirname "$common")"
-  [ -n "$common" ] && [ -d "$repo_path" ] || repo_path="$root"
+[ -n "$repo_path" ] || repo_path="$root"
+repo="${FIRST_RUN_REPO_NAME:-}"
+if [ -z "$repo" ]; then
+  origin="$(git -C "$repo_path" remote get-url origin 2>/dev/null || true)"
+  origin="${origin%/}"
+  origin="${origin%.git}"
+  origin="${origin%/}"
+  repo="${origin##*[/:]}"
+  [ -n "$repo" ] || repo="$(basename "$repo_path")"
 fi
-repo="$(basename "$repo_path")"
+# The shape of a profile repo name (RepoName): 1 to 100 of letters, digits, '.', '_', '-', starting with a letter or digit.
+case "$repo" in
+  '' | [!A-Za-z0-9]* | *[!A-Za-z0-9._-]*) die "the repo name '$repo' is not a profile repo name (letters, digits, '.', '_', '-', starting with a letter or digit); set FIRST_RUN_REPO_NAME" ;;
+esac
+[ "${#repo}" -le 100 ] || die "the repo name '$repo' is longer than 100 characters; set FIRST_RUN_REPO_NAME"
 
 # ---- the guard: this script only ever works in a scratch home of its own ----
 guard() {
@@ -150,7 +160,7 @@ preflight() {
   step "0. preflight"
   if [ "$dry" = 1 ]; then
     echo "  check: git, jq on PATH"
-    echo "  check: $repo_path is a git checkout on main (the code index never builds from another branch)"
+    echo "  check: $repo_path is a git checkout with a clean tree whose HEAD is contained in origin/main or main (the code index never builds from another branch)"
     echo "  check: ollama on PATH, answering on 127.0.0.1:11434, with the pinned model from context/code-index.lock"
     echo "  check: the code-index graphify under $state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox"
     echo "  check: the pinned temporal binary under $state/cache/bin/temporal-*"
@@ -161,8 +171,25 @@ preflight() {
   command -v git >/dev/null 2>&1 || miss "git" "your package manager"
   command -v jq >/dev/null 2>&1 || miss "jq" "apt-get install jq, or brew install jq"
   if [ -d "$repo_path/.git" ] || git -C "$repo_path" rev-parse --git-dir >/dev/null 2>&1; then
-    branch="$(git -C "$repo_path" symbolic-ref --short -q HEAD 2>/dev/null || true)"
-    [ "$branch" = main ] || miss "$repo_path must be on main (it is on '${branch:-a detached HEAD}'): the code index never builds from another branch" "git -C $repo_path switch main"
+    fix="git worktree add --detach <path> origin/main, then set FIRST_RUN_REPO_PATH=<path> or run $self from there"
+    base=""
+    for ref in refs/remotes/origin/HEAD refs/heads/main refs/heads/master; do
+      if git -C "$repo_path" rev-parse --verify -q "$ref" >/dev/null 2>&1; then base="$ref"; break; fi
+    done
+    if [ -z "$base" ]; then
+      miss "$repo_path has none of origin/HEAD, main or master to compare HEAD with" "$fix"
+    elif ! git -C "$repo_path" merge-base --is-ancestor HEAD "$base" >/dev/null 2>&1; then
+      miss "$repo_path: HEAD is not contained in ${base#refs/*/} ($base): the code index never builds from another branch" "$fix"
+    fi
+    gdir="$(git -C "$repo_path" rev-parse --path-format=absolute --git-dir 2>/dev/null || true)"
+    gcommon="$(git -C "$repo_path" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+    if [ -n "$(git -C "$repo_path" status --porcelain 2>/dev/null)" ]; then
+      if [ "$gdir" = "$gcommon" ]; then
+        miss "$repo_path is a shared main checkout with uncommitted or untracked changes; index a clean worktree instead" "$fix"
+      else
+        miss "$repo_path has uncommitted or untracked changes; the index must build from a clean tree" "$fix"
+      fi
+    fi
   else
     miss "$repo_path is not a git checkout" "set FIRST_RUN_REPO_PATH to the repo's checkout"
   fi
@@ -193,7 +220,7 @@ preflight() {
     printf 'Missing before the first run:\n%s' "$MISSING" >&2
     broke "step 0 (preflight): install the above, then run $self up again (nothing was installed)"
   fi
-  echo "  tools ok; $repo is on main at $repo_path"
+  echo "  tools ok; $repo at $repo_path is clean and contained in main"
   # Optional: Onyx. Reported, never required, and it only reads (no control plane).
   note "onyx (optional): run '$(shown) onyx status' to see whether this box could run it"
 }

@@ -49,7 +49,7 @@ internal sealed class FileDeskNotices(SindriSettings settings, IOsNotifier os, J
             if (scrubbed.Class == NoticeClass.Interrupt)
             {
                 await OwnerOnly.Append(settings.NotificationsPath, line, cancellationToken).ConfigureAwait(false);
-                await os.Show("Sindri: " + scrubbed.Instance.Value, scrubbed.Text, cancellationToken).ConfigureAwait(false);
+                await os.Show("Sindri: " + scrubbed.Instance.Value, scrubbed.Text, "workflow/" + scrubbed.Instance.Value, cancellationToken).ConfigureAwait(false);
             }
             else
             {

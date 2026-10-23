@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Facade;
@@ -53,6 +54,13 @@ public interface IContextLenses
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The lenses, or SND-CONTEXT-140 for a bad hops list, else as the overload without hops.</returns>
     public ValueTask<Result<LensesSetView>> LensesOf(IReadOnlyList<string> anchors, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>The whole map in one answer (Part D): every node and edge when the map fits the node budget, else one entry per area; a session sees only its repo.</summary>
+    /// <param name="query">The detail, the keys to place, which map and whose repo.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The view, or SND-CONTEXT-001/003/004/006/020/030/044/045/120.</returns>
+    public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>The direct children of a repo path with their status.</summary>
     /// <param name="query">The repo, the path and the filters.</param>

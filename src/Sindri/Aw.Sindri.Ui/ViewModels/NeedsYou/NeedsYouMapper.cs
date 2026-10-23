@@ -64,6 +64,7 @@ internal static class NeedsYouMapper
             RecordedOnly = row.RecordedOnly,
             Notice = row.Notice ?? string.Empty,
             Timeout = TimeoutOf(row, readAt),
+            Stop = row.Stop,
             Question = PendingDecision(subject?.DecisionId, decisions)?.Question ?? string.Empty,
         };
     }

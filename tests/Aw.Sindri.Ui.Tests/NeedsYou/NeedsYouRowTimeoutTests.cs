@@ -84,4 +84,27 @@ public sealed class NeedsYouRowTimeoutTests
 
         Assert.Equal("waiting 12m", page.FooterRight);
     }
+
+    [Fact]
+    public async Task A_desk_row_that_serves_its_stop_names_the_approval_and_the_stop_in_the_card_s_kind_word()
+    {
+        var served = Served("desk-with-stop");
+        var entry = NeedsYouMapper.Map(served, AwJson.Deserialize<CommandList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("commands", "catalog")), SindriApiClient.Json).Value, decisions: null, new HomeCounts(0, 0, 0), readAt: A.Noon).Rows.Single(r => r.Id == served.Rows[0].Id);
+
+        Assert.Equal(new NeedsYouStopView(2, 3, "checks"), entry.Stop);
+        var page = await Page(entry);
+
+        Assert.Equal("Approval 2 of 3 · Checks", page.KindWord);
+    }
+
+    [Fact]
+    public async Task A_row_with_no_stop_keeps_the_plain_kind_word()
+    {
+        var served = Served("desk-with-stop");
+        var entry = NeedsYouMapper.Map(served with { Rows = [served.Rows[0] with { Stop = null }] }, new CommandList([]), decisions: null, new HomeCounts(0, 0, 0), readAt: A.Noon).Rows[0];
+
+        var page = await Page(entry);
+
+        Assert.DoesNotContain("Approval 2", page.KindWord, StringComparison.Ordinal);
+    }
 }

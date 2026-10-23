@@ -21,7 +21,7 @@
       "actions": [
         "ApplyCommand:answer-text"
       ],
-      "cli": "sindri workflow answer ITM-0000000000000000000000000000000f/step/1 <the child's answer>",
+      "cli": "sindri workflow answer ITM-0000000000000000000000000000000f/step/1/step.4 --text <answer>",
       "via": "child",
       "child": "ITM-0000000000000000000000000000000f/step/1/step.4"
     }

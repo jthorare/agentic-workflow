@@ -103,6 +103,11 @@ internal sealed partial class CompleteStepService(IInstanceDirectory directory, 
             return via.Error;
         }
 
+        if (via.Value == StepRuntime.Agent && await engineFilled.OutputTypeRefusal(view.Value, request, cancellationToken).ConfigureAwait(false) is { } untyped)
+        {
+            return untyped;   // before the nonce is claimed and anything is stored: a refused report consumes nothing
+        }
+
         return engineFilled.HumanOnlyRefusal(view.Value, request, caller) is { } refusal ? refusal : new Located(resolved.Value, view.Value, via.Value);
     }
 

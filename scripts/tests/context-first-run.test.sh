@@ -107,6 +107,61 @@ expect "refuses the real instance's port" 2 "7410"
 OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" up --bogus 2>&1)"; CODE=$?
 expect "an unknown option is a usage error" 2 "unknown option"
 
+echo "context-first-run: the repo name"
+NAMED="$T/work/first-run-main"
+git -C "$REPO" worktree add -q --detach "$NAMED" main
+git -C "$REPO" remote add origin "git@example.com:owner/real-name.git"
+nm() { OUT="$(env AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" FIRST_RUN_REPO_NAME="${2:-}" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?; }
+nm "$NAMED"
+expect "a worktree named differently from its origin gets the origin's name (scp-style URL)" 0 "code-index status --repo real-name"
+git -C "$REPO" remote set-url origin "https://example.com/owner/https-name/"
+nm "$NAMED"
+expect "an https origin with a trailing slash gives its last segment" 0 "--repo https-name"
+nm "$NAMED" custom-name
+expect "FIRST_RUN_REPO_NAME overrides the origin's name" 0 "--repo custom-name"
+nm "$NAMED" "bad name"
+expect "an invalid FIRST_RUN_REPO_NAME is a usage error" 2 "not a profile repo name"
+git -C "$REPO" remote remove origin
+nm "$NAMED"
+expect "with no origin the name falls back to the path's basename" 0 "--repo first-run-main"
+
+echo "context-first-run: the checkout preflight"
+# A real (non-dry) run reaches the preflight; --no-embeddings --no-graph keep it to git, jq and temporal. Only the repo checks matter here.
+pf() { # pf <repo path>: sets OUT and CODE of a real up against that repo
+  OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$1" SINDRI="$T/stub-sindri" "$SCRIPT" up --no-embeddings --no-graph --no-ui 2>&1)"; CODE=$?
+}
+G() { git -C "$1" -c user.name=t -c user.email=t@t "${@:2}"; }
+if command -v jq >/dev/null 2>&1; then
+  mkdir -p "$STATE/cache/bin/temporal-1.9.1"
+  DET="$T/work/detached"
+  git -C "$REPO" worktree add -q --detach "$DET" main
+  pf "$DET"
+  case "$OUT" in
+    *"HEAD is not contained"*|*"uncommitted"*|*"has none of"*) fail "a detached HEAD at main passes the checkout preflight"; printf '%s\n' "$OUT" | sed 's/^/       | /' ;;
+    *) ok "a detached HEAD at main passes the checkout preflight" ;;
+  esac
+  G "$REPO" worktree add -q -b side "$T/work/side" main
+  G "$T/work/side" commit -q --allow-empty -m "not in main"
+  pf "$T/work/side"
+  expect "a commit that is not in main is refused" 1 "HEAD is not contained in main" "git worktree add --detach"
+  echo x > "$DET/stray.txt"
+  pf "$DET"
+  expect "a dirty linked worktree is refused" 1 "uncommitted or untracked" "clean tree"
+  rm -f "$DET/stray.txt"
+  echo x > "$REPO/stray.txt"
+  pf "$REPO"
+  expect "a dirty main checkout is refused and named" 1 "shared main checkout" "index a clean worktree"
+  rm -f "$REPO/stray.txt"
+  pf "$REPO"
+  case "$OUT" in
+    *"tools ok; agentic-workflow at $REPO"*|*"profile approve"*) ok "FIRST_RUN_REPO_PATH still overrides the default repo" ;;
+    *) fail "FIRST_RUN_REPO_PATH still overrides the default repo"; printf '%s\n' "$OUT" | sed 's/^/       | /' ;;
+  esac
+  rm -rf "$STATE/sindri-app-firstrun"
+else
+  echo "  skip the checkout preflight cases: jq isn't installed"
+fi
+
 echo "context-first-run: stop at approval, then a whole run"
 # jq is a real dependency of the script; the real-run cases need it.
 if ! command -v jq >/dev/null 2>&1; then

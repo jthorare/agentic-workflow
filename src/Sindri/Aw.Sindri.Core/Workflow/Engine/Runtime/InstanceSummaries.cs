@@ -36,7 +36,8 @@ public static class InstanceSummaries
             view.StartedAt,
             context.LineStage,
             RootOf(view.Address),
-            Views.WaitingOn.Of(chip, deskOpen: view.Task is not null, agentRunOpen: view.AgentRun is not null, ended: view.Outcome is not null),
+            WaitingOn.Of(chip, deskOpen: view.Task is not null, agentRunOpen: view.AgentRun is not null, ended: view.Outcome is not null),
+            view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.TakenOverBy : null,
             view.Again);
     }
 

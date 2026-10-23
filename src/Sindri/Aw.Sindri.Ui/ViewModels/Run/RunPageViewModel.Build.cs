@@ -115,12 +115,27 @@ internal sealed partial class RunPageViewModel
         ReferenceCopy = new CopyAction(clipboard, clock, Labels.CopyAddressName(line.Address), Labels.RunCopyReference);
         var startedAt = runs.FirstOrDefault(r => string.Equals(r.Address, line.Address, StringComparison.Ordinal))?.StartedAt;   // the instance's own start, not a step run's
         StartedText = StartedLine(startedAt, line);
+        TakenOverText = TakenOverLine(line);
         var state = graph.Nodes.FirstOrDefault(n => n.Kind == RunNodeKind.End && IsReached(line, n))?.State
             ?? graph.Nodes.FirstOrDefault(n => n.Kind == RunNodeKind.Stage && string.Equals(n.Id, ActiveNodeId, StringComparison.Ordinal))?.State
             ?? RunNodeState.NotStarted;
         var brushes = RunStates.Brushes(state);
         (HeaderState, HeaderWord, HeaderIcon, HeaderBrush, HeaderSoftBrush) = (state, RunStates.Word(state), RunStateIcons.Of(state), brushes.Text, brushes.Soft);
         Cancel = line.Actions.Contains(CancelAction, StringComparer.Ordinal) ? catalog.On(CancelAction, line.Address, send: null) : null;
+    }
+
+    // "Taken over by you at 11:04" while the run is with a person; the served takenOverAt and takenOverBy, left out when not served.
+    private string TakenOverLine(InstanceDetail line)
+    {
+        var status = line.Current.Status;
+        if (status.TakenOverAt is null && string.IsNullOrEmpty(status.TakenOverBy))
+        {
+            return string.Empty;
+        }
+
+        var now = TimeZoneInfo.ConvertTime(clock.GetUtcNow(), clock.LocalTimeZone);
+        var at = status.TakenOverAt is { } taken ? Labels.StartedClock(TimeZoneInfo.ConvertTime(taken, clock.LocalTimeZone), now) : null;
+        return Labels.RunTakenOver(at, status.TakenOverBy);
     }
 
     // "Started 11:02 by you" when the instance says when it began; else how long the line has been where it is, as before.

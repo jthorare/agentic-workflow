@@ -16,12 +16,12 @@
       "since": "2026-01-01T00:00:00.0000000Z",
       "recordedOnly": false,
       "notice": null,
-      "answerKind": "text",
-      "primaryAction": "ApplyCommand:answer-text",
+      "answerKind": "resume",
+      "primaryAction": "ApplyCommand:answer-resume",
       "actions": [
-        "ApplyCommand:answer-text"
+        "ApplyCommand:answer-resume"
       ],
-      "cli": "sindri workflow answer ITM-0000000000000000000000000000000f/step/1/phase.p1.1 <the child's answer>",
+      "cli": "sindri workflow answer ITM-0000000000000000000000000000000f/step/1/phase.p1.1 --resume",
       "via": "child",
       "child": "ITM-0000000000000000000000000000000f/step/1/phase.p1.1"
     }

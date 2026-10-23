@@ -42,6 +42,31 @@ internal static partial class Labels
     /// <summary>The label of where the session runs.</summary>
     internal const string SheetHost = "Host";
 
+    /// <summary>The first section: where the session works.</summary>
+    internal const string SheetWhereWorking = "Where it is working";
+
+    /// <summary>The second section: when it started and has been in its status.</summary>
+    internal const string SheetTiming = "Timing";
+
+    /// <summary>The amber callout on the sheet of a session that is asking.</summary>
+    internal const string SheetAskingCallout = "Answer it in its own terminal; Sindri only shows that it is waiting.";
+
+    /// <summary>The line on the sheet of an ended session that has no resume command.</summary>
+    internal const string SheetNoResume = "There is no command to pick it up again.";
+
+    /// <summary>The line on the sheet of an ended session that has a resume command.</summary>
+    /// <param name="command">The command, as the ended row shows it.</param>
+    /// <returns>"To pick it up again, run: claude --resume abc".</returns>
+    internal static string SheetResumeWith(string command) => "To pick it up again, run: " + command;
+
+    /// <summary>The copy chip of the session's ref.</summary>
+    internal const string SheetCopyRef = "Copy reference";
+
+    /// <summary>How long the session has been in its status.</summary>
+    /// <param name="span">The time, as <see cref="Duration(long)"/> says it.</param>
+    /// <returns>"In this status for 4m".</returns>
+    internal static string SheetInStatusFor(string span) => "In this status for " + span;
+
     /// <summary>The label of the host's terminal.</summary>
     internal const string SheetTerminal = "Terminal";
 

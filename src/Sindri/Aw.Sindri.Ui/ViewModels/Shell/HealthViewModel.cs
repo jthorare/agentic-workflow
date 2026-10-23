@@ -272,7 +272,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     {
         Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health);
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
-        Sentence = SentenceFor(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix);
+        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix, _health?.Sentence));
         ShowSystemState();
     }
 

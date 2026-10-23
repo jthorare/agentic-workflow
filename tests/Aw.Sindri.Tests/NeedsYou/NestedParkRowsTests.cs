@@ -1,9 +1,11 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
+using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Tests.Items;
 
 namespace Aw.Sindri.Tests.NeedsYou;
@@ -30,7 +32,7 @@ public sealed class NestedParkRowsTests
         Assert.Equal(("park:" + Instance(_root), "park · needs answer", "child", _phase), (row.Id.Value, row.Label, row.Via, row.Child));
         Assert.Equal(Instance(_root), row.Subject.Id.Value);
         Assert.Contains("it needs an answer (" + _phase + ")", row.Reason, StringComparison.Ordinal);
-        Assert.StartsWith("sindri workflow answer " + _phase + " ", row.Cli, StringComparison.Ordinal);
+        Assert.Equal(("sindri workflow answer " + _phase + " --text <answer>", ActionId.From("ApplyCommand:answer-text")), (row.Cli, row.PrimaryAction));
     }
 
     [Fact]
@@ -43,6 +45,7 @@ public sealed class NestedParkRowsTests
         var row = Assert.Single(await Rows(q)).Row;
         Assert.Equal(("park · dispatch refused", "child", _phase), (row.Label, row.Via, row.Child));
         Assert.Contains("SND-WF-010: fact:nextPhase must be a phase", row.Reason, StringComparison.Ordinal);
+        Assert.Equal(("sindri workflow answer " + _phase + " --resume", AnswerKind.Resume, ActionId.From("ApplyCommand:answer-resume")), (row.Cli, row.AnswerKind, row.PrimaryAction));
     }
 
     [Fact]
@@ -97,6 +100,31 @@ public sealed class NestedParkRowsTests
     }
 
     [Fact]
+    public async Task A_root_that_mirrors_a_parked_child_serves_the_childs_own_answer()
+    {
+        var q = await Started();
+        await Fold(q, EventTypes.WorkflowTransition, Row(_phase, Parked(ParkReason.NeedsAnswer, ParkKind.Step)));
+
+        await Fold(q, EventTypes.WorkflowTransition, Row(_root, Mirroring(ParkReason.NeedsAnswer, _phase)));
+
+        var row = Assert.Single(await Rows(q)).Row;
+        Assert.Equal(("child", _phase, "sindri workflow answer " + _phase + " --text <answer>"), (row.Via, row.Child, row.Cli));
+    }
+
+    [Fact]
+    public async Task A_deeper_park_below_a_mirroring_root_moves_its_row_to_the_deepest()
+    {
+        var q = await Started();
+        await Fold(q, EventTypes.WorkflowTransition, Row(_phase, Parked(ParkReason.NeedsAnswer, ParkKind.Step)));
+        await Fold(q, EventTypes.WorkflowTransition, Row(_root, Mirroring(ParkReason.NeedsAnswer, _phase)));
+
+        await Fold(q, EventTypes.WorkflowTransition, Row(_build, Parked(ParkReason.SpecConflict, ParkKind.Dispatch)));
+
+        var row = Assert.Single(await Rows(q)).Row;
+        Assert.Equal((_build, "sindri workflow answer " + _build + " --resume"), (row.Child, row.Cli));
+    }
+
+    [Fact]
     public async Task A_nested_park_does_not_block_the_roots_desk_row()
     {
         var q = new ItemQueryHarness();
@@ -135,6 +163,9 @@ public sealed class NestedParkRowsTests
     private static Task Fold(ItemQueryHarness q, string type, WorkflowEventPayload payload) => q.Views.Fold(type, payload, ItemQueryHarness.Id('1'));
 
     private static SuspensionSummary Parked(ParkReason reason, ParkKind kind) => new(SuspensionKind.Park, reason, kind, Escalation: null, Mirrors: null);
+
+    private static SuspensionSummary Mirroring(ParkReason reason, string child) =>
+        new(SuspensionKind.Park, reason, ParkKind.Step, Escalation: null, Mirrors: Instance(child), MirrorsAddress: child);
 
     private static WorkflowEventPayload Row(string address, SuspensionSummary? suspension, FrameSummary? frame = null, string? outcome = null, string? reason = null)
     {

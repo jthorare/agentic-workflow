@@ -68,4 +68,14 @@ public sealed class InstanceSummariesTests
         Assert.Null(row.StartedAt);
         Assert.Null(row.LineStage);
     }
+
+    [Fact]
+    public void A_taken_over_instance_row_names_who_took_it_over()
+    {
+        var taken = InstanceSummaries.Of(StatusCases.View("taken-over"), new InstanceSummaryContext(StatusCases.Now));
+        var desk = InstanceSummaries.Of(StatusCases.View("desk-task"), new InstanceSummaryContext(StatusCases.Now));
+
+        Assert.Equal("human:thor", taken.TakenOverBy);
+        Assert.Null(desk.TakenOverBy);
+    }
 }

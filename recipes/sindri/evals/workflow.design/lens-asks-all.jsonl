@@ -1,0 +1,11 @@
+{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:designRevision":{}}}}
+{"trigger":{"kind":"step.completed","outcome":"fresh","outputs":{"fact:scope":{"surfaces":[]},"fact:packs":{"style":"s1","lenses":["l1"]},"fact:design":{"sections":[]},"fact:findings":[],"fact:lensRounds":[],"fact:changedSections":[],"fact:answers":[],"fact:accepted":[]}},"expect":{"state":"draft"}}
+{"trigger":{"kind":"step.completed","outcome":"drafted","outputs":{"fact:design":{"sections":[{"id":"D1","text":"Expiry"}]}}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"round"}}
+{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:lensQueue":["l1","l2"],"fact:lensRounds":[]}},"expect":{"state":"lens"}}
+{"trigger":{"kind":"step.completed","outcome":"reviewed","outputs":{"fact:lensReport":{"lens":"l1","findings":[]}}},"expect":{"state":"lens-log"}}
+{"trigger":{"kind":"step.completed","outcome":"next","outputs":{"fact:lensRounds":[{"round":1}],"fact:lensQueue":["l2"]}},"expect":{"state":"lens"}}
+{"trigger":{"kind":"step.completed","outcome":"reviewed","outputs":{"fact:lensReport":{"lens":"l2","findings":[]}}},"expect":{"state":"lens-log"}}
+{"trigger":{"kind":"step.completed","outcome":"needsOwner","outputs":{"fact:lensRounds":[{"round":1},{"round":1,"closes":true}],"fact:findings":[{"severity":"CRITICAL","text":"legacy flow?"},{"severity":"HIGH","text":"expiry owner?"},{"severity":"HIGH","text":"who is it for?"}],"fact:escalation":[{"kind":"productQuestion","question":"Keep the legacy flow?","lens":"l1","id":"q1"},{"kind":"ambiguousFix","question":"Which table owns expiry?","lens":"l1","id":"q2"},{"kind":"productQuestion","question":"Who is the expiry for?","lens":"l2","id":"q3"}]}},"expect":{"state":"ask"}}
+{"trigger":{"kind":"step.completed","outcome":"answered","outputs":{"fact:answers":[{"id":"q1","question":"Keep the legacy flow?","answer":"drop it"},{"id":"q2","question":"Which table owns expiry?","answer":"accounts"},{"id":"q3","question":"Who is the expiry for?","answer":"admins"}]}},"expect":{"state":"revise"}}
+{"trigger":{"kind":"step.completed","outcome":"revised","outputs":{"fact:design":{"sections":[]},"fact:changedSections":["D1"]}},"expect":{"state":"check"}}

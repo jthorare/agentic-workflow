@@ -18,7 +18,7 @@
 
 ## Errors
 
-Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 014 to 029 are reserved. Layer codes (006 to 009) are carried in a layer row and the build report and fail only the call that depends on the layer.
+Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 017 to 029 are reserved. Layer codes (006 to 009) are carried in a layer row and the build report and fail only the call that depends on the layer.
 
 | Code | Kind | Meaning |
 |---|---|---|

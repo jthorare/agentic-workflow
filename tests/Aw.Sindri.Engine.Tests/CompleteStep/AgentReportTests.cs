@@ -98,7 +98,7 @@ public sealed class AgentReportTests
     }
 
     private CompleteStepService Service(AgentRun run, CallerContext caller) =>
-        new(run, run, _approvals, _facts, _nonces, new FixedCaller(caller), new EngineFilledReport(EvalComposition.Catalog, EvalComposition.Options, _files));
+        new(run, run, _approvals, _facts, _nonces, new FixedCaller(caller), new EngineFilledReport(EvalComposition.Catalog, EvalComposition.Options, _files, new ReportOutputTypes(_approvals, new FakeLauncher())));
 
     private static CallerContext Session() => A.Caller().Session().Build();
 

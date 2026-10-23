@@ -39,17 +39,36 @@ public static partial class NeedsYouRows
         return Row(item, park.Address, shape, since, scrubber);
     }
 
-    /// <summary>The answer a park row offers: a pointer to the descendant that decides, or the instance's own.</summary>
+    /// <summary>
+    /// The answer a park row offers: the instance's own, or for a parked descendant a pointer to it (`via: "child"`) whose cli is
+    /// the descendant's own answer (the deepest park mirrors nothing), so a terminal user runs it there.
+    /// </summary>
     private static Workflow.Views.StatusAnswer? AnswerOf(ParkRowInput park)
     {
-        if (park.Descendant is { } descendant)
+        var suspension = park.Suspension;
+        var shape = ShapeOf(suspension);
+        if (park.Descendant is not { } descendant)
         {
-            return ParkAnswers.For(new ParkShape(SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Child, Mirrors: false), descendant, child: descendant.Value);   // the descendant decides: a pointer to it
+            return ParkAnswers.For(shape, park.Address, child: suspension.MirrorsAddress);
         }
 
-        var suspension = park.Suspension;
-        return ParkAnswers.For(new ParkShape(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors is not null), park.Address, child: suspension.MirrorsAddress);
+        return ParkAnswers.For(shape, descendant) is { Via: null } own
+            ? own with { Via = "child", Child = descendant.Value }
+            : ParkAnswers.For(new ParkShape(SuspensionKind.Escalation, Reason: null, ParkKind: null, EscalationKind.Child, Mirrors: false), descendant, child: descendant.Value);   // no answer of its own (a drift, a revoked child): a pointer to it
     }
+
+    /// <summary>Whether an instance's own park row would only point at a child that decides (`via: "child"`): a parked descendant's row then says more.</summary>
+    /// <param name="suspension">The instance's suspension.</param>
+    /// <param name="address">The instance's address.</param>
+    /// <returns>True for a pointer.</returns>
+    public static bool PointsAtChild(SuspensionSummary suspension, InstanceAddress address)
+    {
+        ArgumentNullException.ThrowIfNull(suspension);
+        return ParkAnswers.For(ShapeOf(suspension), address)?.Via is not null;
+    }
+
+    private static ParkShape ShapeOf(SuspensionSummary suspension) =>
+        new(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors is not null);
 
     /// <summary>The 'park' row of an open desk task.</summary>
     /// <param name="item">The item's row.</param>

@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Ids;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -10,4 +11,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Bundle">The Step's 'bundle' parameter ('style' or 'lenses'), or null when it bundles no pack (LN-WF5).</param>
 /// <param name="Subject">The Step's 'subject' parameter, which says which lens loop's pack a 'lenses' bundle holds; null for none.</param>
 /// <param name="LensQueue">The instance's stored 'fact:lensQueue', whose head lens's prompt a 'lenses' bundle holds; null when it has none.</param>
-internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null);
+/// <param name="Payloads">The payload facts the Step writes under its recipe (<see cref="PayloadFacts.OutputsOf"/>), whose shape its brief states; null for none.</param>
+internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null, IReadOnlyList<FactKey>? Payloads = null);

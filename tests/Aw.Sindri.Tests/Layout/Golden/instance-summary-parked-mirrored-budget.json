@@ -122,11 +122,11 @@
   ],
   "now": "needs your answer",
   "answer": {
-    "kind": "text",
-    "actionId": "ApplyCommand:answer-text",
-    "class": "desk",
-    "cli": "sindri workflow answer T-3/step/1 \u003Cthe child\u0027s answer\u003E",
-    "atTerminal": false,
+    "kind": "grantTokens",
+    "actionId": "ApplyCommand:answer-grant-tokens",
+    "class": "protected",
+    "cli": "sindri workflow answer T-3/step/1/step.4 --grant-tokens \u003Cn\u003E",
+    "atTerminal": true,
     "via": "child",
     "child": "T-3/step/1/step.4"
   },
@@ -138,5 +138,6 @@
   "startedAt": null,
   "lineStage": null,
   "rootAddress": "T-3/step/1",
-  "waitingOn": "you"
+  "waitingOn": "you",
+  "takenOverBy": null
 }

@@ -1,0 +1,48 @@
+{
+  "running": true,
+  "pid": 4242,
+  "epoch": 1,
+  "leaseExpiresAt": "2026-01-01T00:01:00.0000000Z",
+  "profile": {
+    "approved": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
+    "live": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
+    "changedSinceApproval": false,
+    "problem": null,
+    "source": "<home>/profile/profile.yaml",
+    "needsApproval": false
+  },
+  "services": [
+    {
+      "name": "heartbeat",
+      "every": "5s",
+      "lastRun": null
+    }
+  ],
+  "apiVersion": 1,
+  "views": {
+    "cursor": 0,
+    "ledgerHead": 5,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false,
+    "stalledAt": null,
+    "stalledType": null,
+    "text": null
+  },
+  "health": {
+    "word": "degraded",
+    "problems": [
+      {
+        "code": "SND-CODEIDX-014",
+        "text": "demo: code index is behind main; rebuild it from the System page",
+        "clause": "the code index for demo is behind main"
+      }
+    ],
+    "sentence": "Sindri is degraded: the code index for demo is behind main."
+  },
+  "sessions": {
+    "live": 0,
+    "asking": 0,
+    "problems": 0
+  }
+}

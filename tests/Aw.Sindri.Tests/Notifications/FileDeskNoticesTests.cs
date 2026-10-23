@@ -55,6 +55,16 @@ public sealed class FileDeskNoticesTests : IDisposable
     }
 
     [Fact]
+    public async Task An_interrupt_carries_the_deep_link_to_the_instance_so_a_click_can_open_it()
+    {
+        var notices = Notices();
+
+        _ = await notices.Send(DeskNoticesContract.Notice("WFI-a:1:n1"), Token);
+
+        Assert.Equal(["workflow/T-4/dev-notify/1"], _os.Links);
+    }
+
+    [Fact]
     public async Task A_repeat_writes_and_shows_nothing()
     {
         var notices = Notices();

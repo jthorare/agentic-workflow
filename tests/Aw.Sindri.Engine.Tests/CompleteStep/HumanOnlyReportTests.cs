@@ -195,7 +195,7 @@ public sealed class HumanOnlyReportTests
     private CompleteStepService Service(OpenTask desk, CallerContext caller)
     {
         var catalog = EvalComposition.Catalog;
-        return new CompleteStepService(desk, desk, _approvals, _facts, _nonces, new FixedCaller(caller), new EngineFilledReport(catalog, EvalComposition.Options, new FakeLaunchFiles()));
+        return new CompleteStepService(desk, desk, _approvals, _facts, _nonces, new FixedCaller(caller), new EngineFilledReport(catalog, EvalComposition.Options, new FakeLaunchFiles(), new ReportOutputTypes(_approvals, new FakeLauncher())));
     }
 
     private static CallerContext Session() => A.Caller().Session().Build();

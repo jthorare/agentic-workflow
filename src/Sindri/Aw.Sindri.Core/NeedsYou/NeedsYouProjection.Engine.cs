@@ -66,10 +66,11 @@ internal sealed partial class NeedsYouProjection
             return existing.Error;
         }
 
+        var nested = at.Part is { Ended: false } ? existing.Value?.Nested : null;   // the parked descendants outlive the root's own park, not the root
         var plan = new SettlePlan(instance, at.Item, at.Part,
-            at.Part is { } part ? Wanted(at.Item, part, payload) : null,
+            at.Part is { } part ? Wanted(at.Item, part, payload, nested) : null,
             at.Part is { Ended: false } live ? Kept(live, payload) : null,   // a takeover row stays until the handback or the end; a park row stays across a row that doesn't say
-            at.Part is { Ended: false } ? existing.Value?.Nested : null);   // the parked descendants outlive the root's own park, not the root
+            nested);
         foreach (var prefix in new[] { ParkPrefix, "desk:", "takeover:" })
         {
             var outcome = await SettlePrefix(rows, plan, prefix, recorded, cancellationToken).ConfigureAwait(false);
@@ -115,7 +116,8 @@ internal sealed partial class NeedsYouProjection
         _ => null,
     };
 
-    private (string Prefix, Func<DateTimeOffset, NeedsYouRow> Build)? Wanted(ItemRow item, EngineItemPart part, WorkflowEventPayload payload)
+    /// <summary>The row a root's event wants. A park that only points at a child (a mirror) describes the deepest parked descendant instead, when one is known, so its cli is that descendant's own answer.</summary>
+    private (string Prefix, Func<DateTimeOffset, NeedsYouRow> Build)? Wanted(ItemRow item, EngineItemPart part, WorkflowEventPayload payload, IReadOnlyList<NestedPark>? nested)
     {
         var address = InstanceAddress.From(part.Address);
         if (part.Ended)
@@ -125,6 +127,8 @@ internal sealed partial class NeedsYouProjection
 
         return part.Suspension switch
         {
+            SuspensionKind.Park or SuspensionKind.Escalation when payload.Detail?.Delta.Suspension is { } suspension && nested is { Count: > 0 } parked && NeedsYouRows.PointsAtChild(suspension, address) =>
+                (ParkPrefix, NestedPut(item, address, parked).Build),
             SuspensionKind.Park or SuspensionKind.Escalation when payload.Detail?.Delta.Suspension is { } suspension =>
                 (ParkPrefix, since => NeedsYouRows.ForPark(item, new ParkRowInput(address, suspension, payload.Detail?.Reason), since, scrubber)),
             SuspensionKind.Takeover when string.Equals(payload.Trigger, TriggerNames.TakeoverIdle, StringComparison.Ordinal) =>
@@ -149,7 +153,7 @@ internal sealed partial class NeedsYouProjection
     /// <summary>
     /// A descendant's row (API spec section 3.6): its park, if its delta shows one, joins the parked descendants of its root and its leaving the park
     /// (a resume, an answer, a cancel, its end) leaves them. The root's 'park' row then describes the deepest parked descendant (the longest address, the
-    /// later park on a tie), unless the root parks itself, when its own row wins and the descendants wait on the record. A row stored without detail says nothing.
+    /// later park on a tie), unless the root parks itself with an answer of its own, when its own row wins and the descendants wait on the record (a root whose park only points at a child gives way to the deepest one). A row stored without detail says nothing.
     /// </summary>
     private async ValueTask<Result<Unit>> Nested(LedgerEvent recorded, IViewRows rows, string key, WorkflowEventPayload payload, CancellationToken cancellationToken)
     {
@@ -185,9 +189,12 @@ internal sealed partial class NeedsYouProjection
         var parked = ParkedDescendants(existing.Value?.Nested, descendant);
         if (descendant.Part.Suspension is SuspensionKind.Park or SuspensionKind.Escalation)
         {
-            return existing.Value is { } own
-                ? await rows.Put(ViewNames.NeedsYou, id, own with { Nested = parked.Count == 0 ? null : parked }, cancellationToken).ConfigureAwait(false)   // the root's own row wins; the descendants wait on its record
-                : Unit.Value;
+            return existing.Value switch
+            {
+                { Row.Via: not null } when parked.Count > 0 => await PutEngine(rows, NestedPut(descendant.Item, descendant.Root, parked), descendant.Recorded, cancellationToken).ConfigureAwait(false),   // the root only points at a child: the deepest parked descendant says more
+                { } own => await rows.Put(ViewNames.NeedsYou, id, own with { Nested = parked.Count == 0 ? null : parked }, cancellationToken).ConfigureAwait(false),   // the root's own row wins; the descendants wait on its record
+                null => Unit.Value,
+            };
         }
 
         return parked.Count == 0

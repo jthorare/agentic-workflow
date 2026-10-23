@@ -47,7 +47,7 @@ public sealed class ParkRowsTests
     {
         var instance = StatusCases.Instance(name);
         var suspension = instance.Suspension!;
-        var summary = new SuspensionSummary(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors?.Value);
+        var summary = new SuspensionSummary(suspension.Kind, suspension.Reason, suspension.ParkKind, suspension.Escalation, suspension.Mirrors?.Value, suspension.Mirrors is null ? null : "T-3/step/1/step.4");   // the address the engine's event carries for a mirrored child
 
         var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(instance.Address, summary), _since, _plain);
 

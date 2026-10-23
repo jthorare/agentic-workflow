@@ -26,6 +26,18 @@ internal static partial class Labels
             ? startedAt.ToString("HH:mm", CultureInfo.InvariantCulture)
             : startedAt.ToString("MMM d, HH:mm", CultureInfo.InvariantCulture);
 
+    /// <summary>Who took a run over and when.</summary>
+    /// <param name="clock">When, as <see cref="StartedClock"/> says it.</param>
+    /// <param name="takenOverBy">The actor, as served ("human:cli").</param>
+    /// <returns>"Taken over by you at 11:04"; empty when nobody is recorded.</returns>
+    internal static string RunTakenOver(string? clock, string? takenOverBy) => (clock, takenOverBy) switch
+    {
+        (null or "", null or "") => string.Empty,
+        (null or "", { } who) => "Taken over by " + StartedByWords(who),
+        ({ } at, null or "") => "Taken over at " + at,
+        ({ } at, { } who) => "Taken over by " + StartedByWords(who) + " at " + at,
+    };
+
     /// <summary>Who started a run and when; either part is left out when it is not served, and nothing says when neither is.</summary>
     /// <param name="clock">When it started, or null.</param>
     /// <param name="startedBy">Who started it, or null.</param>

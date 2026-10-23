@@ -20,8 +20,10 @@ does, so you can run it again after any stop or failure. Exit codes: 0 done, 1 a
 
 ## Before you start
 
-The script needs `git` and `jq`, and the repo's checkout must be on `main` (the code index never builds from another
-branch). For the code index's two optional layers it checks, and does not install:
+The script needs `git` and `jq`. It indexes the checkout it runs from (override with `FIRST_RUN_REPO_PATH`), never the
+shared main checkout by derivation. That checkout must have a clean tree and a HEAD contained in `origin/main` or `main`
+(the code index never builds from another branch), so run it from a clean detached worktree:
+`git worktree add --detach ../aw-wt/first-run-main origin/main`, then `cd` there and run `scripts/context-first-run.sh`. For the code index's two optional layers it checks, and does not install:
 
 | Needs | Why | Install |
 |---|---|---|
@@ -122,6 +124,6 @@ These are marked here so the first real run checks them, not assumes them:
   scoping recipe is the first workflow on the item. Not run live.
 - `sindri-ui` takes the home from `AW_SINDRI_HOME` and the port from `AW_SINDRI_PORT` in its environment, and a bare
   start shows the last page; there is no flag for the Context page, only the deep link `context?item=<ITM-id>`.
-- The first `sindri services run code-index-main-move` is assumed to start a build when the repo's checkout is on `main`
+- The first `sindri services run code-index-main-move` is assumed to start a build when the repo's checkout is contained in `main`
   and has no index; if the service says it deferred (no heavy-job slot), the wait loop keeps polling until the timeout.
 - `workflow.scoping`'s `scopeInput` is the `brief` shape; the brief path is relative to the repo.

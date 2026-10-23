@@ -200,7 +200,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static string KindWordOf(NeedsYouEntry entry) => NeedsYouGrouping.KindOf(entry) switch
     {
-        NeedsYouGroupKind.Approvals => Labels.NeedsYouKindApproval,
+        NeedsYouGroupKind.Approvals => entry.Stop is { } stop ? Labels.NeedsYouApprovalStop(stop.N, stop.Of, Workflows.WorkflowNames.Of(stop.State, displayName: null)) : Labels.NeedsYouKindApproval,
         NeedsYouGroupKind.Runs => Labels.NeedsYouKindRun,
         NeedsYouGroupKind.Decisions => Labels.NeedsYouKindDecision,
         NeedsYouGroupKind.Settings => entry.Id.StartsWith("profile:", StringComparison.Ordinal) ? Labels.NeedsYouKindSettings : Labels.NeedsYouKindWorkflow,

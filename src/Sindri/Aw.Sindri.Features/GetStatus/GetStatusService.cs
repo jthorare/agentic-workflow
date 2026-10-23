@@ -51,7 +51,9 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     private async ValueTask<HealthReport> Health(bool running, ViewsStatus views, ProfileStatus profile, LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
-        return HealthSummary.For(running, views, rows, profile.NeedsApproval, profile.ChangedSinceApproval);
+        var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
+        var standing = profile.ChangedSinceApproval ? ProfileApproval.Changed : profile.NeedsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved;
+        return HealthSummary.For(running, views, rows, standing, problems);
     }
 
     private static ProfileStatus Profile(LoadedProfile? approved, RecordedApproval? recorded, Result<LoadedProfile> loaded)

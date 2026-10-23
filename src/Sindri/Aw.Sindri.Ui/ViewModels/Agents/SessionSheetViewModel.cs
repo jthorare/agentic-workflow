@@ -268,6 +268,7 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
         if (error.Kind == ErrorKind.NotFound)
         {
             (IsEnded, EndedText, EndedDetail) = (true, Labels.SessionEnded, error.Message);
+            DrawEndedResume();
             Phase = IsShown ? Phase : FramePhase.NotFound;   // what was shown stays, with the sentence above it
         }
         else if (IsShown)
@@ -285,6 +286,8 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
     {
         (Heading, StateLine, EndedText, EndedDetail, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (Fields, HostFields, History, IsEnded, _step) = ([], [], [], false, null);
+        (Sections, IsAsking, InStatusText, RefCopy) = ([], false, string.Empty, null);
+        EndedResumeText = string.Empty;
         OnChanged(nameof(HasStep));
     }
 

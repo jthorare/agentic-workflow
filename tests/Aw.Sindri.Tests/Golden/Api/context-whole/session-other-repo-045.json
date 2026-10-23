@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-CONTEXT-045",
+  "status": 404,
+  "detail": "that repo isn't one this caller can read (fix: name a repo of the approved profile; a session names its own X-Sindri-Repo)",
+  "traceId": "<trace>"
+}

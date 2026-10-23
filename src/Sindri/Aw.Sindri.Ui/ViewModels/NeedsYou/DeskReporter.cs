@@ -27,16 +27,99 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher?
         }
 
         var read = await api.Instance(url, instanceId, CancellationToken.None).ConfigureAwait(true);
-        if (read.IsError || read.Value.Current.Desk is not { } desk)
+        var verbs = VerbsOf(read.IsSuccess ? read.Value.AllowedCommands : null);
+        if (read.IsError || (read.Value.Current.Desk is null && verbs.Count == 0))
+        {
+            return null;   // not an open desk run, and no recipe verb to press either
+        }
+
+        var desk = read.Value.Current.Desk;
+
+        var complete = read.Value.Current.Status.Commands.FirstOrDefault(c => c.Verb == StatusVerb.Complete);
+        var state = await StateOf(url, read.Value).ConfigureAwait(true);
+        var card = await MergeCardOf(url, read.Value).ConfigureAwait(true);
+        var questions = await QuestionsOf(url, read.Value).ConfigureAwait(true);
+        return new DeskTarget(instanceId, desk?.Run ?? string.Empty, complete, state?.Why, OutcomeText(state, "approve"), OutcomeText(state, "revise"), desk?.Recommended, card, questions) { Verbs = verbs };
+    }
+
+    // The ask step's questions; null for a desk that does not ask.
+    private async Task<IReadOnlyList<DeskQuestion>?> QuestionsOf(Uri url, InstanceDetail detail) =>
+        detail.Current.Desk is { } desk && AsksQuestions(desk, detail.Current.Status.Inputs) ? await Questions(url, detail.Id).ConfigureAwait(true) : null;
+
+    // The ask step: the person's answers are the desk's required output and the questions are the escalation fact it was given.
+    private static bool AsksQuestions(DeskForm desk, IReadOnlyList<StatusInput> inputs) =>
+        desk.Outputs.Any(o => string.Equals(o.Key, AnswersKey, StringComparison.Ordinal)) && inputs.Any(i => string.Equals(i.Key, DeskQuestionReader.Key, StringComparison.Ordinal));
+
+    // The whole list comes from the fact read: the instance's fact row only carries a one-line summary.
+    private async Task<IReadOnlyList<DeskQuestion>> Questions(Uri url, string instanceId)
+    {
+        var fact = await api.InstanceFact(url, instanceId, DeskQuestionReader.Key, CancellationToken.None).ConfigureAwait(true);
+        return fact.IsError ? [] : DeskQuestionReader.Of(fact.Value);
+    }
+
+    /// <summary>The fact "answers" for a list of answered questions: [{id, question, answer}] in the order asked.</summary>
+    /// <param name="answered">The questions with their answers.</param>
+    /// <returns>The JSON text.</returns>
+    internal static string AnswersJson(IEnumerable<(string Id, string Question, string Answer)> answered)
+    {
+        ArgumentNullException.ThrowIfNull(answered);
+        using var stream = new MemoryStream();
+        using (var writer = new System.Text.Json.Utf8JsonWriter(stream))
+        {
+            writer.WriteStartArray();
+            foreach (var (id, question, answer) in answered)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id", id);
+                writer.WriteString("question", question);
+                writer.WriteString("answer", answer);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    // The recipe state the instance is in, for its why and its outcomes; null when the recipe cannot be read.
+    private async Task<RecipeStateView?> StateOf(Uri url, InstanceDetail detail)
+    {
+        var recipe = await api.Recipe(url, detail.Recipe.Id, hash: null, CancellationToken.None).ConfigureAwait(true);
+        return recipe.IsSuccess ? recipe.Value.States.FirstOrDefault(s => string.Equals(s.State, detail.Current.State, StringComparison.Ordinal)) : null;
+    }
+
+    // The pull request card, when the instance lists the fact.
+    private async Task<MergeCardViewModel?> MergeCardOf(Uri url, InstanceDetail detail) =>
+        detail.Facts.Any(f => string.Equals(f.Key, PrStatusReader.Key, StringComparison.Ordinal)) ? await MergeCard(url, detail.Id).ConfigureAwait(true) : null;
+
+    // The recipe verbs of the instance: one per distinct verb the engine serves, in its order. The merge asks first until the engine marks which verbs are destructive.
+    private static List<DeskVerb> VerbsOf(IReadOnlyList<AllowedCommandView>? commands) =>
+        [.. (commands ?? [])
+            .Where(c => string.Equals(c.ActionId, "ApplyCommand:command", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(c.Verb))
+            .DistinctBy(c => c.Verb, StringComparer.Ordinal)
+            .Select(c => new DeskVerb(c.Verb!, c.Cli, c.Destructive ?? string.Equals(c.Verb, "merge", StringComparison.Ordinal)))];   // why: filtered to a verb above
+
+    /// <summary>Sends a recipe verb, once: a press while another report for the instance is in flight does nothing.</summary>
+    /// <param name="target">The shown request.</param>
+    /// <param name="verb">The verb.</param>
+    /// <returns>The answer, or null when a report for the instance was in flight or no endpoint is known.</returns>
+    internal async Task<Result<ApplyCommandAccepted>?> ApplyVerb(DeskTarget target, string verb)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (apiUrl() is not { } url || !_inFlight.Add(target.InstanceId))
         {
             return null;
         }
 
-        var complete = read.Value.Current.Status.Commands.FirstOrDefault(c => c.Verb == StatusVerb.Complete);
-        var recipe = await api.Recipe(url, read.Value.Recipe.Id, hash: null, CancellationToken.None).ConfigureAwait(true);
-        var state = recipe.IsSuccess ? recipe.Value.States.FirstOrDefault(s => string.Equals(s.State, read.Value.Current.State, StringComparison.Ordinal)) : null;
-        var card = read.Value.Facts.Any(f => string.Equals(f.Key, PrStatusReader.Key, StringComparison.Ordinal)) ? await MergeCard(url, instanceId).ConfigureAwait(true) : null;
-        return new DeskTarget(instanceId, desk.Run, complete, state?.Why, OutcomeText(state, "approve"), OutcomeText(state, "revise"), desk.Recommended, card);
+        try
+        {
+            return await api.ApplyCommand(url, target.InstanceId, ApplyCommandBody.ForVerb(target.InstanceId, verb), CancellationToken.None).ConfigureAwait(true);
+        }
+        finally
+        {
+            _ = _inFlight.Remove(target.InstanceId);
+        }
     }
 
     // The merge stop's pull request, when the instance lists it and it reads; a fact that cannot be read leaves the card out, never the request.

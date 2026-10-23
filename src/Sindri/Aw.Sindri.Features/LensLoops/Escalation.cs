@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 
 namespace Aw.Sindri.Features.LensLoops;
@@ -17,21 +18,42 @@ internal static class Escalation
     internal static JsonObject? First(IEnumerable<JsonObject> stopping)
     {
         ArgumentNullException.ThrowIfNull(stopping);
-        foreach (var finding in stopping)
-        {
-            if (Typed(finding["escalate"]) is { } typed)
-            {
-                typed["lens"] = LoopJson.Str(finding, "lens");
-                if (LoopJson.Str(finding, "id") is { Length: > 0 } id)
-                {
-                    typed["finding"] = id;
-                }
+        return stopping.Select(Of).OfType<JsonObject>().FirstOrDefault();
+    }
 
-                return typed;
-            }
+    /// <summary>
+    /// Every typed escalation among the findings, in order and with no limit (owner, 2026-10-23): the design review asks all of a round's questions at once, in one desk.
+    /// Each carries a stable 'id', <c language="text">q1</c>, <c language="text">q2</c>... in round order, so two questions with the same text from different lenses stay apart and an answer can name its question.
+    /// </summary>
+    /// <param name="stopping">The round's findings that stop the loop, each with its lens.</param>
+    /// <returns>One entry per escalating finding, as <see cref="First"/> writes it plus its id; empty when no finding carries a typed one.</returns>
+    internal static JsonArray All(IEnumerable<JsonObject> stopping)
+    {
+        ArgumentNullException.ThrowIfNull(stopping);
+        var all = new JsonArray();
+        foreach (var escalation in stopping.Select(Of).OfType<JsonObject>())
+        {
+            escalation["id"] = string.Create(CultureInfo.InvariantCulture, $"q{all.Count + 1}");
+            all.Add((JsonNode?)escalation);
         }
 
-        return null;
+        return all;
+    }
+
+    private static JsonObject? Of(JsonObject finding)
+    {
+        if (Typed(finding["escalate"]) is not { } typed)
+        {
+            return null;
+        }
+
+        typed["lens"] = LoopJson.Str(finding, "lens");
+        if (LoopJson.Str(finding, "id") is { Length: > 0 } id)
+        {
+            typed["finding"] = id;
+        }
+
+        return typed;
     }
 
     private static JsonObject? Typed(JsonNode? node)

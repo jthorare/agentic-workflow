@@ -6,12 +6,13 @@
   <!-- One session that ended recently: what it was, when, and the command that resumes it, with Copy. -->
   <Border x:Name="EndedRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="150,2*,2*,56,Auto" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
-      <TextBlock Classes="body-strong" Text="{Binding StatusText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+    <Grid ColumnDefinitions="150,2*,1.2*,2*,Auto,Auto" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+      <TextBlock x:Name="EndedStatus" Classes="body-strong" Text="{Binding StatusText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock Grid.Column="1" Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-      <TextBlock Grid.Column="2" Classes="caption mono" Text="{Binding ResumeText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-      <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding EndedText}" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-      <Button x:Name="EndedCopy" Grid.Column="4" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding CopyName}">
+      <TextBlock x:Name="EndedRepo" Grid.Column="2" Classes="caption subtle" Text="{Binding RepoText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="EndedResume" Grid.Column="3" Classes="caption mono" Text="{Binding ResumeText}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="EndedAgo" Grid.Column="4" Classes="caption subtle" Text="{Binding EndedText}" Margin="8,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+      <Button x:Name="EndedCopy" Grid.Column="5" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding CopyName}">
         <TextBlock Classes="caption" Text="{Binding CopyLabel}" />
       </Button>
     </Grid>

@@ -1352,11 +1352,13 @@ static Aw.CodeIndex.Core.Values.SymbolRef.TryFrom(string? value, out Aw.CodeInde
 static Aw.CodeIndex.Core.Values.SymbolRef.TryParse(string? s, System.IFormatProvider? provider, out Aw.CodeIndex.Core.Values.SymbolRef result) -> bool
 static Aw.CodeIndex.Core.Values.SymbolRef.operator !=(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
 static Aw.CodeIndex.Core.Values.SymbolRef.operator ==(Aw.CodeIndex.Core.Values.SymbolRef left, Aw.CodeIndex.Core.Values.SymbolRef right) -> bool
+static readonly Aw.CodeIndex.Core.CodeIndexErrors.BuildFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingServerFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.EmbeddingTargetRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.GraphUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.HeavyBusy -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.IndexDamaged -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.CodeIndex.Core.CodeIndexErrors.IndexBehind -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.IndexNotBuilt -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.InputTooLarge -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.NoSandbox -> Aw.Kernel.ErrorDefinition!

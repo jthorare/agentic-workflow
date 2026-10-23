@@ -503,7 +503,7 @@ is a command with a catalog row and an action class, and every route goes throug
 
 | Route | Class |
 |---|---|
-| `GET /context/query`, `/context/node`, `/context/neighbors`, `/context/path`, `/context/map`, `/context/map/export`, `/context/map/review`, `/context/map/review/history`, `/context/map/review/export`, `/context/map/proposals`, `/context/lenses`, `/context/filemap`, `/context/sources` | query (session callers repo-scoped, §3.1) |
+| `GET /context/query`, `/context/node`, `/context/neighbors`, `/context/path`, `/context/map`, `/context/map/export`, `/context/map/review`, `/context/map/review/history`, `/context/map/review/export`, `/context/map/proposals`, `/context/map/whole` (the whole map: nodes up to 500, else areas; `area=` opens one; Part D of the deployable-context spec), `/context/lenses`, `/context/filemap`, `/context/sources` | query (session callers repo-scoped, §3.1) |
 | `GET /context/subgraph?nodes=` (at most 20 keys), `QUERY /context/subgraph` with a JSON body (at most 1000 keys) | query (session callers repo-scoped, §3.1); the `QUERY` refuses an `Origin` header with `SND-API-008` ("a body query from a foreign Origin is refused"), honours `X-Sindri-After`, has no catalog row |
 | `POST /context/map/build`, `POST /context/sources/sync` | `job` |
 | `POST /context/map/import`, `POST /context/map/promote` (both make content `current`) | `protected` |

@@ -1,6 +1,6 @@
 # Onyx for Sindri's context engine
 
-Sindri's `onyx` source reads business intent (Linear issues with their comments, Slack, docs spaces) from a local Onyx
+Sindri's `onyx` source reads business intent (Linear issues with their comments, GitHub issues, Slack, docs spaces) from a local Onyx
 Community Edition. Onyx stays unmodified; Sindri uses it for recall only and does its own ranking (context spec D2,
 D3). Connecting Onyx to company Linear and Slack uses company OAuth: get sign-off first. Sindri never connects a
 source itself.
@@ -59,7 +59,7 @@ one-user sizing), the pull and the start. Then it needs you twice:
    registering. A rerun after any failure resumes at this step (the user is reused, never doubled).
 
 Last it opens Onyx's connectors page and prints the checklist: connect Linear (the product's teams, with a start date that
-covers the backtests) and Slack (the product's channels) with the company's OAuth, in Onyx's UI. `$SINDRI doctor` then
+covers the backtests), Slack (the product's channels) and GitHub (the product's repositories, issues on, with a read-only personal access token) in Onyx's UI, using the company's OAuth for Linear and Slack. `$SINDRI doctor` then
 shows `context:onyx` and `onyx:stack`.
 
 Day to day:
@@ -172,7 +172,15 @@ Create only these, in Admin → Connectors:
 |---|---|
 | Linear | Start date early enough to cover the backtest projects; the product's teams only |
 | Slack | The product's channels only (connector-indexed; Sindri doesn't use the federated lane) |
+| GitHub | The product's repositories only. Issues on; pull requests optional. See below |
 | Docs spaces (Confluence, Drive, …) | The product's spaces only |
+
+GitHub: Onyx's GitHub connector signs in with a GitHub personal access token, not OAuth. Use a fine-grained token limited
+to the product's repositories and read-only: Issues, Pull requests and Metadata, plus Contents only if Onyx asks for it.
+Confirm the exact permissions on the first connect. Issues reach Sindri through this connector; Sindri has no GitHub-issue
+adapter. A GitHub document keys as `onyx:github/<document id>`, using the document id Onyx gives it, with kind Doc. It
+has no issue kind and no `#N` alias (only Linear issues get those; Slack threads are kind Message), and nothing turns it into a
+Sindri item: items are added with `sindri item add`.
 
 Check first indexing and each connector's progress in Onyx's Admin → Connectors page. Sindri doesn't read Onyx's
 connector status (no connector route is on its allowlist, §7), so `$SINDRI context sources status` shows whether Onyx

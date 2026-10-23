@@ -14,6 +14,7 @@ using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 
 namespace Aw.Context.Testing.Engine;
@@ -187,6 +188,8 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<LensesSetView>> LensesOf(IReadOnlyList<string> anchors, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) => NoMap<LensesSetView>();
 
     /// <inheritdoc/>
+    public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<WholeMapView>();
+
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<FileMapView>();
 
     /// <inheritdoc/>

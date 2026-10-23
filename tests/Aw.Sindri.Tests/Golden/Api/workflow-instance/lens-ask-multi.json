@@ -1,0 +1,449 @@
+{
+  "address": "ITM-01JN2/design/1",
+  "id": "WFI-f9bdda4737968d6089b67b0810cd8936",
+  "parent": null,
+  "itemId": "ITM-01JN2",
+  "title": "Add expiry to sessions",
+  "recipe": {
+    "id": "workflow.design",
+    "hash": "sha256:e975aac700000000000000000000000000000000000000000000000000000000",
+    "version": 7,
+    "urgency": "work",
+    "displayName": "Design"
+  },
+  "state": "ask",
+  "since": "2026-10-12T12:22:00.0000000Z",
+  "engineOwned": null,
+  "subject": {
+    "kind": "text",
+    "key": "ITM-01JN2",
+    "label": "Add expiry to sessions",
+    "href": null
+  },
+  "orderedBy": "transition-list",
+  "states": [
+    {
+      "id": "intake",
+      "order": 1,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "draft",
+      "order": 2,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "check",
+          "n": 0,
+          "max": 5
+        },
+        {
+          "with": "evidence",
+          "n": 0,
+          "max": 5
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "check",
+      "order": 3,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "draft",
+          "n": 0,
+          "max": 5
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "round",
+      "order": 4,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "lens",
+      "order": 5,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "lens-log",
+          "n": 0,
+          "max": 40
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "lens-log",
+      "order": 6,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "lens",
+          "n": 0,
+          "max": 40
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "evidence",
+      "order": 7,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [
+        {
+          "with": "draft",
+          "n": 0,
+          "max": 5
+        }
+      ],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "ask",
+      "order": null,
+      "branchOf": "lens-log",
+      "glyph": "active",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "revise",
+      "order": null,
+      "branchOf": "lens-log",
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "lens-desk",
+      "order": null,
+      "branchOf": "lens-log",
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "apply",
+      "order": null,
+      "branchOf": "intake",
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "designed",
+      "order": 8,
+      "branchOf": null,
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": true
+    },
+    {
+      "id": "dropped",
+      "order": 9,
+      "branchOf": null,
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": false,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": true
+    }
+  ],
+  "current": {
+    "state": "ask",
+    "step": {
+      "kind": "active",
+      "ref": "step.lens.ask",
+      "declaration": "asks you to decide questions the reviewers could not settle"
+    },
+    "gates": [],
+    "desk": {
+      "run": "4.1",
+      "outputs": [
+        {
+          "key": "fact:answers",
+          "type": "payload",
+          "required": true
+        }
+      ],
+      "checks": [
+        "answers.payload"
+      ],
+      "completeAction": "CompleteStep"
+    },
+    "status": {
+      "header": {
+        "address": "ITM-01JN2/design/1",
+        "recipe": "workflow.design",
+        "hash12": "e975aac70000",
+        "version": 7,
+        "state": "ask",
+        "detail": "desk task",
+        "since": "2026-10-12T12:22:00.0000000Z",
+        "ageSeconds": 240
+      },
+      "next": "Answer the 3 questions the reviewers raised on ITM-01JN2, then run: sindri workflow complete ITM-01JN2/design/1 --run 4.1 --outcome done --output fact:answers=<file>",
+      "answer": null,
+      "child": null,
+      "drift": null,
+      "inputs": [
+        {
+          "key": "fact:escalation",
+          "name": "escalation.json",
+          "hash": "sha256:5c1e9a3000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "timeout": {
+        "kind": "parks",
+        "inSeconds": 604560,
+        "on": "ask"
+      },
+      "budget": null,
+      "paused": null,
+      "commands": [
+        {
+          "verb": "complete",
+          "actionId": "CompleteStep",
+          "class": "desk",
+          "cli": "sindri workflow complete ITM-01JN2/design/1 --run 4.1 --outcome done --output fact:answers=<file>",
+          "confirm": null
+        },
+        {
+          "verb": "takeover",
+          "actionId": "ApplyCommand:takeover",
+          "class": "pause",
+          "cli": "sindri workflow takeover ITM-01JN2/design/1",
+          "confirm": null
+        },
+        {
+          "verb": "cancel",
+          "actionId": "ApplyCommand:cancel",
+          "class": "desk",
+          "cli": "sindri workflow cancel ITM-01JN2/design/1",
+          "confirm": "Cancel ITM-01JN2/design/1? 0 running steps stop; 0 children are cancelled."
+        }
+      ],
+      "text": "ITM-01JN2/design/1  workflow.design@e975aac70000  v7  ask: desk task  since 12:22 (4m)\n  next      Answer the 3 questions the reviewers raised on ITM-01JN2, then run: sindri workflow complete\n            ITM-01JN2/design/1 --run 4.1 --outcome done --output fact:answers=<file>\n  inputs    fact:escalation  escalation.json  sha256:5c1e...\n  timeout   parks in 6d 23h 56m (desk)\n  commands  complete, takeover, cancel\n",
+      "injection": []
+    }
+  },
+  "facts": [
+    {
+      "key": "fact:scopePacket",
+      "label": "Scope packet (frozen)",
+      "type": "packet",
+      "direction": "input",
+      "from": null,
+      "status": "produced",
+      "summary": "scope packet, frozen",
+      "at": "2026-10-12T09:00:00.0000000Z",
+      "by": "step.design.intake",
+      "ref": {
+        "name": null,
+        "size": null,
+        "hash": null,
+        "path": null,
+        "itemId": null,
+        "url": null,
+        "host": null,
+        "title": null,
+        "factKey": "fact:scopePacket"
+      },
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:designPacket",
+      "label": "Design packet (candidate)",
+      "type": "packet",
+      "direction": "output",
+      "from": "evidence",
+      "status": "pending",
+      "summary": "not started",
+      "at": null,
+      "by": null,
+      "ref": null,
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:design",
+      "label": "Design",
+      "type": "payload",
+      "direction": "output",
+      "from": "evidence",
+      "status": "pending",
+      "summary": "not started",
+      "at": null,
+      "by": null,
+      "ref": null,
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:lensRounds",
+      "label": "Lens rounds",
+      "type": "payload",
+      "direction": "output",
+      "from": "evidence",
+      "status": "pending",
+      "summary": "not started",
+      "at": null,
+      "by": null,
+      "ref": null,
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:escalation",
+      "label": "Questions for you",
+      "type": "payload",
+      "direction": "output",
+      "from": "lens-log",
+      "status": "produced",
+      "summary": "3 questions: q1 Keep the legacy flow? · q2 Which table owns expiry? · q3 Who is the expiry for?",
+      "at": "2026-10-12T12:22:00.0000000Z",
+      "by": "step.lens.log",
+      "ref": {
+        "name": null,
+        "size": null,
+        "hash": null,
+        "path": null,
+        "itemId": null,
+        "url": null,
+        "host": null,
+        "title": null,
+        "factKey": "fact:escalation"
+      },
+      "progress": null,
+      "pending": null
+    },
+    {
+      "key": "fact:answers",
+      "label": "Answers",
+      "type": "payload",
+      "direction": "output",
+      "from": "ask",
+      "status": "pending",
+      "summary": "awaiting your answers",
+      "at": null,
+      "by": null,
+      "ref": null,
+      "progress": null,
+      "pending": {
+        "required": true,
+        "checks": [
+          "answers.payload"
+        ],
+        "completeAction": "CompleteStep"
+      }
+    }
+  ],
+  "children": [],
+  "counts": {
+    "timeline": 9,
+    "decisions": 0,
+    "requests": 1,
+    "context": null
+  },
+  "actions": [
+    "CompleteStep",
+    "ApplyCommand:takeover",
+    "ApplyCommand:cancel"
+  ],
+  "stepRuns": [],
+  "asOf": "2026-10-12T12:26:00.0000000Z",
+  "steps": [],
+  "startedBy": null
+}

@@ -37,6 +37,7 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
     public string? Answer() => Instance.Suspension switch
     {
         _ when Instance.Ended => null,
+        { Kind: SuspensionKind.Park, Mirrors: not null, Reason: { } reason } park when Child is { } child && ParkAnswers.TakesChildOwn(reason) => ChildOwnAnswer(park, child),
         { Kind: SuspensionKind.Park, Mirrors: not null } park when !AnswerVariants.ReasonFixesChildFit(park.Reason) => $"{Answering} <the child's answer>{Gap}(forwarded to {ChildName})",
         { Kind: SuspensionKind.Park, Reason: ParkReason.SpecConflict } park => SpecConflictAnswer(park),
         { Kind: SuspensionKind.Park } park => ParkAnswer(park),
@@ -56,6 +57,28 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
     private Suspension? BehindDrift() => Instance is { Suspension.Kind: SuspensionKind.Park }
         ? Instance.PendingParks().FirstOrDefault(static p => p is { Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Drift, Approved: false })
         : null;
+
+    /// <summary>
+    /// The mirrored child's own answer command, as its status prints it (its grant is the child's recipe's, so '&lt;n&gt;'): the one rule
+    /// <see cref="ParkAnswers"/> gives the record, noting that answering the root forwards it.
+    /// </summary>
+    private string ChildOwnAnswer(Suspension park, ChildView child)
+    {
+        var own = ParkAnswers.For(new ParkShape(park.Kind, park.Reason, park.ParkKind, park.Escalation, Mirrors: true), Instance.Address, child: child.Address.Value)!;   // why: a mirrored park of a reason TakesChildOwn accepts always has an answer
+        var notes = new List<string>();
+        if (own.AtTerminal)
+        {
+            notes.Add("at a terminal");
+        }
+
+        if (park.Reason == ParkReason.Budget)
+        {
+            notes.Add("once per park");
+        }
+
+        notes.Add($"the child's own; {Address} forwards it");
+        return $"{own.Cli}{Gap}({string.Join("; ", notes)})";
+    }
 
     private string Answering => $"sindri workflow answer {Address}";
 

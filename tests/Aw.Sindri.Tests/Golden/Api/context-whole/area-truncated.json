@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "v1",
+  "draft": false,
+  "asOf": "2026-01-01T00:00:00.0000000Z",
+  "repo": "aw-split-panes",
+  "detail": "nodes",
+  "counts": {
+    "nodes": 14,
+    "edges": 15,
+    "byKind": {
+      "feature": 2,
+      "surface": 2,
+      "action": 2,
+      "thing": 1,
+      "flow": 0,
+      "decision": 2,
+      "record": 3,
+      "code": 2
+    }
+  },
+  "areas": [
+    {
+      "key": "area:unassigned",
+      "label": "Not linked to a feature yet",
+      "trust": "trusted",
+      "members": 8,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "thing": 1,
+        "record": 3,
+        "code": 1
+      },
+      "unassigned": true
+    },
+    {
+      "key": "feature:tabs.tab-groups",
+      "label": "Tab groups",
+      "trust": "trusted",
+      "members": 6,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "decision": 2,
+        "code": 1
+      },
+      "unassigned": false
+    }
+  ],
+  "areaEdges": [
+    {
+      "from": "feature:tabs.tab-groups",
+      "to": "area:unassigned",
+      "type": "part-of",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:tabs.tab-groups",
+      "to": "area:unassigned",
+      "type": "quotes",
+      "count": 2,
+      "confirmed": 0
+    }
+  ],
+  "nodes": [
+    {
+      "key": "feature:tabs.tab-groups",
+      "label": "Tab groups",
+      "kind": "feature",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "key": "surface:command/group-tabs",
+      "label": "Group tabs (command)",
+      "kind": "surface",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "key": "action:tab-groups.group-selected",
+      "label": "Group the selected tabs",
+      "kind": "action",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "label": "A tab group collapses to one tab in the strip.",
+      "kind": "decision",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "key": "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
+      "label": "A tab group stays expanded; collapsing is a per-user setting.",
+      "kind": "decision",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "action:tab-groups.group-selected",
+      "to": "surface:command/group-tabs",
+      "type": "on",
+      "link": "edge:f507f71370a5f7c3",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "to": "feature:tabs.tab-groups",
+      "type": "decides",
+      "link": "edge:0cb7bdbdede8a5e8",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
+      "to": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "type": "supersedes",
+      "link": "edge:9408121fe4ae3d76",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
+      "to": "feature:tabs.tab-groups",
+      "type": "decides",
+      "link": "edge:a41786149bc2d1d5",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "surface:command/group-tabs",
+      "to": "feature:tabs.tab-groups",
+      "type": "part-of",
+      "link": "edge:2262bc3d8f1df276",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    }
+  ],
+  "area": {
+    "key": "feature:tabs.tab-groups",
+    "truncated": true,
+    "counts": {
+      "nodes": 6,
+      "edges": 6,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "thing": 0,
+        "flow": 0,
+        "decision": 2,
+        "record": 0,
+        "code": 1
+      }
+    }
+  },
+  "truncated": true
+}

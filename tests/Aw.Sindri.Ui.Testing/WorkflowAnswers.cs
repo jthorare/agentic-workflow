@@ -64,6 +64,7 @@ internal static class WorkflowAnswers
         ["payload"] = ["incident-loop", "escalated-gate"],
         ["text"] = ["incident-loop"],
         ["truncated"] = ["incident-loop"],
+        ["lens-ask-escalation"] = ["lens-ask-multi"],
         ["pr-status"] = [],   // no instance golden runs the babysitter yet: the UI lane binds it when one lists fact:prStatus
     };
 

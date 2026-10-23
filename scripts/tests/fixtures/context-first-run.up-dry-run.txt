@@ -1,7 +1,7 @@
 
 == 0. preflight
   check: git, jq on PATH
-  check: <T>/work/agentic-workflow is a git checkout on main (the code index never builds from another branch)
+  check: <T>/work/agentic-workflow is a git checkout with a clean tree whose HEAD is contained in origin/main or main (the code index never builds from another branch)
   check: ollama on PATH, answering on 127.0.0.1:11434, with the pinned model from context/code-index.lock
   check: the code-index graphify under <T>/state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox
   check: the pinned temporal binary under <T>/state/cache/bin/temporal-*

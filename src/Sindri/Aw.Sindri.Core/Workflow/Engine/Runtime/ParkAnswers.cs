@@ -26,6 +26,7 @@ public static class ParkAnswers
         var answering = $"sindri workflow answer {address.Value}";
         return shape switch
         {
+            { Kind: SuspensionKind.Park, Mirrors: true, Reason: { } reason } when child is not null && TakesChildOwn(reason) => Park(shape, $"sindri workflow answer {child}", "<n>") with { Via = "child", Child = child },
             { Kind: SuspensionKind.Park, Mirrors: true } when !AnswerVariants.ReasonFixesChildFit(shape.Reason) => Pointer(answering, child),
             { Kind: SuspensionKind.Park, Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Drift or ParkKind.ChildRevoked } => null,
             { Kind: SuspensionKind.Park, Reason: ParkReason.SpecConflict, ParkKind: ParkKind.Revoked } => Line(AnswerKind.CancelOnly, $"sindri workflow cancel {address.Value}"),
@@ -36,6 +37,13 @@ public static class ParkAnswers
             _ => null,
         };
     }
+
+    /// <summary>
+    /// Whether a mirrored park of this reason is answered with the child's own command at the child's address. The mirror holds
+    /// the child's reason but not its park kind or escalation kind, so only the reasons whose answer the reason alone gives
+    /// qualify; a spec-conflict (resume or approval) and a child's escalation (accept, resume or a deeper pointer) stay pointers.
+    /// </summary>
+    internal static bool TakesChildOwn(ParkReason reason) => reason is ParkReason.NeedsAnswer or ParkReason.Budget;
 
     /// <summary>The line for a suspension the child decides: the cli is a pointer to it, marked `via: "child"` so a client never reads the text.</summary>
     private static StatusAnswer Pointer(string answering, string? child) => Line(AnswerKind.Text, $"{answering} <the child's answer>") with { Via = "child", Child = child };

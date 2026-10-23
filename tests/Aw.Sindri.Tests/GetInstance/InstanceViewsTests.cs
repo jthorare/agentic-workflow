@@ -218,8 +218,6 @@ public sealed class InstanceViewsTests
     }
 
     [Theory]
-    [InlineData("parked-mirrored-needs-answer")]
-    [InlineData("parked-mirrored-budget")]
     [InlineData("escalated-child")]
     public void A_mirror_whose_child_decides_points_its_status_line_at_the_child(string name)
     {
@@ -232,11 +230,7 @@ public sealed class InstanceViewsTests
 
     [Theory]
     [InlineData("escalated-child", true)]
-    [InlineData("parked-mirrored-needs-answer", true)]
-    [InlineData("parked-mirrored-needs-answer-wait", true)]
-    [InlineData("parked-mirrored-budget", true)]
     [InlineData("parked-mirrored-spec-conflict", true)]
-    [InlineData("parked-mirrored-two-children", true)]
     [InlineData("parked-mirrored-unlisted-child", true)]
     [InlineData("parked-no-progress-child", false)]
     [InlineData("parked-mirrored-rounds", false)]
@@ -253,13 +247,27 @@ public sealed class InstanceViewsTests
         Assert.Equal(pointsAtChild, answer.Cli.EndsWith("<the child's answer>", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("parked-mirrored-needs-answer", "sindri workflow answer T-3/step/1/step.4 --text <answer>", "ApplyCommand:answer-text", "     (the child's own; T-3/step/1 forwards it)")]
+    [InlineData("parked-mirrored-needs-answer-wait", "sindri workflow answer T-3/step/1/step.4 --resume [--text <answer>]", "ApplyCommand:answer-resume", "     (the child's own; T-3/step/1 forwards it)")]
+    [InlineData("parked-mirrored-budget", "sindri workflow answer T-3/step/1/step.4 --grant-tokens <n>", "ApplyCommand:answer-grant-tokens", "     (at a terminal; once per park; the child's own; T-3/step/1 forwards it)")]
+    [InlineData("parked-mirrored-two-children", "sindri workflow answer T-3/step/1/step.4 --grant-tokens <n>", "ApplyCommand:answer-grant-tokens", "     (at a terminal; once per park; the child's own; T-3/step/1 forwards it)")]
+    public void A_mirror_whose_reason_gives_the_childs_answer_names_the_childs_own_command_keeping_via_and_child(string name, string cli, string action, string note)
+    {
+        var view = StatusCases.View(name);
+        var answer = view.AnswerLine!;
+
+        Assert.Equal((cli, action, "child", "T-3/step/1/step.4"), (answer.Cli, answer.ActionId.Value, answer.Via, answer.Child));
+        Assert.Equal(cli + note, AnswerLine(InstanceViews.Status(view, StatusCases.Now).Text).TrimStart()["answer".Length..].TrimStart());
+    }
+
     [Fact]
     public void The_child_named_is_the_one_the_suspension_mirrors_not_the_first_listed_sibling()
     {
         var view = StatusCases.View("parked-mirrored-two-children");
 
         Assert.Equal("T-3/step/1/step.4", view.AnswerLine!.Child);
-        Assert.Contains("(forwarded to T-3/step/1/step.4)", InstanceViews.Status(view, StatusCases.Now).Text, StringComparison.Ordinal);
+        Assert.Contains("answer T-3/step/1/step.4 --grant-tokens <n>", InstanceViews.Status(view, StatusCases.Now).Text, StringComparison.Ordinal);
         Assert.DoesNotContain("step.2", InstanceViews.Status(view, StatusCases.Now).Text.Split('\n').Single(l => l.TrimStart().StartsWith("answer", StringComparison.Ordinal)), StringComparison.Ordinal);
     }
 

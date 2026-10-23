@@ -120,5 +120,6 @@
   "startedAt": null,
   "lineStage": null,
   "rootAddress": "T-3/step/1",
-  "waitingOn": null
+  "waitingOn": null,
+  "takenOverBy": null
 }

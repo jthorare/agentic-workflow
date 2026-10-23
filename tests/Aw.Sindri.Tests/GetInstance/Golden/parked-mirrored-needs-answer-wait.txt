@@ -2,5 +2,5 @@ T-3/step/1  workflow.step@f039848fd714  v4  parked: needs-answer (child)  since 
   next      Parked in T-3/step/1/step.4: the child's wait could not read the reply.
             Fix the cause, then resume to check again, or cancel.
   child     T-3/step/1/step.4  parked: needs-answer
-  answer    sindri workflow answer T-3/step/1 <the child's answer>     (forwarded to T-3/step/1/step.4)
+  answer    sindri workflow answer T-3/step/1/step.4 --resume [--text <answer>]     (the child's own; T-3/step/1 forwards it)
   commands  takeover, cancel

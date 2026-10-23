@@ -3,5 +3,5 @@ T-3/step/1  workflow.step@f039848fd714  v4  parked: budget (child)  since 11:50 
             Grant tokens at a terminal, or cancel.
   child     T-3/step/1/step.2  done
             T-3/step/1/step.4  parked: budget
-  answer    sindri workflow answer T-3/step/1 <the child's answer>     (forwarded to T-3/step/1/step.4)
+  answer    sindri workflow answer T-3/step/1/step.4 --grant-tokens <n>     (at a terminal; once per park; the child's own; T-3/step/1 forwards it)
   commands  takeover, cancel

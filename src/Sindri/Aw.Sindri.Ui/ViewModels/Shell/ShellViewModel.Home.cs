@@ -49,7 +49,7 @@ internal sealed partial class ShellViewModel
     private void InitNeedsYou(IClipboard clipboard)
     {
         Health.Follow(ReadNeedsYou);
-        NeedsYou.SheetRequested += (_, e) => Navigate(LinkOf(e.RowId));
+        NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRow(e.RowId);
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
         NeedsYou.CopyRequested += (_, e) => _ = clipboard.SetText(e.Text, CancellationToken.None);
@@ -159,9 +159,27 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    /// <summary>Opens a row's sheet (a click on its title, Enter).</summary>
+    /// <summary>Opens where a row's click goes (its title, Enter, the tray): the child's frame for a nested park, else the row's sheet. The one place that choice is made.</summary>
     /// <param name="rowId">The row's id.</param>
-    internal void OpenNeedsYouRow(string rowId) => Navigate(LinkOf(rowId));
+    internal void OpenNeedsYouRow(string rowId)
+    {
+        if (!OpenChildOf(rowId))
+        {
+            Navigate(LinkOf(rowId));
+        }
+    }
+
+    // A nested park's click is the answer in its child: the row stays selected (Esc returns to it) and the child's frame opens at its first read action.
+    private bool OpenChildOf(string? rowId)
+    {
+        if (rowId is null || NeedsYou.Row(rowId) is not { OpensChild: true, ChildAnswer: { } answer })
+        {
+            return false;
+        }
+
+        FollowChildAnswerFromNeedsYou(rowId, answer);
+        return true;
+    }
 
     // A, X, Y and Enter act on the Needs-you row the selection is on (Home, focus not in the sheet).
     private bool NeedsYouKeyPressed(string key, bool inSheet)

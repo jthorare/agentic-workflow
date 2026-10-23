@@ -149,7 +149,8 @@
       "startedAt": null,
       "lineStage": null,
       "rootAddress": null,
-      "waitingOn": "you"
+      "waitingOn": "you",
+      "takenOverBy": null
     }
   ],
   "counts": {

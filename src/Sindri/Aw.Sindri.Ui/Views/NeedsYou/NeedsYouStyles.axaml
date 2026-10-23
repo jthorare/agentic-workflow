@@ -153,6 +153,10 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
+  <!-- A verb that asks first (the merge): the Destructive style, an error-coloured border like the command controls'. -->
+  <Style Selector="Button.bar-button.destructive">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+  </Style>
   <Style Selector="Button.bar-button.primary">
     <Setter Property="Background" Value="{DynamicResource Brush.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />

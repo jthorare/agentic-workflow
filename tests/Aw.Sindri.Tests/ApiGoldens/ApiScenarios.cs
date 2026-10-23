@@ -50,8 +50,8 @@ internal static class ApiScenarios
 
     /// <summary>Starts the host the scenario runs on: the plain golden host, or for the context routes one over a small git repo with a map.</summary>
     public static async Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
-        CodeIndexScenarios.Handles(slug)
-            ? await CodeIndexScenarios.Start(ct)
+        CodeIndexScenarios.Handles(slug, scenario)
+            ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
@@ -88,7 +88,7 @@ internal static class ApiScenarios
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
-        if (CodeIndexScenarios.Handles(slug))
+        if (CodeIndexScenarios.Handles(slug, scenario))
         {
             return await CodeIndexScenarios.Body(host, slug, scenario, ct);
         }

@@ -164,4 +164,26 @@ internal static partial class Labels
     /// <param name="subject">The request's title.</param>
     /// <returns>The name.</returns>
     internal static string NeedsYouBarGroupName(string subject) => $"Actions for {subject}";
+
+    /// <summary>The ask step's primary button: sends every answer.</summary>
+    internal const string NeedsYouSendAnswers = "Send answers";
+
+    /// <summary>The heading over the ask step's questions.</summary>
+    internal const string NeedsYouQuestionsHeading = "Questions for you";
+
+    /// <summary>The line that says why Send answers is off.</summary>
+    internal const string NeedsYouAnswerAll = "Answer every question to send.";
+
+    /// <summary>The answer field's placeholder.</summary>
+    internal const string NeedsYouAnswerPlaceholder = "Your answer";
+
+    /// <summary>Where a question came from: "From the security review"; empty when the API names no review.</summary>
+    /// <param name="lens">The review that raised it, or empty.</param>
+    /// <returns>The line.</returns>
+    internal static string NeedsYouQuestionContext(string lens) => lens.Length > 0 ? $"From the {lens} review" : string.Empty;
+
+    /// <summary>An answer field's accessible name: "Your answer to: Keep the legacy flow?".</summary>
+    /// <param name="question">The question.</param>
+    /// <returns>The name.</returns>
+    internal static string NeedsYouAnswerName(string question) => "Your answer to: " + question;
 }

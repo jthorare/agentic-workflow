@@ -14,4 +14,7 @@ internal enum CommandKind
 
     [JsonStringEnumMemberName("handback")]
     Handback = 3,
+
+    [JsonStringEnumMemberName("command")]
+    Command = 4,
 }

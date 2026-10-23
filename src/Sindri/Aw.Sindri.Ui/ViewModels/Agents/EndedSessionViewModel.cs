@@ -20,6 +20,9 @@ internal sealed class EndedSessionViewModel : ObservableObject
     /// <summary>The key the page's selection uses; distinct from a live row's ref.</summary>
     public string Key { get; private set; } = string.Empty;
 
+    /// <summary>The repository the session worked in; empty when none is served.</summary>
+    public string RepoText { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The session's ref.</summary>
     public string Ref { get; private set; } = string.Empty;
 
@@ -61,6 +64,7 @@ internal sealed class EndedSessionViewModel : ObservableObject
         Key = "ended/" + ended.Session.Ref;
         var id8 = ended.Session.Id.Length > 8 ? ended.Session.Id[..8] : ended.Session.Id;
         TitleText = ended.Session.ProviderLabel + " · " + (ended.Session.Title is { Length: > 0 } title ? title : ended.Session.Repo is { Length: > 0 } repo ? repo + "/" + id8 : id8);
+        RepoText = ended.Session.Repo ?? string.Empty;
         EndedText = Labels.EndedAgo(_clock.GetUtcNow() - ended.EndedAt);
         ResumeCommand = ended.Resume is { Count: > 0 } argv && !argv.Any(a => a.Any(char.IsControl)) ? string.Join(' ', argv.Select(Quote)) : string.Empty;
         ResumeText = ResumeCommand.Length > 0 ? ResumeCommand : Labels.NoResumeCommand;

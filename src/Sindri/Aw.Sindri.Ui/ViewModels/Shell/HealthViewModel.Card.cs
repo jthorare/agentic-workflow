@@ -14,18 +14,21 @@ internal sealed partial class HealthViewModel
     public string Sentence { get; private set => Set(ref field, value); } = Labels.Connecting;
 
     // One sentence for how Sindri is, by the shell's state; it lives here because Labels doesn't depend on the Shell namespace.
-    private static string SentenceFor(ShellState state, bool hasHealth, bool healthy, string problems, bool profileFix) => state switch
+    private readonly record struct SentenceInputs(ShellState State, bool HasHealth, bool Healthy, string Problems, bool ProfileFix, string? Served);
+
+    private static string SentenceFor(SentenceInputs h) => h.State switch
     {
-        ShellState.Normal when !hasHealth => Labels.CheckingHealth,
-        ShellState.Normal when healthy && profileFix => Labels.ProfileNeedsApproval,
-        ShellState.Normal when healthy => Labels.AllRunning,
-        ShellState.Normal => problems.Length > 0 ? Labels.NeedsALook(problems) : Labels.RunningNeedsALook,
+        ShellState.Normal when !h.HasHealth => Labels.CheckingHealth,
+        ShellState.Normal when h.Healthy && h.ProfileFix => Labels.ProfileNeedsApproval,
+        ShellState.Normal when h.Healthy => Labels.AllRunning,
+        ShellState.Normal when !string.IsNullOrWhiteSpace(h.Served) => h.Served,   // Sindri's own sentence: "Sindri is degraded: the code index for demo is behind main."
+        ShellState.Normal => h.Problems.Length > 0 ? Labels.NeedsALook(h.Problems) : Labels.RunningNeedsALook,
         ShellState.Stale => Labels.StoppedAnswering,
         ShellState.NotRunning => Labels.SindriNotRunning,
         ShellState.Unreadable => Labels.CantReadAnswer,
         ShellState.VersionMismatch => Labels.DifferentVersions,
         ShellState.Connecting => Labels.Connecting,
-        _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
+        _ => throw new ArgumentOutOfRangeException(nameof(h), h.State, message: null),
     };
 
     /// <summary>Home's health strip's accessible name (R3): the health line, then "stale" while the views are stale.</summary>

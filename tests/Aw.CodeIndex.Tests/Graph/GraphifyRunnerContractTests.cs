@@ -37,13 +37,7 @@ public sealed class GraphifyRunnerContractTests : GraphRunnerContract, IDisposab
     {
         var bin = Directory.CreateDirectory(Path.Combine(_directory, "env", "bin")).FullName;
         var path = Path.Combine(bin, "graphify");
-        File.WriteAllText(path, $"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo graphify {version}; exit 0; fi\n{body}\n");
-        if (!OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.OtherExecute);
-        }
-
-        return path;
+        return ExecutableScript.Write(path, $"if [ \"$1\" = \"--version\" ]; then echo graphify {version}; exit 0; fi\n{body}\n");
     }
 
     private string Writes(string json)

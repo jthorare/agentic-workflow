@@ -173,8 +173,61 @@ public sealed class LensLogStepTests
 
         Assert.Equal("needsOwner", result.Result!.Outcome.Value);
         Assert.Equal(["escalation", "findings", "lensRounds"], LensStepContexts.Keys(result));
-        Assert.Equal("Keep the legacy flow?", LensStepContexts.Out(result, "escalation")["question"]!.GetValue<string>());
+        Assert.Equal("Keep the legacy flow?", Assert.Single(LensStepContexts.Out(result, "escalation").AsArray())!["question"]!.GetValue<string>());
         _ = Assert.Single(LensStepContexts.Out(result, "findings").AsArray());
+    }
+
+    [Fact]
+    public async Task One_round_of_two_lenses_with_three_questions_ends_needsOwner_with_all_three_in_one_escalation_list()
+    {
+        const string earlier = """[{"round":1,"lens":"arch","findings":[{"id":"A1","severity":"CRITICAL","text":"a","escalate":{"kind":"productQuestion","question":"Keep the legacy flow?","options":["keep","drop"]}},{"id":"A2","severity":"HIGH","text":"b","escalate":{"kind":"ambiguousFix","question":"Which table owns expiry?"}}]}]""";
+
+        var result = await Run("""{"lens":"product","findings":[{"id":"P1","severity":"HIGH","text":"c","escalate":{"kind":"productQuestion","question":"Who is the expiry for?"}}]}""", earlier, """["product"]""");
+
+        Assert.Equal("needsOwner", result.Result!.Outcome.Value);
+        var questions = LensStepContexts.Out(result, "escalation").AsArray();
+        Assert.Equal(["Keep the legacy flow?", "Which table owns expiry?", "Who is the expiry for?"], questions.Select(static q => q!["question"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["arch", "arch", "product"], questions.Select(static q => q!["lens"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["A1", "A2", "P1"], questions.Select(static q => q!["finding"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["q1", "q2", "q3"], questions.Select(static q => q!["id"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["keep", "drop"], questions[0]!["options"]!.AsArray().Select(static o => o!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(3, LensStepContexts.Out(result, "findings").AsArray().Count);
+    }
+
+    [Fact]
+    public async Task Any_number_of_questions_in_a_round_are_all_asked()
+    {
+        var findings = new JsonArray([.. Enumerable.Range(1, 12).Select(static i => (JsonNode)new JsonObject
+        {
+            ["severity"] = "HIGH",
+            ["text"] = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"t{i}"),
+            ["escalate"] = new JsonObject { ["kind"] = "ambiguousFix", ["question"] = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"q{i}") },
+        })]);
+
+        var result = await Run(new JsonObject { ["lens"] = "arch", ["findings"] = findings }.ToJsonString(), "[]", """["arch"]""");
+
+        Assert.Equal(12, LensStepContexts.Out(result, "escalation").AsArray().Count);
+    }
+
+    [Fact]
+    public async Task Two_questions_with_the_same_text_from_different_lenses_keep_distinct_ids()
+    {
+        const string earlier = """[{"round":1,"lens":"arch","findings":[{"severity":"HIGH","text":"a","escalate":{"kind":"productQuestion","question":"Keep the legacy flow?"}}]}]""";
+
+        var result = await Run("""{"lens":"product","findings":[{"severity":"HIGH","text":"b","escalate":{"kind":"productQuestion","question":"Keep the legacy flow?"}}]}""", earlier, """["product"]""");
+
+        var questions = LensStepContexts.Out(result, "escalation").AsArray();
+        Assert.Equal(["arch", "product"], questions.Select(static q => q!["lens"]!.GetValue<string>()), StringComparer.Ordinal);
+        Assert.Equal(["q1", "q2"], questions.Select(static q => q!["id"]!.GetValue<string>()), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_single_question_is_still_a_list_of_one_and_an_untyped_finding_beside_it_is_skipped()
+    {
+        var result = await Run("""{"lens":"arch","findings":[{"severity":"HIGH","text":"x","escalate":{"kind":"whatever","question":"no"}},{"severity":"HIGH","text":"y","escalate":{"kind":"ambiguousFix","question":"yes?"}}]}""", "[]", """["arch"]""");
+
+        var only = Assert.Single(LensStepContexts.Out(result, "escalation").AsArray())!;
+        Assert.Equal("yes?", only["question"]!.GetValue<string>());
     }
 
     [Fact]

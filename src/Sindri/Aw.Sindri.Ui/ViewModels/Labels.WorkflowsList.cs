@@ -26,4 +26,7 @@ internal static partial class Labels
 
     /// <summary>A run an agent is working on.</summary>
     internal const string WorkflowsWaitAgent = "AI agent";
+
+    /// <summary>The Waiting on word for a run the engine itself is working on (a timer, a router, a check).</summary>
+    internal const string WorkflowsWaitEngine = "Sindri";
 }
