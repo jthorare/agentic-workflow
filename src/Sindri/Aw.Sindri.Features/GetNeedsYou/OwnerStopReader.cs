@@ -7,11 +7,6 @@ using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Features.GetNeedsYou;
 
-/// <summary>An open instance that waits at a human-verb wait: its view and the wait state of its pinned recipe.</summary>
-/// <param name="View">The instance's view.</param>
-/// <param name="State">The wait state it is in.</param>
-internal sealed record OwnerStopCandidate(InstanceView View, RecipeState State);
-
 /// <summary>
 /// Finds the open instances that wait on the owner at a human-verb wait: a wait state of the instance's pinned recipe with a 'command.&lt;verb&gt;' exit whose
 /// effect acts with a human's authority. The instances are listed once, each instance and each recipe read once; a read that fails leaves that instance off.

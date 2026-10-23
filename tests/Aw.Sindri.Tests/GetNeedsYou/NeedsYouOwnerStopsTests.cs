@@ -8,7 +8,6 @@ using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine.Desk;
-using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Registry;
