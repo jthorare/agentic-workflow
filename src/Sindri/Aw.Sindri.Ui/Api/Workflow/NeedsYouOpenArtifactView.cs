@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api;
+namespace Aw.Sindri.Ui.Api.Workflow;
 
 /// <summary>An artifact an 'open' target names.</summary>
 /// <param name="Kind">The kind of artifact.</param>

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.NeedsYou;
+namespace Aw.Sindri.Core.OpenTargets;
 
 /// <summary>
 /// The one place the human acts on a needs-you row (owner requirement q65): the app goes from the row to the action in one click through <see cref="Route"/>.

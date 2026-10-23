@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Text;
 
 namespace Aw.Sindri.Core.NeedsYou;

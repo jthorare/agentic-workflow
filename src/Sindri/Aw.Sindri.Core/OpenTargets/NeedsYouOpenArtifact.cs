@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.NeedsYou;
+namespace Aw.Sindri.Core.OpenTargets;
 
 /// <summary>An artifact a row opens.</summary>
 /// <param name="Kind">The kind of artifact.</param>

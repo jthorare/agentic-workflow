@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api;
+namespace Aw.Sindri.Ui.Api.Workflow;
 
 /// <summary>The 'open' target of a needs-you row (q65): the one place the owner acts on it.</summary>
 /// <param name="Route">The deep link ("decision/DEC-…", "workflow/&lt;address&gt;", "service/&lt;name&gt;", "recipe/&lt;id&gt;", "needs-you/&lt;rowId&gt;", "setup").</param>
