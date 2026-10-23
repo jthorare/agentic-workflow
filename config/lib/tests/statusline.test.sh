@@ -194,6 +194,23 @@ assert_not_contains "$nos" "calls" "missing scorer: no counts"
 sleep 1
 [ ! -f "$CACHE" ] && ok "missing scorer: no cache written" || bad "missing scorer: cache appeared"
 
+# --- no scorer, judge installed: the judge segment still shows, from a cached `judge health` ---
+mkdir -p "$TMP/judgeonly"
+ln -sf "$(command -v jq)" "$TMP/judgeonly/jq"
+cp "$TMP/bin/judge" "$TMP/judgeonly/judge"
+JCACHE="$AW_STATE_DIR/statusline/judge-health.json"
+rm -f "$JCACHE"
+jo="$(run 200 "$SID" "$TMP/judgeonly:$STRICT_PATH")"
+assert_contains "$(sed -n 2p <<<"$jo")" "│ --" "judge only, no cache: Live shows --"
+deadline=$(( $(now) + 10 ))
+while [ "$(now)" -lt "$deadline" ] && [ ! -f "$JCACHE" ]; do sleep 0.2; done
+[ -f "$JCACHE" ] && ok "judge only: background refresh wrote the judge cache" || bad "judge only: no judge cache"
+assert_contains "$(run 200 "$SID" "$TMP/judgeonly:$STRICT_PATH")" "judge ✓" "judge only: next render shows the judge segment"
+assert_not_contains "$(run 200 "$SID" "$TMP/judgeonly:$STRICT_PATH")" "calls" "judge only: no scorer counts"
+printf '{"at":%s,"judge":"degraded","failures":3}\n' "$(now)" >"$JCACHE"
+assert_contains "$(run 200 "$SID" "$TMP/judgeonly:$STRICT_PATH")" "judge ⚠" "judge only: degraded glyph from the cache"
+[ ! -f "$CACHE" ] && ok "judge only: no scorer cache written" || bad "judge only: scorer cache appeared"
+
 # --- negative caching: a failing scorer is not re-run on every render ---
 mkdir -p "$TMP/failbin"
 printf '#!/usr/bin/env bash\necho "$*" >>"$FAKE_LOG"\nexit 1\n' >"$TMP/failbin/scorer"

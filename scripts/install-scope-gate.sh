@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scope gate (lever 3, Plan 5 Task 1): scope-gate.sh (PreToolUse/Agent) +
 # subagent-start-map.sh (SubagentStart). Its own approval gate, in the style
-# of install-wake-gating.sh — never folded into install-judge.sh.
+# of install-wake-gating.sh — never folded into install-judge-hooks.sh.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SETTINGS_FILE="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
@@ -31,7 +31,7 @@ if [ "$AW_PROVIDER" != "claude" ]; then
     exit 0
   fi
   if ! command -v "$JUDGE_BIN" > /dev/null 2>&1; then
-    echo "  scope-gate: refusing to install — judge is not installed (run scripts/install-judge.sh first, or set AW_JUDGE_BIN)" >&2
+    echo "  scope-gate: refusing to install — judge is not installed (run ./setup.sh, or set AW_JUDGE_BIN)" >&2
     exit 1
   fi
   aw_hooks_stage
@@ -55,7 +55,7 @@ if [ "${1:-}" = "--uninstall" ]; then
 fi
 
 if ! command -v "$JUDGE_BIN" > /dev/null 2>&1; then
-  echo "  scope-gate: refusing to install — judge is not installed (run scripts/install-judge.sh first, or set AW_JUDGE_BIN)" >&2
+  echo "  scope-gate: refusing to install — judge is not installed (run ./setup.sh, or set AW_JUDGE_BIN)" >&2
   exit 1
 fi
 

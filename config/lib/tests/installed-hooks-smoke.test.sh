@@ -75,7 +75,7 @@ assert_installed_hook_runs_clean() {
 }
 
 test_judge_health_hook_installed_runs_clean() {
-  install_full_envelope install-judge
+  install_full_envelope install-judge-hooks
   assert_installed_hook_runs_clean "judge-health.sh" "$HOOKS_DIR/judge-health.sh" '{}' "$STATE_DIR" "$BIN_DIR"
 }
 

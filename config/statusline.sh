@@ -176,12 +176,49 @@ live_refresh() {
   return 0
 }
 
+# Background refresh of the judge-health cache file $1. Never prints; atomic write. The same
+# lock and negative caching as live_refresh: a failing judge is not re-run on every render.
+judge_refresh() {
+  local cache="$1" lock="$1.lock" hs hf tmp now
+  mkdir -p "$(dirname "$cache")" 2>/dev/null || return 0
+  find "$lock" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null
+  mkdir "$lock" 2>/dev/null || return 0
+  tmp="$cache.$$.tmp"
+  now="$(date +%s)"
+  read -r hs hf <<<"$(judge_health)"
+  case "$hf" in ''|*[!0-9]*) hf=0 ;; esac
+  jq -n --argjson at "$now" --arg hs "$hs" --argjson hf "$hf" '{at: $at, judge: $hs, failures: $hf}' >"$tmp" 2>/dev/null
+  [ -s "$tmp" ] || printf '{"at":%s}\n' "$now" >"$tmp"
+  mv -f "$tmp" "$cache" 2>/dev/null
+  rmdir "$lock" 2>/dev/null
+  return 0
+}
+
+# The Live column with no scorer installed: just the judge segment, read from a cached
+# `judge health` (refreshed in the background, as the Live cache is); `--` when there is no
+# judge binary or nothing cached yet.
+judge_only_text() {
+  local cache="$STATE_DIR/statusline/judge-health.json" at="" hs="" now age
+  find_bin judge >/dev/null || { echo "--"; return; }
+  if [ -f "$cache" ]; then
+    eval "$(jq -r '
+      "at=\(.at // "" | tostring | @sh)",
+      "hs=\(.judge // "" | tostring | @sh)"' "$cache" 2>/dev/null)"
+  fi
+  now=$(date +%s)
+  case "$at" in ''|*[!0-9]*) age=999999 ;; *) age=$((now - at)) ;; esac
+  if [ "$age" -ge "$LIVE_TTL" ] 2>/dev/null; then
+    ( judge_refresh "$cache" </dev/null >/dev/null 2>&1 & )
+  fi
+  case "$hs" in ok|degraded|down) judge_segment "$hs" "" ;; *) echo "--" ;; esac
+}
+
 # Prints the Live column text for session $1 (cwd $2); `--` whenever there is nothing to show.
 live_text() {
   local sid="$1" cwd="$2" cache now age text
   # The id becomes part of a path: accept only plain file-name characters.
   [[ "$sid" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--"; return; }
-  find_bin scorer >/dev/null || { echo "--"; return; }
+  find_bin scorer >/dev/null || { judge_only_text; return; }
   cache="$STATE_DIR/scorer/live/$sid.statusline.json"
   L_AT=""; L_CALLS=""; L_OVER=""; L_JCALLS=""; L_JUDGE=""
   if [ -f "$cache" ]; then

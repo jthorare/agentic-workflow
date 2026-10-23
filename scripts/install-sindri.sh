@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build sindri and install the ~/.local/bin/sindri CLI wrapper (matches install-judge.sh).
+# Build sindri and install the ~/.local/bin/sindri CLI wrapper.
 #
 #   install-sindri.sh                 npm ci + build, then write the wrapper
 #   AW_DRY_RUN=1 install-sindri.sh    print what would happen, write nothing

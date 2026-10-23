@@ -38,14 +38,19 @@ check that never reproduced the bug is `unresolved` without a model call; an emp
 No one labels data by hand. Labels come from what happened next and from a stronger model:
 
 1. `judge label import [--question q] [--since 14d]` turns stored decisions into eval items.
+   Not in this build yet: it prints `judge: label is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 2. `judge label outcomes` (free) labels `ask-check` items from Joi's next real prompt in the session transcript.
+   Not in this build yet: it prints `judge: label is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 3. `judge adjudicate <question> --limit 60` (costs Opus tokens: about 3 runs x 3k tokens per item) asks
    `claude -p --model opus --effort high` three times per item and stores a label only on a 2-of-3
    in-enum majority. It never sees the judge's own decision. Run it in the background; labels are
    written per item, so a re-run continues where it stopped.
+   Not in this build yet: it prints `judge: adjudicate is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 4. `judge label status` shows coverage and how often the outcome and Opus labels agree.
+   Not in this build yet: it prints `judge: label is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 
 `judge label set <itemId> <label|skip>` is an optional override; no one is expected to label by hand.
+Not in this build yet: it prints `judge: label is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 
 ## When to reach for this
 
@@ -81,16 +86,19 @@ confirmations.
 
 - `judge prompt-sort why <decision-id>` — the decision, its 11 axes (value, heuristic, source,
   agreed/overrode/undecided) and which scaffolds would have fired.
+  Not in this build yet: it prints `judge: prompt-sort why is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 - `judge prompt-sort scaffold <brief|bugfix|ui-evidence|plan-first> <on|off>` — a scaffold switch.
-  All ship OFF; do not turn one on until `judge prompt-sort promote` says go.
+  All ship OFF; leave scaffolds off; `promote` is not in this build yet.
+- `judge prompt-sort promote` — would say when a scaffold is ready to turn on.
+  Not in this build yet: it prints `judge: prompt-sort promote is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 - `judge config set prompt-sort enabled false` — turns the sorter off entirely (no Jev call).
 - `promptSort` in `config.json`: `enabled`, `budgetMs` (200-1400, default 1000), `cooldownPrompts`
   (default 5), `scaffolds`.
 
 ## What this skill does not cover
 
-- Installing or updating `judge` itself — see `scripts/install-judge.sh` (`--provider
-  claude|codex|cursor` picks which host gets the SessionStart health hook).
+- Installing or updating `judge` itself — run `./setup.sh` from the toolkit checkout (it installs the `judge` binary and, per provider,
+  the hooks through `scripts/install-judge-hooks.sh`).
 - Adding a new question module — that's application code in `judge/src/questions/`, following
   the `QuestionModule` interface in `judge/src/question.ts`.
 - Wiring `judge wake-gate` into a live hook — that's Plan 4 (rollout step 4), gated on the

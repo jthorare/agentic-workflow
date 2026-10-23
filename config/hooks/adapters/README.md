@@ -47,7 +47,7 @@ the `aw:*` entries.
 | `rtk-rewrite.sh` | PreToolUse `Bash` (`updatedInput`) | PreToolUse (`updatedInput`; dropped when the shell input isn't `{command: string}`) | `preToolUse` `Shell` (`updated_input`, merged over the original input) |
 | `git-context.sh` | SessionStart | SessionStart (plain text becomes developer context) | `sessionStart` → `additional_context` |
 | `prism-context.sh` | SessionStart | SessionStart | `sessionStart` → `additional_context` |
-| `judge-health.sh` | SessionStart (`scripts/install-judge.sh`) | SessionStart (`install-judge.sh --provider codex`) | `sessionStart` (`install-judge.sh --provider cursor`) |
+| `judge-health.sh` | SessionStart (`scripts/install-judge-hooks.sh`) | SessionStart (`install-judge-hooks.sh --provider codex`) | `sessionStart` (`install-judge-hooks.sh --provider cursor`) |
 | `sindri-nudge.sh` | SessionStart (`install-sindri.sh --hook-only`) | SessionStart (`--provider codex`) | `sessionStart` → `additional_context` (`--provider cursor`) |
 | `context-guard.sh` | PostToolUse `.*` | PostToolUse `.*`: reads the rollout's latest `token_count.last_token_usage.input_tokens` | **unmapped**: Cursor transcripts carry no token usage, and no hook reports context size per tool call (`preCompact` fires only at compaction) |
 | `done-gate.sh` | Stop | Stop: reads `last_assistant_message`, exit 2 → continuation reason on stderr | `stop`: last assistant text from the transcript; exit 2 → `followup_message`; `stop_hook_active = loop_count > 0` |
@@ -62,7 +62,7 @@ the `aw:*` entries.
 | `trait-check.sh` | PostToolUse `Edit\|Write\|MultiEdit\|NotebookEdit` + Stop (`scripts/install-trait-check.sh`, opt-in) | PostToolUse `^(apply_patch\|Edit\|Write)$`: files from the `*** Add/Update File:` / `*** Move to:` lines of the patch; Stop: exit 2 → continuation reason on stderr | `postToolUse` (no matcher; the hook keeps edit/write tools) → `additional_context`; `stop` → `followup_message`, `stop_hook_active = loop_count > 0` |
 | `external-write-guard.sh` | PreToolUse `.*` | PreToolUse `.*` | `beforeShellExecution` (gh pr merge / comment / review) + `beforeMCPExecution` (tool renamed `mcp__<server>__<tool>`) |
 | `turn-origin.sh` | UserPromptSubmit | UserPromptSubmit | `beforeSubmitPrompt` → `{continue: true}` |
-| `prompt-sort.sh` | UserPromptSubmit (`scripts/install-judge.sh`, timeout 3s) | UserPromptSubmit: the adapter forwards plain stdout as developer context | **unmapped**: `beforeSubmitPrompt` output is `{continue: true}` only, it cannot carry context |
+| `prompt-sort.sh` | UserPromptSubmit (`scripts/install-judge-hooks.sh`, timeout 3s) | UserPromptSubmit: the adapter forwards plain stdout as developer context | **unmapped**: `beforeSubmitPrompt` output is `{continue: true}` only, it cannot carry context |
 | `send-gate.sh` | PreToolUse `SendMessage` | **unmapped**: nothing flushes the outbox before idle (no TeammateIdle), and `send_message`'s argument shape can't be checked against real input yet | **unmapped**: no teammate message tool |
 | `record-teammate-name.sh` | PreToolUse `Agent` | **unmapped** (only consumed by wake gating) | **unmapped** |
 | `outbox-flush.sh` | TeammateIdle | **unmapped**: no TeammateIdle event | **unmapped**: no TeammateIdle event |
