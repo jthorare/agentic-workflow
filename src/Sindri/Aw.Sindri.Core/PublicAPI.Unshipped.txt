@@ -17651,15 +17651,6 @@ Aw.Sindri.Core.OpenTargets.NeedsYouOpenArtifact.Url.get -> string?
 Aw.Sindri.Core.OpenTargets.NeedsYouOpenArtifact.Url.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Deconstruct(out Aw.Sindri.Core.Ids.NeedsYouRowId Id, out Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, out string! Label, out Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, out Aw.Sindri.Core.Ids.ItemId? Item, out string! Title, out string! Reason, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.NeedsYou.Urgency Urgency, out System.DateTimeOffset Since, out bool RecordedOnly, out string? Notice, out Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string! Cli, out Aw.Sindri.Core.OpenTargets.NeedsYouOpen! Open, out string? Via, out string? Child, out Aw.Sindri.Core.NeedsYou.NeedsYouStop? Stop, out Aw.Sindri.Core.Workflow.Views.StatusTimeout? Timeout) -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.NeedsYouRow(Aw.Sindri.Core.Ids.NeedsYouRowId Id, Aw.Sindri.Core.NeedsYou.NeedsYouKind Kind, string! Label, Aw.Sindri.Core.NeedsYou.NeedsYouSubject! Subject, Aw.Sindri.Core.Ids.ItemId? Item, string! Title, string! Reason, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.NeedsYou.Urgency Urgency, System.DateTimeOffset Since, bool RecordedOnly, string? Notice, Aw.Sindri.Core.Workflow.Views.AnswerKind? AnswerKind, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string! Cli, Aw.Sindri.Core.OpenTargets.NeedsYouOpen! Open, string? Via = null, string? Child = null, Aw.Sindri.Core.NeedsYou.NeedsYouStop? Stop = null, Aw.Sindri.Core.Workflow.Views.StatusTimeout? Timeout = null) -> void
-Aw.Sindri.Core.NeedsYou.NeedsYouRoutes
-const Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Setup = "setup" -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Decision(Aw.Sindri.Core.Ids.DecisionId id) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Desk(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Park(Aw.Sindri.Core.Workflow.Engine.InstanceAddress root, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? deepest) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Recipe(Aw.Sindri.Core.Workflow.Ids.RecipeId id) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Row(Aw.Sindri.Core.Ids.NeedsYouRowId id) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Service(string! name) -> string!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Workflow(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
 Aw.Sindri.Core.NeedsYou.OwnerStopInput
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.<Clone>$() -> Aw.Sindri.Core.NeedsYou.OwnerStopInput!
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Deconstruct(out string! Label, out string! Reason, out Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr? Pr) -> void
