@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Views;
@@ -78,7 +77,7 @@ internal sealed class GetInstanceService(IInstanceDirectory directory, IInstance
     /// </summary>
     private async ValueTask<NeedsYouOpen?> OpenOf(InstanceAddress address, CancellationToken cancellationToken)
     {
-        foreach (var id in new[] { NeedsYouRowId.Park(address), NeedsYouRowId.Desk(address), NeedsYouRowId.Takeover(address) })
+        foreach (var id in new[] { NeedsYouRowIds.Park(address), NeedsYouRowIds.Desk(address), NeedsYouRowIds.Takeover(address) })
         {
             var record = await views.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, id.Value, cancellationToken).ConfigureAwait(false);
             if (record.IsSuccess && record.Value is { } found)

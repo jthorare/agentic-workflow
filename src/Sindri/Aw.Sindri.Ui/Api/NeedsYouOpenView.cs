@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Api;
 internal sealed record NeedsYouOpenView(
     string? Route = null,
     string? Label = null,
-    NeedsYouOpenPrView? Pr = null,
-    NeedsYouOpenArtifactView? Artifact = null,
-    string? Session = null,
-    string? ReasonCode = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] NeedsYouOpenPrView? Pr = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] NeedsYouOpenArtifactView? Artifact = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Session = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? ReasonCode = null);

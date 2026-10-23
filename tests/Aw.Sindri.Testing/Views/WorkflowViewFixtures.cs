@@ -499,7 +499,7 @@ public static class WorkflowViewFixtures
         evidence,
     ];
 
-    /// <summary>PRJ-sync: build, four of nine children done in four workstreams, a scope map, a packet and evidence; one child parked.</summary>
+    /// <summary>PRJ-sync: build, four of nine children done in four workstreams, a scope map, a packet and evidence; one child parked, so its needs-you row's open (q65) is that child.</summary>
     public static InstanceDetail ProjectBuild()
     {
         var status = Status(_prjSync, null, "Waiting on 9 children: 4 done, 1 running, 1 parked, 3 not started.", new OpenWork(OpenChildren: 5),
@@ -519,17 +519,15 @@ public static class WorkflowViewFixtures
             [Child(parent, 6, "ITM-01JD7", "Background sync (iOS)", StateGlyph.Active, "produce", owned: park), Child(parent, 7, "ITM-01JF3", "doctor views line", StateGlyph.Pending, "produce", age: 3_120),
                 Child(parent, 8, "ITM-01JF4", "Tray badge on Linux", StateGlyph.Pending, "produce", age: 2_400)]);
         var ws4 = new Workstream("ws-4", "Rollout", [Child(parent, 9, "ITM-01JF8", "Receipt verify route", StateGlyph.Pending, "produce", age: 720)]);
-        return Detail(_prjSync, "Offline sync", PathOrdering.Path,
+        var detail = Detail(_prjSync, "Offline sync", PathOrdering.Path,
             new CurrentState("build", new StepDeclaration("wait", "workflow.step", "one child per packet task"),
                 [new GateLine(BlockId.From("gate.evidence.all"), "exit", null, "Every child has its evidence pack."), new GateLine(BlockId.From("gate.judge.verify"), "exit", 0.8, "The judge scores the build at least 0.8.")],
                 null, status),
             _project.Facts([.. ProjectFacts(At(10, 12, 9, 14), Fake(_project, "fact:evidence", FactStatus.InProgress, "4 of 9 packs", reference: Ref(factKey: "fact:evidence"), progress: new Progress(4, 9)))]),
             [new ChildGroup("build", RecipeId.From("workflow.step"), 4, 9, [ws1, ws2, ws3, ws4], [], 0, "Step")],
             Counts(41, 3, 1));
+        return detail with { Open = new NeedsYouOpen("workflow/ITM-01JK3/project/1/step.6", "Answer in the child") };
     }
-
-    /// <summary>PRJ-sync as <see cref="ProjectBuild"/> with its needs-you row joined (q65): the parked child decides, so the detail opens that child.</summary>
-    public static InstanceDetail OpenChild() => ProjectBuild() with { Open = new NeedsYouOpen("workflow/ITM-01JK3/project/1/step.6", "Answer in the child") };
 
     private static readonly InstanceSummary _prjDocs = Row("ITM-01JKG/project/1", _project, "build", Today(8, 40), null,
         Subject("linear-project", "DOCS", "DOCS · Handbook"),

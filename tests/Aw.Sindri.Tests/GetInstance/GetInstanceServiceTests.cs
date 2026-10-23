@@ -150,7 +150,7 @@ public sealed class GetInstanceServiceTests
     {
         var view = StatusCases.View("done");
         var open = new NeedsYouOpen("workflow/" + view.Address.Value + "/step.6", "Answer in the child");
-        var views = new DetailViews(needsYou: [Row(NeedsYouRowId.Park(view.Address), open)]);
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Park(view.Address), open)]);
 
         var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
 
@@ -162,7 +162,7 @@ public sealed class GetInstanceServiceTests
     {
         var view = StatusCases.View("desk-task") with { Address = InstanceAddress.From("T-1/step/1/step.4"), Id = WorkflowInstanceId.Of(InstanceAddress.From("T-1/step/1/step.4")) };
         var open = new NeedsYouOpen("workflow/T-1/step/1/step.4", "Answer the question");
-        var views = new DetailViews(needsYou: [Row(NeedsYouRowId.Desk(view.Address), open)]);
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Desk(view.Address), open)]);
 
         var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
 
@@ -174,7 +174,7 @@ public sealed class GetInstanceServiceTests
     {
         var view = StatusCases.View("done");
         var open = new NeedsYouOpen("workflow/" + view.Address.Value, "Hand back or cancel");
-        var views = new DetailViews(needsYou: [Row(NeedsYouRowId.Takeover(view.Address), open)]);
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Takeover(view.Address), open)]);
 
         var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
 
@@ -186,7 +186,7 @@ public sealed class GetInstanceServiceTests
     {
         var view = StatusCases.View("done");
         var park = new NeedsYouOpen("workflow/" + view.Address.Value + "/step.6", "Answer in the child");
-        var views = new DetailViews(needsYou: [Row(NeedsYouRowId.Desk(view.Address), new NeedsYouOpen("workflow/" + view.Address.Value, "Answer the question")), Row(NeedsYouRowId.Park(view.Address), park)]);
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Desk(view.Address), new NeedsYouOpen("workflow/" + view.Address.Value, "Answer the question")), Row(NeedsYouRowIds.Park(view.Address), park)]);
 
         var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
 
@@ -198,7 +198,7 @@ public sealed class GetInstanceServiceTests
     {
         var view = StatusCases.View("done");
         var other = InstanceAddress.From("T-9/step/1");
-        var views = new DetailViews(needsYou: [Row(NeedsYouRowId.Park(other), new NeedsYouOpen("workflow/" + other.Value, "Open the workflow"))]);
+        var views = new DetailViews(needsYou: [Row(NeedsYouRowIds.Park(other), new NeedsYouOpen("workflow/" + other.Value, "Open the workflow"))]);
 
         var result = await Service(new SomeInstances(view), views).Handle(new GetInstanceRequest(view.Address.Value), CancellationToken.None);
 
