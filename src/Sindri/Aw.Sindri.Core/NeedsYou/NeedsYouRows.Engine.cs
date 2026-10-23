@@ -84,7 +84,7 @@ public static partial class NeedsYouRows
     public static NeedsYouRow ForOwnerStop(ItemRow item, InstanceAddress address, OwnerStopInput wait, DateTimeOffset since, ITextScrubber scrubber)
     {
         ArgumentNullException.ThrowIfNull(wait);
-        return Row(item, address, new EngineRow(NeedsYouRowId.Desk(address), wait.Label, wait.Reason, Urgency.Colour, AnswerKind: null, _command, [_command], Status(address),
+        return Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), wait.Label, wait.Reason, Urgency.Colour, AnswerKind: null, _command, [_command], Status(address),
             new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Review and act", wait.Pr)), since, scrubber);
     }
 
