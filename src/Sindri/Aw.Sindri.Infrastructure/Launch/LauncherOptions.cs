@@ -30,4 +30,7 @@ internal sealed record LauncherOptions(string Home)
 
     /// <summary>The per-launch Step policy files (0600, deleted with the launch).</summary>
     public string PolicyDirectory => Path.Combine(Home, "launch", "policy");
+
+    /// <summary>The T3 host's session map: one file per session it started (launcher host kind t3).</summary>
+    public string T3Directory => Path.Combine(Home, "launch", "t3");
 }

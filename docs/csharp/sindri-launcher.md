@@ -30,7 +30,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 |---|---|
 | `schema` | The format version; this build reads `1`. Required |
 | `viewer` | What a human sees. `warp`, `print` (nothing opens; the attach command is printed) or `exec-template` (`name`, the UI label, and `argv`, both required) |
-| `host` | Who owns the process: `tmux` (default) or `none` (a GUI app that owns its own agent; attended opens only). Unattended Steps always use tmux |
+| `host` | Who owns the process: `tmux` (default), `none` (a GUI app that owns its own agent; attended opens only) or `t3` (a T3 Code thread; attended opens only, see "The t3 host"). Unattended Steps always use tmux |
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
 | `meta` | `lanesAgent` and per-lane `lanes.<lane>` name catalog agents for `aw-meta-launch` |
@@ -147,17 +147,40 @@ class and `strict: false` (the schema's `x-aw-keys` block, which the bash reader
 set, is an unknown keyword to 2020-12), and `bash scripts/tests/check-launcher.test.sh` proves each kind of drift
 fails. Ajv is a dev dependency of `scripts/` (`npm ci --prefix scripts`; the test installs it when missing).
 
-## T3 Code fallback
+## The t3 host
 
-T3 Code starts and owns its agent process and can't adopt a `claude --session-id` or `codex resume` session, so it is
-not a viewer until the spike (spec §7, phase SL-T) says otherwise. A T3 Code user sets the `print` viewer (or their
-terminal's `exec-template`), and `sindri open ITM-…` prints the `tmux -L sindri-launch attach …` command to run in any terminal,
-including one inside T3 Code if it has one. The session is the normal tmux-hosted CLI, so liveness, usage, budgets and
-takeover all work; T3 Code just isn't the window.
+With `"host": { "kind": "t3" }`, a human open starts a [T3 Code](https://github.com/pingdotgg/t3code) thread instead of a tmux
+session, and the T3 app shows it. Unattended Steps stay on Sindri's tmux server: their scrubbed environment, policy flags and
+approved argv (`argvHash`) need a process Sindri starts itself.
 
 ```json
-{ "schema": 1, "viewer": { "kind": "print" } }
+{ "schema": 1, "viewer": { "kind": "print" }, "host": { "kind": "t3" } }
 ```
+
+- **Start.** The host finds the T3 project whose folder holds the item's repo (none: `SND-LAUNCH-026`, fix `t3 project add <repo>`),
+  then calls T3's `t3_thread_launch` with the item's seed as the first message, `sindri ITM-…` as the title, and, when the launch
+  has a worktree, `workspaceStrategy: existing_worktree` so the thread runs there. The thread uses the T3 project's default
+  provider and model; the catalog entry's argv, environment and MCP config are not used, and no `session wrap` runs.
+- **Viewer.** The attach command is `open t3code://threads/<environment>/<thread>` (`xdg-open` on Linux). The launcher runs it
+  without a terminal whichever `viewer` is configured, so the thread opens in the app; `print` prints it. An attach to a live T3
+  session opens the same link.
+- **Liveness.** With no wrap there is no heartbeat, so the T3 host reports its sessions to the silence sweep (`IHostedSessions`):
+  every 10 s a live thread counts as a heartbeat, and an archived or deleted thread ends the session as `exit`. A T3 that can't be
+  asked (closed, restarting for an update) counts as alive, since its threads outlive it; the session ends when you stop it from
+  Sindri or archive the thread.
+- **Stop.** `Launcher.Stop` asks every host, so a T3 launch's stop calls `t3_thread_interrupt` (the running turn stops; the
+  thread stays in T3 for you to continue). `sindri serve` stopping leaves T3 threads alone.
+- **State.** One 0600 file per session under `<home>/launch/t3/` maps the session name to its thread and environment, so a
+  stop, an attach or the sweep finds the thread after a restart.
+- **Reaching T3.** `userdata/server-runtime.json` in T3's home (`T3CODE_HOME`, default `~/.t3`) names the running server; its
+  `/mcp` endpoint takes a bearer token that Sindri mints with `t3 auth session issue --subject mcp-client --scope
+  orchestration:read --scope orchestration:operate --ttl 1h` (`T3CODE_CLI_PATH`, else `~/.t3/bin/t3`, else `t3` on the PATH),
+  holds in memory only, renews before it expires and revokes when it stops. Such a session can't start threads in full-access
+  mode, so a thread asks for approvals in the app. Anything T3 can't do is `SND-LAUNCH-025`.
+
+The `mcp-client` subject is internal to T3. Once `t3 thread start --worktree-path` and `t3 thread interrupt` exist (proposed in
+[pingdotgg/t3code#23945](https://github.com/pingdotgg/t3code/discussions/23945)), the host can call the `t3 thread` CLI instead,
+which signs itself in, and the token handling goes away.
 
 ## What a launched Step can't do
 

@@ -13,4 +13,8 @@ public enum HostKind
     /// <summary>No host: the viewer owns the process (reserved; attended opens refuse until SL-4).</summary>
     [JsonStringEnumMemberName("none")]
     None,
+
+    /// <summary>A T3 Code thread in the item's worktree; the T3 app shows it (attended opens only).</summary>
+    [JsonStringEnumMemberName("t3")]
+    T3,
 }

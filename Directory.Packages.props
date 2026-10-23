@@ -92,5 +92,9 @@
          warnings); published 2026-08-13, Apache-2.0. Brings ModelContextProtocol and ModelContextProtocol.Core 2.2.0
          (the tests' MCP client) transitively. -->
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="[2.2.0]" />
+    <!-- MCP client (launcher host kind t3): Aw.Sindri.Infrastructure's T3 session host calls T3 Code's /mcp tools
+         (t3_thread_launch, t3_thread_read, t3_thread_interrupt) through the SDK's client. The same 2.2.0 package the
+         AspNetCore one above already brings in, now referenced directly; Apache-2.0. -->
+    <PackageVersion Include="ModelContextProtocol.Core" Version="[2.2.0]" />
   </ItemGroup>
 </Project>

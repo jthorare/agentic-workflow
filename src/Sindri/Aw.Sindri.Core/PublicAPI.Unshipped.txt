@@ -17578,3 +17578,29 @@ static Aw.Sindri.Core.Scheduling.EmbedDecision.NoProgressWait.get -> System.Time
 static Aw.Sindri.Core.Scheduling.EmbedDecision.TryLaterWait.get -> System.TimeSpan
 Aw.Sindri.Core.Forge.PullView.BaseSha.get -> string?
 Aw.Sindri.Core.Forge.PullView.BaseSha.init -> void
+Aw.Sindri.Core.Launch.HostKind.T3 = 2 -> Aw.Sindri.Core.Launch.HostKind
+Aw.Sindri.Core.Launch.HostSession.RepoPath.get -> string?
+Aw.Sindri.Core.Launch.HostSession.RepoPath.init -> void
+Aw.Sindri.Core.Launch.HostSession.Seed.get -> string?
+Aw.Sindri.Core.Launch.HostSession.Seed.init -> void
+Aw.Sindri.Core.Launch.HostSession.Title.get -> string?
+Aw.Sindri.Core.Launch.HostSession.Title.init -> void
+Aw.Sindri.Core.Launch.HostedSession
+Aw.Sindri.Core.Launch.HostedSession.<Clone>$() -> Aw.Sindri.Core.Launch.HostedSession!
+Aw.Sindri.Core.Launch.HostedSession.Alive.get -> bool
+Aw.Sindri.Core.Launch.HostedSession.Alive.init -> void
+Aw.Sindri.Core.Launch.HostedSession.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out bool Alive) -> void
+Aw.Sindri.Core.Launch.HostedSession.Equals(Aw.Sindri.Core.Launch.HostedSession? other) -> bool
+Aw.Sindri.Core.Launch.HostedSession.HostedSession(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, bool Alive) -> void
+Aw.Sindri.Core.Launch.HostedSession.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Launch.HostedSession.Launch.init -> void
+Aw.Sindri.Core.Launch.IHostedSessions
+Aw.Sindri.Core.Launch.IHostedSessions.Check(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launch.HostedSession!>!>
+Aw.Sindri.Core.Launch.IHostedSessions.Forget(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> void
+override Aw.Sindri.Core.Launch.HostedSession.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.HostedSession.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.HostedSession.ToString() -> string!
+static Aw.Sindri.Core.Launch.HostedSession.operator !=(Aw.Sindri.Core.Launch.HostedSession? left, Aw.Sindri.Core.Launch.HostedSession? right) -> bool
+static Aw.Sindri.Core.Launch.HostedSession.operator ==(Aw.Sindri.Core.Launch.HostedSession? left, Aw.Sindri.Core.Launch.HostedSession? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.LaunchT3NoProject -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.LaunchT3Unavailable -> Aw.Kernel.ErrorDefinition!

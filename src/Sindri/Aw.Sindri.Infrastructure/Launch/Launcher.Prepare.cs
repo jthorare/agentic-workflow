@@ -43,7 +43,7 @@ internal sealed partial class Launcher
             var hashFile = LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch);
             var prior = File.Exists(hashFile) ? await File.ReadAllBytesAsync(hashFile, cancellationToken).ConfigureAwait(false) : null;   // a live session of this launch may own it
             LaunchSecrets.Write(parts.Options.SecretsDirectory, request.Launch, secret);
-            return new Prepared(workDir, composed.Value.Argv, Environment(request, workDir), composed.Value.Session?.Value) { PriorHash = prior };
+            return new Prepared(workDir, composed.Value.Argv, Environment(request, workDir), composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -96,7 +96,7 @@ internal sealed partial class Launcher
         return trusted.IsError ? trusted.Error : null;
     }
 
-    private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
+    private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session, string Seed)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
     {
         var step = Denying(request.Attended ? null : request.Step, request, entry, workDir);
         var policyPath = step?.Policy is { } policy && entry.PolicyForm == PolicyForm.ClaudeSettingsFile
@@ -112,7 +112,7 @@ internal sealed partial class Launcher
         }
 
         IReadOnlyList<string> argv = [.. built.Value, .. mcpArguments];
-        return (argv, session);
+        return (argv, session, seed);
     }
 
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
@@ -223,6 +223,9 @@ internal sealed partial class Launcher
     {
         /// <summary>The hash file as it was before this start rewrote it, or null when there was none.</summary>
         public byte[]? PriorHash { get; init; }
+
+        /// <summary>The first message, for a host that runs the agent itself (T3) rather than the argv.</summary>
+        public string? Seed { get; init; }
     }
 
     /// <summary>The start clashed with a session of this launch's name: it is the launch's own and stays untouched. The hash the live wrap checks is put back (and the session answered as started), or, with no hash to put back, the minted pair is removed and the launch fails.</summary>

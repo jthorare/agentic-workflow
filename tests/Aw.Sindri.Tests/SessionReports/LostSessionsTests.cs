@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Launch;
 
 namespace Aw.Sindri.Tests.SessionReports;
 
@@ -12,10 +13,11 @@ namespace Aw.Sindri.Tests.SessionReports;
 public sealed class LostSessionsTests
 {
     private readonly SessionHarness _s = new();
+    private readonly FakeHostedSessions _hosted = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private LostSessions Sweeper() => new(_s.Liveness, _s.Events(), _s.Views.Slice.Clock, _s.Files, new LaunchViews(_s.Views.Views), _s.Views.Progress);
+    private LostSessions Sweeper() => new(_s.Liveness, _s.Events(), _s.Views.Slice.Clock, _s.Files, new LaunchViews(_s.Views.Views), _s.Views.Progress, _hosted);
 
     [Fact]
     public async Task Silence_120s_writes_lost()
@@ -47,6 +49,65 @@ public sealed class LostSessionsTests
 
         Expect.Equal(0, again);
         _ = Assert.Single(_s.Views.Slice.Store.Events);
+    }
+
+    [Fact]
+    public async Task A_hosted_session_that_is_alive_is_never_lost()
+    {
+        await _s.Started();
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _hosted.Add(A.FirstLaunchId);
+
+        for (var minute = 0; minute < 5; minute++)
+        {
+            _s.Views.Slice.Clock.Advance(TimeSpan.FromSeconds(60));
+            Expect.Equal(0, await Sweeper().Sweep(Token));
+        }
+
+        Expect.Equal(0, _s.Views.Slice.Store.Events.Count);
+    }
+
+    [Fact]
+    public async Task A_hosted_session_that_is_gone_ends_as_an_exit_and_is_forgotten()
+    {
+        await _s.Started();
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _hosted.Add(A.FirstLaunchId);
+        _hosted.MarkGone(A.FirstLaunchId);
+
+        var lost = await Sweeper().Sweep(Token);
+
+        Expect.Equal(0, lost);
+        var payload = _s.Views.Slice.Events.Payload<SessionEnded>(Assert.Single(_s.Views.Slice.Store.Events)).Value;
+        Expect.Equal(SessionEndReason.Exit, payload.Reason);
+        Expect.True(payload.ExitCode is null);
+        Expect.Equal(A.FirstLaunchId, Assert.Single(_hosted.Forgotten));
+    }
+
+    [Fact]
+    public async Task A_hosted_session_Sindri_no_longer_tracks_is_not_revived()
+    {
+        await _s.Started();
+        _hosted.Add(A.FirstLaunchId);   // its launch ended before; the host's map still has it
+
+        _ = await Sweeper().Sweep(Token);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromMinutes(5));
+        _ = await Sweeper().Sweep(Token);
+
+        Expect.Equal(0, _s.Views.Slice.Store.Events.Count);
+        Expect.Equal(0, _s.Liveness.Active().Count);
+    }
+
+    [Fact]
+    public async Task A_lost_session_is_forgotten_by_its_host()
+    {
+        await _s.Started();
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromMinutes(3));
+
+        _ = await Sweeper().Sweep(Token);
+
+        Expect.Equal(A.FirstLaunchId, Assert.Single(_hosted.Forgotten));
     }
 
     [Fact]

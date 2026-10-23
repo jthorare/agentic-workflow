@@ -27,7 +27,8 @@
     ],
     "hostKinds": [
       "tmux",
-      "none"
+      "none",
+      "t3"
     ],
     "agent": [
       "override",
@@ -328,7 +329,8 @@
         "kind": {
           "enum": [
             "tmux",
-            "none"
+            "none",
+            "t3"
           ]
         }
       }

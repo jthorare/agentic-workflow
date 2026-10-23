@@ -86,14 +86,6 @@
           "ModelContextProtocol.Core": "[2.2.0]"
         }
       },
-      "ModelContextProtocol.Core": {
-        "type": "Transitive",
-        "resolved": "2.2.0",
-        "contentHash": "FeBfXU6T8k+jw4afg4sfxdEX2rL/e5oKOk9ROOGztu9k47+7Bz08sdaToYt2XvMY1opNbwxYQOFMj6wH9TInhA==",
-        "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.8.3"
-        }
-      },
       "NexusRpc": {
         "type": "Transitive",
         "resolved": "0.4.0",
@@ -277,6 +269,7 @@
           "Aw.Redaction": "[1.0.0, )",
           "Aw.Sindri.Core": "[1.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "ModelContextProtocol.Core": "[2.2.0, 2.2.0]",
           "YamlDotNet": "[18.1.0, 18.1.0]"
         }
       },
@@ -322,6 +315,15 @@
         "requested": "[10.0.12, 10.0.12]",
         "resolved": "10.0.12",
         "contentHash": "+24lC4plfbEDNfLAdTV/SWKS7dW+16X4HdydO3R++134kSNTzcbYA4KpR1Hdh6uWisB8Za3AzwyOn+K+NxWIug=="
+      },
+      "ModelContextProtocol.Core": {
+        "type": "CentralTransitive",
+        "requested": "[2.2.0, 2.2.0]",
+        "resolved": "2.2.0",
+        "contentHash": "FeBfXU6T8k+jw4afg4sfxdEX2rL/e5oKOk9ROOGztu9k47+7Bz08sdaToYt2XvMY1opNbwxYQOFMj6wH9TInhA==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.8.3"
+        }
       },
       "OpenTelemetry": {
         "type": "CentralTransitive",

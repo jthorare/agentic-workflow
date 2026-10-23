@@ -100,10 +100,17 @@ public abstract class SessionHostContract
         Expect.True(!await host.Exists(started.Value, CancellationToken.None));
     }
 
-    /// <summary>The attach command names the session.</summary>
+    /// <summary>A started session has a command that shows it (a tmux attach, a T3 thread link); each adapter's own tests check what it names.</summary>
+    /// <returns>The test.</returns>
     [Fact]
-    public void The_attach_command_names_the_session() =>
-        Expect.True(Create().AttachArgv(new HostRef(HostKind.Tmux, "snd-one")).Any(a => a.Contains("snd-one", StringComparison.Ordinal)));
+    public async Task A_started_session_has_an_attach_command()
+    {
+        var host = Create();
+
+        var started = await host.Start(Session("snd-one"), TimeSpan.FromSeconds(4), CancellationToken.None);
+
+        Expect.True(host.AttachArgv(started.Value).Count > 0);
+    }
 
     /// <summary>The probe reports the host's own kind.</summary>
     /// <returns>The test.</returns>

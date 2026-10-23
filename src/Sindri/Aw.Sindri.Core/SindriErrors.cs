@@ -206,6 +206,12 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-024: the agent CLI's trust file can't be updated for the Step's worktree (unparseable, locked or not writable); the file is left untouched and the launch is refused.</summary>
     public static readonly ErrorDefinition LaunchTrustUnavailable = new("SND-LAUNCH-024", ErrorKind.Unavailable, "The agent CLI's trust file couldn't be updated");
 
+    /// <summary>SND-LAUNCH-025: the launcher's host is T3 and T3 Code can't be reached (not running, its 't3' CLI missing, or a tool call failed); nothing starts.</summary>
+    public static readonly ErrorDefinition LaunchT3Unavailable = new("SND-LAUNCH-025", ErrorKind.Unavailable, "T3 Code can't be reached");
+
+    /// <summary>SND-LAUNCH-026: the launcher's host is T3 and no T3 Code project contains the repo; nothing starts (fix: 't3 project add &lt;repo&gt;').</summary>
+    public static readonly ErrorDefinition LaunchT3NoProject = new("SND-LAUNCH-026", ErrorKind.Invalid, "The repo isn't a T3 Code project");
+
     /// <summary>SND-LAUNCH-013: a Step asked for a model or a policy, and the entry's matching form is 'none'; nothing launches (launcher L-17).</summary>
     public static readonly ErrorDefinition LaunchFormUnsupported = new("SND-LAUNCH-013", ErrorKind.Invalid, "The agent entry can't express the Step's model or policy");
 

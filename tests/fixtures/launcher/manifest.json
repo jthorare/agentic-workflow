@@ -26,6 +26,12 @@
       "note": "none host with an exec-template viewer that owns processes"
     },
     {
+      "file": "host-t3.json",
+      "schema": "valid",
+      "bash": "accept",
+      "note": "t3 host: a human open starts a T3 Code thread; the viewer still serves tmux attaches"
+    },
+    {
       "file": "kitty-example.json",
       "schema": "valid",
       "bash": "accept",

@@ -15,7 +15,7 @@ internal static class LauncherConfigFile
     internal static readonly System.Text.Json.JsonSerializerOptions Json = AwJson.CreateOptions(LauncherJsonContext.Default);
 
     private static readonly string[] _viewerKinds = ["warp", "exec-template", "print"];
-    private static readonly string[] _hostKinds = ["tmux", "none"];
+    private static readonly string[] _hostKinds = ["tmux", "none", "t3"];
 
     /// <summary>The catalog and the sessions section from the built-ins and an optional user file.</summary>
     /// <param name="builtins">The built-in entries (config/launcher/builtins.json).</param>

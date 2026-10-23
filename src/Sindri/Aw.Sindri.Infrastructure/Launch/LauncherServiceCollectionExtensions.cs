@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
-/// <summary>Registers the launcher and its parts (API P10a, U7): the tmux host, the configured viewer, the launcher and the box-local setup.</summary>
+/// <summary>Registers the launcher and its parts (API P10a, U7): the tmux and T3 hosts, the configured viewer, the launcher and the box-local setup.</summary>
 internal static class LauncherServiceCollectionExtensions
 {
     internal static IServiceCollection AddSindriLauncher(this IServiceCollection services, Func<string, string?> environment, SindriSettings settings)
@@ -20,8 +20,13 @@ internal static class LauncherServiceCollectionExtensions
             .AddSingleton(static _ => new TmuxSessionHost(new TmuxHostOptions()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
             .AddSingleton<NoSessionHost>()
+            .AddSingleton(sp => T3Options(sp, environment))
+            .AddSingleton(static sp => new T3Credentials(sp.GetRequiredService<T3Options>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IT3Api>(static sp => new T3McpApi(sp.GetRequiredService<T3Credentials>(), sp.GetRequiredService<T3Options>()))
+            .AddSingleton(static sp => new T3SessionHost(sp.GetRequiredService<IT3Api>(), new T3SessionMap(sp.GetRequiredService<T3Options>()), sp.GetRequiredService<T3Options>()))
+            .AddSingleton<IHostedSessions>(static sp => sp.GetRequiredService<T3SessionHost>())
             .AddSingleton<ILaunchStartup>(sp => new LaunchStartup(() => WarpSweep(sp, environment)))
-            .AddSingleton<ITerminalViewer>(sp => Viewer(sp, environment))
+            .AddSingleton<ITerminalViewer>(sp => new T3AwareViewer(Viewer(sp, environment), sp.GetRequiredService<T3SessionHost>()))
             .AddSingleton<IReadOnlyDictionary<string, IUsageReader>>(UsageReaders(environment))
             .AddSingleton(sp => new UsageSpend(sp.GetRequiredService<ReloadingAgentCatalog>(), sp.GetRequiredService<IReadOnlyDictionary<string, IUsageReader>>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ILaunchSpend>(static sp => sp.GetRequiredService<UsageSpend>())
@@ -52,8 +57,17 @@ internal static class LauncherServiceCollectionExtensions
         var catalog = sp.GetRequiredService<ReloadingAgentCatalog>();
         var tmux = sp.GetRequiredService<TmuxSessionHost>();
         var none = sp.GetRequiredService<NoSessionHost>();
-        return new LauncherParts(catalog, attended => attended && string.Equals(catalog.Current.Host?.Kind, "none", StringComparison.Ordinal) ? none : tmux, sp.GetRequiredService<ITerminalViewer>(), sp.GetRequiredService<LauncherOptions>(), sp.GetRequiredService<TimeProvider>())
+        var t3 = sp.GetRequiredService<T3SessionHost>();
+        ISessionHost HostFor(bool attended) => !attended ? tmux : catalog.Current.Host?.Kind switch
         {
+            "none" => none,
+            "t3" => t3,
+            _ => tmux,
+        };
+
+        return new LauncherParts(catalog, HostFor, sp.GetRequiredService<ITerminalViewer>(), sp.GetRequiredService<LauncherOptions>(), sp.GetRequiredService<TimeProvider>())
+        {
+            OtherHosts = [t3],
             BuiltinHash = builtinHash,
             Approved = Approved(sp),
             McpFor = McpTargetFor(sp),
@@ -73,6 +87,18 @@ internal static class LauncherServiceCollectionExtensions
             },
             Usage = name => sp.GetRequiredService<IReadOnlyDictionary<string, IUsageReader>>().GetValueOrDefault(name),
         };
+    }
+
+    /// <summary>
+    /// Where the T3 host keeps its map and how it reaches T3 Code: <c lang="text">T3CODE_HOME</c> (T3's own variable, default <c lang="text">~/.t3</c>) and
+    /// <c lang="text">T3CODE_CLI_PATH</c> (which T3 sets for its own sessions), else T3's launcher in its home, else <c lang="text">t3</c> on the PATH.
+    /// </summary>
+    private static T3Options T3Options(IServiceProvider sp, Func<string, string?> environment)
+    {
+        var t3Home = LauncherStartup.NonEmpty(environment("T3CODE_HOME")) ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".t3");
+        var bundled = Path.Combine(t3Home, "bin", "t3");
+        var cli = LauncherStartup.NonEmpty(environment("T3CODE_CLI_PATH")) ?? (File.Exists(bundled) ? bundled : "t3");
+        return new T3Options(sp.GetRequiredService<LauncherOptions>().T3Directory, t3Home, cli);
     }
 
     /// <summary>The repo the approved profile names for a checkout path (the launcher passes the profile checkout as RepoPath; an engine step's worktree travels separately in LaunchRequest.Worktree, so only an exact checkout path matches) and the port Sindri answers on: the running instance's, else the profile's.</summary>

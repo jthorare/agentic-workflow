@@ -7,7 +7,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>What <see cref="Launcher"/> is composed of: the catalog, the host and viewer ports, and the facts SL8 and the config gate read.</summary>
 /// <param name="Catalog">The agent catalog (a reloading one in the product: each launch reads the file as it is then).</param>
-/// <param name="HostFor">The host for a launch: the tmux host for Steps (SL4), the configured one for human opens.</param>
+/// <param name="HostFor">The host for a launch: the tmux host for Steps (SL4), the configured one (tmux, none or t3) for human opens.</param>
 /// <param name="Viewer">The terminal viewer (attended launches only).</param>
 /// <param name="Options">Files and bounds.</param>
 /// <param name="Time">The clock the stage bounds run on.</param>
@@ -36,6 +36,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
 
     /// <summary>Marks a Step's working directory trusted for the agent CLI that asks (claude-code), before it starts; nothing by default.</summary>
     public IAgentTrust Trust { get; init; } = new NoAgentTrust();
+
+    /// <summary>The hosts besides tmux a human open may have used (T3): Stop asks each of them too, since a launch doesn't record its host.</summary>
+    public IReadOnlyList<ISessionHost> OtherHosts { get; init; } = [];
 
     /// <summary>Finds an agent CLI the way the login shell does; null when it doesn't resolve.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;

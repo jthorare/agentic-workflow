@@ -21,7 +21,7 @@ public sealed class SessionReviewFixTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private LostSessions Sweeper() => new(_s.Liveness, _s.Events(), _s.Views.Slice.Clock, _s.Files, new LaunchViews(_s.Views.Views), _s.Views.Progress);
+    private LostSessions Sweeper() => new(_s.Liveness, _s.Events(), _s.Views.Slice.Clock, _s.Files, new LaunchViews(_s.Views.Views), _s.Views.Progress, new Testing.Launch.FakeHostedSessions());
 
     private SessionUsageSampler Sampler(UsageSamples samples) =>
         new(_s.Liveness, new LaunchViews(_s.Views.Views), new TokensReader(_s), samples, _s.Events(), _s.Views.Slice.Clock);

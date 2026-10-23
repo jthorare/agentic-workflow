@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "viewer": {
+    "kind": "print"
+  },
+  "host": {
+    "kind": "t3"
+  }
+}
