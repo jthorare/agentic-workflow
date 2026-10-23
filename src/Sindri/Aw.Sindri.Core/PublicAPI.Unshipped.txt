@@ -18066,6 +18066,15 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Facts.init -> void
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Render(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor, System.Collections.Generic.IReadOnlyList<string!>? instructions = null, System.Collections.Generic.IEnumerable<string!>? factFiles = null) -> string!
 static readonly Aw.Sindri.Core.SindriErrors.LaunchFactFileTracked -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Open.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRoutes
+const Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Setup = "setup" -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Decision(Aw.Sindri.Core.Ids.DecisionId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Desk(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Park(Aw.Sindri.Core.Workflow.Engine.InstanceAddress root, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? deepest) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Recipe(Aw.Sindri.Core.Workflow.Ids.RecipeId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Row(Aw.Sindri.Core.Ids.NeedsYouRowId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Service(string! name) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Workflow(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
 Aw.Sindri.Core.OpenTargets.NeedsYouOpen
 Aw.Sindri.Core.OpenTargets.NeedsYouOpen.<Clone>$() -> Aw.Sindri.Core.OpenTargets.NeedsYouOpen!
 Aw.Sindri.Core.OpenTargets.NeedsYouOpen.Deconstruct(out string! Route, out string! Label, out Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr? Pr, out Aw.Sindri.Core.OpenTargets.NeedsYouOpenArtifact? Artifact, out string? Session, out string? ReasonCode) -> void
