@@ -110,13 +110,18 @@ public sealed class NeedsYouOwnerStopsTests
 
     private static CallerContext Human() => A.Caller().Human().Build();
 
+    // The babysitter's 'ready' next sentence with {item} and {instance} filled, as the view serves it.
+    private static string ReadyNext(string item, InstanceAddress address) =>
+        $"Ready to merge {item}'s pull request: CI green on the head, the docs settled (see the view). Merge it, or send it back with rework notes, in the app or with `sindri workflow command {address.Value} merge`.";
+
     private async Task<InstanceView> Waiting(string state, string? prStatus, string? repo = null)
     {
         var document = RecipeReaderTests.Reader.Read(ShippedRecipes.Read("sindri/workflow.pr-babysitter.yaml"), "workflow.pr-babysitter.yaml").Document!;   // why: the shipped recipes bind (ShippedRecipesTests)
         var text = Encoding.UTF8.GetString(AwJson.Serialize(document.Recipe with { Hash = null }, SliceHarness.Json));
         _ = await _recipes.Add(new RegisteredRecipe(document.Recipe.Id, document.Recipe.Version, document.Hash, text, Base: null, DateTimeOffset.UnixEpoch), TestContext.Current.CancellationToken);
         await _q.CreateItem(_item, repo);
-        return StatusCases.View("desk-task") with
+        var basis = StatusCases.View("desk-task");
+        return basis with
         {
             Recipe = new RecipeVersion(document.Recipe.Id, document.Recipe.Version, document.Hash),
             State = state,
@@ -125,6 +130,7 @@ public sealed class NeedsYouOwnerStopsTests
             AgentRun = null,
             Question = null,
             ItemId = ItemKey.From(_item.Value),
+            Next = ReadyNext(_item.Value, basis.Address),
             FactShas = prStatus is null ? null : new Dictionary<string, string>(StringComparer.Ordinal) { ["fact:prStatus"] = new string('1', 64) },
         };
     }
