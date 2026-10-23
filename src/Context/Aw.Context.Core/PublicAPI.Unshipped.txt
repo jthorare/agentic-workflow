@@ -6072,7 +6072,7 @@ static Aw.Context.Core.Onyx.OnyxRecordIdentity.operator !=(Aw.Context.Core.Onyx.
 static Aw.Context.Core.Onyx.OnyxRecordIdentity.operator ==(Aw.Context.Core.Onyx.OnyxRecordIdentity? left, Aw.Context.Core.Onyx.OnyxRecordIdentity? right) -> bool
 static Aw.Context.Core.Onyx.OnyxRecordKeys.Identify(Aw.Context.Core.Sources.ExternalId document, string! sourceType, string! semanticIdentifier, string? link, System.Collections.Generic.IReadOnlySet<string!>! teams) -> Aw.Context.Core.Onyx.OnyxRecordIdentity?
 static Aw.Context.Core.Onyx.OnyxRecordKeys.KindOf(Aw.Context.Core.Sources.RecordKey canonical) -> Aw.Context.Core.Sources.RecordKind
-static Aw.Context.Core.Onyx.OnyxSettings.Create(string? url, string? token, string? version, bool managed = false) -> Aw.Kernel.Result<Aw.Context.Core.Onyx.OnyxSettings!>!
+static Aw.Context.Core.Onyx.OnyxSettings.Create(string? url, string? token, string? version, bool managed = false, string? network = null) -> Aw.Kernel.Result<Aw.Context.Core.Onyx.OnyxSettings!>!
 static Aw.Context.Core.Onyx.OnyxSettings.operator !=(Aw.Context.Core.Onyx.OnyxSettings? left, Aw.Context.Core.Onyx.OnyxSettings? right) -> bool
 static Aw.Context.Core.Onyx.OnyxSettings.operator ==(Aw.Context.Core.Onyx.OnyxSettings? left, Aw.Context.Core.Onyx.OnyxSettings? right) -> bool
 static Aw.Context.Core.Overrides.AppliedMap.operator !=(Aw.Context.Core.Overrides.AppliedMap? left, Aw.Context.Core.Overrides.AppliedMap? right) -> bool
@@ -6550,3 +6550,15 @@ override Aw.Context.Core.Code.SymbolColumnReading.ToString() -> string!
 static Aw.Context.Core.Code.SymbolColumn.Read(Aw.Context.Core.Symbols.ICodeSymbolSource! source, Aw.Context.Core.Code.SymbolColumnReading! reading, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Lenses.LensSymbols!>
 static Aw.Context.Core.Code.SymbolColumnReading.operator !=(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool
 static Aw.Context.Core.Code.SymbolColumnReading.operator ==(Aw.Context.Core.Code.SymbolColumnReading? left, Aw.Context.Core.Code.SymbolColumnReading? right) -> bool
+Aw.Context.Core.Onyx.OnyxClusterPolicy
+Aw.Context.Core.Onyx.OnyxClusterPolicy.Check(Aw.Context.Core.Onyx.OnyxSettings! settings) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Context.Core.Onyx.OnyxClusterPolicy.Check(System.Uri! url) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Context.Core.Onyx.OnyxClusterPolicy.Hosts.get -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Context.Core.Onyx.OnyxClusterPolicy.PodMode.get -> bool
+Aw.Context.Core.Onyx.OnyxNetwork
+Aw.Context.Core.Onyx.OnyxNetwork.Cluster = 1 -> Aw.Context.Core.Onyx.OnyxNetwork
+Aw.Context.Core.Onyx.OnyxNetwork.Loopback = 0 -> Aw.Context.Core.Onyx.OnyxNetwork
+Aw.Context.Core.Onyx.OnyxSettings.Network.get -> Aw.Context.Core.Onyx.OnyxNetwork
+static Aw.Context.Core.Onyx.OnyxClusterPolicy.Desktop.get -> Aw.Context.Core.Onyx.OnyxClusterPolicy!
+static Aw.Context.Core.Onyx.OnyxClusterPolicy.From(string? deploy, string? hosts) -> Aw.Context.Core.Onyx.OnyxClusterPolicy!
+static Aw.Context.Core.Onyx.OnyxSettings.IsLoopback(System.Uri! uri) -> bool

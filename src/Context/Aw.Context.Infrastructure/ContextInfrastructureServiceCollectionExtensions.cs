@@ -7,6 +7,7 @@ using Aw.Context.Core.Extract;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Trust;
@@ -72,8 +73,12 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IBriefSource, OnyxBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
+            .AddSingleton(OnyxClusterPolicy.From(environment("AW_SINDRI_DEPLOY"), environment("AW_SINDRI_ONYX_HOSTS")))
             .AddSingleton(sp => new OnyxSources(new OnyxSourceParts(
-                OnyxHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<OnyxClient>>())))
+                OnyxHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<OnyxClient>>())
+            {
+                Policy = sp.GetRequiredService<OnyxClusterPolicy>(),
+            }))
             .AddSingleton(sp => new LinearSources(new LinearSourceParts(
                 LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())));
 

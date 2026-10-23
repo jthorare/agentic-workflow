@@ -20,22 +20,27 @@ public sealed partial record OnyxSettings
 
     private const string UrlKey = "context.sources.onyx.url";
     private const string TokenKey = "context.sources.onyx.token";
+    private const string NetworkKey = "context.sources.onyx.network";
     private const string VersionKey = "context.sources.onyx.version";
     private const int MaxShown = 64;
     private static readonly HashSet<string> _schemes = new(StringComparer.Ordinal) { "env", "file", "keychain", "op" };
 
-    private OnyxSettings(Uri url, string token, string version, bool managed)
+    private OnyxSettings(Uri url, string token, string version, bool managed, OnyxNetwork network)
     {
         Url = url;
         Token = token;
         Version = version;
         Managed = managed;
+        Network = network;
     }
+
+    /// <summary>Gets where the profile says Onyx is: on this machine's loopback (the default) or at a cluster address ('context.sources.onyx.network: cluster'). Whether a cluster address is allowed here is <see cref="OnyxClusterPolicy"/>'s say, from the environment.</summary>
+    public OnyxNetwork Network { get; }
 
     /// <summary>Gets a value indicating whether Sindri manages this Onyx ('context.sources.onyx.managed'): it stands the stack up, starts it with 'serve' and stops it with 'stop'. Only a managed one has its url on 127.0.0.1.</summary>
     public bool Managed { get; }
 
-    /// <summary>Onyx's base URL (http or https on a loopback host), ending in '/'.</summary>
+    /// <summary>Onyx's base URL (http or https; a loopback host unless <see cref="Network"/> is cluster), ending in '/'.</summary>
     public Uri Url { get; }
 
     /// <summary>The secret pointer to the API key ('env:…', 'file:…', 'keychain:…', 'op:…'), never the key itself.</summary>
@@ -52,10 +57,17 @@ public sealed partial record OnyxSettings
     /// <param name="token">'context.sources.onyx.token', a secret pointer.</param>
     /// <param name="version">'context.sources.onyx.version', a release tag.</param>
     /// <param name="managed">'context.sources.onyx.managed': Sindri runs this Onyx, so its url must be http://127.0.0.1:&lt;port&gt;.</param>
+    /// <param name="network">'context.sources.onyx.network': null or 'loopback' (the default), or 'cluster' for an Onyx at a cluster address (pod mode only, see <see cref="OnyxClusterPolicy"/>).</param>
     /// <returns>The settings, SND-CONTEXT-055 for a URL or version that breaks the rules, or SND-CONTEXT-002 for no token or one that isn't a secret pointer (never repeated).</returns>
-    public static Result<OnyxSettings> Create(string? url, string? token, string? version, bool managed = false)
+    public static Result<OnyxSettings> Create(string? url, string? token, string? version, bool managed = false, string? network = null)
     {
-        var baseUrl = CheckUrl(url);
+        var chosen = CheckNetwork(network, managed);
+        if (chosen.IsError)
+        {
+            return chosen.Error;
+        }
+
+        var baseUrl = CheckUrl(url, chosen.Value);
         if (baseUrl.IsError)
         {
             return baseUrl.Error;
@@ -80,7 +92,7 @@ public sealed partial record OnyxSettings
         }
 
         var pinned = CheckPinned(version);
-        return pinned.IsError ? pinned.Error : new OnyxSettings(baseUrl.Value, token, pinned.Value, managed);
+        return pinned.IsError ? pinned.Error : new OnyxSettings(baseUrl.Value, token, pinned.Value, managed, chosen.Value);
     }
 
     /// <summary>Compares the version a running Onyx reports with the pinned one.</summary>
@@ -100,7 +112,42 @@ public sealed partial record OnyxSettings
     /// <returns>A description.</returns>
     public override string ToString() => $"OnyxSettings {{ Url = {Url}, Version = {Version}, Token = (withheld) }}";
 
-    private static Result<Uri> CheckUrl(string? text)
+    /// <summary>Whether <paramref name="uri"/> names this machine (127.0.0.0/8, ::1 or localhost).</summary>
+    /// <param name="uri">An absolute URL.</param>
+    /// <returns>True for a loopback host.</returns>
+    public static bool IsLoopback(Uri uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        return (uri.HostNameType == UriHostNameType.Dns && string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
+            || (uri.HostNameType == UriHostNameType.IPv4 && uri.Host.StartsWith("127.", StringComparison.Ordinal))
+            || (uri.HostNameType == UriHostNameType.IPv6 && string.Equals(uri.Host, "[::1]", StringComparison.Ordinal));
+    }
+
+    /// <summary>Text from outside (a host, a reported version) as a message shows it: one line, at most 64 characters.</summary>
+    /// <param name="text">The text.</param>
+    /// <returns>The shown text.</returns>
+    internal static string Shown(string text)
+    {
+        var line = new string([.. text.Select(c => char.IsControl(c) ? ' ' : c)]);
+        return line.Length <= MaxShown ? line : line[..MaxShown] + "…";
+    }
+
+    private static Result<OnyxNetwork> CheckNetwork(string? network, bool managed)
+    {
+        if (network is null || string.Equals(network, "loopback", StringComparison.Ordinal))
+        {
+            return OnyxNetwork.Loopback;
+        }
+
+        if (!string.Equals(network, "cluster", StringComparison.Ordinal))
+        {
+            return ContextErrors.OnyxNotPinnedOrLoopback.With($"{NetworkKey}: must be 'loopback' (the default) or 'cluster', not '{Shown(network)}'.");
+        }
+
+        return managed ? NotLoopback("a managed Onyx (managed: true) runs on this machine, so it can't have network: cluster") : OnyxNetwork.Cluster;
+    }
+
+    private static Result<Uri> CheckUrl(string? text, OnyxNetwork network)
     {
         if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
@@ -117,7 +164,7 @@ public sealed partial record OnyxSettings
             return NotLoopback("it carries a query or fragment; give Onyx's base URL only");
         }
 
-        if (!IsLoopback(uri))
+        if (network == OnyxNetwork.Loopback && !IsLoopback(uri))
         {
             return NotLoopback($"its host is '{Shown(uri.Host)}'");
         }
@@ -125,11 +172,6 @@ public sealed partial record OnyxSettings
         var path = uri.GetLeftPart(UriPartial.Path);
         return new Uri(path.EndsWith('/') ? path : path + "/");
     }
-
-    private static bool IsLoopback(Uri uri) =>
-        (uri.HostNameType == UriHostNameType.Dns && string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
-        || (uri.HostNameType == UriHostNameType.IPv4 && uri.Host.StartsWith("127.", StringComparison.Ordinal))
-        || (uri.HostNameType == UriHostNameType.IPv6 && string.Equals(uri.Host, "[::1]", StringComparison.Ordinal));
 
     private static Result<string> CheckPinned(string? version)
     {
@@ -164,13 +206,6 @@ public sealed partial record OnyxSettings
     }
 
     private static string Bare(string version) => version.StartsWith('v') ? version[1..] : version;
-
-    /// <summary>Text from outside (a host, a reported version) as a message shows it: one line, at most 64 characters.</summary>
-    private static string Shown(string text)
-    {
-        var line = new string([.. text.Select(c => char.IsControl(c) ? ' ' : c)]);
-        return line.Length <= MaxShown ? line : line[..MaxShown] + "…";
-    }
 
     [GeneratedRegex(@"^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ReleaseTag { get; }

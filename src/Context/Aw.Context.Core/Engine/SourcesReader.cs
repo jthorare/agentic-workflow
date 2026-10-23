@@ -14,7 +14,7 @@ namespace Aw.Context.Core.Engine;
 internal static partial class SourcesReader
 {
     private static readonly string[] _sources = ["onyx", "linear"];
-    private static readonly string[] _onyx = ["url", "token", "version", "managed"];
+    private static readonly string[] _onyx = ["url", "token", "version", "managed", "network"];
     private static readonly string[] _linear = ["teams", "url", "token"];
 
     /// <summary>The first problem with the shape of <paramref name="context"/>'s 'sources' map, or null.</summary>
@@ -66,7 +66,7 @@ internal static partial class SourcesReader
             return Kernel.Results.Success<OnyxSettings?>(value: null);
         }
 
-        var created = OnyxSettings.Create(onyx.Url, onyx.Token, onyx.Version, onyx.Managed ?? false);
+        var created = OnyxSettings.Create(onyx.Url, onyx.Token, onyx.Version, onyx.Managed ?? false, onyx.Network);
         return created.IsError ? created.Error : Kernel.Results.Success<OnyxSettings?>(created.Value);
     }
 

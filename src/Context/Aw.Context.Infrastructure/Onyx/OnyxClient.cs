@@ -29,6 +29,9 @@ internal sealed partial class OnyxClient(OnyxSettings settings, OnyxSourceParts 
     /// <summary>The checked settings.</summary>
     public OnyxSettings Settings { get; } = settings;
 
+    /// <summary>Gets why this Onyx may not be reached (a cluster address the environment doesn't allow, SND-CONTEXT-055), or null. Checked before any request goes out.</summary>
+    public Error? Refusal { get; } = parts.Policy.Check(settings) is { IsError: true } refused ? refused.Error : null;
+
     /// <summary>The HTTP client.</summary>
     public HttpClient Http => _parts.Http;
 
@@ -38,7 +41,10 @@ internal sealed partial class OnyxClient(OnyxSettings settings, OnyxSourceParts 
     /// <param name="cancellationToken">The caller's cancellation, which is thrown, not turned into an error.</param>
     /// <typeparam name="T">The reply record.</typeparam>
     /// <returns>The reply, or an error from the catalogue.</returns>
-    public async ValueTask<Result<T>> Call<T>(OnyxCall call, TimeSpan deadline, CancellationToken cancellationToken)
+    public ValueTask<Result<T>> Call<T>(OnyxCall call, TimeSpan deadline, CancellationToken cancellationToken) =>
+        Refusal is { } refused ? ValueTask.FromResult<Result<T>>(refused) : Send<T>(call, deadline, cancellationToken);
+
+    private async ValueTask<Result<T>> Send<T>(OnyxCall call, TimeSpan deadline, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(call);
         cancellationToken.ThrowIfCancellationRequested();   // before the spent-deadline answer: a cancelled caller gets the thrown cancellation

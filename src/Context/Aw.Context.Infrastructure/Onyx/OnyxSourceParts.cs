@@ -1,3 +1,4 @@
+using Aw.Context.Core.Onyx;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Infrastructure.Onyx;
@@ -11,4 +12,7 @@ internal sealed record OnyxSourceParts(HttpClient Http, Func<string, string?> En
 {
     /// <summary>How long Onyx gets to answer each fetch and probe call (a search uses the query's own deadline); 4 s.</summary>
     public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(4);
+
+    /// <summary>Gets the rule for an Onyx at a cluster address, from the environment (pod mode and AW_SINDRI_ONYX_HOSTS); the desktop's by default, which allows none.</summary>
+    public OnyxClusterPolicy Policy { get; init; } = OnyxClusterPolicy.Desktop;
 }

@@ -88,6 +88,11 @@ internal sealed class OnyxSource(OnyxClient client, IReadOnlySet<string> teams, 
     /// <inheritdoc />
     public async ValueTask<SourceHealth> Probe(CancellationToken cancellationToken)
     {
+        if (client.Refusal is { } refused)
+        {
+            return new SourceHealth(SourceState.Unavailable, refused.Message, refused.Code);
+        }
+
         var version = await new OnyxVersionProbe(client.Http).Check(client.Settings, callDeadline, cancellationToken).ConfigureAwait(false);
         if (version.State != SourceState.Ok)
         {

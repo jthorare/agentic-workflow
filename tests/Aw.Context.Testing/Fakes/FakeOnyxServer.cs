@@ -26,6 +26,7 @@ public sealed class FakeOnyxServer : IAsyncDisposable
     private const string ChunkRoute = "/api/document/chunk-info";
     private const string VersionRoute = "/api/version";
     private const string MeRoute = "/api/me";
+    private const string HealthRoute = "/api/health";
     private const string NotAuthenticated = "Access denied. User is not authenticated.";
     private static readonly string[] _accountTypes = ["SERVICE_ACCOUNT", "STANDARD", "BOT", "EXT_PERM_USER"];
     private readonly LoopbackServer _server;
@@ -92,6 +93,7 @@ public sealed class FakeOnyxServer : IAsyncDisposable
             var authenticated = Authenticated(request.Authorization, key.Token);
             return (request.Method, request.Path) switch
             {
+                ("GET", HealthRoute) => new FakeHttpReply(200, new JsonObject { ["success"] = true }, "health"),
                 ("GET", VersionRoute) => new FakeHttpReply(200, new JsonObject { ["backend_version"] = key.Version }, "version"),
                 ("GET", MeRoute) => authenticated ? new FakeHttpReply(200, OnyxMe.Info(key.AccountType, key.Admin, key.Email), "me") : OnyxError(403, "UNAUTHORIZED", "Unauthorized", "refused: no valid credential"),
                 ("POST", SearchRoute) or ("GET", SizeRoute) or ("GET", ChunkRoute) when !authenticated => OnyxError(403, "UNAUTHORIZED", NotAuthenticated, "refused: no valid credential"),
@@ -99,7 +101,7 @@ public sealed class FakeOnyxServer : IAsyncDisposable
                 ("POST", SearchRoute) => Search(request.Body, documents),
                 ("GET", SizeRoute) => Size(request.Query, documents),
                 ("GET", ChunkRoute) => Chunk(request.Query, documents),
-                _ => OnyxError(404, "NOT_FOUND", $"The fake Onyx server has no route {request.Method} {request.Path}; it answers GET {VersionRoute}, GET {MeRoute}, POST {SearchRoute}, GET {SizeRoute} and GET {ChunkRoute}.", "refused: route"),
+                _ => OnyxError(404, "NOT_FOUND", $"The fake Onyx server has no route {request.Method} {request.Path}; it answers GET {HealthRoute}, GET {VersionRoute}, GET {MeRoute}, POST {SearchRoute}, GET {SizeRoute} and GET {ChunkRoute}.", "refused: route"),
             };
         }
         catch (FakeRequestException e) when (e.Code == OnyxSearchRequest.ValidationCode)

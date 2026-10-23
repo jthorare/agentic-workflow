@@ -58,6 +58,14 @@ public sealed class SourcesSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_onyx_entry_with_network_cluster_is_read_as_a_cluster_address()
+    {
+        var settings = Read("""{"sources":{"onyx":{"url":"http://onyx-api-service.sindri.svc:8080","token":"env:K","version":"v4.9.0","network":"cluster"}}}""").Value;
+
+        Assert.Equal(Aw.Context.Core.Onyx.OnyxNetwork.Cluster, settings.Onyx!.Network);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_managed_onyx_entry_off_the_loopback_ip_is_055_at_the_reader()
     {
         var read = Read("""{"sources":{"onyx":{"url":"http://localhost:3000","token":"env:K","version":"v4.9.0","managed":true}}}""");
