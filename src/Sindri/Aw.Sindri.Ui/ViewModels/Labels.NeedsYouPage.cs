@@ -96,6 +96,11 @@ internal static partial class Labels
     /// <summary>The caption of the box that says what sending it back does.</summary>
     internal const string NeedsYouIfSendBack = "If you send it back";
 
+    /// <summary>The action that opens the pull request a row is about.</summary>
+    /// <param name="number">The pull request's number.</param>
+    /// <returns>"Open PR #12".</returns>
+    internal static string OpenPr(int? number) => number is { } n ? string.Create(CultureInfo.InvariantCulture, $"Open PR #{n}") : "Open the pull request";
+
     /// <summary>The caption of a row's detail lines.</summary>
     internal const string NeedsYouRequestCaption = "The request";
 

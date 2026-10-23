@@ -77,6 +77,13 @@ internal sealed partial class ShellViewModel
             new PausedAnswerViewModel(commands, clipboard, _clock), new TakeoverViewModel(api, Health.ApiUrl, commands, _clock));
         inbox.LeaveRequested += (_, _) => LeaveNeedsYouInbox();
         inbox.Bar.DecisionRequested += (_, e) => e.Settled = AnswerDecision(e.RowId, e.OptionId, e.Note);
+        inbox.PrRequested += (_, e) =>
+        {
+            if (NeedsYou.Row(e.RowId)?.PrUri is { } uri)
+            {
+                _ = launcher.OpenUri(uri, CancellationToken.None);
+            }
+        };
         inbox.ItemRequested += (_, e) =>
         {
             if (NeedsYou.Row(e.RowId)?.ItemLink is { } link)

@@ -163,10 +163,24 @@ internal sealed partial class ShellViewModel
     /// <param name="rowId">The row's id.</param>
     internal void OpenNeedsYouRow(string rowId)
     {
-        if (!OpenChildOf(rowId))
+        if (!OpenTargetOf(rowId))
         {
             Navigate(LinkOf(rowId));
         }
+    }
+
+    // The served open.route of a row (api q65) is where its click goes. A route that is the row's own sheet changes nothing here, and a row with none keeps the older rule.
+    private bool OpenTargetOf(string? rowId) => OpenChildOf(rowId) || OpenRouteOf(rowId);
+
+    private bool OpenRouteOf(string? rowId)
+    {
+        if (rowId is null || NeedsYou.Row(rowId)?.RouteLink is not { } link || link.Kind == DeepLinkKind.NeedsYou)
+        {
+            return false;
+        }
+
+        Navigate(link);
+        return true;
     }
 
     // A nested park's click is the answer in its child: the row stays selected (Esc returns to it) and the child's frame opens at its first read action.

@@ -43,6 +43,9 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
     /// <summary>Which desk stop of its run the row waits at ("2 of 3") and that stop's state; null when the row serves none.</summary>
     internal NeedsYouStopView? Stop { get; init; }
 
+    /// <summary>The one place the owner acts on the row (api q65): where a click goes, and the button's words; null from a Sindri that serves none.</summary>
+    internal NeedsYouOpenView? Open { get; init; }
+
     /// <summary>The catalog id of the row's primary action; empty for none.</summary>
     internal string PrimaryAction { get; init; } = "";
 
@@ -82,7 +85,7 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
     public bool Equals(NeedsYouEntry? other) =>
         other is not null
         && ((Id, Urgency, Kind, Chip, ShownId, Title, Repo, Label, Reason) == (other.Id, other.Urgency, other.Kind, other.Chip, other.ShownId, other.Title, other.Repo, other.Label, other.Reason))
-        && ((Since, PrimaryAction, Subject, ItemId, Cli, Question, RecordedOnly, Notice, Via, Child, Timeout, Stop) == (other.Since, other.PrimaryAction, other.Subject, other.ItemId, other.Cli, other.Question, other.RecordedOnly, other.Notice, other.Via, other.Child, other.Timeout, other.Stop))
+        && ((Since, PrimaryAction, Subject, ItemId, Cli, Question, RecordedOnly, Notice, Via, Child, Timeout, Stop, Open) == (other.Since, other.PrimaryAction, other.Subject, other.ItemId, other.Cli, other.Question, other.RecordedOnly, other.Notice, other.Via, other.Child, other.Timeout, other.Stop, other.Open))
         && Actions.SequenceEqual(other.Actions);
 
     /// <inheritdoc />

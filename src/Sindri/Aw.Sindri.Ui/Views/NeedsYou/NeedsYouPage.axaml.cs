@@ -169,6 +169,8 @@ internal sealed partial class NeedsYouPage : UserControl
         }
     }
 
+    private void OnPr(object? sender, RoutedEventArgs e) => _page?.OpenPr();
+
     private void OnOpenPr(object? sender, RoutedEventArgs e) => _ = _page?.Bar.MergeCard?.Open(CancellationToken.None);
 
     private void OnVerb(object? sender, RoutedEventArgs e) => _ = sender is Control { DataContext: DeskVerbViewModel verb } ? verb.Press() : Task.CompletedTask;

@@ -49,23 +49,23 @@ public sealed class ShellOpenTargetTests
     }, Token);
 
     [Fact]
-    public Task A_plain_park_keeps_its_sheet_as_the_open_link() => UiThread.Run(async () =>
+    public Task A_plain_park_opens_the_served_route_as_its_open_link() => UiThread.Run(async () =>
     {
         var shell = await Connected("park");
 
         var row = shell.NeedsYou.Seen.Rows[0];
 
-        Assert.Equal((new DeepLink(DeepLinkKind.NeedsYou, row.Id), false), (row.OpenLink, row.OpensChild));
+        Assert.Equal(new DeepLink(DeepLinkKind.Workflow, "ITM-0000000000000000000000000000000f/step/1"), row.OpenLink);
     }, Token);
 
     [Fact]
-    public Task A_child_pointer_served_no_child_keeps_the_sheet_where_the_pointer_is() => UiThread.Run(async () =>
+    public Task A_child_pointer_served_no_child_still_follows_the_served_route() => UiThread.Run(async () =>
     {
         var shell = await Connected("park", via: "child");
 
         var row = shell.NeedsYou.Seen.Rows[0];
 
-        Assert.Equal((row.SheetLink, false), (row.OpenLink, row.OpensChild));
+        Assert.Equal(row.RouteLink, row.OpenLink);
     }, Token);
 
     [Fact]
@@ -79,11 +79,11 @@ public sealed class ShellOpenTargetTests
     }, Token);
 
     [Fact]
-    public Task Clicking_any_other_row_opens_the_inbox_on_that_row() => UiThread.Run(async () =>
+    public Task Clicking_a_row_whose_route_is_its_own_sheet_opens_the_inbox_on_that_row() => UiThread.Run(async () =>
     {
-        var shell = await Connected("park");
+        var shell = await Connected("fixture");
 
-        shell.OpenNeedsYouRow(shell.NeedsYou.Seen.Rows[0].Id);
+        shell.OpenNeedsYouRow("profile:drift");
 
         Assert.True(shell.IsNeedsYouInbox);
     }, Token);
@@ -101,12 +101,11 @@ public sealed class ShellOpenTargetTests
     }, Token);
 
     [Fact]
-    public Task The_tray_row_of_any_other_kind_still_opens_the_inbox_on_that_row() => UiThread.Run(async () =>
+    public Task The_tray_row_whose_route_is_its_own_sheet_still_opens_the_inbox_on_that_row() => UiThread.Run(async () =>
     {
-        var shell = await Connected("park");
-        var rowId = shell.NeedsYou.Seen.Rows[0].Id;
+        var shell = await Connected("fixture");
 
-        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, rowId));
+        shell.Navigate(new DeepLink(DeepLinkKind.NeedsYou, "profile:drift"));
 
         Assert.True(shell.IsNeedsYouInbox);
     }, Token);

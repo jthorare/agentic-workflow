@@ -80,6 +80,10 @@
                 </Border>
                 <StackPanel Grid.Column="1" Spacing="2">
                   <TextBlock x:Name="NeedsYouCardTitle" Classes="detail-title" Text="{Binding Card.Title}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <Button x:Name="NeedsYouCardPr" Classes="row-title" Click="OnPr" IsVisible="{Binding Card.HasPr}" HorizontalAlignment="Left"
+                          AutomationProperties.Name="{Binding Card.OpenPrText}">
+                    <TextBlock Classes="caption muted" Text="{Binding Card.OpenPrText}" AutomationProperties.AccessibilityView="Raw" />
+                  </Button>
                   <Button x:Name="NeedsYouCardItem" Classes="row-title" Click="OnItem" IsVisible="{Binding Card.CanOpenItem}" HorizontalAlignment="Left"
                           AutomationProperties.Name="{Binding OpenItemWord}">
                     <TextBlock Classes="caption muted" Text="{Binding OpenItemWord}" AutomationProperties.AccessibilityView="Raw" />

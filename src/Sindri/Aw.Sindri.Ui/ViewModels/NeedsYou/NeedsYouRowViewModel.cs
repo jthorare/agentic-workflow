@@ -84,7 +84,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// Where a click on the row goes, from Home, the inbox or the tray: a nested park (via child, with the child's address) opens the child's workflow frame
     /// at once, where the answer is; every other row opens its own sheet.
     /// </summary>
-    public DeepLink OpenLink => ChildAnswer is { OpensChild: true, Link: { } child } ? child : SheetLink;
+    public DeepLink OpenLink => RouteLink ?? (ChildAnswer is { OpensChild: true, Link: { } child } ? child : SheetLink);
 
     /// <summary>True when a click on the row opens a child's frame instead of its sheet.</summary>
     public bool OpensChild => OpenLink.Kind == DeepLinkKind.Workflow;
@@ -162,7 +162,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     private static readonly string[] _content =
     [
         nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
-        nameof(CanOpenItem), nameof(ItemLink), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
+        nameof(CanOpenItem), nameof(ItemLink), nameof(OpenLabel), nameof(HasPr), nameof(OpenPrText), nameof(ChildAnswer), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
     ];
 
     private bool _rebuilding;

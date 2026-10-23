@@ -65,6 +65,7 @@ internal static class NeedsYouMapper
             Notice = row.Notice ?? string.Empty,
             Timeout = TimeoutOf(row, readAt),
             Stop = row.Stop,
+            Open = row.Open,
             Question = PendingDecision(subject?.DecisionId, decisions)?.Question ?? string.Empty,
         };
     }
