@@ -180,4 +180,18 @@ public sealed class T3SessionHostTests : IDisposable
 
         Expect.True(Assert.Single(_rig.Api.Launched).Model is null);
     }
+
+    [Fact]
+    public async Task A_clone_of_a_T3_projects_repository_runs_in_that_project_bound_to_the_clone()
+    {
+        var other = Path.Combine(Path.GetDirectoryName(_rig.Repo)!, "elsewhere-clone");   // why: the rig's repo is never a root path
+        var clone = _rig.Session("snd-one") with { RepoPath = other, WorkDir = other };
+        _rig.Api.AddProject("/home/owner/agentic-workflow", "project-2", "github.com/jthorare/agentic-workflow");
+        _rig.Repos.Set(other, new T3RepoIdentity(other, "github.com/jthorare/agentic-workflow"));
+
+        _ = await _rig.Host().Start(clone, _deadline, Token);
+
+        var launched = Assert.Single(_rig.Api.Launched);
+        Expect.Equal(("project-2", (string?)other), (launched.ProjectId, launched.WorktreePath));
+    }
 }

@@ -23,7 +23,7 @@ internal static class LauncherServiceCollectionExtensions
             .AddSingleton(sp => T3Options(sp, environment))
             .AddSingleton(static sp => new T3Credentials(sp.GetRequiredService<T3Options>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IT3Api>(static sp => new T3McpApi(sp.GetRequiredService<T3Credentials>(), sp.GetRequiredService<T3Options>()))
-            .AddSingleton(static sp => new T3SessionHost(sp.GetRequiredService<IT3Api>(), new T3SessionMap(sp.GetRequiredService<T3Options>()), sp.GetRequiredService<T3Options>()))
+            .AddSingleton(static sp => new T3SessionHost(sp.GetRequiredService<IT3Api>(), new T3SessionMap(sp.GetRequiredService<T3Options>()), sp.GetRequiredService<T3Options>(), new GitT3RepoIdentities()))
             .AddSingleton<IHostedSessions>(static sp => sp.GetRequiredService<T3SessionHost>())
             .AddSingleton<ILaunchStartup>(sp => new LaunchStartup(() => WarpSweep(sp, environment)))
             .AddSingleton<ITerminalViewer>(sp => new T3AwareViewer(Viewer(sp, environment), sp.GetRequiredService<T3SessionHost>()))

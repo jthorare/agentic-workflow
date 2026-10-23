@@ -42,7 +42,10 @@ internal static class T3Wire
     internal sealed record ProjectList(IReadOnlyList<Project> Projects, int? NextCursor);
 
     /// <summary>One project.</summary>
-    internal sealed record Project(string Id, string WorkspaceRoot);
+    internal sealed record Project(string Id, string WorkspaceRoot, RepositoryIdentity? RepositoryIdentity);
+
+    /// <summary>The repository T3 knows a project as.</summary>
+    internal sealed record RepositoryIdentity(string CanonicalKey);
 
     /// <summary>'t3_thread_launch' arguments.</summary>
     internal sealed record LaunchArgs(

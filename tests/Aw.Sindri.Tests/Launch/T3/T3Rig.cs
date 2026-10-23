@@ -16,6 +16,8 @@ internal sealed class T3Rig : IDisposable
 
     public FakeT3Api Api { get; } = new();
 
+    public FakeT3RepoIdentities Repos { get; } = new();
+
     public string Repo => Path.Combine(_home, "repo");
 
     public string Worktree => Path.Combine(Repo, ".claude", "worktrees", "sindri-one");
@@ -23,7 +25,7 @@ internal sealed class T3Rig : IDisposable
     /// <summary>'true' opens nothing and exits 0, so the viewer's open succeeds without a T3 app.</summary>
     public T3Options Options => new(Path.Combine(_home, "launch", "t3"), Path.Combine(_home, "t3home"), "t3") { Opener = "true" };
 
-    public T3SessionHost Host() => new(Api, new T3SessionMap(Options), Options);
+    public T3SessionHost Host() => new(Api, new T3SessionMap(Options), Options, Repos);
 
     public HostSession Session(string name, string? workDir = null) =>
         new(name, workDir ?? Worktree, ["sindri", "session", "wrap"], new Dictionary<string, string>(StringComparer.Ordinal))

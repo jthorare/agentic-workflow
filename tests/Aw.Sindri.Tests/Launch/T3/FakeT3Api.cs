@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Launch.T3;
 /// <summary>A T3 Code in memory for the T3 host: projects by folder, threads by id, and a switch that makes it unreachable.</summary>
 internal sealed class FakeT3Api : IT3Api
 {
-    private readonly Dictionary<string, string> _projects = new(StringComparer.Ordinal);
+    private readonly List<T3Project> _projects = [];
     private readonly Dictionary<string, (string Status, bool Archived)> _threads = new(StringComparer.Ordinal);
     private readonly List<T3LaunchRequest> _launched = [];
     private readonly List<string> _interrupted = [];
@@ -28,7 +28,8 @@ internal sealed class FakeT3Api : IT3Api
     /// <summary>Adds a project rooted at <paramref name="root"/>.</summary>
     /// <param name="root">Its folder.</param>
     /// <param name="id">Its id.</param>
-    public void AddProject(string root, string id = "project-1") => _projects[root] = id;
+    /// <param name="repositoryKey">The repository T3 knows it as, or null.</param>
+    public void AddProject(string root, string id = "project-1", string? repositoryKey = null) => _projects.Add(new T3Project(id, root, repositoryKey));
 
     /// <summary>Disables every provider instance of <paramref name="driverKind"/>, as T3's settings do.</summary>
     /// <param name="driverKind">The driver.</param>
@@ -45,8 +46,8 @@ internal sealed class FakeT3Api : IT3Api
     public ValueTask<Result<T3Environment>> Environment(CancellationToken cancellationToken) =>
         Answer(() => (Result<T3Environment>)new T3Environment(EnvironmentId, "0.0.0-test"));
 
-    public ValueTask<Result<string?>> ProjectFor(string repoPath, CancellationToken cancellationToken) =>
-        Answer(() => (Result<string?>)T3Projects.Containing(_projects.Select(static p => new T3Wire.Project(p.Value, p.Key)), repoPath));
+    public ValueTask<Result<IReadOnlyList<T3Project>>> Projects(CancellationToken cancellationToken) =>
+        Answer(() => (Result<IReadOnlyList<T3Project>>)_projects.ToList());
 
     public ValueTask<Result<T3Model?>> ModelFor(string driverKind, CancellationToken cancellationToken) =>
         Answer(() => (Result<T3Model?>)_models.GetValueOrDefault(driverKind));

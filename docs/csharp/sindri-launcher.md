@@ -157,9 +157,12 @@ approved argv (`argvHash`) need a process Sindri starts itself.
 { "schema": 1, "viewer": { "kind": "print" }, "host": { "kind": "t3" } }
 ```
 
-- **Start.** The host finds the T3 project whose folder holds the item's repo (none: `SND-LAUNCH-026`, fix `t3 project add <repo>`),
-  then calls T3's `t3_thread_launch` with the item's seed as the first message, `sindri ITM-…` as the title, and, when the launch
-  has a worktree, `workspaceStrategy: existing_worktree` so the thread runs there. The launch's agent picks the T3 provider:
+- **Start.** The host finds the T3 project the item's repo belongs to, in this order: a project whose folder is the repo or holds it
+  (the deepest); a project whose folder is the repo's main checkout (the repo is a linked worktree); a project T3 knows as the same
+  repository (its `repositoryIdentity.canonicalKey` equals the key of the repo's primary remote, `upstream`, else `origin`, else the
+  first by name, normalized as T3 does: another clone). None: `SND-LAUNCH-026`, fix `t3 project add <repo>`. It then calls T3's
+  `t3_thread_launch` in that project with the item's seed as the first message and `sindri ITM-…` as the title; when the folder the
+  launch runs in isn't the project's own (a worktree, or another clone), `workspaceStrategy: existing_worktree` binds the thread to it. The launch's agent picks the T3 provider:
   `claude-code` runs on T3's Claude, `codex` on Codex, `cursor` on Cursor, each on the first enabled instance of that driver
   with its first listed model (T3 lists favourites first; none enabled: `SND-LAUNCH-027`); an added entry T3 has no driver for
   runs on the project's default. The catalog entry's argv, environment and MCP config are not used, and no `session wrap`

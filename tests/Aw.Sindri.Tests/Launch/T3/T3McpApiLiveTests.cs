@@ -33,11 +33,32 @@ public sealed class T3McpApiLiveTests
         await using var api = new T3McpApi(credentials, options);
 
         var environment = await api.Environment(Token);
-        var project = await api.ProjectFor("/no/such/repo/anywhere", Token);
+        var projects = await api.Projects(Token);
         var thread = await api.Read("sindri-live-test-no-such-thread", Token);
 
         Expect.True(environment.IsSuccess && environment.Value.Id.Length > 0, environment.IsError ? environment.Error.Message : "environment");
-        Expect.True(project is { IsSuccess: true, Value: null }, project.IsError ? project.Error.Message : "project");
+        Expect.True(projects.IsSuccess && projects.Value.All(static p => p.Id.Length > 0 && p.Root.Length > 0), projects.IsError ? projects.Error.Message : "projects");
         Expect.True(thread is { IsSuccess: true, Value: null }, thread.IsError ? thread.Error.Message : "thread");
+    }
+
+    [Fact]
+    public async Task A_repo_resolves_to_its_real_T3_project()
+    {
+        var options = Options();
+        if (Environment.GetEnvironmentVariable("AW_T3_LIVE_REPO") is not { Length: > 0 } repo)
+        {
+            Assert.Skip("set AW_T3_LIVE_REPO to a repo folder T3 has a project for (its folder, a worktree of it, or another clone)");
+            throw new InvalidOperationException("skipped");   // Assert.Skip throws first; this keeps repo definitely assigned
+        }
+
+        await using var credentials = new T3Credentials(options, TimeProvider.System);
+        await using var api = new T3McpApi(credentials, options);
+        var projects = await api.Projects(Token);
+        var identity = await new GitT3RepoIdentities().Of(repo, Token);
+
+        var project = T3Projects.Resolve(projects.Value, repo, identity);
+
+        Expect.True(project is not null, $"no project for {repo} (main checkout {identity.MainCheckout}, key {identity.RepositoryKey})");
+        TestContext.Current.SendDiagnosticMessage($"{repo} -> {project?.Id} at {project?.Root} (key {identity.RepositoryKey})");
     }
 }

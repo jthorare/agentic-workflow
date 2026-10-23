@@ -13,7 +13,8 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <param name="api">T3 Code's tools.</param>
 /// <param name="map">The sessions it started.</param>
 /// <param name="options">The link opener.</param>
-internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options options) : ISessionHost, IHostedSessions
+/// <param name="repos">What git says a repo folder is, for finding its project.</param>
+internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options options, IT3RepoIdentities repos) : ISessionHost, IHostedSessions
 {
     /// <inheritdoc/>
     public HostKind Kind => HostKind.T3;
@@ -47,8 +48,8 @@ internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options opti
             return model.Error;
         }
 
-        var worktree = SamePath(session.WorkDir, repo) ? null : session.WorkDir;
-        var request = new T3LaunchRequest(project.Value, session.Title ?? session.Name, session.Seed ?? $"Sindri session {session.Name}.", worktree, model.Value);
+        var worktree = T3Projects.Same(session.WorkDir, project.Value.Root) ? null : session.WorkDir;   // any other folder (a worktree, or a clone that isn't the project's own) is bound explicitly
+        var request = new T3LaunchRequest(project.Value.Id, session.Title ?? session.Name, session.Seed ?? $"Sindri session {session.Name}.", worktree, model.Value);
         var thread = await api.Launch(request, cancellationToken).ConfigureAwait(false);
         if (thread.IsError)
         {
@@ -173,16 +174,19 @@ internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options opti
             : SindriErrors.LaunchT3NoProvider.With($"T3 Code has no enabled {driver} provider for {id.Value} (fix: enable it in T3 Code's settings, or open with --agent <another agent>)");
     }
 
-    /// <summary>The T3 project that holds <paramref name="repo"/>, or SND-LAUNCH-026 with the command that adds it.</summary>
-    private async ValueTask<Result<string>> ProjectFor(string repo, CancellationToken cancellationToken)
+    /// <summary>The T3 project <paramref name="repo"/> belongs to (<see cref="T3Projects.Resolve"/>), or SND-LAUNCH-026 with the command that adds it.</summary>
+    private async ValueTask<Result<T3Project>> ProjectFor(string repo, CancellationToken cancellationToken)
     {
-        var project = await api.ProjectFor(repo, cancellationToken).ConfigureAwait(false);
-        if (project.IsError)
+        var projects = await api.Projects(cancellationToken).ConfigureAwait(false);
+        if (projects.IsError)
         {
-            return project.Error;
+            return projects.Error;
         }
 
-        return project.Value is { } id ? id : SindriErrors.LaunchT3NoProject.With($"no T3 Code project contains {repo} (fix: t3 project add {repo})");
+        var identity = await repos.Of(repo, cancellationToken).ConfigureAwait(false);
+        return T3Projects.Resolve(projects.Value, repo, identity) is { } project
+            ? project
+            : SindriErrors.LaunchT3NoProject.With($"no T3 Code project is {repo} or the same repository (fix: t3 project add {repo})");
     }
 
     /// <summary>Alive unless T3 says the thread is gone or archived: when T3 can't be asked (closed, restarting for an update) the thread is still there.</summary>
@@ -197,6 +201,4 @@ internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options opti
     private static LaunchId? Launch(string name) =>
         name.StartsWith("snd-", StringComparison.Ordinal) && LaunchId.TryFrom(name["snd-".Length..], out var launch) ? launch : null;
 
-    private static bool SamePath(string left, string right) =>
-        string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(left)), Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.Ordinal);
 }

@@ -28,7 +28,7 @@ internal sealed class T3McpApi(T3Credentials credentials, T3Options options) : I
     }
 
     /// <inheritdoc/>
-    public async ValueTask<Result<string?>> ProjectFor(string repoPath, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyList<T3Project>>> Projects(CancellationToken cancellationToken)
     {
         var projects = new List<T3Wire.Project>();
         int? cursor = 0;
@@ -49,7 +49,7 @@ internal sealed class T3McpApi(T3Credentials credentials, T3Options options) : I
             cursor = list.NextCursor;
         }
 
-        return T3Projects.Containing(projects, repoPath);
+        return projects.Select(static p => new T3Project(p.Id, p.WorkspaceRoot, p.RepositoryIdentity?.CanonicalKey)).ToList();
     }
 
     /// <inheritdoc/>

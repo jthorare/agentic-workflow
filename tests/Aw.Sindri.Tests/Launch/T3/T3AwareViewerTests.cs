@@ -57,7 +57,7 @@ public sealed class T3AwareViewerTests : IDisposable
     public async Task An_opener_that_fails_is_a_viewer_failure()
     {
         var options = _rig.Options with { Opener = "false" };
-        var host = new T3SessionHost(_rig.Api, new T3SessionMap(options), options);
+        var host = new T3SessionHost(_rig.Api, new T3SessionMap(options), options, _rig.Repos);
         var started = await host.Start(_rig.Session("snd-one"), _window, Token);
 
         var shown = await new T3AwareViewer(_terminal, host).Open(new ViewerRequest(started.Value, host.AttachArgv(started.Value), "sindri ITM-1", _window), Token);

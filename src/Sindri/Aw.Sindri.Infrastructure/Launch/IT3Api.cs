@@ -13,11 +13,10 @@ internal interface IT3Api
     /// <returns>Its id and version.</returns>
     public ValueTask<Result<T3Environment>> Environment(CancellationToken cancellationToken);
 
-    /// <summary>The project whose folder contains <paramref name="repoPath"/> (the deepest one), or null when none does.</summary>
-    /// <param name="repoPath">The repo checkout, absolute.</param>
+    /// <summary>Every project, with its folder and the repository T3 knows it as.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The project id, or null.</returns>
-    public ValueTask<Result<string?>> ProjectFor(string repoPath, CancellationToken cancellationToken);
+    /// <returns>The projects.</returns>
+    public ValueTask<Result<IReadOnlyList<T3Project>>> Projects(CancellationToken cancellationToken);
 
     /// <summary>The first enabled provider instance of <paramref name="driverKind"/> that has a model, with its first model (T3 lists favourites first), or null.</summary>
     /// <param name="driverKind">The driver ('claudeAgent', 'codex', 'cursor').</param>
