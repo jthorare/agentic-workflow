@@ -10,7 +10,7 @@
       },
       "item": "ITM-11111111111111111111111111111111",
       "title": "An item",
-      "reason": "Produce the Step output for T-3 (round 1/3), then run: sindri workflow complete T-3/step/1 --run 1.1 --outcome done --output fact:output=<file>",
+      "reason": "Ready to merge ITM-11111111111111111111111111111111's pull request: CI green on the head, the docs settled (see the view). Merge it, or send it back with rework notes, in the app or with `sindri workflow command T-3/step/1 merge`.",
       "repo": null,
       "urgency": "colour",
       "since": "2026-10-11T10:48:00.0000000Z",
