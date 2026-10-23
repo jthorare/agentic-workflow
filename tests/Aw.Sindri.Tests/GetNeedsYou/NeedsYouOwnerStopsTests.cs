@@ -133,9 +133,11 @@ public sealed class NeedsYouOwnerStopsTests
     private async Task<IReadOnlyList<NeedsYouRow>> Read(InstanceView[] listed, CallerContext caller, InstanceView[]? served = null)
     {
         var instances = new SomeInstances(served ?? listed);
-        var stops = new NeedsYouOwnerStops(
+        var reader = new OwnerStopReader(
             new RecordingInstances([.. listed.Select(static v => new InstanceRow(v.Address.Value, v.State, NeedsYou: false))]), instances, instances,
-            new RecipeRegistryReader(_recipes, new InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog,
+            new RecipeRegistryReader(_recipes, new InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog);
+        var stops = new NeedsYouOwnerStops(
+            reader,
             _q.Views.Views, new Contents(), new PassThroughScrubber(), TimeProvider.System);
         return await stops.Read(caller, TestContext.Current.CancellationToken);
     }
