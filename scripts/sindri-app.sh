@@ -50,6 +50,9 @@
 # AW_SINDRI_MCP_REPO (printed as --repo); a linked git worktree names its main checkout's folder, which works when the profile
 # names the repo after its folder (else set AW_SINDRI_MCP_REPO). AW_SINDRI_APP_NO_MCP=1 skips it.
 #
+# The name: Sindri's hints say `sindri …`; a bare run or serve notes once, on stderr, that on this box they run as `sindri-app …`
+# (the `sindri` on the PATH, when there is one, is the TypeScript one until the switch), unless `sindri` resolves into this build.
+#
 # Exit: sindri's exit code; 1 when setup or a publish failed (the publish log's tail on stderr).
 # Bash 3.2 compatible (macOS /bin/bash).
 set -euo pipefail
@@ -313,6 +316,19 @@ register_hint() { # waits up to 2 minutes for a live control plane, then prints 
 if [ "${AW_SINDRI_APP_NO_MCP:-0}" != 1 ] && { [ $# -eq 0 ] || [ "${1:-}" = serve ]; }; then
   register_hint >&2 </dev/null &
 fi
+# 7. The name: Sindri's own hints say `sindri …`, but before the switch this box's C# Sindri is `sindri-app` (the bare name
+# is the TypeScript one, or nothing). A bare run or serve says so once, on stderr, unless `sindri` already runs this build.
+name_hint() {
+  local s r t; s="$(command -v sindri 2>/dev/null || true)"; r="$s"
+  while [ -L "$r" ]; do t="$(readlink "$r")"; case "$t" in /*) r="$t" ;; *) r="$(dirname "$r")/$t" ;; esac; done
+  case "$r" in "$base"/*) return 0 ;; esac
+  if [ -z "$s" ]; then
+    say "name: the commands Sindri suggests start with \`sindri\`; on this box run them as \`sindri-app …\` (\`sindri-app onyx up\`)"
+  else
+    say "name: the commands Sindri suggests start with \`sindri\`; run them as \`sindri-app …\`: the \`sindri\` on your PATH ($s) is the TypeScript one until the switch"
+  fi
+}
+if [ $# -eq 0 ] || [ "${1:-}" = serve ]; then name_hint; fi
 # step.judge.choose runs the judge published with this build, unless the caller named one.
 export AW_SINDRI_JUDGE="${AW_SINDRI_JUDGE:-$base/$stamp/judge}"
 # step.scope.evidence runs the aw-packets published with this build, unless the caller named one.

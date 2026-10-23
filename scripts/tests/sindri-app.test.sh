@@ -8,6 +8,7 @@
 # one replaced, AW_SINDRI_APP_NO_LINK=1 links nothing; stdout carries only sindri's output. At the end: --publish-only
 # publishes and never execs or hints; the shipped recipes staged into the build copy are HEAD's (git archive), never the
 # working tree's; the stamp carries the commit and the recipes tree hash; a dirty tree says so; a non-git tree is refused.
+# The name note: a bare run or serve says once that `sindri …` hints run as `sindri-app …`, unless `sindri` links into the build.
 # Run: bash scripts/tests/sindri-app.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -295,6 +296,25 @@ AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" status >/dev/null 2>"$WO
 check "mcp: other commands print nothing about it" "$(grep -c 'mcp register' "$WORK/err")" "0"
 check "mcp: and nothing ran a registration" "$(grep -c '^sindri mcp' "$CALLS")" "0"
 kill "$PLANE" 2>/dev/null; wait "$PLANE" 2>/dev/null
+
+# The name note: a bare run or serve says once that Sindri's `sindri …` hints run as `sindri-app …` on this box.
+NOSINDRI="$WORK/nosindri"; mkdir -p "$NOSINDRI"
+for t in bash git jq cksum sort find xargs cat tr sed basename dirname mkdir rm cp mv ln readlink date seq sleep kill grep head tail wc printf uname mktemp touch chmod env cut awk shasum sha256sum ps; do
+  p="$(command -v "$t" 2>/dev/null)" && [ -n "$p" ] && [ "${p#/}" != "$p" ] && ln -sf "$p" "$NOSINDRI/$t"
+done
+NAMEPATH="$WORK/fakebin:$NOSINDRI"
+(cd "$WORK" && PATH="$NAMEPATH" AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >"$WORK/out" 2>"$WORK/err")
+check "name: with no sindri on the PATH a bare run says to use sindri-app, once, on stderr" \
+  "$(grep -c 'name: .*run them as `sindri-app …`' "$WORK/err"):$(grep -c 'name:' "$WORK/out")" "1:0"
+mkdir -p "$WORK/tsbin"; printf '#!/bin/sh\n' > "$WORK/tsbin/sindri"; chmod +x "$WORK/tsbin/sindri"
+(cd "$WORK" && PATH="$WORK/tsbin:$NAMEPATH" AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" serve >/dev/null 2>"$WORK/err")
+check "name: another sindri on the PATH is named as the TypeScript one (serve too)" \
+  "$(grep -c "the \`sindri\` on your PATH ($WORK/tsbin/sindri) is the TypeScript one" "$WORK/err")" "1"
+mkdir -p "$WORK/csbin"; ln -sf "$AW_STATE_DIR/bin/sindri-app/$(cat "$AW_STATE_DIR/bin/sindri-app/current")/sindri" "$WORK/csbin/sindri"
+(cd "$WORK" && PATH="$WORK/csbin:$NAMEPATH" AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" >/dev/null 2>"$WORK/err")
+check "name: a sindri that links into this build says nothing" "$(grep -c 'name:' "$WORK/err")" "0"
+(cd "$WORK" && PATH="$NAMEPATH" AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_APP_NO_LINK=1 bash "$R/scripts/sindri-app.sh" status >/dev/null 2>"$WORK/err")
+check "name: other commands say nothing about it" "$(grep -c 'name:' "$WORK/err")" "0"
 
 # --- SO-A7a: --publish-only, and the recipes staged from HEAD ------------------------------------------------------
 git -C "$R" -c user.email=t@t -c user.name=t add -A >/dev/null 2>&1
