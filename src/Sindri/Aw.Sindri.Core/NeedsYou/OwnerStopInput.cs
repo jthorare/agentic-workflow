@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.OpenTargets;
+
 namespace Aw.Sindri.Core.NeedsYou;
 
 /// <summary>What the 'desk:' row of an owner stop says (<see cref="NeedsYouRows.ForOwnerStop"/>).</summary>
