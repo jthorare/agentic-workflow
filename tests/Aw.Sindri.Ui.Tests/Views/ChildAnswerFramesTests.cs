@@ -42,9 +42,14 @@ public sealed class ChildAnswerFramesTests : FrameHost
 
     private static RouteAnswer Served(JsonNode body) => new(HttpStatusCode.OK, body.ToJsonString());
 
-    private static RouteAnswer DetailWith(string detailScenario, string statusScenario)
+    private static RouteAnswer DetailWith(string detailScenario, string statusScenario, bool served = false)
     {
         var detail = GoldenFiles.Node("workflow-instance", detailScenario);
+        if (!served)
+        {
+            _ = detail.AsObject().Remove("open");   // the older path: no served open, so the state's own button leads to the child
+        }
+
         detail["current"]!["status"] = GoldenFiles.Node("workflow-status", statusScenario);
         return Served(detail);
     }
@@ -144,5 +149,23 @@ public sealed class ChildAnswerFramesTests : FrameHost
         await Until(window, () => string.Equals((window.FocusManager?.GetFocusedElement() as Button)?.Name, "ChildRowOpen", StringComparison.Ordinal), "focus did not reach the Children panel");
         Assert.Equal(bare.Address, shell.Instance.Address);
         Frame(window, "expanded-no-child-focus", Prefix);
+    });
+
+    [Fact]
+    public Task A_served_open_is_the_one_open_button_and_follows_its_route() => OnUi(async () =>
+    {
+        var withChild = FixtureInstances.Detail(Detail);
+        Server.InstanceBody = id => string.Equals(id, withChild.Id, StringComparison.Ordinal) ? DetailWith(Detail, "escalated-child", served: true) : null;
+        var (window, shell) = await Connected(width: 1600, height: 1000);
+
+        shell.OpenInstance(withChild.Address, withChild.Id);
+        await Until(window, () => shell.Instance.Phase == FramePhase.Shown && Visible(window, "InstanceOpen"));
+
+        Assert.False(Visible(window, "ExpandedAnswerInChild"));
+        Assert.Equal("Answer in the child", Named<Button>(window, "InstanceOpen").Content);
+
+        Click(Named<Button>(window, "InstanceOpen"));
+
+        Assert.Equal(new DeepLink(DeepLinkKind.Workflow, "ITM-01JK3/project/1/step.6"), shell.SheetLink);
     });
 }
