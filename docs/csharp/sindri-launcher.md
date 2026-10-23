@@ -159,8 +159,12 @@ approved argv (`argvHash`) need a process Sindri starts itself.
 
 - **Start.** The host finds the T3 project whose folder holds the item's repo (none: `SND-LAUNCH-026`, fix `t3 project add <repo>`),
   then calls T3's `t3_thread_launch` with the item's seed as the first message, `sindri ITM-…` as the title, and, when the launch
-  has a worktree, `workspaceStrategy: existing_worktree` so the thread runs there. The thread uses the T3 project's default
-  provider and model; the catalog entry's argv, environment and MCP config are not used, and no `session wrap` runs.
+  has a worktree, `workspaceStrategy: existing_worktree` so the thread runs there. The launch's agent picks the T3 provider:
+  `claude-code` runs on T3's Claude, `codex` on Codex, `cursor` on Cursor, each on the first enabled instance of that driver
+  with its first listed model (T3 lists favourites first; none enabled: `SND-LAUNCH-027`); an added entry T3 has no driver for
+  runs on the project's default. The catalog entry's argv, environment and MCP config are not used, and no `session wrap`
+  runs; the agent reaches Sindri through the repo's own MCP registration (`sindri mcp register`, which the setup service does
+  for every approved repo).
 - **Viewer.** The attach command is `open t3code://threads/<environment>/<thread>` (`xdg-open` on Linux). The launcher runs it
   without a terminal whichever `viewer` is configured, so the thread opens in the app; `print` prints it. An attach to a live T3
   session opens the same link.

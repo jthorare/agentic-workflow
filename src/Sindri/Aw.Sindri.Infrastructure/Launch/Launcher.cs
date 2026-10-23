@@ -224,7 +224,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             return await RunOnViewer(request, host, (name, prepared.WorkDir, wrapped), (source, prepared.Session), cancellationToken).ConfigureAwait(false);
         }
 
-        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}" };
+        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}", Agent = request.Agent };
         var started = await host.Start(session, parts.Options.HostDeadline, cancellationToken).ConfigureAwait(false);
         if (started.IsError)
         {

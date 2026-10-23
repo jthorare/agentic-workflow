@@ -19,6 +19,12 @@ internal interface IT3Api
     /// <returns>The project id, or null.</returns>
     public ValueTask<Result<string?>> ProjectFor(string repoPath, CancellationToken cancellationToken);
 
+    /// <summary>The first enabled provider instance of <paramref name="driverKind"/> that has a model, with its first model (T3 lists favourites first), or null.</summary>
+    /// <param name="driverKind">The driver ('claudeAgent', 'codex', 'cursor').</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The instance and model, or null when T3 has none enabled.</returns>
+    public ValueTask<Result<T3Model?>> ModelFor(string driverKind, CancellationToken cancellationToken);
+
     /// <summary>Starts a thread and its first turn.</summary>
     /// <param name="request">What to start.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

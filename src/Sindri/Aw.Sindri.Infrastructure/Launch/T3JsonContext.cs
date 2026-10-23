@@ -10,6 +10,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 [JsonSerializable(typeof(T3Wire.NoArgs))]
 [JsonSerializable(typeof(T3Wire.Environment))]
 [JsonSerializable(typeof(JsonElement))]
+[JsonSerializable(typeof(T3Wire.Capabilities))]
 [JsonSerializable(typeof(T3Wire.ProjectListArgs))]
 [JsonSerializable(typeof(T3Wire.ProjectList))]
 [JsonSerializable(typeof(T3Wire.LaunchArgs))]

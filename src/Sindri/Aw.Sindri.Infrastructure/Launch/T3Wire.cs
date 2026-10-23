@@ -23,6 +23,18 @@ internal static class T3Wire
     /// <summary>'t3_environment_read' result.</summary>
     internal sealed record Environment(string EnvironmentId, string ServerVersion);
 
+    /// <summary>'orchestrator_capabilities' result.</summary>
+    internal sealed record Capabilities(IReadOnlyList<Provider> Providers);
+
+    /// <summary>One provider instance: its driver ('claudeAgent', 'codex', 'cursor', …), its models and why it can't run ('Provider instance is disabled.').</summary>
+    internal sealed record Provider(string ProviderInstanceId, string DriverKind, IReadOnlyList<Model> Models, IReadOnlyList<string>? Constraints);
+
+    /// <summary>One model.</summary>
+    internal sealed record Model(string Id);
+
+    /// <summary>'t3_thread_launch''s model choice.</summary>
+    internal sealed record ModelSelection(string InstanceId, string Model);
+
     /// <summary>'t3_project_list' arguments.</summary>
     internal sealed record ProjectListArgs(int Cursor, int Limit);
 
@@ -33,7 +45,12 @@ internal static class T3Wire
     internal sealed record Project(string Id, string WorkspaceRoot);
 
     /// <summary>'t3_thread_launch' arguments.</summary>
-    internal sealed record LaunchArgs(string ProjectId, string Title, string Message, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Workspace? WorkspaceStrategy);   // T3 takes an absent strategy as the project folder, and refuses null
+    internal sealed record LaunchArgs(
+        string ProjectId,
+        string Title,
+        string Message,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Workspace? WorkspaceStrategy,   // T3 takes an absent strategy as the project folder, and refuses null
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelSelection? ModelSelection);   // absent: the project's default
 
     /// <summary>The launch's workspace binding ('existing_worktree' only; the project root is the tool's default).</summary>
     internal sealed record Workspace(string Type, string WorktreePath);

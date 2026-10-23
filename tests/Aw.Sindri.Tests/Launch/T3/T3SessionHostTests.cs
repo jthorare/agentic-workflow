@@ -153,4 +153,31 @@ public sealed class T3SessionHostTests : IDisposable
         Expect.True(started.IsError);
         Expect.Equal(0, _rig.Api.Launched.Count);
     }
+
+    [Fact]
+    public async Task A_claude_code_open_runs_on_T3s_enabled_Claude_provider()
+    {
+        _ = await _rig.Host().Start(_rig.Session("snd-one") with { Agent = AgentId.From("claude-code") }, _deadline, Token);
+
+        Expect.Equal(new T3Model("claudeAgent", "claude-test"), Assert.Single(_rig.Api.Launched).Model);
+    }
+
+    [Fact]
+    public async Task An_agent_whose_T3_provider_is_disabled_starts_nothing()
+    {
+        _rig.Api.Disable("codex");
+
+        var started = await _rig.Host().Start(_rig.Session("snd-one") with { Agent = AgentId.From("codex") }, _deadline, Token);
+
+        Expect.Equal("SND-LAUNCH-027", started.Error.Code);
+        Expect.Equal(0, _rig.Api.Launched.Count);
+    }
+
+    [Fact]
+    public async Task An_added_agent_T3_has_no_driver_for_runs_on_the_projects_default()
+    {
+        _ = await _rig.Host().Start(_rig.Session("snd-one") with { Agent = AgentId.From("aider") }, _deadline, Token);
+
+        Expect.True(Assert.Single(_rig.Api.Launched).Model is null);
+    }
 }

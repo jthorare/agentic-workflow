@@ -47,6 +47,7 @@ public sealed class LauncherT3Tests : IDisposable
         var launched = Assert.Single(_rig.Api.Launched);
         Expect.True(launched.Message.StartsWith("Sindri item " + A.FirstItemId.Value, StringComparison.Ordinal));
         Expect.Equal("sindri " + A.FirstItemId.Value, launched.Title);
+        Expect.Equal(new T3Model("claudeAgent", "claude-test"), launched.Model);
         Expect.True(launched.WorktreePath is null);
         Expect.Equal(0, _tmux.Started.Count);
     }

@@ -11,6 +11,7 @@ internal sealed class FakeT3Api : IT3Api
     private readonly Dictionary<string, (string Status, bool Archived)> _threads = new(StringComparer.Ordinal);
     private readonly List<T3LaunchRequest> _launched = [];
     private readonly List<string> _interrupted = [];
+    private readonly Dictionary<string, T3Model> _models = new(StringComparer.Ordinal) { ["claudeAgent"] = new T3Model("claudeAgent", "claude-test") };
 
     /// <summary>The environment id the fake reports.</summary>
     public string EnvironmentId { get; } = "env-1";
@@ -29,6 +30,10 @@ internal sealed class FakeT3Api : IT3Api
     /// <param name="id">Its id.</param>
     public void AddProject(string root, string id = "project-1") => _projects[root] = id;
 
+    /// <summary>Disables every provider instance of <paramref name="driverKind"/>, as T3's settings do.</summary>
+    /// <param name="driverKind">The driver.</param>
+    public void Disable(string driverKind) => _models.Remove(driverKind);
+
     /// <summary>Archives a thread, as the user does in the app.</summary>
     /// <param name="threadId">The thread.</param>
     public void Archive(string threadId) => _threads[threadId] = (_threads[threadId].Status, true);
@@ -42,6 +47,9 @@ internal sealed class FakeT3Api : IT3Api
 
     public ValueTask<Result<string?>> ProjectFor(string repoPath, CancellationToken cancellationToken) =>
         Answer(() => (Result<string?>)T3Projects.Containing(_projects.Select(static p => new T3Wire.Project(p.Value, p.Key)), repoPath));
+
+    public ValueTask<Result<T3Model?>> ModelFor(string driverKind, CancellationToken cancellationToken) =>
+        Answer(() => (Result<T3Model?>)_models.GetValueOrDefault(driverKind));
 
     public ValueTask<Result<string>> Launch(T3LaunchRequest request, CancellationToken cancellationToken) => Answer(() =>
     {

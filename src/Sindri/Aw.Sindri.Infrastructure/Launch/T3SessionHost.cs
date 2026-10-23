@@ -41,8 +41,14 @@ internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options opti
             return project.Error;
         }
 
+        var model = await ModelFor(session.Agent, cancellationToken).ConfigureAwait(false);
+        if (model.IsError)
+        {
+            return model.Error;
+        }
+
         var worktree = SamePath(session.WorkDir, repo) ? null : session.WorkDir;
-        var request = new T3LaunchRequest(project.Value, session.Title ?? session.Name, session.Seed ?? $"Sindri session {session.Name}.", worktree);
+        var request = new T3LaunchRequest(project.Value, session.Title ?? session.Name, session.Seed ?? $"Sindri session {session.Name}.", worktree, model.Value);
         var thread = await api.Launch(request, cancellationToken).ConfigureAwait(false);
         if (thread.IsError)
         {
@@ -143,6 +149,28 @@ internal sealed class T3SessionHost(IT3Api api, T3SessionMap map, T3Options opti
         return map.Get(name) is { } existing && await Alive(existing, cancellationToken).ConfigureAwait(false)
             ? KernelErrors.Conflict.With($"{name} is already a T3 thread ({existing.ThreadId})")
             : null;
+    }
+
+    /// <summary>
+    /// The T3 provider and model for the launch's agent: the first enabled instance of its driver (claude-code runs on T3's Claude, codex on Codex, cursor
+    /// on Cursor), or SND-LAUNCH-027 when T3 has none enabled. An agent T3 has no driver for (an added entry), or none given, runs on the project's default.
+    /// </summary>
+    private async ValueTask<Result<T3Model?>> ModelFor(AgentId? agent, CancellationToken cancellationToken)
+    {
+        if (agent is not { } id || T3Providers.DriverFor(id.Value) is not { } driver)
+        {
+            return (T3Model?)null;
+        }
+
+        var model = await api.ModelFor(driver, cancellationToken).ConfigureAwait(false);
+        if (model.IsError)
+        {
+            return model.Error;
+        }
+
+        return model.Value is { } found
+            ? found
+            : SindriErrors.LaunchT3NoProvider.With($"T3 Code has no enabled {driver} provider for {id.Value} (fix: enable it in T3 Code's settings, or open with --agent <another agent>)");
     }
 
     /// <summary>The T3 project that holds <paramref name="repo"/>, or SND-LAUNCH-026 with the command that adds it.</summary>

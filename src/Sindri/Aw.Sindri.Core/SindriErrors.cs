@@ -212,6 +212,9 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-026: the launcher's host is T3 and no T3 Code project contains the repo; nothing starts (fix: 't3 project add &lt;repo&gt;').</summary>
     public static readonly ErrorDefinition LaunchT3NoProject = new("SND-LAUNCH-026", ErrorKind.Invalid, "The repo isn't a T3 Code project");
 
+    /// <summary>SND-LAUNCH-027: the launcher's host is T3 and T3 has no enabled provider for the launch's agent (claude-code, codex, cursor); nothing starts.</summary>
+    public static readonly ErrorDefinition LaunchT3NoProvider = new("SND-LAUNCH-027", ErrorKind.Invalid, "T3 Code can't run that agent");
+
     /// <summary>SND-LAUNCH-013: a Step asked for a model or a policy, and the entry's matching form is 'none'; nothing launches (launcher L-17).</summary>
     public static readonly ErrorDefinition LaunchFormUnsupported = new("SND-LAUNCH-013", ErrorKind.Invalid, "The agent entry can't express the Step's model or policy");
 

@@ -17604,3 +17604,6 @@ static Aw.Sindri.Core.Launch.HostedSession.operator !=(Aw.Sindri.Core.Launch.Hos
 static Aw.Sindri.Core.Launch.HostedSession.operator ==(Aw.Sindri.Core.Launch.HostedSession? left, Aw.Sindri.Core.Launch.HostedSession? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.LaunchT3NoProject -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LaunchT3Unavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Launch.HostSession.Agent.get -> Aw.Sindri.Core.Launch.AgentId?
+Aw.Sindri.Core.Launch.HostSession.Agent.init -> void
+static readonly Aw.Sindri.Core.SindriErrors.LaunchT3NoProvider -> Aw.Kernel.ErrorDefinition!

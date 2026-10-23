@@ -53,11 +53,24 @@ internal sealed class T3McpApi(T3Credentials credentials, T3Options options) : I
     }
 
     /// <inheritdoc/>
+    public async ValueTask<Result<T3Model?>> ModelFor(string driverKind, CancellationToken cancellationToken)
+    {
+        var read = await Call<T3Wire.NoArgs, T3Wire.Capabilities>("orchestrator_capabilities", new T3Wire.NoArgs(), cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error;
+        }
+
+        return read.Value.Value is { } capabilities ? T3Providers.ModelFor(capabilities, driverKind) : Failed("orchestrator_capabilities", read.Value);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<Result<string>> Launch(T3LaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var workspace = request.WorktreePath is { } path ? new T3Wire.Workspace("existing_worktree", path) : null;
-        var launched = await Call<T3Wire.LaunchArgs, T3Wire.Launched>("t3_thread_launch", new T3Wire.LaunchArgs(request.ProjectId, request.Title, request.Message, workspace), cancellationToken).ConfigureAwait(false);
+        var model = request.Model is { } chosen ? new T3Wire.ModelSelection(chosen.InstanceId, chosen.Model) : null;
+        var launched = await Call<T3Wire.LaunchArgs, T3Wire.Launched>("t3_thread_launch", new T3Wire.LaunchArgs(request.ProjectId, request.Title, request.Message, workspace, model), cancellationToken).ConfigureAwait(false);
         return launched.IsError ? launched.Error : launched.Value.Value is { } thread ? thread.ThreadId : Failed("t3_thread_launch", launched.Value);
     }
 
