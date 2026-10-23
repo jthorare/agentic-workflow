@@ -73,6 +73,18 @@ public static partial class NeedsYouRows
         Row(item, address, new EngineRow(NeedsYouRowId.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
             new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Answer the question")), since, scrubber);
 
+    /// <summary>The 'desk:' row of an instance that waits on the owner at a human-verb wait: a wait state with a 'command.&lt;verb&gt;' exit whose effect acts with a human's authority (read at request time, from the pinned recipe).</summary>
+    /// <param name="item">The item's row.</param>
+    /// <param name="address">The instance's address.</param>
+    /// <param name="wait">What the wait says: its label, its reason and the pull request it is about.</param>
+    /// <param name="since">When the instance entered the wait.</param>
+    /// <param name="scrubber">Scrubs the text the row stores.</param>
+    /// <returns>The row.</returns>
+    public static NeedsYouRow ForOwnerStop(ItemRow item, InstanceAddress address, OwnerStopInput wait, DateTimeOffset since, ITextScrubber scrubber)
+    {
+        throw new NotSupportedException();
+    }
+
     /// <summary>The 'park' row of a takeover that went idle.</summary>
     /// <param name="item">The item's row.</param>
     /// <param name="address">The instance's address.</param>
