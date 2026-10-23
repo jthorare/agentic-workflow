@@ -15,22 +15,13 @@ public sealed class NeedsYouRoutesTests
     private static readonly InstanceAddress _deepest = InstanceAddress.From(_root.Value + "/scoping.1/step.2");
 
     [Fact]
-    public void A_desk_opens_its_instance()
-    {
-        Assert.Equal("workflow/" + _root.Value, NeedsYouRoutes.Desk(_root));
-    }
+    public void A_desk_opens_its_instance() => Assert.Equal("workflow/" + _root.Value, NeedsYouRoutes.Desk(_root));
 
     [Fact]
-    public void A_park_opens_its_deepest_parked_descendant()
-    {
-        Assert.Equal("workflow/" + _deepest.Value, NeedsYouRoutes.Park(_root, _deepest));
-    }
+    public void A_park_opens_its_deepest_parked_descendant() => Assert.Equal("workflow/" + _deepest.Value, NeedsYouRoutes.Park(_root, _deepest));
 
     [Fact]
-    public void A_park_the_root_decides_opens_the_root()
-    {
-        Assert.Equal("workflow/" + _root.Value, NeedsYouRoutes.Park(_root, deepest: null));
-    }
+    public void A_park_the_root_decides_opens_the_root() => Assert.Equal("workflow/" + _root.Value, NeedsYouRoutes.Park(_root, deepest: null));
 
     [Fact]
     public void The_other_routes_take_the_apps_deep_link_forms()
