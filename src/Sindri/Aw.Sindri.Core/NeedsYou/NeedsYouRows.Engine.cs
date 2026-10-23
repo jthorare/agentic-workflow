@@ -35,7 +35,7 @@ public static partial class NeedsYouRows
         var at = park.Descendant ?? park.Address;
         var answer = AnswerOf(park);
         var (label, words) = Words(suspension, park.Refusal);
-        var shape = new EngineRow(NeedsYouRowId.Park(park.Address), label, $"{words} ({at.Value})", Urgency.Pulse, answer?.Kind,
+        var shape = new EngineRow(NeedsYouRowIds.Park(park.Address), label, $"{words} ({at.Value})", Urgency.Pulse, answer?.Kind,
             answer?.ActionId ?? _approveRecipe, answer is null ? [_approveRecipe, _cancel] : [answer.ActionId], answer?.Cli ?? Status(at), OpenOf(answer, at), answer?.Via, answer?.Child);
         return Row(item, park.Address, shape, since, scrubber);
     }
@@ -71,7 +71,7 @@ public static partial class NeedsYouRows
     /// <param name="scrubber">Scrubs the text the row stores.</param>
     /// <returns>The row.</returns>
     public static NeedsYouRow ForDeskTask(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
-        Row(item, address, new EngineRow(NeedsYouRowId.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
+        Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
             new NeedsYouOpen(NeedsYouRoutes.Desk(address), "Answer the question")), since, scrubber);
 
     /// <summary>The 'desk:' row of an instance that waits on the owner at a human-verb wait: a wait state with a 'command.&lt;verb&gt;' exit whose effect acts with a human's authority (read at request time, from the pinned recipe).</summary>
@@ -95,7 +95,7 @@ public static partial class NeedsYouRows
     /// <param name="scrubber">Scrubs the text the row stores.</param>
     /// <returns>The row.</returns>
     public static NeedsYouRow ForIdleTakeover(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
-        Row(item, address, new EngineRow(NeedsYouRowId.Takeover(address), "taken over", $"a takeover is idle ({address.Value})", Urgency.Calm, AnswerKind: null, _handback, [_handback, _cancel], $"sindri handback {address.Value}",
+        Row(item, address, new EngineRow(NeedsYouRowIds.Takeover(address), "taken over", $"a takeover is idle ({address.Value})", Urgency.Calm, AnswerKind: null, _handback, [_handback, _cancel], $"sindri handback {address.Value}",
             new NeedsYouOpen(NeedsYouRoutes.Workflow(address), "Hand back or cancel")), since, scrubber);
 
     private static string Status(InstanceAddress address) => $"sindri workflow status {address.Value}";

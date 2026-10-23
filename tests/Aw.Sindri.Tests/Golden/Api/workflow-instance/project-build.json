@@ -553,5 +553,9 @@
   "stepRuns": [],
   "asOf": "2026-10-12T12:26:00.0000000Z",
   "steps": [],
-  "startedBy": null
+  "startedBy": null,
+  "open": {
+    "route": "workflow/ITM-01JK3/project/1/step.6",
+    "label": "Answer in the child"
+  }
 }

@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
@@ -61,7 +60,7 @@ internal sealed partial class NeedsYouProjection
     private async ValueTask<Result<Unit>> Settle(IViewRows rows, (ItemRow Item, EngineItemPart? Part) at, WorkflowEventPayload payload, LedgerEvent recorded, CancellationToken cancellationToken)
     {
         var address = InstanceAddress.From(payload.Instance);
-        var existing = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, NeedsYouRowId.Park(address).Value, cancellationToken).ConfigureAwait(false);
+        var existing = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, NeedsYouRowIds.Park(address).Value, cancellationToken).ConfigureAwait(false);
         if (existing.IsError)
         {
             return existing.Error;
@@ -111,9 +110,9 @@ internal sealed partial class NeedsYouProjection
     /// <summary>The stored id of the row with <paramref name="prefix"/> for the instance at <paramref name="address"/>.</summary>
     private static string IdOf(string prefix, InstanceAddress address) => prefix switch
     {
-        "desk:" => NeedsYouRowId.Desk(address).Value,
-        "takeover:" => NeedsYouRowId.Takeover(address).Value,
-        _ => NeedsYouRowId.Park(address).Value,
+        "desk:" => NeedsYouRowIds.Desk(address).Value,
+        "takeover:" => NeedsYouRowIds.Takeover(address).Value,
+        _ => NeedsYouRowIds.Park(address).Value,
     };
 
     /// <summary>The row prefix that stays as it is: a takeover's while the instance is taken over, a park's or escalation's when this row carries no detail to say what changed.</summary>
@@ -195,7 +194,7 @@ internal sealed partial class NeedsYouProjection
             return Unit.Value;   // not an engine address: no desk row to settle, and never a stall
         }
 
-        var id = NeedsYouRowId.Desk(address).Value;
+        var id = NeedsYouRowIds.Desk(address).Value;
         var delta = descendant.Payload.Detail!.Delta;   // why: Nested returns before this when the row has no detail
         var idle = delta.Outcome is not null || delta.Suspension is not null;
         if (!idle && delta.Frame is { Run: not null } frame && (frame.Runtime ?? StepRuntime.Desk) == StepRuntime.Desk)
@@ -213,7 +212,7 @@ internal sealed partial class NeedsYouProjection
 
     private async ValueTask<Result<Unit>> Descended(IViewRows rows, DescendantRow descendant, CancellationToken cancellationToken)
     {
-        var id = NeedsYouRowId.Park(descendant.Root).Value;
+        var id = NeedsYouRowIds.Park(descendant.Root).Value;
         var existing = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, id, cancellationToken).ConfigureAwait(false);
         if (existing.IsError)
         {
@@ -247,7 +246,7 @@ internal sealed partial class NeedsYouProjection
     }
 
     private RowPut NestedPut(ItemRow item, InstanceAddress root, IReadOnlyList<NestedPark> parked) =>
-        new(NeedsYouRowId.Park(root).Value, since => NeedsYouRows.ForPark(item, Deepest(root, parked), since, scrubber), parked);
+        new(NeedsYouRowIds.Park(root).Value, since => NeedsYouRows.ForPark(item, Deepest(root, parked), since, scrubber), parked);
 
     /// <summary>The input of the row that describes the deepest of the parked descendants: the longest address, the later park on a tie.</summary>
     private static ParkRowInput Deepest(InstanceAddress root, IReadOnlyList<NestedPark> parked)

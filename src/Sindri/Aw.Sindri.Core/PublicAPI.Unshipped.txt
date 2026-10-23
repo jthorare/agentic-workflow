@@ -17586,9 +17586,6 @@ Aw.Sindri.Core.Forge.PullView.BaseSha.get -> string?
 Aw.Sindri.Core.Forge.PullView.BaseSha.init -> void
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Open.get -> Aw.Sindri.Core.NeedsYou.NeedsYouOpen!
 Aw.Sindri.Core.NeedsYou.NeedsYouRow.Open.init -> void
-static Aw.Sindri.Core.Ids.NeedsYouRowId.Desk(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> Aw.Sindri.Core.Ids.NeedsYouRowId
-static Aw.Sindri.Core.Ids.NeedsYouRowId.Park(Aw.Sindri.Core.Workflow.Engine.InstanceAddress root) -> Aw.Sindri.Core.Ids.NeedsYouRowId
-static Aw.Sindri.Core.Ids.NeedsYouRowId.Takeover(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> Aw.Sindri.Core.Ids.NeedsYouRowId
 Aw.Sindri.Core.NeedsYou.NeedsYouOpen
 Aw.Sindri.Core.NeedsYou.NeedsYouOpen.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouOpen!
 Aw.Sindri.Core.NeedsYou.NeedsYouOpen.Deconstruct(out string! Route, out string! Label, out Aw.Sindri.Core.NeedsYou.NeedsYouOpenPr? Pr, out Aw.Sindri.Core.NeedsYou.NeedsYouOpenArtifact? Artifact, out string? Session, out string? ReasonCode) -> void
@@ -17671,3 +17668,7 @@ Aw.Sindri.Core.NeedsYou.OwnerStopInput.Reason.init -> void
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.get -> Aw.Sindri.Core.NeedsYou.NeedsYouOpenPr?
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.init -> void
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForOwnerStop(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, Aw.Sindri.Core.NeedsYou.OwnerStopInput! wait, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+Aw.Sindri.Core.NeedsYou.NeedsYouRowIds
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.Desk(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.Park(Aw.Sindri.Core.Workflow.Engine.InstanceAddress root) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.Takeover(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> Aw.Sindri.Core.Ids.NeedsYouRowId

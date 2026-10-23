@@ -11,21 +11,6 @@ namespace Aw.Sindri.Core.Ids;
 [JsonConverter(typeof(StringIdJsonConverter<NeedsYouRowId>))]
 public readonly partial struct NeedsYouRowId : ITypedId<NeedsYouRowId, string>
 {
-    /// <summary>The 'desk:' row of the instance at <paramref name="address"/>: an open desk task, a root's or a child's.</summary>
-    /// <param name="address">The instance's address.</param>
-    /// <returns>The row id.</returns>
-    public static NeedsYouRowId Desk(Workflow.Engine.InstanceAddress address) => From("desk:" + Workflow.Engine.WorkflowInstanceId.Of(address).Value);
-
-    /// <summary>The 'park:' row of the root instance at <paramref name="root"/>: its park or escalation, or its deepest parked descendant.</summary>
-    /// <param name="root">The root instance's address.</param>
-    /// <returns>The row id.</returns>
-    public static NeedsYouRowId Park(Workflow.Engine.InstanceAddress root) => From("park:" + Workflow.Engine.WorkflowInstanceId.Of(root).Value);
-
-    /// <summary>The 'takeover:' row of the instance at <paramref name="address"/>: a takeover that went idle.</summary>
-    /// <param name="address">The instance's address.</param>
-    /// <returns>The row id.</returns>
-    public static NeedsYouRowId Takeover(Workflow.Engine.InstanceAddress address) => From("takeover:" + Workflow.Engine.WorkflowInstanceId.Of(address).Value);
-
     private static Validation Validate(string value) =>
         Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A needs-you row id is 'decision:DEC-…', 'park:WFI-…' (or 'desk:', 'takeover:'), 'failure:service:<name>', 'profile:drift', 'setup:repo', 'setup:recipes' or 'setup:mcp', or 'recipe:workflow.<name>'");
 
