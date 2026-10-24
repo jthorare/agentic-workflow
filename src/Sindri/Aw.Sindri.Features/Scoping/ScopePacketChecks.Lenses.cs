@@ -1,12 +1,9 @@
-using System.Globalization;
 using System.Text.Json.Nodes;
 
 namespace Aw.Sindri.Features.Scoping;
 
 internal static partial class ScopePacketChecks
 {
-    private const int BandCap = 100;
-
     /// <summary>SCP-LENS-001: lenses.json (from fact:lenses) agrees with the coverage rows, and its edges end at found nodes or anchors.</summary>
     private static void LensesMatchCoverage(ScopeContext c, RuleSink s)
     {
@@ -67,11 +64,9 @@ internal static partial class ScopePacketChecks
 
         var stray = held.Where(id => !found.Contains(id)).ToList();
         var absent = found.Where(id => !held.Contains(id)).ToList();
-        if (stray.Count > 0 || (!truncated && absent.Count > 0) || (truncated && held.Count > BandCap))
+        if (stray.Count > 0 || (!truncated && absent.Count > 0))
         {
-            s.Fail(lens, truncated && held.Count > BandCap
-                ? $"the {lens} lens holds more than {BandCap.ToString(CultureInfo.InvariantCulture)} ids in a truncated band"
-                : $"the {lens} lens's ids differ from its coverage row's found ids ({string.Join(", ", stray.Concat(absent).Take(5))})", "A lens file holds the row's found ids, or for a truncated band the first 100.");
+            s.Fail(lens, $"the {lens} lens's ids differ from its coverage row's found ids ({string.Join(", ", stray.Concat(absent).Take(5))})", "A lens file holds the row's found ids.");
         }
     }
 

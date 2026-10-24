@@ -8,7 +8,6 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
 {
     private readonly HashSet<string> _missing = new(StringComparer.Ordinal);
 
-    private const int BandCap = 100;
     private readonly List<JsonObject> _nodes = [];
     private readonly List<JsonObject> _items = [];
     private readonly List<JsonObject> _edges = [];
@@ -133,16 +132,9 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
 
     private int Total => _nodes.Count + _items.Count;
 
-    private (List<JsonObject> Nodes, List<JsonObject> Items) Held()
-    {
-        var nodes = _nodes.Take(BandCap).ToList();
-        return (nodes, [.. _items.Take(BandCap - nodes.Count)]);
-    }
-
     /// <summary>The lens's entry in the lenses fact.</summary>
     internal JsonObject Entry(string mapVersion, int depth, IReadOnlyList<string> hops)
     {
-        var (nodes, items) = Held();
         return new JsonObject
         {
             ["anchors"] = ScopeJson.ToArray(anchors),
@@ -150,10 +142,10 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
             ["hops"] = ScopeJson.ToArray(hops),
             ["mapVersion"] = mapVersion,
             ["foundCount"] = Total,
-            ["nodes"] = new JsonArray([.. nodes.Select(static n => n.DeepClone())]),
+            ["nodes"] = new JsonArray([.. _nodes.Select(static n => n.DeepClone())]),
             ["edges"] = new JsonArray([.. _edges.Select(static e => e.DeepClone())]),
-            ["items"] = new JsonArray([.. items.Select(static i => i.DeepClone())]),
-            ["truncated"] = ScopeJson.ToArray(Total > BandCap ? [Lens] : []),
+            ["items"] = new JsonArray([.. _items.Select(static i => i.DeepClone())]),
+            ["truncated"] = new JsonArray(),
         };
     }
 
@@ -163,7 +155,6 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
     /// <summary>The lens's row in the coverage fact: its state follows what was found and what was recorded as a limit.</summary>
     internal JsonObject Row(string mapVersion, int depth, IReadOnlyList<string> hops)
     {
-        var (nodes, items) = Held();
         var limits = new JsonArray();
         foreach (var source in _sources)
         {
@@ -196,7 +187,7 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
             ["found"] = new JsonObject
             {
                 ["count"] = Total,
-                ["ids"] = ScopeJson.ToArray(nodes.Concat(items).Select(static x => ScopeJson.Str(x, "lensItem")).OfType<string>()),
+                ["ids"] = ScopeJson.ToArray(_nodes.Concat(_items).Select(static x => ScopeJson.Str(x, "lensItem")).OfType<string>()),
             },
         };
     }
