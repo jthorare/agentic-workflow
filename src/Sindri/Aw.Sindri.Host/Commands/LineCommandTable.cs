@@ -32,6 +32,7 @@ internal static class LineCommandTable
         ["design", "show", .. var rest] => Show("design", rest, host, ct),
         ["plan", "show", .. var rest] => Show("plan", rest, host, ct),
         ["line", "desk", .. var rest] => LineDeskVerb.Run(rest, host, DeskUsage, ct),
+        ["line", "doctor", .. var rest] => LineDoctorVerb.Run(rest, host.Services, host.Output, ct),
         _ => Fail(host.Output, SindriErrors.UnknownVerb.With($"'{string.Join(' ', args)}' is not a sindri command ({DesignUsage}; {PlanUsage}; {DeskUsage})")),
     };
 

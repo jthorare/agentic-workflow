@@ -18265,6 +18265,30 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Discard(Aw.Sindri.Core.Wor
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Record(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! text) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.ReportRefusals() -> void
 const Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.MaxLength = 300 -> int
+Aw.Sindri.Core.Profile.IBoxLimitsSource
+Aw.Sindri.Core.Profile.IBoxLimitsSource.Read() -> Aw.Sindri.Core.Profile.BoxLimits!
+Aw.Sindri.Core.Line.ILineSetupProbe
+Aw.Sindri.Core.Line.ILineSetupProbe.Read(string! checkout, string? credentialVariable, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Line.LineSetupFacts!>
+Aw.Sindri.Core.Line.LineSetupFacts
+Aw.Sindri.Core.Line.LineSetupFacts.<Clone>$() -> Aw.Sindri.Core.Line.LineSetupFacts!
+Aw.Sindri.Core.Line.LineSetupFacts.LineSetupFacts(bool TestFiles, bool EvidenceConfig, bool? CredentialSet) -> void
+Aw.Sindri.Core.Line.LineSetupFacts.Deconstruct(out bool TestFiles, out bool EvidenceConfig, out bool? CredentialSet) -> void
+Aw.Sindri.Core.Line.LineSetupFacts.Equals(Aw.Sindri.Core.Line.LineSetupFacts? other) -> bool
+Aw.Sindri.Core.Line.LineSetupFacts.TestFiles.get -> bool
+Aw.Sindri.Core.Line.LineSetupFacts.TestFiles.init -> void
+Aw.Sindri.Core.Line.LineSetupFacts.EvidenceConfig.get -> bool
+Aw.Sindri.Core.Line.LineSetupFacts.EvidenceConfig.init -> void
+Aw.Sindri.Core.Line.LineSetupFacts.CredentialSet.get -> bool?
+Aw.Sindri.Core.Line.LineSetupFacts.CredentialSet.init -> void
+override Aw.Sindri.Core.Line.LineSetupFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineSetupFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineSetupFacts.ToString() -> string!
+static Aw.Sindri.Core.Line.LineSetupFacts.operator !=(Aw.Sindri.Core.Line.LineSetupFacts? left, Aw.Sindri.Core.Line.LineSetupFacts? right) -> bool
+static Aw.Sindri.Core.Line.LineSetupFacts.operator ==(Aw.Sindri.Core.Line.LineSetupFacts? left, Aw.Sindri.Core.Line.LineSetupFacts? right) -> bool
+Aw.Sindri.Core.Line.LineDoctorRules
+static Aw.Sindri.Core.Line.LineDoctorRules.Check(Aw.Sindri.Core.Profile.SindriProfile! profile, string! repo, Aw.Sindri.Core.Profile.BoxLimits! box, Aw.Sindri.Core.Line.LineSetupFacts! facts) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!
+static Aw.Sindri.Core.Line.LineDoctorRules.CredentialVariable(Aw.Sindri.Core.Profile.SindriProfile! profile) -> string?
+static Aw.Sindri.Core.Line.LineDoctorRules.Missing(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>! checks) -> Aw.Kernel.Error?
 Aw.Sindri.Core.Prove.RedEntry
 Aw.Sindri.Core.Prove.RedEntry.AppOnly.get -> bool
 Aw.Sindri.Core.Prove.RedEntry.AppOnly.init -> void

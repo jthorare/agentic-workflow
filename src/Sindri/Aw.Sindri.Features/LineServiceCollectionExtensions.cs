@@ -2,6 +2,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.Design;
+using Aw.Sindri.Features.LineDoctor;
 using Aw.Sindri.Features.LineHoldout;
 using Aw.Sindri.Features.Plan;
 using Aw.Sindri.Features.PlanContext;
@@ -16,7 +17,7 @@ internal static class LineServiceCollectionExtensions
     /// <summary>Adds the line's services.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
-    internal static IServiceCollection AddLineSlices(this IServiceCollection services) => services.AddDesignSlices().AddPlanSlices().AddResolveParentsSlices().AddPlanContextSlices()
+    internal static IServiceCollection AddLineSlices(this IServiceCollection services) => services.AddDesignSlices().AddPlanSlices().AddResolveParentsSlices().AddPlanContextSlices().AddLineDoctor()
         .AddScoped<IValidator<GetInstanceDesignStopRequest>, AcceptAllValidator<GetInstanceDesignStopRequest>>()
         .AddQuery<GetInstanceDesignStopRequest, DesignStopView, GetInstanceDesignStopService>()
         .AddScoped<IValidator<ShowLineHoldoutRequest>, AcceptAllValidator<ShowLineHoldoutRequest>>()

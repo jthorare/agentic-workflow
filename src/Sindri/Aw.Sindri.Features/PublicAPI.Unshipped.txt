@@ -4719,3 +4719,30 @@ static Aw.Sindri.Features.Scrub.ScrubRequest.operator !=(Aw.Sindri.Features.Scru
 static Aw.Sindri.Features.Scrub.ScrubRequest.operator ==(Aw.Sindri.Features.Scrub.ScrubRequest? left, Aw.Sindri.Features.Scrub.ScrubRequest? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator !=(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator ==(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.<Clone>$() -> Aw.Sindri.Features.LineDoctor.LineDoctorRequest!
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.LineDoctorRequest(string! Directory) -> void
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.Deconstruct(out string! Directory) -> void
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.Equals(Aw.Sindri.Features.LineDoctor.LineDoctorRequest? other) -> bool
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.Directory.get -> string!
+Aw.Sindri.Features.LineDoctor.LineDoctorRequest.Directory.init -> void
+override Aw.Sindri.Features.LineDoctor.LineDoctorRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.LineDoctor.LineDoctorRequest.GetHashCode() -> int
+override Aw.Sindri.Features.LineDoctor.LineDoctorRequest.ToString() -> string!
+static Aw.Sindri.Features.LineDoctor.LineDoctorRequest.operator !=(Aw.Sindri.Features.LineDoctor.LineDoctorRequest? left, Aw.Sindri.Features.LineDoctor.LineDoctorRequest? right) -> bool
+static Aw.Sindri.Features.LineDoctor.LineDoctorRequest.operator ==(Aw.Sindri.Features.LineDoctor.LineDoctorRequest? left, Aw.Sindri.Features.LineDoctor.LineDoctorRequest? right) -> bool
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.<Clone>$() -> Aw.Sindri.Features.LineDoctor.LineDoctorResponse!
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.LineDoctorResponse(string? Repo, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>! Checks) -> void
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Deconstruct(out string? Repo, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>! Checks) -> void
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Equals(Aw.Sindri.Features.LineDoctor.LineDoctorResponse? other) -> bool
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Repo.get -> string?
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Repo.init -> void
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Doctor.DoctorCheck!>!
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Checks.init -> void
+override Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.LineDoctor.LineDoctorResponse.GetHashCode() -> int
+override Aw.Sindri.Features.LineDoctor.LineDoctorResponse.ToString() -> string!
+static Aw.Sindri.Features.LineDoctor.LineDoctorResponse.operator !=(Aw.Sindri.Features.LineDoctor.LineDoctorResponse? left, Aw.Sindri.Features.LineDoctor.LineDoctorResponse? right) -> bool
+static Aw.Sindri.Features.LineDoctor.LineDoctorResponse.operator ==(Aw.Sindri.Features.LineDoctor.LineDoctorResponse? left, Aw.Sindri.Features.LineDoctor.LineDoctorResponse? right) -> bool
+Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Passed.get -> bool

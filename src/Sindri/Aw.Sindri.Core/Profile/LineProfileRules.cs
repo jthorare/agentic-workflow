@@ -83,7 +83,7 @@ internal static class LineProfileRules
     }
 
     // A parallel left out is the default and is not held to the cap: a box with one slot still runs a profile that never mentions the line.
-    private static Error? ParallelCap(int? parallel, BoxLimits? box) =>
+    internal static Error? ParallelCap(int? parallel, BoxLimits? box) =>
         parallel is { } wanted && box is not null && wanted > box.HeavySlots
             ? Invalid("workflow.line.parallel", string.Create(CultureInfo.InvariantCulture, $"is {wanted}, above this box's heavy-slot cap of {box.HeavySlots} (fix: lower it, or raise the cap in $AW_STATE_DIR/heavy-slots-cap)"))
             : null;
