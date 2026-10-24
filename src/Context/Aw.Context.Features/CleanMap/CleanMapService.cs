@@ -25,7 +25,7 @@ internal sealed class CleanMapService(IGraphStore store, IScrubberFactory scrubb
     private const int AnswerTokensPerEntry = 16;
     private const int FilesPerEntry = 3;
     private const int MaxPasses = 20;
-    private static readonly TimeSpan _budget = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan _budget = TimeSpan.FromMinutes(10);
 
     public async ValueTask<Result<CleanupReport>> Handle(CleanMapRequest request, CancellationToken cancellationToken)
     {

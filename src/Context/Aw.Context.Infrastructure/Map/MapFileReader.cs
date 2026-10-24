@@ -11,7 +11,7 @@ namespace Aw.Context.Infrastructure.Map;
 /// <summary>Reads a map file: refuses one inside a git worktree, hashes its bytes, then parses YAML (or JSON) into a <see cref="MapDocument"/> through AwJson.</summary>
 internal sealed class MapFileReader(JsonSerializerOptions options) : IMapFileReader
 {
-    private const long MaxBytes = 16 * 1024 * 1024;
+    private const long MaxBytes = 256L * 1024 * 1024;
 
     public async ValueTask<Result<MapFile>> Read(string path, CancellationToken cancellationToken)
     {
@@ -29,7 +29,7 @@ internal sealed class MapFileReader(JsonSerializerOptions options) : IMapFileRea
         {
             if (new FileInfo(full).Length > MaxBytes)
             {
-                return ContextErrors.MapFileInvalid.With($"{full}: over 16 MB; nothing was written");
+                return ContextErrors.MapFileInvalid.With($"{full}: over 256 MB; nothing was written");
             }
 
             bytes = await File.ReadAllBytesAsync(full, cancellationToken).ConfigureAwait(false);

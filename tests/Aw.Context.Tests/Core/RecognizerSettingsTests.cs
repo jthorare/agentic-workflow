@@ -44,18 +44,18 @@ public sealed class RecognizerSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void More_than_50_recognizers_is_SND_CONTEXT_131()
+    public void More_than_500_recognizers_is_SND_CONTEXT_131()
     {
-        var settings = Read("[" + string.Join(',', Enumerable.Repeat(Good, 51)) + "]");
+        var settings = Read("[" + string.Join(',', Enumerable.Repeat(Good, 501)) + "]");
 
         Assert.Equal(ContextErrors.RecognizerOverCap.Code, settings.Error.Code);
         Assert.StartsWith("context.extract.recognizers:", settings.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_pattern_over_512_characters_is_SND_CONTEXT_131()
+    public void A_pattern_over_2000_characters_is_SND_CONTEXT_131()
     {
-        var settings = Read("""[{"kind":"flag","glob":"a/*.yaml","pattern":"(?<n>""" + new string('x', 520) + """)","keyFrom":"n"}]""");
+        var settings = Read("""[{"kind":"flag","glob":"a/*.yaml","pattern":"(?<n>""" + new string('x', 2_010) + """)","keyFrom":"n"}]""");
 
         Assert.Equal(ContextErrors.RecognizerOverCap.Code, settings.Error.Code);
         Assert.StartsWith("context.extract.recognizers[0].pattern:", settings.Error.Message, StringComparison.Ordinal);

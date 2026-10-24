@@ -63,7 +63,7 @@ public sealed class AsOfReadTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_version_the_purge_removed_is_120_naming_the_current_version_and_the_retained_range()
     {
-        for (var i = 0; i < 23; i++)
+        for (var i = 0; i < MapRetention.RetainedVersions + 3; i++)
         {
             _ = await _world.ImportFixture();
         }
@@ -75,7 +75,7 @@ public sealed class AsOfReadTests : IDisposable
         var kept = await _reader.ReadViewAt(MapWorld.Human, At("v3"), MapWorld.None);
 
         Assert.Equal(ContextErrors.MapVersionNotRetained.Code, purged.Error.Code);
-        Assert.Contains("v23", purged.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("v" + (MapRetention.RetainedVersions + 3).ToString(System.Globalization.CultureInfo.InvariantCulture), purged.Error.Message, StringComparison.Ordinal);
         Assert.Contains("v3", purged.Error.Message, StringComparison.Ordinal);
         Assert.True(kept.IsSuccess);
     }

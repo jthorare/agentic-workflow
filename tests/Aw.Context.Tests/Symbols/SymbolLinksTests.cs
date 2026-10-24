@@ -44,13 +44,13 @@ public sealed class SymbolLinksTests
     }
 
     [Fact]
-    public void At_most_five_symbols_per_file_and_node_in_line_order()
+    public void At_most_twenty_symbols_per_file_and_node_in_line_order()
     {
-        var symbols = Enumerable.Range(1, 8).Select(i => Site("src/a.ts", "go", i * 10)).ToArray();
+        var symbols = Enumerable.Range(1, 25).Select(i => Site("src/a.ts", "go", i * 10)).ToArray();
 
         var links = SymbolLinks.For([Link("src/a.ts", "feature:go")], [Row("src/a.ts", symbols)]);
 
-        Assert.Equal([10, 20, 30, 40, 50], links.Select(l => l.StartLine));
+        Assert.Equal(Enumerable.Range(1, 20).Select(i => i * 10), links.Select(l => l.StartLine));
     }
 
     [Fact]

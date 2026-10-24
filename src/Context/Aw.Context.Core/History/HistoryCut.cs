@@ -3,7 +3,7 @@ using Aw.Context.Core.Results;
 
 namespace Aw.Context.Core.History;
 
-/// <summary>The pure rules of the history lens: the 'before' and 'since' cut, the union across anchors, the order and the caps (S-H decisions 3, 5, 6).</summary>
+/// <summary>The pure rules of the history lens: the 'before' and 'since' cut, the union across anchors, the order (S-H decisions 3, 5, 6).</summary>
 public static class HistoryCut
 {
     /// <summary>Cuts and orders records and decisions. The same item reached by two anchors becomes one entry listing both.</summary>
@@ -22,10 +22,10 @@ public static class HistoryCut
         var orderedDecisions = cutDecisions
             .Select(d => d with { Supersedes = [.. d.Supersedes.Where(s => !droppedDecisions.Contains(s.Value))] })
             .OrderByDescending(d => d.At.HasValue).ThenByDescending(d => d.At).ThenBy(d => d.Node.Value, StringComparer.Ordinal).ToList();
-        return new HistoryCutResult([.. orderedRecords.Take(HistoryRules.ListCap)], [.. orderedDecisions.Take(HistoryRules.ListCap)], orderedRecords.Count, orderedDecisions.Count, droppedRecords + droppedDecisions.Count);
+        return new HistoryCutResult(orderedRecords, orderedDecisions, orderedRecords.Count, orderedDecisions.Count, droppedRecords + droppedDecisions.Count);
     }
 
-    /// <summary>Unions changes by repo and sha, orders them and caps the list.</summary>
+    /// <summary>Unions changes by repo and sha, orders them.</summary>
     /// <param name="changes">The changes, possibly one per anchor.</param>
     /// <returns>The list.</returns>
     public static HistoryChangeList Changes(IReadOnlyList<HistoryChange> changes)
@@ -33,7 +33,7 @@ public static class HistoryCut
         ArgumentNullException.ThrowIfNull(changes);
         var merged = changes.GroupBy(c => (c.Repo.Value, c.Sha)).Select(g => g.First() with { Anchors = Union(g.SelectMany(c => c.Anchors)) })
             .OrderByDescending(c => c.At).ThenBy(c => c.Repo.Value, StringComparer.Ordinal).ThenBy(c => c.Sha, StringComparer.Ordinal).ToList();
-        return new HistoryChangeList([.. merged.Take(HistoryRules.ListCap)], merged.Count);
+        return new HistoryChangeList(merged, merged.Count);
     }
 
     // Each record's outcome by key: leaky or not; null = dropped by the 'before' cut (a decision that quotes it needs to know).

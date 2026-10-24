@@ -135,7 +135,7 @@ public sealed class HistoryCutTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Lists_cap_at_100_with_full_counts_and_truncated()
+    public void Lists_are_not_cut_at_100()
     {
         var records = Enumerable.Range(0, 150).Select(i => Record("r" + i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture), Day(1, 1), Day(2, 1))).ToList();
         var changes = Enumerable.Range(0, 120).Select(i => Change("alpha", i.ToString("x2", System.Globalization.CultureInfo.InvariantCulture), Day(1, 1))).ToList();
@@ -143,10 +143,10 @@ public sealed class HistoryCutTests
         var result = HistoryCut.Apply(records, [], HistoryWindow.Open);
         var list = HistoryCut.Changes(changes);
 
-        Assert.Equal((100, 150), (result.Records.Count, result.TotalRecords));
-        Assert.True(result.RecordsTruncated);
-        Assert.Equal((100, 120), (list.Items.Count, list.Total));
-        Assert.True(list.Truncated);
+        Assert.Equal((150, 150), (result.Records.Count, result.TotalRecords));
+        Assert.False(result.RecordsTruncated);
+        Assert.Equal((120, 120), (list.Items.Count, list.Total));
+        Assert.False(list.Truncated);
     }
 
     [Fact, Trait("Lane", "unit")]

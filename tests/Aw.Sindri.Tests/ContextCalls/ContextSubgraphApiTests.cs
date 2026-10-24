@@ -70,17 +70,17 @@ public sealed class ContextSubgraphApiTests : IDisposable
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public async Task Subgraph_query_1000_keys_answers_and_1001_is_006()
+    public async Task Subgraph_query_takes_any_number_of_keys()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await using var host = await Host();
 
         var ok = await host.Http.Ask(Query("/sindri/context/subgraph", Body(Fake(1000)), Terminal(host)));
-        var over = await host.Http.Ask(Query("/sindri/context/subgraph", Body(Fake(1001)), Terminal(host)));
+        var over = await host.Http.Ask(Query("/sindri/context/subgraph", Body(Fake(1500)), Terminal(host)));   // the 1000-key limit was removed per owner q93, 2026-10-23
 
         Assert.Equal(HttpStatusCode.OK, ok.Status);
         Assert.Equal(1000, Json(ok.Body).GetProperty("missing").GetArrayLength());
-        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (over.Status, over.Code));
+        Assert.Equal((HttpStatusCode.OK, 1500), (over.Status, Json(over.Body).GetProperty("missing").GetArrayLength()));
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]

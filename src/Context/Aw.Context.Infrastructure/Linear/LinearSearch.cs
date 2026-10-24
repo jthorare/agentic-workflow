@@ -19,8 +19,8 @@ internal sealed partial class LinearSearch(LinearClient client, LinearScope scop
 {
     private sealed record Plan(List<string> Terms, DateTimeOffset? Since, int Want);
 
-    private const int MaxTerms = 8;
-    private const int MaxKeys = 3;
+    private const int MaxTerms = 32;
+    private const int MaxKeys = 10;
     private const int MinPerKind = 50;
     private const int MaxPerKind = 1000;
 

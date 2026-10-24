@@ -359,7 +359,7 @@ Aw.Context.Core.Engine.CascadeHops.None = 0 -> Aw.Context.Core.Engine.CascadeHop
 Aw.Context.Core.Engine.CascadeHops.State = 1 -> Aw.Context.Core.Engine.CascadeHops
 Aw.Context.Core.Engine.CascadeOptions
 Aw.Context.Core.Engine.CascadeOptions.<Clone>$() -> Aw.Context.Core.Engine.CascadeOptions!
-Aw.Context.Core.Engine.CascadeOptions.CascadeOptions(Aw.Context.Core.Engine.CascadeHops Hops = Aw.Context.Core.Engine.CascadeHops.Default, int ComponentFanOut = 5) -> void
+Aw.Context.Core.Engine.CascadeOptions.CascadeOptions(Aw.Context.Core.Engine.CascadeHops Hops = Aw.Context.Core.Engine.CascadeHops.Default, int ComponentFanOut = 50) -> void
 Aw.Context.Core.Engine.CascadeOptions.ComponentFanOut.get -> int
 Aw.Context.Core.Engine.CascadeOptions.ComponentFanOut.init -> void
 Aw.Context.Core.Engine.CascadeOptions.Deconstruct(out Aw.Context.Core.Engine.CascadeHops Hops, out int ComponentFanOut) -> void
@@ -4576,31 +4576,29 @@ Aw.Context.Core.Trust.ScrubRuleset.ScrubRuleset() -> void
 Aw.Context.Core.Trust.ScrubRuleset.ToString(System.IFormatProvider? provider) -> string!
 Aw.Context.Core.Trust.ScrubRuleset.Value.get -> string!
 Aw.Context.Core.Trust.UntrustedFence
-const Aw.Context.Core.Code.CodeRules.MaxCallSymbols = 20 -> int
-const Aw.Context.Core.Code.CodeRules.MaxCandidates = 100 -> int
+const Aw.Context.Core.Code.CodeRules.MaxCallSymbols = 100 -> int
+const Aw.Context.Core.Code.CodeRules.MaxCandidates = 500 -> int
 const Aw.Context.Core.Code.CodeRules.MaxFileChars = 512000 -> int
-const Aw.Context.Core.Code.CodeRules.MaxFilesPerThing = 20 -> int
-const Aw.Context.Core.Code.CodeRules.MaxImplementingFiles = 50 -> int
-const Aw.Context.Core.Code.CodeRules.MaxListed = 100 -> int
-const Aw.Context.Core.Code.CodeRules.MaxSymbolFiles = 200 -> int
+const Aw.Context.Core.Code.CodeRules.MaxFilesPerThing = 100 -> int
+const Aw.Context.Core.Code.CodeRules.MaxImplementingFiles = 200 -> int
+const Aw.Context.Core.Code.CodeRules.MaxSymbolFiles = 1000 -> int
 const Aw.Context.Core.Code.CodeRules.MaxTermLength = 200 -> int
-const Aw.Context.Core.Code.CodeRules.MaxTermsPerCall = 200 -> int
-const Aw.Context.Core.Code.CodeRules.MaxThings = 30 -> int
+const Aw.Context.Core.Code.CodeRules.MaxTermsPerCall = 500 -> int
+const Aw.Context.Core.Code.CodeRules.MaxThings = 100 -> int
 const Aw.Context.Core.Code.CodeRules.MinTermLength = 4 -> int
 const Aw.Context.Core.Code.CodeSymbols.IndexNotBuilt = "index-not-built" -> string!
-const Aw.Context.Core.Engine.CascadeOptions.DefaultFanOut = 5 -> int
+const Aw.Context.Core.Engine.CascadeOptions.DefaultFanOut = 50 -> int
 const Aw.Context.Core.Engine.DiffRange.Message = "a diff names two commit shas joined by '..' (base..head, 7 to 64 lower-case hex characters each); resolve the refs to shas first: branch names, tags, HEAD, '~', '^' and '...' are not accepted" -> string!
 const Aw.Context.Core.Engine.PublishSettings.DefaultWaitMinutes = 15 -> int
 const Aw.Context.Core.Engine.PublishSettings.MaxWaitMinutes = 240 -> int
 const Aw.Context.Core.Engine.QueryRules.BudgetMessage = "budget must be a whole number of tokens, 1 or more" -> string!
 const Aw.Context.Core.Engine.QueryRules.DefaultBudget = 8000 -> int
-const Aw.Context.Core.Engine.QueryRules.DepthMessage = "depth must be a whole number from 0 to 4" -> string!
+const Aw.Context.Core.Engine.QueryRules.DepthMessage = "depth must be a whole number of 0 or more (deeper than 8 is read as 8)" -> string!
 const Aw.Context.Core.Engine.QueryRules.ItemMessage = "an item anchor names a tracker key or record key of 1 to 2000 characters" -> string!
-const Aw.Context.Core.Engine.QueryRules.MaxDepth = 4 -> int
+const Aw.Context.Core.Engine.QueryRules.MaxDepth = 8 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxEncodedText = 6000 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxSubgraphGet = 20 -> int
-const Aw.Context.Core.Engine.QueryRules.MaxSubgraphPost = 1000 -> int
-const Aw.Context.Core.Engine.QueryRules.MaxTerms = 16 -> int
+const Aw.Context.Core.Engine.QueryRules.MaxTerms = 64 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxTextLength = 2000 -> int
 const Aw.Context.Core.Engine.QueryRules.NodeMessage = "a node anchor names a node key, alias or name of 1 to 2000 characters" -> string!
 const Aw.Context.Core.Engine.QueryRules.RepoMessage = "a repo goes with a diff only (it names the repo whose commits the range is read in)" -> string!
@@ -4627,15 +4625,13 @@ const Aw.Context.Core.Eval.ProbeReport.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Eval.ProbeScoring.K = 5 -> int
 const Aw.Context.Core.Extract.MapExtractor.Version = 2 -> int
 const Aw.Context.Core.Graph.EntryKey.Version = 1 -> int
-const Aw.Context.Core.Graph.GraphWalk.MaxDepth = 4 -> int
-const Aw.Context.Core.Graph.GraphWalk.MaxPathLength = 8 -> int
-const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 101 -> int
-const Aw.Context.Core.History.HistoryRules.ListCap = 100 -> int
-const Aw.Context.Core.History.HistoryRules.MaxFiles = 50 -> int
+const Aw.Context.Core.Graph.GraphWalk.MaxDepth = 8 -> int
+const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 10000 -> int
+const Aw.Context.Core.History.HistoryRules.MaxFiles = 200 -> int
 const Aw.Context.Core.History.HistoryRules.SubjectChars = 200 -> int
 const Aw.Context.Core.Lenses.DiffAnchors.MaxFiles = 1000 -> int
 const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
-const Aw.Context.Core.Map.MapRetention.RetainedVersions = 20 -> int
+const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!
 const Aw.Context.Core.Overrides.ProposalRows.Confidence = 0.5 -> double
@@ -4645,8 +4641,8 @@ const Aw.Context.Core.Review.CleanupPolicy.Batch = 40 -> int
 const Aw.Context.Core.Review.CleanupPolicy.KeepAt = 0.75 -> double
 const Aw.Context.Core.Review.CleanupPolicy.MaxTokens = 100000 -> int
 const Aw.Context.Core.Review.ReviewHistory.DefaultLimit = 200 -> int
-const Aw.Context.Core.Review.ReviewHistory.MaxLimit = 1000 -> int
-const Aw.Context.Core.Review.ReviewLimits.Max = 1000 -> int
+const Aw.Context.Core.Review.ReviewHistory.MaxLimit = 10000 -> int
+const Aw.Context.Core.Review.ReviewLimits.Max = 10000 -> int
 const Aw.Context.Core.Review.ReviewLimits.QueueDefault = 100 -> int
 const Aw.Context.Core.Trust.UntrustedFence.MaxTitle = 200 -> int
 override Aw.Context.Core.Code.CodeData.Equals(object? obj) -> bool
@@ -6456,7 +6452,7 @@ Aw.Context.Core.Ranking.RecordSignals.Superseded.get -> bool
 Aw.Context.Core.Ranking.RecordSignals.Superseded.init -> void
 Aw.Context.Core.Ranking.RerankOrder
 const Aw.Context.Core.Engine.RankerSettings.DefaultRerankTop = 30 -> int
-const Aw.Context.Core.Engine.RankerSettings.MaxRerankTop = 50 -> int
+const Aw.Context.Core.Engine.RankerSettings.MaxRerankTop = 100 -> int
 const Aw.Context.Core.Engine.FeatureWeights.MaxWeight = 10 -> double
 const Aw.Context.Core.Ranking.RankFeatures.RecencyHalfLifeDays = 90 -> double
 const Aw.Context.Core.Ranking.RerankOrder.DefaultTop = 30 -> int
@@ -6511,7 +6507,7 @@ Aw.Context.Core.Symbols.SymbolImplements.StartLine.get -> int
 Aw.Context.Core.Symbols.SymbolImplements.StartLine.init -> void
 Aw.Context.Core.Symbols.SymbolImplements.SymbolImplements(Aw.Context.Core.Graph.NodeKey Node, string! Ref, string! Name, string! Path, int StartLine, double Confidence) -> void
 Aw.Context.Core.Symbols.SymbolLinks
-const Aw.Context.Core.Symbols.SymbolLinks.MaxPerLink = 5 -> int
+const Aw.Context.Core.Symbols.SymbolLinks.MaxPerLink = 20 -> int
 const Aw.Context.Core.Symbols.SymbolLinks.NameMatch = 0.9 -> double
 override Aw.Context.Core.Symbols.SymbolImplements.Equals(object? obj) -> bool
 override Aw.Context.Core.Symbols.SymbolImplements.GetHashCode() -> int
@@ -6687,7 +6683,7 @@ Aw.Context.Core.WholeMap.WholeMapRules.Deconstruct(out int NodeBudget, out int A
 Aw.Context.Core.WholeMap.WholeMapRules.Equals(Aw.Context.Core.WholeMap.WholeMapRules? other) -> bool
 Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.get -> int
 Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.init -> void
-Aw.Context.Core.WholeMap.WholeMapRules.WholeMapRules(int NodeBudget = 500, int AreaCap = 500, int AreasCap = 500) -> void
+Aw.Context.Core.WholeMap.WholeMapRules.WholeMapRules(int NodeBudget = 500, int AreaCap = 5000, int AreasCap = 5000) -> void
 Aw.Context.Core.WholeMap.WholeMapView
 Aw.Context.Core.WholeMap.WholeMapView.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapView!
 Aw.Context.Core.WholeMap.WholeMapView.Area.get -> Aw.Context.Core.WholeMap.WholeMapAreaInfo?
@@ -6725,7 +6721,7 @@ Aw.Context.Core.WholeMap.WholeMapView.Truncated.get -> bool
 Aw.Context.Core.WholeMap.WholeMapView.Truncated.init -> void
 const Aw.Context.Core.WholeMap.AreaIndex.UnassignedKey = "area:unassigned" -> string!
 const Aw.Context.Core.WholeMap.AreaIndex.UnassignedLabel = "Not linked to a feature yet" -> string!
-const Aw.Context.Core.WholeMap.WholeMapRules.MaxLocate = 100 -> int
+const Aw.Context.Core.WholeMap.WholeMapRules.MaxLocate = 1000 -> int
 override Aw.Context.Core.WholeMap.AreaIndex.Equals(object? obj) -> bool
 override Aw.Context.Core.WholeMap.AreaIndex.GetHashCode() -> int
 override Aw.Context.Core.WholeMap.AreaIndex.ToString() -> string!
@@ -6836,3 +6832,4 @@ static readonly Aw.Context.Core.ContextErrors.AreaUnknown -> Aw.Kernel.ErrorDefi
 Aw.Context.Core.WholeMap.WholeMapView.Deconstruct(out int SchemaVersion, out string! MapVersion, out bool Draft, out System.DateTimeOffset AsOf, out string? Repo, out Aw.Context.Core.WholeMap.WholeMapDetail Detail, out Aw.Context.Core.WholeMap.WholeMapCounts! Counts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, out bool Truncated) -> void
 Aw.Context.Core.WholeMap.WholeMapView.WholeMapView(int SchemaVersion, string! MapVersion, bool Draft, System.DateTimeOffset AsOf, string? Repo, Aw.Context.Core.WholeMap.WholeMapDetail Detail, Aw.Context.Core.WholeMap.WholeMapCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, bool Truncated) -> void
 static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph, int areaCap) -> Aw.Context.Core.WholeMap.AreaIndex!
+const Aw.Context.Core.Sources.SourceQuery.DefaultLimit = 200 -> int

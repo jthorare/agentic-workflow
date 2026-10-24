@@ -20,9 +20,6 @@ namespace Aw.Context.Infrastructure.Docs;
 /// </summary>
 internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeProvider clock) : IDocIndex
 {
-    /// <summary>The largest document indexed (bigger ones are skipped).</summary>
-    internal const long MaxDocumentBytes = 1024 * 1024;
-
     public async ValueTask<Result<RepoRefresh>> Refresh(ContextRepo repo, IReadOnlyList<string> globs, Scrubbers scrubbers, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(scrubbers);
@@ -57,10 +54,10 @@ internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeP
         database.RestrictFiles();
         return written.IsError
             ? ContextDatabase.Translate(written.Error)
-            : new RepoRefresh(repo.Name, SourceVersion.From(head.Value), prepared.Count(p => p is { Blocked: false, Oversized: false }),
+            : new RepoRefresh(repo.Name, SourceVersion.From(head.Value), prepared.Count(p => p is { Blocked: false }),
                 removed.Count(p => !wanted.ContainsKey(p)), wanted.Count - changed.Count, prepared.Count(p => p.Blocked), Code: null)
             {
-                Skipped = prepared.Count(p => p.Oversized) + unreadable.Count + (matched.Count - wanted.Count),
+                Skipped = unreadable.Count + (matched.Count - wanted.Count),
                 Recleaned = prepared.Count(stored.Value.Recleaned),
             };
     }
@@ -92,9 +89,8 @@ internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeP
         RepoDocs.TryChunkId(repo.Name, path, DocChunker.MaxLine, DocChunker.MaxLine, out _) && RepoDocs.TryKey(repo.Name, path, out _);
 
     /// <summary>
-    /// Reads and cleans each changed document. One over <see cref="MaxDocumentBytes"/> keeps a row without chunks (so it
-    /// counts as kept until it changes) and is reported skipped; one git can't read this run is skipped and its earlier
-    /// rows stay.
+    /// Reads and cleans each changed document. A document has no size limit (owner q93, 2026-10-23); one git can't read this run is skipped and
+    /// its earlier rows stay.
     /// </summary>
     private async ValueTask<(List<PreparedDoc> Prepared, HashSet<string> Unreadable)> Prepare(ContextRepo repo, List<KeyValuePair<string, string>> changed,
         IIngestFilter ingest, CancellationToken cancellationToken)
@@ -103,13 +99,8 @@ internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeP
         var unreadable = new HashSet<string>(StringComparer.Ordinal);
         foreach (var (path, blob) in changed)
         {
-            var size = await git.Size(repo.Path, blob, cancellationToken).ConfigureAwait(false);
-            var text = size is { IsSuccess: true, Value: <= MaxDocumentBytes } ? await git.Blob(repo.Path, blob, cancellationToken).ConfigureAwait(false) : null;
-            if (size.IsSuccess && size.Value > MaxDocumentBytes)
-            {
-                prepared.Add(new PreparedDoc(path, blob, path, Blocked: false, []) { Oversized = true });
-            }
-            else if (text is { IsSuccess: true })
+            var text = await git.Blob(repo.Path, blob, cancellationToken).ConfigureAwait(false);
+            if (text.IsSuccess)
             {
                 prepared.Add(Clean(ingest, path, blob, text.Value));
             }

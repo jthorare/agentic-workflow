@@ -18,7 +18,7 @@ public sealed class GetCodeReviewTests
     {
         // No edge test and no other test file, so the list holds exactly the 100 candidates read: only the scan's own cap says the answer is cut.
         var files = CodeWorld.Files.Where(f => !f.Key.StartsWith("tests/", StringComparison.Ordinal)).ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal);
-        for (var i = 0; i < 150; i++)
+        for (var i = 0; i < CodeRules.MaxCandidates + 50; i++)
         {
             files[$"tests/gen/g{N(i)}.test.ts"] = "import { x } from '../../src/sharing/links';";
         }
@@ -30,14 +30,14 @@ public sealed class GetCodeReviewTests
 
         Assert.True(view.Truncated.Tests);
         Assert.Equal((SearchedState.Ok, "capped"), (Row(view, "lexical-tests").State, Row(view, "lexical-tests").Reason));
-        Assert.Equal(CodeRules.MaxListed, view.Tests.Count);
+        Assert.Equal(CodeRules.MaxCandidates, view.Tests.Count);   // the candidate scan is capped; the list itself is not cut
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task More_than_20_schema_files_for_a_thing_truncate_the_schema_list_and_the_row_says_capped()
+    public async Task More_than_100_schema_files_for_a_thing_truncate_the_schema_list_and_the_row_says_capped()
     {
         var files = new Dictionary<string, string>(CodeWorld.Files, StringComparer.Ordinal);
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < CodeRules.MaxFilesPerThing + 10; i++)
         {
             files[$"migrations/m{N(i)}.sql"] = "create table shared_link (id int);";
         }
@@ -52,10 +52,10 @@ public sealed class GetCodeReviewTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task More_than_30_searchable_things_are_reported_as_capped_not_dropped_silently()
+    public async Task More_than_100_searchable_things_are_reported_as_capped_not_dropped_silently()
     {
-        var nodes = Enumerable.Range(0, 31).Select(i => $"  - {{key: \"thing:gadget-{N(i)}\", label: \"Gadget {N(i)}\"}}").ToArray();
-        var edges = Enumerable.Range(0, 31).Select(i => $"  - {{from: \"action:sharing.create\", to: \"thing:gadget-{N(i)}\", type: writes}}").ToArray();
+        var nodes = Enumerable.Range(0, CodeRules.MaxThings + 1).Select(i => $"  - {{key: \"thing:gadget-{N(i)}\", label: \"Gadget {N(i)}\"}}").ToArray();
+        var edges = Enumerable.Range(0, CodeRules.MaxThings + 1).Select(i => $"  - {{from: \"action:sharing.create\", to: \"thing:gadget-{N(i)}\", type: writes}}").ToArray();
         using var world = new CodeWorld();
         _ = await world.ImportSharing(extraNodes: nodes, extraEdges: edges);
 

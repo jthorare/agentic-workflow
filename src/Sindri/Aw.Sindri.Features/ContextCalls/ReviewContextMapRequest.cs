@@ -18,7 +18,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Other">The other node: the new parent of a move, the node merged into, the parent of an add, or null.</param>
 /// <param name="Path">The review file (apply-file), or null.</param>
 /// <param name="Answer">The challenge and the text the human typed (protected variants), or null.</param>
-/// <param name="Overrides">Several overrides undone together (undo only; 1 to 1000 ids, all or none), or null; not together with <paramref name="Override"/>.</param>
+/// <param name="Overrides">Several overrides undone together (undo only; 1 to 10000 ids, all or none), or null; not together with <paramref name="Override"/>.</param>
 public sealed record ReviewContextMapRequest(string Verb, string? Node = null, string? Link = null, string? Override = null, string? Label = null,
     string? Other = null, string? Path = null, ChallengeAnswer? Answer = null, IReadOnlyList<string>? Overrides = null) : ICommand<ReviewContextMapResponse>, IClassifiedCommand
 {

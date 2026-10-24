@@ -120,7 +120,7 @@ public sealed class GetCodeSymbolsTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_lens_asks_the_map_versions_commit_and_only_the_files_repo_and_never_more_than_the_symbol_cap()
     {
-        var many = Enumerable.Range(0, 30).Select(i => new SymbolSite($"src/sharing/links.ts#f{i.ToString("D2", CultureInfo.InvariantCulture)}", $"f{i.ToString("D2", CultureInfo.InvariantCulture)}", "function", "src/sharing/links.ts", StartLine: i + 1, EndLine: i + 1, Signature: null, Exported: i % 2 == 0)).ToList();
+        var many = Enumerable.Range(0, CodeRules.MaxCallSymbols + 10).Select(i => new SymbolSite($"src/sharing/links.ts#f{i.ToString("D2", CultureInfo.InvariantCulture)}", $"f{i.ToString("D2", CultureInfo.InvariantCulture)}", "function", "src/sharing/links.ts", StartLine: i + 1, EndLine: i + 1, Signature: null, Exported: i % 2 == 0)).ToList();
         var recording = new RecordingSymbolSource(new FakeCodeSymbolSource([Index(MapCommit, symbols: many, calls: [])]));
         var (world, _) = await Lens(recording);
         using var __ = world;

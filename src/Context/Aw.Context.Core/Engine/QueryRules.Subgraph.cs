@@ -8,9 +8,6 @@ public static partial class QueryRules
     /// <summary>The most keys a subgraph GET takes (scoping spec C14).</summary>
     public const int MaxSubgraphGet = 20;
 
-    /// <summary>The most keys a subgraph QUERY takes (scoping spec C14).</summary>
-    public const int MaxSubgraphPost = 1_000;
-
     /// <summary>Whether a subgraph question fits a URL: at most <see cref="MaxSubgraphGet"/> distinct keys, each at most <see cref="MaxEncodedText"/> characters once percent-encoded.</summary>
     /// <param name="keys">The node keys as given.</param>
     /// <returns>Null when it fits, else the 006.</returns>

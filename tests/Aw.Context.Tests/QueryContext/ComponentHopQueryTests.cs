@@ -34,11 +34,11 @@ public sealed class ComponentHopQueryTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_unit_over_the_cap_is_listed_in_skipped_components_with_its_feature_count()
     {
-        await Import(6);
+        await Import(51);
 
         var result = (await Query("component")).Value;
 
-        Assert.Equal([new SkippedComponent("code:src/shared.ts", 6)], result.SkippedComponents);
+        Assert.Equal([new SkippedComponent("code:src/shared.ts", 51)], result.SkippedComponents);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -54,15 +54,15 @@ public sealed class ComponentHopQueryTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Lenses_and_sets_take_the_hop_list_and_refuse_an_unknown_name_with_140()
     {
-        await Import(6);
+        await Import(51);
 
         var one = await _world.Engine.Lenses("feature:f0", MapRead.Current, new LensRange(1, "component"), MapWorld.Human, MapWorld.None);
         var set = await _world.Engine.LensesOf(["feature:f0", "feature:f1"], MapRead.Current, new LensRange(1, "component"), MapWorld.Human, MapWorld.None);
         var bad = await _world.Engine.Lenses("feature:f0", MapRead.Current, new LensRange(1, "everything"), MapWorld.Human, MapWorld.None);
 
-        Assert.Equal([new SkippedComponent("code:src/shared.ts", 6)], one.Value.SkippedComponents);
+        Assert.Equal([new SkippedComponent("code:src/shared.ts", 51)], one.Value.SkippedComponents);
         Assert.Equal(["component"], one.Value.Searched.Hops);
-        Assert.Equal([new SkippedComponent("code:src/shared.ts", 6)], set.Value.SkippedComponents);
+        Assert.Equal([new SkippedComponent("code:src/shared.ts", 51)], set.Value.SkippedComponents);
         Assert.Equal("SND-CONTEXT-140", bad.Error.Code);
     }
 
@@ -80,7 +80,7 @@ public sealed class ComponentHopQueryTests : IDisposable
     public async Task A_skipped_unit_key_holding_a_secret_is_scrubbed_in_the_lenses_answer_and_the_query_answer()
     {
         var unit = "code:src/" + FakeScrubber.Secret + ".ts";
-        await Import(6, unit);
+        await Import(51, unit);
 
         var lenses = await _world.Engine.Lenses("feature:f0", MapRead.Current, new LensRange(1, "component"), MapWorld.Human, MapWorld.None);
         var set = await _world.Engine.LensesOf(["feature:f0", "feature:f1"], MapRead.Current, new LensRange(1, "component"), MapWorld.Human, MapWorld.None);
@@ -91,7 +91,7 @@ public sealed class ComponentHopQueryTests : IDisposable
             var only = Assert.Single(skipped!);
             Assert.DoesNotContain(FakeScrubber.Secret, only.Unit, StringComparison.Ordinal);
             Assert.Contains("[REDACTED:fake]", only.Unit, StringComparison.Ordinal);
-            Assert.Equal(6, only.Features);
+            Assert.Equal(51, only.Features);
         }
     }
 

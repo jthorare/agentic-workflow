@@ -125,7 +125,7 @@ internal sealed class MapPublishStatusReader(IContextEngine engine, IIndexOutloo
         }
     }
 
-    private const int TailWindow = 5000;
+    private const int TailWindow = 100_000;
     private const int PageSize = 500;
 
     private static readonly HashSet<string> _mapTypes = new(StringComparer.Ordinal)

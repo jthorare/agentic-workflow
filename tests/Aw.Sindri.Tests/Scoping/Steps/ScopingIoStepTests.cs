@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Testing.Scoping;
 
@@ -172,24 +171,6 @@ public sealed class ScopingIoStepTests
 
         Assert.Equal("withdrawn", result.Result!.Outcome.Value);
         Assert.Empty(proposals.Calls);
-    }
-
-    [Theory]
-    [InlineData(5, 5)]
-    [InlineData(2_000, 2_000)]
-    [InlineData(2_001, 2_000)]
-    public void The_text_shape_cuts_a_long_text_to_the_questions_limit(int length, int expected) =>
-        Assert.Equal(expected, ContextTextShape.Cut(new string('a', length)).Length);
-
-    [Fact]
-    public void The_text_shape_never_cuts_inside_a_surrogate_pair()
-    {
-        var text = new string('a', ContextTextShape.MaxText - 1) + "\U0001F600";
-
-        var cut = ContextTextShape.Cut(text);
-
-        Assert.Equal(ContextTextShape.MaxText - 1, cut.Length);
-        Assert.DoesNotContain(cut, char.IsSurrogate);
     }
 
     private static ScopingFacts Reanchorable() => new()

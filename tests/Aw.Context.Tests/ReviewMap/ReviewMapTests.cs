@@ -355,8 +355,8 @@ public sealed class ReviewMapTests : IDisposable
     [Theory, Trait("Lane", "unit")]
     [InlineData(0)]
     [InlineData(-3)]
-    [InlineData(1001)]
-    public async Task A_limit_outside_1_to_1000_is_006_for_the_queue_and_the_history(int limit)
+    [InlineData(10_001)]
+    public async Task A_limit_outside_1_to_10000_is_006_for_the_queue_and_the_history(int limit)
     {
         _ = await Drafts.Build(_world);
 

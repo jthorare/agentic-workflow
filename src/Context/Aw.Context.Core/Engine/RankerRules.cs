@@ -10,7 +10,7 @@ internal static class RankerRules
     /// <returns>The settings.</returns>
     internal static RankerSettings Read(RankerSection? section) => new()
     {
-        Features = section?.Features ?? false,
+        Features = section?.Features ?? true,
         Rerank = section?.Rerank ?? false,
         RerankTop = section?.RerankTop ?? RankerSettings.DefaultRerankTop,
         Weights = Weights(section?.Weights),
@@ -36,7 +36,7 @@ internal static class RankerRules
     {
         if (section?.RerankTop is < 1 or > RankerSettings.MaxRerankTop)
         {
-            return SettingsReader.Invalid("context.ranker.rerankTop", "is 1 to 50 items");
+            return SettingsReader.Invalid("context.ranker.rerankTop", "is 1 to 100 items");
         }
 
         var weights = section?.Weights;

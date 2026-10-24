@@ -115,16 +115,16 @@ public sealed class GetFileMapSymbolsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_listing_of_many_files_asks_for_at_most_200()
+    public async Task A_listing_of_many_files_asks_for_at_most_1000()
     {
-        var wide = Enumerable.Range(0, 250).ToDictionary(i => $"src/wide/f{i.ToString("D3", CultureInfo.InvariantCulture)}.ts", _ => "export {};", StringComparer.Ordinal);
+        var wide = Enumerable.Range(0, 1_100).ToDictionary(i => $"src/wide/f{i.ToString("D3", CultureInfo.InvariantCulture)}.ts", _ => "export {};", StringComparer.Ordinal);
         var recording = new RecordingSymbolSource(new FakeCodeSymbolSource([Index(MapCommit)]));
         using var world = new MapWorld(new FakeRepoReader(MapWorld.Repos[0], MapWorld.Head, wide), symbols: recording);
         _ = await world.ImportYaml($"commit: {MapCommit}\nschemaVersion: 1\nkind: authored\nrepo: aw-split-panes\nnodes:\n  - {{key: \"feature:tabs\", label: \"Tabs\"}}\n");
 
         _ = await world.Engine.FileMap(new FileMapQuery(_repo, "src/wide/", UnmappedOnly: false, Draft: false), MapWorld.Human, MapWorld.None);
 
-        Assert.Equal(200, recording.Calls.Single(c => c.Call == "files").Subject!.Split(',').Length);
+        Assert.Equal(1_000, recording.Calls.Single(c => c.Call == "files").Subject!.Split(',').Length);
     }
 
     // Golden files: the file map as the wire carries it, with symbols from a fresh index and from one the map is ahead of.

@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Symbols;
 public static class SymbolLinks
 {
     /// <summary>The most symbols one file-level link is refined to.</summary>
-    public const int MaxPerLink = 5;
+    public const int MaxPerLink = 20;
 
     /// <summary>The confidence of a name match.</summary>
     public const double NameMatch = 0.9;

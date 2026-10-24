@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
@@ -19,7 +18,7 @@ public static class SubgraphBuilder
     /// <param name="keys">The node keys as given.</param>
     /// <param name="depth">How far to widen, 0 to 4.</param>
     /// <param name="conflicts">The model-checked decision pairs.</param>
-    /// <returns>The view; SND-CONTEXT-006 for no key, more than 1000, a malformed key or a depth outside 0 to 4.</returns>
+    /// <returns>The view; SND-CONTEXT-006 for no key or a malformed key, or a negative depth; a depth past 8 is read as 8.</returns>
     public static Result<SubgraphView> Build(LensBasis basis, GraphSnapshot graph, IReadOnlyList<string> keys, int depth, IReadOnlyList<DecisionConflict> conflicts)
     {
         ArgumentNullException.ThrowIfNull(basis);
@@ -30,6 +29,8 @@ public static class SubgraphBuilder
         {
             return badDepth;
         }
+
+        depth = Math.Min(depth, QueryRules.MaxDepth);
 
         var nodes = graph.Nodes.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
         var resolved = Resolve(nodes, keys);
@@ -57,9 +58,9 @@ public static class SubgraphBuilder
     private static Result<(List<NodeKey> Given, List<string> Missing)> Resolve(Dictionary<string, GraphNode> nodes, IReadOnlyList<string> keys)
     {
         var distinct = keys.Distinct(StringComparer.Ordinal).ToList();
-        if (distinct.Count is 0 or > QueryRules.MaxSubgraphPost)
+        if (distinct.Count is 0)
         {
-            return ContextErrors.QueryInvalid.With(string.Create(CultureInfo.InvariantCulture, $"a subgraph call takes 1 to {QueryRules.MaxSubgraphPost} keys, not {distinct.Count}"));
+            return ContextErrors.QueryInvalid.With("a subgraph call takes at least one key");
         }
 
         var given = new List<NodeKey>();

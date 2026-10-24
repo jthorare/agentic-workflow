@@ -39,8 +39,9 @@ public sealed class GraphWalkTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(8, true)]
-    [InlineData(9, false)]
-    public void A_path_longer_than_8_edges_is_not_found(int length, bool found)
+    [InlineData(9, true)]
+    [InlineData(40, true)]
+    public void A_path_of_any_length_is_found(int length, bool found)
     {
         var builder = new GraphBuilder();
         for (var i = 0; i < length; i++)

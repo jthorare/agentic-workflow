@@ -135,8 +135,8 @@ public sealed class ContextGraphMcpTests : IDisposable
 
         var outside = await mcp.Call("context_node", $$"""{"key":"{{OutRecord}}"}""", ct);
         var unknown = await mcp.Call("context_neighbors", """{"key":"no-such-node"}""", ct);
-        var deep = await mcp.Call("context_neighbors", $$"""{"key":"{{Key}}","depth":9}""", ct);
-        var http = await host.Http.Ask(Get("/sindri/context/neighbors?key=" + Uri.EscapeDataString(Key) + "&depth=9", Session()));
+        var deep = await mcp.Call("context_neighbors", $$"""{"key":"{{Key}}","depth":-1}""", ct);
+        var http = await host.Http.Ask(Get("/sindri/context/neighbors?key=" + Uri.EscapeDataString(Key) + "&depth=-1", Session()));
 
         Assert.Equal(("SND-CONTEXT-003", "SND-CONTEXT-003", "SND-CONTEXT-006"), (Code(outside), Code(unknown), Code(deep)));
         Assert.Equal(http.Code, Code(deep));

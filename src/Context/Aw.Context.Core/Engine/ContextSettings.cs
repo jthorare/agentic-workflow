@@ -28,13 +28,13 @@ public sealed record ContextSettings
     public IReadOnlyList<string> DocGlobs { get; init; } = DefaultDocGlobs;
 
     /// <summary>The per-query deadline.</summary>
-    public TimeSpan Deadline { get; init; } = TimeSpan.FromSeconds(4);
+    public TimeSpan Deadline { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>The code lens's lexical search deadline: one git grep per implementing file and data thing, run in turn, so it gets longer than a query.</summary>
-    public TimeSpan CodeDeadline { get; init; } = TimeSpan.FromSeconds(60);
+    public TimeSpan CodeDeadline { get; init; } = TimeSpan.FromSeconds(180);
 
     /// <summary>The largest token budget a request may ask for.</summary>
-    public int MaxBudget { get; init; } = 32_000;
+    public int MaxBudget { get; init; } = 200_000;
 
     /// <summary>Below this many fused items a query reformulates once (Phase 8).</summary>
     public int MinHits { get; init; } = 3;
@@ -42,7 +42,7 @@ public sealed record ContextSettings
     /// <summary>The cascade's depth cap ('context.cascadeDepth', spec §6.1): 0 to 4, default 2; a query's depth overrides it.</summary>
     public int CascadeDepth { get; init; } = 2;
 
-    /// <summary>The component hop's fan-out cap ('context.cascadeComponentFanOut'): 1 to 50, default 5; a code unit implementing more features is skipped and reported.</summary>
+    /// <summary>The component hop's fan-out cap ('context.cascadeComponentFanOut'): 1 to 500, default 50; a code unit implementing more features is skipped and reported.</summary>
     public int CascadeComponentFanOut { get; init; } = CascadeOptions.DefaultFanOut;
 
     /// <summary>Whether session callers may read context at all, on any transport (spec §3). Off until approved.</summary>

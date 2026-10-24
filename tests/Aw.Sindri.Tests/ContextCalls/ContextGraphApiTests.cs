@@ -22,7 +22,7 @@ public sealed class ContextGraphApiTests
         var query = await host.Http.Ask(Get("/sindri/context/query?node=feature%3Alayout.split-pane.orientation", Human(host.Token.Value)));
         var outOfScope = await host.Http.Ask(Get("/sindri/context/node?key=thing%3Apane-layout", session));
         var inScope = await host.Http.Ask(Get("/sindri/context/node?key=feature%3Atabs.tab-manager", session));
-        var deep = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=9", Human(host.Token.Value)));
+        var deep = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=-1", Human(host.Token.Value)));
         var word = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=abc", Human(host.Token.Value)));
         var queryWord = await host.Http.Ask(Get("/sindri/context/query?node=feature%3Alayout.split-pane.orientation&depth=abc", Human(host.Token.Value)));
         var budgetWord = await host.Http.Ask(Get("/sindri/context/query?node=feature%3Alayout.split-pane.orientation&budget=abc", Human(host.Token.Value)));

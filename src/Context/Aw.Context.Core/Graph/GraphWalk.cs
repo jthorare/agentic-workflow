@@ -3,22 +3,19 @@ namespace Aw.Context.Core.Graph;
 /// <summary>Neighbors and paths over the graph (spec §8.5 'neighbors', 'path'), edges walked in either direction, breadth first. Pure.</summary>
 public static class GraphWalk
 {
-    /// <summary>The deepest neighborhood a request may ask for (spec §8.3).</summary>
+    /// <summary>The deepest neighborhood a request gets; a deeper ask is read as this (spec §8.3).</summary>
     public const int MaxDepth = Engine.QueryRules.MaxDepth;
-
-    /// <summary>The longest path searched (spec §8.3).</summary>
-    public const int MaxPathLength = 8;
 
     /// <summary>The nodes within <paramref name="depth"/> edges of <paramref name="center"/>.</summary>
     /// <param name="graph">The graph.</param>
     /// <param name="center">A node key in <paramref name="graph"/>.</param>
-    /// <param name="depth">0 to <see cref="MaxDepth"/>.</param>
+    /// <param name="depth">0 or more; past <see cref="MaxDepth"/> it is read as <see cref="MaxDepth"/>.</param>
     /// <returns>The neighborhood.</returns>
     public static Neighborhood Neighbors(GraphSnapshot graph, NodeKey center, int depth)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentOutOfRangeException.ThrowIfNegative(depth);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(depth, MaxDepth);
+        depth = Math.Min(depth, MaxDepth);
         var index = new GraphIndex(graph);
         var depths = new Dictionary<string, int>(StringComparer.Ordinal) { [center.Value] = 0 };
         var frontier = new List<NodeKey> { center };
@@ -35,18 +32,18 @@ public static class GraphWalk
         return new Neighborhood(center, nodes, edges);
     }
 
-    /// <summary>The shortest path from <paramref name="from"/> to <paramref name="to"/>, at most <see cref="MaxPathLength"/> edges.</summary>
+    /// <summary>The shortest path from <paramref name="from"/> to <paramref name="to"/>; any length (the path limit was removed per owner q93, 2026-10-23).</summary>
     /// <param name="graph">The graph.</param>
     /// <param name="from">A node key in <paramref name="graph"/>.</param>
     /// <param name="to">A node key in <paramref name="graph"/>.</param>
-    /// <returns>The path, or null when none is that short.</returns>
+    /// <returns>The path, or null when the two nodes are not connected.</returns>
     public static GraphPath? ShortestPath(GraphSnapshot graph, NodeKey from, NodeKey to)
     {
         ArgumentNullException.ThrowIfNull(graph);
         var index = new GraphIndex(graph);
         var parents = new Dictionary<string, PathStep?>(StringComparer.Ordinal) { [from.Value] = null };
         var frontier = new List<NodeKey> { from };
-        for (var level = 1; level <= MaxPathLength && !parents.ContainsKey(to.Value) && frontier.Count > 0; level++)
+        for (var level = 1; !parents.ContainsKey(to.Value) && frontier.Count > 0; level++)
         {
             var next = new List<NodeKey>();
             foreach (var node in frontier)

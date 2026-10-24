@@ -22,7 +22,7 @@ internal sealed class SyncSourcesService(ISourceCatalog catalog, IScrubberFactor
     : IService<SyncSourcesRequest, SyncReport>
 {
     /// <summary>The longest one run may take before it stops and saves its cursor (spec §8.8).</summary>
-    internal static readonly TimeSpan RunCap = TimeSpan.FromMinutes(2);
+    internal static readonly TimeSpan RunCap = TimeSpan.FromMinutes(10);
 
     public async ValueTask<Result<SyncReport>> Handle(SyncSourcesRequest request, CancellationToken cancellationToken)
     {

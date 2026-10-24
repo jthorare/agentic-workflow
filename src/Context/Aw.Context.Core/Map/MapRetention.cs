@@ -1,13 +1,13 @@
 namespace Aw.Context.Core.Map;
 
-/// <summary>What the purge removes (spec §6.2, Phase 3): exports after 14 days, retained versions beyond the newest 20.</summary>
+/// <summary>What the purge removes (spec §6.2, Phase 3): exports after 14 days, retained versions beyond the newest 100.</summary>
 public static class MapRetention
 {
     /// <summary>How long an export is kept.</summary>
     public static TimeSpan ExportLifetime { get; } = TimeSpan.FromDays(14);
 
     /// <summary>How many retained versions are kept.</summary>
-    public const int RetainedVersions = 20;
+    public const int RetainedVersions = 100;
 
     /// <summary>The exports past their lifetime.</summary>
     /// <param name="files">The exports folder's files.</param>

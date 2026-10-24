@@ -70,9 +70,9 @@ public sealed class MapHealthTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Context_retention_warns_about_expired_exports_and_versions_past_the_last_20()
+    public async Task Context_retention_warns_about_expired_exports_and_versions_past_the_last_100()
     {
-        for (var i = 0; i < 22; i++)
+        for (var i = 0; i < MapRetention.RetainedVersions + 2; i++)
         {
             _ = await _world.ImportFixture();
         }
@@ -84,7 +84,7 @@ public sealed class MapHealthTests : IDisposable
         var check = (await _world.Map.CheckRetention(MapWorld.None)).Value;
 
         Assert.Equal(MapHealthState.Warn, check.State);
-        Assert.Equal("1 export older than 14 days and 1 map version past the last 20 still present", check.Detail);
+        Assert.Equal("1 export older than 14 days and 1 map version past the last 100 still present", check.Detail);
         Assert.Contains("context-purge", check.Fix, StringComparison.Ordinal);
     }
 }

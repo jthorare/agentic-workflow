@@ -71,7 +71,7 @@ internal sealed partial class AsOfRepoDocs : IContextSource
             .SelectMany(d => d.Chunks.Select(c => (Doc: d, Chunk: c, Score: terms.Count(t => c.Text.Contains(t, StringComparison.OrdinalIgnoreCase)))))
             .Where(s => s.Score > 0)
             .OrderByDescending(s => s.Score).ThenBy(s => s.Doc.Path, StringComparer.Ordinal).ThenBy(s => s.Chunk.LineStart)
-            .Take(Math.Clamp(query.Limit, 1, 200))
+            .Take(Math.Max(query.Limit, 1))
             .Select((s, i) => Hit(s.Doc, s.Chunk, i + 1, now))
             .OfType<SourceHit>()
             .ToList();
@@ -107,12 +107,6 @@ internal sealed partial class AsOfRepoDocs : IContextSource
         if (!RepoDocs.TryChunkId(request.Repo.Name, entry.Path, DocChunker.MaxLine, DocChunker.MaxLine, out _) || !RepoDocs.TryKey(request.Repo.Name, entry.Path, out _))
         {
             return null;   // a path the ids can't carry is never indexed
-        }
-
-        var size = await git.Size(request.Repo.Path, entry.Blob, cancellationToken).ConfigureAwait(false);
-        if (size.IsError || size.Value > SqliteDocIndex.MaxDocumentBytes)
-        {
-            return null;
         }
 
         var text = await git.Blob(request.Repo.Path, entry.Blob, cancellationToken).ConfigureAwait(false);

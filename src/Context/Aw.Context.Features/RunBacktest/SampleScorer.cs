@@ -160,7 +160,7 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
     private static string Question(string brief)
     {
         var clean = new string([.. brief.Where(c => !char.IsControl(c) || c is '\n' or '\t')]);
-        return clean.Length <= QueryRules.MaxTextLength ? clean : clean[..QueryRules.MaxTextLength];
+        return clean;
     }
 
     private enum Outcome

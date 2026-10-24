@@ -9,7 +9,7 @@ public static class ReviewHistory
     public const int DefaultLimit = 200;
 
     /// <summary>The most a history call may ask for.</summary>
-    public const int MaxLimit = 1000;
+    public const int MaxLimit = 10_000;
 
     /// <summary>Builds the history from every override, newest first.</summary>
     /// <param name="overrides">Every override.</param>

@@ -10,5 +10,5 @@ namespace Aw.Context.Infrastructure.Onyx;
 internal sealed record OnyxSourceParts(HttpClient Http, Func<string, string?> Environment, TimeProvider Clock, ILogger<OnyxClient> Logger)
 {
     /// <summary>How long Onyx gets to answer each fetch and probe call (a search uses the query's own deadline); 4 s.</summary>
-    public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(4);
+    public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(15);
 }

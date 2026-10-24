@@ -53,19 +53,19 @@ public sealed class CodeSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_glob_over_200_characters_is_150_on_testGlobs()
+    public void A_glob_over_2000_characters_is_150_on_testGlobs()
     {
-        var settings = Read("{\"code\":{\"testGlobs\":[\"" + new string('a', 201) + "\"]}}");
+        var settings = Read("{\"code\":{\"testGlobs\":[\"" + new string('a', 2_001) + "\"]}}");
 
         Assert.Equal(ContextErrors.CodeGlobInvalid.Code, settings.Error.Code);
         Assert.StartsWith("context.code.testGlobs[0]:", settings.Error.Message, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("schemaGlobs", 50, true)]
-    [InlineData("schemaGlobs", 51, false)]
-    [InlineData("testGlobs", 51, false)]
-    public void More_than_50_globs_is_151(string key, int count, bool valid)
+    [InlineData("schemaGlobs", 500, true)]
+    [InlineData("schemaGlobs", 501, false)]
+    [InlineData("testGlobs", 501, false)]
+    public void More_than_500_globs_is_151(string key, int count, bool valid)
     {
         var globs = string.Join(',', Enumerable.Range(0, count).Select(i => string.Create(CultureInfo.InvariantCulture, $"\"g{i}/**\"")));
         var settings = Read("{\"code\":{\"" + key + "\":[" + globs + "]}}");
@@ -92,17 +92,17 @@ public sealed class CodeSettingsTests
         => Assert.Equal(TimeSpan.FromSeconds(90), Read("""{"code":{"deadline":"90s"}}""").Value.CodeDeadline);
 
     [Fact, Trait("Lane", "unit")]
-    public void Code_deadline_defaults_to_60s_and_leaves_the_query_deadline_at_4s()
+    public void Code_deadline_defaults_to_180s_and_leaves_the_query_deadline_at_10s()
     {
         var settings = Read("""{"minHits":1}""").Value;
 
-        Assert.Equal((TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(4)), (settings.CodeDeadline, settings.Deadline));
+        Assert.Equal((TimeSpan.FromSeconds(180), TimeSpan.FromSeconds(10)), (settings.CodeDeadline, settings.Deadline));
     }
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("1s5")]
     [InlineData("50ms")]
-    [InlineData("601s")]
+    [InlineData("86401s")]
     public void An_invalid_code_deadline_is_refused_naming_the_key_path(string value)
     {
         var settings = Read("{\"code\":{\"deadline\":\"" + value + "\"}}");

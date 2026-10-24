@@ -318,7 +318,7 @@
           "node": null,
           "title": "<untrusted source=\"repo-docs\">Architecture</untrusted>",
           "text": "<untrusted source=\"repo-docs\">## State\n\n`PaneLayout` (`src/layout/PaneLayout.ts`) is the single source of truth for how a tab's panes are arranged:\nthe split orientation, the panes in order, which pane has focus, and each pane's width in columns. Features\nchange the layout only through the functions in that file.\n</untrusted>",
-          "score": 0.016393,
+          "score": 0.019672,
           "why": [
             "rrf:repo-docs#1"
           ],
@@ -337,7 +337,7 @@
           "node": null,
           "title": "<untrusted source=\"repo-docs\">0001: Toggling orientation keeps the focused pane first</untrusted>",
           "text": "<untrusted source=\"repo-docs\"># 0001: Toggling orientation keeps the focused pane first\n\nStatus: accepted (SPL-103)\n\nWhen a person toggles a split between vertical and horizontal, the focused pane becomes the first pane, so the\ncursor stays where the eye already is. Swapping the pane order instead was considered and rejected: it moved the\ncursor to the other side of the screen on every toggle.\n</untrusted>",
-          "score": 0.016129,
+          "score": 0.019355,
           "why": [
             "rrf:repo-docs#2"
           ],

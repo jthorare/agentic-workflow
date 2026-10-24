@@ -14,6 +14,6 @@ internal sealed partial class QueryPipeline
             degraded.Add(rerank);
         }
 
-        return [.. ranked.Items.Take(MaxItems)];
+        return [.. ranked.Items];
     }
 }

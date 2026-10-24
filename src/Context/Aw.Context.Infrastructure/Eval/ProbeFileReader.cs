@@ -16,7 +16,7 @@ namespace Aw.Context.Infrastructure.Eval;
 /// </summary>
 internal sealed class ProbeFileReader(ContextStoreSettings settings) : IProbeFileReader
 {
-    private const long MaxBytes = 4 * 1024 * 1024;
+    private const long MaxBytes = 64L * 1024 * 1024;
 
     public async ValueTask<Result<ProbeFile>> Read(string? path, CancellationToken cancellationToken)
     {
@@ -90,7 +90,7 @@ internal sealed class ProbeFileReader(ContextStoreSettings settings) : IProbeFil
         try
         {
             return new FileInfo(full).Length > MaxBytes
-                ? ContextErrors.ProbeFileInvalid.With($"{full}: over 4 MB; nothing was run")
+                ? ContextErrors.ProbeFileInvalid.With($"{full}: over 64 MB; nothing was run")
                 : await File.ReadAllBytesAsync(full, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

@@ -30,9 +30,9 @@ public static class CodeLensBuilder
         var tests = CodeTests.Of(reach);
         var things = CodeThings.Of(reach);
         var (linkedFiles, linkedTests) = CodeFiles.Link(files, tests);
-        var listedFiles = linkedFiles.Take(CodeRules.MaxListed).ToList();
-        var listedTests = linkedTests.Take(CodeRules.MaxListed).ToList();
-        var listedThings = things.Take(CodeRules.MaxListed).ToList();
+        var listedFiles = linkedFiles.ToList();
+        var listedTests = linkedTests.ToList();
+        var listedThings = things.ToList();
         return new CodeView(
             1,
             [.. scopes.Select(Anchor)],
@@ -46,7 +46,7 @@ public static class CodeLensBuilder
             CodeSymbols.Unavailable,
             CodeSymbols.Unavailable,
             new CodeLensCounts(linkedFiles.Count, linkedTests.Count, things.Count, SchemaFiles: 0, linkedFiles.Count(f => f.TestedBy.Count == 0), Unlocated: 0),
-            new CodeLensTruncated(linkedFiles.Count > CodeRules.MaxListed, linkedTests.Count > CodeRules.MaxListed, things.Count > CodeRules.MaxListed, SchemaFiles: false, SearchedFiles: false),
+            new CodeLensTruncated(Files: false, Tests: false, Things: false, SchemaFiles: false, SearchedFiles: false),
             [],
             CodeEdges.Of(graph, reach.Union, listedFiles, listedTests, listedThings),
             AnchorSet.Coverage(basis, graph, scopes, reach.Union),

@@ -131,7 +131,7 @@ internal sealed class IntentSyncRun(IContextSource source, VisibleMap map, (Cont
     /// <summary>Searches one node, then fetches, commits and extracts its new hits one record at a time; a code when the run must stop.</summary>
     private async ValueTask<string?> Node(IReadOnlyList<string> terms, int index, ((int Version, Dictionary<string, string> Stored, Dictionary<string, IntentRecord> Known) Seen, HashSet<string> Fetched) walk, CancellationToken ct)
     {
-        var hits = await Within(t => source.Search(new SourceQuery(terms, AsOf: null, Limit: 50, context.Settings.Deadline), t), ct).ConfigureAwait(false);
+        var hits = await Within(t => source.Search(new SourceQuery(terms, AsOf: null, Limit: SourceQuery.DefaultLimit, context.Settings.Deadline), t), ct).ConfigureAwait(false);
         if (hits.IsError)
         {
             return hits.Error.Code;

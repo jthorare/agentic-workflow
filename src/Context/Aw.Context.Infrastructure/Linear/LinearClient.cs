@@ -23,7 +23,6 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
 {
     private const string TokenKey = "context.sources.linear.token";
     private const int PageSize = 250;
-    private const int MaxPages = 20;
     private readonly Lock _keyLock = new();
     private Task<string?>? _key;
 
@@ -80,7 +79,7 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
     }
 
     /// <summary>
-    /// Reads a list a page at a time until the wanted nodes are in hand, Linear says there are no more, or <see cref="MaxPages"/> pages were read (the log says so then).
+    /// Reads a list a page at a time until the wanted nodes are in hand, Linear says there are no more, with no page limit: the shared deadline bounds the read (owner q93, 2026-10-23).
     /// The filter is copied for each page; <paramref name="left"/> is asked before every call, so the pages share one deadline.
     /// </summary>
     /// <param name="list">What to read.</param>
@@ -95,7 +94,7 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
         ArgumentNullException.ThrowIfNull(left);
         List<TNode> nodes = [];
         string? after = null;
-        for (var page = 1; ; page++)
+        while (true)
         {
             var variables = LinearFilters.Variables((JsonObject?)list.Filter?.DeepClone(), Math.Clamp(list.Want - nodes.Count, 1, PageSize), after);
             var data = await Query<TData>(list.Operation, variables, left(), cancellationToken).ConfigureAwait(false);
@@ -112,11 +111,6 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
             }
 
             after = cursor;
-            if (page >= MaxPages)
-            {
-                LogTruncated(parts.Logger, list.Operation, nodes.Count);
-                return nodes;
-            }
         }
     }
 
@@ -232,9 +226,6 @@ internal sealed partial class LinearClient(LinearSettings settings, LinearSource
         LogFailed(parts.Logger, operation, status, error.Code, error.Message);
         return error;
     }
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Linear operation {Operation} was cut at {Count} nodes: more pages exist than the adapter reads")]
-    private static partial void LogTruncated(ILogger logger, string operation, int count);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Linear operation {Operation} failed (HTTP {Status}): {Code} {Reason}")]
     private static partial void LogFailed(ILogger logger, string operation, int? status, string code, string reason);

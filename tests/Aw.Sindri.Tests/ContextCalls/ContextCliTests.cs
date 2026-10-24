@@ -41,7 +41,7 @@ public sealed class ContextCliTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("depth", "abc", "(fix: --depth 2)")]
-    [InlineData("depth", "9", "(fix: --depth 2)")]
+    [InlineData("depth", "-1", "(fix: --depth 2)")]
     [InlineData("budget", "abc", "(fix: --budget 4000)")]
     public void The_cli_adds_its_own_flag_to_a_depth_or_budget_006(string field, string text, string fix)
     {
@@ -172,7 +172,7 @@ public sealed class ContextCliTests
         Assert.Contains("model, draft, untrusted", shown, StringComparison.Ordinal);
         Assert.Contains("aliases: none", shown, StringComparison.Ordinal);
         Assert.Contains("no neighbors within 1 edge(s)", lonely, StringComparison.Ordinal);
-        Assert.Contains("no path within 8 edges", nowhere, StringComparison.Ordinal);
+        Assert.Contains("no path between them", nowhere, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

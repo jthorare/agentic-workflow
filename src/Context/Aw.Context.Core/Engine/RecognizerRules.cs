@@ -11,8 +11,8 @@ namespace Aw.Context.Core.Engine;
 internal static partial class RecognizerRules
 {
     private const string Path = "context.extract.recognizers";
-    private const int MaxRecognizers = 50;
-    private const int MaxPattern = 512;
+    private const int MaxRecognizers = 500;
+    private const int MaxPattern = 2_000;
 
     /// <summary>The first refused entry, or null.</summary>
     /// <param name="entries">The entries as written.</param>

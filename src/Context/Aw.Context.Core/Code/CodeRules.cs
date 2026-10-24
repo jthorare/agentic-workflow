@@ -4,31 +4,28 @@ namespace Aw.Context.Core.Code;
 public static class CodeRules
 {
     /// <summary>The most implementing files whose tests are searched for.</summary>
-    public const int MaxImplementingFiles = 50;
+    public const int MaxImplementingFiles = 200;
 
     /// <summary>The most data things whose schema files are searched for.</summary>
-    public const int MaxThings = 30;
+    public const int MaxThings = 100;
 
     /// <summary>The most candidate files one search reads.</summary>
-    public const int MaxCandidates = 100;
+    public const int MaxCandidates = 500;
 
     /// <summary>The most schema files one thing lists.</summary>
-    public const int MaxFilesPerThing = 20;
-
-    /// <summary>The most entries one list of the view carries.</summary>
-    public const int MaxListed = 100;
+    public const int MaxFilesPerThing = 100;
 
     /// <summary>The most symbols whose callers and callees the code lens asks the code index for (exported ones first).</summary>
-    public const int MaxCallSymbols = 20;
+    public const int MaxCallSymbols = 100;
 
     /// <summary>The most files one symbol read of the code index carries.</summary>
-    public const int MaxSymbolFiles = 200;
+    public const int MaxSymbolFiles = 1_000;
 
     /// <summary>The longest search term, in characters.</summary>
     public const int MaxTermLength = 200;
 
     /// <summary>The most terms or paths one search call carries (longer sets are chunked).</summary>
-    public const int MaxTermsPerCall = 200;
+    public const int MaxTermsPerCall = 500;
 
     /// <summary>The shortest searchable term: shorter names match too much.</summary>
     public const int MinTermLength = 4;

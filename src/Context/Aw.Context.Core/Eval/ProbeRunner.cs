@@ -52,7 +52,7 @@ public static partial class ProbeRunner
         now.Totals.PrecisionAt5 < before.Totals.PrecisionAt5 || now.Totals.CitationCorrectness < before.Totals.CitationCorrectness
         || now.Probes.Any(p => before.Probes.FirstOrDefault(b => b.Id == p.Id) is { } was && p.AbsentReturned.Count > was.AbsentReturned.Count);
 
-    /// <summary>Checks a probe file's content: at least one probe, ids unique slugs, questions 1 to 2000 characters, schema version 1.</summary>
+    /// <summary>Checks a probe file's content: at least one probe, ids unique slugs, non-empty questions, schema version 1.</summary>
     /// <param name="set">The parsed file.</param>
     /// <returns>Null when valid, else SND-CONTEXT-035 naming the key path.</returns>
     public static Error? Check(ProbeSet set)
@@ -79,7 +79,7 @@ public static partial class ProbeRunner
                 { Expect: null } => Invalid(at + ".expect", "is required (an object, its lists optional)"),
                 _ when !Slug.IsMatch(probe.Id.Value) => Invalid(at + ".id", "is a slug: lower-case letters, digits and '-', 1 to 100 characters"),
                 _ when !seen.Add(probe.Id.Value) => Invalid(at + ".id", $"'{probe.Id.Value}' is already the id of an earlier probe"),
-                _ when string.IsNullOrWhiteSpace(probe.Question) || probe.Question.Length > QueryRules.MaxTextLength => Invalid(at + ".question", "is 1 to 2000 characters"),
+                _ when string.IsNullOrWhiteSpace(probe.Question) => Invalid(at + ".question", "is not empty"),
                 _ when !QueryRules.FitsQueryUrl(probe.Question) => Invalid(at + ".question", $"is over {QueryRules.MaxEncodedText} characters once percent-encoded for the query (shorten it)"),
                 _ when QueryRules.Terms(probe.Question).Count == 0 => Invalid(at + ".question", "needs at least one word (letters or digits)"),
                 _ => null,

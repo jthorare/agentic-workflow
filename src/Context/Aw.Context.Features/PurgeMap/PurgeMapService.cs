@@ -4,7 +4,7 @@ using Aw.Kernel.Services;
 
 namespace Aw.Context.Features.PurgeMap;
 
-/// <summary>The context-purge service's work (spec §6.2, Phase 3): deletes exports older than 14 days and retained versions past the newest 20.</summary>
+/// <summary>The context-purge service's work (spec §6.2, Phase 3): deletes exports older than 14 days and retained versions past the newest 100.</summary>
 internal sealed class PurgeMapService(IGraphStore store, IExportStore exports, TimeProvider clock) : IService<PurgeMapRequest, PurgeReport>
 {
     public async ValueTask<Result<PurgeReport>> Handle(PurgeMapRequest request, CancellationToken cancellationToken)

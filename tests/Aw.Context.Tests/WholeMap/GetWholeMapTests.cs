@@ -118,15 +118,15 @@ public sealed class GetWholeMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_bad_detail_or_more_than_100_keys_to_place_is_006_and_100_is_fine()
+    public async Task A_bad_detail_or_more_than_1000_keys_to_place_is_006_and_1000_is_fine()
     {
         var world = await Imported();
 
         var bad = await Ask(world, "everything");
-        var hundred = await Ask(world, locate: [.. Enumerable.Range(0, 100).Select(i => "feature:n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
-        var more = await Ask(world, locate: [.. Enumerable.Range(0, 101).Select(i => "feature:n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+        var thousand = await Ask(world, locate: [.. Enumerable.Range(0, 1_000).Select(i => "feature:n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+        var more = await Ask(world, locate: [.. Enumerable.Range(0, 1_001).Select(i => "feature:n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
 
-        Assert.Equal((ContextErrors.QueryInvalid.Code, true, ContextErrors.QueryInvalid.Code), (bad.Error.Code, hundred.IsSuccess, more.Error.Code));
+        Assert.Equal((ContextErrors.QueryInvalid.Code, true, ContextErrors.QueryInvalid.Code), (bad.Error.Code, thousand.IsSuccess, more.Error.Code));
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -77,8 +77,8 @@ public static class AnchorMatch
         return new TextAnchors(anchors, Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)]));
     }
 
-    /// <summary>The most words of a question matching reads (a question is at most 2000 characters, so this never truncates one in practice).</summary>
-    internal const int MaxWords = 256;
+    /// <summary>The most words of a question matching reads (raised from 256 per owner q93, 2026-10-23).</summary>
+    internal const int MaxWords = 4_000;
 
     /// <summary>The words of a text as matching reads them: lower-case letter and digit runs, small words left out before and after a plural 's' is dropped ('this' is never 'thi').</summary>
     /// <param name="text">The text.</param>

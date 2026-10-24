@@ -10,6 +10,18 @@ public sealed class ListNeighborsTests : IDisposable
 
     public void Dispose() => _world.Dispose();
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(5, 5)]
+    [InlineData(99, 8)]
+    public async Task A_depth_past_the_old_cap_is_walked_and_past_8_is_read_as_8(int depth, int shown)
+    {
+        _ = await _world.ImportFixture();
+
+        var view = (await _world.Engine.Neighbors("thing:pane-layout", depth, MapWorld.Human, MapWorld.None)).Value;
+
+        Assert.Equal(shown, view.Depth);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Neighbors_default_to_depth_1_with_the_edges_among_them()
     {
@@ -25,8 +37,7 @@ public sealed class ListNeighborsTests : IDisposable
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(-1)]
-    [InlineData(5)]
-    public async Task A_depth_outside_0_to_4_is_SND_CONTEXT_006(int depth)
+    public async Task A_negative_depth_is_SND_CONTEXT_006(int depth)
     {
         _ = await _world.ImportFixture();
 

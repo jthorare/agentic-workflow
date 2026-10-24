@@ -89,15 +89,15 @@ public sealed class CodeLensMergeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Lists_cap_at_100_and_20_schema_files_per_thing()
+    public void Lists_are_not_cut_and_schema_files_cap_at_100_per_thing()
     {
         var tests = Enumerable.Range(0, 101).Select(i => new LexicalTest(Path("tests/t", i), CodeBasis.Imports, ["src/sharing/links.ts"])).ToList();
-        var schema = Enumerable.Range(0, 21).Select(i => new LexicalSchemaFile(NodeKey.From("thing:shared-link"), Path("migrations/m", i), "shared_link")).ToList();
+        var schema = Enumerable.Range(0, 101).Select(i => new LexicalSchemaFile(NodeKey.From("thing:shared-link"), Path("migrations/m", i), "shared_link")).ToList();
 
         var view = CodeLensMerge.With(Base(), Found(tests, schema));
 
-        Assert.Equal((100, true, 102), (view.Tests.Count, view.Truncated.Tests, view.Counts.Tests));
-        Assert.Equal((20, true, 21), (view.Data.Files.Count, view.Truncated.SchemaFiles, view.Counts.SchemaFiles));
+        Assert.Equal((102, false, 102), (view.Tests.Count, view.Truncated.Tests, view.Counts.Tests));   // no list cut (owner q93, 2026-10-23)
+        Assert.Equal((100, true, 101), (view.Data.Files.Count, view.Truncated.SchemaFiles, view.Counts.SchemaFiles));
     }
 
     [Fact, Trait("Lane", "unit")]

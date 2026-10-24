@@ -112,9 +112,9 @@ internal sealed class CodeSymbolSearch(ICodeSymbolSource source)
             return new CodeSymbolFindings(CodeIndexReading.Row(head), CodeIndexReading.Calls(head, Listed(Callers), UnresolvedCallers), CodeIndexReading.Calls(head, Listed(Callees), UnresolvedCallees));
         }
 
-        // The strongest edge to each symbol first, at most 100.
+        // The strongest edge to each symbol first, every one.
         private static List<CallEdgeRow> Listed(List<CallEdgeRow> rows) =>
             [.. rows.GroupBy(r => r.Symbol.Ref, StringComparer.Ordinal).Select(g => g.OrderByDescending(r => r.Confidence).First())
-                .OrderByDescending(r => r.Confidence).ThenBy(r => r.Symbol.Ref, StringComparer.Ordinal).Take(CodeRules.MaxListed)];
+                .OrderByDescending(r => r.Confidence).ThenBy(r => r.Symbol.Ref, StringComparer.Ordinal)];
     }
 }

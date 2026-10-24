@@ -118,7 +118,7 @@ public sealed class ContextMcpTests : IDisposable
 
         Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":null,"node":null}""", ct)).IsError);   // why: null is absent
         Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":2}""", ct)).IsError);
-        Assert.Equal("SND-CONTEXT-006", Code(await own.Call("context_query", """{"q":"orientation","depth":9}""", ct)));
+        Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":9}""", ct)).IsError);   // a depth past the old cap of 4 is read, and past 8 is read as 8 (owner q93, 2026-10-23)
         Assert.Equal("SND-CONTEXT-006", Code(await own.Call("context_query", """{"q":"orientation","budget":0}""", ct)));
         Assert.Equal(
             [(true, "SND-CONTEXT-020"), (true, "SND-CONTEXT-020"), (true, "SND-CONTEXT-003"), (true, "SND-CONTEXT-021"), (true, "SND-CONTEXT-022"),

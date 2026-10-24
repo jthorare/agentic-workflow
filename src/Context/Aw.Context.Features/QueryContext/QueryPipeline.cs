@@ -28,9 +28,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 {
     private readonly RankerStage _ranker = new(model, clock);
 
-    /// <summary>The most fused items fetched (and so cited) per query.</summary>
-    internal const int MaxItems = 20;
-
     /// <summary>The most text kept from one record after cleaning (spec §8.3: 64 KB).</summary>
     internal const int MaxRecordText = 64 * 1024;
 
@@ -185,7 +182,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var deadline = when.Deadline;
         var calls = sources.Select(async source =>
         {
-            var query = new SourceQuery(terms, when.AsOf, Limit: 50, deadline - clock.GetUtcNow());
+            var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow());
             var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
             return (source.Describe().Id, hits);
         });

@@ -12,11 +12,13 @@ internal sealed class ListNeighborsService(MapReader reader, IScrubberFactory sc
 {
     public async ValueTask<Result<NeighborsView>> Handle(ListNeighborsRequest request, CancellationToken cancellationToken)
     {
-        var depth = request.Depth ?? 1;
-        if (QueryRules.CheckDepth(depth) is { } depthError)
+        var asked = request.Depth ?? 1;
+        if (QueryRules.CheckDepth(asked) is { } depthError)
         {
             return depthError;
         }
+
+        var depth = Math.Min(asked, QueryRules.MaxDepth);
 
         var call = await reader.Open(request.Scope, scrubbers, cancellationToken).ConfigureAwait(false);
         var node = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.Key));

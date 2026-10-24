@@ -45,7 +45,7 @@ internal static class ContextGraphText
         var text = new StringBuilder(Invariant($"path {view.From.Value} → {view.To.Value} · map {view.MapVersion}\n"));
         if (!view.Found || view.Steps.Count == 0)
         {
-            return text.AppendLine(view.Found ? "the same node: no steps" : Invariant($"no path within {GraphWalk.MaxPathLength} edges")).ToString();
+            return text.AppendLine(view.Found ? "the same node: no steps" : "no path between them").ToString();
         }
 
         var i = 0;

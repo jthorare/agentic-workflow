@@ -131,6 +131,12 @@
         "tests/gen/g096.test.ts",
         "tests/gen/g097.test.ts",
         "tests/gen/g098.test.ts",
+        "tests/gen/g099.test.ts",
+        "tests/gen/g100.test.ts",
+        "tests/gen/g101.test.ts",
+        "tests/gen/g102.test.ts",
+        "tests/gen/g103.test.ts",
+        "tests/gen/g104.test.ts",
         "tests/links.test.ts"
       ]
     },
@@ -1860,6 +1866,142 @@
       "anchors": [
         "feature:sharing"
       ]
+    },
+    {
+      "path": "tests/gen/g099.test.ts",
+      "label": "tests/gen/g099.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/gen/g100.test.ts",
+      "label": "tests/gen/g100.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/gen/g101.test.ts",
+      "label": "tests/gen/g101.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/gen/g102.test.ts",
+      "label": "tests/gen/g102.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/gen/g103.test.ts",
+      "label": "tests/gen/g103.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/gen/g104.test.ts",
+      "label": "tests/gen/g104.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/links.test.ts",
+      "label": "tests/links.test.ts",
+      "kind": "code",
+      "basis": "imports",
+      "tests": [],
+      "named": [
+        "src/sharing/links.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
+    },
+    {
+      "path": "tests/routes.test.ts",
+      "label": "tests/routes.test.ts",
+      "kind": "code",
+      "basis": "sibling",
+      "tests": [],
+      "named": [
+        "src/sharing/routes.ts"
+      ],
+      "confirmed": false,
+      "suggested": true,
+      "linkId": null,
+      "trust": "trusted",
+      "anchors": [
+        "feature:sharing"
+      ]
     }
   ],
   "data": {
@@ -1928,7 +2070,7 @@
   },
   "counts": {
     "files": 2,
-    "tests": 102,
+    "tests": 108,
     "things": 2,
     "schemaFiles": 1,
     "filesWithoutTest": 0,
@@ -1936,7 +2078,7 @@
   },
   "truncated": {
     "files": false,
-    "tests": true,
+    "tests": false,
     "things": false,
     "schemaFiles": false,
     "searchedFiles": false
@@ -1946,8 +2088,8 @@
       "repo": "aw-split-panes",
       "commit": "da2e79d",
       "searchedFiles": 2,
-      "candidates": 100,
-      "read": 100
+      "candidates": 107,
+      "read": 107
     }
   ],
   "edges": [
@@ -2144,7 +2286,7 @@
       {
         "id": "lexical-tests",
         "state": "ok",
-        "reason": "capped",
+        "reason": null,
         "code": null,
         "asOf": "2026-01-01T00:00:00.0000000Z"
       },

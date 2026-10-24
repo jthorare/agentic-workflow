@@ -6,8 +6,4 @@ namespace Aw.Context.Infrastructure.Docs;
 /// <param name="Title">The cleaned title.</param>
 /// <param name="Blocked">True when the scrubber withheld any of it.</param>
 /// <param name="Chunks">The cleaned chunks.</param>
-internal sealed record PreparedDoc(string Path, string Blob, string Title, bool Blocked, IReadOnlyList<DocChunk> Chunks)
-{
-    /// <summary>True when the document is over the size cap: kept as a row without chunks, reported skipped.</summary>
-    public bool Oversized { get; init; }
-}
+internal sealed record PreparedDoc(string Path, string Blob, string Title, bool Blocked, IReadOnlyList<DocChunk> Chunks);

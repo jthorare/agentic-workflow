@@ -143,7 +143,7 @@ public sealed class RepoDocsTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task An_oversized_doc_is_skipped_and_kept_and_an_unreadable_one_keeps_its_earlier_rows()
+    public async Task A_doc_over_a_mebibyte_is_searchable_and_an_unreadable_one_keeps_its_earlier_rows()
     {
         using var home = new TempHome();
         using var fixture = FixtureRepo.Build();
@@ -159,11 +159,11 @@ public sealed class RepoDocsTests
         var refreshed = (await home.Index.Refresh(repo, ["docs/**/*.md"], home.Scrubbers, CancellationToken.None)).Value;
         var again = (await home.Index.Refresh(repo, ["docs/**/*.md"], home.Scrubbers, CancellationToken.None)).Value;
 
-        Assert.Equal(2, refreshed.Skipped);   // the oversized doc and the unreadable edit
+        Assert.Equal(1, refreshed.Skipped);   // only the unreadable edit: a doc has no size limit (owner q93, 2026-10-23)
         Assert.Equal(1L, Count(home, "SELECT count(*) FROM doc WHERE path = 'docs/huge.md'"));
-        Assert.Equal(0L, Count(home, "SELECT count(*) FROM doc_chunk WHERE path = 'docs/huge.md'"));
+        Assert.True(Count(home, "SELECT count(*) FROM doc_chunk WHERE path = 'docs/huge.md'") > 0);
         Assert.True(Count(home, "SELECT count(*) FROM doc_chunk WHERE path = 'docs/architecture.md'") > 0);   // its earlier rows stay
-        Assert.Equal((1, 1), (again.Kept - 1, again.Skipped));   // huge.md is kept now; the edit is still unreadable
+        Assert.Equal(1, again.Skipped);   // the edit is still unreadable
     }
 
     [Fact, Trait("Lane", "integration")]

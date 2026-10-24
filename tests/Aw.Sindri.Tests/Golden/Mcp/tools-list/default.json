@@ -28,7 +28,7 @@
         },
         "depth": {
           "type": "integer",
-          "description": "Cascade depth (at most 4)",
+          "description": "Cascade depth (deeper than 8 is read as 8)",
           "minimum": 0
         },
         "hops": {

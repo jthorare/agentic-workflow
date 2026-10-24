@@ -17,7 +17,7 @@ namespace Aw.Context.Infrastructure.Git;
 internal sealed partial class GitCli
 {
     private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-    private readonly TimeSpan _archiveTimeout = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _archiveTimeout = TimeSpan.FromMinutes(30);
     private readonly IReadOnlyList<string> _command;
     private readonly TimeSpan _drainGrace;
 

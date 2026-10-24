@@ -13,8 +13,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// </summary>
 internal sealed class SindriHeavyJobLock(IHeavySlots slots, TimeSpan wait) : IHeavyJobLock
 {
-    /// <summary>How long a build waits for a slot before it answers 040.</summary>
-    internal static TimeSpan DefaultWait { get; } = TimeSpan.FromSeconds(60);
+    /// <summary>How long a build queues for a slot before it answers 040: hours, not a minute, so a busy box makes it wait with progress instead of fail (owner q93, 2026-10-23); cancelling the job ends the wait.</summary>
+    internal static TimeSpan DefaultWait { get; } = TimeSpan.FromHours(12);
 
     public async ValueTask<Result<IAsyncDisposable>> Take(IProgress<string>? waiting, CancellationToken cancellationToken)
     {

@@ -24,8 +24,8 @@ internal sealed class PrContextInput(IPullRequests pulls, IChangedPaths changed,
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor => PrInputs.Context;
 
-    private const int ExcerptCap = 4096;
-    private const int TotalCap = 16384;
+    private const int ExcerptCap = 64 * 1024;
+    private const int TotalCap = 120 * 1024;
 
     /// <inheritdoc/>
     public async ValueTask<Result<InjectionSections>> Fill(StepInputContext context, CancellationToken cancellationToken)

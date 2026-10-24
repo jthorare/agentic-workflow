@@ -147,7 +147,7 @@ public sealed class ContextReviewApiTests : IDisposable
         var again = await host.Http.Ask(Post("/sindri/context/map/review", Review("undo", overrides: [.. ids]), App(host)));
         var both = await host.Http.Ask(Post("/sindri/context/map/review", Review("undo", override_: ids[0], overrides: [ids[1]]), App(host)));
         var empty = await host.Http.Ask(Post("/sindri/context/map/review", Review("undo", overrides: []), App(host)));
-        var tooMany = await host.Http.Ask(Post("/sindri/context/map/review", Review("undo", overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 1001)]), App(host)));
+        var tooMany = await host.Http.Ask(Post("/sindri/context/map/review", Review("undo", overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 10_001)]), App(host)));
         var history = Json((await host.Http.Ask(Get("/sindri/context/map/review/history", Terminal(host)))).Body).GetProperty("entries");
 
         Assert.Equal(HttpStatusCode.OK, undone.Status);
@@ -169,7 +169,7 @@ public sealed class ContextReviewApiTests : IDisposable
         var full = Json((await host.Http.Ask(Get("/sindri/context/map/review", Terminal(host)))).Body);
         var capped = Json((await host.Http.Ask(Get("/sindri/context/map/review?limit=1", Terminal(host)))).Body);
         var zero = await host.Http.Ask(Get("/sindri/context/map/review?limit=0", Terminal(host)));
-        var huge = await host.Http.Ask(Get("/sindri/context/map/review?limit=1001", Terminal(host)));
+        var huge = await host.Http.Ask(Get("/sindri/context/map/review?limit=10001", Terminal(host)));
         var historyZero = await host.Http.Ask(Get("/sindri/context/map/review/history?limit=0", Terminal(host)));
         var history = Json((await host.Http.Ask(Get("/sindri/context/map/review/history?limit=1", Terminal(host)))).Body);
 

@@ -14,7 +14,7 @@ namespace Aw.Context.Infrastructure.Review;
 /// <param name="options">The AwJson options over the review types.</param>
 internal sealed class FileReviewFileStore(ContextStoreSettings settings, JsonSerializerOptions options) : IReviewFileStore
 {
-    private const long MaxBytes = 4 * 1024 * 1024;
+    private const long MaxBytes = 64L * 1024 * 1024;
 
     public ValueTask<Result<string>> Write(string? path, string defaultName, ReviewFile file, CancellationToken cancellationToken)
     {
@@ -57,7 +57,7 @@ internal sealed class FileReviewFileStore(ContextStoreSettings settings, JsonSer
         {
             if (new FileInfo(full).Length > MaxBytes)
             {
-                return ContextErrors.MapFileInvalid.With($"{full}: over 4 MB; nothing was applied");
+                return ContextErrors.MapFileInvalid.With($"{full}: over 64 MB; nothing was applied");
             }
 
             bytes = await File.ReadAllBytesAsync(full, cancellationToken).ConfigureAwait(false);

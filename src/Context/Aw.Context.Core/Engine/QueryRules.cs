@@ -10,20 +10,20 @@ public static partial class QueryRules
     /// <summary>The budget a request gets when it names none.</summary>
     public const int DefaultBudget = 8_000;
 
-    /// <summary>The most search terms a question keeps.</summary>
-    public const int MaxTerms = 16;
+    /// <summary>The most search terms a question keeps (raised from 16 per owner q93, 2026-10-23).</summary>
+    public const int MaxTerms = 64;
 
-    /// <summary>The longest question text.</summary>
+    /// <summary>The longest node, item or symbol anchor; a question's text has no length limit (owner q93, 2026-10-23).</summary>
     public const int MaxTextLength = 2_000;
 
-    /// <summary>The deepest cascade a request may ask for (spec §8.3).</summary>
-    public const int MaxDepth = 4;
+    /// <summary>The deepest cascade a request gets: a deeper ask is read as this depth (spec §8.3; raised from 4 and clamped per owner q93, 2026-10-23).</summary>
+    public const int MaxDepth = 8;
 
     /// <summary>The longest value, percent-encoded, a query URL carries: under Kestrel's 8 KB request line, with room for the rest of the URL. The CLI and probe files both refuse a longer one with a clear code.</summary>
     public const int MaxEncodedText = 6_000;
 
     /// <summary>What a bad depth's 006 starts with (a transport adds its own hint after it).</summary>
-    public const string DepthMessage = "depth must be a whole number from 0 to 4";
+    public const string DepthMessage = "depth must be a whole number of 0 or more (deeper than 8 is read as 8)";
 
     /// <summary>What a bad budget's 006 starts with (a transport adds its own hint after it).</summary>
     public const string BudgetMessage = "budget must be a whole number of tokens, 1 or more";
@@ -89,10 +89,14 @@ public static partial class QueryRules
         return Shaped(query, Math.Min(query.Budget ?? DefaultBudget, settings.MaxBudget));
     }
 
-    /// <summary>A depth as a transport sent it: absent, or a whole number from 0 to <see cref="MaxDepth"/>.</summary>
+    /// <summary>A depth as a transport sent it: absent, or a whole number of 0 or more (a depth past <see cref="MaxDepth"/> is read as <see cref="MaxDepth"/>).</summary>
     /// <param name="text">The text, or null.</param>
-    /// <returns>The depth (null when absent); SND-CONTEXT-006 when it is not a whole number or is out of range. The message names no flag: a transport adds its own hint.</returns>
-    public static Result<int?> ParseDepth(string? text) => ParseWhole(text, DepthMessage, 0, MaxDepth);
+    /// <returns>The depth (null when absent); SND-CONTEXT-006 when it is not a whole number or is negative. The message names no flag: a transport adds its own hint.</returns>
+    public static Result<int?> ParseDepth(string? text)
+    {
+        var parsed = ParseWhole(text, DepthMessage, 0, int.MaxValue);
+        return parsed.IsError || parsed.Value is not { } depth ? parsed : Math.Min(depth, MaxDepth);
+    }
 
     /// <summary>The cascade hops as a transport sent them: absent, or a comma list of state, flow, dependency and component (repeated keys joined with commas).</summary>
     /// <param name="text">The text, or null.</param>
@@ -135,9 +139,9 @@ public static partial class QueryRules
 
     /// <summary>The 006 for a depth already a number, worded as <see cref="ParseDepth"/> words it.</summary>
     /// <param name="depth">The depth, or null.</param>
-    /// <returns>Null when absent or 0 to <see cref="MaxDepth"/>, else the error.</returns>
+    /// <returns>Null when absent or 0 or more (a deeper one is clamped to <see cref="MaxDepth"/> where it is read), else the error.</returns>
     public static Error? CheckDepth(int? depth) =>
-        depth is { } value && value is < 0 or > MaxDepth ? OutOfRange(DepthMessage, value.ToString(CultureInfo.InvariantCulture)) : null;
+        depth is { } value && value < 0 ? OutOfRange(DepthMessage, value.ToString(CultureInfo.InvariantCulture)) : null;
 
     /// <summary>The 006 for an anchor set that is empty; any number of anchors is taken.</summary>
     /// <param name="anchors">The distinct anchor values.</param>
@@ -240,10 +244,9 @@ public static partial class QueryRules
     private static Result<ValidQuery> Question(string text, int budget)
     {
         var terms = Terms(text);
-        if (text.Length > MaxTextLength || terms.Count == 0)
+        if (terms.Count == 0)
         {
-            return ContextErrors.QueryInvalid.With(string.Create(CultureInfo.InvariantCulture,
-                $"the question needs at least one word and at most {MaxTextLength} characters"));
+            return ContextErrors.QueryInvalid.With("the question needs at least one word");
         }
 
         return new ValidQuery(terms, budget);

@@ -173,14 +173,14 @@ public sealed class ContextReviewRowsTests
         var list = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: ["ovr_0123456789abcdef", "ovr_fedcba9876543210"]));
         var both = ReviewInput.Read(new ReviewContextMapRequest("undo", Override: "ovr_0123456789abcdef", Overrides: ["ovr_fedcba9876543210"]));
         var empty = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: []));
-        var tooMany = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 1001)]));
-        var thousand = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 1000)]));
+        var tooMany = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 10_001)]));
+        var tenThousand = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: [.. Enumerable.Repeat("ovr_0123456789abcdef", 10_000)]));
         var bad = ReviewInput.Read(new ReviewContextMapRequest("undo", Overrides: ["ovr_0123456789abcdef", "nonsense"]));
         var wrongVerb = ReviewInput.Read(new ReviewContextMapRequest("drop", Overrides: ["ovr_0123456789abcdef"]));
 
         Assert.Equal(["ovr_0123456789abcdef", "ovr_fedcba9876543210"], list.Value.Decision!.UndoesAll!.Select(i => i.Value), StringComparer.Ordinal);
         Assert.Null(list.Value.Decision.Undoes);
-        Assert.Equal(1000, thousand.Value.Decision!.UndoesAll!.Count);
+        Assert.Equal(10_000, tenThousand.Value.Decision!.UndoesAll!.Count);
         Assert.All([both, empty, tooMany, bad, wrongVerb], r => Assert.Equal(SindriErrors.InvalidInput.Code, r.Error.Code));
         Assert.Contains("overrides", both.Error.Message, StringComparison.Ordinal);
         Assert.Contains("overrides[1]", bad.Error.Message, StringComparison.Ordinal);

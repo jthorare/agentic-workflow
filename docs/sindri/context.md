@@ -30,7 +30,7 @@ context:
   repos: [work-app]                                    # the profile repos the engine maps; default: all of them
   docs: { globs: ["docs/**/*.md", "**/PRD*.md", "**/TDD*.md"] }   # repo-relative; letters, digits and ._-/* only
   deadline: 4s                                         # per query, 100ms to 60s
-  maxBudget: 32000                                     # the largest token budget a request may ask for
+  maxBudget: 200000                                    # the largest token budget a request may ask for
   minHits: 3
   sessions: { enabled: false }                         # whether agent sessions may read context at all (any transport)
 services:
@@ -64,7 +64,7 @@ when named). `context sources status` shows each intent source's last sync, link
 ```bash
 $SINDRI context query "split pane orientation"            # text
 $SINDRI context query "split pane orientation" --json     # the API's JSON, unchanged
-$SINDRI context query "…" --budget 4000                   # tokens; default 8000, capped at context.maxBudget (32000)
+$SINDRI context query "…" --budget 4000                   # tokens; default 8000, capped at context.maxBudget (200000)
 $SINDRI context sources status [--json]                   # each source's state; whether sessions may read
 $SINDRI context query --item SPL-103                      # a tracker key, or a Sindri item id (ITM-...): its record, decisions and conflicts, with citations
 ```
@@ -417,7 +417,7 @@ $SINDRI context map export [<name-or-path>] [--json]
 
 `$SINDRI doctor` adds `context:map` (warns with no map or with orphaned overrides; how far the map is behind HEAD is
 unknown until a build records its commit, S-4) and `context:retention` (warns while exports older than 14 days or
-retained versions past the newest 20 are still there, except those replaced within the last 90 days, which a backtest can still read). The `context-purge` service removes both: name it under
+retained versions past the newest 100 are still there, except those replaced within the last 90 days, which a backtest can still read). The `context-purge` service removes both: name it under
 `services:` in the profile.
 
 ### Exit codes (map verbs)
@@ -465,7 +465,7 @@ those surfaces' actions (the `graph` section). Each step costs 1:
 
 A reached surface or action is reported as the feature that owns it. Only the reached node steps on, never that
 feature's other surfaces, so a sibling such as "Pane resize" is never pulled in. The depth is `context.cascadeDepth`
-in the profile (0–4, default 2), and `--depth` overrides it. Each affected node shows its shortest path (between equally deep paths, the one with the fewest `owns` steps, then key order), starting at the anchor and naming the real hops: the `owns` steps down through the anchor's own scope to the surface or action that writes or depends, then the state, dependency or flow hops. A bad `--depth` (not a whole number, or outside 0–4) is `SND-CONTEXT-006`. `--hops` names the hops to walk and replaces the default three (`--hops component` walks only that hop; `--hops state,flow,dependency,component` adds the opt-in component hop, nodes that share a confirmed code unit, to the default three); a code unit implementing more than `context.cascadeComponentFanOut` features (default 5) is skipped and listed in `skippedComponents`; an unknown hop name is `SND-CONTEXT-140`.
+in the profile (0–8, default 2; a deeper ask is read as 8), and `--depth` overrides it. Each affected node shows its shortest path (between equally deep paths, the one with the fewest `owns` steps, then key order), starting at the anchor and naming the real hops: the `owns` steps down through the anchor's own scope to the surface or action that writes or depends, then the state, dependency or flow hops. A bad `--depth` (not a whole number, or outside 0–4) is `SND-CONTEXT-006`. `--hops` names the hops to walk and replaces the default three (`--hops component` walks only that hop; `--hops state,flow,dependency,component` adds the opt-in component hop, nodes that share a confirmed code unit, to the default three); a code unit implementing more than `context.cascadeComponentFanOut` features (default 5) is skipped and listed in `skippedComponents`; an unknown hop name is `SND-CONTEXT-140`.
 
 **A session sees only its repo.** A session sees only the nodes its repo implements (`implements` edges with file
 evidence in its `X-Sindri-Repo`), the code files those edges start from, and the edges among them (so `lenses` shows its code band and
@@ -491,11 +491,11 @@ searches the sources with the question's words. `suggestedAnchors` lists close n
 
 ```bash
 $SINDRI context show feature:layout.orientation [--json]        # the node, its aliases, its edges in and out
-$SINDRI context neighbors thing:pane-layout [--depth N] [--json] # nodes within N edges either way (0–4, default 1; else 006)
+$SINDRI context neighbors thing:pane-layout [--depth N] [--json] # nodes within N edges either way (0 or more, default 1; deeper than 8 is read as 8)
 $SINDRI context path feature:layout.split-pane.orientation Tabs [--json]   # the shortest path, at most 8 edges
 ```
 
-No path within 8 edges is an answer (`no path within 8 edges`, exit 0), not an error. HTTP: `GET
+No path between two nodes is an answer (`no path between them`, exit 0; the 8-edge path limit was removed per owner q93, 2026-10-23), not an error. HTTP: `GET
 /sindri/context/node?key=`, `/neighbors?key=&depth=`, `/path?from=&to=` (keys in the query string, URL-escaped).
 
 ### Probes
@@ -511,7 +511,7 @@ A probe file is JSON, kept outside every repo:
                             "records": ["linear:issue/…"], "files": ["src/layout/SplitPane.ts"], "decisions": [] } } ] }
 ```
 
-Ids are unique slugs; questions are 1–2000 characters with at least one word (a letter or digit) and at most 6000 characters once percent-encoded for the query URL; unknown keys are refused. A wordless or over-long question is refused with `SND-CONTEXT-035` and its key path, and nothing runs.
+Ids are unique slugs; questions have at least one word (no length limit: removed per owner q93, 2026-10-23) (a letter or digit) and at most 6000 characters once percent-encoded for the query URL; unknown keys are refused. A wordless or over-long question is refused with `SND-CONTEXT-035` and its key path, and nothing runs.
 
 ```bash
 $SINDRI context eval probes [--file ~/probes/probes.json] [--json]
@@ -628,7 +628,7 @@ then 60 minutes. The move check compares the checkouts with the held draft's hea
 and three failed refreshes or publishes in a row raise the one service row.
 
 A build takes a slot of the box-wide heavy-job lock (`$AW_STATE_DIR/locks/heavy-job.lock`, `.2` for the second slot,
-`AW_HEAVY_SLOTS`; the same directory the shell tools and `ui-evidence` use). If every slot stays held for 60 seconds
+`AW_HEAVY_SLOTS`; the same directory the shell tools and `ui-evidence` use). If every slot stays held for 12 hours (it queues with progress; the 60-second wait was removed per owner q93, 2026-10-23)
 it answers `SND-CONTEXT-040` (exit 75) naming the holder, and writes nothing. A second build keeps every decision you made
 (rejected nodes are not proposed again, accepted ones stay accepted) and re-applies pending proposals.
 
@@ -716,12 +716,12 @@ whole map v13@9c2e4f1 · 1840 nodes, 3122 edges · detail: areas (over-budget)
   Not linked to a feature yet · 214 members · 160 record, 54 code
 ```
 
-The whole map in one read, the way the app opens on it. A map of at most 500 nodes answers every node and edge; a bigger one answers one entry per area (a top-level feature and everything that hangs off it by the map's own edges, plus one group for what no feature claims), with the edges between areas. `--area <key>` opens one area in full (up to 500 nodes), `--locate <key>` names the area of a node, and `--map-version` or `--draft` read an older version or the draft as the other map reads do. Exit 1 for no map (`SND-CONTEXT-030`) or an area the map lacks (`SND-CONTEXT-200`). Agent sessions may read their own repo's whole map over HTTP; there is no MCP tool for it.
+The whole map in one read, the way the app opens on it. A map of at most 500 nodes answers every node and edge; a bigger one answers one entry per area (a top-level feature and everything that hangs off it by the map's own edges, plus one group for what no feature claims), with the edges between areas. `--area <key>` opens one area in full (up to 5000 nodes), `--locate <key>` names the area of a node, and `--map-version` or `--draft` read an older version or the draft as the other map reads do. Exit 1 for no map (`SND-CONTEXT-030`) or an area the map lacks (`SND-CONTEXT-200`). Agent sessions may read their own repo's whole map over HTTP; there is no MCP tool for it.
 
 ### Lenses and the file map
 
 ```
-$ sindri context lenses feature:tabs.tab-manager [<key>...] [--depth <0-4>] [--hops <list>] [--draft | --map-version <v>] [--json]
+$ sindri context lenses feature:tabs.tab-manager [<key>...] [--depth <0-8>] [--hops <list>] [--draft | --map-version <v>] [--json]
 lenses of feature:tabs.tab-manager · map v13
 intent (2): …
 product (7): …
@@ -759,7 +759,7 @@ $ sindri context filemap accept edge:0123456789abcdef      # or reject: one over
   counts only: for a node its key, map version and out and in edge counts; for neighbors the centre, depth and node and edge counts.
   A missing or blank `key`, an unknown argument (there is no `draft`) or a wrong type is `SND-CONTEXT-022` with a fix hint; a key
   outside the session's repo or unknown is `003`; a name that matches several nodes is `037`; no map yet is `030`; a depth out of
-  range (0 to 4) is the engine's `006`, as over HTTP (a whole number too large for a 32-bit integer is `022`); sessions off is `020`.
+  range (negative) is the engine's `006`, as over HTTP (a whole number too large for a 32-bit integer is `022`); sessions off is `020`.
 
 ### Exit codes and errors (S-4)
 

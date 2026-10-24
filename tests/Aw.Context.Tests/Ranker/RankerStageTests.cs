@@ -32,7 +32,7 @@ public sealed class RankerStageTests
     {
         var on = new RankerSettings { Features = true, Rerank = true, RerankTop = 12, Weights = new FeatureWeights { Recency = 3 } };
 
-        Assert.Equal((false, false), Pair(RankerPlan.For(new RankerSettings(), mode: null)));
+        Assert.Equal((true, false), Pair(RankerPlan.For(new RankerSettings(), mode: null)));   // features are on by default (owner q93)
         Assert.Equal((true, true), Pair(RankerPlan.For(on, mode: null)));
         Assert.Equal((false, false), Pair(RankerPlan.For(on, RankerMode.Rrf)));
         Assert.Equal((true, false), Pair(RankerPlan.For(new RankerSettings(), RankerMode.Features)));

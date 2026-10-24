@@ -10,5 +10,5 @@ namespace Aw.Context.Infrastructure.Linear;
 internal sealed record LinearSourceParts(HttpClient Http, Func<string, string?> Environment, TimeProvider Clock, ILogger<LinearClient> Logger)
 {
     /// <summary>How long Linear gets to answer each fetch, versions and probe call (a search uses the query's own deadline); 4 s.</summary>
-    public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(4);
+    public TimeSpan CallDeadline { get; init; } = TimeSpan.FromSeconds(15);
 }

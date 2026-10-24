@@ -52,5 +52,18 @@ public sealed class ContextTextShapeContractTests : ScopingTextShapeContract, IA
         Assert.Contains("feature:tabs.tab-manager", anchors.Value, StringComparer.Ordinal);
     }
 
+    /// <summary>A brief far over the old 2,000-character cut is read whole: a label past the old cut still anchors (removed per owner q93, 2026-10-23).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_brief_over_two_thousand_characters_is_read_whole()
+    {
+        var brief = new string('x', 5_000) + " How does the Tab manager restore a layout?";
+
+        var anchors = await Create().Anchors(Repo, brief, TestContext.Current.CancellationToken);
+
+        Assert.True(anchors.IsSuccess);
+        Assert.Contains("feature:tabs.tab-manager", anchors.Value, StringComparer.Ordinal);
+    }
+
     protected override IScopingTextShape Create() => _scope.ServiceProvider.GetRequiredService<IScopingTextShape>();
 }

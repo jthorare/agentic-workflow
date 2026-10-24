@@ -151,14 +151,14 @@ public sealed class CodeLensBuilderTests
     private static string Gen(int i, string prefix) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{prefix}src/gen/f{i:D3}.ts");
 
     [Fact, Trait("Lane", "unit")]
-    public void Lists_cap_at_100_and_say_truncated_with_the_full_counts()
+    public void Lists_are_not_cut_at_100()
     {
         var nodes = Enumerable.Range(0, 101).Select(i => CodeGraphs.Node(Gen(i, "code:"), Gen(i, string.Empty))).ToList();
         var edges = nodes.Select(n => CodeGraphs.Edge(n.Key.Value, "feature:sharing", EdgeType.Implements)).ToList();
 
         var view = BuildOn(CodeGraphs.Sharing(nodes, edges));
 
-        Assert.Equal((100, true, 103), (view.Files.Count, view.Truncated.Files, view.Counts.Files));
+        Assert.Equal((103, false, 103), (view.Files.Count, view.Truncated.Files, view.Counts.Files));
         Assert.False(view.Truncated.Tests);
     }
 

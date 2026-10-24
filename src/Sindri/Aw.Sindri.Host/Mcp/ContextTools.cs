@@ -44,7 +44,7 @@ internal static class ContextTools
             ["item"] = Property("string", "A Sindri item id or tracker key"),
             ["symbol"] = Property("string", "A file path or symbol"),
             ["diff"] = Property("string", "Two commit shas joined by '..' (base..head), not branch names"),
-            ["depth"] = Property("integer", "Cascade depth (at most 4)", minimum: 0),
+            ["depth"] = Property("integer", "Cascade depth (deeper than 8 is read as 8)", minimum: 0),
             ["hops"] = Property("string", HopsText),
             ["budget"] = Property("integer", "Token budget for the answer", minimum: 1),
             ["mapVersion"] = Property("string", "A retained map version to read as of, such as v3; omit for the current map"),

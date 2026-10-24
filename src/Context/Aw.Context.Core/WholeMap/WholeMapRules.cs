@@ -7,10 +7,10 @@ namespace Aw.Context.Core.WholeMap;
 /// <param name="NodeBudget">The most nodes a 'nodes' answer carries; a bigger map answers areas.</param>
 /// <param name="AreaCap">The most nodes one opened area carries.</param>
 /// <param name="AreasCap">The most areas an answer lists.</param>
-public sealed record WholeMapRules(int NodeBudget = 500, int AreaCap = 500, int AreasCap = 500)
+public sealed record WholeMapRules(int NodeBudget = 500, int AreaCap = 5_000, int AreasCap = 5_000)
 {
     /// <summary>The most keys one question may ask to place.</summary>
-    public const int MaxLocate = 100;
+    public const int MaxLocate = 1_000;
 
     /// <summary>The limits the owner's spec sets.</summary>
     public static WholeMapRules Default { get; } = new();

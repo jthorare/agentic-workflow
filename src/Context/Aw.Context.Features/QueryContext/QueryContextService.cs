@@ -13,7 +13,6 @@ internal sealed class QueryContextService(IScrubberFactory scrubberFactory, IIdG
     : IService<QueryContextRequest, ContextResult>
 {
     /// <summary>The most fused items fetched (and so cited) per query.</summary>
-    internal const int MaxItems = QueryPipeline.MaxItems;
 
     public ValueTask<Result<ContextResult>> Handle(QueryContextRequest request, CancellationToken cancellationToken) =>
         new QueryPipeline(scrubberFactory, ids, clock, intents, model).Run(request, live.ToInputs(), cancellationToken);

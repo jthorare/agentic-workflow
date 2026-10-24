@@ -415,12 +415,12 @@ No model call happens on the query path unless rerank is on.
 
 ### 8.3 Budgets and packing
 
-The request carries `budget` (tokens, capped at `context.maxBudget`, default 32 000) and optional per-section caps
+The request carries `budget` (tokens, capped at `context.maxBudget`, default 200 000; raised from 32 000 per owner q93, 2026-10-23) and optional per-section caps
 (the §17.8 injection plan). Sections, in fill order: `graph` (anchor facts, never cut mid-item), `affects` (the
 cascade with paths), `decisions`, `code` (refs and signatures, not bodies), `records` (snippets). Within a section
 items are filled greedily by score; overflow is listed as refs only ("+12 more"). **Conflicts and `degraded` sit
 outside the budget and are always returned in full.** Tokens are estimated as UTF-8 characters / 4 and labeled
-`estimate`. Server-side caps: depth ≤ 4, `path` length ≤ 8, `Limit` ≤ 200, record text ≤ 64 KB per record, one map
+`estimate`. Server-side caps: depth ≤ 8 (a deeper ask is read as 8; was 4), `path` length unlimited (was 8), no `Limit` ceiling (was 200), a question has no length limit and keeps up to 64 terms (was 2000 characters, 16 terms), the 20-item fused cap is gone (all removed or raised per owner q93, 2026-10-23), record text ≤ 64 KB per record, one map
 build at a time.
 
 ### 8.4 Result

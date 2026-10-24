@@ -47,7 +47,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
                     .Bind("@match", string.Join(" OR ", query.Terms.Select(DocSql.Phrase)))
                     .Bind("@repos", RepoList())
                     .Bind("@ruleset", scrubbers.Ruleset.Value)
-                    .Bind("@limit", Math.Clamp(query.Limit, 1, 200))), DocMappers.Hit, cancellationToken)
+                    .Bind("@limit", Math.Max(query.Limit, 1))), DocMappers.Hit, cancellationToken)
                 .ConfigureAwait(false);
             var now = clock.GetUtcNow();
             return rows.IsError
