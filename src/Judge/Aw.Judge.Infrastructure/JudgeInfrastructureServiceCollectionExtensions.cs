@@ -42,7 +42,8 @@ public static class JudgeInfrastructureServiceCollectionExtensions
             .AddSingleton<IProcessRunner>(new SystemProcessRunner(environment))
             .AddSingleton<ISecretSource>(sp => new KeychainSecretSource(environment, sp.GetRequiredService<IProcessRunner>()))
             .AddSingleton<IIdGenerator, RandomIdGenerator>()
-            .AddModelProviders(environment);
+            .AddModelProviders(environment)
+            .AddTraitCheckInfrastructure(environment);
     }
 
     /// <summary>

@@ -339,34 +339,10 @@ Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.get -> System.Collect
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.init -> void
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.init -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.<Clone>$() -> Aw.Judge.Features.CheckTraits.CheckTraitsResponse!
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.CheckTraitsResponse(System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, bool JevUnavailable = false) -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, out bool JevUnavailable) -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? other) -> bool
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>!
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.init -> void
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.get -> bool
-Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.init -> void
 Aw.Judge.Features.CheckTraits.TraitCheckMode
 Aw.Judge.Features.CheckTraits.TraitCheckMode.Edit = 1 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
 Aw.Judge.Features.CheckTraits.TraitCheckMode.Scan = 3 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
 Aw.Judge.Features.CheckTraits.TraitCheckMode.Stop = 2 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
-Aw.Judge.Features.CheckTraits.TraitFinding
-Aw.Judge.Features.CheckTraits.TraitFinding.<Clone>$() -> Aw.Judge.Features.CheckTraits.TraitFinding!
-Aw.Judge.Features.CheckTraits.TraitFinding.Deconstruct(out string! Trait, out string! Severity, out string! File, out double Probability, out string! Message) -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.Equals(Aw.Judge.Features.CheckTraits.TraitFinding? other) -> bool
-Aw.Judge.Features.CheckTraits.TraitFinding.File.get -> string!
-Aw.Judge.Features.CheckTraits.TraitFinding.File.init -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.Message.get -> string!
-Aw.Judge.Features.CheckTraits.TraitFinding.Message.init -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.Probability.get -> double
-Aw.Judge.Features.CheckTraits.TraitFinding.Probability.init -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.Severity.get -> string!
-Aw.Judge.Features.CheckTraits.TraitFinding.Severity.init -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.Trait.get -> string!
-Aw.Judge.Features.CheckTraits.TraitFinding.Trait.init -> void
-Aw.Judge.Features.CheckTraits.TraitFinding.TraitFinding(string! Trait, string! Severity, string! File, double Probability, string! Message) -> void
 Aw.Judge.Features.SetPromptSort.ScaffoldSwitch
 Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.<Clone>$() -> Aw.Judge.Features.SetPromptSort.ScaffoldSwitch!
 Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Deconstruct(out string! Scaffold, out bool On) -> void
@@ -413,12 +389,6 @@ Aw.Judge.Features.SortPrompt.SortPromptResponse.SortPromptResponse(string? Conte
 override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Equals(object? obj) -> bool
 override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.GetHashCode() -> int
 override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.ToString() -> string!
-override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(object? obj) -> bool
-override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.GetHashCode() -> int
-override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.ToString() -> string!
-override Aw.Judge.Features.CheckTraits.TraitFinding.Equals(object? obj) -> bool
-override Aw.Judge.Features.CheckTraits.TraitFinding.GetHashCode() -> int
-override Aw.Judge.Features.CheckTraits.TraitFinding.ToString() -> string!
 override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Equals(object? obj) -> bool
 override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.GetHashCode() -> int
 override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.ToString() -> string!
@@ -436,10 +406,6 @@ override Aw.Judge.Features.SortPrompt.SortPromptResponse.GetHashCode() -> int
 override Aw.Judge.Features.SortPrompt.SortPromptResponse.ToString() -> string!
 static Aw.Judge.Features.CheckTraits.CheckTraitsRequest.operator !=(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? left, Aw.Judge.Features.CheckTraits.CheckTraitsRequest? right) -> bool
 static Aw.Judge.Features.CheckTraits.CheckTraitsRequest.operator ==(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? left, Aw.Judge.Features.CheckTraits.CheckTraitsRequest? right) -> bool
-static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator !=(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
-static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator ==(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
-static Aw.Judge.Features.CheckTraits.TraitFinding.operator !=(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool
-static Aw.Judge.Features.CheckTraits.TraitFinding.operator ==(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool
 static Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.operator !=(Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? left, Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? right) -> bool
 static Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.operator ==(Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? left, Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? right) -> bool
 static Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.operator !=(Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? left, Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? right) -> bool
@@ -450,3 +416,50 @@ static Aw.Judge.Features.SortPrompt.SortPromptRequest.operator !=(Aw.Judge.Featu
 static Aw.Judge.Features.SortPrompt.SortPromptRequest.operator ==(Aw.Judge.Features.SortPrompt.SortPromptRequest? left, Aw.Judge.Features.SortPrompt.SortPromptRequest? right) -> bool
 static Aw.Judge.Features.SortPrompt.SortPromptResponse.operator !=(Aw.Judge.Features.SortPrompt.SortPromptResponse? left, Aw.Judge.Features.SortPrompt.SortPromptResponse? right) -> bool
 static Aw.Judge.Features.SortPrompt.SortPromptResponse.operator ==(Aw.Judge.Features.SortPrompt.SortPromptResponse? left, Aw.Judge.Features.SortPrompt.SortPromptResponse? right) -> bool
+
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.CheckTraitsResponse(System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, bool JevUnavailable = false, string? Reason = null, int Requests = 0) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.<Clone>$() -> Aw.Judge.Features.CheckTraits.CheckTraitsResponse!
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, out bool JevUnavailable, out string? Reason, out int Requests) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? other) -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>!
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.get -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Reason.get -> string?
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Reason.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Requests.get -> int
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Requests.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding
+Aw.Judge.Features.CheckTraits.TraitFinding.<Clone>$() -> Aw.Judge.Features.CheckTraits.TraitFinding!
+Aw.Judge.Features.CheckTraits.TraitFinding.Deconstruct(out string! Trait, out string! Severity, out string! File, out double Probability, out string! Message, out int StartLine, out int EndLine, out string? Guidance, out string? Details) -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Details.get -> string?
+Aw.Judge.Features.CheckTraits.TraitFinding.Details.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.EndLine.get -> int
+Aw.Judge.Features.CheckTraits.TraitFinding.EndLine.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Equals(Aw.Judge.Features.CheckTraits.TraitFinding? other) -> bool
+Aw.Judge.Features.CheckTraits.TraitFinding.File.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.File.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Guidance.get -> string?
+Aw.Judge.Features.CheckTraits.TraitFinding.Guidance.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Message.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Message.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Probability.get -> double
+Aw.Judge.Features.CheckTraits.TraitFinding.Probability.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Severity.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Severity.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.StartLine.get -> int
+Aw.Judge.Features.CheckTraits.TraitFinding.StartLine.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.TraitFinding(string! Trait, string! Severity, string! File, double Probability, string! Message, int StartLine = 0, int EndLine = 0, string? Guidance = null, string? Details = null) -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Trait.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Trait.init -> void
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.GetHashCode() -> int
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.ToString() -> string!
+override Aw.Judge.Features.CheckTraits.TraitFinding.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckTraits.TraitFinding.GetHashCode() -> int
+override Aw.Judge.Features.CheckTraits.TraitFinding.ToString() -> string!
+static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator !=(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
+static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator ==(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
+static Aw.Judge.Features.CheckTraits.TraitFinding.operator !=(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool
+static Aw.Judge.Features.CheckTraits.TraitFinding.operator ==(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool

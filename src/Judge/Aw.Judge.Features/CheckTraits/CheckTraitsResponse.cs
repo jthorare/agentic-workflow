@@ -7,4 +7,6 @@ namespace Aw.Judge.Features.CheckTraits;
 /// </summary>
 /// <param name="Findings">The traits broken, worst first.</param>
 /// <param name="JevUnavailable">Jev was excluded, has no key, couldn't be reached or ran out of budget, so nothing was judged.</param>
-public sealed record CheckTraitsResponse(IReadOnlyList<TraitFinding> Findings, bool JevUnavailable = false);
+/// <param name="Reason">Why Jev was unavailable (the first request's reason code), or null.</param>
+/// <param name="Requests">How many Jev requests were made.</param>
+public sealed record CheckTraitsResponse(IReadOnlyList<TraitFinding> Findings, bool JevUnavailable = false, string? Reason = null, int Requests = 0);

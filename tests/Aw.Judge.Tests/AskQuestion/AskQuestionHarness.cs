@@ -5,6 +5,7 @@ using Aw.Judge.Features;
 using Aw.Judge.Features.AskQuestion;
 using Aw.Judge.Host;
 using Aw.Judge.Testing;
+using Aw.Judge.Tests.CheckTraits;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
@@ -33,6 +34,7 @@ internal sealed class AskQuestionHarness
             .AddSingleton<IInputRedactor>(new FakeInputRedactor())
             .AddSingleton<IIdGenerator>(new SequentialIdGenerator())
             .AddSingleton<IProviderCatalog>(new FakeProviderCatalog(providers))
+            .AddTraitCheckFakes()
             .AddJudgeCore()
             .AddJudgeFeatures();
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });

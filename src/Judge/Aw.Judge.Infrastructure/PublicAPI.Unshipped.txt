@@ -1,3 +1,6 @@
 #nullable enable
 Aw.Judge.Infrastructure.JudgeInfrastructureServiceCollectionExtensions
 static Aw.Judge.Infrastructure.JudgeInfrastructureServiceCollectionExtensions.AddJudgeInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+
+Aw.Judge.Infrastructure.TraitCheckServiceCollectionExtensions
+static Aw.Judge.Infrastructure.TraitCheckServiceCollectionExtensions.AddTraitCheckInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1254,3 +1254,134 @@ virtual Aw.Judge.Core.Batching.BatchAnswer.PrintMembers(System.Text.StringBuilde
 virtual Aw.Judge.Core.Batching.BatchQuestion.EqualityContract.get -> System.Type!
 virtual Aw.Judge.Core.Batching.BatchQuestion.Equals(Aw.Judge.Core.Batching.BatchQuestion? other) -> bool
 virtual Aw.Judge.Core.Batching.BatchQuestion.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Judge.Core.Ports.ITraitCheckLog
+Aw.Judge.Core.Ports.ITraitCheckLog.Append(System.Text.Json.Nodes.JsonObject! entry) -> void
+Aw.Judge.Core.Ports.ITraitFiles
+Aw.Judge.Core.Ports.ITraitFiles.ReadText(string! path) -> string?
+Aw.Judge.Core.Ports.ITraitFiles.WorkingDirectory.get -> string!
+Aw.Judge.Core.Ports.ITraitStore
+Aw.Judge.Core.Ports.ITraitStore.Load(string! repoRoot, string! repoName) -> Aw.Judge.Core.Traits.TraitSet!
+Aw.Judge.Core.Traits.DiffHunk
+Aw.Judge.Core.Traits.DiffHunk.<Clone>$() -> Aw.Judge.Core.Traits.DiffHunk!
+Aw.Judge.Core.Traits.DiffHunk.Deconstruct(out int Start, out int End, out string! Text) -> void
+Aw.Judge.Core.Traits.DiffHunk.DiffHunk(int Start, int End, string! Text) -> void
+Aw.Judge.Core.Traits.DiffHunk.End.get -> int
+Aw.Judge.Core.Traits.DiffHunk.End.init -> void
+Aw.Judge.Core.Traits.DiffHunk.Equals(Aw.Judge.Core.Traits.DiffHunk? other) -> bool
+Aw.Judge.Core.Traits.DiffHunk.Start.get -> int
+Aw.Judge.Core.Traits.DiffHunk.Start.init -> void
+Aw.Judge.Core.Traits.DiffHunk.Text.get -> string!
+Aw.Judge.Core.Traits.DiffHunk.Text.init -> void
+Aw.Judge.Core.Traits.DiffSource
+Aw.Judge.Core.Traits.DiffSource.<Clone>$() -> Aw.Judge.Core.Traits.DiffSource!
+Aw.Judge.Core.Traits.DiffSource.Deconstruct(out string! Path, out int StartLine, out int EndLine, out string! Text) -> void
+Aw.Judge.Core.Traits.DiffSource.DiffSource(string! Path, int StartLine, int EndLine, string! Text) -> void
+Aw.Judge.Core.Traits.DiffSource.EndLine.get -> int
+Aw.Judge.Core.Traits.DiffSource.EndLine.init -> void
+Aw.Judge.Core.Traits.DiffSource.Equals(Aw.Judge.Core.Traits.DiffSource? other) -> bool
+Aw.Judge.Core.Traits.DiffSource.Path.get -> string!
+Aw.Judge.Core.Traits.DiffSource.Path.init -> void
+Aw.Judge.Core.Traits.DiffSource.StartLine.get -> int
+Aw.Judge.Core.Traits.DiffSource.StartLine.init -> void
+Aw.Judge.Core.Traits.DiffSource.Text.get -> string!
+Aw.Judge.Core.Traits.DiffSource.Text.init -> void
+Aw.Judge.Core.Traits.FileDiff
+Aw.Judge.Core.Traits.FileDiff.<Clone>$() -> Aw.Judge.Core.Traits.FileDiff!
+Aw.Judge.Core.Traits.FileDiff.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.DiffHunk!>! Hunks) -> void
+Aw.Judge.Core.Traits.FileDiff.Equals(Aw.Judge.Core.Traits.FileDiff? other) -> bool
+Aw.Judge.Core.Traits.FileDiff.FileDiff(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.DiffHunk!>! Hunks) -> void
+Aw.Judge.Core.Traits.FileDiff.Hunks.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.DiffHunk!>!
+Aw.Judge.Core.Traits.FileDiff.Hunks.init -> void
+Aw.Judge.Core.Traits.FileDiff.Path.get -> string!
+Aw.Judge.Core.Traits.FileDiff.Path.init -> void
+Aw.Judge.Core.Traits.Trait
+Aw.Judge.Core.Traits.Trait.Applicability.get -> string?
+Aw.Judge.Core.Traits.Trait.Applicability.init -> void
+Aw.Judge.Core.Traits.Trait.<Clone>$() -> Aw.Judge.Core.Traits.Trait!
+Aw.Judge.Core.Traits.Trait.Context.get -> string?
+Aw.Judge.Core.Traits.Trait.Context.init -> void
+Aw.Judge.Core.Traits.Trait.Deconstruct(out string! Name, out string! Subject, out string! Requirement, out string! Purpose, out Aw.Judge.Core.Traits.TraitSeverity Severity, out string! File, out string? Applicability, out string? Guidance, out string? Context, out System.Collections.Generic.IReadOnlyList<string!>? Paths) -> void
+Aw.Judge.Core.Traits.TraitDiff
+Aw.Judge.Core.Traits.Trait.Equals(Aw.Judge.Core.Traits.Trait? other) -> bool
+Aw.Judge.Core.Traits.Trait.File.get -> string!
+Aw.Judge.Core.Traits.Trait.File.init -> void
+Aw.Judge.Core.Traits.TraitGlob
+Aw.Judge.Core.Traits.Trait.Guidance.get -> string?
+Aw.Judge.Core.Traits.Trait.Guidance.init -> void
+Aw.Judge.Core.Traits.Trait.Name.get -> string!
+Aw.Judge.Core.Traits.Trait.Name.init -> void
+Aw.Judge.Core.Traits.Trait.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Traits.Trait.Paths.init -> void
+Aw.Judge.Core.Traits.TraitProblem
+Aw.Judge.Core.Traits.TraitProblem.<Clone>$() -> Aw.Judge.Core.Traits.TraitProblem!
+Aw.Judge.Core.Traits.TraitProblem.Deconstruct(out string! File, out string! Error) -> void
+Aw.Judge.Core.Traits.TraitProblem.Equals(Aw.Judge.Core.Traits.TraitProblem? other) -> bool
+Aw.Judge.Core.Traits.TraitProblem.Error.get -> string!
+Aw.Judge.Core.Traits.TraitProblem.Error.init -> void
+Aw.Judge.Core.Traits.TraitProblem.File.get -> string!
+Aw.Judge.Core.Traits.TraitProblem.File.init -> void
+Aw.Judge.Core.Traits.TraitProblem.TraitProblem(string! File, string! Error) -> void
+Aw.Judge.Core.Traits.Trait.Purpose.get -> string!
+Aw.Judge.Core.Traits.Trait.Purpose.init -> void
+Aw.Judge.Core.Traits.TraitQuestions
+Aw.Judge.Core.Traits.Trait.Requirement.get -> string!
+Aw.Judge.Core.Traits.Trait.Requirement.init -> void
+Aw.Judge.Core.Traits.TraitSet
+Aw.Judge.Core.Traits.TraitSet.<Clone>$() -> Aw.Judge.Core.Traits.TraitSet!
+Aw.Judge.Core.Traits.TraitSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.Trait!>! Traits, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.TraitProblem!>! Problems) -> void
+Aw.Judge.Core.Traits.TraitSet.Equals(Aw.Judge.Core.Traits.TraitSet? other) -> bool
+Aw.Judge.Core.Traits.TraitSet.Problems.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.TraitProblem!>!
+Aw.Judge.Core.Traits.TraitSet.Problems.init -> void
+Aw.Judge.Core.Traits.TraitSet.TraitSet(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.Trait!>! Traits, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.TraitProblem!>! Problems) -> void
+Aw.Judge.Core.Traits.TraitSet.Traits.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.Trait!>!
+Aw.Judge.Core.Traits.TraitSet.Traits.init -> void
+Aw.Judge.Core.Traits.TraitSeverity
+Aw.Judge.Core.Traits.TraitSeverity.Block = 1 -> Aw.Judge.Core.Traits.TraitSeverity
+Aw.Judge.Core.Traits.Trait.Severity.get -> Aw.Judge.Core.Traits.TraitSeverity
+Aw.Judge.Core.Traits.Trait.Severity.init -> void
+Aw.Judge.Core.Traits.TraitSeverity.Warn = 2 -> Aw.Judge.Core.Traits.TraitSeverity
+Aw.Judge.Core.Traits.Trait.Subject.get -> string!
+Aw.Judge.Core.Traits.Trait.Subject.init -> void
+Aw.Judge.Core.Traits.Trait.Trait(string! Name, string! Subject, string! Requirement, string! Purpose, Aw.Judge.Core.Traits.TraitSeverity Severity, string! File, string? Applicability = null, string? Guidance = null, string? Context = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null) -> void
+const Aw.Judge.Core.Traits.TraitQuestions.Violation = "violation" -> string!
+override Aw.Judge.Core.Traits.DiffHunk.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.DiffHunk.GetHashCode() -> int
+override Aw.Judge.Core.Traits.DiffHunk.ToString() -> string!
+override Aw.Judge.Core.Traits.DiffSource.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.DiffSource.GetHashCode() -> int
+override Aw.Judge.Core.Traits.DiffSource.ToString() -> string!
+override Aw.Judge.Core.Traits.FileDiff.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.FileDiff.GetHashCode() -> int
+override Aw.Judge.Core.Traits.FileDiff.ToString() -> string!
+override Aw.Judge.Core.Traits.Trait.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.Trait.GetHashCode() -> int
+override Aw.Judge.Core.Traits.TraitProblem.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.TraitProblem.GetHashCode() -> int
+override Aw.Judge.Core.Traits.TraitProblem.ToString() -> string!
+override Aw.Judge.Core.Traits.TraitSet.Equals(object? obj) -> bool
+override Aw.Judge.Core.Traits.TraitSet.GetHashCode() -> int
+override Aw.Judge.Core.Traits.TraitSet.ToString() -> string!
+override Aw.Judge.Core.Traits.Trait.ToString() -> string!
+static Aw.Judge.Core.Traits.DiffHunk.operator !=(Aw.Judge.Core.Traits.DiffHunk? left, Aw.Judge.Core.Traits.DiffHunk? right) -> bool
+static Aw.Judge.Core.Traits.DiffHunk.operator ==(Aw.Judge.Core.Traits.DiffHunk? left, Aw.Judge.Core.Traits.DiffHunk? right) -> bool
+static Aw.Judge.Core.Traits.DiffSource.operator !=(Aw.Judge.Core.Traits.DiffSource? left, Aw.Judge.Core.Traits.DiffSource? right) -> bool
+static Aw.Judge.Core.Traits.DiffSource.operator ==(Aw.Judge.Core.Traits.DiffSource? left, Aw.Judge.Core.Traits.DiffSource? right) -> bool
+static Aw.Judge.Core.Traits.FileDiff.operator !=(Aw.Judge.Core.Traits.FileDiff? left, Aw.Judge.Core.Traits.FileDiff? right) -> bool
+static Aw.Judge.Core.Traits.FileDiff.operator ==(Aw.Judge.Core.Traits.FileDiff? left, Aw.Judge.Core.Traits.FileDiff? right) -> bool
+static Aw.Judge.Core.Traits.TraitDiff.Chunk(Aw.Judge.Core.Traits.FileDiff! file, int maxChars) -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.DiffSource!>!
+static Aw.Judge.Core.Traits.TraitDiff.Ignored(string! head) -> System.Collections.Generic.IReadOnlySet<string!>!
+static Aw.Judge.Core.Traits.TraitDiff.Parse(string! diff) -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.FileDiff!>!
+static Aw.Judge.Core.Traits.TraitDiff.Whole(string! path, string! text) -> Aw.Judge.Core.Traits.FileDiff!
+static Aw.Judge.Core.Traits.TraitGlob.HasUnclosedBrace(string! glob) -> bool
+static Aw.Judge.Core.Traits.TraitGlob.InScope(System.Collections.Generic.IReadOnlyList<string!>? paths, string! file) -> bool
+static Aw.Judge.Core.Traits.TraitGlob.Matches(string! glob, string! file) -> bool
+static Aw.Judge.Core.Traits.Trait.operator !=(Aw.Judge.Core.Traits.Trait? left, Aw.Judge.Core.Traits.Trait? right) -> bool
+static Aw.Judge.Core.Traits.Trait.operator ==(Aw.Judge.Core.Traits.Trait? left, Aw.Judge.Core.Traits.Trait? right) -> bool
+static Aw.Judge.Core.Traits.TraitProblem.operator !=(Aw.Judge.Core.Traits.TraitProblem? left, Aw.Judge.Core.Traits.TraitProblem? right) -> bool
+static Aw.Judge.Core.Traits.TraitProblem.operator ==(Aw.Judge.Core.Traits.TraitProblem? left, Aw.Judge.Core.Traits.TraitProblem? right) -> bool
+static Aw.Judge.Core.Traits.TraitQuestions.Batches(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.Trait!>! traits) -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Traits.Trait!>!>!
+static Aw.Judge.Core.Traits.TraitQuestions.For(Aw.Judge.Core.Traits.Trait! trait) -> Aw.Judge.Core.Batching.ChoiceBatchQuestion!
+static Aw.Judge.Core.Traits.TraitSet.operator !=(Aw.Judge.Core.Traits.TraitSet? left, Aw.Judge.Core.Traits.TraitSet? right) -> bool
+static Aw.Judge.Core.Traits.TraitSet.operator ==(Aw.Judge.Core.Traits.TraitSet? left, Aw.Judge.Core.Traits.TraitSet? right) -> bool
+Aw.Judge.Core.Ports.ITraitJudge
+Aw.Judge.Core.Ports.ITraitJudge.Ask(System.Text.Json.Nodes.JsonNode? state, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Batching.BatchQuestion!>! questions, System.TimeSpan budget, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Providers.ProviderResult!>
