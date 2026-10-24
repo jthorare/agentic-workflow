@@ -6,7 +6,7 @@ namespace Aw.Evidence.Tests.Stack;
 public sealed class DoctorTests
 {
     private static async Task<DoctorResponse> Check(FakeStackProbe probe, string? appTitle, int? apiPort = 5002) =>
-        (await new DoctorService(probe, new FakeEvidenceSettings { AppTitle = appTitle, AppTitleSource = "APP_TITLE", ApiPort = apiPort }).Handle(new DoctorRequest(), CancellationToken.None)).Value;
+        (await new DoctorService(probe, new FakeEvidenceSettings { AppTitle = appTitle, AppTitleSource = "APP_TITLE", ApiPort = apiPort }, new InMemoryRunFiles()).Handle(new DoctorRequest(), CancellationToken.None)).Value;
 
     [Fact, Trait("Lane", "unit")]
     public async Task Doctor_is_healthy_when_the_app_database_and_api_answer()

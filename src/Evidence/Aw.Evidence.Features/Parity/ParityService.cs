@@ -63,7 +63,7 @@ internal sealed class ParityService(ParityFilesAccess files, IMachineLocks locks
         var summary = new ParitySummary(
             ParitySummary.SchemaName, RunId.From(RunPath.NameOf(request.RunDirectory)), context.Host.Origin,
             ProvenanceRules.For(context.Host.Kind, request.DbProvenance), request.AppBuild, context.Manifest.DesignNode,
-            context.Manifest.Viewport, frames.Value);
+            context.Manifest.Viewport, frames.Value, request.At);
         var written = await files.WriteSummaryAsync(request.RunDirectory, summary, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<string> failures = [.. summary.FailedBoxChecks().Select(static x => $"{x.Frame} {x.Check.Target}: {x.Check.Failure}")];
         return written.Map(_ => new ParityResponse(summary, failures));

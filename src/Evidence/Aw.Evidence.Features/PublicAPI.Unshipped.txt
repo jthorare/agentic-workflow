@@ -34,7 +34,6 @@ Aw.Evidence.Features.Parity.ParityRequest.AppBuild.get -> string?
 Aw.Evidence.Features.Parity.ParityRequest.AppBuild.init -> void
 Aw.Evidence.Features.Parity.ParityRequest.DbProvenance.get -> Aw.Evidence.Core.Guard.DbProvenance?
 Aw.Evidence.Features.Parity.ParityRequest.DbProvenance.init -> void
-Aw.Evidence.Features.Parity.ParityRequest.Deconstruct(out string! ManifestPath, out string! RunDirectory, out System.TimeSpan LockTimeout, out string? Host, out bool AllowPreviewHost, out bool AllowWrites, out string? AppBuild, out Aw.Evidence.Core.Guard.DbProvenance? DbProvenance) -> void
 Aw.Evidence.Features.Parity.ParityRequest.Equals(Aw.Evidence.Features.Parity.ParityRequest? other) -> bool
 Aw.Evidence.Features.Parity.ParityRequest.Host.get -> string?
 Aw.Evidence.Features.Parity.ParityRequest.Host.init -> void
@@ -42,7 +41,6 @@ Aw.Evidence.Features.Parity.ParityRequest.LockTimeout.get -> System.TimeSpan
 Aw.Evidence.Features.Parity.ParityRequest.LockTimeout.init -> void
 Aw.Evidence.Features.Parity.ParityRequest.ManifestPath.get -> string!
 Aw.Evidence.Features.Parity.ParityRequest.ManifestPath.init -> void
-Aw.Evidence.Features.Parity.ParityRequest.ParityRequest(string! ManifestPath, string! RunDirectory, System.TimeSpan LockTimeout, string? Host = null, bool AllowPreviewHost = false, bool AllowWrites = false, string? AppBuild = null, Aw.Evidence.Core.Guard.DbProvenance? DbProvenance = null) -> void
 Aw.Evidence.Features.Parity.ParityRequest.RunDirectory.get -> string!
 Aw.Evidence.Features.Parity.ParityRequest.RunDirectory.init -> void
 Aw.Evidence.Features.Parity.ParityResponse
@@ -160,7 +158,6 @@ Aw.Evidence.Features.RunScript.RunScriptRequest.Baseline.get -> string?
 Aw.Evidence.Features.RunScript.RunScriptRequest.Baseline.init -> void
 Aw.Evidence.Features.RunScript.RunScriptRequest.CacheManifest.get -> string?
 Aw.Evidence.Features.RunScript.RunScriptRequest.CacheManifest.init -> void
-Aw.Evidence.Features.RunScript.RunScriptRequest.Deconstruct(out string! ScriptPath, out string! RunDirectory, out System.TimeSpan LockTimeout, out string? Baseline, out string? AppBuild, out string? Fixtures, out string? CacheManifest, out string? Host, out bool AllowPreviewHost, out bool AllowWrites) -> void
 Aw.Evidence.Features.RunScript.RunScriptRequest.Equals(Aw.Evidence.Features.RunScript.RunScriptRequest? other) -> bool
 Aw.Evidence.Features.RunScript.RunScriptRequest.Fixtures.get -> string?
 Aw.Evidence.Features.RunScript.RunScriptRequest.Fixtures.init -> void
@@ -170,7 +167,6 @@ Aw.Evidence.Features.RunScript.RunScriptRequest.LockTimeout.get -> System.TimeSp
 Aw.Evidence.Features.RunScript.RunScriptRequest.LockTimeout.init -> void
 Aw.Evidence.Features.RunScript.RunScriptRequest.RunDirectory.get -> string!
 Aw.Evidence.Features.RunScript.RunScriptRequest.RunDirectory.init -> void
-Aw.Evidence.Features.RunScript.RunScriptRequest.RunScriptRequest(string! ScriptPath, string! RunDirectory, System.TimeSpan LockTimeout, string? Baseline = null, string? AppBuild = null, string? Fixtures = null, string? CacheManifest = null, string? Host = null, bool AllowPreviewHost = false, bool AllowWrites = false) -> void
 Aw.Evidence.Features.RunScript.RunScriptRequest.ScriptPath.get -> string!
 Aw.Evidence.Features.RunScript.RunScriptRequest.ScriptPath.init -> void
 Aw.Evidence.Features.RunScript.RunScriptResponse
@@ -445,3 +441,11 @@ Aw.Evidence.Features.Doctor.DoctorResponse.Failures.get -> System.Collections.Ge
 Aw.Evidence.Features.Doctor.DoctorResponse.Failures.init -> void
 Aw.Evidence.Features.Doctor.DoctorResponse.Slot.get -> Aw.Evidence.Features.Doctor.DoctorSlot?
 Aw.Evidence.Features.Doctor.DoctorResponse.Slot.init -> void
+Aw.Evidence.Features.Parity.ParityRequest.At.get -> Aw.Evidence.Core.Data.DataRunAt?
+Aw.Evidence.Features.Parity.ParityRequest.At.init -> void
+Aw.Evidence.Features.Parity.ParityRequest.Deconstruct(out string! ManifestPath, out string! RunDirectory, out System.TimeSpan LockTimeout, out string? Host, out bool AllowPreviewHost, out bool AllowWrites, out string? AppBuild, out Aw.Evidence.Core.Guard.DbProvenance? DbProvenance, out Aw.Evidence.Core.Data.DataRunAt? At) -> void
+Aw.Evidence.Features.Parity.ParityRequest.ParityRequest(string! ManifestPath, string! RunDirectory, System.TimeSpan LockTimeout, string? Host = null, bool AllowPreviewHost = false, bool AllowWrites = false, string? AppBuild = null, Aw.Evidence.Core.Guard.DbProvenance? DbProvenance = null, Aw.Evidence.Core.Data.DataRunAt? At = null) -> void
+Aw.Evidence.Features.RunScript.RunScriptRequest.At.get -> Aw.Evidence.Core.Data.DataRunAt?
+Aw.Evidence.Features.RunScript.RunScriptRequest.At.init -> void
+Aw.Evidence.Features.RunScript.RunScriptRequest.Deconstruct(out string! ScriptPath, out string! RunDirectory, out System.TimeSpan LockTimeout, out string? Baseline, out string? AppBuild, out string? Fixtures, out string? CacheManifest, out string? Host, out bool AllowPreviewHost, out bool AllowWrites, out Aw.Evidence.Core.Data.DataRunAt? At) -> void
+Aw.Evidence.Features.RunScript.RunScriptRequest.RunScriptRequest(string! ScriptPath, string! RunDirectory, System.TimeSpan LockTimeout, string? Baseline = null, string? AppBuild = null, string? Fixtures = null, string? CacheManifest = null, string? Host = null, bool AllowPreviewHost = false, bool AllowWrites = false, Aw.Evidence.Core.Data.DataRunAt? At = null) -> void

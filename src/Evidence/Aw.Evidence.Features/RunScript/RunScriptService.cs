@@ -74,7 +74,7 @@ internal sealed class RunScriptService(ScriptFiles files, IMachineLocks locks, S
         var summary = new RunSummary(
             RunSummary.SchemaName, RunId.From(RunPath.NameOf(request.RunDirectory)), instance, started, clock.GetUtcNow(), script.Route, script.Role, host.Origin,
             request.AppBuild, request.Fixtures, loaded.Sha256, script.Planning?.Pr, script.Viewports, driven.Value.Steps, visual,
-            driven.Value.LintFindings, log.All, script.Planning, driven.Value.Evidence);
+            driven.Value.LintFindings, log.All, script.Planning, driven.Value.Evidence, request.At);
         var written = await files.WriteSummaryAsync(request.RunDirectory, summary, cancellationToken).ConfigureAwait(false);
         return written.Map(_ => new RunScriptResponse(summary, summary.AllStepsPassed()));
     }

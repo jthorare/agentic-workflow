@@ -22,6 +22,14 @@
     <ProjectReference Include="../../Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(AwBuildTime)' != ''">
+    <!-- The install (scripts/install-cs.sh) publishes with -p:AwBuildTime=<UTC ISO 8601> -p:SourceRevisionId=<commit>; `ui-evidence version` reads both back. -->
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AwBuildTime</_Parameter1>
+      <_Parameter2>$(AwBuildTime)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Aw.Evidence.Tests" />
   </ItemGroup>

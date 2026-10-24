@@ -1,4 +1,3 @@
-#pragma warning disable xUnit1004 // the red tests of cutover unit 1.4: skipped until it lands (spec §12 P0)
 using System.Text.RegularExpressions;
 using Aw.Evidence.Testing;
 using Aw.Evidence.Tests.Cli;
@@ -18,7 +17,6 @@ namespace Aw.Evidence.Tests.Cutover;
 [Collection(ConsoleCapture.Name)]
 public sealed partial class RunSideAndFlagNameTests : IDisposable
 {
-    private const string Red = "red until cutover unit 1.4";
 
     private readonly CutoverCli _cli = new();
 
@@ -28,7 +26,7 @@ public sealed partial class RunSideAndFlagNameTests : IDisposable
 
     private string Manifest() => _cli.Write("manifest.json", TestJson.Write(A.Manifest().Build()));
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData("base")]
     [InlineData("head")]
     public async Task Run_records_the_side_it_was_at_beside_the_commit_it_ran_on(string side)
@@ -53,7 +51,7 @@ public sealed partial class RunSideAndFlagNameTests : IDisposable
         Assert.StartsWith("ui-evidence: usage: ui-evidence run ", badErr, StringComparison.Ordinal);
     }
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData("base")]
     [InlineData("head")]
     public async Task Parity_takes_at_base_or_head_and_records_it(string side)
@@ -63,7 +61,7 @@ public sealed partial class RunSideAndFlagNameTests : IDisposable
         Assert.DoesNotContain("usage: ui-evidence", error, StringComparison.Ordinal);   // that parity.json carries "at" is pinned with the run in unit 1.4
     }
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData("seeded")]
     [InlineData("unknown")]
     public async Task Parity_takes_provenance_as_the_one_flag_name(string provenance)
@@ -104,7 +102,7 @@ public sealed partial class RunSideAndFlagNameTests : IDisposable
         Assert.StartsWith("ui-evidence: usage: ui-evidence publish-plan ", oldNameErr, StringComparison.Ordinal);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public async Task Version_prints_the_build_stamp_on_one_line_and_exits_0_without_a_browser_a_lock_or_a_stack()
     {
         var (exit, output, error) = await _cli.Run("version");

@@ -1,3 +1,5 @@
+using Aw.Evidence.Core.Data;
+
 namespace Aw.Evidence.Features.RunScript;
 
 /// <summary>Runs a UI script in a real browser and writes the run's summary.json.</summary>
@@ -11,6 +13,7 @@ namespace Aw.Evidence.Features.RunScript;
 /// <param name="Host">The --host origin; null drives http://localhost:3000.</param>
 /// <param name="AllowPreviewHost">Whether a pr-&lt;n&gt; preview host is allowed.</param>
 /// <param name="AllowWrites">Whether write-looking steps may run on a preview host.</param>
+/// <param name="At">The side of the change the caller is at (--at base|head); recorded only.</param>
 public sealed record RunScriptRequest(
     string ScriptPath,
     string RunDirectory,
@@ -21,4 +24,5 @@ public sealed record RunScriptRequest(
     string? CacheManifest = null,
     string? Host = null,
     bool AllowPreviewHost = false,
-    bool AllowWrites = false);
+    bool AllowWrites = false,
+    DataRunAt? At = null);

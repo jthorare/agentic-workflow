@@ -1,3 +1,4 @@
+using Aw.Evidence.Core.Data;
 using Aw.Evidence.Core.Guard;
 
 namespace Aw.Evidence.Features.Parity;
@@ -11,6 +12,7 @@ namespace Aw.Evidence.Features.Parity;
 /// <param name="AllowWrites">Whether write-looking frame steps may run (parity is read-only on every host otherwise).</param>
 /// <param name="AppBuild">The app build (commit) under test, when verified.</param>
 /// <param name="DbProvenance">The local database's provenance, when known (ignored for preview hosts).</param>
+/// <param name="At">The side of the change the caller is at (--at base|head); recorded only.</param>
 public sealed record ParityRequest(
     string ManifestPath,
     string RunDirectory,
@@ -19,4 +21,5 @@ public sealed record ParityRequest(
     bool AllowPreviewHost = false,
     bool AllowWrites = false,
     string? AppBuild = null,
-    DbProvenance? DbProvenance = null);
+    DbProvenance? DbProvenance = null,
+    DataRunAt? At = null);

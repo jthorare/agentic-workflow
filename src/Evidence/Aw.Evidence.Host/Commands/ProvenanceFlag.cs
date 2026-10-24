@@ -24,4 +24,17 @@ internal static class ProvenanceFlag
                 return false;
         }
     }
+
+    /// <summary>Parity's pair of names for one setting: --provenance, or --db-provenance for one more release. Both at once is a usage error.</summary>
+    internal static bool TryParseEither(CliArguments arguments, out DbProvenance? provenance)
+    {
+        var (current, old) = (arguments.Value("--provenance"), arguments.Value("--db-provenance"));
+        if (current is not null && old is not null)
+        {
+            provenance = null;
+            return false;
+        }
+
+        return TryParse(current ?? old, out provenance);
+    }
 }

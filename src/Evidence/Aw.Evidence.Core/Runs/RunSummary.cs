@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using Aw.Evidence.Core.Data;
 using Aw.Evidence.Core.Ids;
 using Aw.Evidence.Core.Scripts;
 using Aw.Evidence.Core.Usage;
@@ -25,6 +27,7 @@ namespace Aw.Evidence.Core.Runs;
 /// <param name="Invocations">Every model call (or cache hit), for the cost baseline.</param>
 /// <param name="Planning">The script's planning block.</param>
 /// <param name="Evidence">Traces and videos.</param>
+/// <param name="At">The side of the change the --at flag named (base or head), or null when it was not given; recorded only (DTC9).</param>
 public sealed record RunSummary(
     string Schema,
     RunId RunId,
@@ -44,7 +47,8 @@ public sealed record RunSummary(
     IReadOnlyList<RunLintFinding> LintFindings,
     IReadOnlyList<ModelInvocation> Invocations,
     PlanningMeta? Planning,
-    RunEvidence Evidence)
+    RunEvidence Evidence,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DataRunAt? At = null)
 {
     /// <summary>The schema this build writes and reads.</summary>
     public const string SchemaName = "ui-evidence.run/1";

@@ -1,4 +1,3 @@
-#pragma warning disable xUnit1004 // the red tests of cutover unit 1.4: skipped until it lands (spec §12 P0)
 using Aw.Evidence.Infrastructure.Settings;
 
 namespace Aw.Evidence.Tests.Cutover;
@@ -7,11 +6,10 @@ namespace Aw.Evidence.Tests.Cutover;
 /// Cutover gap G-d (spec §3.3), loader half: run and parity read the deployment's env files as doctor.sh and the
 /// TypeScript runner did (SKILL 'Configuration'): plain NAME=value lines parsed, never sourced; an allowlist of keys; a variable already
 /// set in the environment is never overridden. Precedence: the environment, then the local file (.ui-evidence.local.env or what
-/// UI_EVIDENCE_CONFIG names), then deployment.env. Red until unit 1.4; where the binary finds the two files is 1.4's decision.
+/// UI_EVIDENCE_CONFIG names), then deployment.env. The files sit in UI_EVIDENCE_ENV_DIR, else .agentic-workflow/ui-evidence under the working directory.
 /// </summary>
 public sealed class EnvFileLoaderTests
 {
-    private const string Red = "red until cutover unit 1.4";
     private const string Local = "/skill/.ui-evidence.local.env";
     private const string Deployment = "/skill/deployment.env";
 
@@ -21,7 +19,7 @@ public sealed class EnvFileLoaderTests
     private static Dictionary<string, string> Set(params (string Name, string Value)[] pairs) =>
         pairs.ToDictionary(static p => p.Name, static p => p.Value, StringComparer.Ordinal);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Name_value_lines_comments_an_export_prefix_and_one_layer_of_quotes_are_read()
     {
         var read = Layered(Set(), Set((Local, "# the app\n\nUI_EVIDENCE_APP_TITLE=Acme\nexport UI_EVIDENCE_API_PORT=\"5002\"\nUI_EVIDENCE_USER_AGENT='Mozilla 5.0'\n  UI_EVIDENCE_SEED_TABLE=public.users\n")));
@@ -29,7 +27,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal(["Acme", "5002", "Mozilla 5.0", "public.users"], [read("UI_EVIDENCE_APP_TITLE"), read("UI_EVIDENCE_API_PORT"), read("UI_EVIDENCE_USER_AGENT"), read("UI_EVIDENCE_SEED_TABLE")]);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void A_value_is_text_never_a_command_or_an_expansion()
     {
         var read = Layered(Set(), Set((Local, "UI_EVIDENCE_APP_TITLE=$(touch /tmp/pwned)\nUI_EVIDENCE_SEED_TABLE=$HOME`id`;echo pwned\n")));
@@ -38,7 +36,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal("$HOME`id`;echo pwned", read("UI_EVIDENCE_SEED_TABLE"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void A_variable_set_in_the_environment_is_never_overridden_by_a_file_and_a_blank_one_counts_as_unset()
     {
         var read = Layered(
@@ -49,7 +47,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal("5002", read("UI_EVIDENCE_API_PORT"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void The_local_file_wins_over_the_committed_deployment_file_name_by_name()
     {
         var read = Layered(
@@ -62,7 +60,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal("pr-[0-9]+\\.preview\\.example\\.com", read("UI_EVIDENCE_PREVIEW_HOST_PATTERN"));
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("HOME")]
     [InlineData("PATH")]
     [InlineData("LD_PRELOAD")]
@@ -77,7 +75,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal("Acme", read("UI_EVIDENCE_APP_TITLE"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void A_name_outside_the_allowlist_still_comes_from_the_environment()
     {
         var read = Layered(Set(("AW_STATE_DIR", "/state")), Set((Local, "AW_STATE_DIR=/tmp/evil\n")));
@@ -85,7 +83,7 @@ public sealed class EnvFileLoaderTests
         Assert.Equal("/state", read("AW_STATE_DIR"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void A_missing_or_unreadable_file_is_skipped_and_a_malformed_line_does_not_stop_the_rest()
     {
         var read = Layered(Set(), Set((Deployment, "this is not a setting\n=novalue\n1BAD=x\nUI_EVIDENCE_APP_TITLE=Acme\n")));
