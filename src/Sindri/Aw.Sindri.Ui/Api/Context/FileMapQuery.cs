@@ -5,4 +5,6 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Path">The directory, or null for the root.</param>
 /// <param name="UnmappedOnly">True to list only what is not mapped.</param>
 /// <param name="Draft">True to read the draft map.</param>
-internal sealed record FileMapQuery(string Repo, string? Path, bool UnmappedOnly, bool Draft);
+/// <param name="Cursor">The previous page's nextCursor, passed back unchanged, or null for the first page.</param>
+/// <param name="Limit">The page size, or null for the server's default.</param>
+internal sealed record FileMapQuery(string Repo, string? Path, bool UnmappedOnly, bool Draft, string? Cursor = null, int? Limit = null);

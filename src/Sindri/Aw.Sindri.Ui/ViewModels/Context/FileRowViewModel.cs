@@ -26,6 +26,23 @@ internal sealed class FileRowViewModel
         AutomationName = Dots(Name, StatusWord, ForText, IntentText, SymbolsText);
     }
 
+    private FileRowViewModel()
+    {
+        Name = Labels.ContextFilesLoading;
+        Path = string.Empty;
+        StatusWord = string.Empty;
+        FilesText = string.Empty;
+        ForText = string.Empty;
+        IntentText = string.Empty;
+        SymbolsText = string.Empty;
+        SymbolsOpacity = 1;
+        AutomationName = Name;
+    }
+
+    /// <summary>The stand-in for a row whose page is not read yet: it says it is reading and opens nothing.</summary>
+    /// <returns>A new placeholder row.</returns>
+    internal static FileRowViewModel Placeholder() => new();
+
     /// <summary>The name, as served.</summary>
     public string Name { get; }
 

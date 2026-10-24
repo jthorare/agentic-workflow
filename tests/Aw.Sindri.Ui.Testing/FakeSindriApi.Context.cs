@@ -109,7 +109,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>The file map answer for a query.</summary>
     /// <param name="query">What was asked.</param>
     /// <returns>The answer.</returns>
-    internal RouteAnswer FileMapFor(FileMapQuery query) => FileMapAnswer ?? ContextAnswers.FileMap(query);
+    internal RouteAnswer FileMapFor(FileMapQuery query) => FileMapResponder?.Invoke(query) ?? FileMapAnswer ?? ContextAnswers.FileMap(query);
+
+    /// <summary>Answers each file map read by its query (a paged folder); null falls back to <see cref="FileMapAnswer"/>.</summary>
+    public Func<FileMapQuery, RouteAnswer>? FileMapResponder { get; set; }
+
+    /// <summary>Every file map read, in order.</summary>
+    public IReadOnlyList<FileMapQuery> FileMapQueries { get { lock (_gate) { return [.. _fileMapQueries]; } } }
+
+    private readonly List<FileMapQuery> _fileMapQueries = [];
 
     public Task<Result<LensesView>> Lenses(Uri api, LensesQuery query, CancellationToken cancellationToken)
     {
@@ -162,8 +170,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>Held open until set: a whole-map read that started while it was set waits for it.</summary>
     public TaskCompletionSource? WholeMapGate { get; set; }
 
-    public Task<Result<FileMapView>> FileMap(Uri api, FileMapQuery query, CancellationToken cancellationToken) =>
-        Context<FileMapView>(api, "/sindri/context/filemap", FileMapFor(query), FileMapGate, cancellationToken);
+    public Task<Result<FileMapView>> FileMap(Uri api, FileMapQuery query, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _fileMapQueries.Add(query);
+        }
+
+        return Context<FileMapView>(api, "/sindri/context/filemap", FileMapFor(query), FileMapGate, cancellationToken);
+    }
 
     public Task<Result<ReviewQueueView>> ReviewQueue(Uri api, int? limit, CancellationToken cancellationToken) =>
         Context<ReviewQueueView>(api, "/sindri/context/map/review", ReviewQueueBody(), ReviewQueueGate, cancellationToken);

@@ -17,6 +17,16 @@ internal static partial class Labels
     /// <summary>The button that goes up one folder.</summary>
     internal const string ContextFilesUp = "Up one folder";
 
+    /// <summary>The filter box's hint.</summary>
+    internal const string ContextFilesFilter = "Filter by name";
+
+    /// <summary>The note while a filter waits for the rest of a big folder to arrive.</summary>
+    /// <param name="loaded">How many entries are read.</param>
+    /// <param name="total">How many there are.</param>
+    /// <returns>"Still reading this folder: the filter covers 400 of 27000 so far."</returns>
+    internal static string ContextFilesFilterPartial(int loaded, int total) =>
+        string.Create(CultureInfo.InvariantCulture, $"Still reading this folder: the filter covers {loaded} of {total} so far.");
+
     /// <summary>The word while a folder is read.</summary>
     internal const string ContextFilesLoading = "Reading the files...";
 

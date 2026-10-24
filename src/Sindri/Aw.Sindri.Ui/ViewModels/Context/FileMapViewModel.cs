@@ -7,11 +7,34 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// The Files view (F3 spec 1, slice 4): one folder of the repo at a time from GET /sindri/context/filemap, each entry a
 /// <see cref="FileRowViewModel"/>. The repo is the one the map status names; the newest read wins.
 /// </summary>
-internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
+internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableObject
 {
     private string? _repo;
     private string _current = string.Empty;
     private int _generation;
+    private int _filterVersion;
+    private LazyFileRows _all = new(entries: [], symbols: null);
+    private FileMapEntry[] _entries = [];
+    private List<FileSymbolsEntry> _symbolFiles = [];
+    private SymbolsView? _symbolsServed;
+    private string? _next;
+    private int? _total;
+    private bool _fetching;
+
+    /// <summary>How long typing must pause before the filter runs.</summary>
+    internal static readonly TimeSpan FilterDelay = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>The page size asked for.</summary>
+    internal const int PageSize = 200;
+
+    /// <summary>The next page is read when the list reaches this near its read end.</summary>
+    internal const int PrefetchAhead = 50;
+
+    /// <summary>How many entries are read so far.</summary>
+    internal int Loaded => _entries.Length;
+
+    /// <summary>How many times the filter has run (a burst of keystrokes runs it once).</summary>
+    internal int FilterRuns { get; private set; }
 
     /// <summary>What the stage reads through.</summary>
     internal ContextPorts Ports { get; } = ports;
@@ -43,7 +66,27 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
     /// <summary>The word for a folder with nothing in it.</summary>
     public string EmptyWord { get; } = Labels.ContextFilesEmpty;
 
-    /// <summary>The rows of the folder shown.</summary>
+    /// <summary>The filter box's hint.</summary>
+    public string FilterHint { get; } = Labels.ContextFilesFilter;
+
+    /// <summary>The filter box's text; the rows follow it once typing pauses.</summary>
+    public string FilterText
+    {
+        get;
+        set
+        {
+            var text = value ?? string.Empty;
+            if (string.Equals(field, text, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Set(ref field, text);
+            _ = Refilter();
+        }
+    } = string.Empty;
+
+    /// <summary>The rows of the folder shown, built as the list scrolls to them.</summary>
     public IReadOnlyList<FileRowViewModel> Rows { get; private set => Set(ref field, value); } = [];
 
     /// <summary>The folder shown, in words.</summary>
@@ -113,7 +156,7 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
         }
 
         _repo = repo;
-        var read = await Ports.Api.FileMap(api, new FileMapQuery(repo, path, UnmappedOnly: false, Draft: false), cancellationToken).ConfigureAwait(true);
+        var read = await Ports.Api.FileMap(api, new FileMapQuery(repo, path, UnmappedOnly: false, Draft: false, Cursor: null, Limit: PageSize), cancellationToken).ConfigureAwait(true);
         if (generation != _generation)
         {
             return;
@@ -173,18 +216,29 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
     private void Show(FileMapView view)
     {
         _current = view.Path;
+        _fetching = false;
+        _entries = [.. view.Entries];
+        _symbolFiles = [.. view.Symbols.Files ?? []];
+        _symbolsServed = view.Symbols;
+        _next = view.NextCursor;
+        _total = view.Total;
         Problem = string.Empty;
         Symbols = new SymbolsColumnViewModel(view.Symbols);
-        Rows = [.. view.Entries.Select(e => new FileRowViewModel(e, Symbols))];
+        Rebuild();
         PathText = view.Path.Length == 0 ? Labels.ContextFilesRoot : view.Path;
         CanGoUp = view.Path.Length > 0;
         TotalsText = Labels.ContextFilesTotals(view.Totals.Files, view.Totals.Mapped, view.Totals.Suggested, view.Totals.Unmapped);
-        Note = string.Equals(view.Symbols.State, "available", StringComparison.Ordinal) ? string.Empty : Labels.ContextMapNamesDetail;
+        Note = NoteText();
+        FetchMoreForFilter();
     }
 
     private void Fail(Error error)
     {
-        Rows = [];
+        _all = new LazyFileRows(entries: [], symbols: null);
+        _entries = [];
+        _next = null;
+        _total = null;
+        Rows = _all;
         TotalsText = string.Empty;
         Note = string.Empty;
         Problem = error.Message;

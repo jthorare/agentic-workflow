@@ -31,7 +31,7 @@
   </UserControl.Styles>
 
   <!-- The Files view (F3 spec 1 §2): one folder at a time, 36 px rows, a suggested row hatched. A folder opens; a file is a row. -->
-  <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <Button x:Name="FilesUp" Click="OnUp" IsEnabled="{Binding CanGoUp}" AutomationProperties.Name="{Binding UpWord}">
         <TextBlock Classes="button" Text="{Binding UpWord}" />
@@ -40,15 +40,24 @@
       <TextBlock x:Name="FilesTotals" Grid.Column="2" Classes="caption subtle" Text="{Binding TotalsText}" VerticalAlignment="Center" />
     </Grid>
 
-    <Grid Grid.Row="1" ColumnDefinitions="2*,3*,2*,2*" Margin="8,0" AutomationProperties.AccessibilityView="Raw">
+    <TextBox x:Name="FilesFilter" Grid.Row="1" Text="{Binding FilterText, Mode=TwoWay}" PlaceholderText="{Binding FilterHint}" AutomationProperties.Name="{Binding FilterHint}" />
+
+    <Grid Grid.Row="2" ColumnDefinitions="2*,3*,2*,2*" Margin="8,0" AutomationProperties.AccessibilityView="Raw">
       <TextBlock Classes="eyebrow" Text="{Binding ColFile}" />
       <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColFor}" />
       <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColIntent}" />
       <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding SymbolsHeading}" />
     </Grid>
 
-    <Panel Grid.Row="2">
-      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}" IsVisible="{Binding HasRows}">
+    <Panel Grid.Row="3">
+      <!-- Rows are 36 px and built as they scroll into view; a plain StackPanel would build every row of a big folder. -->
+      <ScrollViewer x:Name="FileScroll" IsVisible="{Binding HasRows}" HorizontalScrollBarVisibility="Disabled">
+      <ItemsControl x:Name="FileRows" ItemsSource="{Binding Rows}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="ctx:FileRowViewModel">
             <Border Classes="file-row" Classes.suggested="{Binding IsSuggested}" AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control">
@@ -69,6 +78,7 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+      </ScrollViewer>
       <TextBlock x:Name="FilesLoading" Classes="body subtle" Text="{Binding LoadingWord}" IsVisible="{Binding IsLoading}" Margin="8,0" />
       <TextBlock x:Name="FilesEmpty" Classes="body subtle" Text="{Binding EmptyWord}" IsVisible="{Binding IsEmptyFolder}" Margin="8,0" />
       <Border x:Name="FilesProblem" IsVisible="{Binding HasProblem}" BorderBrush="{DynamicResource Brush.Attention}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" Padding="12,8" VerticalAlignment="Top"
@@ -77,6 +87,6 @@
       </Border>
     </Panel>
 
-    <TextBlock x:Name="FilesNote" Grid.Row="3" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,0" />
+    <TextBlock x:Name="FilesNote" Grid.Row="4" Classes="caption subtle" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" Margin="8,0" />
   </Grid>
 </UserControl>

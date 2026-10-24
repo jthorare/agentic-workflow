@@ -171,7 +171,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.Lenses(uri, lenses, cancellationToken);
                 return Answer(server.LensesAnswer(lenses));
             case "filemap":
-                var files = new FileMapQuery(query["repo"] ?? string.Empty, Path: query["path"], UnmappedOnly: query["unmapped"] == "true", Draft: query["draft"] == "true");
+                var files = new FileMapQuery(query["repo"] ?? string.Empty, Path: query["path"], UnmappedOnly: query["unmapped"] == "true", Draft: query["draft"] == "true", Cursor: query["cursor"], Limit: limit);
                 _ = await server.FileMap(uri, files, cancellationToken);
                 return Answer(server.FileMapFor(files));
             case "map/review":
