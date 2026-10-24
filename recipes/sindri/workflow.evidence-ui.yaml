@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-ui
-version: 4
+version: 5
 description: "Block recipe: A ui-evidence run: plan, run, lint and critique; one repair when a selector is broken."
 displayName: "Prove the screens work in a browser"
 inputs:
@@ -24,7 +24,7 @@ transitions:
   - { from: run,  to: failed, on: step.completed, when: { outcome: failed },  produces: [fact:evidenceSummary] }
   - { from: run,  to: run,    on: step.completed, when: { all: [ { outcome: broken }, { loop: repairs, below: cap } ] }, produces: [fact:evidenceSummary] }
   - { from: run,  to: failed, on: step.completed, when: { all: [ { outcome: broken }, { not: { loop: repairs, below: cap } } ] }, produces: [fact:evidenceSummary] }
-loops: { repairs: { cap: 2 } }
+loops: { repairs: { cap: 8 } }
 evals:
   - evals/workflow.evidence-ui/happy.jsonl
   - evals/workflow.evidence-ui/failed.jsonl

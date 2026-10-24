@@ -21,10 +21,10 @@ internal static class EngineInstanceScan
     private const int PageSize = 100;
 
     /// <summary>
-    /// How many pages back from the newest event are read to find the open timers: 50 pages, 5000 events. Describe doesn't list timers, so a timer started before
+    /// How many pages back from the newest event are read to find the open timers: 1000 pages, 100000 events. Describe doesn't list timers, so a timer started before
     /// the bound and still open is missed, and an instance whose open timer is that old reads as a signal wait. A history that short of the bound is read whole.
     /// </summary>
-    private const int MaxPages = 50;
+    private const int MaxPages = 1000;
 
     /// <summary>The facts of the instance <paramref name="execution"/> lists; null when it isn't a Sindri recipe instance (no recipe id, or an address that isn't one).</summary>
     /// <param name="client">The client.</param>

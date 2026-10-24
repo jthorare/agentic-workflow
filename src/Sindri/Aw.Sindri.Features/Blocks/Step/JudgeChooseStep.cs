@@ -20,7 +20,7 @@ internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber
 {
     internal const double DefaultThreshold = 0.6;
 
-    internal const int FactTextCap = 16_000;
+    internal const int FactTextCap = 200_000;
 
     private const string Name = "step.judge.choose";
     private const string Uncertain = "uncertain";

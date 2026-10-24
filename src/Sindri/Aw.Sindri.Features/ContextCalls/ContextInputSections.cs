@@ -17,7 +17,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 internal static class ContextInputSections
 {
     /// <summary>The most bytes of text, and of typed result, one input hands over; three inputs stay under the plan cap.</summary>
-    internal const int Budget = 120 * 1024;
+    internal const int Budget = 240 * 1024;
 
     /// <summary>
     /// The most bytes of a typed result kept: the Step input runner's own cap for one (StepInputRunner.SectionCap). A typed result is read by a code
@@ -78,7 +78,7 @@ internal static class ContextInputSections
             shown++;
         }
 
-        return kept.Append(System.Globalization.CultureInfo.InvariantCulture, $"[{lines.Length - shown} more lines not shown: this section is capped at 120 KiB]\n").ToString();
+        return kept.Append(System.Globalization.CultureInfo.InvariantCulture, $"[{lines.Length - shown} more lines not shown: this section is capped at 240 KiB]\n").ToString();
     }
 
     private static string Notes(IReadOnlyList<string> notes) => string.Concat(notes.Select(static n => "note: " + n + "\n"));

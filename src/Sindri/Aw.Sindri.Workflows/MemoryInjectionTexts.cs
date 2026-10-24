@@ -3,17 +3,14 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// The in-memory <see cref="IInjectionTexts"/> (plan: no text is stored): bounded at <see cref="MaxEntries"/> entries and
-/// <see cref="MaxBytes"/> bytes of text, dropping the least recently used past either bound; a newer run of an instance drops
+/// The in-memory <see cref="IInjectionTexts"/> (plan: no text is stored): bounded at
+/// <see cref="MaxBytes"/> bytes of text, dropping the least recently used past it; a newer run of an instance drops
 /// the older runs' entries. Never persisted, never logged.
 /// </summary>
 internal sealed class MemoryInjectionTexts : IInjectionTexts
 {
-    /// <summary>The most entries kept.</summary>
-    internal const int MaxEntries = 64;
-
-    /// <summary>The most text kept, in UTF-8 bytes.</summary>
-    internal const int MaxBytes = 8 * 1024 * 1024;
+    /// <summary>The most text kept, in UTF-8 bytes; the entries are bounded by this alone (owner q93, 2026-10-23).</summary>
+    internal const int MaxBytes = 64 * 1024 * 1024;
 
     private readonly Lock _gate = new();
     private readonly LinkedList<(InjectionKey Key, FilledTexts Texts, int Bytes)> _entries = new();
@@ -29,7 +26,7 @@ internal sealed class MemoryInjectionTexts : IInjectionTexts
             var size = Size(texts);
             _ = _entries.AddFirst((key, texts, size));
             _bytes += size;
-            while (_entries.Count > 1 && (_entries.Count > MaxEntries || _bytes > MaxBytes))
+            while (_entries.Count > 1 && _bytes > MaxBytes)
             {
                 _bytes -= _entries.Last!.Value.Bytes;   // why: the loop runs only while the list holds more than one entry
                 _entries.RemoveLast();

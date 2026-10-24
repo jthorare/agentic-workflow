@@ -15,6 +15,38 @@
 {"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
 {"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
 {"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r1","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r2","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r3","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r4","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r5","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r6","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r7","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
+{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket r8","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
+{"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
+{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"approve"},"expect":{"state":"freeze"}}
 {"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:findings":[{"rule":"PLN-FRZ-001","item":"S1","message":"the plan hash differs from fact:planPacket","fix":"See the rule.","severity":"fail"}]}},"expect":{"state":"evidence"}}
 {"trigger":{"kind":"step.completed","outcome":"complete","outputs":{"fact:planPacket":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}},"expect":{"state":"questions"}}
 {"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"stop"}}

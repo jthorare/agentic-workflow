@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.Blocks.Gate;
 /// </summary>
 internal sealed class PrAutofixCapGate : IGate, IDescribedBlock
 {
-    private const int DefaultCap = 3;
+    private const int DefaultCap = 5;
 
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor => PrGates.AutofixCap;

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.review-loop
-version: 5
+version: 6
 description: "Block recipe: review the phase's change one lens per run, a round per iteration, to zero blocking and issue findings, at most 5 rounds, then one narrow re-check; a review, clean or behaviour-wrong, ends through a recorded, frozen review packet; no lens applying ends stuck. The loop never asks a human by default: only an agent's typed escalation (ambiguousFix or productQuestion, outcome needsOwner) reaches the ask state, at most 3 asks. The round log is an input, so round 1 holds fact:lensRounds: the parent passes [] and each round appends to it."
 displayName: "Review the code until no blocking issues remain"
 inputs:
@@ -53,7 +53,7 @@ transitions:
   - { from: recheck,  to: record,   on: step.completed, when: { outcome: behaviourWrong }, produces: [fact:review] }
   - { from: record,   to: clean,    on: step.completed, when: { outcome: recorded },       produces: [fact:review] }
   - { from: record,   to: wrong,    on: step.completed, when: { outcome: recordedWrong },  produces: [fact:review] }
-loops: { rounds: { cap: 5 }, lens-runs: { cap: 50 }, asks: { cap: 3 } }
+loops: { rounds: { cap: 5 }, lens-runs: { cap: 50 }, asks: { cap: 10 } }
 evals:
   - evals/workflow.review-loop/happy.jsonl
   - evals/workflow.review-loop/cap-then-recheck.jsonl

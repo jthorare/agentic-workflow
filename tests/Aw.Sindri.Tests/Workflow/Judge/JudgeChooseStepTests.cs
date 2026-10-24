@@ -207,7 +207,7 @@ public sealed class JudgeChooseStepTests
     public async Task Fact_text_is_redacted_and_capped_before_it_leaves()
     {
         var judge = new FakeJudgeChoice().Answers(new ChooseAnswer(ChooseStatus.Escalated, Choice: null, "below-threshold"));
-        var context = Context(arguments: null, ("fact:built", "password is hunter2 " + new string('x', 20_000)));
+        var context = Context(arguments: null, ("fact:built", "password is hunter2 " + new string('x', JudgeChooseStep.FactTextCap + 5_000)));
 
         _ = await Run(judge, context, new MaskingScrubber());
 

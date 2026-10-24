@@ -2,12 +2,12 @@ using System.Text;
 
 namespace Aw.Sindri.Core.Scoping;
 
-/// <summary>How much of a change to read (scoping spec §4: the diff is at most 2 MiB).</summary>
+/// <summary>How much of a change to read (scoping spec §4: the diff is at most 16 MiB).</summary>
 /// <param name="MaxDiffBytes">The most diff text, in UTF-8 bytes.</param>
 public sealed record ChangeRead(int MaxDiffBytes)
 {
     /// <summary>The cap the scoping station reads with.</summary>
-    public static ChangeRead Scoping { get; } = new(2 * 1024 * 1024);
+    public static ChangeRead Scoping { get; } = new(16 * 1024 * 1024);
 
     /// <summary>The start of <paramref name="text"/> that fits the cap, cut at a character boundary.</summary>
     /// <param name="text">The diff text.</param>

@@ -55,12 +55,12 @@ public sealed class RecipeYamlRefusalTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_file_over_256_KiB_is_refused_before_it_is_parsed()
+    public void A_file_over_4_MiB_is_refused_before_it_is_parsed()
     {
         var big = Head + "description: \"" + new string('x', YamlRecipeReader.MaxBytes) + "\"\n";
 
         Assert.Equal(
-            ["RCP-SCHEMA-003: the file is 262219 bytes, over the 256 KiB limit at test.yaml:1:1 (); split the recipe, or move long texts out of it"],
+            ["RCP-SCHEMA-003: the file is 4194379 bytes, over the 4 MiB limit at test.yaml:1:1 (); split the recipe, or move long texts out of it"],
             RecipeReaderTests.Lines(big));
     }
 

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.design
-version: 7
+version: 8
 description: "Station 2 of the line: one spec draft from a frozen scope packet, in the repo's style pack, reviewed by the repo's design lens pack on another model until no CRITICAL or HIGH finding is left; ends with a hashed candidate design packet."
 displayName: "Turn the scope into a design"
 why: "Writes the design for the approved scope and has it reviewed from several angles until no serious problem is left."
@@ -19,9 +19,9 @@ states:
   intake:    { kind: active, step: step.design.intake, timeout: { after: 1h, then: park },
                next: "Load {item}'s frozen scope packet and its style and lens packs." }
   draft:     { displayName: "Write the design", why: "Gives the reviews something concrete to check.", kind: active, step: { use: step.design.draft, with: { bundle: style } }, loop: rounds,
-               budget: { tokens: 1M }, timeout: { after: 3h, then: park },
+               budget: { tokens: 5M }, timeout: { after: 3h, then: park },
                next: "Write {item}'s spec draft in the house style (round {loop.rounds}/{loop.rounds.cap})." }
-  apply:     { kind: active, step: { use: step.design.apply, with: { bundle: style } }, budget: { tokens: 1M },
+  apply:     { kind: active, step: { use: step.design.apply, with: { bundle: style } }, budget: { tokens: 5M },
                timeout: { after: 2h, then: park },
                next: "Fold the answers and notes from the after-design stop into {item}'s affected sections." }
   check:     { kind: active, step: step.design.check, timeout: { after: 1h, then: park },
@@ -30,11 +30,11 @@ states:
                loop: lens, timeout: { after: 1h, then: park },
                next: "Start lens round {loop.lens}/{loop.lens.cap} on {item}'s draft." }
   lens:      { displayName: "Review pass", why: "Independent reviewers find serious problems before a plan is built on them.", kind: active, step: { use: step.lens.run, with: { subject: design, bundle: lenses } }, loop: lens-runs,
-               budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+               budget: { tokens: 5M }, timeout: { after: 2h, then: park },
                next: "Review {item}'s draft through the next lens in the pack." }
   lens-log:  { kind: active, step: step.lens.log, timeout: { after: 1h, then: park },
                next: "Append the lens report to {item}'s lens rounds." }
-  revise:    { displayName: "Fix the design", why: "Fixes the problems the reviews found, or answers them in writing.", kind: active, step: { use: step.design.revise, with: { bundle: style } }, budget: { tokens: 1M },
+  revise:    { displayName: "Fix the design", why: "Fixes the problems the reviews found, or answers them in writing.", kind: active, step: { use: step.design.revise, with: { bundle: style } }, budget: { tokens: 5M },
                timeout: { after: 3h, then: park },
                next: "Fix the CRITICAL and HIGH findings on {item}'s draft; answer the rest in writing." }
   lens-desk: { displayName: "Accept the risk?", why: "The reviews ran out of tries with problems left; you decide.", kind: active, step: step.design.lens-desk, timeout: { after: 7d, then: park },
@@ -71,7 +71,7 @@ transitions:
   - { from: evidence, to: designed, on: step.completed, when: { outcome: complete },
       produces: [fact:designPacket, fact:design, fact:lensRounds] }
   - { label: "proof is incomplete: draft again", from: evidence, to: draft,    on: step.completed, when: { outcome: incomplete }, produces: [fact:findings] }
-loops: { rounds: { cap: 5 }, lens: { cap: 4 }, lens-runs: { cap: 40 } }
+loops: { rounds: { cap: 5 }, lens: { cap: 4 }, lens-runs: { cap: 200 } }
 evals:   # the 7 cases of Appendix B.1 (plan's happy-assumed is assumed-happy: the shipped-recipe test wants a *-happy name) and two more
   - evals/workflow.design/check-gaps-twice.jsonl
   - evals/workflow.design/evidence-incomplete.jsonl

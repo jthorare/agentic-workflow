@@ -17,7 +17,7 @@ public sealed class EndedInstanceViews(IInstanceReader reader)
     private (string Address, DateTimeOffset Started)? _newest;
 
     /// <summary>The most ended views kept; past it the newest one is dropped to make room (a list longer than this keeps re-reading only the last few rows, where dropping the oldest would re-read all of them).</summary>
-    public const int Capacity = 512;
+    public const int Capacity = 4096;
 
     /// <summary>The view of <paramref name="address"/>, always read: this is the lookup of one instance, not a list row.</summary>
     /// <param name="address">The instance.</param>

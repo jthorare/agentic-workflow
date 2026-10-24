@@ -31,9 +31,9 @@ public sealed class PrGateTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Autofix_cap_defaults_to_three_when_no_cap_is_given()
+    public async Task Autofix_cap_defaults_to_five_when_no_cap_is_given()
     {
-        var result = await Cap("""{"ciFixes":3}""", cap: null);
+        var result = await Cap("""{"ciFixes":5}""", cap: null);
 
         Assert.Equal(GateVerdict.Fail, result.Verdict);
     }

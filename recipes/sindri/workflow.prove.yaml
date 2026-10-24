@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.prove
-version: 5
+version: 6
 description: "Block recipe: prove every acceptance item of one phase on its head commit: a hand test and the verify journey in the running app, the evidence route, before and after for fixes, and the hidden scenarios; ends with a frozen proof pack."
 displayName: "Prove a phase works in the running app"
 inputs:
@@ -33,7 +33,7 @@ states:
                    next: "Waiting for a heavy-job slot for {item}'s before/after and hidden-scenario runs." }
   before-after:  { kind: active, step: step.prove.before-after, timeout: { after: 2h, then: park },
                    next: "Run {item}'s fix checks at its base (must fail) and its head (must pass)." }
-  holdout:       { kind: active, step: step.prove.holdout, budget: { tokens: 1M }, timeout: { after: 3h, then: park },
+  holdout:       { kind: active, step: step.prove.holdout, budget: { tokens: 5M }, timeout: { after: 3h, then: park },
                    next: "Run {item}'s hidden scenarios against its head." }
   holdout-log:   { kind: active, step: step.prove.holdout-log, timeout: { after: 1h, then: park },
                    next: "Record {item}'s hidden-scenario verdicts and check the canary." }

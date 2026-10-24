@@ -12,7 +12,7 @@ namespace Aw.Sindri.Host.Commands.Line;
 /// </summary>
 internal static class LineFactDirectory
 {
-    private const long MaxBytes = 4 * 1024 * 1024;
+    private const long MaxBytes = 16 * 1024 * 1024;
     private static readonly string[] _extensions = [".json", ".jsonl", ".md"];
 
     /// <summary>The directory's files and the flags' additions.</summary>

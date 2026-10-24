@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 9
+version: 10
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 why: "Pins down exactly what will change and what done means, then waits for your approval before anything is designed."
@@ -41,21 +41,21 @@ states:
         - { use: input.context.history, with: { anchors: { fact: fact:anchors }, window: { profile: workflow.scoping.historyWindow } } }
     timeout: { after: 30m, then: park }
     next: "Run the four lenses for {item}: product surfaces and related features, code, then history (pass {loop.rescope}/{loop.rescope.cap})."
-  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 5M }, timeout: { after: 2h, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
   check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1h, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
-  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 1M }, timeout: { after: 1h, then: park },
+  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 5M }, timeout: { after: 1h, then: park },
                   next: "Find {item}'s behaviour gaps and draft up to five questions with options (round {loop.interview}/{loop.interview.cap})." }
   interview:    { kind: active, step: step.interview.answer, timeout: { after: 2d, then: park },
                   next: "Answer the questions on {item}: pick an option, write your own under other, or skip one." }
   record:       { kind: active, step: step.interview.record, timeout: { after: 1h, then: park },
                   next: "Append {item}'s latest answers to the answer log." }
-  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 1M }, timeout: { after: 1h, then: park },
+  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 5M }, timeout: { after: 1h, then: park },
                   next: "Fold the answers into {item}'s answer log, scope map, acceptance list and open questions." }
   reanchor:     { kind: active, step: step.scope.reanchor, timeout: { after: 1h, then: park },
                   next: "Turn {item}'s changed scope map into anchors the product map knows." }
-  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: step.scope.challenge, loop: challenge, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: step.scope.challenge, loop: challenge, budget: { tokens: 5M }, timeout: { after: 2h, then: park },
                   next: "Challenge {item}'s scope on another model: surfaces and behaviours the map misses (round {loop.challenge}/{loop.challenge.cap})." }
   challenge-log: { kind: active, step: step.scope.challenge-log, timeout: { after: 1h, then: park },
                   next: "Append the challenger's round to {item}'s challenge record, earlier rounds unchanged." }
@@ -142,7 +142,7 @@ transitions:
   - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
-loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 3 }, refreeze: { cap: 2 }, revise: { cap: 4 } }
+loops: { rounds: { cap: 12 }, rescope: { cap: 10 }, interview: { cap: 12 }, challenge: { cap: 10 }, refreeze: { cap: 10 }, revise: { cap: 12 } }
 evals:   # 30 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl

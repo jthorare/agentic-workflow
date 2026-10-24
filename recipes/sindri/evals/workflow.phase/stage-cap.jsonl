@@ -5,4 +5,14 @@
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed"}]}},"expect":{"state":"build"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed r1"}]}},"expect":{"state":"build"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed r2"}]}},"expect":{"state":"build"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed r3"}]}},"expect":{"state":"build"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed r4"}]}},"expect":{"state":"build"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"hidden scenario 2 failed r5"}]}},"expect":{"state":"build"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:built":{"head":"abc123"},"fact:change":{"head":"abc123"},"fact:redTests":{"tests":[]},"fact:activePacket":{"phase":"1","grants":[]}}},"expect":{"state":"prove"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{"fact:findings":[{"item":"AC-1","message":"failing again, pass 3"}]}},"expect":{"state":"parked","park":"rounds"}}

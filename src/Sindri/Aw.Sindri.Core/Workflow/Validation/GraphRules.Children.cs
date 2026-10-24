@@ -12,7 +12,7 @@ namespace Aw.Sindri.Core.Workflow.Validation;
 internal sealed partial class GraphRules
 {
     /// <summary>How deep children may nest: the recipe's own children are depth 1.</summary>
-    private const int MaxChildDepth = 5;
+    private const int MaxChildDepth = 10;
 
     /// <summary>For each child wait of the recipe, the first chain under it that cycles or nests too deep, reported at the wait's 'recipe'.</summary>
     private static IEnumerable<RecipeFinding> ChildChains(Recipe recipe, IChildRecipeResolver children, RecipeSource source)

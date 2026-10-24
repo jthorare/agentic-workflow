@@ -4,4 +4,12 @@
 {"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
 {"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link"}]}},"expect":{"state":"update"}}
 {"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link r1"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link r2"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link r3"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link r4"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
 {"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link"}]}},"expect":{"state":"not-done","outcome":"unresolved"}}

@@ -1,4 +1,10 @@
 {"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
 {"trigger":{"kind":"step.completed","outcome":"planned","outputs":{"fact:evidencePlan":"plan-1"}},"expect":{"state":"run"}}
 {"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r1"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r2"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r3"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r4"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r5"}},"expect":{"state":"run"}}
+{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector broken r6"}},"expect":{"state":"run"}}
 {"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"selector still broken"}},"expect":{"state":"failed","outcome":"unresolved"}}

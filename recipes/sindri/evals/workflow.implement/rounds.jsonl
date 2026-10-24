@@ -3,5 +3,19 @@
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: nothing sent"}},"expect":{"state":"produce"}}
 {"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r1"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r2"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r3"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r4"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r5"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r6"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url r7"}},"expect":{"state":"produce"}}
 {"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Fixed the url."}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong header"}},"expect":{"state":"stuck","outcome":"unresolved"}}

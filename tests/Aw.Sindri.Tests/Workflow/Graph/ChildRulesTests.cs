@@ -5,7 +5,7 @@ using static Aw.Sindri.Tests.Workflow.Graph.GraphRecipe;
 namespace Aw.Sindri.Tests.Workflow.Graph;
 
 /// <summary>
-/// RCP-CHILD-002 (child recipes form a cycle) and RCP-CHILD-003 (children nest more than 5 deep), spec §9.1. Children
+/// RCP-CHILD-002 (child recipes form a cycle) and RCP-CHILD-003 (children nest more than 10 deep), spec §9.1. Children
 /// resolve through the context's IChildRecipeResolver; a child it can't find is RCP-CHILD-001's (the wiring rules).
 /// </summary>
 public sealed class ChildRulesTests
@@ -46,19 +46,19 @@ public sealed class ChildRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Children_nested_more_than_five_deep_are_refused()
+    public void Children_nested_more_than_ten_deep_are_refused()
     {
-        // The recipe of invalid/RCP-CHILD-003.yaml (workflow.depth-0), with depth-1 to depth-6 given by the resolver.
-        var children = Chain(6);
+        // The recipe of invalid/RCP-CHILD-003.yaml (workflow.depth-0), with depth-1 to depth-11 given by the resolver.
+        var children = Chain(11);
 
         Assert.Equal(
-            ["RCP-CHILD-003: child recipes nest 6 deep (workflow.depth-0 -> workflow.depth-1 -> workflow.depth-2 -> workflow.depth-3 -> workflow.depth-4 -> workflow.depth-5 -> workflow.depth-6), more than 5 at RCP-CHILD-003.yaml:8:25 (states.running.waitFor.child.recipe); flatten the chain so children nest at most 5 deep"],
+            ["RCP-CHILD-003: child recipes nest 11 deep (workflow.depth-0 -> workflow.depth-1 -> workflow.depth-2 -> workflow.depth-3 -> workflow.depth-4 -> workflow.depth-5 -> workflow.depth-6 -> workflow.depth-7 -> workflow.depth-8 -> workflow.depth-9 -> workflow.depth-10 -> workflow.depth-11), more than 10 at RCP-CHILD-003.yaml:8:25 (states.running.waitFor.child.recipe); flatten the chain so children nest at most 10 deep"],
             Lines(Parent("workflow.depth-0", "workflow.depth-1"), "RCP-CHILD-003.yaml", [("states.running.waitFor.child.recipe", 8, 25)], children));
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Children_five_deep_raise_nothing() =>
-        Assert.Empty(Lines(Parent("workflow.depth-0", "workflow.depth-1"), Chain(5)));
+    public void Children_ten_deep_raise_nothing() =>
+        Assert.Empty(Lines(Parent("workflow.depth-0", "workflow.depth-1"), Chain(10)));
 
     [Fact, Trait("Lane", "unit")]
     public void A_child_the_resolver_cannot_find_is_left_to_the_wiring_rules() =>

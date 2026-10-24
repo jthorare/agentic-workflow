@@ -126,7 +126,7 @@ The PR babysitter's settings (PR babysitter spec W27, §4, §5, §6). A change t
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `bots` | string[] (logins) | no | none | The bot logins whose comments are fixed or declined instead of held; any other bot is untrusted (Q2) |
-| `autofixCap` | integer, 1 to 5 | no | `3` | The most CI fixes pushed for one PR; the babysitter stops at the cap (`gate.pr.autofix-cap`) |
+| `autofixCap` | integer, 1 to 5 | no | `5` | The most CI fixes pushed for one PR; the babysitter stops at the cap (`gate.pr.autofix-cap`) |
 | `pollInterval` | delay (`5s` to `24h`, unit `s`, `m` or `h`) | no | `60s` | How often the PR watcher polls the forge |
 | `remindAfter` | duration (`1m` and up, unit `m`, `h` or `d`) | no | `14d` | How long a PR waits at ready-to-merge before the desk is reminded |
 | `replies` | `desk` or `post` | no | `desk` | Whether the owner sends each reply or Sindri posts it from its account with a footer (Q5) |

@@ -223,7 +223,7 @@ public interface IDescribedBlock { public static abstract BlockDescriptor Descri
 
 ### 3.1 Reading
 
-- **Refused YAML** (`RCP-SCHEMA-003`): duplicate keys, anchors, aliases, merge keys, explicit tags, more than 256 KiB,
+- **Refused YAML** (`RCP-SCHEMA-003`): duplicate keys, anchors, aliases, merge keys, explicit tags, more than 4 MiB (owner q93, 2026-10-23; was 256 KiB),
   or nesting deeper than 32.
 - **Scalars:** the YAML 1.2 core schema, so `on` stays a string.
 - **Errors:** every node keeps its line and column, and every schema error is reported, not just the first.

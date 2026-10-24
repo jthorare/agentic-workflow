@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.plan
-version: 7
+version: 8
 description: "Station 3 of the line: the phase graph for a candidate design, its executability review and hidden scenarios, then the owner's after-design stop, which freezes the design, the plan and every phase packet together."
 displayName: "Plan the build in phases"
 why: "Breaks the approved design into phases small enough to build and prove one at a time, then waits for your approval."
@@ -25,7 +25,7 @@ states:
       inputs:
         - { use: input.context.code, with: { anchors: { fact: fact:anchors } } }   # LN-CTX2: the code lens, anchored on the design's covered surfaces (intake derives fact:anchors from the design packet)
     loop: rounds
-    budget: { tokens: 1M }
+    budget: { tokens: 5M }
     timeout: { after: 3h, then: park }
     next: "Draft {item}'s phase graph (round {loop.rounds}/{loop.rounds.cap})."
   check:       { kind: active, step: step.plan.check, timeout: { after: 1h, then: park },
@@ -38,10 +38,10 @@ states:
       use: step.plan.exec-review
       inputs:
         - { use: input.context.code, with: { anchors: { fact: fact:anchors } } }   # LN-CTX2
-    budget: { tokens: 1M }
+    budget: { tokens: 5M }
     timeout: { after: 2h, then: park }
     next: "Review each of {item}'s phases as its builder: executable, context, files, checkable signals."
-  holdout:     { displayName: "Write hidden tests", why: "Tests the builder never sees, so passing them cannot be gamed.", kind: active, step: step.plan.holdout, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+  holdout:     { displayName: "Write hidden tests", why: "Tests the builder never sees, so passing them cannot be gamed.", kind: active, step: step.plan.holdout, budget: { tokens: 5M }, timeout: { after: 2h, then: park },
                  next: "Write {item}'s hidden scenarios into the holdout store." }
   holdout-store: { displayName: "Store the hidden tests", why: "Puts the hidden tests where only the evaluator can read them.", kind: active, step: step.plan.holdout-store, loop: holdouts, timeout: { after: 1h, then: park },
                  next: "Move {item}'s hidden scenarios into the private store and add the canary." }
@@ -90,7 +90,7 @@ transitions:
   - { label: "you dropped it", from: stop, to: dropped, on: step.completed, when: { outcome: drop } }
   - { from: freeze, to: planned, on: step.completed, when: { outcome: frozen },   produces: [fact:planPacket, fact:phasePackets] }
   - { from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
-loops: { rounds: { cap: 5 }, refreeze: { cap: 2 }, revisions: { cap: 5 }, holdouts: { cap: 3 } }
+loops: { rounds: { cap: 12 }, refreeze: { cap: 10 }, revisions: { cap: 12 }, holdouts: { cap: 10 } }
 evals:   # the 7 cases of Appendix B.1 (plan's happy-assumed is assumed-happy: the shipped-recipe test wants a *-happy name) and two more
   - evals/workflow.plan/assumed-happy.jsonl
   - evals/workflow.plan/changed-decision.jsonl

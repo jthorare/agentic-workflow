@@ -7,6 +7,18 @@
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 1"}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r1"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r2"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r3"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r4"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r5"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 2 r6"}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h3"}}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 3"}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h4"}}},"expect":{"state":"checks"}}

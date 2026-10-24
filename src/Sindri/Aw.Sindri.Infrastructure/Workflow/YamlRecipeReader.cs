@@ -16,8 +16,8 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 /// </summary>
 internal sealed class YamlRecipeReader(JsonSerializerOptions options) : IRecipeReader
 {
-    /// <summary>The largest recipe file read, in UTF-8 bytes (256 KiB).</summary>
-    internal const int MaxBytes = 256 * 1024;
+    /// <summary>The largest recipe file read, in UTF-8 bytes (4 MiB).</summary>
+    internal const int MaxBytes = 4 * 1024 * 1024;
 
     public RecipeReading Read(string text, string file)
     {
@@ -27,7 +27,7 @@ internal sealed class YamlRecipeReader(JsonSerializerOptions options) : IRecipeR
         if (size > MaxBytes)
         {
             findings.At("RCP-SCHEMA-003", string.Empty, SourcePosition.Start,
-                string.Create(CultureInfo.InvariantCulture, $"the file is {size} bytes, over the 256 KiB limit"), "split the recipe, or move long texts out of it");
+                string.Create(CultureInfo.InvariantCulture, $"the file is {size} bytes, over the 4 MiB limit"), "split the recipe, or move long texts out of it");
             return new RecipeReading(Document: null, findings.All);
         }
 

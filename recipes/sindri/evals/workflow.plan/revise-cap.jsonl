@@ -13,6 +13,27 @@
 {"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0","other":"note 0"}]}},"expect":{"state":"record"}}
 {"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2"}]}},"expect":{"state":"settle"}}
 {"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0s1","other":"note 0 s1"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2s1"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0s2","other":"note 0 s2"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2s2"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0r1","other":"note 0 r1"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2r1"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0r2","other":"note 0 r2"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2r2"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0r3","other":"note 0 r3"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2r3"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0r4","other":"note 0 r4"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2r4"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
+{"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design0r5","other":"note 0 r5"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A2r5"}]}},"expect":{"state":"settle"}}
+{"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}
 {"trigger":{"kind":"step.completed","outcome":"reviseDesign","outputs":{"fact:answers":[{"question":"Q-design1","other":"note 1"}]}},"expect":{"state":"record"}}
 {"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A3"}]}},"expect":{"state":"settle"}}
 {"trigger":{"kind":"step.completed","outcome":"assumed"},"expect":{"state":"stop"}}

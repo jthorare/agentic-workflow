@@ -12,7 +12,7 @@ namespace Aw.Sindri.Core.Workflow;
 public sealed class SameDirectoryChildren : IChildRecipeResolver
 {
     /// <summary>The most child files one validation reads; past the CHILD rules' depth of 4, this only bounds the work.</summary>
-    internal const int MaxFiles = 64;
+    internal const int MaxFiles = 4096;
 
     private readonly Dictionary<RecipeId, ChildRecipe> _byId;
 
