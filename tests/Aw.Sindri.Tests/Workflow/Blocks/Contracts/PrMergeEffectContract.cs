@@ -16,7 +16,7 @@ public sealed class PrMergeEffectContract : BlockContract
 
     protected override BlockDescriptor Descriptor => PrEffects.Merge;
 
-    protected override string ExpectedHash => "sha256:8764a318fd54b017a7c62228e0db4f20bb3e1d2b0c6c3a4aaa747df53ff391a9";
+    protected override string ExpectedHash => "sha256:806168ba9b2c639a20b22db8af9dccca739a29b1044d31ab9454fc064a0c19f7";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

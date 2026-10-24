@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
 using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
@@ -11,10 +13,25 @@ public static partial class TransitionDecision
 {
     /// <summary>
     /// The transition's effects (§5.7), each with identity '{instance}:{entry}:{index}' under the entered frame's entry;
-    /// the interpreter runs each as an activity after the transition's ledger event.
+    /// the interpreter runs each as an activity after the transition's ledger event. An effect whose descriptor declares an 'actor'
+    /// parameter that the recipe leaves unset gets the trigger's actor as that argument, so the persisted effect carries who acted.
     /// </summary>
-    private static List<EffectCommand> Effects(RecipeTransition transition, WorkflowInstanceId instance, int entry) =>
-        [.. transition.Effects.Select((use, index) => new EffectCommand(use.Use, new EffectIdentity(instance, entry, index), CommandOrigin.Recipe, use.With))];
+    private static List<EffectCommand> Effects(RecipeTransition transition, WorkflowInstanceId instance, int entry, BlockCatalog catalog, string? actor) =>
+        [.. transition.Effects.Select((use, index) => new EffectCommand(use.Use, new EffectIdentity(instance, entry, index), CommandOrigin.Recipe, Stamped(use, catalog, actor)))];
+
+    private static IReadOnlyDictionary<string, WithValue> Stamped(BlockUse use, BlockCatalog catalog, string? actor) =>
+        actor is null || use.With.ContainsKey(ActorParameter) || catalog.Find(use.Use) is not { } descriptor || !descriptor.Parameters.Any(static p => string.Equals(p.Name, ActorParameter, StringComparison.Ordinal))
+            ? use.With
+            : new Dictionary<string, WithValue>(use.With, StringComparer.Ordinal) { [ActorParameter] = new(JsonString(actor), Fact: null, Profile: null) };
+
+    private const string ActorParameter = "actor";
+
+    // why: a literal string element without the reflection-based serializer, which NativeAOT trimming flags.
+    private static JsonElement JsonString(string text)
+    {
+        using var document = JsonDocument.Parse($"\"{JsonEncodedText.Encode(text)}\"");
+        return document.RootElement.Clone();
+    }
 
     private sealed partial record Deciding
     {

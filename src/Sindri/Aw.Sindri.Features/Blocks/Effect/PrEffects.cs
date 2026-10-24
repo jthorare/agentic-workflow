@@ -35,7 +35,7 @@ internal static class PrEffects
     { Outputs = [new OutputSpec(FactKey.From("fact:docsPr"), [OutcomeName.From("opened"), OutcomeName.From("updated")]),], };
 
     /// <summary>'effect.pr.merge': merges with the forge's expected-head check; human trigger.</summary>
-    public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method");
+    public static BlockDescriptor Merge { get; } = Of("effect.pr.merge", humanTrigger: true, "pr", "at", "method", "actor");
 
     /// <summary>'effect.pr.purge-marks' (W26, IDEA-033): a babysitter's terminal cleanup, deleting the PR's comment marks.</summary>
     public static BlockDescriptor PurgeMarks { get; } = Of("effect.pr.purge-marks", humanTrigger: false, "pr");

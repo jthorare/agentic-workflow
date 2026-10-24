@@ -92,8 +92,8 @@ Every row carries `kind`, `identity`, `instance`, `headSha` and `at`; the kind a
 | `recheck`, `docs` | `effect.pr.record` | `result` |
 | `end` | `effect.pr.record` | `terminal` (`merged`, `closed`, `stopped`, `rework`), `reworkNotesHash` (`sha256:` of `fact:reworkNotes`' content, on `rework` only) |
 | `restack` | `effect.pr.restack` | `oldBase`, `newBase`, `outcome`. `headSha` is the pushed head (the seen head when nothing was pushed) |
-| `merge` | `effect.pr.merge` | `method`, `sha`, `actor` (the optional `actor` argument; null without one) |
-| `docsMerge` | `effect.pr.merge-docs` | `docsPr` (null when there is none), `outcome` (`merged`, `pending`, `none`; `doneByHand`, `left` from the desk), `trigger` (the babysitter passes `command.merge` after the click and `ownerDesk` from the owner's desk step) and `actor` (an optional argument; null, since the recipe language has no reference to the caller). `headSha` is the docs PR's head. The owner's desk step writes the `doneByHand` and `left` rows through `effect.pr.record` (`kind: docsMerge`, `outcome`, `trigger: ownerDesk`; `docsPr` from `fact:docsMerge` when held, `headSha` null, since the desk holds no docs PR head, `actor` null) |
+| `merge` | `effect.pr.merge` | `method`, `sha`, `actor` (the optional `actor` argument, which the engine fills with the trigger's actor when the recipe sets none; null only when a hand-run effect has none) |
+| `docsMerge` | `effect.pr.merge-docs` | `docsPr` (null when there is none), `outcome` (`merged`, `pending`, `none`; `doneByHand`, `left` from the desk), `trigger` (the babysitter passes `command.merge` after the click and `ownerDesk` from the owner's desk step) and `actor` (the optional `actor` argument, which the engine fills with the trigger's actor when the recipe sets none). `headSha` is the docs PR's head. The owner's desk step writes the `doneByHand` and `left` rows through `effect.pr.record` (`kind: docsMerge`, `outcome`, `trigger: ownerDesk`; `docsPr` from `fact:docsMerge` when held, `headSha` null, since the desk holds no docs PR head, `actor` null) |
 
 A step with no instance address still runs and writes nothing.
 
@@ -148,4 +148,4 @@ The times, tokens, owner actions, CI fixes, rechecks and docs counts come from t
 | Reading `PullView.Base` | `PullView` carries `Base` since #674, but the rows don't read it yet, so `start.base` is null, `step.pr.snapshot` never reports `restack` and `head.ref`, `base.defaultRef` and `base.onto` are not in `fact:prState` (`base.ref`, `base.sha`, `base.tip` and `base.was` are) |
 | `merge-docs` rebase | `effect.pr.merge-docs` has no workspace, so it neither rebases the docs PR nor scans it before the merge (a conflict shows as `pending`) |
 | Hand-off hash check, workspace cut | Intake records the hash but does not check it, and does not cut a workspace from the PR head: no port reaches either |
-| `merge.actor` | The engine's effect context carries no actor, so it stays null |
+| `push.comments` | The push effect has no comment ids; it stays empty |

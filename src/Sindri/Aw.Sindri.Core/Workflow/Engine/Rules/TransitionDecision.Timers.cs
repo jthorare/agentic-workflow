@@ -53,7 +53,7 @@ public static partial class TransitionDecision
     {
         var retried = instance with { Frame = instance.Frame with { Retried = true } };
         var effects = instance.Frame.EnteredBy is { } index && index < d.Recipe.Transitions.Count
-            ? Effects(d.Recipe.Transitions[index], instance.Id, instance.Frame.Entry)
+            ? Effects(d.Recipe.Transitions[index], instance.Id, instance.Frame.Entry, d.Context.Catalog, actor: null)
             : [];
         var own = d.Change(retried, WorkflowEventType.Transition, Records.None);
         own = own with { Event = own.Event with { Effects = [.. effects.Select(static e => e.Identity)] } };

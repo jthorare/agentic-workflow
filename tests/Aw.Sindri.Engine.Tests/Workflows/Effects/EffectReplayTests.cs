@@ -44,6 +44,19 @@ public sealed class EffectReplayTests(SindriTimeSkippingServer server) : IClassF
         Assert.Null(replayed.ReplayFailure);
     }
 
+    /// <summary>The engine now stamps the trigger's actor into an effect's 'with:' arguments; that changes an activity's input only, which replay does not compare, so no patch marks it.</summary>
+    [Fact]
+    public async Task A_history_recorded_before_the_actor_stamp_replays_with_no_non_determinism()
+    {
+        await using var stream = typeof(RecipeFixtures).Assembly.GetManifestResourceStream("histories/effect-pre-forge-reply-facts.json")!;
+        using var reader = new StreamReader(stream);
+        var json = await reader.ReadToEndAsync(Token);
+
+        var replayed = await Replay(WorkflowHistory.FromJson("T-72/workflow.dev-notify/1", json));
+
+        Assert.Null(replayed.ReplayFailure);
+    }
+
     [Fact]
     public async Task A_history_this_build_records_holds_the_marker_at_the_first_effect_and_replays()
     {
