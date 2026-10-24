@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Aw.Sindri.Ui.Views.Context.Whole.WholeMapLegend"
+             IsHitTestVisible="False">
+  <!-- The edge legend (q86): solid is confirmed, dashed is suggested. WholeLegendExtra is the hook for the bands' kind styles. -->
+  <Border Height="28" Padding="12,0" CornerRadius="{StaticResource Radius.SM}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1">
+    <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Line x:Name="WholeLegendSolid" StartPoint="0,4" EndPoint="30,4" Stroke="{DynamicResource Brush.WireHi}" StrokeThickness="2" VerticalAlignment="Center" />
+        <TextBlock x:Name="WholeLegendSolidText" Classes="caption subtle" VerticalAlignment="Center" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Line x:Name="WholeLegendDashed" StartPoint="0,4" EndPoint="30,4" Stroke="{DynamicResource Brush.Wire}" StrokeThickness="2" StrokeDashArray="4,2" VerticalAlignment="Center" />
+        <TextBlock x:Name="WholeLegendDashedText" Classes="caption subtle" VerticalAlignment="Center" />
+      </StackPanel>
+      <StackPanel x:Name="WholeLegendExtra" Orientation="Horizontal" Spacing="14" />
+    </StackPanel>
+  </Border>
+</UserControl>

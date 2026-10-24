@@ -35,26 +35,9 @@ internal sealed partial class WholeMapCanvas
 
         if (geometry.Nodes.Count > 0 || geometry.Columns.Count > 0)
         {
-            DrawEdges(context, geometry, view);
+            DrawNodeEdges(context, geometry, view);
             DrawHeaders(context, geometry, view, dots);
             DrawNodes(context, geometry, view, dots);
-        }
-    }
-
-    private void DrawEdges(DrawingContext context, WholeMapGeometry geometry, WholeRect view)
-    {
-        var solid = new Pen(Brush("Brush.WireHi"), 1.2 / Math.Max(Scale, 0.2));
-        var dashed = new Pen(Brush("Brush.Wire"), 1.2 / Math.Max(Scale, 0.2), new DashStyle([6, 4], 0));
-        var hits = Map?.HitKeys ?? new HashSet<string>(StringComparer.Ordinal);
-        var zoomed = Map?.IsZoomed == true;
-        var lit = new Pen(Brush("Brush.Ink"), 2.2 / Math.Max(Scale, 0.2));
-        foreach (var edge in geometry.Edges.Where(e => Overlaps(view, e.X1, e.Y1, e.X2, e.Y2)))
-        {
-            var touches = Touches(edge.From, edge.To);
-            using (context.PushOpacity(EdgeOpacity(edge, zoomed, hits)))
-            {
-                context.DrawLine(touches ? lit : edge.Confirmed ? solid : dashed, new Point(edge.X1, edge.Y1), new Point(edge.X2, edge.Y2));
-            }
         }
     }
 
@@ -117,14 +100,7 @@ internal sealed partial class WholeMapCanvas
     private void DrawTiles(DrawingContext context, WholeMapGeometry geometry, WholeRect view)
     {
         var muted = Brush("Brush.InkSubtle");
-        foreach (var edge in geometry.AreaEdges)
-        {
-            var touches = Touches(edge.From, edge.To);
-            using (context.PushOpacity(touches ? 1 : Faded(EdgeFade)))
-            {
-                context.DrawLine(new Pen(Brush(touches ? "Brush.WireHi" : "Brush.Wire"), 1 + Math.Min(4, Math.Log2(edge.Count + 1))), new Point(edge.X1, edge.Y1), new Point(edge.X2, edge.Y2));
-            }
-        }
+        DrawAreaBundles(context, geometry);
 
         foreach (var placed in geometry.Tiles.Where(t => t.Rect.Intersects(view)))
         {
@@ -134,10 +110,7 @@ internal sealed partial class WholeMapCanvas
             }
         }
 
-        foreach (var edge in geometry.AreaEdges.Where(e => e.Count > 1))
-        {
-            context.DrawText(Text(edge.Count.ToString(CultureInfo.InvariantCulture), 11, muted, 40), new Point((edge.X1 + edge.X2) / 2, (edge.Y1 + edge.Y2) / 2));
-        }
+        DrawBundlePills(context, geometry);
     }
 
     // The mark that tells an area apart beyond its colour: a solid bar, a hatched one, or a ringed one.

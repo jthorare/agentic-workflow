@@ -37,6 +37,8 @@
         <ctl:MiniMapControl x:Name="WholeMiniMap" />
       </Border>
 
+      <wv:WholeMapLegend x:Name="WholeLegend" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,150,14" />
+
       <Border x:Name="WholeZoom" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14" Height="28"
               Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0">

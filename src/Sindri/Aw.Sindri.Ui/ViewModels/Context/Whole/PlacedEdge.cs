@@ -9,4 +9,5 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 /// <param name="Y1">The line's start y.</param>
 /// <param name="X2">The line's end x.</param>
 /// <param name="Y2">The line's end y.</param>
-internal sealed record PlacedEdge(string From, string To, string Type, bool Confirmed, double X1, double Y1, double X2, double Y2);
+/// <param name="Confidence">How sure the tool is, 0 to 1 (shown as a percentage on a suggested edge's pill).</param>
+internal sealed record PlacedEdge(string From, string To, string Type, bool Confirmed, double X1, double Y1, double X2, double Y2, double Confidence = 1);

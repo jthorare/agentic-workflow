@@ -131,7 +131,7 @@ internal static partial class WholeMapLayout
         var columns = order.Select((key, i) => new AreaColumn(key, labels.GetValueOrDefault(key, key), i, new WholeRect(Margin + (i * ColumnWidth), Margin, ColumnWidth - ColumnGutter, height - (2 * Margin)))).ToList();
         var position = placed.ToDictionary(p => p.Key, StringComparer.Ordinal);
         var edges = (map.Edges ?? []).Where(e => position.ContainsKey(e.From) && position.ContainsKey(e.To)).Select(e =>
-            new PlacedEdge(e.From, e.To, e.Type, e.Confirmed, position[e.From].Rect.CenterX, position[e.From].Rect.CenterY, position[e.To].Rect.CenterX, position[e.To].Rect.CenterY)).ToList();
+            new PlacedEdge(e.From, e.To, e.Type, e.Confirmed, position[e.From].Rect.CenterX, position[e.From].Rect.CenterY, position[e.To].Rect.CenterX, position[e.To].Rect.CenterY, e.Confidence)).ToList();
         var world = new WholeRect(0, 0, (2 * Margin) + (Math.Max(1, order.Count) * ColumnWidth) - ColumnGutter, height);
         return new WholeMapGeometry(world, ByArea: false, order, columns, placed, [], edges, [], bands);
     }
