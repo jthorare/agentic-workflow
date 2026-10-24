@@ -87,14 +87,13 @@ public sealed class NeedsYouViewModelTests
     }
 
     [Fact]
-    public async Task Actions_render_ready_pending_or_cli_only_from_the_catalog()
+    public async Task Actions_render_ready_or_pending_from_the_catalog()
     {
         var list = await List(NeedsYouRows.Decision(), NeedsYouRows.Failure(), NeedsYouRows.Park());
 
         Assert.Equal([true, true], list.Rows[0].Controls.Select(c => c.IsEnabled));
         Assert.Equal([false, false], list.Rows[1].Controls.Select(c => c.IsEnabled));
-        Assert.Equal([false], list.Rows[2].Controls.Select(c => c.IsEnabled));
-        Assert.Equal([false, false, true], [list.Rows[0].Controls[0].IsProtected, list.Rows[1].Controls[0].IsProtected, list.Rows[2].Controls[0].IsProtected]);
+        Assert.Equal([true], list.Rows[2].Controls.Select(c => c.IsEnabled));
     }
 
     [Fact]
@@ -110,15 +109,15 @@ public sealed class NeedsYouViewModelTests
     }
 
     [Fact]
-    public async Task Profile_row_exposes_a_protected_action_with_the_served_cli()
+    public async Task Profile_row_exposes_a_ready_approve_with_the_served_cli()
     {
         var list = await List(NeedsYouRows.Profile(new NeedsYouSubject("profile", "3f1c09")));
 
         var approve = Assert.Single(list.Rows[0].Controls);
 
-        Assert.True(approve.IsProtected);
+        Assert.True(approve.IsEnabled);
         Assert.Equal("sindri profile approve 3f1c09", approve.Action.Cli);
-        Assert.Equal(Labels.ProtectedTooltip, approve.Tooltip);
+        Assert.Empty(approve.Tooltip);
         Assert.Equal("sindri profile approve 3f1c09", list.Rows[0].Cli);
     }
 

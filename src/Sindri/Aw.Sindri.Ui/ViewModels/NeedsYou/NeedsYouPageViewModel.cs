@@ -23,7 +23,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         _list = list;
         _clock = clock;
         _clipboard = clipboard;
-        Bar = new NeedsYouBarViewModel(desk, clipboard, clock, confirm);
+        Bar = new NeedsYouBarViewModel(desk, confirm);
         _list.PropertyChanged += OnListChanged;
         Rebuild();
         _lastRow = Selected;

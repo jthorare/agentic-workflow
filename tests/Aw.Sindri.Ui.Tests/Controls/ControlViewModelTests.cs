@@ -25,34 +25,33 @@ public sealed class ControlViewModelTests
     private ControlViewModel Control(CommandRowView row) => new(row, ct => _server.RebuildViews(_api, ct), _clipboard, _clock);
 
     [Fact]
-    public void A_ready_row_is_a_button_named_by_its_label()
+    public void A_row_with_a_sender_is_a_button_named_by_its_label()
     {
         var control = Control(Row("RebuildViews", "ready"));
 
-        Assert.Equal((ControlKind.Ready, true, "Rebuild views"), (control.Kind, control.CanRun, control.Label));
+        Assert.Equal((false, true, "Rebuild views"), (control.IsCopyOnly, control.CanRun, control.Label));
         Assert.Equal("Rebuild views", control.Name);
     }
 
-    // §7: a pending control is drawn disabled; its phase and CLI sit on a focusable line (never in disabled ink).
-    [Fact]
-    public void A_pending_row_is_disabled_with_its_phase_and_cli_on_its_own_line()
+    // q93: whatever ui word the row carries, a row with a sender is a button and one without is a copy block.
+    [Theory]
+    [InlineData("pending:P2")]
+    [InlineData("cli-only:typed-confirmation")]
+    public void The_ui_word_does_not_gate_a_row_the_app_can_send(string ui)
     {
-        var control = Control(Row("RebuildViews", "pending:P2"));
+        var control = Control(Row("RebuildViews", ui));
 
-        Assert.Equal((ControlKind.Pending, false), (control.Kind, control.CanRun));
-        Assert.Equal("arrives in P2 · sindri views rebuild", control.PendingLine);
-        Assert.Equal("Rebuild views, arrives in P2", control.Name);
-        Assert.True(control.CanCopy);
+        Assert.Equal((true, true, "Rebuild views"), (control.CanRun, control.IsSendable, control.Name));
     }
 
-    // §7: a cli-only row is a copy block: the cli, Copy, and the one line; it never offers to run it.
+    // §7: a row the app has no form for is a copy block: the cli and Copy; it never offers to run it.
     [Fact]
-    public void A_cli_only_row_is_a_copy_block_that_never_runs()
+    public void A_row_without_a_sender_is_a_copy_block_that_never_runs()
     {
-        var control = Control(Row("ApproveProfile", "cli-only:typed-confirmation", "sindri profile approve [<hash>]"));
+        var control = new ControlViewModel(Row("ApproveProfile", "ready", "sindri profile approve [<hash>]"), send: null, _clipboard, _clock);
 
-        Assert.Equal((ControlKind.CliOnly, false, true), (control.Kind, control.CanRun, control.CanCopy));
-        Assert.Equal(("sindri profile approve [<hash>]", "Needs a typed confirmation at a terminal."), (control.Cli, control.CopyNote));
+        Assert.Equal((true, false, true), (control.IsCopyOnly, control.CanRun, control.CanCopy));
+        Assert.Equal("sindri profile approve [<hash>]", control.Cli);
     }
 
     // §7 backstop: a cli with a control or bidi character is neither shown nor copied (E-16 makes this never happen).
@@ -136,13 +135,13 @@ public sealed class ControlViewModelTests
 
     // A ready row the app has nothing wired to (StopProcess before Health's confirm, U4) never runs.
     [Fact]
-    public async Task A_ready_row_without_a_sender_never_runs()
+    public async Task A_row_without_a_sender_never_runs()
     {
         var control = new ControlViewModel(Row("StopProcess", "ready", "sindri stop", destructive: true), send: null, _clipboard, _clock);
 
         await control.Press(Token);
 
-        Assert.Equal((ControlKind.Ready, false, CommandPhase.Idle), (control.Kind, control.CanRun, control.Phase));
+        Assert.Equal((true, false, CommandPhase.Idle), (control.IsCopyOnly, control.CanRun, control.Phase));
     }
 
     // The lane decision of 2026-10-12: Grant is two protected rows, each with its own label.
@@ -239,13 +238,11 @@ public sealed class ControlViewModelTests
 
     // F11 (a11y-8): a name read out of context says whose it is.
     [Fact]
-    public async Task Pending_line_and_copy_button_names_carry_the_controls_label()
+    public async Task Copy_button_names_carry_the_controls_label()
     {
-        var pending = Control(Row("CancelJob", "pending:P6", "sindri jobs cancel <jobId>"));
-        var cliOnly = Control(Row("RunDoctor", "cli-only:no-server", "sindri doctor"));
+        var cliOnly = new ControlViewModel(Row("RunDoctor", "ready", "sindri doctor"), send: null, _clipboard, _clock);
 
-        Assert.Equal("Cancel job, arrives in P6 · sindri jobs cancel <jobId>", pending.PendingName);
-        Assert.Equal(("Copy: Cancel job", "Copy: Run doctor"), (pending.CopyName, cliOnly.CopyName));
+        Assert.Equal("Copy: Run doctor", cliOnly.CopyName);
         var heard = new List<string?>();
         cliOnly.PropertyChanged += (_, e) => heard.Add(e.PropertyName);
 

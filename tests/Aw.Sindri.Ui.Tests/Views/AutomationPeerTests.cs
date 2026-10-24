@@ -134,7 +134,6 @@ public sealed class AutomationPeerTests : IDisposable
         var topBar = Peer(First(window, b => b.Classes.Contains("topbar")));
         shell.GoTo(PageId.System);
         Settle(window);
-        var pending = Peer(First(window, b => b.Name == "PendingLine"));
         shell.Palette.Open();
         Settle(window);
         var palette = Peer(First(window, b => b.Name == "PaletteCard"));
@@ -145,7 +144,6 @@ public sealed class AutomationPeerTests : IDisposable
 
         Assert.All(home, p => Assert.Equal((true, AutomationControlType.Group), p));
         Assert.Equal((true, AutomationControlType.Group), topBar);
-        Assert.Equal((true, AutomationControlType.Text), pending);
         Assert.Equal((true, AutomationControlType.Window), palette);
         Assert.Equal((true, AutomationControlType.Window), shortcuts);
     });

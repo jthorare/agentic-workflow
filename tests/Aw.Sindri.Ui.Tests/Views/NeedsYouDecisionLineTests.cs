@@ -57,7 +57,7 @@ public sealed class NeedsYouDecisionLineTests : IDisposable
         where T : Control => within.GetVisualDescendants().OfType<T>().First(c => c.Name == name);
 
     private static NeedsYouEntry Pending(NeedsYouEntry row) =>
-        row with { Actions = [.. row.Actions.Select(a => a with { Readiness = ActionReadiness.Pending, Stage = "P4" })] };
+        row with { Actions = [.. row.Actions.Select(a => a with { Readiness = ActionReadiness.Pending })] };
 
     [Fact]
     public Task The_decision_sheet_shows_Copy_and_names_the_line_after_the_decision_shown() => OnUi(async () =>

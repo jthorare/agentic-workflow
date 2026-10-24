@@ -225,18 +225,4 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         Assert.True(sheet.IsEffectivelyVisible);
         Assert.DoesNotContain(sheet.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Text?.StartsWith("fill in", StringComparison.Ordinal) == true);
     });
-
-    [Fact]
-    public Task A_protected_Pause_with_an_unfillable_placeholder_shows_the_hint_beside_its_inline_command() => OnUi(async () =>
-    {
-        var (feed, _) = FailureFeed(r => r with { Ui = "cli-only:typed", Cli = Unfillable });
-        var (window, _) = await WithFeed(feed);
-
-        var texts = Rows(window).Single().GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
-
-        Assert.Contains(texts, t => string.Equals(t, Unfillable, StringComparison.Ordinal));
-        Assert.Contains(texts, t => string.Equals(t, Labels.FillInHint(["itemId"]), StringComparison.Ordinal));
-        var button = PauseButton(Rows(window).Single());
-        Assert.Equal(Labels.WithHint(Labels.ProtectedTooltip, Labels.FillInHint(["itemId"])), AutomationProperties.GetHelpText(button));
-    });
 }

@@ -28,7 +28,4 @@ internal sealed record DeskTarget(string InstanceId, string Run, StatusCommand? 
 
     /// <summary>The recipe verbs the instance accepts now, in the order it serves them; empty when it serves none.</summary>
     internal IReadOnlyList<DeskVerb> Verbs { get; init; } = [];
-
-    /// <summary>True when the step serves its complete command as protected: only the user's terminal may send it (a merge), so the app shows the served command and sends nothing.</summary>
-    internal bool IsTerminalOnly => Complete is { } command && string.Equals(command.Class, "protected", StringComparison.Ordinal);
 }

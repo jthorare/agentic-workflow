@@ -132,17 +132,11 @@ internal sealed partial class StartFormViewModel : ObservableObject
     /// <summary>True while <see cref="Note"/> shows.</summary>
     public bool HasNote => Note.Length > 0;
 
-    /// <summary>True when the command catalog says Start is ready (a pending row, or no row, is not).</summary>
-    public bool IsReady => Row is { Kind: ControlKind.Ready };
+    /// <summary>True when the command catalog lists Start (no row, because the list is not read, is not).</summary>
+    public bool IsReady => Row is not null;
 
-    /// <summary>For a Start that is not ready, why: "arrives in P…", or that the command list is not read; else empty.</summary>
-    public string Readiness => Row switch
-    {
-        null => Labels.StartNoCatalog,
-        { Kind: ControlKind.Ready } => string.Empty,
-        { Kind: ControlKind.Pending } pending => Labels.Arrives(pending.Stage),
-        _ => Labels.NotInApp,
-    };
+    /// <summary>For a Start that is not ready, why: that the command list is not read; else empty.</summary>
+    public string Readiness => Row is null ? Labels.StartNoCatalog : string.Empty;
 
     /// <summary>True when <see cref="Readiness"/> shows.</summary>
     public bool IsNotReady => !IsReady;
@@ -263,5 +257,5 @@ internal sealed partial class StartFormViewModel : ObservableObject
     /// <summary>True once an accepted start has opened an instance's frame (a new one, or the one an existing attempt is): on close the window moves focus there, not back to the opener.</summary>
     public bool OpenedFrame { get; private set => Set(ref field, value); }
 
-    private (ControlKind Kind, string Stage)? Row => _catalog.Row(Action) is { } row ? CatalogReadiness.Parse(row.Ui) : null;
+    private CommandRowView? Row => _catalog.Row(Action);
 }

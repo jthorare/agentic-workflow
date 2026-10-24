@@ -12,9 +12,6 @@ internal enum NeedsYouBarOutcome
     /// <summary>Sent back with a reason.</summary>
     Revise,
 
-    /// <summary>A merge sent back with a reason (the step's own outcome for it).</summary>
-    Rework,
-
     /// <summary>Dropped from the card's More menu.</summary>
     Drop,
 

@@ -32,24 +32,3 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Equal(["ApproveAllRecipes"], _history);
     }
 
-    [Fact]
-    public void Approve_all_without_a_dialog_to_open_is_not_runnable()
-    {
-        var palette = new CommandPaletteViewModel(CatalogWithApproveAll("extra-approve-all-ready"), _pages.Add, _history.Add);
-        palette.Open();
-
-        Assert.False(palette.Entries.Single(e => e.Id == "ApproveAllRecipes").IsEnabled);
-    }
-
-    [Fact]
-    public async Task Approve_all_left_to_the_terminal_copies_its_command_and_opens_nothing()
-    {
-        var opened = 0;
-        var palette = new CommandPaletteViewModel(CatalogWithApproveAll("extra-approve-all-cli-only"), _pages.Add, _history.Add, approveAll: () => opened++);
-        palette.Open();
-
-        await palette.Run(palette.Entries.Single(e => e.Id == "ApproveAllRecipes"), Token);
-
-        Assert.Equal((0, "sindri-app recipe approve-all"), (opened, _clipboard.Text));
-    }
-}

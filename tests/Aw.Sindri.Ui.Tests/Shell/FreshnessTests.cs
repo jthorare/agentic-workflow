@@ -103,18 +103,6 @@ public sealed partial class FreshnessTests : IDisposable
 
     // A catalog that still has RebuildViews pending (P1's, before P2): the banner's control is disabled with its focusable line.
     [Fact]
-    public async Task With_rebuild_still_pending_the_banners_control_is_drawn_pending()
-    {
-        var p2 = RouteAnswer.Api("commands", "catalog");
-        _server.Catalog = p2 with { Body = p2.Body.Replace("\"cli\": \"sindri views rebuild\",\n      \"ui\": \"ready\"", "\"cli\": \"sindri views rebuild\",\n      \"ui\": \"pending:P2\"", StringComparison.Ordinal) };
-        _server.ServiceView = RouteAnswer.SpecShaped("services", "stalled");
-
-        await Connected(() => _vm.Banner.IsShown);
-
-        Assert.Equal((false, "arrives in P2 · sindri views rebuild"), (_vm.Banner.Rebuild?.CanRun, _vm.Banner.Rebuild?.PendingLine));
-    }
-
-    [Fact]
     public async Task Rebuilding_views_show_a_progress_banner_without_rebuild()
     {
         _server.ServiceView = RouteAnswer.SpecShaped("services", "rebuilding");
@@ -124,20 +112,16 @@ public sealed partial class FreshnessTests : IDisposable
         Assert.Equal((false, true, "Rebuilding views (cursor 12 of 42)…", false), (_vm.Banner.IsStalled, _vm.Banner.IsRebuilding, _vm.Banner.Text, _vm.Banner.HasRebuild));
     }
 
-    // §9.1: the catalog is read on connect; Health lists its pending rows by phase (§4.8).
+    // §9.1: the catalog is read on connect; Health lists the rows the app has no form for (§4.8).
     [Fact]
-    public async Task The_catalog_is_read_on_connect_and_its_pending_rows_are_grouped_by_phase()
+    public async Task The_catalog_is_read_on_connect()
     {
         await Connected(() => _vm.Catalog.Controls.Count > 0);
 
         Assert.Equal(1, _server.CatalogCalls);
-        var rows = System.Text.Json.JsonDocument.Parse(RouteAnswer.Api("commands", "catalog").Body).RootElement.GetProperty("rows").EnumerateArray()
-            .Select(r => r.GetProperty("ui").GetString()!).ToList();   // why: read from the catalog golden, so the next lane's rows don't break the counts
-        var pending = rows.Where(u => u.StartsWith("pending:", StringComparison.Ordinal)).Select(u => u["pending:".Length..]).ToList();
-        Assert.Equal(rows.Count, _vm.Catalog.Controls.Count);
-        Assert.Equal(pending.Count == 0 ? string.Empty : pending.Count == 1 ? "1 action arrives in later phases" : $"{pending.Count} actions arrive in later phases", _vm.Catalog.PendingSummary);
-        Assert.Equal(pending.Distinct(StringComparer.Ordinal).Select(stage => $"arrives in {stage}"), _vm.Catalog.Pending.Select(p => p.Heading), StringComparer.Ordinal);
-        Assert.Equal(rows.Count(u => u.StartsWith("cli-only", StringComparison.Ordinal)), _vm.Catalog.CliOnly.Count);
+        var rows = System.Text.Json.JsonDocument.Parse(RouteAnswer.Api("commands", "catalog").Body).RootElement.GetProperty("rows").GetArrayLength();   // why: read from the catalog golden, so the next lane's rows don't break the count
+        Assert.Equal(rows, _vm.Catalog.Controls.Count);
+        Assert.Equal(_vm.Catalog.Controls.Count(c => c.IsCopyOnly), _vm.Catalog.CopyOnly.Count);
     }
 
     // §9.2: an event re-reads every view the app shows (the status and the services view); its payload is never applied.

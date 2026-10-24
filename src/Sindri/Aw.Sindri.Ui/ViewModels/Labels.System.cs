@@ -80,11 +80,8 @@ internal static partial class Labels
     /// <summary>The Actions card's name for what the app does itself.</summary>
     internal const string ActionsReady = "in this app";
 
-    /// <summary>The Actions card's name for what stays at a terminal on purpose.</summary>
-    internal const string ActionsTerminal = "at a terminal on purpose";
-
-    /// <summary>The Actions card's name for what arrives later.</summary>
-    internal const string ActionsLater = "arriving later";
+    /// <summary>The count of actions the app shows as a command to copy.</summary>
+    internal const string ActionsCopy = "to copy";
 
     /// <summary>The page width under which the Services table keeps three columns (system spec §2).</summary>
     internal const double SystemWideFrom = 900;
@@ -118,13 +115,12 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ViewsProgress(long cursor, long head) => string.Create(CultureInfo.InvariantCulture, $"event {cursor} of {head}");
 
-    /// <summary>The Actions card's counts: "49 in this app, 14 at a terminal on purpose, 4 arriving later".</summary>
+    /// <summary>The Actions card's counts: "49 in this app, 14 to copy".</summary>
     /// <param name="ready">Actions the app runs.</param>
-    /// <param name="terminal">Actions that stay at a terminal.</param>
-    /// <param name="later">Actions that arrive in a later phase.</param>
+    /// <param name="copy">Actions the app shows as a command to copy.</param>
     /// <returns>The words.</returns>
-    internal static string ActionCounts(int ready, int terminal, int later) =>
-        string.Create(CultureInfo.InvariantCulture, $"{ready} {ActionsReady}, {terminal} {ActionsTerminal}, {later} {ActionsLater}");
+    internal static string ActionCounts(int ready, int copy) =>
+        string.Create(CultureInfo.InvariantCulture, $"{ready} {ActionsReady}, {copy} {ActionsCopy}");
 
     /// <summary>What a built-in service does, in plain words; empty for a service the app does not know.</summary>
     /// <param name="name">The service's name.</param>

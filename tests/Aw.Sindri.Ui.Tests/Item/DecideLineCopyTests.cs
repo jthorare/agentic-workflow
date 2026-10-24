@@ -36,26 +36,11 @@ public sealed class DecideLineCopyTests
     private DecisionSheetViewModel DecisionSheet(ActionReadiness readiness)
     {
         var served = NeedsYouRows.Decision();
-        var row = served with { Actions = [.. served.Actions.Select(a => a with { Readiness = readiness, Cli = "sindri decide DEC-1 " + a.OptionId, Stage = "P4" })] };
+        var row = served with { Actions = [.. served.Actions.Select(a => a with { Readiness = readiness, Cli = "sindri decide DEC-1 " + a.OptionId })] };
         var sheet = new DecisionSheetViewModel(new FakeSindriApi(), () => null, _clock, new DecisionSender(new FakeSindriApi()), _clipboard);
         sheet.Show(new NeedsYouRowViewModel(row, seen: true, reducedMotion: false, arrived: false, _clock));
         return sheet;
     }
-
-    [Fact]
-    public Task The_item_sheets_line_copies_the_served_command_and_is_named_for_the_decision() => UiThread.Run(async () =>
-    {
-        var sheet = await Sheet("pending:P4");
-        var row = sheet.Needs.Decisions[0];
-
-        Assert.True(row.CanCopy);
-        Assert.Equal("Copy: Decide " + row.Id, row.CopyName);
-        Assert.StartsWith(row.Id, row.LineName, StringComparison.Ordinal);
-        await sheet.Needs.CopyDecide(row.Id);
-
-        Assert.Equal(row.DecideCli, _clipboard.Text);
-        Assert.Contains("sindri decide", _clipboard.Text, StringComparison.Ordinal);
-    }, Token);
 
     [Fact]
     public Task A_ready_Decide_has_no_line_and_nothing_to_copy() => UiThread.Run(async () =>

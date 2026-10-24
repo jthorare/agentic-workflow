@@ -6,9 +6,6 @@ internal enum ActionReadiness
     /// <summary>The app runs it.</summary>
     Ready,
 
-    /// <summary>Not available yet: shown disabled with its command.</summary>
+    /// <summary>The catalog has not listed it (or has not been read yet): shown disabled with its command.</summary>
     Pending,
-
-    /// <summary>Only at a terminal, behind a typed confirmation.</summary>
-    CliOnly,
 }

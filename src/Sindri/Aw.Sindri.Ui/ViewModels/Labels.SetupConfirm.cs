@@ -27,7 +27,7 @@ internal static partial class Labels
     internal const string ProfileSummaryConnections = "Outside systems";
 
     /// <summary>The heading over what Sindri keeps for the person.</summary>
-    internal const string ProfileSummaryHumanOnly = "Kept for you";
+    internal const string ProfileSummaryHumanOnly = "Waits for your answer";
 
     /// <summary>A repo's path and size under its name: "/work/demo, 1,204 files, 38.2 MB".</summary>
     /// <param name="path">The real path Sindri would read.</param>

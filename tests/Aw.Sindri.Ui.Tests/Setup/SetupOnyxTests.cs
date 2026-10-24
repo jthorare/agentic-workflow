@@ -186,7 +186,7 @@ public sealed class SetupOnyxTests
         (onyx.Email, onyx.Password) = ("me@example.com", Sentinel);
         await onyx.Connect(Token);
 
-        Assert.Equal(("Only you can do this from the app. An agent session can't.", Labels.SetupOnyxFailed), (refused, onyx.FormError));
+        Assert.Equal(("Sindri's own steps can't answer this.", Labels.SetupOnyxFailed), (refused, onyx.FormError));
     }
 
     [Fact]

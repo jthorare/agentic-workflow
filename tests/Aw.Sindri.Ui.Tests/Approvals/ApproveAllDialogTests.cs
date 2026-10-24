@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.Views.Approvals;
 
 namespace Aw.Sindri.Ui.Tests.Approvals;
 
-/// <summary>The approve-all dialog's view: the hold is the person's pressing, so letting go anywhere ends it, and focus follows the dialog.</summary>
+/// <summary>The approve-all dialog's view: one click approves, and focus follows the dialog.</summary>
 [Lane(TestLane.Integration)]
 public sealed class ApproveAllDialogTests
 {
@@ -55,54 +55,27 @@ public sealed class ApproveAllDialogTests
         control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window) ?? throw new InvalidOperationException("the control is not in the window");
 
     [Fact]
-    public Task Letting_go_off_the_button_ends_the_hold_and_sends_nothing() => OnUi(async () =>
+    public Task One_click_on_Approve_sends_the_approval_once_with_no_challenge() => OnUi(async () =>
     {
         var (window, _, model) = await Shown();
-        var hold = Named<Button>(window, "ApproveHold");
-        var on = CenterOf(window, hold);
+        var approve = Named<Button>(window, "ApproveButton");
+        var on = CenterOf(window, approve);
 
-        IInputElement? captured = null;
-        hold.AddHandler(InputElement.PointerPressedEvent, (_, e) => captured = e.Pointer.Captured, RoutingStrategies.Bubble, handledEventsToo: true);   // the bubble phase comes after the dialog's tunnel handler
         window.MouseDown(on, MouseButton.Left);
-        Assert.True(model.IsHolding);
-        Assert.Same(hold, captured);
-        window.MouseMove(new Point(on.X, on.Y + 400));
-        window.MouseUp(new Point(on.X, on.Y + 400), MouseButton.Left);
+        window.MouseUp(on, MouseButton.Left);
         Settle(window);
-        _f.Clock.Advance(TimeSpan.FromSeconds(3));
-        await model.Tick();
+        await WaitFor(() => model.Phase == ApproveAllPhase.Done);
 
-        Assert.Equal((false, 0), (model.IsHolding, _f.Server.Approvals.Count));
+        _ = Assert.Single(_f.Server.Approvals);
         window.Close();
     });
 
     [Fact]
-    public Task The_hold_button_takes_focus_when_the_challenge_arrives_from_Close() => OnUi(async () =>
+    public Task The_approve_button_takes_focus_when_the_plan_arrives_from_Close() => OnUi(async () =>
     {
         var (window, _, _) = await Shown();
 
-        Assert.Same(Named<Button>(window, "ApproveHold"), Focused(window));
-        window.Close();
-    });
-
-    [Fact]
-    public Task Focus_somewhere_else_in_the_dialog_is_left_alone_when_the_challenge_arrives() => OnUi(async () =>
-    {
-        var model = await _f.Dialog();
-        var dialog = new ApproveAllDialog { DataContext = model };
-        var window = new Window { Width = 900, Height = 900, Content = dialog };
-        window.Show();
-        var gate = _f.Server.AppChallengeGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var opening = model.Open(Token);
-        Settle(window);
-        var row = Named<ItemsControl>(window, "ApproveRows").GetVisualDescendants().OfType<Border>().First(b => b.Focusable);
-        Assert.True(row.Focus());
-
-        gate.SetResult();
-        await opening;
-        Settle(window);
-
-        Assert.Same(row, Focused(window));
+        Assert.Same(Named<Button>(window, "ApproveButton"), Focused(window));
         window.Close();
     });
 
@@ -110,13 +83,22 @@ public sealed class ApproveAllDialogTests
     public Task Focus_goes_to_Close_when_the_outcome_appears() => OnUi(async () =>
     {
         var (window, _, model) = await Shown();
-        model.Typed = "approve-all 1c1fd4";
-        Assert.True(Named<TextBox>(window, "ApproveTyped").Focus());
 
-        await _f.Finish(model.SubmitTyped());
+        await _f.Finish(model.Approve());
         Settle(window);
 
         Assert.Equal((ApproveAllPhase.Done, "ApproveClose"), (model.Phase, Focused(window)?.Name));
         window.Close();
     });
+
+    private async Task WaitFor(Func<bool> condition)
+    {
+        using var bound = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        bound.CancelAfter(TimeSpan.FromSeconds(20));
+        while (!condition())
+        {
+            _f.Clock.Advance(TimeSpan.FromMilliseconds(500));
+            await Task.Delay(1, bound.Token);
+        }
+    }
 }

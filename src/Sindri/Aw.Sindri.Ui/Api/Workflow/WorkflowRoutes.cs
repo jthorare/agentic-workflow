@@ -69,9 +69,6 @@ internal static class WorkflowRoutes
     /// <summary>GET: the approve-all plan; POST: approve it (a job).</summary>
     internal static string ApproveAll => $"{Root}/recipes/approve-all";
 
-    /// <summary>POST: a challenge the app answers by holding or typing.</summary>
-    internal static string AppChallenge => $"{Root}/challenges/app";
-
     /// <summary>GET: one job, which the approval is followed through.</summary>
     internal static string Job(string id) => $"/sindri/jobs/{Uri.EscapeDataString(id)}";
 

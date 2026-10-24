@@ -48,19 +48,20 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Equal(["Actions", "Go to", "Sindri"], _palette.Sections.Select(s => s.Heading), StringComparer.Ordinal);
         var actions = _palette.Entries.Where(e => e.IsAction).Select(e => e.Id).ToList();
         Assert.Equal(_catalog.Rows.Select(r => r.Action).Order(StringComparer.Ordinal), actions.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(("ready", "coming soon", "Copy: sindri doctor"), (Entry("RebuildViews").Status, Entry("ProbeLaunchTargets").Status, Entry("RunDoctor").Status));
-        Assert.Equal("Check launch targets again, coming soon", Entry("ProbeLaunchTargets").Name);
+        var probe = _catalog.Rows.Single(r => r.Action == "ProbeLaunchTargets");
+        Assert.Equal(("ready", Labels.CopyCli(probe.Cli), "Copy: sindri doctor"), (Entry("RebuildViews").Status, Entry("ProbeLaunchTargets").Status, Entry("RunDoctor").Status));
+        Assert.Equal("Check launch targets again, " + Labels.CopyCli(probe.Cli), Entry("ProbeLaunchTargets").Name);
     }
 
-    // Q3: with no selected row, Actions lists the catalog grouped by status: ready, then pending, then cli-only.
+    // Q3: with no selected row, Actions lists the catalog: the rows the app runs first, then the ones it copies.
     [Fact]
     public void Actions_are_grouped_by_status_and_rebuild_and_stop_sit_in_sindri()
     {
         _palette.Open();
 
         var actions = _palette.Sections[0].Entries;
-        var kinds = actions.Select(e => e.Control!.Kind).ToList();
-        Assert.Equal(kinds.Order(), kinds);
+        var copyOnly = actions.Select(e => e.Control!.IsCopyOnly).ToList();
+        Assert.Equal(copyOnly.Order(), copyOnly);
         Assert.DoesNotContain("RebuildViews", actions.Select(e => e.Id), StringComparer.Ordinal);
         Assert.DoesNotContain("StopProcess", actions.Select(e => e.Id), StringComparer.Ordinal);
         Assert.Equal(["Rebuild views", "Stop Sindri", "System"], _palette.Sections[2].Entries.Select(e => e.Label), StringComparer.Ordinal);
@@ -104,35 +105,21 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Null(_palette.Selected);
     }
 
-    // ↑/↓ move between entries that run; a pending entry is shown but never selected.
+    // ↑/↓ move between entries that run; an entry that is sending is shown but not a stop.
     [Fact]
     public void Arrows_move_the_selection_over_entries_that_run()
     {
         _palette.Open();
-        Assert.Equal("ApplyCommand:answer-accept", _palette.Selected?.Id);   // no ready row is in Actions: the first that runs is a copy block
+        var runs = _palette.Entries.Where(e => e.IsEnabled).ToList();
+        Assert.True(runs.Count > 2);
+        Assert.Same(runs[0], _palette.Selected);
 
         _palette.Move(1);
-        Assert.Equal("ApplyCommand:answer-grant", _palette.Selected?.Id);
+        Assert.Same(runs[1], _palette.Selected);
         _palette.Move(-1);
         _palette.Move(-1);
-        Assert.Equal("ApplyCommand:answer-accept", _palette.Selected?.Id);
+        Assert.Same(runs[0], _palette.Selected);
         Assert.True(_palette.Selected!.IsSelected);
-        Assert.All(_palette.Entries.Where(e => e.Control?.IsPending == true), e => Assert.False(e.IsEnabled));
-    }
-
-    // A pending row says "coming soon" in its status and its accessible name; no phase code reaches the screen.
-    [Fact]
-    public void Pending_entries_say_coming_soon_with_no_phase_code()
-    {
-        _palette.Open();
-        var pending = _palette.Entries.Where(e => e.Control?.IsPending == true).ToList();
-
-        Assert.NotEmpty(pending);
-        Assert.All(pending, e =>
-        {
-            Assert.Equal("coming soon", e.Status);
-            Assert.DoesNotContain("arrives", e.Name, StringComparison.Ordinal);
-        });
     }
 
     // Q4: Stop Sindri goes to Health, where it lives (§4.8); it is never sent from the palette.
@@ -154,7 +141,7 @@ public sealed partial class CommandPaletteViewModelTests
     public void Open_and_every_refilter_start_at_the_top_and_only_the_arrows_follow_the_selection()
     {
         _palette.Open();
-        Assert.Equal(("ApplyCommand:answer-accept", false), (_palette.Selected?.Id, _palette.FollowsSelection));
+        Assert.Equal((_palette.Entries.First(e => e.IsEnabled).Id, false), (_palette.Selected?.Id, _palette.FollowsSelection));
 
         _palette.Move(1);
         Assert.True(_palette.FollowsSelection);
@@ -623,16 +610,6 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.Equal(("Copied", true), (Entry("RevokeRecipe").Status, _palette.IsOpen));
         _clock.Advance(ControlViewModel.CopiedFor);
         Assert.Equal("Copy: sindri recipe revoke <recipe>", Entry("RevokeRecipe").Status);
-    }
-
-    [Fact]
-    public async Task A_pending_entry_does_nothing()
-    {
-        _palette.Open();
-
-        await _palette.Run(Entry("CancelJob"), Token);
-
-        Assert.Equal((true, 0, null), (_palette.IsOpen, _history.Count, _clipboard.Text));
     }
 
     [Fact]

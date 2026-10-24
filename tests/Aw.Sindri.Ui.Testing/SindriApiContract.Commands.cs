@@ -23,17 +23,16 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task ApplyCommand_sends_the_token_grant_and_its_challenge_answer_to_the_instance()
+    public async Task ApplyCommand_sends_the_token_grant_to_the_instance()
     {
         var server = new FakeSindriApi();
-        var body = ApplyCommandBody.GrantTokens("ITM-01JH5/step/1", 1_000_000, new ChallengeAnswerBody("CHL-00000000000000000000000000000001", HeldMs: 1500));
+        var body = ApplyCommandBody.GrantTokens("ITM-01JH5/step/1", 1_000_000);
 
         var applied = (await Reach(server).ApplyCommand(_api, DeskInstance, body, Token)).Value;
 
         Expect.Equal(expected: false, applied.AlreadyApplied);
         var (instance, sent) = server.CommandCalls.Single();
         Expect.Equal((DeskInstance, CommandKind.Answer, AnswerVariant.GrantTokens, 1_000_000), (instance, sent.Kind, sent.Answer, sent.Amount));
-        Expect.Equal(("CHL-00000000000000000000000000000001", 1500L), (sent.Challenge!.Challenge, sent.Challenge.HeldMs ?? -1));
     }
 
     [Fact]
@@ -41,7 +40,7 @@ public abstract partial class SindriApiContract
     {
         var server = new FakeSindriApi { CommandAnswer = RouteAnswer.Problem(HttpStatusCode.UnprocessableEntity, "SND-WF-003", "--grant-tokens 9M is outside 1..4M (fix: use --grant-tokens 1 to --grant-tokens 4M)") };
 
-        var result = await Reach(server).ApplyCommand(_api, DeskInstance, ApplyCommandBody.GrantTokens("ITM-01JH5/step/1", 9_000_000, new ChallengeAnswerBody("CHL-00000000000000000000000000000001", Typed: "grant-tokens 9000000 ITM-01JH5/step/1")), Token);
+        var result = await Reach(server).ApplyCommand(_api, DeskInstance, ApplyCommandBody.GrantTokens("ITM-01JH5/step/1", 9_000_000), Token);
 
         Expect.Equal("SND-WF-003", result.Error.Code);
     }

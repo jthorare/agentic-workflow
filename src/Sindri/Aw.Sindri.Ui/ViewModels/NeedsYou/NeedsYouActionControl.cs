@@ -4,16 +4,10 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// <param name="Action">The served action.</param>
 /// <param name="IsPrimary">True for the row's primary control (drawn first).</param>
 /// <param name="IsEnabled">True when it takes input: ready, and the views aren't rebuilding.</param>
-/// <param name="Tooltip">Why it can't be used (the protected sentence, the served command of a pending action, retry after the rebuild); empty when it can.</param>
+/// <param name="Tooltip">Why it can't be used (the served command of a pending action, retry after the rebuild); empty when it can.</param>
 /// <param name="SubjectId">The id the row shows, so the control's name says which row it acts on.</param>
 internal sealed record NeedsYouActionControl(NeedsYouAction Action, bool IsPrimary, bool IsEnabled, string Tooltip, string SubjectId = "")
 {
     /// <summary>The accessible name: the label and the row's id (a list of buttons has several "Approve").</summary>
     internal string Name => SubjectId.Length > 0 ? Action.Label + " " + SubjectId : Action.Label;
-
-    /// <summary>True when a protected action's inline command still has a placeholder to fill in (the hint is drawn beside it).</summary>
-    internal bool IsProtectedWithHint => IsProtected && Action.FillInHint.Length > 0;
-
-    /// <summary>True for a protected action: the view shows the lock and its command, and nothing here runs it.</summary>
-    internal bool IsProtected => Action.IsProtected;
 }

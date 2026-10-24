@@ -46,7 +46,7 @@ public sealed class NeedsYouVerbsTests
 
     private async Task<NeedsYouBarViewModel> Bar()
     {
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api));
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
         return bar;
@@ -138,14 +138,14 @@ public sealed class NeedsYouVerbsTests
     }
 
     [Fact]
-    public async Task The_merge_is_a_button_and_not_a_terminal_copy_but_a_protected_step_without_the_verb_still_is()
+    public async Task The_merge_is_a_button_and_so_is_a_protected_step_without_the_verb()
     {
         Serve(protectedComplete: true, ("merge", null));
         var withVerb = await Bar();
         Serve(protectedComplete: true);
         var without = await Bar();
 
-        Assert.Equal((false, true), (withVerb.ShowsTerminal, without.ShowsTerminal));
+        Assert.Equal((true, true), (withVerb.ShowsPrimary, without.ShowsPrimary));   // q93: a protected class no longer sends the person to a terminal
         Assert.True(withVerb.HasBar);
     }
 

@@ -48,13 +48,9 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     }
 
     // A catalog that has not named Decide yet is read as pending, as the mapper reads an action it has no row for.
-    private static DecideState StateOf(ControlViewModel? decide, bool read) => decide switch
-    {
-        null => new DecideState(ActionReadiness.Pending, "", "", read),
-        { Kind: ControlKind.Ready } => new DecideState(ActionReadiness.Ready, "", decide.Cli),
-        { Kind: ControlKind.Pending } => new DecideState(ActionReadiness.Pending, decide.Stage, decide.Cli),
-        _ => new DecideState(ActionReadiness.CliOnly, "", decide.Cli),
-    };
+    private static DecideState StateOf(ControlViewModel? decide, bool read) => decide is null
+        ? new DecideState(ActionReadiness.Pending, "", read)
+        : new DecideState(ActionReadiness.Ready, decide.Cli);
 
     /// <summary>The item's pending decisions, in the API's order.</summary>
     internal IReadOnlyList<ItemDecisionRow> Decisions { get; private set { Set(ref field, value); OnChanged(nameof(HasDecisions)); } } = [];

@@ -26,7 +26,7 @@ public sealed class NeedsYouAskDeskTests
     {
         _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "lens-ask-multi"));
         _server.FactBody = (_, key) => string.Equals(key, "fact:escalation", StringComparison.Ordinal) ? new RouteAnswer(HttpStatusCode.OK, escalationBody is null ? _golden : Fact(escalationBody)) : null;
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api));
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
         return bar;
@@ -106,7 +106,7 @@ public sealed class NeedsYouAskDeskTests
     public async Task A_desk_that_asks_nothing_keeps_its_approve_and_send_back()
     {
         _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"));
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api));
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
 

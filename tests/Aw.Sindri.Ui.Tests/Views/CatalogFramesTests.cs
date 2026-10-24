@@ -150,33 +150,21 @@ public sealed class CatalogFramesTests : IDisposable
         Frame(window, "control-accepted");
     });
 
-    // §7: pending rows (FocusSession is the one left, until CO-4a) are disabled with a focusable "arrives in <phase> · <cli>" line Tab reaches; cli-only rows are copy blocks.
+    // q93: the rows the app has no form for are copy blocks (the cli and Copy); there are no pending lines.
     [Fact]
-    public Task Health_shows_pending_lines_and_copy_blocks() => OnUi(async () =>
+    public Task Health_shows_copy_blocks_for_the_rows_the_app_has_no_form_for() => OnUi(async () =>
     {
         var (window, shell) = await Connected(s => s.Health.Catalog.Controls.Count > 0);
         shell.GoTo(PageId.System);
         Settle(window);
 
         var page = Named<Control>(window, "HealthPage");
-        var lines = page.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "PendingLine" && b.IsEffectivelyVisible).ToList();
-        Assert.Equal(shell.Health.Catalog.Pending.Sum(p => p.Controls.Count), lines.Count);
-        Assert.All(lines, l => Assert.True(l.Focusable));
-        Assert.Contains("Focus, arrives in CO-4a · sindri agents focus <ref>", lines.Select(AutomationProperties.GetName), StringComparer.Ordinal);
+        Assert.Empty(page.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "PendingLine"));
         var copies = page.GetVisualDescendants().OfType<Button>().Where(b => b.Classes.Contains("copy") && b.IsEffectivelyVisible).Select(AutomationProperties.GetName).ToList();
-        Assert.Contains("Copy: Focus", copies, StringComparer.Ordinal);
         Assert.Contains("Copy: Run doctor", copies, StringComparer.Ordinal);
         Assert.All(page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "TerminalGlyph"), g => Assert.Equal(AccessibilityView.Raw, AutomationProperties.GetAccessibilityView(g)));
-
         var blocks = page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "CliText" && t.IsEffectivelyVisible).Select(t => t.Text).ToList();
-        Assert.Equal(["sindri workflow answer <address> --accept", "sindri workflow answer <address> --grant <rounds>", "sindri workflow answer <address> --grant-tokens <tokens>", "sindri context map import <file>", "sindri profile init", "sindri launch init [--viewer <name>] [--force] [--stdout]", "sindri launch show [<id>] [--json]", "sindri context map promote", "sindri context map review add <node> <name> [--under <node>]", "sindri context map review --apply <file>", "sindri context map review delete <node>", "sindri context map review merge <node> --into <node>", "sindri recipe revoke <recipe>", "sindri doctor", "sindri line holdout show <line> <phase>", "sindri profile validate"], blocks, StringComparer.Ordinal);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "CopyNoteText" && t.IsEffectivelyVisible && t.Text == Labels.TypedConfirmation);
-
-        Assert.True(lines[0].Focus(NavigationMethod.Tab));
-        window.KeyPress(Key.Tab, RawInputModifiers.Shift, PhysicalKey.Tab, keySymbol: null);
-        window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, keySymbol: null);
-        Settle(window);
-        Assert.Same(lines[0], window.FocusManager?.GetFocusedElement());   // Tab reaches the pending line and comes back to it
+        Assert.Contains("sindri doctor", blocks, StringComparer.Ordinal);
         Frame(window, "health-controls");
     });
 
