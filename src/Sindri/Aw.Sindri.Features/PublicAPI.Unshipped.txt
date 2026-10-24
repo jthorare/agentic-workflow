@@ -4719,3 +4719,15 @@ static Aw.Sindri.Features.Scrub.ScrubRequest.operator !=(Aw.Sindri.Features.Scru
 static Aw.Sindri.Features.Scrub.ScrubRequest.operator ==(Aw.Sindri.Features.Scrub.ScrubRequest? left, Aw.Sindri.Features.Scrub.ScrubRequest? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator !=(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator ==(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.<Clone>$() -> Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest!
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.init -> void
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Equals(Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? other) -> bool
+Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.GetInstanceLineRequest(Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance) -> void
+override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.ToString() -> string!
+static Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.operator !=(Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? left, Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? right) -> bool
+static Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.operator ==(Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? left, Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest? right) -> bool

@@ -23,6 +23,7 @@ internal static class LineCommandTable
     private const string PlanUsage = "usage: sindri plan check (<address> | --facts <dir>) [--design <dir>] [--repo <dir>] [--stage draft|evidence] [--json]";
     private const string DesignShowUsage = "usage: sindri design show (<address> | --facts <dir>) [--scope <dir>] [--repo <dir>] [--style <pack.json>] [--lenses <pack.json>] [--json]";
     private const string PlanShowUsage = "usage: sindri plan show (<address> | --facts <dir>) [--design <dir>] [--repo <dir>] [--json]";
+    private const string LineShowUsage = "usage: sindri line show <address> [--json]";
     private const string DeskUsage = "usage: sindri line desk <design.check|design.evidence|plan.check|plan.evidence> --facts <dir> --out <dir> [--packet-id <id> --repo-slug <owner/name> --base-sha <sha>] [--scope-hash <h>] [--design-hash <h>] [--parallel <n>] [--max-stack <n>] [--default-branch <b>] [--scope <dir>] [--design <dir>] [--repo <dir>] [--style <pack.json>] [--lenses <pack.json>] [--json]";
 
     internal static Task<int> Run(string[] args, ScopingCommandTable.Host host, CancellationToken ct) => args switch
@@ -31,8 +32,9 @@ internal static class LineCommandTable
         ["plan", "check", .. var rest] => Check("plan", rest, host, ct),
         ["design", "show", .. var rest] => Show("design", rest, host, ct),
         ["plan", "show", .. var rest] => Show("plan", rest, host, ct),
+        ["line", "show", .. var rest] => ShowLine(rest, host, ct),
         ["line", "desk", .. var rest] => LineDeskVerb.Run(rest, host, DeskUsage, ct),
-        _ => Fail(host.Output, SindriErrors.UnknownVerb.With($"'{string.Join(' ', args)}' is not a sindri command ({DesignUsage}; {PlanUsage}; {DeskUsage})")),
+        _ => Fail(host.Output, SindriErrors.UnknownVerb.With($"'{string.Join(' ', args)}' is not a sindri command ({DesignUsage}; {PlanUsage}; {LineShowUsage}; {DeskUsage})")),
     };
 
     internal static async Task<int> Fail(Output output, Error error)
@@ -75,7 +77,7 @@ internal static class LineCommandTable
 
         var view = parsed.Value("--facts") is { } directory
             ? await LocalView(station, directory, parsed, services, ct).ConfigureAwait(false)
-            : await InstanceView(desk, parsed.Positional[0], ct).ConfigureAwait(false);
+            : await InstanceView<DesignStopView>(desk, parsed.Positional[0], ("workflow.plan", "design-stop"), ct).ConfigureAwait(false);
         if (view.IsError)
         {
             return await Fail(output, view.Error).ConfigureAwait(false);
@@ -83,6 +85,26 @@ internal static class LineCommandTable
 
         var shown = desk.Client.SessionReason is null ? view.Value : DesignStopFencing.Fence(view.Value);
         return parsed.Json ? await output.Json(shown, 0).ConfigureAwait(false) : await output.Text(LineText.Stop(shown), 0).ConfigureAwait(false);
+    }
+
+    // 'line show <address>': the line board of a workflow.line instance through the route (LN-API1), a client of the control plane; a serve that is down is SND-API-001.
+    private static async Task<int> ShowLine(IReadOnlyList<string> args, ScopingCommandTable.Host host, CancellationToken ct)
+    {
+        var (_, output, desk, _) = host;
+        var parsed = ScopingArguments.Parse(args);
+        if (parsed is null || parsed.Positional.Count != 1)
+        {
+            return await Fail(output, SindriErrors.InvalidInput.With(LineShowUsage)).ConfigureAwait(false);
+        }
+
+        var view = await InstanceView<LineView>(desk, parsed.Positional[0], ("workflow.line", "line"), ct).ConfigureAwait(false);
+        if (view.IsError)
+        {
+            return await Fail(output, view.Error).ConfigureAwait(false);
+        }
+
+        var shown = desk.Client.SessionReason is null ? view.Value : LineViewFencing.Fence(view.Value);
+        return parsed.Json ? await output.Json(shown, 0).ConfigureAwait(false) : await output.Text(LineBoardText.Board(shown), 0).ConfigureAwait(false);
     }
 
     // 'design show' reads a design packet, so its files are the design's; 'plan show' reads a plan packet, with the design beside it through --design.
@@ -101,7 +123,7 @@ internal static class LineCommandTable
     private static bool IsBeside(string key) => key.StartsWith("scope/", StringComparison.Ordinal) || key.StartsWith("pack/", StringComparison.Ordinal) || key.StartsWith("repo/", StringComparison.Ordinal) || key == "options.json";
 
     // The view of a workflow.plan instance through the route, a client of the control plane; a serve that is down is SND-API-001.
-    private static async Task<Result<DesignStopView>> InstanceView(RecipeDesk desk, string address, CancellationToken ct)
+    private static async Task<Result<T>> InstanceView<T>(RecipeDesk desk, string address, (string Recipe, string Route) view, CancellationToken ct)
     {
         var listed = await desk.Client.Get<Core.Workflow.Views.InstanceList>($"{InstanceReads.Instances}?address={Uri.EscapeDataString(address)}", ct).ConfigureAwait(false);
         if (listed.IsError)
@@ -114,12 +136,12 @@ internal static class LineCommandTable
             return WorkflowErrors.InstanceNotFound.With($"'{address}' names no one instance (fix: sindri workflow list)");
         }
 
-        if (!string.Equals(instance.Recipe.Id.Value, "workflow.plan", StringComparison.Ordinal))
+        if (!string.Equals(instance.Recipe.Id.Value, view.Recipe, StringComparison.Ordinal))
         {
-            return LineErrors.WrongRecipe.With($"{address} runs {instance.Recipe.Id.Value} (fix: pass the address of a workflow.plan instance)");
+            return LineErrors.WrongRecipe.With($"{address} runs {instance.Recipe.Id.Value} (fix: pass the address of a {view.Recipe} instance)");
         }
 
-        var read = await desk.Client.Get<DesignStopView>($"{InstanceReads.Instances}/{instance.Id.Value}/design-stop", ct).ConfigureAwait(false);
+        var read = await desk.Client.Get<T>($"{InstanceReads.Instances}/{instance.Id.Value}/{view.Route}", ct).ConfigureAwait(false);
         return read.IsError ? read.Error : read.Value.Value;
     }
 

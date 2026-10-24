@@ -18266,6 +18266,105 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Discard(Aw.Sindri.Core.Wor
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Record(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! text) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.ReportRefusals() -> void
 const Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.MaxLength = 300 -> int
+Aw.Sindri.Core.Line.LineView
+Aw.Sindri.Core.Line.LineView.<Clone>$() -> Aw.Sindri.Core.Line.LineView!
+Aw.Sindri.Core.Line.LineView.Stations.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineStation!>!
+Aw.Sindri.Core.Line.LineView.Stations.init -> void
+Aw.Sindri.Core.Line.LineView.Phases.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LinePhaseView!>!
+Aw.Sindri.Core.Line.LineView.Phases.init -> void
+Aw.Sindri.Core.Line.LineView.Parallel.get -> int
+Aw.Sindri.Core.Line.LineView.Parallel.init -> void
+Aw.Sindri.Core.Line.LineView.MaxOpenPrs.get -> int
+Aw.Sindri.Core.Line.LineView.MaxOpenPrs.init -> void
+Aw.Sindri.Core.Line.LineView.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineStation!>! Stations, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LinePhaseView!>! Phases, out int Parallel, out int MaxOpenPrs) -> void
+Aw.Sindri.Core.Line.LineView.Equals(Aw.Sindri.Core.Line.LineView? other) -> bool
+Aw.Sindri.Core.Line.LineView.LineView(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LineStation!>! Stations, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Line.LinePhaseView!>! Phases, int Parallel, int MaxOpenPrs) -> void
+override Aw.Sindri.Core.Line.LineView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineView.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineView.ToString() -> string!
+static Aw.Sindri.Core.Line.LineView.operator !=(Aw.Sindri.Core.Line.LineView? left, Aw.Sindri.Core.Line.LineView? right) -> bool
+static Aw.Sindri.Core.Line.LineView.operator ==(Aw.Sindri.Core.Line.LineView? left, Aw.Sindri.Core.Line.LineView? right) -> bool
+Aw.Sindri.Core.Line.LineStation
+Aw.Sindri.Core.Line.LineStation.<Clone>$() -> Aw.Sindri.Core.Line.LineStation!
+Aw.Sindri.Core.Line.LineStation.Station.get -> string!
+Aw.Sindri.Core.Line.LineStation.Station.init -> void
+Aw.Sindri.Core.Line.LineStation.Instance.get -> string?
+Aw.Sindri.Core.Line.LineStation.Instance.init -> void
+Aw.Sindri.Core.Line.LineStation.Packet.get -> Aw.Sindri.Core.Line.LinePacket?
+Aw.Sindri.Core.Line.LineStation.Packet.init -> void
+Aw.Sindri.Core.Line.LineStation.Deconstruct(out string! Station, out string? Instance, out Aw.Sindri.Core.Line.LinePacket? Packet) -> void
+Aw.Sindri.Core.Line.LineStation.Equals(Aw.Sindri.Core.Line.LineStation? other) -> bool
+Aw.Sindri.Core.Line.LineStation.LineStation(string! Station, string? Instance, Aw.Sindri.Core.Line.LinePacket? Packet) -> void
+override Aw.Sindri.Core.Line.LineStation.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LineStation.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LineStation.ToString() -> string!
+static Aw.Sindri.Core.Line.LineStation.operator !=(Aw.Sindri.Core.Line.LineStation? left, Aw.Sindri.Core.Line.LineStation? right) -> bool
+static Aw.Sindri.Core.Line.LineStation.operator ==(Aw.Sindri.Core.Line.LineStation? left, Aw.Sindri.Core.Line.LineStation? right) -> bool
+Aw.Sindri.Core.Line.LinePacket
+Aw.Sindri.Core.Line.LinePacket.<Clone>$() -> Aw.Sindri.Core.Line.LinePacket!
+Aw.Sindri.Core.Line.LinePacket.Kind.get -> string!
+Aw.Sindri.Core.Line.LinePacket.Kind.init -> void
+Aw.Sindri.Core.Line.LinePacket.Hash.get -> string!
+Aw.Sindri.Core.Line.LinePacket.Hash.init -> void
+Aw.Sindri.Core.Line.LinePacket.Frozen.get -> bool
+Aw.Sindri.Core.Line.LinePacket.Frozen.init -> void
+Aw.Sindri.Core.Line.LinePacket.Deconstruct(out string! Kind, out string! Hash, out bool Frozen) -> void
+Aw.Sindri.Core.Line.LinePacket.Equals(Aw.Sindri.Core.Line.LinePacket? other) -> bool
+Aw.Sindri.Core.Line.LinePacket.LinePacket(string! Kind, string! Hash, bool Frozen) -> void
+override Aw.Sindri.Core.Line.LinePacket.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LinePacket.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LinePacket.ToString() -> string!
+static Aw.Sindri.Core.Line.LinePacket.operator !=(Aw.Sindri.Core.Line.LinePacket? left, Aw.Sindri.Core.Line.LinePacket? right) -> bool
+static Aw.Sindri.Core.Line.LinePacket.operator ==(Aw.Sindri.Core.Line.LinePacket? left, Aw.Sindri.Core.Line.LinePacket? right) -> bool
+Aw.Sindri.Core.Line.LinePhaseView
+Aw.Sindri.Core.Line.LinePhaseView.<Clone>$() -> Aw.Sindri.Core.Line.LinePhaseView!
+Aw.Sindri.Core.Line.LinePhaseView.Id.get -> Aw.Sindri.Core.Line.LinePhaseId
+Aw.Sindri.Core.Line.LinePhaseView.Id.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Attempt.get -> int
+Aw.Sindri.Core.Line.LinePhaseView.Attempt.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Address.get -> string?
+Aw.Sindri.Core.Line.LinePhaseView.Address.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.State.get -> string!
+Aw.Sindri.Core.Line.LinePhaseView.State.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.ParkReason.get -> string?
+Aw.Sindri.Core.Line.LinePhaseView.ParkReason.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Pr.get -> string?
+Aw.Sindri.Core.Line.LinePhaseView.Pr.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Base.get -> string?
+Aw.Sindri.Core.Line.LinePhaseView.Base.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Worktree.get -> string?
+Aw.Sindri.Core.Line.LinePhaseView.Worktree.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Now.get -> string!
+Aw.Sindri.Core.Line.LinePhaseView.Now.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Tokens.get -> int
+Aw.Sindri.Core.Line.LinePhaseView.Tokens.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.WallMinutes.get -> int
+Aw.Sindri.Core.Line.LinePhaseView.WallMinutes.init -> void
+Aw.Sindri.Core.Line.LinePhaseView.Deconstruct(out Aw.Sindri.Core.Line.LinePhaseId Id, out int Attempt, out string? Address, out string! State, out string? ParkReason, out string? Pr, out string? Base, out string? Worktree, out string! Now, out int Tokens, out int WallMinutes) -> void
+Aw.Sindri.Core.Line.LinePhaseView.Equals(Aw.Sindri.Core.Line.LinePhaseView? other) -> bool
+Aw.Sindri.Core.Line.LinePhaseView.LinePhaseView(Aw.Sindri.Core.Line.LinePhaseId Id, int Attempt, string? Address, string! State, string? ParkReason, string? Pr, string? Base, string? Worktree, string! Now, int Tokens, int WallMinutes) -> void
+override Aw.Sindri.Core.Line.LinePhaseView.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LinePhaseView.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LinePhaseView.ToString() -> string!
+static Aw.Sindri.Core.Line.LinePhaseView.operator !=(Aw.Sindri.Core.Line.LinePhaseView? left, Aw.Sindri.Core.Line.LinePhaseView? right) -> bool
+static Aw.Sindri.Core.Line.LinePhaseView.operator ==(Aw.Sindri.Core.Line.LinePhaseView? left, Aw.Sindri.Core.Line.LinePhaseView? right) -> bool
+Aw.Sindri.Core.Line.LinePhaseId
+Aw.Sindri.Core.Line.LinePhaseId.Equals(Aw.Sindri.Core.Line.LinePhaseId other) -> bool
+Aw.Sindri.Core.Line.LinePhaseId.Equals(Aw.Sindri.Core.Line.LinePhaseId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Line.LinePhaseId>! comparer) -> bool
+Aw.Sindri.Core.Line.LinePhaseId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Line.LinePhaseId.IsInitialized() -> bool
+Aw.Sindri.Core.Line.LinePhaseId.LinePhaseId() -> void
+Aw.Sindri.Core.Line.LinePhaseId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Line.LinePhaseId.Value.get -> string!
+override Aw.Sindri.Core.Line.LinePhaseId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Line.LinePhaseId.GetHashCode() -> int
+override Aw.Sindri.Core.Line.LinePhaseId.ToString() -> string!
+static Aw.Sindri.Core.Line.LinePhaseId.From(string! value) -> Aw.Sindri.Core.Line.LinePhaseId
+static Aw.Sindri.Core.Line.LinePhaseId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Line.LinePhaseId
+static Aw.Sindri.Core.Line.LinePhaseId.TryFrom(string? value, out Aw.Sindri.Core.Line.LinePhaseId vo) -> bool
+static Aw.Sindri.Core.Line.LinePhaseId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Line.LinePhaseId result) -> bool
+static Aw.Sindri.Core.Line.LinePhaseId.operator !=(Aw.Sindri.Core.Line.LinePhaseId left, Aw.Sindri.Core.Line.LinePhaseId right) -> bool
+static Aw.Sindri.Core.Line.LinePhaseId.operator ==(Aw.Sindri.Core.Line.LinePhaseId left, Aw.Sindri.Core.Line.LinePhaseId right) -> bool
 Aw.Sindri.Core.Prove.RedEntry
 Aw.Sindri.Core.Prove.RedEntry.AppOnly.get -> bool
 Aw.Sindri.Core.Prove.RedEntry.AppOnly.init -> void

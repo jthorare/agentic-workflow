@@ -159,7 +159,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(EvalRecipeResponse)), JsonSerializable(typeof(WorkflowEvent)), JsonSerializable(typeof(EvalStartLine)), JsonSerializable(typeof(EvalStepLine))]
 [JsonSerializable(typeof(RecipeValidationView)), JsonSerializable(typeof(CompleteStepResponse)), JsonSerializable(typeof(InstanceView)), JsonSerializable(typeof(ListOutboxResponse))]
 [JsonSerializable(typeof(ScopingApproved)), JsonSerializable(typeof(ScopingEscape)), JsonSerializable(typeof(ScopingView)), JsonSerializable(typeof(ScopingCheckResponse)), JsonSerializable(typeof(ScopingDeskReport))]   // SC-K: the scoping verbs
-[JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView))]   // LN-K: the line verbs
+[JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
 [JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(OnyxSetupState))]

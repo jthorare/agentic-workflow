@@ -1,0 +1,70 @@
+{
+  "stations": [
+    {
+      "station": "scoping",
+      "instance": null,
+      "packet": {
+        "kind": "scoping",
+        "hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "frozen": false
+      }
+    },
+    {
+      "station": "design",
+      "instance": null,
+      "packet": {
+        "kind": "design",
+        "hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "frozen": true
+      }
+    },
+    {
+      "station": "plan",
+      "instance": "T-3/line/1/plan.4",
+      "packet": null
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "attempt": 1,
+      "address": "T-3/line/1/phase.p1.1",
+      "state": "running",
+      "parkReason": null,
+      "pr": "https://github.com/o/r/pull/7",
+      "base": "sindri/expiry/p0",
+      "worktree": "/work/expiry/p1",
+      "now": "Waiting for the build.",
+      "tokens": 1234,
+      "wallMinutes": 90
+    },
+    {
+      "id": "p2",
+      "attempt": 0,
+      "address": null,
+      "state": "waiting",
+      "parkReason": null,
+      "pr": null,
+      "base": null,
+      "worktree": null,
+      "now": "",
+      "tokens": 0,
+      "wallMinutes": 0
+    },
+    {
+      "id": "p3",
+      "attempt": 2,
+      "address": "T-3/line/1/phase.p3.2",
+      "state": "failed",
+      "parkReason": "the build ran out of budget",
+      "pr": null,
+      "base": null,
+      "worktree": null,
+      "now": "Parked.",
+      "tokens": 50,
+      "wallMinutes": 10
+    }
+  ],
+  "parallel": 2,
+  "maxOpenPrs": 4
+}

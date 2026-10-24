@@ -36,6 +36,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
         ("workflow-instance-scoping", "expiry-stop"),   // recorded by ScopingShowTests (API2 serves that view as is)
         ("needs-you", "desk-with-stop"), ("needs-you", "park-with-timeout"),   // recorded by NeedsYouJoinsTests (the read-time joins of GetNeedsYou)
         ("workflow-instance-design-stop", "gold-stop"),   // recorded by DesignStopViewTests (LN-API2 serves that view as is)
+        ("workflow-instance-line", "gold-line"),   // recorded by GetInstanceLineServiceTests (LN-API1 serves that view as is)
     ];
 
     /// <summary>What a served start draws at run time: its timestamps and the instance id.</summary>

@@ -71,6 +71,7 @@ internal static class EndpointTable
         _ = queries.MapGetInstanceFact();
         _ = queries.MapGetInstanceScoping();
         _ = queries.MapGetInstanceDesignStop();
+        _ = queries.MapGetInstanceLine();
         _ = queries.MapListInstances();
         return queries;
     }

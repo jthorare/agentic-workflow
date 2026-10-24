@@ -847,6 +847,7 @@ an address is the typed `InstanceAddress`), plus
 | `GET /workflow/instances/{id}/facts/{key}` | `GetInstanceFact` | `FactView` |
 | `GET /workflow/instances/{id}/scoping` | `GetInstanceScoping` (scoping, API2) | `ScopingView` (docs/csharp/sindri-scoping.md) |
 | `GET /workflow/instances/{id}/design-stop` | `GetInstanceDesignStop` (design, LN-API2) | `DesignStopView` of a `workflow.plan` instance (docs/csharp/sindri-line.md) |
+| `GET /workflow/instances/{id}/line` | `GetInstanceLine` (line, LN-API1) | `LineView` of a `workflow.line` instance: `stations[]`, `phases[]`, `parallel`, `maxOpenPrs` (docs/csharp/sindri-line.md) |
 | `GET /workflow/instances/{id}/packets/{hash}/files/{name}` | `GetPacketFile` (scoping, API9) | the file as JSON or text (docs/csharp/sindri-scoping.md) |
 | `GET /workflow/recipes/{id}` and `{id}@{hash}` | `ShowRecipe` (engine) | `RecipeView` |
 | `GET /workflow/recipes/{id}/stats?window=&hash=` (API P12) | `GetRecipeStats` | `RecipeStats` (counts over the ledger's workflow rows; `workflow.started` rows carry the recipe id and hash in their delta so a run is attributable) |
