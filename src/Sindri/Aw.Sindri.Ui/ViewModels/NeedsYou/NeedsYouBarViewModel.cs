@@ -24,6 +24,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         nameof(MergeCard), nameof(HasMergeCard),
         nameof(DeskWhy), nameof(IfApprove), nameof(IfSendBack), nameof(HasIfApprove), nameof(HasIfSendBack),
         nameof(ApproveSuggested), nameof(SendBackSuggested), nameof(Questions), nameof(HasQuestions), nameof(AllAnswered), nameof(QuestionsHint),
+        nameof(Scoping), nameof(HasScoping), nameof(ScopingReady), nameof(ScopingHint), nameof(ShowsDoneAsking), nameof(DoneAskingEnabled),
         nameof(HasVerbs), nameof(HasMergeVerb), nameof(VerbsEnabled), nameof(VerbNote),
     ];
 
@@ -169,7 +170,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         }
 
         _row = row;
-        (_target, _targetKnown, _done, Questions) = (null, false, NeedsYouBarOutcome.None, []);
+        (_target, _targetKnown, _done, Questions, Scoping) = (null, false, NeedsYouBarOutcome.None, [], []);
         DrawVerbs();
         DrawReviews();
         (IsSending, HintIsSuccess) = (false, false);
@@ -189,6 +190,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         {
             (_target, _targetKnown) = (target, true);
             Questions = [.. (target?.Questions ?? []).Select(q => new DeskQuestionViewModel(q, Refresh))];
+            Scoping = [.. (target?.Scoping ?? []).Select(q => new ScopingQuestionViewModel(q, Refresh))];
             DrawVerbs();
             DrawReviews();
             Refresh();

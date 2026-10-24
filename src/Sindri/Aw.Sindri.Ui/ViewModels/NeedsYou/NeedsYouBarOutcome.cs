@@ -20,4 +20,10 @@ internal enum NeedsYouBarOutcome
 
     /// <summary>The ask step's answers sent (the step's outcome "done").</summary>
     Answer,
+
+    /// <summary>One round of the scoping interview answered (the step's outcome "answered").</summary>
+    Answered,
+
+    /// <summary>The scoping interview stopped with what has been answered (the step's outcome "doneAsking").</summary>
+    DoneAsking,
 }

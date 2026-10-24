@@ -171,6 +171,29 @@ internal static partial class Labels
     /// <summary>The heading over the ask step's questions.</summary>
     internal const string NeedsYouQuestionsHeading = "Questions for you";
 
+    /// <summary>"Other" on a scoping question: the person writes their own answer.</summary>
+    internal const string ScopingOther = "Other";
+
+    /// <summary>"Skip" on a scoping question: it stays unanswered.</summary>
+    internal const string ScopingSkip = "Skip";
+
+    /// <summary>The word that marks the answer the interview recommends.</summary>
+    internal const string ScopingRecommended = "Recommended";
+
+    /// <summary>Stops the interview with what has been answered so far.</summary>
+    internal const string ScopingDoneAsking = "Done asking";
+
+    /// <summary>The line that says what Send answers waits for on the interview.</summary>
+    internal const string ScopingChooseAll = "Choose an answer, write your own, or skip, for every question to send.";
+
+    /// <summary>Said when the answers given so far cannot be read, so nothing is sent over them.</summary>
+    internal const string ScopingAnswersUnreadable = "The answers so far could not be read, so nothing was sent. Try again.";
+
+    /// <summary>A recommended answer's accessible name.</summary>
+    /// <param name="answer">The answer in words.</param>
+    /// <returns>The name.</returns>
+    internal static string ScopingRecommendedName(string answer) => $"{answer}, recommended";
+
     /// <summary>The line that says why Send answers is off.</summary>
     internal const string NeedsYouAnswerAll = "Answer every question to send.";
 

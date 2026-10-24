@@ -338,6 +338,41 @@
           <TextBlock x:Name="NeedsYouStepReason" Classes="caption muted" Text="{Binding Bar.ReasonLine}" IsVisible="{Binding Bar.HasReasonLine}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Bar.ReasonLine}" />
           <Button x:Name="NeedsYouSession" Classes="bar-button" HorizontalAlignment="Left" Content="{Binding Bar.SessionLinkText}" IsVisible="{Binding Bar.HasSession}" Click="OnSession"
                   AutomationProperties.Name="{Binding Bar.SessionLinkName}" />
+          <!-- The scoping interview (q65 d): each question a choice among its answers with their reasons, Other with a box, or Skip; Send answers waits for every pick, Done asking stops with what is answered. -->
+          <StackPanel x:Name="NeedsYouScoping" Spacing="8" IsVisible="{Binding Bar.HasScoping}">
+            <TextBlock Classes="body-strong" Text="{Binding Bar.QuestionsHeading}" />
+            <ItemsControl x:Name="NeedsYouScopingList" ItemsSource="{Binding Bar.Scoping}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ny:ScopingQuestionViewModel">
+                  <StackPanel Spacing="4" Margin="0,0,0,10">
+                    <TextBlock Classes="caption subtle" Text="{Binding Dimension}" IsVisible="{Binding HasDimension}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="NeedsYouScopingPrompt" Classes="body" Text="{Binding Prompt}" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding Choices}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="ny:ScopingChoiceViewModel">
+                          <Button x:Name="NeedsYouScopingChoice" Classes="segment" Classes.chosen="{Binding IsChosen}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,4"
+                                  Click="OnScopingChoice" AutomationProperties.Name="{Binding Name}">
+                            <StackPanel Spacing="2" AutomationProperties.AccessibilityView="Raw">
+                              <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" />
+                                <TextBlock Classes="caption subtle" Text="{Binding RecommendedWord}" IsVisible="{Binding IsRecommended}" VerticalAlignment="Center" />
+                              </StackPanel>
+                              <TextBlock Classes="caption muted" Text="{Binding Rationale}" IsVisible="{Binding HasRationale}" TextWrapping="Wrap" />
+                            </StackPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBox x:Name="NeedsYouScopingOther" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" MaxHeight="96" Text="{Binding OtherText, Mode=TwoWay}" IsVisible="{Binding IsOther}"
+                             PlaceholderText="{Binding OtherPlaceholder}" AutomationProperties.Name="{Binding OtherName}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="NeedsYouScopingHint" Classes="caption muted" Text="{Binding Bar.ScopingHint}" />
+            <Button x:Name="NeedsYouDoneAsking" Classes="bar-button" HorizontalAlignment="Left" Content="{Binding Bar.DoneAskingWord}" IsEnabled="{Binding Bar.DoneAskingEnabled}" Click="OnDoneAsking"
+                    AutomationProperties.Name="{Binding Bar.DoneAskingWord}" />
+          </StackPanel>
           <WrapPanel x:Name="NeedsYouBarButtons" Orientation="Horizontal" ItemSpacing="8" LineSpacing="6" IsVisible="{Binding ShowsBarButtons}">
             <Button x:Name="NeedsYouApprove" Classes="bar-button primary" Classes.asking="{Binding Bar.IsAsking}" IsVisible="{Binding Bar.ShowsPrimary}" IsEnabled="{Binding Bar.PrimaryEnabled}"
                     Click="OnApprove" AutomationProperties.Name="{Binding Bar.ApproveName}">

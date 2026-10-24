@@ -74,6 +74,16 @@ internal sealed partial class NeedsYouBarViewModel
     // The first A on a request not read to the end only asks; the second, or one on a request read to the end, reports it.
     private async Task ApproveDesk()
     {
+        if (HasScoping)
+        {
+            if (ScopingReady)
+            {
+                await SendRound(NeedsYouBarOutcome.Answered).ConfigureAwait(true);
+            }
+
+            return;   // every question needs a pick; "Done asking" is the way to stop early
+        }
+
         if (HasQuestions)
         {
             if (AllAnswered)
@@ -224,6 +234,8 @@ internal sealed partial class NeedsYouBarViewModel
         NeedsYouBarOutcome.Rework => "rework",
         NeedsYouBarOutcome.Drop => "drop",
         NeedsYouBarOutcome.Answer => "done",
+        NeedsYouBarOutcome.Answered => "answered",
+        NeedsYouBarOutcome.DoneAsking => "doneAsking",
         NeedsYouBarOutcome.None => throw new InvalidOperationException("no outcome to send"),
         _ => throw new InvalidOperationException("an outcome the bar doesn't know"),
     };

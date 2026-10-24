@@ -193,6 +193,10 @@ internal sealed partial class NeedsYouPage : UserControl
 
     private void OnSendBack(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressSendBack();
 
+    private void OnScopingChoice(object? sender, RoutedEventArgs e) => ((sender as Button)?.DataContext as ScopingChoiceViewModel)?.Choose();
+
+    private void OnDoneAsking(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressDoneAsking();
+
     private void OnChooseOption(object? sender, RoutedEventArgs e) => ((sender as Button)?.DataContext as DeskQuestionOptionViewModel)?.Choose();
 
     private void OnSend(object? sender, RoutedEventArgs e) => _ = _page?.Bar.Send();
