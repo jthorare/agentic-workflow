@@ -5,9 +5,8 @@ using static Aw.Sindri.Features.Blocks.Step.StepSpec;
 namespace Aw.Sindri.Features.Blocks.Step;
 
 /// <summary>
-/// The prove station's own Steps (line spec §7.3, Appendix C.4): descriptors only, desk-capable, so each parks with SND-WF-010 at the
-/// desk until its runtime ships. The hand test, verify and evidence run as children. 'step.prove.holdout' is an agent Step (the evaluator
-/// model, LN-WF4). Fact and outcome names are camelCase.
+/// The prove station's own Steps (line spec §7.3, Appendix C.4): the descriptors; the block Steps' runtimes are in Features/Prove. The hand test,
+/// verify and evidence run as children. 'step.prove.holdout' is an agent Step (the evaluator model, LN-WF4). Fact and outcome names are camelCase.
 /// </summary>
 internal static class ProveSteps
 {

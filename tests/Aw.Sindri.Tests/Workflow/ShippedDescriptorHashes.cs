@@ -112,7 +112,7 @@ internal static class ShippedDescriptorHashes
         ["step.ship.freeze"] = "sha256:3453040d172cde0b45d927abd0eafa80b9f37fe4fcaa4c2ad67705ed5d2840f6",
         ["step.ship.green"] = "sha256:3e06c887a6fb7d941a4b6f9f1f1f2669d13eae58954ef51169ae7eccdff1d73b",
         ["step.ship.open"] = "sha256:fdaa874dea4fa2984993d81986a8d97508bd560244720532ecd105e4ea511990",
-        ["step.ship.pack"] = "sha256:23d1f6fdb7fadca6c5cae974fd3d03a76046f2d1e73a876bf630c8f1b5f8982e",
+        ["step.ship.pack"] = "sha256:d7574819ba136ebc5f1750bd77dbbbaec873d984a2ba174682450445b1aa70d5",
         ["step.ship.return"] = "sha256:b83d017741b130dab48923435dfb5e866215591086c2f10933f89eb59260702d",
         ["step.verify"] = "sha256:076936b6ec84ebf12669ca18a2525adb4c3922e86ed4c6cfc16c975e55944d3d",
         ["step.verify.design"] = "sha256:f64255db776db059a66d31bf1234d42fde46a2ebb7b2fb0568c21ac3ec44cdd5",

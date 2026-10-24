@@ -28,6 +28,7 @@ public sealed class BuildShipBlockRuntimesTests
     [InlineData("workflow.build.yaml", "red-check", "step.build.red-check")]
     [InlineData("workflow.build.yaml", "checks", "step.build.checks")]
     [InlineData("workflow.ship.yaml", "green", "step.ship.green")]
+    [InlineData("workflow.ship.yaml", "pack", "step.ship.pack")]
     [InlineData("workflow.ship.yaml", "freeze", "step.ship.freeze")]
     [InlineData("workflow.ship.yaml", "return", "step.ship.return")]
     [InlineData("workflow.phase.yaml", "drift", "step.phase.drift")]

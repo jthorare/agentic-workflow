@@ -580,7 +580,7 @@ what a report must carry, on which outcomes; "every outcome" outputs are on all 
 | `step.review.recheck` | agent | `change`, `review` | `clean`, `findings`, `behaviourWrong` | `review` (every outcome) |
 | `step.owner.decide` | desk, human-only | - | `retry`, `stop` | `notes` on retry |
 | `step.ship.green` | block | `phasePacket`, `workspace` | `green`, `red` | `green` on green; `findings` on red |
-| `step.ship.pack` | block | `phasePacket`, `proofPack`, `review`, `lineContext` | `packed` | `handoffDraft` on packed |
+| `step.ship.pack` | block | `phasePacket`, `proofPack`, `review`, `lineContext`, `workspace`, `green` | `packed` | `handoffDraft` on packed |
 | `step.ship.freeze` | block | `handoffDraft`, `proofPack`, `review` | `frozen`, `stale` | `handoff` on frozen; `findings` on stale |
 | `step.ship.open` | desk, human-only | `handoff`, `workspace` | `opened`, `updated`, `refused` | `pr` on opened and updated (stands in for `effect.pr.open`; nothing reaches the forge) |
 | `step.ship.return` | block | `findings` | `noted` | `returnNotes` on noted |
@@ -742,7 +742,7 @@ Each round queues the lenses whose `when` holds, in pack order, as `fact:lensQue
 |---|---|---|
 | `fact:phasePacket`, `fact:activePacket` | `{ hash, dir, repo? }`: the packet's frozen hash and directory; `repo` is a checkout of the repository it builds on (PKT-BASE-001 needs the base commit), which `step.build.prepare` sets to `fact:workspace` | the phase's seed (`hash`, `dir`), prepare (`repo`), amend (the child's) |
 | `fact:answers` | object `{ allow?: string[], reason?: string, revert?: string[] }`, the shape the shipped `workflow.build` evals use. `allow` holds the granted paths (repo-relative globs or `new: <path>`); amend needs at least one, and takes the owner's `reason` or the stock line `allowed at the scope desk` | prepare seeds `{}`; the scope desk writes it |
-| `fact:handoffDraft` | `{ dir, head, workspace }`: the hand-off packet directory (`pr.json`, `body.md`, `green.json`, `packet.json`, `index.json`), the head it was packed on, and the phase worktree | `step.ship.pack` (at the desk until its fact shapes are settled) |
+| `fact:handoffDraft` | `{ dir, head, workspace }`: the hand-off packet directory (`pr.json`, `body.md`, `green.json`, `packet.json`, `index.json`), the head it was packed on, and the phase worktree | `step.ship.pack` |
 | `fact:proofPack`, `fact:review` | each holds `head`, the commit its run covered | `step.prove.evidence`, `step.review.record` |
 | `fact:handoff` | `{ hash, dir }`: the frozen hand-off | freeze |
 | `fact:findings` | array of `{ rule, message }` | `SHIP-SHA-001` on stale |

@@ -5,7 +5,7 @@ using static Aw.Sindri.Features.Blocks.Step.StepSpec;
 namespace Aw.Sindri.Features.Blocks.Step;
 
 /// <summary>
-/// The ship station's Steps (line spec §7.5, C.5): descriptors only, so each runs on the desk until its runtime ships.
+/// The ship station's Steps (line spec §7.5, C.5): the block Steps' runtimes are in Features/Ship.
 /// 'step.ship.open' stands in for the 'effect.pr.open' wait: a human opens or refuses the pull request, nothing reaches the forge.
 /// </summary>
 internal static class ShipSteps
@@ -13,8 +13,8 @@ internal static class ShipSteps
     /// <summary>'step.ship.green': the local GREEN gate on the head; 'green' or 'red' (with 'fact:findings').</summary>
     public static BlockDescriptor Green { get; } = BlockStep("step.ship.green", Capability.Tools).Reads("fact:phasePacket", "fact:workspace").Reports("green", "red").Long(CommandStepLimits.GreenMaxDuration).Writes(On("fact:green", "green"), On("fact:findings", "red"));
 
-    /// <summary>'step.ship.pack': assembles the hand-off draft, the evidence pack as the PR body.</summary>
-    public static BlockDescriptor Pack { get; } = BlockStep("step.ship.pack", Capability.Tools).Reads("fact:phasePacket", "fact:proofPack", "fact:review", "fact:lineContext").Reports("packed").Writes(On("fact:handoffDraft", "packed"));
+    /// <summary>'step.ship.pack': assembles the hand-off draft, the evidence pack as the PR body; it reads the worktree (the head it packs on) and the GREEN gate's commands.</summary>
+    public static BlockDescriptor Pack { get; } = BlockStep("step.ship.pack", Capability.Tools).Reads("fact:phasePacket", "fact:proofPack", "fact:review", "fact:lineContext", "fact:workspace", "fact:green").Reports("packed").Writes(On("fact:handoffDraft", "packed"));
 
     /// <summary>'step.ship.freeze': proof, review and hand-off agree on one head; 'frozen' or 'stale' (with 'fact:findings').</summary>
     public static BlockDescriptor Freeze { get; } = BlockStep("step.ship.freeze", Capability.Tools).Reads("fact:handoffDraft", "fact:proofPack", "fact:review").Reports("frozen", "stale").Writes(On("fact:handoff", "frozen"), On("fact:findings", "stale"));
