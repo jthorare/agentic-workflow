@@ -136,7 +136,7 @@ public sealed class GatherInputsFillTests : IDisposable
     }
 
     [Fact]
-    public async Task A_huge_map_fills_under_the_runners_caps_and_the_Step_does_not_fail()
+    public async Task A_huge_map_fills_whole_and_the_Step_does_not_fail()
     {
         _combined = new Combined(a => ContextInputFixtures.SmallSet([.. Enumerable.Range(0, 20000).Select(i => "feature:f" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]));
         await using var provider = Compose();
@@ -145,7 +145,8 @@ public sealed class GatherInputsFillTests : IDisposable
         var filled = await runner.Fill(Context("input.context.lenses"), 1, TestContext.Current.CancellationToken);
 
         Assert.False(filled.IsError, filled.IsError ? filled.Error.Message : string.Empty);
-        Assert.Contains("more lines not shown", filled.Value.Texts.Sections["lenses"], StringComparison.Ordinal);
+        Assert.DoesNotContain("more lines not shown", filled.Value.Texts.Sections["lenses"], StringComparison.Ordinal);
+        Assert.Equal(20000, filled.Value.Texts.Result!.Value.GetProperty("anchors").GetArrayLength());
     }
 
     [Fact]

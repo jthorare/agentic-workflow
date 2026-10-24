@@ -48,6 +48,6 @@ internal sealed class ScopeGatherStep() : ScopingCodeStep(Id), IBlockStepId, IRe
             }
         }
 
-        return "the lenses were unavailable or their typed result was over 256 KiB (its injected section says which)";
+        return "the lenses were unavailable (the input gave no section saying why)";
     }
 }

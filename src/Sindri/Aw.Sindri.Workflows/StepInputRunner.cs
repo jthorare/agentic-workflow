@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -13,20 +12,14 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// Runs one Step input in its own scope and shapes what it returned (plan decisions 2 and 7): section names checked, the
-/// text scrubbed before it is hashed (so the digest covers exactly what is served), sections and the typed result capped
-/// at 256 KiB each and the plan at 1 MiB. The activity and the pull route's refill share this one path.
+/// text scrubbed before it is hashed (so the digest covers exactly what is served). No size cap: the text stays in this process
+/// (only its bytes and digest travel through Temporal), so a big map's view is a long section, not a failure. The activity and the pull route's refill share this one path.
 /// </summary>
 /// <param name="dispatch">Runs the input in its own scope (the registration builds it).</param>
 /// <param name="runtimes">The inputs this build runs.</param>
 /// <param name="redactor">Scrubs the text; the default when none is given.</param>
 internal sealed partial class StepInputRunner(InputDispatch dispatch, StepInputRuntimes runtimes, IRedactor? redactor = null) : IStepInputRunner
 {
-    /// <summary>The most bytes one section, or one typed result, may hold.</summary>
-    internal const int SectionCap = 256 * 1024;
-
-    /// <summary>The most bytes a plan may hold.</summary>
-    internal const int PlanCap = InjectionPlans.PlanCap;
-
     /// <inheritdoc/>
     public async ValueTask<Result<FilledOutput>> Fill(StepInputContext context, int index, CancellationToken cancellationToken)
     {
@@ -45,7 +38,6 @@ internal sealed partial class StepInputRunner(InputDispatch dispatch, StepInputR
         var scrubber = redactor ?? Redactor.Default;
         SortedDictionary<string, string> texts = new(StringComparer.Ordinal);
         List<InjectionEntry> entries = [];
-        var total = 0;
         foreach (var (name, text) in filled.Sections.OrderBy(static s => s.Key, StringComparer.Ordinal))
         {
             if (!SectionName.IsMatch(name))
@@ -55,12 +47,6 @@ internal sealed partial class StepInputRunner(InputDispatch dispatch, StepInputR
 
             var clean = scrubber.Scrub(text).Text;
             var bytes = Encoding.UTF8.GetByteCount(clean);
-            if (bytes > SectionCap)
-            {
-                return WorkflowErrors.InjectionInvalid.With($"input {context.Input.Value}: section '{name}' is {bytes.ToString(CultureInfo.InvariantCulture)} bytes; the cap is {SectionCap.ToString(CultureInfo.InvariantCulture)}");
-            }
-
-            total += bytes;
             texts[name] = clean;
             entries.Add(new InjectionEntry(name, context.Input, bytes, Sha(clean)));
         }
@@ -71,10 +57,7 @@ internal sealed partial class StepInputRunner(InputDispatch dispatch, StepInputR
             return shaped.Error;
         }
 
-        total += shaped.Value.Entry?.Bytes ?? 0;
-        return total > PlanCap
-            ? WorkflowErrors.InjectionInvalid.With($"input {context.Input.Value}: the plan is {total.ToString(CultureInfo.InvariantCulture)} bytes; the cap is {PlanCap.ToString(CultureInfo.InvariantCulture)}")
-            : new FilledOutput(new FilledInput(context.Input, index, entries, shaped.Value.Entry), new FilledTexts(texts, shaped.Value.Element));
+        return new FilledOutput(new FilledInput(context.Input, index, entries, shaped.Value.Entry), new FilledTexts(texts, shaped.Value.Element));
     }
 
     private static Result<(InjectionResultEntry? Entry, JsonElement? Element)> Typed(StepInputContext context, JsonElement? result, IRedactor scrubber)
@@ -86,11 +69,6 @@ internal sealed partial class StepInputRunner(InputDispatch dispatch, StepInputR
 
         var clean = scrubber.Scrub(element.GetRawText()).Text;
         var bytes = Encoding.UTF8.GetByteCount(clean);
-        if (bytes > SectionCap)
-        {
-            return WorkflowErrors.InjectionInvalid.With($"input {context.Input.Value}: the typed result is {bytes.ToString(CultureInfo.InvariantCulture)} bytes; the cap is {SectionCap.ToString(CultureInfo.InvariantCulture)}");
-        }
-
         try
         {
             using var document = JsonDocument.Parse(clean);

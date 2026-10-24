@@ -53,37 +53,16 @@ public sealed class StepInputRunnerTests
     }
 
     [Fact]
-    public async Task A_section_over_256_KiB_is_SND_WF_019()
+    public async Task A_section_a_typed_result_and_a_plan_of_any_size_are_kept_whole()
     {
-        var runner = Runner(() => Sections(("big", new string('a', StepInputRunner.SectionCap + 1))));
+        var big = JsonSerializer.SerializeToElement(new string('b', 3 * 1024 * 1024));
+        var runner = Runner(() => new InjectionSections(new Dictionary<string, string>(StringComparer.Ordinal) { ["a"] = new string('a', 2 * 1024 * 1024), ["b"] = new string('c', 2 * 1024 * 1024) }, big));
 
         var filled = await runner.Fill(_context, 1, TestContext.Current.CancellationToken);
 
-        Assert.Equal("SND-WF-019", filled.Error.Code);
-    }
-
-    [Fact]
-    public async Task A_typed_result_over_256_KiB_is_SND_WF_019()
-    {
-        var big = JsonSerializer.SerializeToElement(new string('b', StepInputRunner.SectionCap + 1));
-        var runner = Runner(() => new InjectionSections(new Dictionary<string, string>(StringComparer.Ordinal), big));
-
-        var filled = await runner.Fill(_context, 1, TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-WF-019", filled.Error.Code);
-        Assert.Contains("typed result", filled.Error.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task A_plan_over_1_MiB_is_SND_WF_019_though_each_section_is_under_its_cap()
-    {
-        var part = new string('c', StepInputRunner.SectionCap - 1);
-        var runner = Runner(() => Sections(("a", part), ("b", part), ("c", part), ("d", part), ("e", part)));
-
-        var filled = await runner.Fill(_context, 1, TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-WF-019", filled.Error.Code);
-        Assert.Contains("plan is", filled.Error.Message, StringComparison.Ordinal);
+        Assert.True(filled.IsSuccess, filled.IsError ? filled.Error.Message : null);
+        Assert.Equal(2 * 1024 * 1024, filled.Value.Texts.Sections["a"].Length);
+        Assert.Equal(3 * 1024 * 1024, filled.Value.Texts.Result!.Value.GetString()!.Length);
     }
 
     [Theory]

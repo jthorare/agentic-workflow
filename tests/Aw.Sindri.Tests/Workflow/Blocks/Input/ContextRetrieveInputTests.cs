@@ -160,14 +160,14 @@ public sealed class ContextRetrieveInputTests
     }
 
     [Fact]
-    public async Task A_huge_answer_is_cut_to_the_section_cap_and_never_fails_the_Step()
+    public async Task A_huge_answer_reaches_the_Step_whole_and_never_fails_it()
     {
         var engine = Engine();
         engine.Answer = () => Result(text: string.Join('\n', Enumerable.Range(0, 20_000).Select(static i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"line {i} of a very long record body"))));
 
         var filled = await Input(engine).Fill(Context(ContextInputFixtures.Web, ("q", "split")), Ct);
 
-        Assert.Contains("more lines not shown", filled.Value.Sections["context"], StringComparison.Ordinal);
-        Assert.True(System.Text.Encoding.UTF8.GetByteCount(filled.Value.Sections["context"]) < 130 * 1024);
+        Assert.DoesNotContain("more lines not shown", filled.Value.Sections["context"], StringComparison.Ordinal);
+        Assert.Contains("line 19999 of a very long record body", filled.Value.Sections["context"], StringComparison.Ordinal);
     }
 }

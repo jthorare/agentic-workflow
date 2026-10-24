@@ -32,6 +32,16 @@ internal static class ContextInputFixtures
             [], new Dictionary<string, Citation>(StringComparer.Ordinal));
     }
 
+    /// <summary>A set whose typed result is well over 256 KiB: <paramref name="reach"/> neighbors with long paths.</summary>
+    internal static LensesSetView BigSet(int reach, params string[] anchors)
+    {
+        var small = SmallSet(anchors);
+        var neighbors = Enumerable.Range(0, reach)
+            .Select(i => new LensReach(NodeKey.From(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"feature:n{i}")), string.Create(System.Globalization.CultureInfo.InvariantCulture, $"neighbor {i}"), NodeKind.Feature, Provenance.Human, 1, Confirmed: true, Trust.Trusted, 1, [new string('p', 120)]))
+            .ToArray();
+        return small with { Bands = small.Bands with { Product = small.Bands.Product with { Neighbors = neighbors } } };
+    }
+
     /// <summary>Stored fact contents by sha, for the fact-reference arguments; a sha it doesn't hold can't be read.</summary>
     internal sealed class MemoryFacts : IFactContents
     {

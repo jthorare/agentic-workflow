@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
@@ -12,19 +14,25 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// 'input.context.lenses' (scoping spec C1, W6): the product band, the cascade, 'searched' and the map coverage for the anchors, read in process from
 /// the engine's multi-anchor lenses as the service, cut to the instance's repo. The section 'lenses' is the readable text; the typed result is the
 /// <see cref="LensesSetView"/> as the route answers it. A call the engine refuses, or an instance with no mapped repo, is an honest section saying
-/// so (and no typed result): the Step still runs and the gather records the gap.
+/// so (and no typed result): the Step still runs and the gather records the gap. A refusal that may pass (the map is building, the engine is down or
+/// busy) is tried again after a short wait, three tries in all, before the section says so. The view is handed over whole at any size:
+/// a code Step reads the typed result, so no cap cuts it.
 /// </summary>
 /// <param name="lenses">The context engine (its facade for this lens).</param>
 /// <param name="scopes">The service scope for the instance's repo.</param>
 /// <param name="facts">Reads the content behind a fact-reference argument.</param>
 /// <param name="json">The host's JSON options.</param>
-internal sealed class ContextLensesInput(IContextEngine lenses, ContextInputScopes scopes, ContextInputFacts facts, JsonSerializerOptions json) : IStepInput, IDescribedBlock
+/// <param name="time">The clock the retry waits on.</param>
+internal sealed class ContextLensesInput(IContextEngine lenses, ContextInputScopes scopes, ContextInputFacts facts, JsonSerializerOptions json, TimeProvider time) : IStepInput, IDescribedBlock
 {
     /// <summary>The block id.</summary>
     public const string Id = "input.context.lenses";
 
     /// <summary>The section the text is under.</summary>
     public const string Section = "lenses";
+
+    /// <summary>The waits between the tries, so a map that is building or an engine that is restarting has about twenty seconds to answer.</summary>
+    internal static readonly TimeSpan[] Backoff = [TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15)];
 
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor { get; } = new(
@@ -68,7 +76,7 @@ internal sealed class ContextLensesInput(IContextEngine lenses, ContextInputScop
             return Unavailable(scope.Error.Code + ": " + scope.Error.Message, notes);
         }
 
-        var view = await lenses.LensesOf(anchors, MapRead.Current, new LensRange(depth, hops), scope.Value, cancellationToken).ConfigureAwait(false);
+        var view = await Read(anchors, new LensRange(depth, hops), scope.Value, cancellationToken).ConfigureAwait(false);
         if (view.IsError)
         {
             return Unavailable(view.Error.Code + ": " + view.Error.Message, notes);
@@ -77,6 +85,24 @@ internal sealed class ContextLensesInput(IContextEngine lenses, ContextInputScop
         var stable = ContextInputSections.Stable(view.Value);
         return ContextInputSections.Filled(Section, ContextLensText.LensesSet(stable, fence: false), notes, stable, json);
     }
+
+    // The engine's answer, asked again after each wait in Backoff while the refusal is one that can pass.
+    private async ValueTask<Result<LensesSetView>> Read(IReadOnlyList<string> anchors, LensRange range, ContextScope scope, CancellationToken cancellationToken)
+    {
+        for (var wait = 0; ; wait++)
+        {
+            var view = await lenses.LensesOf(anchors, MapRead.Current, range, scope, cancellationToken).ConfigureAwait(false);
+            if (!view.IsError || wait == Backoff.Length || !Transient(view.Error))
+            {
+                return view;
+            }
+
+            await Task.Delay(Backoff[wait], time, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static bool Transient(Error error) =>
+        error.Kind is ErrorKind.Unavailable or ErrorKind.Timeout or ErrorKind.RateLimited || error.Code == ContextErrors.NoMap.Code;
 
     private static InjectionSections Unavailable(string why, List<string> notes) => ContextInputSections.Unavailable(Section, "context lenses", why, notes);
 

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -15,9 +14,6 @@ namespace Aw.Sindri.Features.Scoping;
 /// </summary>
 internal static partial class DeskBlocks
 {
-    /// <summary>The most anchors the context engine's multi-anchor lenses take (SND-CONTEXT-006 above this).</summary>
-    internal const int MaxAnchors = 20;
-
     private static Result<ScopingDeskResponse> Needs(string block, ScopeFacts facts, string hint, params string[] keys) =>
         SindriErrors.InvalidInput.With($"{block} needs {string.Join(", ", facts.Missing(keys))} {hint}");
 
@@ -102,8 +98,7 @@ internal static partial class DeskBlocks
             .Concat(keys.Where(static k => k.StartsWith("code:", StringComparison.Ordinal)))
             .Concat(suggested.Anchors)
             .Distinct(StringComparer.Ordinal).ToList();
-        List<ScopeFinding> warnings = ordered.Count > MaxAnchors ? [CapWarning(ordered.Count)] : [];
-        return WithWarnings("step.scope.reanchor", "anchored", Outputs(("anchors", ScopeJson.ToArray(ordered.Take(MaxAnchors)))), warnings);
+        return WithWarnings("step.scope.reanchor", "anchored", Outputs(("anchors", ScopeJson.ToArray(ordered))), []);
     }
 
     private static Result<ScopingDeskResponse> Gather(ScopeFacts facts)
@@ -154,10 +149,7 @@ internal static partial class DeskBlocks
     private static Result<ScopingDeskResponse> WithWarnings(string block, string outcome, IReadOnlyDictionary<string, string> outputs, IReadOnlyList<ScopeFinding> warnings) =>
         new ScopingDeskResponse(block, outcome, outputs, [], [], warnings);
 
-    private static ScopeFinding CapWarning(int count) =>
-        new("DESK-ANCHORS", Item: null, $"{count.ToString(CultureInfo.InvariantCulture)} anchors found; the context engine takes at most {MaxAnchors.ToString(CultureInfo.InvariantCulture)} (SND-CONTEXT-006), so the first {MaxAnchors.ToString(CultureInfo.InvariantCulture)} are kept", "Narrow the brief or the map, or edit anchors.json by hand.", ScopeSeverity.Warn);
-
-    /// <summary>The text shape's suggested anchors, the first twenty, and a warning when it had more or none.</summary>
+    /// <summary>The text shape's suggested anchors, all of them, and a warning when it had none.</summary>
     private static (List<string> Anchors, List<ScopeFinding> Warnings, Error? Error) Suggested(JsonNode? query, bool required = true)
     {
         if (!required && query is null)
@@ -172,16 +164,12 @@ internal static partial class DeskBlocks
 
         var all = ScopeJson.Strings(listed).Distinct(StringComparer.Ordinal).ToList();
         var warnings = new List<ScopeFinding>();
-        if (all.Count > MaxAnchors)
-        {
-            warnings.Add(CapWarning(all.Count));
-        }
-        else if (all.Count == 0)
+        if (all.Count == 0)
         {
             warnings.Add(new ScopeFinding("DESK-ANCHORS", Item: null, "the text shape suggested no anchors; gather has nothing to search from", "Add anchors to anchors.json by hand before gather.", ScopeSeverity.Warn));
         }
 
-        return ([.. all.Take(MaxAnchors)], warnings, null);
+        return (all, warnings, null);
     }
 
     /// <summary>The '## N.' heading's block: from the heading to the next '## ' heading or the end; empty when the file has no such heading.</summary>

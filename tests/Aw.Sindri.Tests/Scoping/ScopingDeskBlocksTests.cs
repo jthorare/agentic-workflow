@@ -99,15 +99,15 @@ public sealed class ScopingDeskBlocksTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Anchor_keeps_the_first_twenty_and_warns_because_the_context_engine_takes_no_more()
+    public async Task Anchor_keeps_every_suggested_anchor_past_twenty_without_a_warning()
     {
         var many = new JsonObject { ["suggestedAnchors"] = new JsonArray([.. Enumerable.Range(1, 25).Select(static i => (JsonNode?)JsonValue.Create(string.Create(CultureInfo.InvariantCulture, $"feature:f{i}")))]) };
         var facts = new ScopingFacts { ["brief"] = ScopingFacts.Expiry()["brief"], ["contextQuery"] = many.ToJsonString() };
 
         var response = await Run("anchor", facts);
 
-        Assert.Equal(20, Out(response, "anchors").AsArray().Count);
-        _ = Assert.Single(response.Warnings);
+        Assert.Equal(25, Out(response, "anchors").AsArray().Count);
+        Assert.Empty(response.Warnings);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -128,7 +128,6 @@ public sealed class ScopingDeskBlocksTests
         Assert.Contains("surface:route/links-create", anchors, StringComparer.Ordinal);
         Assert.Contains("code:migrations/006_link_expiry.sql", anchors, StringComparer.Ordinal);   // a changed file the brief anchored stays
         Assert.Equal(anchors.Length, anchors.Distinct(StringComparer.Ordinal).Count());
-        Assert.True(anchors.Length <= 20);
     }
 
     [Fact, Trait("Lane", "unit")]
