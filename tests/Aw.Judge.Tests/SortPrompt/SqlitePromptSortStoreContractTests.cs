@@ -5,20 +5,21 @@ using Aw.Kernel.Testing;
 
 namespace Aw.Judge.Tests.SortPrompt;
 
-// Red until 6.1: the stub adapter has no database yet. 6.1 opens a JudgeDatabase over the temp state directory
-// (TempStateDirectory.Database()), records decision 'sort-1' in it and passes both to the store.
+// The axes and runs reference the decisions table, so Create records decision 'sort-1' in the database first.
 [Lane(TestLane.Integration)]
-public sealed class SqlitePromptSortStoreContractTests : PromptSortStoreContract
+public sealed class SqlitePromptSortStoreContractTests : PromptSortStoreContract, IDisposable
 {
-    protected override ValueTask<IPromptSortStore> Create(CancellationToken cancellationToken)
+    private readonly TempStateDirectory _state = new();
+
+    protected override async ValueTask<IPromptSortStore> Create(CancellationToken cancellationToken)
     {
-        Assert.Skip(RedUntil.Sorter);
-        return ValueTask.FromResult<IPromptSortStore>(new SqlitePromptSortStore());
+        var recorded = await _state.DecisionLog().Record(A.Decision().WithId(Decision.Value).Build(), cancellationToken);
+        Assert.True(recorded.IsSuccess);
+        return new SqlitePromptSortStore(_state.Database());
     }
 
-    protected override ValueTask<IPromptSortStore> CreateUnavailable(CancellationToken cancellationToken)
-    {
-        Assert.Skip(RedUntil.Sorter);
-        return ValueTask.FromResult<IPromptSortStore>(new SqlitePromptSortStore());
-    }
+    protected override ValueTask<IPromptSortStore> CreateUnavailable(CancellationToken cancellationToken) =>
+        ValueTask.FromResult<IPromptSortStore>(new SqlitePromptSortStore(_state.UnopenableDatabase()));
+
+    public void Dispose() => _state.Dispose();
 }

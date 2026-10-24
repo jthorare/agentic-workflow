@@ -7,9 +7,6 @@ namespace Aw.Judge.Tests;
 /// </summary>
 internal static class RedUntil
 {
-    /// <summary>Unit 6.1: the prompt sorter, its scaffold switch and the promptSort config write.</summary>
-    public const string Sorter = "red until cutover unit 6.1";
-
     /// <summary>Unit 6.2: trait-check.</summary>
     public const string TraitCheck = "red until cutover unit 6.2";
 }

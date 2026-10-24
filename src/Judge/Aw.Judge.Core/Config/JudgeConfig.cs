@@ -39,6 +39,29 @@ public sealed record JudgeConfig(
             ? JudgeErrors.Invalid.With(problem)
             : With(question, q => q with { Threshold = threshold });
 
+    /// <summary>Sets 'promptSort.enabled'; the rest of the promptSort block and every other key is kept.</summary>
+    /// <param name="enabled">Whether the prompt sorter runs.</param>
+    /// <returns>The new config.</returns>
+    public JudgeConfig SetPromptSortEnabled(bool enabled) =>
+        this with { PromptSort = (PromptSort ?? new PromptSortConfig()) with { Enabled = enabled } };
+
+    /// <summary>Switches one scaffold in 'promptSort.scaffolds'; the other scaffolds and keys are kept.</summary>
+    /// <param name="scaffold">The scaffold id: brief, bugfix, ui-evidence or plan-first.</param>
+    /// <param name="on">Whether it fires.</param>
+    /// <returns>The new config, or AW-JUDGE-001 when the scaffold is not one of the four.</returns>
+    public Result<JudgeConfig> SetScaffold(string scaffold, bool on)
+    {
+        ArgumentNullException.ThrowIfNull(scaffold);
+        if (!ProviderNames.Scaffolds.Contains(scaffold, StringComparer.Ordinal))
+        {
+            return JudgeErrors.Invalid.With($"unknown scaffold '{scaffold}' (known: {string.Join(", ", ProviderNames.Scaffolds)})");
+        }
+
+        var current = PromptSort ?? new PromptSortConfig();
+        var scaffolds = new Dictionary<string, bool>(current.Scaffolds ?? new Dictionary<string, bool>(StringComparer.Ordinal), StringComparer.Ordinal) { [scaffold] = on };
+        return this with { PromptSort = current with { Scaffolds = scaffolds } };
+    }
+
     private JudgeConfig With(string question, Func<QuestionConfig, QuestionConfig> change)
     {
         ArgumentNullException.ThrowIfNull(question);

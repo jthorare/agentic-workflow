@@ -5,21 +5,21 @@ using Aw.Kernel.Testing;
 
 namespace Aw.Judge.Tests.SortPrompt;
 
-// Red until 6.1: the stub adapter has no directory yet. 6.1 passes it the temp state directory's judge/sessions (and, for
-// the unwritable case, a path under a regular file), and adds the tests only a file can have: keys it does not know
-// survive a write, the replace is atomic (no .tmp left), and a file a TS sorter left behind reads as is.
 [Lane(TestLane.Integration)]
-public sealed class FileSortSessionStoreContractTests : SortSessionStoreContract
+public sealed class FileSortSessionStoreContractTests : SortSessionStoreContract, IDisposable
 {
-    protected override ValueTask<ISortSessionStore> Create(CancellationToken cancellationToken)
+    private readonly TempStateDirectory _state = new();
+
+    protected override ValueTask<ISortSessionStore> Create(CancellationToken cancellationToken) =>
+        ValueTask.FromResult<ISortSessionStore>(new FileSortSessionStore(Path.Combine(_state.Path, "judge", "sessions")));
+
+    // The judge directory's parent is a regular file, so the sessions directory can't be created.
+    protected override async ValueTask<ISortSessionStore> CreateUnavailable(CancellationToken cancellationToken)
     {
-        Assert.Skip(RedUntil.Sorter);
-        return ValueTask.FromResult<ISortSessionStore>(new FileSortSessionStore());
+        var file = Path.Combine(_state.Path, "not-a-directory");
+        await File.WriteAllTextAsync(file, "x", cancellationToken);
+        return new FileSortSessionStore(Path.Combine(file, "judge", "sessions"));
     }
 
-    protected override ValueTask<ISortSessionStore> CreateUnavailable(CancellationToken cancellationToken)
-    {
-        Assert.Skip(RedUntil.Sorter);
-        return ValueTask.FromResult<ISortSessionStore>(new FileSortSessionStore());
-    }
+    public void Dispose() => _state.Dispose();
 }

@@ -8,8 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Judge.Host.Commands;
 
 /// <summary>
-/// 'judge prompt-sort' &lt; {prompt, sessionId}: the prompt-sort.sh hook path. Unit 6.1 builds the sorter behind it; the
-/// stdout is <see cref="SortPromptOutput"/> only when a scaffold fires.
+/// 'judge prompt-sort' &lt; {prompt, sessionId}: the prompt-sort.sh hook path. The stdout is <see cref="SortPromptOutput"/>
+/// only when a scaffold fires. It fails open: whatever goes wrong inside the sorter, the prompt is not the casualty (exit 0,
+/// nothing printed); only input that isn't the hook's record is exit 1.
 /// </summary>
 internal static class SortPromptCommand
 {
@@ -25,9 +26,17 @@ internal static class SortPromptCommand
             ? id
             : services.GetRequiredService<CallingSession>().Id;
         var service = services.GetRequiredService<IService<SortPromptRequest, SortPromptResponse>>();
-        var result = await service.Handle(new SortPromptRequest(input.Value.Prompt, session, allowed?.ToArray()), CancellationToken.None).ConfigureAwait(false);
-        return result.IsError
-            ? CommandOutput.Emit(1, "", result.Error.Message)
-            : CommandOutput.Emit(0, result.Value.Context is null ? "" : CommandOutput.Json(new SortPromptOutput(result.Value.Context), json));
+        try
+        {
+            var result = await service.Handle(new SortPromptRequest(input.Value.Prompt, session, allowed?.ToArray()), CancellationToken.None).ConfigureAwait(false);
+            return result.IsError || result.Value.Context is null
+                ? CommandOutput.Emit(0, "")
+                : CommandOutput.Emit(0, CommandOutput.Json(new SortPromptOutput(result.Value.Context), json));
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // why: a hook boundary; the sorter must never be the reason a prompt breaks.
+            return CommandOutput.Emit(0, "");
+        }
     }
 }

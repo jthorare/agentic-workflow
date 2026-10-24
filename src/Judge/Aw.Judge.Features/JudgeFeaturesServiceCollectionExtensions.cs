@@ -140,6 +140,7 @@ public static class JudgeFeaturesServiceCollectionExtensions
     private static void AddCutoverVerbs(IServiceCollection services)
     {
         _ = services
+            .AddScoped<SortRecorder>()
             .AddScoped<SortPromptService>()
             .AddScoped<IValidator<SortPromptRequest>, SortPromptValidator>()
             .AddScoped<IService<SortPromptRequest, SortPromptResponse>>(static sp =>
