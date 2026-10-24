@@ -2153,8 +2153,8 @@ Aw.Evidence.Core.Data.ReportedServer.ReportedServer(string? Address, int? Port, 
 Aw.Evidence.Core.Data.ResolvedTargets.DatabaseMap.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>!
 Aw.Evidence.Core.Data.ResolvedTargets.Databases.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>?
 Aw.Evidence.Core.Data.ResolvedTargets.Databases.init -> void
-Aw.Evidence.Core.Data.ResolvedTargets.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! BuildOutputs, out System.Collections.Generic.IReadOnlyList<string!>! Allow, out System.Collections.Generic.IReadOnlyList<string!>! PassEnv, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases) -> void
-Aw.Evidence.Core.Data.ResolvedTargets.ResolvedTargets(System.Collections.Generic.IReadOnlyList<string!>! BuildOutputs, System.Collections.Generic.IReadOnlyList<string!>! Allow, System.Collections.Generic.IReadOnlyList<string!>! PassEnv, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases = null) -> void
+Aw.Evidence.Core.Data.ResolvedTargets.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! BuildOutputs, out System.Collections.Generic.IReadOnlyList<string!>! Allow, out System.Collections.Generic.IReadOnlyList<string!>! PassEnv, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases, out Aw.Evidence.Core.Data.ResolvedDesktop? Desktop) -> void
+Aw.Evidence.Core.Data.ResolvedTargets.ResolvedTargets(System.Collections.Generic.IReadOnlyList<string!>! BuildOutputs, System.Collections.Generic.IReadOnlyList<string!>! Allow, System.Collections.Generic.IReadOnlyList<string!>! PassEnv, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases = null, Aw.Evidence.Core.Data.ResolvedDesktop? Desktop = null) -> void
 Aw.Evidence.Core.Data.RoleFacts
 Aw.Evidence.Core.Data.RoleFacts.<Clone>$() -> Aw.Evidence.Core.Data.RoleFacts!
 Aw.Evidence.Core.Data.RoleFacts.BypassRowSecurity.get -> bool
@@ -2190,8 +2190,8 @@ Aw.Evidence.Core.Data.ServerIdentity.ServerIdentity(string! ServerAddress, strin
 Aw.Evidence.Core.Data.ServerIdentity.ServerPort.get -> int?
 Aw.Evidence.Core.Data.ServerIdentity.ServerPort.init -> void
 Aw.Evidence.Core.Data.TargetsFile.Databases.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>?
-Aw.Evidence.Core.Data.TargetsFile.Deconstruct(out string? Schema, out Aw.Evidence.Core.Data.CliTargets? Cli, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases) -> void
-Aw.Evidence.Core.Data.TargetsFile.TargetsFile(string? Schema = null, Aw.Evidence.Core.Data.CliTargets? Cli = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases = null) -> void
+Aw.Evidence.Core.Data.TargetsFile.Deconstruct(out string? Schema, out Aw.Evidence.Core.Data.CliTargets? Cli, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases, out Aw.Evidence.Core.Data.DesktopTargets? Desktop) -> void
+Aw.Evidence.Core.Data.TargetsFile.TargetsFile(string? Schema = null, Aw.Evidence.Core.Data.CliTargets? Cli = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Evidence.Core.Data.DatabaseEntry!>? Databases = null, Aw.Evidence.Core.Data.DesktopTargets? Desktop = null) -> void
 const Aw.Evidence.Core.Data.DatabaseEntry.Postgres = "postgres" -> string!
 override Aw.Evidence.Core.Data.DatabaseEntry.Equals(object? obj) -> bool
 override Aw.Evidence.Core.Data.DatabaseEntry.GetHashCode() -> int
@@ -2409,3 +2409,433 @@ static Aw.Evidence.Core.Publishing.GhOutcome.operator ==(Aw.Evidence.Core.Publis
 static Aw.Evidence.Core.Settings.SlotSettings.operator !=(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
 static Aw.Evidence.Core.Settings.SlotSettings.operator ==(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
 static readonly Aw.Evidence.Core.EvidenceErrors.GhPublishFailed -> Aw.Kernel.ErrorDefinition!
+Aw.Evidence.Core.Data.ResolvedTargets.Desktop.get -> Aw.Evidence.Core.Data.ResolvedDesktop?
+Aw.Evidence.Core.Data.ResolvedTargets.Desktop.init -> void
+Aw.Evidence.Core.Data.TargetsFile.Desktop.get -> Aw.Evidence.Core.Data.DesktopTargets?
+Aw.Evidence.Core.Data.TargetsFile.Desktop.init -> void
+Aw.Evidence.Core.Data.DesktopFixture
+Aw.Evidence.Core.Data.DesktopFixture.<Clone>$() -> Aw.Evidence.Core.Data.DesktopFixture!
+Aw.Evidence.Core.Data.DesktopFixture.Command.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Data.DesktopFixture.Command.init -> void
+Aw.Evidence.Core.Data.DesktopFixture.Up.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Evidence.Core.Data.DesktopFixture.Up.init -> void
+Aw.Evidence.Core.Data.DesktopFixture.Down.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Evidence.Core.Data.DesktopFixture.Down.init -> void
+Aw.Evidence.Core.Data.DesktopFixture.DesktopFixture(System.Collections.Generic.IReadOnlyList<string!>! Command, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>! Up, System.Collections.Generic.IReadOnlyList<string!>? Down = null) -> void
+Aw.Evidence.Core.Data.DesktopFixture.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Command, out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>! Up, out System.Collections.Generic.IReadOnlyList<string!>? Down) -> void
+Aw.Evidence.Core.Data.DesktopFixture.Equals(Aw.Evidence.Core.Data.DesktopFixture? other) -> bool
+override Aw.Evidence.Core.Data.DesktopFixture.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Data.DesktopFixture.GetHashCode() -> int
+override Aw.Evidence.Core.Data.DesktopFixture.ToString() -> string!
+static Aw.Evidence.Core.Data.DesktopFixture.operator !=(Aw.Evidence.Core.Data.DesktopFixture? left, Aw.Evidence.Core.Data.DesktopFixture? right) -> bool
+static Aw.Evidence.Core.Data.DesktopFixture.operator ==(Aw.Evidence.Core.Data.DesktopFixture? left, Aw.Evidence.Core.Data.DesktopFixture? right) -> bool
+Aw.Evidence.Core.Geometry.SizeText
+static Aw.Evidence.Core.Geometry.SizeText.TryParse(string? text, out Aw.Evidence.Core.Geometry.ViewportSize! size) -> bool
+static readonly Aw.Evidence.Core.EvidenceErrors.DesktopManifestInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Evidence.Core.Desktop.DesktopManifest
+Aw.Evidence.Core.Desktop.DesktopManifest.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopManifest!
+Aw.Evidence.Core.Desktop.DesktopManifest.Schema.get -> string!
+Aw.Evidence.Core.Desktop.DesktopManifest.Schema.init -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.DesignRoot.get -> string!
+Aw.Evidence.Core.Desktop.DesktopManifest.DesignRoot.init -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.Screens.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreen!>!
+Aw.Evidence.Core.Desktop.DesktopManifest.Screens.init -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.Threshold.get -> double?
+Aw.Evidence.Core.Desktop.DesktopManifest.Threshold.init -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.DesktopManifest(string! Schema, string! DesignRoot, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreen!>! Screens, double? Threshold = null) -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.Deconstruct(out string! Schema, out string! DesignRoot, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreen!>! Screens, out double? Threshold) -> void
+Aw.Evidence.Core.Desktop.DesktopManifest.Equals(Aw.Evidence.Core.Desktop.DesktopManifest? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopManifest.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopManifest.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopManifest.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopManifest.operator !=(Aw.Evidence.Core.Desktop.DesktopManifest? left, Aw.Evidence.Core.Desktop.DesktopManifest? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopManifest.operator ==(Aw.Evidence.Core.Desktop.DesktopManifest? left, Aw.Evidence.Core.Desktop.DesktopManifest? right) -> bool
+const Aw.Evidence.Core.Desktop.DesktopManifest.SchemaName = "ui-evidence.desktop-screens/1" -> string!
+Aw.Evidence.Core.Desktop.ScreenMask
+Aw.Evidence.Core.Desktop.ScreenMask.<Clone>$() -> Aw.Evidence.Core.Desktop.ScreenMask!
+Aw.Evidence.Core.Desktop.ScreenMask.X.get -> int
+Aw.Evidence.Core.Desktop.ScreenMask.X.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.Y.get -> int
+Aw.Evidence.Core.Desktop.ScreenMask.Y.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.W.get -> int
+Aw.Evidence.Core.Desktop.ScreenMask.W.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.H.get -> int
+Aw.Evidence.Core.Desktop.ScreenMask.H.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.Why.get -> string!
+Aw.Evidence.Core.Desktop.ScreenMask.Why.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.Size.get -> string?
+Aw.Evidence.Core.Desktop.ScreenMask.Size.init -> void
+Aw.Evidence.Core.Desktop.ScreenMask.ScreenMask(int X, int Y, int W, int H, string! Why, string? Size = null) -> void
+Aw.Evidence.Core.Desktop.ScreenMask.Deconstruct(out int X, out int Y, out int W, out int H, out string! Why, out string? Size) -> void
+Aw.Evidence.Core.Desktop.ScreenMask.Equals(Aw.Evidence.Core.Desktop.ScreenMask? other) -> bool
+override Aw.Evidence.Core.Desktop.ScreenMask.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.ScreenMask.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.ScreenMask.ToString() -> string!
+static Aw.Evidence.Core.Desktop.ScreenMask.operator !=(Aw.Evidence.Core.Desktop.ScreenMask? left, Aw.Evidence.Core.Desktop.ScreenMask? right) -> bool
+static Aw.Evidence.Core.Desktop.ScreenMask.operator ==(Aw.Evidence.Core.Desktop.ScreenMask? left, Aw.Evidence.Core.Desktop.ScreenMask? right) -> bool
+Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopOutcome.Passed = 0 -> Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopOutcome.Failed = 1 -> Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopOutcome.Refused = 2 -> Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopOutcome.Errored = 3 -> Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopSummary
+Aw.Evidence.Core.Desktop.DesktopSummary.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopSummary!
+Aw.Evidence.Core.Desktop.DesktopSummary.Schema.get -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.Schema.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Kind.get -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.Kind.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.RunId.get -> Aw.Evidence.Core.Ids.RunId
+Aw.Evidence.Core.Desktop.DesktopSummary.RunId.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.StartedAt.get -> System.DateTimeOffset
+Aw.Evidence.Core.Desktop.DesktopSummary.StartedAt.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.FinishedAt.get -> System.DateTimeOffset
+Aw.Evidence.Core.Desktop.DesktopSummary.FinishedAt.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.AppBuild.get -> string?
+Aw.Evidence.Core.Desktop.DesktopSummary.AppBuild.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.ManifestSha256.get -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.ManifestSha256.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Outcome.get -> Aw.Evidence.Core.Desktop.DesktopOutcome
+Aw.Evidence.Core.Desktop.DesktopSummary.Outcome.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Headline.get -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.Headline.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Screens.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreenResult!>!
+Aw.Evidence.Core.Desktop.DesktopSummary.Screens.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Refusal.get -> Aw.Evidence.Core.Data.CodedMessage?
+Aw.Evidence.Core.Desktop.DesktopSummary.Refusal.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Error.get -> Aw.Evidence.Core.Data.CodedMessage?
+Aw.Evidence.Core.Desktop.DesktopSummary.Error.init -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.DesktopSummary(string! Schema, string! Kind, Aw.Evidence.Core.Ids.RunId RunId, System.DateTimeOffset StartedAt, System.DateTimeOffset FinishedAt, string? AppBuild, string! ManifestSha256, Aw.Evidence.Core.Desktop.DesktopOutcome Outcome, string! Headline, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreenResult!>! Screens, Aw.Evidence.Core.Data.CodedMessage? Refusal, Aw.Evidence.Core.Data.CodedMessage? Error, System.Collections.Generic.IReadOnlyList<string!>! Notes) -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Deconstruct(out string! Schema, out string! Kind, out Aw.Evidence.Core.Ids.RunId RunId, out System.DateTimeOffset StartedAt, out System.DateTimeOffset FinishedAt, out string? AppBuild, out string! ManifestSha256, out Aw.Evidence.Core.Desktop.DesktopOutcome Outcome, out string! Headline, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopScreenResult!>! Screens, out Aw.Evidence.Core.Data.CodedMessage? Refusal, out Aw.Evidence.Core.Data.CodedMessage? Error, out System.Collections.Generic.IReadOnlyList<string!>! Notes) -> void
+Aw.Evidence.Core.Desktop.DesktopSummary.Equals(Aw.Evidence.Core.Desktop.DesktopSummary? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopSummary.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopSummary.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopSummary.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopSummary.operator !=(Aw.Evidence.Core.Desktop.DesktopSummary? left, Aw.Evidence.Core.Desktop.DesktopSummary? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopSummary.operator ==(Aw.Evidence.Core.Desktop.DesktopSummary? left, Aw.Evidence.Core.Desktop.DesktopSummary? right) -> bool
+const Aw.Evidence.Core.Desktop.DesktopSummary.SchemaName = "ui-evidence.desktop/1" -> string!
+const Aw.Evidence.Core.Desktop.DesktopSummary.KindName = "desktop" -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.ExitCode() -> int
+Aw.Evidence.Core.Desktop.DesktopScreenResult
+Aw.Evidence.Core.Desktop.DesktopScreenResult.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopScreenResult!
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Name.get -> string!
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Name.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Size.get -> string!
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Size.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.DiffPercent.get -> double
+Aw.Evidence.Core.Desktop.DesktopScreenResult.DiffPercent.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Threshold.get -> double
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Threshold.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Passed.get -> bool
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Passed.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Problem.get -> string?
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Problem.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Files.get -> Aw.Evidence.Core.Desktop.DesktopFiles!
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Files.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Accepted.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Accepted.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Masked.get -> int
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Masked.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.DesktopScreenResult(string! Name, string! Size, double DiffPercent, double Threshold, bool Passed, string? Problem, Aw.Evidence.Core.Desktop.DesktopFiles! Files, System.Collections.Generic.IReadOnlyList<string!>! Accepted, int Masked) -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Deconstruct(out string! Name, out string! Size, out double DiffPercent, out double Threshold, out bool Passed, out string? Problem, out Aw.Evidence.Core.Desktop.DesktopFiles! Files, out System.Collections.Generic.IReadOnlyList<string!>! Accepted, out int Masked) -> void
+Aw.Evidence.Core.Desktop.DesktopScreenResult.Equals(Aw.Evidence.Core.Desktop.DesktopScreenResult? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopScreenResult.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopScreenResult.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopScreenResult.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopScreenResult.operator !=(Aw.Evidence.Core.Desktop.DesktopScreenResult? left, Aw.Evidence.Core.Desktop.DesktopScreenResult? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopScreenResult.operator ==(Aw.Evidence.Core.Desktop.DesktopScreenResult? left, Aw.Evidence.Core.Desktop.DesktopScreenResult? right) -> bool
+Aw.Evidence.Core.Desktop.DesktopFiles
+Aw.Evidence.Core.Desktop.DesktopFiles.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopFiles!
+Aw.Evidence.Core.Desktop.DesktopFiles.App.get -> string!
+Aw.Evidence.Core.Desktop.DesktopFiles.App.init -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.Design.get -> string!
+Aw.Evidence.Core.Desktop.DesktopFiles.Design.init -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.Diff.get -> string!
+Aw.Evidence.Core.Desktop.DesktopFiles.Diff.init -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.SideBySide.get -> string!
+Aw.Evidence.Core.Desktop.DesktopFiles.SideBySide.init -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.DesktopFiles(string! App, string! Design, string! Diff, string! SideBySide) -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.Deconstruct(out string! App, out string! Design, out string! Diff, out string! SideBySide) -> void
+Aw.Evidence.Core.Desktop.DesktopFiles.Equals(Aw.Evidence.Core.Desktop.DesktopFiles? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopFiles.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopFiles.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopFiles.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopFiles.operator !=(Aw.Evidence.Core.Desktop.DesktopFiles? left, Aw.Evidence.Core.Desktop.DesktopFiles? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopFiles.operator ==(Aw.Evidence.Core.Desktop.DesktopFiles? left, Aw.Evidence.Core.Desktop.DesktopFiles? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopFiles.For(string! runDirectory, string! name, string! size) -> Aw.Evidence.Core.Desktop.DesktopFiles!
+Aw.Evidence.Core.Desktop.ScreenComparison
+Aw.Evidence.Core.Desktop.ScreenComparison.<Clone>$() -> Aw.Evidence.Core.Desktop.ScreenComparison!
+Aw.Evidence.Core.Desktop.ScreenComparison.App.get -> Aw.Evidence.Core.Images.RgbaImage!
+Aw.Evidence.Core.Desktop.ScreenComparison.App.init -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.Design.get -> Aw.Evidence.Core.Images.RgbaImage!
+Aw.Evidence.Core.Desktop.ScreenComparison.Design.init -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.Pixels.get -> Aw.Evidence.Core.Images.PixelComparison!
+Aw.Evidence.Core.Desktop.ScreenComparison.Pixels.init -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.Problem.get -> string?
+Aw.Evidence.Core.Desktop.ScreenComparison.Problem.init -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.ScreenComparison(Aw.Evidence.Core.Images.RgbaImage! App, Aw.Evidence.Core.Images.RgbaImage! Design, Aw.Evidence.Core.Images.PixelComparison! Pixels, string? Problem) -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.Deconstruct(out Aw.Evidence.Core.Images.RgbaImage! App, out Aw.Evidence.Core.Images.RgbaImage! Design, out Aw.Evidence.Core.Images.PixelComparison! Pixels, out string? Problem) -> void
+Aw.Evidence.Core.Desktop.ScreenComparison.Equals(Aw.Evidence.Core.Desktop.ScreenComparison? other) -> bool
+override Aw.Evidence.Core.Desktop.ScreenComparison.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.ScreenComparison.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.ScreenComparison.ToString() -> string!
+static Aw.Evidence.Core.Desktop.ScreenComparison.operator !=(Aw.Evidence.Core.Desktop.ScreenComparison? left, Aw.Evidence.Core.Desktop.ScreenComparison? right) -> bool
+static Aw.Evidence.Core.Desktop.ScreenComparison.operator ==(Aw.Evidence.Core.Desktop.ScreenComparison? left, Aw.Evidence.Core.Desktop.ScreenComparison? right) -> bool
+static Aw.Evidence.Core.Desktop.ScreenComparison.Compare(Aw.Evidence.Core.Images.RgbaImage! app, Aw.Evidence.Core.Images.RgbaImage! design, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Geometry.Region!>! masks) -> Aw.Kernel.Result<Aw.Evidence.Core.Desktop.ScreenComparison!>!
+Aw.Evidence.Core.Desktop.ScreenComparison.Within(double thresholdPercent) -> bool
+Aw.Evidence.Core.Desktop.CommandSpec
+Aw.Evidence.Core.Desktop.CommandSpec.<Clone>$() -> Aw.Evidence.Core.Desktop.CommandSpec!
+Aw.Evidence.Core.Desktop.CommandSpec.Argv.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Desktop.CommandSpec.Argv.init -> void
+Aw.Evidence.Core.Desktop.CommandSpec.WorkingDirectory.get -> string!
+Aw.Evidence.Core.Desktop.CommandSpec.WorkingDirectory.init -> void
+Aw.Evidence.Core.Desktop.CommandSpec.Environment.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Evidence.Core.Desktop.CommandSpec.Environment.init -> void
+Aw.Evidence.Core.Desktop.CommandSpec.Timeout.get -> System.TimeSpan
+Aw.Evidence.Core.Desktop.CommandSpec.Timeout.init -> void
+Aw.Evidence.Core.Desktop.CommandSpec.CommandSpec(System.Collections.Generic.IReadOnlyList<string!>! Argv, string! WorkingDirectory, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.TimeSpan Timeout) -> void
+Aw.Evidence.Core.Desktop.CommandSpec.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Argv, out string! WorkingDirectory, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.TimeSpan Timeout) -> void
+Aw.Evidence.Core.Desktop.CommandSpec.Equals(Aw.Evidence.Core.Desktop.CommandSpec? other) -> bool
+override Aw.Evidence.Core.Desktop.CommandSpec.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.CommandSpec.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.CommandSpec.ToString() -> string!
+static Aw.Evidence.Core.Desktop.CommandSpec.operator !=(Aw.Evidence.Core.Desktop.CommandSpec? left, Aw.Evidence.Core.Desktop.CommandSpec? right) -> bool
+static Aw.Evidence.Core.Desktop.CommandSpec.operator ==(Aw.Evidence.Core.Desktop.CommandSpec? left, Aw.Evidence.Core.Desktop.CommandSpec? right) -> bool
+Aw.Evidence.Core.Desktop.CommandResult
+Aw.Evidence.Core.Desktop.CommandResult.<Clone>$() -> Aw.Evidence.Core.Desktop.CommandResult!
+Aw.Evidence.Core.Desktop.CommandResult.ExitCode.get -> int
+Aw.Evidence.Core.Desktop.CommandResult.ExitCode.init -> void
+Aw.Evidence.Core.Desktop.CommandResult.StandardOutput.get -> string!
+Aw.Evidence.Core.Desktop.CommandResult.StandardOutput.init -> void
+Aw.Evidence.Core.Desktop.CommandResult.StandardError.get -> string!
+Aw.Evidence.Core.Desktop.CommandResult.StandardError.init -> void
+Aw.Evidence.Core.Desktop.CommandResult.CommandResult(int ExitCode, string! StandardOutput, string! StandardError) -> void
+Aw.Evidence.Core.Desktop.CommandResult.Deconstruct(out int ExitCode, out string! StandardOutput, out string! StandardError) -> void
+Aw.Evidence.Core.Desktop.CommandResult.Equals(Aw.Evidence.Core.Desktop.CommandResult? other) -> bool
+override Aw.Evidence.Core.Desktop.CommandResult.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.CommandResult.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.CommandResult.ToString() -> string!
+static Aw.Evidence.Core.Desktop.CommandResult.operator !=(Aw.Evidence.Core.Desktop.CommandResult? left, Aw.Evidence.Core.Desktop.CommandResult? right) -> bool
+static Aw.Evidence.Core.Desktop.CommandResult.operator ==(Aw.Evidence.Core.Desktop.CommandResult? left, Aw.Evidence.Core.Desktop.CommandResult? right) -> bool
+Aw.Evidence.Core.Desktop.ImageMasks
+static Aw.Evidence.Core.Desktop.ImageMasks.Apply(Aw.Evidence.Core.Images.RgbaImage! image, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Geometry.Region!>! regions) -> Aw.Evidence.Core.Images.RgbaImage!
+Aw.Evidence.Core.Desktop.DesktopManifestReader
+static Aw.Evidence.Core.Desktop.DesktopManifestReader.Read(System.ReadOnlySpan<byte> utf8Json, System.Text.Json.JsonSerializerOptions! options) -> Aw.Kernel.Result<Aw.Evidence.Core.Desktop.DesktopManifest!>!
+Aw.Evidence.Core.Desktop.IDesktopCommands
+Aw.Evidence.Core.Desktop.IDesktopCommands.RunAsync(Aw.Evidence.Core.Desktop.CommandSpec! command, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Evidence.Core.Desktop.CommandResult!>!>
+Aw.Evidence.Core.Desktop.IScratchDirectories
+Aw.Evidence.Core.Desktop.IScratchDirectories.Create(string! prefix) -> Aw.Kernel.Result<string!>!
+Aw.Evidence.Core.Desktop.IScratchDirectories.Remove(string! path) -> void
+Aw.Evidence.Core.Desktop.IStaticSite
+Aw.Evidence.Core.Desktop.IStaticSite.ServeAsync(string! directory, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Evidence.Core.Desktop.IServedSite!>!>
+Aw.Evidence.Core.Desktop.IServedSite
+Aw.Evidence.Core.Desktop.IServedSite.Origin.get -> string!
+Aw.Evidence.Core.Desktop.DesktopSummary.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Desktop.DesktopSummary.Notes.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen
+Aw.Evidence.Core.Desktop.DesktopScreen.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopScreen!
+Aw.Evidence.Core.Desktop.DesktopScreen.Name.get -> string!
+Aw.Evidence.Core.Desktop.DesktopScreen.Name.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopStep!>!
+Aw.Evidence.Core.Desktop.DesktopScreen.Steps.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Design.get -> string!
+Aw.Evidence.Core.Desktop.DesktopScreen.Design.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Fixture.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Evidence.Core.Desktop.DesktopScreen.Fixture.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Threshold.get -> double?
+Aw.Evidence.Core.Desktop.DesktopScreen.Threshold.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Masks.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.ScreenMask!>?
+Aw.Evidence.Core.Desktop.DesktopScreen.Masks.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Accepted.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Evidence.Core.Desktop.DesktopScreen.Accepted.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Sizes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Evidence.Core.Desktop.DesktopScreen.Sizes.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.SettleMs.get -> int?
+Aw.Evidence.Core.Desktop.DesktopScreen.SettleMs.init -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.DesktopScreen(string! Name, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopStep!>! Steps, string! Design, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>? Fixture = null, double? Threshold = null, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.ScreenMask!>? Masks = null, System.Collections.Generic.IReadOnlyList<string!>? Accepted = null, System.Collections.Generic.IReadOnlyList<string!>? Sizes = null, int? SettleMs = null) -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.DesktopStep!>! Steps, out string! Design, out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>? Fixture, out double? Threshold, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Desktop.ScreenMask!>? Masks, out System.Collections.Generic.IReadOnlyList<string!>? Accepted, out System.Collections.Generic.IReadOnlyList<string!>? Sizes, out int? SettleMs) -> void
+Aw.Evidence.Core.Desktop.DesktopScreen.Equals(Aw.Evidence.Core.Desktop.DesktopScreen? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopScreen.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopScreen.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopScreen.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopScreen.operator !=(Aw.Evidence.Core.Desktop.DesktopScreen? left, Aw.Evidence.Core.Desktop.DesktopScreen? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopScreen.operator ==(Aw.Evidence.Core.Desktop.DesktopScreen? left, Aw.Evidence.Core.Desktop.DesktopScreen? right) -> bool
+const Aw.Evidence.Core.Desktop.DesktopScreen.DefaultSettleMs = 1000 -> int
+Aw.Evidence.Core.Desktop.DesktopStep
+Aw.Evidence.Core.Desktop.DesktopStep.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopStep!
+Aw.Evidence.Core.Desktop.DesktopStep.Action.get -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopStep.Action.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.Target.get -> Aw.Evidence.Core.Desktop.DesktopTarget?
+Aw.Evidence.Core.Desktop.DesktopStep.Target.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.ExpectedState.get -> Aw.Evidence.Core.Desktop.DesktopExpectedState?
+Aw.Evidence.Core.Desktop.DesktopStep.ExpectedState.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.Value.get -> string?
+Aw.Evidence.Core.Desktop.DesktopStep.Value.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.Replace.get -> bool?
+Aw.Evidence.Core.Desktop.DesktopStep.Replace.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.TimeoutMs.get -> int?
+Aw.Evidence.Core.Desktop.DesktopStep.TimeoutMs.init -> void
+Aw.Evidence.Core.Desktop.DesktopStep.DesktopStep(Aw.Evidence.Core.Desktop.DesktopAction Action, Aw.Evidence.Core.Desktop.DesktopTarget? Target = null, Aw.Evidence.Core.Desktop.DesktopExpectedState? ExpectedState = null, string? Value = null, bool? Replace = null, int? TimeoutMs = null) -> void
+Aw.Evidence.Core.Desktop.DesktopStep.Deconstruct(out Aw.Evidence.Core.Desktop.DesktopAction Action, out Aw.Evidence.Core.Desktop.DesktopTarget? Target, out Aw.Evidence.Core.Desktop.DesktopExpectedState? ExpectedState, out string? Value, out bool? Replace, out int? TimeoutMs) -> void
+Aw.Evidence.Core.Desktop.DesktopStep.Equals(Aw.Evidence.Core.Desktop.DesktopStep? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopStep.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopStep.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopStep.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopStep.operator !=(Aw.Evidence.Core.Desktop.DesktopStep? left, Aw.Evidence.Core.Desktop.DesktopStep? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopStep.operator ==(Aw.Evidence.Core.Desktop.DesktopStep? left, Aw.Evidence.Core.Desktop.DesktopStep? right) -> bool
+Aw.Evidence.Core.Desktop.DesktopTarget
+Aw.Evidence.Core.Desktop.DesktopTarget.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopTarget!
+Aw.Evidence.Core.Desktop.DesktopTarget.Automation.get -> string?
+Aw.Evidence.Core.Desktop.DesktopTarget.Automation.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Name.get -> string?
+Aw.Evidence.Core.Desktop.DesktopTarget.Name.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Type.get -> string?
+Aw.Evidence.Core.Desktop.DesktopTarget.Type.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Text.get -> string?
+Aw.Evidence.Core.Desktop.DesktopTarget.Text.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Contains.get -> string?
+Aw.Evidence.Core.Desktop.DesktopTarget.Contains.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Index.get -> int?
+Aw.Evidence.Core.Desktop.DesktopTarget.Index.init -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.DesktopTarget(string? Automation = null, string? Name = null, string? Type = null, string? Text = null, string? Contains = null, int? Index = null) -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Deconstruct(out string? Automation, out string? Name, out string? Type, out string? Text, out string? Contains, out int? Index) -> void
+Aw.Evidence.Core.Desktop.DesktopTarget.Equals(Aw.Evidence.Core.Desktop.DesktopTarget? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopTarget.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopTarget.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopTarget.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopTarget.operator !=(Aw.Evidence.Core.Desktop.DesktopTarget? left, Aw.Evidence.Core.Desktop.DesktopTarget? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopTarget.operator ==(Aw.Evidence.Core.Desktop.DesktopTarget? left, Aw.Evidence.Core.Desktop.DesktopTarget? right) -> bool
+Aw.Evidence.Core.Desktop.DesktopTarget.IsEmpty.get -> bool
+Aw.Evidence.Core.Desktop.DesktopTarget.Texts.get -> System.Collections.Generic.IEnumerable<string!>!
+Aw.Evidence.Core.Desktop.DesktopExpectedState
+Aw.Evidence.Core.Desktop.DesktopExpectedState.<Clone>$() -> Aw.Evidence.Core.Desktop.DesktopExpectedState!
+Aw.Evidence.Core.Desktop.DesktopExpectedState.State.get -> string!
+Aw.Evidence.Core.Desktop.DesktopExpectedState.State.init -> void
+Aw.Evidence.Core.Desktop.DesktopExpectedState.Text.get -> string?
+Aw.Evidence.Core.Desktop.DesktopExpectedState.Text.init -> void
+Aw.Evidence.Core.Desktop.DesktopExpectedState.DesktopExpectedState(string! State, string? Text = null) -> void
+Aw.Evidence.Core.Desktop.DesktopExpectedState.Deconstruct(out string! State, out string? Text) -> void
+Aw.Evidence.Core.Desktop.DesktopExpectedState.Equals(Aw.Evidence.Core.Desktop.DesktopExpectedState? other) -> bool
+override Aw.Evidence.Core.Desktop.DesktopExpectedState.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.DesktopExpectedState.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.DesktopExpectedState.ToString() -> string!
+static Aw.Evidence.Core.Desktop.DesktopExpectedState.operator !=(Aw.Evidence.Core.Desktop.DesktopExpectedState? left, Aw.Evidence.Core.Desktop.DesktopExpectedState? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopExpectedState.operator ==(Aw.Evidence.Core.Desktop.DesktopExpectedState? left, Aw.Evidence.Core.Desktop.DesktopExpectedState? right) -> bool
+static Aw.Evidence.Core.Desktop.DesktopExpectedState.States.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Evidence.Core.Desktop.DesktopExpectedState.NeedsText(string! state) -> bool
+Aw.Evidence.Core.Desktop.AppLaunch
+Aw.Evidence.Core.Desktop.AppLaunch.<Clone>$() -> Aw.Evidence.Core.Desktop.AppLaunch!
+Aw.Evidence.Core.Desktop.AppLaunch.Argv.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Desktop.AppLaunch.Argv.init -> void
+Aw.Evidence.Core.Desktop.AppLaunch.WorkingDirectory.get -> string!
+Aw.Evidence.Core.Desktop.AppLaunch.WorkingDirectory.init -> void
+Aw.Evidence.Core.Desktop.AppLaunch.Environment.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Evidence.Core.Desktop.AppLaunch.Environment.init -> void
+Aw.Evidence.Core.Desktop.AppLaunch.AppLaunch(System.Collections.Generic.IReadOnlyList<string!>! Argv, string! WorkingDirectory, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment) -> void
+Aw.Evidence.Core.Desktop.AppLaunch.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Argv, out string! WorkingDirectory, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment) -> void
+Aw.Evidence.Core.Desktop.AppLaunch.Equals(Aw.Evidence.Core.Desktop.AppLaunch? other) -> bool
+override Aw.Evidence.Core.Desktop.AppLaunch.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Desktop.AppLaunch.GetHashCode() -> int
+override Aw.Evidence.Core.Desktop.AppLaunch.ToString() -> string!
+static Aw.Evidence.Core.Desktop.AppLaunch.operator !=(Aw.Evidence.Core.Desktop.AppLaunch? left, Aw.Evidence.Core.Desktop.AppLaunch? right) -> bool
+static Aw.Evidence.Core.Desktop.AppLaunch.operator ==(Aw.Evidence.Core.Desktop.AppLaunch? left, Aw.Evidence.Core.Desktop.AppLaunch? right) -> bool
+Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.Launch = 0 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.Click = 1 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.Type = 2 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.Key = 3 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.WaitFor = 4 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DesktopAction.Screenshot = 5 -> Aw.Evidence.Core.Desktop.DesktopAction
+Aw.Evidence.Core.Desktop.DriverCommandLine
+const Aw.Evidence.Core.Desktop.DriverCommandLine.ReadyWaitMs = 30000 -> int
+static Aw.Evidence.Core.Desktop.DriverCommandLine.Ready(System.Collections.Generic.IReadOnlyList<string!>! driver, string! directory) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Evidence.Core.Desktop.DriverCommandLine.Window(System.Collections.Generic.IReadOnlyList<string!>! driver, string! directory, Aw.Evidence.Core.Geometry.ViewportSize! size) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Evidence.Core.Desktop.DriverCommandLine.Step(System.Collections.Generic.IReadOnlyList<string!>! driver, string! directory, Aw.Evidence.Core.Desktop.DesktopStep! step, string! framePath) -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Evidence.Core.Desktop.IDesktopApps
+Aw.Evidence.Core.Desktop.IDesktopApps.StartAsync(Aw.Evidence.Core.Desktop.AppLaunch! launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Evidence.Core.Desktop.IRunningApp!>!>
+Aw.Evidence.Core.Desktop.IRunningApp
+Aw.Evidence.Core.Desktop.IRunningApp.Display.get -> string!
+Aw.Evidence.Core.Desktop.IRunningApp.Ended() -> string?
+Aw.Evidence.Core.Data.DesktopApp
+Aw.Evidence.Core.Data.DesktopApp.<Clone>$() -> Aw.Evidence.Core.Data.DesktopApp!
+Aw.Evidence.Core.Data.DesktopApp.Command.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Data.DesktopApp.Command.init -> void
+Aw.Evidence.Core.Data.DesktopApp.DesktopApp(System.Collections.Generic.IReadOnlyList<string!>! Command) -> void
+Aw.Evidence.Core.Data.DesktopApp.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Command) -> void
+Aw.Evidence.Core.Data.DesktopApp.Equals(Aw.Evidence.Core.Data.DesktopApp? other) -> bool
+override Aw.Evidence.Core.Data.DesktopApp.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Data.DesktopApp.GetHashCode() -> int
+override Aw.Evidence.Core.Data.DesktopApp.ToString() -> string!
+static Aw.Evidence.Core.Data.DesktopApp.operator !=(Aw.Evidence.Core.Data.DesktopApp? left, Aw.Evidence.Core.Data.DesktopApp? right) -> bool
+static Aw.Evidence.Core.Data.DesktopApp.operator ==(Aw.Evidence.Core.Data.DesktopApp? left, Aw.Evidence.Core.Data.DesktopApp? right) -> bool
+Aw.Evidence.Core.Data.DesktopDriver
+Aw.Evidence.Core.Data.DesktopDriver.<Clone>$() -> Aw.Evidence.Core.Data.DesktopDriver!
+Aw.Evidence.Core.Data.DesktopDriver.Command.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Data.DesktopDriver.Command.init -> void
+Aw.Evidence.Core.Data.DesktopDriver.DesktopDriver(System.Collections.Generic.IReadOnlyList<string!>! Command) -> void
+Aw.Evidence.Core.Data.DesktopDriver.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Command) -> void
+Aw.Evidence.Core.Data.DesktopDriver.Equals(Aw.Evidence.Core.Data.DesktopDriver? other) -> bool
+override Aw.Evidence.Core.Data.DesktopDriver.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Data.DesktopDriver.GetHashCode() -> int
+override Aw.Evidence.Core.Data.DesktopDriver.ToString() -> string!
+static Aw.Evidence.Core.Data.DesktopDriver.operator !=(Aw.Evidence.Core.Data.DesktopDriver? left, Aw.Evidence.Core.Data.DesktopDriver? right) -> bool
+static Aw.Evidence.Core.Data.DesktopDriver.operator ==(Aw.Evidence.Core.Data.DesktopDriver? left, Aw.Evidence.Core.Data.DesktopDriver? right) -> bool
+Aw.Evidence.Core.Data.DesktopTargets
+Aw.Evidence.Core.Data.DesktopTargets.<Clone>$() -> Aw.Evidence.Core.Data.DesktopTargets!
+Aw.Evidence.Core.Data.DesktopTargets.Manifest.get -> string!
+Aw.Evidence.Core.Data.DesktopTargets.Manifest.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.HomeEnv.get -> string!
+Aw.Evidence.Core.Data.DesktopTargets.HomeEnv.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.Fixture.get -> Aw.Evidence.Core.Data.DesktopFixture!
+Aw.Evidence.Core.Data.DesktopTargets.Fixture.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.App.get -> Aw.Evidence.Core.Data.DesktopApp!
+Aw.Evidence.Core.Data.DesktopTargets.App.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.Driver.get -> Aw.Evidence.Core.Data.DesktopDriver?
+Aw.Evidence.Core.Data.DesktopTargets.Driver.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.Sizes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Evidence.Core.Data.DesktopTargets.Sizes.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.Threshold.get -> double?
+Aw.Evidence.Core.Data.DesktopTargets.Threshold.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.TimeoutSeconds.get -> int?
+Aw.Evidence.Core.Data.DesktopTargets.TimeoutSeconds.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Evidence.Core.Data.DesktopTargets.Env.init -> void
+Aw.Evidence.Core.Data.DesktopTargets.DesktopTargets(string! Manifest, string! HomeEnv, Aw.Evidence.Core.Data.DesktopFixture! Fixture, Aw.Evidence.Core.Data.DesktopApp! App, Aw.Evidence.Core.Data.DesktopDriver? Driver = null, System.Collections.Generic.IReadOnlyList<string!>? Sizes = null, double? Threshold = null, int? TimeoutSeconds = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Env = null) -> void
+Aw.Evidence.Core.Data.DesktopTargets.Deconstruct(out string! Manifest, out string! HomeEnv, out Aw.Evidence.Core.Data.DesktopFixture! Fixture, out Aw.Evidence.Core.Data.DesktopApp! App, out Aw.Evidence.Core.Data.DesktopDriver? Driver, out System.Collections.Generic.IReadOnlyList<string!>? Sizes, out double? Threshold, out int? TimeoutSeconds, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Env) -> void
+Aw.Evidence.Core.Data.DesktopTargets.Equals(Aw.Evidence.Core.Data.DesktopTargets? other) -> bool
+override Aw.Evidence.Core.Data.DesktopTargets.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Data.DesktopTargets.GetHashCode() -> int
+override Aw.Evidence.Core.Data.DesktopTargets.ToString() -> string!
+static Aw.Evidence.Core.Data.DesktopTargets.operator !=(Aw.Evidence.Core.Data.DesktopTargets? left, Aw.Evidence.Core.Data.DesktopTargets? right) -> bool
+static Aw.Evidence.Core.Data.DesktopTargets.operator ==(Aw.Evidence.Core.Data.DesktopTargets? left, Aw.Evidence.Core.Data.DesktopTargets? right) -> bool
+const Aw.Evidence.Core.Data.DesktopTargets.DefaultThreshold = 10 -> double
+const Aw.Evidence.Core.Data.DesktopTargets.DefaultTimeoutSeconds = 300 -> int
+const Aw.Evidence.Core.Data.DesktopTargets.DefaultDriver = "aw-ui-driver" -> string!
+static Aw.Evidence.Core.Data.DesktopTargets.DefaultSizes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Data.ResolvedDesktop
+Aw.Evidence.Core.Data.ResolvedDesktop.<Clone>$() -> Aw.Evidence.Core.Data.ResolvedDesktop!
+Aw.Evidence.Core.Data.ResolvedDesktop.Manifest.get -> string!
+Aw.Evidence.Core.Data.ResolvedDesktop.Manifest.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.HomeEnv.get -> string!
+Aw.Evidence.Core.Data.ResolvedDesktop.HomeEnv.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Fixture.get -> Aw.Evidence.Core.Data.DesktopFixture!
+Aw.Evidence.Core.Data.ResolvedDesktop.Fixture.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.App.get -> Aw.Evidence.Core.Data.DesktopApp!
+Aw.Evidence.Core.Data.ResolvedDesktop.App.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.DriverCommand.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Evidence.Core.Data.ResolvedDesktop.DriverCommand.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Sizes.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Geometry.ViewportSize!>!
+Aw.Evidence.Core.Data.ResolvedDesktop.Sizes.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Threshold.get -> double
+Aw.Evidence.Core.Data.ResolvedDesktop.Threshold.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Timeout.get -> System.TimeSpan
+Aw.Evidence.Core.Data.ResolvedDesktop.Timeout.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Evidence.Core.Data.ResolvedDesktop.Env.init -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.ResolvedDesktop(string! Manifest, string! HomeEnv, Aw.Evidence.Core.Data.DesktopFixture! Fixture, Aw.Evidence.Core.Data.DesktopApp! App, System.Collections.Generic.IReadOnlyList<string!>! DriverCommand, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Geometry.ViewportSize!>! Sizes, double Threshold, System.TimeSpan Timeout, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env) -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Deconstruct(out string! Manifest, out string! HomeEnv, out Aw.Evidence.Core.Data.DesktopFixture! Fixture, out Aw.Evidence.Core.Data.DesktopApp! App, out System.Collections.Generic.IReadOnlyList<string!>! DriverCommand, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Geometry.ViewportSize!>! Sizes, out double Threshold, out System.TimeSpan Timeout, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env) -> void
+Aw.Evidence.Core.Data.ResolvedDesktop.Equals(Aw.Evidence.Core.Data.ResolvedDesktop? other) -> bool
+override Aw.Evidence.Core.Data.ResolvedDesktop.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Data.ResolvedDesktop.GetHashCode() -> int
+override Aw.Evidence.Core.Data.ResolvedDesktop.ToString() -> string!
+static Aw.Evidence.Core.Data.ResolvedDesktop.operator !=(Aw.Evidence.Core.Data.ResolvedDesktop? left, Aw.Evidence.Core.Data.ResolvedDesktop? right) -> bool
+static Aw.Evidence.Core.Data.ResolvedDesktop.operator ==(Aw.Evidence.Core.Data.ResolvedDesktop? left, Aw.Evidence.Core.Data.ResolvedDesktop? right) -> bool

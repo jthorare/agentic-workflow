@@ -1,5 +1,6 @@
 using Aw.Evidence.Core.Browser;
 using Aw.Evidence.Core.Data;
+using Aw.Evidence.Core.Desktop;
 using Aw.Evidence.Core.Files;
 using Aw.Evidence.Core.Guard;
 using Aw.Evidence.Core.Images;
@@ -11,6 +12,7 @@ using Aw.Evidence.Core.Stack;
 using Aw.Evidence.Core.Visual;
 using Aw.Evidence.Infrastructure.Browser;
 using Aw.Evidence.Infrastructure.Databases;
+using Aw.Evidence.Infrastructure.Desktop;
 using Aw.Evidence.Infrastructure.Files;
 using Aw.Evidence.Infrastructure.Guard;
 using Aw.Evidence.Infrastructure.Http;
@@ -63,6 +65,10 @@ public static class EvidenceInfrastructureServiceCollectionExtensions
             .AddSingleton<IApiTransport>(static _ => new HttpApiTransport(TimeSpan.FromSeconds(30)))
             .AddSingleton<ICliRunner>(new ProcessCliRunner(TimeSpan.FromMinutes(2)))
             .AddSingleton<IGhRunner, ProcessGhRunner>()
+            .AddSingleton<IDesktopCommands, ProcessDesktopCommands>()
+            .AddSingleton<IDesktopApps, ProcessDesktopApps>()
+            .AddSingleton<IScratchDirectories, TempScratchDirectories>()
+            .AddSingleton<IStaticSite, LoopbackStaticSite>()
             .AddSingleton<IExecutableLocator, FileExecutableLocator>()
             .AddSingleton<IEvidenceTargets, FileEvidenceTargets>()
             .AddSingleton<SqliteDatabaseReader>()

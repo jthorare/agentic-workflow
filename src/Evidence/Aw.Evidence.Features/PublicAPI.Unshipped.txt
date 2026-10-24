@@ -445,3 +445,41 @@ Aw.Evidence.Features.Doctor.DoctorResponse.Failures.get -> System.Collections.Ge
 Aw.Evidence.Features.Doctor.DoctorResponse.Failures.init -> void
 Aw.Evidence.Features.Doctor.DoctorResponse.Slot.get -> Aw.Evidence.Features.Doctor.DoctorSlot?
 Aw.Evidence.Features.Doctor.DoctorResponse.Slot.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.<Clone>$() -> Aw.Evidence.Features.DesktopRun.DesktopRunRequest!
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.ManifestPath.get -> string!
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.ManifestPath.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.RunDirectory.get -> string!
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.RunDirectory.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Repo.get -> string!
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Repo.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.LockTimeout.get -> System.TimeSpan
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.LockTimeout.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.AppBuild.get -> string?
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.AppBuild.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.ConfigPath.get -> string?
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.ConfigPath.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Screens.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Screens.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.DesktopRunRequest(string! ManifestPath, string! RunDirectory, string! Repo, System.TimeSpan LockTimeout, string? AppBuild = null, string? ConfigPath = null, System.Collections.Generic.IReadOnlyList<string!>? Screens = null) -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Deconstruct(out string! ManifestPath, out string! RunDirectory, out string! Repo, out System.TimeSpan LockTimeout, out string? AppBuild, out string? ConfigPath, out System.Collections.Generic.IReadOnlyList<string!>? Screens) -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Equals(Aw.Evidence.Features.DesktopRun.DesktopRunRequest? other) -> bool
+override Aw.Evidence.Features.DesktopRun.DesktopRunRequest.Equals(object? obj) -> bool
+override Aw.Evidence.Features.DesktopRun.DesktopRunRequest.GetHashCode() -> int
+override Aw.Evidence.Features.DesktopRun.DesktopRunRequest.ToString() -> string!
+static Aw.Evidence.Features.DesktopRun.DesktopRunRequest.operator !=(Aw.Evidence.Features.DesktopRun.DesktopRunRequest? left, Aw.Evidence.Features.DesktopRun.DesktopRunRequest? right) -> bool
+static Aw.Evidence.Features.DesktopRun.DesktopRunRequest.operator ==(Aw.Evidence.Features.DesktopRun.DesktopRunRequest? left, Aw.Evidence.Features.DesktopRun.DesktopRunRequest? right) -> bool
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.<Clone>$() -> Aw.Evidence.Features.DesktopRun.DesktopRunResponse!
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Summary.get -> Aw.Evidence.Core.Desktop.DesktopSummary!
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Summary.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Document.get -> string!
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Document.init -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.DesktopRunResponse(Aw.Evidence.Core.Desktop.DesktopSummary! Summary, string! Document) -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Deconstruct(out Aw.Evidence.Core.Desktop.DesktopSummary! Summary, out string! Document) -> void
+Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Equals(Aw.Evidence.Features.DesktopRun.DesktopRunResponse? other) -> bool
+override Aw.Evidence.Features.DesktopRun.DesktopRunResponse.Equals(object? obj) -> bool
+override Aw.Evidence.Features.DesktopRun.DesktopRunResponse.GetHashCode() -> int
+override Aw.Evidence.Features.DesktopRun.DesktopRunResponse.ToString() -> string!
+static Aw.Evidence.Features.DesktopRun.DesktopRunResponse.operator !=(Aw.Evidence.Features.DesktopRun.DesktopRunResponse? left, Aw.Evidence.Features.DesktopRun.DesktopRunResponse? right) -> bool
+static Aw.Evidence.Features.DesktopRun.DesktopRunResponse.operator ==(Aw.Evidence.Features.DesktopRun.DesktopRunResponse? left, Aw.Evidence.Features.DesktopRun.DesktopRunResponse? right) -> bool

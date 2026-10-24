@@ -1,0 +1,442 @@
+{
+  "schema": "ui-evidence.desktop-screens/1",
+  "designRoot": "../../superpowers/specs/2026-10-13-sindri-ui-screens-design/mockups",
+  "threshold": 10,
+  "screens": [
+    {
+      "name": "home",
+      "design": "home.html",
+      "fixture": [
+        [
+          "items"
+        ],
+        [
+          "workflows"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "need you"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "workflows",
+      "design": "workflows.html",
+      "fixture": [
+        [
+          "workflows"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Workflows"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "INC-14"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "workflow-project",
+      "design": "workflow-project.html",
+      "fixture": [
+        [
+          "workflows"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Workflows"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "PRJ-sync"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "click",
+          "target": {
+            "name": "PRJ-sync"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "ITM-01JD6"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "workflow-incident",
+      "design": "workflow-incident.html",
+      "fixture": [
+        [
+          "workflows"
+        ],
+        [
+          "incident",
+          "start"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Workflows"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "INC-14"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "click",
+          "target": {
+            "name": "INC-14"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "ITM-01JG2"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "item-sheet",
+      "design": "item-sheet.html",
+      "fixture": [
+        [
+          "items"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "ITM-01JE7"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "click",
+          "target": {
+            "name": "ITM-01JE7"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "ENG-511"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "recipes",
+      "design": "recipes.html",
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Recipes"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "triage.alert"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "recipe-inspector",
+      "design": "recipe-inspector.html",
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Recipes"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "triage.alert"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "click",
+          "target": {
+            "name": "triage.alert"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "d41f2a07"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "context",
+      "design": "context.html",
+      "fixture": [
+        [
+          "context",
+          "up"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Context"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "agentic-workflow"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "context-filemap",
+      "design": "context-filemap.html",
+      "fixture": [
+        [
+          "context",
+          "up"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Context"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "agentic-workflow"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "click",
+          "target": {
+            "name": "File map"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "tabs.layout"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "agents",
+      "design": "agents.html",
+      "fixture": [
+        [
+          "sessions",
+          "up"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Agents"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "snd-01JE7.2"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "system",
+      "design": "system.html",
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "System"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "index"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.UiDriver.Avalonia.Tests: the driver on a real Avalonia window under the headless platform (Skia drawing on, so a screenshot has pixels),
+       with the command line as its client (spec §4b.5). Integration lane. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.UiDriver.Avalonia.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Avalonia/Aw.UiDriver.Avalonia.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Core/Aw.UiDriver.Core.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Cli/Aw.UiDriver.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

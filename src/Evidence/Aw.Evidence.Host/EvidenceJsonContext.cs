@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Aw.Evidence.Core.Data;
 using Aw.Evidence.Core.Design;
+using Aw.Evidence.Core.Desktop;
 using Aw.Evidence.Core.Publishing;
 using Aw.Evidence.Core.Runs;
 using Aw.Evidence.Core.Scripts;
@@ -23,6 +24,8 @@ namespace Aw.Evidence.Host;
 [JsonSerializable(typeof(DbSummary))]
 [JsonSerializable(typeof(TargetsFile))]
 [JsonSerializable(typeof(DesignManifest))]
+[JsonSerializable(typeof(DesktopManifest))]
+[JsonSerializable(typeof(DesktopSummary))]
 [JsonSerializable(typeof(RunSummary))]
 [JsonSerializable(typeof(ParitySummary))]
 [JsonSerializable(typeof(VerdictCache))]

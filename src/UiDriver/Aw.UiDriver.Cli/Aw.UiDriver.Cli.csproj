@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.UiDriver.Cli: the client of the UI driver and its command line, 'aw-ui-driver'. It finds a running driver through driver.json and the
+       secret next to it (AW_UI_DRIVER_DIR or the dir option), sends one verb and prints the answer; a scripted run (desktop evidence) uses it to drive
+       any Avalonia app that opted in. NativeAOT entry point: PublishAot only under a runtime identifier, so a plain restore keeps
+       packages.lock.json RID-free for CI's locked restore on any OS. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AwAotEntryPoint>true</AwAotEntryPoint>
+    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+    <AssemblyName>aw-ui-driver</AssemblyName>
+    <RootNamespace>Aw.UiDriver.Cli</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Aw.UiDriver.Core/Aw.UiDriver.Core.csproj" />
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.UiDriver.Tests" />
+    <InternalsVisibleTo Include="Aw.UiDriver.Avalonia.Tests" />
+  </ItemGroup>
+</Project>

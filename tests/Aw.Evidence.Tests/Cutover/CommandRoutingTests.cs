@@ -33,7 +33,7 @@ public sealed class CommandRoutingTests : IDisposable
         foreach (var verb in new[]
         {
             "run", "parity", "parity-plan", "parity-comment", "parity-stale", "parity-put", "publish-plan", "doctor", "provenance",
-            "install-browser", "api-run", "db-run", "gh-publish", "version",
+            "install-browser", "api-run", "db-run", "desktop-run", "gh-publish", "version",
         })
         {
             Assert.Contains(verb, verbs, StringComparer.Ordinal);
@@ -51,6 +51,7 @@ public sealed class CommandRoutingTests : IDisposable
     [InlineData("publish-plan", "out", "--provenance", "seeded", "--linear-issue", "ABC-1")]
     [InlineData("api-run", "s.json", "out", "--at", "base", "--repo", ".", "--host", "http://localhost:3000", "--app-build", "abc", "--config", "c.json", "--lock-timeout", "5")]
     [InlineData("db-run", "s.json", "out", "--at", "head", "--repo", ".", "--app-build", "abc", "--config", "c.json", "--lock-timeout", "5")]
+    [InlineData("desktop-run", "s.json", "out", "--repo", ".", "--app-build", "abc", "--config", "c.json", "--screens", "home,agents", "--lock-timeout", "5")]
     public async Task The_flags_of_a_skill_command_line_bind(params string[] args)
     {
         string[] files = ["s.json", "m.json", "out", "u.json", "a.json"];

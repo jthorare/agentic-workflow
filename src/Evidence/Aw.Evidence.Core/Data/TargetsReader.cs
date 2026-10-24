@@ -33,7 +33,8 @@ public static partial class TargetsReader
         }
 
         var databases = CheckDatabases(file.Databases, problems);
-        return problems.Into(new ResolvedTargets(outputs, [.. allow], [.. passEnv], databases), EvidenceErrors.TargetsInvalid);
+        var desktop = DesktopTargetsRules.Resolve(file.Desktop, problems);
+        return problems.Into(new ResolvedTargets(outputs, [.. allow], [.. passEnv], databases, desktop), EvidenceErrors.TargetsInvalid);
     }
 
     private static Dictionary<string, DatabaseEntry> CheckDatabases(IReadOnlyDictionary<string, DatabaseEntry>? raw, Problems problems)

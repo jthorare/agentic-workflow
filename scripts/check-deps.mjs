@@ -262,9 +262,9 @@ function checkProjects(root, doc, byId, declared, edges, { fail, info, excepted,
   const projects = readProjects(root);
   const fileOf = new Map(projects.map((p) => [p.name, p.file]));
   const roleOfRef = (ref, refOwner) => roleOf(ref, refOwner, fileOf.get(ref) ?? null);
-  // §4b.1a: a package reaches another package only through its Core (tier-0 packages are used whole).
+  // §4b.1a: a package reaches another package only through its Core (tier-0 packages are used whole), or a project the owner lists under `exports`.
   // A tier-0 package's library projects are used whole, but never its Host, Infrastructure, Features or App.
-  const contractOk = (ref, refOwner) => (refOwner.tier === 0 ? !/\.(Host|Infrastructure|Features|App)$/.test(ref) : ref === `${refOwner.projectPrefix}.Core`);
+  const contractOk = (ref, refOwner) => (refOwner.tier === 0 ? !/\.(Host|Infrastructure|Features|App)$/.test(ref) : ref === `${refOwner.projectPrefix}.Core` || (refOwner.exports ?? []).includes(ref));
   // §4b.1: Core references Aw.Kernel only and Infrastructure its own Core and Aw.Kernel, so another
   // package's Core is held by Features (App in the small shape) or composed by Host.
   const sourceOk = (name, refOwner) => refOwner.tier === 0 || !/\.(Core|Infrastructure)$/.test(name);

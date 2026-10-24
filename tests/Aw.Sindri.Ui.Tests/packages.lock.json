@@ -469,12 +469,27 @@
           "Aw.Sindri.Ui": "[1.0.0, )"
         }
       },
+      "aw.uidriver.avalonia": {
+        "type": "Project",
+        "dependencies": {
+          "Avalonia": "[12.1.3, 12.1.3]",
+          "Aw.Kernel": "[1.0.0, )",
+          "Aw.UiDriver.Core": "[1.0.0, )"
+        }
+      },
+      "aw.uidriver.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )"
+        }
+      },
       "sindri-ui": {
         "type": "Project",
         "dependencies": {
           "Avalonia.Desktop": "[12.1.3, 12.1.3]",
           "Aw.Kernel.Telemetry": "[1.0.0, )",
-          "Aw.Sindri.Ui": "[1.0.0, )"
+          "Aw.Sindri.Ui": "[1.0.0, )",
+          "Aw.UiDriver.Avalonia": "[1.0.0, )"
         }
       },
       "Avalonia": {

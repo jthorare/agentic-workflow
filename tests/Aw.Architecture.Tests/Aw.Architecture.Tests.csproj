@@ -23,6 +23,9 @@
     <ProjectReference Include="../../src/Aw.Kernel/Aw.Kernel.csproj" />
     <ProjectReference Include="../../src/Aw.Kernel.Data/Aw.Kernel.Data.csproj" />
     <ProjectReference Include="../../src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Core/Aw.UiDriver.Core.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Avalonia/Aw.UiDriver.Avalonia.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Cli/Aw.UiDriver.Cli.csproj" />
     <ProjectReference Include="../../src/Packets/Aw.Packets.Core/Aw.Packets.Core.csproj" />
     <ProjectReference Include="../../src/Packets/Aw.Packets.App/Aw.Packets.App.csproj" />
     <ProjectReference Include="../../src/Readiness/Aw.Readiness.Core/Aw.Readiness.Core.csproj" />

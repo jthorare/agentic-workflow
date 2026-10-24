@@ -1,0 +1,36 @@
+{
+  "schema": "evidence.repo/1",
+  "desktop": {
+    "manifest": "docs/sindri/ui-evidence/screens.json",
+    "homeEnv": "AW_SINDRI_HOME",
+    "fixture": {
+      "command": [
+        "scripts/sindri-ui-fixture.sh"
+      ],
+      "up": [
+        [
+          "up"
+        ]
+      ],
+      "down": [
+        "down"
+      ]
+    },
+    "app": {
+      "command": [
+        "scripts/sindri-ui-app.sh"
+      ]
+    },
+    "driver": {
+      "command": [
+        "scripts/aw-ui-driver.sh"
+      ]
+    },
+    "sizes": [
+      "1440x900",
+      "900x900"
+    ],
+    "threshold": 10,
+    "timeoutSeconds": 900
+  }
+}

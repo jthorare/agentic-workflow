@@ -142,6 +142,15 @@
           "pattern": "^[A-Z][A-Za-z0-9.]*$",
           "description": "C# project names that belong to this package start with this prefix."
         },
+        "exports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9.]*$"
+          },
+          "uniqueItems": true,
+          "description": "Project names of this package, besides its Core, that other packages may reference (DEPS-PROJ-007 carve-out): a reviewed exception, e.g. the in-app half of a library an app links."
+        },
         "scan": {
           "$ref": "#/$defs/relPaths",
           "description": "Source dirs scanned for cli/db/file edges."

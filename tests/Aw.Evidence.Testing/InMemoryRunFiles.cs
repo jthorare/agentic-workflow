@@ -29,6 +29,15 @@ public sealed class InMemoryRunFiles : IRunFiles
         return this;
     }
 
+    /// <summary>Takes a file away without going through the port.</summary>
+    /// <param name="path">The path.</param>
+    /// <returns>This store.</returns>
+    public InMemoryRunFiles Without(string path)
+    {
+        _ = _files.Remove(path);
+        return this;
+    }
+
     /// <inheritdoc/>
     public ValueTask<Result<byte[]>> ReadAsync(string path, CancellationToken cancellationToken)
     {

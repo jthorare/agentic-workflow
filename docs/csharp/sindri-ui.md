@@ -679,6 +679,13 @@ see its exit code and standard error.
 and Sindri's HTTP API (with `control.json` and `auth/human.token`) stays the app's only contract. The edge is `status: planned` only because check-deps doesn't
 scan C# for cli edges (a current edge its scan can't find fails `DEPS-STALE-001`).
 
+### Drivable for desktop evidence
+
+`Composition.Compose` ends with `.UseAwUiDriver(args)` (Aw.UiDriver.Avalonia, docs/csharp/ui-driver.md). It does nothing unless the run sets `AW_UI_DRIVER=1` or passes
+`--ui-driver`, so a normal launch opens no port and writes no file. Desktop UI evidence (docs/csharp/evidence.md "Desktop evidence") starts the published `sindri-ui`
+that way on the seeded fixture home and drives it through its tabs and rows with `aw-ui-driver`, taking each screen's picture with the driver's `screenshot` verb.
+The driver clicks through automation peers, so a control the evidence must press needs an `AutomationProperties.Name` (the tabs and rows already have one).
+
 ## Errors
 
 The app shows the first three as words in the window, never a dialog or a crash. A call Sindri refuses (a 403 with

@@ -1,0 +1,3 @@
+#nullable enable
+Aw.UiDriver.Avalonia.UiDriverAppBuilderExtensions
+static Aw.UiDriver.Avalonia.UiDriverAppBuilderExtensions.UseAwUiDriver(this Avalonia.AppBuilder! builder, System.Collections.Generic.IReadOnlyList<string!>? args = null) -> Avalonia.AppBuilder!

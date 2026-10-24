@@ -1,6 +1,7 @@
 using Avalonia;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Views;
+using Aw.UiDriver.Avalonia;
 
 namespace Aw.Sindri.Ui.Desktop;
 
@@ -50,12 +51,14 @@ internal static class Composition
     /// <summary>The app over <paramref name="platform"/>.</summary>
     /// <param name="platform">The head's adapters.</param>
     /// <param name="clock">The clock for every timing rule.</param>
+    /// <param name="args">The command line; <code language="csharp">--ui-driver</code> (like AW_UI_DRIVER=1) makes the app drivable by aw-ui-driver, which desktop UI evidence uses. A normal launch opens no port.</param>
     /// <returns>The app's builder.</returns>
-    internal static AppBuilder Compose(SindriPlatform platform, TimeProvider clock) =>
+    internal static AppBuilder Compose(SindriPlatform platform, TimeProvider clock, IReadOnlyList<string> args) =>
         AppBuilder.Configure(() => SindriApp.Create(platform, clock))
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace()
+            .UseAwUiDriver(args);
 
     /// <summary>This OS's reduce-motion reader: macOS NSWorkspace, Windows SPI_GETCLIENTAREAANIMATION, GNOME enable-animations; elsewhere never.</summary>
     /// <returns>The reader.</returns>

@@ -15,6 +15,9 @@ internal static class Packages
         "Aw.Kernel",
         "Aw.Kernel.Data",
         "Aw.Kernel.Telemetry",
+        "Aw.UiDriver.Core",
+        "Aw.UiDriver.Avalonia",
+        "Aw.UiDriver.Cli",
         "Aw.Packets.Core",
         "Aw.Packets.App",
         "Aw.Readiness.Core",
@@ -60,5 +63,5 @@ internal static class Packages
     /// project inside a shaped root (Aw.Sindri.Engine) still fails ARCH-PLACE-001; ARCH-REG-003 fails a registered
     /// project that is neither tier 0, a layer project nor listed here.
     /// </summary>
-    public static IReadOnlyList<string> Unshaped { get; } = ["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop"];
+    public static IReadOnlyList<string> Unshaped { get; } = ["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop", "Aw.UiDriver.Avalonia", "Aw.UiDriver.Cli"];
 }

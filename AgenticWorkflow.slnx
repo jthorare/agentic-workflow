@@ -54,6 +54,11 @@
     <Project Path="src/BugFix/Aw.BugFix.Infrastructure/Aw.BugFix.Infrastructure.csproj" />
     <Project Path="src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj" />
   </Folder>
+  <Folder Name="/src/UiDriver/">
+    <Project Path="src/UiDriver/Aw.UiDriver.Core/Aw.UiDriver.Core.csproj" />
+    <Project Path="src/UiDriver/Aw.UiDriver.Avalonia/Aw.UiDriver.Avalonia.csproj" />
+    <Project Path="src/UiDriver/Aw.UiDriver.Cli/Aw.UiDriver.Cli.csproj" />
+  </Folder>
   <Folder Name="/src/Packets/">
     <Project Path="src/Packets/Aw.Packets.Core/Aw.Packets.Core.csproj" />
     <Project Path="src/Packets/Aw.Packets.App/Aw.Packets.App.csproj" />
@@ -73,6 +78,8 @@
     <Project Path="tests/Aw.Kernel.Telemetry.Testing/Aw.Kernel.Telemetry.Testing.csproj" />
     <Project Path="tests/Aw.Kernel.Telemetry.Tests/Aw.Kernel.Telemetry.Tests.csproj" />
     <Project Path="tests/Aw.LaneCap.Testing/Aw.LaneCap.Testing.csproj" />
+    <Project Path="tests/Aw.UiDriver.Tests/Aw.UiDriver.Tests.csproj" />
+    <Project Path="tests/Aw.UiDriver.Avalonia.Tests/Aw.UiDriver.Avalonia.Tests.csproj" />
     <Project Path="tests/Aw.Packets.Tests/Aw.Packets.Tests.csproj" />
     <Project Path="tests/Aw.Packets.Testing/Aw.Packets.Testing.csproj" />
     <Project Path="tests/Aw.Readiness.Tests/Aw.Readiness.Tests.csproj" />

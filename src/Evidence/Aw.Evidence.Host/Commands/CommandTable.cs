@@ -16,7 +16,7 @@ internal static class CommandTable
         '|',
         RunScriptCommand.Name, ParityCommand.Name, ParityPlanCommand.Name, ParityCommentCommand.Name, ParityStaleCommand.Name,
         ParityPutCommand.Name, PublishPlanCommand.Name, DoctorCommand.Name, CheckProvenanceCommand.Name, InstallBrowserCommand.Name, ApiRunCommand.Name, DbRunCommand.Name,
-        GhPublishCommand.Name, VersionCommand.Name);
+        DesktopRunCommand.Name, GhPublishCommand.Name, VersionCommand.Name);
 
     internal static async Task<int> Run(string[] args, IServiceProvider provider)
     {
@@ -67,6 +67,7 @@ internal static class CommandTable
             InstallBrowserCommand.Name => InstallBrowserCommand.Run(rest, services, json, cancellationToken),
             ApiRunCommand.Name => ApiRunCommand.Run(rest, services, cancellationToken),
             DbRunCommand.Name => DbRunCommand.Run(rest, services, cancellationToken),
+            DesktopRunCommand.Name => DesktopRunCommand.Run(rest, services, cancellationToken),
             GhPublishCommand.Name => GhPublishCommand.Run(rest, services, json, cancellationToken),
             VersionCommand.Name => VersionCommand.Run(rest, cancellationToken),
             _ => Task.FromResult(CommandOutput.Usage($"<{_commands}> [arguments] (unknown command '{command}')")),
