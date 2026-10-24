@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Setup;
+using Aw.Sindri.Ui.ViewModels.Approvals;
 
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 
@@ -33,7 +34,13 @@ internal sealed partial class SetupViewModel
 
         if (answer.IsSuccess)
         {
-            Show(answer.Value, read);
+            var recipes = await Workflows(url, cancellationToken).ConfigureAwait(true);
+            if (read != _reads)
+            {
+                return;
+            }
+
+            Show(answer.Value, recipes, read);
         }
         else
         {
@@ -81,28 +88,27 @@ internal sealed partial class SetupViewModel
         }
     }
 
-    private void Show(SetupView view, int read)
+    // The workflows under the workflows step: a read that fails shows none (the step is then as the server says), never an error of its own.
+    private async Task<SetupRecipeListViewModel> Workflows(Uri url, CancellationToken cancellationToken)
+    {
+        var list = await _api.Recipes(url, cancellationToken).ConfigureAwait(true);
+        return list.IsSuccess ? new SetupRecipeListViewModel(list.Value.Recipes) : SetupRecipeListViewModel.Empty;
+    }
+
+    // The server counts a workflow approved while its approval is older than what ships; the app does not: the row needs the person, with the one approve-all action.
+    private static SetupStepView Outdated(SetupStepView step, SetupRecipeListViewModel recipes) =>
+        string.Equals(step.Id, RecipesStep, StringComparison.Ordinal) && recipes.HasOutdated && string.Equals(step.State, "done", StringComparison.Ordinal)
+            ? step with { State = "needs-you", Action = ApproveAllViewModel.Action }
+            : step;
+
+    private void Show(SetupView view, SetupRecipeListViewModel recipes, int read)
     {
         var said = new List<string>();
         var served = new List<SetupStepViewModel>(view.Steps.Count);
-        foreach (var step in view.Steps)
+        foreach (var served0 in view.Steps)
         {
-            if (_rows.TryGetValue(step.Id, out var kept))
-            {
-                if (kept.Update(step, keepWorking: read <= _holdUntil) && _hasRead)
-                {
-                    said.Add(Labels.SetupChanged(kept.Title, kept.ChipWord));
-                }
-
-                served.Add(kept);
-            }
-            else
-            {
-                var row = new SetupStepViewModel(step, served.Count + 1, ActionOf);
-                Attach(row);
-                _rows[step.Id] = row;
-                served.Add(row);
-            }
+            var own = string.Equals(served0.Id, RecipesStep, StringComparison.Ordinal) ? recipes : SetupRecipeListViewModel.Empty;
+            served.Add(Place(Outdated(served0, own), own, served.Count + 1, read, said));
         }
 
         Forget(view);
@@ -116,6 +122,28 @@ internal sealed partial class SetupViewModel
         {
             Live.Say(string.Join(". ", said));
         }
+    }
+
+    // The row of a step: the one kept from an earlier read, updated in place, or a new one; the workflows are given before it words itself.
+    private SetupStepViewModel Place(SetupStepView step, SetupRecipeListViewModel own, int number, int read, List<string> said)
+    {
+        if (_rows.TryGetValue(step.Id, out var kept))
+        {
+            kept.ShowRecipes(own);
+            if (kept.Update(step, keepWorking: read <= _holdUntil) && _hasRead)
+            {
+                said.Add(Labels.SetupChanged(kept.Title, kept.ChipWord));
+            }
+
+            return kept;
+        }
+
+        var row = new SetupStepViewModel(step, number, ActionOf);
+        row.ShowRecipes(own);
+        _ = row.Update(step);   // words itself with the workflows now that it has them
+        Attach(row);
+        _rows[step.Id] = row;
+        return row;
     }
 
     private void Forget(SetupView view)

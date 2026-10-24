@@ -49,7 +49,11 @@ internal sealed partial class ShellViewModel
             }
         };
         RecipesPage.OpenRequested += (_, e) => OpenSheet(e.Link);
-        RecipesPage.ApproveNewRequested += (_, _) => Navigate(DeepLink.Setup);   // Setup's held approve-all: the app approves nothing from here
+        RecipesPage.ApproveNewRequested += (_, _) =>
+        {
+            Setup.RevealStepNext("recipes");   // lands on the workflows row, its list and the one approve-all action; the app approves nothing from here
+            Navigate(DeepLink.Setup);
+        };
         Health.Follow((url, token) => IsRecipeSheet ? Recipe.Refresh(url, token) : Task.CompletedTask);
 
         // The frame's link stacks the recipe on it (Back returns to the frame); a group head's button opens the approved version over the page it is on.

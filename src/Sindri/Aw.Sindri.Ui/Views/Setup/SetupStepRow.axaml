@@ -66,6 +66,19 @@
       <Panel IsVisible="{Binding Profile, Converter={x:Static ObjectConverters.IsNotNull}}">
         <sw:SetupProfileConfirmView x:Name="SetupStepProfileConfirm" DataContext="{Binding Profile}" />
       </Panel>
+      <StackPanel x:Name="SetupStepRecipes" Spacing="4" IsVisible="{Binding Recipes.HasLines}">
+        <TextBlock x:Name="SetupStepRecipesHeading" Classes="body-strong" Text="{Binding Recipes.Heading}" IsVisible="{Binding Recipes.HasOutdated}" />
+        <ItemsControl x:Name="SetupStepRecipeLines" ItemsSource="{Binding Recipes.Lines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="sv:SetupRecipeLineViewModel">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2" Focusable="True" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <TextBlock Grid.Column="0" Classes="caption" Text="{Binding Name}" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Classes.error="{Binding IsOutdated}" AutomationProperties.AccessibilityView="Raw" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
       <Panel IsVisible="{Binding Workflows, Converter={x:Static ObjectConverters.IsNotNull}}">
         <sw:SetupWorkflowsConfirmView x:Name="SetupStepWorkflowsConfirm" DataContext="{Binding Workflows}" />
       </Panel>

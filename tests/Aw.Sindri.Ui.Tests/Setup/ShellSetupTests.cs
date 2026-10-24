@@ -139,4 +139,18 @@ public sealed class ShellSetupTests
 
         Assert.Equal(["setup:mcp", "setup:recipes"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }, Token);
+
+    [Fact]
+    public Task Approve_nudge_lands_on_the_outdated_list() => UiThread.Run(async () =>
+    {
+        _server.RecipeListAnswer = FakeSindriApi.OutdatedRecipeList();
+        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "recipes", "done").ToJsonString());
+        var shell = await Connected();
+        var landed = "none";
+        shell.Setup.RevealRequested += (_, e) => landed = e.StepId;
+
+        shell.RecipesPage.RequestApproveNew();
+
+        Assert.Equal((PageId.Settings, "recipes", true), (shell.CurrentPage, landed, shell.Setup.Steps.Single(s => s.Id == "recipes").IsOpen));
+    }, Token);
 }

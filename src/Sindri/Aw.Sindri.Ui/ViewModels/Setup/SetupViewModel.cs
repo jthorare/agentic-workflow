@@ -146,6 +146,17 @@ internal sealed partial class SetupViewModel : ObservableObject
         RevealRequested?.Invoke(this, new SetupRevealEventArgs(step));
     }
 
+    /// <summary>Has the next reveal bring one step into view and open it (the Recipes page's Approve new workflows lands on the workflows row).</summary>
+    /// <param name="id">The step's id.</param>
+    internal void RevealStepNext(string id)
+    {
+        _revealStep = id;
+        if (_rows.TryGetValue(id, out var row))
+        {
+            row.IsOpen = true;
+        }
+    }
+
     /// <summary>The first step still to do (or being worked on), as Home's line names it; empty when setup is finished or before the first list.</summary>
     public string HomeStepText { get; private set => Set(ref field, value); } = string.Empty;
 

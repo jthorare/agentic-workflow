@@ -185,4 +185,21 @@ internal static partial class Labels
         "RefreshContextMap" => "sindri context map refresh",
         _ => string.Empty,
     };
+
+    /// <summary>The action over the list of outdated workflows.</summary>
+    internal const string SetupReapproveAll = "Re-approve all updated workflows";
+
+    /// <summary>A workflow that is approved at its shipped version and hash.</summary>
+    internal const string SetupRecipeApproved = "approved";
+
+    /// <summary>A workflow that is approved but changed since, without a version to name.</summary>
+    internal const string SetupRecipeOutOfDate = "Out of date";
+
+    /// <summary>"approved v4, v5 available": the approved version and the shipped one.</summary>
+    internal static string SetupRecipeNewer(int approved, int shipped) =>
+        string.Create(CultureInfo.InvariantCulture, $"approved v{approved}, v{shipped} available");
+
+    /// <summary>The line under the workflows row when some approvals are older than what ships.</summary>
+    internal static string SetupOutdatedSub(int count) =>
+        string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "workflow has a newer version" : "workflows have a newer version")} waiting for your approval.");
 }
