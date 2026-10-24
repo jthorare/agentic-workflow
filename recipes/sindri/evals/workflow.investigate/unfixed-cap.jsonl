@@ -1,3 +1,5 @@
 {"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:expected":"A CSV downloads.","fact:actual":"Nothing happens."}}}
-{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"Handler is bound; the request is never sent."}},"expect":{"state":"investigate"}}
-{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"The request is sent; the response is dropped."}},"expect":{"state":"unfixed","outcome":"unresolved"}}
+{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"Finding number 1 is different from the last."}},"expect":{"state":"investigate"}}
+{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"Finding number 2 is different from the last."}},"expect":{"state":"investigate"}}
+{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"Finding number 3 is different from the last."}},"expect":{"state":"investigate"}}
+{"trigger":{"kind":"step.completed","outcome":"unfixed","outputs":{"fact:findings":"Finding number 4 is different from the last."}},"expect":{"state":"unfixed","outcome":"unresolved"}}

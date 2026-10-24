@@ -22,17 +22,17 @@ public sealed class InstanceViewsTests
 
         Assert.Equal(("produce", "desk task"), (view.State, view.Detail));
         Assert.Equal(
-            "Produce the Step output for T-3 (round 1/3), then run:\nsindri workflow complete T-3/step/1 --run 1.1 --outcome done --output fact:output=<file>",
+            "Produce the Step output for T-3 (round 1/5), then run:\nsindri workflow complete T-3/step/1 --run 1.1 --outcome done --output fact:output=<file>",
             view.Next);
         Assert.Equal("complete, takeover, cancel", StatusLayout.Commands(view));
-        Assert.Equal((0, 1_000_000, 0, null), (view.Budget!.State, view.Budget.StateCap, view.Budget.Instance, view.Budget.InstanceCap));
+        Assert.Equal((0, 5_000_000, 0, null), (view.Budget!.State, view.Budget.StateCap, view.Budget.Instance, view.Budget.InstanceCap));
         Assert.Null(view.Answer);
     }
 
     [Theory]
     [InlineData("parked-rounds", "rounds", "sindri workflow answer T-3/step/1 --grant 1     (at a terminal)")]
     [InlineData("parked-no-progress-child", "no-progress (child)", "sindri workflow answer T-3/step/1 --grant 1     (at a terminal; forwarded to the child)")]
-    [InlineData("parked-budget", "budget", "sindri workflow answer T-3/step/1 --grant-tokens 1M     (at a terminal; once per park)")]
+    [InlineData("parked-budget", "budget", "sindri workflow answer T-3/step/1 --grant-tokens 5M     (at a terminal; once per park)")]
     [InlineData("parked-needs-answer-step", "needs-answer", "sindri workflow answer T-3/step/1 --text <answer>")]
     [InlineData("parked-needs-answer-wait", "needs-answer", "sindri workflow answer T-3/step/1 --resume [--text <answer>]")]
     [InlineData("parked-timeout", "timeout", "sindri workflow answer T-3/step/1 --resume")]
@@ -118,7 +118,7 @@ public sealed class InstanceViewsTests
     [Theory]
     [InlineData("parked-rounds", "answer-grant=--grant 1")]
     [InlineData("parked-no-progress-child", "answer-grant=--grant 1", "answer-text=--text <answer>")]
-    [InlineData("parked-budget", "answer-grant-tokens=--grant-tokens 1M")]
+    [InlineData("parked-budget", "answer-grant-tokens=--grant-tokens 5M")]
     [InlineData("parked-budget-odd", "answer-grant-tokens=--grant-tokens 25k")]
     [InlineData("parked-mirrored-rounds", "answer-grant=--grant 1")]
     [InlineData("parked-mirrored-timeout", "answer-resume=--resume")]

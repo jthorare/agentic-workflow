@@ -23,14 +23,14 @@ public sealed class TimerExpiryTests
     [Fact, Trait("Lane", "unit")]
     public void State_timeout_then_park_parks_timeout_on_the_same_run()
     {
-        var verify = Agent(At(Step, "verify", entry: 3));   // timeout: { after: 1h, then: park }
+        var verify = Agent(At(Step, "verify", entry: 3));   // timeout: { after: 4h, then: park }
 
         var applied = Assert.IsType<Applied>(Expire(verify, DeadlineKind.State));
 
         var after = applied.Changes[0].After;
         var park = Assert.IsType<Suspension>(after.Suspension);
         Assert.Equal((SuspensionKind.Park, ParkReason.Timeout, ResumeKind.Rearm), (park.Kind, park.Reason, park.Resume.Kind));
-        Assert.Equal(("verify ran past 1h", Timers), (park.Question, park.Actor));
+        Assert.Equal(("verify ran past 4h", Timers), (park.Question, park.Actor));
         Assert.Equal(("parked", "verify", "3.1"), (after.State, after.Frame.State, after.Frame.Run?.Token.Value));
         Assert.Equal(("deadline", Timers), (applied.Changes[0].Event.Trigger.Kind, applied.Changes[0].Event.Trigger.Actor));
         Assert.Empty(applied.Effects);

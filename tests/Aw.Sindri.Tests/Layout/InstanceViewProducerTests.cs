@@ -107,8 +107,8 @@ public sealed class InstanceViewProducerTests
     {
         var produce = Produce().States[0];
 
-        Assert.Equal(new Round(1, 3), produce.Round);
-        Assert.Equal([new LoopPair("verify", 0, 3), new LoopPair("checks", 0, 3)], produce.Loops);
+        Assert.Equal(new Round(1, 5), produce.Round);
+        Assert.Equal([new LoopPair("verify", 0, 5), new LoopPair("checks", 0, 5)], produce.Loops);
         Assert.True(produce.Desk);
         Assert.False(produce.Child);
         Assert.Null(produce.Badge);
@@ -117,11 +117,11 @@ public sealed class InstanceViewProducerTests
     [Fact]
     public void A_loop_pair_counts_the_rounds_completed_so_far()
     {
-        var view = Produce(i => i with { Loops = new Dictionary<string, Core.Workflow.Engine.Instances.LoopState>(StringComparer.Ordinal) { ["revisions"] = new(3, 3, Last: null) } });
+        var view = Produce(i => i with { Loops = new Dictionary<string, Core.Workflow.Engine.Instances.LoopState>(StringComparer.Ordinal) { ["revisions"] = new(3, 5, Last: null) } });
 
-        Assert.Equal(new Round(3, 3), view.States[0].Round);
-        Assert.Equal([new LoopPair("verify", 2, 3), new LoopPair("checks", 2, 3)], view.States[0].Loops);
-        Assert.Equal([new LoopPair("produce", 2, 3)], view.States[1].Loops);
+        Assert.Equal(new Round(3, 5), view.States[0].Round);
+        Assert.Equal([new LoopPair("verify", 2, 5), new LoopPair("checks", 2, 5)], view.States[0].Loops);
+        Assert.Equal([new LoopPair("produce", 2, 5)], view.States[1].Loops);
     }
 
     [Fact]
@@ -280,9 +280,9 @@ public sealed class InstanceViewProducerTests
 
         Assert.Equal([new StatusInput("fact:spec", "spec.md", $"sha256:{EngineFixture.Fact("the spec").Sha256}")], status.Inputs);
         Assert.Equal(new StatusTimeout(TimeoutKind.Parks, 3 * 3600, "produce"), status.Timeout);
-        Assert.Equal(new StatusBudget("state", 0, 1_000_000, new BudgetFigures(0, Limit: null)), status.Budget);
+        Assert.Equal(new StatusBudget("state", 0, 5_000_000, new BudgetFigures(0, Limit: null)), status.Budget);
         Assert.Contains("  timeout   parks in 3h 0m (desk)\n".Replace("0m (desk)", "(desk)", StringComparison.Ordinal), status.Text, StringComparison.Ordinal);
-        Assert.Contains("tokens 0 / 1M (state)", status.Text, StringComparison.Ordinal);
+        Assert.Contains("tokens 0 / 5M (state)", status.Text, StringComparison.Ordinal);
         Assert.Null(status.Answer);
         Assert.Equal("CompleteStep", status.Commands[0].ActionId.Value);
     }
@@ -292,7 +292,7 @@ public sealed class InstanceViewProducerTests
     {
         var parked = InstanceViews.Status(StatusCases.View("parked-budget"), StatusCases.Now);
 
-        Assert.Contains("1M", parked.Text, StringComparison.Ordinal);
+        Assert.Contains("5M", parked.Text, StringComparison.Ordinal);
         Assert.Equal("1.5k", StatusText.Tokens(1500));
     }
 
@@ -323,7 +323,7 @@ public sealed class InstanceViewProducerTests
     [Theory]
     [InlineData("parked-rounds", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant 1", true)]
     [InlineData("parked-no-progress-child", AnswerKind.Grant, "ApplyCommand:answer-grant", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant 1", true)]
-    [InlineData("parked-budget", AnswerKind.GrantTokens, "ApplyCommand:answer-grant-tokens", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant-tokens 1M", true)]
+    [InlineData("parked-budget", AnswerKind.GrantTokens, "ApplyCommand:answer-grant-tokens", ActionClass.Protected, "sindri workflow answer T-3/step/1 --grant-tokens 5M", true)]
     [InlineData("escalated-gate", AnswerKind.Accept, "ApplyCommand:answer-accept", ActionClass.Protected, "sindri workflow answer T-3/step/1 --accept", true)]
     [InlineData("parked-needs-answer-step", AnswerKind.Text, "ApplyCommand:answer-text", ActionClass.Desk, "sindri workflow answer T-3/step/1 --text <answer>", false)]
     [InlineData("parked-needs-answer-wait", AnswerKind.Resume, "ApplyCommand:answer-resume", ActionClass.Desk, "sindri workflow answer T-3/step/1 --resume [--text <answer>]", false)]

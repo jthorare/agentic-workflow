@@ -7,12 +7,12 @@ namespace Aw.Sindri.Features.Blocks.Gate;
 
 /// <summary>
 /// 'gate.pr.autofix-cap' (PR babysitter spec §10.1, IDEA-016): refuses once the CI fixes pushed to this pull request reach
-/// the 'cap' (the profile's 'workflow.pr.autofixCap', default 3). The count is the 'ciFixes' counter of 'fact:push'; the
+/// the 'cap' (the profile's 'workflow.pr.autofixCap', default 5). The count is the 'ciFixes' counter of 'fact:push'; the
 /// gate reads facts only and never the forge.
 /// </summary>
 internal sealed class PrAutofixCapGate : IGate, IDescribedBlock
 {
-    private const int DefaultCap = 3;
+    private const int DefaultCap = 5;
 
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor => PrGates.AutofixCap;

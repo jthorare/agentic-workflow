@@ -77,7 +77,7 @@ states:
         onParked: propagate
     timeout: { after: 2d, then: park }
     next: "Waiting for the other evidence for {item}: run `sindri workflow status {instance}`."
-  evidence-none: { kind: active, step: step.evidence.none, timeout: { after: 1h, then: park },
+  evidence-none: { kind: active, step: step.evidence.none, timeout: { after: 4h, then: park },
                    next: "Record that the always-run checks are the evidence for {item}." }
   done:    { kind: terminal, outcome: resolved }
   failed:  { kind: terminal, outcome: unresolved }
@@ -87,10 +87,10 @@ transitions:
   - { from: [route-evidence, route-evidence-desk], to: evidence-ui, on: step.completed, when: { outcome: ui }, produces: [fact:decision] }
   - { from: [route-evidence, route-evidence-desk], to: evidence-api, on: step.completed, when: { outcome: api }, produces: [fact:decision] }
   - { from: [route-evidence, route-evidence-desk], to: evidence-db, on: step.completed, when: { outcome: db }, produces: [fact:decision] }
-  - { from: [route-evidence, route-evidence-desk], to: evidence-all, on: step.completed, when: { outcome: all }, produces: [fact:decision] }
+  - { from: route-evidence, to: evidence-all, on: step.completed, when: { any: [ { outcome: all }, { outcome: uncertain } ] }, produces: [fact:decision] }
+  - { from: route-evidence-desk, to: evidence-all, on: step.completed, when: { outcome: all }, produces: [fact:decision] }
   - { from: [route-evidence, route-evidence-desk], to: evidence-none, on: step.completed, when: { outcome: none }, produces: [fact:decision] }
   - { from: [route-evidence, route-evidence-desk], to: evidence-other, on: step.completed, when: { outcome: other }, produces: [fact:decision] }
-  - { from: route-evidence, to: route-evidence-desk, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }
   - { from: route-evidence, to: route-evidence-desk, on: step.failed }
   - { from: [evidence-ui, evidence-api, evidence-db, evidence-all, evidence-other], to: done, on: wait.satisfied, when: { outcome: resolved }, produces: [fact:evidenceSummary] }
   - { from: [evidence-ui, evidence-api, evidence-db, evidence-other], to: failed, on: wait.satisfied, when: { outcome: unresolved }, produces: [fact:evidenceSummary] }

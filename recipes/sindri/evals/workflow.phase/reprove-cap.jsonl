@@ -11,4 +11,10 @@
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:review":{"blocking":0}}},"expect":{"state":"drift"}}
 {"trigger":{"kind":"step.completed","outcome":"moved","outputs":{"fact:built":{"head":"def456"},"fact:change":{"head":"def456"}}},"expect":{"state":"prove"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:proofPack":{"phase":"1"}}},"expect":{"state":"review"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:review":{"blocking":0}}},"expect":{"state":"drift"}}
+{"trigger":{"kind":"step.completed","outcome":"moved","outputs":{"fact:built":{"head":"def456"},"fact:change":{"head":"def456"}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:proofPack":{"phase":"1"}}},"expect":{"state":"review"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:review":{"blocking":0}}},"expect":{"state":"drift"}}
+{"trigger":{"kind":"step.completed","outcome":"moved","outputs":{"fact:built":{"head":"def456"},"fact:change":{"head":"def456"}}},"expect":{"state":"prove"}}
+{"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:proofPack":{"phase":"1"}}},"expect":{"state":"review"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:review":{"blocking":0}}},"expect":{"state":"parked","park":"rounds"}}

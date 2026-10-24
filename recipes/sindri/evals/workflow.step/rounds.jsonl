@@ -1,7 +1,11 @@
 {"start":{"inputs":{"fact:spec":"Add a --version flag that prints the build's version."}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Added --version."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test VersionFlag_prints_the_version fails: printed nothing"}},"expect":{"state":"produce"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Wired --version into the parser."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test VersionFlag_prints_the_version fails: printed 'unknown'"}},"expect":{"state":"produce"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Read the version from the assembly."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test VersionFlag_prints_the_version fails: printed '0.0.0'"}},"expect":{"state":"parked","park":"rounds"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 1."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (1)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 2."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (2)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 3."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (3)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 4."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (4)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 5."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (5)"}},"expect":{"state":"parked","park":"rounds"}}

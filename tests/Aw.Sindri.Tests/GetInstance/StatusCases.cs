@@ -64,7 +64,7 @@ internal static class StatusCases
     {
         "desk-task" => Case(Produce(), Ago(72), timeoutAt: Now + new TimeSpan(days: 1, hours: 22, minutes: 48, seconds: 0)),
         "parked-no-progress-child" => Case(MirroringChild(), Ago(12), children: [new ChildView(InstanceAddress.From("T-3/step/1/step.4"), "parked: no-progress")]),
-        "parked-budget" => Case(Park(ParkReason.Budget, ParkKind.Step, "produce used 1M of 1M tokens") with { Spent = Spent(1_000_000) }, Ago(3)),
+        "parked-budget" => Case(Park(ParkReason.Budget, ParkKind.Step, "produce used 5M of 5M tokens") with { Spent = Spent(5_000_000) }, Ago(3)),
         "escalated-gate" => Case(Escalated(), Ago(120)),
         "taken-over" => Case(TakenOver(TimeSpan.FromSeconds(40)), Ago(5)),
         "done" => Case(Ended("done", "resolved"), Ago(1)),

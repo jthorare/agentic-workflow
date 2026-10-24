@@ -2,6 +2,10 @@
 {"trigger":{"kind":"step.completed","outcome":"candidates","outputs":{"fact:docsResult":{"result":"candidates","headSha":"abc123"},"fact:docsScope":{"docs":["docs/usage.md"]},"fact:prState":{"head":"abc123"},"fact:findings":{},"fact:handoffNote":"n","fact:workspace":"/tmp/docs-wt"}},"expect":{"state":"route"}}
 {"trigger":{"kind":"step.completed","outcome":"update","outputs":{"fact:decision":{"choice":"update"}}},"expect":{"state":"update"}}
 {"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link 1"}]}},"expect":{"state":"update"}}
 {"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link"}]}},"expect":{"state":"not-done","outcome":"unresolved"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link 2"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link 3"}]}},"expect":{"state":"update"}}
+{"trigger":{"kind":"step.completed","outcome":"changed","outputs":{"fact:handoffNote":"edited"}},"expect":{"state":"check"}}
+{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:findings":[{"file":"docs/usage.md","check":"links","message":"broken link 4"}]}},"expect":{"state":"not-done","outcome":"unresolved"}}

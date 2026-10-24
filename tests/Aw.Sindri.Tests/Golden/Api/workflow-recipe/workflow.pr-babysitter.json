@@ -481,13 +481,13 @@
       "name": "docs-merges",
       "from": "docs-merge-owner",
       "to": "docs-merging",
-      "cap": 3
+      "cap": 5
     },
     {
       "name": "cycles",
       "from": "restacking",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "retries",
@@ -499,13 +499,13 @@
       "name": "cycles",
       "from": "pushing",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "await",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "comments",
@@ -553,13 +553,13 @@
       "name": "cycles",
       "from": "next-comment",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "recheck",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "rechecks",
@@ -571,19 +571,19 @@
       "name": "cycles",
       "from": "docs",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "docs",
       "from": "docs",
       "to": "docs-owner",
-      "cap": 3
+      "cap": 5
     },
     {
       "name": "cycles",
       "from": "docs-owner",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "refresh",
@@ -595,19 +595,19 @@
       "name": "cycles",
       "from": "ready-check",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "merging",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "rework-notes",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "held",
@@ -625,19 +625,19 @@
       "name": "cycles",
       "from": "owner-comment",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "held-next",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     },
     {
       "name": "cycles",
       "from": "ready",
       "to": "snapshot",
-      "cap": 150
+      "cap": 1000
     }
   ],
   "displayName": "Watch the pull request until you merge it",

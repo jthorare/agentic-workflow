@@ -39,7 +39,7 @@ states:
     kind: active
     step: { use: step.pr.ci-fix, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
     loop: ci
-    budget: { tokens: 1M }
+    budget: { tokens: 5M }
     timeout: { after: 4h, then: park }
     next: "Fix the failing checks on {item}'s pull request, attempt {loop.ci}/{loop.ci.cap}. Commit in the workspace; Sindri pushes."
   next-comment:
@@ -77,26 +77,26 @@ states:
   fix:
     kind: active
     step: { use: step.pr.fix-comment, with: { effort: full }, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
-    budget: { tokens: 1M }
+    budget: { tokens: 5M }
     timeout: { after: 4h, then: park }
     next: "Make the change this comment asks for on {item}'s pull request. Commit with its trailer; Sindri pushes."
   fix-nit:
     kind: active
     step: { use: step.pr.fix-comment, with: { effort: cheap }, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
-    budget: { tokens: 1M }
-    timeout: { after: 1h, then: park }
+    budget: { tokens: 5M }
+    timeout: { after: 4h, then: park }
     next: "Fix this nit if it is cheap; otherwise decline it with a one-line reason."
   fix-bot:
     kind: active
     step: { use: step.pr.fix-comment, with: { effort: bot }, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
-    budget: { tokens: 1M }
-    timeout: { after: 2h, then: park }
+    budget: { tokens: 5M }
+    timeout: { after: 4h, then: park }
     next: "Fix this automated finding, or decline it with the reason it doesn't apply."
   reply:
     kind: active
     step: { use: step.pr.reply-draft, inputs: [input.pr.context, input.handoff-note] }
-    budget: { tokens: 1M }
-    timeout: { after: 1h, then: park }
+    budget: { tokens: 5M }
+    timeout: { after: 4h, then: park }
     next: "Draft the reply to this comment on {item}'s pull request. Sindri checks and posts it."
   pushing:
     kind: wait
@@ -166,7 +166,7 @@ states:
     why: "Fixes a held comment the way you decided."
     kind: active
     step: { use: step.pr.fix-comment, with: { effort: full }, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
-    budget: { tokens: 1M }
+    budget: { tokens: 5M }
     timeout: { after: 4h, then: park }
     next: "Make the fix the owner asked for on this held comment. Commit with its trailer; Sindri pushes when the walk ends."
   rework-notes:
@@ -184,7 +184,7 @@ states:
   docs-merging:
     kind: wait
     waitFor: { event: pr.docsMerged }
-    timeout: { after: 2h, then: park }
+    timeout: { after: 4h, then: park }
     next: "{item}'s pull request is merged; waiting for its stacked docs PR to be retargeted, checked and merged."
   docs-merge-owner:
     displayName: "Decide about the docs pull request"
@@ -383,15 +383,15 @@ transitions:
   - { from: owner, to: stopped, on: step.completed, when: { outcome: stop },
       effects: [{ use: effect.pr.record, with: { kind: end, terminal: stopped } }] }
 loops:
-  cycles:      { cap: 150 }
-  ci:          { cap: 3 }
+  cycles:      { cap: 1000 }
+  ci:          { cap: 5 }
   comments:    { cap: 60 }
   rounds:      { cap: 6 }
   rechecks:    { cap: 4 }
-  docs:        { cap: 3 }
+  docs:        { cap: 5 }
   refresh:     { cap: 500 }
   held:        { cap: 40 }
-  docs-merges: { cap: 3 }
+  docs-merges: { cap: 5 }
   retries:     { cap: 5 }
 evals:
   - evals/workflow.pr-babysitter/happy.jsonl

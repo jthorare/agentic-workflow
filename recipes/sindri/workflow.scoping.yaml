@@ -16,13 +16,13 @@ outputs:
   - { key: fact:scopePacket,   label: "Scope packet",    type: payload,   from: freeze }
 initial: intake
 states:
-  intake:       { displayName: "Take in the request", why: "Sorts a brief, ticket, idea or change into the right reader; without it the stage would guess the input.", kind: active, step: step.scope.intake, timeout: { after: 1h, then: park },
+  intake:       { displayName: "Take in the request", why: "Sorts a brief, ticket, idea or change into the right reader; without it the stage would guess the input.", kind: active, step: step.scope.intake, timeout: { after: 4h, then: park },
                   next: "Say what {item} asks to scope: a brief, a tracker item, a rough idea or a change." }
-  read-brief:   { kind: active, step: step.scope.read-brief, timeout: { after: 1h, then: park },
+  read-brief:   { kind: active, step: step.scope.read-brief, timeout: { after: 4h, then: park },
                   next: "Read the brief for {item}, the whole file or its named section." }
-  read-tracker: { kind: active, step: step.scope.read-tracker, timeout: { after: 1h, then: park },
+  read-tracker: { kind: active, step: step.scope.read-tracker, timeout: { after: 4h, then: park },
                   next: "Read {item}'s tracker project or issue through the tracker port." }
-  read-change:  { kind: active, step: step.scope.read-change, timeout: { after: 1h, then: park },
+  read-change:  { kind: active, step: step.scope.read-change, timeout: { after: 4h, then: park },
                   next: "Read {item}'s change: the diff against its merge base, the commits and the PR body." }
   idea:         { kind: wait, timeout: { after: 7d, then: park },
                   waitFor: { child: { recipe: workflow.idea-to-brief, onParked: propagate,
@@ -41,23 +41,23 @@ states:
         - { use: input.context.history, with: { anchors: { fact: fact:anchors }, window: { profile: workflow.scoping.historyWindow } } }
     timeout: { after: 30m, then: park }
     next: "Run the four lenses for {item}: product surfaces and related features, code, then history (pass {loop.rescope}/{loop.rescope.cap})."
-  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
-  check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1h, then: park },
+  check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 4h, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
-  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 1M }, timeout: { after: 1h, then: park },
+  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
                   next: "Find {item}'s behaviour gaps and draft up to five questions with options (round {loop.interview}/{loop.interview.cap})." }
   interview:    { kind: active, step: step.interview.answer, timeout: { after: 2d, then: park },
                   next: "Answer the questions on {item}: pick an option, write your own under other, or skip one." }
-  record:       { kind: active, step: step.interview.record, timeout: { after: 1h, then: park },
+  record:       { kind: active, step: step.interview.record, timeout: { after: 4h, then: park },
                   next: "Append {item}'s latest answers to the answer log." }
-  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 1M }, timeout: { after: 1h, then: park },
+  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
                   next: "Fold the answers into {item}'s answer log, scope map, acceptance list and open questions." }
-  reanchor:     { kind: active, step: step.scope.reanchor, timeout: { after: 1h, then: park },
+  reanchor:     { kind: active, step: step.scope.reanchor, timeout: { after: 4h, then: park },
                   next: "Turn {item}'s changed scope map into anchors the product map knows." }
-  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: step.scope.challenge, loop: challenge, budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: step.scope.challenge, loop: challenge, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
                   next: "Challenge {item}'s scope on another model: surfaces and behaviours the map misses (round {loop.challenge}/{loop.challenge.cap})." }
-  challenge-log: { kind: active, step: step.scope.challenge-log, timeout: { after: 1h, then: park },
+  challenge-log: { kind: active, step: step.scope.challenge-log, timeout: { after: 4h, then: park },
                   next: "Append the challenger's round to {item}'s challenge record, earlier rounds unchanged." }
   size:
     displayName: "Estimate size"
@@ -78,16 +78,16 @@ states:
     next: "The judge picks {item}'s size; `sindri workflow status {instance}` shows the choices."
   size-desk:    { kind: active, step: { use: step.desk.choose, with: { from: size } }, timeout: { after: 2d, then: park },
                   next: "Pick the size of {item}. Each choice shows the model's lean, if it had one." }
-  propose:      { kind: active, step: step.scope.propose, timeout: { after: 1h, then: park },
+  propose:      { kind: active, step: step.scope.propose, timeout: { after: 4h, then: park },
                   next: "Propose {item}'s new surfaces to the draft map and record each surface's graph status." }
-  evidence:     { displayName: "Assemble the proof", why: "Packs every check into the document you approve.", kind: active, step: step.scope.evidence, timeout: { after: 1h, then: park },
+  evidence:     { displayName: "Assemble the proof", why: "Packs every check into the document you approve.", kind: active, step: step.scope.evidence, timeout: { after: 4h, then: park },
                   next: "Check {item}'s evidence and assemble the packet: citations, four coverage rows, a failing acceptance list, a clean challenge." }
   stop:         { displayName: "Approve the scope", why: "Last chance to change the scope before it is locked in.", kind: active, step: step.scope.review, loop: revise, timeout: { after: 7d, then: park },
                   onOutcome: { approve: "Locks the scope in and moves on to design.", revise: "Sends your notes back to the AI to change the scope, then asks you again.", drop: "Ends the work here and builds nothing." },
                   next: "Your stop: read the scope packet (`sindri scoping show {instance}` or the stop view), then answer the stop's form: approve, revise with notes, or drop." }
-  freeze:       { displayName: "Lock in the scope", why: "Locks the approved scope so later stages build exactly what you approved.", kind: active, step: step.scope.freeze, loop: refreeze, timeout: { after: 1h, then: park },
+  freeze:       { displayName: "Lock in the scope", why: "Locks the approved scope so later stages build exactly what you approved.", kind: active, step: step.scope.freeze, loop: refreeze, timeout: { after: 4h, then: park },
                   next: "Re-check {item}'s packet, confirm its hash, and freeze it." }
-  withdraw:     { kind: active, step: step.scope.withdraw, timeout: { after: 1h, then: park },
+  withdraw:     { kind: active, step: step.scope.withdraw, timeout: { after: 4h, then: park },
                   next: "Withdraw {item}'s undecided map proposals." }
   scoped:       { displayName: "Scope approved", kind: terminal, outcome: resolved }
   dropped:      { displayName: "Dropped", kind: terminal, outcome: unresolved }
@@ -127,9 +127,10 @@ transitions:
   - { label: "gaps remain: you answer them", from: challenge-log, to: questions, on: step.completed,
       when: { all: [ { outcome: found }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] }, produces: [fact:challenge, fact:findings] }
   - { label: "gaps remain, nothing to ask: size it, findings open", from: challenge-log, to: size, on: step.completed, when: { outcome: found }, produces: [fact:challenge, fact:findings] }
-  - { from: [size, size-desk], to: propose, on: step.completed,
+  - { label: "AI wasn't sure: carry on with the size undecided", from: size, to: propose, on: step.completed,
+      when: { any: [ { outcome: xs }, { outcome: s }, { outcome: m }, { outcome: l }, { outcome: xl }, { outcome: uncertain } ] }, produces: [fact:decision] }
+  - { from: size-desk, to: propose, on: step.completed,
       when: { any: [ { outcome: xs }, { outcome: s }, { outcome: m }, { outcome: l }, { outcome: xl } ] }, produces: [fact:decision] }
-  - { label: "AI wasn't sure: you pick the size", from: size, to: size-desk, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }
   - { from: size, to: size-desk, on: step.failed }
   - { from: propose, to: evidence, on: step.completed, when: { any: [ { outcome: proposed }, { outcome: skipped } ] }, produces: [fact:scopeMap] }
   - { from: evidence, to: stop, on: step.completed, when: { outcome: complete },
@@ -142,8 +143,8 @@ transitions:
   - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
-loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 3 }, refreeze: { cap: 2 }, revise: { cap: 4 } }
-evals:   # 31 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap that reaches the stop
+loops: { rounds: { cap: 10 }, rescope: { cap: 6 }, interview: { cap: 6 }, challenge: { cap: 3 }, refreeze: { cap: 5 }, revise: { cap: 8 } }
+evals:   # 32 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap that reaches the stop
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -168,6 +169,7 @@ evals:   # 31 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/e2e-run9-capped.jsonl
   - evals/workflow.scoping/e2e-run16-parked.jsonl
   - evals/workflow.scoping/size-uncertain.jsonl
+  - evals/workflow.scoping/size-failed.jsonl
   - evals/workflow.scoping/propose-skipped.jsonl
   - evals/workflow.scoping/evidence-incomplete.jsonl
   - evals/workflow.scoping/stop-revise.jsonl

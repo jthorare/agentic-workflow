@@ -7,7 +7,7 @@ namespace Aw.Sindri.Core.Profile;
 /// polls, how replies and merges go. A key left out takes the default named on each parameter.
 /// </summary>
 /// <param name="Bots">The allowlisted bot logins (Q2); any other bot is untrusted.</param>
-/// <param name="AutofixCap">The most CI fixes pushed for one PR, 1 to 5 (default 3).</param>
+/// <param name="AutofixCap">The most CI fixes pushed for one PR, 1 to 5 (default 5).</param>
 /// <param name="PollInterval">How often the PR watcher polls the forge, a delay such as '60s' (default 60s, 5s to 24h).</param>
 /// <param name="RemindAfter">How long a PR waits at ready-to-merge before the desk is reminded, a duration (default 14d).</param>
 /// <param name="Replies">'desk' (the owner sends each reply) or 'post' (Sindri posts it, with a footer); default desk (Q5).</param>

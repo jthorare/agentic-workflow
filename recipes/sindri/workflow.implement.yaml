@@ -11,7 +11,7 @@ outputs:
 initial: produce
 states:
   produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 4h, then: park },
-             budget: { tokens: 1M }, next: "Build the change for {item} test first (round {loop.revisions}/{loop.revisions.cap}): write the failing test, then the fix." }
+             budget: { tokens: 5M }, next: "Build the change for {item} test first (round {loop.revisions}/{loop.revisions.cap}): write the failing test, then the fix." }
   checks:  { kind: active, step: step.checks, timeout: { after: 30m, then: retry },
              next: "Run the deterministic checks on the change for {item}." }
   built:   { kind: terminal, outcome: resolved }
@@ -21,7 +21,7 @@ transitions:
   - { from: checks,  to: built,  on: step.completed, when: { outcome: passed } }
   - { from: checks,  to: produce, on: step.completed, when: { all: [ { outcome: failed }, { loop: revisions, below: cap } ] }, produces: [fact:findings] }
   - { from: checks,  to: stuck,   on: step.completed, when: { all: [ { outcome: failed }, { not: { loop: revisions, below: cap } } ] }, produces: [fact:findings] }
-loops: { revisions: { cap: 3 } }
+loops: { revisions: { cap: 5 } }
 evals:
   - evals/workflow.implement/happy.jsonl
   - evals/workflow.implement/rounds.jsonl

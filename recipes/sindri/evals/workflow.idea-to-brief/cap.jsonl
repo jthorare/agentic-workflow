@@ -8,6 +8,12 @@
 {"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A1","question":"Q1"}]}},"expect":{"state":"ask"}}
 {"trigger":{"kind":"step.completed","outcome":"asked","outputs":{"fact:questions":[{"id":"Q3","question":"Who is it for?","options":[{"id":"Q3.a","answer":"Members.","cites":["R1"]},{"id":"Q3.b","answer":"Admins.","cites":["R1"]}],"other":true,"skip":true}]}},"expect":{"state":"answer"}}
 {"trigger":{"kind":"step.completed","outcome":"answered","outputs":{"fact:answers":[{"question":"Q1","pick":"Q1.a"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A1","question":"Q1"}]}},"expect":{"state":"ask"}}
+{"trigger":{"kind":"step.completed","outcome":"asked","outputs":{"fact:questions":[{"id":"Q4","question":"Who is it for?","options":[{"id":"Q4.a","answer":"Members.","cites":["R1"]},{"id":"Q4.b","answer":"Admins.","cites":["R1"]}],"other":true,"skip":true}]}},"expect":{"state":"answer"}}
+{"trigger":{"kind":"step.completed","outcome":"answered","outputs":{"fact:answers":[{"question":"Q1","pick":"Q1.a"}]}},"expect":{"state":"record"}}
+{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A1","question":"Q1"}]}},"expect":{"state":"ask"}}
+{"trigger":{"kind":"step.completed","outcome":"asked","outputs":{"fact:questions":[{"id":"Q5","question":"Who is it for?","options":[{"id":"Q5.a","answer":"Members.","cites":["R1"]},{"id":"Q5.b","answer":"Admins.","cites":["R1"]}],"other":true,"skip":true}]}},"expect":{"state":"answer"}}
+{"trigger":{"kind":"step.completed","outcome":"answered","outputs":{"fact:answers":[{"question":"Q1","pick":"Q1.a"}]}},"expect":{"state":"record"}}
 {"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A1","question":"Q1"}]}},"expect":{"state":"write"}}
 {"trigger":{"kind":"step.completed","outcome":"written","outputs":{"fact:brief":{"text":"Invitations expire after 14 days (R1).","refs":[{"id":"R1","source":"brief","key":"briefs/expiry.md","version":"abc123","trust":"untrusted","fetchedAt":"2026-10-16T10:00:00Z"}],"subject":"Invitation expiry"}}},"expect":{"state":"anchor"}}
 {"trigger":{"kind":"step.completed","outcome":"anchored","outputs":{"fact:anchors":["feature:invitations"]}},"expect":{"state":"done","outcome":"resolved"}}

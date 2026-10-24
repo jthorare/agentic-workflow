@@ -24,7 +24,7 @@ public sealed class DesignPlanRecipeTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("workflow.design", "rounds=5;lens=4;lens-runs=40")]
-    [InlineData("workflow.plan", "rounds=5;refreeze=2;revisions=5;holdouts=3")]
+    [InlineData("workflow.plan", "rounds=5;refreeze=2;revisions=5;holdouts=5")]
     public void The_loop_caps_are_the_ones_the_spec_names_and_no_token_cap_binds_the_instance(string id, string loops)
     {
         var recipe = Read(id).Recipe;

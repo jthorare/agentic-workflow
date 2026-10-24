@@ -1,6 +1,6 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:8ce8892e922b78d872158f1c1afc02b04a1805558c0902fa9df28acc475bb3a1",
+  "hash": "sha256:301fdb52bb6a6b051d7a761e48ee1d54be25dacfea1913f7d943b73ebdcf907a",
   "version": 9,
   "name": null,
   "inputs": [
@@ -217,49 +217,49 @@
       "name": "rescope",
       "from": "check",
       "to": "gather",
-      "cap": 3
+      "cap": 6
     },
     {
       "name": "rounds",
       "from": "check",
       "to": "draft",
-      "cap": 6
+      "cap": 10
     },
     {
       "name": "rescope",
       "from": "reanchor",
       "to": "gather",
-      "cap": 3
+      "cap": 6
     },
     {
       "name": "refreeze",
       "from": "freeze",
       "to": "evidence",
-      "cap": 2
+      "cap": 5
     },
     {
       "name": "rescope",
       "from": "evidence",
       "to": "gather",
-      "cap": 3
+      "cap": 6
     },
     {
       "name": "rounds",
       "from": "evidence",
       "to": "draft",
-      "cap": 6
+      "cap": 10
     },
     {
       "name": "rounds",
       "from": "challenge-log",
       "to": "draft",
-      "cap": 6
+      "cap": 10
     },
     {
       "name": "interview",
       "from": "challenge-log",
       "to": "questions",
-      "cap": 4
+      "cap": 6
     }
   ],
   "displayName": "Decide what will change",

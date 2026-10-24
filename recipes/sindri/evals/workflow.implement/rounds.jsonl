@@ -1,7 +1,11 @@
 {"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:rootCause":"The click handler is never bound."}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Bound the handler."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: nothing sent"}},"expect":{"state":"produce"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Sent the request."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong url"}},"expect":{"state":"produce"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Fixed the url."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"test ExportClick_sends fails: wrong header"}},"expect":{"state":"stuck","outcome":"unresolved"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 1."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (1)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 2."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (2)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 3."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (3)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 4."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (4)"}},"expect":{"state":"produce"}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Attempt 5."}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"the check fails again in a new way (5)"}},"expect":{"state":"stuck","outcome":"unresolved"}}

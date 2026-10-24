@@ -22,7 +22,7 @@ internal static class ProfileGroups
         new(static w => w.Line?.Parallel, 2, static n => Number($"Sindri may run up to {n} phases at once")),
         new(static w => w.Line?.MaxOpenPrs, 4, static n => Number($"Sindri may keep up to {n} pull requests open")),
         new(static w => w.Line?.MaxStack, 4, static n => Number($"Sindri may stack phases up to {n} deep")),
-        new(static w => w.Pr?.AutofixCap, 3, static n => Number($"Sindri may push up to {n} CI fixes for one pull request")),
+        new(static w => w.Pr?.AutofixCap, 5, static n => Number($"Sindri may push up to {n} CI fixes for one pull request")),
     ];
 
     /// <summary>The spending and work limits the live profile raises or adds.</summary>

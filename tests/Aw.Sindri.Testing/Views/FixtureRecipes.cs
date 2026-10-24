@@ -21,10 +21,10 @@ public static class FixtureRecipes
     private static ShapeOutput Out(string key, string label, FactType type, string from) => new(key, label, type, from);
 
     /// <summary>workflow.step v4 (recipes/sindri/workflow.step.yaml): produce, checks, verify, done; the revisions loop returns to produce.</summary>
-    public static RecipeShape Step { get; } = new("workflow.step", 4, "f039848fd714d2a46a4d3d216083bff1815821cd3e3b4f1bc6402bbb44bd54fa", RecipeUrgency.Work,
-        [S("produce", 1, desk: true, timeout: T(4 * Hour, TimeoutAction.Park), tokens: 1_000_000, block: "step.produce"), S("checks", 2, desk: true, timeout: T(30, TimeoutAction.Retry), block: "step.checks"),
-            S("verify", 3, desk: true, timeout: T(Hour, TimeoutAction.Park), block: "step.verify"), S("done", 4, terminal: true)],
-        [new ShapeLoop("revisions", "checks", "produce", 3), new ShapeLoop("revisions", "verify", "produce", 3)],
+    public static RecipeShape Step { get; } = new("workflow.step", 4, "f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784", RecipeUrgency.Work,
+        [S("produce", 1, desk: true, timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000, block: "step.produce"), S("checks", 2, desk: true, timeout: T(30, TimeoutAction.Retry), block: "step.checks"),
+            S("verify", 3, desk: true, timeout: T(4 * Hour, TimeoutAction.Park), block: "step.verify"), S("done", 4, terminal: true)],
+        [new ShapeLoop("revisions", "checks", "produce", 5), new ShapeLoop("revisions", "verify", "produce", 5)],
         [In("fact:spec", "Spec", FactType.Text, "text")], []);
 
     /// <summary>workflow.dev-desk-round-trip v1: export (desk), import, done; the rounds loop returns from import to export.</summary>

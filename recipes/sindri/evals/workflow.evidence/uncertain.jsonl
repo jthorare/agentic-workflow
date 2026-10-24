@@ -1,3 +1,2 @@
 {"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"api":0.55,"db":0.4}}}},"expect":{"state":"route-evidence-desk"}}
-{"trigger":{"kind":"step.completed","outcome":"api"},"expect":{"state":"evidence-api"}}
+{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"api":0.55,"db":0.4}}}},"expect":{"state":"evidence-all"}}

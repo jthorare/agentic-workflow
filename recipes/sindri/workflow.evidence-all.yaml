@@ -37,7 +37,7 @@ states:
         onParked: propagate
     timeout: { after: 2d, then: park }
     next: "Waiting for the database evidence for {item}: run `sindri workflow status {instance}`."
-  combine: { kind: active, step: step.evidence.combine, timeout: { after: 1h, then: park },
+  combine: { kind: active, step: step.evidence.combine, timeout: { after: 4h, then: park },
              next: "Combine the UI, API and database evidence summaries for {item}." }
   done:    { kind: terminal, outcome: resolved }
   failed:  { kind: terminal, outcome: unresolved }

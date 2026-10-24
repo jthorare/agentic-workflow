@@ -19,13 +19,13 @@ states:
              next: "Waiting for a heavy-job slot for {item}'s full suite." }
   green:   { kind: active, step: step.ship.green, timeout: { after: 3h, then: park },
              next: "Run {item}'s full suite, typecheck and lint on its head." }
-  pack:    { kind: active, step: step.ship.pack, timeout: { after: 1h, then: park },
+  pack:    { kind: active, step: step.ship.pack, timeout: { after: 4h, then: park },
              next: "Assemble {item}'s PR hand-off: the evidence pack becomes the PR body." }
-  freeze:  { kind: active, step: step.ship.freeze, timeout: { after: 1h, then: park },
+  freeze:  { kind: active, step: step.ship.freeze, timeout: { after: 4h, then: park },
              next: "Check that {item}'s proof, review and hand-off agree on one head, and freeze the hand-off." }
-  opening: { kind: wait, waitFor: { event: pr.opened }, timeout: { after: 1h, then: park },
+  opening: { kind: wait, waitFor: { event: pr.opened }, timeout: { after: 4h, then: park },
              next: "Waiting for {item}'s pull request to open from the frozen hand-off." }
-  return:  { kind: active, step: step.ship.return, timeout: { after: 1h, then: park },
+  return:  { kind: active, step: step.ship.return, timeout: { after: 4h, then: park },
              next: "Write why {item} goes back to build." }
   shipped:  { kind: terminal, outcome: resolved }
   returned: { kind: terminal, outcome: unresolved }

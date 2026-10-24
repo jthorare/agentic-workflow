@@ -15,21 +15,21 @@ outputs:
   - { key: fact:activePacket, label: "Phase packet in force", type: packet, from: amend }
 initial: prepare
 states:
-  prepare:    { kind: active, step: step.build.prepare, timeout: { after: 1h, then: park },
+  prepare:    { kind: active, step: step.build.prepare, timeout: { after: 4h, then: park },
                 next: "Check {item}'s phase worktree is clean at its recorded head." }
   slot:       { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
                 next: "Waiting for a heavy-job slot for {item}'s builder." }
-  red:        { displayName: "Write failing tests", why: "Writes one failing test for each point of done, committed before any code.", kind: active, step: step.build.red, loop: tests, budget: { tokens: 1M }, timeout: { after: 3h, then: park },
+  red:        { displayName: "Write failing tests", why: "Writes one failing test for each point of done, committed before any code.", kind: active, step: step.build.red, loop: tests, budget: { tokens: 5M }, timeout: { after: 3h, then: park },
                 next: "Write a failing test for each of {item}'s acceptance items (try {loop.tests}/{loop.tests.cap})." }
   red-check:  { kind: active, step: step.build.red-check, timeout: { after: 3h, then: park },
                 next: "Run {item}'s red tests on the red commit: each must fail." }
-  green:      { displayName: "Write the code", why: "Implements the change in small commits inside the allowed files.", kind: active, step: step.build.green, loop: revisions, budget: { tokens: 1M }, timeout: { after: 6h, then: park },
+  green:      { displayName: "Write the code", why: "Implements the change in small commits inside the allowed files.", kind: active, step: step.build.green, loop: revisions, budget: { tokens: 5M }, timeout: { after: 6h, then: park },
                 next: "Implement {item} in atomic commits inside its allowed files (round {loop.revisions}/{loop.revisions.cap})." }
   checks:     { kind: active, step: step.build.checks, timeout: { after: 3h, then: park },
                 next: "Run {item}'s scope gate, build rules and the repo's commands." }
   scope-desk: { displayName: "Allow a file outside the plan?", why: "A change outside the plan needs your OK.", kind: active, step: step.build.scope-desk, timeout: { after: 2d, then: park },
                 next: "{item}'s builder needs a file outside its allowed files: allow it with a reason, have it reverted, or stop." }
-  amend:      { kind: active, step: step.build.amend, loop: grants, timeout: { after: 1h, then: park },
+  amend:      { kind: active, step: step.build.amend, loop: grants, timeout: { after: 4h, then: park },
                 next: "Write {item}'s scope grant as a new, owner-frozen child of its phase packet." }
   built:      { displayName: "Built", kind: terminal, outcome: resolved }
   stopped:    { displayName: "Stopped", kind: terminal, outcome: unresolved }
@@ -49,7 +49,7 @@ transitions:
   - { label: "you said to revert it", from: scope-desk, to: green,   on: step.completed, when: { outcome: revert }, produces: [fact:answers] }
   - { from: scope-desk, to: stopped, on: step.completed, when: { outcome: stop } }
   - { from: amend, to: checks, on: step.completed, when: { outcome: amended }, produces: [fact:activePacket] }
-loops: { tests: { cap: 3 }, revisions: { cap: 4 }, grants: { cap: 3 } }
+loops: { tests: { cap: 5 }, revisions: { cap: 6 }, grants: { cap: 3 } }
 evals:
   - evals/workflow.build/blocked-stop.jsonl
   - evals/workflow.build/happy.jsonl

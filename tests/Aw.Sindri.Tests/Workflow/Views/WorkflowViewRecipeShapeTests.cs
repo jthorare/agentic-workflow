@@ -224,14 +224,14 @@ public sealed class WorkflowViewRecipeShapeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_item_instance_at_produce_round_two_of_three_has_its_parent()
+    public void An_item_instance_at_produce_round_two_of_five_has_its_parent()
     {
         var view = WorkflowViewFixtures.ItemProduce();
         Assert.Equal("ITM-01JE7/item/1/step.4", view.Address.Value);
         Assert.Equal("ITM-01JE7", view.ItemId!.Value.Value);
         Assert.Equal("ITM-01JE7/item/1", view.Parent!.Address.Value);
         Assert.Equal("produce", view.State);
-        Assert.Equal((2, 3), (view.States.Single(c => c.State == "produce").Round!.N, view.States.Single(c => c.State == "produce").Round!.Max));
+        Assert.Equal((2, 5), (view.States.Single(c => c.State == "produce").Round!.N, view.States.Single(c => c.State == "produce").Round!.Max));
     }
 
     [Fact, Trait("Lane", "unit")]

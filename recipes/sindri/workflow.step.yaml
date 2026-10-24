@@ -7,10 +7,10 @@ inputs:
 initial: produce
 states:
   produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 4h, then: park },
-             budget: { tokens: 1M }, next: "Produce the Step output for {item} (round {loop.revisions}/{loop.revisions.cap})." }
+             budget: { tokens: 5M }, next: "Produce the Step output for {item} (round {loop.revisions}/{loop.revisions.cap})." }
   checks:  { kind: active, step: step.checks, timeout: { after: 30m, then: retry },
              next: "Run the Step's deterministic checks." }
-  verify:  { kind: active, step: step.verify, timeout: { after: 1h, then: park },
+  verify:  { kind: active, step: step.verify, timeout: { after: 4h, then: park },
              next: "Review the output as the verifier." }
   done:    { kind: terminal, outcome: resolved }
 transitions:
@@ -19,5 +19,5 @@ transitions:
   - { from: checks,  to: produce, on: step.completed, when: { outcome: failed },   produces: [fact:findings] }
   - { from: verify,  to: done,    on: step.completed, when: { outcome: accepted } }
   - { from: verify,  to: produce, on: step.completed, when: { outcome: rejected }, produces: [fact:findings] }
-loops: { revisions: { cap: 3 } }
+loops: { revisions: { cap: 5 } }
 evals: [evals/workflow.step/happy.jsonl, evals/workflow.step/no-progress.jsonl, evals/workflow.step/rounds.jsonl]

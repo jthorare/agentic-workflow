@@ -282,7 +282,7 @@ public static class WorkflowViewFixtures
         "ApplyCommand:answer-resume" => "--resume",
         "ApplyCommand:answer-reject" => "--reject",
         "ApplyCommand:answer-grant" => "--grant 1",
-        "ApplyCommand:answer-grant-tokens" => "--grant-tokens 1M",
+        "ApplyCommand:answer-grant-tokens" => "--grant-tokens 5M",
         "ApplyCommand:answer-accept" => "--accept",
         _ => throw new InvalidOperationException($"{action} is not an answer variant"),
     };
@@ -303,7 +303,7 @@ public static class WorkflowViewFixtures
     private static StatusAnswer Answer(AnswerKind kind, string address, string? arguments = null) => kind switch
     {
         AnswerKind.Grant => new(kind, Act("ApplyCommand:answer-grant"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--grant 1"}", AtTerminal: true),
-        AnswerKind.GrantTokens => new(kind, Act("ApplyCommand:answer-grant-tokens"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--grant-tokens 1M"}", AtTerminal: true),
+        AnswerKind.GrantTokens => new(kind, Act("ApplyCommand:answer-grant-tokens"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--grant-tokens 5M"}", AtTerminal: true),
         AnswerKind.Accept => new(kind, Act("ApplyCommand:answer-accept"), ActionClass.Protected, $"sindri workflow answer {address} {arguments ?? "--accept"}", AtTerminal: true),
         AnswerKind.Resume => new(kind, Act("ApplyCommand:answer-resume"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--resume"}", AtTerminal: false),
         AnswerKind.Text => new(kind, Act("ApplyCommand:answer-text"), ActionClass.Desk, $"sindri workflow answer {address} {arguments ?? "--text <answer>"}", AtTerminal: false),
@@ -400,8 +400,8 @@ public static class WorkflowViewFixtures
         });
 
     /// <summary>Layout 3: a budget park; the answer grants tokens.</summary>
-    public static StatusFields StatusParkedBudget() => Status(_budgetStep, "budget", "Parked (budget): produce used 1M of 1M tokens.",
-        new OpenWork(), new StatusLines { Answer = Answer(AnswerKind.GrantTokens, "ITM-01JH5/step/1"), Budget = new StatusBudget("state", 1_000_000, 1_000_000, new BudgetFigures(1_000_000, null)) });
+    public static StatusFields StatusParkedBudget() => Status(_budgetStep, "budget", "Parked (budget): produce used 5M of 5M tokens.",
+        new OpenWork(), new StatusLines { Answer = Answer(AnswerKind.GrantTokens, "ITM-01JH5/step/1"), Budget = new StatusBudget("state", 5_000_000, 5_000_000, new BudgetFigures(5_000_000, null)) });
 
     /// <summary>Layout 4: an escalated gate; the answer accepts at a terminal.</summary>
     public static StatusFields StatusEscalatedGate() => Status(_p2211, "gate",
@@ -411,7 +411,7 @@ public static class WorkflowViewFixtures
     /// <summary>Layout 5: a taken-over instance with its timeout paused.</summary>
     public static StatusFields StatusTakenOver() => Status(_takenOver, null,
         "With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.", new OpenWork(),
-        new StatusLines { Paused = new StatusPaused(40), TakenOverAt = _takenOver.Since, TakenOverBy = "human:thor", Budget = new StatusBudget("state", 40_000, 1_000_000, new BudgetFigures(40_000, null)) });
+        new StatusLines { Paused = new StatusPaused(40), TakenOverAt = _takenOver.Since, TakenOverBy = "human:thor", Budget = new StatusBudget("state", 40_000, 5_000_000, new BudgetFigures(40_000, null)) });
 
     /// <summary>Layout 6: a finished instance, the header only.</summary>
     public static StatusFields StatusDone() => Status(_sentry8809, "resolved", null, new OpenWork());
@@ -692,10 +692,10 @@ public static class WorkflowViewFixtures
     public static InstanceDetail ItemProduce()
     {
         var row = Row("ITM-01JE7/item/1/step.4", _step, "produce", Today(12, 20), null, Subject("text", "Linear ENG-511 · repo agentic-workflow ·", "Linear ENG-511 · repo agentic-workflow · no project · feature:needs-you.ack"),
-            _step.Cells("produce", round: 1, Shape(("produce", c => c with { Round = new Round(2, 3) }))),
-            "your output for the Step (desk) · round 2/3", "CompleteStep", "ApplyCommand:takeover", "ApplyCommand:cancel");
-        var status = DeskStatus(row, "Produce the Step output for ITM-01JE7 (round 2/3)", "3.1", ("fact:output", "<file>"),
-            DeskLines(new StatusInput("fact:spec", "spec.md", Hash("1c0e5a77")), 172_440, "produce", new StatusBudget("state", 0, 1_000_000, new BudgetFigures(0, null))));
+            _step.Cells("produce", round: 1, Shape(("produce", c => c with { Round = new Round(2, 5) }))),
+            "your output for the Step (desk) · round 2/5", "CompleteStep", "ApplyCommand:takeover", "ApplyCommand:cancel");
+        var status = DeskStatus(row, "Produce the Step output for ITM-01JE7 (round 2/5)", "3.1", ("fact:output", "<file>"),
+            DeskLines(new StatusInput("fact:spec", "spec.md", Hash("1c0e5a77")), 172_440, "produce", new StatusBudget("state", 0, 5_000_000, new BudgetFigures(0, null))));
         return Detail(row, "Add needs-you ack route", PathOrdering.Path,
             new CurrentState("produce", new StepDeclaration("active", "step.produce", "produce the output for the item"), [],
                 new DeskForm(RunToken.From("3.1"), [new DeskOutput("fact:output", FactType.File, true)], ["output.file"], Act("CompleteStep")), status),

@@ -31,11 +31,13 @@ public sealed class PrGateTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Autofix_cap_defaults_to_three_when_no_cap_is_given()
+    public async Task Autofix_cap_defaults_to_five_when_no_cap_is_given()
     {
-        var result = await Cap("""{"ciFixes":3}""", cap: null);
+        var below = await Cap("""{"ciFixes":4}""", cap: null);
+        var at = await Cap("""{"ciFixes":5}""", cap: null);
 
-        Assert.Equal(GateVerdict.Fail, result.Verdict);
+        Assert.Equal(GateVerdict.Pass, below.Verdict);
+        Assert.Equal(GateVerdict.Fail, at.Verdict);
     }
 
     [Fact, Trait("Lane", "unit")]

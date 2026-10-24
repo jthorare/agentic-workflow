@@ -124,7 +124,7 @@ public sealed class LegacyRecipeRowTests
     public void The_legacy_hash_of_workflow_step_is_the_one_it_was_registered_under()
     {
         Assert.Equal(
-            "sha256:c5c69b64ac0f6a853673a10a108ee23e4f28aa6979eecfc5fb6855a3b9e57f19",
+            "sha256:d828d91407649c3a280b476cc7c33bf6726ea755f08a001a8a90fd149ecebd31",
             RecipeDeclarationsTests.LegacyHash(LegacyStep()).Value);
     }
 

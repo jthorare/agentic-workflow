@@ -59,7 +59,7 @@ public sealed class RowSentencesTests
     {
         var row = Row(StatusCases.View("taken-over"));
 
-        Assert.Equal(("WITH YOU", "with you: produce the Step output for T-3 (round 1/3)"), (row.Chip.Word, row.Now));
+        Assert.Equal(("WITH YOU", "with you: produce the Step output for T-3 (round 1/5)"), (row.Chip.Word, row.Now));
     }
 
     [Theory]

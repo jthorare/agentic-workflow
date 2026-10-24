@@ -5,12 +5,12 @@ using Aw.Sindri.Testing.Workflow;
 namespace Aw.Sindri.Tests.Workflow;
 
 /// <summary>
-/// The owner's backstop (2026-10-21): a state may use up to 1M tokens per run and nothing parks below that, so no shipped
-/// recipe declares a recipe-level token cap and every per-state budget is 1M.
+/// The owner's backstop (2026-10-21, raised from 1M to 5M by q93): a state may use up to 5M tokens per run and nothing parks below that, so no shipped
+/// recipe declares a recipe-level token cap and every per-state budget is 5M.
 /// </summary>
 public sealed class ShippedBudgetsTests
 {
-    private const int Backstop = 1_000_000;
+    private const int Backstop = 5_000_000;
 
     private static IEnumerable<(string Path, Recipe Recipe)> Shipped() =>
         ShippedRecipes.Recipes
@@ -26,7 +26,7 @@ public sealed class ShippedBudgetsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Every_shipped_per_state_token_budget_is_the_one_million_backstop()
+    public void Every_shipped_per_state_token_budget_is_the_five_million_backstop()
     {
         var off = Shipped()
             .SelectMany(s => s.Recipe.States.Where(st => st.Value.Budget is not null && st.Value.Budget.Tokens != Backstop).Select(st => string.Create(CultureInfo.InvariantCulture, $"{s.Path}:{st.Key}={st.Value.Budget!.Tokens}")))

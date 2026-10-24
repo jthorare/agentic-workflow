@@ -33,7 +33,7 @@ public sealed class StartAndEngineTriggerTests
 
         var (row, started) = (applied.Changes[0].After, applied.Changes[0].Event);
         Assert.Equal(("produce", 1, RunToken.For(1, 1)), (row.State, row.Frame.Entry, row.Frame.Run!.Token));
-        Assert.Equal(new LoopState(1, 3, Last: null), row.Loops["revisions"]);
+        Assert.Equal(new LoopState(1, 5, Last: null), row.Loops["revisions"]);
         Assert.Equal(Fact("Add a --version flag."), row.Facts[FactKey.From("fact:spec")]);
         Assert.Equal(WorkflowEventType.Started, started.Type);
         Assert.Same(row, started.Started);

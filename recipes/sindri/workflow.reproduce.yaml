@@ -36,8 +36,8 @@ states:
   not-reproduced: { kind: terminal, outcome: unresolved }
 transitions:
   - { from: [route-check, route-check-desk], to: ui-check,   on: step.completed, when: { outcome: uiCheck },   produces: [fact:decision] }
-  - { from: [route-check, route-check-desk], to: test-check, on: step.completed, when: { outcome: testCheck }, produces: [fact:decision] }
-  - { from: route-check, to: route-check-desk, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }
+  - { from: route-check, to: test-check, on: step.completed, when: { any: [ { outcome: testCheck }, { outcome: uncertain } ] }, produces: [fact:decision] }
+  - { from: route-check-desk, to: test-check, on: step.completed, when: { outcome: testCheck }, produces: [fact:decision] }
   - { from: route-check, to: route-check-desk, on: step.failed }
   - { from: [ui-check, test-check], to: reproduced,     on: step.completed, when: { outcome: reproduced },    produces: [fact:check, fact:baseline] }
   - { from: [ui-check, test-check], to: not-reproduced, on: step.completed, when: { outcome: notReproduced }, produces: [fact:findings] }

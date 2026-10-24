@@ -57,7 +57,7 @@ public sealed class RecipeViewsTests
         Assert.Empty(view.Outputs);
         Assert.NotEmpty(view.Inputs);
         Assert.All(view.Inputs, static i => Assert.False(string.IsNullOrEmpty(i.Kind)));
-        Assert.Contains(view.Loops, static l => l.Name == "revisions" && l.Cap == 3);
+        Assert.Contains(view.Loops, static l => l.Name == "revisions" && l.Cap == 5);
     }
 
     private static RecipeView ViewOf(string inputs)

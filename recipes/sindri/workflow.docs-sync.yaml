@@ -37,8 +37,8 @@ states:
     kind: active
     step: { use: step.docs.update, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
     loop: edits
-    budget: { tokens: 1M }
-    timeout: { after: 2h, then: park }
+    budget: { tokens: 5M }
+    timeout: { after: 4h, then: park }
     next: "Update the listed docs for {item}'s pull request (try {loop.edits}/{loop.edits.cap}). Commit in the docs worktree; Sindri opens the PR."
   check:
     kind: active
@@ -86,8 +86,8 @@ transitions:
   - { from: owner, to: scope,     on: step.completed, when: { outcome: retry } }
   - { from: owner, to: abandoned, on: step.completed, when: { outcome: stop } }
 loops:
-  edits:   { cap: 2 }
-  retries: { cap: 3 }
+  edits:   { cap: 4 }
+  retries: { cap: 5 }
 evals:
   - evals/workflow.docs-sync/happy.jsonl
   - evals/workflow.docs-sync/opened.jsonl

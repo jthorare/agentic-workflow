@@ -16,32 +16,32 @@ outputs:
   - { key: fact:escalation,   label: "Questions for you",         type: payload, from: lens-log }
 initial: intake
 states:
-  intake:    { kind: active, step: step.design.intake, timeout: { after: 1h, then: park },
+  intake:    { kind: active, step: step.design.intake, timeout: { after: 4h, then: park },
                next: "Load {item}'s frozen scope packet and its style and lens packs." }
   draft:     { displayName: "Write the design", why: "Gives the reviews something concrete to check.", kind: active, step: { use: step.design.draft, with: { bundle: style } }, loop: rounds,
-               budget: { tokens: 1M }, timeout: { after: 3h, then: park },
+               budget: { tokens: 5M }, timeout: { after: 3h, then: park },
                next: "Write {item}'s spec draft in the house style (round {loop.rounds}/{loop.rounds.cap})." }
-  apply:     { kind: active, step: { use: step.design.apply, with: { bundle: style } }, budget: { tokens: 1M },
-               timeout: { after: 2h, then: park },
+  apply:     { kind: active, step: { use: step.design.apply, with: { bundle: style } }, budget: { tokens: 5M },
+               timeout: { after: 4h, then: park },
                next: "Fold the answers and notes from the after-design stop into {item}'s affected sections." }
-  check:     { kind: active, step: step.design.check, timeout: { after: 1h, then: park },
+  check:     { kind: active, step: step.design.check, timeout: { after: 4h, then: park },
                next: "Run the draft-stage design checks on {item}: coverage, signals, decisions, contract edits, style." }
   round:     { kind: active, step: { use: step.lens.round, with: { pack: { profile: workflow.packs.lenses.design } } },
-               loop: lens, timeout: { after: 1h, then: park },
+               loop: lens, timeout: { after: 4h, then: park },
                next: "Start lens round {loop.lens}/{loop.lens.cap} on {item}'s draft." }
   lens:      { displayName: "Review pass", why: "Independent reviewers find serious problems before a plan is built on them.", kind: active, step: { use: step.lens.run, with: { subject: design, bundle: lenses } }, loop: lens-runs,
-               budget: { tokens: 1M }, timeout: { after: 2h, then: park },
+               budget: { tokens: 5M }, timeout: { after: 4h, then: park },
                next: "Review {item}'s draft through the next lens in the pack." }
-  lens-log:  { kind: active, step: step.lens.log, timeout: { after: 1h, then: park },
+  lens-log:  { kind: active, step: step.lens.log, timeout: { after: 4h, then: park },
                next: "Append the lens report to {item}'s lens rounds." }
-  revise:    { displayName: "Fix the design", why: "Fixes the problems the reviews found, or answers them in writing.", kind: active, step: { use: step.design.revise, with: { bundle: style } }, budget: { tokens: 1M },
+  revise:    { displayName: "Fix the design", why: "Fixes the problems the reviews found, or answers them in writing.", kind: active, step: { use: step.design.revise, with: { bundle: style } }, budget: { tokens: 5M },
                timeout: { after: 3h, then: park },
                next: "Fix the CRITICAL and HIGH findings on {item}'s draft; answer the rest in writing." }
   lens-desk: { displayName: "Accept the risk?", why: "The reviews ran out of tries with problems left; you decide.", kind: active, step: step.design.lens-desk, timeout: { after: 7d, then: park },
                next: "The lens rounds on {item} hit their cap with findings left: accept them as known risks, revise with notes, or drop." }
   ask:       { displayName: "Answer a question", why: "A reviewer needs your decision.", kind: active, step: step.lens.ask, timeout: { after: 7d, then: park },
                next: "A lens can't settle a finding on {item}'s draft alone (an ambiguous fix or a product question): answer it, or drop the design." }
-  evidence:  { kind: active, step: step.design.evidence, timeout: { after: 1h, then: park },
+  evidence:  { kind: active, step: step.design.evidence, timeout: { after: 4h, then: park },
                next: "Check {item}'s design evidence and assemble the candidate design packet." }
   designed:  { displayName: "Design ready", kind: terminal, outcome: resolved }
   dropped:   { displayName: "Dropped", kind: terminal, outcome: unresolved }

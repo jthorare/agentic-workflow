@@ -10,4 +10,8 @@
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h3"}}},"expect":{"state":"checks"}}
 {"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 3"}},"expect":{"state":"green"}}
 {"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h4"}}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 4"}},"expect":{"state":"parked","park":"rounds"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 4"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h5"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 5"}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h6"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"unit lane fails 6"}},"expect":{"state":"parked","park":"rounds"}}

@@ -1,4 +1,4 @@
 {"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"db":0.5,"ui":0.45}}}},"expect":{"state":"route-evidence-desk"}}
+{"trigger":{"kind":"step.failed"},"expect":{"state":"route-evidence-desk"}}
 {"trigger":{"kind":"step.completed","outcome":"db"},"expect":{"state":"evidence-db"}}
 {"trigger":{"kind":"wait.satisfied","outcome":"resolved","outputs":{"fact:evidenceSummary":"db ok"}},"expect":{"state":"done","outcome":"resolved"}}

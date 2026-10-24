@@ -14,7 +14,7 @@ outputs:
   - { key: fact:mergedSha, label: "Merged sha",   type: text,   from: babysit }
 initial: seed
 states:
-  seed:    { kind: active, step: step.phase.seed, timeout: { after: 1h, then: park },
+  seed:    { kind: active, step: step.phase.seed, timeout: { after: 4h, then: park },
              next: "Check {item}'s phase packet and dependencies, and prepare its worktree." }
   build:   { displayName: "Build", why: "Writes failing tests first, then the code inside the allowed files.", kind: wait, loop: stage, timeout: { after: 3d, then: park },
              waitFor: { child: { recipe: workflow.build, onParked: propagate,
@@ -30,7 +30,7 @@ states:
              waitFor: { child: { recipe: workflow.review-loop, onParked: propagate,
                                  inputs: { "fact:change": { fact: fact:change }, "fact:phasePacket": { fact: fact:phasePacket }, "fact:workspace": { fact: fact:workspace }, "fact:lensRounds": [] } } },
              next: "Waiting for {child}: {item}'s review to zero blocking and issue findings." }
-  drift:   { kind: active, step: step.phase.drift, loop: reprove, timeout: { after: 1h, then: park },
+  drift:   { kind: active, step: step.phase.drift, loop: reprove, timeout: { after: 4h, then: park },
              next: "Check that {item}'s review left the proven head unchanged." }
   ship:    { displayName: "Open the pull request", why: "Checks that the proof and review are for the exact commit being shipped, then opens the pull request.", kind: wait, timeout: { after: 1d, then: park },
              waitFor: { child: { recipe: workflow.ship, onParked: propagate,
@@ -77,7 +77,7 @@ transitions:
   - { label: "rebuild with your notes", from: owner, to: build,   on: step.completed, when: { outcome: rebuild }, produces: [fact:buildNotes] }
   - { label: "you stopped it: tell the line it failed", from: owner, to: dropped, on: step.completed, when: { outcome: stop },
       effects: [{ use: effect.line.report, with: { status: failed, line: { fact: fact:lineContext } } }] }   # LN-WF1: the line shows the phase failed and stops its dependents (or retries)
-loops: { stage: { cap: 3 }, reprove: { cap: 3 } }
+loops: { stage: { cap: 5 }, reprove: { cap: 5 } }
 evals:
   - evals/workflow.phase/happy.jsonl
   - evals/workflow.phase/drift-moved.jsonl

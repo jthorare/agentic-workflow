@@ -21,5 +21,5 @@ transitions:
   - { from: check,  to: export,  on: step.completed, when: { all: [{ outcome: failed }, { loop: rounds, below: cap }] }, produces: [fact:findings] }
   - { from: check,  to: dropped, on: step.completed, when: { outcome: failed } }
   - { from: export, to: dropped, on: command.skip }
-loops: { rounds: { cap: 2 } }
+loops: { rounds: { cap: 4 } }
 evals: [evals/workflow.dev-child-summary/happy.jsonl]

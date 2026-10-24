@@ -6,7 +6,7 @@
   "title": "Expiry for shared links",
   "recipe": {
     "id": "workflow.scoping",
-    "hash": "sha256:8ce8892e922b78d872158f1c1afc02b04a1805558c0902fa9df28acc475bb3a1",
+    "hash": "sha256:301fdb52bb6a6b051d7a761e48ee1d54be25dacfea1913f7d943b73ebdcf907a",
     "version": 9,
     "urgency": "work",
     "displayName": "Scoping"

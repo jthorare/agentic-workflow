@@ -19,5 +19,5 @@ transitions:
   - { from: investigate, to: diagnosed,   on: step.completed, when: { outcome: diagnosed }, produces: [fact:rootCause] }
   - { from: investigate, to: investigate, on: step.completed, when: { all: [ { outcome: unfixed }, { loop: rounds, below: cap } ] }, produces: [fact:findings] }
   - { from: investigate, to: unfixed,     on: step.completed, when: { all: [ { outcome: unfixed }, { not: { loop: rounds, below: cap } } ] }, produces: [fact:findings] }
-loops: { rounds: { cap: 2 } }
+loops: { rounds: { cap: 4 } }
 evals: [evals/workflow.investigate/happy.jsonl, evals/workflow.investigate/unfixed-cap.jsonl]

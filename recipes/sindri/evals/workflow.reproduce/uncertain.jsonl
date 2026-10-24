@@ -1,4 +1,2 @@
 {"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:rootCause":"The click handler is never bound."}}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"uiCheck":0.55,"testCheck":0.4}}}},"expect":{"state":"route-check-desk"}}
-{"trigger":{"kind":"step.completed","outcome":"testCheck"},"expect":{"state":"test-check"}}
-{"trigger":{"kind":"step.completed","outcome":"reproduced","outputs":{"fact:check":{"kind":"ui","file":"export.spec.ts","command":"npx playwright test"},"fact:baseline":{"base":"abc123","result":"fail"}}},"expect":{"state":"reproduced","outcome":"resolved"}}
+{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"uiCheck":0.55,"testCheck":0.4}}}},"expect":{"state":"test-check"}}

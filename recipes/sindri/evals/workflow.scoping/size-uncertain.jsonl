@@ -7,5 +7,4 @@
 {"trigger":{"kind":"step.completed","outcome":"none","outputs":{"fact:openQuestions":[]}},"expect":{"state":"challenge"}}
 {"trigger":{"kind":"step.completed","outcome":"nothingNew","outputs":{"fact:challengeRound":{"walked":[{"kind":"lens","name":"code"},{"kind":"lens","name":"product"},{"kind":"lens","name":"related"},{"kind":"lens","name":"history"},{"kind":"dimension","name":"who may use it"},{"kind":"dimension","name":"failure"}],"verdict":"nothingNew"}}},"expect":{"state":"challenge-log"}}
 {"trigger":{"kind":"step.completed","outcome":"nothingNew","outputs":{"fact:challenge":{"rounds":[{"round":1,"walked":[{"kind":"lens","name":"code"},{"kind":"lens","name":"product"},{"kind":"lens","name":"related"},{"kind":"lens","name":"history"},{"kind":"dimension","name":"who may use it"},{"kind":"dimension","name":"failure"}],"verdict":"nothingNew"}]}}},"expect":{"state":"size"}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain"},"expect":{"state":"size-desk"}}
-{"trigger":{"kind":"step.completed","outcome":"m"},"expect":{"state":"propose"}}
+{"trigger":{"kind":"step.completed","outcome":"uncertain"},"expect":{"state":"propose"}}

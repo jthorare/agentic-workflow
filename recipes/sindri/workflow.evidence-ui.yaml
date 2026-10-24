@@ -24,7 +24,7 @@ transitions:
   - { from: run,  to: failed, on: step.completed, when: { outcome: failed },  produces: [fact:evidenceSummary] }
   - { from: run,  to: run,    on: step.completed, when: { all: [ { outcome: broken }, { loop: repairs, below: cap } ] }, produces: [fact:evidenceSummary] }
   - { from: run,  to: failed, on: step.completed, when: { all: [ { outcome: broken }, { not: { loop: repairs, below: cap } } ] }, produces: [fact:evidenceSummary] }
-loops: { repairs: { cap: 2 } }
+loops: { repairs: { cap: 4 } }
 evals:
   - evals/workflow.evidence-ui/happy.jsonl
   - evals/workflow.evidence-ui/failed.jsonl
