@@ -1181,6 +1181,8 @@ Aw.Context.Core.Extract.ClusterSet.Equals(Aw.Context.Core.Extract.ClusterSet? ot
 Aw.Context.Core.Extract.ClusterSet.Reason.get -> string?
 Aw.Context.Core.Extract.ClusterSet.Reason.init -> void
 Aw.Context.Core.Extract.ExtractedMap
+Aw.Context.Core.Extract.ExtractedMap.Aliases.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeAlias!>!
+Aw.Context.Core.Extract.ExtractedMap.Aliases.init -> void
 Aw.Context.Core.Extract.ExtractedMap.<Clone>$() -> Aw.Context.Core.Extract.ExtractedMap!
 Aw.Context.Core.Extract.ExtractedMap.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphEdge!>! Edges) -> void
 Aw.Context.Core.Extract.ExtractedMap.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphEdge!>!
@@ -6855,3 +6857,4 @@ Aw.Context.Core.WholeMap.WholeMapView.Deconstruct(out int SchemaVersion, out str
 Aw.Context.Core.WholeMap.WholeMapView.WholeMapView(int SchemaVersion, string! MapVersion, bool Draft, System.DateTimeOffset AsOf, string? Repo, Aw.Context.Core.WholeMap.WholeMapDetail Detail, Aw.Context.Core.WholeMap.WholeMapCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, bool Truncated) -> void
 static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph, int areaCap) -> Aw.Context.Core.WholeMap.AreaIndex!
 const Aw.Context.Core.Sources.SourceQuery.DefaultLimit = 200 -> int
+static Aw.Context.Core.Extract.Recognizers.IsGlossaryFile(string! path) -> bool

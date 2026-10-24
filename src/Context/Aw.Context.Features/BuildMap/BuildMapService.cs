@@ -152,7 +152,7 @@ internal sealed class BuildMapService(
         [.. clusters is { Available: true, Reason: null } ? [] : new[] { clusters.Reason is { } why ? $"clusters: {why}" : "clusters" }, .. labels.IsError || !labels.Value.Complete ? new[] { "labels" } : [], .. timedOut ? new[] { "recognizers" } : []];
 
     // A denied path is never read, whatever a recognizer wants.
-    private static bool Readable(ContextRepo repo, RecognizerSet recognizers, string path) => !repo.Denies(path) && (Recognizers.MayRead(path) || recognizers.Wants(path));
+    private static bool Readable(ContextRepo repo, RecognizerSet recognizers, string path) => !repo.Denies(path) && (Recognizers.MayRead(path) || recognizers.Wants(path) || Recognizers.IsGlossaryFile(path));
 
     // HEAD's tree minus the denied paths, and the text of each file the extractor may read.
     private async ValueTask<Result<(string Commit, List<RepoFile> Files)>> ReadFiles(IProgress<string>? progress, ContextRepo repo, RecognizerSet recognizers, CancellationToken cancellationToken)
@@ -223,6 +223,7 @@ internal sealed class BuildMapService(
         {
             Nodes = [.. kept.Nodes.Where(n => !(n.Provenance == Aw.Context.Core.Results.Provenance.Model && n.Key.Kind == NodeKind.Feature && rebuilt.Contains(n.Key.Value))).Concat(found.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
             Edges = [.. kept.Edges.Concat(found.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
+            Aliases = [.. kept.Aliases.Concat(found.Aliases).DistinctBy(a => a.Alias.Value, StringComparer.Ordinal)],
         };
     }
 

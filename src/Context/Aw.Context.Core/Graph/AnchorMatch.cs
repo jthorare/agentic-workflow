@@ -57,6 +57,11 @@ public static class AnchorMatch
                 .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable).Take(MaxListed)], SettingsJsonContext.Default.ListString);
         }
 
+        if (Extract.Glossary.KeyFor(trimmed) is { } term && graph.Resolve(term) is { } concept)
+        {
+            return concept;
+        }
+
         if (NearFeature(graph, trimmed) is { } near)
         {
             return near;

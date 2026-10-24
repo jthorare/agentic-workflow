@@ -9,7 +9,7 @@ namespace Aw.Context.Core.Extract;
 public static class MapExtractor
 {
     /// <summary>The recognizers' version. A backtest's as-of map cache is keyed by it, so a change to what the recognizers find bumps it.</summary>
-    public const int Version = 2;
+    public const int Version = 3;
 
     /// <summary>Extracts the map from the files.</summary>
     /// <param name="repo">The repo (its name joins the evidence keys).</param>
@@ -37,7 +37,8 @@ public static class MapExtractor
         var known = nodes.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
         var implements = hits.Select(h => new GraphEdge(CodeKey(h.File.Path)!.Value, h.Found.Key, EdgeType.Implements, Provenance.Deterministic, 1.0, [Evidence(repo, h.File.Path)!]));   // why: hits keep only files whose keys are valid
         var related = hits.SelectMany(h => h.Found.Edges.Where(e => known.Contains(e.To.Value)).Select(e => e with { Evidence = [Evidence(repo, h.File.Path)!] }));   // why: as above
-        return new MapExtraction(ExtractedMap.Empty.Plus(new ExtractedMap([.. nodes, .. codeNodes], [.. implements, .. related])), timedOut);
+        var recognized = ExtractedMap.Empty.Plus(new ExtractedMap([.. nodes, .. codeNodes], [.. implements, .. related]));
+        return new MapExtraction(recognized.Plus(Glossary.Extract(repo, files)), timedOut);
     }
 
     private static GraphNode Node(ContextRepoName repo, List<(RepoFile File, Found Found)> hits)

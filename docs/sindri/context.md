@@ -565,6 +565,24 @@ files (`MapGet` and the like, the path as written, without a `MapGroup` prefix);
 The result is a **draft** map; you review it, and only `map promote` makes it
 `current`. Every decision is one `map_override` row, so it survives the next build.
 
+### Glossary concepts
+
+A file named `CONTEXT.md` or `GLOSSARY.md` (any directory, case ignored) seeds domain concepts. A term is a line like
+
+```markdown
+## Glossary
+
+- **Core / On Call** (aliases: on call, oncall) - the rota a team keeps for urgent work
+- **Shift Times**: when a shift starts and ends
+```
+
+A bullet or a bare line that starts with the term in bold is a term; `(aliases: a, b)`, `(also: a, b)` or `(aka a, b)` right after it
+lists aliases. In `GLOSSARY.md` every such line is a term. In `CONTEXT.md` only the lines under a heading that contains
+"glossary" count, up to the next heading of the same or a higher level. Each term becomes a deterministic feature node
+`feature:glossary/<slug>` (the slug is the term's letters and digits, lower case, joined by `-`), implemented by its file, and
+each alias an alias key of the same shape. `context query --node` and `context_node` then resolve a phrase whose slug matches,
+so `Core/On-Call`, `core / on call` and `ON CALL` reach the same concept without an exact key. At most 500 terms per file.
+
 ### Profile
 
 ```yaml

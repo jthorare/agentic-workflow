@@ -37,6 +37,15 @@ public static partial class Recognizers
         return file.Text.Length <= MaxFileLength && MayRead(file.Path);
     }
 
+    /// <summary>Whether a path is a glossary file the extractor reads for domain concepts (CONTEXT.md or GLOSSARY.md, any directory).</summary>
+    /// <param name="path">The path from the repo root.</param>
+    /// <returns>True for a glossary file.</returns>
+    public static bool IsGlossaryFile(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        return Glossary.IsGlossaryFile(path);
+    }
+
     /// <summary>Whether a path could be a source file the extractor reads, before its text is fetched.</summary>
     /// <param name="path">The path from the repo root.</param>
     /// <returns>True for a path with a source extension outside tests and build output.</returns>
