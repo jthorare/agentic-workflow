@@ -25,5 +25,7 @@ internal sealed partial class RecipeSheetView : UserControl
     }
 #pragma warning restore MA0155
 
+    private void OnCopyHash(object? sender, RoutedEventArgs e) => _ = (DataContext as RecipeSheetViewModel)?.CopyHash(CancellationToken.None);
+
     private void OnCopyApprove(object? sender, RoutedEventArgs e) => _ = (DataContext as RecipeSheetViewModel)?.CopyApprove(CancellationToken.None);
 }

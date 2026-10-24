@@ -83,18 +83,18 @@ public sealed class PausedAnswerViewModelTests
     }
 
     [Fact]
-    public void The_stepper_stays_between_one_and_ten()
+    public void The_stepper_stays_between_one_and_a_hundred()
     {
         var form = Form();
 
         form.Decrease();
         Assert.Equal(1, form.ExtraTries);
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < 120; i++)
         {
             form.Increase();
         }
 
-        Assert.Equal(10, form.ExtraTries);
+        Assert.Equal(100, form.ExtraTries);
     }
 
     [Fact]

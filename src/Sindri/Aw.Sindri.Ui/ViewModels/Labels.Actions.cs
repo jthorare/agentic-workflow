@@ -94,6 +94,9 @@ internal static partial class Labels
     /// <summary>After a copy, for 1.5 s (§4.1, §12.4).</summary>
     internal const string Copied = "Copied";
 
+    /// <summary>The button that copies a whole hash where the screen shows its first digits.</summary>
+    internal const string CopyHash = "Copy hash";
+
     /// <summary>The copy block's line (§7, §12.4).</summary>
     internal const string TypedConfirmation = "Needs a typed confirmation at a terminal.";
 

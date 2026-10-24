@@ -114,10 +114,9 @@ internal sealed partial class ApproveAllViewModel
         }
     }
 
-    // Reads the job until it ends. A few failed reads in a row, or two minutes, end the wait with words; closing the dialog (or opening again) ends it silently.
+    // Reads the job until it ends. A few failed reads in a row end the wait with words, a long job does not; closing the dialog (or opening again) ends it silently.
     private async Task Follow(Uri api, string jobId, int session)
     {
-        var until = _clock.GetUtcNow() + _pollFor;
         var failures = 0;
         while (session == _session)
         {
@@ -129,10 +128,12 @@ internal sealed partial class ApproveAllViewModel
 
             failures = job.IsError ? failures + 1 : 0;
             var ended = await Step(api, job, failures, session).ConfigureAwait(true);
-            if (ended || await TimedOut(until).ConfigureAwait(true))
+            if (ended)
             {
                 return;
             }
+
+            await Task.Delay(_pollEvery, _clock).ConfigureAwait(true);
         }
     }
 
@@ -158,19 +159,6 @@ internal sealed partial class ApproveAllViewModel
 
         await Finish(api, job.Value, session).ConfigureAwait(true);
         return true;
-    }
-
-    // Past the deadline the wait ends with words; otherwise it sleeps one beat.
-    private async Task<bool> TimedOut(DateTimeOffset until)
-    {
-        if (_clock.GetUtcNow() >= until)
-        {
-            Fail(new Error("SND-UI-003", ErrorKind.Timeout, Labels.ApproveStillRunning));
-            return true;
-        }
-
-        await Task.Delay(_pollEvery, _clock).ConfigureAwait(true);
-        return false;
     }
 
     private static bool InProgress(ApproveAllJob job) => job.State.Equals("running", StringComparison.Ordinal) || job.State.Equals("waiting", StringComparison.Ordinal) || job.State.Equals("queued", StringComparison.Ordinal);

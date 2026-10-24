@@ -7,8 +7,8 @@ namespace Aw.Sindri.Ui.ViewModels.Facts;
 internal sealed class PayloadNodeViewModel
 {
     private const int MaxDepth = 8;
-    private const int MaxChildren = 100;
-    private const int MaxValue = 200;
+    private const int MaxChildren = 1000;
+    private const int MaxValue = 2000;
 
     private PayloadNodeViewModel(string key, string text, IReadOnlyList<PayloadNodeViewModel> children)
     {

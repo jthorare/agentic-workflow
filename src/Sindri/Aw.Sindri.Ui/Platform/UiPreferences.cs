@@ -48,7 +48,7 @@ internal sealed record UiPreferences(
     internal const double MaxTextScale = 1.3;
 
     /// <summary>The most seen ids kept (the oldest go first).</summary>
-    internal const int MaxSeenIds = 500;
+    internal const int MaxSeenIds = 5000;
 
     /// <summary>The most palette entries kept (the oldest go first).</summary>
     internal const int MaxPaletteHistory = 20;

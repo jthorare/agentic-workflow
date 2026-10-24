@@ -418,15 +418,18 @@ public sealed class ApproveAllViewModelTests
     }
 
     [Fact]
-    public async Task A_job_still_running_after_two_minutes_ends_the_wait_with_words()
+    public async Task A_job_that_runs_for_minutes_is_followed_until_it_ends()
     {
-        _f.Server.ApproveAllJobAnswer = RouteAnswer.SpecShaped("approve-all-job", "running");
+        for (var i = 0; i < 700; i++)   // 700 reads at 500 ms: nearly six minutes
+        {
+            _f.Server.ApproveAllJobAnswers.Enqueue(RouteAnswer.SpecShaped("approve-all-job", "running"));
+        }
+
         var dialog = await _f.Opened();
 
         await _f.Hold(dialog);
 
-        Assert.Equal((ApproveAllPhase.Failed, "SND-UI-003", Labels.ApproveStillRunning), (dialog.Phase, dialog.ErrorCode, dialog.Error));
-        Assert.True(_f.Server.ApproveAllJobCalls > 100);
+        Assert.Equal((ApproveAllPhase.Done, 701), (dialog.Phase, _f.Server.ApproveAllJobCalls));
     }
 
     // The clock does not move on its own: a wait for something the dialog does after a delay is bounded and nudges nothing.

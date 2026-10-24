@@ -10,6 +10,23 @@ namespace Aw.Sindri.Ui.ViewModels.Recipes;
 internal sealed partial class RecipeSheetViewModel
 {
     private string _shownHash = string.Empty;
+    private string _fullHash = string.Empty;
+
+    /// <summary>"Copy hash", or "Copied" after the whole hash was copied (the sheet shows twelve digits).</summary>
+    public string HashCopyLabel { get; private set => Set(ref field, value); } = Labels.CopyHash;
+
+    /// <summary>Copies the recipe's whole hash to the clipboard.</summary>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>A task that ends when the clipboard answered.</returns>
+    internal async Task CopyHash(CancellationToken cancellationToken)
+    {
+        if (clipboard is null || _fullHash.Length == 0 || !await clipboard.SetText(_fullHash, cancellationToken).ConfigureAwait(true))
+        {
+            return;
+        }
+
+        HashCopyLabel = Labels.Copied;
+    }
 
     /// <summary>The window the figures cover: '7d', '30d' (the start) or '90d'.</summary>
     public string StatsWindow { get; private set => Set(ref field, value); } = Labels.DefaultStatsWindow;

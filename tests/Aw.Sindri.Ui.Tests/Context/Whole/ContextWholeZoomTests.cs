@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
@@ -143,6 +144,35 @@ public sealed class ContextWholeZoomTests
         Assert.NotEmpty(page.Whole.Geometry.Tiles);
         _ = page.BackToWholeMap();
         Assert.Equal((true, 0), (page.Whole.ByArea, page.Whole.Geometry!.Nodes.Count));
+    }
+
+    [Fact]
+    public async Task By_feature_every_touched_feature_is_opened_not_just_the_first_three()
+    {
+        var api = new FakeSindriApi
+        {
+            WholeMapAnswer = q => q switch
+            {
+                { Locate.Count: > 0 } => LocatedInAreas(q, 5),
+                { Area: not null } => ContextAnswers.WholeMap(q),
+                _ => RouteAnswer.Api("context-whole", "areas-over-budget"),
+            },
+        };
+        var page = Page(api);
+        await page.Opened(Token);
+        page.AnchorText = Anchor;
+
+        await page.Submit(Token);
+
+        Assert.Equal((5, false), (api.WholeMapAsked.Count(q => q.Area is not null), page.Whole.HasMoreTouched));
+    }
+
+    private static RouteAnswer LocatedInAreas(WholeMapQuery query, int areas)
+    {
+        var golden = GoldenFiles.Node("context-whole", "locate");
+        golden["located"] = new JsonArray(
+            [.. Enumerable.Range(0, areas).Select(i => (JsonNode)new JsonObject { ["key"] = query.Locate[i % query.Locate.Count], ["area"] = "area:a" + i.ToString(CultureInfo.InvariantCulture) })]);
+        return new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
     }
 
     [Fact]

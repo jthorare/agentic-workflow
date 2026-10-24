@@ -71,6 +71,18 @@ public sealed class RecipeSheetLayoutTests
     }
 
     [Fact]
+    public async Task Copy_hash_puts_the_whole_hash_on_the_clipboard_though_the_sheet_shows_twelve_digits()
+    {
+        var sheet = await Opened("approved");
+
+        await sheet.CopyHash(Token);
+
+        Assert.StartsWith("sha256:", _clipboard.Text, StringComparison.Ordinal);
+        Assert.True(_clipboard.Text!.Length > "sha256:".Length + 12);
+        Assert.Contains(Aw.Sindri.Ui.ViewModels.Labels.Hash12(_clipboard.Text), sheet.Identity, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_list_that_cannot_be_read_leaves_the_sheet_without_a_standing()
     {
         _server.RecipeListAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views have not caught up");

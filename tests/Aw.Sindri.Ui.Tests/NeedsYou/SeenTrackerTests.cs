@@ -107,17 +107,16 @@ public sealed class SeenTrackerTests
         Assert.False(tracker.IsSeen("c"));
     }
 
-    // Provisional owner default (2026-10-14 night): the 10 s Undo comes from a comment in the Home mockup ("5 marked seen ·
-    // Undo" for 10 s); the screens text is silent. Confirm with the owner before it is relied on.
+    // The Undo window was 10 s (a provisional owner default); q93 raised it to 5 min so it does not vanish before it is read.
     [Fact]
-    public async Task Mark_all_seen_offers_Undo_for_10_s()
+    public async Task Mark_all_seen_offers_Undo_for_5_min()
     {
         var tracker = await Tracker();
         tracker.Acted("z");
 
         tracker.MarkAllSeen(["a", "b", "z"]);
         Assert.Equal(2, tracker.UndoCount); // z was seen already
-        _clock.Advance(TimeSpan.FromMilliseconds(9999));
+        _clock.Advance(TimeSpan.FromMinutes(5) - TimeSpan.FromMilliseconds(1));
         Assert.Equal(2, tracker.UndoCount);
 
         _clock.Advance(TimeSpan.FromMilliseconds(1));

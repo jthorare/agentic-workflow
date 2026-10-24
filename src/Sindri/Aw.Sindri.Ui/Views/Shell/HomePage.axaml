@@ -48,7 +48,7 @@
                   <TextBlock x:Name="NeedsYouSummary" Classes="caption subtle" Text="{Binding Attention.SummaryLine}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Attention.SummaryLine}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                  <!-- B2: "N marked seen · Undo" for 10 s after Mark all seen; the Undo button is a plain tab stop, and its words are spoken once by NeedsYouSeenLive. -->
+                  <!-- B2: "N marked seen · Undo" for 5 min after Mark all seen; the Undo button is a plain tab stop, and its words are spoken once by NeedsYouSeenLive. -->
                   <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="6" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
                     <TextBlock x:Name="NeedsYouUndoText" Classes="caption subtle" Text="{Binding NeedsYou.Seen.UndoText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Classes="caption subtle" Text="·" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />

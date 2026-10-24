@@ -10,9 +10,6 @@ internal sealed partial class HealthViewModel
     private ServiceList? _serviceList;
     private readonly Dictionary<string, ServiceRowViewModel> _serviceRows = new(StringComparer.Ordinal);
 
-    /// <summary>How many services the Services card lists before the tab.</summary>
-    internal const int ServiceCardRowCount = 4;
-
     /// <summary>The first tab's name.</summary>
     public string OverviewTabLabel { get; } = Labels.SystemOverviewTab;
 
@@ -220,7 +217,7 @@ internal sealed partial class HealthViewModel
         }
 
         ServiceTable = shown;
-        ServiceCard = [.. shown.Take(ServiceCardRowCount)];
+        ServiceCard = [.. shown];
         ServicesTabLabel = Labels.ServicesTab(shown.Count);
         ServicesScheduled = Labels.ServicesScheduled(shown.Count);
         lock (_gate)

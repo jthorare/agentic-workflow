@@ -13,8 +13,8 @@ internal sealed partial class SeenTracker : ObservableObject
     /// <summary>How long a row must be on screen and focused to count as seen.</summary>
     internal static readonly TimeSpan OnScreenFor = TimeSpan.FromSeconds(1);
 
-    /// <summary>How long Mark all seen offers Undo (provisional owner default, 2026-10-14 night).</summary>
-    internal static readonly TimeSpan UndoFor = TimeSpan.FromSeconds(10);
+    /// <summary>How long Mark all seen offers Undo (was 10 s; q93 raised it so the offer outlasts a glance away).</summary>
+    internal static readonly TimeSpan UndoFor = TimeSpan.FromMinutes(5);
 
     private readonly Preferences _preferences;
     private readonly TimeProvider _clock;

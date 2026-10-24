@@ -165,6 +165,7 @@ internal sealed partial class RecipeSheetViewModel(ISindriApi api, IClipboard? c
         Description = RecipeNames.Does(recipe.Id);
         Identity = string.Create(CultureInfo.InvariantCulture, $"{recipe.Id}@{Labels.Hash12(recipe.Hash)} · v{recipe.Version} · {Labels.UrgencyWord(recipe.Urgency)}");
         Name = recipe.Name ?? string.Empty;
+        (_fullHash, HashCopyLabel) = (recipe.Hash, Labels.CopyHash);
         _shownHash = Labels.Hash12(recipe.Hash);   // the figures are the shown version's: a prefix of its digits
         States = new RecipeStatesViewModel(recipe);
         Facts = new RecipeFactsViewModel(recipe);

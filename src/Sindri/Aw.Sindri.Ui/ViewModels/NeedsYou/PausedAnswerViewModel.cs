@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 internal sealed partial class PausedAnswerViewModel : ObservableObject
 {
     internal const int MinTries = 1;
-    internal const int MaxTries = 10;
+    internal const int MaxTries = 100;
 
     private static readonly TimeSpan _copiedShown = TimeSpan.FromMilliseconds(1500);
     private static readonly string[] _all =

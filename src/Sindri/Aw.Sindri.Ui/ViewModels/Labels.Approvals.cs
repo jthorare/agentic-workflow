@@ -78,9 +78,6 @@ internal static partial class Labels
     /// <summary>The plan changed between the reading and the answer.</summary>
     internal const string ApprovePlanChanged = "The plan changed while you were reading it. Read it again, then approve.";
 
-    /// <summary>The job did not end in the time the app waits.</summary>
-    internal const string ApproveStillRunning = "The approval is still running. Close this and look again in a minute.";
-
     /// <summary>The job's end could not be read.</summary>
     internal const string ApproveLostTrack = "Sindri stopped answering before the approval ended. Check Health, then read the plan again.";
 
