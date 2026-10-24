@@ -12,12 +12,11 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>
 /// The mirrored ledger rows carry their trigger's actor (engine spec §5.6): the human who answered or reported, and the
-/// timer service for a timeout. Heavy lane: its one-hour <see cref="Temporalio.Testing.WorkflowEnvironment.DelayAsync(TimeSpan, CancellationToken?)"/>
-/// waits for the checks activity to close before the server can skip time, and under a busy gate that wait outlasts the
-/// client's 30 s RPC timeout ("Timeout expired" at the delay, about 31 s; it passes alone). Tracking: give the delay a
-/// bounded wait for the activity to close, then move it back to the integration lane in InterpreterAttributionTests.
+/// timer service for a timeout. A class of its own, so its time-skipping server is its own: an activity a sibling test
+/// leaves open, even in a cancelled instance, keeps time skipping off for the rest of that server's life (finding F1),
+/// and the skips below would then wait in wall clock. Before each skip it waits for the open activities to close.
 /// </summary>
-[Lane(TestLane.Heavy)]
+[Lane(TestLane.Integration)]
 public sealed class InterpreterTimerAttributionTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>, IDisposable
 {
     private readonly WorkflowsHarness _harness = new();
@@ -43,9 +42,10 @@ public sealed class InterpreterTimerAttributionTests(SindriTimeSkippingServer se
             var report = new StepCompleted("human:cli", RunToken.From("1.1"), OutcomeName.From("done"), new Dictionary<FactKey, FactValue> { [FactKey.From("fact:output")] = output }, Tokens: 0, StepRuntime.Desk, new string('f', 64));
             _ = await handle.ExecuteUpdateAsync(wf => wf.CompleteAsync(report), new WorkflowUpdateOptions(new string('a', 32)));
             _ = await desk.Until(static v => v.State == "checks" && v.Task is not null);
-            await env.DelayAsync(TimeSpan.FromHours(1), ct);   // no time skip while the 'RunStep' activity is open (spec §11 F1)
+            await ActivitiesDone(handle, 2, ct);   // no time skip while a 'RunStep' activity is open (spec §11 F1): produce's and checks' have both closed
+            await WorkflowsHarness.Skip(env, TimeSpan.FromHours(1), ct);
             _ = await desk.Until(static v => v.State == "checks" && v.Task is not null);
-            await env.DelayAsync(TimeSpan.FromDays(2), ct);
+            await WorkflowsHarness.Skip(env, TimeSpan.FromDays(2), ct);
             _ = await desk.Until(static v => v.State == "parked");
             var resume = new AnswerGiven("human:thor", new CommandStamp(CommandNonce.From(new string('b', 32)), new string('c', 64)), AnswerVariant.Resume, Text: null, Amount: null, Forwarded: null);
             _ = await handle.ExecuteUpdateAsync(wf => wf.AnswerAsync(resume), new WorkflowUpdateOptions(new string('b', 32)));
@@ -58,5 +58,20 @@ public sealed class InterpreterTimerAttributionTests(SindriTimeSkippingServer se
 
             Assert.Equal(["host:sindri", "human:cli", "service:workflow.timers", "human:thor"], [.. rows.Select(static e => e.Envelope.Actor)]);
         }, ct);
+    }
+
+    /// <summary>
+    /// Waits until <paramref name="count"/> 'RunStep' activities have completed in the history. The time-skipping server skips
+    /// nothing while one is open, so a skip started earlier sleeps in wall clock for as long as a loaded box takes to finish
+    /// it, past the SDK's 30 s RPC timeout; skipping after this returns never waits on an activity.
+    /// </summary>
+    private static async Task ActivitiesDone(WorkflowHandle handle, int count, CancellationToken ct)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limit.CancelAfter(TimeSpan.FromSeconds(60));
+        while (!(await handle.FetchHistoryAsync()).Events.Where(static e => e.EventType == Temporalio.Api.Enums.V1.EventType.ActivityTaskCompleted).Skip(count - 1).Any())
+        {
+            await Task.Delay(100, limit.Token);
+        }
     }
 }

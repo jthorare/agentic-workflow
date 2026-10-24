@@ -14,7 +14,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// What the mirrored ledger rows say about who did it and for whom (engine spec §5.6; review run 1, P4 interpreter): a
 /// row carries its trigger's actor (the human who answered or reported, the timer service for a timeout) and the
 /// instance's tenant and ring, not the worker process's scope; and the instance's own id is the one its address derives.
-/// The trigger-actor rows are pinned in <see cref="InterpreterTimerAttributionTests"/> (heavy lane).
+/// The trigger-actor rows are pinned in <see cref="InterpreterTimerAttributionTests"/>, on a server of its own.
 /// </summary>
 [Lane(TestLane.Integration)]
 public sealed class InterpreterAttributionTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>, IDisposable
