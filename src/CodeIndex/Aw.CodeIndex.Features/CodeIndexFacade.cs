@@ -121,7 +121,7 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
     }
 
     private static bool IsValid(SymbolQuery query)
-        => !string.IsNullOrWhiteSpace(query.Text) && query.Text.Length <= InputLimits.QueryCharacters && query.Limit is >= 1 and <= CodeIndexRules.MaxSymbolHits;
+        => !string.IsNullOrWhiteSpace(query.Text) && query.Text.Length <= InputLimits.QueryCharacters && query.Limit >= 1;
 
     private async ValueTask<Result<Unit>> SearchOne(CodeIndexRepo repo, SymbolQuery query, Found found, CancellationToken cancellationToken)
     {
@@ -152,11 +152,6 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(paths);
-        if (paths.Count > CodeIndexRules.MaxFileSymbolPaths)
-        {
-            return CodeIndexErrors.QueryInvalid.With("at most 200 paths per call");
-        }
-
         var opened = await Open(scope, repo, cancellationToken).ConfigureAwait(false);
         if (opened.IsError)
         {
@@ -239,6 +234,6 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
 
     private static class InputLimits
     {
-        public const int QueryCharacters = 512;
+        public const int QueryCharacters = 4_096;
     }
 }

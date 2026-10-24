@@ -12,8 +12,8 @@ public sealed class GraphJsonParserTests
 {
     private static readonly HashSet<string> _files = new(["src/a.ts", "src/b.ts"], StringComparer.Ordinal);
 
-    private static Kernel.Result<Core.Model.GraphSnapshot> Parse(string json, IReadOnlySet<string>? files = null, IReadOnlyList<string>? roots = null, int maxNodes = 1_000)
-        => GraphJsonParser.Parse(Encoding.UTF8.GetBytes(json), files ?? _files, roots ?? ["/snap"], maxNodes, new FakeBodyScrubber("hunter2").Scrub);
+    private static Kernel.Result<Core.Model.GraphSnapshot> Parse(string json, IReadOnlySet<string>? files = null, IReadOnlyList<string>? roots = null)
+        => GraphJsonParser.Parse(Encoding.UTF8.GetBytes(json), files ?? _files, roots ?? ["/snap"], new FakeBodyScrubber("hunter2").Scrub);
 
     private static string Node(string id, string label, string file = "src/a.ts", string location = "L1", string extra = "\"_callable\": true")
         => $"{{\"id\": \"{id}\", \"label\": \"{label}\", \"source_file\": \"{file}\", \"source_location\": \"{location}\", {extra}}}";
@@ -174,12 +174,10 @@ public sealed class GraphJsonParserTests
     }
 
     [Fact]
-    public void Over_a_quarter_malformed_is_untrusted_and_over_the_node_cap_is_too_large()
+    public void Over_a_quarter_malformed_is_untrusted()
     {
         var untrusted = Parse(Raw([Node("ok", "f()"), Node("a", "g()", location: "x"), Node("b", "h()", location: "y")], []));
-        var large = Parse(Graph([Node("a", "f()")], []), maxNodes: 1);
 
         Assert.Equal("untrusted", untrusted.Error.Message);
-        Assert.Equal("too-large", large.Error.Message);
     }
 }

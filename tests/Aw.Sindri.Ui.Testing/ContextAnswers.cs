@@ -52,9 +52,9 @@ internal static class ContextAnswers
     {
         ArgumentNullException.ThrowIfNull(query);
         var anchors = query.Anchors.Distinct(StringComparer.Ordinal).ToList();
-        if (anchors.Count > 20)
+        if (query.Depth is > 4)
         {
-            return RouteAnswer.Problem("context-lenses", "set-21-anchors-006");
+            return RouteAnswer.Problem("context-lenses", "bad-depth-006");
         }
 
         if (query.MapVersion is { } pinned && !string.Equals(pinned, "v1", StringComparison.Ordinal))

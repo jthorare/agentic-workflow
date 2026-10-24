@@ -13,7 +13,7 @@ namespace Aw.CodeIndex.Testing;
 public abstract class RepoSnapshotContract
 {
     private static readonly CommitSha _unknownCommit = CommitSha.From("ffffffffffffffffffffffffffffffffffffffff");
-    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 10_000, MaxFiles: 100);
+    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 10_000);
 
     /// <summary>Makes the implementation hold <paramref name="layout"/> in one commit.</summary>
     /// <param name="layout">What the commit's tree holds.</param>
@@ -67,27 +67,13 @@ public abstract class RepoSnapshotContract
     [Fact]
     public async Task Kept_sizes_over_the_total_cap_stop_with_SND_CODEIDX_003()
     {
-        using var repo = Arrange(new RepoLayout().File("a.txt", new string('a', 60)).File("b.txt", new string('b', 40)));
+        using var repo = Arrange(new RepoLayout().File("a.cs", new string('a', 60)).File("b.ts", new string('b', 40)));
 
         var atCap = await repo.Snapshot.Inventory(repo.Repo, repo.Commit, _limits with { MaxTotalBytes = 100 }, TestContext.Current.CancellationToken);
         var over = await repo.Snapshot.Inventory(repo.Repo, repo.Commit, _limits with { MaxTotalBytes = 99 }, TestContext.Current.CancellationToken);
 
         Check(!atCap.IsError, "kept sizes exactly at the cap pass");
         Check(over.IsError && over.Error.Code == "SND-CODEIDX-003", "kept sizes one byte over the cap are SND-CODEIDX-003");
-    }
-
-    /// <summary>More kept files than the file cap stop with SND-CODEIDX-003.</summary>
-    /// <returns>A task.</returns>
-    [Fact]
-    public async Task More_kept_files_than_the_file_cap_stop_with_SND_CODEIDX_003()
-    {
-        using var repo = Arrange(new RepoLayout().File("a", "1").File("b", "2").File("c", "3"));
-
-        var atCap = await repo.Snapshot.Inventory(repo.Repo, repo.Commit, _limits with { MaxFiles = 3 }, TestContext.Current.CancellationToken);
-        var over = await repo.Snapshot.Inventory(repo.Repo, repo.Commit, _limits with { MaxFiles = 2 }, TestContext.Current.CancellationToken);
-
-        Check(!atCap.IsError, "as many files as the cap pass");
-        Check(over.IsError && over.Error.Code == "SND-CODEIDX-003", "one file over the cap is SND-CODEIDX-003");
     }
 
     /// <summary>A path with a '..', '.git' (any case) or backslash component is skipped as unsafe-path and never kept.</summary>

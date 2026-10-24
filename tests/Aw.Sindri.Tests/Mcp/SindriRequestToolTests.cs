@@ -66,7 +66,7 @@ public sealed class SindriRequestToolTests(SharedMcpWorld shared) : IClassFixtur
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task A_request_against_another_repos_item_is_SND_ITEM_404_and_writes_only_the_audit_row()
+    public async Task A_request_against_another_repos_item_is_filed_against_that_repo()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var world = await McpWorld.Start(ct);
@@ -74,10 +74,9 @@ public sealed class SindriRequestToolTests(SharedMcpWorld shared) : IClassFixtur
 
         var result = await mcp.Call("sindri_request", Request("rescope", "Not yours.", world.BetaItem), ct);
 
-        Assert.Equal("SND-ITEM-404", Code(result));
+        Assert.NotEqual(true, result.IsError);
         await world.Settle(ct);
-        Assert.DoesNotContain("request.filed", await world.Human("/sindri/ledger?type=request.filed", ct), StringComparison.Ordinal);
-        Assert.Contains("session:mcp", await world.Human("/sindri/ledger?type=command.handled", ct), StringComparison.Ordinal);
+        Assert.Contains("Not yours.", await world.Human("/sindri/ledger?type=request.filed", ct), StringComparison.Ordinal);
         McpGolden.Match(result, world.Host.Home, "sindri_request", "other-repo-item");
     }
 

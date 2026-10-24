@@ -10,7 +10,6 @@ namespace Aw.Context.Core.Results;
 /// <param name="Counts">The counts over every changed path.</param>
 /// <param name="Truncated">True when more than 1000 files changed and the lists hold the first 1000.</param>
 /// <param name="AnchorsTotal">How many distinct nodes the changed files claim.</param>
-/// <param name="AnchorsTruncated">True when the result's anchors are the first 20 of those (separate from <paramref name="Truncated"/>).</param>
 public sealed record DiffPart(
     Engine.ContextRepoName Repo,
     string Base,
@@ -20,5 +19,4 @@ public sealed record DiffPart(
     IReadOnlyList<string> Unmapped,
     DiffCounts Counts,
     bool Truncated,
-    int AnchorsTotal,
-    bool AnchorsTruncated);
+    int AnchorsTotal);

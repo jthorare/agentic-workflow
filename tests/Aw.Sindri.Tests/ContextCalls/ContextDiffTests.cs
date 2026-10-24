@@ -3,7 +3,6 @@ using System.Net;
 using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Results;
 using Aw.Context.Testing.Fixtures;
 using Aw.Context.Testing.Map;
@@ -153,17 +152,17 @@ public sealed class ContextDiffTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Context_query_diff_text_and_mcp_summary_say_when_the_file_list_and_the_anchors_are_truncated()
+    public void Context_query_diff_text_and_mcp_summary_say_when_the_file_list_is_truncated()
     {
         var sha = "0123456789abcdef0123456789abcdef01234567";
-        var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, sha, [], [], new DiffCounts(1_500, 1_500, 0, 0, 0), Truncated: true, 45, AnchorsTruncated: true);
+        var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, sha, [], [], new DiffCounts(1_500, 1_500, 0, 0, 0), Truncated: true, 45);
         var result = new ContextResult(1, QueryId.From("q_1"), new ContextQuery(Text: null, Diff: new DiffRange(sha, sha)), [], "v1", DateTimeOffset.UnixEpoch,
             [], [], [], [], Truncated: false, new BudgetUse(8000, 10, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal), part);
 
         var text = ContextText.Render(result);
 
         Assert.Contains("file list truncated to the first 0", text, StringComparison.Ordinal);
-        Assert.Contains($"anchors: the first {DiffAnchors.MaxAnchors} of 45", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("anchors: the first", text, StringComparison.Ordinal);
         Assert.Contains("(file list truncated)", McpSummaries.Query(result), StringComparison.Ordinal);
     }
 
@@ -187,7 +186,7 @@ public sealed class ContextDiffTests : IDisposable
         var file = new DiffFile("src/layout/SplitPane.ts", ChangeKind.Modified, DiffStatus.Mapped, [new DiffNode("feature:layout.split-pane", Confirmed: true)]);
         var odd = new DiffFile("src/odd\u001b[31mname.ts", ChangeKind.Added, DiffStatus.Unmapped, []);
         var sha = "0123456789abcdef0123456789abcdef01234567";
-        var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, "89abcdef0123456789abcdef0123456789abcdef", [odd, file], [odd.Path], new DiffCounts(3, 1, 1, 1, 0), Truncated: false, 1, AnchorsTruncated: false);
+        var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, "89abcdef0123456789abcdef0123456789abcdef", [odd, file], [odd.Path], new DiffCounts(3, 1, 1, 1, 0), Truncated: false, 1);
         var item = new ResultItem("feature", "feature:layout.split-pane", "Split pane", Text: null, Score: null, ["anchor"], Provenance.Human, Confirmed: true, Trust.Trusted, ["C1"]);
         var result = new ContextResult(1, QueryId.From("q_1"), new ContextQuery(Text: null, Diff: new DiffRange(sha, sha)), ["feature:layout.split-pane"], "v1", DateTimeOffset.UnixEpoch,
             [new ResultSection("graph", [item], [])], [], [], [], Truncated: false, new BudgetUse(8000, 10, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal), part);

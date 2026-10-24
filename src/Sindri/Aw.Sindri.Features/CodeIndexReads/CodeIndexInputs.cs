@@ -30,7 +30,7 @@ internal static class CodeIndexInputs
         return SymbolRef.TryFrom(full, out var symbol) ? symbol : Invalid($"'{text}' is not a symbol ref ('<repo>:<path>#<name>', or '<path>#<name>' with --repo)");
     }
 
-    internal static Result<CallDepth> Depth(int depth) => depth is >= 1 and <= 3 ? (CallDepth)depth : Invalid($"depth {depth.ToString(CultureInfo.InvariantCulture)} is out of range (1 to 3)");
+    internal static Result<CallDepth> Depth(int depth) => depth is >= 1 and <= 8 ? (CallDepth)depth : Invalid($"depth {depth.ToString(CultureInfo.InvariantCulture)} is out of range (1 to 8)");
 
     internal static Result<SymbolMatch> Match(string? match) => match switch
     {

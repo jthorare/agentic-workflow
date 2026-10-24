@@ -112,8 +112,8 @@ public sealed class ClonesTests
     [Fact, Trait("Lane", "unit")]
     public void Find_caps_each_list_at_the_hit_limit()
     {
-        var exact = Enumerable.Range(0, CodeIndexRules.MaxSymbolHits + 20).Select(i => Hit($"E{i.ToString("D4", CultureInfo.InvariantCulture)}")).ToList();
+        var exact = Enumerable.Range(0, CodeIndexRules.MaxClones + 20).Select(i => Hit($"E{i.ToString("D4", CultureInfo.InvariantCulture)}")).ToList();
 
-        Assert.Equal(CodeIndexRules.MaxSymbolHits, Clones.Find(Hit("Subject").Ref, new CloneCandidates(exact, default, [])).Exact.Count);
+        Assert.Equal(CodeIndexRules.MaxClones, Clones.Find(Hit("Subject").Ref, new CloneCandidates(exact, default, [])).Exact.Count);
     }
 }

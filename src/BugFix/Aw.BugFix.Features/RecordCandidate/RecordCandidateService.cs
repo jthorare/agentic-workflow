@@ -36,12 +36,15 @@ internal sealed class RecordCandidateService(IStateStore store, IGit git, WorkTr
             return changed.Error;
         }
 
+        var approval = changed.Value.Count > 0 && request.AllowTestChanges && Touches(changed.Value, added.Value, check)
+            ? $" --allow-test-changes ({(string.IsNullOrWhiteSpace(request.TestChangeReason) ? "no reason given" : request.TestChangeReason.Trim())})"
+            : string.Empty;
         var candidate = new Candidate(
             CandidateId.Numbered(state.Candidates.Count + 1), state.Attempt, state.Mode ?? FixMode.A, request.Branch,
             request.WorkingDirectory, commit.Value, request.Hypothesis, changed.Value, Run: null, Verdict: null);
         store.Save(
             request.StateDirectory,
-            (state with { Candidates = [.. state.Candidates, candidate] }).Step(state.Phase, $"record-candidate {candidate.Id.Value}", clock.GetUtcNow()));
+            (state with { Candidates = [.. state.Candidates, candidate] }).Step(state.Phase, $"record-candidate {candidate.Id.Value}{approval}", clock.GetUtcNow()));
         return new RecordCandidateResponse(candidate.Id, candidate.Commit, candidate.ChangedFiles);
     }
 
@@ -70,13 +73,17 @@ internal sealed class RecordCandidateService(IStateStore store, IGit git, WorkTr
 
     // Weakening what the check exercises (fixtures, helpers, its runner, config) is as bad as editing the check itself.
     // So is adding a file a loader picks ahead of existing code (a module that shadows another).
+    // Build and lock files are ordinary changes. The flag lets the orchestrator through with a reason that goes into the history.
     private static Result<IReadOnlyList<string>> Untouched(IReadOnlyList<string> changed, IReadOnlyList<string> added, FrozenCheck check, bool approved)
     {
-        var touched = ProtectedPaths.Touched(changed, check.Path, check.CommandFiles)
-            .Union(ProtectedPaths.Shadowing(added, check.Directory, check.Path), StringComparer.Ordinal)
-            .ToList();
+        var touched = Protected(changed, added, check);
         return touched.Count == 0 || approved
             ? Results.Success(changed)
-            : BugFixErrors.CandidateRefused.With($"the fix touches test/fixture/config files or adds a file a loader picks first ({string.Join(", ", touched)}); ask the user, and pass --allow-test-changes only if they approve");
+            : BugFixErrors.CandidateRefused.With($"the fix touches test/fixture/runner-config files or adds a file a loader picks first ({string.Join(", ", touched)}); if the change is needed and does not weaken the check, record-candidate again with --allow-test-changes --reason <why> (the reason is recorded)");
     }
+
+    private static bool Touches(IReadOnlyList<string> changed, IReadOnlyList<string> added, FrozenCheck check) => Protected(changed, added, check).Count > 0;
+
+    private static List<string> Protected(IReadOnlyList<string> changed, IReadOnlyList<string> added, FrozenCheck check) =>
+        [.. ProtectedPaths.Touched(changed, check.Path, check.CommandFiles).Union(ProtectedPaths.Shadowing(added, check.Directory, check.Path), StringComparer.Ordinal)];
 }

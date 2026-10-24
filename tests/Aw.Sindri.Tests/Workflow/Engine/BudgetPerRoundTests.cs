@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.Workflow.Engine;
 /// <summary>
 /// A state's budget is each round's allowance (spec §3.7, W7): spend counts by (state, loop round), a round that overspends
 /// does not starve the next one, the recipe's budget stays the cap over the instance, a grant answers its round and may
-/// reach 4x the original budget, and an instance that began before the rule replays as it ran (pooled).
+/// be any size (owner q93), and an instance that began before the rule replays as it ran (pooled).
 /// </summary>
 public sealed class BudgetPerRoundTests
 {
@@ -67,14 +67,13 @@ public sealed class BudgetPerRoundTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_grant_answers_its_round_and_reaches_four_times_the_original_budget()
+    public void A_grant_answers_its_round_and_reaches_any_size()
     {
         var spent = BudgetRules.Spend(In("produce", new LoopState(1, 3, Last: null), TokenSpend.PerRound), StepRecipe, 200_000);
         var parked = Parked(In("produce", new LoopState(1, 3, Last: null), spent.Spent), ParkReason.Budget, ParkKind.Step, ResumeKind.Rerun);
 
-        var tooMuch = BudgetRules.GrantTokens(parked, StepRecipe, 800_001);
-        Assert.Equal("SND-WF-003", tooMuch.Error.Code);
-        Assert.Contains("1..800k, 4x the original budget of 200k", tooMuch.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("SND-WF-003", BudgetRules.GrantTokens(parked, StepRecipe, 0).Error.Code);
+        Assert.Equal(800_001, BudgetRules.GrantTokens(parked, StepRecipe, 800_001).Value.Spent.Granted);   // owner q93: above 4x
 
         var granted = BudgetRules.GrantTokens(parked, StepRecipe, 150_000).Value;
         Assert.Equal(150_000, granted.Spent.Granted);
@@ -93,7 +92,7 @@ public sealed class BudgetPerRoundTests
         Assert.Equal("produce used 250k of 200k tokens", BudgetRules.Exhausted(pooled, StepRecipe));
         Assert.Equal(0, BudgetRules.Left(pooled, StepRecipe));
         var parked = Parked(In("produce", spent: Spent(200_000, 200_000)), ParkReason.Budget, ParkKind.Step, ResumeKind.Rerun);
-        Assert.Equal("SND-WF-003", BudgetRules.GrantTokens(parked, StepRecipe, 200_001).Error.Code);   // still bounded by the original budget
+        Assert.True(BudgetRules.GrantTokens(parked, StepRecipe, 200_001).IsSuccess);   // owner q93: no bound by the original budget
     }
 
     private static Decision Decide(WorkflowInstance instance, Trigger trigger) =>

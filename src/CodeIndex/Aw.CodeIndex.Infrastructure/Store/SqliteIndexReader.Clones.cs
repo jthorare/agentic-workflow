@@ -89,7 +89,7 @@ internal sealed partial class SqliteIndexReader
 
     private async ValueTask<Result<IReadOnlyList<Neighbor>>> FindNearest(ReadOnlyMemory<float> vector, int k, CancellationToken cancellationToken)
     {
-        var take = Math.Min(k, CodeIndexRules.MaxNeighbors);
+        var take = k;
         var best = new List<(long Id, double Score)>();
         if (take > 0)
         {

@@ -119,4 +119,22 @@ public sealed class ContextQuestionTests
         Assert.Equal([$"query:{Phrase}", $"lenses:{Tabs}"], server.ContextLog);
         Assert.Equal(Labels.ContextHead(1), page.Head);
     }
+
+    [Fact]
+    public async Task A_question_that_resolves_to_fifty_anchors_sends_all_of_them()
+    {
+        var anchors = Enumerable.Range(0, 50).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a:{i}")).ToList();
+        var sent = new List<int>();
+        var server = new FakeSindriApi
+        {
+            QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody(anchors, []),
+            LensesAnswer = q => { sent.Add(q.Anchors.Count); return ContextAnswers.Lenses(q); },
+        };
+        var page = Page(server);
+        page.AnchorText = Phrase;
+
+        await page.Submit(Token);
+
+        Assert.Equal([50], sent);
+    }
 }

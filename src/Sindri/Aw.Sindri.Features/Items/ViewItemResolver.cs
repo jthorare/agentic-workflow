@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.Items;
 
-/// <summary>Resolves an item reference through the views: an alias through 'item-aliases', then the id in 'items', then the caller's repo scope.</summary>
+/// <summary>Resolves an item reference through the views: an alias through 'item-aliases', then the id in 'items'.</summary>
 internal sealed class ViewItemResolver : IItemResolver
 {
     private readonly IViewReader _views;
@@ -46,7 +46,7 @@ internal sealed class ViewItemResolver : IItemResolver
             return row.Error;
         }
 
-        return row.Value is { } item && ItemScope.Visible(caller, item.Repo) ? item : NotFound(reference);
+        return row.Value is { } item ? item : NotFound(reference);
     }
 
     private static Error NotFound(ItemRef reference) => SindriErrors.ItemNotFound.With($"no item '{reference}'");

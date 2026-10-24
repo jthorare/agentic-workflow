@@ -82,6 +82,11 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when it did something.</returns>
     internal bool Back()
     {
+        if (Whole.ClearPin())
+        {
+            return true;   // Esc lets a pinned highlight go first
+        }
+
         if (InspectorOpen)
         {
             CloseInspector();

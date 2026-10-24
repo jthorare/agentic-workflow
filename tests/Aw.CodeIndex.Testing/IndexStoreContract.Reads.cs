@@ -10,7 +10,7 @@ public abstract partial class IndexStoreContract
 {
     private static SymbolQuery Exact(string text) => new(text, SymbolMatch.Exact, Repo: null);
 
-    private static SymbolQuery Prefix(string text, int limit = CodeIndexRules.MaxSymbolHits) => new(text, SymbolMatch.Prefix, Repo: null, limit);
+    private static SymbolQuery Prefix(string text, int limit = CodeIndexRules.DefaultSymbolHits) => new(text, SymbolMatch.Prefix, Repo: null, limit);
 
     /// <summary>An exact search finds a symbol by name, ref, path or path#name.</summary>
     /// <returns>A task.</returns>
@@ -116,10 +116,10 @@ public abstract partial class IndexStoreContract
         }
     }
 
-    /// <summary>A level over 100 edges is cut at 100 and marked truncated.</summary>
+    /// <summary>A level over 1,000 edges is cut at 1,000 and marked truncated.</summary>
     /// <returns>A task.</returns>
     [Fact]
-    public async Task A_walk_cuts_a_level_at_a_hundred_edges()
+    public async Task A_walk_cuts_a_level_at_a_thousand_edges()
     {
         var store = Create();
         var target = SymbolOf("src/T.cs", "T.Target");

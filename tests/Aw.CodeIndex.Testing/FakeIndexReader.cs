@@ -25,7 +25,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
             .ThenBy(x => x.Symbol.StartLine)
             .Select(x => FakeIndexData.ToHit(x.File, x.Symbol))
             .ToList();
-        var limit = Math.Min(query.Limit, CodeIndexRules.MaxSymbolHits);
+        var limit = query.Limit;
         return Ok(new SymbolPage([.. hits.Take(limit)], hits.Count > limit));
     }
 
@@ -87,7 +87,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
         => Ok<IReadOnlyList<Neighbor>>([.. data.Embeddings.Values
             .Select(e => (e, Score: Cosine(vector.Span, e.Vector.Span)))
             .OrderByDescending(x => x.Score)
-            .Take(Math.Min(k, CodeIndexRules.MaxNeighbors))
+            .Take(k)
             .Where(x => data.Hit(x.e.Symbol) is not null)
             .Select(x => new Neighbor(data.Hit(x.e.Symbol)!, x.Score))]);
 

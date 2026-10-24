@@ -154,7 +154,7 @@ public sealed class FakeCodeIndex : ICodeIndex
         }
 
         var hits = repos.SelectMany(r => r.Symbols.Where(s => Matches(query, s))).OrderBy(static s => s.File, StringComparer.Ordinal).ThenBy(static s => s.StartLine).ToList();
-        var limit = Math.Min(query.Limit, CodeIndexRules.MaxSymbolHits);
+        var limit = query.Limit;
         return Ok(new FindSymbolsAnswer(Stamp(repos[0]), [.. hits.Take(limit)], hits.Count > limit));
     }
 

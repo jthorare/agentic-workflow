@@ -14,7 +14,7 @@ internal static class StreamEventsServices
         new(View(h, scrubber), items ?? new NoItems(), Repos(h), h.Callers);
 
     public static CallerEventView View(SliceHarness h, ITextScrubber scrubber) =>
-        new(h.Callers, Repos(h), scrubber, SliceHarness.Json, h.Store);
+        new(scrubber, SliceHarness.Json, h.Store);
 
     public static LedgerItemRepos Repos(SliceHarness h) => new(h.Store, h.Events);
 }

@@ -18,8 +18,8 @@
         "socketKind": "default",
         "attachedClients": 1,
         "terminal": "warp",
-        "session": null,
-        "pane": null,
+        "session": "main",
+        "pane": "%3",
         "socket": null
       },
       "lane": {
@@ -34,17 +34,91 @@
         "possible": false,
         "why": "not-built"
       },
+      "title": "private title",
+      "launch": null,
+      "pid": 111
+    },
+    {
+      "ref": "codex/bbbbbbbb-0000-4000-8000-000000000002",
+      "provider": "codex",
+      "providerLabel": "Codex",
+      "id": "bbbbbbbb-0000-4000-8000-000000000002",
+      "idKnown": true,
+      "state": "asking",
+      "asking": {
+        "reason": "approval",
+        "tool": "Bash",
+        "since": "2026-10-16T12:01:00.0000000Z"
+      },
+      "stateSource": "record",
+      "estimated": false,
+      "repo": "web",
+      "worktree": null,
+      "host": {
+        "kind": "warp",
+        "label": "Warp",
+        "socketKind": null,
+        "attachedClients": null,
+        "terminal": "warp",
+        "session": null,
+        "pane": null,
+        "socket": null
+      },
+      "lane": null,
+      "launchId": null,
+      "startedAt": null,
+      "since": "2026-10-16T12:01:00.0000000Z",
+      "focus": {
+        "method": "none",
+        "possible": false,
+        "why": "not-built"
+      },
       "title": null,
       "launch": null,
-      "pid": null
+      "pid": 222
+    },
+    {
+      "ref": "cursor/pid-333-100",
+      "provider": "cursor",
+      "providerLabel": "Cursor",
+      "id": "pid-333-100",
+      "idKnown": false,
+      "state": "idle",
+      "asking": null,
+      "stateSource": "record",
+      "estimated": false,
+      "repo": null,
+      "worktree": null,
+      "host": {
+        "kind": "unknown",
+        "label": "unknown",
+        "socketKind": null,
+        "attachedClients": null,
+        "terminal": null,
+        "session": null,
+        "pane": null,
+        "socket": null
+      },
+      "lane": null,
+      "launchId": "LCH-00000000000000000000000000000001",
+      "startedAt": null,
+      "since": "2026-10-16T12:02:00.0000000Z",
+      "focus": {
+        "method": "none",
+        "possible": false,
+        "why": "not-built"
+      },
+      "title": null,
+      "launch": null,
+      "pid": 333
     }
   ],
   "recentlyEnded": [],
   "problems": [],
   "counts": {
-    "live": 1,
-    "asking": 0,
-    "outsideWorkflow": 1
+    "live": 3,
+    "asking": 1,
+    "outsideWorkflow": 2
   },
   "empty": null,
   "asOf": "2026-10-16T12:05:00.0000000Z"

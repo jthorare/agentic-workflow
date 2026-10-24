@@ -8,18 +8,18 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.GetQueue;
 
 /// <summary>
-/// The queue (API spec §3.6): the items the caller may see, open ones only, in one entry per group of <see cref="QueueGroups.Order"/> (an empty
+/// The queue (API spec §3.6): the items, open ones only, in one entry per group of <see cref="QueueGroups.Order"/> (an empty
 /// group keeps its entry and its sentence, E-18; stale views replace every sentence, the groups' too, and keep the rows), the oldest 'since' first in each. The top-level sentence is the stale-views one, else the queue's.
 /// </summary>
 /// <param name="views">The 'items' view.</param>
 /// <param name="status">How fresh the views are.</param>
-/// <param name="callers">The caller, whose repo scope applies.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 internal sealed class GetQueueService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers) : IService<GetQueueRequest, QueueResponse>
 {
     public async ValueTask<Result<QueueResponse>> Handle(GetQueueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("the queue needs a caller");
         }
@@ -31,7 +31,7 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
             return rows.Error;
         }
 
-        var open = ItemSummaries.Visible(rows.Value, caller, static r => QueueGroups.GroupOf(r.State) is not null);
+        var open = ItemSummaries.Visible(rows.Value, static r => QueueGroups.GroupOf(r.State) is not null);
         var groups = QueueGroups.Order.Select(group =>
         {
             var items = open.Where(i => QueueGroups.GroupOf(i.State) == group).ToList();

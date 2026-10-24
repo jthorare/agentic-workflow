@@ -22,9 +22,6 @@ internal sealed partial class WholeMapCanvas : Control
     /// <summary>The part of the world on screen, so only that is drawn.</summary>
     internal static readonly StyledProperty<Rect> ViewportProperty = AvaloniaProperty.Register<WholeMapCanvas, Rect>(nameof(Viewport));
 
-    private const double ClickSlop = 3;
-    private Point? _pressed;
-
     static WholeMapCanvas()
     {
         AffectsRender<WholeMapCanvas>(MapProperty, ScaleProperty, ViewportProperty);
@@ -57,40 +54,32 @@ internal sealed partial class WholeMapCanvas : Control
     protected override Size MeasureOverride(Size availableSize) => Map?.Geometry is { } geometry ? new Size(geometry.World.Width, geometry.World.Height) : default;
 
     /// <inheritdoc/>
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    protected override void OnPointerMoved(PointerEventArgs e)
     {
-        base.OnPointerPressed(e);
-        _pressed = e.GetPosition(this);
+        base.OnPointerMoved(e);
+        if (Map is { } map && !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            var at = e.GetPosition(this);
+            map.PointerMoved(at.X, at.Y, Slop);
+        }
     }
 
     /// <inheritdoc/>
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    protected override void OnPointerExited(PointerEventArgs e)
     {
-        base.OnPointerReleased(e);
-        var at = e.GetPosition(this);
-        if (_pressed is { } start && Math.Abs(at.X - start.X) <= ClickSlop && Math.Abs(at.Y - start.Y) <= ClickSlop)
-        {
-            Click(at);
-        }
-
-        _pressed = null;
+        base.OnPointerExited(e);
+        Map?.Hover(key: null);
     }
 
-    // A tile opens its feature; a node (above the dot zoom or as a dot) is chosen for the inspector.
-    private void Click(Point at)
-    {
-        if (Map is not { Geometry: { } geometry } map)
-        {
-            return;
-        }
+    /// <summary>The key under a point of the world, with the slop that keeps a dot easy to hit.</summary>
+    /// <param name="at">The point.</param>
+    /// <returns>The key; null over nothing.</returns>
+    internal string? KeyAt(Point at) => Map?.KeyAt(at.X, at.Y, Slop);
 
-        if (geometry.Tiles.FirstOrDefault(t => t.Rect.Contains(at.X, at.Y)) is { } tile)
-        {
-            map.OpenArea(tile.Key);
-        }
-        else if (geometry.Nodes.FirstOrDefault(n => n.Rect.Contains(at.X, at.Y)) is { } node)
-        {
-            map.ChooseNode(node.Key);
-        }
-    }
+    /// <summary>A click on the world, as the stage delivers it (a press here starts a pan, so the release never lands on this control).</summary>
+    /// <param name="at">The point of the world.</param>
+    internal void Click(Point at) => Map?.PointerClicked(at.X, at.Y, Slop);
+
+    // A dot is 10 px on screen whatever the zoom, so what counts as on it grows as the world shrinks.
+    private double Slop => WholeMapViewModel.UsesDots(Scale) ? 6 / Math.Max(Scale, 0.05) : 0;
 }

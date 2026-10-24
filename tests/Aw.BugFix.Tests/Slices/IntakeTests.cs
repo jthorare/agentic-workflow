@@ -63,7 +63,6 @@ public sealed class IntakeTests : IDisposable
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("unfixed", "confirmed", "a cause", "expected \"diagnosed\"")]
-    [InlineData("diagnosed", "untested", "a cause", "no hypothesis is confirmed")]
     [InlineData("diagnosed", "confirmed", null, "no ## Root Cause")]
     public async Task Advance_investigate_refuses_a_handoff_that_does_not_support_a_fix(string status, string result, string? cause, string reason)
     {
@@ -74,6 +73,28 @@ public sealed class IntakeTests : IDisposable
 
         Assert.Contains(reason, error.Message, StringComparison.Ordinal);
         Assert.Equal(Phase.Intake, _w.Now.Phase);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_handoff_without_a_confirmed_hypothesis_is_taken_when_two_are_open_and_never_asks_a_human()
+    {
+        _ = World.Ok(await _w.Init());
+        _w.Repos.Write(World.HandoffFile, A.Handoff(results: ["untested", "untested"]));
+        var result = World.Ok(await Investigate());
+
+        Assert.Equal(Phase.Investigate, result.Phase);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_handoff_with_one_unconfirmed_hypothesis_is_refused_without_asking_a_human()
+    {
+        _ = World.Ok(await _w.Init());
+        _w.Repos.Write(World.HandoffFile, A.Handoff(results: ["untested"]));
+
+        var message = World.Refused(await Investigate(), BugFixErrors.HandoffRefused).Message;
+
+        Assert.Contains("no hypothesis is confirmed", message, StringComparison.Ordinal);
+        Assert.DoesNotContain("ask the user", message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

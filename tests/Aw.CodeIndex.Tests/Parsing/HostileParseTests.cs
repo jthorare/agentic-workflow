@@ -21,10 +21,10 @@ public sealed class HostileParseTests : IDisposable
 
     public void Dispose() => Directory.Delete(_directory, recursive: true);
 
-    private ParseOutcome ParseFile(string relative)
+    private ParseOutcome ParseFile(string relative, CSharpParser? parser = null)
     {
         var text = Encoding.UTF8.GetString(File.ReadAllBytes(Path.Combine(_directory, relative)));
-        return _parser.Parse(relative, text, TestContext.Current.CancellationToken).Value;
+        return (parser ?? _parser).Parse(relative, text, TestContext.Current.CancellationToken).Value;
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -83,7 +83,16 @@ public sealed class HostileParseTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public void The_files_over_a_ceiling_end_with_that_ceilings_word()
     {
-        Assert.Equal("too-many-symbols", ParseFile("generated/symbols-6000.cs").Skip);
-        Assert.Equal("too-many-call-sites", ParseFile("generated/call-sites-25000.cs").Skip);
+        var oldCeilings = new CSharpParser(ParseLimits.Default with { MaxSymbols = 5_000, MaxCallSites = 20_000 });
+
+        Assert.Equal("too-many-symbols", ParseFile("generated/symbols-6000.cs", oldCeilings).Skip);
+        Assert.Equal("too-many-call-sites", ParseFile("generated/call-sites-25000.cs", oldCeilings).Skip);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public void The_generated_files_past_the_old_ceilings_parse_under_the_default_limits()
+    {
+        Assert.Null(ParseFile("generated/symbols-6000.cs").Skip);
+        Assert.Null(ParseFile("generated/call-sites-25000.cs").Skip);
     }
 }

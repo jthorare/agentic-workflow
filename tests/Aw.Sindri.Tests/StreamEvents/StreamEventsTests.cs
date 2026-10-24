@@ -52,7 +52,7 @@ public sealed class StreamEventsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_scoped_by_the_ledgers_item_repo_with_the_views_empty()
+    public async Task A_session_reads_every_repos_items_with_the_views_empty()
     {
         var h = new SliceHarness();
         var grant = await h.HoldLease();
@@ -66,13 +66,13 @@ public sealed class StreamEventsTests
             _ = await h.Store.Append(h.Events.Entry(EventTypes.ItemStateChanged, moved, "item.state-changed:" + item.Value + ":v2", item.Value), grant, ct);
         }
 
-        // the items view holds nothing, as during a rebuild: the scope still comes from the ledger
+        // the items view holds nothing, as during a rebuild: the rows come from the ledger
         var session = new CallerContext(CallerClass.Session, Terminal: false, "session:cli", h.Ids.New<CommandId>(), h.Ids.New<CorrelationId>(), RepoName.From("demo"));
         using var entered = h.Callers.Enter(session);
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
-        Assert.All(page.Events, e => Assert.Equal(mine, e.Item));
+        Assert.Equal([1L, 2L, 3L, 4L], page.Events.Select(e => e.Sequence));
+        Assert.Equal([mine, mine, other, other], page.Events.Select(e => e.Item));
         Assert.Equal(4L, page.ScannedTo);
     }
 
@@ -138,22 +138,23 @@ public sealed class StreamEventsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_naming_another_repos_item_gets_SND_ITEM_404()
+    public async Task A_session_naming_another_repos_item_streams_it()
     {
         var views = new ViewsHarness();
         var h = views.Slice;
         var created = new ItemCreated(h.Ids.New<CommandId>(), A.FirstItemId, "t", RepoName.From("elsewhere"), Link: null, Body: null, Owner: null);
+        await Append(h, await h.HoldLease(), EventTypes.ItemCreated, created, "item.created:1", A.FirstItemId.Value);   // an id resolves through the ledger
         await views.Fold(EventTypes.ItemCreated, created, A.FirstItemId);
         using var entered = h.Callers.Enter(new CallerContextBuilder().Session().InRepo("demo").Build());
         var service = StreamEventsServices.Over(h, new PassThroughScrubber(), new ViewItemResolver(views.Views));
 
         var result = await service.Handle(new StreamEventsRequest(After: 0, Ref: ItemRef.To(A.FirstItemId)), TestContext.Current.CancellationToken);
 
-        Assert.Equal(SindriErrors.ItemNotFound.Code, result.Error.Code);
+        Assert.True(result.IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Session_without_a_repo_sees_only_item_less_events()
+    public async Task Session_without_a_repo_sees_every_event()
     {
         var h = new SliceHarness();
         var grant = await h.HoldLease();
@@ -165,12 +166,12 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([2L], page.Events.Select(e => e.Sequence));
+        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.ScannedTo);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_payload_naming_another_repo_is_dropped_for_a_session()
+    public async Task A_payload_naming_another_repo_reaches_a_session()
     {
         var h = new SliceHarness();
         var grant = await h.HoldLease();
@@ -181,7 +182,7 @@ public sealed class StreamEventsTests
 
         var page = (await StreamEventsServices.Over(h).Handle(new StreamEventsRequest(After: 0), ct)).Value;
 
-        Assert.Equal([2L], page.Events.Select(e => e.Sequence));
+        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.ScannedTo);
     }
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
@@ -7,7 +8,6 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <summary>The lens stack (U9a): the anchor box's read of GET /sindri/context/lenses and what it draws, read-only.</summary>
 internal sealed partial class ContextPageViewModel
 {
-    private const int MaxAnchors = 20;
     private int _generation;
 
     /// <summary>The map of the last answer (F3 spec 1), or null before a read and after a refusal.</summary>
@@ -57,14 +57,6 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        if (anchors.Count > MaxAnchors)
-        {
-            Show(view: null, choices: []);
-            Problem = Labels.ContextTooMany(MaxAnchors);
-            Refresh();
-            return;
-        }
-
         var result = await Ports.Api.Lenses(api, new LensesQuery(anchors, Depth: null, Draft: false, MapVersion: PinnedVersion), cancellationToken).ConfigureAwait(true);
         if (generation != _generation)
         {
@@ -91,7 +83,7 @@ internal sealed partial class ContextPageViewModel
         else
         {
             Show(view: null, choices: Suggestions(result.Error));
-            Problem = result.Error.Message;
+            Problem = TooLongForOneRead(result.Error) ? Labels.ContextTooLongForOneRead : result.Error.Message;
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 
@@ -107,6 +99,11 @@ internal sealed partial class ContextPageViewModel
         AnchorText = anchor;
         return Submit(cancellationToken);
     }
+
+    // A very long anchor list can overrun the server's request line: the bare 414 or 400 says nothing, so the page says it.
+    private static bool TooLongForOneRead(Error error) =>
+        string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal)
+        && (error.Message.EndsWith(" 414", StringComparison.Ordinal) || error.Message.EndsWith(" 400", StringComparison.Ordinal));
 
     private static List<string> Suggestions(Error error)
     {

@@ -3677,14 +3677,12 @@ Aw.Context.Core.Results.DiffPart
 Aw.Context.Core.Results.DiffPart.<Clone>$() -> Aw.Context.Core.Results.DiffPart!
 Aw.Context.Core.Results.DiffPart.AnchorsTotal.get -> int
 Aw.Context.Core.Results.DiffPart.AnchorsTotal.init -> void
-Aw.Context.Core.Results.DiffPart.AnchorsTruncated.get -> bool
-Aw.Context.Core.Results.DiffPart.AnchorsTruncated.init -> void
 Aw.Context.Core.Results.DiffPart.Base.get -> string!
 Aw.Context.Core.Results.DiffPart.Base.init -> void
 Aw.Context.Core.Results.DiffPart.Counts.get -> Aw.Context.Core.Results.DiffCounts!
 Aw.Context.Core.Results.DiffPart.Counts.init -> void
-Aw.Context.Core.Results.DiffPart.Deconstruct(out Aw.Context.Core.Engine.ContextRepoName Repo, out string! Base, out string! Head, out string! MergeBase, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DiffFile!>! Files, out System.Collections.Generic.IReadOnlyList<string!>! Unmapped, out Aw.Context.Core.Results.DiffCounts! Counts, out bool Truncated, out int AnchorsTotal, out bool AnchorsTruncated) -> void
-Aw.Context.Core.Results.DiffPart.DiffPart(Aw.Context.Core.Engine.ContextRepoName Repo, string! Base, string! Head, string! MergeBase, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DiffFile!>! Files, System.Collections.Generic.IReadOnlyList<string!>! Unmapped, Aw.Context.Core.Results.DiffCounts! Counts, bool Truncated, int AnchorsTotal, bool AnchorsTruncated) -> void
+Aw.Context.Core.Results.DiffPart.Deconstruct(out Aw.Context.Core.Engine.ContextRepoName Repo, out string! Base, out string! Head, out string! MergeBase, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DiffFile!>! Files, out System.Collections.Generic.IReadOnlyList<string!>! Unmapped, out Aw.Context.Core.Results.DiffCounts! Counts, out bool Truncated, out int AnchorsTotal) -> void
+Aw.Context.Core.Results.DiffPart.DiffPart(Aw.Context.Core.Engine.ContextRepoName Repo, string! Base, string! Head, string! MergeBase, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DiffFile!>! Files, System.Collections.Generic.IReadOnlyList<string!>! Unmapped, Aw.Context.Core.Results.DiffCounts! Counts, bool Truncated, int AnchorsTotal) -> void
 Aw.Context.Core.Results.DiffPart.Equals(Aw.Context.Core.Results.DiffPart? other) -> bool
 Aw.Context.Core.Results.DiffPart.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DiffFile!>!
 Aw.Context.Core.Results.DiffPart.Files.init -> void
@@ -4604,7 +4602,6 @@ const Aw.Context.Core.Engine.QueryRules.BudgetMessage = "budget must be a whole 
 const Aw.Context.Core.Engine.QueryRules.DefaultBudget = 8000 -> int
 const Aw.Context.Core.Engine.QueryRules.DepthMessage = "depth must be a whole number from 0 to 4" -> string!
 const Aw.Context.Core.Engine.QueryRules.ItemMessage = "an item anchor names a tracker key or record key of 1 to 2000 characters" -> string!
-const Aw.Context.Core.Engine.QueryRules.MaxAnchors = 20 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxDepth = 4 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxEncodedText = 6000 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxSubgraphGet = 20 -> int
@@ -4642,9 +4639,7 @@ const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 101 -> int
 const Aw.Context.Core.History.HistoryRules.ListCap = 100 -> int
 const Aw.Context.Core.History.HistoryRules.MaxFiles = 50 -> int
 const Aw.Context.Core.History.HistoryRules.SubjectChars = 200 -> int
-const Aw.Context.Core.Lenses.DiffAnchors.MaxAnchors = 20 -> int
 const Aw.Context.Core.Lenses.DiffAnchors.MaxFiles = 1000 -> int
-const Aw.Context.Core.Lenses.LensesBuilder.BandCap = 100 -> int
 const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 20 -> int
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!

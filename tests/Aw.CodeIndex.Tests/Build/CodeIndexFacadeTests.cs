@@ -82,28 +82,46 @@ public sealed class CodeIndexFacadeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task FindSymbols_refuses_an_empty_or_over_limit_query_with_012()
+    public async Task FindSymbols_refuses_an_empty_query_with_012()
     {
         var harness = await Built();
 
         var empty = await harness.Facade.FindSymbols(harness.Scope, new SymbolQuery(" ", SymbolMatch.Exact, Repo: null), Token);
-        var tooMany = await harness.Facade.FindSymbols(harness.Scope, new SymbolQuery("Run", SymbolMatch.Exact, Repo: null, Limit: 201), Token);
 
         Assert.Equal("SND-CODEIDX-012", empty.Error.Code);
-        Assert.Equal("SND-CODEIDX-012", tooMany.Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task FileSymbols_lists_each_files_symbols_and_refuses_over_200_paths()
+    public async Task FindSymbols_takes_any_limit_and_a_long_query_text_removed_per_owner_q93()
+    {
+        var harness = await Built();
+
+        var many = await harness.Facade.FindSymbols(harness.Scope, new SymbolQuery("Run", SymbolMatch.Exact, Repo: null, Limit: 5_000), Token);
+        var stackTrace = await harness.Facade.FindSymbols(harness.Scope, new SymbolQuery(new string('x', 3_000), SymbolMatch.Exact, Repo: null), Token);
+
+        Assert.Equal("Run", many.Value.Hits.Single().Name);
+        Assert.False(stackTrace.IsError);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task FileSymbols_takes_a_thousand_paths_removed_per_owner_q93()
+    {
+        var harness = await Built();
+
+        var answer = await harness.Facade.FileSymbols(harness.Scope, BuildHarness.Name, [.. Enumerable.Range(0, 1_000).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"f{i}.cs"))], Token);
+
+        Assert.Equal(1_000, answer.Value.Files.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task FileSymbols_lists_each_files_symbols()
     {
         var harness = await Built();
 
         var answer = (await harness.Facade.FileSymbols(harness.Scope, BuildHarness.Name, ["src/A.cs", "src/none.cs"], Token)).Value;
-        var tooMany = await harness.Facade.FileSymbols(harness.Scope, BuildHarness.Name, [.. Enumerable.Range(0, 201).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"f{i}.cs"))], Token);
 
         Assert.Equal(2, answer.Files[0].Symbols.Count);
         Assert.Empty(answer.Files[1].Symbols);
-        Assert.Equal("SND-CODEIDX-012", tooMany.Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

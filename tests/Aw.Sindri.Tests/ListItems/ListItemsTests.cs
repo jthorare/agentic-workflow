@@ -67,13 +67,13 @@ public sealed class ListItemsTests
     }
 
     [Fact]
-    public async Task A_session_lists_only_its_repo()
+    public async Task A_session_lists_every_repo()
     {
         await _q.Item('1', "mine", repo: "alpha");
         await _q.Item('2', "theirs", repo: "beta");
         using var entered = _q.Session("alpha");
 
-        Expect.Sequence(["mine"], [.. await Titles(new ListItemsRequest(State: null, Repo: null))]);
+        Expect.Sequence(["mine", "theirs"], [.. await Titles(new ListItemsRequest(State: null, Repo: null))]);
     }
 
     [Fact]

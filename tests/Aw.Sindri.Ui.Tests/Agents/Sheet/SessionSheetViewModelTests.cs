@@ -81,16 +81,14 @@ public sealed class SessionSheetViewModelTests
     }
 
     [Fact]
-    public async Task Hidden_fields_null_draw_as_absent_not_empty_labels()
+    public async Task Null_fields_draw_as_absent_not_empty_labels()
     {
-        _server.SessionAnswer = RouteAnswer.Api("sessions-id", "session-caller-hidden-fields");
-        var sheet = await Opened(ClaudeRef);
+        var sheet = await Opened(CodexRef);   // its row has no title, tmux session, pane or socket
 
         Assert.Equal(FramePhase.Shown, sheet.Phase);
         Assert.All(sheet.Fields.Concat(sheet.HostFields), f => Assert.False(string.IsNullOrWhiteSpace(f.Value), f.Label));
-        Assert.DoesNotContain(sheet.Fields, f => f.Label == "Process");
         Assert.DoesNotContain(sheet.HostFields, f => new[] { "Tmux session", "Pane", "Socket" }.Contains(f.Label, StringComparer.Ordinal));
-        Assert.EndsWith("aaaaaaaa", sheet.Heading, StringComparison.Ordinal);
+        Assert.EndsWith("bbbbbbbb", sheet.Heading, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -100,7 +98,7 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened("codex/gone");
 
         Assert.Equal((FramePhase.NotFound, true, "This session has ended.", false), (sheet.Phase, sheet.IsEnded, sheet.EndedText, sheet.IsFocusEnabled));
-        Assert.Equal("no live session has that ref (or it is outside this caller's repo)", sheet.EndedDetail);
+        Assert.Equal("no live session has that ref", sheet.EndedDetail);
         Assert.Empty(sheet.ProblemText);
     }
 

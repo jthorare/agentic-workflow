@@ -70,10 +70,8 @@ internal static class BudgetRules
     }
 
     /// <summary>
-    /// '--grant-tokens n' (W7): on a budget park only, at most the original budget (the parked state's, or the
-    /// recipe's when the state has none). The answer applies it to the parked instance and then ends the park, so it
-    /// fits a park once. With no budget in the recipe (a 'gate.budget.*' refusal against the profile's budget) the
-    /// caller checks the bound.
+    /// '--grant-tokens n' (W7): on a budget park only, any n of at least 1 (owner q93, 2026-10-23: no upper bound). The answer applies it to the parked instance and then ends the park, so it
+    /// fits a park once.
     /// </summary>
     /// <param name="instance">The parked instance.</param>
     /// <param name="recipe">Its recipe.</param>
@@ -90,21 +88,15 @@ internal static class BudgetRules
                 $"--grant-tokens answers a budget park, not {shown} (fix: use an answer from allowedCommands in status)");
         }
 
-        var original = StateBudget(recipe, instance.Frame.State) ?? recipe.Budget?.Tokens;
         var perRound = instance.Spent.IsPerRound;
-        var bound = perRound ? GrantBound(original) : original;
-        if (tokens < 1 || tokens > bound)
+        if (tokens < 1)
         {
-            return WorkflowErrors.TriggerNotAllowed.With(OutsideBound(tokens, bound, original, perRound));
+            return WorkflowErrors.TriggerNotAllowed.With($"--grant-tokens {Tokens(tokens)} grants nothing (fix: grant at least 1 token)");   // owner q93: no upper bound
         }
 
         var granted = instance.Spent with { Granted = instance.Spent.Granted + tokens };
         return instance with { Spent = perRound && Parks.RecipeState(instance) is { } state ? GrantRound(instance, recipe, granted, state, tokens) : granted };
     }
-
-    private static string OutsideBound(int tokens, int? bound, int? original, bool perRound) => bound is { } b && original is { } o
-        ? $"--grant-tokens {Tokens(tokens)} is outside 1..{Tokens(b)}, {(perRound ? $"{GrantMultiple.ToString(CultureInfo.InvariantCulture)}x the original budget of {Tokens(o)}" : "the original budget")} (fix: use --grant-tokens 1 to --grant-tokens {Tokens(b)})"
-        : $"--grant-tokens {Tokens(tokens)} grants nothing (fix: grant at least 1 token)";
 
     /// <summary>The grant added to the round it answers (the state's current one).</summary>
     private static TokenSpend GrantRound(WorkflowInstance instance, Recipe recipe, TokenSpend granted, string state, int tokens)
@@ -112,14 +104,6 @@ internal static class BudgetRules
         var current = RoundSpendOf(instance.Spent, state, RoundOf(instance, recipe, state));
         return granted with { Rounds = With(instance.Spent.Rounds, state, current with { Granted = current.Granted + tokens }) };
     }
-
-    /// <summary>The most one grant may add under the per-round rule: <see cref="GrantMultiple"/> times the original budget (null when there is none).</summary>
-    /// <param name="original">The parked state's budget, or the recipe's when the state has none.</param>
-    /// <returns>The bound.</returns>
-    internal static int? GrantBound(int? original) => original is { } o ? (int)Math.Min(int.MaxValue, (long)o * GrantMultiple) : null;
-
-    /// <summary>How many times its original budget one grant may add under the per-round rule.</summary>
-    internal const int GrantMultiple = 4;
 
     /// <summary>Tokens the active state's budget has been spent on: this round's under the per-round rule, the lifetime total under the pooled one.</summary>
     /// <param name="instance">The instance.</param>

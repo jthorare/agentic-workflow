@@ -12,7 +12,7 @@ namespace Aw.CodeIndex.Infrastructure.Snapshot;
 /// <summary>The repo's tree at a commit, read with git only (spec §5.1).</summary>
 internal sealed class GitRepoSnapshot : IRepoSnapshot
 {
-    private static readonly TimeSpan _listTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan _listTimeout = TimeSpan.FromMinutes(10);
 
     /// <inheritdoc />
     public async ValueTask<Result<SnapshotInventory>> Inventory(CodeIndexRepo repo, CommitSha commit, SnapshotLimits limits, CancellationToken cancellationToken)

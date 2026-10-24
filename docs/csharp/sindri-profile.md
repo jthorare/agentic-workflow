@@ -162,8 +162,8 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 |---|---|---|---|---|
 | `denyPaths` | string[] | no | none | Repo-relative globs map extraction never reads (`private/**`, `**/*.generated.ts`), added to the built-in secret globs and never replacing them (context spec §6.2). A repo's own are added to the profile's |
 | `utilityGlobs` | string[] | no | none | Globs (same rules as `denyPaths`) of internal utility modules; the code index flags their exports `utility`. A repo's own are added to the profile's |
-| `maxFileKB` | whole number | no | `512` | The code index skips larger files as `too-large`. 1 to 102400 |
-| `maxTotalMB` | whole number | no | `200` | Larger tracked input stops a code index build (`SND-CODEIDX-003`). 1 to 102400 |
+| `maxFileKB` | whole number | no | `4096` | The code index skips larger files as `too-large`. 1 to 102400 |
+| `maxTotalMB` | whole number | no | `4096` | Larger tracked code input (code files only; docs, assets and lockfiles do not count) stops a code index build (`SND-CODEIDX-003`). 1 to 102400 |
 | `embeddings` | mapping | no | none | The code index's embeddings layer, below |
 | `graph` | mapping | no | none | The code index's graph layer, below |
 
@@ -182,8 +182,7 @@ A repo's `index:` replaces each scalar key it names (and each `embeddings` and `
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `enabled` | true or false | no | `true` | `false` leaves the graph layer `disabled` |
-| `maxMB` | whole number | no | `256` | The largest graph file read. 1 to 4096 |
-| `maxNodes` | whole number | no | `500000` | The most graph nodes read (edges: four times that). 1 to 5000000 |
+| `maxMB` | whole number | no | `1024` | The largest graph file read. 1 to 4096 |
 
 ### `launch`
 

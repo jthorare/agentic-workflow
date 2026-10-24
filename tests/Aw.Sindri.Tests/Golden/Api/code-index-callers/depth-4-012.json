@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CODEIDX-012",
-  "status": 400,
-  "detail": "depth 4 is out of range (1 to 3)",
-  "traceId": "<trace>"
-}

@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Text;
@@ -102,11 +101,11 @@ public sealed class GetInstanceDesignStopServiceTests
         return (view with { ItemId = ItemKey.From(Item), Recipe = view.Recipe with { Id = RecipeId.From(recipe) }, FactShas = shas }, new Contents(text));
     }
 
-    private static async Task<Result<DesignStopView>> Read(string recipe, Dictionary<string, string> facts, CallerContext? caller = null, FixedRepos? repos = null)
+    private static async Task<Result<DesignStopView>> Read(string recipe, Dictionary<string, string> facts, CallerContext? caller = null)
     {
         var (view, contents) = Instance(recipe, facts);
         var instances = new SomeInstances(view);
-        var service = new GetInstanceDesignStopService(new PlanInstances(instances, instances, repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build())), contents, new Redacting());
+        var service = new GetInstanceDesignStopService(new PlanInstances(instances, instances, new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build())), contents, new Redacting());
         return await service.Handle(new GetInstanceDesignStopRequest(view.Id), CancellationToken.None);
     }
 
@@ -174,15 +173,13 @@ public sealed class GetInstanceDesignStopServiceTests
     }
 
     [Fact]
-    public async Task A_session_of_another_repo_gets_item_404_and_one_of_the_same_repo_reads()
+    public async Task A_session_of_any_repo_reads_like_a_human()
     {
-        var repos = new FixedRepos((Item, "alpha"));
-
-        var own = await Read("workflow.plan", Facts(LineFixture.Plan()), new CallerContextBuilder().Session().InRepo("alpha").Build(), repos);
-        var other = await Read("workflow.plan", Facts(LineFixture.Plan()), new CallerContextBuilder().Session().InRepo("beta").Build(), repos);
+        var own = await Read("workflow.plan", Facts(LineFixture.Plan()), new CallerContextBuilder().Session().InRepo("alpha").Build());
+        var other = await Read("workflow.plan", Facts(LineFixture.Plan()), new CallerContextBuilder().Session().InRepo("beta").Build());
 
         Assert.True(own.IsSuccess);
-        Assert.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Assert.True(other.IsSuccess);
     }
 
     [Fact]

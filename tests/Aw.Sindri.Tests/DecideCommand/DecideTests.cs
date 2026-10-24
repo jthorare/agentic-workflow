@@ -5,8 +5,8 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Requests;
-using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Text;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Views;
@@ -129,18 +129,6 @@ public sealed class DecideTests
         using var entered = Human();
 
         var result = await Service().Handle(A.DecideRequest().ForDecision(DecisionId.From("DEC-" + new string('9', 32))).Build(), Token);
-
-        Expect.Equal(SindriErrors.DecisionNotFound.Code, result.Error.Code);
-        Assert.Empty(_h.Slice.Store.Events);
-    }
-
-    [Fact]
-    public async Task A_session_outside_the_decisions_repo_gets_404_with_no_hint()
-    {
-        await Pending(A.FirstItemId, "api");
-        using var entered = _h.Slice.Callers.Enter(A.Caller().Session().InRepo("web").Build());
-
-        var result = await Service().Handle(A.DecideRequest().Build(), Token);
 
         Expect.Equal(SindriErrors.DecisionNotFound.Code, result.Error.Code);
         Assert.Empty(_h.Slice.Store.Events);

@@ -37,7 +37,18 @@ public sealed class RecipeEvents(ILedgerStore ledger, EventFactory events, HeldL
     /// <param name="drift">True for a drift approval (the same hash re-approved with new pins).</param>
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>The event's position, or SND-LEDGER-002 when no lease is held.</returns>
-    public async ValueTask<Result<LedgerAppend>> Approved(RecipeApproval approval, bool drift, CancellationToken cancellationToken)
+    public ValueTask<Result<LedgerAppend>> Approved(RecipeApproval approval, bool drift, CancellationToken cancellationToken) =>
+        Approved(approval, drift, batch: null, cancellationToken);
+
+    /// <summary>
+    /// Appends 'recipe.approved' for <paramref name="approval"/> as <see cref="Approved(RecipeApproval, bool, CancellationToken)"/> does, carrying <paramref name="batch"/> when one approve-all hold approved it with others.
+    /// </summary>
+    /// <param name="approval">The stored approval row.</param>
+    /// <param name="drift">True for a drift approval (the same hash re-approved with new pins).</param>
+    /// <param name="batch">The approve-all hold this approval belongs to, or null.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The event's position, or SND-LEDGER-002 when no lease is held.</returns>
+    public async ValueTask<Result<LedgerAppend>> Approved(RecipeApproval approval, bool drift, ApprovalBatch? batch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(approval);
         if (held.Current is null)
@@ -51,8 +62,8 @@ public sealed class RecipeEvents(ILedgerStore ledger, EventFactory events, HeldL
             return latest.Error;   // refuse: without the latest approval event the key can't name what it follows
         }
 
-        var payload = new RecipeApproved(approval.Id, approval.Version, approval.Hash, approval.Via, approval.Base, approval.Pins, drift);
-        if (latest.Value is { } previous && events.Payload<RecipeApproved>(previous) is { IsSuccess: true } read && Same(read.Value, payload))
+        var payload = Payload(approval, drift, batch);
+        if (latest.Value is { } previous && Repeats(previous, payload))
         {
             return new LedgerAppend(previous.Sequence, AlreadyRecorded: true);
         }
@@ -113,6 +124,13 @@ public sealed class RecipeEvents(ILedgerStore ledger, EventFactory events, HeldL
         return Append(EventTypes.RecipeRevoked, new RecipeRevoked(revocation.Id, revocation.Version, revocation.Hash, revocation.CascadedFrom),
             $"{EventTypes.RecipeRevoked}:{revocation.Hash.Value}", cancellationToken);
     }
+
+    private static RecipeApproved Payload(RecipeApproval approval, bool drift, ApprovalBatch? batch) =>
+        new(approval.Id, approval.Version, approval.Hash, approval.Via, approval.Base, approval.Pins, drift, batch?.Batch, batch?.PlanDigest, batch?.HeldMs);
+
+    /// <summary>Whether <paramref name="previous"/> already records <paramref name="asked"/>.</summary>
+    private bool Repeats(LedgerEvent previous, RecipeApproved asked) =>
+        events.Payload<RecipeApproved>(previous) is { IsSuccess: true } read && Same(read.Value, asked);
 
     private static Error NoLease(string type) =>
         SindriErrors.LedgerUnavailable.With($"no lease is held, so '{type}' can't be recorded (fix: restart sindri)");

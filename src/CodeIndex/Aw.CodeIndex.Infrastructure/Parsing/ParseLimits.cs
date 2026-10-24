@@ -13,7 +13,7 @@ internal sealed record ParseLimits(int MaxDepth, TimeSpan TimeLimit, int StackBy
     /// <summary>The limits a real build runs with.</summary>
     public static ParseLimits Default { get; } = new(
         MaxDepth: 1_000,
-        TimeLimit: TimeSpan.FromSeconds(10),
+        TimeLimit: TimeSpan.FromSeconds(60),
         StackBytes: 64 * 1024 * 1024,
         MaxSymbols: CodeIndexRules.MaxSymbolsPerFile,
         MaxCallSites: CodeIndexRules.MaxCallSitesPerFile);

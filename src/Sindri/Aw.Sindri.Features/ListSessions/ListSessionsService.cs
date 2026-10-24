@@ -22,7 +22,7 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
     public async ValueTask<Result<SessionList>> Handle(ListSessionsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("the session list needs a caller");
         }
@@ -37,14 +37,13 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
             return unavailable;
         }
 
-        var human = SessionRows.SeesHumanFields(caller);
         var paths = await RepoPaths(cancellationToken).ConfigureAwait(false);
-        var visible = current.Sessions.Where(s => SessionRows.Visible(caller, s)).ToList();
+        var visible = current.Sessions;
         var matching = visible.Where(s => Matches(request, s)).ToList();
-        var endedVisible = current.RecentlyEnded.Where(e => SessionRows.Visible(caller, e.Session)).ToList();
+        var endedVisible = current.RecentlyEnded;
         var steps = await LaunchSteps.Of(launches, matching.Concat(endedVisible.Select(static e => e.Session)).Select(static s => s.LaunchId).OfType<LaunchId>(), cancellationToken).ConfigureAwait(false);
-        var shown = matching.Select(s => Row(s, paths, human, steps)).ToList();
-        var ended = endedVisible.Select(e => Ended(e, paths, human, steps)).ToList();
+        var shown = matching.Select(s => Row(s, paths, steps)).ToList();
+        var ended = endedVisible.Select(e => Ended(e, paths, steps)).ToList();
         var counts = new SessionCounts(visible.Count, visible.Count(static s => s.State == SessionState.Asking), visible.Count(static s => s.LaunchId is null));
         return new SessionList(shown, ended, current.Problems, counts, shown.Count == 0 ? EmptyText : null, current.ObservedAt);
     }
@@ -55,11 +54,11 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
         && (request.Repo is not { } repo || Equals(s.Repo, repo))
         && (request.InWorkflow is not { } inWorkflow || (s.LaunchId is not null) == inWorkflow);
 
-    private SessionRow Row(ObservedSession s, IReadOnlyDictionary<string, string> paths, bool human, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
-        SessionRows.Of(s, catalog.Resolve(s.Ref.Provider), s.Repo is { } repo ? paths.GetValueOrDefault(repo.Value) : null, human, s.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
+    private SessionRow Row(ObservedSession s, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
+        SessionRows.Of(s, catalog.Resolve(s.Ref.Provider), s.Repo is { } repo ? paths.GetValueOrDefault(repo.Value) : null, s.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
 
-    private EndedSessionRow Ended(EndedSession e, IReadOnlyDictionary<string, string> paths, bool human, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
-        new(Row(e.Session, paths, human, steps), e.EndedAt, human ? SessionRows.Resume(e.Session, catalog.Resolve(e.Session.Ref.Provider)) : null);
+    private EndedSessionRow Ended(EndedSession e, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
+        new(Row(e.Session, paths, steps), e.EndedAt, SessionRows.Resume(e.Session, catalog.Resolve(e.Session.Ref.Provider)));
 
     private async ValueTask<IReadOnlyDictionary<string, string>> RepoPaths(CancellationToken cancellationToken)
     {

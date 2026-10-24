@@ -83,7 +83,7 @@ internal sealed class JudgeCli(Func<string, string?> environment) : IJudge
 
     private static Result<JudgeAnswer> Unavailable(string message) => Unavailable<JudgeAnswer>(message);
 
-    private static Result<T> Unavailable<T>(string message) => BugFixErrors.JudgeUnavailable.With($"{message}; no verdict recorded");
+    private static Result<T> Unavailable<T>(string message) => BugFixErrors.JudgeUnavailable.With($"{message}; no verdict recorded; retry judge with backoff (up to 3 tries), then advance report --unresolved");
 
     private static string Tail(string text) => text.Length <= 200 ? text.Trim() : text[..200].Trim();
 }

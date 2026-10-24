@@ -255,7 +255,7 @@ public sealed class GetItemScopeTests
     }
 
     [Fact]
-    public async Task A_session_of_another_repo_gets_the_same_not_found()
+    public async Task A_session_of_another_repo_gets_the_scope_too()
     {
         await _q.Item('1', "Ship it", "demo");
         await Frozen(Address, _hash, Lenses("v7@abc1234:feature:a", "v7@abc1234:", "v7@abc1234:", "v7@abc1234:"));
@@ -263,8 +263,7 @@ public sealed class GetItemScopeTests
 
         var answer = await Ask();
 
-        Assert.True(answer.IsError);
-        Expect.Equal("SND-ITEM-404", answer.Error.Code);
+        Assert.True(answer.IsSuccess);
     }
 
     /// <summary>Exactly one warning, with only the item id, the ledger row and the reason: no hash, path or lens text.</summary>

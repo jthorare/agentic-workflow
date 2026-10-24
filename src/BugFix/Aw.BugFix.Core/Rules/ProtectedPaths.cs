@@ -3,9 +3,11 @@ using System.Text.RegularExpressions;
 namespace Aw.BugFix.Core.Rules;
 
 /// <summary>
-/// Files a fix must not touch without the user's approval: the check and its directory (unless that is the repository
-/// root), tests, fixtures, mocks, snapshots, runner config and package manifests. Weakening what the check exercises is
-/// as bad as editing the check.
+/// Files a fix must not touch without an approved reason (--allow-test-changes): the check and its directory (unless
+/// that is the repository root), tests, fixtures, mocks, snapshots and test-runner config. Weakening what the check
+/// exercises is as bad as editing the check. Build and lock files (package.json, Makefile, go.mod, Directory.Build.*,
+/// tsconfig and the like) are ordinary changes and need no flag: the frozen command and its environment digest still
+/// decide what the check runs.
 /// </summary>
 public static partial class ProtectedPaths
 {
@@ -91,10 +93,8 @@ public static partial class ProtectedPaths
     [GeneratedRegex(
         "(^|/)(vitest|vite|jest|playwright|karma|cypress|babel)\\.(config|setup|workspace)\\.[^/]+$|(^|/)(jest|vitest)[.-]setup[^/]*$"
         + "|(^|/)setupTests\\.[^/]+$|(^|/)conftest\\.py$|(^|/)\\.mocharc[^/]*$|(^|/)(pytest\\.ini|tox\\.ini|pyproject\\.toml|setup\\.cfg)$"
-        + "|(^|/)\\.babelrc[^/]*$|(^|/)\\.env\\.test[^/]*$|(^|/)tsconfig[^/]*\\.json$|(^|/)package\\.json$"
-        + "|(^|/)(GNUmakefile|[Mm]akefile|[Jj]ustfile|Rakefile|Taskfile\\.ya?ml|noxfile\\.py|bunfig\\.toml|deno\\.jsonc?|pom\\.xml|build\\.gradle(\\.kts)?|settings\\.gradle(\\.kts)?|Cargo\\.toml|Gemfile|go\\.mod)$"
-        + "|\\.mk$|(^|/)\\.(npmrc|yarnrc[^/]*|pnpmfile\\.c?js|nvmrc|tool-versions)$|\\.runsettings$|(^|/)Directory\\.Build\\.(props|targets|rsp)$"
-        + "|(^|/)\\.?pytest\\.(ini|toml)$|(^|/)\\.rspec(-local)?$|(^|/)\\.cargo/config(\\.toml)?$|(^|/)go\\.work(\\.sum)?$|(^|/)global\\.json$",
+        + "|(^|/)\\.babelrc[^/]*$|(^|/)\\.env\\.test[^/]*$|(^|/)noxfile\\.py$|(^|/)\\.pnpmfile\\.c?js$|\\.runsettings$"
+        + "|(^|/)\\.?pytest\\.(ini|toml)$|(^|/)\\.rspec(-local)?$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         matchTimeoutMilliseconds: 1000)]
     private static partial Regex RunnerConfig { get; }

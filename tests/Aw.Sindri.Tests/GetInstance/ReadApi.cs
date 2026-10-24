@@ -81,8 +81,8 @@ internal sealed class ReadApi : HttpMessageHandler
         _ = services
             .AddSingleton<IInstanceDirectory>(instances)
             .AddSingleton<IInstanceReader>(instances)
-            .AddSingleton<IService<GetInstanceRequest, InstanceDetail>>(new GetInstanceService(instances, instances, new DetailViews(), new FixedRepos(), new ListInstances.FixedCaller(_human), new DetailContexts(clock), new StepRunReader(new StepRunEvents(), new StepRunRecipes())))
-            .AddSingleton<IService<ListInstancesRequest, InstanceList>>(new ListInstancesService(instances, new NoRows(), new EndedInstanceViews(instances), new ListInstances.FixedItemViews(), new FixedRepos(), new ListInstances.FixedCaller(current: null), new InstanceRows(clock)));
+            .AddSingleton<IService<GetInstanceRequest, InstanceDetail>>(new GetInstanceService(instances, instances, new DetailViews(), new ListInstances.FixedCaller(_human), new DetailContexts(clock), new StepRunReader(new StepRunEvents(), new StepRunRecipes())))
+            .AddSingleton<IService<ListInstancesRequest, InstanceList>>(new ListInstancesService(instances, new NoRows(), new EndedInstanceViews(instances), new ListInstances.FixedItemViews(), new ListInstances.FixedCaller(current: null), new InstanceRows(clock)));
         configure?.Invoke(services);
     }, running: true);
 

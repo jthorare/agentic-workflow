@@ -92,7 +92,7 @@ public sealed class GetLaunchTests
     }
 
     [Fact]
-    public async Task Session_sees_its_own_repos_launches_only()
+    public async Task Session_sees_every_repos_launches()
     {
         await _v.Item(RepoName.From("alpha"));
         await _v.Request();
@@ -102,7 +102,6 @@ public sealed class GetLaunchTests
         }
 
         using var other = _v.Slice.Callers.Enter(A.Caller().Session().InRepo("beta").Build());
-        var hidden = await Service().Handle(A.GetLaunchRequest().Build(), Token);
-        Expect.Equal(SindriErrors.LaunchNotFound.Code, hidden.Error.Code);   // never a hint that it exists
+        Assert.True((await Service().Handle(A.GetLaunchRequest().Build(), Token)).IsSuccess);
     }
 }

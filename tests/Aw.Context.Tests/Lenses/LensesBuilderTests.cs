@@ -268,7 +268,7 @@ public sealed class LensesBuilderTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_list_is_cut_at_100_items_and_says_so_and_the_counts_stay_full()
+    public void A_list_over_100_items_lists_every_item()
     {
         var builder = new GraphBuilder().Node("feature:root");
         for (var i = 0; i < 120; i++)
@@ -278,8 +278,7 @@ public sealed class LensesBuilderTests
 
         var product = Build(builder.Build(), "feature:root", depth: 1).Bands.Product;
 
-        Assert.Equal(LensesBuilder.BandCap, product.Own.Count);
-        Assert.True(product.Truncated);
+        Assert.Equal(121, product.Own.Count);
         Assert.Equal(121, product.Counts.Own);
     }
 

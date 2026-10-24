@@ -68,19 +68,18 @@ public sealed class SubgraphBuilderTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_product_counts_carry_the_full_neighbor_and_edge_totals_beyond_the_cap()
+    public void The_product_band_lists_every_neighbor_and_edge_beyond_100()
     {
         var builder = new GraphBuilder();
-        foreach (var i in Enumerable.Range(0, LensesBuilder.BandCap + 5))
+        foreach (var i in Enumerable.Range(0, 105))
         {
             _ = builder.Edge(string.Create(CultureInfo.InvariantCulture, $"feature:n{i}"), EdgeType.PartOf, A);
         }
 
         var product = SubgraphBuilder.Build(_basis, builder.Build(), [A], 1, []).Value.Bands.Product;
 
-        Assert.Equal(LensesBuilder.BandCap, product.Neighbors.Count);
-        Assert.Equal((LensesBuilder.BandCap + 5, LensesBuilder.BandCap + 5, true), (product.Counts.Neighbors, product.Counts.Edges, product.Truncated));
-        Assert.Equal(LensesBuilder.BandCap, product.Edges.Count);
+        Assert.Equal((105, 105), (product.Neighbors.Count, product.Edges.Count));
+        Assert.Equal((105, 105), (product.Counts.Neighbors, product.Counts.Edges));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -142,7 +141,7 @@ public sealed class SubgraphBuilderTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Band_over_100_truncated_with_full_counts()
+    public void Band_over_100_lists_every_node()
     {
         var builder = new GraphBuilder();
         var keys = Enumerable.Range(0, 150).Select(i => string.Create(CultureInfo.InvariantCulture, $"feature:f{i:D3}")).ToArray();
@@ -153,9 +152,8 @@ public sealed class SubgraphBuilderTests
 
         var view = Of(keys, graph: builder.Build());
 
-        Assert.True(view.Bands.Product.Truncated);
         Assert.Equal(150, view.Bands.Product.Counts.Own);
-        Assert.Equal(keys.Take(100), view.Bands.Product.Own.Select(i => i.Node.Value), StringComparer.Ordinal);
+        Assert.Equal(keys, view.Bands.Product.Own.Select(i => i.Node.Value), StringComparer.Ordinal);
         Assert.Equal(150, view.Nodes.Count);
     }
 

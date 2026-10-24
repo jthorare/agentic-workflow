@@ -63,11 +63,10 @@ internal static class LensSets
     private static IntentBand Intent(List<LensScope> scopes)
     {
         var (recordList, decisionList) = IntentUnion(scopes);
-        var cut = recordList.Count > LensesBuilder.BandCap || decisionList.Count > LensesBuilder.BandCap;
-        return new IntentBand([.. recordList.Take(LensesBuilder.BandCap)], [.. decisionList.Take(LensesBuilder.BandCap)], new IntentCounts(recordList.Count, decisionList.Count, Orphaned: null), cut);
+        return new IntentBand([.. recordList], [.. decisionList], new IntentCounts(recordList.Count, decisionList.Count, Orphaned: null), Truncated: false);
     }
 
-    /// <summary>The records and decisions of every scope, each once with the anchors that reached it, in key order and uncapped (the lenses cap them; the history lens cuts them by time first).</summary>
+    /// <summary>The records and decisions of every scope, each once with the anchors that reached it, in key order and uncapped (the history lens cuts them by time).</summary>
     internal static (List<LensRecord> Records, List<LensDecision> Decisions) IntentUnion(List<LensScope> scopes)
     {
         var records = new Dictionary<string, (LensRecord Record, List<NodeKey> Mentions, SortedSet<int> By)>(StringComparer.Ordinal);

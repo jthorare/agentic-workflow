@@ -1,4 +1,3 @@
-using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
 
@@ -35,10 +34,6 @@ internal sealed class CsprojReader : IManifestReader
 
             var kind = string.Equals(ManifestXml.AttributeOrChild(item, "PrivateAssets"), "all", StringComparison.OrdinalIgnoreCase) ? "dev" : "runtime";
             rows.Add(new DepRecord(path, name, version, kind, ManifestXml.IsConditional(item) ? "conditional" : string.Empty));
-            if (rows.Count == CodeIndexRules.MaxDepsPerManifest)
-            {
-                break;
-            }
         }
 
         return rows;

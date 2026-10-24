@@ -12,7 +12,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 internal static partial class LoopRules
 {
     /// <summary>
-    /// '--grant n' (W7): 1 ≤ n ≤ the loop's cap, on a rounds or no-progress park; the round it starts is the first of
+    /// '--grant n' (W7): n ≥ 1 (no upper bound), on a rounds or no-progress park; the round it starts is the first of
     /// the n, so the last round allowed becomes the current round plus n. Kind loop grants the loop of the withheld
     /// transition's target; kind refusal the active state's.
     /// </summary>
@@ -30,11 +30,10 @@ internal static partial class LoopRules
             return parked.Error;
         }
 
-        var (name, spec, loop) = parked.Value;
-        if (rounds < 1 || rounds > spec.Cap)
+        var (name, _, loop) = parked.Value;
+        if (rounds < 1)
         {
-            return WorkflowErrors.TriggerNotAllowed.With(
-                $"--grant {Text(rounds)} is outside 1..{Text(spec.Cap)} for loop {name} (fix: use --grant 1 to --grant {Text(spec.Cap)})");
+            return WorkflowErrors.TriggerNotAllowed.With($"--grant {Text(rounds)} grants nothing for loop {name} (fix: use --grant 1 or more)");   // owner q93: no upper bound
         }
 
         return With(instance, name, loop with { Allowed = loop.Round + rounds, Last = null });
@@ -42,7 +41,7 @@ internal static partial class LoopRules
 
     /// <summary>
     /// '--text' on a no-progress park (spec §3.8): the same as a grant (the resume performs the withheld transition or
-    /// re-runs the Step) without adding rounds beyond the one it starts, once per loop.
+    /// re-runs the Step) without adding rounds beyond the one it starts.
     /// </summary>
     /// <param name="instance">The parked instance.</param>
     /// <param name="recipe">Its recipe.</param>
@@ -58,12 +57,6 @@ internal static partial class LoopRules
         }
 
         var (name, _, loop) = parked.Value;
-        if (loop.TextAnswered)
-        {
-            return WorkflowErrors.TriggerNotAllowed.With(
-                $"--text already answered a no-progress park of loop {name}; it works once (fix: grant more rounds at a terminal with --grant n)");
-        }
-
         var answered = loop with { Allowed = Math.Max(loop.Allowed, loop.Round + 1), Last = null, TextAnswered = true };
         return With(instance, name, answered);
     }

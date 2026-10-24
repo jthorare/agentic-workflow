@@ -3,8 +3,8 @@ using Aw.Sindri.Core.Commands;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
-/// <summary>The history lens of one to 20 anchors (GET /sindri/context/history?anchor=&amp;since=&amp;before=; 'sindri context history').</summary>
-/// <param name="Anchors">One to 20 node keys, names or aliases, repeats included.</param>
+/// <summary>The history lens of one or more anchors (GET /sindri/context/history?anchor=&amp;since=&amp;before=; 'sindri context history').</summary>
+/// <param name="Anchors">Node keys, names or aliases, repeats included.</param>
 /// <param name="Since">The earliest instant kept (RFC 3339 or a date), or null.</param>
 /// <param name="Before">The world as of this instant (inclusive), or null for today.</param>
 /// <param name="Draft">True to read the draft map.</param>

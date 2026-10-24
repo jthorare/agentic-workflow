@@ -38,11 +38,9 @@ internal static partial class Labels
     /// <summary>The word for an anchor node in a band.</summary>
     internal const string ContextAnchorTag = "topic";
 
+    /// <summary>The box's line when the server could not take that many topics in one read.</summary>
+    internal const string ContextTooLongForOneRead = "Too many topics for one read. Try fewer.";
+
     /// <summary>The word for something the band was cut short of.</summary>
     internal const string ContextTruncated = "more not shown";
-
-    /// <summary>The box's refusal of too many anchors.</summary>
-    /// <param name="max">The most anchors one read takes.</param>
-    /// <returns>The refusal.</returns>
-    internal static string ContextTooMany(int max) => string.Create(CultureInfo.InvariantCulture, $"At most {max} topics at a time");
 }

@@ -11,9 +11,6 @@ public static class DiffAnchors
     /// <summary>The most changed files a diff answer keeps.</summary>
     public const int MaxFiles = 1_000;
 
-    /// <summary>The most anchors a diff answer starts the cascade from.</summary>
-    public const int MaxAnchors = 20;
-
     /// <summary>
     /// Reads each changed path against the map, through the links of <paramref name="repo"/> only (a path that also exists in another mapped repo never claims that repo's nodes).
     /// Denied paths are only counted. When more than <see cref="MaxFiles"/> files are visible, the files and unmapped lists hold the first 1000 by path, while
@@ -22,7 +19,7 @@ public static class DiffAnchors
     /// <param name="changes">What the repo changed.</param>
     /// <param name="repo">The repo, with its deny globs.</param>
     /// <param name="graph">The map the caller may read.</param>
-    /// <returns>The diff facts and the anchors (at most <see cref="MaxAnchors"/>, confirmed nodes before suggested, then by key).</returns>
+    /// <returns>The diff facts and the anchors (every claimed node, confirmed before suggested, then by key).</returns>
     public static (DiffPart Part, IReadOnlyList<GraphNode> Anchors) Build(RepoChanges changes, ContextRepo repo, GraphSnapshot graph)
     {
         ArgumentNullException.ThrowIfNull(changes);
@@ -36,11 +33,11 @@ public static class DiffAnchors
         var claimed = visible.SelectMany(f => f.Nodes).GroupBy(n => n.Key, StringComparer.Ordinal)
             .Select(g => (g.Key, Confirmed: g.Any(n => n.Confirmed)))
             .OrderByDescending(c => c.Confirmed).ThenBy(c => c.Key, StringComparer.Ordinal).ToList();
-        var anchors = claimed.Select(c => graph.Resolve(NodeKey.From(c.Key))).OfType<GraphNode>().Take(MaxAnchors).ToList();
+        var anchors = claimed.Select(c => graph.Resolve(NodeKey.From(c.Key))).OfType<GraphNode>().ToList();
         var kept = visible.Take(MaxFiles).ToList();
         var part = new DiffPart(repo.Name, changes.Base, changes.Head, changes.MergeBase, kept,
             [.. kept.Where(f => f.Status == DiffStatus.Unmapped).Select(f => f.Path)], counts, Truncated: visible.Count > MaxFiles,
-            claimed.Count, AnchorsTruncated: claimed.Count > MaxAnchors);
+            claimed.Count);
         return (part, anchors);
     }
 

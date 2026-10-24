@@ -26,11 +26,11 @@ public sealed class StartAttemptStepTests
     }
 
     [Fact]
-    public async Task The_fourth_attempt_is_capReached_and_writes_nothing()
+    public async Task The_sixth_attempt_is_capReached_and_writes_nothing()
     {
         var rig = new BugFixRig();
         var step = new StartAttemptStep(rig.State, rig.Area);
-        for (var round = 1; round <= 3; round++)
+        for (var round = 1; round <= 5; round++)
         {
             var number = round.ToString(System.Globalization.CultureInfo.InvariantCulture);
             Assert.Equal("single", (await step.Run(BugFixRig.Context("step.bugfix.start-attempt", ("decision", BugFixRig.Decision("single"))), Token)).Result!.Outcome.Value);
@@ -38,10 +38,10 @@ public sealed class StartAttemptStepTests
             _ = await rig.State.Recheck(rig.StateDirectory, "c" + number, "/w" + number, new FrozenCheck("test", "t", ["t"], "."), Token);
         }
 
-        var fourth = await step.Run(BugFixRig.Context("step.bugfix.start-attempt", ("decision", BugFixRig.Decision("single"))), Token);
+        var sixth = await step.Run(BugFixRig.Context("step.bugfix.start-attempt", ("decision", BugFixRig.Decision("single"))), Token);
 
-        Assert.Equal("capReached", fourth.Result!.Outcome.Value);
-        Assert.Empty(fourth.Result.Outputs);
+        Assert.Equal("capReached", sixth.Result!.Outcome.Value);
+        Assert.Empty(sixth.Result.Outputs);
     }
 
     [Theory]

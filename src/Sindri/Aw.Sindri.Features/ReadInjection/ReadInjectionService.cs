@@ -13,16 +13,15 @@ namespace Aw.Sindri.Features.ReadInjection;
 /// The text behind the open run's plan, pulled on demand (plan "How the text reaches the Step"): the plan names the sections, the
 /// in-memory texts hold them, and a miss (a restart, an eviction) runs the inputs again outside the workflow. A refill is served only
 /// when it equals what the run recorded; otherwise nothing is served and the answer is SND-WF-017. Nothing is recorded. A run that is not
-/// open is SND-WF-005; an unknown instance, or another repo's for a session caller, is the fact route's one not-found answer.
+/// open is SND-WF-005; an unknown instance is the fact route's not-found answer.
 /// </summary>
 /// <param name="directory">Resolves the instance id to its address.</param>
 /// <param name="runtime">The instances on Temporal.</param>
 /// <param name="sources">The open run's inputs.</param>
 /// <param name="texts">The in-memory texts.</param>
 /// <param name="runner">Runs an input again.</param>
-/// <param name="repos">Where each item belongs, from the ledger.</param>
-/// <param name="callers">The caller, whose repo scope decides what it may read and rides on the refill.</param>
-internal sealed class ReadInjectionService(IInstanceDirectory directory, IInstanceReader runtime, IInjectionSources sources, IInjectionTexts texts, IStepInputRunner runner, IItemRepos repos, ICallerContextAccessor callers)
+/// <param name="callers">The caller, whose repo rides on the refill.</param>
+internal sealed class ReadInjectionService(IInstanceDirectory directory, IInstanceReader runtime, IInjectionSources sources, IInjectionTexts texts, IStepInputRunner runner, ICallerContextAccessor callers)
     : IService<ReadInjectionRequest, InjectionView>
 {
     public async ValueTask<Result<InjectionView>> Handle(ReadInjectionRequest request, CancellationToken cancellationToken)
@@ -43,11 +42,6 @@ internal sealed class ReadInjectionService(IInstanceDirectory directory, IInstan
         if (view.IsError)
         {
             return InstanceScope.Unknown(view.Error, request.Instance.Value);
-        }
-
-        if (await InstanceScope.Refusal(caller, view.Value.ItemId, request.Instance.Value, repos, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
         }
 
         return await Pull(address.Value, view.Value, request.Section, caller, cancellationToken).ConfigureAwait(false);

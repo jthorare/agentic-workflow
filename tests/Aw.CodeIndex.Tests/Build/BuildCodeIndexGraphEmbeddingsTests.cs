@@ -37,7 +37,7 @@ public sealed class BuildCodeIndexGraphEmbeddingsTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_graph_class_is_stored_class_like_and_not_embedded()
+    public async Task A_graph_class_is_stored_class_like_and_embedded_by_its_name_alone()
     {
         const string classFile = "export class Cart {\n  private marker = 'class-body-line';\n}\n";
         using var git = A.GitRepo().WithFile("src/a.ts", classFile).WithFile("src/b.ts", FileB).Build();
@@ -49,10 +49,11 @@ public sealed class BuildCodeIndexGraphEmbeddingsTests
         _ = (await index.Service.Handle(new BuildCodeIndexRequest(repo, git.Head, new Progress<string>()), Token)).Value;
         var embedded = (await index.Embed.Handle(new EmbedCodeIndexRequest(repo, new Progress<string>()), Token)).Value;
 
-        Assert.Equal((1, 1, LayerState.Ok), (embedded.Embedded, embedded.Embeddable, embedded.Embeddings));
+        Assert.Equal((2, 2, LayerState.Ok), (embedded.Embedded, embedded.Embeddable, embedded.Embeddings));
         var texts = embedder.Batches.SelectMany(b => b).ToList();
         Assert.Contains(texts, t => t.Contains("return 42;", StringComparison.Ordinal));
         Assert.DoesNotContain(texts, t => t.Contains("class-body-line", StringComparison.Ordinal));
+        Assert.Contains(texts, t => t.StartsWith("Cart\n", StringComparison.Ordinal));   // the class is embedded by its name, never its body (CIX-L60)
         var found = (await index.Facade.FindSymbols(RealIndex.ScopeOf(repo), new SymbolQuery("Cart", SymbolMatch.Exact, Repo: null), Token)).Value;
         Assert.Equal(SymbolKind.Class, found.Hits.Single().Kind);
     }

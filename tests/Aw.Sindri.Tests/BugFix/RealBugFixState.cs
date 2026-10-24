@@ -34,7 +34,7 @@ internal sealed class RealBugFixState : IDisposable
         _ = Git(Repo, "add", "-A");
         _ = Git(Repo, "commit", "-q", "-m", "base");
         _wrapper = Path.Combine(_home.Path, "bugfix-state");
-        _ = ExecutableScript.Write(_wrapper, $"GIT_CONFIG_GLOBAL=/dev/null\nAW_LOG_LEVEL=none\nexport GIT_CONFIG_GLOBAL AW_LOG_LEVEL\ncd '{Repo}'\nexec dotnet '{BuiltDll()}' \"$@\"\n");
+        _ = ExecutableScript.Write(_wrapper, $"GIT_CONFIG_GLOBAL=/dev/null\nAW_LOG_LEVEL=none\nAW_JUDGE_BIN='{NoJudge}'\nexport GIT_CONFIG_GLOBAL AW_LOG_LEVEL AW_JUDGE_BIN\ncd '{Repo}'\nexec dotnet '{BuiltDll()}' \"$@\"\n");
         var ticket = Path.Combine(_home.Path, "ticket.json");
         File.WriteAllText(ticket, """{"source":"text","id":null,"title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}""");
         var handoff = Path.Combine(_home.Path, "handoff.md");
@@ -50,6 +50,9 @@ internal sealed class RealBugFixState : IDisposable
     internal string Empty { get; }
 
     internal string Repo { get; }
+
+    /// <summary>The judge binary bugfix-state is pointed at: a path with no file, so a judge on PATH is never asked.</summary>
+    internal string NoJudge => Path.Combine(_home.Path, "no-judge");
 
     internal static FrozenCheck FrozenCheck { get; } = new("test", Check, ["bash", Check], ".");
 

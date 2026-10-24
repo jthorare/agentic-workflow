@@ -130,7 +130,7 @@ P3 (#180) keeps its pure decisions and drops the frame, fold and store work. P4 
 | W4 | **The rung comes from the block's descriptor.** Rung-2 and rung-3 gates must have a `threshold` | A recipe can't promote a judge question to deterministic |
 | W5 | **Fail closed.** An unknown block is a validation error. An unavailable gate or evidence runtime refuses. A Step with no runtime parks with `SND-WF-010`, unless its descriptor declares `deskCapable`, in which case it runs on the desk runtime (W20) | Nothing passes silently, and the desk fallback is opt-in per block |
 | W6 | **Outcomes are a closed set:** `resolved`, `unresolved`, `alreadySatisfied` and `failed` for recipe terminals, plus the engine's `cancelled` | Receipts count outcomes |
-| W7 | **Grants are explicit and need a terminal or the app's confirm.** `--grant n` (1 ≤ n ≤ the loop's cap) answers a `rounds` or `no-progress` park. `--grant-tokens n` (at most 4x the original budget, once per park; it applies to the round it answers) answers a `budget` park. In the app the same answer is a typed or held confirm (SO-12) that redeems the §4.2 challenge, so the app is a human surface too | Every park has a useful answer (E10). A session can never grant itself anything |
+| W7 | **Grants are explicit and need a terminal or the app's confirm.** `--grant n` (n ≥ 1, no upper bound; owner q93, 2026-10-23) answers a `rounds` or `no-progress` park. `--grant-tokens n` (n ≥ 1, no upper bound, once per park; owner q93, 2026-10-23; it applies to the round it answers) answers a `budget` park. In the app the same answer is a typed or held confirm (SO-12) that redeems the §4.2 challenge, so the app is a human surface too | Every park has a useful answer (E10). A session can never grant itself anything |
 | W8 | **Every recipe needs a human approval to run.** Approvals are stored keyed by `(id, version, hash)`, never in the file | §17.19: workflow templates are approval-tier |
 | W9 | **Hand-written recipes are approved with `sindri recipe approve`**, through a server-issued challenge. **Generated recipes are approved by the packet freeze**, from a `base` that Sindri code picks | Invariant 13 |
 | W10 | **`RCP-CAP-001`–`007` keep a generated recipe at or below its base** (§4.3), comparing guards by path and loops by state | C16, C17, E19 |
@@ -355,7 +355,7 @@ names come from the trigger's source: a Step, an event, or a child's terminal ou
 | State | Entered by | `next` | Ways out (resume action, §5.8) |
 |---|---|---|---|
 | `parked` (`rounds`, `no-progress`) | A loop cap or no progress, either on the transition back into a looped state (kind `loop`) or on a gate refusal at the cap (kind `refusal`); the frame records which | "Parked ({reason}): {question}. Grant more rounds at a terminal, or cancel." | `answer --grant n` (protected): kind `loop` performs the withheld loop transition, and kind `refusal` re-runs the Step. Either way, the round it starts is the first of the n. `answer --text` on `no-progress`: the same, once per loop (§13). `takeover`, `cancel` |
-| `parked` (`budget`) | A budget, or a `gate.budget.*` refusal | "Parked (budget): {question}. Grant tokens at a terminal or in the app, or cancel." | `answer --grant-tokens n` (protected; the suggestion is at least a whole round's budget, the most is 4x the original, named in the error): re-runs the Step, or re-evaluates the withheld transition. A re-run that would pass the loop's cap parks `rounds` (kind `refusal`) instead; `--grant n` is the way on (W7, §5.8, §13). `takeover`, `cancel` |
+| `parked` (`budget`) | A budget, or a `gate.budget.*` refusal | "Parked (budget): {question}. Grant tokens at a terminal or in the app, or cancel." | `answer --grant-tokens n` (protected; the suggestion is at least a whole round's budget, no upper bound, owner q93, 2026-10-23): re-runs the Step, or re-evaluates the withheld transition. A re-run that would pass the loop's cap parks `rounds` (kind `refusal`) instead; `--grant n` is the way on (W7, §5.8, §13). `takeover`, `cancel` |
 | `parked` (`needs-answer`, Step) | A refusal without a loop, `step.failed` | "Parked (needs-answer): {question}. Answer with --text; the Step runs again with your answer." | `answer --text`: re-runs the Step with `fact:answer`. A re-run that would pass the loop's cap parks `rounds` (kind `refusal`) instead; `--grant n` is the way on (W7, §5.8, §13). `takeover`, `cancel` |
 | `parked` (`needs-answer`, wait) | A gate refused the transition out of a wait | "Parked: {gate} refused {from} -> {to} ({reasons}). Fix the cause, then resume to check again, or cancel." | `answer --resume [--text]`: re-checks every gate and evidence at the current head under the answer's key (§5.8). `takeover`, `cancel` |
 | `parked` (`timeout`) | `then: park`, or any timeout in desk mode, whatever `then:` says (*rev 8.2*, *owner, 2026-10-14*) | "Parked (timeout): {state} ran past {after}. Resume to give it the full time again, or cancel." | `answer --resume`: back to the frame (the same run token) with a fresh deadline. `takeover`, `cancel` |
@@ -736,7 +736,7 @@ Registered events (`EventDescriptor`, §2) reach instances as Temporal **Signals
   wait refusal or a budget gate refusal, `rearm` for `timeout` and drift, `restart` for `SND-WF-010`, `reemit` for a
   dispatch refusal, and `--accept` or `--reject` for an escalated gate (on a command's escalation, `--reject`, or an
   `--accept` another check refuses, pops the escalation and the command is refused with `SND-WF-004`; rev 7.2). A
-  resume runs its gates afresh. `answer --text` on a `no-progress` park works once per loop (§13).
+  resume runs its gates afresh. `answer --text` on a `no-progress` park works every time (owner q93, 2026-10-23; was once per loop, §13).
 - **A park that arrives while parked or taken over** is recorded as `pendingPark` and takes effect when the current
   suspension pops. A revoke's `spec-conflict` park replaces the suspension, ending any takeover. A drift wake on a
   parked instance is recorded on the suspension and refused (`SND-RECIPE-006`) until re-approved.
@@ -1549,7 +1549,7 @@ reviewed again. Its fixes are listed below for the owner's review.
     phases.
 - **The eval format** (owner decision, 2026-10-11, rev 7.2): child lines, `variant` and `amount` for the engine
   triggers, and `--record` reading content from the stored facts (§9.2).
-- **`answer --text` on a `no-progress` park works once per loop** (§3.8; the lane lead's decision, 2026-10-11, not
+- **`answer --text` on a `no-progress` park works every time** (owner q93, 2026-10-23: the once-per-loop rule below is removed; §3.8; the lane lead's decision, 2026-10-11, not
   the owner's). `--text` is a desk action and grants are protected (W7), so a `--text` that worked once per park would
   let a desk caller add rounds without end. After the one `--text`, more rounds need `--grant n` at a terminal.
 - **Crafted bypasses** are outside the threat model (A 17.28.3; `docs/csharp/bugfix.md` "Threat model"):

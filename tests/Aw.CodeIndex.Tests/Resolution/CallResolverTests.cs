@@ -128,7 +128,7 @@ public sealed class CallResolverTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_ambiguous_call_keeps_eight_edges_and_the_true_count()
+    public void An_ambiguous_call_keeps_sixty_four_edges_and_the_true_count()
     {
         var caller = Sym("a/A.cs", "N.A.Run");
         var handlers = Enumerable.Range(0, 300).Select(i => Sym(string.Create(CultureInfo.InvariantCulture, $"h/{i:D3}.cs"), string.Create(CultureInfo.InvariantCulture, $"N.H{i:D3}.Handle"))).ToArray();
@@ -137,7 +137,7 @@ public sealed class CallResolverTests
 
         Assert.Equal(CodeIndexRules.MaxAmbiguousEdges, edges.Count);
         Assert.All(edges, e => Assert.Equal(300, e.Candidates));
-        Assert.Equal(handlers.Take(8).Select(h => h.Ref), edges.Select(e => e.Target!.Value));
+        Assert.Equal(handlers.Take(CodeIndexRules.MaxAmbiguousEdges).Select(h => h.Ref), edges.Select(e => e.Target!.Value));
     }
 
     [Theory, Trait("Lane", "unit")]

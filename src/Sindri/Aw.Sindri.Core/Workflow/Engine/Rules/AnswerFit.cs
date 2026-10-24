@@ -1,8 +1,6 @@
-using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
@@ -19,13 +17,12 @@ internal static class AnswerFit
     /// Whether <paramref name="answer"/> fits the instance's suspension: '--grant' on rounds or no-progress,
     /// '--grant-tokens' on budget, '--text' on needs-answer (from a Step) or no-progress, '--resume [--text]' on a wait's
     /// needs-answer, a timeout, SND-WF-010 or a dispatch refusal, '--accept' or '--reject' on a gate escalation.
-    /// '--grant n' is within 1 to the loop's cap and '--grant-tokens n' at most the original budget when the recipe is given.
+    /// '--grant n' and '--grant-tokens n' are any whole number from 1.
     /// </summary>
     /// <param name="instance">The instance.</param>
-    /// <param name="recipe">Its recipe, for the bounds; null skips the upper bounds.</param>
     /// <param name="answer">The answer.</param>
     /// <returns>The resume action, or SND-WF-003 whose fix names the answer that fits.</returns>
-    public static Result<ResumeAction> Check(WorkflowInstance instance, Recipe? recipe, AnswerGiven answer)
+    public static Result<ResumeAction> Check(WorkflowInstance instance, AnswerGiven answer)
     {
         ArgumentNullException.ThrowIfNull(instance);
         ArgumentNullException.ThrowIfNull(answer);
@@ -47,7 +44,7 @@ internal static class AnswerFit
             return FitRefusals.Refuse($"{Spelled(answer.Variant)} doesn't fit {address}, {row.Shown}", row.Fix);
         }
 
-        if (OutOfBounds(instance, suspension, recipe, answer, address) is { } bounded)
+        if (OutOfBounds(answer, address) is { } bounded)
         {
             return bounded;
         }
@@ -72,8 +69,8 @@ internal static class AnswerFit
             : null;
     }
 
-    // W7: '--grant n' is 1 to the loop's cap; '--grant-tokens n' is 1 to the original budget (a per-round instance: 4x it). Once per park holds because the grant ends the park.
-    private static Error? OutOfBounds(WorkflowInstance instance, Suspension suspension, Recipe? recipe, AnswerGiven answer, string address)
+    // W7 (owner q93): '--grant n' and '--grant-tokens n' are any whole number from 1. Once per park holds because the grant ends the park.
+    private static Error? OutOfBounds(AnswerGiven answer, string address)
     {
         if (answer.Variant is not (AnswerVariant.Grant or AnswerVariant.GrantTokens))
         {
@@ -81,33 +78,15 @@ internal static class AnswerFit
         }
 
         var rounds = answer.Variant == AnswerVariant.Grant;
-        var upper = recipe is null ? int.MaxValue : rounds ? LoopCap(instance.Frame, suspension, recipe) : Budget(instance, recipe);
-        if (answer.Amount is { } n && n >= 1 && n <= upper)
+        if (answer.Amount is { } n && n >= 1)
         {
             return null;
         }
 
-        var limit = upper == int.MaxValue ? "a whole number from 1" : "from 1 to " + upper.ToString(CultureInfo.InvariantCulture);
+        const string limit = "a whole number from 1";   // owner q93, 2026-10-23: no upper bound
         return FitRefusals.Refuse(
             $"{Spelled(answer.Variant)} needs {(rounds ? "rounds" : "tokens")} {limit}",
             FitRefusals.Answer(address, rounds ? "--grant 1" : "--grant-tokens <n>"));
-    }
-
-    // The loop a grant raises (the same rule LoopRules.Grant applies): for kind loop, the looped state the withheld transition goes back into; for kind refusal, the active state's own.
-    private static int LoopCap(Frame frame, Suspension suspension, Recipe recipe)
-    {
-        var looped = LoopRules.LoopedState(recipe, frame, suspension);
-        return recipe.States.TryGetValue(looped, out var state) && state.Loop is { } name && recipe.Loops.TryGetValue(name, out var loop)
-            ? loop.Cap
-            : int.MaxValue;
-    }
-
-    // The original budget: the parked state's own, else the recipe's; under the per-round rule one grant may add up to 4x it (BudgetRules.GrantTokens).
-    private static int Budget(WorkflowInstance instance, Recipe recipe)
-    {
-        var own = recipe.States.TryGetValue(instance.Frame.State, out var state) ? state.Budget?.Tokens : null;
-        var original = own ?? recipe.Budget?.Tokens;
-        return (instance.Spent.IsPerRound ? BudgetRules.GrantBound(original) : original) ?? int.MaxValue;
     }
 
     private static string Spelled(AnswerVariant variant) => variant switch

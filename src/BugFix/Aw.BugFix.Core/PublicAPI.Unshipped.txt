@@ -76,12 +76,12 @@ Aw.BugFix.Core.Model.Candidate.Attempt.get -> int
 Aw.BugFix.Core.Model.Candidate.Attempt.init -> void
 Aw.BugFix.Core.Model.Candidate.Branch.get -> string!
 Aw.BugFix.Core.Model.Candidate.Branch.init -> void
-Aw.BugFix.Core.Model.Candidate.Candidate(Aw.BugFix.Core.Ids.CandidateId Id, int Attempt, Aw.BugFix.Core.Model.FixMode Mode, string! Branch, string! Worktree, string! Commit, int? Hypothesis, System.Collections.Generic.IReadOnlyList<string!>! ChangedFiles, Aw.BugFix.Core.Model.CandidateRun? Run, Aw.BugFix.Core.Model.JudgeVerdict? Verdict, string? JudgeAsked = null) -> void
+Aw.BugFix.Core.Model.Candidate.Candidate(Aw.BugFix.Core.Ids.CandidateId Id, int Attempt, Aw.BugFix.Core.Model.FixMode Mode, string! Branch, string! Worktree, string! Commit, int? Hypothesis, System.Collections.Generic.IReadOnlyList<string!>! ChangedFiles, Aw.BugFix.Core.Model.CandidateRun? Run, Aw.BugFix.Core.Model.JudgeVerdict? Verdict, string? JudgeAsked = null, int JudgeAsks = 0, int JudgeEscalations = 0) -> void
 Aw.BugFix.Core.Model.Candidate.ChangedFiles.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.BugFix.Core.Model.Candidate.ChangedFiles.init -> void
 Aw.BugFix.Core.Model.Candidate.Commit.get -> string!
 Aw.BugFix.Core.Model.Candidate.Commit.init -> void
-Aw.BugFix.Core.Model.Candidate.Deconstruct(out Aw.BugFix.Core.Ids.CandidateId Id, out int Attempt, out Aw.BugFix.Core.Model.FixMode Mode, out string! Branch, out string! Worktree, out string! Commit, out int? Hypothesis, out System.Collections.Generic.IReadOnlyList<string!>! ChangedFiles, out Aw.BugFix.Core.Model.CandidateRun? Run, out Aw.BugFix.Core.Model.JudgeVerdict? Verdict, out string? JudgeAsked) -> void
+Aw.BugFix.Core.Model.Candidate.Deconstruct(out Aw.BugFix.Core.Ids.CandidateId Id, out int Attempt, out Aw.BugFix.Core.Model.FixMode Mode, out string! Branch, out string! Worktree, out string! Commit, out int? Hypothesis, out System.Collections.Generic.IReadOnlyList<string!>! ChangedFiles, out Aw.BugFix.Core.Model.CandidateRun? Run, out Aw.BugFix.Core.Model.JudgeVerdict? Verdict, out string? JudgeAsked, out int JudgeAsks, out int JudgeEscalations) -> void
 Aw.BugFix.Core.Model.Candidate.Equals(Aw.BugFix.Core.Model.Candidate? other) -> bool
 Aw.BugFix.Core.Model.Candidate.Evaluated.get -> bool
 Aw.BugFix.Core.Model.Candidate.Hypothesis.get -> int?
@@ -489,8 +489,8 @@ Aw.BugFix.Core.Rules.WorkTree.Clean(Aw.BugFix.Core.Model.BugFixState! state, str
 Aw.BugFix.Core.Rules.WorkTree.Snapshot(string! directory) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.Checkout!>!
 Aw.BugFix.Core.Rules.WorkTree.WorkTree(Aw.BugFix.Core.Ports.IGit! git, Aw.BugFix.Core.Ports.IFiles! files, Aw.BugFix.Core.Ports.IRunLedger! ledger) -> void
 const Aw.BugFix.Core.Model.BugFixState.CurrentSchema = 1 -> int
-const Aw.BugFix.Core.Model.BugFixState.MaxAttempts = 3 -> int
-const Aw.BugFix.Core.Model.ResolutionCheckInput.DiffCap = 200000 -> int
+const Aw.BugFix.Core.Model.BugFixState.MaxAttempts = 5 -> int
+const Aw.BugFix.Core.Model.ResolutionCheckInput.DiffCap = 1000000 -> int
 override Aw.BugFix.Core.Ids.CandidateId.Equals(object? obj) -> bool
 override Aw.BugFix.Core.Ids.CandidateId.GetHashCode() -> int
 override Aw.BugFix.Core.Ids.CandidateId.ToString() -> string!
@@ -675,3 +675,10 @@ static readonly Aw.BugFix.Core.Errors.BugFixErrors.StorageFailed -> Aw.Kernel.Er
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UiEvidenceUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UnknownCandidate -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.WrongPhase -> Aw.Kernel.ErrorDefinition!
+
+Aw.BugFix.Core.Model.BugFixState.Confirmed.get -> bool
+Aw.BugFix.Core.Model.Candidate.JudgeAsks.get -> int
+Aw.BugFix.Core.Model.Candidate.JudgeAsks.init -> void
+Aw.BugFix.Core.Model.Candidate.JudgeEscalations.get -> int
+Aw.BugFix.Core.Model.Candidate.JudgeEscalations.init -> void
+const Aw.BugFix.Core.Model.Candidate.MaxJudgeAsks = 2 -> int

@@ -1,5 +1,117 @@
 [
   {
+    "sequence": 6,
+    "id": "00000000-0000-0000-0000-00000000000f",
+    "type": "job.started",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "service:host",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-00000000000e",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "000000c0-0000-0000-0000-000000000001",
+      "job": "JOB-00000000000000000000000000000001",
+      "kind": "EchoJob",
+      "key": "echo",
+      "item": null,
+      "repo": "demo",
+      "service": null
+    }
+  },
+  {
+    "sequence": 7,
+    "id": "00000000-0000-0000-0000-000000000012",
+    "type": "job.progress",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "service:host",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-000000000011",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "000000c0-0000-0000-0000-000000000001",
+      "job": "JOB-00000000000000000000000000000001",
+      "round": 1,
+      "line": "echo 1",
+      "item": null,
+      "repo": "demo"
+    }
+  },
+  {
+    "sequence": 8,
+    "id": "00000000-0000-0000-0000-000000000015",
+    "type": "job.finished",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "service:host",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-000000000014",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "000000c0-0000-0000-0000-000000000001",
+      "job": "JOB-00000000000000000000000000000001",
+      "outcome": "succeeded",
+      "summary": "echoed 1",
+      "code": null,
+      "item": null,
+      "repo": "demo"
+    }
+  },
+  {
+    "sequence": 9,
+    "id": "00000000-0000-0000-0000-000000000018",
+    "type": "job.started",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "service:host",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-000000000017",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "000000c0-0000-0000-0000-000000000001",
+      "job": "JOB-00000000000000000000000000000002",
+      "kind": "EchoJob",
+      "key": "echo2",
+      "item": null,
+      "repo": "demo",
+      "service": null
+    }
+  },
+  {
+    "sequence": 10,
+    "id": "00000000-0000-0000-0000-00000000001b",
+    "type": "job.cancelled",
+    "schemaVersion": 1,
+    "occurredAt": "2026-01-01T00:00:00.0000000Z",
+    "actor": "service:host",
+    "tenant": "local",
+    "ring": 0,
+    "item": null,
+    "correlationId": "00000000-0000-0000-0000-00000000001a",
+    "causationId": null,
+    "traceId": null,
+    "payload": {
+      "commandId": "000000c0-0000-0000-0000-000000000002",
+      "job": "JOB-00000000000000000000000000000002",
+      "by": "human:cli",
+      "item": null,
+      "repo": "demo"
+    }
+  },
+  {
     "sequence": 11,
     "id": "00000000-0000-0000-0000-00000000001e",
     "type": "service.heartbeat",

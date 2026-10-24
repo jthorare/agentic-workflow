@@ -29,7 +29,7 @@ public interface IIndexReader : IAsyncDisposable
     /// <summary>Walks the edges into or out of a symbol.</summary>
     /// <param name="symbol">The symbol.</param>
     /// <param name="direction">Callers or callees.</param>
-    /// <param name="depth">1 to 3 levels, at most 100 edges each.</param>
+    /// <param name="depth">1 to 8 levels, at most 1,000 edges each.</param>
     /// <param name="includeImplementations">Follow 'inherits' edges from an interface or base member to its implementations.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The walk; SND-CODEIDX-011 when the ref names no symbol.</returns>

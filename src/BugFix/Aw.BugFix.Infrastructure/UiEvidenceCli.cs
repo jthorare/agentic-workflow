@@ -68,5 +68,5 @@ internal sealed class UiEvidenceCli(Func<string, string?> environment) : IUiEvid
 
     private static Result<UiRun> Unavailable(string message) => Unavailable<UiRun>(message);
 
-    private static Result<T> Unavailable<T>(string message) => BugFixErrors.UiEvidenceUnavailable.With($"{message}; no run registered");
+    private static Result<T> Unavailable<T>(string message) => BugFixErrors.UiEvidenceUnavailable.With($"{message}; no run registered; retry run-ui with backoff (up to 3 tries), then advance report --unresolved");
 }

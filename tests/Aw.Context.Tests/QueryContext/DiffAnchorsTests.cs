@@ -92,7 +92,7 @@ public sealed class DiffAnchorsTests
 
         // tab-groups is reached by a confirmed edge from TabManager.ts, so it is confirmed overall.
         Assert.Equal(["feature:layout.split-pane", "feature:layout.split-pane.orientation", "feature:tabs.tab-groups", "feature:tabs.tab-manager"], anchors.Select(a => a.Key.Value), StringComparer.Ordinal);
-        Assert.Equal((4, false), (part.AnchorsTotal, part.AnchorsTruncated));
+        Assert.Equal(4, part.AnchorsTotal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -108,7 +108,7 @@ public sealed class DiffAnchorsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void More_than_20_anchors_keep_the_first_20_and_say_how_many_there_were()
+    public void Every_claimed_anchor_is_used_however_many_there_are()
     {
         var map = new GraphBuilder();
         var files = new List<(string, ChangeKind)>();
@@ -121,10 +121,10 @@ public sealed class DiffAnchorsTests
 
         var (part, anchors) = Build(Changes([.. files]), map: map);
 
-        Assert.Equal(20, anchors.Count);
+        Assert.Equal(25, anchors.Count);
         Assert.Equal("feature:n00", anchors[0].Key.Value);
-        Assert.Equal("feature:n19", anchors[^1].Key.Value);
-        Assert.Equal((25, true, 25), (part.AnchorsTotal, part.AnchorsTruncated, part.Files.Count));
+        Assert.Equal("feature:n24", anchors[^1].Key.Value);
+        Assert.Equal((25, 25), (part.AnchorsTotal, part.Files.Count));
         Assert.All(part.Files, f => Assert.Single(f.Nodes));
     }
 
@@ -172,7 +172,7 @@ public sealed class DiffAnchorsTests
 
         Assert.Empty(part.Files);
         Assert.Empty(anchors);
-        Assert.Equal((new DiffCounts(0, 0, 0, 0, 0), false, 0, false), (part.Counts, part.Truncated, part.AnchorsTotal, part.AnchorsTruncated));
+        Assert.Equal((new DiffCounts(0, 0, 0, 0, 0), false, 0), (part.Counts, part.Truncated, part.AnchorsTotal));
         Assert.Equal((_repo.Name, Sha, Sha, Sha), (part.Repo, part.Base, part.Head, part.MergeBase));
     }
 

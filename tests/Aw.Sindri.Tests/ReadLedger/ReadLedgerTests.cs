@@ -31,7 +31,7 @@ public sealed class ReadLedgerTests
 
         Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
         Assert.Equal(2L, page.Next);
-        Assert.False(page.Events[0].Payload.TryGetProperty("body", out _));
+        Assert.Equal("private [masked] body", page.Events[0].Payload.GetProperty("body").GetString());
         Assert.Equal("Fix \\x1B[31m[masked]\\x1B[0m", page.Events[0].Payload.GetProperty("title").GetString());
     }
 
@@ -87,7 +87,7 @@ public sealed class ReadLedgerTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Session_never_does()
+    public async Task Session_sees_command_handled_too()
     {
         var grant = await _h.HoldLease();
         await CommandHandledRow(grant);
@@ -96,7 +96,7 @@ public sealed class ReadLedgerTests
 
         var page = (await Service().Handle(A.ReadLedgerRequest().Build(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(["service.heartbeat"], page.Events.Select(e => e.Type), StringComparer.Ordinal);
+        Assert.Equal(["command.handled", "service.heartbeat"], page.Events.Select(e => e.Type), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -113,7 +113,7 @@ public sealed class ReadLedgerTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_sees_only_its_repos_items()
+    public async Task A_session_sees_every_repos_items()
     {
         var grant = await _h.HoldLease();
         foreach (var (item, repo) in new[] { (A.FirstItemId, "demo"), (ItemId.From("ITM-00000000000000000000000000000002"), "elsewhere") })
@@ -125,7 +125,7 @@ public sealed class ReadLedgerTests
         using var entered = _h.Callers.Enter(new CallerContextBuilder().Session().InRepo("demo").Build());
         var page = (await Service().Handle(A.ReadLedgerRequest().Build(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal([1L], page.Events.Select(e => e.Sequence));
+        Assert.Equal([1L, 2L], page.Events.Select(e => e.Sequence));
     }
 
     [Theory, Trait("Lane", "unit")]

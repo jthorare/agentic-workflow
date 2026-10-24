@@ -356,6 +356,21 @@ public sealed class CSharpParserTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_generated_file_past_the_old_symbol_and_call_site_ceilings_still_parses()
+    {
+        var methods = string.Join(' ', Enumerable.Range(0, 6_000).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"void m{i}() {{ x(); x(); x(); x(); x(); }}")));
+
+        var outcome = Parse("class A { " + methods + " }");
+
+        Assert.Null(outcome.Skip);
+        Assert.True(outcome.Symbols.Count >= 6_000);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void One_files_parse_may_run_a_minute_on_a_loaded_box()
+        => Assert.Equal(TimeSpan.FromSeconds(60), ParseLimits.Default.TimeLimit);
+
+    [Fact, Trait("Lane", "unit")]
     public void A_parse_past_its_time_limit_is_skipped_timeout()
     {
         var parser = new CSharpParser(ParseLimits.Default with { TimeLimit = TimeSpan.Zero });

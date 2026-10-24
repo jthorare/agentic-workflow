@@ -34,6 +34,7 @@ internal sealed partial class WholeMapView : UserControl
         };
         WholeCanvas.SizeChanged += (_, _) => Arrange();
         WholeMiniMap.Centred += (_, e) => Centre(e.Value);
+        WholeCanvas.Clicked += (_, e) => WholeWorld.Click(e.GetPosition(WholeWorld));
         ViewChanged();
     }
 
@@ -52,6 +53,7 @@ internal sealed partial class WholeMapView : UserControl
             old.ZoomRequested -= OnZoomRequested;
             old.FitRequested -= OnFitRequested;
             old.PropertyChanged -= OnMapChanged;
+            old.EmphasisChanged -= OnEmphasisChanged;
         }
 
         _map = DataContext as WholeMapViewModel;
@@ -61,6 +63,7 @@ internal sealed partial class WholeMapView : UserControl
             _map.ZoomRequested += OnZoomRequested;
             _map.FitRequested += OnFitRequested;
             _map.PropertyChanged += OnMapChanged;
+            _map.EmphasisChanged += OnEmphasisChanged;
             _fitted = false;
             Arrange();
         }
@@ -87,6 +90,8 @@ internal sealed partial class WholeMapView : UserControl
 
         WholeWorld.InvalidateVisual();   // the answer's nodes standing out is not a property the canvas watches
     }
+
+    private void OnEmphasisChanged(object? sender, EventArgs e) => WholeWorld.Highlight(_map?.Focus, _map?.Emphasis);
 
     private void OnFitRequested(object? sender, EventArgs e) => WholeCanvas.Fit();
 

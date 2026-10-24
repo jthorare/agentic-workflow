@@ -35,7 +35,7 @@ public sealed class PlainWordsTests
 
     [Fact]
     public void The_context_page_calls_an_anchor_a_topic_everywhere_it_is_read() =>
-        Assert.Equal(("topic", "At most 20 topics at a time"), (Labels.ContextAnchorTag, Labels.ContextTooMany(20)));
+        Assert.Equal("topic", Labels.ContextAnchorTag);
 
     [Fact]
     public void The_shortcut_sheet_names_pages_and_actions_in_plain_words()

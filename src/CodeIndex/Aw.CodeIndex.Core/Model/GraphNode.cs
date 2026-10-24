@@ -6,5 +6,5 @@ namespace Aw.CodeIndex.Core.Model;
 /// <param name="Name">The scrubbed name, or null.</param>
 /// <param name="Line">The line, or null.</param>
 /// <param name="Community">The community number, or null.</param>
-/// <param name="IsClass">True when graphify marked the node a class (a type, not a function): it is stored class-like, never embedded and keeps no text.</param>
+/// <param name="IsClass">True when graphify marked the node a class (a type, not a function): it is stored class-like and embedded by its name alone (no body).</param>
 public sealed record GraphNode(string NodeKey, string? File, string? Name, int? Line, int? Community, bool IsClass = false);

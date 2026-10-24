@@ -4,7 +4,7 @@ using Aw.Sindri.Features.ContextCalls;
 
 namespace Aw.Sindri.Host.Endpoints;
 
-/// <summary>GET /sindri/context/code?anchor=&amp;draft=&amp;mapVersion=: the files, tests, data things and schema files around one to 20 anchors (a repeated 'anchor').</summary>
+/// <summary>GET /sindri/context/code?anchor=&amp;draft=&amp;mapVersion=: the files, tests, data things and schema files around one or more anchors (a repeated 'anchor').</summary>
 internal static class GetContextCodeEndpoint
 {
     internal static RouteGroupBuilder MapGetContextCode(this RouteGroupBuilder group)

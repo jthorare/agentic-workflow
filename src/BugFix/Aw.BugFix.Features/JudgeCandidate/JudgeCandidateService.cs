@@ -45,7 +45,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
             return question.Error;
         }
 
-        store.Save(request.StateDirectory, state.Value.With(candidate.Value with { JudgeAsked = question.Value.InputSha256 }));
+        store.Save(request.StateDirectory, state.Value.With(candidate.Value with { JudgeAsked = question.Value.InputSha256, JudgeAsks = candidate.Value.JudgeAsks + 1 }));
         return question;
     }
 
@@ -55,7 +55,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var candidate = state.Bind(s => s.Find(request.Candidate));
         if (candidate.IsSuccess && candidate.Value.JudgeAsked == question.InputSha256)
         {
-            store.Save(request.StateDirectory, state.Value.With(candidate.Value with { JudgeAsked = null }));
+            store.Save(request.StateDirectory, state.Value.With(candidate.Value with { JudgeAsked = null, JudgeAsks = Math.Max(0, candidate.Value.JudgeAsks - 1) }));
         }
 
         return Results.Ok();
@@ -105,16 +105,35 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
             return BugFixErrors.JudgeRefused.With($"{request.Candidate.Value} was left behind (start-attempt --abandon-judge) while judge was deciding; its verdict is not recorded");
         }
 
-        var status = answer.Decision switch
+        if (answer.Decision == JudgeDecision.Escalated)
         {
-            JudgeDecision.Escalated => BugFixStatus.NeedsHuman,
-            JudgeDecision.Resolved => BugFixStatus.Active,   // a resolving candidate supersedes an earlier escalation in the attempt
-            JudgeDecision.Partial or JudgeDecision.Unresolved => fresh.Value.Status,
-            _ => throw new ArgumentOutOfRangeException(nameof(answer), answer.Decision, "not a decision"),
-        };
+            return Escalated(request, fresh.Value, candidate.Value, answer);
+        }
+
+        var status = answer.Decision == JudgeDecision.Resolved ? BugFixStatus.Active : fresh.Value.Status;   // a resolving candidate supersedes an earlier escalation in the attempt
         var verdict = new JudgeVerdict(answer.Decision, answer.DecisionId, answer.ReasonCode, answer.InputSha256);
         var state = fresh.Value.With(candidate.Value with { Verdict = verdict, JudgeAsked = null }) with { Status = status };
         store.Save(request.StateDirectory, state.Step(Phase.Evaluate, $"judge {request.Candidate.Value}", clock.GetUtcNow()));
         return new JudgeCandidateResponse(request.Candidate, answer.Decision, answer.DecisionId, answer.ReasonCode, answer.Reasons, status);
+    }
+
+    // An escalation is never recorded as a verdict. The first is asked about once more (the candidate is judgeable again);
+    // the second falls back to an unresolved verdict that names the escalation, so the bug fix goes on to the next attempt
+    // or to a report without a human, and can never resolve the ticket.
+    private Result<JudgeCandidateResponse> Escalated(JudgeCandidateRequest request, BugFixState state, Candidate candidate, JudgeAnswer answer)
+    {
+        var escalations = candidate.JudgeEscalations + 1;
+        if (escalations < 2)
+        {
+            var retry = state.With(candidate with { JudgeAsked = null, JudgeAsks = 0, JudgeEscalations = escalations });
+            store.Save(request.StateDirectory, retry.Step(Phase.Evaluate, $"judge {request.Candidate.Value} escalated", clock.GetUtcNow()));
+            return new JudgeCandidateResponse(request.Candidate, JudgeDecision.Escalated, DecisionId: null, answer.ReasonCode, answer.Reasons, state.Status);
+        }
+
+        var code = $"escalated:{answer.ReasonCode}";
+        var verdict = new JudgeVerdict(JudgeDecision.Unresolved, DecisionId: null, code, answer.InputSha256);
+        var fallen = state.With(candidate with { Verdict = verdict, JudgeAsked = null, JudgeEscalations = escalations });
+        store.Save(request.StateDirectory, fallen.Step(Phase.Evaluate, $"judge {request.Candidate.Value} escalated twice, unresolved", clock.GetUtcNow()));
+        return new JudgeCandidateResponse(request.Candidate, JudgeDecision.Unresolved, DecisionId: null, code, answer.Reasons, state.Status);
     }
 }

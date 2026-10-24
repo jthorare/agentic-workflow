@@ -10,6 +10,10 @@ public static class LanguageTable
         [".tsx"] = "typescript",
         [".js"] = "javascript",
         [".mjs"] = "javascript",
+        [".cjs"] = "javascript",
+        [".jsx"] = "javascript",
+        [".mts"] = "typescript",
+        [".cts"] = "typescript",
         [".py"] = "python",
         [".go"] = "go",
         [".rs"] = "rust",
@@ -21,7 +25,12 @@ public static class LanguageTable
         [".h"] = "c",
         [".cc"] = "cpp",
         [".cpp"] = "cpp",
+        [".cxx"] = "cpp",
+        [".hpp"] = "cpp",
         [".swift"] = "swift",
+        [".scala"] = "scala",
+        [".lua"] = "lua",
+        [".dart"] = "dart",
     };
 
     /// <summary>Names the language of a file.</summary>

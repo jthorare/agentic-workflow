@@ -5,7 +5,7 @@ using Aw.Sindri.Testing.BugFix;
 
 namespace Aw.Sindri.Tests.BugFix;
 
-/// <summary>The real bugfix-state, through the adapter, honours the port's contract the in-memory fake does; its judge is unavailable until Judge's CLI contract is published, which the last test pins.</summary>
+/// <summary>The real bugfix-state, through the adapter, honours the port's contract the in-memory fake does; with AW_JUDGE_BIN naming no file its judge is refused as unavailable, which the last test pins (a judge on PATH is never asked).</summary>
 [Lane(TestLane.Integration)]
 public sealed class BugFixStateToolContractTests : BugFixStateContract, IDisposable
 {
@@ -24,7 +24,7 @@ public sealed class BugFixStateToolContractTests : BugFixStateContract, IDisposa
     protected override CandidateSource Commit(bool fixes) => _real.Commit(fixes);
 
     [Fact]
-    public async Task Judge_is_refused_as_unavailable_by_bugfix_state_until_the_Judge_adapter_lands()
+    public async Task Judge_is_refused_as_unavailable_when_AW_JUDGE_BIN_names_no_file()
     {
         var port = Create();
         var source = Commit(fixes: true);

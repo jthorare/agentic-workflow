@@ -165,7 +165,7 @@ public sealed class GetSessionPreviewTests
             session = await service.Handle(Ask(), SessionsRig.Token);
         }
 
-        Assert.Equal(["SND-SESSION-002", "SND-SESSION-002", "SND-AUTH-002"], [known.Error.Code, unknown.Error.Code, session.Error.Code]);   // never a 404: an unreadable collector is not an ended session
+        Assert.Equal(["SND-SESSION-002", "SND-SESSION-002", "SND-SESSION-002"], [known.Error.Code, unknown.Error.Code, session.Error.Code]);   // never a 404: an unreadable collector is not an ended session
         Assert.Equal(0, _panes.Reads);
     }
 
@@ -206,16 +206,15 @@ public sealed class GetSessionPreviewTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Preview_refuses_a_session_caller_before_resolving_the_ref()
+    public async Task Preview_answers_a_session_caller_like_a_human_for_an_unknown_and_a_stale_ref()
     {
         var service = Service();
         using var session = _r.SessionOf("api");
 
-        var known = await service.Handle(Ask(), SessionsRig.Token);
         var unknown = await service.Handle(Ask(new SessionRef(AgentId.From("codex"), SessionId.From("nope"))), SessionsRig.Token);
         var stale = await service.Handle(Ask(expect: SessionData.T0), SessionsRig.Token);
 
-        Assert.Equal(["SND-AUTH-002", "SND-AUTH-002", "SND-AUTH-002"], [known.Error.Code, unknown.Error.Code, stale.Error.Code]);   // never a 404 or a 409: a session cannot probe refs
+        Assert.Equal([SindriErrors.SessionNotFound.Code, SindriErrors.SessionConflict.Code], [unknown.Error.Code, stale.Error.Code]);
         Assert.Equal(0, _panes.Reads);
     }
 

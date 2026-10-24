@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Registry;
+using Aw.Sindri.Core.Workflow.RegistryWrites;
 
 namespace Aw.Sindri.Features.ApproveRecipe;
 
@@ -84,27 +85,6 @@ internal sealed class ApproveRecipeService(
             : new ApproveRecipeResponse(new CommandAccepted(caller.CommandId, sequence.Value), standing, plan.Preview, plan.Preview.Resumes, AlreadyApproved: true);
     }
 
-    /// <summary>The event, then the row, then (for a drift approval) the wake of the instances parked on that drift.</summary>
-    private async ValueTask<Result<(RecipeApproval Approval, long Sequence)>> Record(ApprovalPlan plan, string actor, CancellationToken cancellationToken)
-    {
-        var recipe = plan.Recipe;
-        var row = new RecipeApproval(recipe.Id, recipe.Version, recipe.Hash, actor, clock.GetUtcNow(), ApprovalVia.Desk, recipe.Base, plan.Preview.Pins);
-        var appended = await events.Approved(row, plan.Reapproval, cancellationToken).ConfigureAwait(false);
-        if (appended.IsError)
-        {
-            return appended.Error;
-        }
-
-        var stored = await approvals.Approve(row, cancellationToken).ConfigureAwait(false);
-        if (stored.IsError)
-        {
-            return stored.Error;
-        }
-
-        var sequence = appended.Value.Sequence;
-        var woken = plan.Reapproval
-            ? await wake.Wake(new RecipeWakeNotice(recipe.Hash, RecipeWakeKind.Approved, sequence, actor), cancellationToken).ConfigureAwait(false)
-            : Unit.Value;
-        return woken.IsError ? woken.Error : (stored.Value, sequence);
-    }
+    private ValueTask<Result<(RecipeApproval Approval, long Sequence)>> Record(ApprovalPlan plan, string actor, CancellationToken cancellationToken) =>
+        new RecipeApprovalRecorder(events, approvals, wake, clock).Record(plan, actor, batch: null, cancellationToken);
 }

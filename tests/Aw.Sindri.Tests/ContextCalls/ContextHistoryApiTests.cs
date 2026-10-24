@@ -82,7 +82,7 @@ public sealed class ContextHistoryApiTests : IDisposable
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public async Task History_refusals_are_problems_unknown_anchor_003_relative_time_006_too_many_006_not_retained_120_draft_and_version_006()
+    public async Task History_refusals_are_problems_unknown_anchor_003_relative_time_006_not_retained_120_draft_and_version_006()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await using var host = await Host();
@@ -90,13 +90,14 @@ public sealed class ContextHistoryApiTests : IDisposable
         var unknown = await host.Http.Ask(Get(History("anchor=feature%3Anope.x"), Terminal(host)));
         var relative = await host.Http.Ask(Get(History("anchor=" + Anchor, "since=90d"), Terminal(host)));
         var swapped = await host.Http.Ask(Get(History("anchor=" + Anchor, "since=2026-07-20", "before=2026-07-01"), Terminal(host)));
-        var many = await host.Http.Ask(Get(History([.. Enumerable.Range(0, 21).Select(i => "anchor=feature%3Anope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]), Terminal(host)));
+        var many = await host.Http.Ask(Get(History([.. Enumerable.Range(0, 50).Select(i => "anchor=feature%3Anope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]), Terminal(host)));
         var gone = await host.Http.Ask(Get(History("anchor=" + Anchor, "mapVersion=v99"), Terminal(host)));
         var both = await host.Http.Ask(Get(History("anchor=" + Anchor, "draft=true", "mapVersion=v1"), Terminal(host)));
         var none = await host.Http.Ask(Get(History(), Terminal(host)));
 
         Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (unknown.Status, unknown.Code));
-        Assert.All([relative, swapped, many, both, none], r => Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (r.Status, r.Code)));
+        Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (many.Status, many.Code));   // fifty anchors are asked, none is known: never a count refusal
+        Assert.All([relative, swapped, both, none], r => Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (r.Status, r.Code)));
         Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-120"), (gone.Status, gone.Code));
     }
 

@@ -11,7 +11,6 @@ internal static class IndexRules
 {
     private const int MaxMegabytes = 102_400;
     private const int MaxGraphMegabytes = 4_096;
-    private const int MaxGraphNodes = 5_000_000;
 
     internal static Error? Check(SindriProfile profile) =>
         Section("index", profile.Index) ?? (profile.Repos ?? []).Select(r => Section($"repos.{r.Name}.index", r.Index)).FirstOrDefault(static e => e is not null);
@@ -26,7 +25,6 @@ internal static class IndexRules
         return Range($"{path}.maxFileKB", index.MaxFileKB, MaxMegabytes)
             ?? Range($"{path}.maxTotalMB", index.MaxTotalMB, MaxMegabytes)
             ?? Range($"{path}.graph.maxMB", index.Graph?.MaxMB, MaxGraphMegabytes)
-            ?? Range($"{path}.graph.maxNodes", index.Graph?.MaxNodes, MaxGraphNodes)
             ?? Embeddings($"{path}.embeddings", index.Embeddings)
             ?? Globs($"{path}.utilityGlobs", index.UtilityGlobs);
     }

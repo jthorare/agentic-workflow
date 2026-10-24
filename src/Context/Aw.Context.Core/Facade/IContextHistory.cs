@@ -9,7 +9,7 @@ namespace Aw.Context.Core.Facade;
 public interface IContextHistory
 {
     /// <summary>The records, decisions and landed changes behind the anchors' own scopes inside a window, as of the map <paramref name="read"/> names.</summary>
-    /// <param name="anchors">One to 20 node keys, aliases or labels; duplicates count once.</param>
+    /// <param name="anchors">Node keys, aliases or labels; duplicates count once.</param>
     /// <param name="window">The absolute window: changes and records since an instant, the world as of another.</param>
     /// <param name="read">Which map.</param>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>

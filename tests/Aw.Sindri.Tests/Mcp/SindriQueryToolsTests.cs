@@ -39,7 +39,7 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_queue_lists_only_the_sessions_repo()
+    public async Task Sindri_queue_lists_every_repo()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var alpha = await seed.Open("alpha", ct);
@@ -48,22 +48,21 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
 
         var titles = Unfenced(mine).GetProperty("groups").EnumerateArray().SelectMany(g => g.GetProperty("items").EnumerateArray())
             .Select(i => i.GetProperty("title").GetString()).ToList();
-        Assert.Equal(3, titles.Count);
-        Assert.DoesNotContain("Beta one", titles, StringComparer.Ordinal);
+        Assert.Contains("Beta one", titles, StringComparer.Ordinal);
         Assert.Contains(SeededMcp.HostileTitle, titles, StringComparer.Ordinal);
-        Assert.StartsWith("3 open items in alpha", Text(mine), StringComparison.Ordinal);
+        Assert.StartsWith(titles.Count.ToString(CultureInfo.InvariantCulture) + " open items", Text(mine), StringComparison.Ordinal);
         McpGolden.Match(mine, seed.Host.Home, "sindri_queue", "alpha");
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_queue_of_a_repo_with_no_items_says_so()
+    public async Task Sindri_queue_with_a_repo_that_has_no_items_still_lists_the_others()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var gamma = await seed.Open("gamma", ct);
 
         var empty = await gamma.Call("sindri_queue", "{}", ct);
 
-        Assert.Equal(JsonValueKind.String, Unfenced(empty).GetProperty("empty").ValueKind);
+        Assert.NotEqual(JsonValueKind.String, Unfenced(empty).GetProperty("empty").ValueKind);
         McpGolden.Match(empty, seed.Host.Home, "sindri_queue", "empty");
     }
 
@@ -103,7 +102,7 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_item_of_another_repo_is_SND_ITEM_404_never_a_hint()
+    public async Task Sindri_item_of_another_repo_is_served_and_a_missing_one_is_SND_ITEM_404()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var mcp = await seed.Open("alpha", ct);
@@ -111,10 +110,9 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
         var other = await mcp.Call("sindri_item", Args("itemId", seed.BetaItem), ct);
         var missing = await mcp.Call("sindri_item", Args("itemId", NoSuchItem), ct);
 
-        Assert.Equal("SND-ITEM-404", Code(other));
+        Assert.NotEqual(true, other.IsError);
+        Assert.Equal(seed.BetaItem, other.StructuredContent!.Value.GetProperty("id").GetString());
         Assert.Equal("SND-ITEM-404", Code(missing));
-        Assert.DoesNotContain("beta", Text(other), StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(Text(other).Replace(seed.BetaItem, "X", StringComparison.Ordinal), Text(missing).Replace(NoSuchItem, "X", StringComparison.Ordinal));   // why: another repo's item answers as an absent one
         McpGolden.Match(other, seed.Host.Home, "sindri_item", "other-repo");
     }
 
@@ -165,7 +163,7 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_item_timeline_rejects_a_negative_after_and_another_repos_item()
+    public async Task Sindri_item_timeline_rejects_a_negative_after_and_serves_another_repos_item()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var mcp = await seed.Open("alpha", ct);
@@ -174,7 +172,7 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
         var other = await mcp.Call("sindri_item_timeline", Args("itemId", seed.BetaItem), ct);
 
         Assert.Equal("SND-CONTEXT-022", Code(negative));
-        Assert.Equal("SND-ITEM-404", Code(other));
+        Assert.NotEqual(true, other.IsError);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
@@ -198,19 +196,19 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_pending_decisions_with_none_pending_says_so()
+    public async Task Sindri_pending_decisions_of_a_repo_without_any_lists_the_others()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var beta = await seed.Open("beta", ct);
 
         var none = await beta.Call("sindri_pending_decisions", "{}", ct);
 
-        Assert.Equal(0, none.StructuredContent!.Value.GetProperty("decisions").GetArrayLength());
-        McpGolden.Match(none, seed.Host.Home, "sindri_pending_decisions", "none");
+        Assert.Equal(seed.AlphaDecision, Assert.Single(none.StructuredContent!.Value.GetProperty("decisions").EnumerateArray()).GetProperty("id").GetString());
+        McpGolden.Match(none, seed.Host.Home, "sindri_pending_decisions", "beta");
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_pending_decisions_for_another_repos_item_is_SND_ITEM_404()
+    public async Task Sindri_pending_decisions_for_another_repos_item_is_served()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var mcp = await seed.Open("alpha", ct);
@@ -218,13 +216,13 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
         var other = await mcp.Call("sindri_pending_decisions", Args("itemId", seed.BetaItem), ct);
         var own = await mcp.Call("sindri_pending_decisions", Args("itemId", seed.AlphaItem), ct);
 
-        Assert.Equal("SND-ITEM-404", Code(other));
+        Assert.NotEqual(true, other.IsError);
         Assert.Equal(1, own.StructuredContent!.Value.GetProperty("decisions").GetArrayLength());
         McpGolden.Match(other, seed.Host.Home, "sindri_pending_decisions", "other-repo-item");
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Sindri_job_of_another_repo_is_SND_JOB_404()
+    public async Task Sindri_job_of_another_repo_is_served()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var mcp = await seed.Open("alpha", ct);
@@ -232,7 +230,7 @@ public sealed class SindriQueryToolsTests(SeededMcp seed) : IClassFixture<Seeded
         var other = await mcp.Call("sindri_job", Args("jobId", seed.BetaJob), ct);
         var bad = await mcp.Call("sindri_job", Args("jobId", "nope"), ct);
 
-        Assert.Equal("SND-JOB-404", Code(other));
+        Assert.NotEqual(true, other.IsError);
         Assert.Equal("SND-CLI-003", Code(bad));
         McpGolden.Match(other, seed.Host.Home, "sindri_job", "other-repo");
     }

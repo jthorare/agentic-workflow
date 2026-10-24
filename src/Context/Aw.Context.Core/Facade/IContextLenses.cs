@@ -23,7 +23,7 @@ public interface IContextLenses
     public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, int? depth, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>The union of the lenses around several nodes (scoping spec C1, schema 2), read from one map snapshot.</summary>
-    /// <param name="anchors">One to 20 node keys, aliases or labels; duplicates count once.</param>
+    /// <param name="anchors">Node keys, aliases or labels; duplicates count once.</param>
     /// <param name="read">Which map.</param>
     /// <param name="depth">How far the neighbors range and the cascade runs (0 to 4), or null for the profile's 'context.cascadeDepth'.</param>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
@@ -47,7 +47,7 @@ public interface IContextLenses
     public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>The union of the lenses around several nodes with the cascade hops the caller names.</summary>
-    /// <param name="anchors">One to 20 node keys, aliases or labels; duplicates count once.</param>
+    /// <param name="anchors">Node keys, aliases or labels; duplicates count once.</param>
     /// <param name="read">Which map.</param>
     /// <param name="range">The depth and the cascade hops.</param>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>

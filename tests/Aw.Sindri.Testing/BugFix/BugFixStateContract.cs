@@ -123,13 +123,13 @@ public abstract class BugFixStateContract
         Expect.Equal("AW-BUGFIX-005", second.Refusal.Code);   // still the fix phase until the candidate's run is recorded
     }
 
-    /// <summary>Three attempts open; the fourth is refused with the cap's kind.</summary>
+    /// <summary>Five attempts open; the sixth is refused with the cap's kind.</summary>
     /// <returns>The test.</returns>
     [Fact]
-    public async Task The_fourth_attempt_is_refused_as_the_cap()
+    public async Task The_sixth_attempt_is_refused_as_the_cap()
     {
         var port = Create();
-        for (var attempt = 1; attempt <= 3; attempt++)
+        for (var attempt = 1; attempt <= 5; attempt++)
         {
             var started = await port.StartAttempt(StateDirectory, AttemptMode.Whole, Token);
             Expect.Equal(attempt, started.Value!.Attempt);
@@ -138,10 +138,10 @@ public abstract class BugFixStateContract
             _ = await port.Recheck(StateDirectory, "c" + attempt.ToString(System.Globalization.CultureInfo.InvariantCulture), source.Worktree, Check, Token);
         }
 
-        var fourth = await port.StartAttempt(StateDirectory, AttemptMode.Whole, Token);
+        var sixth = await port.StartAttempt(StateDirectory, AttemptMode.Whole, Token);
 
-        Expect.Equal(BugFixAnswerStatus.Refused, fourth.Status);
-        Expect.Equal(RefusalKind.AttemptCap, fourth.Refusal!.Kind);
+        Expect.Equal(BugFixAnswerStatus.Refused, sixth.Status);
+        Expect.Equal(RefusalKind.AttemptCap, sixth.Refusal!.Kind);
     }
 
     private async Task<BugFixAnswer<CheckRun>> Recheck(bool fixes) => await Recheck(Create(), fixes);

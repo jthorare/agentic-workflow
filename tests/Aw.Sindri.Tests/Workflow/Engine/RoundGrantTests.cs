@@ -23,9 +23,8 @@ public sealed class RoundGrantTests
         Assert.Equal(parked.Frame, granted.Frame);
         Assert.Equal("SND-WF-003", LoopRules.Grant(parked, StepRecipe, 0).Error.Code);
         Assert.Equal("SND-WF-003", LoopRules.Grant(parked, StepRecipe, -1).Error.Code);
-        Assert.Equal("SND-WF-003", LoopRules.Grant(parked, StepRecipe, 4).Error.Code);
         Assert.True(LoopRules.Grant(parked, StepRecipe, 3).IsSuccess);
-        Assert.Contains("--grant 1 to --grant 3", LoopRules.Grant(parked, StepRecipe, 4).Error.Message, StringComparison.Ordinal);
+        Assert.Equal(new LoopState(3, 1_003, Last: null), LoopRules.Grant(parked, StepRecipe, 1_000).Value.Loops[Revisions]);   // owner q93: no upper bound
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -78,7 +77,7 @@ public sealed class RoundGrantTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Text_on_no_progress_works_once()
+    public void Text_on_no_progress_works_again_on_the_next_park()
     {
         var parked = LoopParked(ParkReason.NoProgress, new LoopState(2, 3, Findings("A")));
 
@@ -88,10 +87,9 @@ public sealed class RoundGrantTests
         Assert.Equal(3, resumed.Next?.Round);
 
         var parkedAgain = LoopParked(ParkReason.NoProgress, resumed.Next! with { Last = Findings("A") }); // why: asserted just above
-        var refused = LoopRules.AnswerText(parkedAgain, StepRecipe);
+        var again = LoopRules.AnswerText(parkedAgain, StepRecipe);
 
-        Assert.Equal("SND-WF-003", refused.Error.Code);
-        Assert.Contains("--grant", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(new LoopState(3, 4, Last: null) { TextAnswered = true }, again.Value.Loops[Revisions]);   // owner q93: a second text answer resumes again
         Assert.True(LoopRules.Grant(parkedAgain, StepRecipe, 1).IsSuccess);
     }
 

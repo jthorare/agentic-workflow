@@ -8,7 +8,7 @@ namespace Aw.Sindri.Tests.Workflow.Engine;
 /// <summary>
 /// Budgets (spec §3.7, §3.8, §5.5, §5.8, W7): every Step report spends against the state's and the recipe's budget;
 /// running out parks with budget (kind step, resume rerun); '{budget.tokens.left}' is the lower of the two, grants
-/// included; '--grant-tokens n' is at most the original budget and fits a budget park once.
+/// included; '--grant-tokens n' is any n of at least 1 (owner q93) and fits a budget park once.
 /// </summary>
 public sealed class BudgetRulesTests
 {
@@ -99,7 +99,7 @@ public sealed class BudgetRulesTests
         Assert.Equal(100_000, granted.Spent.Granted);
         Assert.Equal(100_000, BudgetRules.Left(granted, StepRecipe));
         Assert.Equal(parked.Suspension, granted.Suspension);
-        Assert.Equal("SND-WF-003", BudgetRules.GrantTokens(parked, StepRecipe, 200_001).Error.Code);
+        Assert.True(BudgetRules.GrantTokens(parked, StepRecipe, 200_001).IsSuccess);   // owner q93: no upper bound
         Assert.Equal("SND-WF-003", BudgetRules.GrantTokens(parked, StepRecipe, 0).Error.Code);
         Assert.True(BudgetRules.GrantTokens(parked, StepRecipe, 200_000).IsSuccess);
 
@@ -113,12 +113,12 @@ public sealed class BudgetRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Token_grant_on_a_state_without_a_budget_is_bounded_by_the_recipe_budget()
+    public void Token_grant_on_a_state_without_a_budget_has_no_upper_bound()
     {
         var parked = Parked(In("checks", spent: Spent(400_000, 150_000)), ParkReason.Budget, ParkKind.Step, ResumeKind.Rerun);
 
         Assert.True(BudgetRules.GrantTokens(parked, StepRecipe, 400_000).IsSuccess);
-        Assert.Equal("SND-WF-003", BudgetRules.GrantTokens(parked, StepRecipe, 400_001).Error.Code);
+        Assert.True(BudgetRules.GrantTokens(parked, StepRecipe, 400_001).IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]

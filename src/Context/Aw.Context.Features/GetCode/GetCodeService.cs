@@ -8,7 +8,7 @@ using Aw.Kernel.Services;
 namespace Aw.Context.Features.GetCode;
 
 /// <summary>
-/// The code lens around one to 20 anchors (S-CL, scoping station C3): one snapshot of the map the caller may read (a session's graph is already cut to its repo) serves every anchor, the graph half is
+/// The code lens around one or more anchors (S-CL, scoping station C3): one snapshot of the map the caller may read (a session's graph is already cut to its repo) serves every anchor, the graph half is
 /// built by <see cref="CodeLensBuilder"/>, the lexical half by <see cref="CodeLexicalSearch"/> at the map's commit, the callers and callees by <see cref="CodeSymbolSearch"/> from the code index, and every piece of map text is cleaned like every answer's. An anchor the version doesn't hold, a
 /// session can't see or a deny glob hides is listed in 'missingAnchors' with one answer for every reason; none resolving is SND-CONTEXT-003 and an ambiguous name 037.
 /// </summary>

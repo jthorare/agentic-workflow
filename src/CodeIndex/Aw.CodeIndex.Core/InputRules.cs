@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.CodeIndex.Core.Model;
+using Aw.CodeIndex.Core.Planning;
 using Aw.CodeIndex.Core.Values;
 using Aw.Kernel;
 
@@ -7,7 +8,7 @@ namespace Aw.CodeIndex.Core;
 
 /// <summary>
 /// What the snapshot keeps of a commit's tree (spec §5.1, §9): regular files only, with a safe path, outside the deny globs,
-/// under the size caps. Pure, so the git adapter and the fake apply the same rules.
+/// under the file size cap (the total cap counts code files only). Pure, so the git adapter and the fake apply the same rules.
 /// </summary>
 public static class InputRules
 {
@@ -61,7 +62,7 @@ public static class InputRules
     /// <param name="commit">The commit the tree belongs to.</param>
     /// <param name="entries">Every blob and submodule entry, as git lists them.</param>
     /// <param name="limits">The deny globs and caps.</param>
-    /// <returns>The kept files in path order and a count per skip reason; SND-CODEIDX-003 when the kept sizes or the kept file count pass their cap.</returns>
+    /// <returns>The kept files in path order and a count per skip reason; SND-CODEIDX-003 when the kept code files' sizes pass the cap.</returns>
     public static Result<SnapshotInventory> Apply(CommitSha commit, IEnumerable<TreeEntry> entries, SnapshotLimits limits)
     {
         var skipped = new Dictionary<SkipReason, int>();
@@ -77,17 +78,15 @@ public static class InputRules
 
             var size = entry.Size ?? 0;
             kept.Add(new SnapshotFile(entry.Path, entry.Blob, size));
-            total += size;
-        }
-
-        if (kept.Count > limits.MaxFiles)
-        {
-            return CodeIndexErrors.InputTooLarge.With(string.Create(CultureInfo.InvariantCulture, $"{kept.Count} kept files are over the cap of {limits.MaxFiles}"));
+            if (LanguageTable.Of(entry.Path) is not null)
+            {
+                total += size;
+            }
         }
 
         if (total > limits.MaxTotalBytes)
         {
-            return CodeIndexErrors.InputTooLarge.With(string.Create(CultureInfo.InvariantCulture, $"{total} kept bytes are over the cap of {limits.MaxTotalBytes}"));
+            return CodeIndexErrors.InputTooLarge.With(string.Create(CultureInfo.InvariantCulture, $"{total} kept code bytes are over the cap of {limits.MaxTotalBytes}"));
         }
 
         kept.Sort((a, b) => string.CompareOrdinal(a.Path, b.Path));

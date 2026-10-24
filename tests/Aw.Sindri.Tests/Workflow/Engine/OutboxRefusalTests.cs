@@ -27,7 +27,7 @@ public sealed class OutboxRefusalTests
         var parked = Parked(Decide(Claimed(), Item, Refused("SND-RECIPE-005"), rules: EngineRules.Default));
 
         Assert.Equal((ParkReason.SpecConflict, ParkKind.Revoked, ResumeKind.None), Of(parked));
-        Assert.Equal("SND-WF-003", AnswerFit.Check(parked, Item, Resume()).Error.Code);
+        Assert.Equal("SND-WF-003", AnswerFit.Check(parked, Resume()).Error.Code);
         Assert.Equal("cancelled", Assert.IsType<Applied>(Decide(parked, Item, Cancel(), rules: EngineRules.Default)).Changes[0].After.State);
     }
 

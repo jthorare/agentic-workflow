@@ -134,6 +134,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         (HitKeys, IsZoomed, MoreTouchedText) = (new HashSet<string>(StringComparer.Ordinal), false, string.Empty);
         Answer = answer;
         Geometry = WholeMapLayout.Place(answer);
+        ForgetHighlight();
         Head = Labels.ContextWholeHead(answer.MapVersion);
         ByAreaNote = Geometry.ByArea ? Labels.ContextWholeByArea(answer.Counts.Nodes) : string.Empty;
         SizeText = Labels.ContextWholeSize(answer.Counts.Nodes, answer.Counts.Edges, TimeZoneInfo.ConvertTime(answer.AsOf, _zone()));
@@ -170,6 +171,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         _overview ??= (Answer, Geometry, Areas);
         Answer = answer;
         Geometry = WholeMapLayout.Place(answer);
+        ForgetHighlight();
         var label = answer.Areas.FirstOrDefault(a => string.Equals(a.Key, opened.Key, StringComparison.Ordinal))?.Label ?? opened.Key;
         AreaTitle = label;
         ByAreaNote = opened.Truncated ? Labels.ContextWholeAreaTruncated(answer.Nodes?.Count ?? 0, opened.Counts.Nodes) : string.Empty;
@@ -188,6 +190,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         }
 
         (Answer, Geometry, Areas) = overview;
+        ForgetHighlight();
         _overview = null;
         IsAreaOpen = false;
         AreaTitle = string.Empty;

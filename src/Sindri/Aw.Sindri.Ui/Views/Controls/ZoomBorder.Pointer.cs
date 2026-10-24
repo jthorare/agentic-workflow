@@ -56,6 +56,7 @@ internal sealed partial class ZoomBorder
             if (!drag.Moved)
             {
                 EmptyClicked?.Invoke(this, EventArgs.Empty);
+                Clicked?.Invoke(this, e);
             }
         }
     }

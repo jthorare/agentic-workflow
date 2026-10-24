@@ -1,0 +1,179 @@
+{
+  "recipes": [
+    {
+      "id": "workflow.item",
+      "version": 3,
+      "hash": "sha256:fbd360859893f44e3d8c2bd83de7ee8edd760fb66f5541c99f5edb0e89406176",
+      "standing": "unapproved",
+      "via": null,
+      "stale": [],
+      "inputs": [
+        {
+          "key": "fact:item",
+          "label": "Item",
+          "type": "item",
+          "kind": "item",
+          "generate": null
+        }
+      ],
+      "urgency": "work",
+      "outputs": [],
+      "orderedBy": "path",
+      "states": [
+        {
+          "id": "triaged",
+          "order": 1,
+          "branchOf": null
+        },
+        {
+          "id": "startable",
+          "order": 2,
+          "branchOf": null
+        },
+        {
+          "id": "claimed",
+          "order": 3,
+          "branchOf": null
+        },
+        {
+          "id": "running",
+          "order": 4,
+          "branchOf": null
+        },
+        {
+          "id": "done",
+          "order": 5,
+          "branchOf": null
+        },
+        {
+          "id": "dropped",
+          "order": 6,
+          "branchOf": null
+        }
+      ],
+      "loops": [],
+      "name": null,
+      "status": "draft",
+      "childOnly": false
+    },
+    {
+      "id": "workflow.step",
+      "version": 4,
+      "hash": "sha256:f039848fd714d2a46a4d3d216083bff1815821cd3e3b4f1bc6402bbb44bd54fa",
+      "standing": "approved",
+      "via": "desk",
+      "stale": [],
+      "inputs": [
+        {
+          "key": "fact:spec",
+          "label": "Spec",
+          "type": "text",
+          "kind": "text",
+          "generate": null
+        }
+      ],
+      "urgency": "work",
+      "outputs": [],
+      "orderedBy": "path",
+      "states": [
+        {
+          "id": "produce",
+          "order": 1,
+          "branchOf": null
+        },
+        {
+          "id": "checks",
+          "order": 2,
+          "branchOf": null
+        },
+        {
+          "id": "verify",
+          "order": 3,
+          "branchOf": null
+        },
+        {
+          "id": "done",
+          "order": 4,
+          "branchOf": null
+        }
+      ],
+      "loops": [
+        {
+          "name": "revisions",
+          "from": "verify",
+          "to": "produce"
+        },
+        {
+          "name": "revisions",
+          "from": "checks",
+          "to": "produce"
+        }
+      ],
+      "name": null,
+      "approvedVersion": 4,
+      "approvedHash": "sha256:f039848fd714d2a46a4d3d216083bff1815821cd3e3b4f1bc6402bbb44bd54fa",
+      "status": "approved",
+      "childOnly": true
+    },
+    {
+      "id": "workflow.step",
+      "version": 5,
+      "hash": "sha256:dbef1dbaf49c2d3dd8934cf86e72018c1f6295f7b317d43df1a7b0166f0e3f49",
+      "standing": "unapproved",
+      "via": null,
+      "stale": [],
+      "inputs": [
+        {
+          "key": "fact:spec",
+          "label": "Spec",
+          "type": "text",
+          "kind": "text",
+          "generate": null
+        }
+      ],
+      "urgency": "work",
+      "outputs": [],
+      "orderedBy": "path",
+      "states": [
+        {
+          "id": "produce",
+          "order": 1,
+          "branchOf": null
+        },
+        {
+          "id": "checks",
+          "order": 2,
+          "branchOf": null
+        },
+        {
+          "id": "verify",
+          "order": 3,
+          "branchOf": null
+        },
+        {
+          "id": "done",
+          "order": 4,
+          "branchOf": null
+        }
+      ],
+      "loops": [
+        {
+          "name": "revisions",
+          "from": "verify",
+          "to": "produce"
+        },
+        {
+          "name": "revisions",
+          "from": "checks",
+          "to": "produce"
+        }
+      ],
+      "name": null,
+      "approvedVersion": 4,
+      "approvedHash": "sha256:f039848fd714d2a46a4d3d216083bff1815821cd3e3b4f1bc6402bbb44bd54fa",
+      "status": "draft",
+      "childOnly": true
+    }
+  ],
+  "window": "30d"
+}

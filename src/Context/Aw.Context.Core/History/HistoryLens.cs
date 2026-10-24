@@ -13,8 +13,8 @@ public static class HistoryLens
 
     /// <summary>Resolves the anchors in the snapshot and reads each one's own scope (no cascade).</summary>
     /// <param name="graph">The graph the caller may see.</param>
-    /// <param name="anchors">One to 20 node keys, aliases or labels.</param>
-    /// <returns>The scope; an anchor that names no node goes to 'MissingAnchors'. None resolving is SND-CONTEXT-003, an ambiguous name 037, a count outside 1 to 20 SND-CONTEXT-006.</returns>
+    /// <param name="anchors">Node keys, aliases or labels.</param>
+    /// <returns>The scope; an anchor that names no node goes to 'MissingAnchors'. None resolving is SND-CONTEXT-003, an ambiguous name 037, no anchor at all SND-CONTEXT-006.</returns>
     public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors)
     {
         ArgumentNullException.ThrowIfNull(graph);

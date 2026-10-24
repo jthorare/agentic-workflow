@@ -198,15 +198,14 @@ public sealed class FileRequestTests
     }
 
     [Fact]
-    public async Task FileRequest_against_other_repo_item_is_404()
+    public async Task FileRequest_against_other_repo_item_files_it_against_that_repo()
     {
         await Item(A.FirstItemId, "api");
         using var entered = Session("web");
 
         var result = await Service().Handle(A.FileRequestRequest().AboutItem(ItemRef.To(A.FirstItemId)).Build(), Token);
 
-        Expect.Equal(SindriErrors.ItemNotFound.Code, result.Error.Code);
-        Assert.Empty(_h.Slice.Store.Events);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
     }
 
     [Fact]

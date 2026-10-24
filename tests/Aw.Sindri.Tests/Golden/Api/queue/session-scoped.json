@@ -31,6 +31,20 @@
             "CloseItem:cancelled"
           ],
           "owner": null
+        },
+        {
+          "id": "ITM-00000000000000000000000000000014",
+          "title": "In other",
+          "repo": "other",
+          "state": "new",
+          "step": null,
+          "since": "2026-01-01T00:00:00.0000000Z",
+          "primaryAction": null,
+          "actions": [
+            "CloseItem:done",
+            "CloseItem:cancelled"
+          ],
+          "owner": null
         }
       ],
       "empty": null

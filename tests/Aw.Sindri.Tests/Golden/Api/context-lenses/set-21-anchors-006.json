@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CONTEXT-006",
-  "status": 400,
-  "detail": "a lenses call takes 1 to 20 anchors, not 21",
-  "traceId": "<trace>"
-}

@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
@@ -72,13 +71,13 @@ public sealed class GetItemTimelineTests
     }
 
     [Fact]
-    public async Task Session_outside_the_repo_gets_404()
+    public async Task Session_outside_the_repo_reads_the_timeline()
     {
         await _q.Item('1', "secret", repo: "alpha");
         using var entered = _q.Session("beta");
 
         var result = await Service().Handle(A.GetItemTimelineRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token);
 
-        Expect.Equal(SindriErrors.ItemNotFound.Code, result.Error.Code);
+        Assert.True(result.IsSuccess);
     }
 }

@@ -9,21 +9,19 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 namespace Aw.Sindri.Features.Scoping;
 
 /// <summary>
-/// Opens a workflow.scoping instance for a read the caller is allowed (scoping spec API2, API9): an unknown instance, or another repo's for a
-/// session caller, answers SND-ITEM-404 (one answer); an instance of another recipe SND-SCOPING-001.
+/// Opens a workflow.scoping instance for a read the caller is allowed (scoping spec API2, API9): an unknown instance answers SND-ITEM-404; an instance of another recipe SND-SCOPING-001.
 /// </summary>
 /// <param name="directory">Resolves the instance id to its address.</param>
 /// <param name="runtime">The instances on Temporal.</param>
-/// <param name="repos">Where each item belongs, from the ledger.</param>
-/// <param name="callers">The caller, whose repo scope decides what it may read.</param>
-internal sealed class ScopingInstances(IInstanceDirectory directory, IInstanceReader runtime, IItemRepos repos, ICallerContextAccessor callers)
+/// <param name="callers">The caller; a read needs one.</param>
+internal sealed class ScopingInstances(IInstanceDirectory directory, IInstanceReader runtime, ICallerContextAccessor callers)
 {
     private const string Recipe = "workflow.scoping";
 
     /// <summary>The instance's view, when the caller may read it and it runs the scoping recipe.</summary>
     internal async ValueTask<Result<InstanceView>> Open(WorkflowInstanceId instance, CancellationToken cancellationToken)
     {
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a scoping read needs a caller");
         }
@@ -38,11 +36,6 @@ internal sealed class ScopingInstances(IInstanceDirectory directory, IInstanceRe
         if (view.IsError)
         {
             return InstanceScope.Unknown(view.Error, instance.Value);
-        }
-
-        if (await InstanceScope.Refusal(caller, view.Value.ItemId, instance.Value, repos, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
         }
 
         return string.Equals(view.Value.Recipe.Id.Value, Recipe, StringComparison.Ordinal)

@@ -52,7 +52,7 @@ public sealed class FixTests : IDisposable
         }
 
         var error = World.Refused(await _w.Start(), BugFixErrors.AttemptRefused);
-        Assert.Contains("attempt cap (3) reached", error.Message, StringComparison.Ordinal);
+        Assert.Contains("attempt cap (5) reached", error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -86,7 +86,6 @@ public sealed class FixTests : IDisposable
     [InlineData("tests/bug.test.sh")]
     [InlineData("tests/helpers.sh")]
     [InlineData("src/app.test.ts")]
-    [InlineData("package.json")]
     [InlineData("vitest.config.ts")]
     [InlineData("App/LoginTests.swift")]
     public async Task Record_candidate_refuses_a_fix_that_touches_tests_or_their_config_unless_approved(string file)
@@ -99,6 +98,58 @@ public sealed class FixTests : IDisposable
 
         Assert.Contains(file, error.Message, StringComparison.Ordinal);
         Assert.Contains(file, World.Ok(await _w.Record(allowTestChanges: true)).ChangedFiles, StringComparer.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("package.json")]
+    [InlineData("Directory.Build.props")]
+    [InlineData("go.mod")]
+    [InlineData("tsconfig.json")]
+    [InlineData("Makefile")]
+    public async Task Record_candidate_needs_no_flag_for_build_files(string file)
+    {
+        await _w.Reproduced();
+        _ = World.Ok(await _w.Start());
+        _ = _w.Fix(changes: new(StringComparer.Ordinal) { ["src/app.ts"] = "fixed\n", [file] = "dep bump\n" });
+
+        Assert.Contains(file, World.Ok(await _w.Record()).ChangedFiles, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_approved_test_change_records_its_reason_in_the_history()
+    {
+        await _w.Reproduced();
+        _ = World.Ok(await _w.Start());
+        _ = _w.Fix(changes: new(StringComparer.Ordinal) { ["src/app.ts"] = "fixed\n", ["tests/helpers.sh"] = "new fixture shape\n" });
+
+        _ = World.Ok(await _w.Record(allowTestChanges: true, reason: "the fixture encoded the old API"));
+
+        Assert.Contains("the fixture encoded the old API", _w.Now.History[^1].Command, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_refused_test_change_names_the_flag_and_asks_no_human()
+    {
+        await _w.Reproduced();
+        _ = World.Ok(await _w.Start());
+        _ = _w.Fix(changes: new(StringComparer.Ordinal) { ["src/app.ts"] = "fixed\n", ["tests/helpers.sh"] = "x\n" });
+
+        var message = World.Refused(await _w.Record(), BugFixErrors.CandidateRefused).Message;
+
+        Assert.Contains("--allow-test-changes", message, StringComparison.Ordinal);
+        Assert.DoesNotContain("ask the user", message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Start_attempt_refuses_a_fix_for_an_unconfirmed_cause_and_mode_B_takes_it()
+    {
+        _w.Repos.Write(World.HandoffFile, A.Handoff(results: ["untested", "untested"]));
+        await _w.Investigated();
+        await ReproduceOnly();
+
+        Assert.Contains("mode B", World.Refused(await _w.Start(), BugFixErrors.AttemptRefused).Message, StringComparison.Ordinal);
+        Assert.Contains("mode B", World.Ok(await _w.Run<Features.Resume.ResumeRequest, Features.Resume.ResumeResponse>(new(World.State))).Next, StringComparison.Ordinal);
+        Assert.Equal(FixMode.B, World.Ok(await _w.Start(FixMode.B)).Mode);
     }
 
     [Fact, Trait("Lane", "unit")]

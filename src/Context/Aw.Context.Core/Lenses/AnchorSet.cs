@@ -11,6 +11,7 @@ internal static class AnchorSet
     internal static Result<(List<LensScope> Scopes, List<string> Missing)> Resolve(GraphSnapshot graph, IReadOnlyList<string> given, int depth, CascadeOptions? options = null)
     {
         var scopes = new List<LensScope>();
+        var nodes = LensScope.NodesOf(graph);
         var missing = new List<string>();
         Error? first = null;
         foreach (var raw in given)
@@ -18,7 +19,7 @@ internal static class AnchorSet
             var node = AnchorMatch.Resolve(graph, raw);
             if (node.IsSuccess)
             {
-                if (!scopes.Exists(s => s.Anchor.Key.Value == node.Value.Key.Value) && LensScope.Of(graph, node.Value.Key, depth, options) is { } scope)
+                if (!scopes.Exists(s => s.Anchor.Key.Value == node.Value.Key.Value) && LensScope.Of(graph, node.Value.Key, depth, options, nodes) is { } scope)
                 {
                     scopes.Add(scope);
                 }

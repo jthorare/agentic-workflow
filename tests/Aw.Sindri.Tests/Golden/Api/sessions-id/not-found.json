@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
   "title": "SND-SESSION-404",
   "status": 404,
-  "detail": "no live session has that ref (or it is outside this caller's repo)",
+  "detail": "no live session has that ref",
   "traceId": "<trace>"
 }

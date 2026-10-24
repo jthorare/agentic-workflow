@@ -1,7 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -18,9 +17,7 @@ namespace Aw.Sindri.Features.StartInstance;
 /// <param name="reader">Reads the instance.</param>
 /// <param name="contents">Reads the stored input facts back.</param>
 /// <param name="start">The start command through its pipeline, which checks the approval, the claim and the attempt.</param>
-/// <param name="callers">The caller, whose repo scope the instance must be in.</param>
-/// <param name="repos">The repos an item belongs to.</param>
-internal sealed class RerunInstanceService(IInstanceDirectory directory, IInstanceReader reader, IFactContents contents, IService<StartInstanceRequest, StartInstanceResponse> start, ICallerContextAccessor callers, IItemRepos repos)
+internal sealed class RerunInstanceService(IInstanceDirectory directory, IInstanceReader reader, IFactContents contents, IService<StartInstanceRequest, StartInstanceResponse> start)
     : IService<RerunInstanceRequest, StartInstanceResponse>
 {
     public async ValueTask<Result<StartInstanceResponse>> Handle(RerunInstanceRequest request, CancellationToken cancellationToken)
@@ -39,11 +36,6 @@ internal sealed class RerunInstanceService(IInstanceDirectory directory, IInstan
         }
 
         var view = read.Value;
-        if (callers.Current is { } caller && await InstanceScope.Refusal(caller, view.ItemId, request.Instance, repos, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
-        }
-
         if (Reruns.Of(view).Count == 0 || view.ItemId is not { } item)
         {
             return SindriErrors.InvalidInput.With($"{view.Address.Value} can't be run again (fix: only a root instance that ended failed, unresolved or cancelled can; start a new one with sindri workflow start)");

@@ -87,17 +87,17 @@ public sealed class LensesAtVersionTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task GetLenses_set_lists_an_anchor_the_map_does_not_hold_and_21_anchors_are_006()
+    public async Task GetLenses_set_lists_an_anchor_the_map_does_not_hold_and_fifty_anchors_are_taken()
     {
         _ = await _world.ImportYaml(MapWorld.TabsMap);
 
         var missing = await Set([Manager, "nope:x"]);
         var nothing = await Set(["nope:x", "nope:y"]);
-        var tooMany = await Set([.. Enumerable.Range(0, 21).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"nope:{i}"))]);
+        var many = await Set([Manager, .. Enumerable.Range(0, 49).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"nope:{i}"))]);
 
         Assert.Equal(["nope:x"], missing.Value.MissingAnchors);
         Assert.Equal(ContextErrors.UnknownAnchor.Code, nothing.Error.Code);
-        Assert.Equal(ContextErrors.QueryInvalid.Code, tooMany.Error.Code);
+        Assert.Equal((1, 49), (many.Value.Anchors.Count, many.Value.MissingAnchors.Count));
     }
 
     [Fact, Trait("Lane", "unit")]

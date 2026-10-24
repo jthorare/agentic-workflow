@@ -11,7 +11,7 @@ public sealed class FakeRepoSnapshotTests
 {
     private static readonly CommitSha _commit = CommitSha.From("0123456789abcdef0123456789abcdef01234567");
     private static readonly CodeIndexRepo _repo = new(RepoName.From("fixture"), "/nonexistent", CodeIndexSettings.Default);   // the fake never reads the path
-    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 1_000, MaxFiles: 10);
+    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 1_000);
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_inventory_keeps_regular_files_and_counts_symlinks_submodules_and_big_files()
@@ -34,8 +34,8 @@ public sealed class FakeRepoSnapshotTests
     public async Task Kept_files_over_the_total_cap_stop_with_SND_CODEIDX_003()
     {
         var snapshot = new FakeRepoSnapshot()
-            .WithFile(_commit, "a.txt", new string('a', 60))
-            .WithFile(_commit, "b.txt", new string('b', 60));
+            .WithFile(_commit, "a.cs", new string('a', 60))
+            .WithFile(_commit, "b.ts", new string('b', 60));
 
         var result = await snapshot.Inventory(_repo, _commit, _limits with { MaxTotalBytes = 100 }, TestContext.Current.CancellationToken);
 

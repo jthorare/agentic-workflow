@@ -74,7 +74,7 @@ public sealed class SindriApiClientContextTests
     [InlineData("unknown-anchor-003", "SND-CONTEXT-003", ErrorKind.NotFound, "suggestedAnchors")]
     [InlineData("ambiguous-037", "SND-CONTEXT-037", ErrorKind.Conflict, "candidates")]
     [InlineData("no-draft-044", "SND-CONTEXT-044", null, null)]
-    [InlineData("set-21-anchors-006", "SND-CONTEXT-006", null, null)]
+    [InlineData("bad-depth-006", "SND-CONTEXT-006", null, null)]
     [InlineData("map-version-not-retained-120", "SND-CONTEXT-120", null, null)]
     public async Task Lenses_maps_each_refusal_to_its_code_detail_and_extension(string scenario, string code, ErrorKind? kind, string? extension)
     {

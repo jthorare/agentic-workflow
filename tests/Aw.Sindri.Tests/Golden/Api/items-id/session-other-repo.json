@@ -1,7 +1,43 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
-  "title": "SND-ITEM-404",
-  "status": 404,
-  "detail": "no item 'ITM-0000000000000000000000000000000f'",
-  "traceId": "<trace>"
+  "id": "ITM-0000000000000000000000000000000f",
+  "title": "Try the queue",
+  "repo": "other",
+  "state": "new",
+  "step": null,
+  "since": "2026-01-01T00:00:00.0000000Z",
+  "primaryAction": null,
+  "actions": [
+    "CloseItem:done",
+    "CloseItem:cancelled"
+  ],
+  "owner": null,
+  "version": 1,
+  "createdBy": "human:cli",
+  "waitingOn": null,
+  "instance": null,
+  "createdAt": "2026-01-01T00:00:00.0000000Z",
+  "updatedAt": "2026-01-01T00:00:00.0000000Z",
+  "body": null,
+  "link": null,
+  "launch": {
+    "modes": [
+      "open"
+    ],
+    "defaultTarget": "claude-code",
+    "chosenBy": "builtIn",
+    "attach": null,
+    "resumable": null,
+    "inFlight": null,
+    "lastStarted": null,
+    "confirm": null,
+    "repoPath": "/work/other",
+    "blockers": []
+  },
+  "asOf": {
+    "cursor": 7,
+    "ledgerHead": 7,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
 }

@@ -91,7 +91,7 @@ internal sealed class FakeIndexBuild(FakeIndexData data, IndexHeader? previous, 
 
     public ValueTask<Result<IReadOnlyList<EmbedCandidate>>> EmbedCandidates(int limit, CancellationToken cancellationToken)
         => Ok<IReadOnlyList<EmbedCandidate>>([.. data.Symbols
-            .Where(x => x.Symbol.Body is not null && !FakeIndexData.ClassLike.Contains(x.Symbol.Kind) && !data.Embeddings.ContainsKey(x.Symbol.Ref))
+            .Where(x => x.Symbol.Body is not null && !data.Embeddings.ContainsKey(x.Symbol.Ref))
             .OrderBy(x => x.Symbol.Ref.Value, StringComparer.Ordinal)
             .Take(limit)
             .Select(x => new EmbedCandidate(x.Symbol.Ref, x.Symbol.Name, x.Symbol.Signature, x.Symbol.Body!))]);
@@ -118,7 +118,7 @@ internal sealed class FakeIndexBuild(FakeIndexData data, IndexHeader? previous, 
     }
 
     public ValueTask<Result<EmbeddingProgress>> CountEmbeddings(CancellationToken cancellationToken)
-        => Ok(new EmbeddingProgress(data.Embeddings.Count, data.Symbols.Count(x => !FakeIndexData.ClassLike.Contains(x.Symbol.Kind))));
+        => Ok(new EmbeddingProgress(data.Embeddings.Count, data.Symbols.Count()));
 
     public ValueTask<Result<Unit>> SetLayer(LayerRecord layer, CancellationToken cancellationToken)
     {

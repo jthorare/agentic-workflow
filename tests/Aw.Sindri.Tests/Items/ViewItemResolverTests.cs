@@ -53,7 +53,7 @@ public sealed class ViewItemResolverTests
     }
 
     [Fact]
-    public async Task Item_in_another_repo_is_SND_ITEM_404_for_a_session()
+    public async Task Item_in_another_repo_resolves_for_a_session()
     {
         await Seed(RepoName.From("alpha"));
 
@@ -61,7 +61,7 @@ public sealed class ViewItemResolverTests
         var same = await Resolver().Resolve(ItemRef.To(_item), new CallerContextBuilder().Session().InRepo("alpha").Build(), TestContext.Current.CancellationToken);
         var human = await Resolver().Resolve(ItemRef.To(_item), new CallerContextBuilder().Human().Build(), TestContext.Current.CancellationToken);
 
-        Expect.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Expect.Equal(_item, other.Value.Id);
         Expect.Equal(_item, same.Value.Id);
         Expect.Equal(_item, human.Value.Id);
     }

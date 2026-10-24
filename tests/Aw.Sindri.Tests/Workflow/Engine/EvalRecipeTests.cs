@@ -177,7 +177,7 @@ public sealed class EvalRecipeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Text_on_no_progress_resumes_once_per_loop()
+    public async Task Text_on_no_progress_resumes_again_on_a_second_park()
     {
         string[] lines =
         [
@@ -188,10 +188,9 @@ public sealed class EvalRecipeTests
         ];
         _ = _files.With(StepHappy, string.Join('\n', lines) + "\n");
 
-        var failed = (await Eval(Step)).Cases[0];
+        var result = (await Eval(Step)).Cases[0];
 
-        Assert.Equal(9, failed.Line);
-        Assert.Contains("works once", failed.Detail, StringComparison.Ordinal);
+        Assert.Equal("happy pass", result.ToLine());   // owner q93: a second text answer resumes the loop again
     }
 
     [Theory, Trait("Lane", "unit")]

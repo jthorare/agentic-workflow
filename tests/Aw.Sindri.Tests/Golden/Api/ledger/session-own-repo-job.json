@@ -64,6 +64,7 @@
         "outcome": "succeeded",
         "summary": "echoed 1",
         "code": null,
+        "result": null,
         "item": null,
         "repo": "demo"
       }

@@ -9,7 +9,7 @@ internal static class RecordCandidateCommand
 {
     internal const string Name = "record-candidate";
 
-    internal static readonly CommandSpec Spec = new("record-candidate --state <dir> --branch <branch> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes]", ["state", "branch"], ["cwd", "hypothesis"], ["allow-test-changes"]);
+    internal static readonly CommandSpec Spec = new("record-candidate --state <dir> --branch <branch> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes [--reason <why>]]", ["state", "branch"], ["cwd", "hypothesis", "reason"], ["allow-test-changes"]);
 
     internal static async Task<int> Run(CommandLine line, IServiceProvider services, JsonSerializerOptions json)
     {
@@ -24,6 +24,6 @@ internal static class RecordCandidateCommand
             hypothesis = number;
         }
 
-        return await CommandOutput.Call<RecordCandidateRequest, RecordCandidateResponse>(services, json, new RecordCandidateRequest(line.StateDirectory, line.Values["branch"], line.WorkingDirectory, hypothesis, line.Flags.Contains("allow-test-changes"))).ConfigureAwait(false);
+        return await CommandOutput.Call<RecordCandidateRequest, RecordCandidateResponse>(services, json, new RecordCandidateRequest(line.StateDirectory, line.Values["branch"], line.WorkingDirectory, hypothesis, line.Flags.Contains("allow-test-changes"), line["reason"])).ConfigureAwait(false);
     }
 }

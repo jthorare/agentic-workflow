@@ -54,16 +54,19 @@ public sealed class ListJobsTests
     }
 
     [Fact]
-    public async Task A_session_lists_its_repo_and_repo_less_jobs_only()
+    public async Task A_session_lists_every_repos_jobs()
     {
         var mine = Put(_run, JobState.Running, "alpha");
         var repoLess = Put(_run, JobState.Running);
-        _ = Put(_run, JobState.Running, "beta");
+        var theirs = Put(_run, JobState.Running, "beta");
         using var entered = As(A.Caller().Session().InRepo("alpha").Build());
 
         var list = (await Service().Handle(A.ListJobsRequest().Build(), Token)).Value;
 
-        Expect.Sequence([repoLess, mine], list.Jobs.Select(j => j.Id));
+        Expect.Equal(3, list.Jobs.Count);
+        Assert.Contains(list.Jobs, j => j.Id == theirs);
+        Assert.Contains(list.Jobs, j => j.Id == mine);
+        Assert.Contains(list.Jobs, j => j.Id == repoLess);
     }
 
     [Fact]

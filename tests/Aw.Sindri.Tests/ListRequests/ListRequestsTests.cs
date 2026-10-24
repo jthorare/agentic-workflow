@@ -74,14 +74,14 @@ public sealed class ListRequestsTests
     }
 
     [Fact]
-    public async Task A_session_sees_its_repo_and_the_repo_less_requests()
+    public async Task A_session_sees_every_repos_requests()
     {
         _ = await _q.File("mine", repo: "alpha");
         _ = await _q.File("theirs", repo: "beta");
         _ = await _q.File("nobody's");
         using var entered = _q.Session("alpha");
 
-        Expect.Sequence(["nobody's", "mine"], [.. await Texts(A.ListRequestsRequest().Build())]);
+        Expect.Sequence(["nobody's", "theirs", "mine"], [.. await Texts(A.ListRequestsRequest().Build())]);
     }
 
     [Fact]

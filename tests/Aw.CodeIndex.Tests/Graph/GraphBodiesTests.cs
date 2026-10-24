@@ -38,8 +38,8 @@ public sealed class GraphBodiesTests
         => Assert.Equal([("a", "x"), ("gone", string.Empty)], Attach("x", Symbol("a", 1), Symbol("gone", 9)));
 
     [Fact]
-    public void A_class_symbol_gets_no_body()
-        => Assert.Equal([("Cart", null), ("f", "function f() {}")], Attach("class Cart {}\nfunction f() {}", Symbol("Cart", 1, SymbolKind.Class), Symbol("f", 2)));
+    public void A_class_symbol_gets_an_empty_body_so_it_is_embedded_by_name_and_signature()
+        => Assert.Equal([("Cart", string.Empty), ("f", "function f() {}")], Attach("class Cart {}\nfunction f() {}", Symbol("Cart", 1, SymbolKind.Class), Symbol("f", 2)));
 
     [Fact]
     public void Carriage_returns_and_a_leading_byte_order_mark_are_dropped()

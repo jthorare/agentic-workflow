@@ -43,9 +43,9 @@ public sealed partial class CodeIndexFacade
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(text);
-        if (string.IsNullOrWhiteSpace(text) || k is < 1 or > CodeIndexRules.MaxNeighbors)
+        if (string.IsNullOrWhiteSpace(text) || k < 1)
         {
-            return CodeIndexErrors.QueryInvalid.With("the text is empty, or k is outside 1 to 100");
+            return CodeIndexErrors.QueryInvalid.With("the text is empty, or k is below 1");
         }
 
         var opened = await Open(scope, repo, cancellationToken).ConfigureAwait(false);

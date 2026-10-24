@@ -16,9 +16,30 @@ public static class AttemptRule
     /// <summary>Whether the next attempt may start in <paramref name="mode"/>.</summary>
     /// <param name="state">The bug fix.</param>
     /// <param name="mode">The requested mode.</param>
-    /// <param name="abandonJudge">Whether the user chose to leave a candidate whose judge question was never answered (an interrupted call) behind.</param>
+    /// <param name="abandonJudge">Whether to leave a candidate whose judge question was never answered (an interrupted call) behind.</param>
     /// <returns>Success, or AW-BUGFIX-010 saying why not.</returns>
     public static Result<Unit> CanStart(BugFixState state, FixMode mode, bool abandonJudge = false)
+    {
+        if (Pending(state, abandonJudge) is { } pending)
+        {
+            return pending;
+        }
+
+        if (state.Attempt >= BugFixState.MaxAttempts)
+        {
+            return BugFixErrors.AttemptRefused.With(string.Create(CultureInfo.InvariantCulture, $"attempt cap ({BugFixState.MaxAttempts}) reached; run advance report --unresolved"));
+        }
+
+        if (mode != FixMode.B && state.Attempt == 0 && !state.Confirmed)
+        {
+            return BugFixErrors.AttemptRefused.With("no hypothesis is confirmed; start with mode B (competing implementers, one per open hypothesis)");
+        }
+
+        return mode == FixMode.B ? Competing(state) : Results.Ok();
+    }
+
+    // A candidate that resolves the ticket, or one not evaluated yet, holds the next attempt back.
+    private static Error? Pending(BugFixState state, bool abandonJudge)
     {
         var current = state.CurrentCandidates.ToList();
         if (current.Find(static c => c.Resolves) is { } resolving)
@@ -29,24 +50,19 @@ public static class AttemptRule
         if (current.Find(c => !c.Evaluated && !(abandonJudge && c.JudgeInterrupted)) is { } pending)
         {
             return BugFixErrors.AttemptRefused.With(pending.JudgeInterrupted
-                ? $"judge was asked about {pending.Id.Value} and its answer was never recorded; if the call was interrupted (not still running), the user may leave it with start-attempt --abandon-judge"
+                ? $"judge was asked about {pending.Id.Value} and its answer was never recorded; if no judge process is still running, leave it with start-attempt --abandon-judge"
                 : $"candidate {pending.Id.Value} has not been evaluated yet");
         }
 
-        if (state.Attempt >= BugFixState.MaxAttempts)
-        {
-            return BugFixErrors.AttemptRefused.With(string.Create(CultureInfo.InvariantCulture, $"attempt cap ({BugFixState.MaxAttempts}) reached; run advance report --unresolved"));
-        }
-
-        return mode == FixMode.B ? Competing(state) : Results.Ok();
+        return null;
     }
 
     // Mode B (competing implementers) is the escalation after a failed attempt, one implementer per open hypothesis.
     private static Result<Unit> Competing(BugFixState state)
     {
-        if (state.Attempt == 0)
+        if (state.Attempt == 0 && state.Confirmed)
         {
-            return BugFixErrors.AttemptRefused.With("mode B (competing implementers) is the escalation after a failed attempt");
+            return BugFixErrors.AttemptRefused.With("mode B (competing implementers) is the escalation after a failed attempt, or the first attempt when no hypothesis is confirmed");
         }
 
         var open = state.Investigation?.Hypotheses.Count(static h => h.Result != HypothesisResult.RuledOut) ?? 0;

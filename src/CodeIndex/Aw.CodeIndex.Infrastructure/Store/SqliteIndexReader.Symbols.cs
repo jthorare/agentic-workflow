@@ -41,7 +41,7 @@ internal sealed partial class SqliteIndexReader
             return CodeIndexErrors.QueryInvalid.With("A symbol query needs some text and a limit of at least 1.");
         }
 
-        var limit = Math.Min(query.Limit, CodeIndexRules.MaxSymbolHits);
+        var limit = query.Limit;
         var command = query.Match == SymbolMatch.Prefix ? PrefixCommand(query.Text) : ExactCommand(query.Text);
         await using (command.ConfigureAwait(false))
         {

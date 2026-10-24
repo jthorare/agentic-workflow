@@ -1,4 +1,3 @@
-#pragma warning disable xUnit1004 // the red tests of cutover unit 1.3: skipped until it lands (spec §12 P0)
 using System.Text.Json;
 using Aw.Evidence.Core.Browser;
 using Aw.Evidence.Core.Data;
@@ -22,23 +21,22 @@ namespace Aw.Evidence.Tests.Cutover;
 /// </summary>
 public sealed class JudgeCliJudgeTests
 {
-    private const string Red = "red until cutover unit 1.3";
     private const string Judge = "/opt/aw/judge";
 
     private static readonly SelectorRepairRequest _repair = new(
         "open-panel", "click open-panel; expected: text \"Panel\" visible",
         [new Candidate(0, "button", "Open", TestId.From("open"), "Open"), new Candidate(1, "link", AccessibleName: null, TestId: null, Text: "Panel")]);
 
-    // 1.3 builds new JudgeCliJudge(runner, locator, ...) from these; today the stub takes nothing.
     private static JudgeCliJudge Create(FakeCliRunner runner, bool judgeFound = true)
     {
-        _ = (runner, judgeFound);
-        return new JudgeCliJudge();
+        var locator = new FakeExecutableLocator();
+        _ = judgeFound ? locator.Executable(Judge) : locator;
+        return new JudgeCliJudge(runner, locator, name => name == "AW_JUDGE_BIN" ? Judge : null);
     }
 
     private static CliOutcome Decided(string json) => new(0, json, string.Empty);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task Selector_repair_runs_ui_element_repair_with_the_broken_selector_the_step_and_the_candidates_on_stdin()
     {
         var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"no-good-candidate","confidence":0.8,"model":"claude-cli","reasonCode":"model","id":"d1"}"""));
@@ -46,7 +44,8 @@ public sealed class JudgeCliJudgeTests
         _ = await Create(runner).RepairSelectorAsync(_repair, CancellationToken.None);
 
         var call = Assert.Single(runner.Calls);
-        Assert.Equal((Judge, ["ui-element-repair"]), (call.Executable, call.Args));
+        Assert.Equal(Judge, call.Executable);
+        Assert.Equal(["ui-element-repair"], call.Args);
         using var input = JsonDocument.Parse(call.Stdin!);
         var root = input.RootElement;
         Assert.Equal("open-panel", root.GetProperty("brokenSelector").GetString());
@@ -57,7 +56,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Equal("open", root.GetProperty("candidates")[0].GetProperty("testId").GetString());
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_repaired_envelope_is_the_chosen_candidate_with_the_model_that_decided()
     {
         var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"repaired","chosenIndex":1,"confidence":0.9,"model":"claude-cli","reasonCode":"model","id":"d1"}"""));
@@ -69,7 +68,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Null(repair.Usage?.InputTokens);   // the envelope carries no token counts: unknown, never zero
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task No_good_candidate_is_an_answer_with_no_chosen_index()
     {
         var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"no-good-candidate","confidence":0.8,"model":"rules","reasonCode":"rule","id":"d1"}"""));
@@ -80,7 +79,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Equal((RepairDecision.NoGoodCandidate, null), (repair.Decision, repair.ChosenIndex));
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData(2, """{"escalated":true,"reasonCode":"below-threshold"}""")]                  // unsure: fail closed
     [InlineData(2, """{"escalated":true,"reasonCode":"no-provider-decided"}""")]              // AW_JUDGE_PROVIDERS=rules, offline
     [InlineData(1, "")]
@@ -96,7 +95,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Null(await Create(runner).RepairSelectorAsync(_repair, CancellationToken.None));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_judge_that_would_not_start_gives_no_repair_and_no_critique()
     {
         var runner = new FakeCliRunner();
@@ -107,7 +106,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Null(await judge.CritiqueAsync(new VisualCritiqueRequest("/runs/r1/after.png", BaselineScreenshot: null, "/runs/r1"), CancellationToken.None));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task Visual_critique_sends_paths_relative_to_the_evidence_directory_and_leaves_out_a_missing_baseline()
     {
         var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"looks-right","confidence":0.9,"model":"claude-cli","reasonCode":"model","id":"d1","reasons":[]}"""));
@@ -123,7 +122,7 @@ public sealed class JudgeCliJudgeTests
         Assert.False(withoutBaseline.RootElement.TryGetProperty("baselineScreenshot", out _));
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("looks-right", VisualDecision.LooksRight)]
     [InlineData("looks-off", VisualDecision.LooksOff)]
     [InlineData("sloppy", VisualDecision.Sloppy)]
@@ -134,10 +133,11 @@ public sealed class JudgeCliJudgeTests
         var verdict = await Create(runner).CritiqueAsync(new VisualCritiqueRequest("/runs/r1/after.png", BaselineScreenshot: null, "/runs/r1"), CancellationToken.None);
 
         Assert.NotNull(verdict);
-        Assert.Equal((expected, ["the header overlaps the table"], "codex-cli"), (verdict.Decision, verdict.Reasons, verdict.Usage?.Model));
+        Assert.Equal((expected, "codex-cli"), (verdict.Decision, verdict.Usage?.Model));
+        Assert.Equal(["the header overlaps the table"], verdict.Reasons);
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData(2, """{"escalated":true,"reasonCode":"below-threshold"}""")]
     [InlineData(2, """{"escalated":true,"reasonCode":"invalid-input"}""")]
     [InlineData(1, "")]
@@ -150,7 +150,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Null(await Create(runner).CritiqueAsync(new VisualCritiqueRequest("/runs/r1/after.png", BaselineScreenshot: null, "/runs/r1"), CancellationToken.None));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_screenshot_outside_the_evidence_directory_is_never_sent_to_the_judge()
     {
         var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"looks-right","confidence":0.9,"model":"x","reasonCode":"model","id":"d","reasons":[]}"""));
@@ -161,7 +161,7 @@ public sealed class JudgeCliJudgeTests
         Assert.Empty(runner.Calls);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void The_judge_is_available_when_the_judge_binary_is_found_and_not_when_it_is_missing()
     {
         var runner = new FakeCliRunner();

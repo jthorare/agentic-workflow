@@ -9,13 +9,13 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.ListRequests;
 
 /// <summary>
-/// The request list (API spec §3.1, U3-API-4): the requests the caller may see (a session its repo's and the repo-less ones), by state and
-/// by item (an id or alias, resolved in the caller's scope), newest first. Stale views replace the empty sentence and keep the rows.
+/// The request list (API spec §3.1, U3-API-4): the requests, by state and
+/// by item (an id or alias, resolved by the views), newest first. Stale views replace the empty sentence and keep the rows.
 /// </summary>
 /// <param name="views">The 'requests' view.</param>
 /// <param name="items">Resolves the item filter.</param>
 /// <param name="status">How fresh the views are.</param>
-/// <param name="callers">The caller, whose repo scope applies.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 internal sealed class ListRequestsService(IViewReader views, IItemResolver items, IProjectorStatus status, ICallerContextAccessor callers) : IService<ListRequestsRequest, ListRequestsResponse>
 {
     public async ValueTask<Result<ListRequestsResponse>> Handle(ListRequestsRequest request, CancellationToken cancellationToken)
@@ -46,7 +46,7 @@ internal sealed class ListRequestsService(IViewReader views, IItemResolver items
         }
 
         var shown = rows.Value
-            .Where(r => ItemScope.VisibleOrRepoless(caller, r.Repo) && (request.State is not { } state || r.State == state) && (item is not { } named || r.Item == named))
+            .Where(r => (request.State is not { } state || r.State == state) && (item is not { } named || r.Item == named))
             .OrderByDescending(static r => r.FiledAt).ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
             .Select(static r => new RequestView(r.Id, r.Kind, r.Item, r.Repo, r.Text, r.Actor, r.State, r.Decision, r.FiledAt))
             .ToList();

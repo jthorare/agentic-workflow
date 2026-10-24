@@ -35,12 +35,12 @@ public sealed class EmbeddingsLayerTests
 
         var report = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
 
-        Assert.Equal(["M0000\nvoid M0000()\n{ Work(0000); }", "M0001\nvoid M0001()\n{ Work(0001); }"], Assert.Single(embedder.Batches), StringComparer.Ordinal);
-        Assert.Equal((2, 2), (report.Embedded, report.Embeddable));
+        Assert.Equal(["A\nclass A\n", "M0000\nvoid M0000()\n{ Work(0000); }", "M0001\nvoid M0001()\n{ Work(0001); }"], Assert.Single(embedder.Batches), StringComparer.Ordinal);
+        Assert.Equal((3, 3), (report.Embedded, report.Embeddable));   // the two methods and the class, embedded by name and signature
         var layer = await Layer(harness);
         Assert.Equal(LayerState.Ok, layer.State);
         Assert.Null(layer.Code);
-        Assert.Equal("2 of 2 embedded", layer.Detail);
+        Assert.Equal("3 of 3 embedded", layer.Detail);
         Assert.Equal(FakeEmbedder.DefaultModel, layer.Stamp);
         Assert.Equal(LayerState.Ok, report.Embeddings);
     }
@@ -53,10 +53,10 @@ public sealed class EmbeddingsLayerTests
 
         var report = await harness.Build(BuildHarness.First, cancellationToken: Token);
 
-        Assert.Equal((0, 2), (report.Embedded, report.Embeddable));
+        Assert.Equal((0, 3), (report.Embedded, report.Embeddable));
         var layer = await Layer(harness);
         Assert.Equal(LayerState.Pending, layer.State);
-        Assert.Equal("0 of 2 embedded", layer.Detail);
+        Assert.Equal("0 of 3 embedded", layer.Detail);
         Assert.Equal(0, embedder.Probes);
         Assert.Empty(embedder.Batches);
     }
@@ -68,7 +68,7 @@ public sealed class EmbeddingsLayerTests
 
         _ = await Arranged(70, embedder).BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
 
-        Assert.Equal([32, 32, 6], embedder.Batches.Select(b => b.Count));
+        Assert.Equal([32, 32, 7], embedder.Batches.Select(b => b.Count));
     }
 
     [Fact]
@@ -79,10 +79,10 @@ public sealed class EmbeddingsLayerTests
         var done = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
         var layer = await Layer(harness);
 
-        Assert.Equal((4_100, 4_100, LayerState.Ok), (done.Embedded, done.Embeddable, done.Embeddings));
-        Assert.Equal("4100 of 4100 embedded", layer.Detail);
+        Assert.Equal((4_101, 4_101, LayerState.Ok), (done.Embedded, done.Embeddable, done.Embeddings));
+        Assert.Equal("4101 of 4101 embedded", layer.Detail);
         Assert.Equal([128, 1], [harness.Embedder.Batches.Take(128).Count(), harness.Embedder.Batches.Skip(128).Count()]);
-        Assert.Equal([4], harness.Embedder.Batches.Skip(128).Select(b => b.Count));
+        Assert.Equal([5], harness.Embedder.Batches.Skip(128).Select(b => b.Count));
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class EmbeddingsLayerTests
         var layer = await Layer(harness);
         Assert.Equal(LayerState.Unavailable, layer.State);
         Assert.Equal(CodeIndexErrors.EmbeddingServerFailed.Code, layer.Code);
-        Assert.Equal((0, 3, LayerState.Unavailable), (embed.Value.Embedded, embed.Value.Embeddable, embed.Value.Embeddings));
+        Assert.Equal((0, 4, LayerState.Unavailable), (embed.Value.Embedded, embed.Value.Embeddable, embed.Value.Embeddings));
         Assert.Empty(embedder.Batches);
         Assert.Equal(LayerState.Ok, (await harness.Header())!.Layers.Single(l => l.Layer == LayerName.Structure).State);
     }
@@ -136,11 +136,11 @@ public sealed class EmbeddingsLayerTests
 
         var report = await harness.BuildAndEmbed(BuildHarness.First, cancellationToken: Token);
 
-        Assert.Equal((32, 70, LayerState.Unavailable), (report.Embedded, report.Embeddable, report.Embeddings));
+        Assert.Equal((32, 71, LayerState.Unavailable), (report.Embedded, report.Embeddable, report.Embeddings));
         var layer = await Layer(harness);
         Assert.Equal(LayerState.Unavailable, layer.State);
         Assert.Equal(CodeIndexErrors.EmbeddingServerFailed.Code, layer.Code);
-        Assert.Equal("32 of 70 embedded", layer.Detail);
+        Assert.Equal("32 of 71 embedded", layer.Detail);
     }
 
     [Fact]
@@ -178,8 +178,8 @@ public sealed class EmbeddingsLayerTests
 
         _ = await Arranged(40).BuildAndEmbed(BuildHarness.First, lines, Token);
 
-        Assert.Contains("embeddings 32 of 40", lines.All, StringComparer.Ordinal);
-        Assert.Contains("embeddings 40 of 40", lines.All, StringComparer.Ordinal);
+        Assert.Contains("embeddings 32 of 41", lines.All, StringComparer.Ordinal);
+        Assert.Contains("embeddings 41 of 41", lines.All, StringComparer.Ordinal);
         Assert.DoesNotContain(lines.All, l => l.Contains("Work(", StringComparison.Ordinal));
     }
 
@@ -194,7 +194,7 @@ public sealed class EmbeddingsLayerTests
         _ = await harness.Build(BuildHarness.First, cancellationToken: Token);
         _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await harness.Embed.Handle(new EmbedCodeIndexRequest(harness.Repo, lines), cancel.Token));
 
-        Assert.Equal("0 of 70 embedded", (await Layer(harness)).Detail);
+        Assert.Equal("0 of 71 embedded", (await Layer(harness)).Detail);
     }
 
     [Fact]

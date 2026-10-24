@@ -2,9 +2,9 @@
   "isError": true,
   "structuredContent": {
     "code": "SND-CONTEXT-021",
-    "message": "the call has no X-Sindri-Repo header, so it has no repo scope (fix: run 'sindri mcp register' in the work repo and use that registration)"
+    "message": "the call has no X-Sindri-Repo header and names no itemId, so the request has no repo (fix: run 'sindri mcp register' in the work repo, or pass an itemId)"
   },
   "content": [
-    "SND-CONTEXT-021 the call has no X-Sindri-Repo header, so it has no repo scope (fix: run 'sindri mcp register' in the work repo and use that registration)"
+    "SND-CONTEXT-021 the call has no X-Sindri-Repo header and names no itemId, so the request has no repo (fix: run 'sindri mcp register' in the work repo, or pass an itemId)"
   ]
 }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 
@@ -57,11 +56,6 @@ internal static class ContextText
         if (diff.Truncated)
         {
             _ = text.AppendLine(Invariant($"  file list truncated to the first {diff.Files.Count}"));
-        }
-
-        if (diff.AnchorsTruncated)
-        {
-            _ = text.AppendLine(Invariant($"  anchors: the first {DiffAnchors.MaxAnchors} of {diff.AnchorsTotal}"));
         }
 
         if (diff.Unmapped.Count > 0)

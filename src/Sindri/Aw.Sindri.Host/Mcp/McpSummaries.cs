@@ -118,13 +118,12 @@ internal static class McpSummaries
 
     /// <summary>sindri_queue's summary: the count and each group's count; never a title.</summary>
     /// <param name="queue">The queue.</param>
-    /// <param name="repo">The session's repo.</param>
     /// <returns>The text.</returns>
-    internal static string Queue(QueueResponse queue, string repo)
+    internal static string Queue(QueueResponse queue)
     {
         var groups = queue.Groups.Where(g => g.Items.Count > 0).Select(g => $"{GroupWord(g.Group)} {g.Items.Count.ToString(CultureInfo.InvariantCulture)}").ToList();
         var total = queue.Groups.Sum(g => g.Items.Count);
-        return string.Create(CultureInfo.InvariantCulture, $"{total} open items in {repo}{(groups.Count == 0 ? string.Empty : ": " + string.Join(", ", groups))}\n{Fenced}");
+        return string.Create(CultureInfo.InvariantCulture, $"{total} open items{(groups.Count == 0 ? string.Empty : ": " + string.Join(", ", groups))}\n{Fenced}");
     }
 
     /// <summary>sindri_item's summary: id, state, repo, version, what it waits on and the actions open to a person.</summary>

@@ -117,6 +117,15 @@ public static class PinRules
         };
     }
 
+    /// <summary>Every block id the recipe names (its Steps and their inputs, gates, effects and evidence providers), each once, in file order.</summary>
+    /// <param name="recipe">The recipe.</param>
+    /// <returns>The block ids, whether or not this build has them.</returns>
+    public static IReadOnlyList<BlockId> NamedBlocks(Recipe recipe)
+    {
+        ArgumentNullException.ThrowIfNull(recipe);
+        return [.. Named(recipe).Distinct()];
+    }
+
     /// <summary>Every block id the recipe names, in file order, repeats included.</summary>
     private static IEnumerable<BlockId> Named(Recipe recipe)
     {

@@ -6,9 +6,11 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Host;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
 using Microsoft.AspNetCore.Builder;
@@ -128,6 +130,8 @@ public sealed class GoldenHost : IAsyncDisposable
         await File.WriteAllTextAsync(Path.Combine(Home, "profile", "profile.yaml"), _profileYaml, ct);
         var app = LoopbackBinding.Build([], Environment, new FakeTimeProvider(KnownInstants.Epoch), services =>
         {
+            // why: an ordinary build embeds the checkout's recipes/sindri (#878), and unapproved shipped recipes would add a setup row to every golden; a test that needs a shipped set replaces this in 'extra'
+            _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty));
             _extra?.Invoke(services);
             _ = services.Replace(ServiceDescriptor.Singleton<IIdGenerator>(_ids));
             _ = services.Replace(ServiceDescriptor.Singleton<IProcessProbe>(new FakeProcessProbe(Pid)));

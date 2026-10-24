@@ -28,6 +28,33 @@
       }
     },
     {
+      "id": "decision:DEC-0000000000000000000000000000001c",
+      "kind": "decision",
+      "label": "decision · re-scope",
+      "subject": {
+        "kind": "decision",
+        "id": "DEC-0000000000000000000000000000001c"
+      },
+      "item": null,
+      "title": "Theirs, in other.",
+      "reason": "re-scope request from session:cli",
+      "repo": "other",
+      "urgency": "pulse",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "answerKind": null,
+      "primaryAction": "Decide",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-0000000000000000000000000000001c accept",
+      "open": {
+        "route": "decision/DEC-0000000000000000000000000000001c",
+        "label": "Review and decide"
+      }
+    },
+    {
       "id": "failure:service:heartbeat",
       "kind": "failure",
       "label": "failure · heartbeat",

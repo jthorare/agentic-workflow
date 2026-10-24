@@ -35,7 +35,7 @@ public sealed class ListInstancesServiceTests
     private static async Task<(Result<InstanceList> Result, RecordingInstances Port)> Run(ListInstancesRequest request, params InstanceView[] views)
     {
         var port = new RecordingInstances([.. views.Select(static v => new InstanceRow(v.Address.Value, v.State, NeedsYou: false))]);
-        var service = new ListInstancesService(new NoDirectory(), port, new EndedInstanceViews(new FixedReader(views)), new FixedItemViews(), new FixedRepos(), new FixedCaller(current: null), rowBuilder: new InstanceRows(new FakeTimeProvider()));
+        var service = new ListInstancesService(new NoDirectory(), port, new EndedInstanceViews(new FixedReader(views)), new FixedItemViews(), new FixedCaller(current: null), rowBuilder: new InstanceRows(new FakeTimeProvider()));
         return (await service.Handle(request, CancellationToken.None), port);
     }
 
@@ -239,7 +239,6 @@ public sealed class ListInstancesServiceTests
             new RecordingInstances([.. views.Select(static v => new InstanceRow(v.Address.Value, v.State, NeedsYou: false))]),
             new EndedInstanceViews(new FixedReader(views)),
             titles,
-            new FixedRepos(),
             new FixedCaller(new CallerContextBuilder().Human().Build()),
             rowBuilder: new InstanceRows(new FakeTimeProvider()));
 
@@ -372,13 +371,12 @@ public sealed class ListInstancesServiceTests
     private static ItemRow Titled(string id, string title, string? repo = null) =>
         new ItemRowBuilder().WithId(ItemId.From(id)).InRepo(repo is null ? null : RepoName.From(repo)).Build() with { Title = title };
 
-    private static ListInstancesService Service(IReadOnlyList<InstanceView> views, FixedItemViews items, CallerContext? caller, string? directoryAddress = null, FixedRepos? repos = null, RecordingInstances? port = null, FixedReader? reader = null) =>
+    private static ListInstancesService Service(IReadOnlyList<InstanceView> views, FixedItemViews items, CallerContext? caller, string? directoryAddress = null, RecordingInstances? port = null, FixedReader? reader = null) =>
         new(
             directoryAddress is null ? new NoDirectory() : new FixedDirectory(directoryAddress),
             port ?? new RecordingInstances([.. views.Select(static v => new InstanceRow(v.Address.Value, v.State, NeedsYou: false))]),
             new EndedInstanceViews(reader ?? new FixedReader(views)),
             items,
-            repos ?? new FixedRepos(),
             new FixedCaller(caller),
             rowBuilder: new InstanceRows(new FakeTimeProvider()));
 
@@ -435,23 +433,23 @@ public sealed class ListInstancesServiceTests
     }
 
     [Fact]
-    public async Task A_session_lists_only_its_own_repos_instances_rows_and_counts()
+    public async Task A_session_lists_every_repos_instances_rows_and_counts()
     {
         var views = new[] { OnItem(ItemA, $"{ItemA}/step/1"), OnItem(ItemB, $"{ItemB}/step/1") };
         var items = new FixedItemViews(failing: false, Titled(ItemA, "Mine", repo: "alpha"), Titled(ItemB, "Theirs", repo: "beta"));
-        var service = Service(views, items, new CallerContextBuilder().Session().InRepo("alpha").Build(), repos: new FixedRepos((ItemA, "alpha"), (ItemB, "beta")));
+        var service = Service(views, items, new CallerContextBuilder().Session().InRepo("alpha").Build());
 
         var result = await service.Handle(new ListInstancesRequest(), CancellationToken.None);
 
-        Assert.Equal(["Mine"], result.Value.Instances.Select(static r => r.Subject.Label), StringComparer.Ordinal);
-        Assert.Equal(1, result.Value.Counts.Open);   // the other repo's instance isn't in the root set the counts cover
+        Assert.Equal(["Mine", "Theirs"], result.Value.Instances.Select(static r => r.Subject.Label).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(2, result.Value.Counts.Open);
     }
 
     [Fact]
     public async Task A_human_lists_every_repos_instances()
     {
         var views = new[] { OnItem(ItemA, $"{ItemA}/step/1"), OnItem(ItemB, $"{ItemB}/step/1") };
-        var service = Service(views, new FixedItemViews(failing: false), new CallerContextBuilder().Human().Build(), repos: new FixedRepos((ItemA, "alpha"), (ItemB, "beta")));
+        var service = Service(views, new FixedItemViews(failing: false), new CallerContextBuilder().Human().Build());
 
         var result = await service.Handle(new ListInstancesRequest(), CancellationToken.None);
 
@@ -459,16 +457,15 @@ public sealed class ListInstancesServiceTests
     }
 
     [Fact]
-    public async Task A_session_looking_up_an_address_in_another_repo_gets_item_404_and_its_own_repo_is_served()
+    public async Task A_session_looking_up_an_address_in_another_repo_is_served()
     {
         var views = new[] { OnItem(ItemA, $"{ItemA}/step/1"), OnItem(ItemB, $"{ItemB}/step/1") };
-        var repos = new FixedRepos((ItemA, "alpha"), (ItemB, "beta"));
         var session = new CallerContextBuilder().Session().InRepo("alpha").Build();
 
-        var theirs = await Service(views, new FixedItemViews(failing: false), session, directoryAddress: $"{ItemB}/step/1", repos: repos).Handle(new ListInstancesRequest(Address: $"{ItemB}/step/1"), CancellationToken.None);
-        var mine = await Service(views, new FixedItemViews(failing: false), session, directoryAddress: $"{ItemA}/step/1", repos: repos).Handle(new ListInstancesRequest(Address: $"{ItemA}/step/1"), CancellationToken.None);
+        var theirs = await Service(views, new FixedItemViews(failing: false), session, directoryAddress: $"{ItemB}/step/1").Handle(new ListInstancesRequest(Address: $"{ItemB}/step/1"), CancellationToken.None);
+        var mine = await Service(views, new FixedItemViews(failing: false), session, directoryAddress: $"{ItemA}/step/1").Handle(new ListInstancesRequest(Address: $"{ItemA}/step/1"), CancellationToken.None);
 
-        Assert.Equal(SindriErrors.ItemNotFound.Code, theirs.Error.Code);
+        Assert.Equal([$"{ItemB}/step/1"], theirs.Value.Instances.Select(static r => r.Address.Value), StringComparer.Ordinal);
         Assert.Equal([$"{ItemA}/step/1"], mine.Value.Instances.Select(static r => r.Address.Value), StringComparer.Ordinal);
     }
 

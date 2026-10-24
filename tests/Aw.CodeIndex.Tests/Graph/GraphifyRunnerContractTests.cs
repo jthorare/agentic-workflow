@@ -118,7 +118,7 @@ public sealed class GraphifyRunnerContractTests : GraphRunnerContract, IDisposab
     public async Task A_graph_over_the_size_cap_is_too_large()
     {
         var runner = Runner(Tool(Pin, Writes(GraphJson)));
-        var request = Request() with { Settings = new GraphSettings(Enabled: true, MaxMegabytes: 0, MaxNodes: 1_000) };
+        var request = Request() with { Settings = new GraphSettings(Enabled: true, MaxMegabytes: 0) };
 
         var run = await runner.Run(request, TestContext.Current.CancellationToken);
 

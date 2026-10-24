@@ -126,7 +126,7 @@ public sealed class LensesSetTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Union_band_over_100_is_truncated_by_min_depth_then_anchor_order()
+    public void Union_band_over_100_lists_every_item_by_min_depth_then_anchor_order()
     {
         var builder = new GraphBuilder().Node("feature:a").Node("feature:b");
         for (var i = 0; i < 70; i++)
@@ -137,8 +137,7 @@ public sealed class LensesSetTests
 
         var product = Set(builder.Build(), ["feature:b", "feature:a"], depth: 0).Bands.Product;
 
-        Assert.True(product.Truncated);
-        Assert.Equal((100, 142), (product.Own.Count, product.Counts.Own));
+        Assert.Equal((142, 142), (product.Own.Count, product.Counts.Own));
         Assert.All(product.Own.Take(71), i => Assert.Equal(["feature:b"], i.Anchors));
         Assert.All(product.Own.Skip(71), i => Assert.Equal(["feature:a"], i.Anchors));
         Assert.Equal(product.Own.Skip(71).Select(i => i.Node.Value).Order(StringComparer.Ordinal), product.Own.Skip(71).Select(i => i.Node.Value), StringComparer.Ordinal);
@@ -187,29 +186,26 @@ public sealed class LensesSetTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void More_than_20_anchors_is_006_and_20_or_the_same_value_repeated_is_not()
+    public void No_anchors_is_006_and_any_number_of_anchors_is_not()
     {
-        var many = Enumerable.Range(0, 21).Select(i => "nope:" + i.ToString(CultureInfo.InvariantCulture)).ToArray();
-        var twenty = Enumerable.Range(0, 20).Select(i => "nope:" + i.ToString(CultureInfo.InvariantCulture)).Append(Manager).Take(20).ToArray();
+        var many = Enumerable.Range(0, 50).Select(i => "nope:" + i.ToString(CultureInfo.InvariantCulture)).ToArray();
 
-        Assert.Equal(ContextErrors.QueryInvalid.Code, LensesBuilder.BuildSet(Basis(), Tabs(), many, 2).Error.Code);
         Assert.Equal(ContextErrors.QueryInvalid.Code, LensesBuilder.BuildSet(Basis(), Tabs(), [], 2).Error.Code);
-        Assert.Null(QueryRules.CheckAnchors(twenty));
-        Assert.NotNull(QueryRules.CheckAnchors(many));
-        Assert.Equal(ContextErrors.UnknownAnchor.Code, LensesBuilder.BuildSet(Basis(), Tabs(), twenty, 2).Error.Code);
+        Assert.Null(QueryRules.CheckAnchors(many));
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, LensesBuilder.BuildSet(Basis(), Tabs(), many, 2).Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Twenty_distinct_anchors_the_cap_answer_a_full_schema_2_set()
+    public void Fifty_distinct_anchors_answer_a_full_schema_2_set()
     {
         var graph = Tabs();
-        var extra = Enumerable.Range(0, 20 - graph.Nodes.Count).Select(i => new GraphNode(NodeKey.From("thing:cap-" + i.ToString(CultureInfo.InvariantCulture)), "Cap " + i.ToString(CultureInfo.InvariantCulture)));
+        var extra = Enumerable.Range(0, 50 - graph.Nodes.Count).Select(i => new GraphNode(NodeKey.From("thing:cap-" + i.ToString(CultureInfo.InvariantCulture)), "Cap " + i.ToString(CultureInfo.InvariantCulture)));
         var wide = graph with { Nodes = [.. graph.Nodes, .. extra] };
-        var keys = wide.Nodes.Take(QueryRules.MaxAnchors).Select(n => n.Key.Value).ToArray();
+        var keys = wide.Nodes.Take(50).Select(n => n.Key.Value).ToArray();
 
         var view = Set(wide, keys);
 
-        Assert.Equal((2, QueryRules.MaxAnchors), (view.SchemaVersion, view.Anchors.Count));
+        Assert.Equal((2, 50), (view.SchemaVersion, view.Anchors.Count));
         Assert.Empty(view.MissingAnchors);
     }
 

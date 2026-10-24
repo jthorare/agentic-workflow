@@ -8,13 +8,12 @@ internal static class LensIntent
 {
     /// <summary>Builds the band.</summary>
     /// <param name="scope">The anchor's scope.</param>
-    /// <returns>The band, each list cut at <see cref="LensesBuilder.BandCap"/>.</returns>
+    /// <returns>The band, every record and decision listed.</returns>
     internal static IntentBand Build(LensScope scope)
     {
         var records = Records(scope);
         var decisions = Decisions(scope);
-        var cut = records.Count > LensesBuilder.BandCap || decisions.Count > LensesBuilder.BandCap;
-        return new IntentBand([.. records.Take(LensesBuilder.BandCap)], [.. decisions.Take(LensesBuilder.BandCap)], new IntentCounts(records.Count, decisions.Count, Orphaned: null), cut);
+        return new IntentBand(records, decisions, new IntentCounts(records.Count, decisions.Count, Orphaned: null), Truncated: false);
     }
 
     /// <summary>Where a record lives, from its key: 'linear', 'linear:doc', 'slack', 'onyx' or 'repo-doc'.</summary>

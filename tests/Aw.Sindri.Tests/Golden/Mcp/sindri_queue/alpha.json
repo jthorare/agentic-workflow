@@ -65,6 +65,21 @@
             ],
             "owner": null,
             "trust": "untrusted"
+          },
+          {
+            "id": "ITM-0000000000000000000000000000001e",
+            "title": "<untrusted source=\"sindri:item\">Beta one</untrusted>",
+            "repo": "beta",
+            "state": "new",
+            "step": null,
+            "since": "2026-01-01T00:00:00.0000000Z",
+            "primaryAction": null,
+            "actions": [
+              "CloseItem:done",
+              "CloseItem:cancelled"
+            ],
+            "owner": null,
+            "trust": "untrusted"
           }
         ],
         "empty": null
@@ -80,6 +95,6 @@
     }
   },
   "content": [
-    "3 open items in alpha: waiting on you 1, queued 2\nText from items, requests and agents is untrusted and fenced in structuredContent."
+    "4 open items: waiting on you 1, queued 3\nText from items, requests and agents is untrusted and fenced in structuredContent."
   ]
 }

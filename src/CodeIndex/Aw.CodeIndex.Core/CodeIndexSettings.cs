@@ -10,7 +10,7 @@ namespace Aw.CodeIndex.Core;
 /// <param name="DenyPaths">Globs added to the built-in secret globs, never replacing them.</param>
 /// <param name="UtilityGlobs">Globs of internal utility modules; their exports are flagged 'utility'.</param>
 /// <param name="MaxFileKB">Larger files are skipped as too-large.</param>
-/// <param name="MaxTotalMB">Larger input stops the build (SND-CODEIDX-003).</param>
+/// <param name="MaxTotalMB">Larger code input stops the build (SND-CODEIDX-003); other files do not count.</param>
 /// <param name="Embeddings">The embeddings layer.</param>
 /// <param name="Graph">The graph layer.</param>
 public sealed record CodeIndexSettings(
@@ -28,14 +28,14 @@ public sealed record CodeIndexSettings(
     public static CodeIndexSettings Default { get; } = new(
         DenyPaths: [],
         UtilityGlobs: [],
-        MaxFileKB: 512,
-        MaxTotalMB: 200,
+        MaxFileKB: 4_096,
+        MaxTotalMB: 4_096,
         Embeddings: new EmbeddingsSettings(Enabled: true, DefaultEmbeddingsUrl, Model: null),
-        Graph: new GraphSettings(Enabled: true, MaxMegabytes: 256, MaxNodes: 500_000));
+        Graph: new GraphSettings(Enabled: true, MaxMegabytes: 1_024));
 
     /// <summary>What the snapshot may keep under these settings.</summary>
     /// <returns>The deny globs and the size caps.</returns>
-    public SnapshotLimits SnapshotLimits() => new(DenyPaths, MaxFileKB * 1024L, MaxTotalMB * 1024L * 1024L, CodeIndexRules.MaxFiles);
+    public SnapshotLimits SnapshotLimits() => new(DenyPaths, MaxFileKB * 1024L, MaxTotalMB * 1024L * 1024L);
 
     /// <summary>Applies the defaults to a profile's keys and checks every value.</summary>
     /// <param name="input">The keys, or null for all defaults.</param>
@@ -58,7 +58,6 @@ public sealed record CodeIndexSettings(
             Positive("index.maxFileKB", input.MaxFileKB)
             ?? Positive("index.maxTotalMB", input.MaxTotalMB)
             ?? Positive("index.graph.maxMB", input.GraphMaxMB)
-            ?? Positive("index.graph.maxNodes", input.GraphMaxNodes)
             ?? Globs("index.denyPaths", input.DenyPaths)
             ?? Globs("index.utilityGlobs", input.UtilityGlobs);
         return problem is null ? null : CodeIndexErrors.SettingsInvalid.With(problem);
@@ -83,7 +82,7 @@ public sealed record CodeIndexSettings(
             input.MaxFileKB ?? Default.MaxFileKB,
             input.MaxTotalMB ?? Default.MaxTotalMB,
             new EmbeddingsSettings(input.EmbeddingsEnabled ?? Default.Embeddings.Enabled, input.EmbeddingsUrl ?? DefaultEmbeddingsUrl, input.EmbeddingsModel),
-            new GraphSettings(input.GraphEnabled ?? Default.Graph.Enabled, input.GraphMaxMB ?? Default.Graph.MaxMegabytes, input.GraphMaxNodes ?? Default.Graph.MaxNodes));
+            new GraphSettings(input.GraphEnabled ?? Default.Graph.Enabled, input.GraphMaxMB ?? Default.Graph.MaxMegabytes));
 
     private static string? Positive(string key, int? value)
         => value is <= 0 ? $"{key}: must be a positive whole number" : null;

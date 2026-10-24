@@ -119,8 +119,8 @@ internal sealed class World : IDisposable
     public Task<Result<StartAttemptResponse>> Start(FixMode mode = FixMode.A) =>
         Run<StartAttemptRequest, StartAttemptResponse>(new StartAttemptRequest(State, mode));
 
-    public Task<Result<RecordCandidateResponse>> Record(string branch = "bugfix/eng-1-a1", string worktree = Worktree, int? hypothesis = null, bool allowTestChanges = false) =>
-        Run<RecordCandidateRequest, RecordCandidateResponse>(new RecordCandidateRequest(State, branch, worktree, hypothesis, allowTestChanges));
+    public Task<Result<RecordCandidateResponse>> Record(string branch = "bugfix/eng-1-a1", string worktree = Worktree, int? hypothesis = null, bool allowTestChanges = false, string? reason = null) =>
+        Run<RecordCandidateRequest, RecordCandidateResponse>(new RecordCandidateRequest(State, branch, worktree, hypothesis, allowTestChanges, reason));
 
     /// <summary>Reproduced, attempt 1 in mode A, the fix recorded as c1.</summary>
     public async Task<CandidateId> Candidate()

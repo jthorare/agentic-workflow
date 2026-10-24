@@ -38,7 +38,7 @@ public sealed class GetNeedsYouTests
     private async Task<GetNeedsYouResponse> Get() => (await Service().Handle(A.GetNeedsYouRequest().Build(), RequestQueryHarness.Token)).Value;
 
     [Fact]
-    public async Task GetNeedsYou_shows_the_managed_onyx_row_to_a_human_and_not_to_a_session()
+    public async Task GetNeedsYou_shows_the_managed_onyx_row_to_a_human_and_to_a_session()
     {
         _onyx.Notice = new Core.Onyx.OnyxNotice("Set up Onyx", "Onyx isn't set up on this box", "sindri onyx up");
 
@@ -51,7 +51,7 @@ public sealed class GetNeedsYouTests
 
         using (_q.Session(repo: null))
         {
-            Assert.Empty((await Get()).Rows);
+            Assert.Equal("failure:service:onyx", Assert.Single((await Get()).Rows).Id.Value);
         }
     }
 
@@ -87,7 +87,7 @@ public sealed class GetNeedsYouTests
     }
 
     [Fact]
-    public async Task A_RegisterMcp_job_that_is_running_or_that_a_session_asks_about_has_no_setup_mcp_row()
+    public async Task A_RegisterMcp_job_that_is_running_has_no_setup_mcp_row_and_a_failed_one_shows_to_a_session_too()
     {
         AddRepoJob(JobState.Running, kind: "RegisterMcp");
         using (_q.Human())
@@ -95,20 +95,21 @@ public sealed class GetNeedsYouTests
             Assert.Empty((await Get()).Rows);
         }
 
+        AddRepoJob(JobState.Succeeded, n: 1, kind: "RegisterMcp");   // the run ended; the newest job is the failed one
         AddRepoJob(JobState.Failed, "no", n: 2, kind: "RegisterMcp");
         using (_q.Session(repo: null))
         {
-            Assert.Empty((await Get()).Rows);
+            Assert.Equal("setup:mcp", Assert.Single((await Get()).Rows).Id.Value);
         }
     }
 
     [Fact]
-    public async Task The_setup_repo_row_is_not_a_sessions()
+    public async Task The_setup_repo_row_is_a_sessions_too()
     {
         AddRepoJob(JobState.Failed);
         using var entered = _q.Session(repo: null);
 
-        Assert.Empty((await Get()).Rows);
+        Assert.Equal("setup:repo", Assert.Single((await Get()).Rows).Id.Value);
     }
 
     [Fact]
@@ -149,7 +150,7 @@ public sealed class GetNeedsYouTests
     private static Result<Core.Profile.LoadedProfile> SetupFactsRigProfile() => SetupSources.SetupFactsRig.ProfileWithRepos();
 
     [Fact]
-    public async Task GetNeedsYou_shows_the_setup_recipes_row_and_the_own_approval_rows_to_a_human_and_not_to_a_session()
+    public async Task GetNeedsYou_shows_the_setup_recipes_row_and_the_own_approval_rows_to_a_human_and_to_a_session()
     {
         _ = await _q.Views.Slice.Profiles.Save(SliceHarness.Profile(), RequestQueryHarness.Token);
         var fake = new FakeShippedRecipes(ApproveAllFixtures.StepAndItem());
@@ -168,7 +169,7 @@ public sealed class GetNeedsYouTests
 
         using (_q.Session(repo: null))
         {
-            Assert.Empty((await Get()).Rows);
+            Expect.Sequence(["recipe:workflow.ship", "setup:recipes"], [.. (await Get()).Rows.Select(static r => r.Id.Value)]);
         }
     }
 
@@ -239,7 +240,7 @@ public sealed class GetNeedsYouTests
     }
 
     [Fact]
-    public async Task Session_sees_only_its_repo_rows()
+    public async Task Session_sees_every_repos_rows()
     {
         _ = await _q.File("mine", repo: "alpha");
         _ = await _q.File("theirs", repo: "beta");
@@ -248,8 +249,8 @@ public sealed class GetNeedsYouTests
 
         var rows = (await Get()).Rows;
 
-        Expect.Equal(2, rows.Count);
-        Assert.DoesNotContain(rows, r => r.Repo?.Value == "beta");
+        Expect.Equal(3, rows.Count);
+        Assert.Contains(rows, r => r.Repo?.Value == "beta");
         Assert.Contains(rows, r => r.Kind == NeedsYouKind.Failure);
     }
 

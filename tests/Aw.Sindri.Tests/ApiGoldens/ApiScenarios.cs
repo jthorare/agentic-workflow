@@ -38,7 +38,7 @@ internal static class ApiScenarios
         ["Jobs"] = [.. JobScenarios.All, .. JobScopeScenarios.All],
         ["Launches"] = [.. LaunchScenarios.All, .. WrapSessionScenarios.All],
         ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All],
-        ["Recipes"] = ApproveAllScenarios.All,
+        ["Recipes"] = [.. ApproveAllScenarios.All, .. RecipeApprovedVersionScenarios.All],
         ["CodeIndex"] = CodeIndexScenarios.All,
     };
 
@@ -140,6 +140,7 @@ internal static class ApiScenarios
     /// <summary>The body of an approve-all (recipes), collector (sessions) or wrap (launch) session scenario, else null.</summary>
     private static Func<Task<string>>? SessionBody(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         ApproveAllScenarios.Handles(slug, scenario) ? () => ApproveAllScenarios.Body(host, slug, scenario, ct)
+        : RecipeApprovedVersionScenarios.Handles(slug, scenario) ? () => RecipeApprovedVersionScenarios.Body(host, ct)
         : SetupRepoScenarios.Handles(slug, scenario) ? () => SetupRepoScenarios.Body(host, slug, scenario)
         : SessionScenarios.Handles(slug, scenario) ? () => SessionScenarios.Body(host, slug, scenario, ct)
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)

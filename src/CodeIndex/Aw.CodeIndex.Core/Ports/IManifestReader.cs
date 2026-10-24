@@ -13,6 +13,6 @@ public interface IManifestReader
     /// <summary>Reads the dependencies a manifest declares.</summary>
     /// <param name="path">The repo-relative path; becomes each row's manifest.</param>
     /// <param name="text">The file's text.</param>
-    /// <returns>The rows, raw (the build scrubs and cuts them), one per package name, at most <see cref="CodeIndexRules.MaxDepsPerManifest"/>.</returns>
+    /// <returns>The rows, raw (the build scrubs and cuts them), one per package name.</returns>
     public IReadOnlyList<DepRecord> Read(string path, string text);
 }

@@ -3,7 +3,6 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Views;
 
@@ -15,7 +14,7 @@ namespace Aw.Sindri.Features.GetJob;
 /// </summary>
 /// <param name="jobs">The 'jobs' view.</param>
 /// <param name="status">How fresh the views are.</param>
-/// <param name="callers">The caller, whose repo scope applies.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 internal sealed class GetJobService(IJobViews jobs, IProjectorStatus status, ICallerContextAccessor callers) : IService<GetJobRequest, JobView>
 {
     private static readonly ActionId _cancel = ActionId.From("CancelJob");
@@ -23,7 +22,7 @@ internal sealed class GetJobService(IJobViews jobs, IProjectorStatus status, ICa
     public async ValueTask<Result<JobView>> Handle(GetJobRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a job needs a caller");
         }
@@ -35,7 +34,7 @@ internal sealed class GetJobService(IJobViews jobs, IProjectorStatus status, ICa
             return found.Error;
         }
 
-        if (found.Value is not { } row || !ItemScope.VisibleOrRepoless(caller, row.Repo))
+        if (found.Value is not { } row)
         {
             return SindriErrors.JobNotFound.With(JobRules.NoSuchJob);
         }

@@ -5,10 +5,12 @@ namespace Aw.BugFix.Features.RecordCandidate;
 /// <param name="Branch">The worktree's branch.</param>
 /// <param name="WorkingDirectory">The worktree.</param>
 /// <param name="Hypothesis">The hypothesis it pursues (required in mode B).</param>
-/// <param name="AllowTestChanges">Whether the user approved changes to tests, fixtures or runner config.</param>
+/// <param name="AllowTestChanges">Whether changes to the check, tests, fixtures or runner config are approved.</param>
+/// <param name="TestChangeReason">Why they are approved; recorded in the history.</param>
 public sealed record RecordCandidateRequest(
     string StateDirectory,
     string Branch,
     string WorkingDirectory,
     int? Hypothesis,
-    bool AllowTestChanges);
+    bool AllowTestChanges,
+    string? TestChangeReason = null);

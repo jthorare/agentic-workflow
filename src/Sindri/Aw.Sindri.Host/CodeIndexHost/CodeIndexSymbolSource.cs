@@ -1,5 +1,4 @@
 using System.Text;
-using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
@@ -43,7 +42,7 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         }
 
         var head = read.Value.Head;
-        var asked = new IndexSymbolQuery(query.Text, query.Prefix ? SymbolMatch.Prefix : SymbolMatch.Exact, read.Value.Name, Math.Clamp(query.Max, 1, CodeIndexRules.MaxSymbolHits));
+        var asked = new IndexSymbolQuery(query.Text, query.Prefix ? SymbolMatch.Prefix : SymbolMatch.Exact, read.Value.Name, Math.Max(query.Max, 1));
         var found = await index.FindSymbols(scope, asked, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
@@ -99,7 +98,7 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
             return new CallAnswer(head, [], 0);
         }
 
-        var levels = (CallDepth)Math.Clamp(depth, 1, 3);
+        var levels = (CallDepth)Math.Clamp(depth, 1, 8);
         var answer = callers
             ? await index.Callers(scope, symbol, levels, includeImplementations: false, cancellationToken).ConfigureAwait(false)
             : await index.Callees(scope, symbol, levels, cancellationToken).ConfigureAwait(false);

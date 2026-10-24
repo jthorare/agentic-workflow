@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Infrastructure.Deps;
 
@@ -40,11 +39,11 @@ public sealed class CentralPackagesReaderTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Read_stops_at_the_per_manifest_limit()
+    public void Read_has_no_per_manifest_limit_removed_per_owner_q93()
     {
-        var items = string.Concat(Enumerable.Range(0, CodeIndexRules.MaxDepsPerManifest + 10).Select(i => $"<PackageVersion Include=\"P{i.ToString(CultureInfo.InvariantCulture)}\" Version=\"1\"/>"));
+        var items = string.Concat(Enumerable.Range(0, 5_010).Select(i => $"<PackageVersion Include=\"P{i.ToString(CultureInfo.InvariantCulture)}\" Version=\"1\"/>"));
 
-        Assert.Equal(CodeIndexRules.MaxDepsPerManifest, _reader.Read("Directory.Packages.props", $"<Project><ItemGroup>{items}</ItemGroup></Project>").Count);
+        Assert.Equal(5_010, _reader.Read("Directory.Packages.props", $"<Project><ItemGroup>{items}</ItemGroup></Project>").Count);
     }
 
     [Fact, Trait("Lane", "unit")]

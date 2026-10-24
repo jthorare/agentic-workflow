@@ -29,7 +29,7 @@ public sealed class ItemApiSafetyTests
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task A_session_streams_no_item_row_of_another_repo()
+    public async Task A_session_streams_the_item_rows_of_every_repo()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var host = await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml);
@@ -42,7 +42,7 @@ public sealed class ItemApiSafetyTests
 
         var seen = await Read(host, Session("demo"), stopAt: "Visible in demo", ct);
 
-        Assert.DoesNotContain(seen, e => e.Data.Contains(other, StringComparison.Ordinal) || e.Data.Contains("Hidden in other", StringComparison.Ordinal));
+        Assert.Contains(seen, e => e.Data.Contains(other, StringComparison.Ordinal));
         Assert.Contains(seen, static e => e.Type == "item.created");
     }
 

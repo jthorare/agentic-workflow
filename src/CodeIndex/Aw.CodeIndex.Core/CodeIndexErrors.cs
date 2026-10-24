@@ -12,7 +12,7 @@ public static class CodeIndexErrors
     public static readonly ErrorDefinition RepoNotFound = new("SND-CODEIDX-002", ErrorKind.NotFound, "The repo path is not a git repo, or the commit is not in it");
 
     /// <summary>SND-CODEIDX-003: the tracked input is over 'index.maxTotalMB'.</summary>
-    public static readonly ErrorDefinition InputTooLarge = new("SND-CODEIDX-003", ErrorKind.Invalid, "The tracked input is over the total size cap");
+    public static readonly ErrorDefinition InputTooLarge = new("SND-CODEIDX-003", ErrorKind.Invalid, "The tracked code input is over the total size cap");
 
     /// <summary>SND-CODEIDX-004: every heavy-job slot stayed busy past the wait; only ever a job result code (the job ends deferred, not failed).</summary>
     public static readonly ErrorDefinition HeavyBusy = new("SND-CODEIDX-004", ErrorKind.Unavailable, "Every heavy-job slot stayed busy");

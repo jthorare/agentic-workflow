@@ -89,7 +89,7 @@ public interface ICodeIndex
     /// <param name="scope">The caller's repos.</param>
     /// <param name="repo">The repo.</param>
     /// <param name="text">The text.</param>
-    /// <param name="k">How many; at most <see cref="CodeIndexRules.MaxNeighbors"/>.</param>
+    /// <param name="k">How many, 1 or more.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The neighbors; unavailable with the embeddings layer's code when that layer is (006, 009, 005).</returns>
     public ValueTask<Result<NeighborsAnswer>> Neighbors(CodeIndexScope scope, RepoName repo, string text, int k, CancellationToken cancellationToken);

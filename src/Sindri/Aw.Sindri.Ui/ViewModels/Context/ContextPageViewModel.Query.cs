@@ -39,5 +39,5 @@ internal sealed partial class ContextPageViewModel
 
     // The anchors the question resolved to, or when it found none, the ones it suggests.
     private static List<string> FromQuestion(Api.Context.QueryAnchorsView view) =>
-        [.. (view.Anchors.Count > 0 ? view.Anchors : view.SuggestedAnchors).Distinct(StringComparer.Ordinal).Take(MaxAnchors)];
+        [.. (view.Anchors.Count > 0 ? view.Anchors : view.SuggestedAnchors).Distinct(StringComparer.Ordinal)];
 }

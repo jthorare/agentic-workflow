@@ -1,10 +1,42 @@
 {
-  "isError": true,
+  "isError": false,
   "structuredContent": {
-    "code": "SND-JOB-404",
-    "message": "No such job (fix: run `sindri jobs` to list them)"
+    "id": "JOB-00000000000000000000000000000002",
+    "kind": "EchoJob",
+    "key": "echo-beta",
+    "item": null,
+    "repo": "beta",
+    "service": null,
+    "state": "running",
+    "startedBy": "service:host",
+    "startedAt": "2026-01-01T00:00:00.0000000Z",
+    "endedAt": null,
+    "progress": [
+      {
+        "round": 1,
+        "line": "<untrusted source=\"sindri:job\">echo 1 &lt;step&gt; &amp; done</untrusted>",
+        "at": "2026-01-01T00:00:00.0000000Z",
+        "trust": "untrusted"
+      }
+    ],
+    "rounds": 1,
+    "summary": null,
+    "code": null,
+    "result": null,
+    "cancelledBy": null,
+    "actions": [
+      "CancelJob"
+    ],
+    "cli": "sindri jobs cancel JOB-00000000000000000000000000000002",
+    "asOf": {
+      "cursor": 120,
+      "ledgerHead": 120,
+      "projectedAt": "2026-01-01T00:00:00.0000000Z",
+      "rebuilding": false,
+      "stalled": false
+    }
   },
   "content": [
-    "SND-JOB-404 No such job (fix: run `sindri jobs` to list them)"
+    "JOB-00000000000000000000000000000002 · EchoJob · running\nText from items, requests and agents is untrusted and fenced in structuredContent."
   ]
 }

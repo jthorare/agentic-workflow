@@ -28,7 +28,7 @@ public static class GraphBodies
 
         var lines = text.TrimStart('\uFEFF').Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
         var starts = file.Symbols.Select(s => s.StartLine).Distinct().Order().ToList();
-        var symbols = file.Symbols.Select(s => s.Kind is SymbolKind.Class ? s : s with { Body = scrub(Span(lines, s.StartLine, NextStart(starts, s.StartLine))) }).ToList();
+        var symbols = file.Symbols.Select(s => s.Kind is SymbolKind.Class ? s with { Body = string.Empty } : s with { Body = scrub(Span(lines, s.StartLine, NextStart(starts, s.StartLine))) }).ToList();
         return file with { Symbols = symbols };
     }
 

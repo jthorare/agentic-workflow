@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
@@ -66,14 +65,14 @@ public sealed class GetItemTests
     }
 
     [Fact]
-    public async Task Session_outside_the_repo_never_sees_the_body()
+    public async Task Session_outside_the_repo_sees_the_item_like_a_human()
     {
         await _q.Item('1', "secret", repo: "alpha");
         using var entered = _q.Session("beta");
 
         var result = await Service().Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token);
 
-        Expect.Equal(SindriErrors.ItemNotFound.Code, result.Error.Code);
+        Expect.Equal("secret", result.Value.Title);
     }
 
     /// <summary>The launch block is decided elsewhere (LaunchOptionsTests); here an item only has to carry it.</summary>

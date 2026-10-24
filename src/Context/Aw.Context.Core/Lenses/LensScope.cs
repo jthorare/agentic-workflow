@@ -8,12 +8,12 @@ namespace Aw.Context.Core.Lenses;
 /// <summary>An anchor's own scope over an applied graph (spec §6.1 step 1) with the lookups every band shares.</summary>
 internal sealed class LensScope
 {
-    private LensScope(GraphSnapshot graph, GraphNode anchor, CascadeResult cascade)
+    private LensScope(GraphSnapshot graph, GraphNode anchor, CascadeResult cascade, IReadOnlyDictionary<string, GraphNode> nodes)
     {
         Graph = graph;
         Anchor = anchor;
         Cascade = cascade;
-        Nodes = graph.Nodes.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
+        Nodes = nodes;
         Own = cascade.OwnScope.Select(k => k.Value).ToHashSet(StringComparer.Ordinal);
     }
 
@@ -29,8 +29,14 @@ internal sealed class LensScope
     internal HashSet<string> Own { get; }
 
     /// <summary>The scope of <paramref name="anchor"/> (a key or an alias), cascading <paramref name="depth"/> levels; null when the graph has no such node.</summary>
-    internal static LensScope? Of(GraphSnapshot graph, NodeKey anchor, int depth, CascadeOptions? options = null) =>
-        graph.Resolve(anchor) is { } node ? new LensScope(graph, node, Core.Graph.Cascade.Affects(graph, node.Key, depth, options ?? CascadeOptions.Default)) : null;
+    internal static LensScope? Of(GraphSnapshot graph, NodeKey anchor, int depth, CascadeOptions? options = null) => Of(graph, anchor, depth, options, NodesOf(graph));
+
+    /// <summary>The scope as above, over a node lookup built once by <see cref="NodesOf"/> (a set of anchors shares one instead of building one per anchor).</summary>
+    internal static LensScope? Of(GraphSnapshot graph, NodeKey anchor, int depth, CascadeOptions? options, IReadOnlyDictionary<string, GraphNode> nodes) =>
+        graph.Resolve(anchor) is { } node ? new LensScope(graph, node, Core.Graph.Cascade.Affects(graph, node.Key, depth, options ?? CascadeOptions.Default), nodes) : null;
+
+    /// <summary>Every node of <paramref name="graph"/> by key.</summary>
+    internal static Dictionary<string, GraphNode> NodesOf(GraphSnapshot graph) => graph.Nodes.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
 
     /// <summary>The edges of the given types that end in the own scope.</summary>
     internal IEnumerable<GraphEdge> IntoScope(params EdgeType[] types) => Graph.Edges.Where(e => types.Contains(e.Type) && Own.Contains(e.To.Value));

@@ -23,7 +23,7 @@ internal sealed class OllamaEmbedder : IEmbedder, IDisposable
     internal static readonly ModelPin DefaultPin = new("nomic-embed-text:latest", "sha256:0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f");
 
     private static readonly TimeSpan _probeTimeout = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan _embedTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan _embedTimeout = TimeSpan.FromMinutes(10);
 
     private readonly HttpClient _http;
     private readonly ModelPin _pin;

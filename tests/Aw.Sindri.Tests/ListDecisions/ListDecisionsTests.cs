@@ -113,7 +113,7 @@ public sealed class ListDecisionsTests
     }
 
     [Fact]
-    public async Task A_session_sees_only_its_repo_and_repo_less_decisions()
+    public async Task A_session_sees_every_repos_decisions()
     {
         _ = await _q.File("mine", repo: "alpha");
         _ = await _q.File("theirs", repo: "beta");
@@ -122,21 +122,20 @@ public sealed class ListDecisionsTests
 
         var views = await List(A.ListDecisionsRequest().Build());
 
-        Expect.Equal(2, views.Count);
+        Expect.Equal(3, views.Count);
         Assert.Contains(views, v => v.Id == nobodys);
-        Assert.DoesNotContain(views, v => v.Question.Contains("mine", StringComparison.Ordinal));
+        Assert.Contains(views, v => v.Question.Contains("mine", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task A_session_in_another_repo_sees_none_of_a_repos_decisions()
+    public async Task A_session_in_another_repo_sees_a_repos_decisions()
     {
         _ = await _q.File("theirs", repo: "beta");
         using var entered = _q.Session("alpha");
 
         var result = await Service().Handle(A.ListDecisionsRequest().Build(), RequestQueryHarness.Token);
 
-        Assert.Empty(result.Value.Decisions);
-        Expect.Equal(EmptyText.Decisions(pending: null, item: null), result.Value.Empty);
+        _ = Assert.Single(result.Value.Decisions);
     }
 
     [Fact]

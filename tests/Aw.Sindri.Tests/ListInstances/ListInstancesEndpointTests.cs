@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.ListInstances;
 using Aw.Sindri.Host.Endpoints;
-using Aw.Sindri.Tests.GetInstance;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,7 +59,7 @@ public sealed class ListInstancesEndpointTests
     [InlineData("?open=maybe", "open='maybe' isn't true or false")]
     public async Task A_value_that_is_not_true_or_false_reaches_the_service_so_the_answer_is_its_error(string query, string message)
     {
-        var service = new ListInstancesService(new NoDirectory(), new RecordingInstances([]), new EndedInstanceViews(new FixedReader([])), new FixedItemViews(), new FixedRepos(), new FixedCaller(current: null), rowBuilder: new InstanceRows(new FakeTimeProvider()));
+        var service = new ListInstancesService(new NoDirectory(), new RecordingInstances([]), new EndedInstanceViews(new FixedReader([])), new FixedItemViews(), new FixedCaller(current: null), rowBuilder: new InstanceRows(new FakeTimeProvider()));
         var builder = WebApplication.CreateSlimBuilder();
         _ = builder.WebHost.UseTestServer();
         _ = builder.Services.AddSingleton<IService<ListInstancesRequest, InstanceList>>(service);

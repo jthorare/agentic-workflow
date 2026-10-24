@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Views;
 
@@ -14,13 +13,13 @@ namespace Aw.Sindri.Features.GetLaunch;
 /// </summary>
 /// <param name="launches">The 'launches' view.</param>
 /// <param name="status">How fresh the views are.</param>
-/// <param name="callers">The caller, whose repo scope applies.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 internal sealed class GetLaunchService(ILaunchViews launches, IProjectorStatus status, ICallerContextAccessor callers) : IService<GetLaunchRequest, LaunchView>
 {
     public async ValueTask<Result<LaunchView>> Handle(GetLaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a launch needs a caller");
         }
@@ -32,7 +31,7 @@ internal sealed class GetLaunchService(ILaunchViews launches, IProjectorStatus s
             return found.Error;
         }
 
-        if (found.Value is not { } row || !ItemScope.Visible(caller, row.Repo))
+        if (found.Value is not { } row)
         {
             return SindriErrors.LaunchNotFound.With("No such launch (fix: the id the open answered with)");
         }

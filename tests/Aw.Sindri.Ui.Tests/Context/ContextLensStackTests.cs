@@ -136,21 +136,20 @@ public sealed class ContextLensStackTests
     }
 
     [Fact]
-    public async Task Repeated_anchors_collapse_and_more_than_twenty_are_refused_without_a_call()
+    public async Task Repeated_anchors_collapse_and_fifty_anchors_go_to_the_lenses_read_unrefused()
     {
-        var server = new FakeSindriApi();
+        var sent = new List<int>();
+        var server = new FakeSindriApi { LensesAnswer = q => { sent.Add(q.Anchors.Count); return ContextAnswers.Lenses(q); } };
         var page = Page(server);
         var key = (string)Golden("map-tabs")["anchor"]!["key"]!;
         page.AnchorText = $"{key} {key}";
         await page.Submit(Token);
         Assert.Equal(Labels.ContextHead(1), page.Head);
 
-        var calls = server.ContextCalls;
-        page.AnchorText = string.Join(' ', Enumerable.Range(0, 21).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a:{i}")));
+        page.AnchorText = string.Join(' ', Enumerable.Range(0, 50).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a:{i}")));
         await page.Submit(Token);
 
-        Assert.Equal(calls, server.ContextCalls);
-        Assert.Equal(Labels.ContextTooMany(20), page.Problem);
+        Assert.Equal([1, 50], sent);
     }
 
     [Fact]
@@ -169,22 +168,15 @@ public sealed class ContextLensStackTests
     }
 
     [Fact]
-    public async Task A_read_in_flight_does_not_overwrite_the_too_many_refusal()
+    public async Task A_request_line_the_server_refuses_as_too_long_says_so_in_plain_words()
     {
-        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var server = new FakeSindriApi { LensesGate = gate };
+        var server = new FakeSindriApi { LensesAnswer = _ => new RouteAnswer(HttpStatusCode.RequestUriTooLong, string.Empty) };
         var page = Page(server);
-        page.AnchorText = (string)Golden("map-tabs")["anchor"]!["key"]!;
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(TimeSpan.FromSeconds(20));
-        var first = page.Submit(limit.Token);
+        page.AnchorText = string.Join(' ', Enumerable.Range(0, 400).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a:{i}")));
 
-        page.AnchorText = string.Join(' ', Enumerable.Range(0, 21).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a:{i}")));
-        await page.Submit(limit.Token);
-        gate.SetResult();
-        await first;
+        await page.Submit(Token);
 
-        Assert.Equal(Labels.ContextTooMany(20), page.Problem);
+        Assert.Equal(Labels.ContextTooLongForOneRead, page.Problem);
         Assert.False(page.HasStack);
     }
 }

@@ -17,7 +17,7 @@ public sealed class EmbedTextTests
     [Fact]
     public void A_long_text_is_cut_at_the_embed_limit()
     {
-        var text = EmbedText.Of(new EmbedCandidate(_ref, "Run", "void Run()", new string('x', 5_000)));
+        var text = EmbedText.Of(new EmbedCandidate(_ref, "Run", "void Run()", new string('x', CodeIndexRules.EmbedTextMaxCharacters + 1_000)));
 
         Assert.Equal(CodeIndexRules.EmbedTextMaxCharacters, text.Length);
         Assert.StartsWith("Run\nvoid Run()\nxxx", text, StringComparison.Ordinal);

@@ -6,11 +6,9 @@ namespace Aw.CodeIndex.Infrastructure.Store;
 
 internal sealed partial class SqliteIndexBuild
 {
-    private const string NotClassLike = "('class', 'record', 'struct', 'interface', 'enum')";
-
     private const string Candidates = "SELECT s.ref, s.name, s.signature, b.text "
         + "FROM bodies b JOIN symbols s ON s.id = b.symbol_id LEFT JOIN embeddings e ON e.symbol_id = s.id "
-        + "WHERE e.symbol_id IS NULL AND s.kind NOT IN ('class', 'record', 'struct', 'interface', 'enum') "
+        + "WHERE e.symbol_id IS NULL "
         + "ORDER BY s.ref LIMIT $limit";
 
     private const string InsertVector = "INSERT OR REPLACE INTO embeddings(symbol_id, model, vector) SELECT id, $model, $vector FROM symbols WHERE ref = $ref";
@@ -35,7 +33,7 @@ internal sealed partial class SqliteIndexBuild
     public ValueTask<Result<EmbeddingProgress>> CountEmbeddings(CancellationToken cancellationToken)
         => SqliteFailure.Guard<EmbeddingProgress>("Counting embeddings", async () => new EmbeddingProgress(
             (int)await Sql.Count(connection, "SELECT COUNT(*) FROM embeddings", cancellationToken).ConfigureAwait(false),
-            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols WHERE kind NOT IN " + NotClassLike, cancellationToken).ConfigureAwait(false)));
+            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols", cancellationToken).ConfigureAwait(false)));
 
     private async Task<Result<Unit>> WriteGraph(GraphSnapshot graph, CancellationToken cancellationToken)
     {

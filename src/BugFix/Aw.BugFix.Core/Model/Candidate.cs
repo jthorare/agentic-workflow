@@ -15,7 +15,9 @@ namespace Aw.BugFix.Core.Model;
 /// <param name="ChangedFiles">Files changed since the baseline, as recorded.</param>
 /// <param name="Run">The frozen check's run against it, once recorded.</param>
 /// <param name="Verdict">judge's verdict, once recorded.</param>
-/// <param name="JudgeAsked">The SHA-256 of the input judge was asked about and hasn't answered yet: set before the call, so an interrupted call can't be asked again.</param>
+/// <param name="JudgeAsked">The SHA-256 of the input judge was asked about and hasn't answered yet: set before the call, so an interrupted call is noticed.</param>
+/// <param name="JudgeAsks">How many times judge was asked while no answer was recorded: an interrupted call is retried once.</param>
+/// <param name="JudgeEscalations">How many times judge escalated about this candidate: the first is retried, the second falls back to unresolved.</param>
 public sealed record Candidate(
     CandidateId Id,
     int Attempt,
@@ -27,8 +29,13 @@ public sealed record Candidate(
     IReadOnlyList<string> ChangedFiles,
     CandidateRun? Run,
     JudgeVerdict? Verdict,
-    string? JudgeAsked = null)
+    string? JudgeAsked = null,
+    int JudgeAsks = 0,
+    int JudgeEscalations = 0)
 {
+    /// <summary>How many times judge may be asked while no answer was recorded: the call and one retry after an interruption.</summary>
+    public const int MaxJudgeAsks = 2;
+
     /// <summary>Gets a value indicating whether the candidate has a passing run and a resolved verdict.</summary>
     public bool Resolves => Run is { Passed: true } && Verdict?.Decision == JudgeDecision.Resolved;
 
@@ -46,9 +53,9 @@ public sealed record Candidate(
             return BugFixErrors.JudgeRefused.With($"{Id.Value} was already judged ({Names.Of(Verdict.Decision)}); a verdict is never re-asked");
         }
 
-        return JudgeAsked is null
+        return JudgeAsked is null || JudgeAsks < MaxJudgeAsks
             ? this
-            : BugFixErrors.JudgeRefused.With($"judge was already asked about {Id.Value} and no answer was recorded (the call was interrupted); ask the user how to proceed, a question is never re-asked");
+            : BugFixErrors.JudgeRefused.With($"judge was asked about {Id.Value} {MaxJudgeAsks} times and no answer was recorded; if no judge process is still running, leave it with start-attempt --abandon-judge, or run advance report --unresolved");
     }
 
     /// <summary>Whether the bug fix may be reported resolved by this candidate: only with a passing run and a resolved verdict.</summary>

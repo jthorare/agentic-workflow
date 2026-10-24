@@ -45,13 +45,13 @@ public sealed class GetPacketFileServiceTests
         public string Scrub(string text) => text.Replace("sk-live-123", "[redacted]", StringComparison.Ordinal);
     }
 
-    private static async Task<(Result<PacketFile> Result, Store Store)> Read(string name, string asked, string computed, string? text = "{\"schemaVersion\":1}", string recipe = "workflow.scoping", CallerContext? caller = null, FixedRepos? repos = null)
+    private static async Task<(Result<PacketFile> Result, Store Store)> Read(string name, string asked, string computed, string? text = "{\"schemaVersion\":1}", string recipe = "workflow.scoping", CallerContext? caller = null)
     {
         var view = StatusCases.View("desk-task");
         view = view with { ItemId = ItemKey.From(Item), Recipe = view.Recipe with { Id = RecipeId.From(recipe) }, FactShas = new Dictionary<string, string>(StringComparer.Ordinal) { ["fact:scopePacket"] = new string('1', 64) } };
         var directory = new SomeInstances(view);
         var store = new Store(computed, text);
-        var opened = new ScopingInstances(directory, directory, repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
+        var opened = new ScopingInstances(directory, directory, new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
         var service = new GetPacketFileService(opened, new Contents($$"""{"hash":"{{_hash}}"}"""), store, new Redacting());
         return (await service.Handle(new GetPacketFileRequest(view.Id, asked, name), CancellationToken.None), store);
     }
@@ -124,12 +124,12 @@ public sealed class GetPacketFileServiceTests
     }
 
     [Fact]
-    public async Task A_session_of_another_repo_gets_item_404()
+    public async Task A_session_of_any_repo_reads_the_file()
     {
-        var (own, _) = await Read("brief.md", _hash, _hash, caller: new CallerContextBuilder().Session().InRepo("alpha").Build(), repos: new FixedRepos((Item, "alpha")));
-        var (other, _) = await Read("brief.md", _hash, _hash, caller: new CallerContextBuilder().Session().InRepo("beta").Build(), repos: new FixedRepos((Item, "alpha")));
+        var (own, _) = await Read("brief.md", _hash, _hash, caller: new CallerContextBuilder().Session().InRepo("alpha").Build());
+        var (other, _) = await Read("brief.md", _hash, _hash, caller: new CallerContextBuilder().Session().InRepo("beta").Build());
 
         Assert.True(own.IsSuccess);
-        Assert.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Assert.True(other.IsSuccess);
     }
 }

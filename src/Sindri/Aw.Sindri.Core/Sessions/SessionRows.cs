@@ -1,4 +1,3 @@
-using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Launch;
 
 namespace Aw.Sindri.Core.Sessions;
@@ -6,74 +5,42 @@ namespace Aw.Sindri.Core.Sessions;
 /// <summary>Turns observed sessions into what a client sees, and decides who sees which (collector spec CA-1, CA-2, §12). Pure.</summary>
 public static class SessionRows
 {
-    /// <summary>True when <paramref name="caller"/> may see <paramref name="session"/>: a human or service sees every session, a session caller only the ones in its own X-Sindri-Repo (none without one).</summary>
-    /// <param name="caller">The caller.</param>
-    /// <param name="session">The session.</param>
-    /// <returns>True when visible.</returns>
-    public static bool Visible(CallerContext caller, ObservedSession session)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        ArgumentNullException.ThrowIfNull(session);
-        return caller.Class != CallerClass.Session || (caller.Repo is { } repo && Equals(repo, session.Repo));
-    }
-
-    /// <summary>The live session named <paramref name="reference"/> in <paramref name="pass"/> that <paramref name="caller"/> may see, or null: an unknown, ended or other-repo ref all answer null.</summary>
+    /// <summary>The live session named <paramref name="reference"/> in <paramref name="pass"/>, or null: an unknown or ended ref answers null.</summary>
     /// <param name="pass">One snapshot, read once by the caller.</param>
     /// <param name="reference">The ref.</param>
-    /// <param name="caller">The caller.</param>
     /// <returns>The session, or null.</returns>
-    public static ObservedSession? Find(SessionSnapshot pass, SessionRef reference, CallerContext caller)
+    public static ObservedSession? Find(SessionSnapshot pass, SessionRef reference)
     {
         ArgumentNullException.ThrowIfNull(pass);
-        ArgumentNullException.ThrowIfNull(caller);
-        return pass.Sessions.FirstOrDefault(s => s.Ref.Equals(reference)) is { } found && Visible(caller, found) ? found : null;
-    }
-
-    /// <summary>SND-AUTH-002 for a session caller, else null: for a human-only read to call before it looks a ref up, so a session cannot probe which refs exist.</summary>
-    /// <param name="caller">The caller.</param>
-    /// <returns>The refusal, or null.</returns>
-    public static Kernel.Error? RefuseSession(CallerContext caller)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        return caller.Class == CallerClass.Session ? SindriErrors.AuthRefused.With("a session caller can't read this; ask the human") : null;
-    }
-
-    /// <summary>True when the caller gets the human-only fields (title, pid, tmux session and pane, resume, cwd, socket, history); a service caller is in-process and never serves a client.</summary>
-    /// <param name="caller">The caller.</param>
-    /// <returns>True for a human caller.</returns>
-    public static bool SeesHumanFields(CallerContext caller)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        return caller.Class == CallerClass.Human;
+        return pass.Sessions.FirstOrDefault(s => s.Ref.Equals(reference));
     }
 
     /// <summary>The row of <paramref name="session"/>.</summary>
     /// <param name="session">The session.</param>
     /// <param name="entry">Its agent's catalog entry, or null when the catalog no longer has it.</param>
     /// <param name="repoPath">The checkout path of its repo in the approved profile, or null.</param>
-    /// <param name="human">True to add the human-only fields.</param>
     /// <param name="launch">The instance, Step and attempt of the session's Sindri launch, or null when none is known.</param>
     /// <returns>The row.</returns>
-    public static SessionRow Of(ObservedSession session, AgentEntry? entry, string? repoPath, bool human, LaunchStep? launch = null)
+    public static SessionRow Of(ObservedSession session, AgentEntry? entry, string? repoPath, LaunchStep? launch = null)
     {
         ArgumentNullException.ThrowIfNull(session);
         return new SessionRow(
             session.Ref.ToString(), session.Ref.Provider, entry?.Label ?? session.Ref.Provider.Value, session.Ref.Id, session.IdKnown, session.State, AskingOf(session), session.Source, session.Estimated,
-            session.Repo, Worktree(session.Cwd, repoPath), HostOf(session.Host, human), LaneOf(session), session.LaunchId, session.StartedAt, session.Since, SessionFocus.Pending)
+            session.Repo, Worktree(session.Cwd, repoPath), HostOf(session.Host), LaneOf(session), session.LaunchId, session.StartedAt, session.Since, SessionFocus.Pending)
         {
-            Title = human ? session.Title : null,
-            Pid = human ? session.Pid : null,
+            Title = session.Title,
+            Pid = session.Pid,
             Launch = launch,
         };
     }
 
-    private static SessionHostRow HostOf(HostInfo info, bool human)
+    private static SessionHostRow HostOf(HostInfo info)
     {
         var tmux = info.Tmux;
         return new SessionHostRow(info.Kind, info.Label, tmux?.SocketKind, tmux?.AttachedClients, info.Terminal?.Name)
         {
-            Session = human ? tmux?.Session : null,
-            Pane = human ? tmux?.Pane : null,
+            Session = tmux?.Session,
+            Pane = tmux?.Pane,
         };
     }
 
@@ -83,7 +50,7 @@ public static class SessionRows
     private static SessionLane? LaneOf(ObservedSession session) =>
         session.Team is { } team && session.Lane is { } lane ? new SessionLane(team, lane) : null;
 
-    /// <summary>The same row with the tmux socket path added (the single-session read for a human caller).</summary>
+    /// <summary>The same row with the tmux socket path added (the single-session read).</summary>
     /// <param name="row">The row.</param>
     /// <param name="session">The session it came from.</param>
     /// <returns>The row with <see cref="SessionHostRow.Socket"/> set.</returns>

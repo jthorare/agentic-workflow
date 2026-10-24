@@ -1,6 +1,21 @@
 {
-  "items": [],
-  "empty": "No open items.",
+  "items": [
+    {
+      "id": "ITM-0000000000000000000000000000000f",
+      "title": "In other",
+      "repo": "other",
+      "state": "new",
+      "step": null,
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "primaryAction": null,
+      "actions": [
+        "CloseItem:done",
+        "CloseItem:cancelled"
+      ],
+      "owner": null
+    }
+  ],
+  "empty": null,
   "asOf": {
     "cursor": 7,
     "ledgerHead": 7,

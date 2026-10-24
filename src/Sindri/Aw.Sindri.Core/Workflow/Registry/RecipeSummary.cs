@@ -21,6 +21,14 @@ namespace Aw.Sindri.Core.Workflow.Registry;
 public sealed record RecipeSummary(RecipeId Id, int Version, RecipeHash Hash, RecipeStanding Standing, ApprovalVia? Via, IReadOnlyList<StaleReason> Stale, IReadOnlyList<RecipeInput> Inputs, string Urgency, IReadOnlyList<RecipeOutput> Outputs, string OrderedBy, IReadOnlyList<StatePlace> States, IReadOnlyList<PathLoop> Loops, string? Name = null,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? DisplayName = null)
 {
+    /// <summary>The version the recipe was last approved at, which is an older one than <see cref="Version"/> when a newer shipped version waits for its approval; null, and left out of the JSON, when it was never approved.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? ApprovedVersion { get; init; }
+
+    /// <summary>The hash the recipe was last approved at; null, and left out of the JSON, when it was never approved.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public RecipeHash? ApprovedHash { get; init; }
+
     /// <summary>The list's status word (API spec §3.8, E-25): 'approved', 'changed', 'draft' or 'revoked'; set by the list, null and left out of the JSON elsewhere.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Status { get; init; }

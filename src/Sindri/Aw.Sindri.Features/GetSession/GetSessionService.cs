@@ -10,8 +10,7 @@ using Aw.Sindri.Core.Sessions;
 namespace Aw.Sindri.Features.GetSession;
 
 /// <summary>
-/// One live session (collector spec CA-2). A ref that is unknown, ended or outside a session caller's repo answers the same SND-SESSION-404, so a session cannot probe other
-/// repos. A human also gets the directory, the socket and the state history; a session caller gets none of them.
+/// One live session (collector spec CA-2). A ref that is unknown or ended answers SND-SESSION-404. Every caller gets the directory, the socket and the state history.
 /// </summary>
 internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, ILaunchViews launches)
     : IService<GetSessionRequest, SessionView>
@@ -19,7 +18,7 @@ internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog
     public async ValueTask<Result<SessionView>> Handle(GetSessionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a session needs a caller");
         }
@@ -30,24 +29,21 @@ internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog
             return unavailable;
         }
 
-        var found = now is null ? null : SessionRows.Find(now, request.Ref, caller);
+        var found = now is null ? null : SessionRows.Find(now, request.Ref);
         if (now is null || found is null)
         {
-            return SindriErrors.SessionNotFound.With("no live session has that ref (or it is outside this caller's repo)");
+            return SindriErrors.SessionNotFound.With("no live session has that ref");
         }
 
-        var human = SessionRows.SeesHumanFields(caller);
         var path = await RepoPath(found, cancellationToken).ConfigureAwait(false);
-        var row = await Row(found, path, human, cancellationToken).ConfigureAwait(false);
-        return human
-            ? new SessionView(SessionRows.WithSocket(row, found), found.Cwd, now.History.GetValueOrDefault(found.Ref) ?? [], now.ObservedAt)
-            : new SessionView(row, Cwd: null, StateHistory: null, now.ObservedAt);
+        var row = await Row(found, path, cancellationToken).ConfigureAwait(false);
+        return new SessionView(SessionRows.WithSocket(row, found), found.Cwd, now.History.GetValueOrDefault(found.Ref) ?? [], now.ObservedAt);
     }
 
-    private async ValueTask<SessionRow> Row(ObservedSession session, string? path, bool human, CancellationToken cancellationToken)
+    private async ValueTask<SessionRow> Row(ObservedSession session, string? path, CancellationToken cancellationToken)
     {
         var steps = await LaunchSteps.Of(launches, session.LaunchId is { } id ? [id] : [], cancellationToken).ConfigureAwait(false);
-        return SessionRows.Of(session, catalog.Resolve(session.Ref.Provider), path, human, session.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
+        return SessionRows.Of(session, catalog.Resolve(session.Ref.Provider), path, session.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
     }
 
     private async ValueTask<string?> RepoPath(ObservedSession session, CancellationToken cancellationToken)

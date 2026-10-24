@@ -90,15 +90,36 @@ public sealed class BuildCodeIndexGraphTests
         var g = await Find(index, repo, "g");
         git.WriteFile("src/a.ts", FileA + "// edit\n");
         var second = git.Commit("edit");
-        tool.RunError = CodeIndexErrors.GraphUnavailable.With("timeout");
+        tool.RunError = CodeIndexErrors.GraphUnavailable.With("failed");
 
         var report = await Build(index, repo, second);
 
         var callers = await index.Facade.Callers(RealIndex.ScopeOf(repo), g, CallDepth.One, includeImplementations: false, Token);
         var found = (await index.Facade.FindSymbols(RealIndex.ScopeOf(repo), new SymbolQuery("g", SymbolMatch.Exact, Repo: null), Token)).Value;
-        Assert.Equal(("SND-CODEIDX-008", "timeout"), (report.Layers.Single(l => l.Layer == LayerName.Graph).Code, report.Layers.Single(l => l.Layer == LayerName.Graph).Detail));
+        Assert.Equal(("SND-CODEIDX-008", "failed"), (report.Layers.Single(l => l.Layer == LayerName.Graph).Code, report.Layers.Single(l => l.Layer == LayerName.Graph).Detail));
         Assert.True(callers.IsError);
         Assert.Empty(found.Hits);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_graphify_timeout_keeps_the_last_good_graph_instead_of_clearing_it()
+    {
+        using var git = Repo();
+        var tool = new FakeGraphRunner { Graph = _graph };
+        using var index = new RealIndex(graph: tool);
+        var repo = git.AsRepo("web");
+        _ = await Build(index, repo, git.Head);
+        var g = await Find(index, repo, "g");
+        git.WriteFile("src/c.ts", "export const z = 1;\n");   // a file the graph does not touch: the files whose graph rows are kept
+        var second = git.Commit("edit");
+        tool.RunError = CodeIndexErrors.GraphUnavailable.With("timeout");
+
+        var report = await Build(index, repo, second);
+
+        var callers = (await index.Facade.Callers(RealIndex.ScopeOf(repo), g, CallDepth.One, includeImplementations: false, Token)).Value;
+        var layer = report.Layers.Single(l => l.Layer == LayerName.Graph);
+        Assert.Equal((LayerState.Unavailable, "SND-CODEIDX-008", "timeout"), (layer.State, layer.Code, layer.Detail));
+        Assert.Equal("f", Assert.Single(callers.Edges).Other!.Name);
     }
 
     [Fact, Trait("Lane", "unit")]

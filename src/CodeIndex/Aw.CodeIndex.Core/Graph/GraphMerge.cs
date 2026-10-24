@@ -93,7 +93,7 @@ public static class GraphMerge
         return SymbolRef.TryFrom(text, out var reference) ? reference : null;
     }
 
-    // A class node is class-like (never embedded, no text), like a parsed class; its body, when the node is a function, is attached later from the file.
+    // A class node is class-like (embedded by its name alone), like a parsed class; its body, when the node is a function, is attached later from the file.
     private static SymbolRecord Symbol(SymbolRef reference, Placed node)
         => new(reference, node.Name, node.Name, node.IsClass ? SymbolKind.Class : SymbolKind.GraphSymbol, Arity: 0, node.Line, node.Line, Exported: false, Utility: false,
             Signature: string.Empty, ShapeHash: string.Empty, TokenCount: 0, Complexity: 0, ReadOnlyMemory<byte>.Empty, [], Body: null, []);

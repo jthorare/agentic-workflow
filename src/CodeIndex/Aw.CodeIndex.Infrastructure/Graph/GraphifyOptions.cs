@@ -10,13 +10,7 @@ internal sealed record GraphifyOptions(string Pin, string Binary, string TempRoo
     private const string LockedRequirements = "ebe4304d077e";
 
     /// <summary>The longest one run may take.</summary>
-    public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(30);
-
-    /// <summary>The largest single file copied into the snapshot.</summary>
-    public long MaxFileBytes { get; init; } = 4L * 1024 * 1024;
-
-    /// <summary>The most bytes copied into the snapshot.</summary>
-    public long MaxSnapshotBytes { get; init; } = 512L * 1024 * 1024;
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromHours(2);
 
     /// <summary>The machine; tests swap it.</summary>
     public GraphHost Host { get; init; } = GraphHost.Current();

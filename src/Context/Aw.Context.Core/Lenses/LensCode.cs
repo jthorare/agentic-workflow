@@ -15,9 +15,9 @@ internal static class LensCode
         return (band, scope.IntoScope(EdgeType.Implements, EdgeType.Tests).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal));
     }
 
-    /// <summary>The band from whole file lists (cut at <see cref="LensesBuilder.BandCap"/>, the counts full).</summary>
+    /// <summary>The band from whole file lists (every file listed).</summary>
     internal static CodeBand Band(IReadOnlyList<LensFile> files, int featuresWithNoCode) =>
-        new([.. files.Take(LensesBuilder.BandCap)], LensSymbols.Unavailable, new CodeCounts(files.Count, 0, featuresWithNoCode), files.Count > LensesBuilder.BandCap);
+        new([.. files], LensSymbols.Unavailable, new CodeCounts(files.Count, 0, featuresWithNoCode), Truncated: false);
 
     /// <summary>One entry per file that has an edge among <paramref name="edges"/>, ordered by file key.</summary>
     internal static List<LensFile> Files(IEnumerable<GraphEdge> edges) =>

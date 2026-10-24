@@ -10,7 +10,7 @@ namespace Aw.CodeIndex.Tests.Snapshot;
 
 public sealed class GitRepoSnapshotTests
 {
-    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 1_000_000, MaxTotalBytes: 10_000_000, MaxFiles: 1_000);
+    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 1_000_000, MaxTotalBytes: 10_000_000);
     private readonly GitRepoSnapshot _snapshot = new();
 
     [Fact, Trait("Lane", "unit")]

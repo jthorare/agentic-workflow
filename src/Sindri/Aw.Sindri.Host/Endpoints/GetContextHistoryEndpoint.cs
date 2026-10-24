@@ -4,7 +4,7 @@ using Aw.Sindri.Features.ContextCalls;
 
 namespace Aw.Sindri.Host.Endpoints;
 
-/// <summary>GET /sindri/context/history?anchor=&amp;since=&amp;before=&amp;draft=&amp;mapVersion=: the stored records, decisions and landed changes behind one to 20 anchors; a repeated 'anchor' names several.</summary>
+/// <summary>GET /sindri/context/history?anchor=&amp;since=&amp;before=&amp;draft=&amp;mapVersion=: the stored records, decisions and landed changes behind one or more anchors; a repeated 'anchor' names several.</summary>
 internal static class GetContextHistoryEndpoint
 {
     internal static RouteGroupBuilder MapGetContextHistory(this RouteGroupBuilder group)

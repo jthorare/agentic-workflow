@@ -10,7 +10,7 @@ namespace Aw.CodeIndex.Tests.Graph;
 public sealed class FakeGraphRunnerContractTests : GraphRunnerContract
 {
     internal static GraphRequest RequestOf(IBlobReader? blobs = null)
-        => new(RepoName.From("web"), CommitSha.From("1111111111111111111111111111111111111111"), [.. RequestPaths.Select(p => new SnapshotFile(p, "b-" + p, 10))], blobs ?? new NoBlobs(), new GraphSettings(Enabled: true, MaxMegabytes: 64, MaxNodes: 1_000));
+        => new(RepoName.From("web"), CommitSha.From("1111111111111111111111111111111111111111"), [.. RequestPaths.Select(p => new SnapshotFile(p, "b-" + p, 10))], blobs ?? new NoBlobs(), new GraphSettings(Enabled: true, MaxMegabytes: 64));
 
     protected override (IGraphRunner Runner, GraphRequest Request) ArrangeWithOutsider()
     {

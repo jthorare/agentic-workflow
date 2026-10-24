@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Values;
@@ -8,7 +7,7 @@ namespace Aw.CodeIndex.Tests.Snapshot;
 public sealed class InputRulesTests
 {
     private static readonly CommitSha _commit = CommitSha.From("0123456789abcdef0123456789abcdef01234567");
-    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 1_000, MaxFiles: 10);
+    private static readonly SnapshotLimits _limits = new([], MaxFileBytes: 100, MaxTotalBytes: 1_000);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("src/A.cs")]
@@ -122,22 +121,10 @@ public sealed class InputRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_total_cap_counts_only_kept_files_and_stops_with_SND_CODEIDX_003_one_byte_over()
+    public void The_total_cap_counts_only_kept_code_files_and_stops_with_SND_CODEIDX_003_one_byte_over()
     {
-        var atCap = InputRules.Apply(_commit, [Regular("a", "1", 60), Regular("b", "2", 40), Regular("big", "3", 5_000)], _limits with { MaxTotalBytes = 100 });
-        var over = InputRules.Apply(_commit, [Regular("a", "1", 60), Regular("b", "2", 41)], _limits with { MaxTotalBytes = 100 });
-
-        Assert.False(atCap.IsError);
-        Assert.Equal("SND-CODEIDX-003", over.Error.Code);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void More_kept_files_than_the_file_cap_is_SND_CODEIDX_003()
-    {
-        var entries = Enumerable.Range(0, 4).Select(i => Regular(string.Create(CultureInfo.InvariantCulture, $"f{i}.txt"), string.Create(CultureInfo.InvariantCulture, $"b{i}"), 1)).ToList();
-
-        var atCap = InputRules.Apply(_commit, entries, _limits with { MaxFiles = 4 });
-        var over = InputRules.Apply(_commit, entries, _limits with { MaxFiles = 3 });
+        var atCap = InputRules.Apply(_commit, [Regular("a.cs", "1", 60), Regular("b.ts", "2", 40), Regular("big.cs", "3", 5_000)], _limits with { MaxTotalBytes = 100 });
+        var over = InputRules.Apply(_commit, [Regular("a.cs", "1", 60), Regular("b.ts", "2", 41)], _limits with { MaxTotalBytes = 100 });
 
         Assert.False(atCap.IsError);
         Assert.Equal("SND-CODEIDX-003", over.Error.Code);

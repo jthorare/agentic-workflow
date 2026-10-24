@@ -10,7 +10,6 @@ namespace Aw.CodeIndex.Core;
 /// <param name="EmbeddingsModel">'embeddings.model'; null means the lock's model.</param>
 /// <param name="GraphEnabled">'graph.enabled'.</param>
 /// <param name="GraphMaxMB">'graph.maxMB'.</param>
-/// <param name="GraphMaxNodes">'graph.maxNodes'.</param>
 public sealed record CodeIndexSettingsInput(
     IReadOnlyList<string>? DenyPaths = null,
     IReadOnlyList<string>? UtilityGlobs = null,
@@ -20,5 +19,4 @@ public sealed record CodeIndexSettingsInput(
     string? EmbeddingsUrl = null,
     string? EmbeddingsModel = null,
     bool? GraphEnabled = null,
-    int? GraphMaxMB = null,
-    int? GraphMaxNodes = null);
+    int? GraphMaxMB = null);

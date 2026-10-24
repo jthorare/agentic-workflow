@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Model;
 using Aw.CodeIndex.Core.Ports;
 
@@ -53,10 +52,6 @@ internal sealed class PackageJsonReader : IManifestReader
 
                 var version = property.Value.GetString() ?? string.Empty;
                 rows.Add(new DepRecord(path, property.Name, version, kind, Tags(version)));
-                if (rows.Count == CodeIndexRules.MaxDepsPerManifest)
-                {
-                    return rows;
-                }
             }
         }
 

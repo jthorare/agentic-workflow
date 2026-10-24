@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.ReadLedger;
 
 /// <summary>
 /// Pages the ledger for audits (API spec §2.2, §3.1): the same public envelopes as the event stream, scrubbed and escaped, with
-/// a session limited to its repo, and, for a human, the types outside the catalog's public ones too and every payload whole. The
+/// the types outside the catalog's public ones too and every payload whole, for every caller. The
 /// next cursor is how far the read looked, set after a full page or while the read stopped short of the head.
 /// </summary>
 /// <param name="ledger">The ledger, for its head.</param>
@@ -33,8 +33,7 @@ internal sealed class ReadLedgerService(ILedgerReader ledger, CallerEventView vi
         }
 
         var (filter, head) = checkedInput.Value;
-        var human = callers.Current?.Class == CallerClass.Human;
-        var page = await view.Read(new EventQuery(request.After, request.Max, filter, human), cancellationToken).ConfigureAwait(false);
+        var page = await view.Read(new EventQuery(request.After, request.Max, filter, IncludeNonPublic: true), cancellationToken).ConfigureAwait(false);
         return page.IsError ? page.Error : new LedgerPage(page.Value.Events, MoreAfter(page.Value, request.Max, head) ? page.Value.ScannedTo : null);
     }
 

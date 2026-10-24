@@ -41,14 +41,19 @@ public sealed class RulesTests
     [InlineData("Tests/LoginTest.java", "t/bug.sh", true)]
     [InlineData("src/Contest.cs", "t/bug.sh", false)]
     [InlineData("SRC/JEST.CONFIG.JS", "t/bug.sh", true)]
-    [InlineData("web/tsconfig.app.json", "t/bug.sh", true)]
+    [InlineData("web/tsconfig.app.json", "t/bug.sh", false)]
     [InlineData("scripts/run.sh", "t/bug.sh", true)]
-    [InlineData("Makefile", "t/bug.sh", true)]
-    [InlineData("build/rules.mk", "t/bug.sh", true)]
-    [InlineData(".npmrc", "t/bug.sh", true)]
-    [InlineData("justfile", "t/bug.sh", true)]
+    [InlineData("Makefile", "t/bug.sh", false)]
+    [InlineData("build/rules.mk", "t/bug.sh", false)]
+    [InlineData(".npmrc", "t/bug.sh", false)]
+    [InlineData("justfile", "t/bug.sh", false)]
     [InlineData("src/makefile_parser.ts", "t/bug.sh", false)]
-    public void Protected_paths_cover_the_check_its_directory_tests_and_their_config(string file, string check, bool touched) =>
+    [InlineData("package.json", "t/bug.sh", false)]
+    [InlineData("Directory.Build.props", "t/bug.sh", false)]
+    [InlineData("go.mod", "t/bug.sh", false)]
+    [InlineData("conftest.py", "t/bug.sh", true)]
+    [InlineData("pytest.ini", "t/bug.sh", true)]
+    public void Protected_paths_cover_the_check_its_directory_tests_and_runner_config_but_not_build_files(string file, string check, bool touched) =>
         Assert.Equal(touched, ProtectedPaths.Touched([file], check, ["scripts/run.sh"]).Count == 1);
 
     [Theory, Trait("Lane", "unit")]

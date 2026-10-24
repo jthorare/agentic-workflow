@@ -18,7 +18,7 @@ public static partial class TransitionDecision
 
     private static Decision Answer(Deciding d, WorkflowInstance instance, AnswerGiven answer)
     {
-        var fit = AnswerFit.Check(instance, d.Recipe, answer);
+        var fit = AnswerFit.Check(instance, answer);
         if (fit.IsError)
         {
             return new Rejected(d.Key, fit.Error);

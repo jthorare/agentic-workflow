@@ -93,13 +93,13 @@ public static class Clones
     /// <summary>Turns a reader's candidates into the answer: exact clones, and near clones at or above the threshold.</summary>
     /// <param name="subject">The symbol asked about; never in its own answer.</param>
     /// <param name="candidates">What the reader found.</param>
-    /// <returns>The exact and near clones, at most <see cref="CodeIndexRules.MaxSymbolHits"/> each.</returns>
+    /// <returns>The exact and near clones, at most <see cref="CodeIndexRules.MaxClones"/> each.</returns>
     public static SimilarClones Find(SymbolRef subject, CloneCandidates candidates)
     {
         var exact = candidates.Exact
             .Where(h => h.Ref != subject)
             .OrderBy(h => h.Ref.Value, StringComparer.Ordinal)
-            .Take(CodeIndexRules.MaxSymbolHits)
+            .Take(CodeIndexRules.MaxClones)
             .ToList();
         var exactRefs = exact.Select(h => h.Ref).ToHashSet();
         var near = candidates.Banded
@@ -108,7 +108,7 @@ public static class Clones
             .Where(n => n.Similarity >= CodeIndexRules.NearCloneThreshold)
             .OrderByDescending(n => n.Similarity)
             .ThenBy(n => n.Symbol.Ref.Value, StringComparer.Ordinal)
-            .Take(CodeIndexRules.MaxSymbolHits)
+            .Take(CodeIndexRules.MaxClones)
             .ToList();
         return new SimilarClones(exact, near);
     }

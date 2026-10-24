@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verb writes.</param>
 internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
 {
-    private const string Form = "code-index status [--repo R] [--json] | symbols <query> [--repo R] [--prefix] [--json] | callers|callees <ref> [--depth 1..3] [--repo R] [--json]";
+    private const string Form = "code-index status [--repo R] [--json] | symbols <query> [--repo R] [--prefix] [--json] | callers|callees <ref> [--depth 1..8] [--repo R] [--json]";
 
     private static readonly string[] _attention = [CodeIndexErrors.IndexNotBuilt.Code, CodeIndexErrors.SymbolNotFound.Code, "SND-API-001", "SND-AUTH-002"];
 

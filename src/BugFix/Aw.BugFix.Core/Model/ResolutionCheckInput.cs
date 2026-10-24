@@ -24,5 +24,5 @@ public sealed record ResolutionCheckInput(
     string? Diff)
 {
     /// <summary>The most diff characters the input carries; longer diffs are cut and marked.</summary>
-    public const int DiffCap = 200_000;
+    public const int DiffCap = 1_000_000;
 }

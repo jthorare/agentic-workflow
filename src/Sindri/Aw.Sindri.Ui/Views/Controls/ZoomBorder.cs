@@ -62,6 +62,9 @@ internal sealed partial class ZoomBorder : Border
     /// <summary>Raised when the pointer is pressed and released on empty canvas without moving (a click, which closes the inspector).</summary>
     internal event EventHandler? EmptyClicked;
 
+    /// <summary>Raised with the same click and its pointer, for a page that asks where in its world it fell (the world takes no pointer events of its own: a press here starts a pan, so its release lands here).</summary>
+    internal event EventHandler<PointerReleasedEventArgs>? Clicked;
+
     /// <summary>Gets the current view.</summary>
     internal ZoomView View { get; private set; } = ZoomView.Identity;
 

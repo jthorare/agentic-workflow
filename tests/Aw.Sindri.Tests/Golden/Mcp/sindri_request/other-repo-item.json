@@ -1,10 +1,14 @@
 {
-  "isError": true,
+  "isError": false,
   "structuredContent": {
-    "code": "SND-ITEM-404",
-    "message": "no item 'ITM-00000000000000000000000000000014'"
+    "accepted": {
+      "commandId": "<command>",
+      "sequence": "<n>"
+    },
+    "requestId": "REQ-<id>",
+    "decisionId": "DEC-<id>"
   },
   "content": [
-    "SND-ITEM-404 no item 'ITM-00000000000000000000000000000014'"
+    "filed REQ-<id> (rescope) as DEC-<id>; a human settles it"
   ]
 }

@@ -66,33 +66,33 @@ public sealed class ListSessionsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task ListSessions_scopes_a_session_caller_to_its_repo_and_hides_human_fields()
+    public async Task ListSessions_gives_a_session_caller_every_session_with_its_human_fields_too()
     {
         _ = _r.Publish(SessionsRig.Three, ended: [new EndedSession(SessionsRig.Claude(), SessionData.T0.AddMinutes(4)), new EndedSession(SessionsRig.Codex(), SessionData.T0.AddMinutes(3))]);
         using var session = _r.SessionOf("api");
 
         var list = await List();
 
-        var row = Assert.Single(list.Sessions);
+        Assert.Equal(3, list.Sessions.Count);
+        var row = list.Sessions[0];
         Assert.Equal($"claude-code/{SessionsRig.ClaudeId}", row.Ref);
-        Assert.All<object?>([row.Title, row.Pid, row.Host.Session, row.Host.Pane], Assert.Null);
+        Assert.Equal(("private title", 111, "main", "%3"), (row.Title, row.Pid, row.Host.Session, row.Host.Pane));
         Assert.Equal(("tmux", "default", 1, "warp"), (row.Host.Kind, row.Host.SocketKind, row.Host.AttachedClients, row.Host.Terminal));
-        Assert.Null(row.Host.Socket);
-        var ended = Assert.Single(list.RecentlyEnded);
-        Assert.All<object?>([ended.Resume, ended.Session.Title, ended.Session.Pid], Assert.Null);
-        Assert.Equal(new SessionCounts(Live: 1, Asking: 0, OutsideWorkflow: 1), list.Counts);
+        Assert.Equal(2, list.RecentlyEnded.Count);
+        Assert.Equal(["claude", "--resume", SessionsRig.ClaudeId], list.RecentlyEnded[0].Resume);
+        Assert.Equal(new SessionCounts(Live: 3, Asking: 1, OutsideWorkflow: 2), list.Counts);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task ListSessions_shows_a_session_caller_with_no_repo_nothing()
+    public async Task ListSessions_shows_a_session_caller_with_no_repo_every_session()
     {
         _ = _r.Publish(SessionsRig.Three);
         using var session = _r.SessionWithoutRepo();
 
         var list = await List();
 
-        Assert.Empty(list.Sessions);
-        Assert.Equal(("No agent sessions are running.", 0), (list.Empty, list.Counts.Live));
+        Assert.Equal(3, list.Sessions.Count);
+        Assert.Equal(3, list.Counts.Live);
     }
 
     [Fact, Trait("Lane", "unit")]

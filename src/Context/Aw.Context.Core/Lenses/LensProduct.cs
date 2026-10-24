@@ -8,7 +8,7 @@ internal static class LensProduct
     private static readonly NodeKind[] _kinds = [NodeKind.Feature, NodeKind.Surface, NodeKind.Action, NodeKind.Thing, NodeKind.Flow];
     private static readonly EdgeType[] _structure = [EdgeType.PartOf, EdgeType.On, EdgeType.Reads, EdgeType.Writes, EdgeType.StepOf, EdgeType.DependsOn, EdgeType.MovesTo];
 
-    /// <summary>The band and the keys of every item it lists before the cut (the other bands' edges are drawn among them).</summary>
+    /// <summary>The band and the keys of every item it lists (the other bands' edges are drawn among them).</summary>
     /// <param name="scope">The anchor's scope.</param>
     /// <param name="depth">How far the neighbors reach.</param>
     /// <returns>The band and its item keys.</returns>
@@ -20,12 +20,11 @@ internal static class LensProduct
         return (Band(own, neighbors, affects, edges), seen);
     }
 
-    /// <summary>The band from whole lists: each cut at <see cref="LensesBuilder.BandCap"/>, the counts full.</summary>
+    /// <summary>The band from whole lists: every item listed.</summary>
     internal static ProductBand Band(IReadOnlyList<LensItem> own, IReadOnlyList<LensReach> neighbors, IReadOnlyList<LensReach> affects, IReadOnlyList<LensEdge> edges)
     {
-        var cut = own.Count > LensesBuilder.BandCap || neighbors.Count > LensesBuilder.BandCap || affects.Count > LensesBuilder.BandCap || edges.Count > LensesBuilder.BandCap;
-        return new ProductBand([.. own.Take(LensesBuilder.BandCap)], [.. neighbors.Take(LensesBuilder.BandCap)], [.. affects.Take(LensesBuilder.BandCap)],
-            new ProductCounts(own.Count, affects.Count) { Neighbors = neighbors.Count, Edges = edges.Count }, [.. edges.Take(LensesBuilder.BandCap)], cut);
+        return new ProductBand([.. own], [.. neighbors], [.. affects],
+            new ProductCounts(own.Count, affects.Count) { Neighbors = neighbors.Count, Edges = edges.Count }, [.. edges], Truncated: false);
     }
 
     /// <summary>The whole lists of one anchor's scope (nothing cut) and the keys of every item.</summary>

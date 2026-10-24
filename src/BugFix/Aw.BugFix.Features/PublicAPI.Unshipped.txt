@@ -112,15 +112,17 @@ Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.AllowTestChanges.get -
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.AllowTestChanges.init -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Branch.get -> string!
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Branch.init -> void
-Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Deconstruct(out string! StateDirectory, out string! Branch, out string! WorkingDirectory, out int? Hypothesis, out bool AllowTestChanges) -> void
+Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Deconstruct(out string! StateDirectory, out string! Branch, out string! WorkingDirectory, out int? Hypothesis, out bool AllowTestChanges, out string? TestChangeReason) -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Equals(Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest? other) -> bool
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Hypothesis.get -> int?
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Hypothesis.init -> void
-Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.RecordCandidateRequest(string! StateDirectory, string! Branch, string! WorkingDirectory, int? Hypothesis, bool AllowTestChanges) -> void
+Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.RecordCandidateRequest(string! StateDirectory, string! Branch, string! WorkingDirectory, int? Hypothesis, bool AllowTestChanges, string? TestChangeReason = null) -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.StateDirectory.get -> string!
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.StateDirectory.init -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.WorkingDirectory.get -> string!
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.WorkingDirectory.init -> void
+Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.TestChangeReason.get -> string?
+Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.TestChangeReason.init -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse
 Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse.<Clone>$() -> Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse!
 Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse.Candidate.get -> Aw.BugFix.Core.Ids.CandidateId

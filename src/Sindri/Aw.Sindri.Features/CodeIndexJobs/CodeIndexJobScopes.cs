@@ -66,8 +66,38 @@ internal sealed class CodeIndexJobScopes(IApprovedProfile approvals, ICallerCont
 
     private static Result<CodeIndexRepo> Repo(SindriProfile profile, RepoEntry entry, RepoName name)
     {
-        var settings = CodeIndexSettings.Create(new CodeIndexSettingsInput(DenyPaths: RepoDenyGlobs.For(profile, entry)));
+        var settings = CodeIndexSettings.Create(Input(profile, entry));
         return settings.IsError ? settings.Error : new CodeIndexRepo(name, entry.Path, settings.Value);
+    }
+
+    /// <summary>The whole 'index:' section a repo sees: the profile's list keys joined with the repo's, each scalar the repo names replacing the profile's (spec §13).</summary>
+    private static CodeIndexSettingsInput Input(SindriProfile profile, RepoEntry entry)
+    {
+        var top = profile.Index ?? new IndexSettings();
+        var own = entry.Index ?? new IndexSettings();
+        var input = new CodeIndexSettingsInput(
+            DenyPaths: RepoDenyGlobs.For(profile, entry),
+            UtilityGlobs: Join(top.UtilityGlobs, own.UtilityGlobs),
+            MaxFileKB: own.MaxFileKB ?? top.MaxFileKB,
+            MaxTotalMB: own.MaxTotalMB ?? top.MaxTotalMB);
+        return WithGraph(WithEmbeddings(input, top.Embeddings, own.Embeddings), top.Graph, own.Graph);
+    }
+
+    private static CodeIndexSettingsInput WithEmbeddings(CodeIndexSettingsInput input, EmbeddingSettings? top, EmbeddingSettings? own)
+        => input with
+        {
+            EmbeddingsEnabled = own?.Enabled ?? top?.Enabled,
+            EmbeddingsUrl = own?.Url ?? top?.Url,
+            EmbeddingsModel = own?.Model ?? top?.Model,
+        };
+
+    private static CodeIndexSettingsInput WithGraph(CodeIndexSettingsInput input, GraphSettings? top, GraphSettings? own)
+        => input with { GraphEnabled = own?.Enabled ?? top?.Enabled, GraphMaxMB = own?.MaxMB ?? top?.MaxMB };
+
+    private static string[]? Join(IReadOnlyList<string>? first, IReadOnlyList<string>? second)
+    {
+        string[] all = [.. first ?? [], .. second ?? []];
+        return all.Length == 0 ? null : all;
     }
 
     private static CallerKind Kind(CallerContext? caller) => caller?.Class switch

@@ -12,8 +12,7 @@ namespace Aw.Sindri.Core.Items;
 public static class ItemFilters
 {
     /// <summary>
-    /// The id <paramref name="reference"/> names, or null when the read has no item filter; SND-ITEM-404 when there is no such item
-    /// or a session may not see it, SND-CLI-003 when a filter comes without a caller.
+    /// The id <paramref name="reference"/> names, or null when the read has no item filter; SND-ITEM-404 when there is no such item, SND-CLI-003 when a filter comes without a caller.
     /// </summary>
     /// <param name="reference">The reference, or null.</param>
     /// <param name="items">Resolves an alias.</param>
@@ -42,10 +41,10 @@ public static class ItemFilters
             return row.IsError ? row.Error : row.Value.Id;
         }
 
-        return await ById(id, repos, caller, cancellationToken).ConfigureAwait(false);
+        return await ById(id, repos, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<Result<ItemId?>> ById(ItemId id, IItemRepos repos, CallerContext caller, CancellationToken cancellationToken)
+    private static async ValueTask<Result<ItemId?>> ById(ItemId id, IItemRepos repos, CancellationToken cancellationToken)
     {
         var exists = await repos.Exists(id, cancellationToken).ConfigureAwait(false);
         if (exists.IsError)
@@ -53,18 +52,6 @@ public static class ItemFilters
             return exists.Error;
         }
 
-        var notFound = SindriErrors.ItemNotFound.With($"no item '{id.Value}'");
-        if (!exists.Value)
-        {
-            return notFound;
-        }
-
-        var repo = await repos.RepoOf(id, cancellationToken).ConfigureAwait(false);
-        if (repo.IsError)
-        {
-            return repo.Error;
-        }
-
-        return ItemScope.Visible(caller, repo.Value) ? id : notFound;
+        return exists.Value ? id : SindriErrors.ItemNotFound.With($"no item '{id.Value}'");
     }
 }

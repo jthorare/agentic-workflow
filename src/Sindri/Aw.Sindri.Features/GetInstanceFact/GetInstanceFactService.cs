@@ -17,15 +17,14 @@ namespace Aw.Sindri.Features.GetInstanceFact;
 /// The scrubbed body behind one fact row (API spec §3.8): the instance's view names the declared facts and their stored digests, the
 /// fact store reads the content, the scrubber removes secrets, and the body is capped at <see cref="CapBytes"/>. A text fact is a
 /// string; any other type is its stored JSON, which stays an object when cut (it loses its tail entries). A key the recipe doesn't
-/// declare, or one not produced yet, answers SND-ITEM-404, as does an unknown instance or another repo's for a session caller (one not-found answer).
+/// declare, or one not produced yet, answers SND-ITEM-404, as does an unknown instance.
 /// </summary>
 /// <param name="directory">Resolves the instance id to its address.</param>
 /// <param name="runtime">The instances on Temporal.</param>
 /// <param name="contents">The stored fact content.</param>
 /// <param name="scrubber">Removes secrets from the text.</param>
-/// <param name="repos">Where each item belongs, from the ledger.</param>
-/// <param name="callers">The caller, whose repo scope decides what it may read.</param>
-internal sealed class GetInstanceFactService(IInstanceDirectory directory, IInstanceReader runtime, IFactContents contents, ITextScrubber scrubber, IItemRepos repos, ICallerContextAccessor callers)
+/// <param name="callers">The caller; a read needs one.</param>
+internal sealed class GetInstanceFactService(IInstanceDirectory directory, IInstanceReader runtime, IFactContents contents, ITextScrubber scrubber, ICallerContextAccessor callers)
     : IService<GetInstanceFactRequest, FactView>
 {
     /// <summary>The largest body served: 256 KiB of UTF-8.</summary>
@@ -34,7 +33,7 @@ internal sealed class GetInstanceFactService(IInstanceDirectory directory, IInst
     public async ValueTask<Result<FactView>> Handle(GetInstanceFactRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a fact read needs a caller");
         }
@@ -49,11 +48,6 @@ internal sealed class GetInstanceFactService(IInstanceDirectory directory, IInst
         if (view.IsError)
         {
             return InstanceScope.Unknown(view.Error, request.Instance.Value);
-        }
-
-        if (await InstanceScope.Refusal(caller, view.Value.ItemId, request.Instance.Value, repos, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
         }
 
         var row = view.Value.Facts.FirstOrDefault(f => string.Equals(f.Key, request.Key, StringComparison.Ordinal));

@@ -11,11 +11,9 @@ using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.StartInstance;
-using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Testing.Workflow.Registry;
 using Aw.Sindri.Tests.GetInstance;
-using Aw.Sindri.Tests.ListInstances;
 
 namespace Aw.Sindri.Tests.StartInstance;
 
@@ -97,7 +95,7 @@ public sealed class StartInstanceFactCheckTests
             FactShas = new Dictionary<string, string>(StringComparer.Ordinal) { ["fact:item"] = ItemSha, ["fact:scopeInput"] = NoRepoSha },
         };
         var instances = new SomeInstances(ended);
-        var rerun = new RerunInstanceService(instances, instances, new Stored(), start, new FixedCaller(new CallerContextBuilder().Human().Build()), new FixedRepos());
+        var rerun = new RerunInstanceService(instances, instances, new Stored(), start);
 
         var started = await rerun.Handle(new RerunInstanceRequest(ended.Id.Value), Token);
 

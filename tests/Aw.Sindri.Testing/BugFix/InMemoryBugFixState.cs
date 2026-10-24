@@ -10,7 +10,7 @@ namespace Aw.Sindri.Testing.BugFix;
 /// </summary>
 public sealed class InMemoryBugFixState : IBugFixState
 {
-    private const int Cap = 3;
+    private const int Cap = 5;
 
     private readonly Dictionary<string, Bug> _bugs = new(StringComparer.Ordinal);
     private readonly HashSet<string> _fixing = new(StringComparer.Ordinal);
@@ -74,7 +74,7 @@ public sealed class InMemoryBugFixState : IBugFixState
 
         if (bug.Attempt >= Cap)
         {
-            return Answer(BugFixAnswers.Refused<AttemptStarted>(new BugFixRefusal("AW-BUGFIX-010", RefusalKind.AttemptCap, "attempt cap (3) reached; run advance report --unresolved")));
+            return Answer(BugFixAnswers.Refused<AttemptStarted>(new BugFixRefusal("AW-BUGFIX-010", RefusalKind.AttemptCap, "attempt cap (5) reached; run advance report --unresolved")));
         }
 
         bug.Attempt++;

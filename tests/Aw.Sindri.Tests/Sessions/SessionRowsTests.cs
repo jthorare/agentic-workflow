@@ -1,31 +1,18 @@
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Sessions;
-using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ListSessions;
 
 namespace Aw.Sindri.Tests.Sessions;
 
-/// <summary>The shared lookup and the human-only refusal (collector spec CA-2, CA-9).</summary>
+/// <summary>The shared lookup (collector spec CA-2, CA-9).</summary>
 public sealed class SessionRowsTests
 {
     private static readonly SessionSnapshot _pass = new(SessionsRig.Three, [], [], SessionData.T0);
 
     [Fact, Trait("Lane", "unit")]
-    public void Find_answers_the_session_to_a_human_and_to_a_session_of_its_repo_and_null_to_another_repo()
+    public void Find_answers_the_session_for_its_ref_and_null_for_an_unknown_one()
     {
-        var reference = SessionsRig.Claude().Ref;
-
-        Assert.NotNull(SessionRows.Find(_pass, reference, A.Caller().Human().Build()));
-        Assert.NotNull(SessionRows.Find(_pass, reference, A.Caller().Session().InRepo("api").Build()));
-        Assert.Null(SessionRows.Find(_pass, reference, A.Caller().Session().InRepo("web").Build()));
-        Assert.Null(SessionRows.Find(_pass, reference, A.Caller().Session().Build()));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void RefuseSession_refuses_only_a_session_caller_with_SND_AUTH_002()
-    {
-        Assert.Equal(SindriErrors.AuthRefused.Code, SessionRows.RefuseSession(A.Caller().Session().InRepo("api").Build())!.Code);
-        Assert.Null(SessionRows.RefuseSession(A.Caller().Human().Build()));
+        Assert.NotNull(SessionRows.Find(_pass, SessionsRig.Claude().Ref));
+        Assert.Null(SessionRows.Find(new SessionSnapshot([], [], [], SessionData.T0), SessionsRig.Claude().Ref));
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -16,7 +16,7 @@ public sealed class IndexCodeIndexKeysTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task The_yaml_profile_reads_every_code_index_key_at_the_top_and_on_a_repo()
     {
-        _files.Write(Base + "index:\n  utilityGlobs: [\"src/util/**\"]\n  maxFileKB: 256\n  maxTotalMB: 100\n  embeddings: { enabled: true, url: \"http://127.0.0.1:11434\", model: nomic-embed-text }\n  graph: { enabled: false, maxMB: 64, maxNodes: 1000 }\n"
+        _files.Write(Base + "index:\n  utilityGlobs: [\"src/util/**\"]\n  maxFileKB: 256\n  maxTotalMB: 100\n  embeddings: { enabled: true, url: \"http://127.0.0.1:11434\", model: nomic-embed-text }\n  graph: { enabled: false, maxMB: 64 }\n"
             + "repos:\n  - { name: web, path: /work/web, index: { graph: { maxMB: 8 } } }\n");
 
         var profile = (await _files.Source.Load(Token)).Value.Profile;
@@ -25,7 +25,7 @@ public sealed class IndexCodeIndexKeysTests : IDisposable
         Assert.Equal(256, profile.Index.MaxFileKB);
         Assert.Equal(100, profile.Index.MaxTotalMB);
         Assert.Equal(new EmbeddingSettings(Enabled: true, Url: "http://127.0.0.1:11434", Model: "nomic-embed-text"), profile.Index.Embeddings);
-        Assert.Equal(new GraphSettings(Enabled: false, MaxMB: 64, MaxNodes: 1000), profile.Index.Graph);
+        Assert.Equal(new GraphSettings(Enabled: false, MaxMB: 64), profile.Index.Graph);
         Assert.Equal(new GraphSettings(MaxMB: 8), profile.Repos![0].Index!.Graph);
     }
 
@@ -57,14 +57,6 @@ public sealed class IndexCodeIndexKeysTests : IDisposable
 
         Assert.Equal(SindriErrors.ProfileInvalid.Code, error.Code);
         Assert.Contains(message, error.Message, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_graph_node_cap_below_one_is_refused()
-    {
-        var error = ProfileRules.Check(new SindriProfile(1, "thor", Index: new IndexSettings(Graph: new GraphSettings(MaxNodes: 0)))).Error;
-
-        Assert.Contains("index.graph.maxNodes: must be 1 to 5000000", error.Message, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -114,10 +106,9 @@ public sealed class IndexCodeIndexKeysTests : IDisposable
     public void Defaults_and_a_plain_valid_section_pass()
     {
         Assert.True(ProfileRules.Check(new SindriProfile(1, "thor", Index: new IndexSettings())).IsSuccess);
-        Assert.Equal(512, IndexSettings.DefaultMaxFileKB);
-        Assert.Equal(200, IndexSettings.DefaultMaxTotalMB);
-        Assert.Equal(256, GraphSettings.DefaultMaxMB);
-        Assert.Equal(500_000, GraphSettings.DefaultMaxNodes);
+        Assert.Equal(4_096, IndexSettings.DefaultMaxFileKB);
+        Assert.Equal(4_096, IndexSettings.DefaultMaxTotalMB);
+        Assert.Equal(1_024, GraphSettings.DefaultMaxMB);
         Assert.Equal("http://127.0.0.1:11434", EmbeddingSettings.DefaultUrl);
     }
 }

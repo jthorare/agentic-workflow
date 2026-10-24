@@ -73,7 +73,7 @@ internal static class ContextTools
             ["anchors"] = new JsonObject
             {
                 ["type"] = "array",
-                ["description"] = "Up to 20 node keys, names or aliases: the union of their lenses (schema 2) when several are distinct; give anchor or anchors",
+                ["description"] = "Node keys, names or aliases: the union of their lenses (schema 2) when several are distinct; give anchor or anchors",
                 ["items"] = new JsonObject { ["type"] = "string" },
                 ["maxItems"] = 20,
             },

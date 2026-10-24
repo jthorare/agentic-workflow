@@ -128,7 +128,7 @@ public sealed class EvaluateTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_escalation_hands_the_bug_fix_to_a_human()
+    public async Task A_first_escalation_is_retried_and_never_recorded_as_a_verdict()
     {
         var c1 = await _w.Candidate();
         _ = World.Ok(await _w.RunAgainst(c1));
@@ -136,8 +136,26 @@ public sealed class EvaluateTests : IDisposable
 
         var result = World.Ok(await Judge(c1));
 
-        Assert.Equal((JudgeDecision.Escalated, BugFixStatus.NeedsHuman), (result.Decision, result.Status));
-        Assert.StartsWith("ask the user", World.Ok(await Resume()).Next, StringComparison.Ordinal);
+        Assert.Equal((JudgeDecision.Escalated, BugFixStatus.Active), (result.Decision, result.Status));
+        Assert.Null(_w.Now.Candidates[0].Verdict);
+        Assert.StartsWith("judge c1 again", World.Ok(await Resume()).Next, StringComparison.Ordinal);
+        Assert.Equal(JudgeDecision.Resolved, World.Ok(await Judge(c1)).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_second_escalation_falls_back_to_unresolved_and_the_bug_fix_continues()
+    {
+        var c1 = await _w.Candidate();
+        _ = World.Ok(await _w.RunAgainst(c1));
+        _ = _w.Judge.Answers(A.Verdict(JudgeDecision.Escalated)).Answers(A.Verdict(JudgeDecision.Escalated));
+        _ = World.Ok(await Judge(c1));
+
+        var result = World.Ok(await Judge(c1));
+
+        Assert.Equal((JudgeDecision.Unresolved, BugFixStatus.Active), (result.Decision, result.Status));
+        Assert.StartsWith("escalated", result.ReasonCode, StringComparison.Ordinal);
+        Assert.DoesNotContain("ask the user", World.Ok(await Resume()).Next, StringComparison.Ordinal);
+        _ = World.Refused(await Report(c1), BugFixErrors.ReportRefused);   // a fallback never resolves the ticket
         _ = World.Ok(await _w.Start());
         Assert.Equal(BugFixStatus.Active, _w.Now.Status);
     }
@@ -156,6 +174,7 @@ public sealed class EvaluateTests : IDisposable
         var diff = Assert.Single(_w.Judge.Asked).Diff!; // why: the fake git always produces a diff.
         Assert.EndsWith("chars]", diff, StringComparison.Ordinal);
         Assert.True(diff.Length < ResolutionCheckInput.DiffCap + 100);
+        Assert.Equal(1_000_000, ResolutionCheckInput.DiffCap);
     }
 
     [Fact, Trait("Lane", "unit")]

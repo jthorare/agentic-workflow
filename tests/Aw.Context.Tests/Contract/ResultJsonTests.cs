@@ -79,7 +79,7 @@ public sealed class ResultJsonTests
         var sha = "0123456789abcdef0123456789abcdef01234567";
         var node = new DiffNode("feature:layout.split-pane", Confirmed: true);
         var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, sha,
-            [new DiffFile("src/a.ts", ChangeKind.TypeChanged, DiffStatus.Mapped, [node])], [], new DiffCounts(1, 1, 0, 0, 0), Truncated: false, 1, AnchorsTruncated: false);
+            [new DiffFile("src/a.ts", ChangeKind.TypeChanged, DiffStatus.Mapped, [node])], [], new DiffCounts(1, 1, 0, 0, 0), Truncated: false, 1);
         var result = new ContextResult(ContextResult.CurrentSchemaVersion, QueryId.From("q_1"), new ContextQuery(Text: null, Diff: new DiffRange(sha, sha), Repo: ContextRepoName.From("aw-split-panes")), ["feature:layout.split-pane"],
             "v1", at, [], [], [], [], Truncated: false, new BudgetUse(6000, 0, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal), part);
 
@@ -89,7 +89,7 @@ public sealed class ResultJsonTests
 
         Assert.Contains($"\"diff\":\"{sha}..{sha}\",\"repo\":\"aw-split-panes\"", text, StringComparison.Ordinal);
         Assert.Contains("\"change\":\"typeChanged\",\"status\":\"mapped\"", text, StringComparison.Ordinal);
-        Assert.Contains("\"anchorsTotal\":1,\"anchorsTruncated\":false", text, StringComparison.Ordinal);
+        Assert.Contains("\"anchorsTotal\":1", text, StringComparison.Ordinal);
         Assert.Contains("\"mergeBase\":\"" + sha + "\"", text, StringComparison.Ordinal);
         Assert.True(back.IsSuccess);
         Assert.Equal(text, Encoding.UTF8.GetString(AwJson.Serialize(back.Value, _json)));

@@ -13,17 +13,15 @@ namespace Aw.CodeIndex.Infrastructure.Graph;
 /// </summary>
 internal static class GraphJsonParser
 {
-    private const int NameLimit = 200;
-    private const int EdgesPerNode = 4;
+    private const int NameLimit = 512;
 
     /// <summary>Parses one graph.json.</summary>
     /// <param name="json">The file's bytes (already under the size cap).</param>
     /// <param name="files">The snapshot's paths; a node naming another is dropped.</param>
     /// <param name="roots">The snapshot root as given and as resolved, to cut an absolute path at.</param>
-    /// <param name="maxNodes">The node cap; the edge cap is four times it.</param>
     /// <param name="scrub">Scrubs and cuts a name.</param>
-    /// <returns>The checked graph, or SND-CODEIDX-008 with 'shape', 'untrusted' or 'too-large'.</returns>
-    public static Result<GraphSnapshot> Parse(ReadOnlyMemory<byte> json, IReadOnlySet<string> files, IReadOnlyList<string> roots, int maxNodes, Func<string, int, string> scrub)
+    /// <returns>The checked graph, or SND-CODEIDX-008 with 'shape' or 'untrusted'.</returns>
+    public static Result<GraphSnapshot> Parse(ReadOnlyMemory<byte> json, IReadOnlySet<string> files, IReadOnlyList<string> roots, Func<string, int, string> scrub)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(roots);
@@ -34,7 +32,7 @@ internal static class GraphJsonParser
             var root = document.RootElement;
             return root.ValueKind == JsonValueKind.Object && root.TryGetProperty("nodes", out var nodes) && nodes.ValueKind == JsonValueKind.Array
                 && root.TryGetProperty("links", out var links) && links.ValueKind == JsonValueKind.Array
-                ? Read(nodes, links, new GraphPaths(files, roots), scrub, maxNodes)
+                ? Read(nodes, links, new GraphPaths(files, roots), scrub)
                 : CodeIndexErrors.GraphUnavailable.With("shape");
         }
         catch (JsonException)
@@ -43,13 +41,8 @@ internal static class GraphJsonParser
         }
     }
 
-    private static Result<GraphSnapshot> Read(JsonElement nodes, JsonElement links, GraphPaths paths, Func<string, int, string> scrub, int maxNodes)
+    private static Result<GraphSnapshot> Read(JsonElement nodes, JsonElement links, GraphPaths paths, Func<string, int, string> scrub)
     {
-        if (nodes.GetArrayLength() > maxNodes || links.GetArrayLength() > (long)maxNodes * EdgesPerNode)
-        {
-            return CodeIndexErrors.GraphUnavailable.With("too-large");
-        }
-
         var tally = new Tally();
         var kept = ReadNodes(nodes, paths, scrub, tally);
         var edges = ReadEdges(links, kept, tally);

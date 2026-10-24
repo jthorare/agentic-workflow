@@ -1,38 +1,36 @@
-using Aw.Kernel.Services;
 using Aw.Kernel;
+using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.OpenTargets;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
-using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Features.GetInstance;
 
 /// <summary>
 /// Resolves the instance a reference names (its id, its address, or a bare item: spec §6.1, §6.3), asks its workflow for its view (the
 /// 'GetInstance' Query; SND-WF-001 when there is no such instance), and answers the API's <see cref="InstanceDetail"/> (API spec §3.8).
-/// A session caller reads only its own repo's instances: another repo's answers SND-ITEM-404, the answer for an unknown id too (one not-found, so an id never says it exists elsewhere), by the item's repo from the ledger
-/// (<see cref="IItemRepos"/>, never the views, as the item routes' scope does). The title is the item's, else the address; the parent is
+/// The title is the item's, else the address; the parent is
 /// resolved by its id; the counts come from the timeline, decisions and requests views; 'open' is the instance's own needs-you row's (q65).
 /// </summary>
 /// <param name="directory">Resolves the reference to the instance's address.</param>
 /// <param name="runtime">The instances on Temporal.</param>
 /// <param name="views">The items, timeline, decisions and requests views.</param>
-/// <param name="repos">Where each item belongs, from the ledger.</param>
-/// <param name="callers">The caller, whose repo scope decides what it may read.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 /// <param name="contexts">Builds the detail context at the time of the read, with the recipe's display name (null serves none).</param>
 /// <param name="stepRuns">The instance's Step runs, folded from its ledger events.</param>
-internal sealed class GetInstanceService(IInstanceDirectory directory, IInstanceReader runtime, IViewReader views, IItemRepos repos, ICallerContextAccessor callers, DetailContexts contexts, StepRunReader stepRuns)
+internal sealed class GetInstanceService(IInstanceDirectory directory, IInstanceReader runtime, IViewReader views, ICallerContextAccessor callers, DetailContexts contexts, StepRunReader stepRuns)
     : IService<GetInstanceRequest, InstanceDetail>
 {
     public async ValueTask<Result<InstanceDetail>> Handle(GetInstanceRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("an instance read needs a caller");
         }
@@ -47,11 +45,6 @@ internal sealed class GetInstanceService(IInstanceDirectory directory, IInstance
         if (view.IsError)
         {
             return InstanceScope.Unknown(view.Error, request.Instance);
-        }
-
-        if (await InstanceScope.Refusal(caller, view.Value.ItemId, request.Instance, repos, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
         }
 
         var title = await TitleOf(view.Value, cancellationToken).ConfigureAwait(false);

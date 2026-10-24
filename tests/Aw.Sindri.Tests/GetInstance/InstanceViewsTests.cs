@@ -178,7 +178,7 @@ public sealed class InstanceViewsTests
                 var answer = new AnswerGiven("human:cli", new CommandStamp(CommandNonce.From(new string('c', 32)), new string('d', 64)), parsed.Value.Variant, parsed.Value.Text, parsed.Value.Amount, Forwarded: null);
                 foreach (var target in FitTargets(name))
                 {
-                    var fits = AnswerFit.Check(target, recipe, answer);
+                    var fits = AnswerFit.Check(target, answer);
                     Assert.False(fits.IsError, $"{name}: {entry.Cli} is refused by {target.Suspension!.ParkKind}: {(fits.IsError ? fits.Error.Message : string.Empty)}");
                 }
             }

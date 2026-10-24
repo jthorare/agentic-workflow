@@ -8,7 +8,7 @@ namespace Aw.Sindri.Features.GetSessionPreview;
 
 /// <summary>
 /// The live read-only preview of a session's tmux pane (collector spec CA-9, CI-10). The checks run in this order, per request and before any shared wait: the caller
-/// kind (a session caller is refused whatever the ref), the ref, expectStartedAt, then the answers that are still HTTP 200. Nothing is written to the ledger and no
+/// kind (a caller is needed), the ref, expectStartedAt, then the answers that are still HTTP 200. Nothing is written to the ledger and no
 /// pane text is logged.
 /// </summary>
 internal sealed class GetSessionPreviewService(ISessionSnapshot snapshot, ICallerContextAccessor callers, PaneCaptures captures, IProcessTable processes, TimeProvider time)
@@ -42,14 +42,9 @@ internal sealed class GetSessionPreviewService(ISessionSnapshot snapshot, ICalle
     /// <summary>The refusals, in order: the caller kind, the collector's state, the ref, then expectStartedAt.</summary>
     private Result<ObservedSession> Locate(GetSessionPreviewRequest request)
     {
-        if (callers.Current is not { } caller)
+        if (callers.Current is null)
         {
             return SindriErrors.AuthRefused.With("a session needs a caller");
-        }
-
-        if (SessionRows.RefuseSession(caller) is { } refused)
-        {
-            return refused;
         }
 
         var now = snapshot.Current;   // one read: the check and the row come from the same pass
@@ -58,7 +53,7 @@ internal sealed class GetSessionPreviewService(ISessionSnapshot snapshot, ICalle
             return unavailable;
         }
 
-        if ((now is null ? null : SessionRows.Find(now, request.Ref, caller)) is not { } found)
+        if ((now is null ? null : SessionRows.Find(now, request.Ref)) is not { } found)
         {
             return SindriErrors.SessionNotFound.With("no live session has that ref");
         }

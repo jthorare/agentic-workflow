@@ -38,15 +38,14 @@ public sealed class RequestTextPrivacyTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_sessions_ledger_read_shows_request_filed_without_its_text()
+    public async Task A_sessions_ledger_read_shows_the_stored_event_whole_like_a_humans()
     {
         await using var host = await Filed();
 
         var body = await RequestCalls.Read(host, "/sindri/ledger?type=request.filed", ItemScenarios.Session("demo"), Token);
 
         Assert.Contains("request.filed", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("PRIVATE-REQUEST-TEXT", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"text\"", body, StringComparison.Ordinal);
+        Assert.Contains(Text, body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

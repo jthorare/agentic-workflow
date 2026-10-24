@@ -21,7 +21,7 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
 
     /// <summary>
     /// The graph layer (spec §5.5, §5.7): graphify on the whole snapshot, its nodes in files no parser covers stored as graph symbols and its call edges merged
-    /// as 'graphify' edges. A tool that is missing, unsandboxed, off the pin or failed leaves the layer unavailable with its code and no stale edge; only a
+    /// as 'graphify' edges. A tool that is missing, unsandboxed, off the pin or failed leaves the layer unavailable with its code and no stale edge; one that timed out leaves the last good graph in place; only a
     /// failure of the index file itself fails the build.
     /// </summary>
     /// <param name="build">The build file.</param>
@@ -50,13 +50,7 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
         var ran = await RunGraph(graph, request, code, cancellationToken).ConfigureAwait(false);
         if (ran.IsError)
         {
-            var emptied = await StoreGraph(build, EmptyGraph(request, code), cancellationToken).ConfigureAwait(false);
-            if (emptied.IsError)
-            {
-                return emptied.Error;
-            }
-
-            return Unavailable(ran.Error, now);
+            return await Failed(build, request, code, ran.Error, cancellationToken).ConfigureAwait(false);
         }
 
         var merged = await PlanAndStore(build, request, ran.Value, code, cancellationToken).ConfigureAwait(false);
@@ -68,6 +62,22 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
         var (planned, unread) = merged.Value;
         var detail = string.Create(CultureInfo.InvariantCulture, $"{planned.Files.Sum(f => f.Symbols.Count)} symbols, {planned.Edges.Count} calls, {ran.Value.Dropped + planned.Dropped} dropped{(unread > 0 ? $", {unread} files without text" : string.Empty)}");
         return new LayerRecord(LayerName.Graph, request.Commit.Value, LayerState.Ok, Code: null, detail, now);
+    }
+
+    // A failed run empties the graph, so a layer that is not ok never serves an edge of an earlier build, except a run that ran out of time:
+    // that keeps the last good graph and the layer says it is unavailable (owner q93, 2026-10-23).
+    private async ValueTask<Result<LayerRecord>> Failed(IIndexBuild build, BuildCodeIndexRequest request, IReadOnlyList<SnapshotFile> code, Error error, CancellationToken cancellationToken)
+    {
+        if (!IsTimeout(error))
+        {
+            var emptied = await StoreGraph(build, EmptyGraph(request, code), cancellationToken).ConfigureAwait(false);
+            if (emptied.IsError)
+            {
+                return emptied.Error;
+            }
+        }
+
+        return Unavailable(error, clock.GetUtcNow());
     }
 
     private async ValueTask<Result<(GraphMerged Merged, int Unread)>> PlanAndStore(IIndexBuild build, BuildCodeIndexRequest request, GraphSnapshot graphJson, IReadOnlyList<SnapshotFile> code, CancellationToken cancellationToken)
@@ -179,6 +189,9 @@ public sealed class GraphLayer(IRepoSnapshot snapshot, TimeProvider clock, IBody
     }
 
     // Only the three layer codes and their closed-set detail reach the layer row; any other failure reads as 'failed'.
+    private static bool IsTimeout(Error error)
+        => string.Equals(error.Code, CodeIndexErrors.GraphUnavailable.Code, StringComparison.Ordinal) && string.Equals(error.Message, "timeout", StringComparison.Ordinal);
+
     private static LayerRecord Unavailable(Error error, DateTimeOffset now)
     {
         var known = _layerCodes.Contains(error.Code, StringComparer.Ordinal);

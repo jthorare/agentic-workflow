@@ -1,12 +1,12 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.OpenTargets;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
-using Aw.Sindri.Core;
 using Aw.Sindri.Features.GetInstance;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -19,8 +19,8 @@ public sealed class GetInstanceServiceTests
 {
     private const string ItemA = "ITM-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    private static GetInstanceService Service(SomeInstances instances, DetailViews? views = null, FixedRepos? repos = null, CallerContext? caller = null, StepRunEvents? stepRuns = null, StepRunRecipes? recipes = null) =>
-        new(instances, instances, views ?? new DetailViews(), repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()), new DetailContexts(new FakeTimeProvider(StatusCases.Now)), new StepRunReader(stepRuns ?? new StepRunEvents(), recipes ?? new StepRunRecipes()));
+    private static GetInstanceService Service(SomeInstances instances, DetailViews? views = null, CallerContext? caller = null, StepRunEvents? stepRuns = null, StepRunRecipes? recipes = null) =>
+        new(instances, instances, views ?? new DetailViews(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()), new DetailContexts(new FakeTimeProvider(StatusCases.Now)), new StepRunReader(stepRuns ?? new StepRunEvents(), recipes ?? new StepRunRecipes()));
 
     [Fact]
     public async Task Serves_the_detail_with_title_parent_and_counts()
@@ -81,33 +81,30 @@ public sealed class GetInstanceServiceTests
     }
 
     [Fact]
-    public async Task Session_caller_in_another_repo_gets_SND_ITEM_404()
+    public async Task Session_caller_in_any_repo_reads_the_detail()
     {
         var view = StatusCases.View("done") with { ItemId = ItemKey.From(ItemA) };
-        var repos = new FixedRepos((ItemA, "beta"));
         var instances = new SomeInstances(view);
 
-        var other = await Service(instances, repos: repos, caller: new CallerContextBuilder().Session().InRepo("alpha").Build()).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
-        var own = await Service(instances, repos: repos, caller: new CallerContextBuilder().Session().InRepo("beta").Build()).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
-        var human = await Service(instances, repos: repos).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
+        var other = await Service(instances, caller: new CallerContextBuilder().Session().InRepo("alpha").Build()).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
+        var own = await Service(instances, caller: new CallerContextBuilder().Session().InRepo("beta").Build()).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
+        var human = await Service(instances).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
 
-        Assert.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Assert.True(other.IsSuccess);
         Assert.True(own.IsSuccess);
         Assert.True(human.IsSuccess);
     }
 
     [Fact]
-    public async Task An_unknown_instance_and_another_repos_answer_the_same_not_found()
+    public async Task An_unknown_instance_answers_not_found()
     {
         var view = StatusCases.View("done") with { ItemId = ItemKey.From(ItemA) };
         var instances = new SomeInstances(view);
         var unknown = WorkflowInstanceId.From("WFI-" + new string('9', 32));
 
         var missing = await Service(instances).Handle(new GetInstanceRequest(unknown.Value), CancellationToken.None);
-        var elsewhere = await Service(instances, repos: new FixedRepos((ItemA, "beta")), caller: new CallerContextBuilder().Session().InRepo("alpha").Build()).Handle(new GetInstanceRequest(view.Id.Value), CancellationToken.None);
 
         Assert.Equal((SindriErrors.ItemNotFound.Code, $"No workflow instance {unknown.Value} in this repo."), (missing.Error.Code, missing.Error.Message));
-        Assert.Equal((SindriErrors.ItemNotFound.Code, $"No workflow instance {view.Id.Value} in this repo."), (elsewhere.Error.Code, elsewhere.Error.Message));
     }
 
     [Theory]

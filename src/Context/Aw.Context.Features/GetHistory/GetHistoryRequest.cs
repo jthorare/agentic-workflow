@@ -4,7 +4,7 @@ using Aw.Context.Core.Map;
 
 namespace Aw.Context.Features.GetHistory;
 
-/// <summary>The history lens of one to 20 anchors.</summary>
+/// <summary>The history lens of one or more anchors.</summary>
 /// <param name="Anchors">Node keys, aliases or labels.</param>
 /// <param name="Window">The absolute window.</param>
 /// <param name="Read">Which map: the current version, the draft or a retained version.</param>

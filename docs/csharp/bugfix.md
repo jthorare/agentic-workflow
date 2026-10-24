@@ -21,19 +21,19 @@ design.
 - `run-test` and `run-ui` print `evidence`, the run record path the skill passes back to `advance reproduce` and
   `record-run`.
 - `resume` prints `next`; `status` prints the state with `baseline.commit`.
-- `judge` prints `decision`, `reasons` and `status` (`needs-human` after an escalation).
+- `judge` prints `decision`, `reasons` and `status` (an escalation is asked once more, then falls back to `unresolved`; the status stays `active`).
 
 ## Commands
 
 | Command | Phase | Does |
 |---|---|---|
 | `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear or text, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
-| `advance investigate --evidence <handoff.md>` | intake → investigate | Snapshots the `/rootCause` handoff: status `diagnosed`, at least one `confirmed` hypothesis, a `## Root Cause` section |
+| `advance investigate --evidence <handoff.md>` | intake → investigate | Snapshots the `/rootCause` handoff: status `diagnosed`, a `## Root Cause` section, and a `confirmed` hypothesis or at least two hypotheses not ruled out (without a confirmed one the first attempt must be mode B) |
 | `run-test --check <file> [--cwd <dir>] -- <command…>` | any | Runs the test command on a clean tree and registers a run record (with the commit and the working directory) |
 | `run-ui --check <script.json> [--cwd <dir>]` | any | Runs the ui-evidence script on a clean tree and registers a run record |
 | `advance reproduce --evidence <run> --check <file> [--cwd <dir>]` | investigate → reproduce | Freezes the check and the failing baseline |
-| `start-attempt --mode <A\|B\|C> [--abandon-judge]` | reproduce, evaluate → fix | Opens the next attempt (at most 3); `--abandon-judge` leaves behind a candidate whose judge question was never answered |
-| `record-candidate --branch <b> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes]` | fix, evaluate | Records the worktree's commit as the next candidate (`c1`, `c2`, …) |
+| `start-attempt --mode <A\|B\|C> [--abandon-judge]` | reproduce, evaluate → fix | Opens the next attempt (at most 5); `--abandon-judge` leaves behind a candidate whose judge question was asked twice without an answer, once no judge process is running |
+| `record-candidate --branch <b> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes [--reason <why>]]` | fix, evaluate | Records the worktree's commit as the next candidate (`c1`, `c2`, …) |
 | `record-run <candidate> --evidence <run>` | fix, evaluate → evaluate | Records the frozen check's run against the candidate |
 | `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict |
 | `advance report (--candidate <id> \| --unresolved)` | → report | Finishes resolved (only with a passing run and a `resolved` verdict) or unresolved |
@@ -119,16 +119,16 @@ not with another rule.
   is going, is accepted as that run's output.
 - **Candidates are real changes on the baseline:** a clean worktree on the named branch, with commits on top of the
   baseline commit and a tree different from it, not already recorded. A fix that touches the check, its directory,
-  tests, fixtures, snapshots, runner config, `package.json`, or a repository file the frozen command names (its runner
+  tests, fixtures, snapshots, test-runner config, or a repository file the frozen command names (its runner
   or wrapper script; a script or config file named in an option, `--config=vt.ts`), every file a loader would try for a
   module specifier (`--require=`, `-r`, `--import=`, `--loader=`, `--setupFiles=` values and positional `./x`: the path
   itself, then `.js`, `.json`, `.node`, `.py`, `/package.json`, `/index.js`, `/index.node`, `/__init__.py`, …, whether or
   not it exists yet, so `lib/setup` or `lib/setup.node` added ahead of `lib/setup.js` counts), every file Python could import for a `-m`/`-p` module from the run's directory (each dotted
-  prefix's `.py`, `/__init__.py`, `/__main__.py`), or a runner file the command reads without naming it (`Makefile`,
-  `*.mk`, `justfile`, `Rakefile`, `Taskfile.yml`, `noxfile.py`, `pytest.ini`, `.pytest.ini`, `pytest.toml`, `.rspec`,
-  `.npmrc`, `.yarnrc*`, `bunfig.toml`, `deno.json`, `pom.xml`, `build.gradle`, `Cargo.toml`, `.cargo/config.toml`,
-  `Gemfile`, `go.mod`, `go.work`, `global.json`, `Directory.Build.*`, …) needs `--allow-test-changes` (the user's
-  approval). So does adding a file a loader picks ahead of existing code: a Python module (`x.py`, `x/__init__.py`)
+  prefix's `.py`, `/__init__.py`, `/__main__.py`), or a test-runner config the command reads without naming it (`noxfile.py`, `pytest.ini`, `.pytest.ini`, `pytest.toml`,
+  `tox.ini`, `pyproject.toml`, `setup.cfg`, `conftest.py`, `.rspec`, `.runsettings`, jest/vitest/babel/mocha config, …) needs
+  `--allow-test-changes`; the orchestrator passes it with `--reason <why>`, which goes into the history. Build and lock files
+  (`package.json`, `Makefile`, `go.mod`, `Cargo.toml`, `Directory.Build.*`, `tsconfig*`, …) need no flag: the frozen command and its environment
+  digest still decide what the check runs. So does adding a file a loader picks ahead of existing code: a Python module (`x.py`, `x/__init__.py`)
   directly in the run's directory or the check's directory (both come first on `sys.path`, so a new `argparse.py`
   shadows the standard library), compiled or native code anywhere (`.pyc`, `.pyo`, `.pyd`, `.so`, `.dylib`, `.node`,
   `.pth`), `sitecustomize.py`/`usercustomize.py`, and anything under `node_modules/`. A baseline command that names a positional path (written with `/` or a leading `.`, or with a script or
@@ -141,22 +141,25 @@ not with another rule.
   `--junitxml=out/r.xml`, names such as `--cov=app`) are neither required nor protected, and globs and package patterns
   (`./...`) aren't paths.
 - **Attempts.** Mode A one candidate, C one candidate (split by area, in sequence), B two candidates on different open
-  hypotheses, only after a failed attempt and with at least two hypotheses not ruled out. A new attempt waits until
+  hypotheses, after a failed attempt or as the first attempt when no hypothesis is confirmed, and with at least two hypotheses not ruled out. A new attempt waits until
   every recorded candidate of the current one is evaluated and none resolves the ticket. While a mode-B attempt has
   one candidate, `resume` points at the second (and says to start the next attempt if its implementer produced
   nothing usable).
 - **One verdict per candidate.** `judge` builds the input from state (the ticket verbatim, the snapshotted root cause, a
   description of the frozen check, the diff stat and the diff without lock files (`package-lock.json`, `*.lock`,
-  `pnpm-lock.yaml`, `packages.lock.json`) and `dist/` output, capped at 200,000 characters), writes it to
+  `pnpm-lock.yaml`, `packages.lock.json`) and `dist/` output, capped at 1,000,000 characters), writes it to
   `judge-<candidate>.json`, marks the candidate as asked, asks judge about that file without holding the lock, and
   records the answer only when it names the judge's input digest of that file, the bug fix is still in `evaluate`, and the candidate
-  belongs to the current attempt (a call that outlives an `--abandon-judge` records nothing). It never asks
-  again: a call interrupted after asking leaves the mark and the next `judge` is refused. `resume` then says to ask
-  the user, who may leave it behind with `start-attempt --mode <A|B|C> --abandon-judge` (recorded in the history) or
-  report unresolved; without that flag the candidate isn't evaluated, so a call still running isn't overtaken. If judge gives
+  belongs to the current attempt (a call that outlives an `--abandon-judge` records nothing). A verdict is never
+  re-asked. A call interrupted after asking leaves the mark, and `resume` says to ask once more (one automatic retry);
+  after a second unanswered call `judge` is refused and `resume` tells the orchestrator to leave the question behind with
+  `start-attempt --mode <A|B|C> --abandon-judge` (recorded in the history) once no judge process is running, or to report
+  unresolved; without that flag the candidate isn't evaluated, so a call still running isn't overtaken. If judge gives
   no usable verdict (or one about another input) the mark is cleared and nothing is recorded, so a retry is not a
-  re-roll; the input file stays as a record of what was asked. An escalation sets the status to `needs-human`; a
-  later `resolved` verdict in the same attempt sets it back to `active`, and `resume` points at the resolving candidate.
+  re-roll; the input file stays as a record of what was asked. An escalation is never recorded as a verdict: the first
+  is followed by `resume` saying to `judge` the candidate again; the second records an `unresolved` verdict with reason code
+  `escalated:<code>`, so the bug fix continues (next attempt or `advance report --unresolved`) with no human step, and the
+  candidate can never resolve the ticket.
 - **One writer at a time.** Every state change holds the state directory's lock (`state.lock`) from load to save; a
   long `run-test`, `run-ui` or `judge` takes it only to record its result onto the current state. A call that can't get
   it within `AW_BUGFIX_LOCK_WAIT_SECONDS` (default 30) is refused with AW-BUGFIX-021 and changes nothing. Only `init`
@@ -191,8 +194,8 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 | AW-BUGFIX-013 | notFound | Unknown candidate |
 | AW-BUGFIX-014 | conflict | The run can't be recorded for the candidate |
 | AW-BUGFIX-015 | conflict | The candidate can't be judged (no passing run, already judged) |
-| AW-BUGFIX-016 | unavailable | judge gave no usable verdict; nothing recorded |
-| AW-BUGFIX-017 | unavailable | ui-evidence produced no usable run; nothing registered |
+| AW-BUGFIX-016 | unavailable | judge gave no usable verdict; nothing recorded. The orchestrator retries with backoff (3 tries), then `advance report --unresolved`; no park |
+| AW-BUGFIX-017 | unavailable | ui-evidence produced no usable run; nothing registered. Same retry then `advance report --unresolved` |
 | AW-BUGFIX-018 | invalid | A git command failed (not a repository, unknown revision) |
 | AW-BUGFIX-019 | conflict | The report step isn't allowed (already reported, candidate not eligible) |
 | AW-BUGFIX-020 | conflict | A working tree has uncommitted changes, an untracked file no run of the frozen check left behind, or an untracked file that could change what runs |

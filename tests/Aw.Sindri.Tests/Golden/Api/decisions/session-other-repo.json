@@ -1,6 +1,46 @@
 {
-  "decisions": [],
-  "empty": "No decisions.",
+  "decisions": [
+    {
+      "id": "DEC-00000000000000000000000000000012",
+      "kind": "accept-request",
+      "class": "decision",
+      "label": "decision · re-scope",
+      "item": null,
+      "itemVersion": 0,
+      "repo": "other",
+      "question": "Accept this re-scope request?\nIn other.",
+      "options": [
+        {
+          "id": "accept",
+          "label": "Accept",
+          "rejectLike": false,
+          "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
+        },
+        {
+          "id": "decline",
+          "label": "Decline",
+          "rejectLike": true,
+          "cli": "sindri decide DEC-00000000000000000000000000000012 decline"
+        }
+      ],
+      "recommended": "accept",
+      "state": "pending",
+      "filedBy": "session:cli",
+      "filedAt": "2026-01-01T00:00:00.0000000Z",
+      "decidedBy": null,
+      "decidedAt": null,
+      "choice": null,
+      "note": null,
+      "recordedOnly": true,
+      "notice": "recorded; acted on once the workflow engine runs",
+      "actions": [
+        "Decide"
+      ],
+      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
+      "cleared": null
+    }
+  ],
+  "empty": null,
   "asOf": {
     "cursor": 7,
     "ledgerHead": 7,

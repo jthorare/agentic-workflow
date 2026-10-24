@@ -83,7 +83,7 @@ public sealed class GetQueueTests
     }
 
     [Fact]
-    public async Task Session_queue_is_scoped()
+    public async Task Session_queue_lists_every_repo()
     {
         await _q.Item('1', "mine", repo: "alpha");
         await _q.Item('2', "theirs", repo: "beta");
@@ -92,7 +92,7 @@ public sealed class GetQueueTests
 
         var queued = (await Service().Handle(new GetQueueRequest(), ItemQueryHarness.Token)).Value.Groups.Single(g => g.Group == QueueGroup.Queued);
 
-        Expect.Equal("mine", Assert.Single(queued.Items).Title);
+        Expect.Sequence(["mine", "theirs", "no repo"], [.. queued.Items.Select(static i => i.Title)]);
     }
 
     [Fact]

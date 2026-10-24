@@ -66,7 +66,7 @@ public interface IIndexBuild : IAsyncDisposable
     /// <returns>Success.</returns>
     public ValueTask<Result<Unit>> ReplaceGraph(GraphSnapshot graph, CancellationToken cancellationToken);
 
-    /// <summary>The symbols still to embed, with their stored text, class-like symbols skipped.</summary>
+    /// <summary>The symbols still to embed, with their stored text (class-like symbols included).</summary>
     /// <param name="limit">At most this many.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The candidates, in a stable order.</returns>

@@ -40,7 +40,7 @@ public sealed class AnswerDecisionTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Text_answers_a_no_progress_park_once_per_loop()
+    public void Text_answers_a_no_progress_park_again_after_an_earlier_text_answer()
     {
         var parked = NoProgressPark();
         var answered = parked with
@@ -48,9 +48,9 @@ public sealed class AnswerDecisionTests
             Loops = new Dictionary<string, LoopState>(parked.Loops, StringComparer.Ordinal) { ["revisions"] = parked.Loops["revisions"] with { TextAnswered = true } },
         };
 
-        var rejected = Assert.IsType<Rejected>(Decide(answered, Answer(AnswerVariant.Text, text: "again")));
+        var applied = Assert.IsType<Applied>(Decide(answered, Answer(AnswerVariant.Text, text: "again")));
 
-        Assert.Contains("once", rejected.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("produce", applied.Changes[0].After.State);
     }
 
     [Fact, Trait("Lane", "unit")]

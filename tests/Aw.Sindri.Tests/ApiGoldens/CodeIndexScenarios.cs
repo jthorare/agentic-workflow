@@ -30,7 +30,7 @@ internal static class CodeIndexScenarios
     [
         ("code-index-status", "all-repos"), ("code-index-status", "one-repo"), ("code-index-status", "unknown-repo-013"), ("code-index-status", "session-own-repo"), ("code-index-status", "session-other-repo-013"),
         ("code-index-symbols", "exact"), ("code-index-symbols", "prefix"), ("code-index-symbols", "empty-012"), ("code-index-symbols", "bad-match-012"), ("code-index-symbols", "session-other-repo-none"), ("code-index-symbols", "session-fenced"),
-        ("code-index-callers", "csharp-full"), ("code-index-callers", "csharp-partial-row"), ("code-index-callers", "typescript-none-found"), ("code-index-callers", "with-repo"), ("code-index-callers", "depth-4-012"),
+        ("code-index-callers", "csharp-full"), ("code-index-callers", "csharp-partial-row"), ("code-index-callers", "typescript-none-found"), ("code-index-callers", "with-repo"), ("code-index-callers", "depth-9-012"),
         ("code-index-callers", "unknown-ref-011"), ("code-index-callers", "session-other-repo-013"), ("code-index-callers", "bad-ref-012"),
         ("status", StaleScenario),
         ("code-index-callees", "graphify-partial"), ("code-index-callees", "depth-2"), ("code-index-callees", "session-other-repo-013"), ("code-index-callers", "session-fenced"),
@@ -109,7 +109,7 @@ internal static class CodeIndexScenarios
         ("code-index-callers", "csharp-partial-row") => Callers(Stop),
         ("code-index-callers", "typescript-none-found") => Callers(Go),
         ("code-index-callers", "with-repo") => "/sindri/code-index/callers?ref=" + Uri.EscapeDataString("src/Worker.cs#Worker.Run") + "&repo=demo",
-        ("code-index-callers", "depth-4-012") => Callers(Run) + "&depth=4",
+        ("code-index-callers", "depth-9-012") => Callers(Run) + "&depth=9",
         ("code-index-callers", "unknown-ref-011") => Callers(SymbolRef.From("demo:src/Worker.cs#Worker.Nope")),
         ("code-index-callers", "session-other-repo-013") => Callers(Secret),
         ("code-index-callers", "session-fenced") => Callers(Run),

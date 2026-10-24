@@ -34,6 +34,22 @@ public sealed class EmbedCodeIndexTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task A_class_is_embedded_by_its_name_and_signature_so_similar_code_finds_types()
+    {
+        using var git = A.GitRepo().WithFile("src/Alpha.cs", Class("Alpha", "")).Build();
+        var embedder = new FakeEmbedder();
+        using var index = new RealIndex(embedder: embedder);
+        var repo = git.AsRepo("shop");
+        _ = await Build(index, repo, git.Head);
+
+        var response = await EmbedToOk(index, repo);
+
+        Assert.Equal(LayerState.Ok, response.Embeddings);
+        Assert.Equal(3, response.Embeddable);
+        Assert.Contains(embedder.Batches.SelectMany(b => b), t => t.StartsWith("Alpha\n", StringComparison.Ordinal) && !t.Contains("return", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_repo_larger_than_one_batch_is_fully_embedded_without_a_head_move_or_the_heavy_slot()
     {
         var source = new StringBuilder("namespace Shop;\n\npublic class Big\n{\n");

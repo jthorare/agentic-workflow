@@ -22,8 +22,8 @@ Aw.CodeIndex.Core.CodeIndexSettings.UtilityGlobs.get -> System.Collections.Gener
 Aw.CodeIndex.Core.CodeIndexSettings.UtilityGlobs.init -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput
 Aw.CodeIndex.Core.CodeIndexSettingsInput.<Clone>$() -> Aw.CodeIndex.Core.CodeIndexSettingsInput!
-Aw.CodeIndex.Core.CodeIndexSettingsInput.CodeIndexSettingsInput(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, bool? EmbeddingsEnabled = null, string? EmbeddingsUrl = null, string? EmbeddingsModel = null, bool? GraphEnabled = null, int? GraphMaxMB = null, int? GraphMaxNodes = null) -> void
-Aw.CodeIndex.Core.CodeIndexSettingsInput.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out bool? EmbeddingsEnabled, out string? EmbeddingsUrl, out string? EmbeddingsModel, out bool? GraphEnabled, out int? GraphMaxMB, out int? GraphMaxNodes) -> void
+Aw.CodeIndex.Core.CodeIndexSettingsInput.CodeIndexSettingsInput(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, bool? EmbeddingsEnabled = null, string? EmbeddingsUrl = null, string? EmbeddingsModel = null, bool? GraphEnabled = null, int? GraphMaxMB = null) -> void
+Aw.CodeIndex.Core.CodeIndexSettingsInput.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out bool? EmbeddingsEnabled, out string? EmbeddingsUrl, out string? EmbeddingsModel, out bool? GraphEnabled, out int? GraphMaxMB) -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.CodeIndex.Core.CodeIndexSettingsInput.DenyPaths.init -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput.EmbeddingsEnabled.get -> bool?
@@ -37,8 +37,6 @@ Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphEnabled.get -> bool?
 Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphEnabled.init -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphMaxMB.get -> int?
 Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphMaxMB.init -> void
-Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphMaxNodes.get -> int?
-Aw.CodeIndex.Core.CodeIndexSettingsInput.GraphMaxNodes.init -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput.MaxFileKB.get -> int?
 Aw.CodeIndex.Core.CodeIndexSettingsInput.MaxFileKB.init -> void
 Aw.CodeIndex.Core.CodeIndexSettingsInput.MaxTotalMB.get -> int?
@@ -90,6 +88,11 @@ Aw.CodeIndex.Core.Facade.BuildReport.UnresolvedShare.init -> void
 Aw.CodeIndex.Core.Facade.CallCoverage
 Aw.CodeIndex.Core.Facade.CallDepth
 Aw.CodeIndex.Core.Facade.CallDepth.One = 1 -> Aw.CodeIndex.Core.Facade.CallDepth
+Aw.CodeIndex.Core.Facade.CallDepth.Four = 4 -> Aw.CodeIndex.Core.Facade.CallDepth
+Aw.CodeIndex.Core.Facade.CallDepth.Five = 5 -> Aw.CodeIndex.Core.Facade.CallDepth
+Aw.CodeIndex.Core.Facade.CallDepth.Six = 6 -> Aw.CodeIndex.Core.Facade.CallDepth
+Aw.CodeIndex.Core.Facade.CallDepth.Seven = 7 -> Aw.CodeIndex.Core.Facade.CallDepth
+Aw.CodeIndex.Core.Facade.CallDepth.Eight = 8 -> Aw.CodeIndex.Core.Facade.CallDepth
 Aw.CodeIndex.Core.Facade.CallDepth.Three = 3 -> Aw.CodeIndex.Core.Facade.CallDepth
 Aw.CodeIndex.Core.Facade.CallDepth.Two = 2 -> Aw.CodeIndex.Core.Facade.CallDepth
 Aw.CodeIndex.Core.Facade.CallDirection
@@ -526,15 +529,13 @@ Aw.CodeIndex.Core.Model.GraphNode.NodeKey.get -> string!
 Aw.CodeIndex.Core.Model.GraphNode.NodeKey.init -> void
 Aw.CodeIndex.Core.Model.GraphSettings
 Aw.CodeIndex.Core.Model.GraphSettings.<Clone>$() -> Aw.CodeIndex.Core.Model.GraphSettings!
-Aw.CodeIndex.Core.Model.GraphSettings.Deconstruct(out bool Enabled, out int MaxMegabytes, out int MaxNodes) -> void
+Aw.CodeIndex.Core.Model.GraphSettings.Deconstruct(out bool Enabled, out int MaxMegabytes) -> void
 Aw.CodeIndex.Core.Model.GraphSettings.Enabled.get -> bool
 Aw.CodeIndex.Core.Model.GraphSettings.Enabled.init -> void
 Aw.CodeIndex.Core.Model.GraphSettings.Equals(Aw.CodeIndex.Core.Model.GraphSettings? other) -> bool
-Aw.CodeIndex.Core.Model.GraphSettings.GraphSettings(bool Enabled, int MaxMegabytes, int MaxNodes) -> void
+Aw.CodeIndex.Core.Model.GraphSettings.GraphSettings(bool Enabled, int MaxMegabytes) -> void
 Aw.CodeIndex.Core.Model.GraphSettings.MaxMegabytes.get -> int
 Aw.CodeIndex.Core.Model.GraphSettings.MaxMegabytes.init -> void
-Aw.CodeIndex.Core.Model.GraphSettings.MaxNodes.get -> int
-Aw.CodeIndex.Core.Model.GraphSettings.MaxNodes.init -> void
 Aw.CodeIndex.Core.Model.GraphSnapshot
 Aw.CodeIndex.Core.Model.GraphSnapshot.<Clone>$() -> Aw.CodeIndex.Core.Model.GraphSnapshot!
 Aw.CodeIndex.Core.Model.GraphSnapshot.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphNode!>! Nodes, out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.GraphEdge!>! Edges, out int Dropped) -> void
@@ -722,17 +723,15 @@ Aw.CodeIndex.Core.Model.SnapshotInventory.Skipped.init -> void
 Aw.CodeIndex.Core.Model.SnapshotInventory.SnapshotInventory(Aw.CodeIndex.Core.Values.CommitSha Commit, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Model.SnapshotFile!>! Files, System.Collections.Generic.IReadOnlyDictionary<Aw.CodeIndex.Core.Model.SkipReason, int>! Skipped) -> void
 Aw.CodeIndex.Core.Model.SnapshotLimits
 Aw.CodeIndex.Core.Model.SnapshotLimits.<Clone>$() -> Aw.CodeIndex.Core.Model.SnapshotLimits!
-Aw.CodeIndex.Core.Model.SnapshotLimits.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! DenyPaths, out long MaxFileBytes, out long MaxTotalBytes, out int MaxFiles) -> void
+Aw.CodeIndex.Core.Model.SnapshotLimits.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! DenyPaths, out long MaxFileBytes, out long MaxTotalBytes) -> void
 Aw.CodeIndex.Core.Model.SnapshotLimits.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.CodeIndex.Core.Model.SnapshotLimits.DenyPaths.init -> void
 Aw.CodeIndex.Core.Model.SnapshotLimits.Equals(Aw.CodeIndex.Core.Model.SnapshotLimits? other) -> bool
 Aw.CodeIndex.Core.Model.SnapshotLimits.MaxFileBytes.get -> long
 Aw.CodeIndex.Core.Model.SnapshotLimits.MaxFileBytes.init -> void
-Aw.CodeIndex.Core.Model.SnapshotLimits.MaxFiles.get -> int
-Aw.CodeIndex.Core.Model.SnapshotLimits.MaxFiles.init -> void
 Aw.CodeIndex.Core.Model.SnapshotLimits.MaxTotalBytes.get -> long
 Aw.CodeIndex.Core.Model.SnapshotLimits.MaxTotalBytes.init -> void
-Aw.CodeIndex.Core.Model.SnapshotLimits.SnapshotLimits(System.Collections.Generic.IReadOnlyList<string!>! DenyPaths, long MaxFileBytes, long MaxTotalBytes, int MaxFiles) -> void
+Aw.CodeIndex.Core.Model.SnapshotLimits.SnapshotLimits(System.Collections.Generic.IReadOnlyList<string!>! DenyPaths, long MaxFileBytes, long MaxTotalBytes) -> void
 Aw.CodeIndex.Core.Model.StoredFile
 Aw.CodeIndex.Core.Model.StoredFile.<Clone>$() -> Aw.CodeIndex.Core.Model.StoredFile!
 Aw.CodeIndex.Core.Model.StoredFile.Blob.get -> string!
@@ -991,26 +990,22 @@ Aw.CodeIndex.Core.Values.SymbolRef.SymbolRef() -> void
 Aw.CodeIndex.Core.Values.SymbolRef.ToString(System.IFormatProvider? provider) -> string!
 Aw.CodeIndex.Core.Values.SymbolRef.Value.get -> string!
 const Aw.CodeIndex.Core.CodeIndexRules.EmbedBatchSize = 32 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.EmbedTextMaxCharacters = 2000 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.EmbedTextMaxCharacters = 6000 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.FileBatchSize = 200 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxAmbiguousEdges = 8 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxCallSitesPerFile = 20000 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxDepsPerManifest = 5000 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxEdgesPerLevel = 100 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.MaxAmbiguousEdges = 64 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.MaxClones = 1000 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.MaxCallSitesPerFile = 500000 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.MaxEdgesPerLevel = 1000 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.MaxEmbeddedPerBuild = 4096 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxFileSymbolPaths = 200 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxFiles = 100000 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxIndexBytes = 2147483648 -> long
-const Aw.CodeIndex.Core.CodeIndexRules.MaxNeighbors = 100 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.MaxQuarantined = 100 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxSymbolHits = 200 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.MaxSymbolsPerFile = 5000 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.DefaultSymbolHits = 200 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.MaxSymbolsPerFile = 100000 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.MinCloneTokens = 30 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.MinHashBands = 16 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.MinHashLength = 64 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.NearCloneThreshold = 0.8 -> double
 const Aw.CodeIndex.Core.CodeIndexRules.SchemaVersion = 1 -> int
-const Aw.CodeIndex.Core.CodeIndexRules.SignatureMaxCharacters = 400 -> int
+const Aw.CodeIndex.Core.CodeIndexRules.SignatureMaxCharacters = 2000 -> int
 const Aw.CodeIndex.Core.CodeIndexSettings.DefaultEmbeddingsUrl = "http://127.0.0.1:11434" -> string!
 override Aw.CodeIndex.Core.CodeIndexSettings.Equals(object? obj) -> bool
 override Aw.CodeIndex.Core.CodeIndexSettings.GetHashCode() -> int
@@ -1368,7 +1363,6 @@ static readonly Aw.CodeIndex.Core.CodeIndexErrors.RepoNotFound -> Aw.Kernel.Erro
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.SettingsInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexErrors.SymbolNotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.CodeIndex.Core.CodeIndexRules.HeavySlotWait -> System.TimeSpan
-static readonly Aw.CodeIndex.Core.CodeIndexRules.MaxBuildTime -> System.TimeSpan
 Aw.CodeIndex.Core.Planning.LanguageTable
 Aw.CodeIndex.Core.Planning.ProjectManifests
 Aw.CodeIndex.Core.Ports.ISymbolParser.Version.get -> string!

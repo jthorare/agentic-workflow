@@ -5,7 +5,7 @@ namespace Aw.CodeIndex.Infrastructure.Graph;
 
 /// <summary>
 /// Writes graphify's snapshot from the request's filtered inventory (spec §5.5, CI3): blobs from git objects, never the working tree, never a link,
-/// never graphify's own folders; every write is asserted to resolve under the snapshot root. What the caps leave out is not an error.
+/// never graphify's own folders; every write is asserted to resolve under the snapshot root. Every file of the inventory is copied: no copy cap of its own (removed per owner q93, 2026-10-23).
 /// </summary>
 internal static class GraphSnapshotWriter
 {
@@ -14,17 +14,15 @@ internal static class GraphSnapshotWriter
     /// <summary>Writes the files.</summary>
     /// <param name="request">The files and where their contents come from.</param>
     /// <param name="root">The snapshot folder (already made).</param>
-    /// <param name="options">The caps.</param>
     /// <param name="cancellationToken">Cancels the copy.</param>
     /// <returns>Success, or the blob reader's error.</returns>
-    public static async Task<Result<Unit>> Write(GraphRequest request, string root, GraphifyOptions options, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Write(GraphRequest request, string root, CancellationToken cancellationToken)
     {
         var anchor = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        long copied = 0;
         foreach (var file in request.Files)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!Safe(file.Path) || file.Size > options.MaxFileBytes || copied + file.Size > options.MaxSnapshotBytes)
+            if (!Safe(file.Path))
             {
                 continue;
             }
@@ -48,7 +46,6 @@ internal static class GraphSnapshotWriter
 
             _ = Directory.CreateDirectory(Path.GetDirectoryName(target)!);   // why: target is a file path under the root
             await File.WriteAllBytesAsync(target, content, cancellationToken).ConfigureAwait(false);
-            copied += content.Length;
         }
 
         return Unit.Value;

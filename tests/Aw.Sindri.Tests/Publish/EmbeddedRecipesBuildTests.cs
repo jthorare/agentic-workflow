@@ -5,7 +5,8 @@ using Aw.Sindri.Tests.Ledger;
 namespace Aw.Sindri.Tests.Publish;
 
 /// <summary>
-/// What the Host project embeds as recipes (setup-once spec section 5.3): the files of the staged directory <c xml:lang="en">AwRecipesDir</c> and nothing else.
+/// What the Host project embeds as recipes (setup-once spec section 5.3): the files of the staged directory <c xml:lang="en">AwRecipesDir</c>, or the checkout's
+/// recipes/sindri when none is named (#878: a published binary with an empty set has nothing for approve-all to plan), and nothing else.
 /// MSBuild evaluates the project (no compile), so the names are the ones the assembly would carry.
 /// </summary>
 public sealed class EmbeddedRecipesBuildTests
@@ -13,8 +14,20 @@ public sealed class EmbeddedRecipesBuildTests
     private const string Prefix = "aw-recipes/sindri/";
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public void An_ordinary_build_embeds_no_recipes()
-        => Assert.Empty(RecipeResources(stagedDir: null, TestContext.Current.CancellationToken));
+    public void An_ordinary_build_embeds_the_checkouts_recipes_without_the_readme()
+    {
+        var names = RecipeResources(stagedDir: null, TestContext.Current.CancellationToken);
+
+        Assert.Contains(Prefix + "workflow.scoping.yaml", names, StringComparer.Ordinal);
+        Assert.DoesNotContain(Prefix + "README.md", names, StringComparer.Ordinal);
+        Assert.Equal(
+            Directory.EnumerateFiles(Path.Combine(RepoRoot(), "recipes", "sindri"), "*", SearchOption.AllDirectories)
+                .Select(f => Prefix + Path.GetRelativePath(Path.Combine(RepoRoot(), "recipes", "sindri"), f).Replace('\\', '/'))
+                .Where(static n => !string.Equals(n, Prefix + "README.md", StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal),
+            names,
+            StringComparer.Ordinal);
+    }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
     public void An_empty_staged_directory_embeds_nothing()

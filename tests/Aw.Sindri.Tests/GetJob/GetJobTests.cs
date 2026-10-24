@@ -63,7 +63,7 @@ public sealed class GetJobTests
     }
 
     [Fact]
-    public async Task Session_sees_its_repo_and_repo_less_jobs_only()
+    public async Task Session_sees_every_repos_jobs()
     {
         var mine = JobId.From("JOB-0000000000000000000000000000000a");
         var repoLess = JobId.From("JOB-0000000000000000000000000000000b");
@@ -75,9 +75,7 @@ public sealed class GetJobTests
 
         var seen = new[] { mine, repoLess, other }.Select(async id => (await Service().Handle(new GetJobRequest(id), Token)).IsSuccess);
 
-        Expect.Sequence([true, true, false], await Task.WhenAll(seen));
-        var hidden = await Service().Handle(new GetJobRequest(other), Token);
-        Expect.Equal(SindriErrors.JobNotFound.Code, hidden.Error.Code);   // never a hint that it exists
+        Expect.Sequence([true, true, true], await Task.WhenAll(seen));
     }
 
     [Fact]

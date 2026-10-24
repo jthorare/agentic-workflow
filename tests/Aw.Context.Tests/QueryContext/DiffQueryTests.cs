@@ -66,7 +66,7 @@ public sealed class DiffQueryTests : IDisposable
         Assert.Equal(["feature:layout.split-pane", "feature:layout.split-pane.orientation"], split.Nodes.Select(n => n.Key), StringComparer.Ordinal);
         Assert.All(split.Nodes, n => Assert.True(n.Confirmed));
         Assert.Equal(new DiffCounts(4, 2, 0, 2, 0), diff.Counts);
-        Assert.Equal((4, false, false), (diff.AnchorsTotal, diff.AnchorsTruncated, diff.Truncated));
+        Assert.Equal((4, false), (diff.AnchorsTotal, diff.Truncated));
     }
 
     [Fact, Trait("Lane", "unit")]

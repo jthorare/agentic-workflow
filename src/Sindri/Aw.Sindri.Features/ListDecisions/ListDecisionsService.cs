@@ -10,13 +10,13 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Features.ListDecisions;
 
 /// <summary>
-/// The decision list (API spec §3.1): the decisions the caller may see (a session its repo's and the repo-less ones), by pending-ness and
+/// The decision list (API spec §3.1): the decisions, by pending-ness and
 /// by item. The pending ones come oldest first, then the decided and voided ones newest first, at most 200 of those (D6, plan Q6).
 /// </summary>
 /// <param name="views">The 'decisions' view.</param>
 /// <param name="items">Resolves the item filter.</param>
 /// <param name="status">How fresh the views are.</param>
-/// <param name="callers">The caller, whose repo scope applies.</param>
+/// <param name="callers">The caller; a read needs one.</param>
 internal sealed class ListDecisionsService(IViewReader views, IItemResolver items, IProjectorStatus status, ICallerContextAccessor callers) : IService<ListDecisionsRequest, ListDecisionsResponse>
 {
     private const int SettledMax = 200;
@@ -49,7 +49,7 @@ internal sealed class ListDecisionsService(IViewReader views, IItemResolver item
         }
 
         var views_ = new List<DecisionView>();
-        foreach (var row in Ordered(rows.Value.Where(r => ItemScope.VisibleOrRepoless(caller, r.Repo) && (item is not { } named || r.Item == named)), request.Pending))
+        foreach (var row in Ordered(rows.Value.Where(r => item is not { } named || r.Item == named), request.Pending))
         {
             var view = DecisionViews.From(row);
             if (view.IsError)

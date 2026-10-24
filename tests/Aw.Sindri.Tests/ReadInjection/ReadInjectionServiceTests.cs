@@ -70,7 +70,7 @@ public sealed class ReadInjectionServiceTests
 
         var runner = new Runner(refill);
         var instances = new SomeInstances(view);
-        var service = new ReadInjectionService(instances, instances, new Sources(source), texts, runner, new FixedRepos((Item, "alpha")), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
+        var service = new ReadInjectionService(instances, instances, new Sources(source), texts, runner, new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
         return (await service.Handle(new ReadInjectionRequest(view.Id, section), TestContext.Current.CancellationToken), texts, runner);
     }
 
@@ -115,7 +115,7 @@ public sealed class ReadInjectionServiceTests
         var runner = new ByIndexRunner(new Dictionary<int, (string Section, string Text)> { [1] = ("notes", "first"), [2] = ("extra", "second") });
         var texts = new MemoryInjectionTexts();
         var instances = new SomeInstances(view);
-        var service = new ReadInjectionService(instances, instances, new Sources(source), texts, runner, new FixedRepos((Item, "alpha")), new ListInstances.FixedCaller(new CallerContextBuilder().Human().Build()));
+        var service = new ReadInjectionService(instances, instances, new Sources(source), texts, runner, new ListInstances.FixedCaller(new CallerContextBuilder().Human().Build()));
 
         var result = await service.Handle(new ReadInjectionRequest(view.Id), TestContext.Current.CancellationToken);
 
@@ -159,12 +159,12 @@ public sealed class ReadInjectionServiceTests
     }
 
     [Fact]
-    public async Task Session_outside_repo_scope_gets_not_found_and_inside_it_rides_on_the_refill()
+    public async Task A_session_reads_any_repos_injection_and_its_own_repo_rides_on_the_refill()
     {
         var (other, _, _) = await Read(Open("kept"), "kept", () => "kept", caller: new CallerContextBuilder().Session().InRepo("beta").Build());
         var (own, _, runner) = await Read(Open("kept"), "kept", () => "kept", caller: new CallerContextBuilder().Session().InRepo("alpha").Build());
 
-        Assert.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Assert.True(other.IsSuccess);
         Assert.True(own.IsSuccess);
         Assert.Equal(RepoName.From("alpha"), runner.Seen!.Scope);
     }

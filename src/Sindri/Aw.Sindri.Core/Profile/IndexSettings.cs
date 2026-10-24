@@ -24,8 +24,8 @@ public sealed record IndexSettings(
     GraphSettings? Graph = null)
 {
     /// <summary>The default for 'maxFileKB'.</summary>
-    public const int DefaultMaxFileKB = 512;
+    public const int DefaultMaxFileKB = 4_096;
 
     /// <summary>The default for 'maxTotalMB'.</summary>
-    public const int DefaultMaxTotalMB = 200;
+    public const int DefaultMaxTotalMB = 4_096;
 }

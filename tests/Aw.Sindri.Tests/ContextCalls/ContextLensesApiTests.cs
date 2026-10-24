@@ -87,16 +87,16 @@ public sealed class ContextLensesApiTests : IDisposable
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public async Task Lenses_route_21_anchors_is_006_problem_and_a_draft_with_a_map_version_is_006()
+    public async Task Lenses_route_takes_fifty_anchors_and_a_draft_with_a_map_version_is_006()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await using var host = await Host();
 
-        var many = await host.Http.Ask(Get(Lenses([.. Enumerable.Range(0, 21).Select(i => A("feature:nope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))]), Terminal(host)));
+        var many = await host.Http.Ask(Get(Lenses([.. Enumerable.Range(0, 50).Select(i => A("feature:nope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))]), Terminal(host)));
         var both = await host.Http.Ask(Get(Lenses(A(Anchor), "draft=true", "mapVersion=v1"), Terminal(host)));
         var malformed = await host.Http.Ask(Get(Lenses(A(Anchor), "mapVersion=latest"), Terminal(host)));
 
-        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (many.Status, many.Code));
+        Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (many.Status, many.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (both.Status, both.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (malformed.Status, malformed.Code));
     }

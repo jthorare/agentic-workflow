@@ -158,8 +158,7 @@ public static class SubgraphBuilder
     {
         var records = order.Where(k => nodes[k].Key.Kind == NodeKind.Record).Select(k => Record(graph, nodes[k], reached[k].Depth, all)).ToList();
         var decisions = order.Where(k => nodes[k].Key.Kind == NodeKind.Decision).Select(k => Decision(graph, nodes[k], reached[k].Depth, all)).ToList();
-        var cut = records.Count > LensesBuilder.BandCap || decisions.Count > LensesBuilder.BandCap;
-        return new IntentBand([.. records.Take(LensesBuilder.BandCap)], [.. decisions.Take(LensesBuilder.BandCap)], new IntentCounts(records.Count, decisions.Count, Orphaned: null), cut);
+        return new IntentBand(records, decisions, new IntentCounts(records.Count, decisions.Count, Orphaned: null), Truncated: false);
     }
 
     private static List<NodeKey> Targets(GraphSnapshot graph, NodeKey from, EdgeType type, HashSet<string> all) =>

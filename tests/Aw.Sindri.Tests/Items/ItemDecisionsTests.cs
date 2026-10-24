@@ -78,25 +78,4 @@ public sealed class ItemDecisionsTests
         Expect.Equal(SindriErrors.ItemConflict.Code, result.Error.Code);
         Expect.True(result.Error.Message.Contains("already done", StringComparison.Ordinal));
     }
-
-    [Fact]
-    public void Session_sees_only_its_repo()
-    {
-        var session = new CallerContextBuilder().Session().InRepo("alpha").Build();
-
-        Expect.True(ItemScope.Visible(session, RepoName.From("alpha")));
-        Expect.True(!ItemScope.Visible(session, RepoName.From("beta")));
-        Expect.True(!ItemScope.Visible(session, itemRepo: null));
-        Expect.True(ItemScope.Visible(new CallerContextBuilder().Human().Build(), RepoName.From("beta")));
-        Expect.True(ItemScope.Visible(new CallerContextBuilder().Service("host").Build(), RepoName.From("beta")));
-    }
-
-    [Fact]
-    public void Session_without_repo_sees_only_repo_less_items()
-    {
-        var session = new CallerContextBuilder().Session().Build();
-
-        Expect.True(ItemScope.Visible(session, itemRepo: null));
-        Expect.True(!ItemScope.Visible(session, RepoName.From("alpha")));
-    }
 }

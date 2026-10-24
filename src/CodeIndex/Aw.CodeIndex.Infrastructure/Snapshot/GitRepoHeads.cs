@@ -15,7 +15,7 @@ namespace Aw.CodeIndex.Infrastructure.Snapshot;
 /// </summary>
 internal sealed class GitRepoHeads : IRepoHeads
 {
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan _timeout = TimeSpan.FromMinutes(2);
     private static readonly string[] _defaultRefs = ["refs/remotes/origin/HEAD", "refs/heads/main", "refs/heads/master"];
 
     /// <inheritdoc />

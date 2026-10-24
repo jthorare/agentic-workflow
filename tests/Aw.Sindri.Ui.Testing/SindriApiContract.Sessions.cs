@@ -89,15 +89,15 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task Session_hidden_fields_read_as_null()
+    public async Task A_session_caller_view_carries_the_human_fields()
     {
         var server = new FakeSindriApi { SessionAnswer = RouteAnswer.Api("sessions-id", "session-caller-hidden-fields") };
         var (provider, id) = Split(ClaudeTmux);
 
         var view = (await Reach(server).Session(_api, provider, id, Token)).Value;
 
-        Expect.True(view.Session.Title is null && view.Session.Pid is null && view.Session.Host.Session is null && view.Session.Host.Pane is null);
-        Expect.True(view.Cwd is null && view.StateHistory is null);
+        Expect.True(view.Session.Title is not null && view.Session.Pid is not null && view.Session.Host.Session is not null && view.Session.Host.Pane is not null);
+        Expect.True(view.Cwd is not null && view.StateHistory is not null);
     }
 
     [Fact]

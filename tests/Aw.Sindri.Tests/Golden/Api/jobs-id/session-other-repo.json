@@ -1,7 +1,29 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
-  "title": "SND-JOB-404",
-  "status": 404,
-  "detail": "No such job (fix: run `sindri jobs` to list them)",
-  "traceId": "<trace>"
+  "id": "JOB-00000000000000000000000000000001",
+  "kind": "EchoJob",
+  "key": "echo",
+  "item": null,
+  "repo": "demo",
+  "service": null,
+  "state": "running",
+  "startedBy": "service:host",
+  "startedAt": "2026-01-01T00:00:00.0000000Z",
+  "endedAt": null,
+  "progress": [],
+  "rounds": 0,
+  "summary": null,
+  "code": null,
+  "result": null,
+  "cancelledBy": null,
+  "actions": [
+    "CancelJob"
+  ],
+  "cli": "sindri jobs cancel JOB-00000000000000000000000000000001",
+  "asOf": {
+    "cursor": 6,
+    "ledgerHead": 6,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
 }

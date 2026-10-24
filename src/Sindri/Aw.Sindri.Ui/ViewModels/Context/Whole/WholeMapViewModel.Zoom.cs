@@ -80,6 +80,7 @@ internal sealed partial class WholeMapViewModel
 
         _beforeZoom ??= (Answer, Geometry, Areas);
         Geometry = geometry;
+        ForgetHighlight();
         var byKey = overview.Areas.ToDictionary(a => a.Key, StringComparer.Ordinal);
         Areas = [.. geometry.Order.Select((key, i) => new WholeAreaTileViewModel(byKey[key], i, OpenArea))];
         MoreTouchedText = notOpened > 0 ? Labels.ContextWholeMoreTouched(notOpened) : string.Empty;
@@ -97,6 +98,7 @@ internal sealed partial class WholeMapViewModel
         if (_beforeZoom is { } before)
         {
             (Answer, Geometry, Areas) = before;
+            ForgetHighlight();
             _beforeZoom = null;
         }
 

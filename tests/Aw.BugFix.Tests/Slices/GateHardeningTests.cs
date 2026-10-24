@@ -87,7 +87,8 @@ public sealed class GateHardeningTests : IDisposable
         var c2 = World.Ok(await _w.Record("h1", "/wt/h1", hypothesis: 1)).Candidate;
         var c3 = World.Ok(await _w.Record("h2", "/wt/h2", hypothesis: 2)).Candidate;
         await PassAndJudge(c2, "/wt/h1", JudgeDecision.Escalated);
-        Assert.Equal(BugFixStatus.NeedsHuman, _w.Now.Status);
+        Assert.Null(_w.Now.Candidates[1].Verdict);   // an escalation records nothing
+        Assert.Equal(BugFixStatus.Active, _w.Now.Status);
 
         await PassAndJudge(c3, "/wt/h2", JudgeDecision.Resolved);
 
@@ -130,21 +131,25 @@ public sealed class GateHardeningTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_interrupted_judge_call_is_never_asked_again()
+    public async Task An_interrupted_judge_call_is_retried_once_and_then_only_abandoned()
     {
         var c1 = await _w.Candidate();
         _ = World.Ok(await _w.RunAgainst(c1));
         _w.Judge.WhileDeciding = static () => throw new OperationCanceledException("killed while judge was deciding");
 
         _ = await Assert.ThrowsAsync<OperationCanceledException>(() => Judge(c1));
+        Assert.StartsWith("judge c1 again", World.Ok(await Resume()).Next, StringComparison.Ordinal);   // one automatic retry
+        _ = await Assert.ThrowsAsync<OperationCanceledException>(() => Judge(c1));
         _w.Judge.WhileDeciding = null;
 
         Assert.Contains("no answer was recorded", World.Refused(await Judge(c1), BugFixErrors.JudgeRefused).Message, StringComparison.Ordinal);
-        _ = Assert.Single(_w.Judge.Asked);
-        Assert.StartsWith("ask the user: judge was asked about c1", World.Ok(await Resume()).Next, StringComparison.Ordinal);
+        Assert.Equal(2, _w.Judge.Asked.Count);
+        var next = World.Ok(await Resume()).Next;
+        Assert.Contains("--abandon-judge", next, StringComparison.Ordinal);
+        Assert.DoesNotContain("ask the user", next, StringComparison.Ordinal);
         Assert.Contains("--abandon-judge", World.Refused(await _w.Start(), BugFixErrors.AttemptRefused).Message, StringComparison.Ordinal);
         var moved = World.Ok(await _w.Run<StartAttemptRequest, StartAttemptResponse>(new StartAttemptRequest(World.State, FixMode.A, AbandonJudge: true)));
-        Assert.Equal(2, moved.Attempt);   // only the user's explicit choice leaves the question behind
+        Assert.Equal(2, moved.Attempt);
     }
 
     [Fact, Trait("Lane", "unit")]

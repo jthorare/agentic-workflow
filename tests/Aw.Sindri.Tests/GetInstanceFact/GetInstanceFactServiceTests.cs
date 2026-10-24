@@ -39,10 +39,10 @@ public sealed class GetInstanceFactServiceTests
         return view with { Facts = [row], FactShas = produced ? new Dictionary<string, string>(StringComparer.Ordinal) { [key] = Sha } : null };
     }
 
-    private static async Task<Result<FactView>> Read(InstanceView view, string key, string content, CallerContext? caller = null, FixedRepos? repos = null, WorkflowInstanceId? asking = null)
+    private static async Task<Result<FactView>> Read(InstanceView view, string key, string content, CallerContext? caller = null, WorkflowInstanceId? asking = null)
     {
         var instances = new SomeInstances(view);
-        var service = new GetInstanceFactService(instances, instances, new Contents(content), new Redacting(), repos ?? new FixedRepos(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
+        var service = new GetInstanceFactService(instances, instances, new Contents(content), new Redacting(), new ListInstances.FixedCaller(caller ?? new CallerContextBuilder().Human().Build()));
         return await service.Handle(new GetInstanceFactRequest(asking ?? view.Id, key), CancellationToken.None);
     }
 
@@ -111,29 +111,26 @@ public sealed class GetInstanceFactServiceTests
     private const string Item = "ITM-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     [Fact]
-    public async Task A_session_reads_a_fact_of_its_own_repo_and_gets_item_404_for_another()
+    public async Task A_session_reads_a_fact_of_any_repo()
     {
         var view = With("fact:spec", FactType.Text) with { ItemId = ItemKey.From(Item) };
-        var repos = new FixedRepos((Item, "alpha"));
 
-        var own = await Read(view, "fact:spec", "the spec", new CallerContextBuilder().Session().InRepo("alpha").Build(), repos);
-        var other = await Read(view, "fact:spec", "the spec", new CallerContextBuilder().Session().InRepo("beta").Build(), repos);
+        var own = await Read(view, "fact:spec", "the spec", new CallerContextBuilder().Session().InRepo("alpha").Build());
+        var other = await Read(view, "fact:spec", "the spec", new CallerContextBuilder().Session().InRepo("beta").Build());
 
         Assert.Equal("the spec", own.Value.Body.GetString());
-        Assert.Equal(SindriErrors.ItemNotFound.Code, other.Error.Code);
+        Assert.Equal("the spec", other.Value.Body.GetString());
     }
 
     [Fact]
-    public async Task An_unknown_instance_and_another_repos_answer_the_same_not_found_with_the_id_asked_for()
+    public async Task An_unknown_instance_answers_not_found_with_the_id_asked_for()
     {
         var view = With("fact:spec", FactType.Text) with { ItemId = ItemKey.From(Item) };
         var unknown = WorkflowInstanceId.From("WFI-" + new string('9', 32));
 
         var missing = await Read(view, "fact:spec", "x", asking: unknown);
-        var elsewhere = await Read(view, "fact:spec", "x", new CallerContextBuilder().Session().InRepo("beta").Build(), new FixedRepos((Item, "alpha")));
 
         Assert.Equal((SindriErrors.ItemNotFound.Code, $"No workflow instance {unknown.Value} in this repo."), (missing.Error.Code, missing.Error.Message));
-        Assert.Equal((SindriErrors.ItemNotFound.Code, $"No workflow instance {view.Id.Value} in this repo."), (elsewhere.Error.Code, elsewhere.Error.Message));
     }
 
     [Fact]

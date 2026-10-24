@@ -37,7 +37,10 @@ public sealed record BugFixState(
     public const int CurrentSchema = 1;
 
     /// <summary>The most attempts a bug fix gets before it is reported unresolved.</summary>
-    public const int MaxAttempts = 3;
+    public const int MaxAttempts = 5;
+
+    /// <summary>Gets a value indicating whether the handoff confirmed a hypothesis; without one the first attempt is mode B.</summary>
+    public bool Confirmed => Investigation?.Hypotheses.Any(static h => h.Result == HypothesisResult.Confirmed) ?? false;
 
     /// <summary>Gets the candidates of the current attempt.</summary>
     public IEnumerable<Candidate> CurrentCandidates => Candidates.Where(c => c.Attempt == Attempt);

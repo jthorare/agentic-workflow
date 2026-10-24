@@ -251,14 +251,14 @@ public sealed class GetCodeTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task More_than_20_anchors_is_006_and_a_draft_with_a_version_is_006()
+    public async Task Fifty_anchors_are_not_refused_for_their_count_and_a_draft_with_a_version_is_006()
     {
         _ = await _code.ImportSharing();
 
-        var many = await _code.Code(anchors: [.. Enumerable.Range(0, 21).Select(i => $"feature:n{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}")]);
+        var many = await _code.Code(anchors: [.. Enumerable.Range(0, 50).Select(i => $"feature:n{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}")]);
         var both = await _code.Code(draft: true, mapVersion: "v1");
 
-        Assert.Equal((ContextErrors.QueryInvalid.Code, ContextErrors.QueryInvalid.Code), (many.Error.Code, both.Error.Code));
+        Assert.Equal((ContextErrors.UnknownAnchor.Code, ContextErrors.QueryInvalid.Code), (many.Error.Code, both.Error.Code));
         Assert.Empty(_code.Search.Queries);
     }
 

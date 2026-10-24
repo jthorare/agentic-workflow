@@ -175,7 +175,7 @@ public sealed class JobEndpointTests
     }
 
     [Fact(Timeout = 30_000)]
-    public async Task A_session_sees_a_job_of_its_own_repo_and_not_one_of_another()
+    public async Task A_session_sees_a_job_of_any_repo()
     {
         await using var host = await JobHost.Start(TestContext.Current.CancellationToken);
         await ViewScenarios.Approve(host, TestContext.Current.CancellationToken);
@@ -187,7 +187,7 @@ public sealed class JobEndpointTests
         var own = await host.Http.Ask(Get(path, (SindriHeaders.Caller, "session"), (SindriHeaders.Repo, "demo")));
         var other = await host.Http.Ask(Get(path, (SindriHeaders.Caller, "session"), (SindriHeaders.Repo, "other")));
 
-        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.NotFound, "SND-JOB-404"), (own.Status, other.Status, other.Code));
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (own.Status, other.Status));
     }
 
     [Fact(Timeout = 60_000)]

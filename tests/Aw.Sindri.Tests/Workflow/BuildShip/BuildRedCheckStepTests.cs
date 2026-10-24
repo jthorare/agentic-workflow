@@ -103,8 +103,33 @@ public sealed class BuildRedCheckStepTests
     }
 
     [Theory]
+    [InlineData("""{"AC-13":{"appOnly":{"signal":"AC-13"},"commit":"d1ab76c"}}""")]
+    [InlineData("""{"A1":{"appOnly":{"signal":"s"},"commit":"h1"},"A2":{"appOnly":{"signal":"t"}}}""")]
+    public async Task When_every_item_is_app_only_there_is_nothing_to_run_and_the_check_passes(string redTests)
+    {
+        var rig = new StepRig("red-tests");
+
+        var result = await Step(rig).Run(Context(redTests), Token);
+
+        Assert.Null(result.Failure);
+        Assert.Equal("red", result.Result!.Outcome.Value);   // their proof happens at prove
+        Assert.Empty(rig.Commands.Calls);
+        Assert.Equal(0, rig.Slots.Taken);
+    }
+
+    [Fact]
+    public async Task App_only_items_need_no_command_in_the_profile()
+    {
+        var rig = new StepRig();
+
+        var result = await Step(rig).Run(Context("""{"A1":{"appOnly":{"signal":"s"}}}"""), Token);
+
+        Assert.Equal("red", result.Result!.Outcome.Value);
+    }
+
+    [Theory]
     [InlineData("{}")]
-    [InlineData("""{"A1":{"appOnly":{"signal":"s"},"commit":"h1"}}""")]
+    [InlineData("""{"A1":{"commit":"h1"}}""")]
     public async Task No_test_to_run_fails_the_Step(string redTests)
     {
         var rig = new StepRig("red-tests");

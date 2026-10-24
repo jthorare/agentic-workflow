@@ -82,7 +82,7 @@ public sealed class BuildCodeIndexRealStoreTests
         var answer = (await index.Facade.Neighbors(RealIndex.ScopeOf(repo), repo.Name, texts[0], 3, Token)).Value;
         await using var next = (await index.Store.BeginBuild(repo.Name, incremental: true, Token)).Value;
 
-        Assert.Equal((3, 3), (report.Embedded, report.Embeddable));
+        Assert.Equal((5, 5), (report.Embedded, report.Embeddable));   // the three methods and the two classes (CIX-L60: types are embedded by name and signature)
         Assert.Equal(LayerState.Ok, report.Embeddings);
         Assert.Equal(3, answer.Neighbors.Count);
         Assert.Equal(1.0, answer.Neighbors[0].Score, 4);
