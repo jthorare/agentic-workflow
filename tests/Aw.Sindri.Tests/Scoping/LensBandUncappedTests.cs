@@ -12,12 +12,12 @@ public sealed class LensBandUncappedTests
         var lens = new LensBuilder("code", ["feature:links"]);
         for (var i = 0; i < nodes; i++)
         {
-            lens.Node(string.Create(CultureInfo.InvariantCulture, $"code:src/file{i}.ts"), "code", null, "code");
+            lens.Node(string.Create(CultureInfo.InvariantCulture, $"code:src/file{i}.ts"), "code", label: null, band: "code");
         }
 
         for (var i = 0; i < items; i++)
         {
-            lens.Item("record", null, []);
+            lens.Item("record", label: null, citations: []);
         }
 
         return lens;
