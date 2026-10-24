@@ -169,6 +169,14 @@ packages:
     bins: [aw-packets]
     namespace: packets
     note: "packet schema, validate, freeze (§4c); a standalone NativeAOT CLI before the switch, writing only under packets/"
+  - id: UiDriver
+    kind: package
+    tier: 1
+    projectPrefix: Aw.UiDriver
+    ts: null
+    src: src/UiDriver
+    bins: [aw-ui-driver]
+    note: "a free, generic, Playwright-like driver for any Avalonia app, modelled on the DevTools MCP tool set: Aw.UiDriver.Core (protocol, selectors, wait rules), Aw.UiDriver.Avalonia (the in-app loopback server an app opts into with UseAwUiDriver(); unshaped, like the UI projects) and Aw.UiDriver.Cli (the client and the aw-ui-driver command; unshaped). It knows no app; a scripted run (desktop evidence) uses the CLI, so other packages need no project edge"
   - id: Readiness
     kind: package
     tier: 1
@@ -388,6 +396,11 @@ edges:
     kind: project
     status: current
     note: "replaces judge's copy of the scrubbing patterns"
+  - from: UiDriver
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, JSON (the in-app server and the client)"
   - from: Packets
     to: Kernel
     kind: project

@@ -286,7 +286,7 @@ public sealed class FixtureTests
 
     [Fact]
     public void The_real_ui_assemblies_are_unshaped_and_keep_the_global_rules() =>
-        Assert.Equal(["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop"], Production.Scope.Unshaped);
+        Assert.Equal(["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop", "Aw.UiDriver.Avalonia", "Aw.UiDriver.Cli"], Production.Scope.Unshaped);
 
     [Fact]
     public void Ui_rule_reports_avalonia_in_view_models_and_views_in_heads() =>

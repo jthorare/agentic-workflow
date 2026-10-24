@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.UiDriver.Tests: the protocol and its pure rules in the unit lane; the client and command line against a stand-in driver on loopback
+       in the integration lane (spec §4b.5). The driver itself, on a real Avalonia window, is in Aw.UiDriver.Avalonia.Tests. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.UiDriver.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Core/Aw.UiDriver.Core.csproj" />
+    <ProjectReference Include="../../src/UiDriver/Aw.UiDriver.Cli/Aw.UiDriver.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>
