@@ -104,7 +104,9 @@ internal sealed class FileRunLedger(JsonSerializerOptions json) : IRunLedger
     public JudgeQuestion WriteJudgeInput(string directory, CandidateId candidate, ResolutionCheckInput input)
     {
         var file = Path.Combine(directory, $"judge-{candidate.Value}.json");
-        return new JudgeQuestion(input, file, WriteFile(file, AwJson.Serialize(input, json)));
+        var canonical = JudgeInputForm.Canonical(input, json);
+        File.WriteAllBytes(file, canonical);
+        return new JudgeQuestion(input, file, JudgeInputForm.Digest(canonical));
     }
 
     private static string WriteFile(string path, byte[] bytes)

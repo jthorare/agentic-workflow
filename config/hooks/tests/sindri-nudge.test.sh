@@ -41,6 +41,7 @@ START=$(date +%s)
 OUT="$(SLEEP=5 AW_SINDRI_NUDGE_BUDGET_MS=300 run "$REPO" "$BIN")"; RC=$?
 check "slow sindri: killed, silent" "$OUT" ""
 check "slow sindri: exit 0" "$RC" "0"
+check "slow sindri: the timeout is logged" "$(grep -c '"hook":"sindri-nudge","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2>/dev/null)" "1"
 check "slow sindri: returns within 3 s" "$(( $(date +%s) - START < 3 ))" "1"
 OUT="$(AW_SINDRI_NUDGE_BUDGET_MS=abc run "$REPO" "$BIN")"
 check "bad budget falls back to the default" "$OUT" "sindri: repo is not onboarded; run: sindri repo onboard"
@@ -67,7 +68,7 @@ git -C "$REPO" worktree add -q "$WORK/wt" -b side
 run "$WORK/wt" "$BIN" > /dev/null
 check "linked worktree: asks repo status --nudge" "$(cat "$CALLS")" "repo status --nudge"
 # The hook itself never writes sindri's state.
-check "state dir untouched" "$([ -e "$AW_STATE_DIR" ] && echo exists || echo absent)" "absent"
+check "state dir untouched (only the fail-open log may appear)" "$(find "$AW_STATE_DIR" -type f ! -path "*/logs/failopen.log" 2>/dev/null | wc -l | tr -d " ")" "0"
 # Through the Codex adapter (plain text on SessionStart becomes developer context).
 sed "s|__CWD__|$REPO|" "$DIR/fixtures/codex/sessionstart.json" > "$WORK/ss.json"
 OUT="$(PATH="$BIN:/usr/bin:/bin" bash "$HOOKS/adapters/codex.sh" "$HOOK" < "$WORK/ss.json")"

@@ -4,5 +4,5 @@ namespace Aw.Packets.Core.Kinds.Line;
 public static class LineLimits
 {
     /// <summary>The most files a packet holds under its linked directories together; a bigger one is AW-PACKETS-003.</summary>
-    public const int MaxLinkedFiles = 2000;
+    public const int MaxLinkedFiles = 20_000;
 }

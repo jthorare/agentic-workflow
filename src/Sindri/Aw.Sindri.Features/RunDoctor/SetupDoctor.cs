@@ -10,13 +10,19 @@ namespace Aw.Sindri.Features.RunDoctor;
 /// </summary>
 /// <param name="facts">The sources, read the way GET /setup reads them.</param>
 /// <param name="build">The embedded recipe set's tree hash and HEAD's; absent in a host with no build stamp.</param>
-internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null) : IDoctorChecks
+/// <param name="hooks">Each repo's pre-commit hook; absent keeps the single 'setup:repo-hook' warning until cutover unit 4.1 registers the reader.</param>
+internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null, IRepoHookStates? hooks = null) : IDoctorChecks
 {
     /// <summary>The check's name.</summary>
     internal const string Name = "setup";
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
+        if (hooks is not null)
+        {
+            throw new NotSupportedException("the per-repo 'pre-commit:<repo>' line is built in cutover unit 4.1");
+        }
+
         List<DoctorCheck> checks = [await Steps(cancellationToken).ConfigureAwait(false)];
         var repos = await facts.Repos(cancellationToken).ConfigureAwait(false);
         if (repos.IsSuccess && repos.Value.Count > 0)

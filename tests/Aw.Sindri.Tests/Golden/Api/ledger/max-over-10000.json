@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CLI-003",
+  "status": 400,
+  "detail": "max is 1 to 10000 (fix: --max 100)",
+  "traceId": "<trace>"
+}

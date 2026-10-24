@@ -157,7 +157,9 @@
                 <icons:StateIcon Icon="Spinner" Spins="True" VerticalAlignment="Center" />
                 <TextBlock x:Name="ContextBuildingTitle" Classes="detail-title" Text="{Binding BuildingTitle}" VerticalAlignment="Center" />
               </StackPanel>
-              <TextBlock x:Name="ContextBuildingBody" Classes="body subtle" Text="{Binding BuildingBody}" TextWrapping="Wrap" TextAlignment="Center" />
+              <TextBlock x:Name="ContextBuildingBody" Classes="body subtle" Text="{Binding BuildingBody}" IsVisible="{Binding HasBuildingBody}" TextWrapping="Wrap" TextAlignment="Center" />
+              <Button x:Name="ContextBuildingJob" Classes="row-title" HorizontalAlignment="Center" IsVisible="{Binding HasBuildJob}" Content="{Binding BuildJobText}" Click="OnViewBuildJob"
+                      AutomationProperties.Name="{Binding BuildJobText}" />
               <StackPanel Spacing="8" AutomationProperties.AccessibilityView="Raw">
                 <Border Classes="skeleton" />
                 <Border Classes="skeleton" />

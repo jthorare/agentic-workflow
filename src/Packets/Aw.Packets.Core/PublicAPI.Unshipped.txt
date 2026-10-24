@@ -927,7 +927,7 @@ const Aw.Packets.Core.Checks.PacketRules.TaskInWorkstream = "PKT-WS-001" -> stri
 const Aw.Packets.Core.Checks.PacketRules.UniqueIds = "PKT-ID-001" -> string!
 const Aw.Packets.Core.Checks.PacketRules.WorkflowCoverage = "PKT-FLOW-001" -> string!
 const Aw.Packets.Core.Digest.PacketDigest.Version = 1 -> int
-const Aw.Packets.Core.Kinds.Line.LineLimits.MaxLinkedFiles = 2000 -> int
+const Aw.Packets.Core.Kinds.Line.LineLimits.MaxLinkedFiles = 20000 -> int
 const Aw.Packets.Core.Kinds.Line.LineRules.AcceptanceSchema = 7 -> int
 const Aw.Packets.Core.Kinds.Line.LineRules.PhaseAcceptanceSchema = 10 -> int
 const Aw.Packets.Core.Kinds.Line.LineRules.PhaseAmends = 9 -> int
@@ -944,7 +944,7 @@ const Aw.Packets.Core.Kinds.Scoping.ScopingRules.LensesSchema = "PKT-SCP-004" ->
 const Aw.Packets.Core.Kinds.Scoping.ScopingRules.NoUnlisted = "PKT-SCP-002" -> string!
 const Aw.Packets.Core.Kinds.Scoping.ScopingRules.WellFormed = "PKT-SCP-003" -> string!
 const Aw.Packets.Core.PacketReader.ManifestFile = "packet.json" -> string!
-const Aw.Packets.Core.PacketReader.MaxTasks = 2000 -> int
+const Aw.Packets.Core.PacketReader.MaxTasks = 20000 -> int
 const Aw.Packets.Core.PacketReader.SchemaVersion = 1 -> int
 override Aw.Packets.Core.Checks.CheckResult.Equals(object? obj) -> bool
 override Aw.Packets.Core.Checks.CheckResult.GetHashCode() -> int

@@ -2,7 +2,8 @@
 # aw:outbox-flush — TeammateIdle hook (lever 1A). Exit 2 keeps a teammate
 # working when it still has its own queued progress to send; exit 0 lets it
 # go idle otherwise. Scoped by teammate_name == the queued item's agentType
-# (confirmed field correspondence, 2026-09-27 probe) — not a fallback.
+# (confirmed field correspondence, 2026-09-27 probe) — not a fallback. An item with a null agentType is the lead's
+# own: it matches the lead (no teammate_name) only, never a teammate (q93 JG-25).
 set -uo pipefail
 # HOOK-FAILOPEN: record why this hook is failing open (config/lib/failopen.sh,
 # installed at <hooks>/lib/failopen.sh). Logging only: it runs in a subshell
@@ -36,7 +37,7 @@ OUTBOX_FILE="$OUTBOX_DIR/$SESSION_ID.jsonl"
 [ -s "$OUTBOX_FILE" ] || exit 0
 
 if [ -n "$TEAMMATE_NAME" ]; then
-  MATCH="$(jq -r --arg n "$TEAMMATE_NAME" 'select(.agentType == $n or .agentType == null)' "$OUTBOX_FILE" 2>/dev/null)"
+  MATCH="$(jq -r --arg n "$TEAMMATE_NAME" 'select(.agentType == $n)' "$OUTBOX_FILE" 2>/dev/null)"
   JQ_RC=$?
   if [ -z "$MATCH" ]; then
     [ "$JQ_RC" -ne 0 ] && failopen outbox-unreadable

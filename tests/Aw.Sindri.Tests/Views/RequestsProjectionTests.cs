@@ -183,13 +183,13 @@ public sealed class RequestsProjectionTests
     public void Request_and_decision_text_is_scrubbed_escaped_and_cut()
     {
         var scrubber = new MaskScrubber("SECRET");
-        var filed = new RequestFiled(H.Ids.New<CommandId>(), A.FirstRequestId, A.FirstDecisionId, RequestKind.Rescope, Item: null, Repo: null, "Fix SECRET\u001b[31m\nnow " + new string('x', 3000));
+        var filed = new RequestFiled(H.Ids.New<CommandId>(), A.FirstRequestId, A.FirstDecisionId, RequestKind.Rescope, Item: null, Repo: null, "Fix SECRET\u001b[31m\nnow " + new string('x', RequestRules.TextMax + 1000));
         var recorded = Recorded.Of(H.Events, EventTypes.RequestFiled, filed, 1);
 
         var rows = RequestsProjection.Fold(filed, recorded, scrubber, itemVersion: 0);
 
         Assert.StartsWith("Fix [masked]\\x1B[31m now xxx", rows.Request.Text, StringComparison.Ordinal);
-        Assert.Equal(2000, rows.Request.Text.Length);
+        Assert.Equal(RequestRules.TextMax, rows.Request.Text.Length);
         Assert.Equal(rows.Request.Text, rows.Decision.Text);
     }
 

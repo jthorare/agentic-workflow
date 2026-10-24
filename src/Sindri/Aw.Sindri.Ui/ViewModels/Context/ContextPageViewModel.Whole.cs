@@ -50,6 +50,12 @@ internal sealed partial class ContextPageViewModel
         if (read.IsSuccess)
         {
             Whole.Show(read.Value);
+            if (_servedBuilding)
+            {
+                (IsBuilding, _buildJob, _servedBuilding, _notReady, NoMap) = (false, null, false, MapNotReadyView.None, false);   // the build the answer named is done: the map is here
+                ChangedStates();
+            }
+
             if (!HasStack)
             {
                 Head = Whole.Head;
@@ -58,6 +64,7 @@ internal sealed partial class ContextPageViewModel
         else if (string.Equals(read.Error.Code, NoMapCode, StringComparison.Ordinal))
         {
             Whole.Quiet();
+            NoteNotReady(read.Error);
             await NoteRefusal(api, read.Error, cancellationToken).ConfigureAwait(true);
         }
         else

@@ -1,6 +1,8 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
@@ -13,15 +15,54 @@ internal sealed partial class ContextPageViewModel
     private const string JobConflict = "SND-JOB-409";
     private const string Running = "running";
     private string? _buildJob;
+    private MapNotReadyView _notReady = MapNotReadyView.None;
+    private bool _servedBuilding;
 
-    /// <summary>The Building state's title.</summary>
-    public string BuildingTitle { get; } = Labels.ContextStateBuilding;
+    /// <summary>The Building state's title: the whole map's answer says how far the build is, else the item map's words.</summary>
+    public string BuildingTitle => _servedBuilding ? Labels.ContextBuildingLine(BuildingParts()) : Labels.ContextStateBuilding;
 
-    /// <summary>The Building state's body.</summary>
-    public string BuildingBody { get; } = Labels.ContextStateBuildingBody;
+    /// <summary>The Building state's body: "last map 2 h ago" when the answer names it; nothing when the title is the answer's.</summary>
+    public string BuildingBody => !_servedBuilding ? Labels.ContextStateBuildingBody : _notReady.Building?.LastSyncAt is { } last ? Labels.ContextLastMap(Age(last)) : string.Empty;
 
-    /// <summary>The No map state's title.</summary>
-    public string EmptyTitle { get; } = Labels.ContextStateEmptyTitle;
+    /// <summary>Whether the Building state's body has words.</summary>
+    public bool HasBuildingBody => BuildingBody.Length > 0;
+
+    /// <summary>The No map state's title: "No map yet for 2 repositories" when the answer names them.</summary>
+    public string EmptyTitle => _notReady.NoMap?.Repos is { Count: > 0 } repos ? Labels.ContextNoMapRepos(repos.Count) : Labels.ContextStateEmptyTitle;
+
+    /// <summary>The button's text that opens the build's job.</summary>
+    public string BuildJobText { get; } = Labels.ContextBuildingJob;
+
+    /// <summary>Whether the answer names the build's job (one click opens it).</summary>
+    public bool HasBuildJob => _servedBuilding && !string.IsNullOrEmpty(_notReady.Building?.JobId);
+
+    /// <summary>Raised when the build's job is asked for; the shell opens the Jobs page on that job's sheet.</summary>
+    internal event EventHandler<ContextJobRequestedEventArgs>? JobRequested;
+
+    /// <summary>Opens the build's job; does nothing when the answer names none.</summary>
+    internal void RequestBuildJob()
+    {
+        if (_servedBuilding && _notReady.Building?.JobId is { Length: > 0 } job)
+        {
+            JobRequested?.Invoke(this, new ContextJobRequestedEventArgs(new DeepLink(DeepLinkKind.Job, job)));
+        }
+    }
+
+    private TimeSpan Age(DateTimeOffset at) => Ports.Clock.GetUtcNow() - at;
+
+    // The parts the answer knows, in the order they read: how far, then when it started.
+    private IEnumerable<string> BuildingParts()
+    {
+        if (_notReady.Building is { SourcesDone: { } done, SourcesTotal: { } total })
+        {
+            yield return Labels.ContextBuildingSources(done, total);
+        }
+
+        if ((_notReady.Building?.StartedAt ?? _notReady.NoMap?.FirstRunStartedAt) is { } started)
+        {
+            yield return Labels.ContextBuildingStarted(Age(started));
+        }
+    }
 
     /// <summary>The No map state's body.</summary>
     public string EmptyBody { get; } = Labels.ContextStateEmptyBody;
@@ -62,6 +103,24 @@ internal sealed partial class ContextPageViewModel
         if (!IsBuilding && await BuildRunning(api, cancellationToken).ConfigureAwait(true))
         {
             IsBuilding = true;
+        }
+
+        ChangedStates();
+    }
+
+    // The whole map's refusal says why there is no map: a running build, or a first build that has started, is the Building overlay (it wins over No map).
+    private void NoteNotReady(Error error)
+    {
+        _notReady = MapNotReadyView.From(error, SindriApiClient.Json);
+        _servedBuilding = _notReady.Building is not null || _notReady.NoMap?.FirstRunStartedAt is not null;
+        if (_servedBuilding)
+        {
+            IsBuilding = true;
+            _buildJob = _notReady.Building?.JobId ?? _buildJob;
+        }
+        else if (IsBuilding && _buildJob is null)
+        {
+            IsBuilding = false;
         }
 
         ChangedStates();
@@ -124,6 +183,12 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        if (_servedBuilding && _buildJob is null)
+        {
+            await ReadWhole(cancellationToken).ConfigureAwait(true);   // the answer, not a job, says when the first build is over
+            return;
+        }
+
         var ended = _buildJob is { } id
             ? await Ports.Api.Job(api, id, cancellationToken).ConfigureAwait(true) is { IsSuccess: true } job && !string.Equals(job.Value.State, Running, StringComparison.Ordinal)
             : !await BuildRunning(api, cancellationToken).ConfigureAwait(true);
@@ -132,7 +197,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        (IsBuilding, _buildJob) = (false, null);
+        (IsBuilding, _buildJob, _servedBuilding, _notReady) = (false, null, false, MapNotReadyView.None);
         NoMap = false;
         ChangedStates();
         await ReadWhole(cancellationToken).ConfigureAwait(true);   // the map that was missing or building is the whole map now
@@ -146,6 +211,11 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(NoMap));
         OnChanged(nameof(IsBuilding));
+        OnChanged(nameof(BuildingTitle));
+        OnChanged(nameof(BuildingBody));
+        OnChanged(nameof(HasBuildingBody));
+        OnChanged(nameof(EmptyTitle));
+        OnChanged(nameof(HasBuildJob));
         OnChanged(nameof(Overlay));
         OnChanged(nameof(ShowEmpty));
         OnChanged(nameof(ShowBuilding));

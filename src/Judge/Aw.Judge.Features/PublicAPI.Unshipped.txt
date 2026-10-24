@@ -316,3 +316,137 @@ static Aw.Judge.Features.AskQuestion.AskQuestionRequest.operator !=(Aw.Judge.Fea
 static Aw.Judge.Features.AskQuestion.AskQuestionRequest.operator ==(Aw.Judge.Features.AskQuestion.AskQuestionRequest? left, Aw.Judge.Features.AskQuestion.AskQuestionRequest? right) -> bool
 static Aw.Judge.Features.AskQuestion.AskQuestionResponse.operator !=(Aw.Judge.Features.AskQuestion.AskQuestionResponse? left, Aw.Judge.Features.AskQuestion.AskQuestionResponse? right) -> bool
 static Aw.Judge.Features.AskQuestion.AskQuestionResponse.operator ==(Aw.Judge.Features.AskQuestion.AskQuestionResponse? left, Aw.Judge.Features.AskQuestion.AskQuestionResponse? right) -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.<Clone>$() -> Aw.Judge.Features.CheckTraits.CheckTraitsRequest!
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.BaseRef.get -> string?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.BaseRef.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Budget.get -> System.TimeSpan?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Budget.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.CheckTraitsRequest(Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, System.Collections.Generic.IReadOnlyList<string!>! Files, string? BaseRef = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null, System.Collections.Generic.IReadOnlyList<string!>? Traits = null, System.TimeSpan? Budget = null, double? MinProbability = null, int? Concurrency = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers = null) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Concurrency.get -> int?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Concurrency.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Deconstruct(out Aw.Judge.Features.CheckTraits.TraitCheckMode Mode, out System.Collections.Generic.IReadOnlyList<string!>! Files, out string? BaseRef, out System.Collections.Generic.IReadOnlyList<string!>? Paths, out System.Collections.Generic.IReadOnlyList<string!>? Traits, out System.TimeSpan? Budget, out double? MinProbability, out int? Concurrency, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Equals(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? other) -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Files.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.MinProbability.get -> double?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.MinProbability.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Mode.get -> Aw.Judge.Features.CheckTraits.TraitCheckMode
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Mode.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Paths.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Providers.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Traits.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.<Clone>$() -> Aw.Judge.Features.CheckTraits.CheckTraitsResponse!
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.CheckTraitsResponse(System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, bool JevUnavailable = false) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>! Findings, out bool JevUnavailable) -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? other) -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Features.CheckTraits.TraitFinding!>!
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Findings.init -> void
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.get -> bool
+Aw.Judge.Features.CheckTraits.CheckTraitsResponse.JevUnavailable.init -> void
+Aw.Judge.Features.CheckTraits.TraitCheckMode
+Aw.Judge.Features.CheckTraits.TraitCheckMode.Edit = 1 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
+Aw.Judge.Features.CheckTraits.TraitCheckMode.Scan = 3 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
+Aw.Judge.Features.CheckTraits.TraitCheckMode.Stop = 2 -> Aw.Judge.Features.CheckTraits.TraitCheckMode
+Aw.Judge.Features.CheckTraits.TraitFinding
+Aw.Judge.Features.CheckTraits.TraitFinding.<Clone>$() -> Aw.Judge.Features.CheckTraits.TraitFinding!
+Aw.Judge.Features.CheckTraits.TraitFinding.Deconstruct(out string! Trait, out string! Severity, out string! File, out double Probability, out string! Message) -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Equals(Aw.Judge.Features.CheckTraits.TraitFinding? other) -> bool
+Aw.Judge.Features.CheckTraits.TraitFinding.File.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.File.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Message.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Message.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Probability.get -> double
+Aw.Judge.Features.CheckTraits.TraitFinding.Probability.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Severity.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Severity.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.Trait.get -> string!
+Aw.Judge.Features.CheckTraits.TraitFinding.Trait.init -> void
+Aw.Judge.Features.CheckTraits.TraitFinding.TraitFinding(string! Trait, string! Severity, string! File, double Probability, string! Message) -> void
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.<Clone>$() -> Aw.Judge.Features.SetPromptSort.ScaffoldSwitch!
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Deconstruct(out string! Scaffold, out bool On) -> void
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Equals(Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? other) -> bool
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.On.get -> bool
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.On.init -> void
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Scaffold.get -> string!
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Scaffold.init -> void
+Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.ScaffoldSwitch(string! Scaffold, bool On) -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.<Clone>$() -> Aw.Judge.Features.SetPromptSort.SetPromptSortRequest!
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Deconstruct(out bool? Enabled, out Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? Scaffold) -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Enabled.get -> bool?
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Enabled.init -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Equals(Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? other) -> bool
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Scaffold.get -> Aw.Judge.Features.SetPromptSort.ScaffoldSwitch?
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Scaffold.init -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.SetPromptSortRequest(bool? Enabled = null, Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? Scaffold = null) -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.<Clone>$() -> Aw.Judge.Features.SetPromptSort.SetPromptSortResponse!
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.Config.get -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.Config.init -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.Deconstruct(out Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.Equals(Aw.Judge.Features.SetPromptSort.SetPromptSortResponse? other) -> bool
+Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.SetPromptSortResponse(Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+Aw.Judge.Features.SortPrompt.SortPromptRequest
+Aw.Judge.Features.SortPrompt.SortPromptRequest.<Clone>$() -> Aw.Judge.Features.SortPrompt.SortPromptRequest!
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Deconstruct(out string! Prompt, out Aw.Judge.Core.Ids.SessionId? Session, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers) -> void
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Equals(Aw.Judge.Features.SortPrompt.SortPromptRequest? other) -> bool
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Prompt.get -> string!
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Prompt.init -> void
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>?
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Providers.init -> void
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Session.get -> Aw.Judge.Core.Ids.SessionId?
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Session.init -> void
+Aw.Judge.Features.SortPrompt.SortPromptRequest.SortPromptRequest(string! Prompt, Aw.Judge.Core.Ids.SessionId? Session = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers = null) -> void
+Aw.Judge.Features.SortPrompt.SortPromptResponse
+Aw.Judge.Features.SortPrompt.SortPromptResponse.<Clone>$() -> Aw.Judge.Features.SortPrompt.SortPromptResponse!
+Aw.Judge.Features.SortPrompt.SortPromptResponse.Context.get -> string?
+Aw.Judge.Features.SortPrompt.SortPromptResponse.Context.init -> void
+Aw.Judge.Features.SortPrompt.SortPromptResponse.Deconstruct(out string? Context) -> void
+Aw.Judge.Features.SortPrompt.SortPromptResponse.Equals(Aw.Judge.Features.SortPrompt.SortPromptResponse? other) -> bool
+Aw.Judge.Features.SortPrompt.SortPromptResponse.SortPromptResponse(string? Context = null) -> void
+override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.GetHashCode() -> int
+override Aw.Judge.Features.CheckTraits.CheckTraitsRequest.ToString() -> string!
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.GetHashCode() -> int
+override Aw.Judge.Features.CheckTraits.CheckTraitsResponse.ToString() -> string!
+override Aw.Judge.Features.CheckTraits.TraitFinding.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckTraits.TraitFinding.GetHashCode() -> int
+override Aw.Judge.Features.CheckTraits.TraitFinding.ToString() -> string!
+override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.GetHashCode() -> int
+override Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.ToString() -> string!
+override Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.GetHashCode() -> int
+override Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.ToString() -> string!
+override Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.GetHashCode() -> int
+override Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.ToString() -> string!
+override Aw.Judge.Features.SortPrompt.SortPromptRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SortPrompt.SortPromptRequest.GetHashCode() -> int
+override Aw.Judge.Features.SortPrompt.SortPromptRequest.ToString() -> string!
+override Aw.Judge.Features.SortPrompt.SortPromptResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SortPrompt.SortPromptResponse.GetHashCode() -> int
+override Aw.Judge.Features.SortPrompt.SortPromptResponse.ToString() -> string!
+static Aw.Judge.Features.CheckTraits.CheckTraitsRequest.operator !=(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? left, Aw.Judge.Features.CheckTraits.CheckTraitsRequest? right) -> bool
+static Aw.Judge.Features.CheckTraits.CheckTraitsRequest.operator ==(Aw.Judge.Features.CheckTraits.CheckTraitsRequest? left, Aw.Judge.Features.CheckTraits.CheckTraitsRequest? right) -> bool
+static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator !=(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
+static Aw.Judge.Features.CheckTraits.CheckTraitsResponse.operator ==(Aw.Judge.Features.CheckTraits.CheckTraitsResponse? left, Aw.Judge.Features.CheckTraits.CheckTraitsResponse? right) -> bool
+static Aw.Judge.Features.CheckTraits.TraitFinding.operator !=(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool
+static Aw.Judge.Features.CheckTraits.TraitFinding.operator ==(Aw.Judge.Features.CheckTraits.TraitFinding? left, Aw.Judge.Features.CheckTraits.TraitFinding? right) -> bool
+static Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.operator !=(Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? left, Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? right) -> bool
+static Aw.Judge.Features.SetPromptSort.ScaffoldSwitch.operator ==(Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? left, Aw.Judge.Features.SetPromptSort.ScaffoldSwitch? right) -> bool
+static Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.operator !=(Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? left, Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? right) -> bool
+static Aw.Judge.Features.SetPromptSort.SetPromptSortRequest.operator ==(Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? left, Aw.Judge.Features.SetPromptSort.SetPromptSortRequest? right) -> bool
+static Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.operator !=(Aw.Judge.Features.SetPromptSort.SetPromptSortResponse? left, Aw.Judge.Features.SetPromptSort.SetPromptSortResponse? right) -> bool
+static Aw.Judge.Features.SetPromptSort.SetPromptSortResponse.operator ==(Aw.Judge.Features.SetPromptSort.SetPromptSortResponse? left, Aw.Judge.Features.SetPromptSort.SetPromptSortResponse? right) -> bool
+static Aw.Judge.Features.SortPrompt.SortPromptRequest.operator !=(Aw.Judge.Features.SortPrompt.SortPromptRequest? left, Aw.Judge.Features.SortPrompt.SortPromptRequest? right) -> bool
+static Aw.Judge.Features.SortPrompt.SortPromptRequest.operator ==(Aw.Judge.Features.SortPrompt.SortPromptRequest? left, Aw.Judge.Features.SortPrompt.SortPromptRequest? right) -> bool
+static Aw.Judge.Features.SortPrompt.SortPromptResponse.operator !=(Aw.Judge.Features.SortPrompt.SortPromptResponse? left, Aw.Judge.Features.SortPrompt.SortPromptResponse? right) -> bool
+static Aw.Judge.Features.SortPrompt.SortPromptResponse.operator ==(Aw.Judge.Features.SortPrompt.SortPromptResponse? left, Aw.Judge.Features.SortPrompt.SortPromptResponse? right) -> bool

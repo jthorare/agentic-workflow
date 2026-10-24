@@ -1,21 +1,18 @@
 {
-  "redCommit": "a1b2c3d",
-  "output": "1 failed: Expired_link_answers_410",
-  "items": [
-    {
-      "item": "AC-1",
-      "tests": [
-        {
-          "id": "Expired_link_answers_410",
-          "path": "tests/Links.Tests/ExpiryTests.cs"
-        }
-      ]
-    },
-    {
-      "item": "AC-2",
-      "appOnly": {
-        "signal": "ui-browser:expired-banner"
+  "AC-1": {
+    "tests": [
+      {
+        "id": "Expired_link_answers_410",
+        "path": "tests/Links.Tests/ExpiryTests.cs"
       }
-    }
-  ]
+    ],
+    "commit": "a1b2c3d",
+    "output": "1 failed: Expired_link_answers_410"
+  },
+  "AC-2": {
+    "appOnly": {
+      "signal": "ui-browser:expired-banner"
+    },
+    "commit": "a1b2c3d"
+  }
 }

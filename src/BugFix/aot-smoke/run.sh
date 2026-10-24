@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # NativeAOT smoke for bugfix-state (src/BugFix/Aw.BugFix.Host): publish it with PublishAot for the host RID, fail on any
 # trim/AOT (IL2xxx/IL3xxx) warning, then run the native binary through a bug fix in a temp git repository: init,
-# investigate, a failing baseline run, reproduce, an attempt, a fixed candidate, its passing run, judge (refused until
-# the judge adapter lands), report unresolved, resume, and a usage error. The normalized output must equal expected.txt.
+# investigate, a ui-evidence run, a failing baseline run, reproduce, an attempt, a fixed candidate, its passing run, judge,
+# report, resume, and a usage error. judge and ui-evidence are stub scripts in the temp directory (AW_JUDGE_BIN,
+# AW_UI_EVIDENCE_BIN), so the adapters run for real against them. The normalized output must equal expected.txt.
 # Output goes to artifacts/aot-bugfix-smoke/ (gitignored). The publish runs on a copy of the files it needs (the root
 # build files, src/Aw.Kernel, src/Aw.Kernel.Telemetry and src/Redaction (the host starts telemetry, which scrubs through
 # Redaction), src/Aw.Analyzers (every production project loads it), src/BugFix): PublishAot with a RID makes restore add
@@ -35,12 +36,35 @@ repo="$work/repo"
 git_() { git -C "$1" -c user.name=smoke -c user.email=smoke@example.invalid "${@:2}"; }
 mkdir -p "$repo/src" "$repo/tests"
 printf 'drop cookie\n' >"$repo/src/app.txt"
+printf '{"steps":[]}\n' >"$repo/tests/ui.json"
 printf 'grep -q keep src/app.txt\n' >"$repo/tests/bug.test.sh"
 git_ "$repo" init -q -b main
 git_ "$repo" add -A
 git_ "$repo" commit -q -m base
 printf '{"source":"text","id":null,"title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}' >"$work/ticket.json"
 printf 'status: diagnosed\n\n## Hypotheses\n\n| # | Hypothesis | Cause-site files | Likelihood | Result |\n|---|---|---|---|---|\n| 1 | Cookie dropped | `src/app.txt` | high | confirmed |\n\n## Root Cause\n\nThe cookie is dropped.\n' >"$work/handoff.md"
+
+# Stub judge: resolution-check keeps its stdin and decides resolved; why names the digest the real judge would store for that input.
+mkdir -p "$work/stubs"
+cat >"$work/stubs/judge" <<'STUB'
+#!/bin/bash
+here="$(cd "$(dirname "$0")" && pwd)"
+case "$1" in
+  resolution-check)
+    cat >"$here/input"
+    printf '{"decision":"resolved","confidence":0.9,"model":"jev","reasonCode":"judged","id":"d-1","reasons":["the page opens"]}\n' ;;
+  why) printf '{"id":"%s","question":"resolution-check","decision":"resolved","input_digest":"%s"}\n' "$2" "$(sha256sum "$here/input" | cut -c1-16)" ;;
+  *) exit 64 ;;
+esac
+STUB
+# Stub ui-evidence: run <script> <run-dir> ... writes a one-step passing summary.
+cat >"$work/stubs/ui-evidence" <<'STUB'
+#!/bin/bash
+mkdir -p "$3"
+printf '{"scriptSha256":"%s","steps":[{"index":1,"status":"passed"}]}\n' "$(sha256sum "$2" | cut -d' ' -f1)" >"$3/summary.json"
+STUB
+chmod +x "$work/stubs/judge" "$work/stubs/ui-evidence"
+export AW_JUDGE_BIN="$work/stubs/judge" AW_UI_EVIDENCE_BIN="$work/stubs/ui-evidence"
 
 bin="$out/bin/bugfix-state"
 state="$work/state"
@@ -49,6 +73,7 @@ evidence() { sed -n 's/.*"evidence":"\([^"]*\)".*/\1/p' "$out/raw.txt" | tail -1
 {
   step init --state "$state" --ticket "$work/ticket.json"
   step advance investigate --state "$state" --evidence "$work/handoff.md"
+  step run-ui --state "$state" --check tests/ui.json
   step run-test --state "$state" --check tests/bug.test.sh -- bash tests/bug.test.sh
 } >"$out/raw.txt" 2>&1
 {

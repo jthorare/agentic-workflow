@@ -108,7 +108,7 @@ public sealed class NeedsYouVerbsTests
     [Fact]
     public async Task The_merge_asks_one_line_first_and_Keep_sends_nothing()
     {
-        Serve(protectedComplete: true, ("merge", null), ("check", null));
+        Serve(protectedComplete: true, ("merge", true), ("check", null));
         var bar = await Bar();
         var merge = Verb(bar, "merge");
 
@@ -152,9 +152,9 @@ public sealed class NeedsYouVerbsTests
     [Theory]
     [InlineData("merge", false, false)]
     [InlineData("check", true, true)]
-    [InlineData("merge", null, true)]
+    [InlineData("merge", null, false)]
     [InlineData("check", null, false)]
-    public async Task The_served_destructive_flag_decides_and_the_merge_asks_until_the_engine_marks_it(string verb, bool? served, bool asks)
+    public async Task Only_the_served_destructive_flag_decides_whether_a_verb_asks(string verb, bool? served, bool asks)
     {
         Serve(protectedComplete: false, (verb, served));
 

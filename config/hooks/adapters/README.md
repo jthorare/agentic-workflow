@@ -62,7 +62,7 @@ the `aw:*` entries.
 | `trait-check.sh` | PostToolUse `Edit\|Write\|MultiEdit\|NotebookEdit` + Stop (`scripts/install-trait-check.sh`, opt-in) | PostToolUse `^(apply_patch\|Edit\|Write)$`: files from the `*** Add/Update File:` / `*** Move to:` lines of the patch; Stop: exit 2 → continuation reason on stderr | `postToolUse` (no matcher; the hook keeps edit/write tools) → `additional_context`; `stop` → `followup_message`, `stop_hook_active = loop_count > 0` |
 | `external-write-guard.sh` | PreToolUse `.*` | PreToolUse `.*` | `beforeShellExecution` (gh pr merge / comment / review) + `beforeMCPExecution` (tool renamed `mcp__<server>__<tool>`) |
 | `turn-origin.sh` | UserPromptSubmit | UserPromptSubmit | `beforeSubmitPrompt` → `{continue: true}` |
-| `prompt-sort.sh` | UserPromptSubmit (`scripts/install-judge.sh`, timeout 3s) | UserPromptSubmit: the adapter forwards plain stdout as developer context | **unmapped**: `beforeSubmitPrompt` output is `{continue: true}` only, it cannot carry context |
+| `prompt-sort.sh` | UserPromptSubmit (`scripts/install-judge.sh`, timeout 6s) | UserPromptSubmit: the adapter forwards plain stdout as developer context | **unmapped**: `beforeSubmitPrompt` output is `{continue: true}` only, it cannot carry context |
 | `send-gate.sh` | PreToolUse `SendMessage` | **unmapped**: nothing flushes the outbox before idle (no TeammateIdle), and `send_message`'s argument shape can't be checked against real input yet | **unmapped**: no teammate message tool |
 | `record-teammate-name.sh` | PreToolUse `Agent` | **unmapped** (only consumed by wake gating) | **unmapped** |
 | `outbox-flush.sh` | TeammateIdle | **unmapped**: no TeammateIdle event | **unmapped**: no TeammateIdle event |

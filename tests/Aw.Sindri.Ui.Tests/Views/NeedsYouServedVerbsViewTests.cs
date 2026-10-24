@@ -11,10 +11,10 @@ namespace Aw.Sindri.Ui.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class NeedsYouServedVerbsViewTests : FrameHost
 {
-    private async Task<Window> DeskFor(string scenario)
+    private async Task<Window> DeskFor(string scenario, Func<string, string>? edit = null)
     {
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "desk-task");
-        Server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", scenario));
+        Server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, (edit ?? (body => body))(GoldenFiles.Api("workflow-instance", scenario)));
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, width: 1600, height: 900);
         shell.OpenNeedsYouInbox();
         Settle(window);
@@ -46,6 +46,33 @@ public sealed class NeedsYouServedVerbsViewTests : FrameHost
         Settle(window);
 
         Assert.True(Visible(window, "NeedsYouVerbQuestion"));
+        Assert.Empty(Server.CommandCalls);
+    });
+
+    [Fact]
+    public Task A_verb_named_merge_without_the_served_flag_does_not_ask() => OnUi(async () =>
+    {
+        var window = await DeskFor("babysitter-ready-verbs", body => body.Replace(",\n      \"destructive\": true", "", StringComparison.Ordinal));
+
+        var merge = Verbs(window)[0];
+        Assert.DoesNotContain("destructive", merge.Classes, StringComparer.Ordinal);
+        merge.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.False(Visible(window, "NeedsYouVerbQuestion"));
+    });
+
+    [Fact]
+    public Task A_verb_other_than_merge_with_the_served_flag_asks_for_confirmation() => OnUi(async () =>
+    {
+        var window = await DeskFor("babysitter-ready-verbs", body => body.Replace("\"verb\": \"rework\"", "\"verb\": \"rework\",\n      \"destructive\": true", StringComparison.Ordinal));
+
+        var rework = Verbs(window)[1];
+        Assert.Contains("destructive", rework.Classes, StringComparer.Ordinal);
+        rework.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => string.Equals(t.Name, "NeedsYouVerbQuestion", StringComparison.Ordinal) && t.IsEffectivelyVisible);
         Assert.Empty(Server.CommandCalls);
     });
 

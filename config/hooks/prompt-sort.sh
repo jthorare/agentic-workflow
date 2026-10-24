@@ -5,11 +5,22 @@
 # by default this records a decision and prints nothing).
 #
 # Fails open: always exits 0; any failure, timeout (hard kill after
-# AW_PROMPT_SORT_BUDGET_MS, default 1500) or bad judge output prints nothing.
+# AW_PROMPT_SORT_BUDGET_MS, default 4000) or bad judge output prints nothing.
 # Machine text and slash commands never reach node (same prefixes as
 # turn-origin.sh and judge/src/prompt-sort/tier1.ts). Never prints skill names:
 # Prism's prism-route hook already does keyword skill routing.
 set -uo pipefail
+# HOOK-FAILOPEN: record why this hook printed nothing (config/lib/failopen.sh, installed at <hooks>/lib/failopen.sh).
+# Logging only, in a subshell with its output discarded: it never changes this hook's exit code or output.
+failopen() {
+  (
+    set +eu
+    d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 0
+    for f in "$d/lib/failopen.sh" "$d/../lib/failopen.sh"; do
+      if [ -f "$f" ]; then . "$f" && aw_failopen prompt-sort "$@"; exit 0; fi
+    done
+  ) > /dev/null 2>&1 || true
+}
 [ -n "${AW_JUDGE_CHILD:-}" ] && exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
@@ -31,8 +42,8 @@ PAYLOAD="$(jq -nc --arg p "$PROMPT" --arg s "$SESSION_ID" '{prompt:$p, sessionId
 OUT_FILE="$(mktemp 2>/dev/null)" || exit 0
 trap 'rm -f "$OUT_FILE"' EXIT
 
-BUDGET_MS="${AW_PROMPT_SORT_BUDGET_MS:-1500}"
-case "$BUDGET_MS" in ''|*[!0-9]*) BUDGET_MS=1500 ;; esac
+BUDGET_MS="${AW_PROMPT_SORT_BUDGET_MS:-4000}"
+case "$BUDGET_MS" in ''|*[!0-9]*) BUDGET_MS=4000 ;; esac
 TICKS=$((BUDGET_MS / 100))
 
 ( printf '%s' "$PAYLOAD" | AW_SESSION_ID="$SESSION_ID" judge prompt-sort > "$OUT_FILE" 2>/dev/null ) > /dev/null 2>&1 &
@@ -42,6 +53,7 @@ while kill -0 "$PID" 2>/dev/null; do
   if [ "$i" -ge "$TICKS" ]; then
     pkill -P "$PID" 2>/dev/null
     kill -9 "$PID" 2>/dev/null
+    failopen timeout
     exit 0
   fi
   sleep 0.1

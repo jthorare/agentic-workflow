@@ -43,6 +43,12 @@
 #                                  context.db through down, so the next draft's number depends on earlier runs); up and down
 #                                  approve whenever the profile is not approved
 #
+#   sindri-ui-fixture.sh context whole over|under
+#                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
+#                                  features with 50 code nodes each (612 nodes, over the 500-node budget: the Context page opens by feature),
+#                                  under imports the tabs map again (10 nodes: the page draws every node). Each switch is a new map version
+#                                  and a repeat with the same map imports nothing
+#
 #   sindri-ui-fixture.sh context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume
 #                                  the Health page's Context map card (F1P-c, code index spec 6.4; run after 'context up'): puts the
 #                                  map into one of the six publish states by writing the stored state the card reads, then prints the
@@ -384,21 +390,47 @@ context_up() {
   if needs_approval; then approve >&2 || return; fi
   map="$(context_dir)/tabs-map.json"
   cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context up: can't copy the tabs map"
+  context_import "$map" || return
+  printf '%s\n' "$CONTEXT_REPO"
+}
+
+# Imports a map file as the owner, typing 'import map <hash6>'. Each import makes a new map version, so it runs only when the
+# last import was another file (the marker holds its hash) or the store has no map. Exit 2 when the import is refused.
+context_import() {
+  local map="$1" hash out marker
   hash="$(sha256sum "$map" 2>/dev/null | cut -d' ' -f1)"
   [ -n "$hash" ] || hash="$(shasum -a 256 "$map" | cut -d' ' -f1)"
-  [ -n "$hash" ] || die "context up: no sha256sum or shasum"
-  # Each import makes a new map version, so a repeat up imports only when the store has no map or the file changed.
+  [ -n "$hash" ] || die "context: no sha256sum or shasum"
   marker="$AW_SINDRI_HOME/ui-fixture-context-imported"
   if [ "$(cat "$marker" 2>/dev/null)" = "$hash" ] && "$PROVE" human context map status --json >/dev/null 2>&1; then
-    printf '%s\n' "$CONTEXT_REPO"
     return 0
   fi
   # The challenge is 'import map ' and the first six characters of the file's sha-256 (the content hash the CLI shows).
   if ! out="$(printf 'import map %s\n' "${hash:0:6}" | "$PROVE" human context map import "$map" 2>&1)"; then
-    die "context up: the map import was refused: $out"
+    die "context: the map import was refused: $out"
   fi
   printf '%s\n' "$hash" > "$marker"
-  printf '%s\n' "$CONTEXT_REPO"
+}
+
+# The whole-map fixture (whole-map spec 8): 'over' imports a generated map of 12 features with 50 code nodes each (612 nodes, over
+# the 500-node budget, so the whole map opens by feature); 'under' imports the tabs map (10 nodes, drawn node by node).
+context_whole() {
+  need jq
+  local dir map
+  dir="$(context_dir)"
+  [ -d "$dir/$CONTEXT_REPO/.git" ] || die "context whole: run 'context up' first"
+  case "$1" in
+    under) map="$dir/tabs-map.json"; cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context whole: can't copy the tabs map" ;;
+    over)
+      map="$dir/over-map.json"
+      jq -n --arg repo "$CONTEXT_REPO" '{schemaVersion: 1, kind: "authored", repo: $repo,
+        nodes: [(range(0; 12) as $a | {key: "feature:area\($a)", label: "Area \($a)"}), (range(0; 12) as $a | range(0; 50) as $c
+          | {key: "code:src/area\($a)/File\($c).ts", label: "File\($c).ts", provenance: "deterministic"})],
+        edges: [range(0; 12) as $a | range(0; 50) as $c
+          | {from: "code:src/area\($a)/File\($c).ts", to: "feature:area\($a)", type: "implements"}]}' > "$map" || die "context whole: can't write the over-budget map" ;;
+  esac
+  context_import "$map" || return
+  printf '%s\n' "$1"
 }
 
 context_draft() { "$PROVE" human context map build; }
@@ -534,7 +566,7 @@ context_publish() {
 }
 
 context() {
-  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; esac
+  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; esac
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"
@@ -664,7 +696,8 @@ case "$verb" in
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
-      *) die "usage: context up|draft|down|publish <state>" ;;
+      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ]; }; } || die "usage: context whole over|under" ;;
+      *) die "usage: context up|draft|down|publish <state>|whole over|under" ;;
     esac ;;
   sessions)
     case "${2:-}" in

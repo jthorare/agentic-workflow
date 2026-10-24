@@ -74,7 +74,7 @@ if [ "$DO_HOOK" = "1" ] && [ "$AW_PROVIDER" != "claude" ]; then
     if [ "${AW_NO_PROMPT_SORT:-0}" != "1" ]; then
       case "$AW_PROVIDER" in
         codex)
-          aw_hook_set UserPromptSubmit aw:prompt-sort prompt-sort.sh "" 3
+          aw_hook_set UserPromptSubmit aw:prompt-sort prompt-sort.sh "" 6
           echo "  judge: UserPromptSubmit prompt-sort hook installed for codex"
           ;;
         cursor)
@@ -97,7 +97,7 @@ elif [ "$DO_HOOK" = "1" ]; then
   if [ "${AW_NO_PROMPT_SORT:-0}" != "1" ]; then
     cp "$SCRIPT_DIR/config/hooks/prompt-sort.sh" "$HOOKS_DIR/prompt-sort.sh"
     chmod +x "$HOOKS_DIR/prompt-sort.sh"
-    SORT_ENTRY=$(jq -nc --arg c "$HOOKS_DIR/prompt-sort.sh # aw:prompt-sort" '{hooks:[{type:"command",command:$c,timeout:3}]}')
+    SORT_ENTRY=$(jq -nc --arg c "$HOOKS_DIR/prompt-sort.sh # aw:prompt-sort" '{hooks:[{type:"command",command:$c,timeout:6}]}')
     merge_hook "$SETTINGS_FILE" UserPromptSubmit aw:prompt-sort "$SORT_ENTRY"
     echo "  judge: UserPromptSubmit prompt-sort hook installed (shadow mode: records, injects nothing until a scaffold switch is on)"
   fi

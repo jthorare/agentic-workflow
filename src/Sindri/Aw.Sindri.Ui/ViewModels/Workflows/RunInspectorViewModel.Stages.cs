@@ -7,8 +7,9 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed partial class RunInspectorViewModel
 {
     // The stage names of the line workflow come from the lane table (a stopgap until the engine serves names); any other state reads its id made readable.
-    private static string StageName(string state) =>
-        LineStages.LaneOf(state) is { } lane ? LineStages.Name(lane) : WorkflowNames.Of(state, displayName: null);
+    // "redesign" shares the Design lane on the board but is its own stage here: after Build and prove it must not read "Design" a second time.
+    internal static string StageName(string state) =>
+        string.Equals(state, "redesign", StringComparison.Ordinal) ? Labels.RunStageRedesign : LineStages.LaneOf(state) is { } lane ? LineStages.Name(lane) : WorkflowNames.Of(state, displayName: null);
 
     private static RunStatus Of(string word) => RunStatus.From(new StateChip(word, ChipTone.Neutral));
 

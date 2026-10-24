@@ -182,9 +182,36 @@ public sealed class RunInspectorViewModelTests
         await inspector.ReviewAndDecide(Token);
 
         var link = Assert.Single(asked).Link;
-        Assert.Contains(link.Kind, new[] { DeepLinkKind.NeedsYou, DeepLinkKind.Item });
+        Assert.Contains(link.Kind, new[] { DeepLinkKind.NeedsYou, DeepLinkKind.Item, DeepLinkKind.Workflow });
         Assert.Empty(_server.CompleteCalls);
     }
+
+    [Fact]
+    public async Task Review_and_decide_opens_the_parked_child_when_no_needs_you_row_names_the_run()
+    {
+        var instance = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("workflow-instance", "project-build"))!;
+        instance["itemId"] = null;   // a line run's instance serves no item of its own
+        var parked = instance["children"]![0]!["workstreams"]![1]!["rows"]![0]!;
+        parked["chip"] = System.Text.Json.Nodes.JsonNode.Parse("""{"word":"PARKED","tone":"neutral"}""");
+        _server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, instance.ToJsonString());
+        var inspector = Inspector();
+        await inspector.Show(_api, Row(Served(Build) with { Chip = new StateChip("PARKED", ChipTone.Neutral) }), Token);
+        var asked = new List<OpenRequestedEventArgs>();
+        inspector.OpenRequested += (_, e) => asked.Add(e);
+
+        await inspector.ReviewAndDecide(Token);
+
+        var one = Assert.Single(asked);
+        Assert.Equal((new DeepLink(DeepLinkKind.Workflow, parked["address"]!.GetValue<string>()), FrameIntent.OpenInitial), (one.Link, one.Intent));
+    }
+
+    [Theory]
+    [InlineData("scoping", "Scoping")]
+    [InlineData("design", "Design")]
+    [InlineData("redesign", "Redesign")]
+    [InlineData("phase", "Build and prove")]
+    public void A_line_stage_reads_its_own_name_not_its_lanes(string state, string name) =>
+        Assert.Equal(name, RunInspectorViewModel.StageName(state));
 
     [Fact]
     public async Task Copy_reference_puts_the_address_on_the_clipboard_and_the_footer_names_it()

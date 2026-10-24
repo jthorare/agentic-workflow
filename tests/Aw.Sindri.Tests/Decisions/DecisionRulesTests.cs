@@ -73,9 +73,9 @@ public sealed class DecisionRulesTests
     }
 
     [Fact]
-    public void Decide_refuses_a_note_over_2000_scalars()
+    public void Decide_refuses_a_note_over_65536_scalars()
     {
-        Expect.True(DecisionRules.Decide(A.Decision().Build(), _accept, new string('n', 2000), "human:ui", _command).IsSuccess);
-        Expect.Equal(SindriErrors.DecisionInvalid.Code, DecisionRules.Decide(A.Decision().Build(), _accept, new string('n', 2001), "human:ui", _command).Error.Code);
+        Expect.True(DecisionRules.Decide(A.Decision().Build(), _accept, new string('n', DecisionRules.NoteMax), "human:ui", _command).IsSuccess);
+        Expect.Equal(SindriErrors.DecisionInvalid.Code, DecisionRules.Decide(A.Decision().Build(), _accept, new string('n', DecisionRules.NoteMax + 1), "human:ui", _command).Error.Code);
     }
 }

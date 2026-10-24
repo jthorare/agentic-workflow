@@ -145,6 +145,19 @@ test_unreadable_session_file_falls_back_to_allow() {
   echo "PASS: test_unreadable_session_file_falls_back_to_allow"
 }
 
+test_a_meta_lane_is_never_denied_after_an_auto_continue() {
+  local sessions_dir out
+  sessions_dir="$(mktemp -d)"
+  write_session_with_auto_continue "$sessions_dir" "s1"
+  out="$(AW_META_TEAM=t AW_META_LANE=lane-a run_guard "$sessions_dir" 'gh pr merge 123')"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "allow"' > /dev/null \
+    || { echo "FAIL: a lane (AW_META_TEAM + AW_META_LANE) must be allowed gh pr merge after an auto-continue, got $out"; exit 1; }
+  out="$(AW_META_LANE=lane-a run_guard "$sessions_dir" 'gh pr merge 123')"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "deny"' > /dev/null \
+    || { echo "FAIL: AW_META_LANE alone (no team) is not a lane: still denied, got $out"; exit 1; }
+  echo "PASS: test_a_meta_lane_is_never_denied_after_an_auto_continue"
+}
+
 test_guard_never_invokes_judge() {
   grep -qE '(^|[^_a-zA-Z-])judge($| )' "$HOOK" && { echo "FAIL: external-write-guard.sh must be deterministic only — it must never call the judge binary"; exit 1; }
   echo "PASS: test_guard_never_invokes_judge"
@@ -163,4 +176,5 @@ test_aw_judge_child_gets_explicit_allow
 test_corrupt_session_file_falls_back_to_allow
 test_unreadable_session_file_falls_back_to_allow
 test_guard_never_invokes_judge
+test_a_meta_lane_is_never_denied_after_an_auto_continue
 echo "All external-write-guard tests passed."

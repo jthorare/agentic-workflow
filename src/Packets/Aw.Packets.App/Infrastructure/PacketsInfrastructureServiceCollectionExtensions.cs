@@ -10,7 +10,7 @@ namespace Aw.Packets.App.Infrastructure;
 internal static class PacketsInfrastructureServiceCollectionExtensions
 {
     /// <summary>How long one git run may take.</summary>
-    internal static readonly TimeSpan GitTimeout = TimeSpan.FromSeconds(30);
+    internal static readonly TimeSpan GitTimeout = TimeSpan.FromSeconds(120);
 
     /// <summary>Adds the Packets adapters (disk, git, the freeze log under packets/) and their settings.</summary>
     /// <param name="services">The service collection.</param>

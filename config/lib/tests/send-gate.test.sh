@@ -157,6 +157,32 @@ EOF
   echo "PASS: test_control_messages_bypass_the_classifier_entirely_f6"
 }
 
+test_an_old_queued_item_is_never_expired() {
+  local bin_dir out outbox; bin_dir="$(setup_fake_judge send)"; outbox="$(mktemp -d)"
+  jq -nc '{ts:"2026-01-01T00:00:00Z", agentType:"builder-a", text:"ancient progress"}' > "$outbox/s1.jsonl"
+  out="$(run_hook '{"session_id":"s1","agent_type":"builder-a","tool_input":{"to":"main","message":"done"}}' "$bin_dir" "$outbox")"
+  echo "$out" | jq -e '.hookSpecificOutput.updatedInput.message | contains("ancient progress")' > /dev/null \
+    || { echo "FAIL: a queued item older than 2 h must still ride along, got $out"; exit 1; }
+  [ ! -e "$outbox/expired.jsonl" ] || { echo "FAIL: nothing expires any more"; exit 1; }
+  echo "PASS: test_an_old_queued_item_is_never_expired"
+}
+
+test_a_lane_message_to_meta_or_the_lead_skips_wake_gating() {
+  local bin_dir out outbox to; bin_dir="$(setup_fake_judge drop)"; outbox="$(mktemp -d)"
+  for to in main team-lead meta; do
+    out="$(AW_META_LANE=lane-a run_hook "{\"session_id\":\"s1\",\"agent_type\":\"builder-a\",\"tool_input\":{\"to\":\"$to\",\"message\":\"ok\"}}" "$bin_dir" "$outbox")"
+    echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "allow"' > /dev/null \
+      || { echo "FAIL: a lane's message to $to must skip the wake gate (judge says drop), got $out"; exit 1; }
+  done
+  out="$(AW_META_LANE=lane-a run_hook '{"session_id":"s1","agent_type":"builder-a","tool_input":{"to":"lane-b","message":"ok"}}' "$bin_dir" "$outbox")"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "deny"' > /dev/null \
+    || { echo "FAIL: a lane's message to another lane is still gated, got $out"; exit 1; }
+  out="$(run_hook '{"session_id":"s1","agent_type":"builder-a","tool_input":{"to":"meta","message":"ok"}}' "$bin_dir" "$outbox")"
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "deny"' > /dev/null \
+    || { echo "FAIL: an ordinary session is still gated, got $out"; exit 1; }
+  echo "PASS: test_a_lane_message_to_meta_or_the_lead_skips_wake_gating"
+}
+
 test_send_is_allowed_unmodified
 test_drop_denies_with_no_ack_reason
 test_batch_denies_and_queues_tagged_by_agent_type
@@ -170,4 +196,6 @@ test_a_malformed_queue_fails_open_and_is_left_intact
 test_concurrent_batch_appends_dont_lose_an_item_rf4
 test_aw_judge_child_guard
 test_control_messages_bypass_the_classifier_entirely_f6
+test_an_old_queued_item_is_never_expired
+test_a_lane_message_to_meta_or_the_lead_skips_wake_gating
 echo "All send-gate tests passed."

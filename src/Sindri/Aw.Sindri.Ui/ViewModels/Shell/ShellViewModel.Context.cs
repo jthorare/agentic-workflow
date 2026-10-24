@@ -13,6 +13,9 @@ internal sealed partial class ShellViewModel
 
     // Everything the page needs once it exists (ShellViewModel's constructor calls this one line); a stage adds its wiring here, not in the constructor.
     [MemberNotNull(nameof(Context))]
-    private void InitContext(ISindriApi api, IClipboard clipboard) =>
+    private void InitContext(ISindriApi api, IClipboard clipboard)
+    {
         Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow));
+        Context.JobRequested += (_, e) => Navigate(e.Link);   // the Building overlay's "View build job"
+    }
 }

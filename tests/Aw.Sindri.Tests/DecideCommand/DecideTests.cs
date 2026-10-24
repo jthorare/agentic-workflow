@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Requests;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Testing;
@@ -96,12 +97,12 @@ public sealed class DecideTests
     }
 
     [Fact]
-    public async Task A_note_over_2000_characters_is_SND_DEC_001()
+    public async Task A_note_over_65536_characters_is_SND_DEC_001()
     {
         await Pending();
         using var entered = Human();
 
-        var result = await Service().Handle(A.DecideRequest().WithNote(new string('n', 2001)).Build(), Token);
+        var result = await Service().Handle(A.DecideRequest().WithNote(new string('n', DecisionRules.NoteMax + 1)).Build(), Token);
 
         Expect.Equal(SindriErrors.DecisionInvalid.Code, result.Error.Code);
         Assert.Empty(_h.Slice.Store.Events);

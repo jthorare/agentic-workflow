@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/pr/handoff-note.json",
+  "title": "Agent hand-off note (fact:handoffNote)",
+  "description": "PR babysitter spec W24 and Appendix A.1: what an agent Step leaves for the next one, { done, next, risks, files }. input.handoff-note injects it; each field is a text or a list of texts.",
+  "type": "object",
+  "properties": {
+    "done": { "$ref": "#/$defs/text" },
+    "next": { "$ref": "#/$defs/text" },
+    "risks": { "$ref": "#/$defs/text" },
+    "files": { "$ref": "#/$defs/text" }
+  },
+  "required": ["done", "next"],
+  "additionalProperties": false,
+  "$defs": {
+    "text": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    }
+  }
+}

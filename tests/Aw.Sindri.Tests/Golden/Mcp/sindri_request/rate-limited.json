@@ -2,9 +2,9 @@
   "isError": true,
   "structuredContent": {
     "code": "SND-REQ-002",
-    "message": "20 requests are already open in this repo; the limit is 20 (fix: wait for a human to decide some)"
+    "message": "200 requests are already open in this repo; the limit is 200 (fix: wait for a human to decide some)"
   },
   "content": [
-    "SND-REQ-002 20 requests are already open in this repo; the limit is 20 (fix: wait for a human to decide some)"
+    "SND-REQ-002 200 requests are already open in this repo; the limit is 200 (fix: wait for a human to decide some)"
   ]
 }

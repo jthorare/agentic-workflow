@@ -1,0 +1,12 @@
+{
+  "examples": [
+    { "file": "handoff-note.full.json", "schema": "handoff-note.json", "valid": true, "source": "W24: { done, next, risks, files }" },
+    { "file": "handoff-note.minimal.json", "schema": "handoff-note.json", "valid": true, "source": "A.1: done and next are always written" },
+    { "file": "handoff-note.no-next.json", "schema": "handoff-note.json", "valid": false, "source": "next is required" },
+    { "file": "handoff-note.files-number.json", "schema": "handoff-note.json", "valid": false, "source": "fields are texts or lists of texts" },
+    { "file": "reply.body.json", "schema": "reply.json", "valid": true, "source": "A.3: drafted carries the reply text" },
+    { "file": "reply.comment.json", "schema": "reply.json", "valid": true, "source": "5.4: facts carry their comment id" },
+    { "file": "reply.no-body.json", "schema": "reply.json", "valid": false, "source": "body is required" },
+    { "file": "reply.empty.json", "schema": "reply.json", "valid": false, "source": "an empty reply is not a reply" }
+  ]
+}

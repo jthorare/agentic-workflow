@@ -9,7 +9,7 @@ namespace Aw.Packets.Core.Checks;
 internal sealed class CheckList
 {
     /// <summary>The most failures one rule reports in full.</summary>
-    internal const int MaxFailures = 50;
+    internal const int MaxFailures = 500;
 
     private readonly List<CheckResult> _results = [];
 

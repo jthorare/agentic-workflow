@@ -107,9 +107,7 @@ public static partial class ProofChecks
         LiveItems(facts.Acceptance).SelectMany(id => (facts.Signals?["signals"]?[id] as JsonArray ?? []).OfType<JsonObject>()
             .Where(static s => (string?)s["runsAt"] == "base+head").Select(s => (id, (string?)s["id"] ?? string.Empty)));
 
-    private const string RedShape = "expected {\"tests\": [id or {id, path}], \"appOnly\": {signal}} or a list of test ids";
-
-    // fact:redTests (spec A.7, §7.2): an object keyed by item id, each value a list of test ids or {tests?, appOnly?, commit?, output?}. BLD-RED-001 (the tests failed) is build's red-check.
+    // fact:redTests (spec A.7, §7.2) is parsed by RedTestsFact, as build's red-check parses it. BLD-RED-001 (the tests failed) is build's red-check.
     private static void Red(ProofFacts facts, List<ProofFinding> failures)
     {
         if (Exempt(facts))
@@ -117,53 +115,22 @@ public static partial class ProofChecks
             return;
         }
 
-        if (facts.Red is not JsonObject red)
+        if (facts.Red is not JsonObject)
         {
-            failures.Add(new ProofFinding("PRV-RED-001", Item: null, $"red tests are recorded in the wrong shape: expected an object keyed by item id ({RedShape})", "record the failing tests per item"));
+            failures.Add(new ProofFinding("PRV-RED-001", Item: null, $"red tests are recorded in the wrong shape: expected an object keyed by item id ({RedTestsFact.Shape})", "record the failing tests per item"));
             return;
         }
 
-        failures.AddRange(LiveItems(facts.Acceptance).Select(id => RedFinding(id, RedEntry(red[id]))).OfType<ProofFinding>());
+        var entries = RedTestsFact.Parse(facts.Red).Entries.ToDictionary(static e => e.Item, StringComparer.Ordinal);
+        failures.AddRange(LiveItems(facts.Acceptance).Select(id => RedFinding(id, entries.GetValueOrDefault(id))).OfType<ProofFinding>());
     }
 
-    private static ProofFinding? RedFinding(string id, RedEntryState state) => state switch
+    private static ProofFinding? RedFinding(string id, RedEntry? entry) => entry switch
     {
-        RedEntryState.Recorded => null,
-        RedEntryState.Missing => new ProofFinding("PRV-RED-001", id, $"{id}: no red test or app-only entry was recorded for this item", "write the failing tests first and record them, or record the app-only signal"),
-        RedEntryState.WrongShape => new ProofFinding("PRV-RED-001", id, $"{id}: the red tests are recorded in the wrong shape ({RedShape})", "record the item's red tests in the expected shape"),
-        _ => throw new ArgumentOutOfRangeException(nameof(state), state, "an unknown red entry state"),
+        null or { Problem: null, Tests.Count: 0, AppOnly: false } => new ProofFinding("PRV-RED-001", id, $"{id}: no red test or app-only entry was recorded for this item", "write the failing tests first and record them, or record the app-only signal"),
+        { Problem: not null } => new ProofFinding("PRV-RED-001", id, $"{id}: the red tests are recorded in the wrong shape (expected {RedTestsFact.Shape})", "record the item's red tests in the expected shape"),
+        _ => null,
     };
-
-    private static RedEntryState RedEntry(JsonNode? entry) => entry switch
-    {
-        null => RedEntryState.Missing,
-        JsonArray list => TestIds(list) is { } count ? (count > 0 ? RedEntryState.Recorded : RedEntryState.Missing) : RedEntryState.WrongShape,
-        JsonObject body => RedBody(body),
-        _ => RedEntryState.WrongShape,
-    };
-
-    private static RedEntryState RedBody(JsonObject body)
-    {
-        var tests = body["tests"] is null ? 0 : body["tests"] is JsonArray list ? TestIds(list) : null;
-        var appOnly = body["appOnly"];
-        if (tests is null || appOnly is not (null or JsonObject))
-        {
-            return RedEntryState.WrongShape;
-        }
-
-        return tests > 0 || appOnly is not null ? RedEntryState.Recorded : RedEntryState.Missing;
-    }
-
-    // The number of tests a list names, or null when an element is neither an id nor an {id, path} object.
-    private static int? TestIds(JsonArray list) =>
-        list.All(static t => (t is JsonValue v && v.TryGetValue<string>(out _)) || (t is JsonObject o && o["id"] is JsonValue)) ? list.Count : null;
-
-    private enum RedEntryState
-    {
-        Recorded,
-        Missing,
-        WrongShape,
-    }
 
     private static IEnumerable<JsonObject> ArtifactsOf(JsonNode proof, string id) =>
         (proof["items"] as JsonArray ?? []).OfType<JsonObject>().Where(i => (string?)i["id"] == id).SelectMany(static i => (i["artifacts"] as JsonArray ?? []).OfType<JsonObject>());

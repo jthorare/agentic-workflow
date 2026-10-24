@@ -24,6 +24,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed partial class RecipeWorkflow
 {
     private const string Dispatcher = "system:dispatcher";
+    private const string LineReportOrderPatch = "ln-wf1-line-report-order";   // LN-WF1: a linked instance's reports reach its line one after the other, in the order of the changes
     private readonly List<Task> _effects = [];
     private readonly HashSet<string> _effectsOpen = new(StringComparer.Ordinal);
     private readonly HashSet<string> _effectsSent = new(StringComparer.Ordinal);
@@ -32,6 +33,7 @@ internal sealed partial class RecipeWorkflow
     private CancellationTokenSource? _effectsCancel;
     private TimeSpan _dispatchDelay;
     private bool _deskTaskNotified;
+    private Task? _lastReport;
 
     /// <summary>
     /// Runs <paramref name="effects"/> of the change that left the instance as <paramref name="after"/>: each through
@@ -60,12 +62,24 @@ internal sealed partial class RecipeWorkflow
             }
         }
 
-        return later.Count == 0 ? Workflow.WhenAllAsync(running) : ThenReport(after, running, later);
+        if (later.Count == 0)
+        {
+            return Workflow.WhenAllAsync(running);
+        }
+
+        // LN-WF1 (line spec §8.2): a line is told 'parked', 'resumed' and 'ended' in that order, so a report also waits for the previous change's. Behind a marker: a history recorded before it ran them concurrently.
+        var previous = Workflow.Patched(LineReportOrderPatch) ? _lastReport : null;
+        return _lastReport = ThenReport(after, running, later, previous);
     }
 
-    private async Task ThenReport(WorkflowInstance after, List<Task> first, List<EffectCommand> reports)
+    private async Task ThenReport(WorkflowInstance after, List<Task> first, List<EffectCommand> reports, Task? previous)
     {
         await Workflow.WhenAllAsync(first).ConfigureAwait(true);
+        if (previous is not null)
+        {
+            _ = await Workflow.WhenAnyAsync(previous).ConfigureAwait(true);   // done, failed or cancelled: a failure surfaces through Settle, it doesn't hold the next report
+        }
+
         foreach (var report in reports.Where(r => !_effectsSent.Contains(r.Identity.Text) && _effectsOpen.Add(r.Identity.Text)))
         {
             await DispatchOne(after, report).ConfigureAwait(true);

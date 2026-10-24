@@ -331,6 +331,28 @@ public sealed class ScopingCheckTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_lens_or_dimension_no_round_walked_warns_once_the_second_opinion_is_spent_and_before_it_fails()
+    {
+        static void Spend(JsonNode n)
+        {
+            var rounds = n["rounds"]!.AsArray();
+            rounds.Add(rounds[1]!.DeepClone());
+            foreach (var round in rounds)
+            {
+                round!["walked"] = new JsonArray();
+            }
+        }
+
+        var spent = await Run(ScopingFacts.Expiry().Edit("challenge", Spend), ScopeStage.Evidence);
+        var notYet = await Run(ScopingFacts.Expiry().Edit("challenge", n => { foreach (var round in n["rounds"]!.AsArray()) { round!["walked"] = new JsonArray(); } }), ScopeStage.Evidence);
+
+        Assert.Equal(ScopeOutcome.Complete, spent.Outcome);
+        Assert.Equal(ScopeRuleStatus.Warn, spent.Rules.Single(r => r.Rule == "SCP-CHAL-001").Status);
+        Assert.Equal(ScopeOutcome.Incomplete, notYet.Outcome);
+        Assert.Equal(ScopeRuleStatus.Fail, notYet.Rules.Single(r => r.Rule == "SCP-CHAL-001").Status);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_dimension_any_round_walked_counts_as_walked()
     {
         var facts = ScopingFacts.Expiry().Edit("challenge", n =>

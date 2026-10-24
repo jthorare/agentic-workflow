@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "SND-REQ-001",
   "status": 400,
-  "detail": "The text is longer than 2000 characters (fix: shorten it)",
+  "detail": "The text is longer than 65536 characters (fix: shorten it)",
   "traceId": "<trace>"
 }

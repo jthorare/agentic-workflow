@@ -66,7 +66,7 @@ internal static class ScopeChecks
     {
         var graph = new TaskGraph(packet.Tasks.Tasks);
         var tasks = packet.Tasks.Tasks.OrderBy(static t => t.Id.Value, StringComparer.Ordinal).ToList();
-        // by index, not by task or id: the pair loop runs n²/2 times (two million at the task limit), so it hashes nothing
+        // by index, not by task or id: the pair loop runs n²/2 times (two hundred million at the task limit), so it hashes nothing
         var writes = tasks.Select(t => PathIndex.Words(Written(scopes[t], index))).ToArray();
         var at = tasks.Select(t => graph.Position(t.Id)).ToArray();
         for (var i = 0; i < tasks.Count; i++)

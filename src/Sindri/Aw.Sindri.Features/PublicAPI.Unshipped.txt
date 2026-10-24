@@ -4683,3 +4683,39 @@ Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Area.get -> string?
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Area.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.Deconstruct(out string? Detail, out System.Collections.Generic.IReadOnlyList<string!>? Locate, out bool Draft, out string? MapVersion, out string? Repo, out string? Area) -> void
 Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.GetContextWholeMapRequest(string? Detail = null, System.Collections.Generic.IReadOnlyList<string!>? Locate = null, bool Draft = false, string? MapVersion = null, string? Repo = null, string? Area = null) -> void
+Aw.Sindri.Features.Scrub.ScrubMode
+Aw.Sindri.Features.Scrub.ScrubMode.InstallPreCommit = 2 -> Aw.Sindri.Features.Scrub.ScrubMode
+Aw.Sindri.Features.Scrub.ScrubMode.Staged = 1 -> Aw.Sindri.Features.Scrub.ScrubMode
+Aw.Sindri.Features.Scrub.ScrubMode.Stdin = 0 -> Aw.Sindri.Features.Scrub.ScrubMode
+Aw.Sindri.Features.Scrub.ScrubRequest
+Aw.Sindri.Features.Scrub.ScrubRequest.<Clone>$() -> Aw.Sindri.Features.Scrub.ScrubRequest!
+Aw.Sindri.Features.Scrub.ScrubRequest.Bin.get -> string?
+Aw.Sindri.Features.Scrub.ScrubRequest.Bin.init -> void
+Aw.Sindri.Features.Scrub.ScrubRequest.Deconstruct(out Aw.Sindri.Features.Scrub.ScrubMode Mode, out string! Text, out string? Repo, out string? Bin) -> void
+Aw.Sindri.Features.Scrub.ScrubRequest.Equals(Aw.Sindri.Features.Scrub.ScrubRequest? other) -> bool
+Aw.Sindri.Features.Scrub.ScrubRequest.Mode.get -> Aw.Sindri.Features.Scrub.ScrubMode
+Aw.Sindri.Features.Scrub.ScrubRequest.Mode.init -> void
+Aw.Sindri.Features.Scrub.ScrubRequest.Repo.get -> string?
+Aw.Sindri.Features.Scrub.ScrubRequest.Repo.init -> void
+Aw.Sindri.Features.Scrub.ScrubRequest.ScrubRequest(Aw.Sindri.Features.Scrub.ScrubMode Mode, string! Text = "", string? Repo = null, string? Bin = null) -> void
+Aw.Sindri.Features.Scrub.ScrubRequest.Text.get -> string!
+Aw.Sindri.Features.Scrub.ScrubRequest.Text.init -> void
+Aw.Sindri.Features.Scrub.ScrubResponse
+Aw.Sindri.Features.Scrub.ScrubResponse.<Clone>$() -> Aw.Sindri.Features.Scrub.ScrubResponse!
+Aw.Sindri.Features.Scrub.ScrubResponse.Deconstruct(out string! Output, out string? HookPath) -> void
+Aw.Sindri.Features.Scrub.ScrubResponse.Equals(Aw.Sindri.Features.Scrub.ScrubResponse? other) -> bool
+Aw.Sindri.Features.Scrub.ScrubResponse.HookPath.get -> string?
+Aw.Sindri.Features.Scrub.ScrubResponse.HookPath.init -> void
+Aw.Sindri.Features.Scrub.ScrubResponse.Output.get -> string!
+Aw.Sindri.Features.Scrub.ScrubResponse.Output.init -> void
+Aw.Sindri.Features.Scrub.ScrubResponse.ScrubResponse(string! Output, string? HookPath = null) -> void
+override Aw.Sindri.Features.Scrub.ScrubRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Scrub.ScrubRequest.GetHashCode() -> int
+override Aw.Sindri.Features.Scrub.ScrubRequest.ToString() -> string!
+override Aw.Sindri.Features.Scrub.ScrubResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.Scrub.ScrubResponse.GetHashCode() -> int
+override Aw.Sindri.Features.Scrub.ScrubResponse.ToString() -> string!
+static Aw.Sindri.Features.Scrub.ScrubRequest.operator !=(Aw.Sindri.Features.Scrub.ScrubRequest? left, Aw.Sindri.Features.Scrub.ScrubRequest? right) -> bool
+static Aw.Sindri.Features.Scrub.ScrubRequest.operator ==(Aw.Sindri.Features.Scrub.ScrubRequest? left, Aw.Sindri.Features.Scrub.ScrubRequest? right) -> bool
+static Aw.Sindri.Features.Scrub.ScrubResponse.operator !=(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
+static Aw.Sindri.Features.Scrub.ScrubResponse.operator ==(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool

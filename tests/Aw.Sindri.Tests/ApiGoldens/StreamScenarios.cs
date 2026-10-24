@@ -20,7 +20,7 @@ internal static class StreamScenarios
         ("events", "types-service"), ("events", "item-filter"), ("events", "session-repo"), ("events", "session-no-repo"), ("events", "ansi-escaped"),
         ("events", "after-past-head"), ("events", "bad-types"), ("events", "streams-full"),
         ("ledger", "human-all"), ("ledger", "session-public"), ("ledger", "session-repo"), ("ledger", "type-filter"), ("ledger", "item-filter"),
-        ("ledger", "paged"), ("ledger", "max-over-500"), ("ledger", "after-past-head"), ("ledger", "ansi-escaped"),
+        ("ledger", "paged"), ("ledger", "max-over-10000"), ("ledger", "after-past-head"), ("ledger", "ansi-escaped"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -73,14 +73,14 @@ internal static class StreamScenarios
             "type-filter" => ("/sindri/ledger?type=item.*", human),
             "item-filter" => ("/sindri/ledger?item=" + demo, human),
             "paged" => ("/sindri/ledger?after=2&max=3", human),
-            "max-over-500" => ("/sindri/ledger?max=501", human),
+            "max-over-10000" => ("/sindri/ledger?max=10001", human),
             "after-past-head" => ("/sindri/ledger?after=99999", human),
             _ => ("/sindri/ledger?type=item.created", human),   // 'ansi-escaped'
         };
         return (await host.Http.Ask(Get(route, headers))).Body;
     }
 
-    /// <summary>The 17th stream's 429, after sixteen are open.</summary>
+    /// <summary>The 65th stream's 429, after sixty-four are open.</summary>
     private static async Task<string> StreamsFull(GoldenHost host, (string Name, string Value)[] headers, CancellationToken ct)
     {
         var open = new List<(HttpResponseMessage Response, Stream Body)>();

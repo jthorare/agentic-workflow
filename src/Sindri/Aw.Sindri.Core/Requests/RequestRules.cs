@@ -8,13 +8,13 @@ namespace Aw.Sindri.Core.Requests;
 public static class RequestRules
 {
     /// <summary>The longest text, in Unicode scalars of the raw text (P4 plan G2).</summary>
-    public const int TextMax = 2000;
+    public const int TextMax = 64 * 1024;
 
     /// <summary>The most open requests in one repo (a session caller; P4 plan G4).</summary>
-    public const int MaxOpenPerRepo = 20;
+    public const int MaxOpenPerRepo = 200;
 
     /// <summary>The most open requests overall (a session caller).</summary>
-    public const int MaxOpenTotal = 50;
+    public const int MaxOpenTotal = 500;
 
     /// <summary>Checks a request's kind and text.</summary>
     /// <param name="kind">The kind.</param>
@@ -40,7 +40,7 @@ public static class RequestRules
     /// <summary>Checks the caps against the open requests already filed.</summary>
     /// <param name="openForRepo">Open requests in the new request's repo (0 without a repo).</param>
     /// <param name="openTotal">Open requests overall.</param>
-    /// <returns>Success, or SND-REQ-002 when the new one would be the 21st in the repo or the 51st overall.</returns>
+    /// <returns>Success, or SND-REQ-002 when the new one would be the 201st in the repo or the 501st overall.</returns>
     public static Result<Unit> Cap(int openForRepo, int openTotal)
     {
         if (openForRepo >= MaxOpenPerRepo)

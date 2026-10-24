@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/pr/reply.json",
+  "title": "Drafted reply (fact:reply)",
+  "description": "PR babysitter spec Appendix A.3: the text of one reply to one comment, under 120 words. effect.pr.reply reads its body, checks it through Aw.Redaction and posts it.",
+  "type": "object",
+  "properties": {
+    "body": { "type": "string", "minLength": 1 },
+    "comment": { "type": "string", "minLength": 1, "description": "The comment the reply answers, when the Step carries its id." }
+  },
+  "required": ["body"],
+  "additionalProperties": false
+}

@@ -30,12 +30,12 @@ design.
 | `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear or text, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
 | `advance investigate --evidence <handoff.md>` | intake → investigate | Snapshots the `/rootCause` handoff: status `diagnosed`, at least one `confirmed` hypothesis, a `## Root Cause` section |
 | `run-test --check <file> [--cwd <dir>] -- <command…>` | any | Runs the test command on a clean tree and registers a run record (with the commit and the working directory) |
-| `run-ui --check <script.json> [--cwd <dir>]` | any | Runs the ui-evidence script on a clean tree and registers a run record (blocked: see Ports) |
+| `run-ui --check <script.json> [--cwd <dir>]` | any | Runs the ui-evidence script on a clean tree and registers a run record |
 | `advance reproduce --evidence <run> --check <file> [--cwd <dir>]` | investigate → reproduce | Freezes the check and the failing baseline |
 | `start-attempt --mode <A\|B\|C> [--abandon-judge]` | reproduce, evaluate → fix | Opens the next attempt (at most 3); `--abandon-judge` leaves behind a candidate whose judge question was never answered |
 | `record-candidate --branch <b> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes]` | fix, evaluate | Records the worktree's commit as the next candidate (`c1`, `c2`, …) |
 | `record-run <candidate> --evidence <run>` | fix, evaluate → evaluate | Records the frozen check's run against the candidate |
-| `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict (blocked: see Ports) |
+| `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict |
 | `advance report (--candidate <id> \| --unresolved)` | → report | Finishes resolved (only with a passing run and a `resolved` verdict) or unresolved |
 | `status` | any | Prints the whole state |
 | `resume` | any | Prints `phase`, `status`, `attempt` and the `next` action |
@@ -149,7 +149,7 @@ not with another rule.
   description of the frozen check, the diff stat and the diff without lock files (`package-lock.json`, `*.lock`,
   `pnpm-lock.yaml`, `packages.lock.json`) and `dist/` output, capped at 200,000 characters), writes it to
   `judge-<candidate>.json`, marks the candidate as asked, asks judge about that file without holding the lock, and
-  records the answer only when it names that file's SHA-256, the bug fix is still in `evaluate`, and the candidate
+  records the answer only when it names the judge's input digest of that file, the bug fix is still in `evaluate`, and the candidate
   belongs to the current attempt (a call that outlives an `--abandon-judge` records nothing). It never asks
   again: a call interrupted after asking leaves the mark and the next `judge` is refused. `resume` then says to ask
   the user, who may leave it behind with `start-attempt --mode <A|B|C> --abandon-judge` (recorded in the history) or
@@ -226,14 +226,12 @@ Everything lives under the `--state` directory; the C# build never reads TS-writ
 | `IRunLedger` | `InMemoryRunLedger` | `FileRunLedger` | `RunLedgerContract` |
 | `IGit`, `IFiles` | `InMemoryRepos` (one fake: git answers about the files the file port reads) | `GitProcess` (git on PATH), `LocalFiles` | `ReposContract` |
 | `ICheckRunner` (returns the exit code and whether it ran to a verdict) | `ScriptedCheckRunner` | `ProcessCheckRunner`: output streamed to the log (16 MB cap); killed after `AW_BUGFIX_CHECK_TIMEOUT_SECONDS` (default 1800); a run that exits keeps its exit code even if background children still hold its output (output after the exit is dropped after 5 s, noted in the log; those children aren't killed: they left the process tree); a run killed at the limit or that couldn't start didn't run to a verdict (broken); runs without loader variables | `CheckRunnerContract` |
-| `IJudge` (asks about the written input file; the answer names its SHA-256) | `ScriptedJudge` | `UnavailableJudge` (**blocked**) | `JudgeContract` |
-| `IUiEvidence` | `ScriptedUiEvidence` | `UnavailableUiEvidence` (**blocked**) | `UiEvidenceContract` |
+| `IJudge` (asks about the written input file; the answer names the judge's 16-hex input digest) | `ScriptedJudge` | `JudgeCli` (`judge resolution-check`, then `judge why`; `AW_JUDGE_BIN` else PATH; 5 minutes each) | `JudgeContract` |
+| `IUiEvidence` | `ScriptedUiEvidence` | `UiEvidenceCli` (`ui-evidence run <script> <run-dir> --app-build <commit>`; `AW_UI_EVIDENCE_BIN` else PATH) | `UiEvidenceContract` |
 
-**Blocked adapters.** judge and ui-evidence are reached through their CLIs (`deps.yaml` cli edges), and both are being
-ported to C# too, so `bugfix-state` follows their C# contracts, not the TypeScript ones. Neither contract is published
-yet (`docs/csharp/judge.md` comes with the Judge packet; Evidence isn't ported). Until then Composition registers
-adapters that answer AW-BUGFIX-016 and AW-BUGFIX-017: `judge` and `run-ui` refuse with exit 3 and record nothing, and
-everything else works. The adapter that replaces each one is a new `Infrastructure` class bound to its contract base.
-For judge the port already carries the binding: the adapter gets the written input file and its SHA-256 and must
-return the SHA-256 of the input judge stored the decision for (the helper refuses any other), so an agent can't forge or
-re-roll a verdict.
+**The judge and ui-evidence adapters** reach those tools through their CLIs (`deps.yaml` cli edges; cutover spec §4.3).
+`JudgeCli` writes `judge-<cand>.json` in the judge's canonical form (compact, `ui` sent as `ui-evidence`), pipes it to
+`judge resolution-check` (exit 0 decided, 2 escalated, anything else AW-BUGFIX-016), and asks `judge why <id>` for the stored
+`input_digest`. The input digest is the first 16 hex of the SHA-256 of that canonical form; the helper refuses an answer about any
+other input, so an agent can't forge or re-roll a verdict. `UiEvidenceCli` runs the script and reads `summary.json`: exit 0 passed,
+2 a failed check, 4 broken, anything else AW-BUGFIX-017. Both read `AW_STATE_DIR` (and `AW_JUDGE_STATE_DIR`) as the hooks do, so it must match.

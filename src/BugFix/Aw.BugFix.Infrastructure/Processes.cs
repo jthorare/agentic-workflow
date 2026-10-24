@@ -21,11 +21,11 @@ internal static class Processes
     // the verdict hostage, and don't turn a finished run into a timed-out one.
     private static readonly TimeSpan _drainAfterExit = TimeSpan.FromSeconds(5);
 
-    internal static ProcessResult Capture(ProcessStartInfo start, TimeSpan timeout)
+    internal static ProcessResult Capture(ProcessStartInfo start, TimeSpan timeout, string? input = null)
     {
         using var output = new MemoryStream();
         using var error = new MemoryStream();
-        var (code, _, note) = Run(start, timeout, output, error);
+        var (code, _, note) = Run(start, timeout, output, error, input);
         return new ProcessResult(code, Encoding.UTF8.GetString(output.ToArray()), note ?? Encoding.UTF8.GetString(error.ToArray()));
     }
 
@@ -34,7 +34,7 @@ internal static class Processes
     {
         using var file = new FileStream(log, FileMode.Create, FileAccess.Write, FileShare.Read);
         using var sink = Stream.Synchronized(file);
-        var (code, ran, note) = Run(start, timeout, sink, sink);
+        var (code, ran, note) = Run(start, timeout, sink, sink, input: null);
         if (note is not null)
         {
             sink.Write(Encoding.UTF8.GetBytes($"\nbugfix-state: {note}\n"));
@@ -56,7 +56,7 @@ internal static class Processes
 
     // The deadline covers the process; after it exits, output is drained only briefly, so a background child holding the
     // pipes neither stretches the run nor erases its exit code (the child itself left the process tree and isn't killed).
-    private static (int Code, bool Ran, string? Note) Run(ProcessStartInfo start, TimeSpan timeout, Stream output, Stream error)
+    private static (int Code, bool Ran, string? Note) Run(ProcessStartInfo start, TimeSpan timeout, Stream output, Stream error, string? input)
     {
         start.RedirectStandardOutput = true;
         start.RedirectStandardError = true;
@@ -74,8 +74,8 @@ internal static class Processes
 
         using (process)
         {
-            process.StandardInput.Close();
             var pumps = Task.WhenAll(Pump(process.StandardOutput.BaseStream, output), Pump(process.StandardError.BaseStream, error));
+            WriteInput(process, input);
             if (!process.WaitForExit(timeout))
             {
                 Kill(process);
@@ -87,6 +87,24 @@ internal static class Processes
                 ? (process.ExitCode, true, null)
                 : (process.ExitCode, true, string.Create(CultureInfo.InvariantCulture, $"{start.FileName} exited {process.ExitCode} but left processes holding its output; output after the exit was not kept"));
 #pragma warning restore RS0030
+        }
+    }
+
+    // The program reads its input while the pumps drain its output; a program that exits without reading it is not an error here.
+    private static void WriteInput(Process process, string? input)
+    {
+        try
+        {
+            if (input is not null)
+            {
+                process.StandardInput.Write(input);
+            }
+
+            process.StandardInput.Close();
+        }
+        catch (IOException)
+        {
+            // the program closed its input early.
         }
     }
 

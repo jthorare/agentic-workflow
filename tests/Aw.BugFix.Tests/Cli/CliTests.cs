@@ -28,7 +28,12 @@ public sealed class CliTests : IDisposable
         Assert.Equal("judge c1", Field(Ok("record-run", "c1", "--state", _w.State, "--evidence", Field(after, "evidence").GetString()!), "next").GetString()); // why: as above.
         Assert.Equal("judge c1", Field(Ok("resume", "--state", _w.State), "next").GetString());
 
-        Refused(["judge", "c1", "--state", _w.State], "AW-BUGFIX-016");
+        // A judge binary that isn't there is no verdict (AW-BUGFIX-016, naming the variable), whatever the box has on PATH.
+        var missing = new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_JUDGE_BIN"] = Path.Combine(_w.Root, "no-such-judge") };
+        var (judgeExit, judgeOutput, judgeError) = _w.RunWith(missing, "judge", "c1", "--state", _w.State);
+        Assert.Equal((3, ""), (judgeExit, judgeOutput));
+        Assert.Contains("AW_JUDGE_BIN", judgeError, StringComparison.Ordinal);
+        Assert.EndsWith("(AW-BUGFIX-016)", judgeError.TrimEnd(), StringComparison.Ordinal);
 
         Assert.Equal("unresolved", Field(Ok("advance", "report", "--state", _w.State, "--unresolved"), "status").GetString());
         Assert.StartsWith("done (unresolved)", Field(Ok("resume", "--state", _w.State), "next").GetString(), StringComparison.Ordinal);

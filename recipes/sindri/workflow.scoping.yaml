@@ -143,7 +143,7 @@ transitions:
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
 loops: { rounds: { cap: 6 }, rescope: { cap: 3 }, interview: { cap: 4 }, challenge: { cap: 3 }, refreeze: { cap: 2 }, revise: { cap: 4 } }
-evals:   # 30 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size
+evals:   # 31 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap that reaches the stop
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -163,6 +163,7 @@ evals:   # 30 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/challenge-found-twice.jsonl
   - evals/workflow.scoping/challenge-cap-questions.jsonl
   - evals/workflow.scoping/challenge-cap-size.jsonl
+  - evals/workflow.scoping/challenge-spent-walk-gap-stops.jsonl
   - evals/workflow.scoping/e2e-run15-capped.jsonl
   - evals/workflow.scoping/e2e-run9-capped.jsonl
   - evals/workflow.scoping/e2e-run16-parked.jsonl

@@ -997,3 +997,260 @@ const Aw.Judge.Core.Questions.ChooseQuestion.MaxCriterionLength = 400 -> int
 const Aw.Judge.Core.Questions.ChooseQuestion.MaxNameLength = 32 -> int
 const Aw.Judge.Core.Questions.ChooseQuestion.Uncertain = "uncertain" -> string!
 static Aw.Judge.Core.Questions.ChooseQuestion.Unreadable.get -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.ChooseInput!>!
+Aw.Judge.Core.Batching.BatchAnswer
+Aw.Judge.Core.Batching.BatchAnswer.BatchAnswer() -> void
+Aw.Judge.Core.Batching.BatchAnswer.BatchAnswer(Aw.Judge.Core.Batching.BatchAnswer! original) -> void
+Aw.Judge.Core.Batching.BatchDecided
+Aw.Judge.Core.Batching.BatchDecided.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Judge.Core.Batching.BatchAnswer!>!
+Aw.Judge.Core.Batching.BatchDecided.Answers.init -> void
+Aw.Judge.Core.Batching.BatchDecided.BatchDecided(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Judge.Core.Batching.BatchAnswer!>! Answers, Aw.Judge.Core.Batching.BatchUsage? Usage = null) -> void
+Aw.Judge.Core.Batching.BatchDecided.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Judge.Core.Batching.BatchAnswer!>! Answers, out Aw.Judge.Core.Batching.BatchUsage? Usage) -> void
+Aw.Judge.Core.Batching.BatchDecided.Equals(Aw.Judge.Core.Batching.BatchDecided? other) -> bool
+Aw.Judge.Core.Batching.BatchDecided.Usage.get -> Aw.Judge.Core.Batching.BatchUsage?
+Aw.Judge.Core.Batching.BatchDecided.Usage.init -> void
+Aw.Judge.Core.Batching.BatchQuestion
+Aw.Judge.Core.Batching.BatchQuestion.BatchQuestion(Aw.Judge.Core.Batching.BatchQuestion! original) -> void
+Aw.Judge.Core.Batching.BatchQuestion.BatchQuestion(string! Key, string! Prompt) -> void
+Aw.Judge.Core.Batching.BatchQuestion.Deconstruct(out string! Key, out string! Prompt) -> void
+Aw.Judge.Core.Batching.BatchQuestion.Key.get -> string!
+Aw.Judge.Core.Batching.BatchQuestion.Key.init -> void
+Aw.Judge.Core.Batching.BatchQuestion.Prompt.get -> string!
+Aw.Judge.Core.Batching.BatchQuestion.Prompt.init -> void
+Aw.Judge.Core.Batching.BatchRequest
+Aw.Judge.Core.Batching.BatchRequest.<Clone>$() -> Aw.Judge.Core.Batching.BatchRequest!
+Aw.Judge.Core.Batching.BatchRequest.BatchRequest(System.Text.Json.Nodes.JsonNode? State, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Batching.BatchQuestion!>! Questions, System.TimeSpan Budget) -> void
+Aw.Judge.Core.Batching.BatchRequest.Budget.get -> System.TimeSpan
+Aw.Judge.Core.Batching.BatchRequest.Budget.init -> void
+Aw.Judge.Core.Batching.BatchRequest.Deconstruct(out System.Text.Json.Nodes.JsonNode? State, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Batching.BatchQuestion!>! Questions, out System.TimeSpan Budget) -> void
+Aw.Judge.Core.Batching.BatchRequest.Equals(Aw.Judge.Core.Batching.BatchRequest? other) -> bool
+Aw.Judge.Core.Batching.BatchRequest.Questions.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Batching.BatchQuestion!>!
+Aw.Judge.Core.Batching.BatchRequest.Questions.init -> void
+Aw.Judge.Core.Batching.BatchRequest.State.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Judge.Core.Batching.BatchRequest.State.init -> void
+Aw.Judge.Core.Batching.BatchUsage
+Aw.Judge.Core.Batching.BatchUsage.<Clone>$() -> Aw.Judge.Core.Batching.BatchUsage!
+Aw.Judge.Core.Batching.BatchUsage.BatchUsage(long InputTokens, long OutputTokens) -> void
+Aw.Judge.Core.Batching.BatchUsage.Deconstruct(out long InputTokens, out long OutputTokens) -> void
+Aw.Judge.Core.Batching.BatchUsage.Equals(Aw.Judge.Core.Batching.BatchUsage? other) -> bool
+Aw.Judge.Core.Batching.BatchUsage.InputTokens.get -> long
+Aw.Judge.Core.Batching.BatchUsage.InputTokens.init -> void
+Aw.Judge.Core.Batching.BatchUsage.OutputTokens.get -> long
+Aw.Judge.Core.Batching.BatchUsage.OutputTokens.init -> void
+Aw.Judge.Core.Batching.ChoiceBatchAnswer
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Choice.get -> string!
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Choice.init -> void
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.ChoiceBatchAnswer(string! Choice, double Confidence, System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities) -> void
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Confidence.get -> double
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Confidence.init -> void
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Deconstruct(out string! Choice, out double Confidence, out System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities) -> void
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Equals(Aw.Judge.Core.Batching.ChoiceBatchAnswer? other) -> bool
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>!
+Aw.Judge.Core.Batching.ChoiceBatchAnswer.Probabilities.init -> void
+Aw.Judge.Core.Batching.ChoiceBatchQuestion
+Aw.Judge.Core.Batching.ChoiceBatchQuestion.ChoiceBatchQuestion(string! Key, string! Prompt, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.Judge.Core.Batching.ChoiceBatchQuestion.Criteria.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Judge.Core.Batching.ChoiceBatchQuestion.Criteria.init -> void
+Aw.Judge.Core.Batching.ChoiceBatchQuestion.Deconstruct(out string! Key, out string! Prompt, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Criteria) -> void
+Aw.Judge.Core.Batching.ChoiceBatchQuestion.Equals(Aw.Judge.Core.Batching.ChoiceBatchQuestion? other) -> bool
+Aw.Judge.Core.Batching.JevInclusion
+Aw.Judge.Core.Batching.NoulBatchAnswer
+Aw.Judge.Core.Batching.NoulBatchAnswer.Deconstruct(out double Noul) -> void
+Aw.Judge.Core.Batching.NoulBatchAnswer.Equals(Aw.Judge.Core.Batching.NoulBatchAnswer? other) -> bool
+Aw.Judge.Core.Batching.NoulBatchAnswer.Noul.get -> double
+Aw.Judge.Core.Batching.NoulBatchAnswer.Noul.init -> void
+Aw.Judge.Core.Batching.NoulBatchAnswer.NoulBatchAnswer(double Noul) -> void
+Aw.Judge.Core.Batching.NoulBatchQuestion
+Aw.Judge.Core.Batching.NoulBatchQuestion.Deconstruct(out string! Key, out string! Prompt) -> void
+Aw.Judge.Core.Batching.NoulBatchQuestion.Equals(Aw.Judge.Core.Batching.NoulBatchQuestion? other) -> bool
+Aw.Judge.Core.Batching.NoulBatchQuestion.NoulBatchQuestion(string! Key, string! Prompt) -> void
+Aw.Judge.Core.Batching.ScoreBatchAnswer
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Confidence.get -> double
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Confidence.init -> void
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Deconstruct(out double Score, out double Confidence, out System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities) -> void
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Equals(Aw.Judge.Core.Batching.ScoreBatchAnswer? other) -> bool
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>!
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Probabilities.init -> void
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Score.get -> double
+Aw.Judge.Core.Batching.ScoreBatchAnswer.Score.init -> void
+Aw.Judge.Core.Batching.ScoreBatchAnswer.ScoreBatchAnswer(double Score, double Confidence, System.Collections.Generic.IReadOnlyDictionary<string!, double>! Probabilities) -> void
+Aw.Judge.Core.Batching.ScoreBatchQuestion
+Aw.Judge.Core.Batching.ScoreBatchQuestion.Deconstruct(out string! Key, out string! Prompt, out System.Collections.Generic.IReadOnlyList<string!>! Levels) -> void
+Aw.Judge.Core.Batching.ScoreBatchQuestion.Equals(Aw.Judge.Core.Batching.ScoreBatchQuestion? other) -> bool
+Aw.Judge.Core.Batching.ScoreBatchQuestion.Levels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Batching.ScoreBatchQuestion.Levels.init -> void
+Aw.Judge.Core.Batching.ScoreBatchQuestion.ScoreBatchQuestion(string! Key, string! Prompt, System.Collections.Generic.IReadOnlyList<string!>! Levels) -> void
+Aw.Judge.Core.Ports.IBatchClassifier
+Aw.Judge.Core.Ports.IBatchClassifier.Classify(Aw.Judge.Core.Batching.BatchRequest! request, Aw.Judge.Core.Config.ProvidersConfig? providers, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Providers.ProviderResult!>
+Aw.Judge.Core.Ports.IPromptSortStore
+Aw.Judge.Core.Ports.IPromptSortStore.Find(Aw.Judge.Core.Ids.DecisionId decision, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.PromptSort.PromptSortRecord!>!>
+Aw.Judge.Core.Ports.IPromptSortStore.Save(Aw.Judge.Core.PromptSort.PromptSortRecord! record, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Judge.Core.Ports.ISortSessionStore
+Aw.Judge.Core.Ports.ISortSessionStore.Read(Aw.Judge.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.PromptSort.SortSession!>!>
+Aw.Judge.Core.Ports.ISortSessionStore.Write(Aw.Judge.Core.Ids.SessionId session, Aw.Judge.Core.PromptSort.SortSession! state, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Judge.Core.PromptSort.PromptSortRecord
+Aw.Judge.Core.PromptSort.PromptSortRecord.<Clone>$() -> Aw.Judge.Core.PromptSort.PromptSortRecord!
+Aw.Judge.Core.PromptSort.PromptSortRecord.Axes.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.PromptSort.SortedAxis!>!
+Aw.Judge.Core.PromptSort.PromptSortRecord.Axes.init -> void
+Aw.Judge.Core.PromptSort.PromptSortRecord.Decision.get -> Aw.Judge.Core.Ids.DecisionId
+Aw.Judge.Core.PromptSort.PromptSortRecord.Decision.init -> void
+Aw.Judge.Core.PromptSort.PromptSortRecord.Deconstruct(out Aw.Judge.Core.Ids.DecisionId Decision, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.PromptSort.SortedAxis!>! Axes, out Aw.Judge.Core.PromptSort.SortRun! Run) -> void
+Aw.Judge.Core.PromptSort.PromptSortRecord.Equals(Aw.Judge.Core.PromptSort.PromptSortRecord? other) -> bool
+Aw.Judge.Core.PromptSort.PromptSortRecord.PromptSortRecord(Aw.Judge.Core.Ids.DecisionId Decision, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.PromptSort.SortedAxis!>! Axes, Aw.Judge.Core.PromptSort.SortRun! Run) -> void
+Aw.Judge.Core.PromptSort.PromptSortRecord.Run.get -> Aw.Judge.Core.PromptSort.SortRun!
+Aw.Judge.Core.PromptSort.PromptSortRecord.Run.init -> void
+Aw.Judge.Core.PromptSort.SortRequirements
+Aw.Judge.Core.PromptSort.SortRequirements.<Clone>$() -> Aw.Judge.Core.PromptSort.SortRequirements!
+Aw.Judge.Core.PromptSort.SortRequirements.Deconstruct(out bool UiEvidence) -> void
+Aw.Judge.Core.PromptSort.SortRequirements.Equals(Aw.Judge.Core.PromptSort.SortRequirements? other) -> bool
+Aw.Judge.Core.PromptSort.SortRequirements.SortRequirements(bool UiEvidence = false) -> void
+Aw.Judge.Core.PromptSort.SortRequirements.UiEvidence.get -> bool
+Aw.Judge.Core.PromptSort.SortRequirements.UiEvidence.init -> void
+Aw.Judge.Core.PromptSort.SortRun
+Aw.Judge.Core.PromptSort.SortRun.<Clone>$() -> Aw.Judge.Core.PromptSort.SortRun!
+Aw.Judge.Core.PromptSort.SortRun.Deconstruct(out string! Mode, out string! Reason, out System.Collections.Generic.IReadOnlyList<string!>! WouldFire, out System.Collections.Generic.IReadOnlyList<string!>! Fired, out System.Collections.Generic.IReadOnlyList<string!>! Suppressed) -> void
+Aw.Judge.Core.PromptSort.SortRun.Equals(Aw.Judge.Core.PromptSort.SortRun? other) -> bool
+Aw.Judge.Core.PromptSort.SortRun.Fired.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.PromptSort.SortRun.Fired.init -> void
+Aw.Judge.Core.PromptSort.SortRun.Mode.get -> string!
+Aw.Judge.Core.PromptSort.SortRun.Mode.init -> void
+Aw.Judge.Core.PromptSort.SortRun.Reason.get -> string!
+Aw.Judge.Core.PromptSort.SortRun.Reason.init -> void
+Aw.Judge.Core.PromptSort.SortRun.SortRun(string! Mode, string! Reason, System.Collections.Generic.IReadOnlyList<string!>! WouldFire, System.Collections.Generic.IReadOnlyList<string!>! Fired, System.Collections.Generic.IReadOnlyList<string!>! Suppressed) -> void
+Aw.Judge.Core.PromptSort.SortRun.Suppressed.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.PromptSort.SortRun.Suppressed.init -> void
+Aw.Judge.Core.PromptSort.SortRun.WouldFire.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.PromptSort.SortRun.WouldFire.init -> void
+Aw.Judge.Core.PromptSort.SortSession
+Aw.Judge.Core.PromptSort.SortSession.<Clone>$() -> Aw.Judge.Core.PromptSort.SortSession!
+Aw.Judge.Core.PromptSort.SortSession.Deconstruct(out int Prompts, out System.Collections.Generic.IReadOnlyDictionary<string!, int>! LastFired, out Aw.Judge.Core.PromptSort.SortRequirements! Requirements) -> void
+Aw.Judge.Core.PromptSort.SortSession.Equals(Aw.Judge.Core.PromptSort.SortSession? other) -> bool
+Aw.Judge.Core.PromptSort.SortSession.LastFired.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Judge.Core.PromptSort.SortSession.LastFired.init -> void
+Aw.Judge.Core.PromptSort.SortSession.Prompts.get -> int
+Aw.Judge.Core.PromptSort.SortSession.Prompts.init -> void
+Aw.Judge.Core.PromptSort.SortSession.Requirements.get -> Aw.Judge.Core.PromptSort.SortRequirements!
+Aw.Judge.Core.PromptSort.SortSession.Requirements.init -> void
+Aw.Judge.Core.PromptSort.SortSession.SortSession(int Prompts, System.Collections.Generic.IReadOnlyDictionary<string!, int>! LastFired, Aw.Judge.Core.PromptSort.SortRequirements! Requirements) -> void
+Aw.Judge.Core.PromptSort.SortedAxis
+Aw.Judge.Core.PromptSort.SortedAxis.<Clone>$() -> Aw.Judge.Core.PromptSort.SortedAxis!
+Aw.Judge.Core.PromptSort.SortedAxis.Axis.get -> string!
+Aw.Judge.Core.PromptSort.SortedAxis.Axis.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Confidence.get -> double?
+Aw.Judge.Core.PromptSort.SortedAxis.Confidence.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Deconstruct(out string! Axis, out string! Value, out string! Heuristic, out string! Source, out string! Status, out double? Probability, out double? Confidence) -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Equals(Aw.Judge.Core.PromptSort.SortedAxis? other) -> bool
+Aw.Judge.Core.PromptSort.SortedAxis.Heuristic.get -> string!
+Aw.Judge.Core.PromptSort.SortedAxis.Heuristic.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Probability.get -> double?
+Aw.Judge.Core.PromptSort.SortedAxis.Probability.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.SortedAxis(string! Axis, string! Value, string! Heuristic, string! Source, string! Status, double? Probability, double? Confidence) -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Source.get -> string!
+Aw.Judge.Core.PromptSort.SortedAxis.Source.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Status.get -> string!
+Aw.Judge.Core.PromptSort.SortedAxis.Status.init -> void
+Aw.Judge.Core.PromptSort.SortedAxis.Value.get -> string!
+Aw.Judge.Core.PromptSort.SortedAxis.Value.init -> void
+abstract Aw.Judge.Core.Batching.BatchAnswer.<Clone>$() -> Aw.Judge.Core.Batching.BatchAnswer!
+abstract Aw.Judge.Core.Batching.BatchQuestion.<Clone>$() -> Aw.Judge.Core.Batching.BatchQuestion!
+override Aw.Judge.Core.Batching.BatchAnswer.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.BatchAnswer.GetHashCode() -> int
+override Aw.Judge.Core.Batching.BatchAnswer.ToString() -> string!
+override Aw.Judge.Core.Batching.BatchDecided.<Clone>$() -> Aw.Judge.Core.Batching.BatchDecided!
+override Aw.Judge.Core.Batching.BatchDecided.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.BatchDecided.GetHashCode() -> int
+override Aw.Judge.Core.Batching.BatchDecided.ToString() -> string!
+override Aw.Judge.Core.Batching.BatchQuestion.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.BatchQuestion.GetHashCode() -> int
+override Aw.Judge.Core.Batching.BatchQuestion.ToString() -> string!
+override Aw.Judge.Core.Batching.BatchRequest.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.BatchRequest.GetHashCode() -> int
+override Aw.Judge.Core.Batching.BatchRequest.ToString() -> string!
+override Aw.Judge.Core.Batching.BatchUsage.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.BatchUsage.GetHashCode() -> int
+override Aw.Judge.Core.Batching.BatchUsage.ToString() -> string!
+override Aw.Judge.Core.Batching.ChoiceBatchAnswer.<Clone>$() -> Aw.Judge.Core.Batching.ChoiceBatchAnswer!
+override Aw.Judge.Core.Batching.ChoiceBatchAnswer.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.ChoiceBatchAnswer.GetHashCode() -> int
+override Aw.Judge.Core.Batching.ChoiceBatchAnswer.ToString() -> string!
+override Aw.Judge.Core.Batching.ChoiceBatchQuestion.<Clone>$() -> Aw.Judge.Core.Batching.ChoiceBatchQuestion!
+override Aw.Judge.Core.Batching.ChoiceBatchQuestion.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.ChoiceBatchQuestion.GetHashCode() -> int
+override Aw.Judge.Core.Batching.ChoiceBatchQuestion.ToString() -> string!
+override Aw.Judge.Core.Batching.NoulBatchAnswer.<Clone>$() -> Aw.Judge.Core.Batching.NoulBatchAnswer!
+override Aw.Judge.Core.Batching.NoulBatchAnswer.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.NoulBatchAnswer.GetHashCode() -> int
+override Aw.Judge.Core.Batching.NoulBatchAnswer.ToString() -> string!
+override Aw.Judge.Core.Batching.NoulBatchQuestion.<Clone>$() -> Aw.Judge.Core.Batching.NoulBatchQuestion!
+override Aw.Judge.Core.Batching.NoulBatchQuestion.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.NoulBatchQuestion.GetHashCode() -> int
+override Aw.Judge.Core.Batching.NoulBatchQuestion.ToString() -> string!
+override Aw.Judge.Core.Batching.ScoreBatchAnswer.<Clone>$() -> Aw.Judge.Core.Batching.ScoreBatchAnswer!
+override Aw.Judge.Core.Batching.ScoreBatchAnswer.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.ScoreBatchAnswer.GetHashCode() -> int
+override Aw.Judge.Core.Batching.ScoreBatchAnswer.ToString() -> string!
+override Aw.Judge.Core.Batching.ScoreBatchQuestion.<Clone>$() -> Aw.Judge.Core.Batching.ScoreBatchQuestion!
+override Aw.Judge.Core.Batching.ScoreBatchQuestion.Equals(object? obj) -> bool
+override Aw.Judge.Core.Batching.ScoreBatchQuestion.GetHashCode() -> int
+override Aw.Judge.Core.Batching.ScoreBatchQuestion.ToString() -> string!
+override Aw.Judge.Core.PromptSort.PromptSortRecord.Equals(object? obj) -> bool
+override Aw.Judge.Core.PromptSort.PromptSortRecord.GetHashCode() -> int
+override Aw.Judge.Core.PromptSort.PromptSortRecord.ToString() -> string!
+override Aw.Judge.Core.PromptSort.SortRequirements.Equals(object? obj) -> bool
+override Aw.Judge.Core.PromptSort.SortRequirements.GetHashCode() -> int
+override Aw.Judge.Core.PromptSort.SortRequirements.ToString() -> string!
+override Aw.Judge.Core.PromptSort.SortRun.Equals(object? obj) -> bool
+override Aw.Judge.Core.PromptSort.SortRun.GetHashCode() -> int
+override Aw.Judge.Core.PromptSort.SortRun.ToString() -> string!
+override Aw.Judge.Core.PromptSort.SortSession.Equals(object? obj) -> bool
+override Aw.Judge.Core.PromptSort.SortSession.GetHashCode() -> int
+override Aw.Judge.Core.PromptSort.SortSession.ToString() -> string!
+override Aw.Judge.Core.PromptSort.SortedAxis.Equals(object? obj) -> bool
+override Aw.Judge.Core.PromptSort.SortedAxis.GetHashCode() -> int
+override Aw.Judge.Core.PromptSort.SortedAxis.ToString() -> string!
+override sealed Aw.Judge.Core.Batching.BatchDecided.Equals(Aw.Judge.Core.Providers.ProviderResult? other) -> bool
+override sealed Aw.Judge.Core.Batching.ChoiceBatchAnswer.Equals(Aw.Judge.Core.Batching.BatchAnswer? other) -> bool
+override sealed Aw.Judge.Core.Batching.ChoiceBatchQuestion.Equals(Aw.Judge.Core.Batching.BatchQuestion? other) -> bool
+override sealed Aw.Judge.Core.Batching.NoulBatchAnswer.Equals(Aw.Judge.Core.Batching.BatchAnswer? other) -> bool
+override sealed Aw.Judge.Core.Batching.NoulBatchQuestion.Equals(Aw.Judge.Core.Batching.BatchQuestion? other) -> bool
+override sealed Aw.Judge.Core.Batching.ScoreBatchAnswer.Equals(Aw.Judge.Core.Batching.BatchAnswer? other) -> bool
+override sealed Aw.Judge.Core.Batching.ScoreBatchQuestion.Equals(Aw.Judge.Core.Batching.BatchQuestion? other) -> bool
+static Aw.Judge.Core.Batching.BatchAnswer.operator !=(Aw.Judge.Core.Batching.BatchAnswer? left, Aw.Judge.Core.Batching.BatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.BatchAnswer.operator ==(Aw.Judge.Core.Batching.BatchAnswer? left, Aw.Judge.Core.Batching.BatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.BatchDecided.operator !=(Aw.Judge.Core.Batching.BatchDecided? left, Aw.Judge.Core.Batching.BatchDecided? right) -> bool
+static Aw.Judge.Core.Batching.BatchDecided.operator ==(Aw.Judge.Core.Batching.BatchDecided? left, Aw.Judge.Core.Batching.BatchDecided? right) -> bool
+static Aw.Judge.Core.Batching.BatchQuestion.operator !=(Aw.Judge.Core.Batching.BatchQuestion? left, Aw.Judge.Core.Batching.BatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.BatchQuestion.operator ==(Aw.Judge.Core.Batching.BatchQuestion? left, Aw.Judge.Core.Batching.BatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.BatchRequest.operator !=(Aw.Judge.Core.Batching.BatchRequest? left, Aw.Judge.Core.Batching.BatchRequest? right) -> bool
+static Aw.Judge.Core.Batching.BatchRequest.operator ==(Aw.Judge.Core.Batching.BatchRequest? left, Aw.Judge.Core.Batching.BatchRequest? right) -> bool
+static Aw.Judge.Core.Batching.BatchUsage.operator !=(Aw.Judge.Core.Batching.BatchUsage? left, Aw.Judge.Core.Batching.BatchUsage? right) -> bool
+static Aw.Judge.Core.Batching.BatchUsage.operator ==(Aw.Judge.Core.Batching.BatchUsage? left, Aw.Judge.Core.Batching.BatchUsage? right) -> bool
+static Aw.Judge.Core.Batching.ChoiceBatchAnswer.operator !=(Aw.Judge.Core.Batching.ChoiceBatchAnswer? left, Aw.Judge.Core.Batching.ChoiceBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.ChoiceBatchAnswer.operator ==(Aw.Judge.Core.Batching.ChoiceBatchAnswer? left, Aw.Judge.Core.Batching.ChoiceBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.ChoiceBatchQuestion.operator !=(Aw.Judge.Core.Batching.ChoiceBatchQuestion? left, Aw.Judge.Core.Batching.ChoiceBatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.ChoiceBatchQuestion.operator ==(Aw.Judge.Core.Batching.ChoiceBatchQuestion? left, Aw.Judge.Core.Batching.ChoiceBatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.JevInclusion.Of(Aw.Judge.Core.Config.ProvidersConfig? providers, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed) -> bool
+static Aw.Judge.Core.Batching.NoulBatchAnswer.operator !=(Aw.Judge.Core.Batching.NoulBatchAnswer? left, Aw.Judge.Core.Batching.NoulBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.NoulBatchAnswer.operator ==(Aw.Judge.Core.Batching.NoulBatchAnswer? left, Aw.Judge.Core.Batching.NoulBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.NoulBatchQuestion.operator !=(Aw.Judge.Core.Batching.NoulBatchQuestion? left, Aw.Judge.Core.Batching.NoulBatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.NoulBatchQuestion.operator ==(Aw.Judge.Core.Batching.NoulBatchQuestion? left, Aw.Judge.Core.Batching.NoulBatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.ScoreBatchAnswer.operator !=(Aw.Judge.Core.Batching.ScoreBatchAnswer? left, Aw.Judge.Core.Batching.ScoreBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.ScoreBatchAnswer.operator ==(Aw.Judge.Core.Batching.ScoreBatchAnswer? left, Aw.Judge.Core.Batching.ScoreBatchAnswer? right) -> bool
+static Aw.Judge.Core.Batching.ScoreBatchQuestion.operator !=(Aw.Judge.Core.Batching.ScoreBatchQuestion? left, Aw.Judge.Core.Batching.ScoreBatchQuestion? right) -> bool
+static Aw.Judge.Core.Batching.ScoreBatchQuestion.operator ==(Aw.Judge.Core.Batching.ScoreBatchQuestion? left, Aw.Judge.Core.Batching.ScoreBatchQuestion? right) -> bool
+static Aw.Judge.Core.PromptSort.PromptSortRecord.operator !=(Aw.Judge.Core.PromptSort.PromptSortRecord? left, Aw.Judge.Core.PromptSort.PromptSortRecord? right) -> bool
+static Aw.Judge.Core.PromptSort.PromptSortRecord.operator ==(Aw.Judge.Core.PromptSort.PromptSortRecord? left, Aw.Judge.Core.PromptSort.PromptSortRecord? right) -> bool
+static Aw.Judge.Core.PromptSort.SortRequirements.operator !=(Aw.Judge.Core.PromptSort.SortRequirements? left, Aw.Judge.Core.PromptSort.SortRequirements? right) -> bool
+static Aw.Judge.Core.PromptSort.SortRequirements.operator ==(Aw.Judge.Core.PromptSort.SortRequirements? left, Aw.Judge.Core.PromptSort.SortRequirements? right) -> bool
+static Aw.Judge.Core.PromptSort.SortRun.operator !=(Aw.Judge.Core.PromptSort.SortRun? left, Aw.Judge.Core.PromptSort.SortRun? right) -> bool
+static Aw.Judge.Core.PromptSort.SortRun.operator ==(Aw.Judge.Core.PromptSort.SortRun? left, Aw.Judge.Core.PromptSort.SortRun? right) -> bool
+static Aw.Judge.Core.PromptSort.SortSession.Empty.get -> Aw.Judge.Core.PromptSort.SortSession!
+static Aw.Judge.Core.PromptSort.SortSession.operator !=(Aw.Judge.Core.PromptSort.SortSession? left, Aw.Judge.Core.PromptSort.SortSession? right) -> bool
+static Aw.Judge.Core.PromptSort.SortSession.operator ==(Aw.Judge.Core.PromptSort.SortSession? left, Aw.Judge.Core.PromptSort.SortSession? right) -> bool
+static Aw.Judge.Core.PromptSort.SortedAxis.operator !=(Aw.Judge.Core.PromptSort.SortedAxis? left, Aw.Judge.Core.PromptSort.SortedAxis? right) -> bool
+static Aw.Judge.Core.PromptSort.SortedAxis.operator ==(Aw.Judge.Core.PromptSort.SortedAxis? left, Aw.Judge.Core.PromptSort.SortedAxis? right) -> bool
+virtual Aw.Judge.Core.Batching.BatchAnswer.EqualityContract.get -> System.Type!
+virtual Aw.Judge.Core.Batching.BatchAnswer.Equals(Aw.Judge.Core.Batching.BatchAnswer? other) -> bool
+virtual Aw.Judge.Core.Batching.BatchAnswer.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Aw.Judge.Core.Batching.BatchQuestion.EqualityContract.get -> System.Type!
+virtual Aw.Judge.Core.Batching.BatchQuestion.Equals(Aw.Judge.Core.Batching.BatchQuestion? other) -> bool
+virtual Aw.Judge.Core.Batching.BatchQuestion.PrintMembers(System.Text.StringBuilder! builder) -> bool

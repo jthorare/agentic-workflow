@@ -13,6 +13,7 @@ internal static class Usage
         "       sindri stop                   stop it and release the host lease",
         "       sindri profile validate [--json]",
         "       sindri profile init [--json]   write the default profile when none exists (no repos yet: add one with 'repo add', then approve); refuses when one exists (exit 2); runs without the control plane",
+        "       sindri scrub [--staged | --install-pre-commit [--repo PATH] [--bin PATH]]   redact standard input; --staged scans the staged diff's added lines (exit 1, SND-SCRUB-002, on a finding); --install-pre-commit writes the pre-commit hook that runs it; runs without the control plane",
         "       sindri profile approve [--no-start] [<hash>]   without a hash: show the hash and what changed; with it: approve (needs a terminal); starts the control plane unless --no-start",
         "       sindri views rebuild [--no-start]   replay the ledger into the views (the fix when they stall); starts the control plane unless --no-start",
         "       sindri queue [--json] [--no-start]   the queue's groups, one line per item; exit 1 while the views rebuild or stall; starts the control plane unless --no-start",

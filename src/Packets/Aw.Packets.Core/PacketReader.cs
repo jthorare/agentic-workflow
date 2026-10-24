@@ -18,7 +18,7 @@ public static class PacketReader
     public const string ManifestFile = "packet.json";
 
     /// <summary>The most tasks a packet may hold; a bigger one is AW-PACKETS-003 (split it into several packets).</summary>
-    public const int MaxTasks = 2000;
+    public const int MaxTasks = 20_000;
 
     /// <summary>The schemaVersion this build reads.</summary>
     public const int SchemaVersion = 1;

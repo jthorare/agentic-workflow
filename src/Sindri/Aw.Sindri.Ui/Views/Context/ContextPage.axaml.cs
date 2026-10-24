@@ -133,6 +133,15 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // View build job on the Building overlay: the Jobs page opens on that job.
+    private void OnViewBuildJob(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ContextPageViewModel page)
+        {
+            page.RequestBuildJob();
+        }
+    }
+
     private void OnPick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Content: string anchor } && DataContext is ContextPageViewModel page)

@@ -25,7 +25,7 @@ public sealed class NeedsYouVerbsViewTests : FrameHost
 
         instance["allowedCommands"] = new JsonArray(
             _verbs
-                .Select(v => (JsonNode)new JsonObject { ["actionId"] = "ApplyCommand:command", ["cli"] = "sindri workflow command ITM-1/pr-babysitter/1 " + v, ["verb"] = v }).ToArray());
+                .Select(v => (JsonNode)new JsonObject { ["actionId"] = "ApplyCommand:command", ["cli"] = "sindri workflow command ITM-1/pr-babysitter/1 " + v, ["verb"] = v, ["destructive"] = string.Equals(v, "merge", StringComparison.Ordinal) ? true : null }).ToArray());
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "desk-task");
         Server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, instance.ToJsonString());
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0, width: 1600, height: 900);

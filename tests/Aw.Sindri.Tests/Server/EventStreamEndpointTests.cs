@@ -79,29 +79,29 @@ public sealed class EventStreamEndpointTests
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task The_seventeenth_stream_is_429_SND_API_012()
+    public async Task The_65th_stream_is_429_SND_API_012()
     {
         await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         var open = await OpenMany(host, StreamLimits.Total, Human(host.Token.Value));
 
-        var seventeenth = await host.Http.Ask(Get("/sindri/events", Human(host.Token.Value)));
+        var overTotal = await host.Http.Ask(Get("/sindri/events", Human(host.Token.Value)));
 
-        Assert.Equal((HttpStatusCode.TooManyRequests, "SND-API-012"), (seventeenth.Status, seventeenth.Code));
+        Assert.Equal((HttpStatusCode.TooManyRequests, "SND-API-012"), (overTotal.Status, overTotal.Code));
         await DisposeAll(open);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task The_thirteenth_session_stream_is_429_but_a_human_gets_in()
+    public async Task A_session_gets_the_same_streams_as_a_human()
     {
         await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         var session = new[] { (SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli") };
-        var open = await OpenMany(host, StreamLimits.Session, session);
+        var open = await OpenMany(host, StreamLimits.Total - 1, session);
 
-        var thirteenth = await host.Http.Ask(Get("/sindri/events", session));
-        await using var human = await EventStreamClient.Open(host, "/sindri/events?after=0");
+        await using var last = await EventStreamClient.Open(host, "/sindri/events?after=0", session);
+        var over = await host.Http.Ask(Get("/sindri/events", session));
 
-        Assert.Equal((HttpStatusCode.TooManyRequests, "SND-API-012"), (thirteenth.Status, thirteenth.Code));
-        Assert.StartsWith("event: ", await human.Line(), StringComparison.Ordinal);
+        Assert.StartsWith("event: ", await last.Line(), StringComparison.Ordinal);
+        Assert.Equal((HttpStatusCode.TooManyRequests, "SND-API-012"), (over.Status, over.Code));
         await DisposeAll(open);
     }
 

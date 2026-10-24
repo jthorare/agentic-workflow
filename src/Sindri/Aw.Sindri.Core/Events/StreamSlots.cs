@@ -13,7 +13,7 @@ internal sealed class StreamSlots : IStreamSlots
     {
         lock (_gate)
         {
-            if (!StreamLimits.Admits(caller, _sessions + _others, _sessions))
+            if (!StreamLimits.Admits(_sessions + _others))
             {
                 slot = Released.Instance;
                 return false;

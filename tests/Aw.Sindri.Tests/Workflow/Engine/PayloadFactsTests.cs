@@ -91,6 +91,22 @@ public sealed class PayloadFactsTests
         Assert.Null(PayloadFacts.WithShapes(instructions: null, []));
     }
 
+    [Fact]
+    public void The_red_Step_s_brief_tells_the_agent_the_exact_redTests_shape_with_an_example_and_the_commit()
+    {
+        var redTests = FactKey.From("fact:redTests");
+        var recipe = Recipe([], [new RecipeOutput(redTests, "Red tests", "payload", "red")]);
+        var red = new BlockDescriptor(BlockId.From("step.build.red"), BlockKind.Step, 1, [], [new OutputSpec(redTests, [])], [OutcomeName.From("written")], Capability.None, [], Rung: null, DeskCapable: false);
+
+        var lines = PayloadFacts.WithShapes(["Goal: failing tests."], PayloadFacts.OutputsOf(recipe, red));
+
+        var shape = Assert.Single(lines!, static l => l.Contains("fact:redTests", StringComparison.Ordinal));
+        Assert.Contains("one key per acceptance item, and nothing else at the top level", shape, StringComparison.Ordinal);
+        Assert.Contains("\"AC-1\": { \"tests\": [\"<test id>\"], \"commit\": \"<red commit sha>\" }", shape, StringComparison.Ordinal);
+        Assert.Contains("\"AC-3\": { \"appOnly\": { \"signal\": \"<signal id>\" }, \"commit\": \"<red commit sha>\" }", shape, StringComparison.Ordinal);
+        Assert.Contains("write the commit on every item", shape, StringComparison.Ordinal);
+    }
+
     private static BlockDescriptor Descriptor(params FactKey[] outputs) =>
         new(BlockId.From("step.test.draft"), BlockKind.Step, 1, [], [.. outputs.Select(static o => new OutputSpec(o, []))], [OutcomeName.From("done")], Capability.None, [], Rung: null, DeskCapable: false);
 

@@ -12,6 +12,7 @@ public static class PayloadFacts
     private static readonly Dictionary<string, string> _shapes = new(StringComparer.Ordinal)
     {
         ["fact:design"] = "Shape: { \"spec\": \"<the whole design as Markdown, following the style pack>\", \"sections\": [...], \"coverage\": {...}, \"decisions\": [...], \"deferred\": [...], \"resolutions\": [...], \"signals\": [...], \"contracts\": [...], \"acceptance\": {...}, \"escapes\": [...], \"runs\": [...] }; the spec text is required (it becomes spec.md), and the design checks read each other field by name, so keep the ones already in the fact.",
+        ["fact:redTests"] = "Shape: one key per acceptance item, and nothing else at the top level (no \"commit\", \"file\" or \"tests\" beside the items): { \"AC-1\": { \"tests\": [\"<test id>\"], \"commit\": \"<red commit sha>\" }, \"AC-2\": { \"tests\": [{ \"id\": \"<test id>\", \"path\": \"<test file>\" }], \"commit\": \"<red commit sha>\" }, \"AC-3\": { \"appOnly\": { \"signal\": \"<signal id>\" }, \"commit\": \"<red commit sha>\" } }; write the commit on every item, the same sha on each (the commit of the failing tests); an item proven only in the running app has \"appOnly\" instead of \"tests\".",
     };
 
     private const string Fix = "write the structure itself, with any text inside a field, and report again";

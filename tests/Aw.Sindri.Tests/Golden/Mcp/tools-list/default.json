@@ -281,7 +281,7 @@
   },
   {
     "name": "sindri_request",
-    "description": "Ask a person for something: rescope an item, add a task to it, leave a note, or hand it back. Filing a request changes nothing by itself; it appears as a decision a person settles. At most 20 requests stay open per repo.",
+    "description": "Ask a person for something: rescope an item, add a task to it, leave a note, or hand it back. Filing a request changes nothing by itself; it appears as a decision a person settles. At most 200 requests stay open per repo.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -298,9 +298,9 @@
         },
         "text": {
           "type": "string",
-          "description": "What and why, in plain words (1 to 2,000 characters)",
+          "description": "What and why, in plain words (1 to 65,536 characters)",
           "minLength": 1,
-          "maxLength": 2000
+          "maxLength": 65536
         },
         "itemId": {
           "type": "string",

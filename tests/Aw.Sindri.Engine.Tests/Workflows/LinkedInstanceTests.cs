@@ -1,14 +1,18 @@
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Infrastructure.Workflows;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.ApplyCommand;
 using Aw.Sindri.Tests.Workflows.Effects;
 using Microsoft.Extensions.DependencyInjection;
+using Temporalio.Common;
 using Temporalio.Worker;
 
 namespace Aw.Sindri.Tests.Workflows;
@@ -47,7 +51,7 @@ public sealed class LinkedInstanceTests : IDisposable
             _ = await WorkflowsHarness.Until(phase, static v => v.State == "waiting");
             await ChildTree.Go(phase);
             var result = await phase.GetResultAsync().WaitAsync(TimeSpan.FromSeconds(60), ct);
-            var reports = await Reports(sindri, 3);
+            var reports = await Reports(sindri, 3, TimeSpan.FromSeconds(30));
 
             Assert.Equal(("done", "resolved"), (result.State, result.Outcome));
             Assert.Equal(["parked", "resumed", "ended"], reports.Select(static r => r.Outcome), StringComparer.Ordinal);
@@ -57,6 +61,53 @@ public sealed class LinkedInstanceTests : IDisposable
             Assert.Equal(3, reports.Select(static r => r.Identity).Distinct(StringComparer.Ordinal).Count());
             Assert.Null((await InterpreterEvalTests.Replay(phase, ct)).ReplayFailure);
         }, ct);
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_resume_report_waits_for_the_park_report_while_the_park_notice_is_slow()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _ = _harness.Approve(Recipe());
+        var notice = new GatedNotice(new FakeDeskEffect());
+        await using var server = new SindriTimeSkippingServer();
+        await server.InitializeAsync();
+        await using var sindri = _harness.Sindri(notice.Replace);
+        await WorkflowsHarness.HoldLease(sindri, ct);
+        using var worker = new TemporalWorker(server.Environment.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
+        await worker.ExecuteAsync(async () =>
+        {
+            var tree = new ChildTree(sindri, server.Environment, _harness);
+            var phase = await WorkflowsHarness.Start(server.Environment.Client, await LinkedStart(sindri, "T-83", ct));
+            _ = await WorkflowsHarness.Until(phase, static v => v.State == "waiting");
+            var skipped = tree.PastTheHour();   // the server's clock stands still while the held notice runs, so this ends only once it is released
+            _ = await WorkflowsHarness.Until(phase, static v => v.State == "parked");
+            _ = await ChildTree.Resume(phase);
+            _ = await WorkflowsHarness.Until(phase, static v => v.State == "waiting");
+            var early = await Reports(sindri, 1, TimeSpan.FromSeconds(2));   // the park notice is held, so the park report waits behind it: a report that lands now is the resume's, ahead of it
+
+            notice.Release();
+            await skipped;
+            await ChildTree.Go(phase);
+            _ = await phase.GetResultAsync().WaitAsync(TimeSpan.FromSeconds(60), ct);
+            var reports = await Reports(sindri, 3, TimeSpan.FromSeconds(30));
+
+            Assert.Empty(early);
+            Assert.Equal(["parked", "resumed", "ended"], reports.Select(static r => r.Outcome), StringComparer.Ordinal);
+        }, ct);
+    }
+
+    [Fact]
+    public async Task A_history_recorded_before_the_report_order_marker_replays_with_its_reports_concurrent()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var stream = typeof(RecipeFixtures).Assembly.GetManifestResourceStream("histories/linked-phase-pre-report-order.json")!;
+        using var reader = new StreamReader(stream);
+        var json = await reader.ReadToEndAsync(ct);
+
+        var replayed = await new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<RecipeWorkflow>())
+            .ReplayWorkflowAsync(WorkflowHistory.FromJson(LinkedAddress("T-83"), json), throwOnReplayFailure: false, ct);
+
+        Assert.Null(replayed.ReplayFailure);
     }
 
     [Fact(Timeout = 120_000)]
@@ -83,7 +134,7 @@ public sealed class LinkedInstanceTests : IDisposable
 
         Assert.Equal(("cancelled", "cancelled"), (cancelled.State, cancelled.Outcome));
         Assert.Equal(Temporalio.Api.Enums.V1.WorkflowExecutionStatus.Completed, (await phase.DescribeAsync()).Status);   // its own cancelled, not a terminate
-        var (outcome, _, report) = (await Reports(sindri, 1)).Single();
+        var (outcome, _, report) = (await Reports(sindri, 1, TimeSpan.FromSeconds(30))).Single();
         Assert.Equal(("ended", "cancelled"), (outcome, report.GetProperty("ended").GetString()));   // the cancelled end reaches the line too
     }
 
@@ -102,10 +153,10 @@ public sealed class LinkedInstanceTests : IDisposable
     }
 
     /// <summary>The 'line.phaseChanged' replies in the ledger, oldest first, once there are <paramref name="count"/>.</summary>
-    private static async Task<IReadOnlyList<(string Outcome, string Identity, JsonElement Event)>> Reports(IServiceProvider sindri, int count)
+    private static async Task<IReadOnlyList<(string Outcome, string Identity, JsonElement Event)>> Reports(IServiceProvider sindri, int count, TimeSpan patience)
     {
         var events = sindri.GetRequiredService<EventFactory>();
-        var deadline = RealTime.NowDateTime + TimeSpan.FromSeconds(30);
+        var deadline = RealTime.NowDateTime + patience;
         while (true)
         {
             var found = new List<(string, string, JsonElement)>();
@@ -123,6 +174,27 @@ public sealed class LinkedInstanceTests : IDisposable
             }
 
             await Task.Delay(200, TestContext.Current.CancellationToken);
+        }
+    }
+
+    /// <summary>The engine's park notice held until <see cref="Release"/>, as a slow desk notification is; a recipe effect passes through.</summary>
+    private sealed class GatedNotice(FakeDeskEffect inner) : IEffectKind
+    {
+        private readonly TaskCompletionSource _open = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Release() => _open.TrySetResult();
+
+        public void Replace(IServiceCollection services) =>
+            services.AddKeyedScoped<IEffectKind>("effect.notify.desk", (_, _) => this);
+
+        public async ValueTask<Result<EffectDone>> Dispatch(EffectContext context, CancellationToken cancellationToken)
+        {
+            if (context.FromEngine)
+            {
+                await _open.Task.WaitAsync(cancellationToken);
+            }
+
+            return await inner.Dispatch(context, cancellationToken);
         }
     }
 
