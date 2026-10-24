@@ -132,6 +132,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(answer);
         (_overview, _beforeZoom, IsAreaOpen, AreaTitle) = (null, null, false, string.Empty);
         (HitKeys, IsZoomed, MoreTouchedText) = (new HashSet<string>(StringComparer.Ordinal), false, string.Empty);
+        (SearchActive, NoMatches, _searchSet) = (false, false, null);
         Answer = answer;
         Geometry = WholeMapLayout.Place(answer);
         ForgetHighlight();

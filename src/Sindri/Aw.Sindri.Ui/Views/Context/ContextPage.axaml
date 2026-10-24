@@ -60,7 +60,7 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- The Context page (F3 spec 1 §2): the head, a control row (starting points, as of, Map or Files, coverage), and the stage, which
+  <!-- The Context page (F3 spec 1 §2): the head, a control row (the search box, as of, Map or Files, coverage), and the stage, which
        is the pannable map. The hosts below are the seams the later stages fill: the lens stack is the stage, the node card and the
        sources are the inspector, the review and the file map are the Files view. -->
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{StaticResource Size.PanelGap}">
@@ -81,9 +81,9 @@
           <TextBlock Classes="eyebrow" Text="{Binding StartsAtLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="AnchorBox" KeyDown="OnAnchorKey" MinWidth="220" Text="{Binding AnchorText, Mode=TwoWay}" PlaceholderText="{Binding AnchorHint}"
                    AutomationProperties.Name="{Binding AnchorLabel}" />
-          <Button x:Name="StartingPoints" IsVisible="{Binding HasStack}" VerticalAlignment="Center">
-            <TextBlock x:Name="StartingPointsText" Classes="button" AutomationProperties.AccessibilityView="Raw" />
-          </Button>
+          <Button x:Name="AnchorClear" IsVisible="False" Click="OnClearSearch" VerticalAlignment="Center" Content="{Binding SearchClearText}" AutomationProperties.Name="{Binding SearchClearText}" />
+          <TextBlock x:Name="SearchNoteText" Classes="caption subtle" Text="{Binding SearchNote}" IsVisible="{Binding HasSearchNote}" VerticalAlignment="Center"
+                     AutomationProperties.Name="{Binding SearchNote}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,16,8">
           <TextBlock Classes="eyebrow" Text="{Binding AsOfLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />

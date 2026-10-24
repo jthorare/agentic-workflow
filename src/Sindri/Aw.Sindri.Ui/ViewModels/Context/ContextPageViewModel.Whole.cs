@@ -17,6 +17,15 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the quiet loading row or the failure row shows over the stage.</summary>
     public bool ShowWholeStatus => ShowMap && !HasStack && !NoMap && !IsBuilding && (Whole.IsLoading || Whole.IsFailed);
 
+    /// <summary>The note by the search box when nothing on the map matches.</summary>
+    public string SearchNote => Whole.NoMatches ? Labels.ContextSearchNoMatches : string.Empty;
+
+    /// <summary>Whether the note shows.</summary>
+    public bool HasSearchNote => Whole.NoMatches;
+
+    /// <summary>The clear button's words.</summary>
+    public string SearchClearText { get; } = Labels.ContextSearchClear;
+
     // Registered once: whenever the control plane is reachable and the page was shown, a map that is not read yet is read (the first open may have come before the connection).
     private void InitWhole()
     {
@@ -108,5 +117,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
+        OnChanged(nameof(SearchNote));
+        OnChanged(nameof(HasSearchNote));
     }
 }

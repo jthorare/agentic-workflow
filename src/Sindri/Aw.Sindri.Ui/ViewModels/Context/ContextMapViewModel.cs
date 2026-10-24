@@ -62,9 +62,6 @@ internal sealed partial class ContextMapViewModel : ObservableObject
     /// <summary>The starting points of the read.</summary>
     public IReadOnlyList<MapAnchorViewModel> Anchors { get; }
 
-    /// <summary>The "N starting points" button's words.</summary>
-    public string StartingPoints => Labels.ContextMapStartingPoints(Anchors.Count);
-
     /// <summary>The four areas of the coverage strip.</summary>
     internal IReadOnlyList<CoverageArea> CoverageAreas { get; }
 

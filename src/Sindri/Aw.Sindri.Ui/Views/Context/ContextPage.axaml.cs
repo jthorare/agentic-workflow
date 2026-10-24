@@ -1,10 +1,8 @@
 using System.ComponentModel;
 using Avalonia;
-using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Context;
 
@@ -15,7 +13,6 @@ internal sealed partial class ContextPage : UserControl
 {
     private const double StageMinimum = 420;
     private const double PageEdge = 24;   // the room the page keeps under the stage
-    private readonly StackPanel _startingRows = new() { MinWidth = 320 };
     private ContextPageViewModel? _page;
     private ScrollViewer? _scroller;
 
@@ -23,7 +20,6 @@ internal sealed partial class ContextPage : UserControl
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
-        StartingPoints.Flyout = new Flyout { Content = _startingRows, Placement = PlacementMode.BottomEdgeAlignedLeft };   // a closed flyout's content is not in the tree, so it is built here
     }
 
     /// <inheritdoc/>
@@ -115,6 +111,15 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The clear button: the box empties and the map is whole again.
+    private void OnClearSearch(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ContextPageViewModel page)
+        {
+            page.ClearSearch();
+        }
+    }
+
     // "Whole map": the answer stops standing out and the camera fits the world again.
     private void OnWholeMapBack(object? sender, RoutedEventArgs e)
     {
@@ -156,45 +161,25 @@ internal sealed partial class ContextPage : UserControl
         {
             Sync(_page);
         }
+        else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
+        {
+            AnchorClear.IsVisible = _page.AnchorText.Length > 0;   // the clear button shows while the box holds something
+        }
     }
 
-    // The parts of the control row that take lists or controls the view model does not bind: the coverage strip and the starting points.
+    // The parts of the control row that take lists or controls the view model does not bind: the coverage strip.
     private void Sync(ContextPageViewModel page)
     {
         ContextStack.DataContext = page.Map;
+        AnchorClear.IsVisible = page.AnchorText.Length > 0;
         if (page.Map is { } map)
         {
             ContextCoverageStrip.Areas = map.CoverageAreas;
             ContextCoverageStrip.Lead = map.CoverageLead;
             ContextCoverageStrip.Rest = map.CoverageRest;
-            StartingPointsText.Text = map.StartingPoints;
-            AutomationProperties.SetName(StartingPoints, map.StartingPoints);
-            _startingRows.Children.Clear();
-            foreach (var anchor in map.Anchors)
-            {
-                _startingRows.Children.Add(Row(anchor));
-            }
         }
 
         Dispatch(FitStage);
-    }
-
-    private static Grid Row(MapAnchorViewModel anchor)
-    {
-        var tick = new Icons.StateIcon { Icon = "Ok", VerticalAlignment = VerticalAlignment.Center };
-        var label = new TextBlock { Text = anchor.Label, VerticalAlignment = VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
-        label.Classes.Add("body");
-        var kind = new TextBlock { Text = anchor.KindWord.ToLowerInvariant(), VerticalAlignment = VerticalAlignment.Center };
-        kind.Classes.Add("caption");
-        kind.Classes.Add("subtle");
-        var row = new Grid { Height = 36, ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 10 };
-        row.Children.Add(tick);
-        row.Children.Add(label);
-        row.Children.Add(kind);
-        Grid.SetColumn(label, 1);
-        Grid.SetColumn(kind, 2);
-        AutomationProperties.SetName(row, anchor.Label + ", " + anchor.KindWord.ToLowerInvariant());
-        return row;
     }
 
     private static void Dispatch(Action action) => Avalonia.Threading.Dispatcher.UIThread.Post(action);

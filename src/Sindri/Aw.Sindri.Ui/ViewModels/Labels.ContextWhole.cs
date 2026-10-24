@@ -32,6 +32,12 @@ internal static partial class Labels
     /// <summary>The card on the whole map while no starting point is chosen.</summary>
     internal const string ContextWholePick = "Pick a starting point to see why it matters.";
 
+    /// <summary>The note by the search box when nothing on the map matches.</summary>
+    internal const string ContextSearchNoMatches = "No matches";
+
+    /// <summary>The button that empties the search box and returns to the full map.</summary>
+    internal const string ContextSearchClear = "Clear search";
+
     /// <summary>The line when what was asked is not on the whole map.</summary>
     internal const string ContextWholeNoMatch = "None of those items are on the map.";
 

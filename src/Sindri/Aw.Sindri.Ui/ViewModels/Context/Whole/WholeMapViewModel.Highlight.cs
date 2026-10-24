@@ -13,7 +13,7 @@ internal sealed partial class WholeMapViewModel
     internal string? Pinned { get; private set; }
 
     /// <summary>The key the highlight is about: the one under the pointer, else the pinned one.</summary>
-    internal string? Focus => Hovered ?? Pinned;
+    internal string? Focus => SearchActive ? null : Hovered ?? Pinned;
 
     /// <summary>The focus and what it is directly linked to, drawn at full strength while the rest dims; null when nothing is highlighted.</summary>
     internal IReadOnlySet<string>? Emphasis { get; private set; }
@@ -47,7 +47,7 @@ internal sealed partial class WholeMapViewModel
     /// <param name="key">The key; null over nothing.</param>
     internal void Hover(string? key)
     {
-        if (!string.Equals(Hovered, key, StringComparison.Ordinal))
+        if (!SearchActive && !string.Equals(Hovered, key, StringComparison.Ordinal))
         {
             Hovered = key;
             Refocus();
@@ -68,8 +68,8 @@ internal sealed partial class WholeMapViewModel
         }
 
         var isTile = Geometry?.Tiles.Any(t => string.Equals(t.Key, key, StringComparison.Ordinal)) == true;
-        var again = string.Equals(Pinned, key, StringComparison.Ordinal);
-        Pinned = key;
+        var again = SearchActive || string.Equals(Pinned, key, StringComparison.Ordinal);
+        Pinned = again ? null : key;   // a search owns the highlight; a second click goes further and lets the pin go, so it cannot stick
         Refocus();
         if (again)
         {
@@ -100,7 +100,7 @@ internal sealed partial class WholeMapViewModel
 
     private void Refocus()
     {
-        Emphasis = Focus is { } focus ? Around(focus) : null;
+        Emphasis = SearchActive ? _searchSet : Focus is { } focus ? Around(focus) : null;
         EmphasisChanged?.Invoke(this, EventArgs.Empty);
     }
 

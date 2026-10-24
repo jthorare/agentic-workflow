@@ -46,7 +46,13 @@ internal sealed partial class ContextPageViewModel
     public async Task Submit(CancellationToken cancellationToken = default)
     {
         var words = Words(AnchorText);
-        if (words.Count == 0 || Ports.ApiUrl() is not { } api)
+        if (words.Count == 0)
+        {
+            _ = BackToWholeMap();   // Enter on an empty box returns to the full map
+            return;
+        }
+
+        if (Ports.ApiUrl() is not { } api)
         {
             return;
         }
@@ -84,6 +90,12 @@ internal sealed partial class ContextPageViewModel
         {
             Show(view: null, choices: Suggestions(result.Error));
             Problem = TooLongForOneRead(result.Error) ? Labels.ContextTooLongForOneRead : result.Error.Message;
+            if (Whole.IsReady)
+            {
+                Whole.ApplySearch([], [], zoomed: false);   // nothing resolved: the map dims and says so
+                ChangedWhole();
+            }
+
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 

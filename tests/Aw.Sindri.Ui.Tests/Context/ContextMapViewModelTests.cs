@@ -143,7 +143,6 @@ public sealed class ContextMapViewModelTests
         var plain = Map();
         var draft = Map(node => node["draft"] = true);
 
-        Assert.Equal(Labels.ContextMapStartingPoints(1), plain.StartingPoints);
         Assert.Equal([("feature:tabs.tab-manager", "Tab manager", "feature")], plain.Anchors.Select(a => (a.Key, a.Label, a.Kind)));
         Assert.False(plain.Draft);
         Assert.True(draft.Draft);

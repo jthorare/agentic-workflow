@@ -8,6 +8,8 @@ internal sealed partial class ContextPageViewModel
     private const int MaxOpenedAreas = 3;
     private const int MaxLocate = 100;
 
+    private IReadOnlyCollection<string> _unopenedHitAreas = [];   // the features a search touched that stay tiles
+
     /// <summary>Whether the camera is on a query's answer.</summary>
     public bool IsZoomedIn => Whole.IsZoomed;
 
@@ -22,8 +24,15 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        IReadOnlyList<string> keys = [.. map.Nodes.Select(n => n.Key)];
+        var hits = await MapSearch.Search(AnchorText, cancellationToken).ConfigureAwait(true);
+        IReadOnlyList<string> keys = [.. hits.Select(h => h.Key)];
+        _unopenedHitAreas = [];
         var zoomed = Whole.AnswerByArea ? await ZoomIntoAreas(api, keys, cancellationToken).ConfigureAwait(true) : Whole.Zoom(keys);
+        if (zoomed || hits.Count == 0 || _unopenedHitAreas.Count > 0)
+        {
+            Whole.ApplySearch(hits, _unopenedHitAreas, zoomed);   // an answer with none of its items on the map is not a search
+        }
+
         if (!zoomed)
         {
             Problem = Labels.ContextWholeNoMatch;
@@ -63,6 +72,7 @@ internal sealed partial class ContextPageViewModel
             return true;
         }
 
+        _unopenedHitAreas = [.. touched.Skip(reads.Length).OfType<string>()];
         return Whole.ZoomIntoAreas(overview, [.. reads.Select(r => r.Value)], keys, touched.Count - reads.Length);
     }
 
@@ -93,14 +103,27 @@ internal sealed partial class ContextPageViewModel
             return true;
         }
 
+        if (Whole.SearchActive)
+        {
+            ClearSearch();   // the box empties too
+            return true;
+        }
+
         return BackToWholeMap();
+    }
+
+    /// <summary>The clear button and Esc: the box empties, nothing dims and the camera fits the whole map.</summary>
+    internal void ClearSearch()
+    {
+        AnchorText = string.Empty;   // an empty box ends the search itself
+        _ = BackToWholeMap();
     }
 
     /// <summary>"Whole map": the answer stops standing out and the camera fits the world again.</summary>
     /// <returns>True when the camera was on an answer.</returns>
     internal bool BackToWholeMap()
     {
-        if (!Whole.IsZoomed)
+        if (!Whole.IsZoomed && !Whole.SearchActive)
         {
             return false;
         }

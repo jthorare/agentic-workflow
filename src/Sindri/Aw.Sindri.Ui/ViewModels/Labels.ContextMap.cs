@@ -118,11 +118,6 @@ internal static partial class Labels
     /// <summary>The label of the starting points box.</summary>
     internal const string ContextMapStartsAt = "Starts at";
 
-    /// <summary>The button that lists the starting points.</summary>
-    /// <param name="n">How many starting points.</param>
-    /// <returns>"3 starting points".</returns>
-    internal static string ContextMapStartingPoints(int n) => string.Create(CultureInfo.InvariantCulture, $"{n} starting {(n == 1 ? "point" : "points")}");
-
     /// <summary>The label of the pinned or live choice.</summary>
     internal const string ContextMapAsOf = "As of";
 

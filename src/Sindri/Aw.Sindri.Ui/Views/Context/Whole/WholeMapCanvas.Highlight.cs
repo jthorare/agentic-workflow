@@ -77,6 +77,8 @@ internal sealed partial class WholeMapCanvas
 
     private double Faded(double to) => _set is null ? 1 : 1 - (DimStrength * (1 - to));
 
-    // An edge touches the highlight when the focus is one of its ends.
-    private bool Touches(string from, string to) => _focus is { } focus && (string.Equals(from, focus, StringComparison.Ordinal) || string.Equals(to, focus, StringComparison.Ordinal));
+    // An edge touches the highlight when the focus is one of its ends; with no focus (a search), when both its ends are lit.
+    private bool Touches(string from, string to) => _focus is { } focus
+        ? string.Equals(from, focus, StringComparison.Ordinal) || string.Equals(to, focus, StringComparison.Ordinal)
+        : _set is { } lit && lit.Contains(from) && lit.Contains(to);
 }

@@ -71,7 +71,7 @@ public sealed class ContextMapFramesTests : FrameHost
         var (window, shell) = await Open(1440, 900);
 
         Assert.True(Visible(window, "AnchorBox"));
-        Assert.Equal(Labels.ContextMapStartingPoints(1), Named<TextBlock>(window, "StartingPointsText").Text);
+        Assert.False(Visible(window, "StartingPoints"));
         var strip = Named<CoverageStrip>(window, "ContextCoverageStrip");
         Assert.Equal(shell.Context.Map!.CoverageLead, strip.Lead);
         Assert.Equal(4, strip.Areas.Count);
