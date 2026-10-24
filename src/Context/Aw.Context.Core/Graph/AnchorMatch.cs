@@ -4,10 +4,14 @@ using Aw.Kernel;
 namespace Aw.Context.Core.Graph;
 
 /// <summary>
-/// Resolves what a caller names to graph nodes (spec §8.1). The 'node' shape takes a key, an alias or a label. The 'text'
-/// shape anchors on nodes whose whole label the question uses: words compared lower-case, a plural 's' dropped, small
-/// words and a parenthesized kind ('(command)') ignored. The most specific match wins (a label whose words are all in
-/// another match's label gives way to it). Source-hit voting waits for sources that link records to nodes (S-5B).
+/// Resolves what a caller names to graph nodes (spec §8.1). The 'node' shape takes a key, an alias or one exact label
+/// (case ignored). When that names nothing and the label is not shared by several nodes, one feature still matches when
+/// every significant word of the name (two or more, each of length at least 3) sits in its label, in any order and with
+/// punctuation ignored. The 'text' shape anchors on nodes whose whole label the question uses: words compared
+/// lower-case, a plural 's' dropped, small words and a parenthesized kind ('(command)') ignored. The most specific
+/// match wins (a label whose words are all in another match's label gives way to it). Suggestions list nodes that share
+/// those words, most first, then a test file (its key or label contains '/__tests__/', '.test.', '.spec.' or 'fixture')
+/// after every other node with the same count. Source-hit voting waits for sources that link records to nodes (S-5B).
 /// </summary>
 public static class AnchorMatch
 {
@@ -53,6 +57,11 @@ public static class AnchorMatch
                 .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable).Take(MaxListed)], SettingsJsonContext.Default.ListString);
         }
 
+        if (NearFeature(graph, trimmed) is { } near)
+        {
+            return near;
+        }
+
         var suggested = Suggest(graph, Words(trimmed), except: []);
         var hint = suggested.Count == 0 ? "sindri context map status" : "try " + string.Join(", ", suggested.Select(k => k.Value));
         var unknown = ContextErrors.UnknownAnchor.With($"no node is named '{Shown(trimmed)}' (fix: {hint})");
@@ -86,12 +95,30 @@ public static class AnchorMatch
     internal static HashSet<string> Words(string text) =>
         QueryRules.Words(text, MaxWords).Where(w => !_small.Contains(w)).Select(Singular).Where(w => !_small.Contains(w)).ToHashSet(StringComparer.Ordinal);
 
+    private static GraphNode? NearFeature(GraphSnapshot graph, string name)
+    {
+        var words = Words(name).Where(w => w.Length >= 3).ToHashSet(StringComparer.Ordinal);
+        if (words.Count < 2)
+        {
+            return null;
+        }
+
+        var hits = graph.Nodes.Where(n => n.Key.Kind == NodeKind.Feature && words.IsSubsetOf(Words(Unbracketed(n.Label)))).Take(2).ToList();
+        return hits.Count == 1 ? hits[0] : null;
+    }
+
     private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except) =>
         [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal))
-            .Select(n => (n.Key, Shared: Words(Unbracketed(n.Label)).Count(w => w.Length >= 3 && words.Contains(w))))
+            .Select(n => (n.Key, n.Label, Shared: Words(Unbracketed(n.Label)).Count(w => w.Length >= 3 && words.Contains(w))))
             .Where(m => m.Shared > 0)
-            .OrderByDescending(m => m.Shared).ThenBy(m => m.Key.Value, StringComparer.Ordinal)
+            .OrderByDescending(m => m.Shared).ThenBy(m => TestLike(m.Key.Value) || TestLike(m.Label)).ThenBy(m => m.Key.Value, StringComparer.Ordinal)
             .Take(MaxSuggestions).Select(m => m.Key)];
+
+    private static bool TestLike(string text) =>
+        text.Contains("/__tests__/", StringComparison.OrdinalIgnoreCase)
+        || text.Contains(".test.", StringComparison.OrdinalIgnoreCase)
+        || text.Contains(".spec.", StringComparison.OrdinalIgnoreCase)
+        || text.Contains("fixture", StringComparison.OrdinalIgnoreCase);
 
     private static string Singular(string word) =>
         word.Length > 3 && word.EndsWith('s') && !word.EndsWith("ss", StringComparison.Ordinal) ? word[..^1] : word;

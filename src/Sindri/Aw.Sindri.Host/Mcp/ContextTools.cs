@@ -102,9 +102,7 @@ internal static class ContextTools
             return McpResults.Failure(services, answer.Error);
         }
 
-        return answer.Value.Many is { } many
-            ? McpResults.Success(services, many, McpSummaries.LensesSet(many))
-            : McpResults.Success(services, answer.Value.One!, McpSummaries.Lenses(answer.Value.One!));   // why: exactly one of One and Many is set
+        return LensPayload.Deliver(services, answer.Value);
     }
 
     /// <summary>The lenses arguments as a request: 'anchor' then 'anchors' (in order), an optional 'mapVersion'; SND-CONTEXT-022 for anything else. The draft map is never read over MCP.</summary>

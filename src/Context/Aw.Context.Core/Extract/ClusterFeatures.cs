@@ -5,9 +5,24 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Extract;
 
-/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their files.</summary>
+/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their source files. Tests, fixtures, demos, icons, deprecated trees, shells, routers and crons are not implementers.</summary>
 public static class ClusterFeatures
 {
+    // Roles and common directory words. '**/' is any directories, '*' stays inside one segment, and matching ignores case.
+    private static readonly string[] _sharedRoles =
+    [
+        "**/__tests__/**",
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/*fixture*",
+        "**/demo/**",
+        "**/icons/**",
+        "**/*deprecated*/**",
+        "**/*shell*/**",
+        "**/*router.*",
+        "**/*cron*",
+    ];
+
     /// <summary>Proposes a feature per cluster.</summary>
     /// <param name="repo">The repo.</param>
     /// <param name="clusters">What the cluster source found.</param>
@@ -42,11 +57,16 @@ public static class ClusterFeatures
     private static ExtractedMap One(Candidate candidate, ExtractedMap extracted, HashSet<string> claimed)
     {
         var (repo, key, label, confidence, files) = candidate;
-        var inCluster = files.ToHashSet(StringComparer.Ordinal);
+        var inCluster = files.Where(f => !NotAnImplementer(f)).ToHashSet(StringComparer.Ordinal);
         var nodes = new List<GraphNode> { new(key, label, Provenance.Model, confidence) };
         var edges = new List<GraphEdge>();
         foreach (var file in files)
         {
+            if (NotAnImplementer(file))
+            {
+                continue;
+            }
+
             var code = NodeKey.From("code:" + file);
             nodes.Add(new GraphNode(code, file[(file.LastIndexOf('/') + 1)..], Provenance.Deterministic));
             var evidence = RecordKey.TryFrom($"repo:{repo.Value}/{file}", out var record) ? new[] { new EvidenceRef(record) } : null;
@@ -58,6 +78,8 @@ public static class ClusterFeatures
         edges.AddRange(surfaces.Select(s => new GraphEdge(s, key, EdgeType.PartOf, Provenance.Model, confidence)));
         return new ExtractedMap(nodes, edges);
     }
+
+    private static bool NotAnImplementer(string file) => PathDenylist.Matches(file, _sharedRoles);
 
     // Distinct files with a usable code key, in path order.
     private static List<string> Files(FileCluster cluster) =>
