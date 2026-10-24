@@ -1,11 +1,25 @@
 # Sindri setup once: the owner sets up Sindri and Onyx, and nothing else is typed (spec amendment)
 
-**Status:** approved, rev 4 (owner, 2026-10-20: approved with the recommended answer to each question in §14). It is a
-docs-only amendment; the code lands in the phases of §13. Lanes: api (this spec), engine, context, ui.
+**Status:** approved rev 4 (owner, 2026-10-20: approved with the recommended answer to each question in §14); rev 5
+proposed, awaiting the owner's read. It is a docs-only amendment; the code lands in the phases of §13. Lanes: api (this
+spec), engine, context, ui.
+
+**Rev 5 (2026-10-20), owner Q1 of the F3 Setup spec:** setup under Settings, one Home line; the API is unchanged. The
+six-step checklist is its own page under **Settings** (route `setup`, reached from Settings and by `G U`), and Home shows
+one line, **"Finish setting up Sindri"**, while any step is open (it links to the checklist and is gone when every step is
+`done` or `skipped`). That replaces the three-row Setup card on Home (§1, §2, §3 SO-D1, §5.7, §6, §7.2, §7.3, §7.5, §9, §11,
+§13, §13.1). The steps, their states, the `why` sentences and the actions are unchanged. **The Home fold:** "three rows
+filled by priority" had a role only on a card that had to fit above the fold; the checklist is a page, so it draws all six
+steps in the spec's step order (repo, profile, recipes, mcp, map, onyx) with each state shown, and the priority fill and
+"and N more" are dropped (R3-2's concern, a failed or needs-you step hidden behind "and N more", cannot arise: nothing is
+hidden on the page). Home hides the `setup:*` needs-you rows while any step is open, because the Home line replaces them,
+as before in kind (the Needs you page and the tray keep them all). **The API contract does not change:** §7 (including
+`GET /sindri/setup`), the goldens of §8, the events, the codes and the action ids stay as in rev 4, because the API carries
+no layout. The history in §12 keeps the wording of the time it was written.
 
 **Rev 4 (2026-10-19), /autoplan round 3, the last (§12):** the first slice is shippable (SO-A7 is split: A7a keeps
 today's Onyx default and the MCP hint, A7b drops them only once A4, A5 and U1 have merged, and the slice is recounted);
-the Setup card fills its three rows by priority; the default profile allows the effects the shipped recipes declare; every
+the Setup card filled its three rows by priority (dropped in rev 5); the default profile allows the effects the shipped recipes declare; every
 C# command is written `sindri-app <verb>`; the manifest file is gone (the shipped set is the recipe files embedded from
 `git archive HEAD`, hashed at serve start, with a new `sindri-app recipe manifest` verb); a recipe's capability set is its
 block ids, effect kinds and capability literals (`RecipeCapabilitySet`); the app-confirm check is in the handlers, not in
@@ -22,7 +36,7 @@ password has one in-memory slot; the `RegisterMcp` job key is valid; existing bo
 a step in the app; one table counts every prompt); approve-all is a job with a plan digest, an internal approval path and a
 shipped-recipe manifest written from the committed tree; recipe versions bump with `displayName`; job kinds and keys match
 the id types; Onyx setup is two calls and the password never reaches a job row; approve-all also takes a typed answer;
-Setup is a Home card, not a first screen; the UI specs are amended; consent is in plain words; background failures are
+Setup is a Home card, not a first screen (rev 5: a Settings page and one Home line); the UI specs are amended; consent is in plain words; background failures are
 visible and retryable.
 
 **Decision it implements (owner, 2026-10-19, after the demo):** Sindri is set up **once**, then Onyx. Everything else
@@ -38,8 +52,8 @@ prompt, MCP registration, map builds and recipe registration.
 - the context retrieval spec (`2026-10-10-sindri-context-retrieval-design.md`): SO-14 (the map has no manual promote
   step; the `context-map-refresh` service promotes);
 - the Onyx spec (`2026-10-16-sindri-onyx-managed-design.md`): SO-15 (the owner's Onyx login may be given in the app);
-- the UI specs (`2026-10-11-sindri-ui-design.md`, `2026-10-13-sindri-ui-screens-design.md`): SO-19 to SO-21 (Setup on
-  Home, three protected actions become app confirmations);
+- the UI specs (`2026-10-11-sindri-ui-design.md`, `2026-10-13-sindri-ui-screens-design.md`): SO-19 to SO-21 (Setup under
+  Settings with one Home line, three protected actions become app confirmations);
 - `.agents/rules/mcp-servers.md`: SO-22 (Sindri may register its own MCP after the profile is approved);
 - `docs/sindri/README.md`: SO-16 (X65).
 
@@ -61,13 +75,13 @@ confirmation in the app. A map builds itself.
 the recipe approvals keep a confirmation bound to the content's hash, now given in the app (§4). A session is still
 refused `SND-AUTH-002`. Nothing in this spec lets an agent approve anything.
 
-**Success.** A new owner runs `./setup.sh --with-sindri`. It installs, publishes the app and opens it. Home shows a
-Setup card of six steps (repo, profile, recipes, MCP, map, Onyx). They pick a repo, confirm one profile approval (two
+**Success.** A new owner runs `./setup.sh --with-sindri`. It installs, publishes the app and opens it. Home shows one
+line, "Finish setting up Sindri", that opens the Setup checklist under Settings, six steps (repo, profile, recipes, MCP, map, Onyx). They pick a repo, confirm one profile approval (two
 when Onyx is set up after the profile is approved), hold one "approve all recipes", sign up to Onyx in the browser and enter their Onyx login in a form (or press Not now), and
 watch the rest finish.
 The second repo they add is one pick and one typed confirmation. Success is measured two ways: the prompts in the table
 of §2, and **time to first value**, the time from the app's first open to all six steps `done` or `skipped` (`setup.done`;
-"finished" means exactly that, here and in §5.7, §6 and §7.5), and the time from there to the first work item's first transition (`setup.first-item`), both recorded from the ledger (§7.5). When the six are done, the card's last line says what to do next ("Open a repo's map" or
+"finished" means exactly that, here and in §5.7, §6 and §7.5), and the time from there to the first work item's first transition (`setup.first-item`), both recorded from the ledger (§7.5). When the six are done, the Home line is gone and the checklist's last line says what to do next ("Open a repo's map" or
 "Start a work item").
 
 ## 2. Today, and after: every prompt a new owner meets
@@ -104,7 +118,7 @@ part of setup.sh, so 62 is the honest figure.
    installs (the Serena image, the TypeScript build). **From A7b on** it no longer runs `onyx up` or prints the MCP register
    hint; `--with-onyx` keeps the old terminal behaviour (Q9). **In the first slice (A7a, §13.1) both stay**, because the app
    steps that replace them (A4, A5, U1) have not merged yet; the table below is the count from A7b on.
-2. In the app, Home shows the Setup card. The shipped recipes register at start. Only the folder pick and Set up Onyx
+2. In the app, Home shows the "Finish setting up Sindri" line, which opens the Setup checklist. The shipped recipes register at start. Only the folder pick and Set up Onyx
    (any time Docker is ready) can start. The profile step is `todo` ("Waits for your first repo") until a repo exists
    (§5.2), and `recipes` is `todo` ("After the profile is approved") until the profile is approved (§5.3).
 3. The owner picks a repo and confirms the profile once. Then the hold is offered, and the owner holds approve-all. They
@@ -135,13 +149,13 @@ the approved profile; `recipes` is `needs-you` once (the version bump of §5.3 m
 `needs-you` once with the action "Turn on for your repos": that profile was approved before Sindri could write MCP
 settings or run cleanup calls on its own, so **nothing is written or started until the owner presses it**
 (`setup.consent.given`, §5.4); entries made by hand are `unchanged`, never overwritten, and doctor still warns on a
-user-wide one; `onyx` is `done` or `needs-you`. The card says why `recipes` came back ("Sindri updated 26 recipes").
+user-wide one; `onyx` is `done` or `needs-you`. The checklist says why `recipes` came back ("Sindri updated 26 recipes").
 
 ## 3. Decisions
 
 | # | Decision | Why |
 |---|---|---|
-| SO-D1 | The setup is **one visible list of six steps**, served by `GET /sindri/setup`, in the order repo, profile, recipes, mcp, map, onyx. The app draws it as a **Setup card on Home** (§5.7); nothing in it is the app's own logic | The UI is a pure client (UI spec §17.27.1); the owner sees one place that says what is done and what needs them, and Home stays the default page |
+| SO-D1 | The setup is **one visible list of six steps**, served by `GET /sindri/setup`, in the order repo, profile, recipes, mcp, map, onyx. The app draws it as a **Setup checklist under Settings, with one "Finish setting up Sindri" line on Home while any step is open** (§5.7); nothing in it is the app's own logic | The UI is a pure client (UI spec §17.27.1); the owner sees one place that says what is done and what needs them, Home stays the default page and carries one line, not a card |
 | SO-D2 | Long work is a **background job** returning 202 and a job id, never a blocking POST; a step that fails or waits on the owner is also a **needs-you row**. This includes approve-all | The existing job and needs-you machinery (API §3.6, P6) already gives progress, cancel and events |
 | SO-D3 | The app becomes a **second confirmation channel for exactly three `protected` actions**: `ApproveProfile`, `ApproveRecipe`, `ApproveAllRecipes`, each marked by a per-row `AppConfirm` flag (§4 item 7). Everything else `protected` (grants, accept, revoke, map promote by hand, review-apply, merge, add, delete) stays terminal-only | The owner's rule needs the profile and the recipes in the app. Widening further is a separate decision |
 | SO-D4 | The app confirms by **typing** (the profile, a recipe) or by **holding or typing** (approve-all), against a server challenge bound to the content's hash. Same challenge store, same 5 minutes, same drift refusal as the terminal | The profile widens what Sindri may do (repos, services, effects), so it is typed. Approve-all covers only recipes whose `id@hash` is in the installed build's embedded set (§5.3), so a deliberate hold after reading the list is enough, and the typed answer keeps it reachable by keyboard and assistive tools |
@@ -253,7 +267,7 @@ a second conflict leaves the step `failed` with "The profile changed while Sindr
 |---|---|
 | States | **`todo`**, "Waits for your first repo", until the profile names a repo: on a fresh box there is nothing to approve, so there is no `needs-you` row and no preview. **No profile file is written before a repo exists** (the first `AddRepo` creates it, §5.1), so Set up Onyx before a repo leaves this step `todo` and raises no `profile:drift` row. It becomes `needs-you` when the live profile differs from the approved one (`profile.checked drifted:true`, every 30 s) |
 | Route | The existing `GET /profile` and the app challenge of §4 (`approve profile <hash6>`, **typed**), then `POST /profile/approve` `{hash, answer}` (unchanged body) |
-| Needs-you | The existing `profile:drift` row (kind `profile`); its `primaryAction` becomes `ApproveProfile`, `ready` in the app (SO-5). **There is no `setup:profile` row**: the Setup card links the same row, so the card and Needs you show one approval, not two |
+| Needs-you | The existing `profile:drift` row (kind `profile`); its `primaryAction` becomes `ApproveProfile`, `ready` in the app (SO-5). **There is no `setup:profile` row**: the Setup checklist links the same row, so the checklist and Needs you show one approval, not two |
 | Preview | In plain words, first: for each added repo, **its resolved real path and its size (files and megabytes)** and the sentences the approval carries: "Sindri will read `<path>` and send what it reads to your Onyx and to the map cleanup agent", "Sindri will write its MCP settings into `<repo>` for Claude Code, Codex and Cursor" (§5.4) and "Sindri will keep `<repo>`'s map up to date on its own". Then widened services and effects in words (for the default profile, the effects it allows: reserve a work item, put a question or notice in Needs you, write progress lines, open or update a pull request), then the changed key paths. The typed text is a slip guard; the sentences are the consent. Every pending change (the repo and, if Onyx ran first, the Onyx section) is in this one preview |
 | Events | `profile.checked`, `profile.approved` (unchanged), `setup.step.changed` |
 | Failure | A stale hash is `SND-PROFILE-003` (the app re-reads and asks again); an invalid profile file is `SND-PROFILE-001/002` shown on the step as `failed` with the sentence |
@@ -367,47 +381,50 @@ adds only the setup step that reports them.
 | | |
 |---|---|
 | Trigger | The owner presses **Set up Onyx** in the app (any time Docker is ready), or runs `sindri-app onyx up` at a terminal (or `setup.sh --with-onyx`) |
-| Docker and "Not now" | Docker missing: the step is **`skipped`** with the reason "Docker isn't installed" and a link to the install doc (`SND-ONYX-001`), `action: null`; installing Docker moves it back to `todo` and reopens the card. A Docker that is present but fails the memory, disk or port preflight (`sindri-app onyx status`) is shown the same way, with that reason. A **not-started Onyx is `todo`** with the action `SetupOnyx`, never `needs-you`: nothing blocks the owner. **Not now** (`DeferOnyx`, `desk`, `POST /sindri/onyx/defer {deferred: true}`) sets the step to `skipped` with "You chose to set up Onyx later"; Set up Onyx in the card's menu reverses it (`{deferred: false}`). Both append `onyx.deferred` |
+| Docker and "Not now" | Docker missing: the step is **`skipped`** with the reason "Docker isn't installed" and a link to the install doc (`SND-ONYX-001`), `action: null`; installing Docker moves it back to `todo` and reopens the checklist and the Home line. A Docker that is present but fails the memory, disk or port preflight (`sindri-app onyx status`) is shown the same way, with that reason. A **not-started Onyx is `todo`** with the action `SetupOnyx`, never `needs-you`: nothing blocks the owner. **Not now** (`DeferOnyx`, `desk`, `POST /sindri/onyx/defer {deferred: true}`) sets the step to `skipped` with "You chose to set up Onyx later"; Set up Onyx in the checklist's menu reverses it (`{deferred: false}`). Both append `onyx.deferred` |
 | Call 1: start | `POST /sindri/onyx/setup` (`SetupOnyx`, `desk`, no body) answers **202** `JobStarted`; job kind **`SetupOnyx`**, key `onyx`. It runs the Onyx spec's §4.1 steps 1 to 6 (the stack up) and then **parks in `waiting` on the named signal `onyx-account`** (`JobState.Waiting` is new: it holds no job slot while it waits, shows in `GET /jobs` as `waiting`, and a restart turns it into `failed`; added to API §3.5 and unit A5): the step is `needs-you`, why "Create your Onyx account in the browser, then enter your login here", and the detail always holds the sign-up address (`http://127.0.0.1:3000/auth/signup`) so a box with no browser opener still works. The job opens the page when it can. A wait of **30 minutes** fails the job with the `SND-SETUP-006` sentence; the wait can also be cancelled (`CancelJob`); either way the step goes back to `todo` |
 | Call 2: the login | `POST /sindri/onyx/account` `{adminEmail, adminPassword}` (`ConnectOnyx`, `desk`) is **refused unless the job is waiting on `onyx-account`** (`SND-SETUP-006`); otherwise it answers **202** with the same job id and signals it (steps 7 to 10). Without both fields it is `SND-SETUP-005` |
 | The password | The endpoint reads the body with its own reader straight into a **dedicated secret type**: no `ToString`, not serializable, excluded from `AwJson` and from `Aw.Redaction`'s output by construction. It puts the secret in a **single-use in-memory slot keyed by the job id**; the command sent to the job carries **only the job id**, so the password is not a field of the command record or the job's stored request. The slot is cleared on use, on cancel, on job failure and on restart. A binding error on this route returns a fixed message and never echoes the body. The password is **never** in the job row, the ledger, `command.handled`, a job line, a log, a span, a response or the UI's own state. A job does not survive a restart with a login pending: on restart the step goes back to `needs-you` and asks again. The password reaches Onyx in a request body only, never an argument or an environment variable. The sentinel test sends a password and greps logs, the ledger, jobs and `command.handled` for it on **every path: success, a malformed body, a wrong password** (`SND-ONYX-007`), `ConnectOnyx` while not waiting (`SND-SETUP-006`), a missing field (`SND-SETUP-005`), the 30-minute timeout, and the Onyx login call itself |
-| The profile section | Onyx writes its section into the profile, a change like a repo (Q10). **No profile file is written before a repo exists**: if Onyx runs first, the job keeps the section in `control.json`, the step says "Connected; the profile section is added with your first repo", the profile step stays `todo`, and the first `AddRepo` write includes the section, so one approval covers both. If the profile has already been approved, the section is a second typed approval and the card says so (§5.7) |
-| Needs-you | The existing **`failure:service:onyx`** row (`NeedsYouRows.ForOnyx`), whose reason carries the wait or failure sentence (`SND-ONYX-0nn`) and whose primary action is `SetupOnyx` (or `ConnectOnyx` once waiting for the login); **no `setup:onyx` row**. `cli` = `sindri-app onyx up`. A `todo` Onyx has no row and is card-only |
+| The profile section | Onyx writes its section into the profile, a change like a repo (Q10). **No profile file is written before a repo exists**: if Onyx runs first, the job keeps the section in `control.json`, the step says "Connected; the profile section is added with your first repo", the profile step stays `todo`, and the first `AddRepo` write includes the section, so one approval covers both. If the profile has already been approved, the section is a second typed approval and the checklist says so (§5.7) |
+| Needs-you | The existing **`failure:service:onyx`** row (`NeedsYouRows.ForOnyx`), whose reason carries the wait or failure sentence (`SND-ONYX-0nn`) and whose primary action is `SetupOnyx` (or `ConnectOnyx` once waiting for the login); **no `setup:onyx` row**. `cli` = `sindri-app onyx up`. A `todo` Onyx has no row and is checklist-only |
 | Events | `job.*`, `setup.step.changed`, `onyx.deferred`; the existing Onyx state in `control.json` |
 | Human-only part | The sign-up and the owner's login. Docker is a prerequisite (`SND-ONYX-001`), shown on the step on first open when it is missing |
 | Re-run | Onyx's own idempotence (Onyx spec §4.1) |
 | Terminal | Unchanged: `sindri-app onyx up` stays (Onyx spec P5). `setup.sh` runs it only with `--with-onyx`; its profile confirmation is then the typed challenge at the terminal, as today |
 
-### 5.7 The Setup card on Home, and its states
+### 5.7 The Setup checklist under Settings, the Home line, and their states
 
-The app shows the six steps as a **Setup card on Home**, above Needs you, until every step is `done` or `skipped`. Home
-stays the default page (screens spec R8-1; rev 7 §3.3). The card has a **nav entry (Setup under Home) and the chord
-`G U`**, and the in-app route name `setup` (UI §10); there is no OS URL scheme for it, because `sindri://` is later (UI
-§12.2). `G U` scrolls Home to the card, or expands its one line once it has collapsed (a link to Health). A step that
-reopens (a new repo, a new build) brings the card back.
+The app shows the six steps as a **Setup checklist**, its own page under **Settings** (in-app route `setup`, UI §10),
+reached from Settings and by the chord **`G U`**. There is no OS URL scheme for it, because `sindri://` is later (UI
+§12.2). **Home stays the default page** (screens spec R8-1; rev 7 §3.3) and shows **one line, "Finish setting up Sindri",
+while any step is not `done` or `skipped`**; the line links to the checklist, and it is gone when every step is `done` or
+`skipped`. A step that reopens (a new repo, a new build) brings the line back. Rev 5 replaces the rev 4 three-row Setup
+card on Home (owner Q1, F3 Setup spec).
 
 - **Finished:** one meaning. Setup is finished when every step is `done` or `skipped`; `setup.done` is emitted at that
-  moment and the card collapses at the same moment.
-- **Fold:** the card shows **three rows, filled by priority**: `needs-you` first, then `failed`, then `running`, then `todo`
-  (the spec's step order within each group), then "and N more", which says how many of the hidden steps need the owner (one
-  press expands it). A failed or needs-you step is therefore never behind "and N more" while a running one is drawn. The UI
-  spec's Home fold rule is amended (SO-19): the Setup card is at most three rows plus "and N more", so Needs you starts
-  above the 1280 by 800 fold. A UI fixture has three `running` steps and a failed Onyx.
-- **One approval, one row:** the server always emits the `setup:*` needs-you rows (it cannot know the client's card
-  state, §7.3). The Home view hides a `setup:*` row **only for a step the card is currently drawing**; the Needs you page
-  and the tray keep them all, and the tray badge counts each once. The card links the `profile:drift` row rather than copying it.
+  moment and the Home line goes at the same moment. The checklist page stays reachable from Settings.
+- **Order, no fold:** the checklist draws all six steps in the spec's step order (repo, profile, recipes, mcp, map, onyx),
+  each with its state, so a failed or needs-you step is never hidden. Rev 4's "three rows filled by priority" and "and N
+  more" are dropped: they existed to keep a Home card above the 1280 by 800 fold, and Home now carries one line. The UI
+  spec's Home fold rule is amended (SO-19): Home's Setup line is one row, so Needs you starts above the fold. A UI fixture
+  has three `running` steps and a failed Onyx, and checks that all six rows are drawn on the page and that Home shows only
+  the line.
+- **One approval, one row:** the server always emits the `setup:*` needs-you rows (it cannot know the client's layout,
+  §7.3). **While any step is open, the Home view hides every `setup:*` row**, because the Home line replaces them; the
+  Needs you page and the tray keep them all, and the tray badge counts each once. When no step is open there is no `setup:*`
+  row to show. The checklist links the `profile:drift` row rather than copying it.
 - **Needs its own look:** a previously approved recipe that gained a capability (§5.3) is listed under that heading, one
   line each, each opening the existing recipe approve flow (`ApproveRecipe`, typed, §4).
 - **Onyx:** a not-started Onyx is `todo` with Set up Onyx, and its line says "Do this before you approve the profile to
-  save one approval". `skipped` reads "Onyx isn't set up" with Set up Onyx in the card's menu. Docker missing is `skipped`
+  save one approval". `skipped` reads "Onyx isn't set up" with Set up Onyx in the checklist's menu. Docker missing is `skipped`
   with the reason "Docker isn't installed" and a link to the install doc (`SND-ONYX-001`); it is finished like any `skipped`
-  step, and installing Docker reopens it as `todo`. When Onyx changed the profile after it was approved, the card says "Onyx added a section to your profile. Approve the profile once more."
+  step, and installing Docker reopens it as `todo`. When Onyx changed the profile after it was approved, the checklist says "Onyx added a section to your profile. Approve the profile once more."
 - **The Onyx form:** each field has a visible label ("Onyx email", "Onyx password"); autofill and paste are allowed; the
   password has a show/hide toggle; focus goes to the first field when the form opens and back to the button when it
   closes; `SND-SETUP-005` and `SND-SETUP-006` show under the field and are announced.
-- **Loading:** a six-row skeleton. **Rebuilding or stalled views:** the existing `asOf` banners. **Sindri is
+- **Loading:** a six-row skeleton on the checklist page; Home shows no line until the answer arrives. **Rebuilding or stalled views:** the existing `asOf` banners. **Sindri is
   restarting:** "Sindri is starting" until the next answer.
-- **Sindri isn't running:** derived client-side when `GET /setup` fails to connect: the card says "Sindri isn't
+- **Sindri isn't running:** derived client-side when `GET /setup` fails to connect: the checklist says "Sindri isn't
   running", shows the launcher command (`sindri-app`, the daily path after a reboot) with a **copy** action, and says "The app reconnects on its own
   when Sindri starts." There is **no Start button**: the app never starts the control plane from inside the window (UI
   §6.5). No server means no `setup` events, so nothing else is shown.
@@ -426,7 +443,7 @@ reopens (a new repo, a new build) brings the card back.
 | `needs-you` | Only the owner can go on; `action` is the button |
 | `done` | Finished; `detail` says what it did |
 | `failed` | It stopped; `error {code, sentence}` and the fix are in plain words |
-| `skipped` | Only `onyx` has it: the owner chose "Not now", or Docker isn't installed (the reason is in `why`, the link in `detail`). It counts as finished, and `action` (`SetupOnyx`) stays available from the card's menu when the owner chose it |
+| `skipped` | Only `onyx` has it: the owner chose "Not now", or Docker isn't installed (the reason is in `why`, the link in `detail`). It counts as finished, and `action` (`SetupOnyx`) stays available from the checklist's menu when the owner chose it |
 
 A step never moves backwards by itself except when its inputs change (a new repo, a new build).
 
@@ -450,6 +467,8 @@ whose profile pre-dates this build also for `setup.consent.given` (§5.4); `onyx
 pressing it before a repo exists leaves the profile `todo`.
 
 ## 7. The contract
+
+**Rev 5: this section is unchanged.** Moving the checklist under Settings and reducing Home to one line is layout, and the API carries no layout: `GET /sindri/setup`, the routes, the needs-you rows the server emits, the events, the error codes, the action ids and the goldens of §8 are as in rev 4.
 
 ### 7.1 Profile
 
@@ -503,7 +522,7 @@ failure code, not an HTTP status; only the checks that run before the job is cla
   "needs-you", detail}`). `skipped` is only ever `onyx`'s.
 - `asOf` is the views' `asOf` object (API §2.3), as every view carries.
 - Titles are fixed: Add your repo · Approve the profile · Approve the recipes · Connect your agents · Build the map ·
-  Set up Onyx. A client may show them or its own. Each has a one-line gloss in the card: "Set up your repos", "Allow
+  Set up Onyx. A client may show them or its own. Each has a one-line gloss in the checklist: "Set up your repos", "Allow
   Sindri's workflows" and so on (the glosses are the app's text, UI §12.4); paths go in a secondary line and commands only in
   `cli`.
 
@@ -536,7 +555,7 @@ existing `failure:service:onyx`.
 | `cli` | the terminal fallback: the CLI form of the action |
 | Cleared when | the step is `done` or `running` |
 
-The server always emits these rows; the Home view hides one only for a step the Setup card is drawing (§5.7). Onyx is the one step that is card-only until it fails or waits for the login (it has no `setup:onyx` row; the existing `failure:service:onyx` row carries it). Rows order by urgency, then oldest first (API §3.6). A `setup` row raises no OS notification (notifications come only
+The server always emits these rows; the Home view hides them all while any step is open, because the Home line replaces them (§5.7). Onyx is the one step that is checklist-only until it fails or waits for the login (it has no `setup:onyx` row; the existing `failure:service:onyx` row carries it). Rows order by urgency, then oldest first (API §3.6). A `setup` row raises no OS notification (notifications come only
 from `notify.desk`, X50).
 
 ### 7.4 Catalog action ids (SO-3)
@@ -579,7 +598,7 @@ call the same routes. `sindri-app recipe approve-all` asks the typed `approve-al
 The event catalog's `invalidates` lists (UI E-15) add: `setup.step.changed`, `repo.added` and `mcp.registered` re-query
 `setup`; `recipe.registration.completed` re-queries `setup` and the recipe list. Step durations come from
 `setup.step.changed`. Two metrics (`Aw.Kernel.Telemetry`, no new ledger event) are computed by `service:setup` from the
-ledger: `setup.done` (the app's first open to the moment every step is `done` or `skipped`, the same moment the card collapses) and `setup.first-item` (recorded on the first `workflow.instance.started` after `setup.done`, carrying the minutes between them), so the proof and the card can report time to done and time to first value.
+ledger: `setup.done` (the app's first open to the moment every step is `done` or `skipped`, the same moment the Home line goes) and `setup.first-item` (recorded on the first `workflow.instance.started` after `setup.done`, carrying the minutes between them), so the proof and the checklist can report time to done and time to first value.
 
 ### 7.6 Errors (SO-8)
 
@@ -670,10 +689,10 @@ Each is `Golden/Api/<path>`; one body each. Hashes and ids are shortened. **Thir
  {"id":"recipes","state":"todo","...":"..."}],"asOf":{"...":"..."}}
 ```
 
-**`setup/onyx-skipped.json`** (everything else done; the owner chose Not now, so the card collapses and `setup.done` is emitted)
+**`setup/onyx-skipped.json`** (everything else done; the owner chose Not now, so the Home line goes and `setup.done` is emitted)
 ```json
 {"steps":[{"id":"repo","state":"done","...":"..."},{"id":"profile","state":"done","...":"..."},{"id":"recipes","state":"done","...":"..."},{"id":"mcp","state":"done","...":"..."},{"id":"map","state":"done","...":"..."},
- {"id":"onyx","title":"Set up Onyx","state":"skipped","why":"You chose to set up Onyx later.","detail":"Onyx isn't set up. Use Set up Onyx in the card's menu when you want search.","error":null,"action":"SetupOnyx","progress":null,"items":[]}],
+ {"id":"onyx","title":"Set up Onyx","state":"skipped","why":"You chose to set up Onyx later.","detail":"Onyx isn't set up. Use Set up Onyx in the checklist's menu when you want search.","error":null,"action":"SetupOnyx","progress":null,"items":[]}],
  "asOf":{"...":"..."}}
 ```
 
@@ -741,9 +760,9 @@ covered, and the app is still the owner's rule, not a requirement.
 re-publishes `sindri-app` only when the source changed (the stamp check), never replaces a running `serve` (it declines and prints the older-build line)
 and runs Onyx only with `--with-onyx`. Its summary lists what is still to do and what failed, separately.
 
-Daily start (`sindri-app`, bare) is not setup. On a box where Onyx is not set up it shows the Onyx step on the Setup card
+Daily start (`sindri-app`, bare) is not setup. On a box where Onyx is not set up it shows the Onyx step on the Setup checklist
 and the existing `failure:service:onyx` row. **From A7b on**, bare `sindri-app` prints no MCP register hint and skips its
-Onyx offer when the Setup card owns that step (`docs/csharp/sindri.md` is amended with A7b, §11).
+Onyx offer when the Setup checklist owns that step (`docs/csharp/sindri.md` is amended with A7b, §11).
 
 ## 10. Folding in PR #433 (CI apply spec): clause by clause
 
@@ -795,13 +814,13 @@ should add one line to #433's body: "its map-promote half is replaced by the set
 | `docs/sindri/README.md` | X65 | the decision | SO-16 |
 | Engine spec | §6.3 (the `recipe`/`workflow` CLI table) | the short form `sindri takeover <item-or-address>` beside `sindri handback`, as added by #448 (open at rev 2; whichever merges second keeps the line) | SO-17 |
 | API surface spec | §3.2 and the engine-owned list | the same short form beside `sindri handback` | SO-18 |
-| UI screens spec (rev 8) | §3 (R8-1, the page table), §4.1 Home | Home stays the default; the Setup card above Needs you (three rows and "and N more"), a nav entry under Home, `G U`, the in-app route `setup` (no OS scheme). Rev 7 §3.3 gets the same one-line note | SO-19 |
+| UI screens spec (rev 8) | §3 (R8-1, the page table), §4.1 Home | Home stays the default and shows one "Finish setting up Sindri" line while any step is open; the checklist is a page under Settings (route `setup`, `G U`; no OS scheme). Rev 7 §3.3 gets the same one-line note | SO-19 |
 | UI spec (rev 7) | §6.5 (what the app never does), §7 (the protected rows and the closing paragraph), §18.1 and the E-9/E-13 row | `ApproveProfile`, `ApproveRecipe` and `ApproveAllRecipes` become app confirmations (typed or held); the rest stay `cli-only`; the line-15 list of protected rows drops `ApproveRecipe` | SO-20 |
-| UI spec (rev 7) | §3.2 (the Home fold rule) | the Setup card is at most three rows plus "and N more", filled by priority, so Needs you starts above the 1280 by 800 fold | SO-19 |
+| UI spec (rev 7) | §3.2 (the Home fold rule) | Home's Setup entry is one line, so Needs you starts above the 1280 by 800 fold | SO-19 |
 | UI screens spec (rev 8) | the recipes page ("Re-approval is `protected`: the CLI to copy") | re-approval of one recipe is typed in the app | SO-21 |
 | `.agents/rules/mcp-servers.md` | per-repo servers, the `sindri` row | the owner runs `sindri mcp register`, or Sindri registers itself after the owner approves a profile naming the repo; never user-wide, never by `setup.sh` or a provider installer | SO-22 |
 | `docs/csharp/sindri-profile.md` | `setup` | the key | SO-P1 |
-| `docs/csharp/sindri.md` | commands, errors, events | as phases land; with A7b: bare `sindri-app` prints no register hint and skips its Onyx offer when the Setup card owns that step (line 19); with E1: `recipe manifest`, `recipe eval --shipped` | each phase; SO-P4 for A7b |
+| `docs/csharp/sindri.md` | commands, errors, events | as phases land; with A7b: bare `sindri-app` prints no register hint and skips its Onyx offer when the Setup checklist owns that step (line 19); with E1: `recipe manifest`, `recipe eval --shipped` | each phase; SO-P4 for A7b |
 | `scripts/sindri-app.sh`, `scripts/lib/sindri-build-inputs.sh`, `setup.sh` | headers and output, A7a | A7a: `--publish-only`, `recipes/sindri` in `SINDRI_BUILD_PATHSPECS`, the `git archive` staging, the publish step right after the provider installs, the detached start line and its success check, the exit codes, the log path; the headers (sindri-app.sh's "the one caller in setup.sh is the Onyx step") | SO-P4 (A7a) |
 | `scripts/sindri-app.sh`, `setup.sh` (header and `usage()`), `config/lib/setup-onyx-step.sh`, `scripts/install-onyx.sh`, `scripts/tests/install-onyx.test.sh` | headers and output, A7b | A7b: no register-command print, `--with-onyx`, `--no-onyx` is a no-op, the closing line | SO-P4 (A7b) |
 | `AGENTS.md` (and so `CLAUDE.md`) | the sindri-app and Onyx lines | the `sindri-app` line and the C# build paragraph's "setup.sh builds and links it only through the Onyx step of `--with-sindri` (skip with `--no-onyx`)": setup.sh now publishes and starts it, Onyx is `--with-onyx`; the `install-onyx.test.sh` line | SO-P6 (A7b) |
@@ -810,6 +829,8 @@ should add one line to #433's body: "its map-promote half is replaced by the set
 (The review's "SO-U*" UI edits are numbered SO-19 to SO-21 here, because SO-U1 to SO-U4 are the UI lane's phase units.)
 
 ## 12. Review findings
+
+Rows below keep the wording of the round that wrote them. Where they say "the card" or "Home card", read the rev 5 layout (§5.7): the Setup checklist under Settings and one line on Home.
 
 /autoplan round 1 (2026-10-19): five lenses, all NEEDS_WORK, **19 HIGH** (product 1, arch 6, design 7, devex 4, security 1).
 Resolutions are rev 2. "Open" means the owner decides (a question in §14) or a later round re-checks it.
@@ -969,12 +990,12 @@ Lanes: **api**, **engine**, **context**, **ui**. Up to four builders per lane. A
 | SO-A5 | api | `SetupOnyx`, `ConnectOnyx` and `DeferOnyx`: three routes, **`JobState.Waiting`** and the job's wait on the signal `onyx-account` with its 30-minute timeout, the single-use password slot, the secret type and its tests (every sentinel path of §5.6), the Onyx section held until the first repo; `sindri-app onyx up` unchanged | A1 |
 | SO-A6 | api | Setup service: the read model, `setup.step.changed`, the needs-you rows, doctor `setup`; the first-run proof in a scratch home (§13.1) | A1, A3, E2, C1 |
 | SO-A7a | api | Publish (**in the first slice**): `sindri-app --publish-only` (leading flag, publish steps only, no exec, no register hint); `scripts/sindri-app.sh` stages `git archive HEAD recipes/sindri` into the build copy (deleting the copy's directory first) and embeds it as resources, with `recipes/sindri` in the build inputs, the commit and the recipes tree hash in the stamp, and runs `recipe eval --shipped` with the published binary when the embedded set changed; `setup.sh` publishes right after the provider installs, reports it as its own step, starts the app detached with the exact line of §9 when a desktop session exists and checks that it answers, exits 1 on a failed publish or start and 0 on a skipped step; **it keeps today's `onyx up` default and the MCP register hint**; the scripted slice proof (`scripts/tests/setup-sindri-app.test.sh` through a stub `sindri-app`, a faked desktop, both branches) | E1 (for the eval step) |
-| SO-A7b | api | Publish (**after A4, A5 and U1 have merged**): `setup.sh` stops running `onyx up` and printing the register hint, adds `--with-onyx` and the no-op `--no-onyx`, the closing line; bare `sindri-app` prints no register hint and skips its Onyx offer when the Setup card owns the step; `docs/csharp/sindri.md`, `AGENTS.md`/`CLAUDE.md`, `scripts/install-onyx.sh` and its test, `.agents/rules/mcp-servers.md`; deps and env entries | A4, A5, U1, A7a |
+| SO-A7b | api | Publish (**after A4, A5 and U1 have merged**): `setup.sh` stops running `onyx up` and printing the register hint, adds `--with-onyx` and the no-op `--no-onyx`, the closing line; bare `sindri-app` prints no register hint and skips its Onyx offer when the Setup checklist owns the step; `docs/csharp/sindri.md`, `AGENTS.md`/`CLAUDE.md`, `scripts/install-onyx.sh` and its test, `.agents/rules/mcp-servers.md`; deps and env entries | A4, A5, U1, A7a |
 | SO-E1 | engine | `displayName`: the field, `RCP-DISPLAY-001`, the version bump of all 26 recipes, the rule "a content change bumps the version" (CI: `recipe manifest` over `HEAD` and `git archive origin/main`, `recipe validate --against` that output), **the verbs `recipe manifest <dir> [--json]` and `recipe eval --shipped`**, evals updated, views carry it, a plain sentence on every block descriptor | — |
 | SO-E2 | engine | Registration at serve start from the embedded set (hashed once, no disk fallback) and `recipe.registration.completed {…, failed}`; `RecipeVersionTaken` as the backstop; the test that a working-tree edit never changes the embedded set; the CI check that the default profile allows every effect the embedded recipes declare | E1, A1, A7a |
 | SO-E3 | engine | Approve-all: **`RecipeCapabilitySet`** and the plan (digest, delta, `ownApproval`, the gain rule), the protected POST as a job with the fixed key `approve-all` that redeems last, `ApproveShippedRecipe` (no route, verb or catalog row; the job its only caller) with its per-row recheck, skip-and-continue with `{approved, refused, skipped}`, `batch`, `SND-RECIPE-011`, `SND-RECIPE-009` on drift, `SND-SETUP-007`; terminal verb `sindri-app recipe approve-all`; the `sindri takeover` short form lines | E1, A1 (and A2 for the app channel) |
 | SO-C1 | context | The `map` step's inputs: `context.map.refreshed` and the failure row as the context lane specified, the retry action, the cleanup agent's limits and the per-repo daily cap (no separate machine cap), the consent gate, the manual `context map refresh` row | A1 |
-| SO-U1 | ui | The Setup card on Home with its nav entry, `G U` and the route `setup`: six steps from `GET /setup`, states (with `skipped`), progress, items, plain words, the three-row fold filled by priority (a fixture of three running steps and a failed Onyx), loading, rebuilding and "Sindri isn't running" with the launcher command and a copy action (no Start button); hides `setup:*` rows on Home while shown; fixtures are the goldens | goldens in A1 |
+| SO-U1 | ui | The Setup checklist page under Settings (route `setup`, reached from Settings and `G U`) and the one "Finish setting up Sindri" line on Home while any step is open: six steps from `GET /setup` in step order, states (with `skipped`), progress, items, plain words, a fixture of three running steps and a failed Onyx (all six drawn), loading, rebuilding and "Sindri isn't running" with the launcher command and a copy action (no Start button); hides `setup:*` rows on Home while any step is open; fixtures are the goldens | goldens in A1 |
 | SO-U2 | ui | The confirmations: typed (profile, one recipe) and held-or-typed (approve-all), the preview sheet in plain words, the hold's lifecycle, `SND-SETUP-003` handling | goldens in A1; A2 to run live |
 | SO-U3 | ui | Add repo (folder picker and typed path, then the job's progress), Set up Onyx (the wait, the login form with its accessibility rules, Not now), Register MCP and "Turn on for your repos" | A3, A5 to run live |
 | SO-U4 | ui | `setup` needs-you rows, `displayName` on recipes and instances, the approve-all list and its plain capabilities, "Needs its own look" | A1, E1 |
@@ -991,7 +1012,7 @@ daily use (the engine spec's P2 note says the same of every hash-changing field)
 ### 13.1 First shippable slice
 
 **A1 + A7a + E1 + E2 + E3 (the terminal approve-all path).** After it: `setup.sh` publishes the app first and starts it
-(the app opens on the existing shell, not the Setup card, until U1; `GET /setup` answers with every step `todo`); the
+(the app opens on the existing shell, with no Setup checklist or Home line, until U1; `GET /setup` answers with every step `todo`); the
 shipped recipes register on their own at start; `sindri-app recipe approve-all` (typed `approve-all <digest6>`) replaces the 52
 register and approve commands. `setup.sh` **still runs `sindri-app onyx up` and prints the MCP register command**, because
 A4, A5 and U1 are not in the slice. A first run is **12 commands and 3 typed confirmations** (setup.sh, start, `sindri-app
@@ -1015,7 +1036,7 @@ works too); a never-approved recipe with a `step.ship.*` capability is in the pl
 POST gives `SND-RECIPE-009` and nothing applied; a refused recipe skips only the recipes that wait on it and the rest are
 approved; **a work item started after approve-all runs its first effect with no `outbox.refused`** (the default profile
 allows the effects the shipped recipes declare); a second scratch home on the same box shows `recipes` as needing one
-approve-all; the map step runs the refresh job and shows "Retrying" after a forced failure; Onyx `skipped` (Not now, or Docker missing) lets the card collapse and emits `setup.done`, and a not-started Onyx is `todo`; the Onyx password sentinel appears nowhere (every path of §5.6). **Measure:** commands
+approve-all; the map step runs the refresh job and shows "Retrying" after a forced failure; Onyx `skipped` (Not now, or Docker missing) lets the Home line go and emits `setup.done`, and a not-started Onyx is `todo`; the Onyx password sentinel appears nowhere (every path of §5.6). **Measure:** commands
 typed from install to a working Sindri: 1 (target) on a box with a desktop, against 62 today; the time from the first app
 open to all six `done` or `skipped` (`setup.done`); and the time from setup done to the first work item's first
 transition (`setup.first-item`).
