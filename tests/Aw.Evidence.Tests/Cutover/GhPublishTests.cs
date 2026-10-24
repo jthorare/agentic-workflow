@@ -1,4 +1,3 @@
-#pragma warning disable xUnit1004 // the red tests of cutover unit 1.2: skipped until it lands (spec §12 P0)
 using Aw.Evidence.Core;
 using Aw.Evidence.Core.Guard;
 using Aw.Evidence.Core.Steps;
@@ -16,7 +15,6 @@ namespace Aw.Evidence.Tests.Cutover;
 /// </summary>
 public sealed class GhPublishTests
 {
-    private const string Red = "red until cutover unit 1.2";
     private const string Run = "/runs/run-1";
     private const string FirstShot = "/runs/run-1/desktop-1-click.png";
     private const string SecondShot = "/runs/run-1/desktop-2-click.png";
@@ -25,12 +23,7 @@ public sealed class GhPublishTests
     private readonly InMemoryRunFiles _files = new();
     private readonly FakeGhRunner _gh = new FakeGhRunner().WithGitData("o/n");
 
-    // 1.2 passes the run files, the gh runner and the JSON options: new GhPublishService(_files, _gh, TestJson.Options).
-    private GhPublishService Service()
-    {
-        _ = (_files, _gh);
-        return new GhPublishService();
-    }
+    private GhPublishService Service() => new(_files, _gh, TestJson.Options);
 
     private static GhPublishRequest Request(DbProvenance? provenance = DbProvenance.Seeded, params string[] reviewed) =>
         new(Run, "o/n", 7, provenance, reviewed);
@@ -52,7 +45,7 @@ public sealed class GhPublishTests
         .With(FirstShot, [1, 1, 1])
         .With(SecondShot, [2, 2, 2]);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_script_run_pushes_each_step_screenshot_to_the_PRs_evidence_branch_under_pr_n_run_id()
     {
         var response = await Published();
@@ -64,7 +57,7 @@ public sealed class GhPublishTests
         Assert.Equal("ui-evidence: PR #7 run run-1", _gh.MessageOf(response.Commit!));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task Each_image_gets_a_commit_pinned_raw_url_that_renders_for_anyone_who_can_read_the_repo()
     {
         var response = await Published();
@@ -73,7 +66,7 @@ public sealed class GhPublishTests
         Assert.Equal(Pinned(response.Commit!, "pr-7/run-1/desktop-2-click.png"), response.Urls[SecondShot]);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_second_run_goes_on_top_of_the_earlier_one_and_is_never_force_pushed()
     {
         var earlier = _gh.Seed(Branch, new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["pr-7/run-0/old.png"] = [9] });
@@ -85,7 +78,7 @@ public sealed class GhPublishTests
         Assert.DoesNotContain(_gh.Calls, static c => c.Stdin is { } body && body.Contains("\"force\":true", StringComparison.Ordinal));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task It_writes_pr_comment_md_next_to_the_run_embedding_the_urls_and_prints_the_post_argv()
     {
         var response = await Published();
@@ -96,7 +89,7 @@ public sealed class GhPublishTests
         Assert.Equal(["gh", "pr", "comment", "7", "--repo", "o/n", "--body-file", $"{Run}/pr-comment.md"], response.Post);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_parity_run_pushes_its_side_by_side_images_and_carries_its_own_provenance()
     {
         var parity = A.ParitySummary().WithProvenance(Provenance.Seeded).WithFrame(ParitySummaryBuilder.Frame("default")).Build();
@@ -109,7 +102,7 @@ public sealed class GhPublishTests
         Assert.Equal([7, 7], _gh.FilesAt(result.Value.Commit!)["pr-7/parity-1/default-side-by-side.png"]);
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData(null)]
     [InlineData(DbProvenance.Unknown)]
     public async Task A_script_run_without_seeded_provenance_pushes_nothing(DbProvenance? provenance)
@@ -122,7 +115,7 @@ public sealed class GhPublishTests
         Assert.Empty(_gh.Calls);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_run_on_a_non_local_host_is_never_seeded_whatever_the_caller_claims()
     {
         _ = _files
@@ -135,7 +128,7 @@ public sealed class GhPublishTests
         Assert.Empty(_gh.Calls);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_scrubbed_parity_run_keeps_its_images_off_github()
     {
         var parity = A.ParitySummary().WithProvenance(Provenance.Scrubbed).WithFrame(ParitySummaryBuilder.Frame("default")).Build();
@@ -147,7 +140,7 @@ public sealed class GhPublishTests
         Assert.Empty(_gh.Calls);
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData(0)]
     [InlineData(1)]
     public async Task An_image_that_is_not_in_the_reviewed_list_blocks_the_publish_and_nothing_is_pushed(int reviewedCount)
@@ -164,7 +157,7 @@ public sealed class GhPublishTests
         Assert.False(_files.Files.ContainsKey($"{Run}/pr-comment.md"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_gh_failure_is_AW_EVIDENCE_025_and_no_comment_is_written()
     {
         Given();
@@ -177,7 +170,7 @@ public sealed class GhPublishTests
         Assert.False(_files.Files.ContainsKey($"{Run}/pr-comment.md"));
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_gh_that_would_not_start_exits_the_run_errored_way()
     {
         Given();
@@ -188,7 +181,7 @@ public sealed class GhPublishTests
         Assert.Equal(ErrorKind.Unavailable, result.Error.Kind);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public async Task A_run_with_no_images_is_an_error_not_an_empty_commit()
     {
         _ = _files.With($"{Run}/summary.json", AwJson.Serialize(A.RunSummary().Build(), TestJson.Options));   // its one screenshot is not on disk
@@ -199,7 +192,7 @@ public sealed class GhPublishTests
         Assert.Empty(_gh.Calls);
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("o", 7, "/runs/run-1")]
     [InlineData("o/n/x", 7, "/runs/run-1")]
     [InlineData("../n", 7, "/runs/run-1")]
