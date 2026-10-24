@@ -428,6 +428,10 @@ path (`005`), session reads off (`020`), no map (`030`), an invalid file (`031`,
 
 ## S-3b: the graph: `context query --node`, `show`, `neighbors`, `path`, text anchors, `eval probes`
 
+**Order inside the graph sections.** In `graph` the anchor comes first, then its own scope; in `affects` items sort by depth. In
+both, nodes that are part of fewer features come first (a screen of one feature before a primitive many features share), and
+ties fall back to the node key, so the order is the same on every run. Coverage numbers are not affected.
+
 ### Asking about a node
 
 ```bash
