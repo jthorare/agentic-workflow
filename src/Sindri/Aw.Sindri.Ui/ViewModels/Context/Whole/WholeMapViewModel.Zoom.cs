@@ -15,15 +15,6 @@ internal sealed partial class WholeMapViewModel
     /// <summary>Whether the camera is on a query's answer.</summary>
     public bool IsZoomed { get; private set; }
 
-    /// <summary>The "Whole map" button's words.</summary>
-    public string BackText { get; } = Labels.ContextWholeBack;
-
-    /// <summary>The card's title.</summary>
-    public string CardTitle { get; } = Labels.ContextMapWhyTitle;
-
-    /// <summary>The card's words: pick a starting point until one is chosen, then what the map says about it.</summary>
-    public string CardText => IsZoomed ? Labels.ContextMapWhyNone : Labels.ContextWholePick;
-
     /// <summary>"2 more features touched" once a query touched more features than were opened; empty otherwise.</summary>
     public string MoreTouchedText { get; private set; } = string.Empty;
 

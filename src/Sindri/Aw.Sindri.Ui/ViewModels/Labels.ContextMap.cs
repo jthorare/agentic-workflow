@@ -123,25 +123,6 @@ internal static partial class Labels
     /// <returns>"3 starting points".</returns>
     internal static string ContextMapStartingPoints(int n) => string.Create(CultureInfo.InvariantCulture, $"{n} starting {(n == 1 ? "point" : "points")}");
 
-    /// <summary>The label of the pinned or live choice.</summary>
-    internal const string ContextMapAsOf = "As of";
-
-    /// <summary>The pinned choice (the map as it was when the plan was approved).</summary>
-    internal const string ContextMapAsOfPinned = "At approval";
-
-    /// <summary>The live choice.</summary>
-    internal const string ContextMapAsOfLive = "Live";
-
-    /// <summary>The version of the map that answered, as the live choice's hint shows it.</summary>
-    /// <param name="version">The map version, "v3".</param>
-    /// <param name="commit">The map's commit, or null.</param>
-    /// <returns>"Map v3 @ abc1234".</returns>
-    internal static string ContextMapVersionLine(string version, string? commit) =>
-        commit is { Length: > 0 } ? $"Map {version} @ {commit}" : $"Map {version}";
-
-    /// <summary>Why the pinned choice is off.</summary>
-    internal const string ContextMapPinnedNotServed = "Not served yet: the map as it was at approval.";
-
     /// <summary>The map view's name in the view switch.</summary>
     internal const string ContextMapViewMap = "Map";
 
@@ -193,21 +174,6 @@ internal static partial class Labels
         1 => limited[0] + " is limited.",
         _ => string.Join(", ", limited.Take(limited.Count - 1)) + " and " + limited[^1] + " are limited.",
     };
-
-    /// <summary>The summary card's title.</summary>
-    internal const string ContextMapWhyTitle = "Why this matters";
-
-    /// <summary>The summary card's subtitle.</summary>
-    internal const string ContextMapWhySub = "Written from this map";
-
-    /// <summary>The summary card's body while nothing is written.</summary>
-    internal const string ContextMapWhyNone = "No summary written for this map yet.";
-
-    /// <summary>The button that closes the summary card.</summary>
-    internal const string ContextMapCollapse = "Collapse summary";
-
-    /// <summary>The button that opens the summary card.</summary>
-    internal const string ContextMapExpand = "Show summary";
 
     /// <summary>The zoom in button.</summary>
     internal const string ContextMapZoomIn = "Zoom in";

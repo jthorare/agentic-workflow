@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
@@ -32,17 +31,13 @@ public sealed class WholeMapViewModelTests
     }
 
     [Fact]
-    public void An_answer_by_area_says_in_one_line_why_it_is_grouped_by_feature()
+    public void An_answer_by_area_has_no_grouping_note()
     {
         var map = new WholeMapViewModel(() => _utc);
-        var answer = WholeMapLayoutTests.Draft("areas-over-budget");
 
-        map.Show(answer);
+        map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
 
-        Assert.True(map.ByArea);
-        Assert.Equal(Labels.ContextWholeByArea(answer.Counts.Nodes), map.ByAreaNote);
-        Assert.Contains("grouped by feature", map.ByAreaNote, StringComparison.Ordinal);
-        Assert.DoesNotContain("area", map.ByAreaNote, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal((true, string.Empty, false), (map.ByArea, map.ByAreaNote, map.HasNote));
     }
 
     [Fact]
@@ -99,7 +94,7 @@ public sealed class WholeMapViewModelTests
         Assert.Equal((false, 6, 1), (map.ByArea, map.Geometry!.Nodes.Count, map.Geometry.Columns.Count));
         map.CloseArea();
         Assert.Equal((false, true), (map.IsAreaOpen, ReferenceEquals(overview, map.Geometry)));
-        Assert.Equal(Labels.ContextWholeByArea(14), map.ByAreaNote);
+        Assert.Equal(string.Empty, map.ByAreaNote);
     }
 
     [Fact]

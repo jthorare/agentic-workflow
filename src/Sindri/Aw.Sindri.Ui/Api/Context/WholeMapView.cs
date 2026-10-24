@@ -20,6 +20,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Area">The opened area.</param>
 /// <param name="Located">Where the located keys are.</param>
 /// <param name="Truncated">True when the answer was cut.</param>
+/// <param name="Repos">The repos the map covers; null until Sindri serves it, which reads as one repo.</param>
 internal sealed record WholeMapView(
     int SchemaVersion,
     string MapVersion,
@@ -36,4 +37,5 @@ internal sealed record WholeMapView(
     IReadOnlyList<WholeNode>? Nodes = null,
     IReadOnlyList<WholeEdge>? Edges = null,
     WholeAreaInfo? Area = null,
-    IReadOnlyList<WholeLocated>? Located = null);
+    IReadOnlyList<WholeLocated>? Located = null,
+    IReadOnlyList<WholeRepoSummary>? Repos = null);

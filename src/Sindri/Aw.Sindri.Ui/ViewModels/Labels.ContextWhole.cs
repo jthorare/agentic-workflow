@@ -10,14 +10,11 @@ internal static partial class Labels
     /// <returns>"Context · the whole map · v3".</returns>
     internal static string ContextWholeHead(string version) => "Context · the whole map · " + version;
 
-    /// <summary>Why the map is grouped by feature (the API says area; people read feature).</summary>
-    /// <param name="items">How many items the map has.</param>
-    /// <returns>The one line under the head.</returns>
-    internal static string ContextWholeByArea(int items) =>
-        string.Create(CultureInfo.InvariantCulture, $"This map has {items} items, so it is grouped by feature; open one to see its items.");
+    /// <summary>The last step of the map's breadcrumb while a query's answer is on it.</summary>
+    internal const string ContextCrumbAnswer = "Starting points";
 
-    /// <summary>The button that goes from one open feature back to all of them.</summary>
-    internal const string ContextWholeAllFeatures = "All features";
+    /// <summary>The map breadcrumb's accessible name.</summary>
+    internal const string ContextMapCrumbsName = "Where you are on the map";
 
     /// <summary>What a feature cut at the cap shows.</summary>
     /// <param name="shown">How many items are drawn.</param>
@@ -25,12 +22,6 @@ internal static partial class Labels
     /// <returns>"Showing 500 of 640 items; the rest are not shown."</returns>
     internal static string ContextWholeAreaTruncated(int shown, int total) =>
         string.Create(CultureInfo.InvariantCulture, $"Showing {shown} of {total} items; the rest are not shown.");
-
-    /// <summary>The button that goes from a zoomed-in query back to the whole map.</summary>
-    internal const string ContextWholeBack = "Whole map";
-
-    /// <summary>The card on the whole map while no starting point is chosen.</summary>
-    internal const string ContextWholePick = "Pick a starting point to see why it matters.";
 
     /// <summary>The line when what was asked is not on the whole map.</summary>
     internal const string ContextWholeNoMatch = "None of those items are on the map.";

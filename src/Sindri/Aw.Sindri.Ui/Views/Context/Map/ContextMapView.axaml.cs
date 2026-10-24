@@ -12,25 +12,19 @@ namespace Aw.Sindri.Ui.Views.Context.Map;
 /// <summary>The context map's stage: the canvas and the cards over it (F3 spec 1). Bound to a <see cref="ContextMapViewModel"/>.</summary>
 internal sealed partial class ContextMapView : UserControl
 {
-    private const double NarrowStage = 1100;   // under this the summary card starts collapsed
     private bool _fit = true;
-    private bool _sized;
     private ZoomView? _autoFit;
 
     /// <summary>Initializes a new instance of the <see cref="ContextMapView"/> class.</summary>
     public ContextMapView()
     {
         InitializeComponent();
-        HudTitle.Text = Labels.ContextMapWhyTitle;
-        HudSub.Text = Labels.ContextMapWhySub;
-        HudNone.Text = Labels.ContextMapWhyNone;
         LegendConfirmed.Text = Labels.ContextMapLegendConfirmed;
         LegendSuggested.Text = Labels.ContextMapLegendSuggested;
         SetName(ZoomOutButton, Labels.ContextMapZoomOut);
         SetName(ZoomInButton, Labels.ContextMapZoomIn);
         SetName(ZoomFitButton, Labels.ContextMapZoomFit);
         AutomationProperties.SetName(ContextZoom, Labels.ContextMapZoomPct(1));
-        SetHud(collapsed: false);
         ContextCanvas.PropertyChanged += (_, e) =>
         {
             if (e.Property == ZoomBorder.ViewProperty)
@@ -40,7 +34,6 @@ internal sealed partial class ContextMapView : UserControl
         };
         ZoomValue.Text = Labels.ContextMapZoomPct(1);
         ContextCanvas.SizeChanged += (_, _) => FitWhenSized();
-        SizeChanged += OnStageSized;
     }
 
     /// <summary>Gets the pannable canvas.</summary>
@@ -89,29 +82,6 @@ internal sealed partial class ContextMapView : UserControl
             ContextCanvas.Fit();
             _autoFit = ZoomView.Fit(ContextCanvas.Bounds.Size, ContextCanvas.WorldBounds);
         }
-    }
-
-    private void OnStageSized(object? sender, SizeChangedEventArgs e)
-    {
-        HudToggleWidth(e.NewSize.Width);
-        if (!_sized && e.NewSize.Width > 0)
-        {
-            _sized = true;
-            SetHud(collapsed: e.NewSize.Width < NarrowStage);
-        }
-    }
-
-    private void HudToggleWidth(double stage) => ContextHud.Width = stage < NarrowStage ? 300 : 400;
-
-    private void OnHudToggle(object? sender, RoutedEventArgs e) => SetHud(HudBody.IsVisible);
-
-    private void SetHud(bool collapsed)
-    {
-        HudBody.IsVisible = !collapsed;
-        var word = collapsed ? Labels.ContextMapExpand : Labels.ContextMapCollapse;
-        AutomationProperties.SetName(HudToggle, word);
-        ToolTip.SetTip(HudToggle, word);
-        HudChevron.RenderTransform = collapsed ? new Avalonia.Media.RotateTransform(-90) : null;
     }
 
     private void OnZoomIn(object? sender, RoutedEventArgs e) => ContextCanvas.ZoomIn();

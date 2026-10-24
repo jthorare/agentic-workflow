@@ -64,21 +64,20 @@ public sealed class WholeMapFramesTests : FrameHost
     });
 
     [Fact]
-    public Task A_map_over_the_budget_opens_by_feature_with_its_one_line_and_a_click_on_a_feature_opens_it() => OnUi(async () =>
+    public Task A_map_over_the_budget_opens_by_feature_without_a_grouping_line_and_a_click_on_a_feature_opens_it() => OnUi(async () =>
     {
         var (window, shell) = await Open(1440, 900, Draft("areas-over-budget"));
 
         Assert.True(shell.Context.Whole.ByArea);
-        Assert.True(Visible(window, "WholeNote"));
-        Assert.Equal(shell.Context.Whole.ByAreaNote, Named<TextBlock>(window, "WholeNote").Text);
+        Assert.False(Visible(window, "WholeNote"));
         Frame(window, "whole-map-by-area-1440", "w3-");
 
         shell.Context.Whole.Areas.First(a => a.Key == ContextAnswers.OpenArea).Open();
         await Until(window, () => shell.Context.Whole.IsAreaOpen);
         Settle(window);
 
-        Assert.True(Visible(window, "WholeAllFeatures"));
-        Assert.Equal("Tab groups", Named<TextBlock>(window, "WholeAreaTitle").Text);
+        Assert.Equal([("~", true), ("Tab groups", false)], shell.Context.Whole.Crumbs.Select(c => (c.Text, c.IsLink)));
+        Assert.True(Visible(window, "WholeCrumbs"));
         Assert.Equal(6, shell.Context.Whole.Geometry!.Nodes.Count);
     });
 
@@ -221,7 +220,7 @@ public sealed class WholeMapFramesTests : FrameHost
         whole.Canvas.Settle();
         Frame(window, "zoomed-1440", "w4-");
 
-        Assert.Equal((true, true, true), (Visible(window, "WholeMapBack"), shell.Context.ShowWhole, shell.Context.Whole.HitKeys.Count > 0));
+        Assert.Equal((true, true), (shell.Context.ShowWhole, shell.Context.Whole.HitKeys.Count > 0));
         Assert.True(whole.Canvas.View.Scale > fitted.Scale || whole.Canvas.View != fitted);
         var box = Named<TextBox>(window, "AnchorBox");
         box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Escape });
@@ -229,7 +228,7 @@ public sealed class WholeMapFramesTests : FrameHost
         whole.Canvas.Settle();
         Frame(window, "back-1440", "w4-");
 
-        Assert.Equal((false, false, false), (shell.Context.IsZoomedIn, Visible(window, "WholeMapBack"), shell.Context.Whole.IsZoomed));
+        Assert.Equal((false, false), (shell.Context.IsZoomedIn, shell.Context.Whole.IsZoomed));
         Assert.Equal(shell.Context.Whole.Head, shell.Context.Head);
     });
 }

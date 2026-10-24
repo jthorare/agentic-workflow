@@ -6,21 +6,6 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The label of the starting points box.</summary>
     public string StartsAtLabel { get; } = Labels.ContextMapStartsAt;
 
-    /// <summary>The label of the pinned or live choice.</summary>
-    public string AsOfLabel { get; } = Labels.ContextMapAsOf;
-
-    /// <summary>The pinned choice's words (off until the item's approved map is served).</summary>
-    public string AsOfPinned { get; private set => Set(ref field, value); } = Labels.ContextMapAsOfPinned;
-
-    /// <summary>Why the pinned choice is off.</summary>
-    public string AsOfPinnedHint { get; private set => Set(ref field, value); } = Labels.ContextMapPinnedNotServed;
-
-    /// <summary>The live choice's words.</summary>
-    public string AsOfLive { get; } = Labels.ContextMapAsOfLive;
-
-    /// <summary>The version of the map that answered ("Map v3 @ abc1234"), or null before a read.</summary>
-    public string? AsOfLiveHint { get; private set; }
-
     /// <summary>The view switch's name.</summary>
     public string ViewName { get; } = Labels.ContextMapViewName;
 

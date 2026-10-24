@@ -115,15 +115,6 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
-    // "Whole map": the answer stops standing out and the camera fits the world again.
-    private void OnWholeMapBack(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is ContextPageViewModel page)
-        {
-            _ = page.BackToWholeMap();
-        }
-    }
-
     // Retry on the failure row: the whole map is read again.
     private void OnRetryWhole(object? sender, RoutedEventArgs e)
     {

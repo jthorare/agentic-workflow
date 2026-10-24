@@ -60,7 +60,7 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- The Context page (F3 spec 1 §2): the head, a control row (starting points, as of, Map or Files, coverage), and the stage, which
+  <!-- The Context page (F3 spec 1 §2): the head, a control row (starting points, Map or Files, coverage), and the stage, which
        is the pannable map. The hosts below are the seams the later stages fill: the lens stack is the stage, the node card and the
        sources are the inspector, the review and the file map are the Files view. -->
   <Grid RowDefinitions="Auto,Auto,*" RowSpacing="{StaticResource Size.PanelGap}">
@@ -85,18 +85,8 @@
             <TextBlock x:Name="StartingPointsText" Classes="button" AutomationProperties.AccessibilityView="Raw" />
           </Button>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,16,8">
-          <TextBlock Classes="eyebrow" Text="{Binding AsOfLabel}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <Border x:Name="ContextAsOf" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2">
-            <StackPanel Orientation="Horizontal">
-              <RadioButton x:Name="AsOfPinned" GroupName="AsOf" Classes="segment" IsEnabled="{Binding PinnedEnabled}" IsChecked="{Binding IsPinned, Mode=TwoWay}" Content="{Binding AsOfPinned}" ToolTip.Tip="{Binding AsOfPinnedHint}" ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{Binding AsOfPinned}" />
-              <RadioButton x:Name="AsOfLive" GroupName="AsOf" Classes="segment" IsChecked="{Binding IsLive, Mode=OneWay}" Content="{Binding AsOfLive}" ToolTip.Tip="{Binding AsOfLiveHint}" AutomationProperties.Name="{Binding AsOfLive}" />
-            </StackPanel>
-          </Border>
-          <TextBlock x:Name="PinnedNoteText" Classes="caption subtle" Text="{Binding PinnedNote}" IsVisible="{Binding HasPinnedNote}" VerticalAlignment="Center" TextWrapping="Wrap"
-                     AutomationProperties.Name="{Binding PinnedNote}" />
-        </StackPanel>
-        <Button x:Name="WholeMapBack" Margin="0,0,16,8" VerticalAlignment="Center" IsVisible="{Binding IsZoomedIn}" Click="OnWholeMapBack" Content="{Binding WholeBackText}" AutomationProperties.Name="{Binding WholeBackText}" />
+        <ComboBox x:Name="ContextRepo" ItemsSource="{Binding Repos}" SelectedItem="{Binding SelectedRepo, Mode=TwoWay}" IsVisible="{Binding HasRepoPicker}" MinWidth="140" Height="28" Margin="0,0,16,8"
+                  VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoName}" />
         <Border x:Name="ContextViewSwitch" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" Margin="0,0,16,8" VerticalAlignment="Center"
                 AutomationProperties.Name="{Binding ViewName}">
           <StackPanel Orientation="Horizontal">

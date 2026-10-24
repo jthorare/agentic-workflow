@@ -7,33 +7,12 @@
              x:Class="Aw.Sindri.Ui.Views.Context.Map.ContextMapView"
              x:DataType="vm:ContextMapViewModel"
              ClipToBounds="True">
-  <!-- The context map's stage (F3 spec 1 §2): the pannable canvas with its world, and over it the summary card (top left), the
+  <!-- The context map's stage (F3 spec 1 §2): the pannable canvas with its world, and over it the
        legend and the zoom pill (bottom right). The inspector and the Files view are the next stages'. -->
   <Grid x:Name="ContextStage">
     <ctl:ZoomBorder x:Name="ContextCanvas">
       <map:ContextMapWorld x:Name="ContextWorld" />
     </ctl:ZoomBorder>
-
-    <Border x:Name="ContextHud" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,16,0,0" Width="400"
-            Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}">
-      <StackPanel>
-        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="14,12">
-          <Border Width="28" Height="28" Background="{DynamicResource Brush.Surface3}" CornerRadius="{StaticResource Radius.SM}">
-            <icons:StateIcon Icon="Kind.Decision" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-          </Border>
-          <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock x:Name="HudTitle" Classes="body-strong" />
-            <TextBlock x:Name="HudSub" Classes="caption subtle" />
-          </StackPanel>
-          <Button x:Name="HudToggle" Grid.Column="2" Click="OnHudToggle" Padding="6" VerticalAlignment="Center" Background="Transparent" BorderThickness="0">
-            <icons:StateIcon x:Name="HudChevron" Icon="Kind.Chevron" Foreground="{DynamicResource Brush.InkMuted}" />
-          </Button>
-        </Grid>
-        <Border x:Name="HudBody" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="14,12">
-          <TextBlock x:Name="HudNone" Classes="body" TextWrapping="Wrap" Foreground="{DynamicResource Brush.InkMuted}" />
-        </Border>
-      </StackPanel>
-    </Border>
 
     <Border x:Name="ContextLegend" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,150,14" Height="28" Padding="12,0"
             Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}">

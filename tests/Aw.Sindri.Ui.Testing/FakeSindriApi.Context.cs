@@ -162,8 +162,20 @@ internal sealed partial class FakeSindriApi
     /// <summary>Held open until set: a whole-map read that started while it was set waits for it.</summary>
     public TaskCompletionSource? WholeMapGate { get; set; }
 
-    public Task<Result<FileMapView>> FileMap(Uri api, FileMapQuery query, CancellationToken cancellationToken) =>
-        Context<FileMapView>(api, "/sindri/context/filemap", FileMapFor(query), FileMapGate, cancellationToken);
+    /// <summary>Every file map read, in order.</summary>
+    public IReadOnlyList<FileMapQuery> FileMapAsked { get { lock (_gate) { return [.. _fileMapAsked]; } } }
+
+    private readonly List<FileMapQuery> _fileMapAsked = [];
+
+    public Task<Result<FileMapView>> FileMap(Uri api, FileMapQuery query, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _fileMapAsked.Add(query);
+        }
+
+        return Context<FileMapView>(api, "/sindri/context/filemap", FileMapFor(query), FileMapGate, cancellationToken);
+    }
 
     public Task<Result<ReviewQueueView>> ReviewQueue(Uri api, int? limit, CancellationToken cancellationToken) =>
         Context<ReviewQueueView>(api, "/sindri/context/map/review", ReviewQueueBody(), ReviewQueueGate, cancellationToken);

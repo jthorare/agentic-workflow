@@ -35,8 +35,7 @@ public sealed class FileMapViewModelTests
         Assert.Equal((true, Labels.ContextFilesCount(4), Labels.ContextFilesIntent(records: 1, decisions: 0)), (src.IsDirectory, src.FilesText, src.IntentText));
         var readme = files.Rows[1];
         Assert.Equal((false, Labels.ContextFilesIntentNone), (readme.IsDirectory, readme.IntentText));
-        Assert.Equal(Labels.ContextFilesRoot, files.PathText);
-        Assert.False(files.CanGoUp);
+        Assert.Equal([(Labels.ContextFilesTop, false)], files.Crumbs.Select(c => (c.Text, c.IsLink)));
     }
 
     [Fact]
@@ -73,21 +72,48 @@ public sealed class FileMapViewModelTests
         Assert.True(files.HasNote);
     }
 
+    private static IEnumerable<(string Text, bool IsLink)> Trail(FileMapViewModel files) => files.Crumbs.Select(c => (c.Text, c.IsLink));
+
     [Fact]
-    public async Task Opening_a_folder_reads_it_and_up_goes_back_one_level_to_the_root()
+    public async Task The_breadcrumb_has_a_tilde_for_the_top_and_a_link_for_each_level_above_the_folder_shown()
     {
         var files = Files(new FakeSindriApi());
         await files.Load(path: null, Token);
 
         await files.Open(files.Rows.First(r => r.IsDirectory), Token);
-        Assert.Equal(("src/", true), (files.PathText, files.CanGoUp));
+        Assert.Equal([(Labels.ContextFilesTop, true), ("src", false)], Trail(files));
         await files.Open(files.Rows.First(r => r.IsDirectory && string.Equals(r.Name, "tabs", StringComparison.Ordinal)), Token);
-        Assert.Equal("src/tabs/", files.PathText);
 
-        await files.Up(Token);
-        Assert.Equal("src/", files.PathText);
-        await files.Up(Token);
-        Assert.Equal((Labels.ContextFilesRoot, false), (files.PathText, files.CanGoUp));
+        Assert.Equal([(Labels.ContextFilesTop, true), ("src", true), ("tabs", false)], Trail(files));
+        Assert.Equal([null, "src/", "src/tabs/"], files.Crumbs.Select(c => c.Path), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_link_in_the_breadcrumb_goes_to_that_level_and_the_tilde_goes_to_the_top_of_the_repo()
+    {
+        var api = new FakeSindriApi();
+        var files = Files(api);
+        await files.Load("src/tabs/", Token);
+
+        await files.Go(files.Crumbs[1], Token);
+        Assert.Equal([(Labels.ContextFilesTop, true), ("src", false)], Trail(files));
+        await files.Go(files.Crumbs[0], Token);
+
+        Assert.Equal([(Labels.ContextFilesTop, false)], Trail(files));
+        Assert.Equal(["src/tabs/", "src/", null], api.FileMapAsked.Select(q => q.Path), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_last_crumb_is_plain_text_and_asks_for_nothing()
+    {
+        var api = new FakeSindriApi();
+        var files = Files(api);
+        await files.Load("src/", Token);
+        var calls = api.FileMapAsked.Count;
+
+        await files.Go(files.Crumbs[^1], Token);
+
+        Assert.Equal(calls, api.FileMapAsked.Count);
     }
 
     [Fact]
@@ -130,6 +156,6 @@ public sealed class FileMapViewModelTests
         gate.SetResult();
         await slow;
 
-        Assert.Equal("src/tabs/", files.PathText);
+        Assert.Equal([(Labels.ContextFilesTop, true), ("src", true), ("tabs", false)], Trail(files));
     }
 }

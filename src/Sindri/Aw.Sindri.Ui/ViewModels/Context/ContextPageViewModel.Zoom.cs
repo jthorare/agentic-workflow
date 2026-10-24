@@ -2,7 +2,7 @@ using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
-/// <summary>A query zooms into the whole map (<see cref="ContextPageViewModel"/>, continued; whole-map spec §3.1 "Zoomed in"): the answer's nodes stand out on the map, the camera eases to them, Esc and "Whole map" go back.</summary>
+/// <summary>A query zooms into the whole map (<see cref="ContextPageViewModel"/>, continued; whole-map spec §3.1 "Zoomed in"): the answer's nodes stand out on the map, the camera eases to them, Esc goes back.</summary>
 internal sealed partial class ContextPageViewModel
 {
     private const int MaxOpenedAreas = 3;
@@ -10,9 +10,6 @@ internal sealed partial class ContextPageViewModel
 
     /// <summary>Whether the camera is on a query's answer.</summary>
     public bool IsZoomedIn => Whole.IsZoomed;
-
-    /// <summary>The "Whole map" button's words.</summary>
-    public string WholeBackText => Whole.BackText;
 
     // After the existing read drew its answer: it is shown as a zoom onto the whole map when the map is there (the map behind it stays), else as the neighbourhood.
     private async Task ZoomIntoWhole(Uri api, CancellationToken cancellationToken)
@@ -42,7 +39,7 @@ internal sealed partial class ContextPageViewModel
             return false;
         }
 
-        var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. keys.Take(MaxLocate)], PinnedVersion, Draft: false), cancellationToken).ConfigureAwait(true);
+        var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. keys.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
         if (located.IsError)
         {
             Problem = located.Error.Message;
@@ -56,7 +53,7 @@ internal sealed partial class ContextPageViewModel
             return false;
         }
 
-        var reads = await Task.WhenAll(touched.Take(MaxOpenedAreas).Select(area => Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], PinnedVersion, Draft: false), cancellationToken))).ConfigureAwait(true);
+        var reads = await Task.WhenAll(touched.Take(MaxOpenedAreas).Select(area => Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo), cancellationToken))).ConfigureAwait(true);
         if (reads.FirstOrDefault(r => r.IsError) is { } failed)
         {
             Problem = failed.Error.Message;
@@ -96,7 +93,7 @@ internal sealed partial class ContextPageViewModel
         return BackToWholeMap();
     }
 
-    /// <summary>"Whole map": the answer stops standing out and the camera fits the world again.</summary>
+    /// <summary>Back to the whole map: the answer stops standing out and the camera fits the world again.</summary>
     /// <returns>True when the camera was on an answer.</returns>
     internal bool BackToWholeMap()
     {

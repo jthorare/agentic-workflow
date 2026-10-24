@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
@@ -34,8 +35,8 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
     /// <summary>The third column's heading.</summary>
     public string ColIntent { get; } = Labels.ContextMapAreaIntent;
 
-    /// <summary>The up button's words.</summary>
-    public string UpWord { get; } = Labels.ContextFilesUp;
+    /// <summary>The breadcrumb's name.</summary>
+    public string CrumbsName { get; } = Labels.ContextFilesCrumbsName;
 
     /// <summary>The word while a folder is read.</summary>
     public string LoadingWord { get; } = Labels.ContextFilesLoading;
@@ -46,11 +47,8 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
     /// <summary>The rows of the folder shown.</summary>
     public IReadOnlyList<FileRowViewModel> Rows { get; private set => Set(ref field, value); } = [];
 
-    /// <summary>The folder shown, in words.</summary>
-    public string PathText { get; private set => Set(ref field, value); } = Labels.ContextFilesRoot;
-
-    /// <summary>Whether there is a folder above this one.</summary>
-    public bool CanGoUp { get; private set => Set(ref field, value); }
+    /// <summary>The folder shown as a breadcrumb: "~ / src / tabs", each step but the last a link to that level.</summary>
+    public IReadOnlyList<Crumb> Crumbs { get; private set => Set(ref field, value); } = [Crumb.Top(isLink: false)];
 
     /// <summary>The totals line (files, in the map, suggested, not in the map).</summary>
     public string TotalsText { get; private set => Set(ref field, value); } = string.Empty;
@@ -144,17 +142,42 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
         return row.IsDirectory ? Load(row.Path, cancellationToken) : Task.CompletedTask;
     }
 
-    /// <summary>Goes up one folder.</summary>
+    /// <summary>Goes to a level of the breadcrumb; the last step is the folder already shown and does nothing.</summary>
+    /// <param name="crumb">The step.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the folder is shown.</returns>
-    internal Task Up(CancellationToken cancellationToken = default) => CanGoUp ? Load(Parent(_current), cancellationToken) : Task.CompletedTask;
-
-    // "src/tabs/" -> "src/"; "src/" -> the top (null).
-    private static string? Parent(string path)
+    internal Task Go(Crumb crumb, CancellationToken cancellationToken = default)
     {
-        var trimmed = path.TrimEnd('/');
-        var cut = trimmed.LastIndexOf('/');
-        return cut < 0 ? null : trimmed[..(cut + 1)];
+        ArgumentNullException.ThrowIfNull(crumb);
+        return crumb.IsLink ? Load(crumb.Path, cancellationToken) : Task.CompletedTask;
+    }
+
+    /// <summary>Switches to another repo (the page's picker): the path goes back to its top, read the next time the view opens or loads.</summary>
+    /// <param name="repo">The repo's name.</param>
+    internal void UseRepo(string repo)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        if (string.Equals(repo, _repo, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _repo = repo;
+        _current = string.Empty;
+        Crumbs = [Crumb.Top(isLink: false)];
+    }
+
+    // "src/tabs/" -> "~", "src" (a link), "tabs" (plain); the top is "~" alone, plain.
+    private static List<Crumb> CrumbsOf(string path)
+    {
+        var folders = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var crumbs = new List<Crumb> { Crumb.Top(isLink: folders.Length > 0) };
+        for (var i = 0; i < folders.Length; i++)
+        {
+            crumbs.Add(new Crumb(folders[i], string.Join('/', folders[..(i + 1)]) + "/", IsLink: i < folders.Length - 1));
+        }
+
+        return crumbs;
     }
 
     // The map status names the repo the caller reads; a refusal (no map yet) is the file map's refusal too.
@@ -176,8 +199,7 @@ internal sealed class FileMapViewModel(ContextPorts ports) : ObservableObject
         Problem = string.Empty;
         Symbols = new SymbolsColumnViewModel(view.Symbols);
         Rows = [.. view.Entries.Select(e => new FileRowViewModel(e, Symbols))];
-        PathText = view.Path.Length == 0 ? Labels.ContextFilesRoot : view.Path;
-        CanGoUp = view.Path.Length > 0;
+        Crumbs = CrumbsOf(view.Path);
         TotalsText = Labels.ContextFilesTotals(view.Totals.Files, view.Totals.Mapped, view.Totals.Suggested, view.Totals.Unmapped);
         Note = string.Equals(view.Symbols.State, "available", StringComparison.Ordinal) ? string.Empty : Labels.ContextMapNamesDetail;
     }

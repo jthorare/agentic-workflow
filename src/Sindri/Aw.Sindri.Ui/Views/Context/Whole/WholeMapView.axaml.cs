@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
+using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.Run;
 using Aw.Sindri.Ui.Views.Controls;
 
@@ -187,7 +188,7 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
-    private void OnAllFeatures(object? sender, RoutedEventArgs e) => _map?.CloseArea();
+    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.GoHome();
 
     private void OnZoomIn(object? sender, RoutedEventArgs e) => WholeCanvas.ZoomIn();
 

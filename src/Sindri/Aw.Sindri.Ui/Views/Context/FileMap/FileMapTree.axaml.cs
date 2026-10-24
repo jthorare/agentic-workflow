@@ -1,10 +1,12 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.ViewModels.Controls;
+using Aw.Sindri.Ui.ViewModels.Run;
 
 namespace Aw.Sindri.Ui.Views.Context.FileMap;
 
-/// <summary>The Files view: one folder of the repo as 36 px rows. A folder's name opens it; Up goes back one level.</summary>
+/// <summary>The Files view: one folder of the repo as 36 px rows. A folder's name opens it; a step of the breadcrumb goes back to that level.</summary>
 internal sealed partial class FileMapTree : UserControl
 {
     public FileMapTree()
@@ -20,11 +22,11 @@ internal sealed partial class FileMapTree : UserControl
         }
     }
 
-    private void OnUp(object? sender, RoutedEventArgs e)
+    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e)
     {
         if (DataContext is FileMapViewModel files)
         {
-            _ = files.Up();
+            _ = files.Go(e.Value);
         }
     }
 }

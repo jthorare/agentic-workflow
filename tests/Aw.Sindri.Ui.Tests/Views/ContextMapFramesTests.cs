@@ -75,47 +75,27 @@ public sealed class ContextMapFramesTests : FrameHost
         var strip = Named<CoverageStrip>(window, "ContextCoverageStrip");
         Assert.Equal(shell.Context.Map!.CoverageLead, strip.Lead);
         Assert.Equal(4, strip.Areas.Count);
-        Assert.False(Named<RadioButton>(window, "AsOfPinned").IsEnabled);
-        Assert.True(Named<RadioButton>(window, "AsOfLive").IsChecked);
+        Assert.False(Visible(window, "ContextAsOf"));
+        Assert.False(Visible(window, "WholeMapBack"));
         Assert.True(Named<RadioButton>(window, "ViewMapButton").IsChecked);
         Assert.False(Named<RadioButton>(window, "ViewFilesButton").IsChecked);
         Assert.False(Visible(window, "ContextDraftTag"));
     });
 
     [Fact]
-    public Task Live_stays_chosen_when_it_is_clicked_and_the_disabled_pinned_choice_explains_itself() => OnUi(async () =>
-    {
-        var (window, shell) = await Open(1440, 900);
-
-        var live = Named<RadioButton>(window, "AsOfLive");
-        live.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Settle(window);
-        var pinned = Named<RadioButton>(window, "AsOfPinned");
-        Assert.True(live.IsChecked);
-        Assert.False(pinned.IsChecked);
-        Assert.True(ToolTip.GetShowOnDisabled(pinned));
-        Assert.Equal(Labels.ContextMapPinnedNotServed, ToolTip.GetTip(pinned));
-        Assert.Equal(shell.Context.AsOfLiveHint, ToolTip.GetTip(live));
-        Assert.StartsWith("Map v", shell.Context.AsOfLiveHint, StringComparison.Ordinal);
-    });
-
-    [Fact]
-    public Task The_summary_card_says_nothing_is_written_yet() => OnUi(async () =>
+    public Task The_summary_card_is_gone_and_the_stage_keeps_its_zoom_pill() => OnUi(async () =>
     {
         var (window, _) = await Open(1440, 900);
 
-        Assert.Equal(Labels.ContextMapWhyTitle, Named<TextBlock>(window, "HudTitle").Text);
-        Assert.Equal(Labels.ContextMapWhyNone, Named<TextBlock>(window, "HudNone").Text);
-        Assert.True(Visible(window, "HudNone"));
+        Assert.False(Visible(window, "ContextHud"));
         Assert.Equal(Labels.ContextMapZoomPct(Named<ZoomBorder>(window, "ContextCanvas").View.Scale), Named<TextBlock>(window, "ZoomValue").Text);
     });
 
     [Fact]
-    public Task At_900_the_card_starts_collapsed_the_map_fits_no_smaller_than_62_percent_and_the_page_does_not_scroll_sideways() => OnUi(async () =>
+    public Task At_900_the_map_fits_no_smaller_than_62_percent_and_the_page_does_not_scroll_sideways() => OnUi(async () =>
     {
         var (window, _) = await Open(900, 800);
 
-        Assert.False(Visible(window, "HudNone"));
         var canvas = Named<ZoomBorder>(window, "ContextCanvas");
         var scale = canvas.View.Scale;
         Assert.Equal(ZoomView.Fit(canvas.Bounds.Size, canvas.WorldBounds).Scale, scale);

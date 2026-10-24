@@ -7,29 +7,19 @@
              x:Class="Aw.Sindri.Ui.Views.Context.Whole.WholeMapView"
              x:DataType="vm:WholeMapViewModel"
              ClipToBounds="True">
-  <!-- The whole map (whole-map spec §3): the size line and, when the map is grouped by feature, why; the pannable canvas with the mini-map and the zoom pill over it. -->
+  <!-- The whole map (whole-map spec §3): the size line and, when a feature is cut, a note; the pannable canvas with the mini-map and the zoom pill over it. -->
   <Grid RowDefinitions="Auto,*" RowSpacing="8">
     <StackPanel Spacing="2">
-      <Button x:Name="WholeAllFeatures" Content="{Binding AllFeaturesText}" IsVisible="{Binding IsAreaOpen}" Click="OnAllFeatures" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AllFeaturesText}" />
-      <TextBlock x:Name="WholeAreaTitle" Classes="body-strong" Text="{Binding AreaTitle}" IsVisible="{Binding IsAreaOpen}" AutomationProperties.Name="{Binding AreaTitle}" />
+      <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CrumbsName}" />
       <TextBlock x:Name="WholeSize" Classes="caption subtle" Text="{Binding SizeText}" AutomationProperties.Name="{Binding SizeText}" />
       <TextBlock x:Name="WholeNote" Classes="body" Text="{Binding ByAreaNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ByAreaNote}" />
+      <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
     </StackPanel>
 
     <Grid Grid.Row="1">
       <ctl:ZoomBorder x:Name="WholeCanvas" AutomationProperties.Name="{Binding CanvasName}">
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
-
-      <!-- The card (F3 context spec): nothing is chosen until a query zooms in. -->
-      <Border x:Name="WholeCard" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14" Padding="12,10" MaxWidth="320"
-              Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}">
-        <StackPanel Spacing="2">
-          <TextBlock x:Name="WholeCardTitle" Classes="body-strong" Text="{Binding CardTitle}" AutomationProperties.Name="{Binding CardTitle}" />
-          <TextBlock x:Name="WholeCardText" Classes="caption subtle" Text="{Binding CardText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding CardText}" />
-          <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
-        </StackPanel>
-      </Border>
 
       <Border x:Name="WholeMiniMapHost" Focusable="True" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14" Width="180" Height="112"
               Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}"

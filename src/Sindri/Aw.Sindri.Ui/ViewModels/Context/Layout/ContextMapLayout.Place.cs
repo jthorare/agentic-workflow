@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Layout;
 
 internal static partial class ContextMapLayout
 {
-    private const double IntentLeft = 440;   // the left of the intent band stays free for the "Why this matters" card
+    private const double IntentLeft = 14;   // where the intent band starts: the left edge of the first column, like the bands below it
     private const double CardRowStep = CardHeight + 14;
 
     // Every node's rectangle, band by band from the top: each band's height depends on how many rows the one above it wrapped to.
