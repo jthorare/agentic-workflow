@@ -46,9 +46,11 @@ internal static class GraphAnswer
         }
 
         var reached = own.Select(o => o.Key.Value).Concat(affected.Keys).ToHashSet(StringComparer.Ordinal);
+        var memberships = graph.Edges.Where(e => e.Type == EdgeType.PartOf).GroupBy(e => e.From.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(e => e.To.Value).Distinct(StringComparer.Ordinal).Count(), StringComparer.Ordinal);
         var candidates = new List<PackCandidate>();
-        candidates.AddRange(own.Select(o => Fact(nodes[o.Key.Value], graph, text, o.Key.Value == o.Anchor.Value ? "anchor" : "own-scope of " + o.Anchor.Value)));
-        candidates.AddRange(affected.Values.OrderBy(a => a.Depth).ThenBy(a => a.Node.Value, StringComparer.Ordinal).Select(a => Affects(a, nodes, text)));
+        candidates.AddRange(own.OrderBy(o => o.Key.Value == o.Anchor.Value ? 0 : 1).ThenBy(o => memberships.GetValueOrDefault(o.Key.Value)).Select(o => Fact(nodes[o.Key.Value], graph, text, o.Key.Value == o.Anchor.Value ? "anchor" : "own-scope of " + o.Anchor.Value)));
+        // Within a depth, a node in fewer features is more specific (a screen of one feature before a primitive many features share); ties fall back to the key, so the order is the same on every run.
+        candidates.AddRange(affected.Values.OrderBy(a => a.Depth).ThenBy(a => memberships.GetValueOrDefault(a.Node.Value)).ThenBy(a => a.Node.Value, StringComparer.Ordinal).Select(a => Affects(a, nodes, text)));
         candidates.AddRange(Decisions(graph, reached, text));
         candidates.AddRange(Code(graph, reached, text));
         var cites = new Dictionary<string, Citation>(StringComparer.Ordinal);

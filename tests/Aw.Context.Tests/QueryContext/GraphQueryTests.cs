@@ -63,6 +63,45 @@ public sealed class GraphQueryTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Affected_nodes_at_one_depth_list_the_ones_in_fewer_features_first_then_by_key()
+    {
+        // feature:aa sits in two features (a shared piece) and feature:zz in none, so zz is the more specific and comes first although aa sorts first by key.
+        _ = await _world.ImportYaml(MapWorld.Yaml(
+            "schemaVersion: 1",
+            "kind: authored",
+            "repo: aw-split-panes",
+            "nodes:",
+            "  - {key: \"feature:a\", label: \"A\"}",
+            "  - {key: \"surface:screen/a\", label: \"A screen\"}",
+            "  - {key: \"action:a1\", label: \"A action\"}",
+            "  - {key: \"thing:t\", label: \"T\"}",
+            "  - {key: \"feature:aa\", label: \"Shared aa\"}",
+            "  - {key: \"feature:zz\", label: \"Specific zz\"}",
+            "  - {key: \"feature:p1\", label: \"P1\"}",
+            "  - {key: \"feature:p2\", label: \"P2\"}",
+            "  - {key: \"surface:screen/aa\", label: \"aa screen\"}",
+            "  - {key: \"surface:screen/zz\", label: \"zz screen\"}",
+            "  - {key: \"action:aa1\", label: \"aa action\"}",
+            "  - {key: \"action:zz1\", label: \"zz action\"}",
+            "edges:",
+            "  - {from: \"surface:screen/a\", to: \"feature:a\", type: part-of}",
+            "  - {from: \"action:a1\", to: \"surface:screen/a\", type: on}",
+            "  - {from: \"action:a1\", to: \"thing:t\", type: writes}",
+            "  - {from: \"action:aa1\", to: \"thing:t\", type: reads}",
+            "  - {from: \"action:zz1\", to: \"thing:t\", type: reads}",
+            "  - {from: \"action:aa1\", to: \"surface:screen/aa\", type: on}",
+            "  - {from: \"action:zz1\", to: \"surface:screen/zz\", type: on}",
+            "  - {from: \"surface:screen/aa\", to: \"feature:aa\", type: part-of}",
+            "  - {from: \"surface:screen/zz\", to: \"feature:zz\", type: part-of}",
+            "  - {from: \"feature:aa\", to: \"feature:p1\", type: part-of}",
+            "  - {from: \"feature:aa\", to: \"feature:p2\", type: part-of}"));
+
+        var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: "feature:a"), MapWorld.Human, MapWorld.None)).Value;
+
+        Assert.Equal(["feature:zz", "feature:aa"], Section(result, "affects").Items.Where(i => i.Node is "feature:aa" or "feature:zz").Select(i => i.Node), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Two_anchors_reaching_a_node_at_the_same_depth_show_the_path_with_the_fewest_owns_hops()
     {
         // Alpha comes first (anchors sort by key) and reaches feature:x through two owns hops; Beta reaches it through one.
