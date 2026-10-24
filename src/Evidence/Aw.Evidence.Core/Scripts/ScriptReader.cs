@@ -30,6 +30,11 @@ public static partial class ScriptReader
             CheckStep(script.Steps[i], i + 1, problems);
         }
 
+        foreach (var problem in script.Login?.Problems() ?? [])
+        {
+            problems.Add(problem);
+        }
+
         if (script.Planning is { } planning)
         {
             problems.AddIf(planning.ElapsedMs < 0 || planning.InputTokens < 0 || planning.OutputTokens < 0, "planning numbers must not be negative");
@@ -47,7 +52,11 @@ public static partial class ScriptReader
             return;
         }
 
-        problems.AddIf(!Enum.IsDefined(step.Action), $"{at}: action is not a known action");
+        foreach (var broken in StepRules.Problems(step))
+        {
+            problems.Add($"{at}: {broken}");
+        }
+
         if (step.ExpectedState.Problem() is { } problem)
         {
             problems.Add($"{at}: {problem}");

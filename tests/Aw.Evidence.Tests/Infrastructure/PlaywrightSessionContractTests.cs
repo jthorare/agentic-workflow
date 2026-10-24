@@ -16,4 +16,12 @@ public sealed class PlaywrightSessionContractTests(BrowserFixture fixture) : Bro
         Assert.True(opened.IsSuccess, opened.IsError ? opened.Error.Message : null);
         return session;
     }
+
+    protected override async Task<IBrowserSession> OpenFeaturePageAsync(IReadOnlyDictionary<string, string>? localStorage = null)
+    {
+        var session = await fixture.OpenAsync(localStorage: localStorage);
+        var opened = await session.GotoAsync("/features", PassingWait, CancellationToken.None);
+        Assert.True(opened.IsSuccess, opened.IsError ? opened.Error.Message : null);
+        return session;
+    }
 }

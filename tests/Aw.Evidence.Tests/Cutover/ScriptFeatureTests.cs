@@ -1,4 +1,3 @@
-#pragma warning disable xUnit1004 // the red tests of cutover unit 1.1: skipped until it lands (spec §12 P0)
 using Aw.Evidence.Core;
 using Aw.Evidence.Core.Guard;
 using Aw.Evidence.Core.Scripts;
@@ -13,7 +12,6 @@ namespace Aw.Evidence.Tests.Cutover;
 /// </summary>
 public sealed class ScriptFeatureTests
 {
-    private const string Red = "red until cutover unit 1.1";
     private const string Visible = """{"kind":"testid-visible","testId":"panel"}""";
 
     private static readonly ResolvedHost _preview = new("https://pr-9.preview.example.com", HostKind.Preview);
@@ -24,7 +22,7 @@ public sealed class ScriptFeatureTests
     private static string Step(string action, string target, string more = "", string expected = Visible) =>
         $$"""{"action":"{{action}}","target":"{{target}}"{{more}},"expectedState":{{expected}}}""";
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("end")]
     [InlineData("start")]
     [InlineData("bottom")]
@@ -46,7 +44,7 @@ public sealed class ScriptFeatureTests
     public void Scroll_with_any_other_value_fails_the_schema(string value) =>
         Assert.Equal(EvidenceErrors.ScriptInvalid.Code, Read(Step("scroll", "timeline", ",\"value\":\"" + value + "\"")).Error.Code);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Drag_carries_its_destination_offsets_and_alt_through_a_round_trip()
     {
         var script = Read(Step("drag", "card-1", ",\"to\":\"lane-2\",\"grabOffset\":{\"x\":4,\"y\":8},\"dropOffset\":{\"x\":0,\"y\":12},\"holdAlt\":true"));
@@ -71,7 +69,7 @@ public sealed class ScriptFeatureTests
     public void A_step_field_on_the_wrong_action_or_a_missing_one_fails_the_schema(string action, string target, string more) =>
         Assert.Equal(EvidenceErrors.ScriptInvalid.Code, Read(Step(action, target, more)).Error.Code);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Press_sends_a_key_to_the_target_or_to_whatever_has_focus()
     {
         var withTarget = Read(Step("press", "tab-1", ",\"key\":\"ArrowRight\""));
@@ -84,7 +82,7 @@ public sealed class ScriptFeatureTests
         Assert.Equal("press", focused.Value.Steps[0].ActionName);
     }
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("click", true)]
     [InlineData("fill", true)]
     [InlineData("scroll", true)]
@@ -116,7 +114,7 @@ public sealed class ScriptFeatureTests
     public void Prefixed_click_targets_are_accepted(string target) =>
         Assert.True(Read(Step("click", target)).IsSuccess);
 
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("role:button")]         // no name
     [InlineData("text:")]               // no text
     [InlineData("Role:button|Save")]    // near-miss prefix
@@ -126,7 +124,7 @@ public sealed class ScriptFeatureTests
     public void A_malformed_or_near_miss_prefix_fails_the_schema_parse(string target) =>
         Assert.Equal(EvidenceErrors.ScriptInvalid.Code, Read(Step("click", target)).Error.Code);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Expected_state_url_search_waits_for_one_query_parameter()
     {
         var script = Read(Step("click", "filter-night", expected: """{"kind":"url-search","param":"timeFilter","value":"Night"}"""));
@@ -135,7 +133,7 @@ public sealed class ScriptFeatureTests
         Assert.Contains("\"kind\":\"url-search\"", TestJson.Write(script.Value), StringComparison.Ordinal);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Expected_state_testid_absent_passes_when_no_visible_element_has_the_test_id()
     {
         var script = Read(Step("drag", "card-1", ",\"to\":\"lane-2\"", """{"kind":"testid-absent","testId":"drag-ghost"}"""));
@@ -151,7 +149,7 @@ public sealed class ScriptFeatureTests
     public void A_new_expected_state_missing_its_fields_fails_the_schema(string expected) =>
         Assert.Equal(EvidenceErrors.ScriptInvalid.Code, Read(Step("click", "filter-night", expected: expected)).Error.Code);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void A_script_level_login_signs_in_by_environment_variable_names_and_selectors()
     {
         var script = Read(
@@ -173,7 +171,7 @@ public sealed class ScriptFeatureTests
             EvidenceErrors.ScriptInvalid.Code,
             Read(Step("goto", "/x", expected: """{"kind":"url-path","path":"/x"}"""), ",\"login\":" + login).Error.Code);
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Script_level_local_storage_is_a_map_of_strings_written_verbatim()
     {
         var script = Read(Step("click", "open"), ",\"localStorage\":{\"theme\":\"dark\",\"flags\":\"{\\\"newNav\\\":true}\"}");
@@ -187,7 +185,7 @@ public sealed class ScriptFeatureTests
         Assert.Equal(EvidenceErrors.ScriptInvalid.Code, Read(Step("click", "open"), ",\"localStorage\":{\"flag\":true}").Error.Code);
 
     // The write guard (SKILL 'Host override'): a preview host refuses the new actions that can write unless --allow-writes.
-    [Theory(Skip = Red), Trait("Lane", "unit")]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("drag", "card-1", ",\"to\":\"lane-2\"", true)]                 // every drag counts as a write
     [InlineData("press", "tab-1", ",\"key\":\"Enter\"", true)]                 // a non-navigation key can activate a Save button
     [InlineData("press", "tab-1", ",\"key\":\"Space\"", true)]
@@ -216,7 +214,7 @@ public sealed class ScriptFeatureTests
         Assert.True(StepGuard.ForRun(script.Value.Steps, new ResolvedHost("http://localhost:3000", HostKind.Local), allowWrites: false).IsSuccess);
     }
 
-    [Fact(Skip = Red), Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "unit")]
     public void Parity_refuses_a_drag_and_a_key_press_without_allow_writes_on_every_host()
     {
         var script = Read(Step("drag", "card-1", ",\"to\":\"lane-2\""));

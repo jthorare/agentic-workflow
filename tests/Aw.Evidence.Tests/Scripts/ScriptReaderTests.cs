@@ -63,7 +63,7 @@ public sealed class ScriptReaderTests
     [InlineData("""{"route":null,"role":"manager","viewports":["desktop"],"steps":[]}""", "$.route: must not be null")]
     [InlineData("""{"route":"/","role":"manager","viewports":["desktop"],"steps":[{"action":"goto","target":"/","expectedState":{"kind":"url-path"}}]}""", "$.steps[0].expectedState: missing required property \"path\"")]
     [InlineData("""{"route":"/","role":"manager","viewports":["desktop"],"steps":[{"action":"goto","target":"/","expectedState":{"path":"/"}}]}""", "$.steps[0].expectedState: missing required property \"kind\"")]
-    [InlineData("""{"route":"/","role":"manager","viewports":["desktop"],"steps":[{"action":"goto","target":"/","expectedState":{"kind":"looks-nice"}}]}""", "$.steps[0].expectedState.kind: \"looks-nice\" is not a known kind (text-visible, text-absent, testid-visible, url-path, input-value)")]
+    [InlineData("""{"route":"/","role":"manager","viewports":["desktop"],"steps":[{"action":"goto","target":"/","expectedState":{"kind":"looks-nice"}}]}""", "$.steps[0].expectedState.kind: \"looks-nice\" is not a known kind (text-visible, text-absent, testid-visible, testid-absent, url-path, url-search, input-value)")]
     [InlineData("""{"route":"/","role":"manager","viewports":["desktop"],"steps":[{"action":"goto","target":"/","expectedState":{"kind":"testid-visible","testId":""}}]}""", "$.steps[0].expectedState.testId: \"\" is not a valid value")]
     [InlineData("not json", "$: not valid JSON (line 1, column 2)")]
     public void A_malformed_script_is_described_by_its_json_location_in_its_own_terms(string json, string message)

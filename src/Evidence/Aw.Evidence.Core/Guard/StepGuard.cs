@@ -59,5 +59,5 @@ public static class StepGuard
     private static List<string> Numbered(IReadOnlyList<ScriptStep> steps, Func<ScriptStep, bool> refused) =>
         [.. steps.Select(static (s, i) => (Step: s, Number: i + 1))
             .Where(x => refused(x.Step))
-            .Select(static x => string.Create(CultureInfo.InvariantCulture, $"#{x.Number} {x.Step.ActionName} {x.Step.Target}"))];
+            .Select(static x => string.Create(CultureInfo.InvariantCulture, $"#{x.Number} {x.Step.ActionName} {x.Step.Subject}"))];
 }

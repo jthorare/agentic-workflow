@@ -15,7 +15,7 @@ namespace Aw.Evidence.Infrastructure.Browser;
 /// main frame actually is: once it has been anywhere off the vetted origin, every call fails (before and after it acts),
 /// and sign-in checks again right before it types each credential.
 /// </summary>
-internal sealed class PlaywrightSession : IBrowserSession
+internal sealed partial class PlaywrightSession : IBrowserSession
 {
     private static readonly TimeSpan _signInPage = TimeSpan.FromSeconds(120);
     private static readonly TimeSpan _signInStep = TimeSpan.FromSeconds(60);

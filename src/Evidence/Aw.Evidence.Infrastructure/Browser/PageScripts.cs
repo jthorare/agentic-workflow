@@ -15,6 +15,17 @@ internal static class PageScripts
     /// <summary>True once the page's path no longer contains the given text and the page has finished loading.</summary>
     internal const string OffPathLoaded = "text => !location.pathname.includes(text) && document.readyState === 'complete'";
 
+    /// <summary>True once one query parameter of the page's URL has the given value and the page has finished loading; its argument is { param, value }.</summary>
+    internal const string OnSearchParam =
+        "({ param, value }) => new URL(location.href).searchParams.get(param) === value && document.readyState === 'complete'";
+
+    /// <summary>Scrolls a container: end/start (horizontal), bottom/top (vertical) or a horizontal pixel offset; its argument is the position.</summary>
+    internal const string ScrollTo =
+        "(node, pos) => { if (pos === 'end') node.scrollLeft = node.scrollWidth; else if (pos === 'start') node.scrollLeft = 0; else if (pos === 'bottom') node.scrollTop = node.scrollHeight; else if (pos === 'top') node.scrollTop = 0; else node.scrollLeft = Number(pos); return true; }";
+
+    /// <summary>Resolves after the next animation frame.</summary>
+    internal const string NextFrame = "() => new Promise((resolve) => requestAnimationFrame(() => resolve(true)))";
+
     /// <summary>Blurs the focused element.</summary>
     internal const string Blur = "() => { document.activeElement?.blur?.(); return true; }";
 

@@ -35,6 +35,9 @@ internal sealed class RunScriptHarness
 
     public SequentialIds Ids { get; } = new();
 
+    /// <summary>The secrets a script's login names (environment variables in a real run).</summary>
+    public Dictionary<string, string> SecretValues { get; } = new(StringComparer.Ordinal);
+
     public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(2026, 10, 10, 12, 0, 0, TimeSpan.Zero));
 
     public byte[] WithScript(UiScript script)
@@ -50,7 +53,7 @@ internal sealed class RunScriptHarness
     public ValueTask<Kernel.Result<RunScriptResponse>> Interruptible(RunScriptRequest request, CancellationToken interrupt)
     {
         var json = TestJson.Options;
-        var run = new ScriptRun(Browser, new StepRunner(Judge, Clock), Files, Settings);
+        var run = new ScriptRun(Browser, new StepRunner(Judge, Clock), Files, Settings, new FakeSecrets(SecretValues));
         var verdict = new RunVerdict(new VisualGate(Files, Codec, Judge, Clock, json), Cache, Settings, json);
         var service = new ValidatingService<RunScriptRequest, RunScriptResponse>(
             new RunScriptService(new ScriptFiles(Files, json), Locks, run, verdict, Clock, Ids, Settings), new RunScriptValidator());

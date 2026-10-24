@@ -24,17 +24,29 @@ internal static partial class WriteWords
 
     private static readonly string[] _controlSuffixes = ["btn", "button", "link", "action"];
 
-    internal static bool LooksLikeWrite(ScriptStep step)
+    // Keys that move focus or selection, optionally with Shift. Anything else (Enter, Space, a letter, Control+S) can activate a control.
+    private static readonly string[] _navigationKeys =
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown", "Tab", "Escape"];
+
+    /// <summary>
+    /// A click reads its target's label (the name of a role: target, the text of a text: target, a '#&lt;n&gt;' dropped); a goto reads its path.
+    /// Every drag counts as a write: dropping moves data whatever the test ids say. A press counts as a write unless its key only
+    /// navigates: Enter or Space on a focused Save button saves, whatever the target says. Scroll and the rest never write.
+    /// </summary>
+    internal static bool LooksLikeWrite(ScriptStep step) => step.Action switch
     {
-        var label = step.Action switch
-        {
-            StepAction.Click => step.Target,
-            StepAction.Goto => step.Target.Split('?')[0],
-            StepAction.Fill or StepAction.ExpectVisible => null,
-            _ => null,
-        };
-        return LabelLooksLikeWrite(label);
-    }
+        StepAction.Drag => true,
+        StepAction.Press => !IsNavigationKey(step.Key),
+        StepAction.Click => LabelLooksLikeWrite(LabelOf(step.Target)),
+        StepAction.Goto => LabelLooksLikeWrite(step.Target.Split('?')[0]),
+        StepAction.Fill or StepAction.ExpectVisible or StepAction.Scroll => false,
+        _ => false,
+    };
+
+    private static string LabelOf(string target) => StepTarget.Parse(target) is { IsSuccess: true } parsed ? parsed.Value.Label : target;
+
+    private static bool IsNavigationKey(string? key) =>
+        key is not null && _navigationKeys.Contains(key.StartsWith("Shift+", StringComparison.Ordinal) ? key["Shift+".Length..] : key, StringComparer.Ordinal);
 
     /// <summary>The words of a CLI argument that read as write verbs (the UI list plus the CLI verbs).</summary>
     internal static IEnumerable<string> CliWritesIn(string argument) => Words(argument).Where(static w => IsWriteWord(w) || _cliVerbs.Contains(w));

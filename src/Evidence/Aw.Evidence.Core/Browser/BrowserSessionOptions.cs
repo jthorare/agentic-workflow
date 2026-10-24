@@ -8,4 +8,6 @@ namespace Aw.Evidence.Core.Browser;
 /// <param name="Viewport">The viewport (device scale factor 1).</param>
 /// <param name="RecordDirectory">Where to record video and tracing; null records nothing.</param>
 /// <param name="UserAgentOverride">A user agent to present instead of desktop Chrome (UI_EVIDENCE_USER_AGENT).</param>
-public sealed record BrowserSessionOptions(ResolvedHost Host, ViewportSize Viewport, string? RecordDirectory, string? UserAgentOverride);
+/// <param name="LocalStorage">Entries written verbatim into the host origin's localStorage before every page load, so the app reads them on its first render and after each navigation; null writes none.</param>
+public sealed record BrowserSessionOptions(
+    ResolvedHost Host, ViewportSize Viewport, string? RecordDirectory, string? UserAgentOverride, IReadOnlyDictionary<string, string>? LocalStorage = null);

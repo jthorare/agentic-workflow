@@ -82,6 +82,7 @@ internal sealed class PlaywrightBrowser : IBrowser, IAsyncDisposable, IDisposabl
         try
         {
             var origin = options.Host.Origin;
+            await SeedLocalStorageAsync(context, options).ConfigureAwait(false);
             _ = await context.RouteAsync("**/*", route =>
                 HostGuard.IsOffOriginNavigation(origin, route.Request.Url, route.Request.IsNavigationRequest)
                     ? route.AbortAsync("blockedbyclient")
@@ -106,6 +107,15 @@ internal sealed class PlaywrightBrowser : IBrowser, IAsyncDisposable, IDisposabl
             }
 
             throw;
+        }
+    }
+
+    // Runs before any page script on every load of the host origin, so the app reads the overrides on its first render and after each navigation.
+    private static async Task SeedLocalStorageAsync(IBrowserContext context, BrowserSessionOptions options)
+    {
+        if (options.LocalStorage is { Count: > 0 } entries)
+        {
+            _ = await context.AddInitScriptAsync(LocalStorageScript.For(options.Host.Origin, entries)).ConfigureAwait(false);
         }
     }
 

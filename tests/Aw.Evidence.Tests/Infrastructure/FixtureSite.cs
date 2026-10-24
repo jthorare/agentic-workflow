@@ -6,6 +6,7 @@ internal static class FixtureSite
     internal static IReadOnlyDictionary<string, string> Pages(string elsewhere) => new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["/"] = Home(elsewhere),
+        ["/features"] = Features(),
         ["/next"] = "<!doctype html><html><head><title>Next</title></head><body><h1>Next page</h1></body></html>",
         ["/controls"] = Lines(
             "<!doctype html><html><head><title>Controls</title></head><body>",
@@ -34,6 +35,35 @@ internal static class FixtureSite
             "</body></html>"),
         ["/home"] = "<!doctype html><html><head><title>Home</title></head><body><h1>Welcome</h1></body></html>",
     };
+
+    // The feature page of the browser-session contract (BrowserSessionContract's summary lists what it holds).
+    private static string Features() => Lines(
+        "<!doctype html><html><head><title>Features</title></head><body>",
+        "<div id=\"strip\" data-testid=\"strip\" style=\"width: 120px; overflow-x: auto\"><div style=\"width: 1000px; height: 20px\">Wide</div></div>",
+        "<div id=\"card\" data-testid=\"card\" style=\"width: 100px; height: 40px; background: #ccc; user-select: none\">Card</div>",
+        "<div id=\"lane\" data-testid=\"lane\" style=\"width: 200px; height: 80px; background: #eee\">Lane</div>",
+        "<input data-testid=\"note\" aria-label=\"Note\">",
+        "<button data-testid=\"night\" onclick=\"history.pushState(null, '', '/features?timeFilter=Night')\">Night</button>",
+        "<button data-testid=\"show-ghost\" onclick=\"document.getElementById('ghost').style.display = 'block'\">Show ghost</button>",
+        "<div id=\"ghost\" data-testid=\"ghost\" style=\"display: none\">Ghost</div>",
+        "<button data-testid=\"row\" onclick=\"say('Row 1 clicked')\">Row</button>",
+        "<button data-testid=\"row\" onclick=\"say('Row 2 clicked')\">Row</button>",
+        "<button data-testid=\"row\" onclick=\"say('Row 3 clicked')\">Row</button>",
+        "<button onclick=\"say('Dup 1 clicked')\">Dup</button><button onclick=\"say('Dup 2 clicked')\">Dup</button>",
+        "<button>Plain</button>",
+        "<script>",
+        "  function say(text) { const line = document.createElement('div'); line.textContent = text; document.body.appendChild(line); }",
+        "  say('Theme ' + (localStorage.getItem('theme') ?? 'none'));",
+        "  document.getElementById('strip').addEventListener('scroll', () => say('Strip scrolled'));",
+        "  let grabbed = false;",
+        "  document.getElementById('card').addEventListener('mousedown', () => { grabbed = true; });",
+        "  document.addEventListener('mouseup', (e) => {",
+        "    if (grabbed && e.target.closest('#lane')) say(e.altKey ? 'Dropped with Alt' : 'Dropped');",
+        "    grabbed = false;",
+        "  });",
+        "  document.addEventListener('keydown', (e) => say('Key ' + e.key));",
+        "</script>",
+        "</body></html>");
 
     private static string Home(string elsewhere) => Lines(
         "<!doctype html><html><head><title>Fixture</title><style>",

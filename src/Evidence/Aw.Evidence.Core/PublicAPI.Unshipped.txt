@@ -5,8 +5,6 @@ abstract Aw.Evidence.Core.Scripts.ExpectedState.Describe() -> string!
 abstract Aw.Evidence.Core.Scripts.ExpectedState.Problem() -> string?
 Aw.Evidence.Core.Browser.BrowserSessionOptions
 Aw.Evidence.Core.Browser.BrowserSessionOptions.<Clone>$() -> Aw.Evidence.Core.Browser.BrowserSessionOptions!
-Aw.Evidence.Core.Browser.BrowserSessionOptions.BrowserSessionOptions(Aw.Evidence.Core.Guard.ResolvedHost! Host, Aw.Evidence.Core.Geometry.ViewportSize! Viewport, string? RecordDirectory, string? UserAgentOverride) -> void
-Aw.Evidence.Core.Browser.BrowserSessionOptions.Deconstruct(out Aw.Evidence.Core.Guard.ResolvedHost! Host, out Aw.Evidence.Core.Geometry.ViewportSize! Viewport, out string? RecordDirectory, out string? UserAgentOverride) -> void
 Aw.Evidence.Core.Browser.BrowserSessionOptions.Equals(Aw.Evidence.Core.Browser.BrowserSessionOptions? other) -> bool
 Aw.Evidence.Core.Browser.BrowserSessionOptions.Host.get -> Aw.Evidence.Core.Guard.ResolvedHost!
 Aw.Evidence.Core.Browser.BrowserSessionOptions.Host.init -> void
@@ -799,18 +797,12 @@ Aw.Evidence.Core.Scripts.ScriptReader
 Aw.Evidence.Core.Scripts.ScriptStep
 Aw.Evidence.Core.Scripts.ScriptStep.<Clone>$() -> Aw.Evidence.Core.Scripts.ScriptStep!
 Aw.Evidence.Core.Scripts.ScriptStep.Action.get -> Aw.Evidence.Core.Scripts.StepAction
-Aw.Evidence.Core.Scripts.ScriptStep.Action.init -> void
 Aw.Evidence.Core.Scripts.ScriptStep.ActionName.get -> string!
-Aw.Evidence.Core.Scripts.ScriptStep.Deconstruct(out Aw.Evidence.Core.Scripts.StepAction Action, out string! Target, out Aw.Evidence.Core.Scripts.ExpectedState! ExpectedState, out string? Value) -> void
 Aw.Evidence.Core.Scripts.ScriptStep.Describe() -> string!
 Aw.Evidence.Core.Scripts.ScriptStep.Equals(Aw.Evidence.Core.Scripts.ScriptStep? other) -> bool
 Aw.Evidence.Core.Scripts.ScriptStep.ExpectedState.get -> Aw.Evidence.Core.Scripts.ExpectedState!
-Aw.Evidence.Core.Scripts.ScriptStep.ExpectedState.init -> void
-Aw.Evidence.Core.Scripts.ScriptStep.ScriptStep(Aw.Evidence.Core.Scripts.StepAction Action, string! Target, Aw.Evidence.Core.Scripts.ExpectedState! ExpectedState, string? Value = null) -> void
 Aw.Evidence.Core.Scripts.ScriptStep.Target.get -> string!
-Aw.Evidence.Core.Scripts.ScriptStep.Target.init -> void
 Aw.Evidence.Core.Scripts.ScriptStep.Value.get -> string?
-Aw.Evidence.Core.Scripts.ScriptStep.Value.init -> void
 Aw.Evidence.Core.Scripts.ScriptViewports
 Aw.Evidence.Core.Scripts.StepAction
 Aw.Evidence.Core.Scripts.StepAction.Click = 1 -> Aw.Evidence.Core.Scripts.StepAction
@@ -837,7 +829,6 @@ Aw.Evidence.Core.Scripts.TextVisible.Text.init -> void
 Aw.Evidence.Core.Scripts.TextVisible.TextVisible(string! Text) -> void
 Aw.Evidence.Core.Scripts.UiScript
 Aw.Evidence.Core.Scripts.UiScript.<Clone>$() -> Aw.Evidence.Core.Scripts.UiScript!
-Aw.Evidence.Core.Scripts.UiScript.Deconstruct(out string! Route, out string! Role, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ScriptStep!>! Steps, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ViewportKind>! Viewports, out Aw.Evidence.Core.Scripts.PlanningMeta? Planning) -> void
 Aw.Evidence.Core.Scripts.UiScript.Equals(Aw.Evidence.Core.Scripts.UiScript? other) -> bool
 Aw.Evidence.Core.Scripts.UiScript.Planning.get -> Aw.Evidence.Core.Scripts.PlanningMeta?
 Aw.Evidence.Core.Scripts.UiScript.Planning.init -> void
@@ -847,7 +838,6 @@ Aw.Evidence.Core.Scripts.UiScript.Route.get -> string!
 Aw.Evidence.Core.Scripts.UiScript.Route.init -> void
 Aw.Evidence.Core.Scripts.UiScript.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ScriptStep!>!
 Aw.Evidence.Core.Scripts.UiScript.Steps.init -> void
-Aw.Evidence.Core.Scripts.UiScript.UiScript(string! Route, string! Role, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ScriptStep!>! Steps, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ViewportKind>! Viewports, Aw.Evidence.Core.Scripts.PlanningMeta? Planning = null) -> void
 Aw.Evidence.Core.Scripts.UiScript.Viewports.get -> System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ViewportKind>!
 Aw.Evidence.Core.Scripts.UiScript.Viewports.init -> void
 Aw.Evidence.Core.Scripts.UrlPath
@@ -2409,3 +2399,215 @@ static Aw.Evidence.Core.Publishing.GhOutcome.operator ==(Aw.Evidence.Core.Publis
 static Aw.Evidence.Core.Settings.SlotSettings.operator !=(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
 static Aw.Evidence.Core.Settings.SlotSettings.operator ==(Aw.Evidence.Core.Settings.SlotSettings? left, Aw.Evidence.Core.Settings.SlotSettings? right) -> bool
 static readonly Aw.Evidence.Core.EvidenceErrors.GhPublishFailed -> Aw.Kernel.ErrorDefinition!
+abstract Aw.Evidence.Core.Scripts.StepTarget.<Clone>$() -> Aw.Evidence.Core.Scripts.StepTarget!
+abstract Aw.Evidence.Core.Scripts.StepTarget.Label.get -> string!
+Aw.Evidence.Core.Browser.BrowserSessionOptions.BrowserSessionOptions(Aw.Evidence.Core.Guard.ResolvedHost! Host, Aw.Evidence.Core.Geometry.ViewportSize! Viewport, string? RecordDirectory, string? UserAgentOverride, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LocalStorage = null) -> void
+Aw.Evidence.Core.Browser.BrowserSessionOptions.Deconstruct(out Aw.Evidence.Core.Guard.ResolvedHost! Host, out Aw.Evidence.Core.Geometry.ViewportSize! Viewport, out string? RecordDirectory, out string? UserAgentOverride, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LocalStorage) -> void
+Aw.Evidence.Core.Browser.BrowserSessionOptions.LocalStorage.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Evidence.Core.Browser.BrowserSessionOptions.LocalStorage.init -> void
+Aw.Evidence.Core.Browser.DragGesture
+Aw.Evidence.Core.Browser.DragGesture.<Clone>$() -> Aw.Evidence.Core.Browser.DragGesture!
+Aw.Evidence.Core.Browser.DragGesture.Deconstruct(out Aw.Evidence.Core.Geometry.Offset? Grab, out Aw.Evidence.Core.Geometry.Offset? Drop, out bool HoldAlt) -> void
+Aw.Evidence.Core.Browser.DragGesture.DragGesture(Aw.Evidence.Core.Geometry.Offset? Grab, Aw.Evidence.Core.Geometry.Offset? Drop, bool HoldAlt) -> void
+Aw.Evidence.Core.Browser.DragGesture.Drop.get -> Aw.Evidence.Core.Geometry.Offset?
+Aw.Evidence.Core.Browser.DragGesture.Drop.init -> void
+Aw.Evidence.Core.Browser.DragGesture.Equals(Aw.Evidence.Core.Browser.DragGesture? other) -> bool
+Aw.Evidence.Core.Browser.DragGesture.Grab.get -> Aw.Evidence.Core.Geometry.Offset?
+Aw.Evidence.Core.Browser.DragGesture.Grab.init -> void
+Aw.Evidence.Core.Browser.DragGesture.HoldAlt.get -> bool
+Aw.Evidence.Core.Browser.DragGesture.HoldAlt.init -> void
+Aw.Evidence.Core.Browser.ExactTextLocator
+Aw.Evidence.Core.Browser.ExactTextLocator.Deconstruct(out string! Text, out int? Nth) -> void
+Aw.Evidence.Core.Browser.ExactTextLocator.Equals(Aw.Evidence.Core.Browser.ExactTextLocator? other) -> bool
+Aw.Evidence.Core.Browser.ExactTextLocator.ExactTextLocator(string! Text, int? Nth) -> void
+Aw.Evidence.Core.Browser.ExactTextLocator.Nth.get -> int?
+Aw.Evidence.Core.Browser.ExactTextLocator.Nth.init -> void
+Aw.Evidence.Core.Browser.ExactTextLocator.Text.get -> string!
+Aw.Evidence.Core.Browser.ExactTextLocator.Text.init -> void
+Aw.Evidence.Core.Browser.IBrowserSession.DragAsync(Aw.Evidence.Core.Browser.Locator! source, Aw.Evidence.Core.Browser.Locator! destination, Aw.Evidence.Core.Browser.DragGesture! gesture, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Evidence.Core.Browser.IBrowserSession.ExpectAbsentNowAsync(Aw.Evidence.Core.Browser.Locator! target, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Evidence.Core.Browser.IBrowserSession.PressAsync(string! key, Aw.Evidence.Core.Browser.Locator? target, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Evidence.Core.Browser.IBrowserSession.ScrollAsync(Aw.Evidence.Core.Browser.Locator! target, string! position, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Evidence.Core.Browser.IBrowserSession.WaitForUrlSearchAsync(string! param, string! value, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Evidence.Core.Browser.NthTestIdLocator
+Aw.Evidence.Core.Browser.NthTestIdLocator.Deconstruct(out Aw.Evidence.Core.Ids.TestId TestId, out int Index) -> void
+Aw.Evidence.Core.Browser.NthTestIdLocator.Equals(Aw.Evidence.Core.Browser.NthTestIdLocator? other) -> bool
+Aw.Evidence.Core.Browser.NthTestIdLocator.Index.get -> int
+Aw.Evidence.Core.Browser.NthTestIdLocator.Index.init -> void
+Aw.Evidence.Core.Browser.NthTestIdLocator.NthTestIdLocator(Aw.Evidence.Core.Ids.TestId TestId, int Index) -> void
+Aw.Evidence.Core.Browser.NthTestIdLocator.TestId.get -> Aw.Evidence.Core.Ids.TestId
+Aw.Evidence.Core.Browser.NthTestIdLocator.TestId.init -> void
+Aw.Evidence.Core.Browser.RoleLocator
+Aw.Evidence.Core.Browser.RoleLocator.Deconstruct(out string! Role, out string! Name, out int? Nth) -> void
+Aw.Evidence.Core.Browser.RoleLocator.Equals(Aw.Evidence.Core.Browser.RoleLocator? other) -> bool
+Aw.Evidence.Core.Browser.RoleLocator.Name.get -> string!
+Aw.Evidence.Core.Browser.RoleLocator.Name.init -> void
+Aw.Evidence.Core.Browser.RoleLocator.Nth.get -> int?
+Aw.Evidence.Core.Browser.RoleLocator.Nth.init -> void
+Aw.Evidence.Core.Browser.RoleLocator.Role.get -> string!
+Aw.Evidence.Core.Browser.RoleLocator.Role.init -> void
+Aw.Evidence.Core.Browser.RoleLocator.RoleLocator(string! Role, string! Name, int? Nth) -> void
+Aw.Evidence.Core.Scripts.RoleTarget
+Aw.Evidence.Core.Scripts.RoleTarget.Deconstruct(out string! Role, out string! Name, out int? Nth) -> void
+Aw.Evidence.Core.Scripts.RoleTarget.Equals(Aw.Evidence.Core.Scripts.RoleTarget? other) -> bool
+Aw.Evidence.Core.Scripts.RoleTarget.Name.get -> string!
+Aw.Evidence.Core.Scripts.RoleTarget.Name.init -> void
+Aw.Evidence.Core.Scripts.RoleTarget.Nth.get -> int?
+Aw.Evidence.Core.Scripts.RoleTarget.Nth.init -> void
+Aw.Evidence.Core.Scripts.RoleTarget.Role.get -> string!
+Aw.Evidence.Core.Scripts.RoleTarget.Role.init -> void
+Aw.Evidence.Core.Scripts.RoleTarget.RoleTarget(string! Role, string! Name, int? Nth) -> void
+Aw.Evidence.Core.Scripts.ScriptLogin
+Aw.Evidence.Core.Scripts.ScriptLogin.<Clone>$() -> Aw.Evidence.Core.Scripts.ScriptLogin!
+Aw.Evidence.Core.Scripts.ScriptLogin.Deconstruct(out string! EmailEnv, out string! PasswordEnv, out string? EmailSelector, out string? PasswordSelector, out string? SubmitSelector, out string? NextSelector, out string? LoginPath) -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.EmailEnv.get -> string!
+Aw.Evidence.Core.Scripts.ScriptLogin.EmailEnv.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.EmailSelector.get -> string?
+Aw.Evidence.Core.Scripts.ScriptLogin.EmailSelector.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.Equals(Aw.Evidence.Core.Scripts.ScriptLogin? other) -> bool
+Aw.Evidence.Core.Scripts.ScriptLogin.LoginPath.get -> string?
+Aw.Evidence.Core.Scripts.ScriptLogin.LoginPath.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.NextSelector.get -> string?
+Aw.Evidence.Core.Scripts.ScriptLogin.NextSelector.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.PasswordEnv.get -> string!
+Aw.Evidence.Core.Scripts.ScriptLogin.PasswordEnv.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.PasswordSelector.get -> string?
+Aw.Evidence.Core.Scripts.ScriptLogin.PasswordSelector.init -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.Problems() -> System.Collections.Generic.IEnumerable<string!>!
+Aw.Evidence.Core.Scripts.ScriptLogin.ScriptLogin(string! EmailEnv, string! PasswordEnv, string? EmailSelector = null, string? PasswordSelector = null, string? SubmitSelector = null, string? NextSelector = null, string? LoginPath = null) -> void
+Aw.Evidence.Core.Scripts.ScriptLogin.SubmitSelector.get -> string?
+Aw.Evidence.Core.Scripts.ScriptLogin.SubmitSelector.init -> void
+Aw.Evidence.Core.Scripts.ScriptStep.DropOffset.get -> Aw.Evidence.Core.Geometry.Offset?
+Aw.Evidence.Core.Scripts.ScriptStep.GrabOffset.get -> Aw.Evidence.Core.Geometry.Offset?
+Aw.Evidence.Core.Scripts.ScriptStep.HoldAlt.get -> bool?
+Aw.Evidence.Core.Scripts.ScriptStep.Index.get -> int?
+Aw.Evidence.Core.Scripts.ScriptStep.Key.get -> string?
+Aw.Evidence.Core.Scripts.ScriptStep.ScriptStep(Aw.Evidence.Core.Scripts.StepAction action, Aw.Evidence.Core.Scripts.ExpectedState! expectedState, string? target = null, string? value = null, int? index = null, string? to = null, Aw.Evidence.Core.Geometry.Offset? grabOffset = null, Aw.Evidence.Core.Geometry.Offset? dropOffset = null, bool? holdAlt = null, string? key = null) -> void
+Aw.Evidence.Core.Scripts.ScriptStep.ScriptStep(Aw.Evidence.Core.Scripts.StepAction action, string! target, Aw.Evidence.Core.Scripts.ExpectedState! expectedState, string? value) -> void
+Aw.Evidence.Core.Scripts.ScriptStep.ScriptStep(Aw.Evidence.Core.Scripts.StepAction action, string! target, Aw.Evidence.Core.Scripts.ExpectedState! expectedState) -> void
+Aw.Evidence.Core.Scripts.ScriptStep.Subject.get -> string!
+Aw.Evidence.Core.Scripts.ScriptStep.To.get -> string?
+Aw.Evidence.Core.Scripts.StepAction.Drag = 5 -> Aw.Evidence.Core.Scripts.StepAction
+Aw.Evidence.Core.Scripts.StepAction.Press = 6 -> Aw.Evidence.Core.Scripts.StepAction
+Aw.Evidence.Core.Scripts.StepAction.Scroll = 4 -> Aw.Evidence.Core.Scripts.StepAction
+Aw.Evidence.Core.Scripts.StepTarget
+Aw.Evidence.Core.Scripts.StepTarget.StepTarget(Aw.Evidence.Core.Scripts.StepTarget! original) -> void
+Aw.Evidence.Core.Scripts.StepTarget.StepTarget() -> void
+Aw.Evidence.Core.Scripts.TestIdAbsent
+Aw.Evidence.Core.Scripts.TestIdAbsent.Deconstruct(out Aw.Evidence.Core.Ids.TestId TestId) -> void
+Aw.Evidence.Core.Scripts.TestIdAbsent.Equals(Aw.Evidence.Core.Scripts.TestIdAbsent? other) -> bool
+Aw.Evidence.Core.Scripts.TestIdAbsent.TestIdAbsent(Aw.Evidence.Core.Ids.TestId TestId) -> void
+Aw.Evidence.Core.Scripts.TestIdAbsent.TestId.get -> Aw.Evidence.Core.Ids.TestId
+Aw.Evidence.Core.Scripts.TestIdAbsent.TestId.init -> void
+Aw.Evidence.Core.Scripts.TestIdTarget
+Aw.Evidence.Core.Scripts.TestIdTarget.Deconstruct(out Aw.Evidence.Core.Ids.TestId TestId) -> void
+Aw.Evidence.Core.Scripts.TestIdTarget.Equals(Aw.Evidence.Core.Scripts.TestIdTarget? other) -> bool
+Aw.Evidence.Core.Scripts.TestIdTarget.TestId.get -> Aw.Evidence.Core.Ids.TestId
+Aw.Evidence.Core.Scripts.TestIdTarget.TestId.init -> void
+Aw.Evidence.Core.Scripts.TestIdTarget.TestIdTarget(Aw.Evidence.Core.Ids.TestId TestId) -> void
+Aw.Evidence.Core.Scripts.TextTarget
+Aw.Evidence.Core.Scripts.TextTarget.Deconstruct(out string! Text, out int? Nth) -> void
+Aw.Evidence.Core.Scripts.TextTarget.Equals(Aw.Evidence.Core.Scripts.TextTarget? other) -> bool
+Aw.Evidence.Core.Scripts.TextTarget.Nth.get -> int?
+Aw.Evidence.Core.Scripts.TextTarget.Nth.init -> void
+Aw.Evidence.Core.Scripts.TextTarget.Text.get -> string!
+Aw.Evidence.Core.Scripts.TextTarget.Text.init -> void
+Aw.Evidence.Core.Scripts.TextTarget.TextTarget(string! Text, int? Nth) -> void
+Aw.Evidence.Core.Scripts.UiScript.Deconstruct(out string! Route, out string! Role, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ScriptStep!>! Steps, out System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ViewportKind>! Viewports, out Aw.Evidence.Core.Scripts.PlanningMeta? Planning, out Aw.Evidence.Core.Scripts.ScriptLogin? Login, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LocalStorage) -> void
+Aw.Evidence.Core.Scripts.UiScript.LocalStorage.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Evidence.Core.Scripts.UiScript.LocalStorage.init -> void
+Aw.Evidence.Core.Scripts.UiScript.Login.get -> Aw.Evidence.Core.Scripts.ScriptLogin?
+Aw.Evidence.Core.Scripts.UiScript.Login.init -> void
+Aw.Evidence.Core.Scripts.UiScript.UiScript(string! Route, string! Role, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ScriptStep!>! Steps, System.Collections.Generic.IReadOnlyList<Aw.Evidence.Core.Scripts.ViewportKind>! Viewports, Aw.Evidence.Core.Scripts.PlanningMeta? Planning = null, Aw.Evidence.Core.Scripts.ScriptLogin? Login = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LocalStorage = null) -> void
+Aw.Evidence.Core.Scripts.UrlSearch
+Aw.Evidence.Core.Scripts.UrlSearch.Deconstruct(out string! Param, out string! Value) -> void
+Aw.Evidence.Core.Scripts.UrlSearch.Equals(Aw.Evidence.Core.Scripts.UrlSearch? other) -> bool
+Aw.Evidence.Core.Scripts.UrlSearch.Param.get -> string!
+Aw.Evidence.Core.Scripts.UrlSearch.Param.init -> void
+Aw.Evidence.Core.Scripts.UrlSearch.UrlSearch(string! Param, string! Value) -> void
+Aw.Evidence.Core.Scripts.UrlSearch.Value.get -> string!
+Aw.Evidence.Core.Scripts.UrlSearch.Value.init -> void
+override Aw.Evidence.Core.Browser.DragGesture.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Browser.DragGesture.GetHashCode() -> int
+override Aw.Evidence.Core.Browser.DragGesture.ToString() -> string!
+override Aw.Evidence.Core.Browser.ExactTextLocator.<Clone>$() -> Aw.Evidence.Core.Browser.ExactTextLocator!
+override Aw.Evidence.Core.Browser.ExactTextLocator.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Browser.ExactTextLocator.GetHashCode() -> int
+override Aw.Evidence.Core.Browser.ExactTextLocator.ToString() -> string!
+override Aw.Evidence.Core.Browser.NthTestIdLocator.<Clone>$() -> Aw.Evidence.Core.Browser.NthTestIdLocator!
+override Aw.Evidence.Core.Browser.NthTestIdLocator.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Browser.NthTestIdLocator.GetHashCode() -> int
+override Aw.Evidence.Core.Browser.NthTestIdLocator.ToString() -> string!
+override Aw.Evidence.Core.Browser.RoleLocator.<Clone>$() -> Aw.Evidence.Core.Browser.RoleLocator!
+override Aw.Evidence.Core.Browser.RoleLocator.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Browser.RoleLocator.GetHashCode() -> int
+override Aw.Evidence.Core.Browser.RoleLocator.ToString() -> string!
+override Aw.Evidence.Core.Scripts.RoleTarget.<Clone>$() -> Aw.Evidence.Core.Scripts.RoleTarget!
+override Aw.Evidence.Core.Scripts.RoleTarget.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.RoleTarget.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.RoleTarget.Label.get -> string!
+override Aw.Evidence.Core.Scripts.RoleTarget.ToString() -> string!
+override Aw.Evidence.Core.Scripts.ScriptLogin.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.ScriptLogin.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.ScriptLogin.ToString() -> string!
+override Aw.Evidence.Core.Scripts.StepTarget.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.StepTarget.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.StepTarget.ToString() -> string!
+override Aw.Evidence.Core.Scripts.TestIdAbsent.<Clone>$() -> Aw.Evidence.Core.Scripts.TestIdAbsent!
+override Aw.Evidence.Core.Scripts.TestIdAbsent.Describe() -> string!
+override Aw.Evidence.Core.Scripts.TestIdAbsent.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.TestIdAbsent.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.TestIdAbsent.Problem() -> string?
+override Aw.Evidence.Core.Scripts.TestIdAbsent.ToString() -> string!
+override Aw.Evidence.Core.Scripts.TestIdTarget.<Clone>$() -> Aw.Evidence.Core.Scripts.TestIdTarget!
+override Aw.Evidence.Core.Scripts.TestIdTarget.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.TestIdTarget.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.TestIdTarget.Label.get -> string!
+override Aw.Evidence.Core.Scripts.TestIdTarget.ToString() -> string!
+override Aw.Evidence.Core.Scripts.TextTarget.<Clone>$() -> Aw.Evidence.Core.Scripts.TextTarget!
+override Aw.Evidence.Core.Scripts.TextTarget.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.TextTarget.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.TextTarget.Label.get -> string!
+override Aw.Evidence.Core.Scripts.TextTarget.ToString() -> string!
+override Aw.Evidence.Core.Scripts.UrlSearch.<Clone>$() -> Aw.Evidence.Core.Scripts.UrlSearch!
+override Aw.Evidence.Core.Scripts.UrlSearch.Describe() -> string!
+override Aw.Evidence.Core.Scripts.UrlSearch.Equals(object? obj) -> bool
+override Aw.Evidence.Core.Scripts.UrlSearch.GetHashCode() -> int
+override Aw.Evidence.Core.Scripts.UrlSearch.Problem() -> string?
+override Aw.Evidence.Core.Scripts.UrlSearch.ToString() -> string!
+override sealed Aw.Evidence.Core.Browser.ExactTextLocator.Equals(Aw.Evidence.Core.Browser.Locator? other) -> bool
+override sealed Aw.Evidence.Core.Browser.NthTestIdLocator.Equals(Aw.Evidence.Core.Browser.Locator? other) -> bool
+override sealed Aw.Evidence.Core.Browser.RoleLocator.Equals(Aw.Evidence.Core.Browser.Locator? other) -> bool
+override sealed Aw.Evidence.Core.Scripts.RoleTarget.Equals(Aw.Evidence.Core.Scripts.StepTarget? other) -> bool
+override sealed Aw.Evidence.Core.Scripts.TestIdAbsent.Equals(Aw.Evidence.Core.Scripts.ExpectedState? other) -> bool
+override sealed Aw.Evidence.Core.Scripts.TestIdTarget.Equals(Aw.Evidence.Core.Scripts.StepTarget? other) -> bool
+override sealed Aw.Evidence.Core.Scripts.TextTarget.Equals(Aw.Evidence.Core.Scripts.StepTarget? other) -> bool
+override sealed Aw.Evidence.Core.Scripts.UrlSearch.Equals(Aw.Evidence.Core.Scripts.ExpectedState? other) -> bool
+static Aw.Evidence.Core.Browser.DragGesture.operator !=(Aw.Evidence.Core.Browser.DragGesture? left, Aw.Evidence.Core.Browser.DragGesture? right) -> bool
+static Aw.Evidence.Core.Browser.DragGesture.operator ==(Aw.Evidence.Core.Browser.DragGesture? left, Aw.Evidence.Core.Browser.DragGesture? right) -> bool
+static Aw.Evidence.Core.Browser.ExactTextLocator.operator !=(Aw.Evidence.Core.Browser.ExactTextLocator? left, Aw.Evidence.Core.Browser.ExactTextLocator? right) -> bool
+static Aw.Evidence.Core.Browser.ExactTextLocator.operator ==(Aw.Evidence.Core.Browser.ExactTextLocator? left, Aw.Evidence.Core.Browser.ExactTextLocator? right) -> bool
+static Aw.Evidence.Core.Browser.Locator.For(Aw.Evidence.Core.Scripts.StepTarget! target, int? index) -> Aw.Evidence.Core.Browser.Locator?
+static Aw.Evidence.Core.Browser.NthTestIdLocator.operator !=(Aw.Evidence.Core.Browser.NthTestIdLocator? left, Aw.Evidence.Core.Browser.NthTestIdLocator? right) -> bool
+static Aw.Evidence.Core.Browser.NthTestIdLocator.operator ==(Aw.Evidence.Core.Browser.NthTestIdLocator? left, Aw.Evidence.Core.Browser.NthTestIdLocator? right) -> bool
+static Aw.Evidence.Core.Browser.RoleLocator.operator !=(Aw.Evidence.Core.Browser.RoleLocator? left, Aw.Evidence.Core.Browser.RoleLocator? right) -> bool
+static Aw.Evidence.Core.Browser.RoleLocator.operator ==(Aw.Evidence.Core.Browser.RoleLocator? left, Aw.Evidence.Core.Browser.RoleLocator? right) -> bool
+static Aw.Evidence.Core.Scripts.RoleTarget.operator !=(Aw.Evidence.Core.Scripts.RoleTarget? left, Aw.Evidence.Core.Scripts.RoleTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.RoleTarget.operator ==(Aw.Evidence.Core.Scripts.RoleTarget? left, Aw.Evidence.Core.Scripts.RoleTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.ScriptLogin.operator !=(Aw.Evidence.Core.Scripts.ScriptLogin? left, Aw.Evidence.Core.Scripts.ScriptLogin? right) -> bool
+static Aw.Evidence.Core.Scripts.ScriptLogin.operator ==(Aw.Evidence.Core.Scripts.ScriptLogin? left, Aw.Evidence.Core.Scripts.ScriptLogin? right) -> bool
+static Aw.Evidence.Core.Scripts.StepTarget.IsPrefixed(string! target) -> bool
+static Aw.Evidence.Core.Scripts.StepTarget.operator !=(Aw.Evidence.Core.Scripts.StepTarget? left, Aw.Evidence.Core.Scripts.StepTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.StepTarget.operator ==(Aw.Evidence.Core.Scripts.StepTarget? left, Aw.Evidence.Core.Scripts.StepTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.StepTarget.Parse(string! target) -> Aw.Kernel.Result<Aw.Evidence.Core.Scripts.StepTarget!>!
+static Aw.Evidence.Core.Scripts.TestIdAbsent.operator !=(Aw.Evidence.Core.Scripts.TestIdAbsent? left, Aw.Evidence.Core.Scripts.TestIdAbsent? right) -> bool
+static Aw.Evidence.Core.Scripts.TestIdAbsent.operator ==(Aw.Evidence.Core.Scripts.TestIdAbsent? left, Aw.Evidence.Core.Scripts.TestIdAbsent? right) -> bool
+static Aw.Evidence.Core.Scripts.TestIdTarget.operator !=(Aw.Evidence.Core.Scripts.TestIdTarget? left, Aw.Evidence.Core.Scripts.TestIdTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.TestIdTarget.operator ==(Aw.Evidence.Core.Scripts.TestIdTarget? left, Aw.Evidence.Core.Scripts.TestIdTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.TextTarget.operator !=(Aw.Evidence.Core.Scripts.TextTarget? left, Aw.Evidence.Core.Scripts.TextTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.TextTarget.operator ==(Aw.Evidence.Core.Scripts.TextTarget? left, Aw.Evidence.Core.Scripts.TextTarget? right) -> bool
+static Aw.Evidence.Core.Scripts.UrlSearch.operator !=(Aw.Evidence.Core.Scripts.UrlSearch? left, Aw.Evidence.Core.Scripts.UrlSearch? right) -> bool
+static Aw.Evidence.Core.Scripts.UrlSearch.operator ==(Aw.Evidence.Core.Scripts.UrlSearch? left, Aw.Evidence.Core.Scripts.UrlSearch? right) -> bool
+virtual Aw.Evidence.Core.Scripts.StepTarget.EqualityContract.get -> System.Type!
+virtual Aw.Evidence.Core.Scripts.StepTarget.Equals(Aw.Evidence.Core.Scripts.StepTarget? other) -> bool
+virtual Aw.Evidence.Core.Scripts.StepTarget.PrintMembers(System.Text.StringBuilder! builder) -> bool

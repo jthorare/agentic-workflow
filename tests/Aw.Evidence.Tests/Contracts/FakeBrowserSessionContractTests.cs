@@ -30,4 +30,29 @@ public sealed class FakeBrowserSessionContractTests : BrowserSessionContract
         var options = new BrowserSessionOptions(new ResolvedHost("http://localhost:3000", HostKind.Local), new ViewportSize(1280, 800), RecordDirectory: null, UserAgentOverride: null);
         return Task.FromResult<IBrowserSession>(new FakeBrowserSession(page, options));
     }
+
+    protected override Task<IBrowserSession> OpenFeaturePageAsync(IReadOnlyDictionary<string, string>? localStorage = null)
+    {
+        var page = new FakePage { Path = "/features" };
+        foreach (var id in (string[])["strip", "card", "lane", "note", "night", "show-ghost", "row"])
+        {
+            _ = page.TestIds.Add(id);
+        }
+
+        page.Counts["testId:row"] = 3;
+        _ = page.Roles.Add("button|Plain");
+        _ = page.Roles.Add("button|Dup");
+        page.Counts["role:button|Dup"] = 2;
+        _ = page.Texts.Add("Plain");
+        _ = page.Texts.Add(localStorage is not null && localStorage.TryGetValue("theme", out var theme) ? $"Theme {theme}" : "Theme none");
+        page.OnScroll["testId:strip"] = static p => p.Texts.Add("Strip scrolled");
+        page.OnDrag["testId:card>testId:lane"] = static (p, gesture) => p.Texts.Add(gesture.HoldAlt ? "Dropped with Alt" : "Dropped");
+        page.OnKey = static (p, key) => p.Texts.Add($"Key {key}");
+        page.OnClick["testId:night"] = static p => p.Query["timeFilter"] = "Night";
+        page.OnClick["testId:show-ghost"] = static p => p.TestIds.Add("ghost");
+        page.OnClick["testId:row[1]"] = static p => p.Texts.Add("Row 2 clicked");
+        page.OnClick["role:button|Dup#2"] = static p => p.Texts.Add("Dup 2 clicked");
+        var options = new BrowserSessionOptions(new ResolvedHost("http://localhost:3000", HostKind.Local), new ViewportSize(1280, 800), RecordDirectory: null, UserAgentOverride: null, localStorage);
+        return Task.FromResult<IBrowserSession>(new FakeBrowserSession(page, options));
+    }
 }

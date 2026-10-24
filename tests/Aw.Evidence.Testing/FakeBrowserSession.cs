@@ -41,7 +41,15 @@ public sealed class FakeBrowserSession(FakePage page, BrowserSessionOptions opti
             return Fail($"a goto target must be a path on the host: {path}");   // as the adapter refuses it
         }
 
-        Page.Path = path.Split('?')[0];
+        var parts = path.Split('?', 2);
+        Page.Path = parts[0];
+        Page.Query.Clear();
+        foreach (var pair in parts.Length > 1 ? parts[1].Split('&', StringSplitOptions.RemoveEmptyEntries) : [])
+        {
+            var kv = pair.Split('=', 2);
+            Page.Query[Uri.UnescapeDataString(kv[0])] = kv.Length > 1 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
+        }
+
         return Ok();
     }
 
@@ -96,6 +104,71 @@ public sealed class FakeBrowserSession(FakePage page, BrowserSessionOptions opti
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Page.Path == path ? Ok() : Fail($"path is {Page.Path}, not {path}");
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> ScrollAsync(Locator target, string position, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _calls.Add($"scroll {FakePage.KeyOf(target)} {position}");
+        if (!Page.Has(target))
+        {
+            return Fail($"{FakePage.KeyOf(target)} not found");
+        }
+
+        if (Page.OnScroll.TryGetValue(FakePage.KeyOf(target), out var effect))
+        {
+            effect(Page);
+        }
+
+        return Ok();
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> DragAsync(Locator source, Locator destination, DragGesture gesture, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var key = $"{FakePage.KeyOf(source)}>{FakePage.KeyOf(destination)}";
+        _calls.Add($"drag {key}");
+        if (!Page.Has(source) || !Page.Has(destination))
+        {
+            return Fail($"{key}: an end of the drag was not found");   // before the press: the mouse never goes down
+        }
+
+        if (Page.OnDrag.TryGetValue(key, out var effect))
+        {
+            effect(Page, gesture);
+        }
+
+        return Ok();
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> PressAsync(string key, Locator? target, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _calls.Add(target is null ? $"press {key}" : $"press {key} on {FakePage.KeyOf(target)}");
+        if (target is not null && !Page.Has(target))
+        {
+            return Fail($"{FakePage.KeyOf(target)} not found");   // no key is sent
+        }
+
+        Page.OnKey?.Invoke(Page, key);
+        return Ok();
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> WaitForUrlSearchAsync(string param, string value, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Page.Query.TryGetValue(param, out var actual) && actual == value ? Ok() : Fail($"url ?{param} is not {value}");
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<Unit>> ExpectAbsentNowAsync(Locator target, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Page.Has(target) ? Fail($"{FakePage.KeyOf(target)} is visible") : Ok();
     }
 
     /// <inheritdoc/>

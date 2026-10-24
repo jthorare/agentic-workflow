@@ -89,28 +89,37 @@ rule is listed, joined by `; `.
 | `role` | lower-case kebab-case string (the app's own role name, e.g. `admin`) | yes | the app role; recorded in `summary.json`, not interpreted |
 | `viewports` | (`desktop` \| `phone`)[] | yes | at least one; every step runs in each (desktop 1280x800, phone 375x812) |
 | `steps` | step[] | yes | at least one, run in order (below) |
+| `login` | object \| null | no | a sign-in run before the first step, in each viewport: `emailEnv`, `passwordEnv` (UPPER_SNAKE environment variable names; both required, never a literal credential), and optional `emailSelector` (default `input[type="email"]`), `passwordSelector` (`input[type="password"]`), `submitSelector` (`button[type="submit"]`), `nextSelector` (clicked after the email, two-step forms) and `loginPath` (default `/login`: sign-in is done once the URL path no longer contains it). A variable unset or blank is AW-EVIDENCE-006 before a browser opens |
+| `localStorage` | object (string to string) \| null | no | entries written verbatim into the host origin's localStorage before every page load (feature-flag overrides and similar client toggles) |
 | `planning` | object \| null | no | the planner's own model call, recorded as the first `invocations[]` entry: `pr` (string \| null, also `summary.json`'s `pr`), `model` (string \| null), `elapsedMs`, `inputTokens`, `outputTokens` (integer \| null each, not negative; null is unknown, never zero) |
 
 A step:
 
 | Key | Type | Required | Holds and rules |
 |---|---|---|---|
-| `action` | `goto` \| `click` \| `fill` \| `expect-visible` | yes | what the step does |
-| `target` | string | yes | `goto`: a path on the host (one leading `/`; the host guard below); `click`, `fill`: a `data-testid`; `expect-visible`: visible text |
+| `action` | `goto` \| `click` \| `fill` \| `expect-visible` \| `scroll` \| `drag` \| `press` | yes | what the step does |
+| `target` | string | yes, except for a `press` | `goto`: a path on the host (one leading `/`; the host guard below); `click`, `fill`, `press`: a `data-testid`, `role:<role>\|<accessible name>` or `text:<text>`, with a trailing `#<n>` (1-based, hugging the name: `Day#2`) picking the nth of several matches; `scroll`, `drag`: a `data-testid`; `expect-visible`: visible text. A `role:` or `text:` target is exact and strict (several matches without `#<n>` fail the step), the role is lower-case, and a near-miss prefix (`Role:`, ` text:`) is a schema error. A broken `role:` or `text:` target is never repaired by a model |
 | `expectedState` | object | yes | the state that must hold after the action (below) |
-| `value` | string \| null | no | the text a `fill` types; null or absent types nothing |
+| `value` | string \| null | no | the text a `fill` types; null or absent types nothing. A `scroll`'s position: `end` (default) or `start` (horizontal), `bottom` or `top` (vertical), or a non-negative integer horizontal pixel offset |
+| `index` | integer, not negative | no | `click`, `fill`, `scroll`, `press` with a target: picks the nth match (0-based) when a bare `data-testid` repeats |
+| `to` | string | `drag` only, required there | the destination `data-testid` |
+| `grabOffset`, `dropOffset` | `{x, y}` (both required) | `drag` only | pixels from the source's (destination's) top-left corner; default its centre |
+| `holdAlt` | boolean | `drag` only | holds Alt through the release |
+| `key` | string | `press` only, required there | a Playwright key (`ArrowRight`, `Shift+Tab`), pressed on the target (focused first), or on whatever has focus when there is no target |
 
-`expectedState` is one of five kinds, chosen by its `kind` key (anywhere in the object):
+`expectedState` is one of seven kinds, chosen by its `kind` key (anywhere in the object):
 
 | `kind` | Other keys (all required) | Holds when |
 |---|---|---|
 | `text-visible` | `text` (string, not empty) | some visible element shows the text |
 | `text-absent` | `text` (string, not empty) | no visible element shows the text |
 | `testid-visible` | `testId` (string, not blank) | the element with that `data-testid` is visible |
+| `testid-absent` | `testId` (string, not blank) | no visible element has that `data-testid`; looked at once, right after the action, without waiting for it to go (a leftover after a drag drop fails the step) |
 | `url-path` | `path` (string, not empty) | the page's URL path is `path` |
+| `url-search` | `param` (string, not empty), `value` (string, may be empty) | the URL's query parameter `param` is `value`; the path is not checked |
 | `input-value` | `testId` (string, not blank), `value` (string, may be empty) | that input holds exactly `value` |
 
-A missing `kind` is `missing required property "kind"`; another value names the five kinds. Enum values are matched by
+A missing `kind` is `missing required property "kind"`; another value names the seven kinds. Enum values are matched by
 name only (a number is refused). Unknown keys are refused in every script object (the script, `planning`, each step
 and each `expectedState`, whatever its kind and wherever `kind` sits): a misspelt key is one error naming the file, the
 JSON location and the key (`script <path>: $.steps[0].vaule: unknown property`), never a silently ignored setting such
@@ -260,7 +269,7 @@ Scorer and bugfix-state read these files after their own ports; the fields they 
 | `scriptSha256` † | string | SHA-256 (hex) of the script file's bytes as read: proves which script a run executed |
 | `pr` | string \| null | the script's `planning.pr` |
 | `viewports` | (`desktop` \| `phone`)[] | the script's viewports (1280x800, 375x812) |
-| `steps[]` † | object[] | viewport by viewport, in order: `viewport`, `index` (1-based), `action` (`goto` \| `click` \| `fill` \| `expect-visible`), `target`, `status` † (`passed` \| `failed` \| `broken`), `screenshot` (`<run-dir>/<viewport>-<index>-<action>.png`) |
+| `steps[]` † | object[] | viewport by viewport, in order: `viewport`, `index` (1-based), `action` (`goto` \| `click` \| `fill` \| `expect-visible` \| `scroll` \| `drag` \| `press`), `target` (for a `drag` `<target> → <to>`, for a `press` `<key> on <target>` or the key alone), `status` † (`passed` \| `failed` \| `broken`), `screenshot` (`<run-dir>/<viewport>-<index>-<action>.png`) |
 | `visual` | object | `verdict` † (`unchecked` \| `unchanged` \| `looks-right` \| `looks-off` \| `sloppy`), `reasons` (string[]), `diffScore` (number \| null: the fraction of pixels differing from the baseline, 1 for a size change), `diffImage` (string \| null: `<run-dir>/visual-diff.png`) |
 | `lintFindings[]` | object[] | `viewport`, `rule` (`overlap` \| `misaligned-edge` \| `phone-overflow` \| `truncated-label` \| `clipped` \| `missing-hover-focus` \| `unresolved-placeholder` \| `non-token-color`), `selector`, `detail` |
 | `invocations[]` † | object[] | every model call actually made, in order (none when no judge is wired: "Judge" below): `phase` (`planning` \| `selector-repair` \| `visual-critique`), `model` (string \| null), `elapsedMs` (number \| null), `ok` (false: the judge was called and failed or answered nothing), `inputTokens`, `outputTokens` (number \| null: null is unknown, never zero), `cacheHit` (a verdict-cache hit stands in for a critique) |
@@ -527,7 +536,7 @@ exit 4 and write no `summary.json` / `parity.json`. In `run` that message is the
 run failure as AW-EVIDENCE-015, naming the origin when the page left during sign-in or route opening, and naming the
 frame and its step (`step N … broken`) when it left during a frame step. Sign-in checks again after loading the host and right before it
 types each credential, so a credential is never typed into a page off the vetted origin. A write-looking step is a click (or a `goto`) whose
-target has a write verb (`save`, `submit`, `delete`, …, including fused control names such as `saveBtn`). Selector
+target has a write verb (`save`, `submit`, `delete`, …, including fused control names such as `saveBtn`); for a `role:` or `text:` target the name or text is read, its `#<n>` dropped. Every `drag` counts as a write, and so does a `press` unless its key only navigates (`Shift+` an arrow key, `Home`, `End`, `PageUp`, `PageDown`, `Tab`, `Escape`); `scroll` never does. Selector
 repair is held to the same guard: where writes are refused, a candidate the judge picks whose test id, accessible name
 or text reads like a write is never clicked or filled (it counts as no candidate, so the step stays `broken`). `parity`
 applies the write guard on every host, local included, to its manifest `route` (vetted as the first `goto`) and every

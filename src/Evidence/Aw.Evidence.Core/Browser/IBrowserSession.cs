@@ -58,6 +58,49 @@ public interface IBrowserSession : IAsyncDisposable
     /// <returns>Success or AW-EVIDENCE-013.</returns>
     public ValueTask<Result<Unit>> WaitForPathAsync(string path, TimeSpan timeout, CancellationToken cancellationToken);
 
+    /// <summary>Scrolls an element's container (read-only), then lets lazy layout settle.</summary>
+    /// <param name="target">The scroll container.</param>
+    /// <param name="position">'end' or 'start' (horizontal), 'bottom' or 'top' (vertical), or a horizontal pixel offset.</param>
+    /// <param name="timeout">How long to wait for it.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>Success or AW-EVIDENCE-013.</returns>
+    public ValueTask<Result<Unit>> ScrollAsync(Locator target, string position, TimeSpan timeout, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Drags <paramref name="source"/> onto <paramref name="destination"/> with real mouse events (press, a first nudge, a stepped move, a short
+    /// hover, release), so pointer-sensor libraries see a genuine gesture. Both points are measured before the press: a missing
+    /// source or destination fails with the mouse still up.
+    /// </summary>
+    /// <param name="source">The element to grab.</param>
+    /// <param name="destination">The element to drop on.</param>
+    /// <param name="gesture">The grab and drop points, and Alt.</param>
+    /// <param name="timeout">How long to wait for each element.</param>
+    /// <param name="cancellationToken">Cancels the drag.</param>
+    /// <returns>Success or AW-EVIDENCE-013.</returns>
+    public ValueTask<Result<Unit>> DragAsync(Locator source, Locator destination, DragGesture gesture, TimeSpan timeout, CancellationToken cancellationToken);
+
+    /// <summary>Presses a key on <paramref name="target"/> (focused first), or on whatever has focus when there is none. A missing target sends no key.</summary>
+    /// <param name="key">A Playwright key ('ArrowRight', 'Shift+Tab').</param>
+    /// <param name="target">The element to focus, or null.</param>
+    /// <param name="timeout">How long to wait for the target.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>Success or AW-EVIDENCE-013.</returns>
+    public ValueTask<Result<Unit>> PressAsync(string key, Locator? target, TimeSpan timeout, CancellationToken cancellationToken);
+
+    /// <summary>Waits until one query parameter of the page's URL equals <paramref name="value"/>; the path is not checked.</summary>
+    /// <param name="param">The parameter's name.</param>
+    /// <param name="value">The expected value.</param>
+    /// <param name="timeout">How long to wait.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>Success or AW-EVIDENCE-013.</returns>
+    public ValueTask<Result<Unit>> WaitForUrlSearchAsync(string param, string value, TimeSpan timeout, CancellationToken cancellationToken);
+
+    /// <summary>Looks once, now, for a visible element, without waiting for it to go.</summary>
+    /// <param name="target">The element.</param>
+    /// <param name="cancellationToken">Cancels the look.</param>
+    /// <returns>Success when no visible element matches, else AW-EVIDENCE-013.</returns>
+    public ValueTask<Result<Unit>> ExpectAbsentNowAsync(Locator target, CancellationToken cancellationToken);
+
     /// <summary>Reads an input's current value.</summary>
     /// <param name="target">The input.</param>
     /// <param name="timeout">How long to wait for it.</param>
