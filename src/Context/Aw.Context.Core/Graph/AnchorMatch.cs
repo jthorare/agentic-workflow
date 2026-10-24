@@ -10,8 +10,8 @@ namespace Aw.Context.Core.Graph;
 /// punctuation ignored. The 'text' shape anchors on nodes whose whole label the question uses: words compared
 /// lower-case, a plural 's' dropped, small words and a parenthesized kind ('(command)') ignored. The most specific
 /// match wins (a label whose words are all in another match's label gives way to it). Suggestions list nodes that share
-/// those words, most first, then a test file (its key or label contains '/__tests__/', '.test.', '.spec.' or 'fixture')
-/// after every other node with the same count. Source-hit voting waits for sources that link records to nodes (S-5B).
+/// those words, most first; a test node (its key or label contains '/__tests__/', '.test.', '.spec.' or 'fixture') is left out
+/// when any other node shares the words, and listed only when nothing else does. Source-hit voting waits for sources that link records to nodes (S-5B).
 /// </summary>
 public static class AnchorMatch
 {
@@ -107,12 +107,14 @@ public static class AnchorMatch
         return hits.Count == 1 ? hits[0] : null;
     }
 
-    private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except) =>
-        [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal))
+    private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except)
+    {
+        var sharing = graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal))
             .Select(n => (n.Key, n.Label, Shared: Words(Unbracketed(n.Label)).Count(w => w.Length >= 3 && words.Contains(w))))
-            .Where(m => m.Shared > 0)
-            .OrderByDescending(m => m.Shared).ThenBy(m => TestLike(m.Key.Value) || TestLike(m.Label)).ThenBy(m => m.Key.Value, StringComparer.Ordinal)
-            .Take(MaxSuggestions).Select(m => m.Key)];
+            .Where(m => m.Shared > 0).ToList();
+        var source = sharing.Where(m => !TestLike(m.Key.Value) && !TestLike(m.Label)).ToList();
+        return [.. (source.Count > 0 ? source : sharing).OrderByDescending(m => m.Shared).ThenBy(m => m.Key.Value, StringComparer.Ordinal).Take(MaxSuggestions).Select(m => m.Key)];
+    }
 
     private static bool TestLike(string text) =>
         text.Contains("/__tests__/", StringComparison.OrdinalIgnoreCase)

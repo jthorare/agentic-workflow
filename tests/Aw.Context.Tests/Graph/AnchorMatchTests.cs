@@ -39,14 +39,25 @@ public sealed class AnchorMatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Suggestions_list_a_test_file_after_other_nodes_with_the_same_word_count()
+    public void Suggestions_leave_out_a_test_node_when_a_non_test_node_shares_the_words()
     {
         var graph = new GraphBuilder().Node("code:src/a/__tests__/widget.test.ts", "widget.test.ts").Node("feature:widget", "Widget").Build();
 
         var node = AnchorMatch.Resolve(graph, "widget gadget");
 
         Assert.Equal(ContextErrors.UnknownAnchor.Code, node.Error.Code);
-        Assert.True(node.Error.Message.IndexOf("feature:widget", StringComparison.Ordinal) < node.Error.Message.IndexOf("code:src/a", StringComparison.Ordinal));
+        Assert.Contains("feature:widget", node.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("__tests__", node.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Suggestions_list_a_test_node_when_nothing_else_shares_the_words()
+    {
+        var graph = new GraphBuilder().Node("code:src/a/__tests__/widget.test.ts", "widget.test.ts").Node("feature:other", "Other").Build();
+
+        var node = AnchorMatch.Resolve(graph, "widget gadget");
+
+        Assert.Contains("code:src/a/__tests__/widget.test.ts", node.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
