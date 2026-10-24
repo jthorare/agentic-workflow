@@ -32,7 +32,7 @@ internal static class ChoiceSteps
         DeskCapable: true,
         OutcomesFrom: "choices",
         InputsFrom: "facts",
-        Runtime: BlockRuntime.Block,   // the judge asks (JudgeChooseStep); on the desk it is human-only (DT spec §8.5)
+        Runtime: BlockRuntime.Block,   // the judge asks (JudgeChooseStep); on the desk any caller may answer (owner q93, 2026-10-23)
         MaxDuration: TimeSpan.FromMinutes(2));
 
     /// <summary>'step.desk.choose': the desk twin of a route state ('from'); outcomes are that state's choices, without 'uncertain'.</summary>
@@ -47,7 +47,6 @@ internal static class ChoiceSteps
         DeskCapable: true,
         OutcomesFrom: "from.choices",
         InputsFrom: "from.facts",
-        HumanOnly: true,
         Runtime: BlockRuntime.Desk);
 
     private static OutputSpec Decision => new(FactKey.From("fact:decision"), RequiredOn: [], Every: true, EngineFilled: true);

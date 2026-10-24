@@ -23,13 +23,11 @@ public sealed class BlockRuntimeTests
     private static readonly Recipe _route = EvalComposition.Recipe(RouteRecipes.Dev);
 
     [Fact]
-    public void A_block_runtime_step_without_a_registered_runtime_opens_a_desk_run_and_stays_human_only()
+    public void A_block_runtime_step_without_a_registered_runtime_opens_a_desk_run_any_caller_may_answer()
     {
         var entered = StateEntry.Enter(EngineFixture.At(_route, "evidence-ui"), _route, "route-evidence", EngineFixture.Context());
 
         Assert.Equal(StepRuntime.Desk, entered.Frame.Run?.Runtime);
-        Assert.True(HumanOnlySteps.Applies(EngineFixture.Catalog.Find(_judge)!, StepRuntime.Desk));
-        Assert.False(HumanOnlySteps.Applies(EngineFixture.Catalog.Find(_judge)!, StepRuntime.Block));
     }
 
     [Fact]

@@ -12,7 +12,7 @@ public sealed class DeskChooseStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => ChoiceSteps.DeskChoose;
 
-    protected override string ExpectedHash => "sha256:f01cd85115d1e9d1e12afdb5cdae46a3bdbf7a033d0f95d9973c7847ca6e062c";
+    protected override string ExpectedHash => "sha256:d7f8146bcf35afb979ff45d6e8b122a2f7cf9c6327b23e93caf68a49b4940be3";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

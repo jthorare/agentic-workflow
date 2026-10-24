@@ -2,7 +2,6 @@ using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -23,25 +22,6 @@ internal sealed class EngineFilledReport(BlockCatalog catalog, JsonSerializerOpt
     /// <returns>The refusal; null when none of them is engine-filled.</returns>
     public Error? Refusal(IEnumerable<FactKey> written) =>
         EngineFilledOutputs.Refusal(catalog.Blocks, written) is { } message ? SindriErrors.InvalidInput.With(message) : null;
-
-    /// <summary>
-    /// The refusal (SND-AUTH-002) for a non-human caller reporting on a human-only Step (DT spec §8.5, scoping-station spec W3): the
-    /// open task is this run's and <see cref="HumanOnlySteps"/> says a human must report it.
-    /// </summary>
-    /// <param name="view">The instance as read.</param>
-    /// <param name="request">The report.</param>
-    /// <param name="caller">Who reports.</param>
-    /// <returns>The refusal; null when the report may go on.</returns>
-    public Error? HumanOnlyRefusal(InstanceView view, CompleteStepRequest request, CallerContext caller)
-    {
-        if (caller.Class == CallerClass.Human || view.Task is not { } task || task.Run != request.Run || catalog.Find(task.Step) is not { } step || !HumanOnlySteps.Applies(step, StepRuntime.Desk))
-        {
-            return null;
-        }
-
-        return SindriErrors.AuthRefused.With(
-            $"CompleteStep on '{task.Step.Value}' (state '{task.State}') is a human-only Step. Ask the human to run it in a terminal or the Sindri app: {CompleteCommand.Line(view.Address.Value, request.Run, [request.Outcome], task.Outputs)}");
-    }
 
     /// <summary>Who may report the run (see <see cref="AgentReportAuthority"/>): a non-human caller's report on an agent run is proven by its launch secret.</summary>
     /// <param name="view">The instance as read.</param>

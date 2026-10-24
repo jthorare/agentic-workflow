@@ -10378,8 +10378,6 @@ Aw.Sindri.Core.Workflow.Blocks.BlockRuntime
 Aw.Sindri.Core.Workflow.Blocks.BlockRuntime.Agent = 3 -> Aw.Sindri.Core.Workflow.Blocks.BlockRuntime
 Aw.Sindri.Core.Workflow.Blocks.BlockRuntime.Block = 2 -> Aw.Sindri.Core.Workflow.Blocks.BlockRuntime
 Aw.Sindri.Core.Workflow.Blocks.BlockRuntime.Desk = 1 -> Aw.Sindri.Core.Workflow.Blocks.BlockRuntime
-Aw.Sindri.Core.Workflow.Engine.HumanOnlySteps
-static Aw.Sindri.Core.Workflow.Engine.HumanOnlySteps.Applies(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! step, Aw.Sindri.Core.Workflow.Engine.StepRuntime runOn) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.CompleteCommand
 static Aw.Sindri.Core.Workflow.Engine.Runtime.CompleteCommand.Line(string! address, Aw.Sindri.Core.Workflow.Engine.RunToken run, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.OutcomeName>! outcomes, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.OutputSpec!>! outputs) -> string!
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.MaxDuration.init -> void

@@ -12,7 +12,7 @@ public sealed class EvidenceDeskStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => EvidenceSteps.Desk;
 
-    protected override string ExpectedHash => "sha256:6f4e09b7fad8b4a095386eaa2083406a84245702cfb6d887a3a3d7934dcce0fe";
+    protected override string ExpectedHash => "sha256:060a0b89118c9cfa76196e8066a4bbdcea96d2dccb1d1bb50c255ce4b4fffc39";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

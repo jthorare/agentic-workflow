@@ -12,7 +12,7 @@ public sealed class OwnerDecideStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => OwnerSteps.Decide;
 
-    protected override string ExpectedHash => "sha256:8df7dfe0c17e2b53dc326b5dc77352b48520495c3e64ec3d52e12e662992237b";
+    protected override string ExpectedHash => "sha256:620a9e89b802990887be0e676adedcecaf6c7630b306aa3c778b955cb98d12c5";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

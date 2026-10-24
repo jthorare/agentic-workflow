@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -16,7 +17,10 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.CompleteStep;
 
-/// <summary>'workflow complete' on a human-only Step (DT spec §8.5, scoping-station spec W3): a non-human caller is refused SND-AUTH-002 before the nonce is claimed, whatever the chain in front said.</summary>
+/// <summary>
+/// 'workflow complete' on a Step a human decides (owner q100, 2026-10-24): who started the agent decides, not which Step it is. A plain session (an agent the owner
+/// started, no launch secret) answers every one; a session Sindri launched reports with its launch secret, and a secret on a desk run is refused SND-AUTH-002 before the nonce is claimed.
+/// </summary>
 [Lane(TestLane.Unit)]
 public sealed class HumanOnlyReportTests
 {
@@ -27,12 +31,35 @@ public sealed class HumanOnlyReportTests
     private readonly InMemoryFactStore _facts = new();
     private readonly InMemoryCommandNonces _nonces = new(new FakeTimeProvider());
 
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_complete_on_a_desk_choose_run_is_SND_AUTH_002_and_claims_nothing()
+    [Theory(Timeout = 30_000)]
+    [InlineData("step.desk.choose")]
+    [InlineData("step.judge.choose")]
+    [InlineData("step.owner.decide")]
+    [InlineData("step.evidence.desk")]
+    [InlineData("step.scope.review")]
+    [InlineData("step.interview.answer")]
+    [InlineData("step.pr.docs-merge-decide")]
+    [InlineData("step.phase.decide")]
+    [InlineData("step.produce")]
+    public async Task A_plain_session_answers_a_step_a_human_decides(string step)
     {
-        var desk = new OpenTask("step.desk.choose");
+        var desk = new OpenTask(step);
 
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
+        var done = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
+
+        Assert.False(done.IsError, done.IsError ? done.Error.Message : null);
+        _ = Assert.Single(desk.Sent);
+    }
+
+    [Theory(Timeout = 30_000)]
+    [InlineData("step.desk.choose")]
+    [InlineData("step.scope.review")]
+    [InlineData("step.pr.docs-merge-decide")]
+    public async Task A_session_Sindri_launched_is_refused_on_a_desk_step_and_claims_nothing(string step)
+    {
+        var desk = new OpenTask(step);
+
+        var refused = await Service(desk, Session()).Handle(Request(new LaunchSecret("launched-child-secret")), TestContext.Current.CancellationToken);
 
         Assert.Equal("SND-AUTH-002", refused.Error.Code);
         Assert.Empty(desk.Sent);
@@ -40,57 +67,10 @@ public sealed class HumanOnlyReportTests
         Assert.Equal(NonceClaim.Fresh, (await _nonces.Claim(_nonce, "another command", TestContext.Current.CancellationToken)).Value);
     }
 
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_complete_on_the_babysitters_docs_merge_decision_is_SND_AUTH_002_so_it_cannot_reach_merge_docs()
-    {
-        var desk = new OpenTask("step.pr.docs-merge-decide");
-
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-AUTH-002", refused.Error.Code);
-        Assert.Empty(desk.Sent);
-        Assert.Empty(desk.Attempted);
-    }
-
-    [Fact(Timeout = 30_000)]
-    public async Task A_human_completes_the_babysitters_docs_merge_decision()
-    {
-        var desk = new OpenTask("step.pr.docs-merge-decide");
-
-        var merge = new CompleteStepRequest(_address.Value, RunToken.For(1, 1), OutcomeName.From("merge"), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), _nonce);
-
-        var done = await Service(desk, A.Caller().Human().AtTerminal().Build()).Handle(merge, TestContext.Current.CancellationToken);
-
-        Assert.False(done.IsError, done.IsError ? done.Error.Message : null);
-        _ = Assert.Single(desk.Sent);
-    }
-
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_complete_on_a_judge_choose_run_on_the_desk_is_SND_AUTH_002()
-    {
-        var desk = new OpenTask("step.judge.choose");
-
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-AUTH-002", refused.Error.Code);
-        Assert.Empty(desk.Attempted);
-    }
-
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_complete_on_a_plain_desk_step_passes_the_service()
-    {
-        var desk = new OpenTask("step.produce");
-
-        var done = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.False(done.IsError, done.IsError ? done.Error.Message : null);   // the chain already refuses a session on every complete; this layer is per Step
-        _ = Assert.Single(desk.Sent);
-    }
-
     [Theory(Timeout = 30_000)]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task A_human_in_the_app_or_a_terminal_completes_a_human_only_step(bool terminal)
+    public async Task A_human_in_the_app_or_a_terminal_completes_a_step(bool terminal)
     {
         var desk = new OpenTask("step.desk.choose");
         var human = terminal ? A.Caller().Human().AtTerminal().Build() : A.Caller().Human().Build();
@@ -102,7 +82,7 @@ public sealed class HumanOnlyReportTests
     }
 
     [Fact(Timeout = 30_000)]
-    public async Task A_stale_run_on_a_human_only_step_is_answered_by_the_send_not_refused()
+    public async Task A_stale_run_is_answered_by_the_send()
     {
         var desk = new OpenTask("step.desk.choose");
         var stale = new CompleteStepRequest(_address.Value, RunToken.For(2, 1), OutcomeName.From("api"), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), _nonce);
@@ -113,63 +93,17 @@ public sealed class HumanOnlyReportTests
     }
 
     [Fact(Timeout = 30_000)]
-    public async Task The_refusal_names_the_block_state_and_the_human_command()
-    {
-        var desk = new OpenTask("step.desk.choose");
-
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.Equal(
-            $"CompleteStep on 'step.desk.choose' (state 'route-evidence-desk') is a human-only Step. Ask the human to run it in a terminal or the Sindri app: sindri workflow complete T-7/evidence/1 --run {RunToken.For(1, 1).Value} --outcome api",
-            refused.Error.Message);
-    }
-
-    /// <summary>Review run 1 (I2): the command in the refusal lists the outputs the Step requires on the reported outcome, as the status line does.</summary>
-    [Theory(Timeout = 30_000)]
-    [InlineData("step.evidence.desk", "recorded", " --output fact:evidenceSummary=<file> --output fact:evidenceReason=<file>")]
-    [InlineData("step.owner.decide", "retry", " --output fact:notes=<file>")]
-    [InlineData("step.owner.decide", "stop", "")]
-    [InlineData("step.phase.decide", "rebuild", " --output fact:buildNotes=<file>")]
-    [InlineData("step.phase.decide", "stop", "")]
-    [InlineData("step.babysit.watch", "merged", " --output fact:mergedSha=<file>")]
-    [InlineData("step.babysit.watch", "rework", " --output fact:reworkNotes=<file>")]
-    public async Task The_refusal_command_lists_the_outputs_required_on_the_reported_outcome(string step, string outcome, string outputs)
-    {
-        var desk = new OpenTask(step);
-        var request = new CompleteStepRequest(_address.Value, RunToken.For(1, 1), OutcomeName.From(outcome), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), _nonce);
-
-        var refused = await Service(desk, Session()).Handle(request, TestContext.Current.CancellationToken);
-
-        Assert.EndsWith($"sindri workflow complete T-7/evidence/1 --run {RunToken.For(1, 1).Value} --outcome {outcome}{outputs}", refused.Error.Message, StringComparison.Ordinal);
-    }
-
-    /// <summary>Review run 1 (qa-r1-2): a retry with a nonce that is already claimed is refused before anything else, and the claim stays.</summary>
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_retry_on_a_claimed_nonce_is_refused_and_keeps_the_claim()
-    {
-        var desk = new OpenTask("step.desk.choose");
-        _ = await _nonces.Claim(_nonce, "earlier report", TestContext.Current.CancellationToken);
-
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-AUTH-002", refused.Error.Code);
-        Assert.Empty(desk.Attempted);
-        Assert.Equal(NonceClaim.Pending, (await _nonces.Claim(_nonce, "earlier report", TestContext.Current.CancellationToken)).Value);
-    }
-
-    [Fact(Timeout = 30_000)]
-    public async Task A_session_retry_on_a_claimed_nonce_with_an_unreadable_instance_is_that_error()
+    public async Task A_session_report_on_an_instance_that_cant_be_read_is_that_error_and_claims_nothing()
     {
         var desk = new OpenTask("step.desk.choose") { Unreadable = true };
-        _ = await _nonces.Claim(_nonce, "earlier report", TestContext.Current.CancellationToken);
 
         var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
 
         Assert.Equal("SND-WF-010", refused.Error.Code);
-        Assert.Empty(desk.Attempted);
+        Assert.Equal(NonceClaim.Fresh, (await _nonces.Claim(_nonce, "another command", TestContext.Current.CancellationToken)).Value);
     }
 
-    /// <summary>Review run 1 (arch-r1-1): the view read for the human-only rule serves the engine-filled outputs and the approval check too.</summary>
+    /// <summary>Review run 1 (arch-r1-1): the view read serves the engine-filled outputs and the approval check too.</summary>
     [Fact(Timeout = 30_000)]
     public async Task A_session_report_reads_the_instance_once()
     {
@@ -181,17 +115,6 @@ public sealed class HumanOnlyReportTests
         Assert.Equal(1, desk.Reads);
     }
 
-    [Fact(Timeout = 30_000)]
-    public async Task A_fresh_session_report_on_an_instance_that_cant_be_read_is_that_error_and_claims_nothing()
-    {
-        var desk = new OpenTask("step.desk.choose") { Unreadable = true };
-
-        var refused = await Service(desk, Session()).Handle(Request(), TestContext.Current.CancellationToken);
-
-        Assert.Equal("SND-WF-010", refused.Error.Code);
-        Assert.Equal(NonceClaim.Fresh, (await _nonces.Claim(_nonce, "another command", TestContext.Current.CancellationToken)).Value);
-    }
-
     private CompleteStepService Service(OpenTask desk, CallerContext caller)
     {
         var catalog = EvalComposition.Catalog;
@@ -200,7 +123,7 @@ public sealed class HumanOnlyReportTests
 
     private static CallerContext Session() => A.Caller().Session().Build();
 
-    private static CompleteStepRequest Request() => new(_address.Value, RunToken.For(1, 1), OutcomeName.From("api"), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), _nonce);
+    private static CompleteStepRequest Request(LaunchSecret? secret = null) => new(_address.Value, RunToken.For(1, 1), OutcomeName.From("api"), new Dictionary<FactKey, ReadOnlyMemory<byte>>(), _nonce, secret);
 
     private sealed class FixedCaller(CallerContext caller) : ICallerContextAccessor
     {

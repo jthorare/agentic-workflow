@@ -229,7 +229,7 @@ Fixtures: `tests/Aw.Sindri.Ui.Testing/FixtureInstances.cs` gets a line run for e
 
 1. DIDN'T WORK OUT tone: SETTLED by the owner 2026-10-20: amber, the served `attn` tone; no override.
 2. **Settled by ideas:** a phase with several children lists the first child that is not Done, shows `ChildGroup.Done/Total` in the footer, and adds a quiet "Show the other N phases" row that opens the existing `ChildrenPanel` (today the line runs one phase, so this rarely shows).
-3. "Approve the merge" and every other protected step: the exact catalog id comes from `StatusAnswer.ActionId` per instance; verify it exists for the line's last step (`CompleteStep` is `desk` in the catalog, but `HumanOnlySteps` makes it terminal-only).
+3. "Approve the merge" and every other protected step: the exact catalog id comes from `StatusAnswer.ActionId` per instance; verify it exists for the line's last step (`CompleteStep` is `desk` in the catalog; the human-only refusal is gone, so the caller class in `Authorization.cs` decides who reaches it).
 4. Whether a failed (terminal) instance serves `takeover` in `Actions[]`; the prototype offers it. Engine F5 decides; the UI draws only what `Actions` carries.
 5. Card radius 12 vs the prototype's 16, same as context open item 2; and the prototype's 85% default zoom is not built (we open at 100%, Q8).
 6. A line run with many stages beyond the recipe's four (a different recipe): the layout handles any count, but the minimap and `Fit` floor at 30%; confirm that is readable.

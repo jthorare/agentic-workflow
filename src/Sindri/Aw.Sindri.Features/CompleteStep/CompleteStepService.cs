@@ -108,7 +108,7 @@ internal sealed partial class CompleteStepService(IInstanceDirectory directory, 
             return untyped;   // before the nonce is claimed and anything is stored: a refused report consumes nothing
         }
 
-        return engineFilled.HumanOnlyRefusal(view.Value, request, caller) is { } refusal ? refusal : new Located(resolved.Value, view.Value, via.Value);
+        return new Located(resolved.Value, view.Value, via.Value);
     }
 
     /// <summary>Checks approval (a fresh claim only, as ApplyCommand does), stores the outputs and sends the report.</summary>

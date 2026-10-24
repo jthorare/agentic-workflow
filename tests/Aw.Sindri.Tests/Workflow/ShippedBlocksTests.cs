@@ -165,7 +165,7 @@ public sealed class ShippedBlocksTests
             Assert.Empty(decision.RequiredOn);
         }
 
-        Assert.True(catalog.Find(BlockId.From("step.desk.choose"))!.HumanOnly);   // why: the catalog test pins both ids
+        Assert.Null(catalog.Find(BlockId.From("step.desk.choose"))!.HumanOnly);   // owner q93, 2026-10-23: an agent may answer the desk   // why: the catalog test pins both ids
         Assert.Equal(BlockRuntime.Block, catalog.Find(BlockId.From("step.judge.choose"))!.Runtime);
 
         Assert.Empty(scope.ServiceProvider.GetServices<IStep>());   // the decision-tree Steps have no desk-runtime Step (step.judge.choose runs on the block runtime, step.desk.choose on the desk)

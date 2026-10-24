@@ -33,7 +33,7 @@ internal static class EvidenceSteps
     public static BlockDescriptor Combine { get; } = BlockStep("step.evidence.combine", Capability.None).Reads("fact:evidenceUi", "fact:evidenceApi", "fact:evidenceDb").Reports("done").Writes(On("fact:evidenceSummary", "done"));
 
     /// <summary>'step.evidence.desk': a human records evidence for a change no provider covers; human-only; 'recorded' or 'noneFound', summary and reason on both.</summary>
-    public static BlockDescriptor Desk { get; } = HumanDeskStep("step.evidence.desk", Capability.None).Reads("fact:built").Reports("recorded", "noneFound").Writes(Every("fact:evidenceSummary"), Every("fact:evidenceReason"));
+    public static BlockDescriptor Desk { get; } = DeskStep("step.evidence.desk", Capability.None).Reads("fact:built").Reports("recorded", "noneFound").Writes(Every("fact:evidenceSummary"), Every("fact:evidenceReason"));
 
     private static BlockDescriptor Plan(string id) => AgentStep(id, Capability.Tools).Reads("fact:phasePacket", "fact:built").Reports("planned", "noTarget").Writes(On("fact:evidencePlan", "planned"), On("fact:evidenceSummary", "noTarget"));
 

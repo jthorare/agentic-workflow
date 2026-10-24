@@ -552,12 +552,9 @@ results: the diff, the root cause, the check, the evidence summary.
 
 ### 8.5 Human-only desk Steps (engine; DT-R)
 
-`BlockDescriptor` gains `HumanOnly` (written only when true, §8.1). `complete` on a human-only Step's run requires
-caller class `human` (API §4). A session gets `SND-AUTH-002`, as for a protected command, without a typed challenge.
-It applies to `step.desk.choose`, `step.evidence.desk` and `step.owner.decide`, and to any `deskCapable` Step whose
-runtime is `block` while it runs on the desk (`step.judge.choose` before DT-J, or on a fallback), so a session can't
-pick a branch through the route state itself. Every desk completion event already
-records its actor, which `workflow events` shows. The refusal lives in `CompleteStep` (`EngineFilledReport.HumanOnlyRefusal`), before the nonce claim, so nothing is consumed; a session report on an instance that can't be read is refused with that read error. Today `CompleteStep` is a desk-class command, so the command chain (`AuthorizingService`) refuses every session with its generic `SND-AUTH-002` before the service runs; the per-Step check, with its full-command message, is defence in depth that takes over once a non-human class can reach `CompleteStep` (step reports open to sessions, P10).
+> Owner q93, 2026-10-23, reworked by q100, 2026-10-24: `HumanOnly` is no longer an authorization rule. A plain agent session (one the owner started, with no launch secret) may report every desk Step, including `step.interview.answer`, `step.scope.review` and the merge decision; a session Sindri launched is refused on a desk run by `AgentReportAuthority` (SND-AUTH-002, a launch secret on a run no agent runs). The flag still drives the "only you" label, `RCP-HUMAN-001` and the recommendation filter.
+
+`BlockDescriptor` gains `HumanOnly` (written only when true, §8.1). It marks a Step the owner decides: the app labels it "only you", `RCP-HUMAN-001` counts it as a human act, and a recommendation on it is dropped when it isn't one of the outcomes. It does not gate who may report the Step (owner q100, above). `complete` on a desk run is open to a human and to a plain agent session; a session Sindri launched reports with its launch secret, and `AgentReportAuthority` refuses that secret on a desk run with `SND-AUTH-002`, before the nonce claim, so nothing is consumed. A session report on an instance that can't be read is refused with that read error. Every desk completion event records its actor, which `workflow events` shows. This covers `CompleteStep` only: a Sindri child answering through another command (a park answer, a decision answer) carries no launch secret and still passes until the `X-Sindri-Launch` / `CallerContext.Launch` change extends the same refusal.
 
 ### 8.6 Tracing a route (engine; DT-J)
 

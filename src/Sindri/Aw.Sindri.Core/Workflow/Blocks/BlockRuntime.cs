@@ -3,8 +3,7 @@ using System.Text.Json.Serialization;
 namespace Aw.Sindri.Core.Workflow.Blocks;
 
 /// <summary>
-/// Where a Step runs when its recipe doesn't say otherwise (DT spec §8.2). Descriptor-only until the block runtime (DT-J);
-/// the one rule that reads it today is <see cref="Engine.HumanOnlySteps"/>.
+/// Where a Step runs when its recipe doesn't say otherwise (DT spec §8.2). Descriptor-only until the block runtime (DT-J); no rule reads it today.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter<BlockRuntime>))]
 public enum BlockRuntime
