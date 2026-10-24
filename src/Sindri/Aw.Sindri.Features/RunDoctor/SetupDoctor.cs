@@ -5,12 +5,12 @@ namespace Aw.Sindri.Features.RunDoctor;
 
 /// <summary>
 /// Doctor's 'setup' check (setup-once spec §7.5): ok when every step is done or skipped; otherwise a warning that names each step still open and the owner's next move, the first open step's terminal form.
-/// Its two companions warn and never fail: 'setup:repo-hook' (a repo is added and the C# build has no secret-check hook to install, §5.1) and 'setup:recipes-tree' (the embedded recipe set's tree hash differs from the checkout's HEAD, §5.3).
+/// Its companions warn and never fail: 'pre-commit:&lt;repo&gt;' per onboarded repo (the secret-scan hook is missing, the TS build's, or someone else's; cutover spec §6.2), 'setup:repo-hook' (kept only in a host with no hook reader) and 'setup:recipes-tree' (the embedded recipe set's tree hash differs from the checkout's HEAD, §5.3).
 /// Never a failure: an unfinished setup is not a broken Sindri.
 /// </summary>
 /// <param name="facts">The sources, read the way GET /setup reads them.</param>
 /// <param name="build">The embedded recipe set's tree hash and HEAD's; absent in a host with no build stamp.</param>
-/// <param name="hooks">Each repo's pre-commit hook; absent keeps the single 'setup:repo-hook' warning until cutover unit 4.1 registers the reader.</param>
+/// <param name="hooks">Each repo's pre-commit hook; absent keeps the single 'setup:repo-hook' warning.</param>
 internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null, IRepoHookStates? hooks = null) : IDoctorChecks
 {
     /// <summary>The check's name.</summary>
@@ -18,14 +18,12 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null,
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
+        List<DoctorCheck> checks = [await Steps(cancellationToken).ConfigureAwait(false)];
         if (hooks is not null)
         {
-            throw new NotSupportedException("the per-repo 'pre-commit:<repo>' line is built in cutover unit 4.1");
+            checks.AddRange((await hooks.Read(cancellationToken).ConfigureAwait(false)).Select(HookLine));
         }
-
-        List<DoctorCheck> checks = [await Steps(cancellationToken).ConfigureAwait(false)];
-        var repos = await facts.Repos(cancellationToken).ConfigureAwait(false);
-        if (repos.IsSuccess && repos.Value.Count > 0)
+        else if (await facts.Repos(cancellationToken).ConfigureAwait(false) is { IsSuccess: true, Value.Count: > 0 })
         {
             checks.Add(new DoctorCheck("setup:repo-hook", CheckState.Warn, "No secret-check hook yet: add it when the installer ships", "add a pre-commit hook that refuses secret-shaped text to each repo by hand"));
         }
@@ -39,6 +37,22 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null,
 
         return checks;
     }
+
+    // One line per onboarded repo (cutover spec §6.2 item 2): ok with the v3 hook, else a warning whose fix installs it (a foreign hook is never overwritten).
+    private static DoctorCheck HookLine(RepoHookState state)
+    {
+        var name = "pre-commit:" + state.Repo;
+        return state.Kind switch
+        {
+            HookKind.V3 => new DoctorCheck(name, CheckState.Ok, "the secret-scan pre-commit hook is installed", Fix: null),
+            HookKind.Foreign => new DoctorCheck(name, CheckState.Warn, "a pre-commit hook that is not Sindri's is installed, so staged secrets are not scanned", $"add 'sindri scrub --staged || exit 1' to {state.Path}'s pre-commit hook by hand"),
+            HookKind.None => new DoctorCheck(name, CheckState.Warn, "no pre-commit hook, so staged secrets are not scanned", Install(state)),
+            HookKind.V2 or HookKind.V1 => new DoctorCheck(name, CheckState.Warn, "the pre-commit hook is the TS build's, which Sindri replaces", Install(state)),
+            _ => throw new ArgumentOutOfRangeException(nameof(state)),
+        };
+    }
+
+    private static string Install(RepoHookState state) => "sindri scrub --install-pre-commit --repo " + state.Path;
 
     private async ValueTask<DoctorCheck> Steps(CancellationToken cancellationToken)
     {

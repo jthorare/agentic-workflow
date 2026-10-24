@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.OnboardRepo;
+using Aw.Sindri.Features.Scrub;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -16,8 +17,10 @@ internal static class OnboardRepoServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         var resolved = new ResolvedOnboardRepos();
-        services.TryAddSingleton<IRepoHooks, NoSecretCheckHook>();   // until an installer ships
+        services.TryAddSingleton<IRepoHooks, PreCommitRepoHooks>();
+        services.TryAddSingleton<IPreCommitInstaller, PreCommitInstaller>();
         return services
+            .AddScoped<IRepoHookStates, RepoHookStates>()
             .AddSingleton(resolved)
             .AddScoped<RepoOnboarding>()
             .AddScoped<IRepoOnboardingTick>(static sp => sp.GetRequiredService<RepoOnboarding>())

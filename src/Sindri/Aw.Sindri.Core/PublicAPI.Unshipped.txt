@@ -18238,6 +18238,30 @@ Aw.Sindri.Core.Setup.HookKind.None = 0 -> Aw.Sindri.Core.Setup.HookKind
 Aw.Sindri.Core.Setup.HookKind.V1 = 3 -> Aw.Sindri.Core.Setup.HookKind
 Aw.Sindri.Core.Setup.HookKind.V2 = 2 -> Aw.Sindri.Core.Setup.HookKind
 Aw.Sindri.Core.Setup.HookKind.V3 = 1 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookLocation
+Aw.Sindri.Core.Setup.HookLocation.<Clone>$() -> Aw.Sindri.Core.Setup.HookLocation!
+Aw.Sindri.Core.Setup.HookLocation.Deconstruct(out string! Path, out bool InGitDir) -> void
+Aw.Sindri.Core.Setup.HookLocation.Equals(Aw.Sindri.Core.Setup.HookLocation? other) -> bool
+Aw.Sindri.Core.Setup.HookLocation.HookLocation(string! Path, bool InGitDir) -> void
+Aw.Sindri.Core.Setup.HookLocation.InGitDir.get -> bool
+Aw.Sindri.Core.Setup.HookLocation.InGitDir.init -> void
+Aw.Sindri.Core.Setup.HookLocation.Path.get -> string!
+Aw.Sindri.Core.Setup.HookLocation.Path.init -> void
+Aw.Sindri.Core.Setup.IPreCommitGit
+Aw.Sindri.Core.Setup.IPreCommitGit.ReadHook(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+Aw.Sindri.Core.Setup.IPreCommitGit.RunningBin.get -> string!
+Aw.Sindri.Core.Setup.IPreCommitGit.StableBin.get -> string!
+Aw.Sindri.Core.Setup.IPreCommitGit.WriteHook(string! path, string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Setup.IPreCommitInstaller
+Aw.Sindri.Core.Setup.IPreCommitInstaller.Install(string? repo, string! bin, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Setup.IPreCommitInstaller.Kind(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Setup.HookKind>
+Aw.Sindri.Core.Setup.IPreCommitGit.HookPath(string? repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.HookLocation!>!>
+Aw.Sindri.Core.Setup.IPreCommitGit.StagedAddedLines(string? repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Checks.AddedLine!>!>!>
+override Aw.Sindri.Core.Setup.HookLocation.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.HookLocation.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.HookLocation.ToString() -> string!
+static Aw.Sindri.Core.Setup.HookLocation.operator !=(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
+static Aw.Sindri.Core.Setup.HookLocation.operator ==(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
 Aw.Sindri.Core.Setup.IRepoHookStates
 Aw.Sindri.Core.Setup.IRepoHookStates.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.RepoHookState!>!>
 Aw.Sindri.Core.Setup.RepoHookState
