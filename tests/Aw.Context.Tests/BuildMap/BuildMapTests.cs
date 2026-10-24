@@ -115,6 +115,21 @@ public sealed class BuildMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_rebuild_gives_an_unreviewed_feature_the_label_of_its_new_cluster_and_keeps_it_model_provenance()
+    {
+        _world.Clusters.Set = new ClusterSet([Cluster("src/commands/ids.ts", "src/commands/registry.ts")], Available: true);
+        _ = await _world.Map.BuildMap(progress: null, Labeling(), MapWorld.None);
+        var first = Assert.Single((await _world.Store.Snapshot(draft: true, MapWorld.None)).Value!.Graph.Nodes, n => n.Key.Kind == NodeKind.Feature);
+
+        _ = await _world.Map.BuildMap(progress: null, Scope, MapWorld.None);
+
+        var second = Assert.Single((await _world.Store.Snapshot(draft: true, MapWorld.None)).Value!.Graph.Nodes, n => n.Key.Kind == NodeKind.Feature);
+        Assert.Equal(first.Key, second.Key);
+        Assert.NotEqual(first.Label, second.Label);
+        Assert.Equal(Provenance.Model, second.Provenance);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task The_profiles_extra_scrub_patterns_go_to_the_labeler()
     {
         _world.Clusters.Set = new ClusterSet([Cluster("src/commands/ids.ts", "src/commands/registry.ts")], Available: true);

@@ -215,12 +215,16 @@ internal sealed class BuildMapService(
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"extracting {done}/{total} files"));
 
     // The current map first (already without what the built repos' deny globs take out, spec §6.2): what a person put there wins over what the build found, and a promote loses nothing.
-    private static GraphSnapshot Join(GraphSnapshot kept, ExtractedMap found) =>
-        kept with
+    // A feature the model proposed and nobody reviewed is the exception: the build's reading of that key replaces it, so its label follows its cluster instead of the cluster an earlier build had.
+    private static GraphSnapshot Join(GraphSnapshot kept, ExtractedMap found)
+    {
+        var rebuilt = found.Nodes.Where(n => n.Key.Kind == NodeKind.Feature).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        return kept with
         {
-            Nodes = [.. kept.Nodes.Concat(found.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
+            Nodes = [.. kept.Nodes.Where(n => !(n.Provenance == Aw.Context.Core.Results.Provenance.Model && n.Key.Kind == NodeKind.Feature && rebuilt.Contains(n.Key.Value))).Concat(found.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
             Edges = [.. kept.Edges.Concat(found.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
         };
+    }
 
     private static List<ProposedNode> Proposed(GraphSnapshot current, ExtractedMap found) =>
     [

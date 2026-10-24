@@ -62,6 +62,27 @@ public sealed class ClusterFeaturesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_key_that_collides_four_times_is_told_apart_by_the_clusters_files_not_a_counter()
+    {
+        FileCluster[] Four(string prefix) => [.. new[] { "a", "b", "c", "d" }.Select(n => Cluster(prefix + n, 0.8, "package.json", $"src/{n}.ts"))];
+        var first = ClusterFeatures.Propose(_repo, Set(Four("c")), [], ExtractedMap.Empty);
+        var renumbered = ClusterFeatures.Propose(_repo, Set(Four("z")), [], ExtractedMap.Empty);
+
+        var keys = first.Nodes.Where(n => n.Key.Kind == NodeKind.Feature).Select(n => n.Key.Value).ToList();
+        Assert.Equal(4, keys.Distinct(StringComparer.Ordinal).Count());
+        Assert.DoesNotContain(keys, k => System.Text.RegularExpressions.Regex.IsMatch(k, "-[0-9]+$"));
+        Assert.Equal(keys, renumbered.Nodes.Where(n => n.Key.Kind == NodeKind.Feature).Select(n => n.Key.Value));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_proposed_feature_is_never_human_provenance()
+    {
+        var map = ClusterFeatures.Propose(_repo, Set(Cluster("c1", 0.8, "src/tabs/a.ts")), [new ClusterLabel(ClusterId.From("c1"), "Tab groups")], ExtractedMap.Empty);
+
+        Assert.All(map.Nodes.Where(n => n.Key.Kind == NodeKind.Feature), n => Assert.Equal(Provenance.Model, n.Provenance));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_cluster_claims_the_surfaces_defined_in_its_files()
     {
         var map = ClusterFeatures.Propose(_repo, Set(Cluster("c1", 0.8, "src/tabs/ids.ts")), [], Extracted());

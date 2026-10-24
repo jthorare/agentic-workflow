@@ -44,7 +44,7 @@ public static class ClusterFeatures
         var result = ExtractedMap.Empty;
         foreach (var cluster in clusters.Clusters.Select(c => (Cluster: c, Files: Files(c))).Where(c => c.Files.Any(f => !NotAnImplementer(f))).OrderBy(c => c.Files[0], StringComparer.Ordinal).ThenBy(c => c.Cluster.Id.Value, StringComparer.Ordinal))
         {
-            var key = Unique(cluster.Files, taken);
+            var key = Unique(cluster.Files.Where(f => !NotAnImplementer(f)).ToList(), taken);
             var label = labels.FirstOrDefault(l => l.Id.Value == cluster.Cluster.Id.Value)?.Label is { } named && !string.IsNullOrWhiteSpace(named)
                 ? string.Join(' ', named.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
                 : Humanize(Leaf(cluster.Files));
@@ -91,7 +91,7 @@ public static class ClusterFeatures
         var dir = CommonDirectory(files);
         var stem = Stem(files[0]);
         string[] candidates = [dir.Length > 0 ? dir.Replace('/', '.') : stem, $"{(dir.Length > 0 ? dir.Replace('/', '.') : "root")}.{stem}"];
-        foreach (var name in candidates.Concat(Enumerable.Range(2, 1000).Select(n => $"{candidates[1]}-{n.ToString(System.Globalization.CultureInfo.InvariantCulture)}")))
+        foreach (var name in candidates.Concat(Enumerable.Range(0, 1000).Select(n => $"{candidates[1]}-h{Digest(files, n)}")))
         {
             if (NodeKey.TryFrom("feature:" + name, out var key) && taken.Add(EntryKey.For(key).Value))
             {
@@ -101,6 +101,10 @@ public static class ClusterFeatures
 
         throw new InvalidOperationException("no free feature key for a cluster");
     }
+
+    // A collision is told apart by the cluster's own files, never by a counter: a counter renumbers when the clusters change, and a decision made on 'x-3' would then land on another cluster.
+    private static string Digest(List<string> files, int round) =>
+        Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join('\n', files) + (round == 0 ? "" : "#" + round.ToString(System.Globalization.CultureInfo.InvariantCulture)))))[..6];
 
     private static string CommonDirectory(List<string> files)
     {
