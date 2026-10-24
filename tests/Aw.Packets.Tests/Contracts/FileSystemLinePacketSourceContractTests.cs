@@ -78,5 +78,19 @@ public sealed class FileSystemLinePacketSourceContractTests : LinePacketSourceCo
         Assert.Equal(PacketsErrors.Malformed.Code, read.Error.Code);
     }
 
+    [Fact]
+    public async Task More_files_than_the_old_2000_limit_are_read()
+    {
+        var files = A.LinePacket(PacketKinds.Proof).Build();
+        for (var i = 0; i <= 2_000; i++)
+        {
+            files["evidence/f" + i.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".txt"] = "x"u8.ToArray();
+        }
+
+        var read = await Create(files).Read(PacketKinds.Proof, Directory, CancellationToken.None);
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
+    }
+
     public void Dispose() => _root.Dispose();
 }

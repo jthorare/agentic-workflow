@@ -1,5 +1,3 @@
-#pragma warning disable xUnit1004 // red until cutover unit 2.1: each skipped test is turned on by the unit named in its Skip reason
-
 using System.Globalization;
 using Aw.BugFix.Core.Errors;
 using Aw.BugFix.Core.Model;
@@ -10,13 +8,12 @@ using Aw.Kernel.Testing;
 namespace Aw.BugFix.Tests.Cutover;
 
 /// <summary>
-/// Cutover spec §4.3 (a): the UI-evidence adapter spawns `ui-evidence run &lt;script&gt; &lt;run-dir&gt; --app-build &lt;commit&gt;`. Red until unit 2.1
+/// They run against a stub `ui-evidence` script.
 /// replaces the stub body; they run against a stub `ui-evidence` script.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class UiEvidenceCliTests : IDisposable
 {
-    private const string Red = "red until cutover unit 2.1";
     private static readonly string _script = string.Join('\n',
     [
         """#!/bin/bash""",
@@ -37,7 +34,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         _work.Dispose();
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void It_runs_ui_evidence_run_with_the_script_the_run_directory_and_the_commit()
     {
         _stub.Set("exit", "0");
@@ -50,7 +47,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal(["run", request.Script, request.RunDirectory, "--app-build", request.Commit], _stub.Read("argv").Split('\n', StringSplitOptions.RemoveEmptyEntries));
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void Exit_0_is_a_passing_run_with_its_steps_and_the_hash_of_the_script_it_executed()
     {
         _stub.Set("exit", "0");
@@ -63,7 +60,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal((RunOutcome.Passed, 0), (run.Outcome, run.ExitCode));
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void Exit_2_is_a_failed_check_not_an_error()
     {
         _stub.Set("exit", "2");
@@ -74,7 +71,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal((RunOutcome.Failed, 2), (run.Outcome, run.ExitCode));
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void Exit_4_is_a_broken_run()
     {
         _stub.Set("exit", "4");
@@ -85,7 +82,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal((RunOutcome.Broken, 4), (run.Outcome, run.ExitCode));
     }
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData(1)]
     [InlineData(75)]
     [InlineData(130)]
@@ -98,7 +95,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal(BugFixErrors.UiEvidenceUnavailable.Code, run.Error.Code);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void A_run_that_wrote_no_summary_is_refused_as_AW_BUGFIX_017()
     {
         _stub.Set("exit", "0");
@@ -108,7 +105,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.Equal(BugFixErrors.UiEvidenceUnavailable.Code, run.Error.Code);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void Without_AW_UI_EVIDENCE_BIN_the_binary_is_found_on_PATH()
     {
         _stub.Set("exit", "0");
@@ -120,7 +117,7 @@ public sealed class UiEvidenceCliTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_stub.Directory, "argv")));
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void A_missing_binary_is_refused_as_AW_BUGFIX_017_naming_the_variable()
     {
         var run = Adapter(("AW_UI_EVIDENCE_BIN", Path.Combine(_work.Path, "no-such-ui-evidence"))).Run(Request());

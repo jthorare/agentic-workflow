@@ -27,6 +27,7 @@ copy() {
   local d="$TMPROOT/$1"
   mkdir -p "$d/schemas"
   cp -R "$REPO/schemas/line" "$d/schemas/"
+  cp -R "$REPO/schemas/pr" "$d/schemas/"
   echo "$d"
 }
 
@@ -54,6 +55,9 @@ run "$d"; expect_rc "an example with no source fails" 1; expect_out "names the r
 
 d="$(copy noinvalid)"; edit "$d/schemas/line/examples/manifest.json" '.examples |= map(select(.schema != "built.json" or .valid))'
 run "$d"; expect_rc "a schema with no invalid example fails" 1; expect_out "names the schema" "built.json: has no invalid example"
+
+d="$(copy prrelax)"; edit "$d/schemas/pr/reply.json" '.additionalProperties = true | .required = []'
+run "$d"; expect_rc "a pr schema that accepts an invalid example fails" 1; expect_out "names the invalid example" "reply.no-body.json"
 
 echo
 echo "passed $PASS, failed $FAIL"

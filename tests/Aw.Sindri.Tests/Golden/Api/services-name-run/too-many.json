@@ -1,6 +1,6 @@
 {
   "title": "SND-JOB-002",
   "status": 429,
-  "detail": "8 jobs are running (fix: wait for one to end, or cancel one)",
+  "detail": "64 jobs are running (fix: wait for one to end, or cancel one)",
   "traceId": "<trace>"
 }

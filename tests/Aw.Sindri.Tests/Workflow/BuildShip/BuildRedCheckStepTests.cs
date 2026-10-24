@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.Prove;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Build;
 
@@ -11,7 +12,7 @@ public sealed class BuildRedCheckStepTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static StepContext Context(string redTests = """{"commit":"h1","items":{"A1":{"tests":["T1","T2"]},"A2":{"tests":["T3"]},"A3":{"appOnly":"the page shows it"}}}""") =>
+    private static StepContext Context(string redTests = """{"A1":{"tests":["T1","T2"],"commit":"h1"},"A2":{"tests":["T3"],"commit":"h1"},"A3":{"appOnly":{"signal":"SG-1"}}}""") =>
         StepRig.Context("step.build.red-check", new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["activePacket"] = $$"""{"hash":"sha256:x","dir":"{{StepRig.PacketDir}}","repo":"{{StepRig.Tree}}"}""",
@@ -103,7 +104,7 @@ public sealed class BuildRedCheckStepTests
 
     [Theory]
     [InlineData("{}")]
-    [InlineData("""{"items":{"A1":{"appOnly":"s"}}}""")]
+    [InlineData("""{"A1":{"appOnly":{"signal":"s"},"commit":"h1"}}""")]
     public async Task No_test_to_run_fails_the_Step(string redTests)
     {
         var rig = new StepRig("red-tests");
@@ -141,9 +142,46 @@ public sealed class BuildRedCheckStepTests
     {
         var rig = new StepRig("red-tests");
 
-        var result = await Step(rig).Run(Context("""{"items":{"A1":{"tests":["T1"]}}}"""), Token);
+        var result = await Step(rig).Run(Context("""{"A1":["T1"]}"""), Token);
 
-        Assert.Contains("fact:redTests.commit", result.Failure, StringComparison.Ordinal);
+        Assert.Contains("name the red commit", result.Failure, StringComparison.Ordinal);
+        Assert.Empty(rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task The_short_form_with_the_commit_on_another_item_is_enough()
+    {
+        var rig = new StepRig("red-tests");
+        _ = rig.Commands.Answer("red-tests", StepRig.Fail());
+
+        var result = await Step(rig).Run(Context("""{"A1":["T1"],"A2":{"tests":["T2"],"commit":"h1"}}"""), Token);
+
+        Assert.Equal("red", result.Result!.Outcome.Value);
+    }
+
+    [Fact]
+    public async Task Run24_s_fact_fails_the_Step_naming_the_expected_shape_and_the_field_and_runs_nothing()
+    {
+        var rig = new StepRig("red-tests");
+
+        var result = await Step(rig).Run(Context("""{"commit":"h1","file":"a.sh","tests":[{"name":"x","covers":["AC-1"]}]}"""), Token);
+
+        Assert.Null(result.Result);
+        Assert.Contains("fact:redTests", result.Failure, StringComparison.Ordinal);
+        Assert.Contains(RedTestsFact.Shape, result.Failure, StringComparison.Ordinal);
+        Assert.Contains("commit", result.Failure, StringComparison.Ordinal);
+        Assert.Contains("tests", result.Failure, StringComparison.Ordinal);
+        Assert.Empty(rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task Items_naming_different_red_commits_fail_the_Step_and_run_nothing()
+    {
+        var rig = new StepRig("red-tests");
+
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"h1"},"A2":{"tests":["T2"],"commit":"h2"}}"""), Token);
+
+        Assert.Contains("h2", result.Failure, StringComparison.Ordinal);
         Assert.Empty(rig.Commands.Calls);
     }
 }

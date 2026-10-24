@@ -32,6 +32,9 @@ internal static partial class Labels
     /// <summary>The needs-you callout's primary button.</summary>
     internal const string RunReviewDecide = "Review and decide";
 
+    /// <summary>The line workflow's fifth stage, where a failed build goes back to design.</summary>
+    internal const string RunStageRedesign = "Redesign";
+
     /// <summary>The needs-you callout's terminal chip.</summary>
     internal const string RunTerminal = "Or run in a terminal";
 

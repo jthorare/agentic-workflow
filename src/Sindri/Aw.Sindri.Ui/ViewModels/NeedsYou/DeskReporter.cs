@@ -105,12 +105,12 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher?
     private async Task<MergeCardViewModel?> MergeCardOf(Uri url, InstanceDetail detail) =>
         detail.Facts.Any(f => string.Equals(f.Key, PrStatusReader.Key, StringComparison.Ordinal)) ? await MergeCard(url, detail.Id).ConfigureAwait(true) : null;
 
-    // The recipe verbs of the instance: one per distinct verb the engine serves, in its order. The merge asks first until the engine marks which verbs are destructive.
+    // The recipe verbs of the instance: one per distinct verb the engine serves, in its order.
     private static List<DeskVerb> VerbsOf(IReadOnlyList<AllowedCommandView>? commands) =>
         [.. (commands ?? [])
             .Where(c => string.Equals(c.ActionId, "ApplyCommand:command", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(c.Verb))
             .DistinctBy(c => c.Verb, StringComparer.Ordinal)
-            .Select(c => new DeskVerb(c.Verb!, c.Cli, c.Destructive ?? string.Equals(c.Verb, "merge", StringComparison.Ordinal)))];   // why: filtered to a verb above
+            .Select(c => new DeskVerb(c.Verb!, c.Cli, c.Destructive == true))];   // why: filtered to a verb above
 
     /// <summary>Sends a recipe verb, once: a press while another report for the instance is in flight does nothing.</summary>
     /// <param name="target">The shown request.</param>

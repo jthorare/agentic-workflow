@@ -72,6 +72,10 @@ is_matched_external_write() {
 # An unreadable payload has no tool name, so it can never match: log why.
 is_matched_external_write || { [ -n "$TOOL_NAME" ] || failopen input "$INPUT"; allow; }
 
+# q93 JG-01/02: a meta-harness lane or the meta itself (AW_META_TEAM and AW_META_LANE, exported by scripts/meta-lane.sh) works
+# unattended by design and never has a human turn to reset auto_continued_at, so it is never denied. Interactive sessions keep the block.
+[ -n "${AW_META_TEAM:-}" ] && [ -n "${AW_META_LANE:-}" ] && allow
+
 SESSION_ID="$(printf '%s' "$INPUT" | jq -r '.session_id // empty')"
 SESSIONS_DIR="${AW_JUDGE_SESSIONS_DIR:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/judge/sessions}"
 SESSION_FILE="$SESSIONS_DIR/$SESSION_ID.json"

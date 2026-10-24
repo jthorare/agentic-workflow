@@ -21,7 +21,7 @@ namespace Aw.Sindri.Features.ReadLedger;
 internal sealed class ReadLedgerService(ILedgerReader ledger, CallerEventView view, IItemResolver items, IItemRepos repos, ICallerContextAccessor callers)
     : IService<ReadLedgerRequest, LedgerPage>
 {
-    private const int MaxPage = 500;
+    private const int MaxPage = 10_000;
 
     public async ValueTask<Result<LedgerPage>> Handle(ReadLedgerRequest request, CancellationToken cancellationToken)
     {

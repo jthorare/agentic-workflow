@@ -101,7 +101,7 @@ internal static class JobScenarios
                     return await Ask(host, Post("/sindri/services/heartbeat/run", json: null, human));
                 }
 
-            default:   // too-many: eight jobs run (seven echoes and the stuck service); a ninth is refused with 429, SND-JOB-002
+            default:   // too-many: the cap of jobs run (all but one echoes, then the stuck service); one more is refused with 429, SND-JOB-002
                 for (var n = 0; n < JobLimits.MaxRunning - 1; n++)
                 {
                     _ = await JobHost.StartEcho(host, lines: 10 + n, delayMs: JobHost.LongDelayMs);

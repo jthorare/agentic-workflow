@@ -211,8 +211,7 @@ done
 jq -e '.auto_continued_at | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T")' "$WORK/state-cs-done-continue/judge/sessions/s1.json" > /dev/null 2>&1 \
   || fail "done-continue: expected judge/sessions/s1.json with auto_continued_at"
 [ "$(rc_of done-brief)" = 0 ] || fail "done-brief: a claim meeting the brief must pass, got $(rc_of done-brief)"
-[ "$(rc_of done-brief-miss)" = 2 ] || fail "done-brief-miss: a claim missing the brief's criteria must block (exit 2), got $(rc_of done-brief-miss)"
-err_of done-brief-miss | has 'acceptance criteria ("all tests pass")' || fail "done-brief-miss: stderr must name the criteria, got $(err_of done-brief-miss)"
+[ "$(rc_of done-brief-miss)" = 0 ] || fail "done-brief-miss: a briefed claim need not repeat the criteria (q93 JG-05), exit 0, got $(rc_of done-brief-miss)"
 [ "$(rc_of done-nobrief)" = 0 ] || fail "done-nobrief: a claim with evidence and no brief must pass, got $(rc_of done-nobrief)"
 no_failopen done-ask done-escalated done-continue done-brief done-brief-miss done-nobrief
 for c in done-ask done-escalated done-continue done-brief done-brief-miss done-nobrief; do same $c; done

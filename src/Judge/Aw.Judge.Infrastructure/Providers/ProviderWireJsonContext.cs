@@ -12,4 +12,6 @@ namespace Aw.Judge.Infrastructure.Providers;
 [JsonSerializable(typeof(ImageEvidence))]
 [JsonSerializable(typeof(JevRequest))]
 [JsonSerializable(typeof(JevResponse))]
+[JsonSerializable(typeof(JevBatchRequest))]
+[JsonSerializable(typeof(JevBatchResponse))]
 internal sealed partial class ProviderWireJsonContext : JsonSerializerContext;

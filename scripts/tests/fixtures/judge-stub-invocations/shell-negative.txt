@@ -1,0 +1,12 @@
+judge prompt-sort
+judge prompt-sort scaffold brief on
+printf '%s' "$p" | AW_SESSION_ID="$s" judge prompt-sort > "$OUT_FILE"
+judge health
+judge config set prompt-sort enabled true
+judge brief get "task:$SESSION_ID"
+"$JUDGE_BIN" trait-check --stop
+eval "$cmd"
+label="$1"
+  # judge label status (a comment is not an invocation)
+aw-judge label x
+$HOME/.local/bin/judge-eval run

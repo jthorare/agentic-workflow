@@ -1,0 +1,6 @@
+version: 1
+name: no-todo
+subject: a source file
+requirement: leaves no TODO comment behind
+paths: [src/**/*.ts, lib/{a,b}/*.ts]
+severity: block

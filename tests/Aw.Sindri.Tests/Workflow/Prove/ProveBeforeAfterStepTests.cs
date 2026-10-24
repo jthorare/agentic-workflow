@@ -174,7 +174,7 @@ public sealed class ProveBeforeAfterStepTests
     }
 
     private const string NoScript = """{"AC-1":[{"id":"SG-1a","kind":"test","statement":"s","runsAt":"base+head"}]}""";
-    private const string RedTests = """{"commit":"abc1234","items":{"AC-1":{"tests":[{"id":"Fix_works","path":"tests/FixTests.cs"}]}}}""";
+    private const string RedTests = """{"AC-1":{"tests":[{"id":"Fix_works","path":"tests/FixTests.cs"}],"commit":"abc1234"}}""";
     private const string Generated = "/run/T-1/prove/1/before-after/AC-1.sh";
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed class ProveBeforeAfterStepTests
     {
         var rig = new Rig(signals: NoScript);
 
-        var result = await rig.Step().Run(Context(redTests: """{"items":{"AC-1":{"appOnly":{"signal":"SG-1a"}}}}"""), Token);
+        var result = await rig.Step().Run(Context(redTests: """{"AC-1":{"appOnly":{"signal":"SG-1a"}}}"""), Token);
 
         Assert.Equal("missing", (string?)Out(result)["results"]![0]!["base"]);
         Assert.Empty(rig.Scripts.Calls);
@@ -220,7 +220,7 @@ public sealed class ProveBeforeAfterStepTests
     {
         var rig = new Rig(signals: NoScript);
 
-        var result = await rig.Step().Run(Context(redTests: """{"items":{"AC-1":{"tests":[{"id":"x","path":"../../etc/passwd"}]}}}"""), Token);
+        var result = await rig.Step().Run(Context(redTests: """{"AC-1":{"tests":[{"id":"x","path":"../../etc/passwd"}]}}"""), Token);
 
         Assert.Equal("missing", (string?)Out(result)["results"]![0]!["base"]);
         Assert.Empty(rig.Scripts.Calls);

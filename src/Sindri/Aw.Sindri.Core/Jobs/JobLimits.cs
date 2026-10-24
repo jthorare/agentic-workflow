@@ -16,7 +16,7 @@ public static class JobLimits
     public const int QueueLines = 256;
 
     /// <summary>Jobs running at once; the next start is SND-JOB-002.</summary>
-    public const int MaxRunning = 8;
+    public const int MaxRunning = 64;
 
     /// <summary>Bytes of result JSON a job keeps; a larger result is dropped with a note.</summary>
     public const int ResultBytes = 16 * 1024;

@@ -4,6 +4,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$DIR/../../hooks/prompt-sort.sh"
 BASH_BIN="$(command -v bash)"
+AW_STATE_DIR="$(mktemp -d)" || exit 2; export AW_STATE_DIR
+trap 'find "$AW_STATE_DIR" -delete 2> /dev/null' EXIT
 
 # A fake `judge` on PATH. FAKE_MODE: context | silent | slow | garbage. Logs argv + stdin.
 make_fake_judge() {
@@ -57,6 +59,7 @@ test_slow_judge_is_killed_within_budget_with_no_output_rf2() {
   end=$(date +%s)
   [ "$rc" -eq 0 ] || { echo "FAIL: RF-2 must exit 0, got $rc"; exit 1; }
   [ -z "$out" ] || { echo "FAIL: RF-2 must print nothing, got: $out"; exit 1; }
+  grep -q '"hook":"prompt-sort","cause":"timeout"' "$AW_STATE_DIR/logs/failopen.log" 2>/dev/null || { echo "FAIL: JG-18: a timeout must be logged to failopen.log"; exit 1; }
   [ $((end - start)) -le 3 ] || { echo "FAIL: RF-2 hook took $((end - start))s, budget is 0.6s"; exit 1; }
   echo "PASS: test_slow_judge_is_killed_within_budget_with_no_output_rf2"
 }

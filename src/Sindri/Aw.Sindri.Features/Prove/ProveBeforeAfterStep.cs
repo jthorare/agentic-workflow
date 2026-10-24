@@ -187,9 +187,8 @@ internal sealed class ProveBeforeAfterStep(IBriefFiles files, IRunArea area, IRe
     }
 
     private static List<string> TestPaths(JsonNode? redTests, string item) =>
-        redTests?["items"]?[item]?["tests"] is JsonArray listed
-            ? [.. listed.OfType<JsonObject>().Select(static t => Script((string?)t["path"])).OfType<string>().Distinct(StringComparer.Ordinal)]
-            : [];
+        [.. RedTestsFact.Parse(redTests).Entries.Where(e => string.Equals(e.Item, item, StringComparison.Ordinal))
+            .SelectMany(static e => e.Tests).Select(static t => Script(t.Path)).OfType<string>().Distinct(StringComparer.Ordinal)];
 
     private static string RunScript(string workspace, List<string> paths, IReadOnlyList<BuildCommand> profile)
     {

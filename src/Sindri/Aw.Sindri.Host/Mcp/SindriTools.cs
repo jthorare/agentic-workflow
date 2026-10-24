@@ -121,11 +121,11 @@ internal static class SindriTools
     {
         Name = Request,
         Description = "Ask a person for something: rescope an item, add a task to it, leave a note, or hand it back. "
-            + "Filing a request changes nothing by itself; it appears as a decision a person settles. At most 20 requests stay open per repo.",
+            + "Filing a request changes nothing by itself; it appears as a decision a person settles. At most 200 requests stay open per repo.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["kind"] = ContextTools.Property("string", "What you ask for", bounds: new ContextTools.PropertyBounds(Allowed: RequestKinds)),
-            ["text"] = ContextTools.Property("string", "What and why, in plain words (1 to 2,000 characters)", bounds: new ContextTools.PropertyBounds(MinLength: 1, MaxLength: 2000)),
+            ["text"] = ContextTools.Property("string", "What and why, in plain words (1 to 65,536 characters)", bounds: new ContextTools.PropertyBounds(MinLength: 1, MaxLength: 65_536)),
             ["itemId"] = ContextTools.Property("string", $"{ItemIdText}; left out, the request concerns this repo"),
         }, required: ["kind", "text"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = false },

@@ -21,6 +21,9 @@ public sealed class JudgeCli(TempStateDirectory state)
     /// <summary>The providers the questions can use, through a FakeProviderCatalog (the agent CLIs among them count as installed); none when null.</summary>
     public IReadOnlyList<IModelProvider>? Providers { get; init; }
 
+    /// <summary>Replaces registrations after Compose (the last registration wins): a recording service in place of a stub, for a routing test.</summary>
+    public Action<IServiceCollection>? Overrides { get; init; }
+
     /// <summary>Runs one command line with empty stdin.</summary>
     public Task<CliRun> Run(params string[] args) => RunWithInput("", args);
 
@@ -33,6 +36,8 @@ public sealed class JudgeCli(TempStateDirectory state)
             Clock);
         // Never the real catalog: no agent CLI or Jev call (nor a keychain read) from a test.
         _ = services.AddSingleton<IProviderCatalog>(new FakeProviderCatalog([.. Providers ?? []]));   // the last registration wins
+
+        Overrides?.Invoke(services);
 
         var provider = services.BuildServiceProvider();
         await using (provider)

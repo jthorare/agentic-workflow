@@ -19,7 +19,7 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <param name="http">Sends the request (owned: disposed with the provider).</param>
 /// <param name="secrets">Reads the API key.</param>
 /// <param name="redactor">Strips secrets from the input before it leaves the machine.</param>
-internal sealed class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor) : IModelProvider, IDisposable
+internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor) : IModelProvider, IDisposable
 {
     /// <summary>The model.</summary>
     public const string Model = "jev-1.13.0";

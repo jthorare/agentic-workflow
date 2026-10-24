@@ -138,7 +138,7 @@ public sealed class JobRuntimeTests
     }
 
     [Fact]
-    public async Task The_ninth_running_job_is_refused_SND_JOB_002()
+    public async Task The_65th_running_job_is_refused_SND_JOB_002()
     {
         await using var runtime = await Open();
         var started = new List<Core.Ids.JobId>();
@@ -147,9 +147,9 @@ public sealed class JobRuntimeTests
             started.Add((await runtime.Start(new ProbeJobRequest(string.Create(CultureInfo.InvariantCulture, $"hold{n}")), Human())).Value.JobId);
         }
 
-        var ninth = await runtime.Start(new ProbeJobRequest("hold9"), Human());
+        var over = await runtime.Start(new ProbeJobRequest("hold-over"), Human());
 
-        Expect.Equal(SindriErrors.JobsRateLimited.Code, ninth.Error.Code);
+        Expect.Equal(SindriErrors.JobsRateLimited.Code, over.Error.Code);
         foreach (var job in started)
         {
             _ = await runtime.Cancel(job);

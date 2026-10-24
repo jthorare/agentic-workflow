@@ -18,6 +18,6 @@ public static class BugFixInfrastructureServiceCollectionExtensions
             .AddSingleton<IFiles, LocalFiles>()
             .AddSingleton<IGit, GitProcess>()
             .AddSingleton<ICheckRunner, ProcessCheckRunner>()
-            .AddSingleton<IJudge, UnavailableJudge>()
-            .AddSingleton<IUiEvidence, UnavailableUiEvidence>();
+            .AddSingleton<IJudge>(_ => new JudgeCli(environment))
+            .AddSingleton<IUiEvidence>(_ => new UiEvidenceCli(environment));
 }

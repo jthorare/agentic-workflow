@@ -1,24 +1,13 @@
-using Aw.Sindri.Core.Commands;
-
 namespace Aw.Sindri.Core.Events;
 
-/// <summary>The event stream's limits (API spec §5.4): 16 open streams, 4 of them held for the human.</summary>
+/// <summary>The event stream's limit (API spec §5.4): 64 open streams, the same for every caller.</summary>
 public static class StreamLimits
 {
     /// <summary>The most streams open at once.</summary>
-    public const int Total = 16;
+    public const int Total = 64;
 
-    /// <summary>The streams only a human may open.</summary>
-    public const int HumanReserved = 4;
-
-    /// <summary>The most streams sessions may hold together.</summary>
-    public const int Session = Total - HumanReserved;
-
-    /// <summary>True when one more stream for <paramref name="caller"/> fits: a human while fewer than 16 are open; a session while sessions hold fewer than 12 and fewer than 16 are open.</summary>
-    /// <param name="caller">Who asks.</param>
+    /// <summary>True when one more stream fits: fewer than <see cref="Total"/> are open.</summary>
     /// <param name="open">The streams open now, every caller.</param>
-    /// <param name="openSessions">The streams sessions hold now.</param>
     /// <returns>Whether it is admitted.</returns>
-    public static bool Admits(CallerClass caller, int open, int openSessions)
-        => open < Total && (caller != CallerClass.Session || openSessions < Session);
+    public static bool Admits(int open) => open < Total;
 }

@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.Api.Workflow;
 /// <param name="ActionId">The catalog action ("ApplyCommand:command" for a recipe verb).</param>
 /// <param name="Cli">The 'sindri workflow …' line.</param>
 /// <param name="Verb">The recipe verb of an "ApplyCommand:command" entry ("merge", "check"); null for every other command.</param>
-/// <param name="Destructive">True when the verb is destructive (the engine marks it once it does); read as optional.</param>
+/// <param name="Destructive">True when the verb is destructive; read as optional, a missing flag is not destructive.</param>
 internal sealed record AllowedCommandView(
     string ActionId,
     string Cli,

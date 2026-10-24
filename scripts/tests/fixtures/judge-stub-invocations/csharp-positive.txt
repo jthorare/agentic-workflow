@@ -1,0 +1,4 @@
+var args = new[] { "judge", "label", "status" };
+ArgumentList = { "judge", "eval", "import-turns" }
+Run("judge", "adjudicate", question)
+Command("judge", "prompt-sort", "why", id)

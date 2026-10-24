@@ -1,9 +1,6 @@
 {
-  "redCommit": "a1b2c3d",
-  "output": "",
-  "items": [
-    {
-      "item": "AC-1"
-    }
-  ]
+  "AC-1": {
+    "commit": "a1b2c3d",
+    "output": ""
+  }
 }

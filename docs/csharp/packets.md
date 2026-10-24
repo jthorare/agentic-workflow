@@ -20,7 +20,7 @@ It was generated with `/new-package` (the invocation is in the PR that added it)
 
 Every JSON file carries `schemaVersion` (1). The JSON Schemas for editors are generated from the records and committed
 in `schemas/packets/` (`PacketSchemaTests` fails when a record changes and the schema isn't regenerated). Links are
-relative paths with `/` inside the packet directory; `..`, a root or a `:` is refused, and so is a symbolic link anywhere between the packet directory and the file (a linked file or a linked sub-directory). Every JSON file is UTF-8 without a byte order mark, with no duplicate keys, no unknown members (an optional `$schema` editor hint is allowed at the top of each file) and no null in a list; a packet holds at most 2,000 tasks (`PacketReader.MaxTasks`). Anything else is AW-PACKETS-003.
+relative paths with `/` inside the packet directory; `..`, a root or a `:` is refused, and so is a symbolic link anywhere between the packet directory and the file (a linked file or a linked sub-directory). Every JSON file is UTF-8 without a byte order mark, with no duplicate keys, no unknown members (an optional `$schema` editor hint is allowed at the top of each file) and no null in a list; a packet holds at most 20,000 tasks (`PacketReader.MaxTasks`). Anything else is AW-PACKETS-003.
 
 Write-scope globs are repo-relative: `*` and `?` stay inside one path segment, `**` crosses segments (`src/**`,
 `**/guide.md`; `**` only as a whole segment, inside one it acts as `*`); entries are at most 1,024 characters, and matching is a two-pointer walk with no regex (bounded by the entry length, no backtracking blow-up); each distinct entry is matched against the base commit's files once. `new: src/c.cs` declares a file the task creates.
@@ -48,7 +48,7 @@ file list comes from git.
 | `PKT-FLOW-001` | **Unchecked**: workflow coverage (addendum §17.7) needs the lens catalog and workflow generation |
 
 The text output lists every rule (`pass`, `FAIL` with the subject, what was found and the fix, or `unchecked` with the
-reason). A rule reports at most 50 failures, then one `omitted` record whose `omitted` field counts the rest (the summary line's failure count includes them). `--json` writes one document, `schemaVersion` 1, with `packet`, `passed` and `checks[]` (one record per
+reason). A rule reports at most 500 failures, then one `omitted` record whose `omitted` field counts the rest (the summary line's failure count includes them). `--json` writes one document, `schemaVersion` 1, with `packet`, `passed` and `checks[]` (one record per
 failure, one per passing or unchecked rule; each failure has `rule`, `subject`, `message` and `fix`).
 
 ## Sizes (`PKT-SIZE-001`, `validate --sizes <file>`, LN-PKT3)
@@ -263,9 +263,9 @@ Errors go to stderr as `aw-packets: <code> <message>` (with `--json`, the `Error
 |---|---|---|
 | `IPacketSource` | `FileSystemPacketSource` | `InMemoryPacketSource`, `PacketSourceContract` |
 | `IScopingPacketSource` | `FileSystemScopingPacketSource` (the twelve listed files, a symbolic link refused; the other top-level names, never their content) | `InMemoryScopingPacketSource`, `ScopingPacketSourceContract` |
-| `ILinePacketSource` | `FileSystemLinePacketSource` (a line kind's listed files and every file under its linked directories, at most 2,000 of them; a symbolic link, linked file or directory, is refused; the other top-level names, never their content) | `InMemoryLinePacketSource`, `LinePacketSourceContract` |
+| `ILinePacketSource` | `FileSystemLinePacketSource` (a line kind's listed files and every file under its linked directories, at most 20,000 of them; a symbolic link, linked file or directory, is refused; the other top-level names, never their content) | `InMemoryLinePacketSource`, `LinePacketSourceContract` |
 | `ISealSource` | `FileSystemSealSource` (a regular file of at most 16 KiB; `SealReader` parses it) | `InMemorySealSource`, `SealSourceContract` |
-| `IRepoSnapshot` | `GitRepoSnapshot` (`git ls-tree -r -z`, 30 s limit per run) | `InMemoryRepoSnapshot`, `RepoSnapshotContract` |
+| `IRepoSnapshot` | `GitRepoSnapshot` (`git ls-tree -r -z`, 120 s limit per run) | `InMemoryRepoSnapshot`, `RepoSnapshotContract` |
 | `IFreezeLog` | `FileFreezeLog` (temp file, then move) | `InMemoryFreezeLog`, `FreezeLogContract` |
 | `TimeProvider` (BCL) | `TimeProvider.System` | `FakeTimeProvider` |
 

@@ -26,7 +26,7 @@ public sealed class LimitTests
     public async Task A_chain_at_the_task_limit_passes()
     {
         var packet = A.Packet();
-        for (var i = 0; i < PacketReader.MaxTasks; i++)
+        for (var i = 0; i < 2_000; i++)
         {
             var id = "t" + i.ToString(CultureInfo.InvariantCulture);
             var task = A.Task(id).Writing("src/a.cs");
@@ -39,17 +39,32 @@ public sealed class LimitTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_rule_reports_at_most_50_failures_and_counts_the_rest()
+    public async Task A_chain_past_the_old_2000_task_limit_passes()
     {
         var packet = A.Packet();
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < 2_001; i++)
+        {
+            var task = A.Task("t" + i.ToString(CultureInfo.InvariantCulture)).Writing("src/a.cs");
+            _ = packet.With(i == 0 ? task : task.After("t" + (i - 1).ToString(CultureInfo.InvariantCulture)));
+        }
+
+        var report = await Validate(packet);
+
+        Assert.True(report.Passed, string.Join("; ", report.Checks.Where(static c => c.State == CheckState.Fail).Select(static c => c.Rule)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rule_reports_at_most_500_failures_and_counts_the_rest()
+    {
+        var packet = A.Packet();
+        for (var i = 0; i < 40; i++)
         {
             _ = packet.With(A.Task("t" + i.ToString(CultureInfo.InvariantCulture)).Writing("src/a.cs"));
         }
 
         var failures = Failures(await Validate(packet), "PKT-SCOPE-002");
 
-        Assert.Equal(50, failures.Count);
+        Assert.Equal(500, failures.Count);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -62,7 +77,7 @@ public sealed class LimitTests
         }
 
         var packet = A.Packet();
-        for (var i = 0; i < PacketReader.MaxTasks; i++)
+        for (var i = 0; i < 2_000; i++)
         {
             var task = A.Task("t" + i.ToString(CultureInfo.InvariantCulture)).Writing("src/**");
             _ = packet.With(i == 0 ? task : task.After("t" + (i - 1).ToString(CultureInfo.InvariantCulture)));
@@ -77,7 +92,7 @@ public sealed class LimitTests
     public async Task The_omitted_record_counts_the_unlisted_failures_and_gives_a_generic_fix()
     {
         var packet = A.Packet();
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < 40; i++)
         {
             _ = packet.With(A.Task("t" + i.ToString(CultureInfo.InvariantCulture)).Writing("src/a.cs"));
         }
@@ -85,7 +100,7 @@ public sealed class LimitTests
         var report = await Validate(packet);
 
         var omitted = Assert.Single(report.Checks, static c => c.State == CheckState.Omitted);
-        Assert.Equal((PacketRules.ScopeOverlap, 140), (omitted.Rule, omitted.Omitted));
+        Assert.Equal((PacketRules.ScopeOverlap, 280), (omitted.Rule, omitted.Omitted));
         Assert.DoesNotContain("src/a.cs", omitted.Fix, StringComparison.Ordinal);
         Assert.False(report.Passed);
     }

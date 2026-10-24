@@ -10,11 +10,11 @@ namespace Aw.Sindri.Tests.Requests;
 public sealed class RequestRulesTests
 {
     [Fact]
-    public void Validate_accepts_a_known_kind_with_text_up_to_2000_scalars()
+    public void Validate_accepts_a_known_kind_with_text_up_to_65536_scalars()
     {
         Expect.True(RequestRules.Validate(RequestKind.Rescope, "Split the work.").IsSuccess);
-        Expect.True(RequestRules.Validate(RequestKind.Handback, new string('x', 2000)).IsSuccess);
-        Expect.True(RequestRules.Validate(RequestKind.Note, string.Concat(Enumerable.Repeat("\U0001F600", 2000))).IsSuccess);   // 4,000 UTF-16 units, 2,000 scalars
+        Expect.True(RequestRules.Validate(RequestKind.Handback, new string('x', RequestRules.TextMax)).IsSuccess);
+        Expect.True(RequestRules.Validate(RequestKind.Note, string.Concat(Enumerable.Repeat("\U0001F600", RequestRules.TextMax))).IsSuccess);   // twice as many UTF-16 units as scalars
     }
 
     [Theory]
@@ -24,10 +24,10 @@ public sealed class RequestRulesTests
     public void Validate_refuses_empty_text(string? text) => Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate(RequestKind.Note, text).Error.Code);
 
     [Fact]
-    public void Validate_refuses_over_2000_scalars()
+    public void Validate_refuses_over_65536_scalars()
     {
-        Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate(RequestKind.Note, new string('x', 2001)).Error.Code);
-        Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate(RequestKind.Note, string.Concat(Enumerable.Repeat("\U0001F600", 2001))).Error.Code);
+        Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate(RequestKind.Note, new string('x', RequestRules.TextMax + 1)).Error.Code);
+        Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate(RequestKind.Note, string.Concat(Enumerable.Repeat("\U0001F600", RequestRules.TextMax + 1))).Error.Code);
     }
 
     [Fact]
@@ -35,19 +35,19 @@ public sealed class RequestRulesTests
         Expect.Equal(SindriErrors.RequestInvalid.Code, RequestRules.Validate((RequestKind)99, "text").Error.Code);
 
     [Fact]
-    public void Cap_refuses_the_21st_in_a_repo()
+    public void Cap_refuses_the_201st_in_a_repo()
     {
-        Expect.True(RequestRules.Cap(openForRepo: 19, openTotal: 19).IsSuccess);
-        var refused = RequestRules.Cap(openForRepo: 20, openTotal: 20).Error;
+        Expect.True(RequestRules.Cap(openForRepo: 199, openTotal: 199).IsSuccess);
+        var refused = RequestRules.Cap(openForRepo: 200, openTotal: 200).Error;
         Expect.Equal(SindriErrors.RequestsRateLimited.Code, refused.Code);
-        Expect.True(refused.Message.Contains("20", StringComparison.Ordinal) && refused.Message.Contains("fix:", StringComparison.Ordinal));
+        Expect.True(refused.Message.Contains("200", StringComparison.Ordinal) && refused.Message.Contains("fix:", StringComparison.Ordinal));
     }
 
     [Fact]
-    public void Cap_refuses_the_51st_overall()
+    public void Cap_refuses_the_501st_overall()
     {
-        Expect.True(RequestRules.Cap(openForRepo: 0, openTotal: 49).IsSuccess);
-        Expect.Equal(SindriErrors.RequestsRateLimited.Code, RequestRules.Cap(openForRepo: 0, openTotal: 50).Error.Code);
+        Expect.True(RequestRules.Cap(openForRepo: 0, openTotal: 499).IsSuccess);
+        Expect.Equal(SindriErrors.RequestsRateLimited.Code, RequestRules.Cap(openForRepo: 0, openTotal: 500).Error.Code);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Features.ApproveDecision;
 using Aw.Judge.Features.AskQuestion;
+using Aw.Judge.Features.CheckTraits;
 using Aw.Judge.Features.ExplainDecision;
 using Aw.Judge.Features.GetBrief;
 using Aw.Judge.Features.GetConfig;
@@ -10,6 +11,8 @@ using Aw.Judge.Features.MapBriefByName;
 using Aw.Judge.Features.SaveBrief;
 using Aw.Judge.Features.SetBriefAgentId;
 using Aw.Judge.Features.SetConfig;
+using Aw.Judge.Features.SetPromptSort;
+using Aw.Judge.Features.SortPrompt;
 using Aw.Judge.Features.UndoDecision;
 using Aw.Kernel.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,6 +71,7 @@ public static class JudgeFeaturesServiceCollectionExtensions
     // AskQuestion: every 'judge <question>', validated, then the retention prune after it (outermost first).
     private static void AddQuestions(IServiceCollection services)
     {
+        AddCutoverVerbs(services);
         _ = services
             .AddScoped<AskQuestionService>()
             .AddScoped<IValidator<AskQuestionRequest>, AskQuestionValidator>()
@@ -130,5 +134,31 @@ public static class JudgeFeaturesServiceCollectionExtensions
                 new ValidatingService<SetBriefAgentIdRequest, SetBriefAgentIdResponse>(
                     sp.GetRequiredService<SetBriefAgentIdService>(),
                     sp.GetRequiredService<IValidator<SetBriefAgentIdRequest>>()));
+    }
+
+    // The verbs the cutover builds on: SortPrompt and SetPromptSort (unit 6.1), CheckTraits (unit 6.2).
+    private static void AddCutoverVerbs(IServiceCollection services)
+    {
+        _ = services
+            .AddScoped<SortPromptService>()
+            .AddScoped<IValidator<SortPromptRequest>, SortPromptValidator>()
+            .AddScoped<IService<SortPromptRequest, SortPromptResponse>>(static sp =>
+                new ValidatingService<SortPromptRequest, SortPromptResponse>(
+                    sp.GetRequiredService<SortPromptService>(),
+                    sp.GetRequiredService<IValidator<SortPromptRequest>>()));
+        _ = services
+            .AddScoped<SetPromptSortService>()
+            .AddScoped<IValidator<SetPromptSortRequest>, SetPromptSortValidator>()
+            .AddScoped<IService<SetPromptSortRequest, SetPromptSortResponse>>(static sp =>
+                new ValidatingService<SetPromptSortRequest, SetPromptSortResponse>(
+                    sp.GetRequiredService<SetPromptSortService>(),
+                    sp.GetRequiredService<IValidator<SetPromptSortRequest>>()));
+        _ = services
+            .AddScoped<CheckTraitsService>()
+            .AddScoped<IValidator<CheckTraitsRequest>, CheckTraitsValidator>()
+            .AddScoped<IService<CheckTraitsRequest, CheckTraitsResponse>>(static sp =>
+                new ValidatingService<CheckTraitsRequest, CheckTraitsResponse>(
+                    sp.GetRequiredService<CheckTraitsService>(),
+                    sp.GetRequiredService<IValidator<CheckTraitsRequest>>()));
     }
 }

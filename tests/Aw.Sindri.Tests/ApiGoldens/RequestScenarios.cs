@@ -3,6 +3,7 @@ using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Views;
 using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
@@ -265,7 +266,7 @@ internal static class RequestScenarios
 
         if (scenario == "too-many")
         {
-            for (var n = 0; n < 20; n++)
+            for (var n = 0; n < RequestRules.MaxOpenPerRepo; n++)
             {
                 _ = await Filed(host, ct, string.Create(CultureInfo.InvariantCulture, $"Request {n + 1}."), "note");
             }
@@ -275,7 +276,7 @@ internal static class RequestScenarios
         {
             "invalid" => ("rescope", "   "),
             "invalid-kind" => ("bogus", "Split it."),
-            "too-long" => ("rescope", new string('x', 2001)),
+            "too-long" => ("rescope", new string('x', RequestRules.TextMax + 1)),
             "too-many" => ("note", "One too many."),
             _ => ("rescope", Split),
         };

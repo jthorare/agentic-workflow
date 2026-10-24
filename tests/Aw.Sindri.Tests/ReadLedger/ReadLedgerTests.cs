@@ -129,9 +129,9 @@ public sealed class ReadLedgerTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(501)]
+    [InlineData(10001)]
     [InlineData(0)]
-    public async Task Max_outside_1_to_500_is_400(int max)
+    public async Task Max_outside_1_to_10000_is_400(int max)
     {
         var result = await Service().Handle(A.ReadLedgerRequest().WithMax(max).Build(), TestContext.Current.CancellationToken);
 

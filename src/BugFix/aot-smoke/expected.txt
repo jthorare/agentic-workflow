@@ -2,6 +2,8 @@
 {"state":"<tmp>/state/state.json"}
 ## advance investigate --state <tmp>/state --evidence <tmp>/handoff.md
 {"phase":"investigate","hypotheses":1}
+## run-ui --state <tmp>/state --check tests/ui.json
+{"evidence":"<tmp>/state/runs/<stamp>-ui-1.json","outcome":"passed","exitCode":0,"commit":"<sha>"}
 ## run-test --state <tmp>/state --check tests/bug.test.sh -- bash tests/bug.test.sh
 {"evidence":"<tmp>/state/runs/<stamp>-test-1.json","outcome":"failed","exitCode":1,"commit":"<sha>"}
 ## advance reproduce --state <tmp>/state --evidence <tmp>/state/runs/<stamp>-test-1.json --check tests/bug.test.sh
@@ -15,8 +17,7 @@
 ## record-run c1 --state <tmp>/state --evidence <tmp>/state/runs/<stamp>-test-1.json
 {"candidate":"c1","passed":true,"next":"judge c1"}
 ## judge c1 --state <tmp>/state
-refused: judge resolution-check isn't wired into the C# bugfix-state yet (it waits on the C# judge CLI contract, docs/csharp/judge.md); no verdict recorded (AW-BUGFIX-016)
-exit 3
+{"candidate":"c1","decision":"resolved","decisionId":"d-1","reasonCode":"judged","reasons":["the page opens"],"status":"active"}
 ## advance report --state <tmp>/state --unresolved
 {"phase":"report","status":"unresolved","candidate":null}
 ## resume --state <tmp>/state

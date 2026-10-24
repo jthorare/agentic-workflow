@@ -58,4 +58,16 @@ public static class A
     /// <summary>A test question builder (wake-gate's shape over <see cref="TextInput"/>).</summary>
     /// <returns>A new builder.</returns>
     public static QuestionBuilder Question() => new();
+
+    /// <summary>A SortPromptRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static SortPromptRequestBuilder SortPromptRequest() => new();
+
+    /// <summary>A SetPromptSortRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static SetPromptSortRequestBuilder SetPromptSortRequest() => new();
+
+    /// <summary>A CheckTraitsRequest builder with deterministic defaults.</summary>
+    /// <returns>A new builder.</returns>
+    public static CheckTraitsRequestBuilder CheckTraitsRequest() => new();
 }

@@ -538,4 +538,29 @@ check "clearing leaves a pointer that is not the fixture's" "$(ls "$P/code-index
 pub pause >/dev/null 2>&1; pub resume >/dev/null 2>&1
 check "pause and resume only toggle the service" "$(tr '\n' ';' < "$STUB_LOG")" "services pause context-map-refresh;services resume context-map-refresh;"
 
+# --- context whole over | under: the whole-map fixture (whole-map spec 8) ---
+W="$TMPDIR/ctxw"; mkdir -p "$W"
+AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+AW_SINDRI_HOME="$W" bash "$FIXTURE" context whole over >/dev/null 2>&1; check "context whole refuses before context up (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+AW_SINDRI_HOME="$W" bash "$FIXTURE" context whole sideways >/dev/null 2>&1; check "context whole refuses another word (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$W" bash "$FIXTURE" context whole >/dev/null 2>&1; check "context whole needs over or under (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" context whole over >/dev/null 2>&1; check "context whole refuses outside a guarded home" "$?" "2"
+: > "$STUB_LOG"
+out="$(AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole over 2>/dev/null)"; check "context whole over exits 0" "$?" "0"
+check "context whole over prints its word" "$out" "over"
+contains "context whole over imports the map as the owner" "$(cat "$STUB_LOG")" "context map import"
+M="$W/ui-fixture-context/over-map.json"
+check "the over map has 612 nodes (over the 500-node budget)" "$(jq '.nodes | length' "$M")" "612"
+check "the over map has 12 features" "$(jq '[.nodes[] | select(.key | startswith("feature:"))] | length' "$M")" "12"
+check "every edge of the over map joins two of its nodes" "$(jq '[.nodes[].key] as $k | [.edges[] | select((.from as $f | $k | index($f)) == null or (.to as $t | $k | index($t)) == null)] | length' "$M")" "0"
+check "the over map is for the fixture repo" "$(jq -r .repo "$M")" "aw-split-panes"
+: > "$STUB_LOG"
+AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole over >/dev/null 2>&1
+absent "a repeat of context whole over imports nothing" "$(cat "$STUB_LOG")" "context map import"
+: > "$STUB_LOG"
+out="$(AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole under 2>/dev/null)"; check "context whole under exits 0 and prints its word" "$out" "under"
+contains "context whole under imports the tabs map again" "$(cat "$STUB_LOG")" "context map import"
+check "the under map is the tabs map (10 nodes)" "$(jq '.nodes | length' "$W/ui-fixture-context/tabs-map.json")" "10"
+
 exit "$fail"

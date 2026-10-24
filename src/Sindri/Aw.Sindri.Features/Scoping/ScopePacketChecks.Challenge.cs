@@ -22,11 +22,12 @@ internal static partial class ScopePacketChecks
 
         var last = rounds[^1];
         var label = string.Create(CultureInfo.InvariantCulture, $"round {rounds.Count}");
+        // why: the recipe's challenge loop (cap c.ChallengeCap) is spent at this many rounds; neither a new round nor a redraft can change what the challenger recorded
+        var spent = rounds.Count >= c.ChallengeCap;
         if (!string.Equals(ScopeJson.Str(last, "verdict"), "nothingNew", StringComparison.Ordinal)
             || ScopeJson.Items(last, "surfaces").Any() || ScopeJson.Items(last, "behaviours").Any())
         {
-            // why: the recipe's challenge loop (cap c.ChallengeCap) ends on a found round only when it is spent; a new round can't clear it, so the owner reads it at the stop
-            var spent = rounds.Count >= c.ChallengeCap;
+            // why: a found round ends the loop only when it is spent; a new round can't clear it, so the owner reads it at the stop
             var message = $"the last challenger round ({label}) found something new";
             if (spent)
             {
@@ -38,23 +39,37 @@ internal static partial class ScopePacketChecks
             }
         }
 
-        Walked(rounds, label, s);
+        Walked(rounds, label, spent, s);
     }
 
-    private static void Walked(List<JsonNode> rounds, string label, RuleSink s)
+    private static void Walked(List<JsonNode> rounds, string label, bool spent, RuleSink s)
     {
+        // why: once the loop is spent the challenger never reruns and the drafter can't fix its record, so a gap in the walk is open at the stop (a warning), not a fail that loops evidence back to the draft
         // why: a round may re-walk only part of the ground, so what counts is what any round walked
         var walked = rounds.SelectMany(static r => ScopeJson.Items(r, "walked")).ToList();
         var lenses = walked.Where(static w => string.Equals(ScopeJson.Str(w, "kind"), "lens", StringComparison.Ordinal)).Select(static w => ScopeJson.Str(w, "name")).OfType<string>().ToHashSet(StringComparer.Ordinal);
         var dimensions = walked.Where(static w => string.Equals(ScopeJson.Str(w, "kind"), "dimension", StringComparison.Ordinal)).Select(static w => ScopeJson.Str(w, "name")).OfType<string>().ToHashSet(StringComparer.Ordinal);
         foreach (var lens in ScopeRules.Lenses.Where(l => !lenses.Contains(l)))
         {
-            s.Fail(label, $"the challenger did not walk the {lens} lens", "The challenger lists every lens and dimension it walked.");
+            Gap(s, spent, label, $"the challenger did not walk the {lens} lens");
         }
 
         foreach (var dimension in ScopeRules.Dimensions.Where(d => !dimensions.Contains(d)))
         {
-            s.Fail(label, $"the challenger did not walk the dimension '{dimension}'", "The challenger lists every lens and dimension it walked.");
+            Gap(s, spent, label, $"the challenger did not walk the dimension '{dimension}'");
+        }
+    }
+
+    private static void Gap(RuleSink s, bool spent, string label, string message)
+    {
+        const string fix = "The challenger lists every lens and dimension it walked.";
+        if (spent)
+        {
+            s.Warn(label, message + " and the second opinion is spent", fix);
+        }
+        else
+        {
+            s.Fail(label, message, fix);
         }
     }
 

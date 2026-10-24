@@ -44,6 +44,15 @@ internal static class ProviderReasons
     /// <summary>Errored: the question has more outputs than Jev's 255-option limit.</summary>
     public const string TooManyOptions = "too-many-options";
 
+    /// <summary>Errored: a score question has more levels than Jev's 10.</summary>
+    public const string TooManyLevels = "too-many-levels";
+
+    /// <summary>Errored: two questions of a batch share a key.</summary>
+    public const string DuplicateQuestion = "duplicate-question";
+
+    /// <summary>Unavailable: the allowlist or config.json leaves Jev out of the chain (not a failure).</summary>
+    public const string Excluded = "excluded";
+
     /// <summary>Errored: the CLI exited non-zero ('exit-1').</summary>
     /// <param name="code">The exit code.</param>
     /// <returns>The reason code.</returns>

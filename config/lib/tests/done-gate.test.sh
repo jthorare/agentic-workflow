@@ -97,7 +97,7 @@ test_done_claim_with_matching_brief_and_evidence_exits_0() {
   echo "PASS: test_done_claim_with_matching_brief_and_evidence_exits_0"
 }
 
-test_done_claim_not_matching_brief_acceptance_exits_2() {
+test_a_paraphrased_claim_with_evidence_passes_whatever_the_brief_says() {
   local bin_dir transcript rc
   bin_dir="$(setup_fake_judge '{"acceptanceCriteria":"the migration runs cleanly on staging"}')"
   transcript="$(mktemp)"
@@ -106,8 +106,16 @@ test_done_claim_not_matching_brief_acceptance_exits_2() {
   PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')"
   rc=$?
   set -e
-  [ "$rc" -eq 2 ] || { echo "FAIL: expected exit 2 when the claim doesn't address the brief's acceptance criteria, got $rc"; exit 1; }
-  echo "PASS: test_done_claim_not_matching_brief_acceptance_exits_2"
+  [ "$rc" -eq 0 ] || { echo "FAIL: JG-05: a claim need not repeat the brief's criteria, got $rc"; exit 1; }
+  echo "PASS: test_a_paraphrased_claim_with_evidence_passes_whatever_the_brief_says"
+}
+
+test_dotnet_cargo_and_go_runs_count_as_evidence() {
+  local c
+  for c in 'Done: dotnet test passed, 12 tests.' 'Done. cargo test is green.' 'Done: go test ./... ok.' 'Done: Passed! - Failed: 0, Passed: 40.'; do
+    [ "$(claim_rc "$c")" -eq 0 ] || { echo "FAIL: JG-04: '$c' should count as evidence"; exit 1; }
+  done
+  echo "PASS: test_dotnet_cargo_and_go_runs_count_as_evidence"
 }
 
 test_string_shaped_message_content_is_read_too() {
@@ -339,7 +347,8 @@ test_not_a_done_claim_exits_0
 test_no_brief_found_falls_back_to_any_evidence_check_rf2
 test_done_claim_with_no_evidence_at_all_exits_2
 test_done_claim_with_matching_brief_and_evidence_exits_0
-test_done_claim_not_matching_brief_acceptance_exits_2
+test_a_paraphrased_claim_with_evidence_passes_whatever_the_brief_says
+test_dotnet_cargo_and_go_runs_count_as_evidence
 test_string_shaped_message_content_is_read_too
 test_done_claim_survives_over_1mb_of_trailing_hook_attachments
 test_question_with_claim_word_is_not_a_claim

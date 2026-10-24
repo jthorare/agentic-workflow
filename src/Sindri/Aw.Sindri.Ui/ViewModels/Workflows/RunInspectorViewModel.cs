@@ -216,7 +216,7 @@ internal sealed partial class RunInspectorViewModel(ISindriApi api, IClipboard c
     internal Task CopyTerminal(CancellationToken cancellationToken) =>
         HasTerminal ? clipboard.SetText(Row!.Protected!.Cli, cancellationToken) : Task.CompletedTask;   // why: HasTerminal holds only for a row with a protected answer
 
-    /// <summary>Review and decide: goes to the Needs you row of the run's item, else to the item, else to the run. Nothing is approved here.</summary>
+    /// <summary>Review and decide: goes to the run's parked child (its frame opens at the answer), else the Needs you row of the run's item, else the item, else the run. Never nothing, and nothing is approved here.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the shell was asked.</returns>
     internal async Task ReviewAndDecide(CancellationToken cancellationToken)
@@ -226,18 +226,52 @@ internal sealed partial class RunInspectorViewModel(ISindriApi api, IClipboard c
             return;
         }
 
-        var link = row.Link;
-        if (_detail?.ItemId is { Length: > 0 } item)
+        var child = WaitingChild();
+        if (_url is { } desk && (await api.NeedsYou(desk, cancellationToken).ConfigureAwait(true)) is { IsSuccess: true, Value: var parks }
+            && parks.Rows.FirstOrDefault(r => IsParkOf(r, row, child)) is { } park)
         {
-            link = new DeepLink(DeepLinkKind.Item, item);
-            if (_url is { } url && (await api.NeedsYou(url, cancellationToken).ConfigureAwait(true)) is { IsSuccess: true, Value: var list }
-                && list.Rows.FirstOrDefault(r => string.Equals(r.Item, item, StringComparison.Ordinal)) is { } waiting)
-            {
-                link = new DeepLink(DeepLinkKind.NeedsYou, waiting.Id);
-            }
+            OpenRequested?.Invoke(this, new OpenRequestedEventArgs(new DeepLink(DeepLinkKind.NeedsYou, park.Id), atDesk: true));   // the answer form is on the desk card, mirrored child parks included
+            return;
         }
 
-        OpenRequested?.Invoke(this, new OpenRequestedEventArgs(link));
+        if (child is not null)
+        {
+            OpenRequested?.Invoke(this, new OpenRequestedEventArgs(new DeepLink(DeepLinkKind.Workflow, child.Address), FrameIntent.OpenInitial));
+            return;
+        }
+
+        var (link, intent) = await ItemOrRun(row, cancellationToken).ConfigureAwait(true);
+        OpenRequested?.Invoke(this, new OpenRequestedEventArgs(link, intent));
+    }
+
+    // The Needs you row of the run's item, else the item, else the run's own frame at its children.
+    private async Task<(DeepLink Link, FrameIntent Intent)> ItemOrRun(InstanceRowViewModel row, CancellationToken cancellationToken)
+    {
+        if (_detail?.ItemId is not { Length: > 0 } item)
+        {
+            return (row.Link, FrameIntent.FocusChildren);
+        }
+
+        if (_url is { } url && (await api.NeedsYou(url, cancellationToken).ConfigureAwait(true)) is { IsSuccess: true, Value: var list }
+            && list.Rows.FirstOrDefault(r => string.Equals(r.Item, item, StringComparison.Ordinal)) is { } waiting)
+        {
+            return (new DeepLink(DeepLinkKind.NeedsYou, waiting.Id), FrameIntent.None);
+        }
+
+        return (new DeepLink(DeepLinkKind.Item, item), FrameIntent.None);
+    }
+
+    // The park row that stands for this run's wait: its own, or its waiting child's (engine #850 mirrors a child's park at the root).
+    private static bool IsParkOf(NeedsYouRowView r, InstanceRowViewModel row, ChildRow? child) =>
+        r.Id.StartsWith("park:", StringComparison.Ordinal)
+        && (string.Equals(r.Subject?.Id, row.InstanceId, StringComparison.Ordinal)
+            || (child is not null && (string.Equals(r.Subject?.Id, child.Id, StringComparison.Ordinal) || string.Equals(r.Child, child.Address, StringComparison.Ordinal))));
+
+    // The child that waits on the user (a parked step first), as the stage list shows it.
+    private ChildRow? WaitingChild()
+    {
+        var rows = (_detail?.Children ?? []).SelectMany(g => g.Workstreams.SelectMany(w => w.Rows).Concat(g.Rows)).ToList();
+        return rows.Find(r => RunStatus.From(r.Chip).Kind == RunStatusKind.Paused) ?? rows.Find(r => RunStatus.From(r.Chip).Kind == RunStatusKind.WaitingForYou);
     }
 
     private TimeSpan Age(InstanceDetail detail) => clock.GetUtcNow() - detail.Since;

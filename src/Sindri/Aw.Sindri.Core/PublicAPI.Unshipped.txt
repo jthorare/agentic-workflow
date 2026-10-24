@@ -5869,12 +5869,10 @@ const Aw.Sindri.Core.Events.EventTypes.WorkflowRefused = "workflow.refused" -> s
 const Aw.Sindri.Core.Events.EventTypes.WorkflowShifted = "workflow.shifted" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowStarted = "workflow.started" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowTransition = "workflow.transition" -> string!
-const Aw.Sindri.Core.Events.StreamLimits.HumanReserved = 4 -> int
-const Aw.Sindri.Core.Events.StreamLimits.Session = 12 -> int
-const Aw.Sindri.Core.Events.StreamLimits.Total = 16 -> int
+const Aw.Sindri.Core.Events.StreamLimits.Total = 64 -> int
 const Aw.Sindri.Core.Jobs.JobLimits.LineChars = 200 -> int
 const Aw.Sindri.Core.Jobs.JobLimits.MaxProgressEvents = 2000 -> int
-const Aw.Sindri.Core.Jobs.JobLimits.MaxRunning = 8 -> int
+const Aw.Sindri.Core.Jobs.JobLimits.MaxRunning = 64 -> int
 const Aw.Sindri.Core.Jobs.JobLimits.QueueLines = 256 -> int
 const Aw.Sindri.Core.Jobs.JobLimits.ResultBytes = 16384 -> int
 const Aw.Sindri.Core.Jobs.JobLimits.ViewLines = 200 -> int
@@ -5882,10 +5880,10 @@ const Aw.Sindri.Core.Mcp.McpScope.ServerName = "sindri" -> string!
 const Aw.Sindri.Core.Profile.ApiSettings.DefaultPort = 7410 -> int
 const Aw.Sindri.Core.Profile.SindriProfile.CurrentSchemaVersion = 1 -> int
 const Aw.Sindri.Core.Profile.SindriProfile.DefaultTenant = "local" -> string!
-const Aw.Sindri.Core.Requests.RequestRules.MaxOpenPerRepo = 20 -> int
-const Aw.Sindri.Core.Requests.RequestRules.MaxOpenTotal = 50 -> int
-const Aw.Sindri.Core.Requests.RequestRules.TextMax = 2000 -> int
-const Aw.Sindri.Core.Views.DecisionRules.NoteMax = 2000 -> int
+const Aw.Sindri.Core.Requests.RequestRules.MaxOpenPerRepo = 200 -> int
+const Aw.Sindri.Core.Requests.RequestRules.MaxOpenTotal = 500 -> int
+const Aw.Sindri.Core.Requests.RequestRules.TextMax = 65536 -> int
+const Aw.Sindri.Core.Views.DecisionRules.NoteMax = 65536 -> int
 const Aw.Sindri.Core.Views.ViewNames.Decisions = "decisions" -> string!
 const Aw.Sindri.Core.Views.ViewNames.ItemAliases = "item-aliases" -> string!
 const Aw.Sindri.Core.Views.ViewNames.ItemTimeline = "item-timeline" -> string!
@@ -7277,7 +7275,7 @@ static Aw.Sindri.Core.Events.ServiceRan.operator !=(Aw.Sindri.Core.Events.Servic
 static Aw.Sindri.Core.Events.ServiceRan.operator ==(Aw.Sindri.Core.Events.ServiceRan? left, Aw.Sindri.Core.Events.ServiceRan? right) -> bool
 static Aw.Sindri.Core.Events.ServiceResumed.operator !=(Aw.Sindri.Core.Events.ServiceResumed? left, Aw.Sindri.Core.Events.ServiceResumed? right) -> bool
 static Aw.Sindri.Core.Events.ServiceResumed.operator ==(Aw.Sindri.Core.Events.ServiceResumed? left, Aw.Sindri.Core.Events.ServiceResumed? right) -> bool
-static Aw.Sindri.Core.Events.StreamLimits.Admits(Aw.Sindri.Core.Commands.CallerClass caller, int open, int openSessions) -> bool
+static Aw.Sindri.Core.Events.StreamLimits.Admits(int open) -> bool
 static Aw.Sindri.Core.Events.SuspensionSummary.operator !=(Aw.Sindri.Core.Events.SuspensionSummary? left, Aw.Sindri.Core.Events.SuspensionSummary? right) -> bool
 static Aw.Sindri.Core.Events.SuspensionSummary.operator ==(Aw.Sindri.Core.Events.SuspensionSummary? left, Aw.Sindri.Core.Events.SuspensionSummary? right) -> bool
 static Aw.Sindri.Core.Events.ViewsRebuilt.operator !=(Aw.Sindri.Core.Events.ViewsRebuilt? left, Aw.Sindri.Core.Events.ViewsRebuilt? right) -> bool
@@ -18163,9 +18161,88 @@ static Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadFacts.Instruction(Aw.Sindri
 static Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadFacts.Violation(Aw.Sindri.Core.Workflow.Ids.FactKey fact, System.ReadOnlySpan<byte> content) -> string?
 static Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadFacts.OutputsOf(Aw.Sindri.Core.Workflow.Recipes.Recipe! recipe, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
 static Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadFacts.WithShapes(System.Collections.Generic.IReadOnlyList<string!>? instructions, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>? payload) -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookKind.Foreign = 4 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookKind.None = 0 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookKind.V1 = 3 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookKind.V2 = 2 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.HookKind.V3 = 1 -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.IRepoHookStates
+Aw.Sindri.Core.Setup.IRepoHookStates.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.RepoHookState!>!>
+Aw.Sindri.Core.Setup.RepoHookState
+Aw.Sindri.Core.Setup.RepoHookState.<Clone>$() -> Aw.Sindri.Core.Setup.RepoHookState!
+Aw.Sindri.Core.Setup.RepoHookState.Deconstruct(out string! Repo, out string! Path, out Aw.Sindri.Core.Setup.HookKind Kind) -> void
+Aw.Sindri.Core.Setup.RepoHookState.Equals(Aw.Sindri.Core.Setup.RepoHookState? other) -> bool
+Aw.Sindri.Core.Setup.RepoHookState.Kind.get -> Aw.Sindri.Core.Setup.HookKind
+Aw.Sindri.Core.Setup.RepoHookState.Kind.init -> void
+Aw.Sindri.Core.Setup.RepoHookState.Path.get -> string!
+Aw.Sindri.Core.Setup.RepoHookState.Path.init -> void
+Aw.Sindri.Core.Setup.RepoHookState.Repo.get -> string!
+Aw.Sindri.Core.Setup.RepoHookState.Repo.init -> void
+Aw.Sindri.Core.Setup.RepoHookState.RepoHookState(string! Repo, string! Path, Aw.Sindri.Core.Setup.HookKind Kind) -> void
+override Aw.Sindri.Core.Setup.RepoHookState.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.RepoHookState.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.RepoHookState.ToString() -> string!
+static Aw.Sindri.Core.Setup.RepoHookState.operator !=(Aw.Sindri.Core.Setup.RepoHookState? left, Aw.Sindri.Core.Setup.RepoHookState? right) -> bool
+static Aw.Sindri.Core.Setup.RepoHookState.operator ==(Aw.Sindri.Core.Setup.RepoHookState? left, Aw.Sindri.Core.Setup.RepoHookState? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ScrubForeignHook -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ScrubGitFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ScrubNotARepo -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ScrubStagedSecrets -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Take(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Discard(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.Record(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! text) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.ReportRefusals() -> void
 const Aw.Sindri.Core.Workflow.Engine.Runtime.ReportRefusals.MaxLength = 300 -> int
+Aw.Sindri.Core.Prove.RedEntry
+Aw.Sindri.Core.Prove.RedEntry.AppOnly.get -> bool
+Aw.Sindri.Core.Prove.RedEntry.AppOnly.init -> void
+Aw.Sindri.Core.Prove.RedEntry.<Clone>$() -> Aw.Sindri.Core.Prove.RedEntry!
+Aw.Sindri.Core.Prove.RedEntry.Commit.get -> string?
+Aw.Sindri.Core.Prove.RedEntry.Commit.init -> void
+Aw.Sindri.Core.Prove.RedEntry.Deconstruct(out string! Item, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedTest!>! Tests, out bool AppOnly, out string? Commit, out string? Problem) -> void
+Aw.Sindri.Core.Prove.RedEntry.Equals(Aw.Sindri.Core.Prove.RedEntry? other) -> bool
+Aw.Sindri.Core.Prove.RedEntry.Item.get -> string!
+Aw.Sindri.Core.Prove.RedEntry.Item.init -> void
+Aw.Sindri.Core.Prove.RedEntry.Problem.get -> string?
+Aw.Sindri.Core.Prove.RedEntry.Problem.init -> void
+Aw.Sindri.Core.Prove.RedEntry.RedEntry(string! Item, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedTest!>! Tests, bool AppOnly, string? Commit, string? Problem) -> void
+Aw.Sindri.Core.Prove.RedEntry.Tests.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedTest!>!
+Aw.Sindri.Core.Prove.RedEntry.Tests.init -> void
+Aw.Sindri.Core.Prove.RedTest
+Aw.Sindri.Core.Prove.RedTest.<Clone>$() -> Aw.Sindri.Core.Prove.RedTest!
+Aw.Sindri.Core.Prove.RedTest.Deconstruct(out string! Name, out string? Path) -> void
+Aw.Sindri.Core.Prove.RedTest.Equals(Aw.Sindri.Core.Prove.RedTest? other) -> bool
+Aw.Sindri.Core.Prove.RedTest.Name.get -> string!
+Aw.Sindri.Core.Prove.RedTest.Name.init -> void
+Aw.Sindri.Core.Prove.RedTest.Path.get -> string?
+Aw.Sindri.Core.Prove.RedTest.Path.init -> void
+Aw.Sindri.Core.Prove.RedTest.RedTest(string! Name, string? Path) -> void
+Aw.Sindri.Core.Prove.RedTestsFact
+Aw.Sindri.Core.Prove.RedTestsFact.<Clone>$() -> Aw.Sindri.Core.Prove.RedTestsFact!
+Aw.Sindri.Core.Prove.RedTestsFact.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedEntry!>! Entries, out string? Problem) -> void
+Aw.Sindri.Core.Prove.RedTestsFact.Entries.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedEntry!>!
+Aw.Sindri.Core.Prove.RedTestsFact.Entries.init -> void
+Aw.Sindri.Core.Prove.RedTestsFact.Equals(Aw.Sindri.Core.Prove.RedTestsFact? other) -> bool
+Aw.Sindri.Core.Prove.RedTestsFact.Problem.get -> string?
+Aw.Sindri.Core.Prove.RedTestsFact.Problem.init -> void
+Aw.Sindri.Core.Prove.RedTestsFact.RedCommit() -> (string? Commit, string? Problem)
+Aw.Sindri.Core.Prove.RedTestsFact.RedTestsFact(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Prove.RedEntry!>! Entries, string? Problem) -> void
+const Aw.Sindri.Core.Prove.RedTestsFact.Shape = "{ \"<acceptance item id>\": { \"tests\": [\"<test id>\" | { \"id\": \"<test id>\", \"path\": \"<test file>\" }], \"appOnly\": { \"signal\": \"<signal id>\" }, \"commit\": \"<red commit sha>\", \"output\": \"<failing run, trimmed>\" } } (one key per acceptance item and nothing else at the top level; the value may also be just a list of test ids)" -> string!
+override Aw.Sindri.Core.Prove.RedEntry.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.RedEntry.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.RedEntry.ToString() -> string!
+override Aw.Sindri.Core.Prove.RedTest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.RedTest.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.RedTestsFact.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Prove.RedTestsFact.GetHashCode() -> int
+override Aw.Sindri.Core.Prove.RedTestsFact.ToString() -> string!
+override Aw.Sindri.Core.Prove.RedTest.ToString() -> string!
+static Aw.Sindri.Core.Prove.RedEntry.operator !=(Aw.Sindri.Core.Prove.RedEntry? left, Aw.Sindri.Core.Prove.RedEntry? right) -> bool
+static Aw.Sindri.Core.Prove.RedEntry.operator ==(Aw.Sindri.Core.Prove.RedEntry? left, Aw.Sindri.Core.Prove.RedEntry? right) -> bool
+static Aw.Sindri.Core.Prove.RedTest.operator !=(Aw.Sindri.Core.Prove.RedTest? left, Aw.Sindri.Core.Prove.RedTest? right) -> bool
+static Aw.Sindri.Core.Prove.RedTest.operator ==(Aw.Sindri.Core.Prove.RedTest? left, Aw.Sindri.Core.Prove.RedTest? right) -> bool
+static Aw.Sindri.Core.Prove.RedTestsFact.operator !=(Aw.Sindri.Core.Prove.RedTestsFact? left, Aw.Sindri.Core.Prove.RedTestsFact? right) -> bool
+static Aw.Sindri.Core.Prove.RedTestsFact.operator ==(Aw.Sindri.Core.Prove.RedTestsFact? left, Aw.Sindri.Core.Prove.RedTestsFact? right) -> bool
+static Aw.Sindri.Core.Prove.RedTestsFact.Parse(System.Text.Json.Nodes.JsonNode? fact) -> Aw.Sindri.Core.Prove.RedTestsFact!

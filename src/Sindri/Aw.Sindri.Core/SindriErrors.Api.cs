@@ -10,7 +10,7 @@ public static partial class SindriErrors
     /// <summary>SND-API-011: the views didn't reach the sequence a caller waits for (X-Sindri-After, or a command's head) in time.</summary>
     public static readonly ErrorDefinition ViewsBehind = new("SND-API-011", ErrorKind.Unavailable, "The views didn't reach the sequence in time");
 
-    /// <summary>SND-API-012: every event stream a caller may open is open (16, 4 held for the human; API spec §5.4).</summary>
+    /// <summary>SND-API-012: every event stream a caller may open is open (64, the same for every caller; API spec §5.4).</summary>
     public static readonly ErrorDefinition StreamsFull = new("SND-API-012", ErrorKind.RateLimited, "Too many event streams are open; re-query every 5 s");
 
     /// <summary>SND-API-013: a query parameter outside its set: a stats or list window that isn't 7d, 30d or 90d, or a hash that isn't a recipe hash (API spec §3.8, E-24, E-25).</summary>

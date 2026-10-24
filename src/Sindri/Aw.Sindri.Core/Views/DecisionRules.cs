@@ -11,7 +11,7 @@ namespace Aw.Sindri.Core.Views;
 public static class DecisionRules
 {
     /// <summary>The longest note, in Unicode scalars (P4 plan G2).</summary>
-    public const int NoteMax = 2000;
+    public const int NoteMax = 64 * 1024;
 
     /// <summary>Settles <paramref name="decision"/> with <paramref name="choice"/>.</summary>
     /// <param name="decision">The decision as the views hold it.</param>

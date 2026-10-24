@@ -12,6 +12,8 @@ internal static class PrServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddPrSlices(this IServiceCollection services) => services
         .AddSingleton<IAgentStepInstructions, CiFixInstructions>()
+        .AddSingleton<IAgentStepInstructions, FixCommentInstructions>()
+        .AddSingleton<IAgentStepInstructions, ReplyDraftInstructions>()
         .AddBlockRuntime<PrCiLogStep>()
         .AddBlockRuntime<PrIntakeStep>()
         .AddBlockRuntime<PrSnapshotStep>()

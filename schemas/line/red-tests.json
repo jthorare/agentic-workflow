@@ -2,46 +2,49 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jthorare/agentic-workflow/schemas/line/red-tests.json",
   "title": "The red tests (fact:redTests)",
-  "description": "Line spec A.7: \"per item, its test ids and file paths or appOnly with the signal, the red commit, and the failing run's output trimmed to 4,000 characters\".",
+  "description": "Line spec A.7 as built: an object keyed by acceptance item id, nothing else at the top level. Each value is a list of test ids (the short form) or an entry with tests and/or appOnly, the red commit and the failing run's output trimmed to 4,000 characters. Parsed by Aw.Sindri.Core.Prove.RedTestsFact.",
   "type": "object",
-  "properties": {
-    "redCommit": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{7,64}$"
-    },
-    "output": {
-      "type": "string",
-      "maxLength": 4000
-    },
-    "items": {
-      "type": "array",
-      "items": {
+  "additionalProperties": {
+    "oneOf": [
+      {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      {
         "type": "object",
         "properties": {
-          "item": {
-            "type": "string",
-            "minLength": 1
-          },
           "tests": {
             "type": "array",
             "minItems": 1,
             "items": {
-              "type": "object",
-              "properties": {
-                "id": {
+              "oneOf": [
+                {
                   "type": "string",
                   "minLength": 1
                 },
-                "path": {
-                  "type": "string",
-                  "minLength": 1
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "path"
+                  ],
+                  "additionalProperties": false
                 }
-              },
-              "required": [
-                "id",
-                "path"
-              ],
-              "additionalProperties": false
+              ]
             }
           },
           "appOnly": {
@@ -56,13 +59,18 @@
               "signal"
             ],
             "additionalProperties": false
+          },
+          "commit": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{7,64}$"
+          },
+          "output": {
+            "type": "string",
+            "maxLength": 4000
           }
         },
-        "required": [
-          "item"
-        ],
         "additionalProperties": false,
-        "oneOf": [
+        "anyOf": [
           {
             "required": [
               "tests"
@@ -75,12 +83,6 @@
           }
         ]
       }
-    }
-  },
-  "required": [
-    "redCommit",
-    "output",
-    "items"
-  ],
-  "additionalProperties": false
+    ]
+  }
 }

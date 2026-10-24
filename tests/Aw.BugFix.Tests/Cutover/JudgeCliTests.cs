@@ -1,5 +1,3 @@
-#pragma warning disable xUnit1004 // red until cutover unit 2.1: each skipped test is turned on by the unit named in its Skip reason
-
 using System.Globalization;
 using Aw.BugFix.Core.Errors;
 using Aw.BugFix.Core.Ids;
@@ -14,13 +12,12 @@ namespace Aw.BugFix.Tests.Cutover;
 
 /// <summary>
 /// Cutover spec §4.3 (b) and (c): the judge adapter spawns `judge resolution-check` (the input JSON on stdin), then `judge why &lt;id&gt;`.
-/// Red until unit 2.1 replaces the stub body; they run against a stub `judge` script. The two mismatches of (c) are here too: the digest the
+/// They run against a stub `judge` script. The two mismatches of (c) are here too: the digest the
 /// answer names is the judge's 16-hex input digest, and the check kind `ui` goes out as `ui-evidence`.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class JudgeCliTests : IDisposable
 {
-    private const string Red = "red until cutover unit 2.1";
 
     // resolution-check: save stdin, print the canned envelope, exit as told. why: print the stored row, whose input_digest is the
     // first 16 hex of the SHA-256 of what was sent (the judge's canonical digest of a compact input).
@@ -54,7 +51,7 @@ public sealed class JudgeCliTests : IDisposable
         _work.Dispose();
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void It_sends_the_input_on_stdin_to_resolution_check_then_asks_why_for_the_decision()
     {
         Decides("resolved");
@@ -67,7 +64,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.Equal(File.ReadAllText(question.InputFile), _stub.Read("stdin"));
     }
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData("resolved", JudgeDecision.Resolved)]
     [InlineData("partial", JudgeDecision.Partial)]
     [InlineData("unresolved", JudgeDecision.Unresolved)]
@@ -83,7 +80,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.Equal(["the reported page now opens"], answer.Reasons);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void An_exit_2_envelope_is_an_escalation_without_a_decision_id_and_never_asks_why()
     {
         _stub.Set("exit", "2");
@@ -97,7 +94,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.Equal(["resolution-check"], _stub.Read("calls").Split('\n', StringSplitOptions.RemoveEmptyEntries));
     }
 
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData(1)]
     [InlineData(64)]
     public void Any_other_exit_is_no_usable_verdict_AW_BUGFIX_016(int exit)
@@ -110,7 +107,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.Equal(BugFixErrors.JudgeUnavailable.Code, answer.Error.Code);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void Without_AW_JUDGE_BIN_the_binary_is_found_on_PATH()
     {
         Decides("resolved");
@@ -120,7 +117,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.True(answer.IsSuccess);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void A_missing_binary_is_AW_BUGFIX_016_naming_the_variable()
     {
         var answer = Adapter(("AW_JUDGE_BIN", Path.Combine(_work.Path, "no-such-judge"))).ResolutionCheck(Question(CheckKind.Test));
@@ -129,7 +126,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.Contains("AW_JUDGE_BIN", answer.Error.Message, StringComparison.Ordinal);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void The_judge_reads_the_same_state_as_the_hooks_AW_JUDGE_STATE_DIR_over_AW_STATE_DIR()
     {
         Decides("resolved");
@@ -143,7 +140,7 @@ public sealed class JudgeCliTests : IDisposable
 
     // (c) mismatch 1: the digest. The port's InputSha256 is the judge's input digest (first 16 hex of the SHA-256 of the canonical compact
     // input), the adapter returns what `judge why` stored, and the helper compares the two.
-    [Fact(Skip = Red)]
+    [Fact]
     public void The_input_digest_is_the_judges_16_hex_canonical_digest_not_a_64_hex_file_hash()
     {
         Decides("resolved");
@@ -156,7 +153,7 @@ public sealed class JudgeCliTests : IDisposable
     }
 
     // (c) mismatch 2: the check kind. BugFix says `ui`, the judge's resolution-check takes `ui-evidence`.
-    [Fact(Skip = Red)]
+    [Fact]
     public void The_check_kind_ui_goes_out_as_ui_evidence()
     {
         Decides("resolved");
@@ -168,7 +165,7 @@ public sealed class JudgeCliTests : IDisposable
         Assert.DoesNotContain("\"checkKind\":\"ui\"", _stub.Read("stdin"), StringComparison.Ordinal);
     }
 
-    [Fact(Skip = Red)]
+    [Fact]
     public void The_check_kind_test_goes_out_as_test()
     {
         Decides("resolved");
@@ -179,7 +176,7 @@ public sealed class JudgeCliTests : IDisposable
     }
 
     // The ledger writes the file the judge will digest: compact, with the judge's check kind, named by the same 16-hex digest.
-    [Theory(Skip = Red)]
+    [Theory]
     [InlineData(CheckKind.Test, "test")]
     [InlineData(CheckKind.Ui, "ui-evidence")]
     public void The_ledger_writes_the_judge_input_in_the_judges_canonical_form(CheckKind kind, string wireKind)

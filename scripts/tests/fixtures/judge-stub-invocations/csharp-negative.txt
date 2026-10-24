@@ -1,0 +1,5 @@
+Run("judge", "choose", "--providers", list)
+Run("judge", "prompt-sort")
+Run("judge", "prompt-sort", "scaffold", "brief", "on")
+var label = "judge";
+Run("judge", "health")

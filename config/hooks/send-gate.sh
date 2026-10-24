@@ -110,6 +110,15 @@ mkdir -p "$OUTBOX_DIR"
 OUTBOX_FILE="$OUTBOX_DIR/$SESSION_ID.jsonl"
 LOCK_DIR="$OUTBOX_FILE.lock"
 
+# q93 JG-09: in a meta-harness lane or the meta (AW_META_LANE set), a message to the lead (main, team-lead) or to the team's meta lane
+# is never wake-gated (not dropped, not queued): the sender waits on the reply. The meta lane's name is the metaLane of the team
+# config AW_META_CONFIG names ("meta" when it names none). Ordinary sessions are gated as before.
+if [ -n "${AW_META_LANE:-}" ] && [ -n "$TO" ]; then
+  META_LANE="meta"
+  [ -n "${AW_META_CONFIG:-}" ] && [ -f "$AW_META_CONFIG" ] && META_LANE="$(jq -r '.metaLane // "meta"' "$AW_META_CONFIG" 2> /dev/null || echo meta)"
+  case "$TO" in main|team-lead|"$META_LANE") allow ;; esac
+fi
+
 JUDGE_INPUT="$(jq -nc --arg text "$MESSAGE" --arg sk "$SENDER_KIND" '{text: $text, senderKind: $sk}')"
 JUDGE_OUT="$(printf '%s' "$JUDGE_INPUT" | AW_SESSION_ID="$SESSION_ID" judge wake-gate 2>/dev/null)" || { failopen "judge-exit-$?"; allow; }
 DECISION="$(printf '%s' "$JUDGE_OUT" | jq -r '.decision // empty' 2>/dev/null)" || { failopen judge-output-unparsable; allow; }
@@ -120,14 +129,12 @@ case "$DECISION" in
     # RF-4: mkdir-based lock around the read-then-rewrite (no flock on macOS).
     if acquire_lock "$LOCK_DIR" 5; then
       if [ -s "$OUTBOX_FILE" ]; then
-        CUTOFF_EPOCH=$(( $(date -u +%s) - 7200 ))
-        # Classify every queued item: expired (past 2h), mine (queued for this recipient, or from before items
-        # recorded one), other (queued for a different recipient: kept for its own send, never merged here).
+        # Classify every queued item: mine (queued for this recipient, or from before items recorded one), other
+        # (queued for a different recipient: kept for its own send, never merged here). Nothing expires (q93 JG-10).
         # A queue that doesn't parse leaves the file untouched and the original send goes through (fail open).
-        if CLASSIFIED="$(jq -c --argjson cutoff "$CUTOFF_EPOCH" --arg to "$TO" \
-            '(.ts | fromdateiso8601) as $t | if $t < $cutoff then {k:"expired",e:.} elif (.to == null or .to == $to) then {k:"mine",e:.} else {k:"other",e:.} end' \
+        if CLASSIFIED="$(jq -c --arg to "$TO" \
+            'if (.to == null or .to == $to) then {k:"mine",e:.} else {k:"other",e:.} end' \
             "$OUTBOX_FILE" 2>/dev/null)"; then
-          printf '%s\n' "$CLASSIFIED" | jq -c 'select(.k == "expired") | .e' >> "$OUTBOX_DIR/expired.jsonl" 2>/dev/null || true
           OTHERS="$(printf '%s\n' "$CLASSIFIED" | jq -c 'select(.k == "other") | .e' 2>/dev/null)"
           FRESH="$(printf '%s\n' "$CLASSIFIED" | jq -c 'select(.k == "mine") | .e' 2>/dev/null)"
           if [ -n "$OTHERS" ]; then printf '%s\n' "$OTHERS" > "$OUTBOX_FILE"; else : > "$OUTBOX_FILE"; fi

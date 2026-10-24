@@ -17,7 +17,7 @@ test_installs_a_timed_user_prompt_submit_hook_idempotently_and_keeps_foreign_hoo
   install "$d"; install "$d"
   [ -x "$d/hooks/prompt-sort.sh" ] || { echo "FAIL: hook script not copied/executable"; exit 1; }
   [ "$(jq '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort"))] | length' "$d/settings.json")" = "1" ] || { echo "FAIL: expected exactly one aw:prompt-sort entry"; exit 1; }
-  [ "$(jq -r '.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .timeout' "$d/settings.json")" = "3" ] || { echo "FAIL: timeout must be 3s"; exit 1; }
+  [ "$(jq -r '.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .timeout' "$d/settings.json")" = "6" ] || { echo "FAIL: timeout must be 6s"; exit 1; }
   [ "$(jq -r '.hooks.UserPromptSubmit[0].hooks[0].command' "$d/settings.json")" = "python3 /x/prism-route/on_prompt.py --v4" ] || { echo "FAIL: the foreign Prism hook must stay first and untouched"; exit 1; }
   jq -e '.hooks.SessionStart[].hooks[] | select(.command | endswith("# aw:judge-health"))' "$d/settings.json" > /dev/null || { echo "FAIL: judge-health must still be installed"; exit 1; }
   echo "PASS: test_installs_a_timed_user_prompt_submit_hook_idempotently_and_keeps_foreign_hooks"
