@@ -14,7 +14,7 @@ internal static class DocsSteps
         .Writes(Every("fact:docsResult"), On("fact:docsScope", "candidates"), On("fact:prState", "candidates"), On("fact:findings", "candidates"), On("fact:handoffNote", "candidates"), On("fact:workspace", "candidates"));
 
     /// <summary>'step.docs.update': edits the listed docs in the docs worktree; 'changed', 'noChange' or 'blocked'.</summary>
-    public static BlockDescriptor Update { get; } = AgentStep("step.docs.update", Capability.Tools | Capability.WriteScope).Reads("fact:docsScope", "fact:prState", "fact:findings", "fact:handoffNote", "fact:phasePacket").Reports("changed", "noChange", "blocked").Writes(Every("fact:handoffNote"));
+    public static BlockDescriptor Update { get; } = AgentStep("step.docs.update", Capability.Tools | Capability.WriteScope).Reads("fact:docsScope", "fact:prState", "fact:findings", "fact:handoffNote", "fact:phasePacket", "fact:workspace").Reports("changed", "noChange", "blocked").Writes(Every("fact:handoffNote"));
 
     /// <summary>'step.docs.check': doc paths only, links resolve, the markdown parses; 'pass' or 'fail' (with 'fact:findings').</summary>
     public static BlockDescriptor Check { get; } = BlockStep("step.docs.check", Capability.Tools).Takes(Text("paths")).Reads("fact:docsScope", "fact:workspace").Reports("pass", "fail").Writes(On("fact:findings", "fail"));

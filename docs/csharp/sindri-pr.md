@@ -44,6 +44,8 @@ Output: one line per finding with its fix, then the verdict; `--json` prints `{ 
 
 Exit codes: 0 no findings, 1 findings, 2 usage or a tool error (a missing directory or fact file, a worktree git cannot read).
 
+The docs agent runs it on its own work. `step.docs.update` declares `fact:workspace` and `fact:docsScope` among its input facts, so the launch writes `workspace.json` and `docsScope.json` into the Step's run directory, and `DocsUpdateInstructions` tells the agent to run `sindri docs check --facts "$AW_SINDRI_RUN_DIR" --json`, fix every finding and run it again before it reports `changed`. `step.docs.check` stays the gate after the Step.
+
 ## Steps (`Features/Pr`)
 
 | Block | Outcomes | Does |

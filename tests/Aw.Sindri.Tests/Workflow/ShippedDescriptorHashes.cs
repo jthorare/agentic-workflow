@@ -40,7 +40,7 @@ internal static class ShippedDescriptorHashes
         ["step.desk.choose"] = "sha256:f01cd85115d1e9d1e12afdb5cdae46a3bdbf7a033d0f95d9973c7847ca6e062c",
         ["step.docs.check"] = "sha256:86370439930195d2543e6d57da90e5e73281bde43e0f78c1c42b97929a2dc43d",
         ["step.docs.scope"] = "sha256:588b7dde7f1d787a475280c94f1e18e5e52086c8a7cca1ebc3466a251ab81cc9",
-        ["step.docs.update"] = "sha256:fe3be5076278a2899201656a5178065bb13a5eaee1ae26cea6b4528fa6438fa9",
+        ["step.docs.update"] = "sha256:6c009a9be381e08469fcb8b223dc350f7f80c5789ab7b076e6f43349025bf1ba",
         ["step.evidence.api-plan"] = "sha256:6569f1b231e81b1c2766f6d6a2c921d913902f8bb018397ef406eb561a925988",
         ["step.evidence.api-run"] = "sha256:d4e136c9e5435a8485879e5910510eccd99b6cd7a200ba74248fb4a8c405991d",
         ["step.evidence.combine"] = "sha256:4763332a755d9790c0f16f7a8bc90e0327e11ca25fddb9f95c46944d06afb5a4",
