@@ -82,7 +82,7 @@ public static partial class SettingsReader
                     MaxBudget = section.MaxBudget ?? settings.MaxBudget,
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
-                    SessionsEnabled = section.Sessions?.Enabled ?? false,
+                    SessionsEnabled = section.Sessions?.Enabled ?? true,
                     Onyx = sources.Value.Onyx,
                     Linear = sources.Value.Linear,
                     LinearTeams = sources.Value.Teams,

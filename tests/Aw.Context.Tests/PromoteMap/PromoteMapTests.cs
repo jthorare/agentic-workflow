@@ -86,15 +86,15 @@ public sealed class PromoteMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_cant_promote()
+    public async Task A_session_may_promote()
     {
         _ = await Drafts.Build(_world);
         await Decide(new ReviewDecision(ReviewVerb.AcceptDeterministic));
 
         var promoted = await _world.Map.Promote(MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, promoted.Error.Code);
-        _ = Assert.Single((await _world.Store.Versions(MapWorld.None)).Value, v => v.Status == MapVersionStatus.Draft);
+        Assert.True(promoted.IsSuccess);
+        Assert.DoesNotContain((await _world.Store.Versions(MapWorld.None)).Value, v => v.Status == MapVersionStatus.Draft);
     }
 
     private static ContextScope DenyingPrivate() =>

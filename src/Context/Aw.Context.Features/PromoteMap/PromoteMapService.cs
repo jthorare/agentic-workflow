@@ -18,7 +18,7 @@ internal sealed class PromoteMapService(IGraphStore store, TimeProvider clock) :
 {
     public async ValueTask<Result<MapPromoted>> Handle(PromoteMapRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.Gate(request.Scope, "promoting a draft") is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

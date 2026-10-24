@@ -120,7 +120,7 @@ that graph plus rank fusion across adapters.
   session caller on the whole-map paths (bulk accept, `--apply`, export, promote, build) and leaves a single decision to
   the class check.
 - **Session reads, any transport.** `context.sessions.enabled` gates every `session`-class context read: MCP, the CLI
-  run inside an agent session, and plain HTTP. Off, they answer `SND-CONTEXT-020`; `human` reads are unaffected.
+  run inside an agent session, and plain HTTP. Off, they answer `SND-CONTEXT-020`; `human` reads are unaffected. **Amended per owner q93 (2026-10-23):** the key defaults to on (the owner may turn it off); sessions also build, back-test, measure, read the repo heads, review, promote and preview a map, and search the intent sources (no `context.repoTeams` needed); map import, export, hold, release, eval purge and profile approval stay with a human or the service, and the typed confirmation stays on import. The "Decisions stay human (X63)" rule below is superseded for review and promote.
 - **Denied paths.** The profile's `index.denyPaths` (added to the built-in secret globs) hide a path from every read of the map as soon as the profile with the glob is approved: its code nodes, the edges touching them, the features only they made, the surfaces only they produced and any evidence that names them are left out of lenses, file maps, queries, export, `map status`, the review queue (its counts, the bulk accept and the promote check), the history and a run's proposal statuses, for every caller. The decision is made once, on the map with the overrides applied, so a feature a person accepted goes with its only file. The path leaves the stored map when a draft is promoted, whether the draft came from a build or from a proposal.
 - **Repo scope.** A `session` caller sees only records reachable from its `X-Sindri-Repo`: that repo's files and code,
   graph nodes the repo implements and their cascade, and intent records linked to those nodes or from the Linear teams
@@ -947,7 +947,7 @@ HIGHs, fixed:
 
 Also fixed: a stage-owner brief overriding `/specToProvenPR`'s epic defaults (devex); owners stay assigned until merge
 and do their own rebases; the lead is the only `stages.md` writer; caps on ready-unmerged PRs and stack depth; a token
-budget per stage; S-2W as its own stage, merging before S-5A; `context.sessions.enabled` defaults to false; MCP usage
+budget per stage; S-2W as its own stage, merging before S-5A; `context.sessions.enabled` defaults to false (on since owner q93, 2026-10-23); MCP usage
 counts in `sources status` (P-4); every-source-down is exit 2 (`SND-CONTEXT-011`); `scrub-blocked` as a citation state;
 stale review files refused (`SND-CONTEXT-043`), resume after quit, `--undo`; cascade behaviour after ascend; truth
 mapped through the sample's as-of map; as-of maps deterministic-only and cached; Linear canonical keys on the UUID; the

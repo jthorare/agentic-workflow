@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Globalization;
 using Aw.Context.Core.Review;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Host.Text;
 
@@ -10,8 +9,8 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// The review half of 'sindri context map …' (context spec §8.7, README X63): review (the loop at a terminal, the queue, the
-/// history, an export, single decisions), promote, propose and proposals. The desk actions are sent at once; the protected ones
-/// (--apply, merge, add, delete, promote) show what they would do, then the human types the server's challenge at a terminal.
+/// history, an export, single decisions), promote, propose and proposals. Every action is sent at once, from a human or a session (the typed
+/// challenge on --apply, merge, add, delete and promote was removed per owner q93, 2026-10-23).
 /// </summary>
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verbs write.</param>
@@ -43,21 +42,7 @@ internal sealed class ContextReviewVerbs(ControlPlaneClient client, Output outpu
 
     internal async Task<int> Promote(CancellationToken ct)
     {
-        var shown = await client.Post<PromoteContextMapRequest, PromoteContextMapResponse>(Route + "/promote", new PromoteContextMapRequest(), ct).ConfigureAwait(false);
-        if (shown.IsError)
-        {
-            return await Failed(shown.Error).ConfigureAwait(false);
-        }
-
-        var preview = shown.Value.Value;
-        await output.Out.WriteAsync(ContextReviewText.Promote(preview)).ConfigureAwait(false);
-        var answer = preview.Challenge is { } challenge ? await Answer(challenge).ConfigureAwait(false) : SindriErrors.AuthRefused.With("the server issued no challenge; nothing was promoted (fix: update the CLI to the server's build)");
-        if (answer.IsError)
-        {
-            return await Failed(answer.Error).ConfigureAwait(false);
-        }
-
-        var done = await client.Post<PromoteContextMapRequest, PromoteContextMapResponse>(Route + "/promote", new PromoteContextMapRequest(preview.Draft, answer.Value), ct).ConfigureAwait(false);
+        var done = await client.Post<PromoteContextMapRequest, PromoteContextMapResponse>(Route + "/promote", new PromoteContextMapRequest(), ct).ConfigureAwait(false);
         return done.IsError ? await Failed(done.Error).ConfigureAwait(false) : await output.Text(ContextReviewText.Promote(done.Value.Value), 0).ConfigureAwait(false);
     }
 
@@ -121,29 +106,10 @@ internal sealed class ContextReviewVerbs(ControlPlaneClient client, Output outpu
             : await output.Text(ContextReviewText.Exported(answer.Value.Value), 0).ConfigureAwait(false);
     }
 
-    /// <summary>One review request. A protected variant first answers its preview and challenge; the human types the text and it is sent again with the answer.</summary>
+    /// <summary>One review request, sent at once.</summary>
     private async Task<int> Send(ReviewContextMapRequest request, bool json, CancellationToken ct)
     {
-        var first = await client.Post<ReviewContextMapRequest, ReviewContextMapResponse>(Route + "/review", request, ct).ConfigureAwait(false);
-        if (first.IsError)
-        {
-            return await Failed(first.Error).ConfigureAwait(false);
-        }
-
-        var shown = first.Value;
-        if (shown.Value.Challenge is not { } challenge)
-        {
-            return json ? await output.Raw(shown.Body, 0).ConfigureAwait(false) : await output.Text(ContextReviewText.Review(shown.Value), 0).ConfigureAwait(false);
-        }
-
-        await output.Out.WriteAsync(ContextReviewText.Review(shown.Value)).ConfigureAwait(false);
-        var answer = await Answer(challenge).ConfigureAwait(false);
-        if (answer.IsError)
-        {
-            return await Failed(answer.Error).ConfigureAwait(false);
-        }
-
-        var done = await client.Post<ReviewContextMapRequest, ReviewContextMapResponse>(Route + "/review", request with { Answer = answer.Value }, ct).ConfigureAwait(false);
+        var done = await client.Post<ReviewContextMapRequest, ReviewContextMapResponse>(Route + "/review", request, ct).ConfigureAwait(false);
         return done.IsError ? await Failed(done.Error).ConfigureAwait(false)
             : json ? await output.Raw(done.Value.Body, 0).ConfigureAwait(false)
             : await output.Text(ContextReviewText.Review(done.Value.Value), 0).ConfigureAwait(false);
@@ -205,19 +171,6 @@ internal sealed class ContextReviewVerbs(ControlPlaneClient client, Output outpu
 
         await output.Out.WriteAsync("\n" + ContextReviewText.Review(answer.Value.Value)).ConfigureAwait(false);
         return (0, answer.Value.Value.Result?.Written.Count);
-    }
-
-    /// <summary>The human's answer to the challenge: what they typed at the terminal, sent as is (the server compares it).</summary>
-    private async Task<Kernel.Result<ChallengeAnswer>> Answer(ContextChallenge challenge)
-    {
-        if (!interactive)
-        {
-            return SindriErrors.AuthRefused.With($"this needs an interactive terminal: run it yourself and type '{challenge.Action}'; nothing was changed");
-        }
-
-        await output.Out.WriteAsync($"Type '{challenge.Action}' to confirm: ").ConfigureAwait(false);
-        var typed = (await input.ReadLineAsync().ConfigureAwait(false))?.Trim() ?? string.Empty;
-        return new ChallengeAnswer(challenge.Challenge, typed);
     }
 
     private async Task<int> Failed(Kernel.Error error) => ContextExit.For(error, await output.Error(error).ConfigureAwait(false));

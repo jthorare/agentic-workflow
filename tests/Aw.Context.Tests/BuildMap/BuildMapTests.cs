@@ -227,12 +227,12 @@ public sealed class BuildMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_cant_build()
+    public async Task A_session_may_build()
     {
         var report = await _world.Map.BuildMap(progress: null, MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, report.Error.Code);
-        Assert.Empty(await Versions());
+        Assert.True(report.IsSuccess);
+        Assert.NotEmpty(await Versions());
     }
 
     [Fact, Trait("Lane", "unit")]

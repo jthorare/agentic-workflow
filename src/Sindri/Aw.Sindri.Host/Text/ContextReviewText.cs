@@ -116,16 +116,14 @@ internal static partial class ContextReviewText
     [GeneratedRegex(@"\b[a-z][a-z0-9-]*:[^\s,()']+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Ids { get; }
 
-    internal static string Review(ReviewContextMapResponse response) => response.Result is { } result
-        ? Result("review", result) + (response.Sequence is { } seq ? Invariant($"recorded as event {seq}\n") : string.Empty)
-        : (response.Summary ?? string.Empty) + "\n";
+    internal static string Review(ReviewContextMapResponse response) =>
+        Result("review", response.Result) + (response.Sequence is { } seq ? Invariant($"recorded as event {seq}\n") : string.Empty);
 
     internal static string Exported(ReviewExported exported) =>
         Invariant($"Exported the review queue ({exported.Entries} entries) to {exported.Path}\nedit the 'decision' of each entry, then: sindri context map review --apply {exported.Path}\n");
 
-    internal static string Promote(PromoteContextMapResponse response) => response.Promoted is { } promoted
-        ? Invariant($"Promoted {response.Draft} to current for {promoted.Version.Repo.Value} (v{promoted.Version.Number}){(promoted.Retained is { } old ? Invariant($"; v{old.Number} is retained") : string.Empty)}; recorded as event {response.Sequence}\n")
-        : $"draft {response.Draft} has nothing left to decide\n";
+    internal static string Promote(PromoteContextMapResponse response) =>
+        Invariant($"Promoted {response.Draft} to current for {response.Promoted.Version.Repo.Value} (v{response.Promoted.Version.Number}){(response.Promoted.Retained is { } old ? Invariant($"; v{old.Number} is retained") : string.Empty)}; recorded as event {response.Sequence}\n");
 
     internal static string Proposals(ProposalsView view, bool fence)
     {

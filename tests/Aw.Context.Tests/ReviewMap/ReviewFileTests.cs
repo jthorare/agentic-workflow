@@ -36,14 +36,14 @@ public sealed class ReviewFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_cant_export_the_queue_it_is_a_whole_map_path()
+    public async Task A_session_may_export_the_queue()
     {
         _ = await Drafts.Build(_world);
 
         var exported = await _world.Map.ExportReview(path: null, MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, exported.Error.Code);
-        Assert.Empty(_world.ReviewFiles.Files);
+        Assert.True(exported.IsSuccess);   // removed per owner q93 (2026-10-23)
+        Assert.NotEmpty(_world.ReviewFiles.Files);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -76,7 +76,7 @@ public sealed class ReviewFileTests : IDisposable
         Assert.Equal((1, 0), (preview.Entries, preview.Decided));
         Assert.Equal((1, 1), (after.Entries, after.Decided));
         Assert.NotEqual(preview.Hash, after.Hash, StringComparer.Ordinal);
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, session.Error.Code);
+        Assert.True(session.IsSuccess);
         Assert.Equal(0, await Drafts.Rows(_world));
     }
 
@@ -141,13 +141,13 @@ public sealed class ReviewFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_file_in_a_worktree_or_a_missing_one_is_refused_and_a_session_cant_apply()
+    public async Task A_file_in_a_worktree_or_a_missing_one_is_refused_for_a_session_too()
     {
         _ = await Drafts.Build(_world);
         var inside = await _world.Map.ApplyReviewFile(Path.Combine(FakeReviewFileStore.WorktreeRoot, "review.json"), Drafts.Scope, MapWorld.None);
         var missing = await _world.Map.ApplyReviewFile(Path.Combine(FakeReviewFileStore.Folder, "nothing.json"), Drafts.Scope, MapWorld.None);
         var session = await _world.Map.ApplyReviewFile(Path.Combine(FakeReviewFileStore.Folder, "nothing.json"), MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
-        Assert.Equal((ContextErrors.PathInWorktree.Code, ContextErrors.MapFileInvalid.Code, ContextErrors.SessionsDisabled.Code), (inside.Error.Code, missing.Error.Code, session.Error.Code));
+        Assert.Equal((ContextErrors.PathInWorktree.Code, ContextErrors.MapFileInvalid.Code, ContextErrors.MapFileInvalid.Code), (inside.Error.Code, missing.Error.Code, session.Error.Code));
     }
 }

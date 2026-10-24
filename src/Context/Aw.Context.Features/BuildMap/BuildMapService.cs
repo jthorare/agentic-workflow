@@ -33,11 +33,6 @@ internal sealed class BuildMapService(
     public async ValueTask<Result<MapBuildReport>> Handle(BuildMapRequest request, CancellationToken cancellationToken)
     {
         var scope = request.Scope;
-        if (scope.Caller.Kind == ContextCallerKind.Session)
-        {
-            return ContextErrors.SessionsDisabled.With("building the map is a human or service job: a session can't start one");
-        }
-
         var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller).Map(r => (Settings: settings, Repos: r)));
         if (mapped.IsError)
         {

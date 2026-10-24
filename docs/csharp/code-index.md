@@ -47,7 +47,7 @@ Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 017 to 029 are re
 
 ## Read surfaces (CI-10a)
 
-Sindri's reads of the facade live in `Aw.Sindri.Features/CodeIndexReads` (the slices) and `Aw.Sindri.Host` (routes, CLI, text); the facade is `ICodeIndex`, scoped by `CodeIndexScopes` from the approved profile and the caller (a session's scope holds only its own repo, so another repo and a repo that does not exist answer the same SND-CODEIDX-013).
+Sindri's reads of the facade live in `Aw.Sindri.Features/CodeIndexReads` (the slices) and `Aw.Sindri.Host` (routes, CLI, text); the facade is `ICodeIndex`, scoped by `CodeIndexScopes` from the approved profile and the caller (a session's scope holds every repo of the approved profile, like a human's, since owner q93, 2026-10-23; a repo outside the profile, and one never built, answer the same SND-CODEIDX-013).
 
 | Surface | What |
 |---|---|

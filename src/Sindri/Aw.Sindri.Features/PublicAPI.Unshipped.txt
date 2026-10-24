@@ -339,25 +339,21 @@ Aw.Sindri.Features.ContextCalls.MapImportChallenge.ExpiresAt.init -> void
 Aw.Sindri.Features.ContextCalls.MapImportChallenge.MapImportChallenge(Aw.Sindri.Core.Challenges.ChallengeId Challenge, string! Action, System.DateTimeOffset ExpiresAt) -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest
 Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest!
-Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Answer.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
-Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Answer.init -> void
-Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Deconstruct(out string? Draft, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer) -> void
+Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Deconstruct(out string? Draft) -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Draft.get -> string?
 Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Draft.init -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.Equals(Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest? other) -> bool
-Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.PromoteContextMapRequest(string? Draft = null, Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer = null) -> void
+Aw.Sindri.Features.ContextCalls.PromoteContextMapRequest.PromoteContextMapRequest(string? Draft = null) -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.<Clone>$() -> Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse!
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Challenge.get -> Aw.Sindri.Features.ContextCalls.ContextChallenge?
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Challenge.init -> void
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Deconstruct(out string! Draft, out Aw.Context.Core.Map.MapPromoted? Promoted, out long? Sequence, out Aw.Sindri.Features.ContextCalls.ContextChallenge? Challenge) -> void
+Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Deconstruct(out string! Draft, out Aw.Context.Core.Map.MapPromoted! Promoted, out long Sequence) -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Draft.get -> string!
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Draft.init -> void
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Equals(Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse? other) -> bool
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.PromoteContextMapResponse(string! Draft, Aw.Context.Core.Map.MapPromoted? Promoted, long? Sequence, Aw.Sindri.Features.ContextCalls.ContextChallenge? Challenge = null) -> void
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Promoted.get -> Aw.Context.Core.Map.MapPromoted?
+Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.PromoteContextMapResponse(string! Draft, Aw.Context.Core.Map.MapPromoted! Promoted, long Sequence) -> void
+Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Promoted.get -> Aw.Context.Core.Map.MapPromoted!
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Promoted.init -> void
-Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Sequence.get -> long?
+Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Sequence.get -> long
 Aw.Sindri.Features.ContextCalls.PromoteContextMapResponse.Sequence.init -> void
 Aw.Sindri.Features.ContextCalls.ProposeContextMapRequest
 Aw.Sindri.Features.ContextCalls.ProposeContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ProposeContextMapRequest!
@@ -400,10 +396,8 @@ Aw.Sindri.Features.ContextCalls.QueryContextRequest.Symbol.get -> string?
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Symbol.init -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest!
-Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Answer.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
-Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Answer.init -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.CarriesProtectedFields.get -> bool
-Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Deconstruct(out string! Verb, out string? Node, out string? Link, out string? Override, out string? Label, out string? Other, out string? Path, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer, out System.Collections.Generic.IReadOnlyList<string!>? Overrides) -> void
+Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Deconstruct(out string! Verb, out string? Node, out string? Link, out string? Override, out string? Label, out string? Other, out string? Path, out System.Collections.Generic.IReadOnlyList<string!>? Overrides) -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Equals(Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest? other) -> bool
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Label.get -> string?
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Label.init -> void
@@ -419,23 +413,19 @@ Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Overrides.get -> System.
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Overrides.init -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Path.get -> string?
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Path.init -> void
-Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.ReviewContextMapRequest(string! Verb, string? Node = null, string? Link = null, string? Override = null, string? Label = null, string? Other = null, string? Path = null, Aw.Sindri.Core.Challenges.ChallengeAnswer? Answer = null, System.Collections.Generic.IReadOnlyList<string!>? Overrides = null) -> void
+Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.ReviewContextMapRequest(string! Verb, string? Node = null, string? Link = null, string? Override = null, string? Label = null, string? Other = null, string? Path = null, System.Collections.Generic.IReadOnlyList<string!>? Overrides = null) -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Variant.get -> string!
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Verb.get -> string!
 Aw.Sindri.Features.ContextCalls.ReviewContextMapRequest.Verb.init -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse!
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Challenge.get -> Aw.Sindri.Features.ContextCalls.ContextChallenge?
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Challenge.init -> void
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Deconstruct(out Aw.Context.Core.Review.ReviewResult? Result, out long? Sequence, out Aw.Sindri.Features.ContextCalls.ContextChallenge? Challenge, out string? Summary) -> void
+Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Deconstruct(out Aw.Context.Core.Review.ReviewResult! Result, out long? Sequence) -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Equals(Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse? other) -> bool
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Result.get -> Aw.Context.Core.Review.ReviewResult?
+Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Result.get -> Aw.Context.Core.Review.ReviewResult!
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Result.init -> void
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.ReviewContextMapResponse(Aw.Context.Core.Review.ReviewResult? Result, long? Sequence, Aw.Sindri.Features.ContextCalls.ContextChallenge? Challenge = null, string? Summary = null) -> void
+Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.ReviewContextMapResponse(Aw.Context.Core.Review.ReviewResult! Result, long? Sequence) -> void
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Sequence.get -> long?
 Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Sequence.init -> void
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Summary.get -> string?
-Aw.Sindri.Features.ContextCalls.ReviewContextMapResponse.Summary.init -> void
 Aw.Sindri.Features.ContextCalls.ShowContextNodeRequest
 Aw.Sindri.Features.ContextCalls.ShowContextNodeRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ShowContextNodeRequest!
 Aw.Sindri.Features.ContextCalls.ShowContextNodeRequest.Deconstruct(out string! Key) -> void

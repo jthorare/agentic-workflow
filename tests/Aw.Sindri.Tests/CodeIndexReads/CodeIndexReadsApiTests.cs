@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.CodeIndexReads;
 public sealed class CodeIndexReadsApiTests
 {
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task A_session_reaches_the_facade_with_a_scope_of_its_own_repo_only()
+    public async Task A_session_reaches_the_facade_with_every_profile_repo_like_a_human()
     {
         await using var host = await CodeIndexScenarios.Start(TestContext.Current.CancellationToken);
 
@@ -20,14 +20,14 @@ public sealed class CodeIndexReadsApiTests
         _ = await host.Http.Ask(Get("/sindri/code-index/status", ItemScenarios.Human(host)));
 
         var scopes = ((FakeCodeIndex)host.App.Services.GetRequiredService<ICodeIndex>()).Scopes;
-        Assert.Equal(["demo"], [.. scopes[0].Repos.Select(static r => r.Name.Value)]);
+        Assert.Equal(["demo", "other"], [.. scopes[0].Repos.Select(static r => r.Name.Value)]);   // owner q93 (2026-10-23): CIX-L56
         Assert.Equal((CallerKind.Session, "demo"), (scopes[0].Caller.Kind, scopes[0].Caller.Repo?.Value));
         Assert.Equal(["demo", "other"], [.. scopes[1].Repos.Select(static r => r.Name.Value)]);
         Assert.Equal(CallerKind.Human, scopes[1].Caller.Kind);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Another_repo_and_a_repo_that_does_not_exist_answer_the_same_body_to_a_session()
+    public async Task A_session_reads_another_profile_repo_and_a_repo_outside_the_profile_is_still_404()
     {
         await using var host = await CodeIndexScenarios.Start(TestContext.Current.CancellationToken);
         var session = ItemScenarios.Session("demo");
@@ -37,9 +37,9 @@ public sealed class CodeIndexReadsApiTests
         var otherSymbol = await host.Http.Ask(Get("/sindri/code-index/callers?ref=" + Uri.EscapeDataString(CodeIndexScenarios.Secret.Value), session));
         var neverSymbol = await host.Http.Ask(Get("/sindri/code-index/callers?ref=" + Uri.EscapeDataString("nope:src/X.cs#X.Y"), session));
 
-        Assert.Equal((HttpStatusCode.NotFound, HttpStatusCode.NotFound), (other.Status, nope.Status));
-        Assert.Equal(Words(other.Body), Words(nope.Body));
-        Assert.Equal(Words(otherSymbol.Body), Words(neverSymbol.Body));
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.NotFound), (other.Status, nope.Status));
+        Assert.Equal(HttpStatusCode.OK, otherSymbol.Status);
+        Assert.Equal(HttpStatusCode.NotFound, neverSymbol.Status);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
@@ -63,12 +63,5 @@ public sealed class CodeIndexReadsApiTests
         var status = await host.Http.Ask(Get("/sindri/code-index/status", ItemScenarios.Human(host)));
 
         Assert.Equal("SND-PROFILE-005", status.Code);
-    }
-
-    // The problem's words without its trace id, which is different on every call.
-    private static string Words(string body)
-    {
-        var problem = JsonDocument.Parse(body).RootElement;
-        return string.Join('|', problem.GetProperty("status").GetInt32(), problem.GetProperty("title").GetString(), problem.GetProperty("detail").GetString());
     }
 }

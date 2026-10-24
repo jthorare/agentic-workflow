@@ -109,7 +109,8 @@ and the status reads "never refreshed".
 | `SND-CONTEXT-006` | Invalid (400) | 1 | The question is invalid: no words, two shapes, depth or budget out of range |
 | `SND-CONTEXT-010` | Unavailable | — | One source is unavailable: a `degraded` entry, never the answer's error |
 | `SND-CONTEXT-011` | Unavailable (503) | 2 | Every source is unavailable |
-| `SND-CONTEXT-020` | Forbidden (403) | 1 | Session reads are off (`context.sessions.enabled: false`), on every transport; also a session asking for a human or service job (map import, preview, build, export). Defined by S-1A (spec §3); S-1M maps it to the MCP tool error |
+| `SND-CONTEXT-020` | Forbidden (403) | 1 | Session reads are off (`context.sessions.enabled: false`, on by default since owner q93, 2026-10-23), on every transport; also a session asking for a human or service job (map import, export, hold, release, eval purge). Defined by S-1A (spec §3); S-1M maps it to the MCP tool error |
+| `SND-CONTEXT-021` | Invalid (400) | 1 | The call names no repo (no `X-Sindri-Repo` header): every context call says which repo it is for, with no guess from the folder and no fallback (owner q94, 2026-10-23). The message names the header and gives an example |
 
 ### Tests
 
@@ -285,7 +286,7 @@ is enough. `CheckRetention` counts the same set.
 `GET /sindri/context/map/export` is the one query that writes: a file under `exports/` (owner-only, purged after 14
 days), never the store or the ledger. It is a query because the API spec lists it as one, and it changes no state a
 command or event describes; a later file-writing route should not take it as a precedent without the same reasons.
-Import and preview refuse a session-kind caller in the engine too (SND-CONTEXT-020), whatever surface reaches them.
+Import refuses a session-kind caller in the engine too (SND-CONTEXT-020), whatever surface reaches them; preview is open to a session (owner q93, 2026-10-23).
 
 **The challenge (S-3b):** the import uses the engine's shared challenge (engine spec §4.2, README X30). The preview
 (`ImportContextMapRequest` without a hash) issues `import map <hash6>` with the subject `map:<content hash>` through
@@ -410,8 +411,7 @@ User-facing behaviour is in `docs/sindri/context.md` (S-4). This is where the co
   arrives with each pass, from `context.labeling.maxTokens`; the profile's `context.scrub.extraPatterns` scrub every path sent to the model). Ports: `IRepoReader` (files at a sha), `IClusterSource`, `ILabeler`.
 - **Core `Overrides/`, `Review/`, `Proposals/`, `Lenses/`.** Pure: `OverrideApplier`, `ReviewBacklog` (the queue), `ReviewPlanner` (one
   decision to override rows; `Repoint` is an undo of the orphan plus the same decision on the new node), `ReviewFileMatcher`, `PromoteReadiness`,
-  `ReviewHistory`, `ProposalPlanner`, `GraphStatuses`, `LensesBuilder`, `FileMapBuilder`. `ReviewDrafts.Gate` (the whole-map paths: session callers
-  are `SND-CONTEXT-020`) and `ReviewDrafts.GateDecision` (a single decision is left to Sindri's class check; only the bulk accept keeps the gate).
+  `ReviewHistory`, `ProposalPlanner`, `GraphStatuses`, `LensesBuilder`, `FileMapBuilder`. the review paths (queue, history, bulk accept, review file, promote, clean) check only `MapAccess.Gate`: `ReviewDrafts.Gate` and `GateDecision`, which refused a session, were removed per owner q93 (2026-10-23).
 - **Core `Locks/IHeavyJobLock`** is the context engine's lock port; `Sindri.Core/Locks/IHeavySlots` is Sindri's own (one lock for the engine
   and the shell tools today; the workflow engine's `heavy` allocator is meant to use it too and is not wired yet).
 - **Infrastructure.** `GitRepoReader` over `GitCli` (048), `GraphifyClusterSource` (pinned, sandboxed, fail-closed; `GraphifySnapshot` unpacks the commit under the file and snapshot caps, counting only copied bytes; `GraphifyProcess` runs graphify under the time limit and keeps at most 64 KB of each output stream; `graph.json` is parsed from a stream). The backtest's as-of cache key gains the limits when they are not the shipped ones, and a map whose cluster pass was partial (`ClusterSet.Reason`) is not cached, `ModelLabeler` over `IModelPort`
@@ -440,11 +440,10 @@ User-facing behaviour is in `docs/sindri/context.md` (S-4). This is where the co
 
 | Row | Class | Who may run it |
 |---|---|---|
-| `ReviewContextMap:accept`, `reject`, `rename`, `move`, `accept-deterministic`, `undo`, `drop`, `repoint` | desk | terminal, app |
-| `ReviewContextMap:apply-file`, `merge`, `add`, `delete` | protected (`NeedsTerminal`) | terminal, with the typed challenge `review <verb> <hash6>` bound to the request's fields (a file's content for apply-file) |
-| `PromoteContextMap` | protected (`NeedsTerminal`) | terminal, challenge `promote map v<N>` bound to the draft |
+| `ReviewContextMap:accept`, `reject`, `rename`, `move`, `accept-deterministic`, `undo`, `drop`, `repoint`, `apply-file`, `merge`, `add`, `delete` | desk, `SessionOk` | terminal, app, agent session; no typed challenge (removed per owner q93, 2026-10-23: each is a reversible override row) |
+| `PromoteContextMap` | desk, `SessionOk` | terminal, app, agent session; no typed challenge (removed per owner q93, 2026-10-23; the previous version is retained) |
 | `ProposeContextMap` | job | terminal, app, `service:engine` |
-| `BuildContextMap` | job (P6 runtime) | terminal, app, `service:engine` (a session is refused by the gate, `SND-AUTH-002`) |
+| `BuildContextMap`, `RefreshContextMap`, `RunContextBacktest` | job (P6 runtime), `SessionOk` | terminal, app, `service:engine`, agent session (owner q93, 2026-10-23; the single-flight and the heavy lock still bound them) |
 
 `map build` is a job on API P6's runtime: `AddContextJobs` (Features) registers it with `AddJob` (key `build`), `ContextJobEndpoints` maps it with `MapJob` (any body starts it), and `BuildContextMapService` is the work, run by the job runner under the starting caller: it passes the engine's step lines to the job's progress, appends `context.map.built` and returns a small result (`repo`, `draft`, `proposed`, at most 20 `degraded` lines). `ContextRebuildService` runs the same slice on its cadence outside the gate.
 
@@ -508,8 +507,8 @@ The goldens under `tests/Aw.Sindri.Tests/Golden/Api/context-*/` pin every body b
   egress-scrubs each on its own into `Citation.Aliases` (a blocked or empty one is dropped). JSON `cites.<n>.aliases`;
   the text form shows the first beside the key.
 - `Aw.Context.Core.Engine`: `SourcesReader` reads `context.sources` (`onyx`, `linear.teams`) for `SettingsReader`;
-  `ContextSettings.Onyx` and `ContextSettings.LinearTeams` hold the result. `ScopeRules.MayRead` keeps intent sources
-  from session callers until `context.repoTeams` exists (the linked intent in the graph is separate: owner decision 2026-10-15, B).
+  `ContextSettings.Onyx` and `ContextSettings.LinearTeams` hold the result. `ScopeRules.MayRead`, which kept intent sources
+  from session callers until `context.repoTeams` existed, was removed per owner q93 (2026-10-23): a session searches Onyx and Linear like a human, for the repos of the approved profile.
 - `Aw.Context.Infrastructure.Onyx` (all internal): `OnyxSource` (`IContextSource`), `OnyxClient`, `OnyxRequests` and
   `OnyxRoute` (the allowlist), `OnyxVersionProbe`, the wire records and their own `OnyxWireJsonContext`, and
   `OnyxSources.Create(OnyxSettings, IReadOnlySet<string> teams)`, the per-call factory registered by

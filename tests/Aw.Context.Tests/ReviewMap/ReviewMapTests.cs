@@ -48,7 +48,7 @@ public sealed class ReviewMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_cant_read_the_queue_or_decide_in_bulk()
+    public async Task A_session_may_read_the_queue_and_decide_in_bulk()
     {
         _ = await Drafts.Build(_world);
         var session = MapWorld.Session(FixtureMap.Repo);
@@ -56,8 +56,8 @@ public sealed class ReviewMapTests : IDisposable
         var queue = await _world.Map.ReviewQueue(limit: null, session, MapWorld.None);
         var bulk = await Decide(new ReviewDecision(ReviewVerb.AcceptDeterministic), session);
 
-        Assert.Equal((ContextErrors.SessionsDisabled.Code, ContextErrors.SessionsDisabled.Code), (queue.Error.Code, bulk.Error.Code));
-        Assert.Equal(0, await Drafts.Rows(_world));
+        Assert.True(queue.IsSuccess);
+        Assert.True(bulk.IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -201,7 +201,7 @@ public sealed class ReviewMapTests : IDisposable
         var session = await _world.Map.ReviewHistory(limit: null, MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
         Assert.Equal(new[] { rejected.Value, accepted.Value }.Order(StringComparer.Ordinal), history.Value.Entries.Select(e => e.Id.Value).Order(StringComparer.Ordinal));
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, session.Error.Code);
+        Assert.True(session.IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]

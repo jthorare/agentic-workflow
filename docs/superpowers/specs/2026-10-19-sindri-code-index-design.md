@@ -867,7 +867,7 @@ Defaults are what the builders do if you say nothing.
 - **Q7. Keep symbol text on disk?** The index stores each symbol's text (secrets scrubbed) so it can embed it later.
   *Default:* keep it only until the embedding is made, then drop it; the cost is that a changed model means re-reading the
   file from git, which is cheap. Say if you would rather keep it for faster rebuilds.
-- **Q8. Sessions reading the index.** An agent session may ask for symbols and callers in its own repo, with names fenced as
+- **Q8. Sessions reading the index.** An agent session may ask for symbols and callers in every repo of the approved profile (widened from its own repo only, per owner q93, 2026-10-23), with names fenced as
   untrusted, the same as the context lenses. *Default:* yes.
 - **Q9. One commit per repo.** The index keeps only the newest commit, so a scoping run that asks "as of last month's map"
   gets today's callers marked stale. *Default:* accept that for version 1.

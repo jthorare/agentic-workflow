@@ -21,11 +21,6 @@ internal sealed class RunBacktestService(CorpusLoader corpus, SampleScorer score
     {
         ArgumentNullException.ThrowIfNull(request);
         var scope = request.Scope;
-        if (scope.Caller.Kind == ContextCallerKind.Session)
-        {
-            return ContextErrors.SessionsDisabled.With("the backtest is a human or service job: a session can't start one");
-        }
-
         var settings = SettingsReader.Read(scope.Settings);
         var repos = settings.Bind(s => ScopeRules.Resolve(s, scope.Repos, scope.Caller));
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));

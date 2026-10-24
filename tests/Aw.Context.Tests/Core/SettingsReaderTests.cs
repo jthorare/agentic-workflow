@@ -14,7 +14,7 @@ public sealed class SettingsReaderTests
     {
         var settings = SettingsReader.Read(section: null).Value;
 
-        Assert.Equal((TimeSpan.FromSeconds(4), 32_000, 3, false), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
+        Assert.Equal((TimeSpan.FromSeconds(4), 32_000, 3, true), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
         Assert.Equal(ContextSettings.DefaultDocGlobs, settings.DocGlobs);
         Assert.Null(settings.Repos);
     }
@@ -63,9 +63,9 @@ public sealed class SettingsReaderTests
     [Fact, Trait("Lane", "unit")]
     public void Every_key_is_read()
     {
-        var settings = Read("""{"repos":["split-panes"],"docs":{"globs":["docs/**/*.md"]},"deadline":"500ms","maxBudget":6000,"minHits":1,"sessions":{"enabled":true}}""").Value;
+        var settings = Read("""{"repos":["split-panes"],"docs":{"globs":["docs/**/*.md"]},"deadline":"500ms","maxBudget":6000,"minHits":1,"sessions":{"enabled":false}}""").Value;
 
-        Assert.Equal((TimeSpan.FromMilliseconds(500), 6_000, 1, true), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
+        Assert.Equal((TimeSpan.FromMilliseconds(500), 6_000, 1, false), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
         Assert.Equal(["docs/**/*.md"], settings.DocGlobs, StringComparer.Ordinal);
         Assert.Equal(["split-panes"], settings.Repos!.Select(r => r.Value), StringComparer.Ordinal);   // why: set above
     }

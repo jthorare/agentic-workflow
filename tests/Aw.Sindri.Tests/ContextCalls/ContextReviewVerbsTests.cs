@@ -44,32 +44,30 @@ public sealed class ContextReviewVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Promote_shows_the_draft_asks_for_the_challenge_and_sends_the_typed_answer()
+    public async Task Promote_is_sent_once_with_no_challenge_and_prints_the_result()
     {
         var api = new ScriptedApi(
-            Ok("""{"draft":"v14@0a1b2c3","promoted":null,"sequence":null,"challenge":{"challenge":"CHL-00000000000000000000000000000001","action":"promote map v14","expiresAt":"2026-10-15T00:05:00Z"}}"""),
-            Ok("""{"draft":"v14@0a1b2c3","promoted":{"version":{"number":14,"repo":"aw-split-panes","commit":null,"keyVersion":1,"created":"2026-10-15T00:00:00Z","status":"current"},"retained":null},"sequence":7,"challenge":null}"""));
+            Ok("""{"draft":"v14@0a1b2c3","promoted":{"version":{"number":14,"repo":"aw-split-panes","commit":null,"keyVersion":1,"created":"2026-10-15T00:00:00Z","status":"current"},"retained":null},"sequence":7}"""));
 
-        var exit = await Run(api, interactive: true, "promote map v14\n", "promote");
+        var exit = await Run(api, interactive: true, string.Empty, "promote");
 
         Assert.True(exit == 0, _error.ToString());
-        Assert.Equal(2, api.Calls.Count);
-        Assert.Contains("\"draft\":\"v14@0a1b2c3\"", api.Calls[1].Body, StringComparison.Ordinal);
-        Assert.Contains("\"typed\":\"promote map v14\"", api.Calls[1].Body, StringComparison.Ordinal);
-        Assert.Contains("Type 'promote map v14' to confirm", _out.ToString(), StringComparison.Ordinal);
+        var (_, route, body) = Assert.Single(api.Calls);
+        Assert.Equal("/sindri/context/map/promote", route);
+        Assert.DoesNotContain("answer", body, StringComparison.Ordinal);
         Assert.Contains("Promoted v14@0a1b2c3 to current", _out.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Promote_without_a_terminal_sends_nothing_after_the_preview_and_exits_1()
+    public async Task Promote_without_a_terminal_is_sent_all_the_same()
     {
-        var api = new ScriptedApi(Ok("""{"draft":"v14@0a1b2c3","promoted":null,"sequence":null,"challenge":{"challenge":"CHL-00000000000000000000000000000001","action":"promote map v14","expiresAt":"2026-10-15T00:05:00Z"}}"""));
+        var api = new ScriptedApi(
+            Ok("""{"draft":"v14@0a1b2c3","promoted":{"version":{"number":14,"repo":"aw-split-panes","commit":null,"keyVersion":1,"created":"2026-10-15T00:00:00Z","status":"current"},"retained":null},"sequence":7}"""));
 
         var exit = await Run(api, interactive: false, string.Empty, "promote");
 
-        Assert.True(exit == 1, _error.ToString());
+        Assert.True(exit == 0, _error.ToString());
         _ = Assert.Single(api.Calls);
-        Assert.Contains("SND-AUTH-002", _error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -95,7 +93,7 @@ public sealed class ContextReviewVerbsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_single_decision_is_sent_at_once_and_prints_the_rows_and_what_is_left()
     {
-        var api = new ScriptedApi(Ok("""{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":4},"sequence":9,"challenge":null,"summary":null}"""));
+        var api = new ScriptedApi(Ok("""{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":4},"sequence":9}"""));
 
         var exit = await Run(api, interactive: false, string.Empty, "review", "accept", "feature:tabs");
 
@@ -111,7 +109,7 @@ public sealed class ContextReviewVerbsTests : IDisposable
     public async Task The_loop_sends_the_bulk_accept_and_each_decision_and_skip_sends_nothing()
     {
         const string Queue = """{"draft":"v14@0a1b2c3","entries":[{"node":"surface:command/close-tab","link":null,"group":"deterministic","label":"Close tab","provenance":"deterministic","confidence":1,"impact":1,"files":[],"parent":null},{"node":"feature:layout","link":null,"group":"model","label":"Layout","provenance":"model","confidence":0.7,"impact":1,"files":[],"parent":null},{"node":"feature:zoom","link":null,"group":"model","label":"Zoom","provenance":"model","confidence":0.6,"impact":0,"files":[],"parent":null}],"decided":0,"proposals":3,"version":{"number":14,"commit":"0a1b2c3"},"counts":{"deterministic":1,"model":2,"orphaned":0},"byKind":{"surface":1},"truncated":{"deterministic":false,"model":false,"orphaned":false}}""";
-        const string Done = """{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":1},"sequence":9,"challenge":null,"summary":null}""";
+        const string Done = """{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":1},"sequence":9}""";
         var api = new ScriptedApi(Ok(Queue), Ok(Done), Ok(Done));
 
         var exit = await Run(api, interactive: true, "y\na\ns\n", "review");
@@ -140,7 +138,7 @@ public sealed class ContextReviewVerbsTests : IDisposable
     public async Task The_loop_offers_the_whole_backlog_counts_only_what_the_server_took_and_says_how_many_it_did_not_show()
     {
         const string Queue = """{"draft":"v14@0a1b2c3","entries":[{"node":"surface:command/close-tab","link":null,"group":"deterministic","label":"Close tab","provenance":"deterministic","confidence":1,"impact":1,"files":[],"parent":null},{"node":"feature:layout","link":null,"group":"model","label":"Layout","provenance":"model","confidence":0.7,"impact":1,"files":[],"parent":null}],"decided":0,"proposals":8,"version":{"number":14,"commit":"0a1b2c3"},"counts":{"deterministic":3,"model":5,"orphaned":0},"byKind":{"surface":3},"truncated":{"deterministic":true,"model":true,"orphaned":false}}""";
-        const string Bulk = """{"result":{"written":["ovr_0123456789abcde1","ovr_0123456789abcde2","ovr_0123456789abcde3"],"skipped":[],"undecided":1},"sequence":9,"challenge":null,"summary":null}""";
+        const string Bulk = """{"result":{"written":["ovr_0123456789abcde1","ovr_0123456789abcde2","ovr_0123456789abcde3"],"skipped":[],"undecided":1},"sequence":9}""";
         var api = new ScriptedApi(Ok(Queue), Ok(Bulk), Problem(HttpStatusCode.Conflict, "SND-CONTEXT-047", "feature:layout is not in the review queue"));
 
         var exit = await Run(api, interactive: true, "y\na\ns\nq\n", "review");
@@ -153,17 +151,17 @@ public sealed class ContextReviewVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_protected_review_action_types_the_challenge_and_sends_it_again_with_the_answer()
+    public async Task A_merge_is_sent_at_once_with_no_challenge()
     {
-        var api = new ScriptedApi(
-            Ok("""{"result":null,"sequence":null,"challenge":{"challenge":"CHL-00000000000000000000000000000002","action":"review merge ab12cd","expiresAt":"2026-10-15T00:05:00Z"},"summary":"merge feature:a into feature:b in the draft map"}"""),
-            Ok("""{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":0},"sequence":3,"challenge":null,"summary":null}"""));
+        var api = new ScriptedApi(Ok("""{"result":{"written":["ovr_0123456789abcdef"],"skipped":[],"undecided":0},"sequence":3}"""));
 
-        var exit = await Run(api, interactive: true, "review merge ab12cd\n", "review", "merge", "feature:a", "--into", "feature:b");
+        var exit = await Run(api, interactive: false, string.Empty, "review", "merge", "feature:a", "--into", "feature:b");
 
         Assert.True(exit == 0, _error.ToString());
-        Assert.Contains("merge feature:a into feature:b in the draft map", _out.ToString(), StringComparison.Ordinal);
-        Assert.Contains("\"typed\":\"review merge ab12cd\"", api.Calls[1].Body, StringComparison.Ordinal);
+        var (_, _, body) = Assert.Single(api.Calls);
+        Assert.Contains("\"verb\":\"merge\"", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("typed", body, StringComparison.Ordinal);
+        Assert.Contains("1 row written", _out.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

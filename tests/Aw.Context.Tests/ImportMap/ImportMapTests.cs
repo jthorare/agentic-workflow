@@ -111,12 +111,12 @@ public sealed class ImportMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_can_neither_preview_nor_import_a_map()
+    public async Task A_session_may_preview_but_not_import_a_map()
     {
         var preview = await _world.Map.PreviewMap(MapWorld.MapPath, MapWorld.Session(FixtureMap.Repo), MapWorld.None);
         var imported = await _world.Map.ImportMap(MapWorld.MapPath, new string('0', 64), MapWorld.Session(FixtureMap.Repo), MapWorld.None);
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, preview.Error.Code);
+        Assert.True(preview.IsSuccess);
         Assert.Equal(ContextErrors.SessionsDisabled.Code, imported.Error.Code);
         Assert.Empty((await _world.Store.Versions(MapWorld.None)).Value);
     }

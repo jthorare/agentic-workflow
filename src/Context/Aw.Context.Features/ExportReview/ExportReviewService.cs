@@ -12,7 +12,7 @@ internal sealed class ExportReviewService(IGraphStore store, IScrubberFactory sc
 {
     public async ValueTask<Result<ReviewExported>> Handle(ExportReviewRequest request, CancellationToken cancellationToken)
     {
-        var loaded = await ReviewDrafts.Load(store, scrubbers, request.Scope, "exporting the review queue", cancellationToken).ConfigureAwait(false);
+        var loaded = await ReviewDrafts.Load(store, scrubbers, request.Scope, cancellationToken).ConfigureAwait(false);
         if (loaded.IsError)
         {
             return loaded.Error;

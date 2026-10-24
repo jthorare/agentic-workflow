@@ -1,0 +1,22 @@
+{
+  "draft": "v2",
+  "promoted": {
+    "version": {
+      "number": 2,
+      "repo": "aw-split-panes",
+      "commit": null,
+      "keyVersion": 1,
+      "created": "2026-01-01T00:00:00.0000000Z",
+      "status": "current"
+    },
+    "retained": {
+      "number": 1,
+      "repo": "aw-split-panes",
+      "commit": null,
+      "keyVersion": 1,
+      "created": "2026-01-01T00:00:00.0000000Z",
+      "status": "retained"
+    }
+  },
+  "sequence": 15
+}

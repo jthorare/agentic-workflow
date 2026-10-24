@@ -28,12 +28,12 @@ internal static class CodeIndexScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("code-index-status", "all-repos"), ("code-index-status", "one-repo"), ("code-index-status", "unknown-repo-013"), ("code-index-status", "session-own-repo"), ("code-index-status", "session-other-repo-013"),
-        ("code-index-symbols", "exact"), ("code-index-symbols", "prefix"), ("code-index-symbols", "empty-012"), ("code-index-symbols", "bad-match-012"), ("code-index-symbols", "session-other-repo-none"), ("code-index-symbols", "session-fenced"),
+        ("code-index-status", "all-repos"), ("code-index-status", "one-repo"), ("code-index-status", "unknown-repo-013"), ("code-index-status", "session-own-repo"), ("code-index-status", "session-other-repo"),
+        ("code-index-symbols", "exact"), ("code-index-symbols", "prefix"), ("code-index-symbols", "empty-012"), ("code-index-symbols", "bad-match-012"), ("code-index-symbols", "session-other-repo-symbols"), ("code-index-symbols", "session-fenced"),
         ("code-index-callers", "csharp-full"), ("code-index-callers", "csharp-partial-row"), ("code-index-callers", "typescript-none-found"), ("code-index-callers", "with-repo"), ("code-index-callers", "depth-9-012"),
-        ("code-index-callers", "unknown-ref-011"), ("code-index-callers", "session-other-repo-013"), ("code-index-callers", "bad-ref-012"),
+        ("code-index-callers", "unknown-ref-011"), ("code-index-callers", "session-other-repo"), ("code-index-callers", "bad-ref-012"),
         ("status", StaleScenario),
-        ("code-index-callees", "graphify-partial"), ("code-index-callees", "depth-2"), ("code-index-callees", "session-other-repo-013"), ("code-index-callers", "session-fenced"),
+        ("code-index-callees", "graphify-partial"), ("code-index-callees", "depth-2"), ("code-index-callees", "session-other-repo"), ("code-index-callers", "session-fenced"),
     ];
 
     /// <summary>GET /status with the 'demo' index a commit behind main: one stale code-index row in health.problems.</summary>
@@ -98,25 +98,25 @@ internal static class CodeIndexScenarios
         ("code-index-status", "one-repo") => "/sindri/code-index/status?repo=other",
         ("code-index-status", "unknown-repo-013") => "/sindri/code-index/status?repo=nope",
         ("code-index-status", "session-own-repo") => "/sindri/code-index/status",
-        ("code-index-status", "session-other-repo-013") => "/sindri/code-index/status?repo=other",
+        ("code-index-status", "session-other-repo") => "/sindri/code-index/status?repo=other",
         ("code-index-symbols", "exact") => "/sindri/code-index/symbols?query=Worker.Run",
         ("code-index-symbols", "prefix") => "/sindri/code-index/symbols?query=Worker.&match=prefix",
         ("code-index-symbols", "empty-012") => "/sindri/code-index/symbols?query=",
         ("code-index-symbols", "bad-match-012") => "/sindri/code-index/symbols?query=Run&match=like",
         ("code-index-symbols", "session-fenced") => "/sindri/code-index/symbols?query=Worker.Run",
-        ("code-index-symbols", "session-other-repo-none") => "/sindri/code-index/symbols?query=Secret.Keep",
+        ("code-index-symbols", "session-other-repo-symbols") => "/sindri/code-index/symbols?query=Secret.Keep",
         ("code-index-callers", "csharp-full") => Callers(Run),
         ("code-index-callers", "csharp-partial-row") => Callers(Stop),
         ("code-index-callers", "typescript-none-found") => Callers(Go),
         ("code-index-callers", "with-repo") => "/sindri/code-index/callers?ref=" + Uri.EscapeDataString("src/Worker.cs#Worker.Run") + "&repo=demo",
         ("code-index-callers", "depth-9-012") => Callers(Run) + "&depth=9",
         ("code-index-callers", "unknown-ref-011") => Callers(SymbolRef.From("demo:src/Worker.cs#Worker.Nope")),
-        ("code-index-callers", "session-other-repo-013") => Callers(Secret),
+        ("code-index-callers", "session-other-repo") => Callers(Secret),
         ("code-index-callers", "session-fenced") => Callers(Run),
         ("code-index-callers", "bad-ref-012") => "/sindri/code-index/callers?ref=" + Uri.EscapeDataString("not a ref"),
         ("code-index-callees", "graphify-partial") => Callees(Run),
         ("code-index-callees", "depth-2") => Callees(Run) + "&depth=2",
-        ("code-index-callees", "session-other-repo-013") => Callees(Secret),
+        ("code-index-callees", "session-other-repo") => Callees(Secret),
         _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such code-index scenario"),
     };
 

@@ -1,4 +1,3 @@
-using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Kernel;
@@ -15,11 +14,6 @@ internal sealed class MapHeadsService(IRepoReader repos, IDefaultBranch defaults
     public async ValueTask<Result<IReadOnlyList<RepoHead>>> Handle(MapHeadsRequest request, CancellationToken cancellationToken)
     {
         var scope = request.Scope;
-        if (scope.Caller.Kind == ContextCallerKind.Session)
-        {
-            return ContextErrors.SessionsDisabled.With("reading the repo heads is a human or service job: a session can't");
-        }
-
         var mapped = SettingsReader.Read(scope.Settings).Bind(settings => ScopeRules.Resolve(settings, scope.Repos, scope.Caller));
         if (mapped.IsError)
         {

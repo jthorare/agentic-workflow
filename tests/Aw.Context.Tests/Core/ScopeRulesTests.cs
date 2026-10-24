@@ -16,16 +16,15 @@ public sealed class ScopeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_session_is_refused_with_020_while_sessions_are_off()
+    public void A_session_is_refused_with_020_when_the_owner_turned_sessions_off()
     {
-        var scoped = ScopeRules.Resolve(new ContextSettings(), _repos, new(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Http));
+        var scoped = ScopeRules.Resolve(new ContextSettings { SessionsEnabled = false }, _repos, new(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Http));
 
         Assert.Equal(ContextErrors.SessionsDisabled.Code, scoped.Error.Code);
     }
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("unknown-repo")]
-    [InlineData(null)]
     [InlineData("other")]
     public void A_session_outside_its_mapped_repo_gets_003_the_same_way(string? repo)
     {
@@ -38,9 +37,18 @@ public sealed class ScopeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_session_sees_only_its_own_repo()
+    public void A_session_that_names_no_repo_is_told_which_header_names_it()
     {
-        var scoped = ScopeRules.Resolve(new ContextSettings { SessionsEnabled = true }, _repos, new(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Http));
+        var scoped = ScopeRules.Resolve(new ContextSettings(), _repos, new(ContextCallerKind.Session, Repo: null, ContextClient.Http));
+
+        Assert.Equal(ContextErrors.McpRepoMissing.Code, scoped.Error.Code);
+        Assert.Contains("X-Sindri-Repo: <repo> (e.g. X-Sindri-Repo: agentic-workflow)", scoped.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sessions_are_on_by_default_and_a_session_sees_only_its_own_repo()
+    {
+        var scoped = ScopeRules.Resolve(new ContextSettings(), _repos, new(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Http));
 
         Assert.Equal(["split-panes"], scoped.Value.Select(r => r.Name.Value), StringComparer.Ordinal);
     }

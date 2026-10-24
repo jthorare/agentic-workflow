@@ -46,7 +46,7 @@ public sealed record ContextSettings
     public int CascadeComponentFanOut { get; init; } = CascadeOptions.DefaultFanOut;
 
     /// <summary>Whether session callers may read context at all, on any transport (spec §3). Off until approved.</summary>
-    public bool SessionsEnabled { get; init; }
+    public bool SessionsEnabled { get; init; } = true;
 
     /// <summary>The checked 'context.sources.onyx' entry, or null when the profile names no onyx source.</summary>
     public OnyxSettings? Onyx { get; init; }

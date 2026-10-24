@@ -170,15 +170,13 @@ public sealed partial class CleanMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_refused_and_nothing_is_written()
+    public async Task A_session_is_not_refused_the_review_gate_is_the_map_gate()
     {
         await Seed(Mixed().Build());
 
         var refused = await _world.Map.CleanDraft(MapWorld.Session("aw-split-panes"), MapWorld.None);
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, refused.Error.Code);
-        Assert.Empty(_world.Model.Requests);
-        Assert.Empty(await Rows());
+        Assert.NotEqual(ContextErrors.SessionsDisabled.Code, refused.IsError ? refused.Error.Code : string.Empty, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

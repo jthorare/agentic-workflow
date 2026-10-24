@@ -42,7 +42,7 @@ internal static class ContextChecks
             return new DoctorCheck(SourcesName, CheckState.Warn, $"{ContextErrors.SourceUnavailable.Code} {counts}; degraded: {string.Join("; ", down)}", "sindri context sources status");
         }
 
-        // Session reads off is the default and a choice, not a fault: ok, saying what it means for MCP.
+        // Session reads off is the owner's choice (they are on by default since q93), not a fault: ok, saying what it means for MCP.
         return new DoctorCheck(SourcesName, CheckState.Ok, view.Value.SessionsEnabled
             ? $"{counts}; session reads on"
             : $"{counts}; session reads off (context.sessions.enabled), so MCP calls answer {ContextErrors.SessionsDisabled.Code}", Fix: null);

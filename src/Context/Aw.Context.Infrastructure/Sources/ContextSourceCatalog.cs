@@ -13,8 +13,7 @@ namespace Aw.Context.Infrastructure.Sources;
 /// <summary>
 /// The sources for one call, in a stable order: repo-docs over the repos in scope, then the onyx source when the profile
 /// names 'context.sources.onyx' and the linear source when it names a 'context.sources.linear' token (each built per call, as <see cref="OnyxSources"/> and <see cref="LinearSources"/> ask). No repo in scope gives no source at
-/// all, onyx included (SourceCatalogContract): a caller whose scope maps no repo reads nothing. Which of the sources a
-/// caller may read is ScopeRules.MayRead's decision, in the slices. Repo-docs cleans with the call's scrubbers (the
+/// all, onyx included (SourceCatalogContract): a caller whose scope maps no repo reads nothing. Every caller reads every source in scope (owner q93, 2026-10-23). Repo-docs cleans with the call's scrubbers (the
 /// profile's extra patterns included); the onyx source returns raw text, which the query cleans at the ingest boundary
 /// with those same scrubbers and scrubs again per field on egress.
 /// </summary>

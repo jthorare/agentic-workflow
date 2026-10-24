@@ -42,7 +42,7 @@ internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catal
             rows.Add(Row(repo.Name, status.Value));
         }
 
-        var live = await LiveRows(catalog.For(settings.Value, repos.Value, scrubbers.Value).Where(static s => s.Describe().Freshness == SourceFreshness.Live), request.Scope.Caller, cancellationToken)
+        var live = await LiveRows(catalog.For(settings.Value, repos.Value, scrubbers.Value).Where(static s => s.Describe().Freshness == SourceFreshness.Live), cancellationToken)
             .ConfigureAwait(false);
         if (live.IsError)
         {
@@ -53,20 +53,16 @@ internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catal
         return new SourcesView(rows, settings.Value.SessionsEnabled, clock.GetUtcNow());
     }
 
-    // Every live source is listed, a session's view too: its state and probe are health, not content (doctor shows them to
-    // any caller). A source the caller may not search says so and leaves out its sync counts.
-    private async ValueTask<Result<IReadOnlyList<SourceStatusRow>>> LiveRows(IEnumerable<IContextSource> sources, ContextCaller caller, CancellationToken cancellationToken)
+    // Every live source is listed, a session's view too (a session searches the intent sources like a human, owner q93, 2026-10-23).
+    private async ValueTask<Result<IReadOnlyList<SourceStatusRow>>> LiveRows(IEnumerable<IContextSource> sources, CancellationToken cancellationToken)
     {
         var rows = new List<SourceStatusRow>();
         foreach (var source in sources)
         {
             var health = await source.Probe(cancellationToken).ConfigureAwait(false);
             var described = source.Describe();
-            var searched = ScopeRules.MayRead(caller, described);
-            var detail = searched ? health.Detail : $"{health.Detail}; sessions don't search it until context.repoTeams maps its teams to a repo";
-            var row = new SourceStatusRow(described.Id, described.Kind, Repo: null, health.State, detail, health.Code, LastSync: null, Records: 0);
-            // The sync's counts are about the store's content, so a caller that doesn't search it gets health only.
-            if (described.Kind == SourceKind.Intent && searched)
+            var row = new SourceStatusRow(described.Id, described.Kind, Repo: null, health.State, health.Detail, health.Code, LastSync: null, Records: 0);
+            if (described.Kind == SourceKind.Intent)
             {
                 var state = await intents.State(described.Id, cancellationToken).ConfigureAwait(false);
                 if (state.IsError)

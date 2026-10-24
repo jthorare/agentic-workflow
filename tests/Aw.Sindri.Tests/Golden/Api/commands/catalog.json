@@ -262,7 +262,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "service"
+        "service",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -696,15 +697,17 @@
     },
     {
       "action": "PromoteContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/promote",
       "cli": "sindri context map promote",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -769,7 +772,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "service"
+        "service",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -855,7 +859,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -872,7 +877,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -886,15 +892,17 @@
     },
     {
       "action": "ReviewContextMap:add",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review add <node> <name> [--under <node>]",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -902,15 +910,17 @@
     },
     {
       "action": "ReviewContextMap:apply-file",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review --apply <file>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -918,15 +928,17 @@
     },
     {
       "action": "ReviewContextMap:delete",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review delete <node>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -937,7 +949,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -951,15 +964,17 @@
     },
     {
       "action": "ReviewContextMap:merge",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review merge <node> --into <node>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -970,7 +985,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -987,7 +1003,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -1004,7 +1021,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -1021,7 +1039,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -1038,7 +1057,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -1072,7 +1092,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "service"
+        "service",
+        "session"
       ],
       "terminal": false,
       "method": "POST",

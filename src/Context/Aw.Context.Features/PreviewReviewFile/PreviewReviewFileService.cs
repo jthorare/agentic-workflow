@@ -1,3 +1,4 @@
+using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -9,7 +10,7 @@ internal sealed class PreviewReviewFileService(IReviewFileStore files) : IServic
 {
     public async ValueTask<Result<ReviewFilePreview>> Handle(PreviewReviewFileRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.Gate(request.Scope, "applying a review file") is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

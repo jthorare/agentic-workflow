@@ -1,11 +1,10 @@
-using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Engine;
 
 /// <summary>
-/// Who may read what (spec §3), decided once for every transport: session reads are off until
-/// 'context.sessions.enabled' (SND-CONTEXT-020), and a session sees only the repo it names in X-Sindri-Repo. Any other
+/// Who may read what (spec §3), decided once for every transport: session reads are on unless the owner turned
+/// 'context.sessions.enabled' off (SND-CONTEXT-020), and a session sees only the repo it names in X-Sindri-Repo. Any other
 /// repo, or none, answers as an unknown anchor (SND-CONTEXT-003), never as a hint that it exists.
 /// </summary>
 public static class ScopeRules
@@ -36,7 +35,13 @@ public static class ScopeRules
         if (!settings.SessionsEnabled)
         {
             return ContextErrors.SessionsDisabled.With(
-                "context reads from agent sessions are off (context.sessions.enabled: false); ask the human to enable them in the profile and approve it");
+                "context reads from agent sessions are off (context.sessions.enabled: false in the approved profile); ask the human to turn them on in the profile and approve it");
+        }
+
+        if (caller.Repo is null)
+        {
+            return ContextErrors.McpRepoMissing.With(
+                "this call doesn't say which repo it is for: send the header X-Sindri-Repo: <repo> (e.g. X-Sindri-Repo: agentic-workflow); the sindri CLI sends it when run from a repo's checkout, and 'sindri mcp register' sets it for MCP");
         }
 
         var own = mapped.Where(r => r.Name == caller.Repo).ToList();
@@ -54,22 +59,6 @@ public static class ScopeRules
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(repos);
         return settings.Repos is { } names ? [.. repos.Where(r => names.Contains(r.Name))] : [.. repos];
-    }
-
-    /// <summary>
-    /// Whether <paramref name="caller"/> may read <paramref name="source"/> at all. A session reads no intent source
-    /// until the profile maps Linear teams to its repo ('context.repoTeams', spec §3, a later stage): without that map
-    /// no intent source can be searched for its repo. The records and decisions linked to its repo's nodes are in the map, not a source, and
-    /// a session sees them regardless (owner decision 2026-10-15, B; <see cref="Graph.RepoScope.WithLinkedIntent"/>).
-    /// </summary>
-    /// <param name="caller">The caller.</param>
-    /// <param name="source">The source.</param>
-    /// <returns>True when the source may answer this caller.</returns>
-    public static bool MayRead(ContextCaller caller, SourceDescriptor source)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        ArgumentNullException.ThrowIfNull(source);
-        return caller.Kind != ContextCallerKind.Session || source.Kind != SourceKind.Intent;
     }
 
     /// <summary>

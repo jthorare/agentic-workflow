@@ -66,11 +66,11 @@ public sealed class MapHeadsTests
     }
 
     [Fact]
-    public async Task A_session_is_refused_like_a_build()
+    public async Task A_session_reads_the_heads_of_its_own_repo()
     {
         var heads = await Heads(MapWorld.Session(MapWorld.Repos[0].Name.Value));
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, heads.Error.Code);
+        Assert.Equal([MapWorld.Repos[0].Name], heads.Value.Select(h => h.Repo));
     }
 
     [Fact]

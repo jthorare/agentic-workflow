@@ -17,7 +17,7 @@ internal sealed class ReviewQueueService(IGraphStore store, IScrubberFactory scr
             return limit.Error;
         }
 
-        var loaded = await ReviewDrafts.Load(store, scrubbers, request.Scope, "reading the review queue", cancellationToken).ConfigureAwait(false);
+        var loaded = await ReviewDrafts.Load(store, scrubbers, request.Scope, cancellationToken).ConfigureAwait(false);
         return loaded.Map(l => l.Queue.Capped(limit.Value));
     }
 }

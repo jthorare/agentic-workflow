@@ -15,7 +15,7 @@ internal sealed class ApplyReviewFileService(IGraphStore store, IReviewFileStore
 {
     public async ValueTask<Result<ReviewResult>> Handle(ApplyReviewFileRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.Gate(request.Scope, "applying a review file") is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

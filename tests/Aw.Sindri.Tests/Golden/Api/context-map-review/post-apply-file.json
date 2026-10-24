@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-CONTEXT-043",
+  "status": 409,
+  "detail": "no decided entry of the file is in draft v2 (fix: export the queue again with 'sindri context map review --export')",
+  "traceId": "<trace>"
+}

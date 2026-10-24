@@ -75,14 +75,13 @@ public sealed class BacktestTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task Backtest_session_caller_is_020()
+    public async Task Backtest_session_caller_is_not_refused()
     {
         await using var world = await BacktestWorld.Start(BacktestWorld.BeforeAllCuts);
 
-        var refused = await world.Run("graph", world.Session());
+        var run = await world.Run("graph", world.Session());
 
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, refused.Error.Code);
-        Assert.Contains("human or service job", refused.Error.Message, StringComparison.Ordinal);
+        Assert.NotEqual(ContextErrors.SessionsDisabled.Code, run.IsError ? run.Error.Code : string.Empty, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

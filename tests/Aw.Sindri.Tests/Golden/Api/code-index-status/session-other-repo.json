@@ -1,0 +1,31 @@
+{
+  "repos": [
+    {
+      "repo": "other",
+      "state": "ok",
+      "commit": "0123456789abcdef0123456789abcdef01234567",
+      "builtAt": "2026-10-20T12:00:00.0000000Z",
+      "layers": [
+        {
+          "layer": "structure",
+          "state": "ok",
+          "code": null,
+          "detail": "ok"
+        }
+      ],
+      "counts": {
+        "files": 1,
+        "symbols": 1,
+        "edges": 0
+      }
+    }
+  ],
+  "health": [
+    {
+      "repo": "other",
+      "state": "ok",
+      "embeddingsPercent": null,
+      "waiting": null
+    }
+  ]
+}

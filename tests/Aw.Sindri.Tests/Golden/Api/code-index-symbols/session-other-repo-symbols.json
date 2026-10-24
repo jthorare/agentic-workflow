@@ -1,0 +1,28 @@
+{
+  "stamp": {
+    "repo": "demo",
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "builtAt": "2026-10-20T12:00:00.0000000Z",
+    "state": "ok",
+    "layer": {
+      "layer": "graph",
+      "state": "ok",
+      "code": null,
+      "detail": "ok"
+    }
+  },
+  "hits": [
+    {
+      "ref": "other:src/Secret.cs#Secret.Keep",
+      "kind": "method",
+      "name": "<untrusted source=\"code-index\">Secret.Keep</untrusted>",
+      "file": "<untrusted source=\"code-index\">src/Secret.cs</untrusted>",
+      "startLine": 1,
+      "endLine": 4,
+      "signature": "<untrusted source=\"code-index\">void Secret.Keep()</untrusted>",
+      "exported": true,
+      "untrusted": true
+    }
+  ],
+  "truncated": false
+}

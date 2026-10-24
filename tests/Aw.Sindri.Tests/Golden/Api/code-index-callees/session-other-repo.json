@@ -1,6 +1,6 @@
 {
   "stamp": {
-    "repo": "demo",
+    "repo": "other",
     "commit": "0123456789abcdef0123456789abcdef01234567",
     "builtAt": "2026-10-20T12:00:00.0000000Z",
     "state": "ok",
@@ -11,6 +11,10 @@
       "detail": "ok"
     }
   },
-  "hits": [],
+  "subject": "other:src/Secret.cs#Secret.Keep",
+  "coverage": "full",
+  "note": "none",
+  "edges": [],
+  "unresolvedCount": 0,
   "truncated": false
 }

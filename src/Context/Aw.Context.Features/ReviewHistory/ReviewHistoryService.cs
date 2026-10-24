@@ -11,7 +11,7 @@ internal sealed class ReviewHistoryService(IGraphStore store) : IService<ReviewH
 {
     public async ValueTask<Result<ReviewHistoryView>> Handle(ReviewHistoryRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.Gate(request.Scope, "reading the review history") is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

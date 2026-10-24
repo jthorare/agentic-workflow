@@ -17,7 +17,7 @@ internal sealed class ReviewMapService(IGraphStore store, ICurrentUser user, Tim
 {
     public async ValueTask<Result<ReviewResult>> Handle(ReviewMapRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.GateDecision(request.Scope, request.Decision) is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

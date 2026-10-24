@@ -147,7 +147,7 @@ public sealed class QueryContextTests
         var catalog = new FixedSourceCatalog(FakeContextSource.FixtureDocs());
         var engine = Engines.Over(catalog);
 
-        var off = await engine.Query(new ContextQuery("orientation"), Engines.Session("split-panes"), CancellationToken.None);
+        var off = await engine.Query(new ContextQuery("orientation"), Engines.Session("split-panes", """{"sessions":{"enabled":false}}"""), CancellationToken.None);
         var on = await engine.Query(new ContextQuery("orientation"), Engines.Session("split-panes", """{"sessions":{"enabled":true}}"""), CancellationToken.None);
         var elsewhere = await engine.Query(new ContextQuery("orientation"), Engines.Session("nope", """{"sessions":{"enabled":true}}"""), CancellationToken.None);
 

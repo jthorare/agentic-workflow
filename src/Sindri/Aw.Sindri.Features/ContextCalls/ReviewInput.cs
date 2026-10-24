@@ -19,12 +19,6 @@ internal sealed record ReviewInput(string Verb, ReviewDecision? Decision, string
     internal static IReadOnlyList<string> Verbs { get; } =
         ["accept", "reject", "rename", "move", "accept-deterministic", "undo", "drop", "repoint", "apply-file", "merge", "add", "delete"];
 
-    /// <summary>The protected variants: they show what they would do and need the human's typed answer (README X63).</summary>
-    internal static IReadOnlySet<string> Protected { get; } = new HashSet<string>(["apply-file", "merge", "add", "delete"], StringComparer.Ordinal);
-
-    /// <summary>Whether this variant is protected.</summary>
-    internal bool IsProtected => Protected.Contains(Verb);
-
     /// <summary>Reads <paramref name="request"/>: the verb, and the keys and ids it names; a bad one is SND-CLI-003 naming the field.</summary>
     /// <param name="request">The request.</param>
     /// <returns>The input.</returns>

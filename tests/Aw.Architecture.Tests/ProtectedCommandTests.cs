@@ -109,7 +109,7 @@ public sealed class ProtectedCommandTests
             .Select(g => g.Key)
             .Order(StringComparer.Ordinal)];
 
-    // One route, class by verb: the review route carries desk verbs and protected ones, so the app may only hold the desk verbs.
+    // One route, class by verb (since owner q93, 2026-10-23, every review verb is desk): the app may only hold verbs that are desk rows.
     // Every verb the app can put in a review request (the members of its DeskVerb enum, by wire name) must be a catalog row on
     // that route whose class is not Protected.
     [Fact]
@@ -128,7 +128,6 @@ public sealed class ProtectedCommandTests
         // The link: the request the app posts carries its verb as DeskVerb, and no string verb beside it.
         Assert.Equal(desk, request.GetProperty("Verb")!.PropertyType);
         Assert.DoesNotContain(request.GetProperties(), p => p.PropertyType == typeof(string) && p.Name.Contains("Verb", StringComparison.Ordinal));
-        Assert.Contains(rows, r => r.Class == ActionClass.Protected);   // the route really is shared with protected verbs
     }
 
     [Fact]

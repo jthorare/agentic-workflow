@@ -29,7 +29,7 @@ internal sealed class CleanMapService(IGraphStore store, IScrubberFactory scrubb
 
     public async ValueTask<Result<CleanupReport>> Handle(CleanMapRequest request, CancellationToken cancellationToken)
     {
-        if (ReviewDrafts.Gate(request.Scope, "cleaning a draft") is { } refused)
+        if (MapAccess.Gate(request.Scope) is { } refused)
         {
             return refused;
         }

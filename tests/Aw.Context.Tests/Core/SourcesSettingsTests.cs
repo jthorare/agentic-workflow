@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
 namespace Aw.Context.Tests.Core;
@@ -106,18 +105,6 @@ public sealed class SourcesSettingsTests
     [InlineData("keychain:onyx/sindri-onyx")]
     [InlineData("op:work/onyx/credential")]
     public void Every_pointer_scheme_is_accepted(string token) => Assert.Equal(token, Read(WithToken(token)).Value.Onyx?.Token);
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_session_reads_no_intent_source_until_the_profile_maps_teams_to_its_repo()
-    {
-        var onyx = new SourceDescriptor(SourceId.From("onyx"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false);
-        var docs = new SourceDescriptor(SourceId.From("repo-docs"), SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false);
-        var session = new ContextCaller(ContextCallerKind.Session, ContextRepoName.From("split-panes"), ContextClient.Mcp);
-        var human = new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Cli);
-
-        Assert.Equal((false, true, true, true),
-            (ScopeRules.MayRead(session, onyx), ScopeRules.MayRead(session, docs), ScopeRules.MayRead(human, onyx), ScopeRules.MayRead(human, docs)));
-    }
 
     [Fact, Trait("Lane", "unit")]
     public void The_settings_error_names_its_catalogue_entry() => Assert.Equal(ContextErrors.SourceNotConfigured.Code, Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","version":"v4.9.0"}}}""").Error.Code);

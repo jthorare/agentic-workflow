@@ -19,7 +19,7 @@ public sealed class SourcesStatusTests
         var row = view.Value.Sources[0];
         Assert.Equal(("repo-docs", "split-panes", SourceState.Degraded), (row.Source.Value, row.Repo?.Value, row.State));
         Assert.Contains("context-docs-refresh", row.Detail, StringComparison.Ordinal);
-        Assert.False(view.Value.SessionsEnabled);
+        Assert.True(view.Value.SessionsEnabled);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -73,7 +73,7 @@ public sealed class SourcesStatusTests
         var session = await engine.Sources(Engines.Session("split-panes"), CancellationToken.None);
 
         Assert.Equal((SourceState.Unavailable, "SND-CONTEXT-010"), (view.Value.Sources[^1].State, view.Value.Sources[^1].Code));
-        Assert.Equal(ContextErrors.SessionsDisabled.Code, session.Error.Code);
+        Assert.True(session.IsSuccess);
     }
 
     // Health is not content: doctor already shows a session the onyx row and points it at `sources status` as the fix, so the status lists it too.
@@ -85,22 +85,14 @@ public sealed class SourcesStatusTests
         Assert.Equal((SourceState.Unavailable, "SND-CONTEXT-010"), (session.State, session.Code));
     }
 
+    // A session searches the intent sources like a human (owner q93, 2026-10-23), so its row carries the sync counts too.
     [Fact, Trait("Lane", "unit")]
-    public async Task A_sessions_onyx_row_says_sessions_do_not_search_it_and_a_humans_does_not()
+    public async Task A_sessions_onyx_row_says_nothing_of_a_refusal_and_carries_the_sync_counts()
     {
         var (session, human) = await OnyxRows();
 
-        Assert.EndsWith("; sessions don't search it until context.repoTeams maps its teams to a repo", session.Detail, StringComparison.Ordinal);
-        Assert.DoesNotContain("sessions don't search it", human.Detail, StringComparison.Ordinal);
-    }
-
-    // The sync's counts describe the intent store's content, so a caller that may not search the source gets its health only.
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_sessions_onyx_row_leaves_out_the_sync_counts_a_human_sees()
-    {
-        var (session, human) = await OnyxRows();
-
-        Assert.Null(session.Sync);
+        Assert.DoesNotContain("sessions don't search it", session.Detail, StringComparison.Ordinal);
+        Assert.NotNull(session.Sync);
         Assert.NotNull(human.Sync);
     }
 
