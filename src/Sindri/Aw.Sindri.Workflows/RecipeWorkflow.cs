@@ -106,7 +106,7 @@ internal sealed partial class RecipeWorkflow
         var agentRuntime = Workflow.Patched("p8-agent-runtime");
         var keepsReport = Workflow.Patched("token-budget-keeps-report-v1");   // an accepted report over budget keeps its transition (the next Step start parks); a history without the marker parks on the report as it did
         var keepsRoundOnLaunchFailure = Workflow.Patched("launch-failure-keeps-round-v1");   // a launch that never started a session counts no loop round, and the third in a row parks; a history without the marker counts the round as it did.
-        var perRound = Workflow.Patched("token-budget-per-round-v1"); _heavy = Workflow.Patched("ln-wf3-heavy-slot");   // LN-WF3: the heavy allocator; a history without it never takes or grants a slot
+        var perRound = Workflow.Patched("token-budget-per-round-v1"); _heavy = Workflow.Patched("ln-wf3-heavy-slot"); var retriesBeforePark = Workflow.Patched("timeout-retries-before-park-v1");   // LN-WF3: the heavy allocator; a history without it never takes or grants a slot; owner q93: retriesBeforePark makes a state timeout retry once before it parks, and a history without the marker parks at the first expiry as it did
         var storesLiterals = Workflow.Patched("child-literal-facts-v1");   // last, after every marker main has: a child's literal inputs go into the fact store at its start; a history without it never stored them
         var loaded = await LoadRecipe(start, storesLiterals).ConfigureAwait(true);
         var pins = await LoadChildPins(loaded).ConfigureAwait(true);   // engine P7: the children the approval pinned
@@ -115,7 +115,7 @@ internal sealed partial class RecipeWorkflow
         _deskTimeout = loaded.DeskTimeout;
         _eventHold = loaded.EventHold;
         _dispatchDelay = loaded.DispatchDelay;
-        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, Runtimes(loaded, blockRuntime, agentRuntime), pins.Resolver()) { DeskTimeout = loaded.DeskTimeout, LegacyBudgetPark = !keepsReport, PooledBudget = !perRound, LegacyLaunchRound = !keepsRoundOnLaunchFailure };
+        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, Runtimes(loaded, blockRuntime, agentRuntime), pins.Resolver()) { DeskTimeout = loaded.DeskTimeout, LegacyBudgetPark = !keepsReport, PooledBudget = !perRound, LegacyLaunchRound = !keepsRoundOnLaunchFailure, LegacyTimeoutPark = !retriesBeforePark };
         _context = new Interpreting(loaded.Recipe, decisions);
         (_repo, _repoUnreadable) = start.Inputs.TryGetValue(_itemFact, out var item) ? await RepoOf(item.Value).ConfigureAwait(true) : (null, false);
         (_subject, _contents) = await NamedSubject(_recipe, start).ConfigureAwait(true);

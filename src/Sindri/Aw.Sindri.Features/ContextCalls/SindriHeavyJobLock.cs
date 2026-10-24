@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 internal sealed class SindriHeavyJobLock(IHeavySlots slots, TimeSpan wait) : IHeavyJobLock
 {
     /// <summary>How long a build waits for a slot before it answers 040.</summary>
-    internal static TimeSpan DefaultWait { get; } = TimeSpan.FromSeconds(60);
+    internal static TimeSpan DefaultWait { get; } = TimeSpan.FromHours(1);
 
     public async ValueTask<Result<IAsyncDisposable>> Take(IProgress<string>? waiting, CancellationToken cancellationToken)
     {

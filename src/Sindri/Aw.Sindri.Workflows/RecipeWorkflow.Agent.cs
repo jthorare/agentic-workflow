@@ -25,9 +25,9 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 internal sealed partial class RecipeWorkflow
 {
-    private static readonly AgentCall _launchCall = new("agent-launch", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _launchCall = new("agent-launch", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private static readonly AgentCall _watchCall = new("agent-watch", TimeSpan.FromDays(7), TimeSpan.FromSeconds(10), new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumInterval = TimeSpan.FromSeconds(10) });   // a heartbeat timeout or a restarted worker retries the watch, which attaches to the same session
-    private static readonly AgentCall _closeCall = new("agent-close", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _closeCall = new("agent-close", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private AgentRunning? _held;   // the launched run whose session is still live, so the interpreter loop can stop it when the instance ends or the run is replaced while it is parked or taken over (D11)
     private (string Token, AgentLaunched Launched)? _agent;   // the open run's launch, kept across a park or a takeover so the watch resumes without a second launch
 

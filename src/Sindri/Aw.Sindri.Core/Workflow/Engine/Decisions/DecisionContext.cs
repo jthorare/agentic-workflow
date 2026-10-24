@@ -46,6 +46,12 @@ public sealed record DecisionContext(
     public bool LegacyLaunchRound { get; init; }
 
     /// <summary>
+    /// Whether a state's timeout with 'then: park' parks at its first expiry (the behavior before the 'timeout-retries-before-park-v1' patch, which a history recorded
+    /// without the marker replays). Off: the first expiry retries the state once (the timer re-arms in the same entry) and the second parks with 'timeout'; a desk Step still parks at once.
+    /// </summary>
+    public bool LegacyTimeoutPark { get; init; }
+
+    /// <summary>
     /// Where this build runs a Step that is not at the desk (P8 D5, one map): <see cref="StepRuntime.Block"/> for a registered block runtime whose descriptor says
     /// <see cref="BlockRuntime.Block"/>, <see cref="StepRuntime.Agent"/> for a Step an agent session runs. A Step in neither is at the desk when it is deskCapable.
     /// </summary>

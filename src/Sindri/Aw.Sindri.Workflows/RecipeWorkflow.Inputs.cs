@@ -169,7 +169,7 @@ internal sealed partial class RecipeWorkflow
     {
         ActivityId = string.Create(CultureInfo.InvariantCulture, $"inputs:{open.Token.Value}:{n}"),
         TaskQueue = StepTaskQueue.For(state, Workflow.Info.TaskQueue),
-        StartToCloseTimeout = TimeSpan.FromSeconds(60),
+        StartToCloseTimeout = ActivityBounds.Long,
         RetryPolicy = new RetryPolicy { MaximumAttempts = 3, InitialInterval = TimeSpan.FromSeconds(1), BackoffCoefficient = 2 },
     };
 

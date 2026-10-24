@@ -2763,6 +2763,8 @@ Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.get -> boo
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.init -> void
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.get -> bool
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.DeskTimeout.get -> System.TimeSpan
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.DeskTimeout.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.Equals(Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext? other) -> bool
@@ -11146,6 +11148,7 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Exit = 1 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Lost = 2 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.Bound(System.TimeSpan max, System.TimeSpan? timerLeft) -> System.TimeSpan
+static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.IsExplicit(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Rules.BlockStepTriggers.IsBlockActor(string! actor) -> bool
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockFactUnreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockProfileUnreadable -> Aw.Kernel.ErrorDefinition!
