@@ -109,6 +109,11 @@ internal static partial class DeskBlocks
         }
 
         var assembled = LensGather.Assemble(facts["lensesView"], facts["codeView"], facts["historyView"], [.. ScopeJson.Strings(facts["anchors"])]);
+        if (LensShape.GatherFault(assembled.Lenses, assembled.Coverage) is { } fault)
+        {
+            return SindriErrors.InvalidInput.With(fault);   // why: the lenses are deterministic code over the context engine's views, so gathering again serves the same fault
+        }
+
         return Reply("step.scope.gather", "gathered", Outputs(("lenses", assembled.Lenses), ("coverage", assembled.Coverage)), []);
     }
 

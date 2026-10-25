@@ -49,9 +49,8 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
             return found.Error.Code == NotBuiltCode ? new SymbolAnswer<SymbolHit>(head, []) : found.Error;
         }
 
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         // why: the head is readable here, so it names a commit.
-        return new SymbolAnswer<SymbolHit>(head, [.. found.Value.Hits.Select(h => new SymbolHit(Site(h), head.Commit!, asOfCommit, state))]);
+        return new SymbolAnswer<SymbolHit>(head, [.. found.Value.Hits.Select(h => Stamped(head, Site(h)))]);
     }
 
     public async ValueTask<Result<SymbolAnswer<FileSymbolsRow>>> FileSymbols(ContextRepoName repo, IReadOnlyList<string> paths, string? asOf, CancellationToken cancellationToken)
@@ -71,9 +70,8 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         }
 
         // A file the index does not know comes back with no symbols, and has no row.
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         // why: the head is readable here, so it names a commit.
-        return new SymbolAnswer<FileSymbolsRow>(head, [.. files.Value.Files.Where(static f => f.Symbols.Count > 0).Select(f => new FileSymbolsRow(f.Path, [.. f.Symbols.Select(Site)], head.Commit!, asOfCommit, state))]);
+        return new SymbolAnswer<FileSymbolsRow>(head, [.. files.Value.Files.Where(static f => f.Symbols.Count > 0).Select(f => Stamped(head, f))]);
     }
 
     public ValueTask<Result<CallAnswer>> Callers(ContextRepoName repo, string symbolRef, int depth, string? asOf, CancellationToken cancellationToken) =>
@@ -108,10 +106,9 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
             return _noEdges.Contains(answer.Error.Code) ? new CallAnswer(head, [], 0) : answer.Error;
         }
 
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         // why: the Where keeps the edges that resolved to a symbol; the head is readable, so it names a commit.
         var rows = answer.Value.Edges.Where(static e => e.Other is not null)
-            .Select(e => new CallEdgeRow(Site(e.Other!), Name(e.Basis), Weight(e.Confidence), Name(e.Coverage), e.Level, head.Commit!, asOfCommit, state)).ToList();
+            .Select(e => Stamped(head, e)).ToList();
         return new CallAnswer(head, rows, answer.Value.UnresolvedCount + answer.Value.Edges.Count(static e => e.Other is null));
     }
 
@@ -141,7 +138,12 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         }
 
         var row = status.Value.Repos.FirstOrDefault(r => r.Repo == name);
-        return new Reading(row is null ? CodeIndexHead.None : CodeIndexReading.Head(Own(row), asOf), scope.Value, name);
+        if (row is null)
+        {
+            return new Reading(CodeIndexHead.None, scope.Value, name);
+        }
+
+        return new Reading(CodeIndexReading.Head(Own(row), asOf), scope.Value, name);
     }
 
     private static CodeIndexHead NotConfigured() => CodeIndexHead.None with { State = CodeIndexState.NotConfigured };
@@ -164,6 +166,30 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         return down is null
             ? new CodeIndexHead(CodeIndexState.Ok, commit, row.BuiltAt, AsOfCommit: null, Layer: null, Code: null)
             : new CodeIndexHead(CodeIndexState.LayerUnavailable, commit, row.BuiltAt, AsOfCommit: null, Layer: "graph", down.Code);
+    }
+
+    // Each row carries the state of its own file under the head: with a catching-up index, only the files changed since it was built are stale.
+    private static SymbolHit Stamped(CodeIndexHead head, SymbolSite site)
+    {
+        var (state, asOfCommit) = CodeIndexReading.Stamp(head, site.Path);
+        // why: rows are stamped only under a readable head, which names a commit.
+        return new SymbolHit(site, head.Commit!, asOfCommit, state);
+    }
+
+    private static FileSymbolsRow Stamped(CodeIndexHead head, FileSymbolsEntry file)
+    {
+        var (state, asOfCommit) = CodeIndexReading.Stamp(head, file.Path);
+        // why: rows are stamped only under a readable head, which names a commit.
+        return new FileSymbolsRow(file.Path, [.. file.Symbols.Select(Site)], head.Commit!, asOfCommit, state);
+    }
+
+    private static CallEdgeRow Stamped(CodeIndexHead head, CallEdge edge)
+    {
+        // why: the caller keeps only the edges that resolved to a symbol.
+        var site = Site(edge.Other!);
+        var (state, asOfCommit) = CodeIndexReading.Stamp(head, site.Path);
+        // why: rows are stamped only under a readable head, which names a commit.
+        return new CallEdgeRow(site, Name(edge.Basis), Weight(edge.Confidence), Name(edge.Coverage), edge.Level, head.Commit!, asOfCommit, state);
     }
 
     private static SymbolSite Site(IndexSymbolHit hit)

@@ -8,6 +8,7 @@ namespace Aw.Context.Core.Code;
 public static class CodeIndexReading
 {
     private const int MinCommitLength = 7;
+    private const string CatchingUpReason = "catching-up";
 
     /// <summary>Whether a text is a commit sha (7 to 64 lowercase hex characters), the only kind of 'as of' a source is asked for.</summary>
     /// <param name="commit">The text.</param>
@@ -37,6 +38,38 @@ public static class CodeIndexReading
         return behind ? own with { State = own.State is CodeIndexState.Ok or CodeIndexState.LayerUnavailable ? CodeIndexState.Stale : own.State, AsOfCommit = asOf } : own with { AsOfCommit = null };
     }
 
+    /// <summary>The head of a stale index whose commit was found to be the merge base of the index and the map (an ancestor): catching-up, with the files changed between them as pending. Any other stale head stays as it is.</summary>
+    /// <param name="stale">The head <see cref="Head"/> gave.</param>
+    /// <param name="mergeBase">The merge base of the index's commit and the map's.</param>
+    /// <param name="pending">The files changed from the index's commit to the map's.</param>
+    /// <returns>The head.</returns>
+    public static CodeIndexHead CatchingUp(CodeIndexHead stale, string mergeBase, IReadOnlyList<string> pending)
+    {
+        ArgumentNullException.ThrowIfNull(stale);
+        ArgumentNullException.ThrowIfNull(mergeBase);
+        ArgumentNullException.ThrowIfNull(pending);
+        // A layer that is down is a fault whatever the history; an index that is not the merge base is not an ancestor of the map's commit.
+        var trails = stale is { State: CodeIndexState.Stale, Layer: null, Commit: { } commit } && Same(commit, mergeBase);
+        return trails ? stale with { State = CodeIndexState.CatchingUp, Pending = [.. pending.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)] } : stale;
+    }
+
+    /// <summary>What a row of an answer carries for one file: like <see cref="Stamp(CodeIndexHead)"/>, except that a catching-up index is 'stale' only for the files pending and 'ok' for the others.</summary>
+    /// <param name="head">The head the rows were read under.</param>
+    /// <param name="path">The repo-relative path of the row's file.</param>
+    /// <returns>The row state and the as-of commit to show, or null.</returns>
+    public static (SymbolsState State, string? AsOfCommit) Stamp(CodeIndexHead head, string path)
+    {
+        ArgumentNullException.ThrowIfNull(head);
+        ArgumentNullException.ThrowIfNull(path);
+        if (head.State != CodeIndexState.CatchingUp)
+        {
+            return Stamp(head);
+        }
+
+        // A file the index trails on may differ at the map's commit; any other file is the same there, so its rows are current.
+        return head.Pending?.Contains(path, StringComparer.Ordinal) == true ? (SymbolsState.Stale, head.AsOfCommit) : (SymbolsState.Ok, null);
+    }
+
     /// <summary>Whether the head names an index that can be read: a commit and a state that is not missing, damaged, still building or not configured.</summary>
     /// <param name="head">The head.</param>
     /// <returns>True when rows can be asked for.</returns>
@@ -55,7 +88,7 @@ public static class CodeIndexReading
         return head.Commit is not null && head.AsOfCommit is not null && !Same(head.Commit, head.AsOfCommit);
     }
 
-    /// <summary>What every row of an answer carries: 'stale' (and the map's commit when it differs) or 'ok'.</summary>
+    /// <summary>What every row of an answer carries: 'stale' (and the map's commit when it differs) or 'ok'. A catching-up index is stale for any row whose file is not known; see <see cref="Stamp(CodeIndexHead, string)"/>.</summary>
     /// <param name="head">The head the rows were read under.</param>
     /// <returns>The row state and the as-of commit to show, or null.</returns>
     public static (SymbolsState State, string? AsOfCommit) Stamp(CodeIndexHead head)
@@ -66,7 +99,7 @@ public static class CodeIndexReading
             return (SymbolsState.Unavailable, null);
         }
 
-        return (head.State is CodeIndexState.Stale or CodeIndexState.CheckoutNotOnMain ? SymbolsState.Stale : SymbolsState.Ok, AsOfMismatch(head) ? head.AsOfCommit : null);
+        return (head.State is CodeIndexState.Stale or CodeIndexState.CheckoutNotOnMain or CodeIndexState.CatchingUp ? SymbolsState.Stale : SymbolsState.Ok, AsOfMismatch(head) ? head.AsOfCommit : null);
     }
 
     /// <summary>The 'code-index' row of 'searched.sources' for a head.</summary>
@@ -78,6 +111,7 @@ public static class CodeIndexReading
         return head.State switch
         {
             CodeIndexState.Ok => Make(SearchedState.Ok, reason: null, code: null, head.BuiltAt),
+            CodeIndexState.CatchingUp => Make(SearchedState.Ok, CatchingUpReason, code: null, head.BuiltAt) with { CatchingUp = new SearchedCatchingUp(head.Commit ?? string.Empty, head.AsOfCommit ?? string.Empty, head.Pending ?? []) },
             CodeIndexState.Stale => Make(SearchedState.Degraded, "stale", head.Code, head.BuiltAt),
             CodeIndexState.CheckoutNotOnMain => Make(SearchedState.Degraded, "checkout-not-on-main", head.Code, head.BuiltAt),
             CodeIndexState.LayerUnavailable => Make(SearchedState.Degraded, head.Layer ?? "layer", head.Code, head.BuiltAt),
@@ -109,7 +143,7 @@ public static class CodeIndexReading
             return head.Code is null ? none : none with { Code = head.Code };
         }
 
-        var (state, _) = Stamp(head);
+        var state = head.State == CodeIndexState.CatchingUp ? (rows.Any(static r => r.State == SymbolsState.Stale) ? SymbolsState.Stale : SymbolsState.Ok) : Stamp(head).State;
         return new CodeSymbols(state, Reason(head, calls: true), rows)
         {
             Commit = head.Commit,
@@ -133,7 +167,7 @@ public static class CodeIndexReading
             return head.Code is null ? none : none with { Code = head.Code };
         }
 
-        var (state, _) = Stamp(head);
+        var state = head.State == CodeIndexState.CatchingUp ? (files.Any(static f => f.State == SymbolsState.Stale) ? SymbolsState.Stale : SymbolsState.Ok) : Stamp(head).State;
         return new LensSymbols(state, Reason(head, calls: false), [])
         {
             Files = files,
@@ -157,14 +191,15 @@ public static class CodeIndexReading
     private static int Weight(CodeIndexState state) => state switch
     {
         CodeIndexState.Ok => 0,
-        CodeIndexState.LayerUnavailable => 1,
-        CodeIndexState.Stale => 2,
-        CodeIndexState.CheckoutNotOnMain => 3,
-        CodeIndexState.NotConfigured => 4,
-        CodeIndexState.Building => 5,
-        CodeIndexState.Missing => 6,
-        CodeIndexState.Damaged => 7,
-        _ => 7,
+        CodeIndexState.CatchingUp => 1,
+        CodeIndexState.LayerUnavailable => 2,
+        CodeIndexState.Stale => 3,
+        CodeIndexState.CheckoutNotOnMain => 4,
+        CodeIndexState.NotConfigured => 5,
+        CodeIndexState.Building => 6,
+        CodeIndexState.Missing => 7,
+        CodeIndexState.Damaged => 8,
+        _ => 8,
     };
 
     private static string UnreadableReason(CodeIndexState state, bool hyphen) => (state, hyphen) switch
@@ -183,6 +218,7 @@ public static class CodeIndexReading
     private static string? Reason(CodeIndexHead head, bool calls) => head.State switch
     {
         CodeIndexState.Stale => "stale",
+        CodeIndexState.CatchingUp => CatchingUpReason,
         CodeIndexState.CheckoutNotOnMain => "checkout-not-on-main",
         CodeIndexState.LayerUnavailable when calls => $"{head.Layer ?? "layer"}-unavailable",
         CodeIndexState.Ok or CodeIndexState.LayerUnavailable or CodeIndexState.Missing or CodeIndexState.Damaged or CodeIndexState.Building or CodeIndexState.NotConfigured => null,

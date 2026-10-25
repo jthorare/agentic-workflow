@@ -69,6 +69,32 @@
                         "code": {
                           "type": "string"
                         },
+                        "catchingUp": {
+                          "type": "object",
+                          "description": "A code index that trails the map along main (the recorded limit catching-up, state ok): the commit it describes, the map's commit, and the files changed between them, whose rows may be out of date.",
+                          "properties": {
+                            "indexCommit": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "mapCommit": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "pending": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "indexCommit",
+                            "mapCommit",
+                            "pending"
+                          ],
+                          "additionalProperties": false
+                        },
                         "sync": {
                           "type": "object",
                           "description": "A never-synced source's sync pair (scoping spec 8.2, Recorded limits): ScopeFixLines words the stop row by it.",
@@ -149,7 +175,7 @@
                 "why": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "A recorded limit: index-not-built, history-unlinked, commit-not-held, not-synced, not-configured, or anchor-missing (an asked anchor the view couldn't find; 'not' names the anchor) (SCP-COV-002)."
+                  "description": "A recorded limit: index-not-built, history-unlinked, commit-not-held, not-synced, catching-up, not-configured, or anchor-missing (an asked anchor the view couldn't find; 'not' names the anchor) (SCP-COV-002)."
                 }
               },
               "required": [

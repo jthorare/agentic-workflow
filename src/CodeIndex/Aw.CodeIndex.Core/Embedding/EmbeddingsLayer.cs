@@ -46,9 +46,14 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
 
         var model = embedder.ModelFor(settings);
         var probed = await embedder.Probe(settings, cancellationToken).ConfigureAwait(false);
-        return probed.IsError
-            ? await Settle(build, model, probed.Error, cancellationToken).ConfigureAwait(false)
-            : await Embed(build, new EmbedPass(settings, model, progress, limit), cancellationToken).ConfigureAwait(false);
+        if (probed.IsError)
+        {
+            // nothing is made, so every vector now there was carried
+            var failed = await Settle(build, model, probed.Error, cancellationToken).ConfigureAwait(false);
+            return failed.IsError ? failed : failed.Value with { Carried = failed.Value.Embedded };
+        }
+
+        return await Embed(build, new EmbedPass(settings, model, progress, limit), cancellationToken).ConfigureAwait(false);
     }
 
     private sealed record EmbedPass(EmbeddingsSettings Settings, string Model, IProgress<string> Progress, int Limit);
@@ -64,13 +69,15 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
         }
 
         var done = before.Value.Embedded;
+        var made = 0;
+        var carried = before.Value.Embedded;
         foreach (var batch in candidates.Value.Chunk(CodeIndexRules.EmbedBatchSize))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var vectors = await embedder.Embed(settings, [.. batch.Select(EmbedText.Of)], cancellationToken).ConfigureAwait(false);
             if (vectors.IsError)
             {
-                return await Settle(build, model, vectors.Error, cancellationToken).ConfigureAwait(false);
+                return Tally(await Settle(build, model, vectors.Error, cancellationToken).ConfigureAwait(false), carried, made);
             }
 
             var written = await build.WriteEmbeddings([.. batch.Select((c, i) => new EmbeddingRecord(c.Symbol, model, vectors.Value[i]))], cancellationToken).ConfigureAwait(false);
@@ -80,10 +87,11 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
             }
 
             done += batch.Length;
+            made += batch.Length;
             progress.Report(string.Create(CultureInfo.InvariantCulture, $"embeddings {done:N0} of {before.Value.Embeddable:N0}"));
         }
 
-        return await Settle(build, model, failure: null, cancellationToken).ConfigureAwait(false);
+        return Tally(await Settle(build, model, failure: null, cancellationToken).ConfigureAwait(false), carried, made);
     }
 
     // Records what the layer ended as: unavailable with the failure's code when the model failed (the vectors made so far stay),
@@ -102,6 +110,10 @@ public sealed class EmbeddingsLayer(IEmbedder embedder, TimeProvider clock)
         var recorded = await Record(build, new LayerRecord(LayerName.Embeddings, model, state, failure?.Code, detail, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : counted.Value;
     }
+
+    // A run's result also says how many vectors it found already there (carried) and how many it made.
+    private static Result<EmbeddingProgress> Tally(Result<EmbeddingProgress> settled, int carried, int made)
+        => settled.IsError ? settled : settled.Value with { Carried = carried, Made = made };
 
     private async ValueTask<Result<EmbeddingProgress>> Disabled(IIndexBuild build, CancellationToken cancellationToken)
     {

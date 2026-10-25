@@ -25,13 +25,16 @@ internal static class CodeIndexJobServiceCollectionExtensions
             .AddJob<BuildCodeIndexRequest, BuildCodeIndexResult, BuildCodeIndexService>(
                 static r => IndexJobs.KeyOf(r.Repo), static r => Summary(r), precheck: null, repo: static r => Core.Ids.RepoName.TryFrom(r.Repo, out var repo) ? repo : null)
             .AddJob<EmbedCodeIndexRequest, EmbedCodeIndexResult, EmbedCodeIndexService>(
-                static r => IndexJobs.EmbedKeyOf(r.Repo), static r => Summary(r), precheck: null, repo: static r => Core.Ids.RepoName.TryFrom(r.Repo, out var repo) ? repo : null);
+                static r => IndexJobs.EmbedKeyOf(r.Repo), static r => EmbedSummary(r), precheck: null, repo: static r => Core.Ids.RepoName.TryFrom(r.Repo, out var repo) ? repo : null);
     }
 
-    private static string Summary(EmbedCodeIndexResult result) => result.Outcome switch
+    /// <summary>The embed job's detail line: what this run made and what it carried, so a full re-embed shows.</summary>
+    /// <param name="result">What the job did.</param>
+    /// <returns>The line 'sindri jobs show' prints.</returns>
+    internal static string EmbedSummary(EmbedCodeIndexResult result) => result.Outcome switch
     {
         EmbedCodeIndexResult.Later => $"{result.Repo}: the index was busy or not built, nothing embedded",
-        _ => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{result.Repo}: {result.Embedded:N0} of {result.Embeddable:N0} symbols embedded"),
+        _ => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{result.Repo}: embedded {result.Made:N0}, carried {result.Carried:N0} of {result.Embeddable:N0}"),
     };
 
     private static string Summary(BuildCodeIndexResult result) => result.Outcome switch

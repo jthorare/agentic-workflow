@@ -88,12 +88,26 @@ internal static partial class DeskBlocks
         return Reply("step.scope.intake", kind, outputs, []);
     }
 
+    /// <summary>SCP-LENS-001 failing at a check names a fault in the gathered lens, which another gather reproduces and a redraft can't change: the Step fails, it neither regathers nor reports gaps.</summary>
+    private static Error? LensFaultAt(string block, ScopingCheckResponse report)
+    {
+        var faults = report.Findings.Where(static f => string.Equals(f.Rule, ScopeRules.Lens1, StringComparison.Ordinal)).Select(static f => f.Message).ToList();
+        return faults.Count == 0
+            ? null
+            : SindriErrors.InvalidInput.With($"{ScopeRules.Lens1} fails at {block}: {string.Join("; ", faults)}; a fault in the lens, not in the scope (fix: the context engine's lens, #993)");
+    }
+
     private static Result<ScopingDeskResponse> Seed() =>
         Reply("step.brief.seed", "seeded", Outputs(("answers", new JsonArray()), ("answerLog", new JsonArray())), []);
 
     private static Result<ScopingDeskResponse> Check(ScopeFacts facts)
     {
         var report = ScopePacketChecks.Run(facts, ScopeStage.Draft);
+        if (LensFaultAt("step.scope.check", report) is { } lens)
+        {
+            return lens;
+        }
+
         var outputs = report.Outcome is ScopeOutcome.Gaps or ScopeOutcome.Regather
             ? Outputs(("findings", FindingsFact(report.Findings)))
             : [];
@@ -221,6 +235,11 @@ internal static partial class DeskBlocks
     {
         var assembled = ScopeEvidence.FlagUncited(facts);
         var report = ScopePacketChecks.Run(assembled, ScopeStage.Evidence, challengeCap);
+        if (LensFaultAt("step.scope.evidence", report) is { } lens)
+        {
+            return lens;
+        }
+
         if (report.Outcome is not ScopeOutcome.Complete)
         {
             var outcome = report.Outcome == ScopeOutcome.Regather ? "regather" : "incomplete";

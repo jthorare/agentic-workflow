@@ -4628,8 +4628,8 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.Repo.get -> string!
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexRequest.Repo.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.<Clone>$() -> Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult!
-Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Deconstruct(out string! Repo, out string! Outcome, out int Embedded, out int Embeddable, out long Milliseconds) -> void
-Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.EmbedCodeIndexResult(string! Repo, string! Outcome, int Embedded, int Embeddable, long Milliseconds) -> void
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Deconstruct(out string! Repo, out string! Outcome, out int Embedded, out int Embeddable, out int Carried, out int Made, out long Milliseconds) -> void
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.EmbedCodeIndexResult(string! Repo, string! Outcome, int Embedded, int Embeddable, int Carried, int Made, long Milliseconds) -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Embeddable.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Embeddable.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Embedded.get -> int
@@ -4751,3 +4751,7 @@ override Aw.Sindri.Features.LineDoctor.LineDoctorResponse.ToString() -> string!
 static Aw.Sindri.Features.LineDoctor.LineDoctorResponse.operator !=(Aw.Sindri.Features.LineDoctor.LineDoctorResponse? left, Aw.Sindri.Features.LineDoctor.LineDoctorResponse? right) -> bool
 static Aw.Sindri.Features.LineDoctor.LineDoctorResponse.operator ==(Aw.Sindri.Features.LineDoctor.LineDoctorResponse? left, Aw.Sindri.Features.LineDoctor.LineDoctorResponse? right) -> bool
 Aw.Sindri.Features.LineDoctor.LineDoctorResponse.Passed.get -> bool
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.get -> int
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.get -> int
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
+Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void

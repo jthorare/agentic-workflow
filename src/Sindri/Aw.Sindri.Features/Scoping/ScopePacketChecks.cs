@@ -51,8 +51,8 @@ internal static partial class ScopePacketChecks
     {
         if (fails.Count > 0)
         {
-            // why: both rules fail on what the lenses gathered, which a redraft can't change; only gathering again can
-            return fails.TrueForAll(static f => string.Equals(f.Rule, ScopeRules.Cov2, StringComparison.Ordinal) || string.Equals(f.Rule, ScopeRules.Lens1, StringComparison.Ordinal))
+            // why: SCP-COV-002 fails on a stale lens, which a redraft can't change and a re-embed plus another gather can; SCP-LENS-001 is a fault in the lens itself, which gather reproduces (it fails there first, and the check Step fails on it)
+            return fails.TrueForAll(static f => string.Equals(f.Rule, ScopeRules.Cov2, StringComparison.Ordinal))
                 ? ScopeOutcome.Regather
                 : stage == ScopeStage.Draft ? ScopeOutcome.Gaps : ScopeOutcome.Incomplete;
         }

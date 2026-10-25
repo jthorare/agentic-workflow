@@ -11,4 +11,8 @@ public sealed record SearchedSource(Sources.SourceId Id, SearchedState State, st
     /// <summary>The sync job that is filling this gap ('not-synced'), or null; the engine reads no jobs, so Sindri sets it from its jobs view.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public SearchedSync? Sync { get; init; }
+
+    /// <summary>Both commits and the pending files when the index trails the map along main (reason 'catching-up'); null otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public SearchedCatchingUp? CatchingUp { get; init; }
 }

@@ -1407,8 +1407,8 @@ Aw.CodeIndex.Core.Embedding.EmbeddingsLayer.Run(Aw.CodeIndex.Core.Ports.IIndexBu
 Aw.CodeIndex.Core.Embedding.EmbeddingsLayer.Record(Aw.CodeIndex.Core.Ports.IIndexBuild! build, Aw.CodeIndex.Core.Model.EmbeddingsSettings! settings, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Model.EmbeddingProgress!>!>
 Aw.CodeIndex.Core.Facade.EmbedReport
 Aw.CodeIndex.Core.Facade.EmbedReport.<Clone>$() -> Aw.CodeIndex.Core.Facade.EmbedReport!
-Aw.CodeIndex.Core.Facade.EmbedReport.Deconstruct(out Aw.CodeIndex.Core.Values.RepoName Repo, out int Embedded, out int Embeddable, out Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
-Aw.CodeIndex.Core.Facade.EmbedReport.EmbedReport(Aw.CodeIndex.Core.Values.RepoName Repo, int Embedded, int Embeddable, Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
+Aw.CodeIndex.Core.Facade.EmbedReport.Deconstruct(out Aw.CodeIndex.Core.Values.RepoName Repo, out int Embedded, out int Embeddable, out int Carried, out int Made, out Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
+Aw.CodeIndex.Core.Facade.EmbedReport.EmbedReport(Aw.CodeIndex.Core.Values.RepoName Repo, int Embedded, int Embeddable, int Carried, int Made, Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
 Aw.CodeIndex.Core.Facade.EmbedReport.Embeddable.get -> int
 Aw.CodeIndex.Core.Facade.EmbedReport.Embeddable.init -> void
 Aw.CodeIndex.Core.Facade.EmbedReport.Embedded.get -> int
@@ -1424,3 +1424,12 @@ override Aw.CodeIndex.Core.Facade.EmbedReport.ToString() -> string!
 static Aw.CodeIndex.Core.Facade.EmbedReport.operator !=(Aw.CodeIndex.Core.Facade.EmbedReport? left, Aw.CodeIndex.Core.Facade.EmbedReport? right) -> bool
 static Aw.CodeIndex.Core.Facade.EmbedReport.operator ==(Aw.CodeIndex.Core.Facade.EmbedReport? left, Aw.CodeIndex.Core.Facade.EmbedReport? right) -> bool
 Aw.CodeIndex.Core.Facade.ICodeIndex.Embed(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, System.IProgress<string!>! progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.EmbedReport!>!>
+Aw.CodeIndex.Core.Facade.EmbedReport.Carried.get -> int
+Aw.CodeIndex.Core.Facade.EmbedReport.Made.get -> int
+Aw.CodeIndex.Core.Facade.EmbedReport.Carried.init -> void
+Aw.CodeIndex.Core.Facade.EmbedReport.Made.init -> void
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.get -> int
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.get -> int
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.init -> void
+Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.init -> void
+Aw.CodeIndex.Core.Ports.IIndexBuild.FilesWithoutBodiesOrVectors(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>

@@ -22,7 +22,7 @@ public enum ScopeOutcome
     [JsonStringEnumMemberName("incomplete")]
     Incomplete = 4,
 
-    /// <summary>Every failing rule is SCP-COV-002 or SCP-LENS-001: a lens must run again.</summary>
+    /// <summary>Every failing rule is SCP-COV-002: a stale lens, which a re-embed plus another gather can fix. SCP-LENS-001 is not: it is a fault in the lens itself and fails the Step.</summary>
     [JsonStringEnumMemberName("regather")]
     Regather = 5,
 }

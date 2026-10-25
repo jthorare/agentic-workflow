@@ -6983,3 +6983,33 @@ static Aw.Context.Core.Lenses.FileMapBuilder.Build(Aw.Context.Core.Lenses.FileMa
 const Aw.Context.Core.Sources.SourceQuery.DefaultLimit = 200 -> int
 Aw.Context.Core.Graph.NodeDetail.Repo.get -> string?
 Aw.Context.Core.Graph.NodeDetail.Repo.init -> void
+Aw.Context.Core.Symbols.CodeIndexState.CatchingUp = 8 -> Aw.Context.Core.Symbols.CodeIndexState
+Aw.Context.Core.Symbols.CodeIndexHead.Pending.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Symbols.CodeIndexHead.Pending.init -> void
+Aw.Context.Core.Lenses.SearchedSource.CatchingUp.get -> Aw.Context.Core.Lenses.SearchedCatchingUp?
+Aw.Context.Core.Lenses.SearchedSource.CatchingUp.init -> void
+Aw.Context.Core.Lenses.SearchedCatchingUp
+Aw.Context.Core.Lenses.SearchedCatchingUp.<Clone>$() -> Aw.Context.Core.Lenses.SearchedCatchingUp!
+Aw.Context.Core.Lenses.SearchedCatchingUp.Deconstruct(out string! IndexCommit, out string! MapCommit, out System.Collections.Generic.IReadOnlyList<string!>! Pending) -> void
+Aw.Context.Core.Lenses.SearchedCatchingUp.Equals(Aw.Context.Core.Lenses.SearchedCatchingUp? other) -> bool
+Aw.Context.Core.Lenses.SearchedCatchingUp.IndexCommit.get -> string!
+Aw.Context.Core.Lenses.SearchedCatchingUp.IndexCommit.init -> void
+Aw.Context.Core.Lenses.SearchedCatchingUp.MapCommit.get -> string!
+Aw.Context.Core.Lenses.SearchedCatchingUp.MapCommit.init -> void
+Aw.Context.Core.Lenses.SearchedCatchingUp.Pending.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Lenses.SearchedCatchingUp.Pending.init -> void
+Aw.Context.Core.Lenses.SearchedCatchingUp.SearchedCatchingUp(string! IndexCommit, string! MapCommit, System.Collections.Generic.IReadOnlyList<string!>! Pending) -> void
+static Aw.Context.Core.Code.CodeIndexReading.CatchingUp(Aw.Context.Core.Symbols.CodeIndexHead! stale, string! mergeBase, System.Collections.Generic.IReadOnlyList<string!>! pending) -> Aw.Context.Core.Symbols.CodeIndexHead!
+static Aw.Context.Core.Code.CodeIndexReading.Stamp(Aw.Context.Core.Symbols.CodeIndexHead! head, string! path) -> (Aw.Context.Core.Symbols.SymbolsState State, string? AsOfCommit)
+override Aw.Context.Core.Lenses.SearchedCatchingUp.Equals(object? obj) -> bool
+override Aw.Context.Core.Lenses.SearchedCatchingUp.GetHashCode() -> int
+override Aw.Context.Core.Lenses.SearchedCatchingUp.ToString() -> string!
+static Aw.Context.Core.Lenses.SearchedCatchingUp.operator !=(Aw.Context.Core.Lenses.SearchedCatchingUp? left, Aw.Context.Core.Lenses.SearchedCatchingUp? right) -> bool
+static Aw.Context.Core.Lenses.SearchedCatchingUp.operator ==(Aw.Context.Core.Lenses.SearchedCatchingUp? left, Aw.Context.Core.Lenses.SearchedCatchingUp? right) -> bool
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.Callees(Aw.Context.Core.Engine.ContextRepoName repo, string! symbolRef, int depth, string? asOf, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Symbols.CallAnswer!>!>
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.Callers(Aw.Context.Core.Engine.ContextRepoName repo, string! symbolRef, int depth, string? asOf, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Symbols.CallAnswer!>!>
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.FileSymbols(Aw.Context.Core.Engine.ContextRepoName repo, System.Collections.Generic.IReadOnlyList<string!>! paths, string? asOf, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Symbols.SymbolAnswer<Aw.Context.Core.Symbols.FileSymbolsRow!>!>!>
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.FindSymbols(Aw.Context.Core.Engine.ContextRepoName repo, Aw.Context.Core.Symbols.SymbolQuery! query, string? asOf, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Symbols.SymbolAnswer<Aw.Context.Core.Symbols.SymbolHit!>!>!>
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.Heads(Aw.Context.Core.Engine.ContextRepoName repo, string? asOf, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Symbols.CodeIndexHead!>!>
+Aw.Context.Core.Symbols.TrailingCodeSymbolSource.TrailingCodeSymbolSource(Aw.Context.Core.Symbols.ICodeSymbolSource! inner, Aw.Context.Core.Extract.IRepoReader! repos, Aw.Context.Core.Engine.ContextRepo! checkout) -> void

@@ -10,7 +10,7 @@ namespace Aw.CodeIndex.Features.BuildCodeIndex;
 
 /// <summary>
 /// The build slice (spec §5.7): the snapshot, the incremental plan, the structure write in batches, the syntax
-/// edges and the publish. The graph layer (graphify) runs after the syntax edges and never fails the build; the clones rows are written with the structure; the embeddings layer is only recorded here (bodies stay stored and vectors of unchanged files are carried; the embed slice embeds the rest outside the heavy slot); the deps layer plugs in later; until then it is recorded as unavailable
+/// edges and the publish. The graph layer (graphify) runs after the syntax edges and never fails the build; the clones rows are written with the structure; the embeddings layer is only recorded here (bodies stay stored and vectors of unchanged files are carried, graph files included: the graph layer writes only the graph files whose blob or planned symbols changed; the embed slice embeds the rest outside the heavy slot); the deps layer plugs in later; until then it is recorded as unavailable
 /// with its reason, so a reader never mistakes a layer that was not built for one that is empty.
 /// </summary>
 /// <param name="heads">Whether a commit is still on the default branch.</param>

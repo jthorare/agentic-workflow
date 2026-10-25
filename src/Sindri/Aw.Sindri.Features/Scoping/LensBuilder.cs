@@ -198,6 +198,7 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
         "history-unlinked" => "tickets linked to the map",
         "commit-not-held" => "the commit's files",
         "not-synced" => "records not yet synced",
+        "catching-up" => "files changed since the index was built",
         _ => $"the {ScopeJson.Str(source, "id") ?? "source"} source",
     };
 }
