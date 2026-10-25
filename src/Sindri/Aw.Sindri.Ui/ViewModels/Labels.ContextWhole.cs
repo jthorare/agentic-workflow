@@ -109,4 +109,11 @@ internal static partial class Labels
     /// <param name="what">The kind, or how many items a feature holds.</param>
     /// <returns>"Tab groups, feature".</returns>
     internal static string ContextMapItemName(string label, string what) => $"{label}, {what}";
+
+    /// <summary>One edge of that list: the two ends and the kind of link.</summary>
+    /// <param name="from">The label the edge starts at.</param>
+    /// <param name="to">The label it ends at.</param>
+    /// <param name="type">The link's kind.</param>
+    /// <returns>"Tab groups to Billing, part-of".</returns>
+    internal static string ContextMapEdgeName(string from, string to, string type) => $"{from} to {to}, {type}";
 }
