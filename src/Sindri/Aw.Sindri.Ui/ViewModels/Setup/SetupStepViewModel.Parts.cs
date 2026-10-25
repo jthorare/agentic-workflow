@@ -8,6 +8,9 @@ internal sealed partial class SetupStepViewModel
     /// <summary>True when the row offers a link.</summary>
     public bool HasLink => LinkUrl is not null;
 
+    /// <summary>The link button's word, named by the step so each link is told apart.</summary>
+    public string OpenLinkLabel => Labels.SetupOpenLinkFor(Title);
+
     /// <summary>True when the step was skipped.</summary>
     internal bool IsSkipped => string.Equals(Step.State, "skipped", StringComparison.Ordinal);
 
