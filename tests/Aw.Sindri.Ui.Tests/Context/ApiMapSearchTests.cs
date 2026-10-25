@@ -83,7 +83,8 @@ public sealed class ApiMapSearchTests
 
         var hits = await search.Search(new string('a', 513), Token);
 
-        Assert.Equal((0, 0, [Labels.ContextSearchTooLong]), (hits.Count, api.ContextSearchAsked.Count, problems));
+        Assert.Equal((0, 0), (hits.Count, api.ContextSearchAsked.Count));
+        Assert.Equal([Labels.ContextSearchTooLong], problems);
     }
 
     [Fact]
@@ -93,7 +94,8 @@ public sealed class ApiMapSearchTests
 
         var hits = await search.Search("tab", Token);
 
-        Assert.Equal((0, ["the search needs words to find (fix: pass q, for example q=tab manager)"]), (hits.Count, problems));
+        Assert.Empty(hits);
+        Assert.Equal(["the search needs words to find (fix: pass q, for example q=tab manager)"], problems);
     }
 
     [Fact]
@@ -104,7 +106,8 @@ public sealed class ApiMapSearchTests
 
         var hits = await search.Search("tab", Token);
 
-        Assert.Equal(([drawn], 0), (hits, problems.Count));
+        Assert.Equal([drawn], hits);
+        Assert.Empty(problems);
     }
 
     private sealed class Drawn(IReadOnlyList<MapSearchHit> hits) : IMapSearch
