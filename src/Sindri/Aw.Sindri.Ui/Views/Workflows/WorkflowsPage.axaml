@@ -11,6 +11,9 @@
   <Grid ColumnDefinitions="*,Auto">
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="Auto,*,Auto">
+      <!-- The live region sits in the head's grid, not in the page's stack, so it takes no row and no panel gap of its own. -->
+      <TextBlock x:Name="WorkflowsKeyNoteAnnouncement" Classes="caption live-region" Classes.live="{Binding KeyNoteVoice.IsAnnouncing}" Width="0" Opacity="0"
+                 IsHitTestVisible="False" Text="{Binding KeyNoteVoice.Announcement}" />
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="Workflows" AutomationProperties.Name="Workflows" />
         <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Head}" />
@@ -41,7 +44,7 @@
         <ListBoxItem x:Name="WorkflowsFilterNeedsYouItem" AutomationProperties.Name="{Binding FilterNeedsYouText}"><TextBlock Classes="caption" Text="{Binding FilterNeedsYouText}" AutomationProperties.AccessibilityView="Raw" /></ListBoxItem>
         <ListBoxItem x:Name="WorkflowsFilterMineItem" AutomationProperties.Name="{Binding FilterMineText}"><TextBlock Classes="caption" Text="{Binding FilterMineText}" AutomationProperties.AccessibilityView="Raw" /></ListBoxItem>
       </ListBox>
-      <TextBlock x:Name="WorkflowsKeyHints" Classes="caption subtle" Text="{Binding KeyHints}" VerticalAlignment="Center" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="WorkflowsKeyHints" Classes="caption subtle" Text="{Binding KeyHints}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw" />
     </WrapPanel>
 
     <StackPanel x:Name="WorkflowsPageStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
@@ -52,8 +55,6 @@
     <!-- A key that only names a later phase (B, N) says so here, politely, and changes nothing. -->
     <TextBlock x:Name="WorkflowsKeyNote" Classes="caption" Text="{Binding KeyNote}" IsVisible="{Binding HasKeyNote}" TextWrapping="Wrap"
                AutomationProperties.Name="{Binding KeyNote}" />
-    <TextBlock x:Name="WorkflowsKeyNoteAnnouncement" Classes="caption live-region" Classes.live="{Binding KeyNoteVoice.IsAnnouncing}" Width="0" Opacity="0"
-               IsHitTestVisible="False" Text="{Binding KeyNoteVoice.Announcement}" />
 
     <TextBlock x:Name="WorkflowsNoRunsMatch" Classes="caption quiet" Text="{Binding NoRunsMatchText}" IsVisible="{Binding NoRunsMatch}" TextWrapping="Wrap"
                AutomationProperties.Name="{Binding NoRunsMatchText}" />
