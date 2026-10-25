@@ -1,5 +1,6 @@
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Context.Hits;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
@@ -13,7 +14,7 @@ internal sealed partial class ContextPageViewModel
     public WholeMapViewModel Whole { get; } = new();
 
     /// <summary>The list of a search's hits, beside the map.</summary>
-    public Hits.MapHitsViewModel Hits { get; } = new();
+    public MapHitsViewModel Hits { get; } = new();
 
     /// <summary>Whether the whole map is on the stage: it is read, and neither a query's neighbourhood, the No map state nor a running build covers it.</summary>
     public bool ShowWhole => ShowMap && Whole.IsReady && !NoMap && !IsBuilding;
@@ -37,6 +38,7 @@ internal sealed partial class ContextPageViewModel
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
+        Hits.Chosen += (_, e) => _ = Whole.FocusHit(e.Value);
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
         Ports.Follow((_, cancellationToken) => _wholeWanted && !Whole.IsReady && !Whole.IsLoading && !Whole.IsFailed && !Concepts.IsOnStage ? (_conceptsRead ? ReadWhole(cancellationToken) : OpenFirst(cancellationToken)) : Task.CompletedTask);
     }

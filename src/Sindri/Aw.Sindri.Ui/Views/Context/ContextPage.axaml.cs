@@ -208,5 +208,6 @@ internal sealed partial class ContextPage : UserControl
 
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
         ContextStageHost.Height = Math.Max(StageMinimum, scroller.Viewport.Height - top - PageEdge);
+        ContextHitsHost.Height = ContextStageHost.Height;   // the list scrolls inside the height the stage has
     }
 }

@@ -26,6 +26,20 @@ internal static partial class Labels
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";
 
+    /// <summary>The title of the list of a search's hits.</summary>
+    internal const string ContextHitsTitle = "Matches";
+
+    /// <summary>How many of the matches the list holds.</summary>
+    /// <param name="shown">How many rows the list has.</param>
+    /// <param name="total">How many items matched.</param>
+    /// <returns>"50 of 132".</returns>
+    internal static string ContextHitsOf(int shown, int total) => string.Create(CultureInfo.InvariantCulture, $"{shown} of {total}");
+
+    /// <summary>The line on a hit that says where it matched.</summary>
+    /// <param name="where">"title", "path" or "text".</param>
+    /// <returns>"matched in: title".</returns>
+    internal static string ContextHitMatchedIn(string where) => $"matched in: {where}";
+
     /// <summary>The line when the search words are longer than the API takes.</summary>
     internal const string ContextSearchTooLong = "The search is too long; it takes at most 512 characters.";
 

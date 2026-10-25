@@ -90,6 +90,7 @@ internal sealed partial class ContextPageViewModel
         {
             Show(view: null, choices: Suggestions(result.Error));
             Problem = result.Error.Message;
+            Hits.Clear();
             if (Whole.IsReady)
             {
                 Whole.ApplySearch([], [], zoomed: false);   // nothing resolved: the map dims and says so

@@ -17,6 +17,7 @@ internal sealed class ApiMapSearch : IMapSearch
     private readonly IMapSearch _fallback;
     private readonly Action<string> _problem;
     private readonly int _limit;
+    private readonly Action<int>? _total;
 
     /// <summary>Makes the search.</summary>
     /// <param name="api">Sindri's API.</param>
@@ -25,9 +26,10 @@ internal sealed class ApiMapSearch : IMapSearch
     /// <param name="fallback">The search used when the route is unavailable (a 404 or no connection).</param>
     /// <param name="problem">Told the words of a refusal or a too long search, so the page can show them.</param>
     /// <param name="limit">How many hits to ask for; kept to 1 to 200.</param>
-    internal ApiMapSearch(ISindriApi api, Func<Uri?> apiUrl, Func<string?> repo, IMapSearch fallback, Action<string> problem, int limit = 50)
+    /// <param name="total">Told how many items matched in all, when the answer says.</param>
+    internal ApiMapSearch(ISindriApi api, Func<Uri?> apiUrl, Func<string?> repo, IMapSearch fallback, Action<string> problem, int limit = 50, Action<int>? total = null)
     {
-        (_api, _apiUrl, _repo, _fallback, _problem) = (api, apiUrl, repo, fallback, problem);
+        (_api, _apiUrl, _repo, _fallback, _problem, _total) = (api, apiUrl, repo, fallback, problem, total);
         _limit = Math.Clamp(limit, MinLimit, MaxLimit);
     }
 
@@ -55,6 +57,7 @@ internal sealed class ApiMapSearch : IMapSearch
         var answer = await _api.ContextSearch(api, new MapSearchQuery(words, _limit, Area: null, _repo()), cancellationToken).ConfigureAwait(false);
         if (answer.IsSuccess)
         {
+            _total?.Invoke(answer.Value.Total);
             return [.. answer.Value.Hits.Select(h => new MapSearchHit(h.Key, h.Kind, h.Label, h.Area, h.Repo, h.Score, h.Matched, h.Snippet))];
         }
 

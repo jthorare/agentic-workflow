@@ -14,7 +14,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     internal ContextPageViewModel(ContextPorts ports)
     {
         Ports = ports;
-        MapSearch = new ApiMapSearch(Ports.Api, Ports.ApiUrl, () => _repo, new DrawnMapSearch(() => Map), said => _searchProblem = said);
+        MapSearch = new ApiMapSearch(Ports.Api, Ports.ApiUrl, () => _repo, new DrawnMapSearch(() => Map), said => _searchProblem = said, total: total => _searchTotal = total);
         InitReview();
         InitFileMap();
         InitSide();
