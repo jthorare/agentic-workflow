@@ -57,14 +57,12 @@ APP_WRAPPER_PID=$!
 drv ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
 # 2. Work.
-tab=""
+nav_ok=0
 for _ in $(seq 1 60); do
-  tab="$(drv search --text Work --limit 50 2>/dev/null | jq -r '[.matches[] | select(.type == "Button" or .type == "TabItem" or .type == "ListBoxItem" or .type == "RadioButton" or .type == "ToggleButton")][0].id // empty')"
-  [ -n "$tab" ] && break
+  if drv click --type ListBoxItem --name Work >"$OUT/nav.log" 2>&1; then nav_ok=1; break; fi
   sleep 1
 done
-[ -n "$tab" ] || setup_fail "no Work tab in the top bar"
-drv click --node-id "$tab" >/dev/null 2>&1 || setup_fail "the Work tab click was not accepted by the driver"
+[ "$nav_ok" = 1 ] || setup_fail "the Work nav entry could not be clicked (see $OUT/nav.log)"
 heads=""
 for _ in $(seq 1 30); do
   heads="$(drv search --type ToggleButton --limit 200 2>/dev/null | jq -c '[.matches[] | select((.name // "") | startswith("Queued"))][0] // empty')"
