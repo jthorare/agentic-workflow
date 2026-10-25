@@ -27,6 +27,8 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
     <TextBlock x:Name="SheetRowCli" Classes="mono" Text="{Binding Cli}" IsVisible="{Binding ShowsCliUpFront}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Cli}" />
+    <!-- A desk task's Complete (the UX pass's A-1): the same send as the row's own Complete, named with the instance's address. -->
+    <Button x:Name="SheetRowComplete" Classes="command-control primary" IsVisible="{Binding ShowsComplete}" Content="{Binding CompleteLabel}" Click="OnComplete" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CompleteName}" />
     <!-- Review 456-4: a hash and the approve command are bookkeeping; they wait behind Details, closed until asked for. -->
     <Expander x:Name="SheetRowMoreDetails" Header="{Binding MoreHeading}" IsExpanded="{Binding DetailsOpen, Mode=TwoWay}" IsVisible="{Binding HasMoreDetails}" AutomationProperties.Name="{Binding MoreHeading}">
       <ItemsControl ItemsSource="{Binding MoreDetails}">

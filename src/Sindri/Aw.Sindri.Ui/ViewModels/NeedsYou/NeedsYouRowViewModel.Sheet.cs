@@ -21,16 +21,22 @@ internal sealed partial class NeedsYouRowViewModel
     /// <summary>True when the served command shows under the lines: not when Details already holds it.</summary>
     public bool ShowsCliUpFront => Cli.Length > 0 && !HasMoreDetails;
 
-    /// <summary>The ready Complete action of an open desk task, which the sheet offers as a button; null for any other row.</summary>
-    internal NeedsYouAction? SheetComplete => null;
+    private const string CompleteAction = "CompleteStep";
+    private const string WorkflowRoutePrefix = "workflow/";
+
+    /// <summary>The ready Complete action of an open desk task, which the sheet offers as a button; null for any other row, a Complete the app may not send, or a task with no instance to name.</summary>
+    internal NeedsYouAction? SheetComplete =>
+        Address.Length > 0 ? Entry.Actions.FirstOrDefault(a => a.IsReady && string.Equals(a.CatalogId, CompleteAction, StringComparison.Ordinal)) : null;
 
     /// <summary>True when the sheet shows the Complete button.</summary>
     public bool ShowsComplete => SheetComplete is not null;
 
     /// <summary>The words on the Complete button.</summary>
-    public string CompleteLabel => string.Empty;
+    public string CompleteLabel => Labels.Action(CompleteAction);
 
     /// <summary>The Complete button's accessible name: the words and the instance's address ("Complete ITM-.../dev-desk-round-trip/1").</summary>
-    public string CompleteName => string.Empty;
-}
+    public string CompleteName => Labels.CommandName(CompleteLabel, Address);
 
+    // The desk task's instance address, as its row's open route names it ("workflow/<address>"); empty for a row that opens elsewhere.
+    private string Address => Entry.Open?.Route is { } route && route.StartsWith(WorkflowRoutePrefix, StringComparison.Ordinal) ? route[WorkflowRoutePrefix.Length..] : string.Empty;
+}
