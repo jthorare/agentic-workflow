@@ -61,6 +61,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Context.ReviewHistoryView))]
 [JsonSerializable(typeof(Context.PromotePreview))]
 [JsonSerializable(typeof(Context.MapStatusView))]
+[JsonSerializable(typeof(Context.RepoRolesView))]
 [JsonSerializable(typeof(Context.MapPublishView))]
 [JsonSerializable(typeof(Context.NodeView))]
 [JsonSerializable(typeof(Context.SourcesView))]

@@ -99,6 +99,21 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     /// <summary>The note under the table, or empty.</summary>
     public string Note { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>One line per role of the repo ("test, demoted: 41 files"); empty when the map status names no role for it.</summary>
+    public IReadOnlyList<string> RoleLines { get; private set => Set(ref field, value); } = [];
+
+    /// <summary>"2 files look like a role but match no glob", or empty when none do.</summary>
+    public string UnassignedLine { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The paths of a few of those files, or empty.</summary>
+    public string UnassignedExamples { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>Whether there is a role line or an unassigned line to show.</summary>
+    public bool HasRoles => RoleLines.Count > 0 || HasUnassigned;
+
+    /// <summary>Whether role-like files match no glob.</summary>
+    public bool HasUnassigned => UnassignedLine.Length > 0;
+
     /// <summary>The refusal's own words, or empty.</summary>
     public string Problem { get; private set => Set(ref field, value); } = string.Empty;
 

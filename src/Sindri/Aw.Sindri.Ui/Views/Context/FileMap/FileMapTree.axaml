@@ -33,11 +33,25 @@
 
   <!-- The Files view (F3 spec 1 §2): one folder at a time, 36 px rows, a suggested row hatched. A folder opens; a file is a row. -->
   <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
-    <Grid ColumnDefinitions="*,Auto">
-      <!-- The path as a breadcrumb: "~" is the top of the repo; every level but the last is a link, the last is where you are. -->
-      <ctl:CrumbTrail x:Name="FilesCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
-      <TextBlock x:Name="FilesTotals" Grid.Column="1" Classes="caption subtle" Text="{Binding TotalsText}" VerticalAlignment="Center" />
-    </Grid>
+    <StackPanel Spacing="4">
+      <Grid ColumnDefinitions="*,Auto">
+        <!-- The path as a breadcrumb: "~" is the top of the repo; every level but the last is a link, the last is where you are. -->
+        <ctl:CrumbTrail x:Name="FilesCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
+        <TextBlock x:Name="FilesTotals" Grid.Column="1" Classes="caption subtle" Text="{Binding TotalsText}" VerticalAlignment="Center" />
+      </Grid>
+      <!-- Per role, how many files it matches; then the role-like files no glob covers, with examples. Nothing shows when the map status carries no roles. -->
+      <StackPanel x:Name="FilesRoles" IsVisible="{Binding HasRoles}" Spacing="2" Margin="8,0">
+        <ItemsControl x:Name="FilesRoleLines" ItemsSource="{Binding RoleLines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Classes="caption subtle" Text="{Binding}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock x:Name="FilesUnassigned" Classes="caption" Text="{Binding UnassignedLine}" IsVisible="{Binding HasUnassigned}" TextWrapping="Wrap" />
+        <TextBlock x:Name="FilesUnassignedExamples" Classes="caption subtle" Text="{Binding UnassignedExamples}" IsVisible="{Binding HasUnassigned}" TextWrapping="Wrap" />
+      </StackPanel>
+    </StackPanel>
 
     <TextBox x:Name="FilesFilter" Grid.Row="1" Text="{Binding FilterText, Mode=TwoWay}" PlaceholderText="{Binding FilterHint}" AutomationProperties.Name="{Binding FilterHint}" />
 
