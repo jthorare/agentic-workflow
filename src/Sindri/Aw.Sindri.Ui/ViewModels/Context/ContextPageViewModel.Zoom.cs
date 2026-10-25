@@ -17,6 +17,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Whether the camera is on a query's answer.</summary>
     public bool IsZoomedIn => Whole.IsZoomed;
 
+    // The last search's problem and total go before a new search asks; the search's callbacks fill them again.
+    private void ForgetSearchAnswer() => (_searchProblem, _searchTotal) = (string.Empty, null);
+
     // After the existing read drew its answer: it is shown as a zoom onto the whole map when the map is there (the map behind it stays), else as the neighbourhood.
     private async Task ZoomIntoWhole(Uri api, CancellationToken cancellationToken)
     {
@@ -26,7 +29,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        (_searchProblem, _searchTotal) = (string.Empty, null);
+        ForgetSearchAnswer();
         var hits = await MapSearch.Search(AnchorText, cancellationToken).ConfigureAwait(true);
         Hits.Show(hits, _searchTotal ?? hits.Count);
         IReadOnlyList<string> keys = [.. hits.Select(h => h.Key)];

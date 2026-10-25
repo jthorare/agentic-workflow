@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Context.Hits;
 
 namespace Aw.Sindri.Ui.Views.Context.Hits;
