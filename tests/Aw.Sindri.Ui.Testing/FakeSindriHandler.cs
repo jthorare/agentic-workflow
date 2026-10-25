@@ -220,7 +220,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.QueryAnchors(uri, asked, cancellationToken);
                 return Answer(server.QueryAnswer(asked));
             case "search":
-                var search = new MapSearchQuery(query["q"] ?? string.Empty, limit, query["area"], query["repo"]);
+                var search = new MapSearchQuery(query["q"] ?? string.Empty, int.TryParse(query["limit"], NumberStyles.None, CultureInfo.InvariantCulture, out var searchLimit) ? searchLimit : null, query["area"], query["repo"]);
                 _ = await server.ContextSearch(uri, search, cancellationToken);
                 return Answer(server.ContextSearchAnswer(search));
             case "sources":
