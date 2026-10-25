@@ -7,7 +7,8 @@ namespace Aw.BugFix.Infrastructure;
 /// Runs a test command as the program file argv[0] resolves to: started by the path the lookup found (so a venv's
 /// python or an argv[0]-dispatched shim keeps its name) and hashed by that path's real file. It runs with the allowed
 /// environment variables only, its output streamed to the log. A command that can't start or hits the time limit
-/// didn't run to a verdict.
+/// didn't run to a verdict. At the limit, and after a normal exit, every process it started (a daemonized one too) is stopped:
+/// SIGTERM, a grace period, then SIGKILL.
 /// </summary>
 internal sealed class ProcessCheckRunner(BugFixSettings settings, IFiles files) : ICheckRunner
 {
@@ -22,7 +23,7 @@ internal sealed class ProcessCheckRunner(BugFixSettings settings, IFiles files) 
 
         var start = Processes.Start(found, command.Skip(1), directory);
         CheckEnvironment.Only(start.Environment, environment);
-        var (code, ran) = Processes.ToLog(start, settings.CheckTimeout, log);
+        var (code, ran) = Processes.ToLog(start, settings.CheckTimeout, settings.CheckGrace, log);
         return new CheckExit(code, ran, files.Sha256(real).Match(static s => s, static _ => string.Empty), CheckEnvironment.Digests(settings.FrozenVariables, digestKey));
     }
 

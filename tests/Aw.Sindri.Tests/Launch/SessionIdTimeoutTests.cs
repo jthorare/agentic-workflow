@@ -55,7 +55,7 @@ public sealed class SessionIdTimeoutTests
         Expect.Equal(SindriErrors.LaunchSessionIdTimedOut.Code, argv.Error.Code);
     }
 
-    // A mismatch is judged under a roomy limit: with the 1 ms one, a cold or loaded run can time out "[0-9]+" and answer SND-LAUNCH-028.
+    // A mismatch is judged under a roomy limit: with the 1 ms one, a cold or loaded run can time out "[0-9]+" and answer SND-LAUNCH-030.
     [Fact]
     public void A_mismatch_is_still_a_plain_invalid_request()
     {

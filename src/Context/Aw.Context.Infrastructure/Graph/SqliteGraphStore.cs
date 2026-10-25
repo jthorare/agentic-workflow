@@ -26,7 +26,7 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
     }
 
     public ValueTask<Result<IReadOnlyList<MapVersion>>> Versions(CancellationToken cancellationToken) =>
-        ReadOr<IReadOnlyList<MapVersion>>([], session => GraphVersionReads.List(session, cancellationToken), cancellationToken);
+        ReadOr([], session => GraphVersionReads.List(session, cancellationToken), cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<MapOverride>>> Overrides(CancellationToken cancellationToken) =>
         ReadOr([], session => ReadOverrides(session, cancellationToken), cancellationToken);

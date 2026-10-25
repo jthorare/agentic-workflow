@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.plan
-version: 7
+version: 8
 description: "Station 3 of the line: the phase graph for a candidate design, its executability review and hidden scenarios, then the owner's after-design stop, which freezes the design, the plan and every phase packet together."
 displayName: "Plan the build in phases"
 why: "Breaks the approved design into phases small enough to build and prove one at a time, then waits for your approval."
@@ -14,7 +14,7 @@ outputs:
   - { key: fact:designRevision, label: "Design revision",  type: payload, from: settle }
 initial: intake
 states:
-  intake:      { kind: active, step: step.plan.intake, timeout: { after: 4h, then: park },
+  intake:      { kind: active, step: step.plan.intake, timeout: { after: 1d, then: park },
                  next: "Load {item}'s candidate design and frozen scope packets." }
   graph:
     displayName: "Split into phases"
@@ -26,9 +26,9 @@ states:
         - { use: input.context.code, with: { anchors: { fact: fact:anchors } } }   # LN-CTX2: the code lens, anchored on the design's covered surfaces (intake derives fact:anchors from the design packet)
     loop: rounds
     budget: { tokens: 5M }
-    timeout: { after: 3h, then: park }
+    timeout: { after: 1d, then: park }
     next: "Draft {item}'s phase graph (round {loop.rounds}/{loop.rounds.cap})."
-  check:       { kind: active, step: step.plan.check, timeout: { after: 4h, then: park },
+  check:       { kind: active, step: step.plan.check, timeout: { after: 1d, then: park },
                  next: "Run the plan checks and aw-packets validate on {item}'s graph." }
   exec-review:
     displayName: "Dry-run each phase"
@@ -39,26 +39,26 @@ states:
       inputs:
         - { use: input.context.code, with: { anchors: { fact: fact:anchors } } }   # LN-CTX2
     budget: { tokens: 5M }
-    timeout: { after: 4h, then: park }
+    timeout: { after: 1d, then: park }
     next: "Review each of {item}'s phases as its builder: executable, context, files, checkable signals."
-  holdout:     { displayName: "Write hidden tests", why: "Tests the builder never sees, so passing them cannot be gamed.", kind: active, step: step.plan.holdout, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  holdout:     { displayName: "Write hidden tests", why: "Tests the builder never sees, so passing them cannot be gamed.", kind: active, step: step.plan.holdout, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                  next: "Write {item}'s hidden scenarios into the holdout store." }
-  holdout-store: { displayName: "Store the hidden tests", why: "Puts the hidden tests where only the evaluator can read them.", kind: active, step: step.plan.holdout-store, loop: holdouts, timeout: { after: 4h, then: park },
+  holdout-store: { displayName: "Store the hidden tests", why: "Puts the hidden tests where only the evaluator can read them.", kind: active, step: step.plan.holdout-store, loop: holdouts, timeout: { after: 1d, then: park },
                  next: "Move {item}'s hidden scenarios into the private store and add the canary." }
-  evidence:    { kind: active, step: step.plan.evidence, timeout: { after: 4h, then: park },
+  evidence:    { kind: active, step: step.plan.evidence, timeout: { after: 1d, then: park },
                  next: "Check {item}'s design and plan evidence and assemble the candidate packets." }
-  questions:   { kind: active, step: step.plan.questions, timeout: { after: 4h, then: park },
+  questions:   { kind: active, step: step.plan.questions, timeout: { after: 1d, then: park },
                  next: "Turn {item}'s open decisions into the stop's questions." }
-  decide:      { kind: active, step: step.interview.answer, timeout: { after: 2d, then: park },
+  decide:      { kind: active, step: step.interview.answer, timeout: { after: 14d, then: park },
                  next: "Your stop: answer {item}'s open decisions. Each shows its options, trade-offs and the recommended one." }
-  record:      { kind: active, step: step.interview.record, timeout: { after: 4h, then: park },
+  record:      { kind: active, step: step.interview.record, timeout: { after: 1d, then: park },
                  next: "Append {item}'s answers to the answer log." }
-  settle:      { kind: active, step: step.plan.settle, timeout: { after: 4h, then: park },
+  settle:      { kind: active, step: step.plan.settle, timeout: { after: 1d, then: park },
                  next: "Compare {item}'s answers with the design's assumptions." }
   stop:        { displayName: "Approve the design and plan", why: "Locks in the design, the plan and every phase together.", kind: active, step: step.plan.review, loop: revisions, timeout: { after: 7d, then: park },
                  onOutcome: { approve: "Locks in the design and the plan and starts building.", reviseDesign: "Sends your notes back so the design is changed, then asks you again.", revisePlan: "Sends your notes back so the plan is changed, then asks you again.", drop: "Ends the work here and builds nothing." },
                  next: "Your stop: read {item}'s design and plan graph (`sindri plan show {instance}` or the stop view), then approve, revise the design, revise the plan, or drop." }
-  freeze:      { kind: active, step: step.plan.freeze, loop: refreeze, timeout: { after: 4h, then: park },
+  freeze:      { kind: active, step: step.plan.freeze, loop: refreeze, timeout: { after: 1d, then: park },
                  next: "Re-check and freeze {item}'s design, plan and phase packets." }
   planned:     { displayName: "Plan approved", kind: terminal, outcome: resolved }
   redesign:    { displayName: "Sent back to design", kind: terminal, outcome: unresolved }

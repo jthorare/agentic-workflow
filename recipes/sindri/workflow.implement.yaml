@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.implement
-version: 3
+version: 4
 description: "Block recipe: build the change test first, looping on the deterministic checks."
 displayName: "Build a change, tests first"
 inputs:
@@ -10,7 +10,7 @@ outputs:
   - { key: fact:output, label: "Diff", type: text, from: produce }
 initial: produce
 states:
-  produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 4h, then: park },
+  produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 1d, then: park },
              budget: { tokens: 5M }, next: "Build the change for {item} test first (round {loop.revisions}/{loop.revisions.cap}): write the failing test, then the fix." }
   checks:  { kind: active, step: step.checks, timeout: { after: 30m, then: retry },
              next: "Run the deterministic checks on the change for {item}." }

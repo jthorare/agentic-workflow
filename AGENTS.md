@@ -182,6 +182,7 @@ bash scripts/tests/owner-check.test.sh
 bash scripts/tests/context-first-run.test.sh   # dry-run golden, the refusal of a real-looking home, the approval stops, a whole run on a stub sindri
 bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
+bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/dotnet-verify-packages.test.sh
 bash scripts/tests/install-onyx.test.sh      # the Onyx step of setup.sh: dry run, Docker missing or silent, no terminal, the call, a failure, a rerun, --no-onyx (stub docker and sindri)
@@ -190,7 +191,7 @@ bash scripts/tests/evidence-one-path.test.sh   # cutover §3.4: Playwright only 
 bash scripts/tests/sindri-sandbox-e2e.test.sh   # scripts/sindri-sandbox-e2e.sh: arguments, the --sindri apphost rewrite and the scratch guard (no serve)
 bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/forge-fixture.test.sh    # scripts/forge-fixture.sh over the real aw-forge-fake (dotnet build once): the PR babysitter's fixture PR set, every variant, the guard, --github refusals and dry run
-bash scripts/tests/cutover-clean-ts.test.sh   # scripts/cutover-clean-ts.sh on a scratch box: what the TS install left, removed and nothing else
+bash scripts/tests/cutover-clean-ts.test.sh   # scripts/cutover-clean-ts.sh on a scratch box: what the TS install left, removed and nothing else; its last case runs the real bugfix-state (needs dotnet, or BUGFIX_STATE_BIN)
 bash scripts/tests/cutover-prove.test.sh      # the switch proof: setup.sh on a scratch box, the C# binaries linked, the TS wrappers gone
 bash scripts/tests/install-cs.test.sh         # scripts/install-cs.sh: publish, link, the wrappers, the stamps, the running-serve guard
 bash scripts/tests/serve-build-guard.test.sh    # #1032: a running serve keeps its build dir (cutover-clean-ts refuses or keeps it), install-cs --link names the still-running build

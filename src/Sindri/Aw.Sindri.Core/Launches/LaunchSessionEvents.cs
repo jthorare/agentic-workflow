@@ -48,7 +48,7 @@ public sealed class LaunchSessionEvents(ILaunchFiles files, LaunchLiveness liven
 
     /// <summary>Whether <paramref name="error"/> says only that the session id pattern timed out (the launch itself is fine).</summary>
     /// <param name="error">The error from <see cref="Report"/>.</param>
-    /// <returns>True for SND-LAUNCH-028.</returns>
+    /// <returns>True for SND-LAUNCH-030.</returns>
     public static bool IsPatternTimeout(Error error)
     {
         ArgumentNullException.ThrowIfNull(error);
@@ -59,7 +59,7 @@ public sealed class LaunchSessionEvents(ILaunchFiles files, LaunchLiveness liven
     /// <param name="launch">The launch.</param>
     /// <param name="reported">The agent's session id, or null.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
-    /// <returns>Success, SND-LAUNCH-028 when the entry's pattern timed out on the id (nothing is recorded), or why the ledger refused.</returns>
+    /// <returns>Success, SND-LAUNCH-030 when the entry's pattern timed out on the id (nothing is recorded), or why the ledger refused.</returns>
     public async ValueTask<Result<Unit>> Report(LaunchId launch, SessionId? reported, CancellationToken cancellationToken)
     {
         if (reported is not { } id || liveness.IsReported(launch))

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.docs-sync
-version: 3
+version: 4
 description: "Block recipe: update the docs a pull request leaves stale, in its own worktree, as a docs PR stacked on that pull request's head branch."
 displayName: "Update the docs a pull request leaves stale"
 inputs:
@@ -14,7 +14,7 @@ states:
   scope:
     kind: active
     step: { use: step.docs.scope, with: { pr: { fact: fact:pr }, phase-packet: { fact: fact:phasePacket }, paths: { profile: workflow.docs.globs }, enabled: { profile: workflow.docs.sync } } }
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "List the docs that {item}'s pull request might leave stale."
   route:
     kind: active
@@ -26,29 +26,29 @@ states:
         choices:
           - "update: a listed doc describes a behaviour, command, flag, path, config key or setup step that this diff changes, adds or removes, or the phase packet's design.md names it as changing"
           - "none: the diff changes nothing a listed doc describes, or the PR already updates those docs"
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Decide whether {item}'s pull request needs a docs update: run `sindri workflow status {instance}`."
   route-desk:
     kind: active
     step: { use: step.desk.choose, with: { from: route } }
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Decide whether {item}'s pull request needs a docs update. Each choice shows the model's lean, if it had one."
   update:
     kind: active
     step: { use: step.docs.update, inputs: [input.pr.context, input.handoff-note, input.phase-packet] }
     loop: edits
     budget: { tokens: 5M }
-    timeout: { after: 4h, then: park }
+    timeout: { after: 1d, then: park }
     next: "Update the listed docs for {item}'s pull request (try {loop.edits}/{loop.edits.cap}). Commit in the docs worktree; Sindri opens the PR."
   check:
     kind: active
     step: { use: step.docs.check, with: { paths: { profile: workflow.docs.globs } } }
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Check the docs commit: doc paths only, links resolve, the markdown parses."
   opening:
     kind: wait
     waitFor: { event: pr.stacked }
-    timeout: { after: 30m, then: park }
+    timeout: { after: 1d, then: park }
     next: "Waiting for the stacked docs PR on {item}'s pull request."
   owner:
     kind: active

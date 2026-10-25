@@ -2486,6 +2486,8 @@ Aw.Context.Core.Lenses.LensFile.Confidence.get -> double
 Aw.Context.Core.Lenses.LensFile.Confidence.init -> void
 Aw.Context.Core.Lenses.LensFile.Confirmed.get -> bool
 Aw.Context.Core.Lenses.LensFile.Confirmed.init -> void
+Aw.Context.Core.Lenses.LensFile.Demoted.get -> bool
+Aw.Context.Core.Lenses.LensFile.Demoted.init -> void
 Aw.Context.Core.Lenses.LensFile.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Implements, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Tests, out Aw.Context.Core.Results.Provenance Provenance, out double Confidence, out bool Confirmed, out bool Suggested, out Aw.Context.Core.Graph.LinkId? LinkId, out string! Label, out Aw.Context.Core.Graph.NodeKind Kind, out Aw.Context.Core.Results.Trust Trust) -> void
 Aw.Context.Core.Lenses.LensFile.Depth.get -> int?
 Aw.Context.Core.Lenses.LensFile.Depth.init -> void
@@ -4698,6 +4700,7 @@ const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!
+const Aw.Context.Core.Overrides.MapOverride.DemoteMarker = "service:demote-cut" -> string!
 const Aw.Context.Core.Overrides.ProposalRows.Confidence = 0.5 -> double
 const Aw.Context.Core.Ranking.RankFusion.K = 60 -> int
 const Aw.Context.Core.Results.ContextResult.CurrentSchemaVersion = 1 -> int
@@ -6070,6 +6073,7 @@ static Aw.Context.Core.Map.MapAccess.Maps(Aw.Context.Core.Engine.ContextRepoName
 static Aw.Context.Core.Map.MapAccess.View(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending, bool callerScope = true) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
 static Aw.Context.Core.Map.MapAccess.ViewWithIntent(Aw.Context.Core.Linking.IntentLayer! intent, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
 static Aw.Context.Core.Map.MapAccess.ViewWithIntentOrEmpty(Aw.Context.Core.Linking.IntentLayer! intent, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
+static Aw.Context.Core.Map.MapAccess.WithoutDemoted(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.DateTimeOffset at) -> (Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Undo)
 static Aw.Context.Core.Map.MapAccess.WithoutDenied(Aw.Context.Core.Graph.GraphSnapshot! current, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! profile, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.DateTimeOffset at) -> (Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Undo)
 static Aw.Context.Core.Map.MapBuildReport.operator !=(Aw.Context.Core.Map.MapBuildReport? left, Aw.Context.Core.Map.MapBuildReport? right) -> bool
 static Aw.Context.Core.Map.MapBuildReport.operator ==(Aw.Context.Core.Map.MapBuildReport? left, Aw.Context.Core.Map.MapBuildReport? right) -> bool
@@ -6148,6 +6152,7 @@ static Aw.Context.Core.Overrides.Confirmation.Of(Aw.Context.Core.Results.Provena
 static Aw.Context.Core.Overrides.MapOverride.operator !=(Aw.Context.Core.Overrides.MapOverride? left, Aw.Context.Core.Overrides.MapOverride? right) -> bool
 static Aw.Context.Core.Overrides.MapOverride.operator ==(Aw.Context.Core.Overrides.MapOverride? left, Aw.Context.Core.Overrides.MapOverride? right) -> bool
 static Aw.Context.Core.Overrides.MapOverride.UndoingCut(Aw.Context.Core.Overrides.MapOverride! decision, System.DateTimeOffset at) -> Aw.Context.Core.Overrides.MapOverride!
+static Aw.Context.Core.Overrides.MapOverride.UndoingDemote(Aw.Context.Core.Overrides.MapOverride! decision, System.DateTimeOffset at) -> Aw.Context.Core.Overrides.MapOverride!
 static Aw.Context.Core.Overrides.OverrideApplier.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides) -> Aw.Context.Core.Overrides.AppliedMap!
 static Aw.Context.Core.Overrides.OverrideId.From(string! value) -> Aw.Context.Core.Overrides.OverrideId
 static Aw.Context.Core.Overrides.OverrideId.operator !=(Aw.Context.Core.Overrides.OverrideId left, Aw.Context.Core.Overrides.OverrideId right) -> bool
@@ -7518,3 +7523,10 @@ static Aw.Context.Core.Lenses.DemotedFiles.Last<T>(System.Collections.Generic.IR
 Aw.Context.Core.Lenses.DemotedFiles
 Aw.Context.Core.Graph.DemotedCode
 static Aw.Context.Core.Lenses.DemotedFiles.Last(Aw.Context.Core.Lenses.LensBands! bands, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Lenses.LensBands!
+Aw.Context.Core.Engine.FillBands
+const Aw.Context.Core.Engine.FillBands.CodeLexical = "context.fill.code.lexical" -> string!
+const Aw.Context.Core.Engine.FillBands.CodeSymbols = "context.fill.code.symbols" -> string!
+const Aw.Context.Core.Engine.FillBands.History = "context.fill.history" -> string!
+const Aw.Context.Core.Engine.FillBands.Lenses = "context.fill.lenses" -> string!
+static Aw.Context.Core.Engine.FillBands.Source.get -> System.Diagnostics.ActivitySource!
+static Aw.Context.Core.Engine.FillBands.Start(string! band) -> System.Diagnostics.Activity?

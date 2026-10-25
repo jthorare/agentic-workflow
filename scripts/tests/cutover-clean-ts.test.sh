@@ -2,8 +2,9 @@
 # Tests for scripts/cutover-clean-ts.sh (cutover spec §8, §8.1, P2). Run: bash scripts/tests/cutover-clean-ts.test.sh
 # Each scenario seeds a fake TS install in its own temp directory (state dir, ~/.local/bin, LaunchAgents, git config, a
 # profile with one repo that carries a v2 pre-commit hook, a TS-shaped judge database) and stub binaries in place of the
-# published C# ones. Nothing here builds, starts sindri, touches the real HOME or kills a process (the one background
-# process, a file holder for the step-1 refusal, is stopped by its recorded pid).
+# published C# ones. Apart from the bugfix-state case below, nothing here builds, starts sindri, touches the real HOME or kills a process (the one background
+# process, a file holder for the step-1 refusal, is stopped by its recorded pid). The last case before the log-dir check runs the
+# real bugfix-state: $BUGFIX_STATE_BIN, else one dotnet build of src/BugFix/Aw.BugFix.Host (needs dotnet; a missing SDK fails it).
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../.." && pwd)"
@@ -12,6 +13,7 @@ SCRIPT="$REPO_ROOT/scripts/cutover-clean-ts.sh"
 # The lane and agent environment must not steer the script or the stubs.
 for v in $(env | sed -n 's/^\(AW_META[A-Z_]*\|AW_SINDRI[A-Z_]*\|TMUX\|TMUX_PANE\|AW_PROFILE_DIR\|AW_JUDGE[A-Z_]*\)=.*/\1/p'); do unset "$v"; done
 ORIG_PATH="$PATH"
+REAL_HOME="$HOME"
 fail=0
 ok() { echo "ok - $1"; }
 bad() { echo "not ok - $1"; fail=1; }
@@ -89,8 +91,8 @@ EOF
   echo p > "$s/myrepo-slug/plans/p.md"; echo '{}' > "$s/myrepo-slug/reviews/r.json"; echo d > "$s/digests/d.md"; echo '{}' > "$s/meta/m.json"
   echo c > "$s/cache/c"; echo cs > "$s/sindri-app/ledger.db"; echo '{"pid": 999999}' > "$s/sindri-app/control.json"
   echo '{}' > "$s/bugfix/myrepo-slug/t1/state.json"
-  # live bug-fix state at $AW_STATE_DIR/<slug>/bugfix/<ticket>/: the C# bugfix-state shape (schemaVersion), written by hand
-  # (the real binary is a dotnet build, which this suite never runs), and the TS helper's shape (version) the lanes still run (#1104)
+  # live bug-fix state at $AW_STATE_DIR/<slug>/bugfix/<ticket>/: the C# bugfix-state shape (schemaVersion) and the TS helper's
+  # shape (version) the lanes still run, both written by hand here (#1104); the last case runs the real bugfix-state binary
   echo '{"schemaVersion":1,"ticket":"c1","phase":"reproduce"}' > "$s/myrepo-slug/bugfix/c1/state.json"; echo 'log' > "$s/myrepo-slug/bugfix/c1/events.jsonl"
   echo '{"version":1,"ticket":"t2","phase":"fix"}' > "$s/myrepo-slug/bugfix/t2/state.json"
   echo old > "$s/logs/older.log"; echo bin > "$s/bin/aw-meta"
@@ -300,6 +302,46 @@ check "flipped run keeps the C# judge state" "$(snap "$D6")" "$before"
 check "bug-fix state alone opens no log" "$(ls "$D6/state/logs")" "older.log"
 [ ! -e "$D6/state/backups" ] && ok "bug-fix state alone makes no backup" || bad "a backup was made for bug-fix state alone"
 check "bug-fix state alone is untouched" "$(cat "$D6/state/myrepo-slug/bugfix/c1/state.json" "$D6/state/myrepo-slug/bugfix/t2/state.json")" "$(printf '%s\n%s' '{"schemaVersion":1,"ticket":"c1","phase":"reproduce"}' '{"version":1,"ticket":"t2","phase":"fix"}')"
+
+echo "# bug-fix state written by the real C# bugfix-state survives a cutover run (#1104)"
+# The binary: $BUGFIX_STATE_BIN (a command line, split on spaces), else a dotnet build of src/BugFix/Aw.BugFix.Host once into
+# the suite's temp root. The build runs before any case points HOME at a box, so the SDK and NuGet cache stay the real ones.
+BF_BIN="${BUGFIX_STATE_BIN:-}"
+if [ -z "$BF_BIN" ]; then
+  if ! command -v dotnet > /dev/null 2>&1; then
+    bad "dotnet is needed to build the real bugfix-state (or set BUGFIX_STATE_BIN)"
+  else
+    mkdir -p "$WORK/bf-bin"
+    if HOME="$REAL_HOME" NUGET_PACKAGES="${NUGET_PACKAGES:-$REAL_HOME/.nuget/packages}" \
+        dotnet build "$REPO_ROOT/src/BugFix/Aw.BugFix.Host" -c Release -o "$WORK/bf-bin" -nologo -v q > "$WORK/bf-build.log" 2>&1; then
+      BF_BIN="dotnet $WORK/bf-bin/bugfix-state.dll"
+    else
+      bad "dotnet build of bugfix-state failed"; tail -20 "$WORK/bf-build.log"
+    fi
+  fi
+fi
+if [ -n "$BF_BIN" ]; then
+  D8="$WORK/realbf"; seed "$D8"; use "$D8"
+  export AW_LOG_LEVEL=none
+  bf() { (cd "$D8/bfrepo" && $BF_BIN "$@"); }
+  BFSTATE="$D8/state/myrepo-slug/bugfix/real1"
+  mkdir -p "$D8/bfrepo/src"; printf 'drop cookie\n' > "$D8/bfrepo/src/app.txt"
+  git -C "$D8/bfrepo" -c advice.ignoredHook=false init -q -b main
+  git -C "$D8/bfrepo" add -A
+  git -C "$D8/bfrepo" -c advice.ignoredHook=false -c user.name=t -c user.email=t@t commit -q -m base
+  printf '{"source":"text","id":null,"title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}' > "$D8/ticket.json"
+  printf 'status: diagnosed\n\n## Hypotheses\n\n| # | Hypothesis | Cause-site files | Likelihood | Result |\n|---|---|---|---|---|\n| 1 | Cookie dropped | `src/app.txt` | high | confirmed |\n\n## Root Cause\n\nThe cookie is dropped.\n' > "$D8/handoff.md"
+  bf init --state "$BFSTATE" --ticket "$D8/ticket.json" > /dev/null 2>&1; check "real bugfix-state init exits 0" "$?" 0
+  bf advance investigate --state "$BFSTATE" --evidence "$D8/handoff.md" > /dev/null 2>&1; check "real bugfix-state advance investigate exits 0" "$?" 0
+  bfsnap() { (cd "$BFSTATE" && find . -type f | sort | while IFS= read -r f; do echo "$f $(cksum < "$f")"; done); }
+  bf_before="$(bfsnap)"
+  [ -n "$bf_before" ] && ok "the real binary wrote state files" || bad "the real binary wrote no state files"
+  out="$(run "$D8")"; rc=$?
+  check "cutover over real bug-fix state exits 0" "$rc" 0
+  check "real bug-fix state is byte-identical after the cutover" "$(bfsnap)" "$bf_before"
+  check "no backup was made for real bug-fix state" "$(find "$D8/state/backups" -path '*real1*' 2> /dev/null | wc -l | tr -d ' ')" 0
+  check "the real bugfix-state still reads it: phase investigate" "$(bf status --state "$BFSTATE" 2> /dev/null | jq -r .phase)" investigate
+fi
 
 echo "# a log directory the script creates is 0700"
 D7="$WORK/newlogdir"; seed "$D7"; use "$D7"; wipe "$D7/state/logs"

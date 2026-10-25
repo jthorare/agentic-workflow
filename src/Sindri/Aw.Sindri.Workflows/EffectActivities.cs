@@ -57,7 +57,7 @@ internal sealed class EffectActivities(
     /// </summary>
     public static ActivityOptions RunOptions { get; } = new()
     {
-        StartToCloseTimeout = TimeSpan.FromMinutes(1),
+        StartToCloseTimeout = ActivityBounds.Long,
         RetryPolicy = new RetryPolicy
         {
             InitialInterval = OutboxRetryPolicy.Default.BaseDelay,

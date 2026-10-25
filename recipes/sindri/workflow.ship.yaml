@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.ship
-version: 4
+version: 5
 description: "Block recipe: the GREEN gate on a reviewed, proven head, then the PR opens with its evidence pack as the body. No owner stop."
 displayName: "Open the pull request with its proof"
 inputs:
@@ -17,15 +17,15 @@ initial: slot
 states:
   slot:    { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
              next: "Waiting for a heavy-job slot for {item}'s full suite." }
-  green:   { kind: active, step: step.ship.green, timeout: { after: 3h, then: park },
+  green:   { kind: active, step: step.ship.green, timeout: { after: 1d, then: park },
              next: "Run {item}'s full suite, typecheck and lint on its head." }
-  pack:    { kind: active, step: step.ship.pack, timeout: { after: 4h, then: park },
+  pack:    { kind: active, step: step.ship.pack, timeout: { after: 1d, then: park },
              next: "Assemble {item}'s PR hand-off: the evidence pack becomes the PR body." }
-  freeze:  { kind: active, step: step.ship.freeze, timeout: { after: 4h, then: park },
+  freeze:  { kind: active, step: step.ship.freeze, timeout: { after: 1d, then: park },
              next: "Check that {item}'s proof, review and hand-off agree on one head, and freeze the hand-off." }
-  opening: { kind: wait, waitFor: { event: pr.opened }, timeout: { after: 4h, then: park },
+  opening: { kind: wait, waitFor: { event: pr.opened }, timeout: { after: 1d, then: park },
              next: "Waiting for {item}'s pull request to open from the frozen hand-off." }
-  return:  { kind: active, step: step.ship.return, timeout: { after: 4h, then: park },
+  return:  { kind: active, step: step.ship.return, timeout: { after: 1d, then: park },
              next: "Write why {item} goes back to build." }
   shipped:  { kind: terminal, outcome: resolved }
   returned: { kind: terminal, outcome: unresolved }

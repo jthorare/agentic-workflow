@@ -41,8 +41,8 @@ internal sealed record ChildTree(IServiceProvider Sindri, Temporalio.Testing.Wor
     public static Task Go(WorkflowHandle<RecipeWorkflow, RecipeResult> instance) =>
         instance.SignalAsync(wf => wf.EventAsync(new WaitSatisfied("service:workflow.events", new EventWaitSource(EventKind.From("t.go"), 1), Outcome: null, new Dictionary<FactKey, FactValue>())));
 
-    /// <summary>Lets an hour pass and a bit: a child that waits for 't.go' reaches its timeout.</summary>
-    public Task PastTheHour() => WorkflowsHarness.Skip(Environment, TimeSpan.FromMinutes(65), TestContext.Current.CancellationToken);
+    /// <summary>Lets two hours pass and a bit (the timeout retries once before a park): a child that waits for 't.go' reaches its timeout.</summary>
+    public Task PastTheHour() => WorkflowsHarness.Skip(Environment, TimeSpan.FromMinutes(130), TestContext.Current.CancellationToken);
 
     /// <summary>The 'answer --resume' a human gives <paramref name="instance"/>.</summary>
     public static Task<CommandResult> Resume(WorkflowHandle<RecipeWorkflow, RecipeResult> instance) =>

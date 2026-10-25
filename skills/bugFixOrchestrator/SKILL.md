@@ -67,7 +67,8 @@ box-wide heavy-job lock (at most two heavy jobs on the box, `AW_HEAVY_SLOTS`).
 `record-run`; a check command that is not a plain test runner or that changes the frozen environment
 (`AW_BUGFIX_CHECK_ENV`); a busy state lock (retry after a moment; `AW_BUGFIX_LOCK_WAIT_SECONDS`); and
 `DOTNET_SYSTEM_IO_DISABLEFILELOCKING` being set (unset it). A check run times out after 30 minutes
-(`AW_BUGFIX_CHECK_TIMEOUT_SECONDS`). Report the printed reason and follow it.
+(`AW_BUGFIX_CHECK_TIMEOUT_SECONDS`); it is stopped with SIGTERM first (its EXIT trap runs), then killed after a 30 s grace
+(`AW_BUGFIX_CHECK_GRACE_SECONDS`), and nothing it started is left running. Report the printed reason and follow it.
 
 **Dispatch briefs:** the brief-scope gate reads each subagent prompt. Every dispatch below must
 contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.

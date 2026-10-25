@@ -46,6 +46,12 @@ public sealed record DecisionContext(
     public bool LegacyLaunchRound { get; init; }
 
     /// <summary>
+    /// Whether a state's timeout with 'then: park' parks at its first expiry (the behavior before the 'timeout-retries-before-park-v1' patch, which a history recorded
+    /// without the marker replays). Off: the first expiry retries the state once (the timer re-arms in the same entry) and the second parks with 'timeout'; a desk Step still parks at once.
+    /// </summary>
+    public bool LegacyTimeoutPark { get; init; }
+
+    /// <summary>
     /// Whether a Step failure no transition takes parks with needs-answer at once (the behavior before the 'step-unavailable-v1' patch, which a history recorded without the
     /// marker replays). Off: the engine runs the Step again until it has failed three times in a row, then parks it as unavailable, which asks no human.
     /// </summary>

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.investigate
-version: 2
+version: 3
 description: "Block recipe: find the root cause of a reported bug, with a confirmed hypothesis; at most 2 rounds."
 displayName: "Find why a bug happens"
 inputs:
@@ -11,7 +11,7 @@ outputs:
   - { key: fact:rootCause, label: "Root cause", type: text, from: investigate }
 initial: investigate
 states:
-  investigate: { kind: active, step: step.rootcause.investigate, loop: rounds, timeout: { after: 4h, then: park },
+  investigate: { kind: active, step: step.rootcause.investigate, loop: rounds, timeout: { after: 1d, then: park },
                  next: "Investigate the root cause for {item} (round {loop.rounds}/{loop.rounds.cap})." }
   diagnosed:   { kind: terminal, outcome: resolved }
   unfixed:     { kind: terminal, outcome: unresolved }

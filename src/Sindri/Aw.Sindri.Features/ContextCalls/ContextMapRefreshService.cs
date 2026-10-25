@@ -9,7 +9,6 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.ContextCalls;
@@ -39,22 +38,6 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     /// <summary>Whether the rules the build runs under are computed from the scope's repos each tick (the registered service: a profile edit changes them); off, only an explicit <see cref="RunningRuleset"/> is compared.</summary>
     internal bool RulesFromScope { get; init; }
-
-    /// <summary>The registered service: the same, with the rules computed from the scope each tick.</summary>
-    /// <param name="services">The container.</param>
-    /// <returns>The service.</returns>
-    internal static ContextMapRefreshService Registered(IServiceProvider services) =>
-        new(
-            services.GetRequiredService<ContextScopes>(),
-            services.GetRequiredService<IContextEngine>(),
-            services.GetRequiredService<IJobViews>(),
-            services.GetRequiredService<IIndexOutlooks>(),
-            services.GetRequiredService<MapJobStarts>(),
-            services.GetRequiredService<TimeProvider>(),
-            services.GetRequiredService<ILogger<ContextMapRefreshService>>())
-        {
-            RulesFromScope = true,
-        };
 
     internal static JobKind RefreshKind { get; } = JobKind.From("RefreshContextMap");
 

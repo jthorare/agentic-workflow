@@ -2,8 +2,8 @@
   "header": {
     "address": "ITM-01JM3/step/1",
     "recipe": "workflow.step",
-    "hash12": "f511ce1fc529",
-    "version": 4,
+    "hash12": "4ca37bf46333",
+    "version": 5,
     "state": "produce",
     "detail": "agent running",
     "since": "2026-10-12T12:10:00.0000000Z",
@@ -33,7 +33,7 @@
       "confirm": "Cancel ITM-01JM3/step/1? 1 running step stops; 0 children are cancelled."
     }
   ],
-  "text": "ITM-01JM3/step/1  workflow.step@f511ce1fc529  v4  produce: agent running  since 12:10 (16m)\n  next      An agent session is working on produce. It reports when it is done; take it over to work on it yourself.\n  run       agent LCH-01JM3A4B5C6D7E8F\n  commands  takeover, cancel\n",
+  "text": "ITM-01JM3/step/1  workflow.step@4ca37bf46333  v5  produce: agent running  since 12:10 (16m)\n  next      An agent session is working on produce. It reports when it is done; take it over to work on it yourself.\n  run       agent LCH-01JM3A4B5C6D7E8F\n  commands  takeover, cancel\n",
   "run": {
     "runtime": "agent",
     "launch": "LCH-01JM3A4B5C6D7E8F"

@@ -35,7 +35,7 @@ internal sealed class RegistryApprovedRecipes(IRecipeStore store, IRecipeApprova
 
         var versions = await store.Versions(id, cancellationToken).ConfigureAwait(false);
         return versions.IsError ? versions.Error
-            : versions.Value.Count == 0 ? WorkflowErrors.RecipeNotFound.With($"no recipe {id.Value} is registered (fix: sindri recipe register <file>, then sindri recipe approve {id.Value})")
+            : versions.Value.Count == 0 ? WorkflowErrors.RecipeNotFound.With($"no recipe {id.Value} is registered (fix: sindri recipe register <file>)")
             : await NotApproved(id, versions.Value[^1], cancellationToken).ConfigureAwait(false);
     }
 
@@ -73,7 +73,7 @@ internal sealed class RegistryApprovedRecipes(IRecipeStore store, IRecipeApprova
         var blocks = parsed is null ? [] : PinRules.Blocks(parsed.Value.Recipe, catalog, json);
         return PinRules.Check(latest.Value, revoked.Value, blocks) is { } check
             ? await Settle(check, latest.Value, blocks, cancellationToken).ConfigureAwait(false)
-            : WorkflowErrors.RecipeNotApproved.With($"{recipe.Id.Value}@{recipe.Hash.Display} was never approved (fix: sindri recipe approve {recipe.Id.Value} {recipe.Version.ToString(CultureInfo.InvariantCulture)})");
+            : WorkflowErrors.RecipeNotApproved.With($"{recipe.Id.Value}@{recipe.Hash.Display} was never approved (fix: sindri recipe approve {recipe.Id.Value}@{recipe.Hash.Display})");
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ internal sealed class RegistryApprovedRecipes(IRecipeStore store, IRecipeApprova
 
         var version = registered.Version.ToString(CultureInfo.InvariantCulture);
         var why = revoked.Value is null ? "isn't approved" : "was revoked, and no other version is approved";
-        return WorkflowErrors.RecipeNotApproved.With($"{id.Value} v{version} ({registered.Hash.Display}) {why} (fix: sindri recipe approve {id.Value} {version})");
+        return WorkflowErrors.RecipeNotApproved.With($"{id.Value} v{version} ({registered.Hash.Display}) {why} (fix: sindri recipe approve {id.Value}@{registered.Hash.Display})");
     }
 
     private async ValueTask<Result<ApprovedRecipe>> Load(RecipeId id, RecipeHash hash, CancellationToken cancellationToken)

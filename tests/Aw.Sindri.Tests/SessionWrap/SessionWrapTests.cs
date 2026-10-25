@@ -243,7 +243,7 @@ public sealed class SessionWrapTests : IDisposable
         _ = await Finish(run, 0);
 
         Expect.True(_calls.Exits.Single().Session is null);
-        Expect.True(_errors.ToString().Contains("SND-LAUNCH-028", StringComparison.Ordinal));
+        Expect.True(_errors.ToString().Contains("SND-LAUNCH-030", StringComparison.Ordinal));
     }
 
     [Fact]

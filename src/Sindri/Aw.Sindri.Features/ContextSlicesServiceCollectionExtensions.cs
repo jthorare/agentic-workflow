@@ -14,10 +14,12 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -37,7 +39,7 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddScoped<IScheduledService, ContextSyncService>()
             .AddScoped<IScheduledService, ContextSyncGapsService>()
             .AddSingleton(ContextSyncGapsService.BuiltIn)
-            .AddScoped<IScheduledService>(ContextMapRefreshService.Registered)
+            .AddScoped<IScheduledService>(RefreshService)
             .AddSingleton(ContextMapRefreshService.BuiltIn)
             .AddScoped<SyncGaps>()
             .AddScoped<ContextInputScopes>()
@@ -80,4 +82,18 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
         return services;
     }
+
+    // The refresh service as registered: the rules it compares are computed from the scope each tick.
+    private static ContextMapRefreshService RefreshService(IServiceProvider sp) =>
+        new(
+            sp.GetRequiredService<ContextScopes>(),
+            sp.GetRequiredService<IContextEngine>(),
+            sp.GetRequiredService<IJobViews>(),
+            sp.GetRequiredService<IIndexOutlooks>(),
+            sp.GetRequiredService<MapJobStarts>(),
+            sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<ILogger<ContextMapRefreshService>>())
+        {
+            RulesFromScope = true,
+        };
 }

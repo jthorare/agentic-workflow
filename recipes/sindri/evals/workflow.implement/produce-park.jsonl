@@ -1,2 +1,3 @@
 {"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:rootCause":"The click handler is never bound."}}}
+{"trigger":{"kind":"deadline"},"expect":{"state":"produce"}}
 {"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}

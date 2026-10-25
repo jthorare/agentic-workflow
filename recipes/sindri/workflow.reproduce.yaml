@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.reproduce
-version: 2
+version: 3
 description: "Block recipe: route a bug to a UI check or a test check, then reproduce it with a check that fails for the reported reason."
 displayName: "Reproduce a bug with a failing check"
 inputs:
@@ -21,16 +21,16 @@ states:
         choices:
           - "uiCheck: the bug is what a user sees or does in a web app, so a browser check reproduces it"
           - "testCheck: the bug is in logic or a contract a test can call directly, with no browser"
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Pick the kind of check for {item}: run `sindri workflow status {instance}` for the choices."
   route-check-desk:
     kind: active
     step: { use: step.desk.choose, with: { from: route-check } }
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Pick the kind of check that reproduces {item}. Each choice shows the model's lean, if it had one."
-  ui-check:   { kind: active, step: step.reproduce.ui-check, timeout: { after: 4h, then: park },
+  ui-check:   { kind: active, step: step.reproduce.ui-check, timeout: { after: 1d, then: park },
                 next: "Write a browser check for {item} that fails on the base for the reported reason, and freeze it." }
-  test-check: { kind: active, step: step.reproduce.test-check, timeout: { after: 4h, then: park },
+  test-check: { kind: active, step: step.reproduce.test-check, timeout: { after: 1d, then: park },
                 next: "Write a test for {item} that fails on the base for the reported reason, and freeze it." }
   reproduced:     { kind: terminal, outcome: resolved }
   not-reproduced: { kind: terminal, outcome: unresolved }

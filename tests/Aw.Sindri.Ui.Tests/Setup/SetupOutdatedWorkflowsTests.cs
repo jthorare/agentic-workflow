@@ -91,7 +91,7 @@ public sealed class SetupOutdatedWorkflowsTests
 
         var row = (await _f.Read(Token)).Steps.Single(s => s.Id == "recipes");
 
-        Assert.Equal(["Not approved", "approved v4, v5 available"], row.Recipes.Lines.Select(l => l.Status), StringComparer.Ordinal);
+        Assert.Equal(["Not approved", "approved v5, v6 available"], row.Recipes.Lines.Select(l => l.Status), StringComparer.Ordinal);
         Assert.Equal(("Needs you", true), (row.ChipWord, row.Workflows!.IsOpen));
     }
 }

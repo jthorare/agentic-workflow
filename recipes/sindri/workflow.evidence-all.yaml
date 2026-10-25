@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-all
-version: 2
+version: 3
 description: "Block recipe: run the UI, API and database evidence in sequence, then combine the three summaries."
 displayName: "Run the proof this phase needs"
 inputs:
@@ -17,7 +17,7 @@ states:
         recipe: workflow.evidence-ui
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the UI evidence for {item}: run `sindri workflow status {instance}`."
   api:
     kind: wait
@@ -26,7 +26,7 @@ states:
         recipe: workflow.evidence-api
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the API evidence for {item}: run `sindri workflow status {instance}`."
   db:
     kind: wait
@@ -35,9 +35,9 @@ states:
         recipe: workflow.evidence-db
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the database evidence for {item}: run `sindri workflow status {instance}`."
-  combine: { kind: active, step: step.evidence.combine, timeout: { after: 4h, then: park },
+  combine: { kind: active, step: step.evidence.combine, timeout: { after: 1d, then: park },
              next: "Combine the UI, API and database evidence summaries for {item}." }
   done:    { kind: terminal, outcome: resolved }
   failed:  { kind: terminal, outcome: unresolved }

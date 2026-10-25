@@ -103,6 +103,8 @@ SERIAL=(
   "config/lib/tests/installed-hooks-smoke.test.sh	runs scripts/install-judge-hooks.sh for real and fires the installed hooks against a fake judge under their timeouts; it built judge/dist before the cutover and stays serial until the switch PR rechecks it"
   "config/lib/tests/install-wake-gating.test.sh	runs scripts/install-judge-hooks.sh and the wake-gating hooks against a fake judge under their timeouts; it built judge/ before the cutover and stays serial until the switch PR rechecks it"
   "scripts/tests/forge-fixture.test.sh	dotnet-builds src/Forge in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
+  "scripts/tests/run-test-guard.test.sh	asserts a 2 s timeout plus 3 s grace returns within 20 s and reaps a daemonized sleep by token; a loaded machine shifts the windows"
+  "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
 )
 

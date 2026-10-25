@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.Choice;
 using Aw.Sindri.Tests.Workflow.Engine;
 using static Aw.Sindri.Tests.Workflow.Graph.GraphRecipe;
@@ -85,19 +86,45 @@ public sealed class TimeoutRulesTests
     [InlineData("2m", 1)]
     [InlineData("3m", 0)]
     [InlineData("2d", 0)]
-    public void A_block_runtime_state_timeout_must_outlast_the_Steps_maxDuration(string after, int findings)
+    public void A_block_runtime_state_timeout_must_outlast_a_maxDuration_the_Step_sets(string after, int findings)
     {
         var yaml = RouteRecipes.Edit(RouteRecipes.Fixture("RCP-TIME-003"), "timeout: { after: 2d, then: retry }", $"timeout: {{ after: {after}, then: park }}");
 
-        Assert.Equal(findings, RouteRecipes.Lines(yaml, "RCP-TIME-003.yaml").Count);
+        Assert.Equal(findings, RouteRecipes.Lines(yaml, "RCP-TIME-003.yaml", JudgeWith(TimeSpan.FromMinutes(2))).Count);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("1m")]
+    [InlineData("2m")]
+    [InlineData("1h")]
+    public void A_block_runtime_state_timeout_is_free_when_the_Step_sets_no_maxDuration(string after)
+    {
+        var yaml = RouteRecipes.Edit(RouteRecipes.Fixture("RCP-TIME-003"), "timeout: { after: 2d, then: retry }", $"timeout: {{ after: {after}, then: park }}");
+
+        Assert.Empty(RouteRecipes.Lines(yaml, "RCP-TIME-003.yaml"));
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_Step_without_a_maxDuration_is_bounded_at_two_minutes_and_a_set_one_wins()
+    public void A_Step_without_a_maxDuration_has_no_fixed_cap_and_a_set_one_wins()
     {
         var judge = EngineFixture.Catalog.Find(BlockId.From("step.judge.choose"))!;
 
-        Assert.Equal(TimeSpan.FromMinutes(2), BlockLimits.MaxDuration(judge with { MaxDuration = null }));
+        Assert.True(BlockLimits.MaxDuration(judge with { MaxDuration = null }) >= TimeSpan.FromDays(1));
+        Assert.False(BlockLimits.IsExplicit(judge with { MaxDuration = null }));
         Assert.Equal(TimeSpan.FromSeconds(5), BlockLimits.MaxDuration(judge with { MaxDuration = TimeSpan.FromSeconds(5) }));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_shipped_judge_choice_sets_no_maxDuration_so_a_slow_judge_is_not_cut_at_two_minutes()
+    {
+        var judge = FixtureCatalog.Shipped().Find(BlockId.From("step.judge.choose"))!;
+
+        Assert.Null(judge.MaxDuration);
+    }
+
+    private static BlockCatalog JudgeWith(TimeSpan max)
+    {
+        var shipped = FixtureCatalog.Shipped();
+        return new BlockCatalog([.. shipped.Blocks.Select(b => b.Id == BlockId.From("step.judge.choose") ? b with { MaxDuration = max } : b)], shipped.Events);
     }
 }

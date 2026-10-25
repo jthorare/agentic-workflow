@@ -1,4 +1,4 @@
-T-3/step/1  workflow.step@f511ce1fc529  v4  produce: desk task  since 10:48 (1h 12m)
+T-3/step/1  workflow.step@4ca37bf46333  v4  produce: desk task  since 10:48 (1h 12m)
   next      Produce the Step output for T-3 (round 1/5), then run:
             sindri workflow complete T-3/step/1 --run 1.1 --outcome done --output fact:output=<file>
   inputs    fact:spec  spec.md  sha256:688b...

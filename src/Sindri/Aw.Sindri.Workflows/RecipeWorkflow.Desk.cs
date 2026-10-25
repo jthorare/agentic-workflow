@@ -236,7 +236,7 @@ internal sealed partial class RecipeWorkflow
                 {
                     ActivityId = string.Create(CultureInfo.InvariantCulture, $"run:{open.Token.Value}:{_runs}"),
                     TaskQueue = StepTaskQueue.For(state, Workflow.Info.TaskQueue),
-                    StartToCloseTimeout = TimeSpan.FromSeconds(30),
+                    StartToCloseTimeout = ActivityBounds.Long,
                 }).ConfigureAwait(true);
             _recorded = open.Token.Value;
         }

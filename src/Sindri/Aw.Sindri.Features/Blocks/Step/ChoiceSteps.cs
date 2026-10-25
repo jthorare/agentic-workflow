@@ -32,8 +32,7 @@ internal static class ChoiceSteps
         DeskCapable: true,
         OutcomesFrom: "choices",
         InputsFrom: "facts",
-        Runtime: BlockRuntime.Block,   // the judge asks (JudgeChooseStep); on the desk any caller may answer (owner q93, 2026-10-23)
-        MaxDuration: TimeSpan.FromMinutes(2));
+        Runtime: BlockRuntime.Block);   // the judge asks (JudgeChooseStep); on the desk any caller may answer (owner q93, 2026-10-23); no maxDuration: the state timer bounds it (owner q93)
 
     /// <summary>'step.desk.choose': the desk twin of a route state ('from'); outcomes are that state's choices, without 'uncertain'.</summary>
     public static BlockDescriptor DeskChoose { get; } = new(

@@ -25,12 +25,12 @@ public sealed class StateTimerTests(SindriTimeSkippingServer server) : IClassFix
     public void Dispose() => _harness.Dispose();
 
     [Fact]
-    public async Task A_wait_state_timeout_with_then_park_parks_timeout()
+    public async Task A_wait_state_timeout_with_then_park_retries_once_and_the_second_timeout_parks_timeout()
     {
-        var (parked, events) = await Expire("park", "T-41", static v => v.State == "parked");
+        var (parked, events) = await Expire("park", "T-41", static v => v.State == "parked", TimeSpan.FromMinutes(21), rows: 3);   // owner q93: the first timeout at 10m retries, the second at 20m parks; the history replays
 
         Assert.Equal((ParkReason.Timeout, "waiting ran past 10m"), (parked.Question?.Reason, parked.Question?.Question));
-        Assert.Equal(["workflow.started", "workflow.transition"], events);
+        Assert.Equal(["workflow.started", "workflow.transition", "workflow.transition"], events);
     }
 
     [Fact]
@@ -181,11 +181,12 @@ public sealed class StateTimerTests(SindriTimeSkippingServer server) : IClassFix
         {
             await down;
             var desk = new DeskInstance(sindri, handle!); // why: the first worker's run set it before it returned
+            await env.DelayAsync(TimeSpan.FromMinutes(11), ct);   // the expired timer fired once the worker was back and retried; the re-armed one parks (owner q93)
             var parked = await desk.Until(static v => v.State == "parked");
             await env.DelayAsync(TimeSpan.FromHours(1), ct);
 
             Assert.Equal(ParkReason.Timeout, parked.Question?.Reason);
-            Assert.Equal(["workflow.started", "workflow.transition"], await Rows(desk, 2));
+            Assert.Equal(["workflow.started", "workflow.transition", "workflow.transition"], await Rows(desk, 3));
             Assert.Equal("parked", (await desk.Until(static _ => true)).State);
             await desk.Handle.TerminateAsync("test over");
         }, ct);
@@ -240,7 +241,7 @@ public sealed class StateTimerTests(SindriTimeSkippingServer server) : IClassFix
     }
 
     /// <summary>Starts the 'then: <paramref name="then"/>' recipe on <paramref name="item"/>, skips past its 10m timeout and reads the result.</summary>
-    private async Task<(InstanceView View, IReadOnlyList<string> Events)> Expire(string then, string item, Func<InstanceView, bool> expired)
+    private async Task<(InstanceView View, IReadOnlyList<string> Events)> Expire(string then, string item, Func<InstanceView, bool> expired, TimeSpan? wait = null, int rows = 2)
     {
         var ct = TestContext.Current.CancellationToken;
         var env = server.Environment;
@@ -254,9 +255,9 @@ public sealed class StateTimerTests(SindriTimeSkippingServer server) : IClassFix
             var desk = new DeskInstance(sindri, handle);
             _ = await desk.Until(static v => v.State == "waiting");
 
-            await env.DelayAsync(TimeSpan.FromMinutes(11), ct);
+            await env.DelayAsync(wait ?? TimeSpan.FromMinutes(11), ct);
             var view = await desk.Until(expired);
-            var events = await Rows(desk, 2);
+            var events = await Rows(desk, rows);
             Assert.Null((await InterpreterEvalTests.Replay(handle, ct)).ReplayFailure);
             await handle.TerminateAsync("test over");
             return (view, events);

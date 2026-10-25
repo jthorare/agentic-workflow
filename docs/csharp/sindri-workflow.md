@@ -349,7 +349,8 @@ order (`RecipeStateView.onOutcome`). Written into the hashed form only when set.
 (LN-WF3, see "The heavy resource" below); `slot` is a stub that is always free (P7), so a `slot` wait is reported as information
 (`RCP-RES-001`). `then: retry`
 re-arms the deadline in the same frame and re-sends the entering transition's effects; it isn't allowed on a child wait
-(`RCP-TIME-002`), nor on a state whose Step runs on the block runtime, whose timeout must also outlast the Step's `maxDuration` (`RCP-TIME-003`).
+(`RCP-TIME-002`), nor on a state whose Step runs on the block runtime, whose timeout must also outlast the Step's `maxDuration` when it sets one (`RCP-TIME-003`; a Step with none has no fixed limit, owner q93, 2026-10-23).
+A `then: park` timeout on an active or wait state (not a child wait, not a desk run) retries once, as `then: retry` does, and parks `timeout` on the second expiry (owner q93, 2026-10-23; patch `timeout-retries-before-park-v1`).
 
 ### Transitions
 
@@ -453,7 +454,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-EXIT-001` | Every non-terminal state has a path to a terminal state | Add a transition towards a terminal state |
 | `RCP-TIME-001` | Every active and wait state has a timeout | Add `timeout: { after, then }` |
 | `RCP-TIME-002` | A child wait doesn't `retry` | Use `park` or `escalate` |
-| `RCP-TIME-003` | A state whose Step's descriptor says `runtime: block` (whether or not this build registers a runtime for it) doesn't `retry`, and its `timeout.after` is longer than the Step's `maxDuration` (two minutes when the descriptor sets none) | Use `then: park` (a block call that runs out ends as `step.failed`, which the route sends to its desk twin); make the state timeout longer than the Step's `maxDuration` |
+| `RCP-TIME-003` | A state whose Step's descriptor says `runtime: block` (whether or not this build registers a runtime for it) doesn't `retry`, and its `timeout.after` is longer than the Step's `maxDuration` (when the descriptor sets none, the Step has no fixed limit: the state timer ends it; owner q93, 2026-10-23) | Use `then: park` (a block call that runs out ends as `step.failed`, which the route sends to its desk twin); make the state timeout longer than the Step's `maxDuration` |
 | `RCP-LOOP-001` | A state's `loop` is declared, every loop's `cap` is at least 1, and every cycle of step and wait transitions passes through a state with a `loop` (a cycle closed by a `command.<verb>` or by the answer to an `answer` wait is a human's, and a cycle with no way out is `RCP-EXIT-001`'s) | Declare it under `loops`, or add `loop` to a state on the cycle |
 | `RCP-LOOP-002` | A looped state has a transition back into it | Add it, or remove `loop` |
 | `RCP-LOOP-003` | `noProgress` isn't empty | Name a signal, or leave it out |
@@ -1413,7 +1414,7 @@ sends it on to the desk twin. A Step with no registered runtime keeps opening a 
 
   (The workflow also falls back to `failed` and `the Step returned nothing` when Temporal reports no inner failure or
   the outcome is empty; the runner never produces either.)
-- **The bound:** the activity (queue time included, `ScheduleToCloseTimeout`) is bounded by the descriptor's `maxDuration`
+- **The bound:** the activity (queue time included, `ScheduleToCloseTimeout`) of a Step with no `maxDuration` is bounded by 30 days (`BlockLimits.Fallback`, owner q93, 2026-10-23): the state timer retries once and then parks it. One that sets a `maxDuration` is bounded by it
   and by the time left on the state timer less a second (`BlockLimits.Bound`), so after a takeover and handback, when the
   timer resumes with only what was left, the Step's own `timeout` still ends the run before the timer would park it.
 - **`providers` is checked at validate time:** a literal list may name only `jev`, `claude-cli`, `codex-cli`, `cursor-cli`

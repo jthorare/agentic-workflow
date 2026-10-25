@@ -1,3 +1,4 @@
 {"start":{"inputs":{"fact:phasePacket":{"hash":"sha256:aa","dir":"packets/p1"},"fact:workspace":"/work/p1","fact:buildNotes":{},"fact:lineContext":{}}}}
 {"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:activePacket":{"hash":"sha256:aa"},"fact:redTests":{},"fact:built":{},"fact:change":{},"fact:findings":[],"fact:answers":{}}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"deadline"},"expect":{"state":"slot"}}
 {"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}

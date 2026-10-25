@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Scoping;
 
 namespace Aw.Sindri.Features.Scoping;
 
@@ -173,6 +174,11 @@ internal static partial class DeskBlocks
         }
 
         var round = facts.ObjectCopy("challengeRound");
+        if (ChallengeRoundShape.LogShape(round) is { } shape)
+        {
+            return SindriErrors.InvalidInput.With(shape);
+        }
+
         var verdict = ScopeJson.Str(round, "verdict");
         var surfaces = ScopeJson.Items(round, "surfaces").ToList();
         var behaviours = ScopeJson.Items(round, "behaviours").ToList();

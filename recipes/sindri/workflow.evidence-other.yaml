@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-other
-version: 2
+version: 3
 description: "Block recipe: the evidence a person used when no evidence block fitted, and why."
 displayName: "Record proof a person gathered by hand"
 inputs:
@@ -11,7 +11,7 @@ outputs:
   - { key: fact:evidenceReason, label: "Why no block fitted", type: text, from: record }
 initial: record
 states:
-  record:    { kind: active, step: step.evidence.desk, timeout: { after: 2d, then: park },
+  record:    { kind: active, step: step.evidence.desk, timeout: { after: 14d, then: park },
                next: "Record the evidence you used for {item} and why no listed evidence fitted, or say none was found." }
   recorded:  { kind: terminal, outcome: resolved }
   none-found: { kind: terminal, outcome: unresolved }

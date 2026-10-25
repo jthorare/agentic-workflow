@@ -109,7 +109,8 @@ public sealed class ListRecipesTests
         var item = await r.Shipped("sindri/workflow.item.yaml");
         _ = await r.Approve(step);
         _ = await r.Approve(item);
-        var step2 = await r.Register(RegistryHarness.Parse(step) with { Version = 5 });
+        var parsed = RegistryHarness.Parse(step);
+        var step2 = await r.Register(parsed with { Version = parsed.Version + 1 });
         Assert.Empty(await r.List(stale: true));
 
         _ = await r.Approve(step2);

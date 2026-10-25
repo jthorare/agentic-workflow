@@ -71,7 +71,7 @@ internal sealed partial class RecipeWorkflow
 
         var pinned = await Workflow.ExecuteLocalActivityAsync(
             (ChildActivities a) => a.LoadChildrenAsync(loaded.Version),
-            new LocalActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(30), RetryPolicy = new RetryPolicy { MaximumAttempts = 3 } }).ConfigureAwait(true);
+            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long, RetryPolicy = new RetryPolicy { MaximumAttempts = 3 } }).ConfigureAwait(true);
         return new ChildPins(pinned);
     }
 

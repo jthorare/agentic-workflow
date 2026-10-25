@@ -2,7 +2,7 @@ using Aw.Kernel;
 
 namespace Aw.Sindri.Core;
 
-// The sandbox launch codes (sandbox spec §6, -014 to -021); the session id pattern timeout in SindriErrors.cs is -028, since the sandbox reserved -015 first.
+// The sandbox launch codes (sandbox spec §6, -014 to -021); the session id pattern timeout in SindriErrors.cs is -030, since the sandbox reserved -015 first.
 public static partial class SindriErrors
 {
     /// <summary>SND-LAUNCH-014: the sandbox isn't available on this box (sandbox spec §6; kind no-runtime); detail 'reason' is no-bwrap, no-user-namespace, no-user-manager, no-cgroup-controllers, no-forwarder or unsupported-platform.</summary>

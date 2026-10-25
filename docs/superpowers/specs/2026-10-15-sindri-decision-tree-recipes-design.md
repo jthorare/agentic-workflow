@@ -159,7 +159,7 @@ transitions:
   state name shows it, in `workflow status`, the ledger and the app.
 - The route state's `next` is written as an instruction, because before DT-J it runs at the desk and a human acts in
   it (REF "Voice"). Its timeout is the desk's 2 days for that reason. On the block runtime the call is bounded by
-  `MaxDuration` (2 minutes, §8.2), which ends it as `step.failed` long before the state's timer.
+  `MaxDuration` (§8.2); owner q93, 2026-10-23: the judge Steps set none now, so the state's timer is the only bound (it retries once, then parks).
 - The route's timeout parks (`then: park`). It never retries, so a hung provider can't loop. The park is the ordinary
   `parked (timeout)` (WF §3.8), with its standard text, answered with `answer --resume`. The desk twin parks the same
   way.
@@ -488,7 +488,7 @@ A judge call is neither a desk task (P4) nor an agent session (P8). The engine r
   to the desk. `then: retry` doesn't apply on the block runtime; the validator refuses it on a block-runtime state
   (`RCP-TIME-003`, with its invalid fixture in DT-J). The activity's retry policy is `MaximumAttempts = 1` (today's
   `RunStep` uses Temporal's unlimited default), so a failed Judge call isn't silently repeated.
-- `MaxDuration` is 2 minutes for the judge Steps. The evidence run Steps (§5) are long, take machine locks and can
+- `MaxDuration` was 2 minutes for the judge Steps (owner q93, 2026-10-23: removed; a Step with none has no fixed limit, the state timer bounds it). The evidence run Steps (§5) are long, take machine locks and can
   outlast 10 minutes, so they run on the agent runtime's activity shape (heartbeating, P8). Until then they run at
   the desk. The block runtime is for short calls only.
 - A block-runtime Step that is also `deskCapable` falls back to the desk when its runtime isn't registered (W5).

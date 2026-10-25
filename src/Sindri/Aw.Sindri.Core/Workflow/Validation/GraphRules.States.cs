@@ -57,7 +57,7 @@ internal sealed partial class GraphRules
         }
 
         var max = BlockLimits.MaxDuration(block);
-        if (timeout.After.Span <= max)
+        if (BlockLimits.IsExplicit(block) && timeout.After.Span <= max)
         {
             yield return source.Finding(
                 "RCP-TIME-003",
