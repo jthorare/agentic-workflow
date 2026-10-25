@@ -149,7 +149,7 @@
                 "why": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "A recorded limit: index-not-built, history-unlinked, commit-not-held, not-synced, not-configured, or anchor-missing (an asked anchor the view couldn't find; 'not' names the anchor) (SCP-COV-002)."
+                  "description": "A recorded limit: index-not-built, history-unlinked, commit-not-held, not-synced, not-configured, anchor-missing (an asked anchor the view couldn't find; 'not' names the anchor), or edges-out-of-scope (the lens left out edges ending outside its found nodes and anchors; 'not' says how many) (SCP-COV-002)."
                 }
               },
               "required": [
