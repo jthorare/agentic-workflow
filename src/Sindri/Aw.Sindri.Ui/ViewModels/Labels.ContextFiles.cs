@@ -73,6 +73,21 @@ internal static partial class Labels
         string.Create(CultureInfo.InvariantCulture, $"{suggested} suggested"),
         string.Create(CultureInfo.InvariantCulture, $"{unmapped} not in the map"));
 
+    /// <summary>One role of a repo and how many indexed files it matches.</summary>
+    /// <param name="role">The role's name.</param>
+    /// <param name="demoted">True for a demoted role, false for an ignored one.</param>
+    /// <param name="files">How many files.</param>
+    /// <returns>"test, demoted: 41 files".</returns>
+    internal static string ContextRoleLine(string role, bool demoted, int files) =>
+        string.Create(CultureInfo.InvariantCulture, $"{role}, {(demoted ? "demoted" : "ignored")}: {Count(files, "file", "files")}");
+
+    /// <summary>Files that look like a role but no glob of the profile matches.</summary>
+    /// <param name="count">How many.</param>
+    /// <returns>"2 files look like a role but match no glob".</returns>
+    internal static string ContextRolesUnassigned(int count) => count == 1
+        ? "1 file looks like a role but matches no glob"
+        : string.Create(CultureInfo.InvariantCulture, $"{count} files look like a role but match no glob");
+
     /// <summary>A feature key as a person reads it.</summary>
     /// <param name="key">The key, "feature:tabs.tab-groups".</param>
     /// <returns>"tabs.tab-groups" (the key without its kind word).</returns>

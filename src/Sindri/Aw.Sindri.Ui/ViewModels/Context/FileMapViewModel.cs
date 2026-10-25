@@ -162,8 +162,29 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
 
     private async Task Read(Uri api, string? path, int generation, CancellationToken cancellationToken)
     {
-        var repo = _repo ?? await ReadRepo(api, cancellationToken).ConfigureAwait(true);
-        if (generation != _generation || repo is null)
+        var repo = _repo;
+        if (repo is null || string.IsNullOrEmpty(path))   // the top of a repo reads the status again, so its role counts are fresh
+        {
+            var status = await Ports.Api.MapStatus(api, anchor: null, cancellationToken).ConfigureAwait(true);
+            if (generation != _generation)
+            {
+                return;
+            }
+
+            if (status.IsError && repo is null)
+            {
+                Fail(status.Error);
+                return;
+            }
+
+            if (status.IsSuccess)
+            {
+                repo ??= status.Value.Version.Repo;
+                ShowRoles(status.Value.Roles, repo);
+            }
+        }
+
+        if (repo is null)
         {
             return;
         }
@@ -223,6 +244,7 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
         _repo = repo;
         _current = string.Empty;
         Crumbs = [Crumb.Top(isLink: false)];
+        ShowRoles(roles: null, repo);
     }
 
     // "src/tabs/" -> "~", "src" (a link), "tabs" (plain); the top is "~" alone, plain.
@@ -238,17 +260,16 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
         return crumbs;
     }
 
-    // The map status names the repo the caller reads; a refusal (no map yet) is the file map's refusal too.
-    private async Task<string?> ReadRepo(Uri api, CancellationToken cancellationToken)
+    // The repo's own entry of the status's role counts; no entry, or one with nothing in it, shows nothing.
+    private void ShowRoles(IReadOnlyList<RepoRolesView>? roles, string repo)
     {
-        var status = await Ports.Api.MapStatus(api, anchor: null, cancellationToken).ConfigureAwait(true);
-        if (status.IsError)
-        {
-            Fail(status.Error);
-            return null;
-        }
-
-        return status.Value.Version.Repo;
+        var mine = roles?.FirstOrDefault(r => string.Equals(r.Repo, repo, StringComparison.Ordinal));
+        RoleLines = mine is null ? [] : [.. mine.Roles.Select(r => Labels.ContextRoleLine(r.Role, r.Demoted, r.Files))];
+        var unassigned = mine?.Unassigned is { Count: > 0 } u ? u : null;
+        UnassignedLine = unassigned is null ? string.Empty : Labels.ContextRolesUnassigned(unassigned.Count);
+        UnassignedExamples = unassigned is null ? string.Empty : string.Join(", ", unassigned.Examples);
+        OnChanged(nameof(HasRoles));
+        OnChanged(nameof(HasUnassigned));
     }
 
     private void Show(FileMapView view)
