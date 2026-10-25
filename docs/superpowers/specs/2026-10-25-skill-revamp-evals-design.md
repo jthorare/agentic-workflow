@@ -10,7 +10,7 @@
 
 Today we cannot tell whether a skill helps. The pilot ran `claude plugin eval` on three skills and found three things: some skills never fire on natural phrasing, a skill's main output cannot be read by a check, and 50 of 52 skills only work when the toolkit sits at one fixed path in the home directory. This spec fixes those in order:
 
-1. Make every skill self-contained: two path variables, a cheap preamble, a mode that touches no git state, a machine-readable last block.
+1. Make every skill self-contained: one toolkit-root variable, all output through `$AW_DIR`, a cheap preamble, a mode that touches no git state, a machine-readable result file.
 2. Give every skill 4 eval cases, grouped into tiers by how much setup they need.
 3. Run the cases in a clean clone through one script, and gate changes on them.
 4. Fix descriptions routing-first, with the `rootCause` description as the worked example, and never tune a description to the eval prompts.
@@ -43,23 +43,23 @@ Blockers that shape this spec:
 
 ## 2. Self-contained skills
 
-A skill is self-contained when a plugin that ships `skills/` can run it with nothing else installed except the tools it declares. Four changes, applied to all skills by one mechanical edit (phase 0).
+A skill is self-contained when a plugin that ships `skills/` can run it with nothing else installed except the tools it declares. **Goal:** this is for measurement first: the eval runner loads the skills as a plugin in a temp `HOME`. Installing the toolkit as a plugin for other people is not a goal of this spec and is not proven here; the changes keep that door open at no extra cost. Four changes, applied to all skills by one mechanical edit (phase 0).
 
 ### 2.1 `AW_TOOLKIT`
 
 Replace every `$HOME/.agentic-workflow/toolkit` in `skills/` with `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}`. The default is today's symlink, so installed behaviour does not change. In a plugin, the eval sets `AW_TOOLKIT` to the plugin root, which already holds `skills/_preamble.md` and `skills/_shared/`. This removes the `evals/_lib/shim.sh` copy trick and the per-case `scaffold_script` stubs.
 
-`.agents/rules/skills.md` ("Shared Fragments", "Preamble") is updated with the new text, and `scripts/` gets a check (like `check-env-example.sh`) that fails when a bare `$HOME/.agentic-workflow/toolkit` appears in `skills/**`. Files the skills need beyond `skills/` (the voice file under `config/voice/`) move under `skills/_shared/` so one root is enough. **Decision:** the toolkit root is one variable, not a path relative to the skill's base directory, because bash snippets inside a SKILL.md cannot know their own base directory on every provider.
+`.agents/rules/skills.md` ("Shared Fragments", "Preamble") is updated with the new text, and `scripts/` gets a check (like `check-env-example.sh`) that fails when a bare `$HOME/.agentic-workflow/toolkit` appears in `skills/**`. `AW_TOOLKIT` is the toolkit root, not the skills dir, so files the skills read beyond `skills/` (`config/voice/joi.md`, read by `_preamble.md`) stay where they are: the eval stage copies them to the same relative path. Nothing moves, so `providers/lib.sh`, `providers/cursor/install.sh` and the three `config/agents/lean-*.md` files that read `config/voice/` are untouched. **Decision:** the toolkit root is one variable, not a path relative to the skill's base directory, because bash snippets inside a SKILL.md cannot know their own base directory on every provider.
 
-### 2.2 `AW_OUT_DIR`
+### 2.2 Output under `AW_DIR`, no new variable
 
-Every skill that writes a file today writes under `~/.agentic-workflow/<slug>/<kind>/`. Add `AW_OUT_DIR`, default `$HOME/.agentic-workflow`, and write to `${AW_OUT_DIR}/<slug>/<kind>/`. `skills/_shared/repo-slug.sh` gains a `aw_out_dir` helper so skills call one function, not a string. An eval sets `AW_OUT_DIR=$PWD/.aw-out` (inside the run's workspace, which is writable) and a `file_exists` or `regex` grader reads the report. State kept by tools (judge sessions, packets) stays under `AW_STATE_DIR`; this spec does not touch it.
+`skills/_shared/repo-slug.sh:13` already sets `AW_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/$REPO_SLUG"`. The fix is to make every skill write through `$AW_DIR` (today some SKILL.md text spells `~/.agentic-workflow/<slug>/` by hand; the check from §2.1 also flags that string). No `AW_OUT_DIR` is added. An eval sets `AW_STATE_DIR=<workspace>/.aw-state`, inside the run's writable workspace, which does two things at once: a `file_exists` or `regex` grader can read the report, and the state tools write (judge sessions, packets, `aw-meta` logs) lands in the throwaway workspace instead of the owner's real state dir (§5.4).
 
 ### 2.3 A cheap or skippable preamble
 
 The preamble (about 10 KB) lists skills, runs a bootstrap check over every skill dir, may ask the user to run `setup.sh`, and loads prism context. Changes:
 
-1. Split `_preamble.md` into a **core** (provider capability map, the one-line voice rule; under 1 KB) and an **extended** part (skill index, bootstrap check, prism context, Session Close). A skill's SKILL.md points at the core by default and at the extended part only where it needs it.
+1. Split `_preamble.md` (50 skills) and `_design-preamble.md` (17 design skills, read on top of the first) the same way, each into a **core** (provider capability map, the one-line voice rule; under 1 KB) and an **extended** part (skill index, bootstrap check, prism context, Session Close). A skill's SKILL.md points at the core by default and at the extended part only where it needs it.
 2. `AW_PREAMBLE=off` skips the extended part entirely. An eval sets it. Interactive sessions leave it unset, so nothing changes for a person.
 3. The bootstrap check moves to `setup.sh` and `sindri doctor`, where it belongs; a skill never asks the user to run setup from inside a run.
 
@@ -71,17 +71,17 @@ Skills that make worktrees, branches, commits or PRs (`specToProvenPR` step 0, `
 
 ### 2.5 An output contract per skill
 
-Each skill ends its reply with one fenced JSON block, `aw-result`, in a fixed shape:
+Some skills already end with a machine-readable tail that callers parse: `rootCause` ends its reply with `{status: fixed|unfixed|scope-breach|diagnosed, report_path, handoff_path, boundary}` (absolute paths; `bugFixOrchestrator` takes `handoff_path` from it), the review lenses end their report file with `verdict: PASS|NEEDS_WORK|BLOCKED`, and 50 skills end the reply with `## Next steps`. The contract **extends** those, never replaces them:
 
-```json
-{"skill":"rootCause","status":"done","artifacts":["investigations/2026-10-25-cart.md"],"summary":"..."}
-```
+1. Every skill writes one result file, `$AW_DIR/results/<skill>-<timestamp>.json`. Required keys: `skill`, `artifacts` (absolute paths, so callers need no root), `summary` (one line). Everything else is the skill's own: `rootCause` keeps its `status` enum and its three path keys, a lens skill adds `verdict` mirroring its report's last line. No shared `status` enum is forced on skills that already have one.
+2. In the reply, a skill that already prints a JSON tail (`rootCause`, and any other a phase 0 grep finds) keeps printing it always, as a fenced `aw-result` block with the two new keys added. Every other skill prints the block **only when `AW_RESULT=1`** (the eval runner sets it), so a person's reply stays as it is today.
+3. Order: the `aw-result` block, then `## Next steps`. A lens's `verdict:` stays the last line of its report file.
 
-Required keys: `skill`, `status` (`done`, `blocked`, `refused`), `artifacts` (paths relative to `AW_OUT_DIR`), `summary` (one line). A skill may add its own keys (`rootCause` keeps `boundary` and `cause_site`). The contract lives in `skills/_shared/output-contract.md`; a skill's SKILL.md ends with a "Result block" section naming its extra keys. This is what lets a `regex` grader check the result in one line and what `/review` and `/bugFixOrchestrator` already read from `rootCause`. Skills that only talk (`enhancePrompt`, `withInterview`) use `artifacts: []`.
+The contract lives in `skills/_shared/output-contract.md`; a skill's SKILL.md ends with a "Result block" section naming its own keys. Skills that only talk (`enhancePrompt`, `withInterview`) use `artifacts: []`.
 
 ### 2.6 Declared dependencies
 
-Every SKILL.md frontmatter gains `requires:` listing binaries, agents and MCP servers it calls (`requires: {bins: [gh], agents: [qa-runner], mcp: [playwright]}`). The runner uses it to decide which stubs a case needs (§5.3), and `scripts/` checks that each name exists in the stub set or the real install. Agents a skill spawns (`qa-runner`) are copied under the plugin's `agents/` in the staged copy so they exist in a run.
+Every SKILL.md frontmatter gains `requires:` listing binaries, agents and MCP servers it calls (`requires: {bins: [gh], agents: [qa-runner], mcp: [playwright]}`). Phase 0 first checks that Claude Code, Codex and Cursor each still load a SKILL.md carrying the extra key (one skill, each provider, the description shows up); if any rejects or mangles it, the list goes in a sidecar `skills/<x>/requires.yaml` instead, with the same shape. The runner uses it to decide which stubs a case needs (§5.3), and `scripts/` checks that each name exists in the stub set or the real install. Agents a skill spawns (`qa-runner`, from `config/agents/`) are copied under the plugin's `agents/` in the staged copy; plugin agents are namespaced, so phase 0 checks that a skill spawning one by its bare name still finds it, and the skill text names it the way the plugin needs if not. Skills that call another plugin's skills (`specToProvenPR` calls `superpowers:using-git-worktrees` and `superpowers:writing-plans`) list them under `requires.skills` and are not self-contained: their forced case is graded on what happens up to that call, and the call itself is checked with `tool_used`.
 
 ## 3. The eval suite
 
@@ -89,11 +89,26 @@ Every SKILL.md frontmatter gains `requires:` listing binaries, agents and MCP se
 
 | Case | Kind | Purpose |
 |---|---|---|
-| `<s>-natural-1`, `<s>-natural-2` | routing | a person's own words that should fire the skill (two different phrasings) |
-| `<s>-near-miss` | routing | a request that looks close but must not fire it |
+| `<s>-natural-1`, `<s>-natural-2` | routing | a person's own words that should fire the skill (two different phrasings); `natural-1` is seeded from a real prompt (a scrubbed session prompt or an issue's text, named in `case.yaml`), `natural-2` is written |
+| `<s>-near-miss` | routing | a request that belongs to the skill's closest sibling (§3.1a), so it must not fire this one; a skill with no sibling uses a request that only looks close |
 | `<s>-forced` | behaviour | "use the `<s>` skill on ..." and grade what it does |
 
-With 52 skills that is 208 cases. **Decision:** routing and behaviour cases are kept apart, in two directories per skill (`routing/` and `behaviour/`) and tagged `routing` or `behaviour`. Reason: with the skill unfired a behaviour score means nothing, and under `with-without` the `tool_used: Skill` grader is excluded from the score, so a skill that never fires can still show Δ near 0 and look harmless (`rc-failing-test` showed Δ -0.04). Routing cases run with `--ablation none` and the fire rate is read from `--json`; behaviour cases run with the default `with-without` so Δ is real.
+Tier D skills have no forced case (§3.3). Counting it all: 33 skills × 4 + 19 × 3 = 189 cases, plus one held-out natural prompt per skill (§7.2, 52) and the family case sets (§3.1a, about 30 prompts): about 270 cases, of which 33 are behaviour cases and the rest are routing.
+
+### 3.1a Sibling families
+
+The real routing risk is a skill stealing a sibling's prompts, not firing on an unrelated request. `rootCause`'s merged description ("Use BEFORE fixing any bug, even when the fix looks small") can win prompts meant for `bugHunt`, `bugFixOrchestrator` or `bugReport`, and each skill's own gate would still pass. So skills are grouped into families, and each family has one **family case set** in `evals/_families/<family>/`: one prompt per member, graded on *which* skill fired (a `regex` on the Skill tool's argument), run with `--ablation none` whenever any member's description changes.
+
+| Family | Members |
+|---|---|
+| bug | `rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator` |
+| review | `review`, `addressReview`, `postReview` |
+| plan review | `autoplan`, `archReview`, `productReview`, `planDesignReview`, `planDevexReview`, `cso` |
+| ship | `shipRelease`, `landAndDeploy`, `canary` |
+| verify | `verify-app`, `verify-web`, `verify-ios`, `verify-desktop`, `ui-evidence` |
+| design dispatch | each dispatcher (`design-analyze`, `-evolve`, `-implement`, `-mockup`, `-verify`) with its `-web`, `-ios`, `-desktop` members |
+
+Phase 0 runs the bug family once on today's descriptions as its baseline, before Phase 2 rewrites any of them. A description change that raises its own fire rate but drops a sibling's member below the routing gate (§6.1) fails. **Decision:** routing and behaviour cases are kept apart, in two directories per skill (`routing/` and `behaviour/`) and tagged `routing` or `behaviour`. Reason: with the skill unfired a behaviour score means nothing, and under `with-without` the `tool_used: Skill` grader is excluded from the score, so a skill that never fires can still show Δ near 0 and look harmless (`rc-failing-test` showed Δ -0.04). Routing cases run with `--ablation none` and the fire rate is read from `--json`; behaviour cases run with the default `with-without` so Δ is real.
 
 ### 3.2 Graders
 
@@ -115,7 +130,7 @@ Tiers group skills by what a case needs. Every directory under `skills/` with a 
 
 **Tier B, small fixture repo (16).** A made-up repo built by a `fixture.sh`, plus stubbed `gh` and `git` remotes where needed, `AW_GIT_MODE=readonly`.
 `rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit`, `review`, `addressReview`, `postReview`, `syncDocs`, `shipRelease`, `specToProvenPR`, `new-package`, `new-slice`, `weeklyRetro`, `landAndDeploy`, `canary`.
-`review`, `addressReview` and `postReview` read a saved review JSON from `AW_OUT_DIR`; the fixture writes one. `landAndDeploy` and `canary` use a stub `curl` and a stub deploy command from `.agentic-workflow/deploy.json`.
+`review`, `addressReview` and `postReview` read a saved review JSON from `$AW_DIR/reviews/`; the fixture writes one. `landAndDeploy` and `canary` use a stub `curl` and a stub deploy command from `.agentic-workflow/deploy.json`.
 
 **Tier C, stubbed binaries or servers (6).** Behaviour is checked against canned tool output: the process, the order of calls, the refusals. Not the tool.
 `ui-evidence` (stub `ui-evidence`, as in the pilot), `verify-web` (mock Playwright server), `verify-ios` (mock XcodeBuildMCP), `verify-desktop` (stub `ui-evidence` desktop recipe), `verify-app` (dispatcher: which of the three it picks), `meta` (stub `aw-meta` with canned JSON).
@@ -124,7 +139,7 @@ MCP mocks live in `evals/mocks/<server>/<tool>.md`; a plugin `.mcp.json` declare
 **Tier D, routing and dispatch only (19).** The design family needs a browser, a simulator or a reference site. Cases check that the right skill fires, that dispatchers (`design-analyze`, `-evolve`, `-implement`, `-mockup`, `-verify`) pick web, iOS or desktop from the prompt, and that the plan before the first tool call is right. No end-to-end runs.
 `design-analyze`, `design-analyze-web`, `design-analyze-ios`, `design-evolve`, `design-evolve-web`, `design-evolve-ios`, `design-implement`, `design-implement-web`, `design-implement-ios`, `design-mockup`, `design-mockup-web`, `design-mockup-ios`, `design-verify`, `design-verify-web`, `design-verify-ios`, `design-verify-desktop`, `design-language`, `design-refine`, `design-shotgun`.
 
-Tier counts: 11 + 16 + 6 + 19 = 52. Tier D gets the two routing cases and the near-miss only (3 cases), and its forced case checks the plan text. **Not evaluated:** the fetched external packs (`impeccable`, `emil-design-eng`, `taste-skill` family, `brandkit`), which are not ours.
+Tier counts: 11 + 16 + 6 + 19 = 52. Tier D gets the two routing cases and the near-miss only (3 cases), no forced case: a plan-text check without a real browser run says little. **Not evaluated:** the fetched external packs (`impeccable`, `emil-design-eng`, `taste-skill` family, `brandkit`), which are not ours.
 
 ## 4. Where the evals live
 
@@ -160,13 +175,23 @@ scripts/skill-evals.sh [--skills a,b | --changed | --all] [--kind routing|behavi
                        [--threshold T] [--max-cost-usd N] [--jobs N] [--dry-run]
 ```
 
-Steps: (1) resolve the skill set (`--changed` = skills whose files or evals differ from `origin/main`, plus every skill if `skills/_shared/**` or `skills/_preamble.md` changed); (2) stage `evals/plugin`, the chosen skills (`rsync -L`, links resolved), their `evals/<skill>/`, `_lib`, `mocks`, `stubs` into a fresh directory under `$AW_STATE_DIR/cache/skill-evals/` that is not inside a git repo; (3) check the day's spend (§6.4) and stop if over; (4) export `AW_TOOLKIT=<stage>`, `AW_OUT_DIR=<workspace>/.aw-out`, `AW_PREAMBLE=off`, `AW_GIT_MODE=readonly`, put `stubs/bin` first on `PATH`; (5) run `claude plugin eval <stage> --trust-plugin --scaffold --no-publish --json <out>` with the flags above and `--allow-tools Bash Write Edit`; (6) copy `results.json` and the report to `$AW_STATE_DIR/skill-evals/<date>/`, append cost to the day's tally, and print the WITH / W-OUT / Δ table in Markdown for the PR body; (7) exit with the tool's code (0 pass, 1 below threshold, 2 budget hit).
+Steps: (1) resolve the skill set (`--changed` = skills whose files or evals differ from `origin/main`, plus every skill if `skills/_shared/**` or `skills/_preamble.md` changed); (2) stage `evals/plugin`, **every** skill's SKILL.md and the chosen skills' full directories (`rsync -L`, links resolved), the chosen skills' `evals/<skill>/`, `_lib`, `mocks`, `stubs` into a fresh directory under `$AW_STATE_DIR/cache/skill-evals/` that is not inside a git repo; (3) check the day's spend (§6.4) and stop if over; (4) build the run's environment from scratch (§5.4): `AW_TOOLKIT=<stage>`, `AW_STATE_DIR=<workspace>/.aw-state`, `AW_PREAMBLE=off`, `AW_GIT_MODE=readonly`, `AW_RESULT=1`, `stubs/bin` first on `PATH`; none of these is exported into the caller's shell; (5) run `claude plugin eval <stage> --trust-plugin --scaffold --no-publish --json <out>` with the flags above and `--allow-tools Bash Write Edit`; (6) copy `results.json` and the report to `$AW_STATE_DIR/skill-evals/<date>/`, append cost to the day's tally, and print the WITH / W-OUT / Δ table in Markdown for the PR body; (7) exit 0 pass, 1 below threshold or a routing gate missed, 2 budget refused, 3 environment (`claude` missing, not logged in, a staged path resolving outside the repo). `--changed` that resolves to no skills prints `no skills changed` and exits 0.
 
-`--scaffold` runs author-written bash as you; the script passes it only for case files under `evals/` in the checked-out tree and refuses a staged tree that differs from `git ls-files` there. It never runs inside an agent session without `--dry-run`: only a lane lead or CI runs it. A bash test (`scripts/tests/skill-evals.test.sh`) covers `--dry-run`, the changed-skill resolution and the spend guard with a stub `claude`.
+`--scaffold` runs author-written bash (`fixture.sh`, scaffold scripts) as the owner. The script passes it only for a committed tree (it refuses uncommitted changes under `evals/` or `skills/`) on `main` or on a branch of this repo's own lanes; it never runs cases from a PR by an outside author until a lane has reviewed and re-committed them. `rsync -L` refuses any link that resolves outside the repo, and the stage is refused if it holds a `hooks/` dir or an `.mcp.json` other than the mocks'.
+
+**Who runs it.** Lane lead sessions and the owner run the real thing; builders never do (they spend shared usage). Builders run `scripts/skill-evals.sh --selftest`, which calls no model and costs nothing: it lints the case files, runs each `fixture.sh` in a temp dir, runs every grader against its `graders/_selftest/` pass and fail replies, and runs `--lint-descriptions`. A case is ready for the lead only when `--selftest` passes.
+
+A bash test (`scripts/tests/skill-evals.test.sh`) covers `--dry-run`, `--selftest`, the changed-skill resolution, the exit codes and the spend guard with a stub `claude`.
+
+Every skill is staged because routing is a choice among all of them: with only the tested skill loaded, a natural prompt has nothing else to pick and a near miss has no sibling to go to, so both numbers would look better than a real session. Only fixtures, cases and stubs are per skill.
 
 ### 5.3 Stubs
 
-`evals/stubs/bin/` holds one canned stand-in per binary named in any skill's `requires:`. A stub reads `evals/stubs/<name>.json` for its answers and refuses what the real tool refuses (the pilot's `ui-evidence` stub refuses a non-local host). Writes to the real network are impossible: stubs for `gh` and `curl` return fixtures and exit 1 on an unknown call, which a grader can see.
+`evals/stubs/bin/` holds one canned stand-in per binary named in any skill's `requires:`. A stub reads `evals/stubs/<name>.json` for its answers and refuses what the real tool refuses (the pilot's `ui-evidence` stub refuses a non-local host). Stubs for `gh` and `curl` return fixtures and exit 1 on an unknown call, which a grader can see. This guards against honest mistakes, not a determined agent: the real tools are still reachable by absolute path, which §5.4 limits.
+
+### 5.4 The run's environment
+
+The run starts from `env -i` with an allowlist: `PATH` (stubs first), `TERM`, `LANG`, the eval's own credentials as `claude` needs them, and the `AW_*` values from step 4. `GH_TOKEN`, `GITHUB_TOKEN`, `AW_FORGE_TOKEN` and any other token are not passed. `HOME` is a temp dir and `AW_STATE_DIR` points inside the workspace, so judge, packets and meta state never land in the owner's real state dir. Fixture repos have no remote, so a stray real `git push` has nowhere to go. Saved transcripts and `results.json` stay under `$AW_STATE_DIR/skill-evals/` on the box; only the table goes into a PR body.
 
 ## 6. The gate
 
@@ -174,23 +199,26 @@ Steps: (1) resolve the skill set (`--changed` = skills whose files or evals diff
 
 | Trigger | Runs | Settings |
 |---|---|---|
-| PR that touches `skills/<x>/` or `evals/<x>/` | that skill's cases only | `--runs 2 --ablation none`, free graders only, `--threshold 0.8`, `--max-cost-usd 5` |
+| PR that touches `skills/<x>/` or `evals/<x>/` | that skill's cases, plus its family's case set (§3.1a) when its description changed | `--runs 3 --ablation none`, free graders only, `--threshold 0.8`, `--max-cost-usd 8` |
 | PR that touches `skills/_shared/**` or `_preamble.md` | one case per skill in tiers A and B (forced case) | `--runs 1 --ablation none`, `--max-cost-usd 15` |
-| Nightly | all cases | `--runs 3 --ablation with-without --threshold 0.7`, `--max-cost-usd 60`, `-j 4` |
+| Nightly | tiers A and B, routing and behaviour (pending §9 Q2) | `--runs 3`, with-without on behaviour, `--threshold 0.7`, `--max-cost-usd 40`, `-j 4` |
+| Weekly | all cases | same settings, its own budget (§9 Q2) |
 
 The per-PR job also reads the JSON for the **routing gate**: on a skill's two natural cases the Skill-fired rate must be at least 50%, and on its near-miss case 0%. A skill that does not fire on its own natural phrasing fails the PR even when the score is fine. The nightly job fails any skill with mean Δ below 0 on its behaviour cases, so a skill that makes things worse is caught. It never charts a run with `partial: true`.
 
 ### 6.2 Cost budget per change
 
-Pilot rates: about $0.18 per run (Opus default, judges included), $0.46 for the heaviest. A skill's 4 cases at 2 runs, one arm, is 8 runs, about $1.50 to $4. The $5 cap per PR holds that. A change that touches many skills runs them in sequence and stops at its cap; the PR body says which skills were skipped.
+Pilot rates: about $0.18 per run (Opus default, judges included), $0.46 for the heaviest. A skill's 4 cases plus its held-out prompt at 3 runs, one arm, is 15 runs, about $2.70 to $7. The $8 cap per PR holds that; a family case set adds about $2 to $5 and is counted in the same cap.
+
+The per-PR gate is a cheap, one-arm check for later edits. It is not the table a group PR carries: a group PR (§8) runs its own full measurement once (`--runs 3`, with-without on behaviour cases), and that is the table in its body. A change that touches many skills runs them in sequence and stops at its cap; the PR body says which skills were skipped.
 
 ### 6.3 Models
 
-**Decision:** the agent model is pinned in the script (`--model`), the same one for with and without and for every run in a table, so Δ is comparable. Pilot numbers used the default (Opus); to cut cost the per-PR job uses Sonnet 5.5, and the nightly job uses the default. The first phase measures both on the three pilot skills and reports the difference before this is fixed. The judge is `--judge-model sonnet`, not the Haiku default, and only on cases that need one (§3.2). Full-suite estimate at pilot rates: 208 cases × 3 runs × 2 arms = 1,248 runs, about $225 to $400. Per-PR only runs a small slice of that.
+**Decision:** the agent model is pinned in the script (`--model`), the same one for with and without and for every run in a table, so Δ is comparable. Pilot numbers used the default (Opus); to cut cost the per-PR job uses Sonnet 5.5, and the nightly job uses the default. The first phase measures both on the three pilot skills and reports the difference before this is fixed. The judge is `--judge-model sonnet`, not the Haiku default, and only on cases that need one (§3.2). Full-suite estimate at pilot rates ($0.18 to $0.46 a run): routing about 237 cases × 3 runs × 1 arm = 711 runs, behaviour 33 × 3 × 2 arms = 198 runs, about 900 runs, $160 to $420. Per-PR only runs a small slice of that.
 
 ### 6.4 Daily spend cap
 
-The cap is **$60 per day** of eval spend for this work (the owner's number, issue #1107). `scripts/skill-evals.sh` keeps a tally in `$AW_STATE_DIR/skill-evals/spend.jsonl` (date, command, cost from `--json`) and refuses to start when the day's total plus `--max-cost-usd` would pass $60, exiting 2. When it refuses, the lane lead stops running evals, tells meta in one line (spend so far, what was skipped), and resumes the next day. The cap is shared by everyone who runs the script; builders do not run it at all. The tally is also a line in each group PR (§8).
+The cap is **$60 per day** of eval spend for this work (the owner's number, issue #1107). `scripts/skill-evals.sh` keeps a tally in `$AW_STATE_DIR/skill-evals/spend.jsonl` (date, command, cost from `--json`) and refuses to start when the day's total plus `--max-cost-usd` would pass $60, exiting 2. The check and a **reserve row** (the full `--max-cost-usd`) are written under one `flock` on the tally file, so two lanes starting at once cannot both fit under the cap; when the run ends, a second row replaces the reserve with the real cost. An unreadable or malformed tally fails closed (exit 2). Once the nightly is on (§8), the tally keeps two pools inside the $60, nightly $40 and everything else $20, and each job is checked against its own pool, so a nightly never starves a PR gate. The weekly full run is the one job that needs its own budget (§9 Q2). When it refuses, the lane lead stops running evals, tells meta in one line (spend so far, what was skipped), and resumes the next day. The cap is shared by everyone who runs the script; builders do not run it at all. The tally is also a line in each group PR (§8).
 
 ## 7. Description fixes
 
@@ -216,7 +244,7 @@ Two lessons. First, a "Use when" opener is not enough: Claude reads a bug as som
 2. **Add the exclusion.** One clause for the near miss ("not for writing new features").
 3. **Never paraphrase a case prompt into a description.** A description may not contain a phrase of five or more words that also appears in any of that skill's case prompts. The script checks this mechanically (`scripts/skill-evals.sh --lint-descriptions`, part of the gate).
 4. **Hold out phrasings.** Each skill has 2 natural cases for tuning and one more natural prompt kept in `evals/<skill>/routing/_heldout/`, written by someone other than the person editing the description and never read while editing. After a description change, the held-out prompt must fire as often as the tuned ones. If tuned cases fire and the held-out case does not, the description is overfitted; revert and widen it.
-5. **Keep it short.** One to three sentences; the trigger cases come first. Long descriptions cost context in every session.
+5. **Keep it short.** One to three sentences; the trigger cases come first. Long descriptions cost context in every session, so `--lint-descriptions` also fails when a PR grows the total bytes of all descriptions by more than 10% over the Phase 0 baseline.
 6. **Re-measure.** A description PR carries the before and after fire rates for all three natural cases at the default three runs; a single run is noise.
 
 ## 8. Rollout
@@ -225,12 +253,13 @@ Eval runs are for lane leads. Builders write cases and skill text only (standing
 
 ### Phase 0: plumbing (one lane, blocks everything)
 
-1. `AW_TOOLKIT` and `AW_OUT_DIR` edit across `skills/` plus the check script (§2.1, §2.2).
+1. `AW_TOOLKIT` edit and the `$AW_DIR`-only writes across `skills/`, plus the check script (§2.1, §2.2).
 2. Preamble split and `AW_PREAMBLE=off` (§2.3); `AW_GIT_MODE` in the five skills (§2.4).
 3. `skills/_shared/output-contract.md` and the `requires:` field with its check (§2.5, §2.6).
 4. `evals/` skeleton, `plugin.json`, stubs for `gh`, `curl`; `scripts/skill-evals.sh` and its bash test (§4, §5).
-5. Move the pilot's three suites into the new layout; re-run once as the baseline row.
+5. Move the pilot's three suites into the new layout; re-run once as the baseline row. The baseline also records: (a) the 3 pilot skills' forced cases once with `AW_PREAMBLE` on and once off, so we know whether the eval's mode changes Δ (if it moves by more than 0.1, one preamble-on behaviour case per tier B skill joins the nightly); (b) the bug family's case set (§3.1a) on today's descriptions; (c) the total bytes of all 52 descriptions.
 6. Update `.agents/rules/skills.md` and `planning/TESTING.md`.
+7. `evals/STATUS.md`: one row per skill (fire rate on its natural cases, behaviour Δ, date of the last run, the PR). Each group PR updates its skills' rows, so the current state is one committed file anyone can read, not a PR body.
 
 Proof: the pilot's `rootCause` forced case runs in fewer turns than before; the three pilot skills score the same or better; `scripts/skill-evals.sh --dry-run` passes in CI. One lane, builders split by step 1 / step 2-3 / step 4-5 (they touch different files).
 
@@ -249,13 +278,13 @@ Inside a group, builders take one skill each (up to 8 at once), each writing: 4 
 
 **Each group PR carries:** (a) the cases and graders; (b) a WITH / W-OUT / Δ table, one row per case, plus the Skill-fired rate for routing cases; (c) a before/after row for each description changed; (d) a spend tally ("this PR $X, today $Y of $60, total for #1107 $Z"); (e) `Refs #1107`.
 
-Order inside the weeks: phase 0, then phases 1 to 4 together, then a nightly job turned on once phase 1 is green for three nights.
+Order inside the weeks: phase 0, then phases 1 to 4 together, then the nightly job, turned on only after the four groups have merged. Until then the whole $60 a day is for the lanes' runs. After that the cap splits into two pools: nightly $40, per-PR and lane runs $20. A nightly that hits its pool stops, is marked partial, and starts from the next tier on the following night, so the tiers rotate instead of the same ones running every time.
 
 ## 9. Open questions for the owner
 
 1. **Agent model for the per-PR gate.** Run it on Sonnet 5.5 (about half the cost, a different model from what you use) or on the default Opus (full cost, same as production)? Recommendation: Sonnet per PR, Opus nightly.
-2. **Full suite cost.** The complete nightly run is about $225 to $400 per night at pilot rates, which is above the $60 daily cap. Run the full suite weekly and a third of it nightly, or run all of it every night and lift the cap for that job? Recommendation: weekly full run, nightly tier A and B only.
+2. **Full suite cost.** The complete run is about $160 to $420 at pilot rates, above the $60 daily cap. Run it weekly with its own budget and keep the nightly to tiers A and B under $40 (what §6.1 assumes), or run all of it every night and lift the cap for that job? Recommendation: weekly full run with its own budget.
 3. **Tier D depth.** Routing and dispatch only for the 19 design skills, or also a real browser run for the web ones? Recommendation: routing only now; real runs are a later phase.
 4. **Merge gate strictness.** Block a PR when a touched skill misses the routing gate (§6.1), or only warn for the first month? Recommendation: warn for a month, then block.
-5. **Output contract on every skill.** Force the `aw-result` block on skills that only talk (`enhancePrompt`, `withInterview`), or leave those out? Recommendation: include them with `artifacts: []`, for uniformity.
-6. **Where CI runs it.** The eval needs your account's credentials. Run it on your machine and attach the table by hand (as the lanes do now), or give CI a key with its own budget? Recommendation: by hand through the lane lead until the cap is proven.
+5. **Output contract on every skill.** Write the result file on skills that only talk (`enhancePrompt`, `withInterview`), or leave those out? The block shows in a reply only under `AW_RESULT=1`, so people never see it either way. Recommendation: include them with `artifacts: []`, for uniformity.
+6. **Where CI runs it.** The eval needs your account's credentials. Run it on your machine and attach the table by hand (as the lanes do now), or give CI a key with its own budget? Recommendation: by hand through the lane lead until the cap is proven. If CI gets a key later, the job runs only on pushes to `main` and on PRs from this repo's own branches, never on a fork or an outside author's PR, because `--scaffold` runs the cases' bash.
