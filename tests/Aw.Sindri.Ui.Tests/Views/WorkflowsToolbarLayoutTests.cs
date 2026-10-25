@@ -1,5 +1,6 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Workflows;
@@ -24,7 +25,7 @@ public sealed class WorkflowsToolbarLayoutTests : FrameHost
         var toolbar = Named<WrapPanel>(window, "WorkflowsToolbar");
         var list = Named<Control>(window, "WorkflowsList");
         var gap = list.TranslatePoint(default, window)!.Value.Y - (toolbar.TranslatePoint(default, window)!.Value.Y + toolbar.Bounds.Height);
-        Assert.True(gap < PanelGap + 8, $"{gap} px sit between the toolbar and the list (one panel gap is {PanelGap})");
+        Assert.True(gap < PanelGap + 8, $"{gap.ToString(CultureInfo.InvariantCulture)} px sit between the toolbar and the list (one panel gap is {PanelGap})");
     });
 
     [Fact]
@@ -39,6 +40,6 @@ public sealed class WorkflowsToolbarLayoutTests : FrameHost
         var hints = Named<TextBlock>(window, "WorkflowsKeyHints");
         var right = hints.TranslatePoint(default, window)!.Value.X + hints.Bounds.Width;
         var edge = toolbar.TranslatePoint(default, window)!.Value.X + toolbar.Bounds.Width;
-        Assert.True(right <= edge + 1, $"the key hints end at {right}, past the toolbar's edge {edge}");
+        Assert.True(right <= edge + 1, $"the key hints end at {right.ToString(CultureInfo.InvariantCulture)}, past the toolbar's edge {edge.ToString(CultureInfo.InvariantCulture)}");
     });
 }
