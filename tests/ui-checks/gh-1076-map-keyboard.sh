@@ -39,7 +39,18 @@ ctx_start 1280 900
 rc=$?
 [ "$rc" -eq 0 ] || setup_fail "driver call failed: tree --depth 60 (exit $rc: $(head -c 200 "$OUT/tree.err"))"
 hit="$(jq -c 'first(.. | objects | select(.type != null and .type != "TextBlock" and (((.name // "") | contains("Tab groups")) or ((.text // "") | contains("Tab groups"))))) // empty' "$OUT/tree.json")"
-[ -n "$hit" ] || fail "no element named for a map item ('Tab groups') is in the automation tree: the map has no keyboard or screen-reader path"
+# The nodes part is setup here (the Map items list for nodes already exists on this base): a miss is a broken setup, not the bug.
+[ -n "$hit" ] || setup_fail "no element named for a map item ('Tab groups') is in the automation tree"
 "$DRIVER" action --node-id "$(jq -r .id <<<"$hit")" --do focus >/dev/null 2>&1 \
-  || fail "the element named 'Tab groups' ($(jq -r .type <<<"$hit")) cannot take keyboard focus"
-echo "PASS: a map item is in the automation tree and takes focus"
+  || setup_fail "the element named 'Tab groups' ($(jq -r .type <<<"$hit")) cannot take keyboard focus"
+
+# The bug (#1076): an edge is in the same list, named "<A> to <B>, <type>", takes focus, and Enter opens its start node's card.
+edge="$(jq -c 'first(.. | objects | select(.type == "ListBoxItem" and ((.name // "") | test("^.+ to .+, [^,]+$")))) // empty' "$OUT/tree.json")"
+[ -n "$edge" ] || fail "no map edge can be reached from the keyboard: no Map items entry is named '<A> to <B>, <type>'"
+"$DRIVER" action --node-id "$(jq -r .id <<<"$edge")" --do focus >/dev/null 2>&1 \
+  || fail "the map edge '$(jq -r .name <<<"$edge")' cannot take keyboard focus"
+"$DRIVER" key --chord Enter >/dev/null 2>&1 || setup_fail "driver call failed: key --chord Enter"
+sleep 1
+title="$(ctx_text --type TextBlock --name WholeNodeTitle)"
+[ -n "$title" ] || fail "Enter on the map edge '$(jq -r .name <<<"$edge")' did not open its start node's card"
+echo "PASS: a map edge is in the list, takes focus, and Enter opens its start node's card"
