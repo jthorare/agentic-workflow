@@ -8,7 +8,7 @@ namespace Aw.Context.Tests.QueryContext;
 /// <summary>The facade's stored-state gap check: a configured intent source with no successful sync, read without probing any source.</summary>
 public sealed class SyncGapTests
 {
-    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:K","version":"v4.9.0"}}}""";
+    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0"}}}""";
     private static readonly SourceId _onyx = SourceId.From("onyx");
     private readonly FakeIntentStore _intents = new();
 

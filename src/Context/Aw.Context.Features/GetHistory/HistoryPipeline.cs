@@ -88,8 +88,8 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         var located = found.Files.Where(f => f.Repo is not null).ToList();
         var unlocated = found.Files.Count - located.Count;
         var mine = located.Where(f => repos.FirstOrDefault(r => r.Name == f.Repo) is { } repo && !repo.Denies(f.Path)).ToList();
-        var chosen = mine.Take(HistoryRules.MaxFiles).ToList();
-        var read = new GitRead(chosen.Count, unlocated, mine.Count > HistoryRules.MaxFiles);
+        var chosen = mine;   // every implementing file is searched: no cap
+        var read = new GitRead(chosen.Count, unlocated, filesTruncated: false);
         using var timer = new CancellationTokenSource(settings.Deadline, clock);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timer.Token);
         var version = inputs.Map.Snapshot.Version;

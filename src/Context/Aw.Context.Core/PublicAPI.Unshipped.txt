@@ -485,8 +485,6 @@ Aw.Context.Core.Engine.ContextSettings.Labeling.get -> Aw.Context.Core.Engine.La
 Aw.Context.Core.Engine.ContextSettings.Labeling.init -> void
 Aw.Context.Core.Engine.ContextSettings.LinearTeams.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.ContextSettings.LinearTeams.init -> void
-Aw.Context.Core.Engine.ContextSettings.MaxBudget.get -> int
-Aw.Context.Core.Engine.ContextSettings.MaxBudget.init -> void
 Aw.Context.Core.Engine.ContextSettings.MinHits.get -> int
 Aw.Context.Core.Engine.ContextSettings.MinHits.init -> void
 Aw.Context.Core.Engine.ContextSettings.Onyx.get -> Aw.Context.Core.Onyx.OnyxSettings?
@@ -567,13 +565,11 @@ Aw.Context.Core.Engine.ScopeRules
 Aw.Context.Core.Engine.SettingsReader
 Aw.Context.Core.Engine.ValidQuery
 Aw.Context.Core.Engine.ValidQuery.<Clone>$() -> Aw.Context.Core.Engine.ValidQuery!
-Aw.Context.Core.Engine.ValidQuery.Budget.get -> int
-Aw.Context.Core.Engine.ValidQuery.Budget.init -> void
-Aw.Context.Core.Engine.ValidQuery.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Terms, out int Budget) -> void
+Aw.Context.Core.Engine.ValidQuery.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Terms) -> void
 Aw.Context.Core.Engine.ValidQuery.Equals(Aw.Context.Core.Engine.ValidQuery? other) -> bool
 Aw.Context.Core.Engine.ValidQuery.Terms.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.ValidQuery.Terms.init -> void
-Aw.Context.Core.Engine.ValidQuery.ValidQuery(System.Collections.Generic.IReadOnlyList<string!>! Terms, int Budget) -> void
+Aw.Context.Core.Engine.ValidQuery.ValidQuery(System.Collections.Generic.IReadOnlyList<string!>! Terms) -> void
 Aw.Context.Core.Eval.Backtest.AdjudicatedScoring
 Aw.Context.Core.Eval.Backtest.Adjudication
 Aw.Context.Core.Eval.Backtest.Adjudication.<Clone>$() -> Aw.Context.Core.Eval.Backtest.Adjudication!
@@ -2437,6 +2433,8 @@ Aw.Context.Core.Lenses.LensesSetView.MapVersion.get -> string!
 Aw.Context.Core.Lenses.LensesSetView.MapVersion.init -> void
 Aw.Context.Core.Lenses.LensesSetView.MissingAnchors.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Lenses.LensesSetView.MissingAnchors.init -> void
+Aw.Context.Core.Lenses.LensesSetView.Page.get -> Aw.Context.Core.Lenses.LensWindow?
+Aw.Context.Core.Lenses.LensesSetView.Page.init -> void
 Aw.Context.Core.Lenses.LensesSetView.SchemaVersion.get -> int
 Aw.Context.Core.Lenses.LensesSetView.SchemaVersion.init -> void
 Aw.Context.Core.Lenses.LensesSetView.Searched.get -> Aw.Context.Core.Lenses.LensSearched!
@@ -2472,6 +2470,8 @@ Aw.Context.Core.Lenses.LensesView.MapCommit.get -> string?
 Aw.Context.Core.Lenses.LensesView.MapCommit.init -> void
 Aw.Context.Core.Lenses.LensesView.MapVersion.get -> string!
 Aw.Context.Core.Lenses.LensesView.MapVersion.init -> void
+Aw.Context.Core.Lenses.LensesView.Page.get -> Aw.Context.Core.Lenses.LensWindow?
+Aw.Context.Core.Lenses.LensesView.Page.init -> void
 Aw.Context.Core.Lenses.LensesView.SchemaVersion.get -> int
 Aw.Context.Core.Lenses.LensesView.SchemaVersion.init -> void
 Aw.Context.Core.Lenses.LensesView.Searched.get -> Aw.Context.Core.Lenses.LensSearched!
@@ -2543,6 +2543,7 @@ Aw.Context.Core.Lenses.LensItem.Provenance.get -> Aw.Context.Core.Results.Proven
 Aw.Context.Core.Lenses.LensItem.Provenance.init -> void
 Aw.Context.Core.Lenses.LensItem.Trust.get -> Aw.Context.Core.Results.Trust
 Aw.Context.Core.Lenses.LensItem.Trust.init -> void
+Aw.Context.Core.Lenses.LensPages
 Aw.Context.Core.Lenses.LensQuote
 Aw.Context.Core.Lenses.LensQuote.<Clone>$() -> Aw.Context.Core.Lenses.LensQuote!
 Aw.Context.Core.Lenses.LensQuote.Deconstruct(out Aw.Context.Core.Sources.RecordKey Record, out string! Text, out Aw.Context.Core.Results.Trust Trust) -> void
@@ -2651,6 +2652,19 @@ Aw.Context.Core.Lenses.LensSymbols.Reason.get -> string?
 Aw.Context.Core.Lenses.LensSymbols.Reason.init -> void
 Aw.Context.Core.Lenses.LensSymbols.State.get -> Aw.Context.Core.Symbols.SymbolsState
 Aw.Context.Core.Lenses.LensSymbols.State.init -> void
+Aw.Context.Core.Lenses.LensWindow
+Aw.Context.Core.Lenses.LensWindow.<Clone>$() -> Aw.Context.Core.Lenses.LensWindow!
+Aw.Context.Core.Lenses.LensWindow.Deconstruct(out int Offset, out int Limit, out bool More) -> void
+Aw.Context.Core.Lenses.LensWindow.Equals(Aw.Context.Core.Lenses.LensWindow? other) -> bool
+Aw.Context.Core.Lenses.LensWindow.LensWindow(int Offset, int Limit, bool More) -> void
+Aw.Context.Core.Lenses.LensWindow.Limit.get -> int
+Aw.Context.Core.Lenses.LensWindow.Limit.init -> void
+Aw.Context.Core.Lenses.LensWindow.More.get -> bool
+Aw.Context.Core.Lenses.LensWindow.Totals.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>?
+Aw.Context.Core.Lenses.LensWindow.Totals.init -> void
+Aw.Context.Core.Lenses.LensWindow.More.init -> void
+Aw.Context.Core.Lenses.LensWindow.Offset.get -> int
+Aw.Context.Core.Lenses.LensWindow.Offset.init -> void
 Aw.Context.Core.Lenses.MapCoverage
 Aw.Context.Core.Lenses.MapCoverage.<Clone>$() -> Aw.Context.Core.Lenses.MapCoverage!
 Aw.Context.Core.Lenses.MapCoverage.AgeDays.get -> int
@@ -3461,13 +3475,11 @@ Aw.Context.Core.Packing.PackCandidate.Section.get -> string!
 Aw.Context.Core.Packing.PackCandidate.Section.init -> void
 Aw.Context.Core.Packing.Packed
 Aw.Context.Core.Packing.Packed.<Clone>$() -> Aw.Context.Core.Packing.Packed!
-Aw.Context.Core.Packing.Packed.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, out int Used, out bool Truncated) -> void
+Aw.Context.Core.Packing.Packed.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, out int Used) -> void
 Aw.Context.Core.Packing.Packed.Equals(Aw.Context.Core.Packing.Packed? other) -> bool
-Aw.Context.Core.Packing.Packed.Packed(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, int Used, bool Truncated) -> void
+Aw.Context.Core.Packing.Packed.Packed(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, int Used) -> void
 Aw.Context.Core.Packing.Packed.Sections.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>!
 Aw.Context.Core.Packing.Packed.Sections.init -> void
-Aw.Context.Core.Packing.Packed.Truncated.get -> bool
-Aw.Context.Core.Packing.Packed.Truncated.init -> void
 Aw.Context.Core.Packing.Packed.Used.get -> int
 Aw.Context.Core.Packing.Packed.Used.init -> void
 Aw.Context.Core.Packing.Packer
@@ -3597,17 +3609,6 @@ Aw.Context.Core.Ranking.SourceAnswer.Hits.init -> void
 Aw.Context.Core.Ranking.SourceAnswer.Source.get -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Ranking.SourceAnswer.Source.init -> void
 Aw.Context.Core.Ranking.SourceAnswer.SourceAnswer(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.SourceHit!>! Hits) -> void
-Aw.Context.Core.Results.BudgetUse
-Aw.Context.Core.Results.BudgetUse.<Clone>$() -> Aw.Context.Core.Results.BudgetUse!
-Aw.Context.Core.Results.BudgetUse.Asked.get -> int
-Aw.Context.Core.Results.BudgetUse.Asked.init -> void
-Aw.Context.Core.Results.BudgetUse.BudgetUse(int Asked, int Used, bool Estimate) -> void
-Aw.Context.Core.Results.BudgetUse.Deconstruct(out int Asked, out int Used, out bool Estimate) -> void
-Aw.Context.Core.Results.BudgetUse.Equals(Aw.Context.Core.Results.BudgetUse? other) -> bool
-Aw.Context.Core.Results.BudgetUse.Estimate.get -> bool
-Aw.Context.Core.Results.BudgetUse.Estimate.init -> void
-Aw.Context.Core.Results.BudgetUse.Used.get -> int
-Aw.Context.Core.Results.BudgetUse.Used.init -> void
 Aw.Context.Core.Results.ChangeKind
 Aw.Context.Core.Results.ChangeKind.Added = 0 -> Aw.Context.Core.Results.ChangeKind
 Aw.Context.Core.Results.ChangeKind.Deleted = 2 -> Aw.Context.Core.Results.ChangeKind
@@ -3658,14 +3659,10 @@ Aw.Context.Core.Results.ContextResult.Anchors.get -> System.Collections.Generic.
 Aw.Context.Core.Results.ContextResult.Anchors.init -> void
 Aw.Context.Core.Results.ContextResult.AsOf.get -> System.DateTimeOffset
 Aw.Context.Core.Results.ContextResult.AsOf.init -> void
-Aw.Context.Core.Results.ContextResult.Budget.get -> Aw.Context.Core.Results.BudgetUse!
-Aw.Context.Core.Results.ContextResult.Budget.init -> void
 Aw.Context.Core.Results.ContextResult.Cites.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Results.Citation!>!
 Aw.Context.Core.Results.ContextResult.Cites.init -> void
 Aw.Context.Core.Results.ContextResult.Conflicts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultConflict!>!
 Aw.Context.Core.Results.ContextResult.Conflicts.init -> void
-Aw.Context.Core.Results.ContextResult.ContextResult(int SchemaVersion, Aw.Context.Core.Results.QueryId QueryId, Aw.Context.Core.Engine.ContextQuery! Query, System.Collections.Generic.IReadOnlyList<string!>! Anchors, string? MapVersion, System.DateTimeOffset AsOf, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultConflict!>! Conflicts, System.Collections.Generic.IReadOnlyList<string!>! SuggestedAnchors, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DegradedSource!>! Degraded, bool Truncated, Aw.Context.Core.Results.BudgetUse! Budget, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Results.Citation!>! Cites, Aw.Context.Core.Results.DiffPart? Diff = null) -> void
-Aw.Context.Core.Results.ContextResult.Deconstruct(out int SchemaVersion, out Aw.Context.Core.Results.QueryId QueryId, out Aw.Context.Core.Engine.ContextQuery! Query, out System.Collections.Generic.IReadOnlyList<string!>! Anchors, out string? MapVersion, out System.DateTimeOffset AsOf, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultConflict!>! Conflicts, out System.Collections.Generic.IReadOnlyList<string!>! SuggestedAnchors, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DegradedSource!>! Degraded, out bool Truncated, out Aw.Context.Core.Results.BudgetUse! Budget, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Results.Citation!>! Cites, out Aw.Context.Core.Results.DiffPart? Diff) -> void
 Aw.Context.Core.Results.ContextResult.Degraded.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DegradedSource!>!
 Aw.Context.Core.Results.ContextResult.Degraded.init -> void
 Aw.Context.Core.Results.ContextResult.Diff.get -> Aw.Context.Core.Results.DiffPart?
@@ -3685,8 +3682,8 @@ Aw.Context.Core.Results.ContextResult.SkippedComponents.get -> System.Collection
 Aw.Context.Core.Results.ContextResult.SkippedComponents.init -> void
 Aw.Context.Core.Results.ContextResult.SuggestedAnchors.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Results.ContextResult.SuggestedAnchors.init -> void
-Aw.Context.Core.Results.ContextResult.Truncated.get -> bool
-Aw.Context.Core.Results.ContextResult.Truncated.init -> void
+Aw.Context.Core.Results.ContextResult.ContextResult(int SchemaVersion, Aw.Context.Core.Results.QueryId QueryId, Aw.Context.Core.Engine.ContextQuery! Query, System.Collections.Generic.IReadOnlyList<string!>! Anchors, string? MapVersion, System.DateTimeOffset AsOf, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultConflict!>! Conflicts, System.Collections.Generic.IReadOnlyList<string!>! SuggestedAnchors, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DegradedSource!>! Degraded, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Results.Citation!>! Cites, Aw.Context.Core.Results.DiffPart? Diff = null) -> void
+Aw.Context.Core.Results.ContextResult.Deconstruct(out int SchemaVersion, out Aw.Context.Core.Results.QueryId QueryId, out Aw.Context.Core.Engine.ContextQuery! Query, out System.Collections.Generic.IReadOnlyList<string!>! Anchors, out string? MapVersion, out System.DateTimeOffset AsOf, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultSection!>! Sections, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultConflict!>! Conflicts, out System.Collections.Generic.IReadOnlyList<string!>! SuggestedAnchors, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.DegradedSource!>! Degraded, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Results.Citation!>! Cites, out Aw.Context.Core.Results.DiffPart? Diff) -> void
 Aw.Context.Core.Results.DegradedSource
 Aw.Context.Core.Results.DegradedSource.<Clone>$() -> Aw.Context.Core.Results.DegradedSource!
 Aw.Context.Core.Results.DegradedSource.Code.get -> string!
@@ -3854,15 +3851,13 @@ Aw.Context.Core.Results.ResultItem.Why.get -> System.Collections.Generic.IReadOn
 Aw.Context.Core.Results.ResultItem.Why.init -> void
 Aw.Context.Core.Results.ResultSection
 Aw.Context.Core.Results.ResultSection.<Clone>$() -> Aw.Context.Core.Results.ResultSection!
-Aw.Context.Core.Results.ResultSection.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultItem!>! Items, out System.Collections.Generic.IReadOnlyList<string!>! More) -> void
+Aw.Context.Core.Results.ResultSection.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultItem!>! Items) -> void
 Aw.Context.Core.Results.ResultSection.Equals(Aw.Context.Core.Results.ResultSection? other) -> bool
 Aw.Context.Core.Results.ResultSection.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultItem!>!
 Aw.Context.Core.Results.ResultSection.Items.init -> void
-Aw.Context.Core.Results.ResultSection.More.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Context.Core.Results.ResultSection.More.init -> void
 Aw.Context.Core.Results.ResultSection.Name.get -> string!
 Aw.Context.Core.Results.ResultSection.Name.init -> void
-Aw.Context.Core.Results.ResultSection.ResultSection(string! Name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultItem!>! Items, System.Collections.Generic.IReadOnlyList<string!>! More) -> void
+Aw.Context.Core.Results.ResultSection.ResultSection(string! Name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.ResultItem!>! Items) -> void
 Aw.Context.Core.Results.SkippedComponent
 Aw.Context.Core.Results.SkippedComponent.<Clone>$() -> Aw.Context.Core.Results.SkippedComponent!
 Aw.Context.Core.Results.SkippedComponent.Deconstruct(out string! Unit, out int Features) -> void
@@ -4244,6 +4239,8 @@ Aw.Context.Core.Sources.ExternalId.Value.get -> string!
 Aw.Context.Core.Sources.IChangeFeed
 Aw.Context.Core.Sources.IChangeFeed.Changes(Aw.Context.Core.Sources.SourceCursor? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.ChangePage!>!>
 Aw.Context.Core.Sources.IContextSource
+Aw.Context.Core.Sources.ISourceNotes
+Aw.Context.Core.Sources.ISourceNotes.TakeNotes() -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Sources.IContextSource.Describe() -> Aw.Context.Core.Sources.SourceDescriptor!
 Aw.Context.Core.Sources.IContextSource.Fetch(Aw.Context.Core.Sources.SourceRef! reference, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.SourceRecord!>!>
 Aw.Context.Core.Sources.IContextSource.Probe(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Sources.SourceHealth!>
@@ -4661,8 +4658,6 @@ const Aw.Context.Core.Engine.CascadeOptions.DefaultFanOut = 50 -> int
 const Aw.Context.Core.Engine.DiffRange.Message = "a diff names two commit shas joined by '..' (base..head, 7 to 64 lower-case hex characters each); resolve the refs to shas first: branch names, tags, HEAD, '~', '^' and '...' are not accepted" -> string!
 const Aw.Context.Core.Engine.PublishSettings.DefaultWaitMinutes = 15 -> int
 const Aw.Context.Core.Engine.PublishSettings.MaxWaitMinutes = 240 -> int
-const Aw.Context.Core.Engine.QueryRules.BudgetMessage = "budget must be a whole number of tokens, 1 or more" -> string!
-const Aw.Context.Core.Engine.QueryRules.DefaultBudget = 8000 -> int
 const Aw.Context.Core.Engine.QueryRules.DepthMessage = "depth must be a whole number of 0 or more (deeper than 8 is read as 8)" -> string!
 const Aw.Context.Core.Engine.QueryRules.ItemMessage = "an item anchor names a tracker key or record key of 1 to 2000 characters" -> string!
 const Aw.Context.Core.Engine.QueryRules.MaxDepth = 8 -> int
@@ -4671,6 +4666,7 @@ const Aw.Context.Core.Engine.QueryRules.MaxSubgraphGet = 20 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxTerms = 64 -> int
 const Aw.Context.Core.Engine.QueryRules.MaxTextLength = 2000 -> int
 const Aw.Context.Core.Engine.QueryRules.NodeMessage = "a node anchor names a node key, alias or name of 1 to 2000 characters" -> string!
+const Aw.Context.Core.Engine.QueryRules.PageMessage = "limit must be a whole number of 1 or more, and offset a whole number of 0 or more" -> string!
 const Aw.Context.Core.Engine.QueryRules.RepoMessage = "a repo goes with a diff only (it names the repo whose commits the range is read in)" -> string!
 const Aw.Context.Core.Engine.QueryRules.ShapeMessage = "ask exactly one of: text, node, item or symbol" -> string!
 const Aw.Context.Core.Engine.QueryRules.SymbolMessage = "a symbol anchor is a file path of 1 to 2000 characters" -> string!
@@ -4696,10 +4692,8 @@ const Aw.Context.Core.Eval.ProbeScoring.K = 5 -> int
 const Aw.Context.Core.Extract.MapExtractor.Version = 2 -> int
 const Aw.Context.Core.Graph.EntryKey.Version = 1 -> int
 const Aw.Context.Core.Graph.GraphWalk.MaxDepth = 8 -> int
-const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 10000 -> int
-const Aw.Context.Core.History.HistoryRules.MaxFiles = 200 -> int
+const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 2147483646 -> int
 const Aw.Context.Core.History.HistoryRules.SubjectChars = 200 -> int
-const Aw.Context.Core.Lenses.DiffAnchors.MaxFiles = 1000 -> int
 const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
@@ -4710,10 +4704,8 @@ const Aw.Context.Core.Results.ContextResult.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Review.CleanupPolicy.Batch = 40 -> int
 const Aw.Context.Core.Review.CleanupPolicy.KeepAt = 0.75 -> double
 const Aw.Context.Core.Review.CleanupPolicy.MaxTokens = 100000 -> int
-const Aw.Context.Core.Review.ReviewHistory.DefaultLimit = 200 -> int
-const Aw.Context.Core.Review.ReviewHistory.MaxLimit = 10000 -> int
-const Aw.Context.Core.Review.ReviewLimits.Max = 10000 -> int
-const Aw.Context.Core.Review.ReviewLimits.QueueDefault = 100 -> int
+const Aw.Context.Core.Review.ReviewHistory.DefaultLimit = 2147483647 -> int
+const Aw.Context.Core.Review.ReviewLimits.QueueDefault = 2147483647 -> int
 const Aw.Context.Core.Map.NodeDetails.MaxDescription = 280 -> int
 const Aw.Context.Core.Trust.UntrustedFence.MaxTitle = 200 -> int
 override Aw.Context.Core.Code.CodeData.Equals(object? obj) -> bool
@@ -5189,6 +5181,9 @@ override Aw.Context.Core.Lenses.LensSearched.ToString() -> string!
 override Aw.Context.Core.Lenses.LensSymbols.Equals(object? obj) -> bool
 override Aw.Context.Core.Lenses.LensSymbols.GetHashCode() -> int
 override Aw.Context.Core.Lenses.LensSymbols.ToString() -> string!
+override Aw.Context.Core.Lenses.LensWindow.Equals(object? obj) -> bool
+override Aw.Context.Core.Lenses.LensWindow.GetHashCode() -> int
+override Aw.Context.Core.Lenses.LensWindow.ToString() -> string!
 override Aw.Context.Core.Lenses.MapCoverage.Equals(object? obj) -> bool
 override Aw.Context.Core.Lenses.MapCoverage.GetHashCode() -> int
 override Aw.Context.Core.Lenses.MapCoverage.ToString() -> string!
@@ -5359,9 +5354,6 @@ override Aw.Context.Core.Ranking.FusedItem.ToString() -> string!
 override Aw.Context.Core.Ranking.SourceAnswer.Equals(object? obj) -> bool
 override Aw.Context.Core.Ranking.SourceAnswer.GetHashCode() -> int
 override Aw.Context.Core.Ranking.SourceAnswer.ToString() -> string!
-override Aw.Context.Core.Results.BudgetUse.Equals(object? obj) -> bool
-override Aw.Context.Core.Results.BudgetUse.GetHashCode() -> int
-override Aw.Context.Core.Results.BudgetUse.ToString() -> string!
 override Aw.Context.Core.Results.Citation.Equals(object? obj) -> bool
 override Aw.Context.Core.Results.Citation.GetHashCode() -> int
 override Aw.Context.Core.Results.Citation.ToString() -> string!
@@ -5627,7 +5619,6 @@ static Aw.Context.Core.Engine.ContextScope.operator !=(Aw.Context.Core.Engine.Co
 static Aw.Context.Core.Engine.ContextScope.operator ==(Aw.Context.Core.Engine.ContextScope? left, Aw.Context.Core.Engine.ContextScope? right) -> bool
 static Aw.Context.Core.Engine.ContextSettings.DefaultDocGlobs.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Context.Core.Engine.ContextSettings.DefaultSchemaGlobs.get -> System.Collections.Generic.IReadOnlyList<string!>!
-static Aw.Context.Core.Engine.ContextSettings.DefaultTestGlobs.get -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Context.Core.Engine.ContextSettings.operator !=(Aw.Context.Core.Engine.ContextSettings? left, Aw.Context.Core.Engine.ContextSettings? right) -> bool
 static Aw.Context.Core.Engine.ContextSettings.operator ==(Aw.Context.Core.Engine.ContextSettings? left, Aw.Context.Core.Engine.ContextSettings? right) -> bool
 static Aw.Context.Core.Engine.DiffRange.operator !=(Aw.Context.Core.Engine.DiffRange? left, Aw.Context.Core.Engine.DiffRange? right) -> bool
@@ -5646,9 +5637,9 @@ static Aw.Context.Core.Engine.QueryRules.CascadeFor(Aw.Context.Core.Engine.Casca
 static Aw.Context.Core.Engine.QueryRules.Check(Aw.Context.Core.Engine.ContextQuery! query, Aw.Context.Core.Engine.ContextSettings! settings) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ValidQuery!>!
 static Aw.Context.Core.Engine.QueryRules.CheckAnchors(System.Collections.Generic.IReadOnlyList<string!>! anchors, string! call) -> Aw.Kernel.Error?
 static Aw.Context.Core.Engine.QueryRules.CheckDepth(int? depth) -> Aw.Kernel.Error?
+static Aw.Context.Core.Engine.QueryRules.CheckPage(int? limit, int? offset) -> Aw.Kernel.Error?
 static Aw.Context.Core.Engine.QueryRules.CheckSubgraphGet(System.Collections.Generic.IReadOnlyList<string!>! keys) -> Aw.Kernel.Error?
 static Aw.Context.Core.Engine.QueryRules.FitsQueryUrl(string! value) -> bool
-static Aw.Context.Core.Engine.QueryRules.ParseBudget(string? text) -> Aw.Kernel.Result<int?>!
 static Aw.Context.Core.Engine.QueryRules.ParseDepth(string? text) -> Aw.Kernel.Result<int?>!
 static Aw.Context.Core.Engine.QueryRules.ParseHops(string? text) -> Aw.Kernel.Result<Aw.Context.Core.Engine.CascadeHops?>!
 static Aw.Context.Core.Engine.QueryRules.Terms(string! text) -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -5986,6 +5977,8 @@ static Aw.Context.Core.Lenses.LensEdge.operator !=(Aw.Context.Core.Lenses.LensEd
 static Aw.Context.Core.Lenses.LensEdge.operator ==(Aw.Context.Core.Lenses.LensEdge? left, Aw.Context.Core.Lenses.LensEdge? right) -> bool
 static Aw.Context.Core.Lenses.LensesBuilder.Build(Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.DecisionConflict!>? checkedPairs = null) -> Aw.Kernel.Result<Aw.Context.Core.Lenses.LensesView!>!
 static Aw.Context.Core.Lenses.LensesBuilder.BuildSet(Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, int depth, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.DecisionConflict!>? checkedPairs = null) -> Aw.Kernel.Result<Aw.Context.Core.Lenses.LensesSetView!>!
+static Aw.Context.Core.Lenses.LensPages.Window(Aw.Context.Core.Lenses.LensesSetView! view, int limit, int offset) -> Aw.Context.Core.Lenses.LensesSetView!
+static Aw.Context.Core.Lenses.LensPages.Window(Aw.Context.Core.Lenses.LensesView! view, int limit, int offset) -> Aw.Context.Core.Lenses.LensesView!
 static Aw.Context.Core.Lenses.LensesSetView.operator !=(Aw.Context.Core.Lenses.LensesSetView? left, Aw.Context.Core.Lenses.LensesSetView? right) -> bool
 static Aw.Context.Core.Lenses.LensesSetView.operator ==(Aw.Context.Core.Lenses.LensesSetView? left, Aw.Context.Core.Lenses.LensesSetView? right) -> bool
 static Aw.Context.Core.Lenses.LensesView.operator !=(Aw.Context.Core.Lenses.LensesView? left, Aw.Context.Core.Lenses.LensesView? right) -> bool
@@ -6008,6 +6001,8 @@ static Aw.Context.Core.Lenses.LensSearched.operator !=(Aw.Context.Core.Lenses.Le
 static Aw.Context.Core.Lenses.LensSearched.operator ==(Aw.Context.Core.Lenses.LensSearched? left, Aw.Context.Core.Lenses.LensSearched? right) -> bool
 static Aw.Context.Core.Lenses.LensSymbols.operator !=(Aw.Context.Core.Lenses.LensSymbols? left, Aw.Context.Core.Lenses.LensSymbols? right) -> bool
 static Aw.Context.Core.Lenses.LensSymbols.operator ==(Aw.Context.Core.Lenses.LensSymbols? left, Aw.Context.Core.Lenses.LensSymbols? right) -> bool
+static Aw.Context.Core.Lenses.LensWindow.operator !=(Aw.Context.Core.Lenses.LensWindow? left, Aw.Context.Core.Lenses.LensWindow? right) -> bool
+static Aw.Context.Core.Lenses.LensWindow.operator ==(Aw.Context.Core.Lenses.LensWindow? left, Aw.Context.Core.Lenses.LensWindow? right) -> bool
 static Aw.Context.Core.Lenses.LensSymbols.Unavailable.get -> Aw.Context.Core.Lenses.LensSymbols!
 static Aw.Context.Core.Lenses.MapCoverage.operator !=(Aw.Context.Core.Lenses.MapCoverage? left, Aw.Context.Core.Lenses.MapCoverage? right) -> bool
 static Aw.Context.Core.Lenses.MapCoverage.operator ==(Aw.Context.Core.Lenses.MapCoverage? left, Aw.Context.Core.Lenses.MapCoverage? right) -> bool
@@ -6173,7 +6168,7 @@ static Aw.Context.Core.Packing.PackCandidate.operator !=(Aw.Context.Core.Packing
 static Aw.Context.Core.Packing.PackCandidate.operator ==(Aw.Context.Core.Packing.PackCandidate? left, Aw.Context.Core.Packing.PackCandidate? right) -> bool
 static Aw.Context.Core.Packing.Packed.operator !=(Aw.Context.Core.Packing.Packed? left, Aw.Context.Core.Packing.Packed? right) -> bool
 static Aw.Context.Core.Packing.Packed.operator ==(Aw.Context.Core.Packing.Packed? left, Aw.Context.Core.Packing.Packed? right) -> bool
-static Aw.Context.Core.Packing.Packer.Pack(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Packing.PackCandidate!>! candidates, int budget) -> Aw.Context.Core.Packing.Packed!
+static Aw.Context.Core.Packing.Packer.Pack(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Packing.PackCandidate!>! candidates) -> Aw.Context.Core.Packing.Packed!
 static Aw.Context.Core.Packing.TokenEstimate.Of(string? text) -> int
 static Aw.Context.Core.Proposals.GraphStatus.operator !=(Aw.Context.Core.Proposals.GraphStatus? left, Aw.Context.Core.Proposals.GraphStatus? right) -> bool
 static Aw.Context.Core.Proposals.GraphStatus.operator ==(Aw.Context.Core.Proposals.GraphStatus? left, Aw.Context.Core.Proposals.GraphStatus? right) -> bool
@@ -6199,8 +6194,6 @@ static Aw.Context.Core.Ranking.FusedItem.operator ==(Aw.Context.Core.Ranking.Fus
 static Aw.Context.Core.Ranking.RankFusion.Fuse(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.SourceAnswer!>! answers) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
 static Aw.Context.Core.Ranking.SourceAnswer.operator !=(Aw.Context.Core.Ranking.SourceAnswer? left, Aw.Context.Core.Ranking.SourceAnswer? right) -> bool
 static Aw.Context.Core.Ranking.SourceAnswer.operator ==(Aw.Context.Core.Ranking.SourceAnswer? left, Aw.Context.Core.Ranking.SourceAnswer? right) -> bool
-static Aw.Context.Core.Results.BudgetUse.operator !=(Aw.Context.Core.Results.BudgetUse? left, Aw.Context.Core.Results.BudgetUse? right) -> bool
-static Aw.Context.Core.Results.BudgetUse.operator ==(Aw.Context.Core.Results.BudgetUse? left, Aw.Context.Core.Results.BudgetUse? right) -> bool
 static Aw.Context.Core.Results.Citation.operator !=(Aw.Context.Core.Results.Citation? left, Aw.Context.Core.Results.Citation? right) -> bool
 static Aw.Context.Core.Results.Citation.operator ==(Aw.Context.Core.Results.Citation? left, Aw.Context.Core.Results.Citation? right) -> bool
 static Aw.Context.Core.Results.CitationRef.operator !=(Aw.Context.Core.Results.CitationRef? left, Aw.Context.Core.Results.CitationRef? right) -> bool
@@ -6278,7 +6271,7 @@ static Aw.Context.Core.Review.ReviewFileMatch.operator ==(Aw.Context.Core.Review
 static Aw.Context.Core.Review.ReviewFileMatcher.Match(Aw.Context.Core.Review.ReviewFile! file, Aw.Context.Core.Review.ReviewQueueView! queue) -> Aw.Kernel.Result<Aw.Context.Core.Review.ReviewFileMatch!>!
 static Aw.Context.Core.Review.ReviewFilePreview.operator !=(Aw.Context.Core.Review.ReviewFilePreview? left, Aw.Context.Core.Review.ReviewFilePreview? right) -> bool
 static Aw.Context.Core.Review.ReviewFilePreview.operator ==(Aw.Context.Core.Review.ReviewFilePreview? left, Aw.Context.Core.Review.ReviewFilePreview? right) -> bool
-static Aw.Context.Core.Review.ReviewHistory.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, int limit = 200) -> Aw.Context.Core.Review.ReviewHistoryView!
+static Aw.Context.Core.Review.ReviewHistory.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, int limit = 2147483647) -> Aw.Context.Core.Review.ReviewHistoryView!
 static Aw.Context.Core.Review.ReviewHistoryEntry.operator !=(Aw.Context.Core.Review.ReviewHistoryEntry? left, Aw.Context.Core.Review.ReviewHistoryEntry? right) -> bool
 static Aw.Context.Core.Review.ReviewHistoryEntry.operator ==(Aw.Context.Core.Review.ReviewHistoryEntry? left, Aw.Context.Core.Review.ReviewHistoryEntry? right) -> bool
 static Aw.Context.Core.Review.ReviewHistoryView.operator !=(Aw.Context.Core.Review.ReviewHistoryView? left, Aw.Context.Core.Review.ReviewHistoryView? right) -> bool
@@ -6763,13 +6756,11 @@ Aw.Context.Core.WholeMap.WholeMapRules
 Aw.Context.Core.WholeMap.WholeMapRules.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapRules!
 Aw.Context.Core.WholeMap.WholeMapRules.AreaCap.get -> int
 Aw.Context.Core.WholeMap.WholeMapRules.AreaCap.init -> void
-Aw.Context.Core.WholeMap.WholeMapRules.AreasCap.get -> int
-Aw.Context.Core.WholeMap.WholeMapRules.AreasCap.init -> void
-Aw.Context.Core.WholeMap.WholeMapRules.Deconstruct(out int NodeBudget, out int AreaCap, out int AreasCap) -> void
+Aw.Context.Core.WholeMap.WholeMapRules.Deconstruct(out int NodeBudget, out int AreaCap) -> void
 Aw.Context.Core.WholeMap.WholeMapRules.Equals(Aw.Context.Core.WholeMap.WholeMapRules? other) -> bool
 Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.get -> int
 Aw.Context.Core.WholeMap.WholeMapRules.NodeBudget.init -> void
-Aw.Context.Core.WholeMap.WholeMapRules.WholeMapRules(int NodeBudget = 500, int AreaCap = 5000, int AreasCap = 5000) -> void
+Aw.Context.Core.WholeMap.WholeMapRules.WholeMapRules(int NodeBudget = 500, int AreaCap = 5000) -> void
 Aw.Context.Core.WholeMap.WholeMapView
 Aw.Context.Core.WholeMap.WholeMapView.<Clone>$() -> Aw.Context.Core.WholeMap.WholeMapView!
 Aw.Context.Core.WholeMap.WholeMapView.Area.get -> Aw.Context.Core.WholeMap.WholeMapAreaInfo?
@@ -6918,6 +6909,7 @@ static readonly Aw.Context.Core.ContextErrors.AreaUnknown -> Aw.Kernel.ErrorDefi
 Aw.Context.Core.WholeMap.WholeMapView.Deconstruct(out int SchemaVersion, out string! MapVersion, out bool Draft, out System.DateTimeOffset AsOf, out string? Repo, out Aw.Context.Core.WholeMap.WholeMapDetail Detail, out Aw.Context.Core.WholeMap.WholeMapCounts! Counts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, out bool Truncated) -> void
 Aw.Context.Core.WholeMap.WholeMapView.WholeMapView(int SchemaVersion, string! MapVersion, bool Draft, System.DateTimeOffset AsOf, string? Repo, Aw.Context.Core.WholeMap.WholeMapDetail Detail, Aw.Context.Core.WholeMap.WholeMapCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, bool Truncated) -> void
 static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph, int areaCap) -> Aw.Context.Core.WholeMap.AreaIndex!
+const Aw.Context.Core.Sources.SourceQuery.DefaultLimit = 2147483647 -> int
 Aw.Context.Core.Search.MapSearchQuery
 Aw.Context.Core.Search.MapSearchQuery.<Clone>$() -> Aw.Context.Core.Search.MapSearchQuery!
 Aw.Context.Core.Search.MapSearchQuery.Q.get -> string!
@@ -7104,7 +7096,6 @@ Aw.Context.Core.Lenses.RepoTree.RepoTree(System.Collections.Generic.IEnumerable<
 const Aw.Context.Core.Lenses.FileMapBuilder.DefaultLimit = 200 -> int
 const Aw.Context.Core.Lenses.FileMapBuilder.MaxLimit = 1000 -> int
 static Aw.Context.Core.Lenses.FileMapBuilder.Build(Aw.Context.Core.Lenses.FileMapBasis! basis, Aw.Context.Core.Lenses.FileMapQuery! query, Aw.Context.Core.Lenses.RepoTree! tree, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Kernel.Result<Aw.Context.Core.Lenses.FileMapView!>!
-const Aw.Context.Core.Sources.SourceQuery.DefaultLimit = 200 -> int
 Aw.Context.Core.Graph.NodeDetail.Repo.get -> string?
 Aw.Context.Core.Graph.NodeDetail.Repo.init -> void
 Aw.Context.Core.Graph.NodeKind.Concept = 8 -> Aw.Context.Core.Graph.NodeKind

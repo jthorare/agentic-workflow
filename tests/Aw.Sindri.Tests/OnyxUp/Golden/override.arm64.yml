@@ -20,7 +20,7 @@ services:
   nginx:
     image: docker.io/library/nginx@sha256:05325b3a32db871dc396a859d9a9609d75f50d2f7ad12194f9f3a550111bdcaa
     ports: !override
-      - "127.0.0.1:3000:80"
+      - "127.0.0.1:3189:80"
   opensearch:
     image: docker.io/opensearchproject/opensearch@sha256:394b1c4eb141df969e05b186e9560b4cd0ab5c7ffa748788d2f322410a3cf856
     environment:

@@ -128,7 +128,7 @@ public sealed class FileOnyxWorkspaceTests : IDisposable
     [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public void The_state_file_is_0600()
     {
-        _workspace.WriteState(new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal)));
+        _workspace.WriteState(new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal)));
 
         Assert.Equal(OwnerFile, File.GetUnixFileMode(_paths.State));
     }
@@ -136,7 +136,7 @@ public sealed class FileOnyxWorkspaceTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public void The_state_file_carries_its_schema_version()
     {
-        _workspace.WriteState(new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal)));
+        _workspace.WriteState(new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal)));
 
         Assert.Contains("\"schemaVersion\":1", File.ReadAllText(_paths.State), StringComparison.Ordinal);
     }
@@ -173,7 +173,7 @@ public sealed class FileOnyxWorkspaceTests : IDisposable
     public void No_temporary_file_is_left_behind()
     {
         _ = _workspace.WriteIfChanged(_paths.Override, "a\n", secret: false);
-        _workspace.WriteState(new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal)));
+        _workspace.WriteState(new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal)));
 
         Assert.Empty(Directory.EnumerateFiles(_home, "*.tmp*", SearchOption.AllDirectories));
     }

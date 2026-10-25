@@ -71,7 +71,7 @@ public sealed class FakeContainerRuntime(ContainerRuntimeFacts facts) : IContain
     public string Platform { get; set; } = "linux/arm64";
 
     /// <summary>Gets or sets the host port nginx is published on after <see cref="Up"/>.</summary>
-    public int PublishedPort { get; set; } = 3000;
+    public int PublishedPort { get; set; } = 3189;
 
     /// <summary>Gets the standard error lines <see cref="Pull"/> and <see cref="Up"/> hand to their progress callback.</summary>
     public IList<string> ProgressLines { get; } = [];

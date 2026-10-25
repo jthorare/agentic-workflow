@@ -140,7 +140,7 @@ public sealed class LensesAtVersionTests : IDisposable
 
     private static ContextScope WithOnyx() => MapWorld.Human with
     {
-        Settings = System.Text.Json.JsonDocument.Parse("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:ONYX_KEY","version":"v4.9.0"}}}""").RootElement.Clone(),
+        Settings = System.Text.Json.JsonDocument.Parse("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""").RootElement.Clone(),
     };
 
     private async Task<SearchedSource> OnyxRow()

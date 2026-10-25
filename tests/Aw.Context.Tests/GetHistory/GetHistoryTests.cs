@@ -21,7 +21,7 @@ public sealed class GetHistoryTests : IDisposable
 {
     private const string Anchor = "feature:layout.split-pane";
     private const string Orientation = "feature:layout.split-pane.orientation";
-    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:K","version":"v4.9.0"}}}""";
+    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0"}}}""";
     private static readonly SourceId _onyx = SourceId.From("onyx");
     private static readonly string[] _searched = ["src/layout/PaneResize.ts", "src/layout/SplitPane.ts"];
     private readonly List<IDisposable> _worlds = [];

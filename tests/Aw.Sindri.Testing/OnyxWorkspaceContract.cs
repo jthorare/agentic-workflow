@@ -63,7 +63,7 @@ public abstract class OnyxWorkspaceContract
     [Theory]
     [InlineData("not json")]
     [InlineData("")]
-    [InlineData("{\"port\":3000,\"steps\":{},\"schemaVersion\":2}")]
+    [InlineData("{\"port\":3189,\"steps\":{},\"schemaVersion\":2}")]
     public void A_state_file_that_cannot_be_read_is_told_apart_from_a_missing_one(string raw)
     {
         using var rig = Create();
@@ -82,7 +82,7 @@ public abstract class OnyxWorkspaceContract
         using var rig = Create();
         rig.WriteRawState("not json");
 
-        rig.Workspace.WriteState(new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal)));
+        rig.Workspace.WriteState(new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal)));
 
         Expect.True(rig.Workspace.ReadState() is not null);
         Expect.True(!rig.Workspace.StateIsUnreadable());

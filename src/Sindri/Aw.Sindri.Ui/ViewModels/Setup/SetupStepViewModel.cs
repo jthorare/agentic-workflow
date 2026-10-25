@@ -78,6 +78,9 @@ internal sealed class SetupStepViewModel : ObservableObject
     /// <summary>The repo form of the repo step; null for every other step.</summary>
     public SetupRepoFormViewModel? Repo { get; set; }
 
+    /// <summary>Asked when a form in this step needs focus on the step heading.</summary>
+    internal event EventHandler<SetupFocusEventArgs>? FocusRequested;
+
     /// <summary>The typed approval of the profile step; null for every other step.</summary>
     public SetupProfileConfirmViewModel? Profile
     {
@@ -86,6 +89,7 @@ internal sealed class SetupStepViewModel : ObservableObject
         {
             field = value;
             value?.Summary.PropertyChanged += (_, _) => OnChanged(nameof(HasPreview));
+            value?.FocusRequested += (_, e) => FocusRequested?.Invoke(this, e);
         }
     }
 

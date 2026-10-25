@@ -183,7 +183,7 @@ public sealed class ContextReviewApiTests : IDisposable
         Assert.True(capped.GetProperty("truncated").GetProperty("deterministic").GetBoolean());
         Assert.False(full.GetProperty("truncated").GetProperty("deterministic").GetBoolean());
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (zero.Status, zero.Code));
-        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (huge.Status, huge.Code));
+        Assert.Equal(HttpStatusCode.OK, huge.Status);   // why: there is no ceiling on a named limit
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (historyZero.Status, historyZero.Code));
         Assert.False(history.GetProperty("truncated").GetBoolean());
     }

@@ -8,10 +8,10 @@ namespace Aw.Context.Tests.Core;
 /// <summary>'context.sources' (spec §8.8): the onyx entry and the Linear teams its identifier aliases may name.</summary>
 public sealed class SourcesSettingsTests
 {
-    private const string Onyx = """{"url":"http://127.0.0.1:3000","token":"env:ONYX_KEY","version":"v4.9.0"}""";
+    private const string Onyx = """{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}""";
 
     private static string WithToken(string token) =>
-        """{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":""" + JsonSerializer.Serialize(token) + ""","version":"v4.9.0"}}}""";
+        """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":""" + JsonSerializer.Serialize(token) + ""","version":"v4.9.0"}}}""";
 
     private static Result<ContextSettings> Read(string json) => SettingsReader.Read(JsonDocument.Parse(json).RootElement.Clone());
 
@@ -30,7 +30,7 @@ public sealed class SourcesSettingsTests
         var settings = Read("""{"sources":{"onyx":""" + Onyx + ""","linear":{"teams":["SPL","APP"]}}}""").Value;
 
         Assert.NotNull(settings.Onyx);
-        Assert.Equal(("127.0.0.1:3000", "env:ONYX_KEY", "v4.9.0"), (settings.Onyx.Address, settings.Onyx.Token, settings.Onyx.Version));
+        Assert.Equal(("127.0.0.1:3189", "env:ONYX_KEY", "v4.9.0"), (settings.Onyx.Address, settings.Onyx.Token, settings.Onyx.Version));
         Assert.Equal(["SPL", "APP"], settings.LinearTeams, StringComparer.Ordinal);
     }
 
@@ -51,7 +51,7 @@ public sealed class SourcesSettingsTests
     public void A_managed_onyx_entry_as_sindri_onyx_up_writes_it_is_read_with_managed_set()
     {
         // The same four keys YamlOnyxProfileWriter writes: url, token, version, managed: true.
-        var settings = Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"keychain:onyx/sindri-onyx","version":"v4.9.0","managed":true}}}""").Value;
+        var settings = Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"keychain:onyx/sindri-onyx","version":"v4.9.0","managed":true}}}""").Value;
 
         Assert.True(settings.Onyx!.Managed);
     }
@@ -59,7 +59,7 @@ public sealed class SourcesSettingsTests
     [Fact, Trait("Lane", "unit")]
     public void A_managed_onyx_entry_off_the_loopback_ip_is_055_at_the_reader()
     {
-        var read = Read("""{"sources":{"onyx":{"url":"http://localhost:3000","token":"env:K","version":"v4.9.0","managed":true}}}""");
+        var read = Read("""{"sources":{"onyx":{"url":"http://localhost:3189","token":"env:K","version":"v4.9.0","managed":true}}}""");
 
         Assert.Equal("SND-CONTEXT-055", read.Error.Code);
         Assert.StartsWith("context.sources.onyx", read.Error.Message, StringComparison.Ordinal);
@@ -67,17 +67,17 @@ public sealed class SourcesSettingsTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("""{"sources":{"slack":{}}}""", "SND-CONTEXT-001", "context.sources.slack:")]
-    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:K","version":"v4.9.0","apiKey":"x"}}}""", "SND-CONTEXT-001", "context.sources.onyx.apiKey:")]
+    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0","apiKey":"x"}}}""", "SND-CONTEXT-001", "context.sources.onyx.apiKey:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"apiKey":"x"}}}""", "SND-CONTEXT-001", "context.sources.linear.apiKey:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://evil.example/graphql","token":"env:K"}}}""", "SND-CONTEXT-070", "context.sources.linear.url:")]
     [InlineData("""{"sources":{"linear":{"teams":["SPL"],"url":"https://api.linear.app/graphql"}}}""", "SND-CONTEXT-002", "context.sources.linear.token:")]
     [InlineData("""{"sources":[]}""", "SND-CONTEXT-001", "context.sources:")]
-    [InlineData("""{"sources":{"onyx":"http://127.0.0.1:3000"}}""", "SND-CONTEXT-001", "context.sources.onyx:")]
+    [InlineData("""{"sources":{"onyx":"http://127.0.0.1:3189"}}""", "SND-CONTEXT-001", "context.sources.onyx:")]
     [InlineData("""{"sources":{"linear":{"teams":["eng team"]}}}""", "SND-CONTEXT-001", "context.sources.linear.teams:")]
     [InlineData("""{"sources":{"linear":{"teams":["E"]}}}""", "SND-CONTEXT-001", "context.sources.linear.teams:")]   // one letter can't prefix an alias
-    [InlineData("""{"sources":{"onyx":{"url":"http://10.0.0.5:3000","token":"env:K","version":"v4.9.0"}}}""", "SND-CONTEXT-055", "context.sources.onyx.url:")]
-    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:K","version":"latest"}}}""", "SND-CONTEXT-055", "context.sources.onyx.version:")]
-    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","version":"v4.9.0"}}}""", "SND-CONTEXT-002", "context.sources.onyx.token:")]
+    [InlineData("""{"sources":{"onyx":{"url":"http://10.0.0.5:3189","token":"env:K","version":"v4.9.0"}}}""", "SND-CONTEXT-055", "context.sources.onyx.url:")]
+    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"latest"}}}""", "SND-CONTEXT-055", "context.sources.onyx.version:")]
+    [InlineData("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","version":"v4.9.0"}}}""", "SND-CONTEXT-002", "context.sources.onyx.token:")]
     public void A_bad_sources_entry_is_refused_with_its_code_and_key_path(string json, string code, string keyPath)
     {
         var read = Read(json);
@@ -107,5 +107,5 @@ public sealed class SourcesSettingsTests
     public void Every_pointer_scheme_is_accepted(string token) => Assert.Equal(token, Read(WithToken(token)).Value.Onyx?.Token);
 
     [Fact, Trait("Lane", "unit")]
-    public void The_settings_error_names_its_catalogue_entry() => Assert.Equal(ContextErrors.SourceNotConfigured.Code, Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","version":"v4.9.0"}}}""").Error.Code);
+    public void The_settings_error_names_its_catalogue_entry() => Assert.Equal(ContextErrors.SourceNotConfigured.Code, Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","version":"v4.9.0"}}}""").Error.Code);
 }

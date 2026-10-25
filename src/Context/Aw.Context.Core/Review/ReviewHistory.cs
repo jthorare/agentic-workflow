@@ -5,11 +5,8 @@ namespace Aw.Context.Core.Review;
 /// <summary>The override log as a person reads it (S-4).</summary>
 public static class ReviewHistory
 {
-    /// <summary>The newest overrides a history call returns by default.</summary>
-    public const int DefaultLimit = 200;
-
-    /// <summary>The most a history call may ask for.</summary>
-    public const int MaxLimit = 10_000;
+    /// <summary>The overrides a history call returns when it names no limit: all of them.</summary>
+    public const int DefaultLimit = int.MaxValue;
 
     /// <summary>Builds the history from every override, newest first.</summary>
     /// <param name="overrides">Every override.</param>

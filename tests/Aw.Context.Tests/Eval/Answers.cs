@@ -17,8 +17,8 @@ internal static class Answers
 
     public static ContextResult With(IReadOnlyDictionary<string, Citation> cites, params (string Section, ResultItem Item)[] items) =>
         new(ContextResult.CurrentSchemaVersion, QueryId.From("q_test"), new ContextQuery("q"), [], "v1", At,
-            [.. items.GroupBy(i => i.Section, StringComparer.Ordinal).Select(g => new ResultSection(g.Key, [.. g.Select(i => i.Item)], []))],
-            [], [], [], Truncated: false, new BudgetUse(8000, 10, Estimate: true), cites);
+            [.. items.GroupBy(i => i.Section, StringComparer.Ordinal).Select(g => new ResultSection(g.Key, [.. g.Select(i => i.Item)]))],
+            [], [], [], cites);
 
     public static Dictionary<string, Citation> Map(params (string Marker, string Key)[] more)
     {

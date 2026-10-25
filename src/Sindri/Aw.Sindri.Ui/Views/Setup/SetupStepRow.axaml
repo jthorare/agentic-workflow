@@ -63,7 +63,7 @@
       <Panel IsVisible="{Binding Repo, Converter={x:Static ObjectConverters.IsNotNull}}">
         <sw:SetupRepoForm x:Name="SetupStepRepoForm" DataContext="{Binding Repo}" />
       </Panel>
-      <Panel IsVisible="{Binding Profile, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <Panel IsVisible="{Binding Profile.HasContent}">
         <sw:SetupProfileConfirmView x:Name="SetupStepProfileConfirm" DataContext="{Binding Profile}" />
       </Panel>
       <StackPanel x:Name="SetupStepRecipes" Spacing="4" IsVisible="{Binding Recipes.HasLines}">

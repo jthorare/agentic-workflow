@@ -27,6 +27,9 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     /// <summary>True: Fetch waits until its token is cancelled (a fetch that misses the deadline).</summary>
     public bool FetchHangs { get; set; }
 
+    /// <summary>When set, Fetch (only) fails with this error.</summary>
+    public Error? FetchFailure { get; set; }
+
     /// <summary>True: Fetch reports the record as already withheld by a whole-document scrub (SourceRecord.Blocked).</summary>
     public bool FetchBlocked { get; set; }
 
@@ -94,7 +97,7 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
         }
 
-        if (Failure is { } failure)
+        if ((FetchFailure ?? Failure) is { } failure)
         {
             return failure;
         }
