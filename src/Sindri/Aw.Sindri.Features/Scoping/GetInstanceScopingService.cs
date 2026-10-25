@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
@@ -13,7 +14,8 @@ namespace Aw.Sindri.Features.Scoping;
 /// <param name="instances">Opens the instance for the caller.</param>
 /// <param name="contents">The stored fact content.</param>
 /// <param name="scrubber">Removes secrets from the text.</param>
-internal sealed class GetInstanceScopingService(ScopingInstances instances, IFactContents contents, ITextScrubber scrubber)
+/// <param name="launches">The launches view, for the 'runs' an engine run never stores (#1008); null reads none.</param>
+internal sealed class GetInstanceScopingService(ScopingInstances instances, IFactContents contents, ITextScrubber scrubber, ILaunchViews? launches = null)
     : IService<GetInstanceScopingRequest, ScopingView>
 {
     public async ValueTask<Result<ScopingView>> Handle(GetInstanceScopingRequest request, CancellationToken cancellationToken)
@@ -26,7 +28,26 @@ internal sealed class GetInstanceScopingService(ScopingInstances instances, IFac
         }
 
         var facts = await Facts(view.Value, cancellationToken).ConfigureAwait(false);
-        return facts.IsError ? facts.Error : ScopingViewBuilder.Build(new ScopeFacts(facts.Value));
+        if (facts.IsError)
+        {
+            return facts.Error;
+        }
+
+        if (launches is not null && !facts.Value.ContainsKey("runs"))
+        {
+            var runs = await ScopingRuns.Of(launches, view.Value.Address.Value, cancellationToken).ConfigureAwait(false);
+            if (runs.IsError)
+            {
+                return runs.Error;
+            }
+
+            if (runs.Value is { } json)
+            {
+                facts.Value["runs"] = json;
+            }
+        }
+
+        return ScopingViewBuilder.Build(new ScopeFacts(facts.Value));
     }
 
     private async ValueTask<Result<Dictionary<string, string>>> Facts(InstanceView view, CancellationToken cancellationToken)

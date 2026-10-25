@@ -19,7 +19,9 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Instance">The workflow instance an engine launch belongs to, or null (attended and click launches, and events recorded before this field).</param>
 /// <param name="State">The Step's state id in that instance, or null.</param>
 /// <param name="Attempt">The Step run's number ('{entry}.{n}' → n), or null.</param>
+/// <param name="Model">The model id the Step asked the agent to run, or null (the agent's default; no Step names one yet). Omitted from the JSON when null.</param>
 public sealed record LaunchStartedPublic(
     [property: JsonPropertyName("launchId")] LaunchId Launch, ItemId Item, LaunchMode Mode, AgentId Target, SessionId? SessionId, string TabTitle, LaunchViewerPublic Viewer,
     IReadOnlyList<string> Attach, CatalogSource CatalogSource, string ArgvHash,
-    InstanceAddress? Instance = null, string? State = null, int? Attempt = null);
+    InstanceAddress? Instance = null, string? State = null, int? Attempt = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Model = null);

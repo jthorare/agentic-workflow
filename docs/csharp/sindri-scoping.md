@@ -32,7 +32,7 @@ like `desk --out`, is refused inside a git worktree (`SND-SCOPING-002`); with an
 plus `SCP-SCHEMA-001` (SC-K's: a model's `scopeMap` and `acceptance` are validated against the schema's `$defs/fact` directly, whatever `schemaVersion` says).
 Choices where the spec is silent: a surface is marked `noBehaviourChange: "<reason>"` (SCP-ACC-002/005); a regression item matches `continue to`;
 SCP-COV-003 counts nodes of a lens that followed at most one edge, or within one edge of an anchor; SCP-COV-004 reads a brief ref with source `change`
-and the `code:` anchors; SCP-ACC-004 checks uniqueness only; the vendor half of SCP-CHAL-002 is not enforced. A rule whose facts are missing is `not-run`
+and the `code:` anchors; SCP-ACC-004 checks uniqueness only; SCP-CHAL-002 compares the launcher agent each engine run recorded (`target` on the run record, built from the instance's `launch.started` rows for the `draft` and `challenge` states when no `runs` fact is stored) before any model: a different agent passes, the same agent fails unless both runs name different models. The challenge Step is launched on a usable agent other than the draft's, or parks with `SND-LAUNCH-028`; the vendor half is not enforced. A rule whose facts are missing is `not-run`
 with the missing keys and never fails; at `evidence` it makes the outcome `incomplete`.
 
 Coverage: a source that is `degraded`, or `unavailable`/`not-configured` without matching a row of the Recorded limits table on (lens, state, reason), fails

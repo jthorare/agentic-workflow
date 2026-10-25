@@ -75,7 +75,11 @@ internal static partial class ScopePacketChecks
         }
     }
 
-    /// <summary>SCP-CHAL-002: the challenger's model differs from the drafter's; a run at the desk is a warning (its model is self-reported), never a refusal.</summary>
+    /// <summary>
+    /// SCP-CHAL-002: the challenger ran on another agent than the drafter, or on another model; a run at the desk is a warning (its model is self-reported), never a refusal.
+    /// An engine run records the launcher agent it ran on as 'target' (the 'launch.started' target): two runs with different targets differ whatever their models say, the same target
+    /// differs only by two known, different models.
+    /// </summary>
     private static void ChallengerDiffers(ScopeContext c, RuleSink s)
     {
         if (!c.Facts.Has("runs"))
@@ -113,6 +117,12 @@ internal static partial class ScopePacketChecks
     private static void ModelsDiffer(JsonNode drafter, JsonNode challenger, ScopeContext c, RuleSink s)
     {
         var challengerModel = ScopeJson.Str(challenger, "model");
+        if (ScopeJson.Str(drafter, "target") is { Length: > 0 } drafterTarget && ScopeJson.Str(challenger, "target") is { Length: > 0 } challengerTarget)
+        {
+            AgentsDiffer(drafter, challenger, (drafterTarget, challengerTarget), c, s);
+            return;
+        }
+
         if (IsDesk(challenger) || IsDesk(drafter))
         {
             var self = string.IsNullOrEmpty(challengerModel) ? "model not recorded" : "model self-reported";
@@ -121,6 +131,18 @@ internal static partial class ScopePacketChecks
         else if (string.IsNullOrEmpty(challengerModel) || string.Equals(ScopeJson.Str(drafter, "model"), challengerModel, StringComparison.Ordinal))
         {
             Differs(s, c, "step.scope.challenge", $"the challenger ran on {challengerModel ?? "no recorded model"}, the drafter's model", "Run the challenger on a different model.");
+        }
+    }
+
+    private static void AgentsDiffer(JsonNode drafter, JsonNode challenger, (string Drafter, string Challenger) targets, ScopeContext c, RuleSink s)
+    {
+        var drafterModel = ScopeJson.Str(drafter, "model");
+        var challengerModel = ScopeJson.Str(challenger, "model");
+        var sameAgent = string.Equals(targets.Drafter, targets.Challenger, StringComparison.Ordinal);
+        var modelsKnownAndDiffer = !string.IsNullOrEmpty(drafterModel) && !string.IsNullOrEmpty(challengerModel) && !string.Equals(drafterModel, challengerModel, StringComparison.Ordinal);
+        if (sameAgent && !modelsKnownAndDiffer)
+        {
+            Differs(s, c, "step.scope.challenge", $"the challenger ran on {targets.Challenger}, the drafter's agent", "Run the challenger on a different agent (approve a second one for Steps with `sindri launch show`).");
         }
     }
 

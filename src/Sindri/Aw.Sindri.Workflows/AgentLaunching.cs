@@ -14,11 +14,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 /// <param name="launcher">The launcher.</param>
 /// <param name="targets">Where the Step runs.</param>
+/// <param name="challenger">Picks the agent of a second-opinion Step.</param>
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="catalog">The blocks' descriptors, for the Step's brief.</param>
 /// <param name="inputs">What a launch reads beside the target: the pack bundles, the stored facts and the Steps' instructions.</param>
-internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, AgentLaunchRecorder recorder, IRunDiff diff, BlockCatalog catalog, AgentLaunchInputs inputs)
+internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver targets, ChallengerPick challenger, AgentLaunchRecorder recorder, IRunDiff diff, BlockCatalog catalog, AgentLaunchInputs inputs)
 {
     /// <summary>Launches the run's session.</summary>
     /// <param name="run">The run.</param>
@@ -33,19 +34,26 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
             return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));   // nothing was asked of the launcher, so there is no outcome to record
         }
 
+        var contrast = await Contrast(run, target.Value, cancellationToken).ConfigureAwait(false);
+        if (contrast.IsError)
+        {
+            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.Park, contrast.Error.Code, contrast.Error.Message));   // no second agent: the owner fixes the approvals, nothing was asked of the launcher
+        }
+
+        var chosen = target.Value with { Agent = contrast.Value };
         var workspace = await WorkspaceOf(run, cancellationToken).ConfigureAwait(false);
         if (workspace.IsError)
         {
             return StepFailed(workspace.Error);
         }
 
-        var bundle = await Bundle(run, target.Value, cancellationToken).ConfigureAwait(false);
+        var bundle = await Bundle(run, chosen, cancellationToken).ConfigureAwait(false);
         if (bundle.IsError)
         {
             return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(string.Equals(bundle.Error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, bundle.Error.Code, bundle.Error.Message));   // an unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step
         }
 
-        var asked = await Request(run, target.Value, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
+        var asked = await Request(run, chosen, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
         if (asked.IsError)
         {
             return StepFailed(asked.Error);
@@ -66,6 +74,12 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
                 throw new InvalidOperationException($"the launcher answered {result.GetType().Name}");
         }
     }
+
+    // The agent the Step runs on: the target's, or for a second-opinion Step one other than its drafter's (#1008).
+    private async ValueTask<Result<AgentId>> Contrast(AgentLaunchRun run, AgentStepTarget target, CancellationToken cancellationToken) =>
+        run.DrafterState is { } drafter
+            ? await challenger.Pick(new ChallengerAsk(target.Item, run.Run.Address, AgentLaunches.LaunchIdFor(run.Run), drafter, target.Agent), cancellationToken).ConfigureAwait(false)
+            : target.Agent;
 
     // The launcher's request: the Step's brief and policy, its pack, and its declared read facts as files (read and scrubbed here); the failure when a fact can't be read.
     private async ValueTask<Result<LaunchRequest>> Request(AgentLaunchRun run, AgentStepTarget target, string? workspace, PackBundle? bundle, CancellationToken cancellationToken)

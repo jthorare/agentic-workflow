@@ -119,7 +119,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         return services
         .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentLaunchInputs>().AddSingleton<AgentClosing>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
-        .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
+        .AddSingleton<AgentTargetResolver>().AddSingleton<ChallengerPick>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
         .AddSingleton<WorkerActivities>();
     }
 

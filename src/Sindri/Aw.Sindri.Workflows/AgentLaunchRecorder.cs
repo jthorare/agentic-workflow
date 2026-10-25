@@ -31,7 +31,7 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         var chosen = started.ChosenSession is { } id && SessionId.TryFrom(id, out var session) ? session : (SessionId?)null;
         var viewer = LaunchViewer.Background(started.Viewer);
         var payload = new LaunchStarted(request.Launch, request.Item, request.Mode, request.Agent, chosen, "sindri " + request.Item.Value, viewer, started.Attach, started.CatalogSource, started.ArgvHash,
-            request.Instance, request.Step?.Ref.State, request.Run?.Number);
+            request.Instance, request.Step?.Ref.State, request.Run?.Number, Model: request.Step?.Model);
         var appended = await Append(events.Entry(EventTypes.LaunchStarted, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
         if (!appended.AlreadyRecorded)
         {
