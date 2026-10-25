@@ -252,6 +252,17 @@ SB-5a's rendered settings put it into effect.
 - **Contract.** `ISandboxContract` (in `Aw.Sindri.Testing`) runs on the pass-through (confinement cases skipped) and on the real bubblewrap; it skips cleanly where bwrap cannot make a user namespace. Its `SandboxBox` is a
   fixture repo, worktree, state directory and fake login under the test output directory, with the owner's real home (toolchains, hooks, the judge wrapper) and nothing of the owner's state or login.
 
+## SB-3a: wall and memory
+
+`session wrap --launch <id> --limits <file> -- <agent cli>` holds a sandboxed session to its limits. Without `--limits` the wrap runs unwatched, as before; a limits file that cannot be read or has no unit refuses the start (exit 2), because a sandboxed agent must never run unwatched.
+
+- **Limits file** (`WrapLimits`, JSON the launcher writes beside the plan): `unit` (the scope unit), `wallSeconds` (the Step's timeout plus the grace, absent for an attended session), `wallGraceSeconds`, `parkMaxSeconds`, `memoryMaxBytes`.
+- **The scope.** `SystemdScopeArgv.Start` builds `systemd-run --user --scope --quiet --unit=sindri-<launch>.scope --slice=sindri-steps.slice` with `MemoryHigh`, `MemoryMax`, `MemorySwapMax=0`, `OOMPolicy=kill`, `CPUWeight=50`, `CPUQuota`, `TasksMax` and, for a Step, the loose `RuntimeMaxSec` (the wall plus `parkMax`). `SliceCap` puts the total memory on the parent slice. The launcher (SB-5a) wraps the bubblewrap command in it; nothing in the product calls it yet.
+- **The watchdog** (`LimitWatchdog`, one tick every 5 s) is the only clock. It reads the scope's `memory.events`, `memory.current`, `memory.peak`, `pids.current` and `cpu.stat` (the files go with the scope, so it keeps the peaks), asks `GET /sindri/launches/{launch}/suspended` through the launch secret, and counts only unsuspended time (`WallBudget`; an interval counts when the run was unsuspended at both ends). A failed or unreachable answer counts as not suspended, so a runaway is still stopped while `serve` is down. When the wall is used up it sends SIGTERM to the scope (`systemctl --user kill --kill-whom=all`), waits 10 s, then SIGKILL.
+- **The loose ceiling.** When a suspension ends the watchdog runs `systemctl --user set-property --runtime <unit> RuntimeMaxSec=<elapsed + wall left + parkMax>` (`RuntimeCeiling.Next`; `wall` already holds the grace), so several long parks in a row never cost the run its scope. It is never the clock.
+- **How a session ends.** A memory kill is the kernel's (`OOMPolicy=kill`): the watchdog sees `oom_kill` in `memory.events`, or, if the poll missed it, systemd's `Result=oom-kill` of the failed unit. Wrap then reports the exit through `POST /sindri/sessions/{launch}/exit` with `limit` (`kind`, `limit`, `peak` and the peaks of every limit): the service takes one final usage sample (`ISessionUsageSampler.Flush`), then appends `session.ended` with reason `limit`, never `lost`. An ordinary exit takes the same final sample.
+- **Not in this phase.** `sandbox.limit-hit` (`TasksMax`, `MemoryHigh`, disk) needs a proven route and is SB-3b/SB-5a's; the engine's `GET /sindri/launches/{launch}/suspended` and the `step.failed(limit)` mapping are P8 U9's (until it lands the read answers 404 and every run counts as unsuspended); the session cap and the shims are SB-3b.
+
 ## Phases
 
 | Phase | Builds |
