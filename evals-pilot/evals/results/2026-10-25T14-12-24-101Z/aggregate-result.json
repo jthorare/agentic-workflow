@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.310",
+  "startedAt": "2026-10-25T14:12:24.101Z",
+  "durationSeconds": 0,
+  "costUsd": 0,
+  "partial": false,
+  "suite": {
+    "root": "/home/thor/repos/aw-wt/meta-skill-evals/evals-pilot",
+    "ablation": "none",
+    "caseFilter": "smoke-skill-visible",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "aw-pilot",
+        "version": "0.0.1",
+        "path": "/home/thor/repos/aw-wt/meta-skill-evals/evals-pilot"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "smoke-skill-visible",
+      "dir": "evals/smoke-skill-visible",
+      "source": "prose",
+      "promptMarkdown": "List the exact names of every skill you can invoke with the Skill tool. Just the names, one per line.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 300,
+      "maxTurns": 3,
+      "graders": [
+        {
+          "name": "has-rootcause",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "rootCause",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "has-ui-evidence",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "ui-evidence",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 0,
+            "costUsd": 0,
+            "judgeCostUsd": 0,
+            "durationSeconds": 0,
+            "startedAt": "2026-10-25T14:12:24.173Z",
+            "error": "case \"\"smoke-skill-visible\"\": a git directory of the plugin registers more linked worktrees than can be screened",
+            "tracePath": "",
+            "skippedPaidGraders": false,
+            "graders": []
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0,
+        "passRate": 0
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 0,
+    "overallScore": 0,
+    "overallPassRate": 0
+  }
+}
