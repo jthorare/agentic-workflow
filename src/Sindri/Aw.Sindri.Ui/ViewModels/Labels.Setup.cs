@@ -53,7 +53,10 @@ internal static partial class Labels
     /// <summary>What a skipped step's number circle shows: a dash, not the tick of a done step.</summary>
     internal const string SetupSkippedMark = "\u2013";
 
-    /// <summary>The button that opens the web address a step's words carry, named by the step.</summary>
+    /// <summary>The button that opens the web address a step's words carry.</summary>
+    internal const string SetupOpenLink = "Open link";
+
+    /// <summary>The same button's accessible name, told apart by its step.</summary>
     internal static string SetupOpenLinkFor(string step) => $"Open link: {step}";
 
     /// <summary>Home's control that opens Settings at the first step still to do.</summary>

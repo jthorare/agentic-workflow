@@ -25,7 +25,7 @@
       <Border IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Button x:Name="SetupStepLink" Classes="command-control" IsVisible="{Binding HasLink}" Click="OnOpenLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenLinkLabel}">
+      <Button x:Name="SetupStepLink" Classes="command-control" IsVisible="{Binding HasLink}" Click="OnOpenLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenLinkName}">
         <TextBlock Classes="button" Text="{Binding OpenLinkLabel}" AutomationProperties.AccessibilityView="Raw" />
       </Button>
       <StackPanel IsVisible="{Binding HasProgress}" Spacing="4">
