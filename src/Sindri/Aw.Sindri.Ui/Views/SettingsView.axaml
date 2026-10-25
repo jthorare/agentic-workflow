@@ -11,7 +11,7 @@
       <ColumnDefinition Width="*" MinWidth="480" MaxWidth="1100" />
       <ColumnDefinition Width="0" />
     </Grid.ColumnDefinitions>
-  <StackPanel x:Name="SettingsPage" Spacing="{StaticResource Space.LG}">
+  <StackPanel Spacing="{StaticResource Space.LG}">
     <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
