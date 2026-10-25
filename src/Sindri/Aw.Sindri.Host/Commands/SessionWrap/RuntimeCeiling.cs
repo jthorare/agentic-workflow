@@ -13,5 +13,6 @@ internal static class RuntimeCeiling
     /// <param name="used">The unsuspended time counted so far.</param>
     /// <param name="parkMax">The longest single suspension.</param>
     /// <returns>The value for 'RuntimeMaxSec', counted from the scope's start.</returns>
-    internal static TimeSpan Next(TimeSpan elapsed, TimeSpan wall, TimeSpan used, TimeSpan parkMax) => throw new NotSupportedException();
+    internal static TimeSpan Next(TimeSpan elapsed, TimeSpan wall, TimeSpan used, TimeSpan parkMax) =>
+        elapsed + (wall > used ? wall - used : TimeSpan.Zero) + parkMax;
 }
