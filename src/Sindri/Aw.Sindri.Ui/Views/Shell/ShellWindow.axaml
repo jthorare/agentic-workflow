@@ -240,7 +240,7 @@
             <LayoutTransformControl.LayoutTransform>
               <RotateTransform Angle="-90" />
             </LayoutTransformControl.LayoutTransform>
-            <TextBlock Classes="mono" Text="{Binding SheetSubject}" />
+            <TextBlock Classes="mono" Text="{Binding EdgeTabText}" />
           </LayoutTransformControl>
         </Button>
 

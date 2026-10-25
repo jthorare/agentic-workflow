@@ -26,8 +26,14 @@ internal sealed partial class ShellViewModel
     /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case.</summary>
     public string EdgeTabName => Labels.Reopen + " " + (SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? char.ToLowerInvariant(noun[0]) + noun[1..] + " " + NamedSubject : SheetSubject);
 
-    /// <summary>The edge tab shows when the sheet is closed and has a subject, over a visible page.</summary>
-    public bool IsEdgeTabShown => !IsSheetOpen && HasEdgeTab && IsConnected;
+    /// <summary>The edge tab's text: a workflow instance's readable title once read, else the subject.</summary>
+    public string EdgeTabText => IsInstanceSheet && Instance.Title.Length > 0 ? Instance.Title : SheetSubject;
+
+    /// <summary>The edge tab shows when the sheet is closed and has a subject, over a visible page, on the page it was closed on.</summary>
+    public bool IsEdgeTabShown => !IsSheetOpen && HasEdgeTab && IsConnected && _edgeTabPage == CurrentPage;
+
+    // The page the sheet was closed on: the edge tab belongs to it and goes when the page is left.
+    private PageId? _edgeTabPage;
 
     /// <summary>True while the sheet shows its "not served yet" placeholder: until a lane's content claims the link's kind.</summary>
 #pragma warning disable IDE0072 // the lanes populate the kinds they claim; every other kind keeps the placeholder
@@ -56,13 +62,14 @@ internal sealed partial class ShellViewModel
         IsSheetOpen = true;
         ForgetRowSheetUnless(link);
         OnSheetOpened(link);
-        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetName), nameof(EdgeTabName), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
+        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
     }
 
     /// <summary>Closes the sheet (Esc); its subject stays on the edge tab.</summary>
     internal void CloseSheet()
     {
         IsSheetOpen = false;
+        _edgeTabPage = CurrentPage;
         _ = NeedsYou.CloseSheet();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));
     }
