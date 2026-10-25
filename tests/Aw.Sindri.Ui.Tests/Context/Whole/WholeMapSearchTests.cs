@@ -55,8 +55,7 @@ public sealed class WholeMapSearchTests
 
         map.ApplySearch([Hit(edge.From)], hitAreas: [], zoomed: false);
 
-        var node = map.Geometry.Nodes.First(n => n.Key == edge.From);
-        Assert.Equal(WholeZoomBox.Around([node.Rect]), Assert.Single(asked));
+        Assert.Equal(map.FitBox, Assert.Single(asked));   // the matches and their links: the box the map fits
         Assert.False(map.NoMatches);
     }
 

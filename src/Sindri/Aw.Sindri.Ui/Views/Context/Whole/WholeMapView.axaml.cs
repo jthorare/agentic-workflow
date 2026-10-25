@@ -153,7 +153,7 @@ internal sealed partial class WholeMapView : UserControl
     {
         var fit = Math.Min(stage.Width / world.Width, stage.Height / world.Height);
         (WholeCanvas.MinZoom, WholeCanvas.MaxZoom) = WholeMapViewModel.ZoomLimits(fit);
-        if (!_fitted || WholeCanvas.View == _fitView)
+        if (WholeMapViewModel.RefitsOnArrange(_fitted, WholeCanvas.View == _fitView, _map?.SearchActive == true || _map?.IsZoomed == true))
         {
             _fitted = true;
             WholeCanvas.SetView(ZoomView.Fit(stage, world, new ZoomRange(WholeMapViewModel.FirstOpenFloor, WholeMapViewModel.MaxScale)));

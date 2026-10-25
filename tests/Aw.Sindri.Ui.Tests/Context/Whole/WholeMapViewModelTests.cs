@@ -177,7 +177,7 @@ public sealed class WholeMapViewModelTests
         Assert.True(map.Zoom([.. some, "feature:not.on.the.map"]));
 
         Assert.Equal((true, true), (map.IsZoomed, map.HitKeys.SetEquals(some)));
-        Assert.Equal(WholeZoomBox.Around([.. map.Geometry.Nodes.Where(n => some.Contains(n.Key)).Select(n => n.Rect)]), Assert.Single(asked));
+        Assert.Equal(map.FitBox, Assert.Single(asked));   // the answer and its links: the box the map fits
         map.Unzoom();
         Assert.Equal((false, 0, 1), (map.IsZoomed, map.HitKeys.Count, fits));
     }

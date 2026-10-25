@@ -59,7 +59,7 @@ public sealed class ContextWholeZoomTests
         Assert.Equal((true, false, true), (page.ShowWhole, page.MapVisible, page.IsZoomedIn));
         Assert.NotEmpty(page.Whole.HitKeys);
         Assert.All(page.Whole.HitKeys, key => Assert.Contains(page.Map!.Nodes, n => n.Key == key));
-        Assert.Equal(WholeZoomBox.Around([.. page.Whole.Geometry!.Nodes.Where(n => page.Whole.HitKeys.Contains(n.Key)).Select(n => n.Rect)]), Assert.Single(asked));
+        Assert.Equal(page.Whole.FitBox, Assert.Single(asked));   // the answer and its links: the box the map fits
         Assert.Equal("Context · the whole map · v1", page.Head);
     }
 

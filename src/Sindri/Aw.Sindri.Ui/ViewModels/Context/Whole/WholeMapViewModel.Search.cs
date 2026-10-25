@@ -54,7 +54,7 @@ internal sealed partial class WholeMapViewModel
         OnChanged(nameof(Items));
         if (!zoomed && rects.Count > 0)
         {
-            ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(WholeZoomBox.Around(rects)));
+            ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(FitBox ?? WholeZoomBox.Around(rects)));   // the matches and their links: the box the map fits
         }
     }
 

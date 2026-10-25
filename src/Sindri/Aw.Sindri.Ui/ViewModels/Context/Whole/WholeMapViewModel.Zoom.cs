@@ -50,7 +50,7 @@ internal sealed partial class WholeMapViewModel
         Changed();
         OnChanged(nameof(Shown));
         OnChanged(nameof(Items));
-        ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(WholeZoomBox.Around([.. hit.Select(n => n.Rect)])));
+        ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(FitBox ?? WholeZoomBox.Around([.. hit.Select(n => n.Rect)])));   // the answer and what it links to: the box the map fits
         return true;
     }
 
@@ -114,7 +114,7 @@ internal sealed partial class WholeMapViewModel
     /// <param name="viewUnmoved">Whether the view is still the one the last fit set.</param>
     /// <param name="filtering">Whether a search or a zoom onto an answer is on the map.</param>
     /// <returns>True when the view is fitted again.</returns>
-    internal static bool RefitsOnArrange(bool fitted, bool viewUnmoved, bool filtering) => throw new NotSupportedException();
+    internal static bool RefitsOnArrange(bool fitted, bool viewUnmoved, bool filtering) => !filtering && (!fitted || viewUnmoved);
 
     /// <summary>Whether Zoom in can act.</summary>
     /// <param name="scale">The zoom now.</param>
