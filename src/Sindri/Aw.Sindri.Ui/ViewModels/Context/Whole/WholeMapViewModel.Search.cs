@@ -54,9 +54,13 @@ internal sealed partial class WholeMapViewModel
         OnChanged(nameof(Items));
         if (!zoomed && rects.Count > 0)
         {
-            ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(FitBox ?? WholeZoomBox.Around(rects)));   // the matches and their links: the box the map fits
+            RequestSearchZoom(rects);
         }
     }
+
+    // The matches and their links: the box the map fits (a box round the matches when nothing is drawn).
+    private void RequestSearchZoom(List<WholeRect> matches) =>
+        ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(FitBox ?? WholeZoomBox.Around(matches)));
 
     /// <summary>Esc or an empty box: the whole map is drawn again, a hover or pin works again, and the camera fits the whole map.</summary>
     internal void EndSearch()
