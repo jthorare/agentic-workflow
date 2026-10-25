@@ -7,4 +7,9 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Label">What a person calls it, or null.</param>
 /// <param name="Outcome">What it did.</param>
 /// <param name="Code">The error code for a failure, otherwise null.</param>
-public sealed record LaunchViewerPublic(string Kind, string? Label, ViewerOutcomeKind Outcome, string? Code);
+public sealed record LaunchViewerPublic(string Kind, string? Label, ViewerOutcomeKind Outcome, string? Code)
+{
+    /// <summary>The reason a viewer was skipped on purpose, otherwise null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; init; }
+}

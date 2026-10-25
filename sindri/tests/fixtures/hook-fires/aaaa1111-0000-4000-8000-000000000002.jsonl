@@ -1,2 +1,0 @@
-{"type":"assistant","timestamp":"2026-10-01T11:00:00Z","cwd":"/example/other","message":{"role":"assistant","content":[{"type":"text","text":"Done."}]}}
-{"type":"user","timestamp":"2026-10-01T11:00:01Z","cwd":"/example/other","isMeta":true,"message":{"role":"user","content":"Stop hook feedback:\n[/example/other/config/hooks/done-gate.sh # aw:done-gate]: Claiming done with no evidence mentioned."}}

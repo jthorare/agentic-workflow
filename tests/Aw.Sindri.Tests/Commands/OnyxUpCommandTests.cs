@@ -60,7 +60,7 @@ public sealed class OnyxUpCommandTests : IDisposable
         var lines = _out.ToString().TrimEnd('\n').Split('\n');
         Assert.Equal(
             [
-                "url       http://127.0.0.1:3000",
+                "url       http://127.0.0.1:3189",
                 "version   v4.9.0",
                 "ran       fetch, config, pull, start",
                 "skipped   none",
@@ -92,7 +92,7 @@ public sealed class OnyxUpCommandTests : IDisposable
 
         var summary = AwJson.Deserialize<OnyxUpSummary>(Encoding.UTF8.GetBytes(_out.ToString()), _json).Value;
         Assert.Equal(0, code);
-        Assert.Equal("http://127.0.0.1:3000", summary.Up.Url);
+        Assert.Equal("http://127.0.0.1:3189", summary.Up.Url);
         Assert.True(summary.Account!.NeedsHuman);
         Assert.DoesNotContain("USER_AUTH", _out.ToString(), StringComparison.Ordinal);
     }
@@ -112,7 +112,7 @@ public sealed class OnyxUpCommandTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task The_hand_over_line_follows_the_response()
     {
-        var needsYou = new OnyxUpResponse(3000, "http://127.0.0.1:3000", "v4.9.0", [], [new OnyxStepResult("fetch", OnyxStepOutcome.Ran), new OnyxStepResult("account", OnyxStepOutcome.NeedsHuman)]);
+        var needsYou = new OnyxUpResponse(3189, "http://127.0.0.1:3189", "v4.9.0", [], [new OnyxStepResult("fetch", OnyxStepOutcome.Ran), new OnyxStepResult("account", OnyxStepOutcome.NeedsHuman)]);
         await using var provider = new ServiceCollection().AddSingleton<IService<OnyxUpRequest, OnyxUpResponse>>(new StubUp(needsYou)).BuildServiceProvider();
 
         var code = await new OnyxVerbs(provider, new Output(_out, _error, _json)).Up(json: false, TestContext.Current.CancellationToken);
@@ -255,14 +255,14 @@ public sealed class OnyxUpCommandTests : IDisposable
         Assert.Equal(1, await Verbs().Open(TestContext.Current.CancellationToken));
         Assert.Contains("sindri onyx up", _error.ToString(), StringComparison.Ordinal);
 
-        _rig.Workspace.State = new OnyxSetupState(3001, new Dictionary<string, string>(StringComparer.Ordinal));
+        _rig.Workspace.State = new OnyxSetupState(3190, new Dictionary<string, string>(StringComparer.Ordinal));
         Assert.Equal(0, await Verbs().Open(TestContext.Current.CancellationToken));
         Assert.Equal("/auth/signup", Assert.Single(_browser.Opened).AbsolutePath);
 
-        _rig.Workspace.State = new OnyxSetupState(3001, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Signup] = "x" });
+        _rig.Workspace.State = new OnyxSetupState(3190, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Signup] = "x" });
         _ = await Verbs().Open(TestContext.Current.CancellationToken);
         Assert.Equal("/admin/add-connector", _browser.Opened[^1].AbsolutePath);
-        Assert.Equal(3001, _browser.Opened[^1].Port);
+        Assert.Equal(3190, _browser.Opened[^1].Port);
     }
 
     private sealed class StubProfile : Core.Profile.IProfileSource

@@ -49,6 +49,58 @@ public sealed class SetupConfirmTests
     }
 
     [Fact]
+    public async Task A_second_change_to_the_profile_offers_the_button_again()
+    {
+        var profile = (await ProfileRow()).Profile!;
+        await profile.Approve();
+        await profile.Follow(wanted: false);   // the row is done and leaves Needs you
+
+        _f.Hash = "b" + LiveHash[1..];   // the profile changed again
+        await profile.Follow(wanted: true);
+
+        Assert.Equal((false, true, true), (profile.IsDone, profile.ShowsApprove, profile.CanApprove));
+    }
+
+    [Fact]
+    public async Task A_second_approval_sends_the_new_hash()
+    {
+        var profile = (await ProfileRow()).Profile!;
+        await profile.Approve();
+        await profile.Follow(wanted: false);
+        _f.Hash = "b" + LiveHash[1..];
+        await profile.Follow(wanted: true);
+
+        await profile.Approve();
+
+        Assert.Equal([LiveHash, "b" + LiveHash[1..]], _f.Server.ProfileApprovals.Select(a => a.Hash), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_successful_approval_asks_for_focus_on_the_step_heading()
+    {
+        var step = await ProfileRow();
+        var asked = new List<SetupFocus>();
+        step.Profile!.FocusRequested += (_, e) => asked.Add(e.Target);
+
+        await step.Profile.Approve();
+
+        Assert.Equal([SetupFocus.StepHeading], asked);
+    }
+
+    [Fact]
+    public async Task A_refused_approval_keeps_focus_where_it_is()
+    {
+        _f.Server.ApproveProfileAnswer = RouteAnswer.Refused();
+        var step = await ProfileRow();
+        var asked = new List<SetupFocus>();
+        step.Profile!.FocusRequested += (_, e) => asked.Add(e.Target);
+
+        await step.Profile.Approve();
+
+        Assert.Empty(asked);
+    }
+
+    [Fact]
     public async Task A_stale_hash_says_to_read_it_again_and_leaves_the_button_pressable()
     {
         _f.Server.ApproveProfileAnswer = RouteAnswer.Problem("profile-approve", "stale-hash");

@@ -4,7 +4,7 @@ namespace Aw.Context.Core.Sources;
 /// <param name="Ref">The record.</param>
 /// <param name="Kind">Its kind.</param>
 /// <param name="Title">Its title.</param>
-/// <param name="Text">Its text (at most 64 KB; the engine cuts the rest).</param>
+/// <param name="Text">Its text (whole; nothing is cut).</param>
 /// <param name="Author">Its author, if the source has one.</param>
 /// <param name="CreatedAt">When it was created, if known.</param>
 /// <param name="UpdatedAt">When it last changed, if known.</param>

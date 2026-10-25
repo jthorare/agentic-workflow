@@ -39,11 +39,11 @@ internal sealed class EmbedCodeIndexService(CodeIndexJobScopes scopes, ICodeInde
         if (embedded.IsError)
         {
             return embedded.Error.Code == CodeIndexErrors.IndexBusy.Code || embedded.Error.Code == CodeIndexErrors.IndexNotBuilt.Code
-                ? new EmbedCodeIndexResult(request.Repo, EmbedCodeIndexResult.Later, Embedded: 0, Embeddable: 0, milliseconds)
+                ? new EmbedCodeIndexResult(request.Repo, EmbedCodeIndexResult.Later, Embedded: 0, Embeddable: 0, Carried: 0, Made: 0, milliseconds)
                 : embedded.Error;
         }
 
         var report = embedded.Value;
-        return new EmbedCodeIndexResult(request.Repo, report.Embeddings == LayerState.Ok ? EmbedCodeIndexResult.Ok : EmbedCodeIndexResult.Pending, report.Embedded, report.Embeddable, milliseconds);
+        return new EmbedCodeIndexResult(request.Repo, report.Embeddings == LayerState.Ok ? EmbedCodeIndexResult.Ok : EmbedCodeIndexResult.Pending, report.Embedded, report.Embeddable, report.Carried, report.Made, milliseconds);
     }
 }

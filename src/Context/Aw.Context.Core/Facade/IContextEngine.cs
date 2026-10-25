@@ -13,7 +13,7 @@ namespace Aw.Context.Core.Facade;
 /// Core records only. Sindri passes the approved profile's 'context:' section, its repos and the caller on every call;
 /// the engine keeps no profile of its own.
 /// </summary>
-public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory
+public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts
 {
     /// <summary>Validates a profile's 'context:' section against the profile's repos and applies its defaults.</summary>
     /// <param name="section">The section, or null when the profile has none.</param>

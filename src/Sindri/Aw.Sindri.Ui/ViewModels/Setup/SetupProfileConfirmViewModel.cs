@@ -16,15 +16,20 @@ internal sealed class SetupProfileConfirmViewModel : ObservableObject
     private readonly Func<string?> _hash;
     private readonly ISindriApi _api;
     private readonly Func<string> _cli;   // the served catalog's command for this approval, named with every refusal
+    private string _approvedHash = string.Empty;   // the hash the person approved here; done holds only while the live profile still has it
     private string _summaryFor = string.Empty;   // the hash the summary in hand was read for
     private bool _wanted;
     private int _session;
 
     private bool Sending { get; set; }
 
+    /// <summary>Asked when the Approve button left the tree with focus in it: focus goes to the step heading.</summary>
+    internal event EventHandler<SetupFocusEventArgs>? FocusRequested;
+
     internal SetupProfileConfirmViewModel(Func<Uri?> url, Func<string?> hash, ISindriApi api, Func<string> cli)
     {
         (_url, _hash, _api, _cli) = (url, hash, api, cli);
+        Summary.PropertyChanged += (_, _) => OnChanged(nameof(HasContent));
     }
 
     /// <summary>The plain-words summary of what approving lets Sindri do (shown while the row needs the person).</summary>
@@ -44,8 +49,11 @@ internal sealed class SetupProfileConfirmViewModel : ObservableObject
     /// <summary>True when there is a refusal to show.</summary>
     public bool HasRefusal => Refusal.Length > 0;
 
-    /// <summary>True once the approval went through.</summary>
-    public bool IsDone { get; private set => Set(ref field, value); }
+    /// <summary>True while the live profile is the one that was approved here; a later change to the profile makes it false again.</summary>
+    public bool IsDone => _approvedHash.Length > 0 && string.Equals(_approvedHash, Hash, StringComparison.Ordinal);
+
+    /// <summary>True when the confirmation has anything to draw; the step's body gives it no room otherwise.</summary>
+    public bool HasContent => ShowsApprove || IsWaiting || HasRefusal || Summary.HasSummary;
 
     /// <summary>The Approve button's word.</summary>
 #pragma warning disable CA1822, MA0041 // why: the view binds it as an instance property of the view model
@@ -111,17 +119,18 @@ internal sealed class SetupProfileConfirmViewModel : ObservableObject
 
         if (session == _session)
         {
-            Settle(sent);
+            Settle(sent, hash);
         }
     }
 
     // An approval is the row's end; anything else is a refusal in words (a changed profile asks for the summary again).
-    private void Settle(Result<ProfileApproved> sent)
+    private void Settle(Result<ProfileApproved> sent, string hash)
     {
         if (sent.IsSuccess && sent.Value.Approved)
         {
-            IsDone = true;
+            _approvedHash = hash;
             Announce();
+            FocusRequested?.Invoke(this, new SetupFocusEventArgs(SetupFocus.StepHeading));   // the Approve button just left the tree with focus in it
             return;
         }
 
@@ -176,6 +185,8 @@ internal sealed class SetupProfileConfirmViewModel : ObservableObject
 
     private void Announce()
     {
+        OnChanged(nameof(IsDone));
+        OnChanged(nameof(HasContent));
         OnChanged(nameof(ShowsApprove));
         OnChanged(nameof(CanApprove));
         OnChanged(nameof(IsWaiting));

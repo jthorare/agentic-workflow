@@ -14,7 +14,7 @@ public sealed class SettingsReaderTests
     {
         var settings = SettingsReader.Read(section: null).Value;
 
-        Assert.Equal((TimeSpan.FromSeconds(10), 200_000, 3, true), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
+        Assert.Equal((TimeSpan.FromSeconds(10), 3, true), (settings.Deadline, settings.MinHits, settings.SessionsEnabled));
         Assert.Equal(ContextSettings.DefaultDocGlobs, settings.DocGlobs);
         Assert.Null(settings.Repos);
     }
@@ -63,11 +63,22 @@ public sealed class SettingsReaderTests
     [Fact, Trait("Lane", "unit")]
     public void Every_key_is_read()
     {
-        var settings = Read("""{"repos":["split-panes"],"docs":{"globs":["docs/**/*.md"]},"deadline":"500ms","maxBudget":6000,"minHits":1,"sessions":{"enabled":false}}""").Value;
+        var settings = Read("""{"repos":["split-panes"],"docs":{"globs":["docs/**/*.md"]},"deadline":"500ms","minHits":1,"sessions":{"enabled":false}}""").Value;
 
-        Assert.Equal((TimeSpan.FromMilliseconds(500), 6_000, 1, false), (settings.Deadline, settings.MaxBudget, settings.MinHits, settings.SessionsEnabled));
+        Assert.Equal((TimeSpan.FromMilliseconds(500), 1, false), (settings.Deadline, settings.MinHits, settings.SessionsEnabled));
         Assert.Equal(["docs/**/*.md"], settings.DocGlobs, StringComparer.Ordinal);
         Assert.Equal(["split-panes"], settings.Repos!.Select(r => r.Value), StringComparer.Ordinal);   // why: set above
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("""{"maxBudget":6000,"minHits":1}""")]
+    [InlineData("""{"maxBudget":10}""")]
+    [InlineData("""{"maxBudget":2000000}""")]
+    public void A_retired_maxBudget_in_an_old_profile_still_loads_and_is_ignored(string json)
+    {
+        var settings = Read(json);
+
+        Assert.True(settings.IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -85,7 +96,6 @@ public sealed class SettingsReaderTests
     [InlineData("""{"scrub":{"extraPatterns":[{"id":"a","pattern":"b","flags":"i"}]}}""", "context:")]
     [InlineData("""{"deadline":"soon"}""", "context.deadline:")]
     [InlineData("""{"deadline":"301s"}""", "context.deadline:")]
-    [InlineData("""{"maxBudget":10}""", "context.maxBudget:")]
     [InlineData("""{"minHits":99}""", "context.minHits:")]
     [InlineData("""{"docs":{"globs":["../etc/*"]}}""", "context.docs.globs:")]
     [InlineData("""{"docs":{"globs":[]}}""", "context.docs.globs:")]

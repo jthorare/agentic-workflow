@@ -104,16 +104,15 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
         }
     }
 
-    /// <summary>Edges are kept only when both ends are found nodes or anchors, once per ends and type; call after every node is added.</summary>
+    /// <summary>Candidate edges, once per ends and type. Which of them the lens serves is decided where it is written (<see cref="Entry"/>), against the nodes it holds then, so no call order lets a dangling edge out.</summary>
     internal void Edges(IEnumerable<JsonNode> edges)
     {
-        var ends = _nodes.Select(static n => ScopeJson.Str(n, "key")).OfType<string>().Concat(anchors).ToHashSet(StringComparer.Ordinal);
         foreach (var edge in edges)
         {
             var from = ScopeJson.Str(edge, "from") ?? string.Empty;
             var to = ScopeJson.Str(edge, "to") ?? string.Empty;
             var type = ScopeJson.Str(edge, "type") ?? "relates";
-            if (ends.Contains(from) && ends.Contains(to) && !_edges.Exists(e => Same(e, from, to, type)))
+            if (!_edges.Exists(e => Same(e, from, to, type)))
             {
                 _edges.Add(new JsonObject
                 {
@@ -127,6 +126,14 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
         }
     }
 
+    // The edges whose two ends are found nodes or anchors, and how many candidates ended elsewhere (out of scope by definition, not a cap).
+    private (List<JsonObject> Kept, int Dropped) InScope()
+    {
+        var ends = _nodes.Select(static n => ScopeJson.Str(n, "key")).OfType<string>().Concat(anchors).ToHashSet(StringComparer.Ordinal);
+        var kept = _edges.Where(e => ends.Contains(ScopeJson.Str(e, "from") ?? string.Empty) && ends.Contains(ScopeJson.Str(e, "to") ?? string.Empty)).ToList();
+        return (kept, _edges.Count - kept.Count);
+    }
+
     private static bool Same(JsonObject edge, string from, string to, string type) =>
         string.Equals(ScopeJson.Str(edge, "from"), from, StringComparison.Ordinal) && string.Equals(ScopeJson.Str(edge, "to"), to, StringComparison.Ordinal) && string.Equals(ScopeJson.Str(edge, "type"), type, StringComparison.Ordinal);
 
@@ -135,6 +142,7 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
     /// <summary>The lens's entry in the lenses fact.</summary>
     internal JsonObject Entry(string mapVersion, int depth, IReadOnlyList<string> hops)
     {
+        var (edges, _) = InScope();
         return new JsonObject
         {
             ["anchors"] = ScopeJson.ToArray(anchors),
@@ -143,7 +151,7 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
             ["mapVersion"] = mapVersion,
             ["foundCount"] = Total,
             ["nodes"] = new JsonArray([.. _nodes.Select(static n => n.DeepClone())]),
-            ["edges"] = new JsonArray([.. _edges.Select(static e => e.DeepClone())]),
+            ["edges"] = new JsonArray([.. edges.Select(static e => e.DeepClone())]),
             ["items"] = new JsonArray([.. _items.Select(static i => i.DeepClone())]),
             ["truncated"] = new JsonArray(),
         };
@@ -152,11 +160,19 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
     /// <summary>Records the asked anchors the view couldn't find: they leave the row's searched anchors and each is an anchor-missing limit.</summary>
     internal void Missing(IEnumerable<string> missing) => _missing.UnionWith(missing.Where(m => anchors.Contains(m, StringComparer.Ordinal)));
 
+    // The searched sources, and an 'edges' source when the lens left out edges ending outside its nodes and anchors (the edges-out-of-scope limit).
+    private List<JsonObject> RowSources()
+    {
+        var (_, dropped) = InScope();
+        return dropped > 0 ? [.. _sources, new JsonObject { ["id"] = "edges", ["state"] = "unavailable", ["reason"] = "edges-out-of-scope" }] : _sources;
+    }
+
     /// <summary>The lens's row in the coverage fact: its state follows what was found and what was recorded as a limit.</summary>
     internal JsonObject Row(string mapVersion, int depth, IReadOnlyList<string> hops)
     {
         var limits = new JsonArray();
-        foreach (var source in _sources)
+        var sources = RowSources();
+        foreach (var source in sources)
         {
             if (ScopeFixLines.Match(Lens, ScopeJson.Str(source, "state"), ScopeJson.Str(source, "reason")) is { } limit
                 && !ScopeJson.Items(limits).Any(l => string.Equals(ScopeJson.Str(l, "why"), limit.Name, StringComparison.Ordinal)))
@@ -177,7 +193,7 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
             ["searched"] = new JsonObject
             {
                 ["anchors"] = ScopeJson.ToArray(anchors.Where(a => !_missing.Contains(a))),
-                ["sources"] = new JsonArray([.. _sources.Select(static s => s.DeepClone())]),
+                ["sources"] = new JsonArray([.. sources.Select(static s => s.DeepClone())]),
                 ["mapVersion"] = mapVersion,
                 ["depth"] = depth,
                 ["hops"] = ScopeJson.ToArray(hops),
@@ -192,12 +208,14 @@ internal sealed class LensBuilder(string lens, IReadOnlyList<string> anchors)
         };
     }
 
-    private static string Not(RecordedLimit limit, JsonObject source) => limit.Name switch
+    private string Not(RecordedLimit limit, JsonObject source) => limit.Name switch
     {
+        "edges-out-of-scope" => string.Create(CultureInfo.InvariantCulture, $"{InScope().Dropped} edges outside the lens"),
         "index-not-built" => "callers and callees",
         "history-unlinked" => "tickets linked to the map",
         "commit-not-held" => "the commit's files",
         "not-synced" => "records not yet synced",
+        "catching-up" => "files changed since the index was built",
         _ => $"the {ScopeJson.Str(source, "id") ?? "source"} source",
     };
 }

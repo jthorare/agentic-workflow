@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
@@ -41,6 +42,8 @@ public sealed class ContextLensesInputTests
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public ValueTask<Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

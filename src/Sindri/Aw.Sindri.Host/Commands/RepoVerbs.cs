@@ -7,7 +7,7 @@ using Aw.Sindri.Features.OnboardRepo;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri repo add &lt;path&gt; [--name &lt;name&gt;] [--detach] [--json]' and 'sindri repo onboard [&lt;path&gt;] [--detach] [--json]' (setup-once spec §7.4; 'sindri-app repo add …' passes it through): the terminal form of the app's Add repo, which calls the same route. A relative path is made
+/// 'sindri repo add &lt;path&gt; [--name &lt;name&gt;] [--detach] [--json]' and 'sindri repo onboard [&lt;path&gt;] [--detach] [--json]' (setup-once spec §7.4; 'sindri repo add …' passes it through): the terminal form of the app's Add repo, which calls the same route. A relative path is made
 /// absolute from the working directory (the route takes only absolute paths); 'onboard' takes the working directory when no path is given and never approves the profile. It starts the AddRepo job and follows it as 'context map build' does (Ctrl-C cancels the job, a second Ctrl-C leaves);
 /// --detach prints the job id and returns. Exit codes are the follower's: 0 added, 1 failed, cancelled, left or Sindri not running, 2 refused or invalid (SND-SETUP-001 and 002 are refusals).
 /// </summary>

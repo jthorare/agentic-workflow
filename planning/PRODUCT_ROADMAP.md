@@ -125,7 +125,7 @@ Extend into a broader multi-agent development platform.
 
 The toolkit supports Claude Code, Codex, and Cursor as equal hosts through a provider adapter layer (`providers/<name>/`, capability vocabulary in `skills/_shared/capabilities.md`, see `planning/PROVIDERS.md`). Remaining work:
 
-- [x] **Claude Code, Codex, Cursor** — Skills, hooks, MCP registration, repo instructions, judge, and scorer all have per-provider adapters.
+- [x] **Claude Code, Codex, Cursor** — Skills, hooks, MCP registration, repo instructions, and judge all have per-provider adapters.
 - **Gemini CLI** — If/when Google ships MCP support, add configuration templates.
 
 **2. Skill Marketplace Integration**

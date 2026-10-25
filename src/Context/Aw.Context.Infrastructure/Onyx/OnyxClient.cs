@@ -16,7 +16,7 @@ namespace Aw.Context.Infrastructure.Onyx;
 /// calling thread and is awaited under the call's deadline and the caller's cancellation, so a locked keychain or an op
 /// sign-in makes the call 010 on time (the tool itself ends at its own timeout in the background). The key goes only into
 /// the Authorization header, never into an error or a log line. Failures map to the catalogue: no usable key 002, no
-/// answer in time or a 5xx 010, a 403 050, a 404 on a document route 052, any other status or shape 051.
+/// answer in time or a 5xx 010, a 401 or 403 050, a 404 on a document route 052, any other status or shape 051.
 /// </summary>
 /// <param name="settings">The checked settings.</param>
 /// <param name="parts">The client, environment, clock and log every onyx source shares.</param>
@@ -108,12 +108,15 @@ internal sealed partial class OnyxClient(OnyxSettings settings, OnyxSourceParts 
     private Error StatusError(OnyxCall call, HttpStatusCode status)
     {
         var answered = string.Create(CultureInfo.InvariantCulture, $"answered HTTP {(int)status} on {call.Route}");
-        if (status == HttpStatusCode.Forbidden)
+        if (status is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
         {
+            var why = call.Route == "/api/me"
+                ? "the key isn't accepted (missing, wrong, expired or revoked; /api/me needs only a valid key)"
+                : "the key is missing, wrong, or lacks the admin role POST /api/admin/search needs";
             return ContextErrors.OnyxKeyRefused.With(
-                $"Onyx at {Settings.Address} refused the key on {call.Method} {call.Route} (HTTP 403): it is missing, wrong, or lacks the admin "
-                + $"role POST /api/admin/search needs. Create an admin key for a dedicated service account, store it behind {TokenKey} "
-                + "and approve the profile again (spec §8.8).");
+                $"Onyx at {Settings.Address} refused the key on {call.Method} {call.Route} (HTTP {((int)status).ToString(CultureInfo.InvariantCulture)}): {why}. Fix: create an admin key for a dedicated account "
+                + $"(`sindri onyx up` makes one), store it behind {TokenKey} (env:, file:, keychain: or op:), then approve the profile again (`sindri profile approve`). "
+                + $"If this isn't your Onyx, another service may answer on {Settings.Address}: check `curl {Settings.Url}api/version` shows a backend_version (spec §8.8).");
         }
 
         if (status == HttpStatusCode.NotFound && call.Route.StartsWith("/api/document/", StringComparison.Ordinal))

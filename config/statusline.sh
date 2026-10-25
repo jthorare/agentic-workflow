@@ -74,10 +74,10 @@ if ! valid_cols "$COLS"; then COLS_SRC=COLUMNS; COLS=${COLUMNS:-}; fi
 if ! valid_cols "$COLS"; then COLS_SRC=default; COLS=200; fi
 [ -n "${AW_STATUSLINE_DEBUG:-}" ] && echo "statusline width: $COLS (source: $COLS_SRC)" >&2
 
-# --- Live column (scorer live snapshot + judge health) ---
-# `1289 calls · 351 >200k · judge ✓ 12`. The statusline runs often and must never wait
-# on scorer or judge, so it only READS a per-session cache and, when that is older than
-# the TTL, starts a detached background refresh and prints the cached value right away.
+# --- Live column (judge health) ---
+# `judge ✓`. The statusline runs often and must never wait on judge, so it only READS a
+# cache and, when that is older than the TTL, starts a detached background refresh and
+# prints the cached value right away.
 LIVE_W=36                                    # visible width of the Live column
 LIVE_TTL="${AW_STATUSLINE_LIVE_TTL:-15}"     # seconds before the cache is refreshed
 STATE_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}"
@@ -120,7 +120,7 @@ find_bin() {
 
 # Health of the judge as `<ok|degraded|down> <failures24h>`. Shells out to `judge health`
 # rather than reading decisions.sqlite directly, so every judge-health consumer (this, the
-# SessionStart hook, the scorer report) agrees by construction. Only the background refresh
+# SessionStart hook) agrees by construction. Only the background refresh
 # calls this; the statusline itself reads the cached result.
 judge_health() {
   local bin out status failures
@@ -145,73 +145,49 @@ judge_segment() {
   echo "judge $glyph${2:+ $2}"
 }
 
-# Background refresh of the cache file $1 for session $2 (cwd $3). Never prints; atomic write.
-live_refresh() {
-  local cache="$1" sid="$2" cwd="$3" lock="$1.lock" bin snap="" hs hf tmp now
+# Background refresh of the judge-health cache file $1. Never prints; atomic write. The same
+# lock and negative caching as live_refresh: a failing judge is not re-run on every render.
+judge_refresh() {
+  local cache="$1" lock="$1.lock" hs hf tmp now
   mkdir -p "$(dirname "$cache")" 2>/dev/null || return 0
-  # One refresher at a time; a lock older than a minute belongs to a dead refresher.
   find "$lock" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null
   mkdir "$lock" 2>/dev/null || return 0
-  bin="$(find_bin scorer)" && snap="$("$bin" live --session "$sid" ${cwd:+--cwd "$cwd"} --json 2>/dev/null)"
   tmp="$cache.$$.tmp"
   now="$(date +%s)"
-  if [ -n "$snap" ] && echo "$snap" | jq -e '.v == 1 and (.usage.calls | type == "number")' >/dev/null 2>&1; then
-    read -r hs hf <<<"$(judge_health)"
-    case "$hf" in ''|*[!0-9]*) hf=0 ;; esac
-    echo "$snap" | jq --argjson at "$now" --arg hs "$hs" --argjson hf "$hf" '{
-         at: $at,
-         calls: .usage.calls,
-         over200k: .usage.callsOver200k,
-         judgeCalls: (if .judge.state == "ok" then .judge.calls else null end),
-         judge: $hs,
-         failures: $hf }' >"$tmp" 2>/dev/null
-  fi
-  # Failure: keep any earlier numbers but stamp a new `at`, so the next refresh waits a full TTL.
-  if [ ! -s "$tmp" ]; then
-    { [ -f "$cache" ] && jq --argjson at "$now" '.at = $at' "$cache" 2>/dev/null; } >"$tmp" 2>/dev/null
-    [ -s "$tmp" ] || printf '{"at":%s}\n' "$now" >"$tmp"
-  fi
+  read -r hs hf <<<"$(judge_health)"
+  case "$hf" in ''|*[!0-9]*) hf=0 ;; esac
+  jq -n --argjson at "$now" --arg hs "$hs" --argjson hf "$hf" '{at: $at, judge: $hs, failures: $hf}' >"$tmp" 2>/dev/null
+  [ -s "$tmp" ] || printf '{"at":%s}\n' "$now" >"$tmp"
   mv -f "$tmp" "$cache" 2>/dev/null
   rmdir "$lock" 2>/dev/null
   return 0
 }
 
-# Prints the Live column text for session $1 (cwd $2); `--` whenever there is nothing to show.
-live_text() {
-  local sid="$1" cwd="$2" cache now age text
-  # The id becomes part of a path: accept only plain file-name characters.
-  [[ "$sid" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--"; return; }
-  find_bin scorer >/dev/null || { echo "--"; return; }
-  cache="$STATE_DIR/scorer/live/$sid.statusline.json"
-  L_AT=""; L_CALLS=""; L_OVER=""; L_JCALLS=""; L_JUDGE=""
+# The Live column: the judge segment, read from a cached `judge health` (refreshed in the
+# background, so a render never waits on it); `--` when there is no
+# judge binary or nothing cached yet.
+judge_only_text() {
+  local cache="$STATE_DIR/statusline/judge-health.json" at="" hs="" now age
+  find_bin judge >/dev/null || { echo "--"; return; }
   if [ -f "$cache" ]; then
     eval "$(jq -r '
-      "L_AT=\(.at // "" | tostring | @sh)",
-      "L_CALLS=\(.calls // "" | tostring | @sh)",
-      "L_OVER=\(.over200k // "" | tostring | @sh)",
-      "L_JCALLS=\(.judgeCalls // "" | tostring | @sh)",
-      "L_JUDGE=\(.judge // "" | tostring | @sh)"' "$cache" 2>/dev/null)"
+      "at=\(.at // "" | tostring | @sh)",
+      "hs=\(.judge // "" | tostring | @sh)"' "$cache" 2>/dev/null)"
   fi
   now=$(date +%s)
-  case "$L_AT" in ''|*[!0-9]*) age=999999 ;; *) age=$((now - L_AT)) ;; esac
+  case "$at" in ''|*[!0-9]*) age=999999 ;; *) age=$((now - at)) ;; esac
   if [ "$age" -ge "$LIVE_TTL" ] 2>/dev/null; then
-    # Detached with no inherited stdio, so the host does not wait on it either.
-    ( live_refresh "$cache" "$sid" "$cwd" </dev/null >/dev/null 2>&1 & )
+    ( judge_refresh "$cache" </dev/null >/dev/null 2>&1 & )
   fi
-  case "$L_CALLS$L_OVER" in ''|*[!0-9]*) echo "--"; return ;; esac
-  # Too wide: drop the judge call count, then shorten `calls` to `c`, and only then cut
-  # (on a character boundary). Widths are counted in characters, not bytes.
-  text="$L_CALLS calls · $L_OVER >200k · $(judge_segment "$L_JUDGE" "$L_JCALLS")"
-  if [ "$(vwidth "$text")" -gt "$LIVE_W" ]; then
-    text="$L_CALLS calls · $L_OVER >200k · $(judge_segment "$L_JUDGE" "")"
-  fi
-  if [ "$(vwidth "$text")" -gt "$LIVE_W" ]; then
-    text="$L_CALLS c · $L_OVER >200k · $(judge_segment "$L_JUDGE" "")"
-  fi
-  if [ "$(vwidth "$text")" -gt "$LIVE_W" ]; then
-    text="$(vcut "$text" "$((LIVE_W - 1))")…"
-  fi
-  echo "$text"
+  case "$hs" in ok|degraded|down) judge_segment "$hs" "" ;; *) echo "--" ;; esac
+}
+
+# Prints the Live column text for session $1; `--` whenever there is nothing to show.
+live_text() {
+  local sid="$1"
+  # The id becomes part of a path elsewhere: accept only plain file-name characters.
+  [[ "$sid" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--"; return; }
+  judge_only_text
 }
 
 # Tier selection: Live (36 wide) outranks Lines, so it shows from 141 columns up.

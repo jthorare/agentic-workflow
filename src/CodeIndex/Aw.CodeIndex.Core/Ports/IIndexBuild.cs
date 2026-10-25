@@ -66,6 +66,11 @@ public interface IIndexBuild : IAsyncDisposable
     /// <returns>Success.</returns>
     public ValueTask<Result<Unit>> ReplaceGraph(GraphSnapshot graph, CancellationToken cancellationToken);
 
+    /// <summary>The paths of files holding a symbol that has neither a stored body nor a vector: nothing is left to embed it from.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The paths.</returns>
+    public ValueTask<Result<IReadOnlySet<string>>> FilesWithoutBodiesOrVectors(CancellationToken cancellationToken);
+
     /// <summary>The symbols still to embed, with their stored text (class-like symbols included).</summary>
     /// <param name="limit">At most this many.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

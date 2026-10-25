@@ -73,10 +73,10 @@ public sealed class HostProbesTests
     {
         var probed = new List<int>();
 
-        var facts = HostProbes.Ports(3000, 3001, 3010, port => { probed.Add(port); return true; });
+        var facts = HostProbes.Ports(3189, 3190, 3199, port => { probed.Add(port); return true; });
 
-        Assert.Equal([3000], probed);
-        Assert.Equal(new PortFacts(3000, PreferredFree: true, FirstFreeFallback: null), facts);
+        Assert.Equal([3189], probed);
+        Assert.Equal(new PortFacts(3189, PreferredFree: true, FirstFreeFallback: null), facts);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -84,10 +84,10 @@ public sealed class HostProbesTests
     {
         var probed = new List<int>();
 
-        var facts = HostProbes.Ports(3000, 3001, 3010, port => { probed.Add(port); return port == 3003; });
+        var facts = HostProbes.Ports(3189, 3190, 3199, port => { probed.Add(port); return port == 3192; });
 
-        Assert.Equal([3000, 3001, 3002, 3003], probed);
-        Assert.Equal(new PortFacts(3000, PreferredFree: false, FirstFreeFallback: 3003), facts);
+        Assert.Equal([3189, 3190, 3191, 3192], probed);
+        Assert.Equal(new PortFacts(3189, PreferredFree: false, FirstFreeFallback: 3192), facts);
     }
 
     [Fact, Trait("Lane", "integration")]

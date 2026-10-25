@@ -61,8 +61,8 @@ public sealed class QueryContextTests
 
         var result = await Engines.Advancing(clock, () => engine.Query(new ContextQuery("orientation"), Engines.Human("""{"deadline":"2s"}"""), TestContext.Current.CancellationToken).AsTask());
 
-        Assert.Equal("onyx", result.Value.Degraded.Single().Source.Value);
-        Assert.Contains("deadline", result.Value.Degraded.Single().Message, StringComparison.Ordinal);
+        var onyx = Assert.Single(result.Value.Degraded, d => d.Source.Value == "onyx");   // why: the other source's records may also be reported as not read in time
+        Assert.Contains("deadline", onyx.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -130,15 +130,14 @@ public sealed class QueryContextTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Items_past_the_budget_are_listed_as_references_only()
+    public async Task A_small_budget_cuts_nothing_because_the_answer_holds_every_ranked_item()
     {
-        var result = await Engines.Over(FakeContextSource.FixtureDocs()).Query(new ContextQuery("layout orientation", Budget: 60), Engines.Human(), CancellationToken.None);
+        var whole = await Engines.Over(FakeContextSource.FixtureDocs()).Query(new ContextQuery("layout orientation"), Engines.Human(), CancellationToken.None);
+        var small = await Engines.Over(FakeContextSource.FixtureDocs()).Query(new ContextQuery("layout orientation", Budget: 60), Engines.Human(), CancellationToken.None);
 
-        var records = result.Value.Sections.Single();
-        Assert.True(result.Value.Truncated);
-        Assert.Equal(2, records.Items.Count + records.More.Count);
-        Assert.NotEmpty(records.More);
-        Assert.True(result.Value.Budget.Used <= 60);
+        var records = small.Value.Sections.Single();
+        Assert.Equal(2, records.Items.Count);
+        Assert.Equal(whole.Value.Sections.Single().Items.Select(i => i.Title), records.Items.Select(i => i.Title), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -274,6 +273,19 @@ public sealed class QueryContextTests
 
         Assert.Equal("repo-docs", result.Value.Degraded.Single().Source.Value);
         Assert.Empty(result.Value.Cites);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Records_found_but_gone_when_read_are_degraded_not_an_empty_answer()
+    {
+        var docs = FakeContextSource.FixtureDocs();
+        docs.FetchFailure = ContextErrors.OnyxDocumentNotFound.With("no such document");
+
+        var result = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
+
+        var degraded = result.Value.Degraded.Single();
+        Assert.Equal(("repo-docs", "SND-CONTEXT-010"), (degraded.Source.Value, degraded.Code));
+        Assert.Contains("gone", degraded.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

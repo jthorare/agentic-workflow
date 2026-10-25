@@ -132,7 +132,7 @@ public sealed class CodeIndexDoctorTests
         var rig = new CodeIndexJobsRig();
         await rig.Approve(TestContext.Current.CancellationToken);
         var fresh = new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo"), new RepoEntry("other", "/work/other"), new RepoEntry("fresh", "/work/fresh")]);
-        rig.Harness.Profiles.Live = new LoadedProfile(fresh, Aw.Sindri.Core.Ids.ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
+        rig.Harness.Profiles.Live = new LoadedProfile(fresh, Core.Ids.ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
         _ = rig.Index.WithIndex(CodeIndexJobsRig.Fresh, CodeIndexJobsRig.Old);
         var doctor = new CodeIndexDoctor(rig.Index, rig.Heads, rig.Jobs, new FakeEmbedder(), new FakePins(), rig.Harness.Clock, rig.Harness.Profiles);
         var approved = (await rig.Harness.Profiles.Latest(TestContext.Current.CancellationToken)).Value;

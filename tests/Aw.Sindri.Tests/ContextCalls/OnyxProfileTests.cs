@@ -22,7 +22,7 @@ public sealed class OnyxProfileTests
     [Fact, Trait("Lane", "unit")]
     public async Task Validate_refuses_an_onyx_key_written_into_the_profile_without_repeating_it()
     {
-        _h.Profiles.Live = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"on_live-key-0123","version":"v4.9.0"}}}""");
+        _h.Profiles.Live = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""");
         var service = new ValidateProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, FakeContextEngine.Instance);
 
         var validated = await service.Handle(new ValidateProfileRequest(), Token);
@@ -35,7 +35,7 @@ public sealed class OnyxProfileTests
     [Fact, Trait("Lane", "unit")]
     public async Task Validate_reports_an_onyx_url_off_loopback_with_its_key_path()
     {
-        _h.Profiles.Live = With("""{"sources":{"onyx":{"url":"http://onyx.example:3000","token":"env:ONYX_KEY","version":"v4.9.0"}}}""");
+        _h.Profiles.Live = With("""{"sources":{"onyx":{"url":"http://onyx.example:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""");
         var service = new ValidateProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, FakeContextEngine.Instance);
 
         var validated = await service.Handle(new ValidateProfileRequest(), Token);
@@ -66,7 +66,7 @@ public sealed class OnyxProfileTests
     [Fact, Trait("Lane", "unit")]
     public async Task Doctor_warns_when_onyx_is_named_but_no_repo_is_mapped_so_no_source_runs()
     {
-        var approved = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:ONYX_KEY","version":"v4.9.0"}}}""");
+        var approved = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""");
 
         var check = await new OnyxDoctor(FakeContextEngine.Instance, _noSecrets).Check(approved, Token);
 
@@ -76,7 +76,7 @@ public sealed class OnyxProfileTests
     [Fact, Trait("Lane", "unit")]
     public async Task Doctor_fails_with_the_pointers_SND_SECRET_reason_before_any_call_to_onyx()
     {
-        var approved = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"env:ONYX_KEY","version":"v4.9.0"}}}""", [new RepoEntry("split-panes", "/repos/split-panes")]);
+        var approved = With("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""", [new RepoEntry("split-panes", "/repos/split-panes")]);
 
         var check = await new OnyxDoctor(FakeContextEngine.Instance, _noSecrets).Check(approved, Token);
 

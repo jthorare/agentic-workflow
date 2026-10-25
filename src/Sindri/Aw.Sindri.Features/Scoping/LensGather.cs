@@ -149,7 +149,7 @@ internal static class LensGather
         }
     }
 
-    /// <summary>A coverage source: id, state, and the reason (spelled with hyphens, as the Recorded limits table has it), code and sync pair when the view had them.</summary>
+    /// <summary>A coverage source: id, state, and the reason (spelled with hyphens, as the Recorded limits table has it), code, sync pair and catching-up commits when the view had them.</summary>
     internal static JsonObject Source(string id, JsonNode? from)
     {
         var source = new JsonObject { ["id"] = id, ["state"] = ScopeJson.Str(from, "state") ?? "ok" };
@@ -161,6 +161,11 @@ internal static class LensGather
         if (ScopeJson.Str(from, "code") is { Length: > 0 } code)
         {
             source["code"] = code;
+        }
+
+        if (ScopeJson.Obj(from, "catchingUp") is { } catching)
+        {
+            source["catchingUp"] = catching.DeepClone();
         }
 
         if (ScopeJson.Obj(from, "sync") is { } sync)

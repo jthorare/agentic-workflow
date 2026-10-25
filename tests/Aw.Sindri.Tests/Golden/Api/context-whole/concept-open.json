@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "v1",
+  "draft": false,
+  "asOf": "2026-01-01T00:00:00.0000000Z",
+  "repo": "aw-split-panes",
+  "detail": "nodes",
+  "counts": {
+    "nodes": 11,
+    "edges": 12,
+    "byKind": {
+      "feature": 4,
+      "surface": 1,
+      "action": 1,
+      "thing": 0,
+      "flow": 0,
+      "decision": 0,
+      "record": 0,
+      "code": 3,
+      "concept": 2
+    }
+  },
+  "areas": [
+    {
+      "key": "feature:invoices",
+      "label": "Invoices",
+      "trust": "trusted",
+      "members": 2,
+      "byKind": {
+        "feature": 1,
+        "code": 1
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:lone",
+      "label": "Loose end",
+      "trust": "trusted",
+      "members": 1,
+      "byKind": {
+        "feature": 1
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:shifts",
+      "label": "Shifts",
+      "trust": "trusted",
+      "members": 5,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "code": 2
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:swaps",
+      "label": "Swaps",
+      "trust": "trusted",
+      "members": 1,
+      "byKind": {
+        "feature": 1
+      },
+      "unassigned": false
+    }
+  ],
+  "areaEdges": [
+    {
+      "from": "feature:invoices",
+      "to": "feature:shifts",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:lone",
+      "to": "feature:shifts",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:swaps",
+      "to": "feature:invoices",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:shifts",
+      "to": "feature:swaps",
+      "type": "implements",
+      "count": 1,
+      "confirmed": 0
+    }
+  ],
+  "nodes": [
+    {
+      "key": "concept:scheduling",
+      "label": "Self scheduling",
+      "kind": "concept",
+      "area": "area:concepts",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "feature:shifts",
+      "label": "Shifts",
+      "kind": "feature",
+      "area": "feature:shifts",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "surface:screen/shifts",
+      "label": "Shifts screen",
+      "kind": "surface",
+      "area": "feature:shifts",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "action:pick",
+      "label": "Pick a shift",
+      "kind": "action",
+      "area": "feature:shifts",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "code:src/shared.ts",
+      "label": "shared.ts",
+      "kind": "code",
+      "area": "feature:shifts",
+      "alsoIn": [
+        "feature:swaps"
+      ],
+      "trust": "trusted",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "code:src/shifts.ts",
+      "label": "shifts.ts",
+      "kind": "code",
+      "area": "feature:shifts",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "feature:swaps",
+      "label": "Swaps",
+      "kind": "feature",
+      "area": "feature:swaps",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    }
+  ],
+  "edges": [
+    {
+      "from": "action:pick",
+      "to": "surface:screen/shifts",
+      "type": "on",
+      "link": "edge:7144dc4c303eaef0",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "code:src/shared.ts",
+      "to": "feature:shifts",
+      "type": "implements",
+      "link": "edge:ce4ef92e3481a23a",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false
+    },
+    {
+      "from": "code:src/shared.ts",
+      "to": "feature:swaps",
+      "type": "implements",
+      "link": "edge:283909cde3f52d0a",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false
+    },
+    {
+      "from": "code:src/shifts.ts",
+      "to": "feature:shifts",
+      "type": "implements",
+      "link": "edge:eda485d74b0d377e",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false
+    },
+    {
+      "from": "feature:shifts",
+      "to": "concept:scheduling",
+      "type": "belongs-to",
+      "link": "edge:004659721a1a65b7",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "feature:swaps",
+      "to": "concept:scheduling",
+      "type": "belongs-to",
+      "link": "edge:c444cc204ab63062",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "surface:screen/shifts",
+      "to": "feature:shifts",
+      "type": "part-of",
+      "link": "edge:ad3bb71642d1fcce",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    }
+  ],
+  "truncated": false,
+  "repos": [
+    {
+      "name": "aw-split-panes",
+      "nodeCount": 9
+    },
+    {
+      "name": "elsewhere",
+      "nodeCount": 2
+    }
+  ]
+}

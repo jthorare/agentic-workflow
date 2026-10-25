@@ -9,5 +9,5 @@
 - **Shut down finished teammates.** A teammate that's done and isn't
   `keep_alive` should be told to stop, not left idling and pinging.
 
-The scorer's `## Wakes` section (`idle_notification` count) is how you'll see
+The `idle_notification` count in a session's transcript is how you'll see
 whether this discipline is slipping.

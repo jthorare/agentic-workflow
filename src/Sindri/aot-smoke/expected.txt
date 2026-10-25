@@ -66,7 +66,7 @@ Approved HASH
 {"running":true,"apiVersion":1}
 ## /sindri/mcp initialize, then tools/list (stateless)
 "sindri"
-["context_query","context_sources","context_lenses","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_request"]
+["context_query","context_sources","context_lenses","context_concepts","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_request"]
 ## /sindri/mcp sindri_queue, sindri_request (files as session:mcp), sindri_item (not an id), sindri_decide (no such tool)
 {"isError":null,"groups":["waitingOnYou","withYou","running","queued"]}
 {"isError":null,"request":"REQ-ID"}

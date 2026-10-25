@@ -46,7 +46,7 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        Services(profile.Services) ?? Workflow(profile) ?? Globs(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup);
+        Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup);
 
     /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>
     private static Error? SetupKeys(SetupSettings? setup) =>
@@ -112,43 +112,7 @@ public static class ProfileRules
         return null;
     }
 
-    /// <summary>The longest glob 'index.denyPaths' takes.</summary>
-    private const int MaxGlob = 300;
-
-    /// <summary>Checks every 'index.denyPaths' glob (the profile's and each repo's): relative to the repo, '/'-separated, no '..'.</summary>
-    private static Error? Globs(SindriProfile profile)
-    {
-        var lists = new List<(string Path, IReadOnlyList<string> Globs)>();
-        if (profile.Index?.DenyPaths is { } shared)
-        {
-            lists.Add(("index.denyPaths", shared));
-        }
-
-        lists.AddRange((profile.Repos ?? []).Where(r => r.Index?.DenyPaths is not null).Select(r => ($"repos.{r.Name}.index.denyPaths", r.Index!.DenyPaths!)));   // why: the filter keeps repos with a list
-        foreach (var (path, globs) in lists)
-        {
-            for (var i = 0; i < globs.Count; i++)
-            {
-                if (GlobProblem(globs[i]) is { } problem)
-                {
-                    return Invalid(string.Create(CultureInfo.InvariantCulture, $"{path}[{i}]"), problem);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    internal static string? GlobProblem(string glob) => true switch
-    {
-        _ when string.IsNullOrWhiteSpace(glob) => "must be a non-empty glob",
-        _ when glob.Length > MaxGlob => string.Create(CultureInfo.InvariantCulture, $"is over {MaxGlob} characters"),
-        _ when glob.StartsWith('/') || glob.Contains(':', StringComparison.Ordinal) => "must be relative to the repo root (no leading '/' and no drive or scheme)",
-        _ when glob.Contains('\\', StringComparison.Ordinal) => "must use '/' separators",
-        _ when glob.Split('/').Contains("..") => "must not contain '..'",
-        _ when glob.Contains('\0', StringComparison.Ordinal) => "must not contain a NUL character",
-        _ => null,
-    };
+    internal static string? GlobProblem(string glob) => ProfileGlobRules.GlobProblem(glob);
 
     /// <summary>
     /// Whether the profile with hash <paramref name="live"/> is approved: it is the saved approval and the latest recorded

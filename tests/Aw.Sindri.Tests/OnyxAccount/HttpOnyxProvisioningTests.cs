@@ -53,7 +53,7 @@ public sealed class HttpOnyxProvisioningTests
         => new() { Answer = sent => sent.PathAndQuery == path ? (status, body) : (HttpStatusCode.OK, "{}") };
 
     private static async Task<IOnyxSession> Session(Script script)
-        => (await Adapter(script).SignIn(3000, "a@b.c", "x", Token)).Value;
+        => (await Adapter(script).SignIn(3189, "a@b.c", "x", Token)).Value;
 
     [Theory, Trait("Lane", "integration")]
     [InlineData("POST", "/api/auth/login", true)]
@@ -93,7 +93,7 @@ public sealed class HttpOnyxProvisioningTests
     {
         var script = new Script();
 
-        var session = (await Adapter(script).SignIn(3000, "owner@example.net", "pw value", Token)).Value;
+        var session = (await Adapter(script).SignIn(3189, "owner@example.net", "pw value", Token)).Value;
         await session.DisposeAsync();
 
         var login = script.Requests[0];
@@ -112,7 +112,7 @@ public sealed class HttpOnyxProvisioningTests
             Hang = static sent => sent.PathAndQuery == "/api/auth/logout",
         };
         var adapter = new HttpOnyxProvisioning(() => script, TimeSpan.FromMilliseconds(100));
-        var session = (await adapter.SignIn(3000, "a@b.c", "x", Token)).Value;
+        var session = (await adapter.SignIn(3189, "a@b.c", "x", Token)).Value;
         var token = await session.CreateToken("sindri-onyx", Token);
 
         await session.DisposeAsync();   // must not throw
@@ -125,7 +125,7 @@ public sealed class HttpOnyxProvisioningTests
     {
         var script = new Script { Answer = static _ => (HttpStatusCode.BadRequest, "{\"detail\":\"LOGIN_BAD_CREDENTIALS\"}") };
 
-        var result = await Adapter(script).SignIn(3000, "owner@example.net", "the-password-text", Token);
+        var result = await Adapter(script).SignIn(3189, "owner@example.net", "the-password-text", Token);
 
         Assert.Equal(SindriErrors.OnyxKeyFailed.Code, result.Error.Code);
         Assert.DoesNotContain("the-password-text", result.Error.Message, StringComparison.Ordinal);
@@ -388,11 +388,11 @@ public sealed class HttpOnyxProvisioningTests
         var script = new Script { Answer = sent => accounts.TryGetValue(sent.Authorization ?? string.Empty, out var body) ? (HttpStatusCode.OK, body) : (HttpStatusCode.Unauthorized, "{}") };
         var adapter = Adapter(script);
 
-        Assert.True((await adapter.TokenIsAdmin(3000, "good", OnyxAccounts.DedicatedEmail, Token)).Value);
-        Assert.False((await adapter.TokenIsAdmin(3000, "basic", OnyxAccounts.DedicatedEmail, Token)).Value);
-        Assert.False((await adapter.TokenIsAdmin(3000, "human", OnyxAccounts.DedicatedEmail, Token)).Value);
-        Assert.False((await adapter.TokenIsAdmin(3000, "noemail", OnyxAccounts.DedicatedEmail, Token)).Value);
-        Assert.False((await adapter.TokenIsAdmin(3000, "stranger", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Assert.True((await adapter.TokenIsAdmin(3189, "good", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Assert.False((await adapter.TokenIsAdmin(3189, "basic", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Assert.False((await adapter.TokenIsAdmin(3189, "human", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Assert.False((await adapter.TokenIsAdmin(3189, "noemail", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Assert.False((await adapter.TokenIsAdmin(3189, "stranger", OnyxAccounts.DedicatedEmail, Token)).Value);
         Assert.All(script.Requests, static r => Assert.Equal("/api/me", r.PathAndQuery));
     }
 
@@ -402,7 +402,7 @@ public sealed class HttpOnyxProvisioningTests
         var script = new Script { Hang = static sent => sent.PathAndQuery == "/api/me" };
         var adapter = new HttpOnyxProvisioning(() => script, requestTimeout: TimeSpan.FromMilliseconds(100));
 
-        var result = await adapter.TokenIsAdmin(3000, "k", OnyxAccounts.DedicatedEmail, Token);
+        var result = await adapter.TokenIsAdmin(3189, "k", OnyxAccounts.DedicatedEmail, Token);
 
         Assert.Equal(SindriErrors.OnyxKeyFailed.Code, result.Error.Code);
         Assert.Contains("didn't answer GET /api/me", result.Error.Message, StringComparison.Ordinal);
@@ -413,8 +413,8 @@ public sealed class HttpOnyxProvisioningTests
     {
         var script = new Script { Refuse = static _ => true };
 
-        var admin = await Adapter(script).TokenIsAdmin(3000, "k", OnyxAccounts.DedicatedEmail, Token);
-        var login = await Adapter(script).SignIn(3000, "a@b.c", "x", Token);
+        var admin = await Adapter(script).TokenIsAdmin(3189, "k", OnyxAccounts.DedicatedEmail, Token);
+        var login = await Adapter(script).SignIn(3189, "a@b.c", "x", Token);
 
         Assert.Contains("couldn't be reached", admin.Error.Message, StringComparison.Ordinal);
         Assert.Contains("couldn't be reached", login.Error.Message, StringComparison.Ordinal);
@@ -447,7 +447,7 @@ public sealed class HttpOnyxProvisioningTests
         const string Typed = "typed-login-value-31c7e2";
         var script = new Script { Answer = static sent => (HttpStatusCode.BadRequest, "{\"detail\": \"LOGIN_BAD_CREDENTIALS " + sent.Body + "\"}") };
 
-        var refused = await Adapter(script).SignIn(3000, "owner@example.com", Typed, Token);
+        var refused = await Adapter(script).SignIn(3189, "owner@example.com", Typed, Token);
 
         Assert.True(refused.IsError);
         Assert.DoesNotContain(Typed, refused.Error.Message, StringComparison.Ordinal);   // Onyx's own answer here quotes the request: it is never passed on

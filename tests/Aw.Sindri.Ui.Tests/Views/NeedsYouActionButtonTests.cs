@@ -182,6 +182,10 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         Assert.Equal(pause, PauseLine(row).Command);
     });
 
+    private static List<TextBlock> SheetHintCaptions(ShellWindow window, string hint) =>
+        [.. window.GetVisualDescendants().OfType<NeedsYouSheet>().Single().GetVisualDescendants().OfType<TextBlock>()
+            .Where(t => t.IsEffectivelyVisible && string.Equals(t.Text, hint, StringComparison.Ordinal))];
+
     [Fact]
     public Task The_failure_sheet_draws_the_hint_as_a_caption_a_screen_reader_names() => OnUi(async () =>
     {

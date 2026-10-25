@@ -1,0 +1,65 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "state": "ok",
+  "concepts": [
+    {
+      "id": "concept:billing",
+      "name": "Billing",
+      "summary": "Invoices and payment.",
+      "source": "override",
+      "size": {
+        "features": 1,
+        "records": 0,
+        "decisions": 0,
+        "code": 1
+      },
+      "citations": []
+    },
+    {
+      "id": "concept:scheduling",
+      "name": "Self scheduling",
+      "summary": "People pick and swap shifts.",
+      "source": "derived",
+      "size": {
+        "features": 2,
+        "records": 0,
+        "decisions": 0,
+        "code": 2
+      },
+      "citations": [
+        {
+          "key": "repo:aw-split-panes/docs/scheduling.md"
+        }
+      ]
+    }
+  ],
+  "other": {
+    "id": "concept:other",
+    "name": "Other",
+    "size": {
+      "features": 1,
+      "records": 0,
+      "decisions": 0,
+      "code": 0
+    }
+  },
+  "links": [
+    {
+      "from": "concept:billing",
+      "to": "concept:scheduling",
+      "weight": 1
+    },
+    {
+      "from": "concept:other",
+      "to": "concept:scheduling",
+      "weight": 1
+    },
+    {
+      "from": "concept:scheduling",
+      "to": "concept:billing",
+      "weight": 1
+    }
+  ]
+}

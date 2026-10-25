@@ -55,7 +55,7 @@ public sealed class NodeDetails
         NodeKind.Record => ForRecord(node.Key.Name, withTitle: false),
         NodeKind.Code => new NodeSource("file", _text.Line(node.Key.Name)),
         NodeKind.Decision when decision is not null => ForRecord(decision.Record.Value, withTitle: true),
-        NodeKind.Decision or NodeKind.Feature or NodeKind.Surface or NodeKind.Action or NodeKind.Thing or NodeKind.Flow => FromEvidence(node),
+        NodeKind.Decision or NodeKind.Feature or NodeKind.Surface or NodeKind.Action or NodeKind.Thing or NodeKind.Flow or NodeKind.Concept => FromEvidence(node),
         _ => null,
     };
 

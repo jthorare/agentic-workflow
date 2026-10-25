@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "v1",
+  "draft": false,
+  "asOf": "2026-01-01T00:00:00.0000000Z",
+  "repo": "aw-split-panes",
+  "detail": "nodes",
+  "counts": {
+    "nodes": 11,
+    "edges": 12,
+    "byKind": {
+      "feature": 4,
+      "surface": 1,
+      "action": 1,
+      "thing": 0,
+      "flow": 0,
+      "decision": 0,
+      "record": 0,
+      "code": 3,
+      "concept": 2
+    }
+  },
+  "areas": [
+    {
+      "key": "feature:invoices",
+      "label": "Invoices",
+      "trust": "trusted",
+      "members": 2,
+      "byKind": {
+        "feature": 1,
+        "code": 1
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:lone",
+      "label": "Loose end",
+      "trust": "trusted",
+      "members": 1,
+      "byKind": {
+        "feature": 1
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:shifts",
+      "label": "Shifts",
+      "trust": "trusted",
+      "members": 5,
+      "byKind": {
+        "feature": 1,
+        "surface": 1,
+        "action": 1,
+        "code": 2
+      },
+      "unassigned": false
+    },
+    {
+      "key": "feature:swaps",
+      "label": "Swaps",
+      "trust": "trusted",
+      "members": 1,
+      "byKind": {
+        "feature": 1
+      },
+      "unassigned": false
+    }
+  ],
+  "areaEdges": [
+    {
+      "from": "feature:invoices",
+      "to": "feature:shifts",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:lone",
+      "to": "feature:shifts",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:swaps",
+      "to": "feature:invoices",
+      "type": "depends-on",
+      "count": 1,
+      "confirmed": 1
+    },
+    {
+      "from": "feature:shifts",
+      "to": "feature:swaps",
+      "type": "implements",
+      "count": 1,
+      "confirmed": 0
+    }
+  ],
+  "nodes": [
+    {
+      "key": "feature:lone",
+      "label": "Loose end",
+      "kind": "feature",
+      "area": "feature:lone",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    }
+  ],
+  "edges": [],
+  "truncated": false,
+  "repos": [
+    {
+      "name": "aw-split-panes",
+      "nodeCount": 9
+    },
+    {
+      "name": "elsewhere",
+      "nodeCount": 2
+    }
+  ]
+}

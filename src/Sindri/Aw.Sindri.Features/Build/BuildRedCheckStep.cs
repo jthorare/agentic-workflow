@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.Build;
 /// <summary>
 /// 'step.build.red-check' on the block runtime (line spec §7.2, BLD-RED-001): the red tests must FAIL on the red commit, before any code. The profile's
 /// <c language="text">workflow.build.commands</c> all run once in the phase worktree on that commit (decision A); at least one must fail ('red'). When every command passes the tests can't fail: 'vacuous' (a finding names the
-/// items and their tests) and the build goes back to 'red'. When every item is app-only there is no test to run and it passes ('red') without running a command; their proof is at prove. A command that runs out of time, a worktree off the red commit or with uncommitted files, no red commit in the facts, no command in the profile or no test to run
+/// items and their tests) and the build goes back to 'red'. When every item is app-only there is no test to run and it passes ('red') without running a command; their proof is at prove. A command that runs out of time, a worktree off the red commit (unless it stands where a rework round started) or with uncommitted files, no red commit in the facts, no command in the profile or no test to run
 /// fails the Step instead, so the instance parks. The commands run under one heavy slot.
 /// </summary>
 /// <param name="diff">Reads the worktree's head.</param>
@@ -47,13 +47,17 @@ internal sealed class BuildRedCheckStep(IRunDiff diff, RepoCommandRunner command
             return BlockStepResult.Failed($"step.build.red-check needs fact:redTests to name the red commit the tests are run on (step.build.red sets it): {problem}");
         }
 
-        return await CheckHead(commit, worktree, cancellationToken).ConfigureAwait(false) is { } off
+        var packet = ActivePacket.From(StepFacts.Read(context, "fact:activePacket"));
+        var startHead = packet is { Rework: true } ? packet.StartHead : null;
+        return await CheckHead(commit, startHead, worktree, cancellationToken).ConfigureAwait(false) is { } off
             ? off
             : await Check(red, listed.Value, worktree, cancellationToken).ConfigureAwait(false);
     }
 
-    // The tests must run on the red commit, in a clean tree: a worktree that already moved on, or carries uncommitted files, proves nothing.
-    private async ValueTask<BlockStepResult?> CheckHead(string commit, string worktree, CancellationToken cancellationToken)
+    // The tests must run on the red commit, in a clean tree: a worktree that already moved on, or carries uncommitted files, proves nothing. A rework round (one that began with notes) starts from the earlier
+    // round's code head and may add no tests: when the worktree still stands on the head the round started at, and the named commit is an earlier one with changes after it, the tests it names were proven red on their red commit in the
+    // round that wrote them, so the check passes without a run. A first round, code committed after the round started, or a commit that is not behind the head is refused as before.
+    private async ValueTask<BlockStepResult?> CheckHead(string commit, string? startHead, string worktree, CancellationToken cancellationToken)
     {
         var head = await diff.Head(worktree, cancellationToken).ConfigureAwait(false);
         if (head.IsError)
@@ -63,6 +67,12 @@ internal sealed class BuildRedCheckStep(IRunDiff diff, RepoCommandRunner command
 
         if (!string.Equals(head.Value, commit, StringComparison.Ordinal))
         {
+            if (string.Equals(head.Value, startHead, StringComparison.Ordinal) && await CleanAt(worktree, head.Value, cancellationToken).ConfigureAwait(false)
+                && await Behind(worktree, commit, cancellationToken).ConfigureAwait(false))
+            {
+                return StepFacts.Done("red");
+            }
+
             return BlockStepResult.Failed($"step.build.red-check: {worktree} is at {head.Value}, not the red commit {commit} (BLD-RED-001 needs the tests run before any code)");
         }
 
@@ -70,6 +80,19 @@ internal sealed class BuildRedCheckStep(IRunDiff diff, RepoCommandRunner command
         return clean.IsError
             ? BlockStepResult.Failed($"step.build.red-check can't read {worktree}: {clean.Error.Message}")
             : clean.Value ? null : BlockStepResult.Failed($"step.build.red-check: the worktree {worktree} has uncommitted or untracked files (fix: commit or discard them, then resume)");
+    }
+
+    // The named commit is an earlier one, with changes after it: a rework's red commit sits behind the code the earlier round added.
+    private async ValueTask<bool> Behind(string worktree, string commit, CancellationToken cancellationToken)
+    {
+        var changed = await diff.ChangedPaths(worktree, commit, cancellationToken).ConfigureAwait(false);
+        return !changed.IsError && changed.Value.Count > 0;
+    }
+
+    private async ValueTask<bool> CleanAt(string worktree, string head, CancellationToken cancellationToken)
+    {
+        var clean = await diff.IsEmpty(worktree, head, cancellationToken).ConfigureAwait(false);
+        return !clean.IsError && clean.Value;
     }
 
     private async ValueTask<BlockStepResult> Check(RedTestsFact red, CommandSet set, string worktree, CancellationToken cancellationToken)

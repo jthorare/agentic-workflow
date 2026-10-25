@@ -21,7 +21,7 @@
       "actions": [
         "RegisterMcp"
       ],
-      "cli": "sindri-app mcp register --apply"
+      "cli": "sindri mcp register --apply"
     },
     {
       "id": "setup:recipes",
@@ -44,7 +44,7 @@
       "actions": [
         "ApproveAllRecipes"
       ],
-      "cli": "sindri-app recipe approve-all"
+      "cli": "sindri recipe approve-all"
     }
   ],
   "empty": null,

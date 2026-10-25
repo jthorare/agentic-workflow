@@ -83,4 +83,18 @@ public static class RepoScope
         all.UnionWith(records);
         return all;
     }
+
+    /// <summary>
+    /// <paramref name="scope"/> and the concepts its members belong to: a concept node with a 'belongs-to' edge from a node in <paramref name="scope"/>. A concept with no member in scope stays out, so a session
+    /// sees its repo's concepts, sized by its repo's members.
+    /// </summary>
+    /// <param name="graph">The graph.</param>
+    /// <param name="scope">The nodes the repo implements with their hierarchy and linked intent.</param>
+    /// <returns>The keys of the scope and of those concepts (ordinal).</returns>
+    internal static IReadOnlySet<string> WithConcepts(GraphSnapshot graph, IReadOnlySet<string> scope)
+    {
+        var all = new HashSet<string>(scope, StringComparer.Ordinal);
+        all.UnionWith(graph.Edges.Where(e => e.Type == EdgeType.BelongsTo && e.To.Kind == NodeKind.Concept && scope.Contains(e.From.Value)).Select(e => e.To.Value));
+        return all;
+    }
 }

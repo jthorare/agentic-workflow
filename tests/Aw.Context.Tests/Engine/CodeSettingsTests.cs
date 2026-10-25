@@ -20,13 +20,13 @@ public sealed class CodeSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Defaults_are_used_when_the_section_is_absent()
+    public void Schema_globs_default_and_test_globs_have_no_default_when_the_section_is_absent()
     {
         var settings = Read("""{"minHits":1}""").Value;
 
-        Assert.Equal((ContextSettings.DefaultSchemaGlobs, ContextSettings.DefaultTestGlobs), (settings.SchemaGlobs, settings.TestGlobs));
+        Assert.Equal(ContextSettings.DefaultSchemaGlobs, settings.SchemaGlobs);
+        Assert.Empty(settings.TestGlobs);
         Assert.Contains("**/*.sql", settings.SchemaGlobs, StringComparer.Ordinal);
-        Assert.Contains("**/*.test.*", settings.TestGlobs, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -35,7 +35,7 @@ public sealed class CodeSettingsTests
         var settings = Read("""{"code":{"schemaGlobs":[]}}""").Value;
 
         Assert.Empty(settings.SchemaGlobs);
-        Assert.Equal(ContextSettings.DefaultTestGlobs, settings.TestGlobs);
+        Assert.Empty(settings.TestGlobs);   // why: no built-in list, so an empty profile list means no file is a test
     }
 
     [Theory, Trait("Lane", "unit")]

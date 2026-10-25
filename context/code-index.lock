@@ -8,7 +8,7 @@
 # Measured 2026-10-20:
 #   graphify  equals context/graphify.pin's row (the check compares them, so the two can't drift). The requirements file is `uv pip compile code-index-requirements.in --universal --generate-hashes
 #             --exclude-newer <date> --python-version 3.11`; the sha256 is of that file.
-#   model     nomic-embed-text:latest is the TS index's default model (sindri/src/profile/schema.ts). The digest is the sha256 of the
+#   model     nomic-embed-text:latest is the code index's default model. The digest is the sha256 of the
 #             manifest GET https://registry.ollama.ai/v2/library/nomic-embed-text/manifests/latest (a manifest read, nothing pulled);
 #             its first 12 hex digits, 0a109f422b47, are the ID `ollama list` shows for it.
 #   need      1073741824 (1 GiB) = the model, 274301030 bytes (its three layers), + the graphify environment, 158689618 bytes

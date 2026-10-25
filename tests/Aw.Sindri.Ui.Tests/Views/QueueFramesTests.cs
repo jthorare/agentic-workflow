@@ -326,13 +326,22 @@ public sealed class QueueFramesTests : IDisposable
         _server.Items[A.NewItem] = RouteAnswer.SpecShaped("items-id", "after-close");
 
         var close = Named<Control>(window, "ItemActionList").GetVisualDescendants().OfType<Button>().First(b => b.Name == "RunButton");
-        close.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        PressAndConfirm(window, close);
         await Until(window, () => shell.Item.HasProblem);
 
         Assert.Equal(("SND-ITEM-409", A.Detail("items-id-close", "stale-version")), (Named<TextBlock>(window, "ProblemCodeText").Text, Named<TextBlock>(window, "ProblemDetailText").Text));
         Assert.StartsWith("Done", Named<TextBlock>(window, "ItemStatusLine").Text, StringComparison.Ordinal);
         Frame(window, "item-409");
     });
+
+    // Close item asks first (ux-A-3): a press opens Confirm and Keep, and Confirm sends.
+    private static void PressAndConfirm(Window window, Button run)
+    {
+        run.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        var control = run.FindAncestorOfType<Ui.Views.Controls.CommandControl>() ?? throw new InvalidOperationException("the run button is not in a CommandControl");
+        Named<Button>(control, "ConfirmButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }
 
     private static IInputElement? Focused(Window window) => window.FocusManager?.GetFocusedElement();
 
@@ -349,7 +358,7 @@ public sealed class QueueFramesTests : IDisposable
         var close = FirstRunButton(window);
         Assert.True(close.Focus(NavigationMethod.Tab));
 
-        close.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        PressAndConfirm(window, close);
         await Until(window, () => shell.Item.HasProblem && shell.Item.Actions.Count == 0);
 
         Assert.Same(Named<Control>(window, "SheetTitle"), Focused(window));
@@ -364,7 +373,7 @@ public sealed class QueueFramesTests : IDisposable
         var close = FirstRunButton(window);
         Assert.True(close.Focus(NavigationMethod.Tab));
 
-        close.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        PressAndConfirm(window, close);
         _server.Push(A.Event(58, "item.state-changed"));
         await Until(window, () => shell.Item.StateWord == "Done");
 

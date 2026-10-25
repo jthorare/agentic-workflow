@@ -36,7 +36,6 @@ jobs:
     outputs:
       bash: ${{ steps.detect.outputs.bash }}
       dotnet: ${{ steps.detect.outputs.dotnet }}
-      packages: ${{ steps.detect.outputs.packages }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -52,66 +51,6 @@ jobs:
         run: >-
           bash scripts/ci/changed-areas.sh "$EVENT_NAME" "${BASE_SHA:-}" "${BASE_REF:-}" "${DEFAULT_BRANCH:-}"
           >> "$GITHUB_OUTPUT"
-
-  ts:
-    name: TS ${{ matrix.package }}
-    needs: changes
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - scorer
-          - judge
-          - sindri
-          - skills/ui-evidence
-          - skills/bugFixOrchestrator
-    env:
-      CHANGED: ${{ contains(fromJSON(needs.changes.outputs.packages), matrix.package) }}
-    defaults:
-      run:
-        working-directory: ${{ matrix.package }}
-    steps:
-      - name: No-op when unchanged
-        if: env.CHANGED != 'true'
-        working-directory: .
-        env:
-          PACKAGE: ${{ matrix.package }}
-        run: |
-          echo "no-op: $PACKAGE unchanged — typecheck and tests not needed"
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: env.CHANGED == 'true'
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: env.CHANGED == 'true'
-        with:
-          # .nvmrc holds the engines major (22, set by better-sqlite3 13). setup-node
-          # resolves it to the newest 22.x, so CI tests the major, not 22.0.0 exactly.
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: |
-            ${{ matrix.package }}/package-lock.json
-            judge/package-lock.json
-      - name: npm ci
-        if: env.CHANGED == 'true'
-        run: npm ci --no-audit --no-fund
-      # scorer's tests import judge/src/db.ts (the declared scorer -> judge db edge),
-      # which resolves better-sqlite3 from judge's own node_modules.
-      - name: npm ci judge (scorer's tests import judge's source)
-        if: env.CHANGED == 'true' && matrix.package == 'scorer'
-        working-directory: judge
-        run: npm ci --no-audit --no-fund
-      - name: Install Playwright Chromium
-        if: env.CHANGED == 'true' && matrix.package == 'skills/ui-evidence'
-        run: npx --no-install playwright install --with-deps chromium
-      - name: Typecheck
-        if: env.CHANGED == 'true'
-        run: npm run typecheck
-      - name: Test with coverage thresholds
-        if: env.CHANGED == 'true'
-        run: npm run test:coverage
 
   bash-tests:
     name: Bash tests
@@ -135,21 +74,24 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: env.CHANGED == 'true'
         with:
+          # Node stays for the Ajv-based schema checks (scripts/package.json) and the .mjs gates.
           node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: |
-            judge/package-lock.json
-            scorer/package-lock.json
-            sindri/package-lock.json
-      - name: Build the CLIs the tests call
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         if: env.CHANGED == 'true'
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Publish the C# judge and sindri the suites call
+        if: env.CHANGED == 'true'
+        # The suites run the real binaries (hooks, installers, the nudge), never a TS build. Judge is the NativeAOT
+        # publish the hooks run; sindri is framework-dependent (the Temporal worker cannot be trimmed). The paths go to
+        # the later steps through GITHUB_ENV; scripts/ci/bash-tests.sh keeps them in every suite's environment.
         run: |
-          for pkg in judge scorer sindri; do
-            (cd "$pkg" && npm ci --no-audit --no-fund && npm run build)
-          done
-      - name: Install the CI tools (the gate 7 checker's tests need typescript)
-        if: env.CHANGED == 'true'
-        run: npm ci --prefix .github/ci-tools --ignore-scripts --no-audit --no-fund
+          dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/judge" -nologo -v quiet
+          dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release -o "$RUNNER_TEMP/cs-bin/sindri" -nologo -v quiet
+          echo "AW_JUDGE_CS_BIN=$RUNNER_TEMP/cs-bin/judge/judge" >> "$GITHUB_ENV"
+          echo "AW_SINDRI_CS_BIN=$RUNNER_TEMP/cs-bin/sindri/sindri" >> "$GITHUB_ENV"
       - name: Run every tracked bash test suite
         if: env.CHANGED == 'true'
         run: bash scripts/ci/bash-tests.sh
@@ -165,48 +107,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # The no-any step reads the base branch's baseline. The repo is private and the
-          # token isn't persisted, so a later `git fetch` can't authenticate; fetch every
-          # branch here, while checkout still holds the token.
-          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: .github/ci-tools/package-lock.json
       - name: Rules links and index are current
         run: scripts/sync-rules.sh --check
       - name: setup.sh dry run (every provider)
         run: ./setup.sh --providers claude,codex,cursor --dry-run
-      - name: No coverage-ignore annotations
-        run: |
-          if git grep -nE '(v8|c8|istanbul) ignore' -- '*.ts' '*.tsx' ':!**/node_modules/**'; then
-            echo "::error::coverage-ignore annotations are prohibited (AGENTS.md merge gate 6) — write the test instead"
-            exit 1
-          fi
-      - name: Install the CI tools (claude, typescript) from their lockfile
-        # Scripts stay off for the whole tree; only claude-code's own installer runs, and it
-        # links the platform binary that the lockfile already pinned by integrity hash.
-        run: |
-          npm ci --prefix .github/ci-tools --ignore-scripts --no-audit --no-fund
-          (cd .github/ci-tools && node node_modules/@anthropic-ai/claude-code/install.cjs)
-      - name: No any types in TypeScript source (merge gate 7)
-        # Merge gate 7: parses the TS (strings and comments never count) and holds existing
-        # violations to scripts/ci/no-any-baseline.json, which may only shrink.
-        # On a PR the baseline is also checked against the base branch's copy, so a PR
-        # can't raise a count or baseline a new file in its own diff.
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          args=()
-          if [ -n "$BASE_REF" ]; then
-            if git show "origin/$BASE_REF:scripts/ci/no-any-baseline.json" > "$RUNNER_TEMP/base-no-any.json" 2>/dev/null; then
-              args=(--base-baseline "$RUNNER_TEMP/base-no-any.json")
-            else
-              echo "no-op: $BASE_REF has no no-any baseline yet — the base comparison starts once it does"
-            fi
-          fi
-          node scripts/ci/no-any.mjs "${args[@]}"
       - name: Every env var the code reads is in .env.example
         # A C# change runs only the .NET job, so the env scan runs here, where every PR passes.
         run: scripts/check-env-example.sh
@@ -219,10 +126,6 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
-      - name: claude plugin validate mods/aw-live
-        run: .github/ci-tools/node_modules/.bin/claude plugin validate mods/aw-live
-      - name: claude plugin test mods/aw-live
-        run: .github/ci-tools/node_modules/.bin/claude plugin test mods/aw-live
 
   dotnet:
     name: .NET build and test
@@ -362,13 +265,18 @@ jobs:
         # Spec §4a step 3 and §4b.5: the real hooks run against the NativeAOT binary, the one the NativeAOT smoke step
         # above published to artifacts/aot-judge-smoke/bin/judge (its cleanup removes only its run directory), so a
         # trimmed member or a missing source-generated type on a hook path fails here.
-        # judge/dist isn't built in this job, so the TS side of the comparison is skipped here (it runs locally).
         run: AW_JUDGE_CS_BIN=artifacts/aot-judge-smoke/bin/judge bash config/lib/tests/judge-cs-hook-surface.test.sh
       - name: Hook contract, sindri
         if: steps.sln.outputs.run == 'true'
         # The SessionStart nudge (config/hooks/sindri-nudge.sh) against the C# sindri: one line, silence, exit 0, read-only, bounded.
         # Sindri is framework-dependent (no NativeAOT), so the test builds it itself.
         run: bash config/lib/tests/sindri-cs-hook-surface.test.sh
+      - name: Install end to end
+        if: steps.sln.outputs.run == 'true'
+        # Cutover spec §12 P2: scripts/cutover-prove.sh installs the C# build into a scratch box (a guarded temp
+        # AW_STATE_DIR and CLAUDE_LOCAL_BIN, never the runner's real ones), drives the installed binaries and the removal
+        # script, and fails if anything installed still points at a TS build.
+        run: bash scripts/cutover-prove.sh
       - name: Lane budgets per package
         if: steps.sln.outputs.run == 'true'
         # Times each test project's unit and integration lanes against the Release build
@@ -441,7 +349,7 @@ jobs:
 
   ci-result:
     name: CI result
-    needs: [changes, ts, bash-tests, gate, dotnet, scaffold]
+    needs: [changes, bash-tests, gate, dotnet, scaffold]
     # The one job-level `if:` in this file: it must run (and fail) even when a need
     # failed or was skipped, since GitHub counts a skipped required check as passing.
     if: always()

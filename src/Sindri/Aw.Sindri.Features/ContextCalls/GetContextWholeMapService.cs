@@ -24,7 +24,7 @@ internal sealed class GetContextWholeMapService(ContextScopes scopes, IContextEn
             return scope.Error;
         }
 
-        var whole = await engine.WholeMap(new WholeMapQuery(request.Detail, request.Locate ?? [], read.Value, request.Repo, request.Area), scope.Value, cancellationToken).ConfigureAwait(false);
+        var whole = await engine.WholeMap(new WholeMapQuery(request.Detail, request.Locate ?? [], read.Value, request.Repo, request.Area) { Concept = request.Concept }, scope.Value, cancellationToken).ConfigureAwait(false);
         return whole.IsError && !request.Draft && request.MapVersion is null && string.Equals(whole.Error.Code, ContextErrors.NoMap.Code, StringComparison.Ordinal)
             ? await notReady.Explain(whole.Error, scope.Value, cancellationToken).ConfigureAwait(false)
             : whole;

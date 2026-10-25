@@ -35,7 +35,7 @@ Or with an optional scope:
 Scope narrows the area of change. Use the package or module name:
 
 ```
-feat(scorer): add live session view
+feat(sindri): add the ledger command
 fix(sindri): refuse a ledger newer than the binary
 test(judge): cover the empty outbox path
 ```
@@ -47,7 +47,7 @@ test(judge): cover the empty outbox path
 | Rule | Correct | Incorrect |
 |------|---------|-----------|
 | Lowercase first word | `fix: address review findings` | `Fix: Address review findings` |
-| No period at end | `feat: add scorer audit` | `feat: add scorer audit.` |
+| No period at end | `feat: add the ledger command` | `feat: add the ledger command.` |
 | Imperative mood | `fix: validate the profile before a ledger write` | `fix: validated the profile before a ledger write` |
 | Concise (under 72 chars) | `fix: address review findings` | `fix: I fixed the review findings that were found during the code review` |
 | Describe the "why" when possible | `fix: address review findings -- atomicity, security, DX` | `fix: change some code` |
@@ -81,10 +81,10 @@ Body guidelines:
 ### Good: atomic and focused
 
 ```
-feat: add scorer live view
+feat: add the ledger command
 
-Adds `scorer live --session <id>` for this session's numbers, read
-by the aw-live mod. Includes tests.
+Adds `sindri ledger --after N` to page the ledger from the command
+line. Includes tests.
 ```
 
 ```
@@ -117,10 +117,10 @@ Branches use a type prefix followed by a `/` and a kebab-case descriptor:
 
 | Pattern | Example |
 |---------|---------|
-| `feat/<description>` | `feat/scorer-live-view` |
+| `feat/<description>` | `feat/sindri-ledger-command` |
 | `fix/<description>` | `fix/ledger-newer-than-binary` |
 | `docs/<description>` | `docs/planning-docs` |
-| `chore/<description>` | `chore/upgrade-vitest-v3` |
+| `chore/<description>` | `chore/upgrade-xunit` |
 | `refactor/<description>` | `refactor/extract-validation` |
 | `test/<description>` | `test/judge-outbox-edge-cases` |
 

@@ -1,0 +1,17 @@
+{
+  "mapVersion": "v1",
+  "total": 1,
+  "hits": [
+    {
+      "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "kind": "decision",
+      "label": "A tab group collapses to one tab in the strip.",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 1.0585,
+      "matched": "text",
+      "snippet": "a tab group collapses to a single tab in the strip",
+      "trust": "trusted"
+    }
+  ]
+}

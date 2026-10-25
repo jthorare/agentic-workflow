@@ -15,7 +15,6 @@ internal sealed class QueryContextService(ContextScopes scopes, IContextEngine e
     public async ValueTask<Result<ContextResult>> Handle(QueryContextRequest request, CancellationToken cancellationToken)
     {
         var depth = QueryRules.ParseDepth(request.Depth);
-        var budget = QueryRules.ParseBudget(request.Budget);
         var diff = request.Diff is null ? (Result<DiffRange?>)(DiffRange?)null : DiffRange.Parse(request.Diff).Map<DiffRange?>(d => d);
         var repo = request.Repo is null ? (Result<ContextRepoName?>)(ContextRepoName?)null : Repo(request.Repo);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
@@ -24,9 +23,8 @@ internal sealed class QueryContextService(ContextScopes scopes, IContextEngine e
             : diff.IsError ? diff.Error
             : repo.IsError ? repo.Error
             : depth.IsError ? depth.Error
-            : budget.IsError ? budget.Error
             : scope.IsError ? scope.Error
-            : await engine.Query(new ContextQuery(request.Q, request.Node, item.Value, request.Symbol, depth.Value, budget.Value, request.Draft, diff.Value, repo.Value) { MapVersion = request.MapVersion, Hops = request.Hops },
+            : await engine.Query(new ContextQuery(request.Q, request.Node, item.Value, request.Symbol, depth.Value, Budget: null, request.Draft, diff.Value, repo.Value) { MapVersion = request.MapVersion, Hops = request.Hops },
                 scope.Value, cancellationToken).ConfigureAwait(false);
     }
 

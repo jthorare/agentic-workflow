@@ -14,7 +14,7 @@ public sealed class DockerRuntimeKindTests
     private static readonly OnyxPins _pins = new("v4.9.0", new string('0', 40), [], [], DiskBytes: 30 * Gib, DockerMemoryBytes: 5_905_580_032);
 
     private static PreflightCheck DockerRow(ContainerRuntimeFacts facts)
-        => Assert.Single(OnyxPreflight.Evaluate(facts, new HostFacts(new DiskFacts("/h", 80 * Gib), DataRoot: null, new PortFacts(3000, PreferredFree: true, FirstFreeFallback: 3001)), _pins).Checks, static c => c.Name == "docker");
+        => Assert.Single(OnyxPreflight.Evaluate(facts, new HostFacts(new DiskFacts("/h", 80 * Gib), DataRoot: null, new PortFacts(3189, PreferredFree: true, FirstFreeFallback: 3190)), _pins).Checks, static c => c.Name == "docker");
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(OrbStackSocket, ContainerRuntimeKind.OrbStack)]
