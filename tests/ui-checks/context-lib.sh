@@ -65,7 +65,11 @@ ctx_start() {
   fi
   [ -x "$AW_SINDRI_UI" ] || setup_fail "no sindri-ui at $AW_SINDRI_UI"
   # A screen larger than any window the checks ask for, whatever DISPLAY the caller has: sizes must be the same everywhere.
-  env -u DISPLAY xvfb-run -a -s "-screen 0 2200x1400x24" bash "$CTX_ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
+  if [ -n "${XVFB_PID:-}" ]; then
+    bash "$CTX_ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &   # the check started its own Xvfb (xvfb-lib.sh)
+  else
+    env -u DISPLAY xvfb-run -a -s "-screen 0 2200x1400x24" bash "$CTX_ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
+  fi
   APP_WRAPPER_PID=$!
   "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
   "$DRIVER" window --width "$w" --height "$h" >/dev/null 2>&1 || setup_fail "could not size the window"
