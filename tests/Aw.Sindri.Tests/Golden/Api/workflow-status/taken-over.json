@@ -2,8 +2,8 @@
   "header": {
     "address": "ITM-01JA1/step/1",
     "recipe": "workflow.step",
-    "hash12": "f511ce1fc529",
-    "version": 4,
+    "hash12": "4ca37bf46333",
+    "version": 5,
     "state": "taken-over",
     "detail": null,
     "since": "2026-10-12T12:01:00.0000000Z",
@@ -43,7 +43,7 @@
       "confirm": "Cancel ITM-01JA1/step/1? 0 running steps stop; 0 children are cancelled."
     }
   ],
-  "text": "ITM-01JA1/step/1  workflow.step@f511ce1fc529  v4  taken-over  since 12:01 (25m)\n  next      With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.\n  budget    tokens 40k / 5M (state), 40k used (instance)\n  paused    timeout 40s left\n  commands  handback, cancel\n",
+  "text": "ITM-01JA1/step/1  workflow.step@4ca37bf46333  v5  taken-over  since 12:01 (25m)\n  next      With you since 12:01. Run `sindri workflow handback ITM-01JA1/step/1` when you're done.\n  budget    tokens 40k / 5M (state), 40k used (instance)\n  paused    timeout 40s left\n  commands  handback, cancel\n",
   "takenOverAt": "2026-10-12T12:01:00.0000000Z",
   "takenOverBy": "human:thor",
   "injection": []

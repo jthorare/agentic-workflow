@@ -30,15 +30,15 @@ internal sealed class LexicalTestsRule(LexicalCandidates candidates)
         pass.Searched.Add(new CodeLexical(run.Repo.Name.Value, run.Commit[..7], files.Count, found.Value.Paths.Count, read));
     }
 
-    // Reads each candidate and ties it to the implementing files whose path forms its text names; returns how many it could read.
+    // Reads each candidate (in parallel, taken in candidate order) and ties it to the implementing files whose path forms its text names; returns how many it could read.
     private async ValueTask<int> Imports(LexicalRun run, Dictionary<string, IReadOnlyList<string>> forms, List<string> paths, CancellationToken cancellationToken)
     {
         var read = 0;
-        foreach (var candidate in paths)
+        bool Take(string candidate, string? text)
         {
-            if (await candidates.Text(run, candidate, cancellationToken).ConfigureAwait(false) is not { } text)
+            if (text is null)
             {
-                continue;
+                return true;
             }
 
             read++;
@@ -47,8 +47,11 @@ internal sealed class LexicalTestsRule(LexicalCandidates candidates)
             {
                 run.Pass.Tests.Add(new LexicalTest(candidate, CodeBasis.Imports, named));
             }
+
+            return true;
         }
 
+        await Fanout.ForEach(paths, (candidate, token) => candidates.Text(run, candidate, token), Take, cancellationToken).ConfigureAwait(false);
         return read;
     }
 }

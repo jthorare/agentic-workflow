@@ -17,4 +17,9 @@ public sealed record MapStatusView(
     int Orphaned,
     int Retained,
     ContextRepoName? ScopedTo,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LensCoverage? Coverage = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LensCoverage? Coverage = null)
+{
+    /// <summary>True when the current version records the map rules it was built under and they differ from the ones the scope runs under now (issue 1041); false, and left out of the JSON, otherwise or when none were recorded.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RulesOlder { get; init; }
+}

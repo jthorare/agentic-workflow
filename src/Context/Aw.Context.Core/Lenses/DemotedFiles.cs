@@ -8,16 +8,6 @@ public static class DemotedFiles
 {
     private const string CodePrefix = "code:";
 
-    /// <summary>Whether <paramref name="key"/> is a code node of a file one of <paramref name="repos"/> demotes.</summary>
-    /// <param name="key">A node key.</param>
-    /// <param name="repos">The repos in scope.</param>
-    /// <returns>True for a demoted file's code node.</returns>
-    public static bool IsDemoted(NodeKey key, IReadOnlyList<ContextRepo> repos)
-    {
-        ArgumentNullException.ThrowIfNull(repos);
-        return key.Kind == NodeKind.Code && repos.Any(r => r.DemotePaths.Count > 0 && r.Demotes(key.Value[CodePrefix.Length..]));
-    }
-
     /// <summary>The items with every demoted one moved after the rest; the order inside each group stays.</summary>
     /// <typeparam name="T">The item type.</typeparam>
     /// <param name="items">The items, best first.</param>
@@ -38,8 +28,11 @@ public static class DemotedFiles
     {
         ArgumentNullException.ThrowIfNull(band);
         ArgumentNullException.ThrowIfNull(repos);
-        return repos.All(r => r.DemotePaths.Count == 0) ? band : band with { Files = Last(band.Files, f => IsDemoted(NodeKey.From(CodePrefix + f.Path), repos)) };
+        return repos.All(r => r.DemotePaths.Count == 0) ? band : band with { Files = Last(Flagged(band.Files, repos), f => f.Demoted) };
     }
+
+    private static List<LensFile> Flagged(IReadOnlyList<LensFile> files, IReadOnlyList<ContextRepo> repos) =>
+        [.. files.Select(f => DemotedCode.IsDemoted(NodeKey.From(CodePrefix + f.Path), repos) ? f with { Demoted = true } : f)];
 
     /// <summary>The bands with the code band's demoted files moved after the product files.</summary>
     /// <param name="bands">The bands.</param>

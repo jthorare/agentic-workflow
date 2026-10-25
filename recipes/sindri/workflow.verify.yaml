@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.verify
-version: 3
+version: 4
 description: "Block recipe: the verify journey with its lenses and evidence pack, then the design check when screen baselines match. Always runs."
 displayName: "Check the change in the running app"
 inputs:
@@ -10,9 +10,9 @@ outputs:
   - { key: fact:evidencePack, label: "Evidence pack", type: evidence, from: journey }
 initial: journey
 states:
-  journey: { kind: active, step: step.verify.journey, timeout: { after: 4h, then: park },
+  journey: { kind: active, step: step.verify.journey, timeout: { after: 1d, then: park },
              next: "Run the verify journey for {item} through its lenses and record the evidence pack. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (screenshots, logs, notes); name no hash." }
-  design:  { kind: active, step: step.verify.design, timeout: { after: 4h, then: park },
+  design:  { kind: active, step: step.verify.design, timeout: { after: 1d, then: park },
              next: "Compare the screens of {item} with their baselines, or skip when none match." }
   passed:  { kind: terminal, outcome: resolved }
   failed:  { kind: terminal, outcome: unresolved }
