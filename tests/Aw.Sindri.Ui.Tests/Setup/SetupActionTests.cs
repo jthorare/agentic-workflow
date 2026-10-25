@@ -53,10 +53,10 @@ public sealed class SetupActionTests
         var action = Step(await f.Read(Token), "recipes").Action!;
 
         Assert.Equal((false, null, true), (action.IsInApp, action.Cli, action.HasProtected));
-        Assert.Equal("sindri-app recipe approve-all", action.Protected!.Cli);   // the catalog's own CLI form wins over the app's table
+        Assert.Equal("sindri recipe approve-all", action.Protected!.Cli);   // the catalog's own CLI form wins over the app's table
         Assert.Equal("⌂ Approve all workflows · terminal", action.Protected.Label);
         await action.Protected.Copy(Token);
-        Assert.Equal("sindri-app recipe approve-all", f.Clipboard.Text);
+        Assert.Equal("sindri recipe approve-all", f.Clipboard.Text);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed class SetupActionTests
 
         var action = Step(await f.Read(Token), "repo").Action!;
 
-        Assert.Equal(("Add a repo", "sindri-app repo add <path>", false), (action.Label, action.Cli?.Cli, action.IsInApp));
+        Assert.Equal(("Add a repo", "sindri repo add <path>", false), (action.Label, action.Cli?.Cli, action.IsInApp));
     }
 
     [Fact]

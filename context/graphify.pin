@@ -3,6 +3,4 @@
 # graphify row must carry the same version and date (scripts/code-index-lock.sh check, CODEIDX-LOCK-007).
 # The version is an exact release at least 14 days old. The date is the next 00:00Z after the last upload of any of the release's
 # files: uv excludes files uploaded at or after it, so an earlier date would exclude the pinned release itself.
-# Until the switch sindri/package.json (sindri.graphifyPin, graphifyPinDate) still carries the same pair for the TS index
-# (sindri/src/index/pins.ts); code-index-lock.test.sh checks the three agree.
 graphify 0.9.67 2026-09-24T00:00:00Z

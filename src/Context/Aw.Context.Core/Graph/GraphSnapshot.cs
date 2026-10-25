@@ -25,13 +25,13 @@ public sealed record GraphSnapshot(
 
     /// <summary>
     /// What a session scoped to <paramref name="repo"/> may see (spec §3): <see cref="RepoScope"/>'s nodes with their part-of hierarchy (<see cref="RepoScope.WithHierarchy"/>), the records and decisions linked to them (owner decision 2026-10-15, B),
-    /// and the edges, aliases and decisions among those. A link to a node outside the scope is dropped with that node.
+    /// the concepts those belong to (<see cref="RepoScope.WithConcepts"/>), and the edges, aliases and decisions among those. A link to a node outside the scope is dropped with that node.
     /// </summary>
     /// <param name="repo">The session's X-Sindri-Repo.</param>
     /// <returns>The scoped graph (empty when the repo implements nothing).</returns>
     public GraphSnapshot ScopedTo(Engine.ContextRepoName repo)
     {
-        var keys = RepoScope.WithLinkedIntent(this, RepoScope.WithHierarchy(this, RepoScope.NodesFor(this, repo)));
+        var keys = RepoScope.WithConcepts(this, RepoScope.WithLinkedIntent(this, RepoScope.WithHierarchy(this, RepoScope.NodesFor(this, repo))));
         return new GraphSnapshot(
             [.. Nodes.Where(n => keys.Contains(n.Key.Value))],
             [.. Edges.Where(e => keys.Contains(e.From.Value) && keys.Contains(e.To.Value))],

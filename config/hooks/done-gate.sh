@@ -62,7 +62,7 @@ if [ -z "$LAST_ASSISTANT_LINE" ]; then
 fi
 [ -n "$LAST_ASSISTANT_LINE" ] || { failopen no-assistant-line; exit 0; }
 # message.content is real-world either a bare string or an array of blocks
-# (scorer/src/transcript/parse-line.ts's own schema confirms both shapes) —
+# (real transcripts carry both shapes) —
 # branch on its type rather than assuming array-shaped content.
 CLAIM_TEXT="$(printf '%s' "$LAST_ASSISTANT_LINE" | jq -r '
   if (.message.content | type) == "string" then .message.content

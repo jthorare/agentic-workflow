@@ -34,7 +34,6 @@ public sealed class ReviewHistoryTests
         Assert.Equal([rows[4].ToId(), rows[3].ToId()], cut.Entries.Select(e => e.Id));
         Assert.True(cut.Truncated);
         Assert.Equal((5, false), (all.Entries.Count, all.Truncated));
-        Assert.Equal(200, ReviewHistory.DefaultLimit);
-        Assert.Equal(10_000, ReviewHistory.MaxLimit);
+        Assert.Equal(int.MaxValue, ReviewHistory.DefaultLimit);   // no limit named: everything
     }
 }

@@ -5,6 +5,6 @@ public interface IRecipeBuild
 {
     /// <summary>The two tree hashes.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The trees, or null when this build has no stamp (it wasn't published by sindri-app).</returns>
+    /// <returns>The trees, or null when this build has no stamp (it wasn't published by scripts/install-cs.sh).</returns>
     public ValueTask<RecipeTrees?> Read(CancellationToken cancellationToken);
 }

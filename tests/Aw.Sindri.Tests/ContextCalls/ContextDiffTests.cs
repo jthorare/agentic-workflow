@@ -157,7 +157,7 @@ public sealed class ContextDiffTests : IDisposable
         var sha = "0123456789abcdef0123456789abcdef01234567";
         var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, sha, [], [], new DiffCounts(1_500, 1_500, 0, 0, 0), Truncated: true, 45);
         var result = new ContextResult(1, QueryId.From("q_1"), new ContextQuery(Text: null, Diff: new DiffRange(sha, sha)), [], "v1", DateTimeOffset.UnixEpoch,
-            [], [], [], [], Truncated: false, new BudgetUse(8000, 10, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal), part);
+            [], [], [], [], new Dictionary<string, Citation>(StringComparer.Ordinal), part);
 
         var text = ContextText.Render(result);
 
@@ -189,7 +189,7 @@ public sealed class ContextDiffTests : IDisposable
         var part = new DiffPart(ContextRepoName.From("aw-split-panes"), sha, sha, "89abcdef0123456789abcdef0123456789abcdef", [odd, file], [odd.Path], new DiffCounts(3, 1, 1, 1, 0), Truncated: false, 1);
         var item = new ResultItem("feature", "feature:layout.split-pane", "Split pane", Text: null, Score: null, ["anchor"], Provenance.Human, Confirmed: true, Trust.Trusted, ["C1"]);
         var result = new ContextResult(1, QueryId.From("q_1"), new ContextQuery(Text: null, Diff: new DiffRange(sha, sha)), ["feature:layout.split-pane"], "v1", DateTimeOffset.UnixEpoch,
-            [new ResultSection("graph", [item], [])], [], [], [], Truncated: false, new BudgetUse(8000, 10, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal), part);
+            [new ResultSection("graph", [item])], [], [], [], new Dictionary<string, Citation>(StringComparer.Ordinal), part);
 
         var text = ContextText.Render(result);
 

@@ -149,7 +149,7 @@ internal sealed partial class DockerCliRuntime
 
     private static bool IsContainerId(string id) => id.Length is >= 12 and <= 64 && id.All(static c => char.IsAsciiHexDigitLower(c));
 
-    // `127.0.0.1:3000->80/tcp, [::]:3000->80/tcp`: one publisher per published single port; an exposed-only port and a range are skipped.
+    // `127.0.0.1:3189->80/tcp, [::]:3189->80/tcp`: one publisher per published single port; an exposed-only port and a range are skipped.
     private static List<ComposePublisher> PortsOf(string text)
     {
         List<ComposePublisher> publishers = [];

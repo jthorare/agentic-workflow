@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.OnyxUp;
 /// <summary>
 /// Spec §4.1 steps 1-5: preflight, then fetch, config, pull and start, each recorded in state.json with the stamp of its inputs only after it succeeds, so a rerun, an
 /// interruption or a crash resumes at the first step whose inputs changed or whose result is gone and repeats nothing earlier. One `up` runs at a time (the workspace lock).
-/// The port is the preflight's (3000, or the first free fallback), except that while our own nginx publishes a port (ps shows it) that port stays.
+/// The port is the preflight's (3189, or the first free fallback), except that while our own nginx publishes a port (ps shows it) that port stays.
 /// A Docker that is starting or not running yet is waited for first (<see cref="OnyxDockerWait"/>).
 /// </summary>
 internal sealed class OnyxUpService(IOnyxWorkspace workspace, OnyxFacts facts, IOnyxPinsSource pinsSource, IOnyxProgress progress, OnyxDockerWait dockerWait, IEnumerable<IOnyxUpStep> steps)

@@ -120,10 +120,10 @@ q bash "$ROOT/scripts/install-external-write-guard.sh" --provider cursor
 check "external-write-guard cursor: shell + MCP + prompt" \
   "$(jq -c '[.hooks.beforeShellExecution, .hooks.beforeMCPExecution, .hooks.beforeSubmitPrompt | length]' "$CURSOR_FILE")" "[1,1,1]"
 
-q bash "$ROOT/scripts/install-judge.sh" --hook-only --provider codex
+q bash "$ROOT/scripts/install-judge-hooks.sh" --hook-only --provider codex
 check "judge codex: UserPromptSubmit prompt-sort, timeout 6" "$(jq -c '[.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .timeout]' "$CODEX_FILE")" "[6]"
 check "judge codex: prompt-sort runs through the adapter" "$(jq -r '.hooks.UserPromptSubmit[].hooks[] | select(.command | endswith("# aw:prompt-sort")) | .command | contains("adapters/codex.sh")' "$CODEX_FILE")" "true"
-q bash "$ROOT/scripts/install-judge.sh" --hook-only --provider cursor
+q bash "$ROOT/scripts/install-judge-hooks.sh" --hook-only --provider cursor
 check "judge cursor: no prompt-sort (beforeSubmitPrompt cannot inject context)" "$(jq -r '[.hooks.beforeSubmitPrompt[]?.command | select(endswith("# aw:prompt-sort"))] | length' "$CURSOR_FILE")" "0"
 
 # judge has no uninstaller: drop its entries so the lever-uninstall check below stays exact.

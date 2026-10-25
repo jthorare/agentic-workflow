@@ -6,8 +6,8 @@
   "title": "Expiry for shared links",
   "recipe": {
     "id": "workflow.scoping",
-    "hash": "sha256:9968fa7b2aae1c5969316cb1988751e6efde47ae814f8b327378d2723b21e21b",
-    "version": 9,
+    "hash": "sha256:f72ebcc9a47af7022611760a6a13290abf7b4434a622063eb18ebb656b0e7ec1",
+    "version": 10,
     "urgency": "work",
     "displayName": "Scoping"
   },
@@ -423,8 +423,8 @@
       "header": {
         "address": "ITM-01JN3/scoping/1",
         "recipe": "workflow.scoping",
-        "hash12": "9968fa7b2aae",
-        "version": 9,
+        "hash12": "f72ebcc9a47a",
+        "version": 10,
         "state": "interview",
         "detail": "desk task",
         "since": "2026-10-12T12:10:00.0000000Z",
@@ -471,7 +471,7 @@
           "confirm": "Cancel ITM-01JN3/scoping/1? 0 running steps stop; 0 children are cancelled."
         }
       ],
-      "text": "ITM-01JN3/scoping/1  workflow.scoping@9968fa7b2aae  v9  interview: desk task  since 12:10 (16m)\n  next      Answer the 3 questions on ITM-01JN3, then run:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome answered --output fact:answers=<file>\n            or, to stop asking and close the interview:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome doneAsking --output fact:answers=<file>\n  inputs    fact:questions  questions.json  sha256:7e3a...\n  timeout   parks in 2d (desk)\n  commands  complete, takeover, cancel\n",
+      "text": "ITM-01JN3/scoping/1  workflow.scoping@f72ebcc9a47a  v10  interview: desk task  since 12:10 (16m)\n  next      Answer the 3 questions on ITM-01JN3, then run:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome answered --output fact:answers=<file>\n            or, to stop asking and close the interview:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome doneAsking --output fact:answers=<file>\n  inputs    fact:questions  questions.json  sha256:7e3a...\n  timeout   parks in 2d (desk)\n  commands  complete, takeover, cancel\n",
       "injection": []
     }
   },

@@ -14,14 +14,14 @@ public sealed class OnyxStackDoctorTests
     private static readonly string[] _services = ["api_server", "background", "cache", "inference_model_server", "nginx", "opensearch", "relational_db", "web_server"];
 
     private readonly FakeContainerRuntime _runtime = new(FakeContainerRuntime.Healthy);
-    private readonly FakeOnyxWorkspace _workspace = new() { State = new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" }) };
+    private readonly FakeOnyxWorkspace _workspace = new() { State = new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" }) };
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static string Pinned(string repository) => repository + "@" + _pins.Images.Single(i => i.Repository == repository && i.Platform == "linux/arm64").Digest;
 
     private static ComposeContainer Container(string service, string state = "running", string? health = null, string? image = null, ComposePublisher[]? publishers = null)
-        => new(service, state, health, image ?? Pinned("docker.io/onyxdotapp/onyx-backend"), publishers ?? (service == "nginx" ? [new ComposePublisher("127.0.0.1", 3000, 80)] : []));
+        => new(service, state, health, image ?? Pinned("docker.io/onyxdotapp/onyx-backend"), publishers ?? (service == "nginx" ? [new ComposePublisher("127.0.0.1", 3189, 80)] : []));
 
     private OnyxStackDoctor Doctor() => new(_workspace, new OnyxFacts(_runtime, new FakeHostProbes(), new FakeSindriHome(OnyxUpRig.Home)), new FakeOnyxPins(_pins));
 
@@ -86,7 +86,7 @@ public sealed class OnyxStackDoctorTests
 
         Assert.Equal("onyx:stack", check!.Name);
         Assert.Equal(CheckState.Ok, check.State);
-        Assert.Equal("8 containers running, healthy, bound to 127.0.0.1:3000, digests match the pins", check.Detail);
+        Assert.Equal("8 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins", check.Detail);
         Assert.Null(check.Fix);
     }
 
@@ -96,14 +96,14 @@ public sealed class OnyxStackDoctorTests
     [InlineData("192.168.1.5")]
     public async Task A_publisher_off_loopback_fails_naming_the_service_the_address_and_the_port(string address)
     {
-        Stack(s => s == "nginx" ? Container(s, publishers: [new ComposePublisher(address, 3000, 80)]) : Container(s));
+        Stack(s => s == "nginx" ? Container(s, publishers: [new ComposePublisher(address, 3189, 80)]) : Container(s));
 
         var check = await Doctor().Check(Token);
 
         Assert.Equal(CheckState.Fail, check!.State);
         Assert.Contains("nginx", check.Detail, StringComparison.Ordinal);
         Assert.Contains(address, check.Detail, StringComparison.Ordinal);
-        Assert.Contains("3000", check.Detail, StringComparison.Ordinal);
+        Assert.Contains("3189", check.Detail, StringComparison.Ordinal);
         Assert.Contains("sindri onyx down", check.Fix, StringComparison.Ordinal);
     }
 

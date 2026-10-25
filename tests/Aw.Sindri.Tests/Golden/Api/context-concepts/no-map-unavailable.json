@@ -1,0 +1,19 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "",
+  "state": "unavailable",
+  "code": "SND-CONTEXT-030",
+  "concepts": [],
+  "other": {
+    "id": "concept:other",
+    "name": "Other",
+    "size": {
+      "features": 0,
+      "records": 0,
+      "decisions": 0,
+      "code": 0
+    }
+  },
+  "links": []
+}

@@ -1,10 +1,9 @@
 # Dependency updates (spec §4d): grouped, with a 14-day cooldown that matches the
 # repo's minimum-age pin policy.
 #
-# The TS packages are in maintenance until the C# cutover replaces them (spec §4a,
-# §4c), so npm gets no major-version bumps and one grouped minor/patch PR a month
-# across every directory. Security updates are separate from these version
-# updates and still arrive as they're published.
+# Node stays only for scripts/ (Ajv for the schema checks) and the setup-time tools, so npm gets no
+# major-version bumps and one grouped minor/patch PR a month. Security updates are separate from these
+# version updates and still arrive as they're published.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -19,19 +18,14 @@ updates:
         patterns: ["*"]
   - package-ecosystem: npm
     directories:
-      - /scorer
-      - /judge
-      - /sindri
-      - /skills/ui-evidence
-      - /skills/bugFixOrchestrator
-      - /.github/ci-tools
+      - /scripts
     schedule:
       interval: monthly
     cooldown:
       default-days: 14
     open-pull-requests-limit: 1
     ignore:
-      # Maintenance only until the cutover: no major bumps in the TS packages.
+      # Maintenance only: no major bumps in the Node tooling.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
     groups:

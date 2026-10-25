@@ -42,7 +42,7 @@ internal sealed partial class SetupOnyxForm : UserControl
         {
             SetupFocus.OnyxPassword => (Control)SetupOnyxPassword,
             SetupFocus.OnyxConnect => SetupOnyxOpen,
-            SetupFocus.RepoPath or SetupFocus.OnyxEmail => SetupOnyxEmail,
+            SetupFocus.RepoPath or SetupFocus.OnyxEmail or SetupFocus.StepHeading => SetupOnyxEmail,
             _ => SetupOnyxEmail,
         }).Focus(), DispatcherPriority.Input);
 

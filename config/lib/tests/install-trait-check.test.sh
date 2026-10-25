@@ -21,6 +21,7 @@ test_refuses_without_judge_on_path() {
   set -e
   [ "$rc" -ne 0 ] || { echo "FAIL: expected a nonzero exit when judge isn't installed: $out"; exit 1; }
   echo "$out" | has -i "judge" || { echo "FAIL: expected the refusal to mention judge, got: $out"; exit 1; }
+  echo "$out" | has -F "./setup.sh" || { echo "FAIL: expected the refusal to point at ./setup.sh (the C# judge is installed by setup), got: $out"; exit 1; }
   jq -e '.hooks' "$settings" > /dev/null 2>&1 && { echo "FAIL: refusal must not install hook entries"; exit 1; }
   echo "PASS: test_refuses_without_judge_on_path"
 }

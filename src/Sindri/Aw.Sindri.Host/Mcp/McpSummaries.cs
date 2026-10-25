@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Results;
@@ -32,7 +33,7 @@ internal static class McpSummaries
         var items = result.Sections.Sum(s => s.Items.Count);
         var degraded = result.Degraded.Count == 0 ? "none" : string.Join(", ", result.Degraded.Select(d => d.Source.Value));
         var text = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{items} items in {result.Sections.Count} sections; {result.Conflicts.Count} conflicts; degraded: {degraded}"))
-            .AppendLine(result.Truncated ? "; truncated to the budget" : string.Empty)
+            .AppendLine()
             .AppendLine($"anchors: {(result.Anchors.Count == 0 ? "none" : string.Join(", ", result.Anchors))}");
         if (result.Diff is { } diff)
         {
@@ -84,6 +85,22 @@ internal static class McpSummaries
             $"coverage: {c.Intent.Covered} of {c.Scope} in scope have a record or decision, {c.Product.Confirmed} confirmed, {c.Code.Implemented} implemented in code ({c.Code.Suggested} suggested), {c.Gaps.Count} gaps"));
         _ = text.AppendLine(view.Degraded.Count == 0 ? "degraded: none" : "degraded: " + string.Join(", ", view.Degraded));
         return text.Append("The bands, their text fenced as untrusted, are in structuredContent.").ToString();
+    }
+
+    /// <summary>context_concepts' summary: the page's concept ids with their sizes, what 'other' holds and whether there is a next page; never a name or a summary.</summary>
+    /// <param name="view">The page.</param>
+    /// <returns>The text.</returns>
+    internal static string Concepts(ConceptsView view)
+    {
+        var text = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{view.Concepts.Count} concepts on this page · map {view.MapVersion} · state {view.State}\n"));
+        foreach (var concept in view.Concepts)
+        {
+            _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{concept.Id}: {concept.Size.Features} features, {concept.Size.Records} records, {concept.Size.Decisions} decisions, {concept.Size.Code} code"));
+        }
+
+        _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{view.Other.Id}: {view.Other.Size.Features} features, {view.Other.Size.Records} records, {view.Other.Size.Decisions} decisions, {view.Other.Size.Code} code"));
+        _ = text.AppendLine(view.Next is null ? "last page" : "next: " + view.Next);
+        return text.Append("The concepts, their names and summaries fenced as untrusted, are in structuredContent.").ToString();
     }
 
     /// <summary>context_node's summary: the key, the map version and the edge counts; never a label.</summary>

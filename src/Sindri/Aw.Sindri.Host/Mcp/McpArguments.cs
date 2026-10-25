@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -12,6 +13,46 @@ namespace Aw.Sindri.Host.Mcp;
 /// </summary>
 internal static class McpArguments
 {
+    /// <summary>The page arguments every tool takes.</summary>
+    internal static readonly string[] PageNames = ["limit", "offset"];
+
+    /// <summary>The page the call asked for. Both are optional: offset defaults to 0 and limit to <see cref="McpWindow.DefaultLimit"/>. A wrong type is SND-CONTEXT-022; a limit under 1 or an offset under 0 is SND-CONTEXT-006.</summary>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>The page or the refusal.</returns>
+    internal static Result<McpWindow> ReadPage(IDictionary<string, JsonElement>? arguments)
+    {
+        if (ReadWhole(arguments, "limit", out var limit) is { } limitError)
+        {
+            return limitError;
+        }
+
+        if (ReadWhole(arguments, "offset", out var offset) is { } offsetError)
+        {
+            return offsetError;
+        }
+
+        if (QueryRules.CheckPage(limit, offset) is { } refused)
+        {
+            return refused;
+        }
+
+        return new McpWindow(limit ?? McpWindow.DefaultLimit, offset ?? 0);
+    }
+
+    /// <summary>The arguments without the page, so a tool's own binder does not see them.</summary>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>The arguments a tool's binder reads, or null when there were none.</returns>
+    internal static IDictionary<string, JsonElement>? ExceptPage(IDictionary<string, JsonElement>? arguments)
+    {
+        if (arguments is null)
+        {
+            return null;
+        }
+
+        return arguments.Where(pair => !PageNames.Contains(pair.Key, StringComparer.Ordinal))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+    }
+
     /// <summary>Refuses any argument: the tool takes none.</summary>
     /// <param name="tool">The tool's name.</param>
     /// <param name="arguments">The call's arguments.</param>
@@ -98,6 +139,23 @@ internal static class McpArguments
         }
 
         return ContextErrors.McpArgumentsInvalid.With($"{tool} needs '{name}', one of {string.Join(", ", names)} (fix: call it with {{\"{name}\": \"{names[0]}\"}})");
+    }
+
+    private static Error? ReadWhole(IDictionary<string, JsonElement>? arguments, string name, out int? number)
+    {
+        number = null;
+        if (arguments is null || !arguments.TryGetValue(name, out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (raw.ValueKind == JsonValueKind.Number && raw.TryGetInt32(out var parsed))
+        {
+            number = parsed;
+            return null;
+        }
+
+        return ContextErrors.McpArgumentsInvalid.With($"'{name}' must be an integer, got {Kind(raw)} (fix: see the tool's input schema)");
     }
 
     private static string Kind(JsonElement value) => value.ValueKind.ToString().ToLowerInvariant();

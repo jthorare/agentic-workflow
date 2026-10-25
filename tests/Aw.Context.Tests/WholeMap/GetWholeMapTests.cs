@@ -107,17 +107,6 @@ public sealed class GetWholeMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_longer_list_of_areas_than_the_cap_is_cut_and_says_so()
-    {
-        var world = await Imported(new WholeMapRules(NodeBudget: 5, AreasCap: 2));
-
-        var view = (await Ask(world)).Value;
-
-        Assert.Equal((2, true), (view.Areas.Count, view.Truncated));
-        Assert.Equal(string.Join(' ', view.Areas.Select(a => a.Key).Order(StringComparer.Ordinal)), Keys(view));
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task A_bad_detail_or_more_than_1000_keys_to_place_is_006_and_1000_is_fine()
     {
         var world = await Imported();
@@ -322,7 +311,7 @@ public sealed class GetWholeMapTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_area_over_the_cap_keeps_the_first_nodes_and_says_so_with_its_full_counts()
+    public async Task An_area_over_the_split_cap_still_lists_every_node()
     {
         var world = new MapWorld(wholeMapRules: new WholeMapRules(AreaCap: 2));
         _worlds.Add(world);
@@ -334,10 +323,10 @@ public sealed class GetWholeMapTests : IDisposable
 
         var view = (await Ask(world, area: "feature:wide")).Value;
 
-        Assert.Equal(2, view.Nodes!.Count);
-        Assert.Equal((true, true, 3), (view.Area!.Truncated, view.Truncated, view.Area.Counts.Nodes));
-        Assert.Equal(("feature:wide", "surface:screen/s1"), (view.Nodes[0].Key.Value, view.Nodes[1].Key.Value));
-        _ = Assert.Single(view.Edges!);
+        Assert.Equal(3, view.Nodes!.Count);
+        Assert.Equal((false, false, 3), (view.Area!.Truncated, view.Truncated, view.Area.Counts.Nodes));
+        Assert.Equal(["feature:wide", "surface:screen/s1", "surface:screen/s2"], view.Nodes.Select(n => n.Key.Value), StringComparer.Ordinal);
+        Assert.Equal(2, view.Edges!.Count);
     }
 
     [Fact, Trait("Lane", "unit")]

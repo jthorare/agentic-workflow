@@ -79,6 +79,9 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     /// <summary>The repo form of the repo step; null for every other step.</summary>
     public SetupRepoFormViewModel? Repo { get; set; }
 
+    /// <summary>Asked when a form in this step needs focus on the step heading.</summary>
+    internal event EventHandler<SetupFocusEventArgs>? FocusRequested;
+
     /// <summary>The typed approval of the profile step; null for every other step.</summary>
     public SetupProfileConfirmViewModel? Profile
     {
@@ -87,6 +90,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         {
             field = value;
             value?.Summary.PropertyChanged += (_, _) => OnChanged(nameof(HasPreview));
+            value?.FocusRequested += (_, e) => FocusRequested?.Invoke(this, e);
         }
     }
 
@@ -152,12 +156,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
 
     /// <summary>True when the step needs the person.</summary>
     internal bool NeedsYou => string.Equals(Step.State, "needs-you", StringComparison.Ordinal);
-
-    /// <summary>True when the step was skipped.</summary>
-    internal bool IsSkipped => string.Equals(Step.State, "skipped", StringComparison.Ordinal);
-
-    /// <summary>True when the step is done or skipped: setup is finished when every step is.</summary>
-    internal bool IsFinished => IsDone || IsSkipped;
 
     /// <summary>True while Sindri works on it, as served.</summary>
     internal bool IsRunning => string.Equals(Step.State, "running", StringComparison.Ordinal);

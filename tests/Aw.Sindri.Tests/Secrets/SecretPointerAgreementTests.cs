@@ -18,7 +18,7 @@ public sealed class SecretPointerAgreementTests
     public void Every_pointer_sindri_parses_passes_contexts_check(string text)
     {
         var parsed = SecretPointer.Parse(text);
-        var settings = OnyxSettings.Create("http://127.0.0.1:3000", text, "v4.9.0");
+        var settings = OnyxSettings.Create("http://127.0.0.1:3189", text, "v4.9.0");
 
         Assert.True(parsed.IsSuccess, parsed.IsError ? parsed.Error.Message : null);
         Assert.True(settings.IsSuccess, settings.IsError ? settings.Error.Message : null);

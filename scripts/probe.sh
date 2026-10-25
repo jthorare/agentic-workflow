@@ -122,7 +122,7 @@ case "${1:-}" in
     fi
     drop_backup
     echo "probe: on. Logs go to $LOG_DIR."
-    echo "Leave it on for one working day, then run: scripts/probe.sh$PROVIDER_FLAG off && scorer probe"
+    echo "Leave it on for one working day, then run: scripts/probe.sh$PROVIDER_FLAG off"
     ;;
   off)
     backup_settings

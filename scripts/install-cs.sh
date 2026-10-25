@@ -16,6 +16,8 @@
 # untracked source file the publishes read), `bin/cs/current` is the symlink --link switches (atomically). The newest two
 # builds are kept, plus the one `current` names, and any build a running control plane executes (the pid in control.json,
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
+# A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
+# them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
 # One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
@@ -114,13 +116,44 @@ built() { # $1 = a stamp: a complete build is a build-info file written last
   [ -f "$base/$1/build-info" ]
 }
 # A build a running control plane executes: the pid in control.json, alive, whose command line (ps) names the build dir.
+# The running control plane (#1032). serve writes control.json as one compact line, {"url":..,"pid":N,"epoch":..,
+# "temporal":{"pid":M,..}}: the serve's pid is the TOP-LEVEL one, never the Temporal server's. (Same helper as
+# cutover-clean-ts.sh; the two scripts are copied alone in their tests, so it is repeated, not sourced.)
 control="${AW_SINDRI_HOME:-$state/sindri-app}/control.json"
-in_use() { # $1 = a stamp
-  local pid cmd
+serve_pid() { # the live serve pid, or nothing
+  local pid
+  [ -f "$control" ] || return 0
   pid="$(jq -r '.pid // empty' "$control" 2> /dev/null || true)"
-  if [ -z "$pid" ] || ! kill -0 "$pid" 2> /dev/null; then return 1; fi
-  cmd="$(ps -p "$pid" -o command= 2> /dev/null || true)"
-  case "$cmd" in *"$base/$1/"*) return 0 ;; *) return 1 ;; esac
+  if [ -z "$pid" ]; then
+    pid="$(tr -d '\n' < "$control" | sed -E 's/"temporal"[ ]*:.*//' | sed -nE 's/.*"pid"[ ]*:[ ]*([0-9]+).*/\1/p' | head -n 1)"
+  fi
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac
+  if kill -0 "$pid" 2> /dev/null; then echo "$pid"; fi
+}
+serve_cmd() { # $1 = pid: its executable (Linux, " (deleted)" stripped) and its command line, one per line
+  local exe=""
+  if [ -d /proc/self ]; then exe="$(readlink "/proc/$1/exe" 2> /dev/null || true)"; exe="${exe% (deleted)}"; fi
+  printf '%s\n%s\n' "$exe" "$(ps -o args= -p "$1" 2> /dev/null || true)"
+}
+in_use() { # $1 = a stamp: does the running control plane execute from it?
+  local pid
+  pid="$(serve_pid)"
+  [ -n "$pid" ] || return 1
+  case "$(serve_cmd "$pid")" in *"$base/$1/"*) return 0 ;; *) return 1 ;; esac
+}
+running_build() { # the build dir name the running control plane executes from (bin/cs or the pre-cutover bin/sindri-app), or nothing
+  local pid cmd rest root_dir
+  pid="$(serve_pid)"
+  [ -n "$pid" ] || return 0
+  cmd="$(serve_cmd "$pid")"
+  for root_dir in "$base" "$state/bin/sindri-app"; do
+    case "$cmd" in
+      *"$root_dir/"*)
+        rest="${cmd#*"$root_dir/"}"
+        echo "${rest%%/*}"
+        return 0 ;;
+    esac
+  done
 }
 current_stamp() { # the stamp `current` names
   if [ -L "$base/current" ]; then basename "$(readlink "$base/current")"; fi
@@ -164,6 +197,20 @@ publish() {
   if [ "$rebuild" = 0 ] && built "$stamp"; then
     say "build $stamp is current"
     return 0
+  fi
+
+  # Open agent runs (#1000): a publish under a running plane can stop it mid-Step. Checked with the running build's own
+  # sindri (the build its command line names, else the current one).
+  local pid guard_bin="" d
+  pid="$(serve_pid)"
+  if [ -n "$pid" ]; then
+    for d in "$base"/*; do
+      if [ -d "$d" ] && [ ! -L "$d" ] && [ -x "$d/sindri" ] && in_use "$(basename "$d")"; then guard_bin="$d/sindri"; break; fi
+    done
+    if [ -z "$guard_bin" ] && [ -x "$base/current/sindri" ]; then guard_bin="$base/current/sindri"; fi
+    # shellcheck source=lib/sindri-open-runs.sh
+    source "$here/lib/sindri-open-runs.sh"
+    if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
   mkdir -p "$base"
@@ -332,6 +379,11 @@ link() {
       || warn "ui-evidence install-browser failed (offline?); re-run: ui-evidence install-browser"
   fi
   prune
+  local running
+  running="$(running_build)"
+  if [ -n "$running" ] && [ "$running" != "$stamp" ]; then
+    say "Sindri is still running build $running; run \`sindri stop && sindri\` to switch to $stamp"
+  fi
 }
 
 if [ "$do_publish" = 1 ]; then publish; fi

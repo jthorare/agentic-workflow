@@ -39,8 +39,7 @@
           "path": null,
           "tokens": 11
         }
-      ],
-      "more": []
+      ]
     },
     {
       "name": "code",
@@ -64,19 +63,12 @@
           "path": null,
           "tokens": 12
         }
-      ],
-      "more": []
+      ]
     }
   ],
   "conflicts": [],
   "suggestedAnchors": [],
   "degraded": [],
-  "truncated": false,
-  "budget": {
-    "asked": 8000,
-    "used": 23,
-    "estimate": true
-  },
   "cites": {
     "C1": {
       "key": "map:aw-split-panes/v1",

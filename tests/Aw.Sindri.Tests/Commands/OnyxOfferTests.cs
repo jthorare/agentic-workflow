@@ -91,7 +91,7 @@ public sealed class OnyxOfferTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_box_where_onyx_is_set_up_is_not_asked()
     {
-        _rig.Workspace.State = new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" });
+        _rig.Workspace.State = new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" });
 
         await Run(Human, "y");
 

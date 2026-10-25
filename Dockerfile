@@ -3,7 +3,7 @@
 # Build from the repo root:  docker build -t sindri .   (add --platform linux/arm64 for arm)
 #
 # Every FROM is a digest from deploy/images.lock (scripts/images-lock.sh check fails when one drifts). Three stages:
-#   build    publishes the Sindri host exactly as scripts/sindri-app.sh does (framework-dependent, the shipped recipes embedded),
+#   build    publishes the Sindri host exactly as scripts/install-cs.sh does (framework-dependent, the shipped recipes embedded),
 #            then judge and aw-packets NativeAOT for the target platform, then runs the shipped recipes' evals
 #   tools    the temporal CLI from binaries.lock (sha256-checked) and graphify at the code index's pin (context/code-index.lock)
 #   runtime  aspnet + git, bubblewrap, tini; uid 1000; read-only-root friendly (all state under /data)
@@ -21,19 +21,19 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
-# The RID: the same one scripts/sindri-app.sh derives from uname
+# The RID: the same one scripts/install-cs.sh derives from uname
 RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
       amd64) echo linux-x64 > /rid ;; arm64) echo linux-arm64 > /rid ;; *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; esac
 # The host: framework-dependent, locked restore, the shipped recipes embedded (AwRecipesDir)
 RUN dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release --no-self-contained \
       -p:AwRecipesDir=/src/recipes/sindri -o /out/sindri
-# judge and aw-packets, NativeAOT; the RID's packs are not in the lock files, so the restore is unlocked, as in sindri-app.sh
+# judge and aw-packets, NativeAOT; the RID's packs are not in the lock files, so the restore is unlocked, as in install-cs.sh
 RUN dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -r "$(cat /rid)" -p:RestoreLockedMode=false -o /out/judge \
  && dotnet publish src/Packets/Aw.Packets.App/Aw.Packets.App.csproj -c Release -r "$(cat /rid)" -p:RestoreLockedMode=false -o /out/packets \
  && cp /out/judge/judge /out/sindri/judge && cp /out/packets/aw-packets /out/sindri/aw-packets \
  && cp /out/judge/libe_sqlite3.* /out/packets/libe_sqlite3.* /out/sindri/ \
  && printf 'commit=%s\nrecipes-tree=%s\n' "${SOURCE_COMMIT}" "${RECIPES_TREE}" > /out/sindri/build-info
-# The shipped recipes' evals fail the build, as they fail sindri-app's publish; the embedded count must equal the recipes shipped
+# The shipped recipes' evals fail the build, as they fail the install-cs.sh publish; the embedded count must equal the recipes shipped
 RUN /out/sindri/sindri recipe eval --shipped --json > /tmp/evals.json \
  && test "$(jq -r '.recipes | length' /tmp/evals.json)" = "$(find /src/recipes/sindri -maxdepth 1 -name '*.yaml' | wc -l)"
 
