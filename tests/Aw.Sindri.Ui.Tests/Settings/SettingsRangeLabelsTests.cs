@@ -1,6 +1,6 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Settings;
 
 namespace Aw.Sindri.Ui.Tests.Settings;
