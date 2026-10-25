@@ -42,7 +42,8 @@ set `AW_UI_DRIVER` for a normal launch, and do not point `AW_UI_DRIVER_DIR` at a
 
 `POST /v1/<verb>` with a JSON body; `200` with JSON (a screenshot: `image/png`), else a `DriverFailure` body `{"code","message"}` with the status of its kind
 (400 invalid, 401 unauthorized, 404 no match, 408 timeout, 500 failed). `GET /v1/ping` answers `{"ok":true}`. Calls are served one at a time; each runs on the
-UI thread through the dispatcher after a layout pass, so it sees the screen as it is now.
+UI thread through the dispatcher after a layout pass, so it sees the screen as it is now. A tree is cut at 64 levels whatever `depth` asks. The command line
+never waits for ever: a call that gets no answer within its budget (60 s; a `wait-for` adds its wait and 5 s) is `AW-UIDRIVER-004`, exit `2`.
 
 A **selector** names an element; every field given must match: `nodeId` (`0/2/1`: child positions in the visual tree, window `0`), `automationId`, `name`
 (`AutomationProperties.Name`, else `x:Name`), `type` (type name, exact), `text` (the text it shows, exact), `textContains`, and `index` (which match, from 0,
@@ -70,7 +71,7 @@ accessibility fix, and it benefits screen readers too.
 ## The command line
 
 ```
-aw-ui-driver [--dir D] <verb> [flags]      D defaults to $AW_UI_DRIVER_DIR
+aw-ui-driver [--dir D] [--timeout-ms N] <verb> [flags]   D defaults to $AW_UI_DRIVER_DIR; N (default 60000, else $AW_UI_DRIVER_TIMEOUT_MS) bounds the whole call
   ready [--wait-ms 30000]                  wait until a driver answers (the app may still be starting)
   tree [--depth N] · search --limit N · props · click · type --value T [--replace] · key --chord Ctrl+K
   scroll --dx N --dy N · wait-for --state S [--expect-text T] [--wait-ms N] · screenshot --out file.png
@@ -84,8 +85,8 @@ out (a check failed) · `4` the driver is unreachable or the app failed · `130`
 
 ## Errors
 
-`AW-UIDRIVER-001` invalid request · `002` no element matches · `003` element can't take the action · `004` timed out · `005` unauthorized · `006` driver
-unreachable (no `driver.json`, a stale one, a refused connection) · `007` the app failed while the driver acted.
+`AW-UIDRIVER-001` invalid request · `002` no element matches · `003` element can't take the action · `004` timed out (a wait, the app's UI thread past 20 s, or the driver not answering the command line within `--timeout-ms`) · `005` unauthorized · `006` driver
+unreachable (no `driver.json`, a stale one, a refused connection) · `007` the app failed while the driver acted (a verb that throws answers 500 with this code and the server keeps serving).
 
 ## NativeAOT
 
