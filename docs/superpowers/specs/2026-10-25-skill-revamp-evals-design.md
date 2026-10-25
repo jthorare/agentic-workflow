@@ -67,7 +67,7 @@ Target: a forced `rootCause` run drops from 10-11 turns to 6-7. Phase 0 measures
 
 ### 2.4 A no-worktree mode
 
-Skills that make worktrees, branches, commits or PRs (`specToProvenPR` step 0, `shipRelease`, `bugHunt`, `bugFixOrchestrator`, `addressReview`) read `AW_GIT_MODE`: `full` (default) or `readonly`. In `readonly` they work in the current directory, make no branch, commit, push or PR, and print the commands they would have run under a heading `Would run:`. Cases then grade the plan and the edits, not the git state. Cases that need a real commit are not run under `claude plugin eval` (they stay with the existing bash and C# tests).
+Skills that make worktrees, branches, commits, PRs or PR comments read `AW_GIT_MODE`. A grep today finds at least 9 (`specToProvenPR`, `shipRelease`, `bugHunt`, `bugFixOrchestrator`, `addressReview`, `review`, `postReview`, `syncDocs`, `ui-evidence`), and `landAndDeploy`, `canary`, `meta` and the `design-implement-*` pair mention worktrees or `gh`; phase 0 fixes the list from a grep for git and `gh` write commands, and a check keeps it current. They read it: `full` (default) or `readonly`. In `readonly` they work in the current directory, make no branch, commit, push or PR, and print the commands they would have run under a heading `Would run:`. Cases then grade the plan and the edits, not the git state. Because the mode is only an instruction, the eval's stub `git` and `gh` are the backstop: under `readonly` they refuse `commit`, `push`, `worktree add`, `checkout -b`, `pr create|merge|comment` with exit 1 and a line a grader can match, so a skill that ignores the mode fails its case instead of writing. Cases that need a real commit are not run under `claude plugin eval` (they stay with the existing bash and C# tests).
 
 ### 2.5 An output contract per skill
 
@@ -254,7 +254,7 @@ Eval runs are for lane leads. Builders write cases and skill text only (standing
 ### Phase 0: plumbing (one lane, blocks everything)
 
 1. `AW_TOOLKIT` edit and the `$AW_DIR`-only writes across `skills/`, plus the check script (§2.1, §2.2).
-2. Preamble split and `AW_PREAMBLE=off` (§2.3); `AW_GIT_MODE` in the five skills (§2.4).
+2. Preamble split and `AW_PREAMBLE=off` (§2.3); `AW_GIT_MODE` in every skill the grep finds, and the stub `git` / `gh` refusals (§2.4).
 3. `skills/_shared/output-contract.md` and the `requires:` field with its check (§2.5, §2.6).
 4. `evals/` skeleton, `plugin.json`, stubs for `gh`, `curl`; `scripts/skill-evals.sh` and its bash test (§4, §5).
 5. Move the pilot's three suites into the new layout; re-run once as the baseline row. The baseline also records: (a) the 3 pilot skills' forced cases once with `AW_PREAMBLE` on and once off, so we know whether the eval's mode changes Δ (if it moves by more than 0.1, one preamble-on behaviour case per tier B skill joins the nightly); (b) the bug family's case set (§3.1a) on today's descriptions; (c) the total bytes of all 52 descriptions.
