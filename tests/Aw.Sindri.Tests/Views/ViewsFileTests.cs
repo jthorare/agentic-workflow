@@ -66,10 +66,10 @@ public sealed class ViewsFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Every_view_name_has_a_table_and_the_schema_is_at_version_11()
+    public void Every_view_name_has_a_table_and_the_schema_is_at_version_12()
     {
         Assert.Equal(["code-index", "decisions", "item-aliases", "item-timeline", "items", "jobs", "launches", "needs_you", "profile", "recipe-stats", "requests", "services"], ViewNames.All.Order(StringComparer.Ordinal).ToList());
-        Assert.Equal(11, ViewSchema.Version);   // the engine item part carries the unavailable park (#1001); NeedsYouRow.Open became required (#959); the code-index view joined after recipe-stats (and launch rows gained a required member at 7): an older views.db must rebuild, not fail to read
+        Assert.Equal(12, ViewSchema.Version);   // the launch row gained its takeover viewer (#1004); the engine item part carries the unavailable park (#1001); NeedsYouRow.Open became required (#959); the code-index view joined after recipe-stats (and launch rows gained a required member at 7): an older views.db must rebuild, not fail to read
     }
 
     [Fact, Trait("Lane", "integration")]

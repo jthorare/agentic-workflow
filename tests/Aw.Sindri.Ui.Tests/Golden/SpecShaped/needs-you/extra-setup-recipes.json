@@ -21,7 +21,7 @@
       "actions": [
         "ApproveAllRecipes"
       ],
-      "cli": "sindri-app recipe approve-all"
+      "cli": "sindri recipe approve-all"
     }
   ],
   "empty": null,

@@ -71,7 +71,7 @@ public sealed class GetCodeReviewTests
         using var slow = new CodeWorld(decorateTimed: (inner, expire) => new StallingSearch(inner, _ => true, expire));
         _ = await slow.ImportSharing();
 
-        var view = (await slow.Code(MapWorld.HumanWith("""{"deadline":"100ms"}"""))).Value;
+        var view = (await slow.Code(MapWorld.HumanWith("{\"deadline\":\"100ms\",\"code\":{\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         var tests = Row(view, "lexical-tests");
         var schema = Row(view, "lexical-schema");

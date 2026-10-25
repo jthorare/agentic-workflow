@@ -51,5 +51,5 @@ internal sealed class MapPublishDoctorCheck(MapPublishStatusReader publish, Time
     // The approved profile's scope as a service reads it (the deny globs apply); null while no profile is approved.
     private static ContextScope? ScopeOf(LoadedProfile? approved) => approved is null
         ? null
-        : new ContextScope(approved.Profile.Context, ScopeRules.Usable([.. RepoDenyGlobs.Entries(approved.Profile).Select(e => new ProfileRepoEntry(e.Name, e.Path, e.DenyPaths))]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
+        : new ContextScope(approved.Profile.Context, ScopeRules.Usable(ContextScopes.Entries(approved.Profile)), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
 }

@@ -17,7 +17,8 @@
       "flow": 0,
       "decision": 2,
       "record": 3,
-      "code": 2
+      "code": 2,
+      "concept": 0
     }
   },
   "areas": [

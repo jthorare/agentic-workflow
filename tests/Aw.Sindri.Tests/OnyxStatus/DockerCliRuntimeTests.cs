@@ -384,7 +384,7 @@ public sealed class DockerCliRuntimeTests
         Assert.True(ComposeFailures.IsTimeout(error));
     }
 
-    private const string ConfigJson = "{\"name\":\"sindri-onyx\",\"services\":{\"nginx\":{\"image\":\"nginx@sha256:aaa\",\"environment\":{\"USER_AUTH_SECRET\":\"hunter2-secret\"},\"ports\":[{\"mode\":\"ingress\",\"host_ip\":\"127.0.0.1\",\"target\":80,\"published\":\"3000\",\"protocol\":\"tcp\"}]},\"cache\":{\"image\":\"redis\"},\"relational_db\":{\"ports\":[{\"mode\":\"ingress\",\"target\":5432,\"protocol\":\"tcp\"}]}}}";
+    private const string ConfigJson = "{\"name\":\"sindri-onyx\",\"services\":{\"nginx\":{\"image\":\"nginx@sha256:aaa\",\"environment\":{\"USER_AUTH_SECRET\":\"hunter2-secret\"},\"ports\":[{\"mode\":\"ingress\",\"host_ip\":\"127.0.0.1\",\"target\":80,\"published\":\"3189\",\"protocol\":\"tcp\"}]},\"cache\":{\"image\":\"redis\"},\"relational_db\":{\"ports\":[{\"mode\":\"ingress\",\"target\":5432,\"protocol\":\"tcp\"}]}}}";
 
     [Fact, Trait("Lane", "unit")]
     public void RenderedConfig_reads_compose_config_json_and_names_a_port_with_no_address_or_host_port()
@@ -395,7 +395,7 @@ public sealed class DockerCliRuntimeTests
 
         Assert.Equal([.. _composePrefix, "config", "--format", "json"], Assert.Single(runner.Calls).Arguments);
         Assert.Equal(
-            [new ComposePublishedPort("nginx", "127.0.0.1", 3000, 80), new ComposePublishedPort("relational_db", "", 0, 5432)],
+            [new ComposePublishedPort("nginx", "127.0.0.1", 3189, 80), new ComposePublishedPort("relational_db", "", 0, 5432)],
             ports);
     }
 
@@ -450,7 +450,7 @@ public sealed class DockerCliRuntimeTests
         try
         {
             var envFile = Path.Combine(directory, ".env");
-            File.WriteAllText(envFile, "# a comment\nPOSTGRES_PASSWORD=password\n\nexport REDIS_PASSWORD=x\nHOST_PORT=3000\nQUOTED=\"a=b\"\n");
+            File.WriteAllText(envFile, "# a comment\nPOSTGRES_PASSWORD=password\n\nexport REDIS_PASSWORD=x\nHOST_PORT=3189\nQUOTED=\"a=b\"\n");
             var runner = new FakeToolRunner(Exit(0, "[]"));
 
             _ = Cli(runner).Stop(_project with { EnvFile = envFile }, Token);
@@ -523,7 +523,7 @@ public sealed class DockerCliRuntimeTests
     public void A_cancelled_command_throws_after_the_tool_was_killed()
         => Assert.Throws<OperationCanceledException>(() => Cli(new FakeToolRunner(ToolRun.Cancelled)).Pull(_project, static _ => { }, Token));
 
-    private const string NginxJson = "{\"Service\":\"nginx\",\"State\":\"running\",\"Health\":\"\",\"Image\":\"nginx@sha256:aaa\",\"Publishers\":[{\"URL\":\"127.0.0.1\",\"TargetPort\":80,\"PublishedPort\":3000,\"Protocol\":\"tcp\"}]}";
+    private const string NginxJson = "{\"Service\":\"nginx\",\"State\":\"running\",\"Health\":\"\",\"Image\":\"nginx@sha256:aaa\",\"Publishers\":[{\"URL\":\"127.0.0.1\",\"TargetPort\":80,\"PublishedPort\":3189,\"Protocol\":\"tcp\"}]}";
     private const string CacheJson = "{\"Service\":\"cache\",\"State\":\"exited\",\"Health\":\"\",\"Image\":\"redis:7.4-alpine\",\"Publishers\":null}";
 
     [Theory, Trait("Lane", "unit")]
@@ -535,7 +535,7 @@ public sealed class DockerCliRuntimeTests
 
         Assert.Equal(["nginx", "cache"], containers.Select(static c => c.Service), StringComparer.Ordinal);
         Assert.Equal(("running", null, "nginx@sha256:aaa"), (containers[0].State, containers[0].Health, containers[0].Image));
-        Assert.Equal([new ComposePublisher("127.0.0.1", 3000, 80)], containers[0].Publishers);
+        Assert.Equal([new ComposePublisher("127.0.0.1", 3189, 80)], containers[0].Publishers);
         Assert.Equal(("exited", null, "redis:7.4-alpine"), (containers[1].State, containers[1].Health, containers[1].Image));
         Assert.Empty(containers[1].Publishers);
     }

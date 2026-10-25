@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for the prompt-sort entry that scripts/install-judge.sh --hook-only installs.
+# Tests for the prompt-sort entry that scripts/install-judge-hooks.sh --hook-only installs.
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$DIR/../../.." && pwd)"
@@ -8,7 +8,7 @@ fresh() { local d; d="$(mktemp -d)"; echo '{}' > "$d/settings.json"; mkdir -p "$
 install() { # install <dir> [env...]
   local d="$1"; shift
   env HOME="$d/home" AW_STATE_DIR="$d/state" CLAUDE_SETTINGS_FILE="$d/settings.json" CLAUDE_HOOKS_DIR="$d/hooks" "$@" \
-    bash "$ROOT/scripts/install-judge.sh" --hook-only > /dev/null
+    bash "$ROOT/scripts/install-judge-hooks.sh" --hook-only > /dev/null
 }
 
 test_installs_a_timed_user_prompt_submit_hook_idempotently_and_keeps_foreign_hooks() {

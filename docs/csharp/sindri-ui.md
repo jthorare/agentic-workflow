@@ -4,7 +4,7 @@ The Sindri app is an [Avalonia UI](https://avaloniaui.net/) desktop app (readine
 "The UI package"). Stage S1b ships its shell: one window that shows the control plane's status, the same status
 `sindri status` prints, kept live from the event stream, and that says "Not running" with the fix when the control plane
 is down. It is its own package, `SindriUi` (tier 4 in `deps.yaml`), and it holds no logic: every verdict comes from
-Sindri's handlers (factory addendum §17.27.1). Nothing installs it before the switch.
+Sindri's handlers (factory addendum §17.27.1). `scripts/install-cs.sh` publishes it beside `sindri` and links nothing for it: bare `sindri` finds it.
 
 ## Shape
 
@@ -657,15 +657,16 @@ Either way `sindri` is the binary in a publish directory (framework-dependent: a
 depends on nothing else about how `sindri` is built: it talks to the control plane only through the HTTP API and two files under its home, `control.json` and
 `auth/human.token`.
 
-**One command before the switch: `sindri-app`** (`scripts/sindri-app.sh`). It builds exactly that layout and runs it:
+**One command: `sindri`** (the wrapper `scripts/install-cs.sh --link` writes). `install-cs.sh` builds exactly that layout:
 when the source changed (a content hash of the files the host build reads, committed or not, with the pinned SDK and
 the platform), it publishes `sindri` framework-dependent and `sindri-ui` NativeAOT (through
-`Aw.Sindri.Ui.AotSmoke/run.sh <dir>`) the C# `judge` NativeAOT (the publish of `src/Judge/aot-smoke/run.sh`) and `aw-packets` NativeAOT (`src/Packets/aot-smoke/run.sh`) into `$AW_STATE_DIR/bin/sindri-app/<stamp>/`, keeping the build before it, then
-`exec`s that `sindri` with its arguments and `AW_SINDRI_JUDGE=<stamp dir>/judge` (unless the caller set it; `step.judge.choose` needs `judge choose`, which the TypeScript `judge` on the PATH lacks) and `AW_PACKETS_BIN=<stamp dir>/aw-packets` (unless the caller set it; `step.scope.evidence` runs `aw-packets hash`), so bare `sindri-app` starts the control plane and opens the app. It also
-installs the pinned SDK into `~/.dotnet` and fetches the pinned `temporal` when either is missing, and links
-`~/.local/bin/sindri-app` to itself (from the canonical checkout; `AW_SINDRI_APP_NO_LINK=1` skips). It is a side name:
-`sindri` stays the TypeScript CLI until the switch. A control plane already running from an earlier build keeps
-running it (bare `sindri` finds it); the script says so and `sindri-app stop` then `sindri-app` moves to the new build.
+`Aw.Sindri.Ui.AotSmoke/run.sh <dir>`) with the other binaries (`judge`, `aw-packets`, `bugfix-state`, `ui-evidence`,
+`aw-readiness`) into `$AW_STATE_DIR/bin/cs/<stamp>/`, keeping the build before it. The `sindri` wrapper `exec`s the real
+`sindri` with its arguments and `AW_SINDRI_JUDGE=<current>/judge` and `AW_PACKETS_BIN=<current>/aw-packets` (unless the
+caller set them), so bare `sindri` starts the control plane and opens the app. `install-cs.sh` also installs the pinned
+SDK into `~/.dotnet` and fetches the pinned `temporal` when either is missing. A control plane already running from an
+earlier build keeps running it (bare `sindri` finds it); the installer says so and `sindri stop` then `sindri` moves to
+the new build.
 
 **`opened` is only "started".** `sindri` starts `sindri-ui` detached with its output to `/dev/null` and reports
 `opened (sindri-ui, pid N)` as soon as the process starts, so the line can still claim success when that `sindri-ui`

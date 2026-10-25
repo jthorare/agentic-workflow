@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -17,7 +18,11 @@ internal sealed partial class CommandControl : UserControl
     /// <summary>Puts focus back on the control's button (after its question is answered or dismissed), on the keyboard's ring.</summary>
     internal bool FocusRun() => this.FindControl<Button>("RunButton")?.Focus(NavigationMethod.Tab) == true;
 
-    private void OnRun(object? sender, RoutedEventArgs e)
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new CommandControlAutomationPeer(this);
+
+    /// <summary>Presses the control as its button does (a destructive one asks first); the automation peer's invoke and the button's click both come here.</summary>
+    internal void Invoke()
     {
         if (DataContext is ControlViewModel control)
         {
@@ -29,6 +34,8 @@ internal sealed partial class CommandControl : UserControl
             }
         }
     }
+
+    private void OnRun(object? sender, RoutedEventArgs e) => Invoke();
 
     private void OnConfirm(object? sender, RoutedEventArgs e)
     {

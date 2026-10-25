@@ -76,7 +76,7 @@ public sealed class SetupDoctorTests
         Assert.Equal(CheckState.Warn, check.State);
         Assert.Contains("aaaa111", check.Detail, StringComparison.Ordinal);
         Assert.Contains("bbbb222", check.Detail, StringComparison.Ordinal);
-        Assert.Contains("sindri-app --rebuild", check.Fix, StringComparison.Ordinal);
+        Assert.Contains("scripts/install-cs.sh --rebuild", check.Fix, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

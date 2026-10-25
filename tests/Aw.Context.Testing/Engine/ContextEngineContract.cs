@@ -31,7 +31,7 @@ public abstract class ContextEngineContract<TEngine>
     {
         var settings = CreateDown().CheckSettings(section: null, _repos);
 
-        Check(settings.IsSuccess && settings.Value.MaxBudget == 200_000, "no section gives the defaults");
+        Check(settings.IsSuccess && settings.Value.MinHits == 3, "no section gives the defaults");
     }
 
     /// <summary>A bad key, an unknown context.repos name and an unusable repo in scope are 001 with their key paths.</summary>

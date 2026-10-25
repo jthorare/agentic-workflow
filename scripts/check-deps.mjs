@@ -165,10 +165,10 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
     let bad = false;
     const flag = (...args) => { bad = true; fail(...args); };
     if (b.kind !== "package") {
-      flag("DEPS-KIND-002", "edge into a shell or mod node", edgeText(e), `shell and mod nodes only consume packages; nothing depends on them (${e.to} is ${b.kind})`, `move the shared state or contract into a package and point the edge the other way (${e.to} -> <package>)`);
+      flag("DEPS-KIND-002", "edge into a shell node", edgeText(e), `shell nodes only consume packages; nothing depends on them (${e.to} is ${b.kind})`, `move the shared state or contract into a package and point the edge the other way (${e.to} -> <package>)`);
       return bad;
     }
-    // DEPS-KIND-004 depends only on the target, so it holds for an http edge from a shell or mod node too.
+    // DEPS-KIND-004 depends only on the target, so it holds for an http edge from a shell node too.
     if (e.kind === "http" && !(b.routes ?? []).length) flag("DEPS-KIND-004", "http edge to a package that serves no routes", edgeText(e), `an http edge calls a package's HTTP API, declared as its routes (${e.to} lists none)`, `add routes: [/<prefix>/] to ${e.to} in deps.yaml, or change the edge's kind`);
     if (a.kind !== "package") {
       if (linked(e.kind)) flag("DEPS-KIND-001", `${e.kind} edge outside the C# packages`, edgeText(e), `project and compose edges connect kind: package nodes (${e.from} is ${a.kind})`, `change the edge to kind: cli or file in deps.yaml`);
@@ -221,7 +221,7 @@ export function check(root, today = new Date().toISOString().slice(0, 10)) {
     } else if (d.status === "planned") fail("DEPS-STALE-002", "planned edge found in source", `${edgeText(d)}: ${h.where} ${h.what}`, "an edge the source has today is status: current", `set status: current on ${edgeText(d)} in deps.yaml`);
   }
   for (const e of edges.filter((x) => x.status === "current" && !linked(x.kind) && !found.has(edgeKey(x)))) {
-    // Only the C# scan finds http calls, so an http edge from a shell or mod node can't be checked (review run 4).
+    // Only the C# scan finds http calls, so an http edge from a shell node can't be checked (review run 4).
     const from = byId.get(e.from);
     if (e.kind === "http" && from.kind !== "package") {
       info.push(`${edgeText(e)}: not scanned (http calls from ${from.kind} sources are not detected)`);

@@ -216,13 +216,13 @@ public sealed class OnyxUpResumeTests
     {
         var rig = new OnyxUpRig();
         _ = await rig.Up(Token);
-        _ = rig.Probes.TakenPorts.Add(3000);
+        _ = rig.Probes.TakenPorts.Add(3189);
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3000, rerun.Port);
+        Assert.Equal(3189, rerun.Port);
         Assert.Equal(["fetch", "config", "pull", "start"], rerun.Skipped, StringComparer.Ordinal);
-        Assert.Equal(3000, rig.Workspace.State!.Port);
+        Assert.Equal(3189, rig.Workspace.State!.Port);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -232,27 +232,27 @@ public sealed class OnyxUpResumeTests
         _ = await rig.Up(Token);
         var state = rig.Workspace.State!;
         rig.Workspace.State = state with { Steps = state.Steps.Where(static s => s.Key != "start").ToDictionary(static s => s.Key, static s => s.Value, StringComparer.Ordinal) };
-        _ = rig.Probes.TakenPorts.Add(3000);
+        _ = rig.Probes.TakenPorts.Add(3189);
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3000, rerun.Port);
+        Assert.Equal(3189, rerun.Port);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_stopped_stack_keeps_its_port_even_when_the_preferred_one_is_free_again()
     {
         var rig = new OnyxUpRig();
-        _ = rig.Probes.TakenPorts.Add(3000);
-        rig.Runtime.PublishedPort = 3001;
+        _ = rig.Probes.TakenPorts.Add(3189);
+        rig.Runtime.PublishedPort = 3190;
         _ = await rig.Up(Token);
         _ = rig.Runtime.Stop(rig.Paths.Project, Token);
-        _ = rig.Probes.TakenPorts.Remove(3000);
+        _ = rig.Probes.TakenPorts.Remove(3189);
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3001, rerun.Port);
-        Assert.Equal(3001, rig.Workspace.State!.Port);
+        Assert.Equal(3190, rerun.Port);
+        Assert.Equal(3190, rig.Workspace.State!.Port);
         Assert.Equal(["start"], rerun.Ran, StringComparer.Ordinal);
     }
 
@@ -260,16 +260,16 @@ public sealed class OnyxUpResumeTests
     public async Task A_stopped_stack_moves_only_when_something_else_holds_its_port()
     {
         var rig = new OnyxUpRig();
-        _ = rig.Probes.TakenPorts.Add(3000);
-        rig.Runtime.PublishedPort = 3001;
+        _ = rig.Probes.TakenPorts.Add(3189);
+        rig.Runtime.PublishedPort = 3190;
         _ = await rig.Up(Token);
         _ = rig.Runtime.Stop(rig.Paths.Project, Token);
-        _ = rig.Probes.TakenPorts.Remove(3000);
-        _ = rig.Probes.TakenPorts.Add(3001);
+        _ = rig.Probes.TakenPorts.Remove(3189);
+        _ = rig.Probes.TakenPorts.Add(3190);
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3000, rerun.Port);
+        Assert.Equal(3189, rerun.Port);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -277,13 +277,13 @@ public sealed class OnyxUpResumeTests
     {
         var rig = new OnyxUpRig();
         _ = await rig.Up(Token);
-        _ = rig.Probes.TakenPorts.Add(3000);
+        _ = rig.Probes.TakenPorts.Add(3189);
         rig.Workspace.StateIsCorrupt = true;
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3000, rerun.Port);
-        Assert.Equal(3000, rig.Workspace.State!.Port);
+        Assert.Equal(3189, rerun.Port);
+        Assert.Equal(3189, rig.Workspace.State!.Port);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -292,11 +292,11 @@ public sealed class OnyxUpResumeTests
         var rig = new OnyxUpRig();
         _ = await rig.Up(Token);
         _ = rig.Runtime.Stop(rig.Paths.Project, Token);
-        _ = rig.Probes.TakenPorts.Add(3000);
+        _ = rig.Probes.TakenPorts.Add(3189);
 
         var rerun = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3001, rerun.Port);
+        Assert.Equal(3190, rerun.Port);
         Assert.Contains("start", rerun.Ran, StringComparer.Ordinal);
         Assert.Contains("config", rerun.Ran, StringComparer.Ordinal);
     }
@@ -338,7 +338,7 @@ public sealed class OnyxUpResumeTests
     {
         var rig = new OnyxUpRig();
         _ = await rig.Up(Token);
-        rig.Workspace.Files[rig.Paths.Env] = "IMAGE_TAG=v4.9.0\nHOST_PORT=3000\n";
+        rig.Workspace.Files[rig.Paths.Env] = "IMAGE_TAG=v4.9.0\nHOST_PORT=3189\n";
 
         var rerun = (await rig.Up(Token)).Value;
 

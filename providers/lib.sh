@@ -233,34 +233,6 @@ aw_install_skills_into() {
   aw_link_external_skills "$dir"
 }
 
-# Skills that ship a TypeScript helper need dist/ built before their SKILL.md
-# can run it (skills/<name>/dist/bin.js). Override in tests.
-AW_SKILL_PACKAGES=(${AW_SKILL_PACKAGES[@]+"${AW_SKILL_PACKAGES[@]}"})
-[ ${#AW_SKILL_PACKAGES[@]} -gt 0 ] || AW_SKILL_PACKAGES=(ui-evidence bugFixOrchestrator)
-
-# Build every skill package: aw_build_skill_packages <toolkit-root>
-# A failed build warns and continues — the rest of setup must not abort.
-# --ignore-scripts: building needs no dependency install scripts, so none run.
-aw_build_skill_packages() {
-  local root="$1" name dir
-  for name in "${AW_SKILL_PACKAGES[@]}"; do
-    dir="$root/skills/$name"
-    if [ ! -f "$dir/package.json" ]; then
-      echo "  $name: no package.json, skipping"
-      continue
-    fi
-    if aw_dry; then
-      echo "  [dry-run] would run: npm ci && npm run build (in $dir)"
-      continue
-    fi
-    if (cd "$dir" && npm ci --ignore-scripts --no-audit --no-fund >/dev/null && npm run build >/dev/null); then
-      echo "  $name: built"
-    else
-      echo "  WARN: $name build failed — run: (cd $dir && npm ci && npm run build)"
-    fi
-  done
-}
-
 # $HOME/.agentic-workflow/toolkit -> repo root. Skills resolve shared fragments
 # via $HOME/.agentic-workflow/toolkit/skills/_shared regardless of provider.
 aw_link_toolkit() {
@@ -449,11 +421,11 @@ aw_remove_retired_dir() {
 # Cheap-agent-harness lever hooks for one provider. Each scripts/install-*.sh
 # takes --provider (default claude) and no-ops with a note where a lever is
 # unsupported on that provider.
-AW_LEVER_INSTALLERS="install-wake-gating install-context-guard install-scope-gate install-done-gate install-external-write-guard install-live-pane"
+AW_LEVER_INSTALLERS="install-wake-gating install-context-guard install-scope-gate install-done-gate install-external-write-guard"
 aw_install_levers() {
   local provider="$1" inst
   echo ""
-  echo "=== Installing lever hooks for $provider (wake gating 1A, context-guard 2B, evaluator gates 3, live pane) ==="
+  echo "=== Installing lever hooks for $provider (wake gating 1A, context-guard 2B, evaluator gates 3) ==="
   for inst in $AW_LEVER_INSTALLERS; do
     if aw_dry; then
       echo "  [dry-run] would run scripts/$inst.sh --provider $provider"

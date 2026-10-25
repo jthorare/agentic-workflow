@@ -1,0 +1,21 @@
+{
+  "launchId": "LCH-00000000000000000000000000000001",
+  "item": "ITM-00000000000000000000000000000001",
+  "instance": "ITM-00000000000000000000000000000001/spec/1",
+  "viewer": {
+    "kind": "warp",
+    "label": "Warp",
+    "outcome": "failed",
+    "code": "no-viewer",
+    "detail": null,
+    "reason": "no terminal viewer can open a window on this box (fix: name one in launcher.json, or run the attach command)"
+  },
+  "attach": [
+    "tmux",
+    "-L",
+    "sindri-launch",
+    "attach",
+    "-t",
+    "=snd-1"
+  ]
+}

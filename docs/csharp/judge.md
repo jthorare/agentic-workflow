@@ -4,9 +4,9 @@
 hooks call (send-gate, scope-gate, done-gate, done-gate-annotate, subagent-start-map, judge-health, prompt-sort, trait-check)
 and the statusline. It is a reimplementation,
 not a translation of the TS judge (`judge/src/**`): the TS package is a guide to what the judge does, never to how.
-Its contracts are the C# tests in `tests/Aw.Judge.Tests`, except the **hook contract** below, which stays frozen
-until the switch (spec §4a step 1, §4c). Before the switch nothing installs it (spec §4a: the installed toolkit stays
-TypeScript); the switch puts the NativeAOT `judge` binary where the hooks find `judge` on `PATH`.
+Its contracts are the C# tests in `tests/Aw.Judge.Tests`, except the **hook contract** below, which the bash hooks
+and the statusline read and which stays frozen (cutover spec §10). `./setup.sh` installs the NativeAOT `judge` binary
+where the hooks find `judge` on `PATH`; the TS judge is gone and the C# judge starts with fresh state (cutover spec §5.3).
 
 ## Package shape
 
@@ -374,7 +374,7 @@ by `PruneAfterQuestionTests`, `PruneAfterQuestionCliTests` and `SqlitePruneTests
 
 ## Hook contract
 
-What the hooks that keep running read, and nothing else. It stays frozen until the switch.
+What the hooks that keep running read, and nothing else. It stays frozen: a change here is a change to the hooks too, checked by the real-hook check below.
 
 | Hook | Calls | Reads | Pinned by |
 |---|---|---|---|
@@ -416,14 +416,14 @@ traits (exit 0, silent) and a repo with a matching trait and no Jev (the CLI exi
 (`AW_JUDGE_PROVIDERS=rules`) the sorter runs on its keyword heuristics and trait-check is exit 3; a decisive axis and the findings
 path are the C# unit tests' (`SortPromptTests`, `CheckTraitsTests`, over `FakeBatchClassifier`). The health cases cover
 ok, degraded (a stub `claude` that exits 1 leaves one failure row) and a store that can't be opened. It builds
-`src/Judge/Aw.Judge.Host` in Release itself (or takes `AW_JUDGE_CS_BIN`, made absolute); when `judge/dist` is built it
-runs the same cases against the TS judge too and compares. CI runs it in the .NET job, which a hook, statusline or
+`src/Judge/Aw.Judge.Host` in Release itself when neither `AW_JUDGE_CS_BIN` (made absolute) nor an installed `judge` on `PATH`
+is there. CI runs it in the .NET job, which a hook, statusline or
 hook-library change selects (`scripts/ci/changed-areas.sh`), against the NativeAOT publish the AOT smoke step leaves at
 `artifacts/aot-judge-smoke/bin/judge` (spec §4a step 3, §4b.5), so the hook paths the smoke doesn't cover (brief-scope,
 the claude-cli provider, an unusable store) are checked natively too.
 
 ```bash
-bash config/lib/tests/judge-cs-hook-surface.test.sh   # needs dotnet 10; "All … passed (sides: cs ts)" with judge/dist
+bash config/lib/tests/judge-cs-hook-surface.test.sh   # "All judge-cs-hook-surface tests passed."; dotnet 10 only for the build fallback
 bash src/Judge/aot-smoke/run.sh && AW_JUDGE_CS_BIN=artifacts/aot-judge-smoke/bin/judge \
   bash config/lib/tests/judge-cs-hook-surface.test.sh   # as CI runs it: against the NativeAOT binary
 ```

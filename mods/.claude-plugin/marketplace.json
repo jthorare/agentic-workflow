@@ -1,8 +1,0 @@
-{
-  "name": "agentic-workflow-mods",
-  "owner": { "name": "agentic-workflow" },
-  "metadata": { "description": "Claude Code mods (in-process function hooks) that ship with agentic-workflow." },
-  "plugins": [
-    { "name": "aw-live", "source": "./aw-live", "description": "Live scorer numbers inside Claude Code: a /live pane (and /live status) for context, cost, judge, gates and wakes. The headline numbers live in the statusline Live column." }
-  ]
-}

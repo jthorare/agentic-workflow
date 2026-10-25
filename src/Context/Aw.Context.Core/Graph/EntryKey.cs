@@ -5,7 +5,7 @@ namespace Aw.Context.Core.Graph;
 
 /// <summary>
 /// The versioned key function (spec §6.1): every key a map file or a build writes passes through it. Version 1: Unicode
-/// NFC, trailing white space dropped, and feature, action, thing and flow names in lower case (surface, code, record and
+/// NFC, trailing white space dropped, and feature, action, thing, flow and concept names in lower case (surface, code, record and
 /// decision names keep their case: 'surface:setting/paneResizeStep'). A change to it is a new version with a
 /// <see cref="IKeyMigration"/>; the golden snapshot test pins it.
 /// </summary>
@@ -20,7 +20,7 @@ public static class EntryKey
     public static NodeKey For(NodeKey key)
     {
         var name = key.Name.Normalize(NormalizationForm.FormC).TrimEnd();
-        if (key.Kind is NodeKind.Feature or NodeKind.Action or NodeKind.Thing or NodeKind.Flow)
+        if (key.Kind is NodeKind.Feature or NodeKind.Action or NodeKind.Thing or NodeKind.Flow or NodeKind.Concept)
         {
             name = name.ToLower(CultureInfo.InvariantCulture);
         }

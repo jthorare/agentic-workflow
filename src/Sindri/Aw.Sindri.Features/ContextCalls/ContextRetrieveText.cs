@@ -37,7 +37,6 @@ internal static class ContextRetrieveText
             Section(text, section);
         }
 
-        _ = text.AppendLine(Invariant($"budget: {result.Budget.Used} of {result.Budget.Asked} tokens{(result.Budget.Estimate ? " (estimate)" : string.Empty)}{(result.Truncated ? ", truncated" : string.Empty)}"));
         Sources(text, result.Cites);
         return text.ToString();
     }
@@ -48,11 +47,6 @@ internal static class ContextRetrieveText
         foreach (var item in section.Items)
         {
             Item(text, item);
-        }
-
-        if (section.More.Count > 0)
-        {
-            _ = text.AppendLine(Invariant($"  +{section.More.Count} more (references only): {string.Join(", ", section.More)}"));
         }
     }
 

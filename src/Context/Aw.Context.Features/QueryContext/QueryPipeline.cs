@@ -28,8 +28,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 {
     private readonly RankerStage _ranker = new(model, clock);
 
-    /// <summary>The most text kept from one record after cleaning (spec §8.3: 64 KB).</summary>
-    internal const int MaxRecordText = 64 * 1024;
 
     /// <summary>Answers one question over the given map and catalog.</summary>
     /// <param name="request">The question and its scope.</param>
@@ -75,7 +73,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        return assembly.Build(request.Query, valid.Value.Valid.Budget, new RecordPart(fetched, versions, degraded), graph);
+        return assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), graph);
     }
 
     /// <summary>
@@ -184,12 +182,14 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         {
             var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow());
             var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
-            return (source.Describe().Id, hits);
+            var notes = source is ISourceNotes noted ? noted.TakeNotes() : [];
+            return (source.Describe().Id, hits, notes);
         });
         var answers = new List<SourceAnswer>();
         var degraded = new List<DegradedSource>();
-        foreach (var (id, hits) in await Task.WhenAll(calls).ConfigureAwait(false))
+        foreach (var (id, hits, notes) in await Task.WhenAll(calls).ConfigureAwait(false))
         {
+            degraded.AddRange(notes.Select(note => new DegradedSource(id, ContextErrors.SourceUnavailable.Code, note, clock.GetUtcNow())));
             if (hits.IsSuccess)
             {
                 answers.Add(new SourceAnswer(id, hits.Value));
@@ -201,42 +201,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         return new Searched(answers, degraded);
-    }
-
-    private async Task<IReadOnlyList<FetchedRecord>> Fetch(IReadOnlyList<FusedItem> items, (IReadOnlyList<IContextSource> Sources, IIngestFilter Ingest) call,
-        DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
-    {
-        var (sources, ingest) = call;
-        var fetched = new List<FetchedRecord>();
-        foreach (var item in items)
-        {
-            if (deadline - clock.GetUtcNow() <= TimeSpan.Zero)
-            {
-                break;   // no claim without a citation: what wasn't fetched in time isn't shown (search already answered)
-            }
-
-            var hit = item.Hits[0];
-            var source = sources.First(s => s.Describe().Id == hit.Ref.Source);
-            var record = await SourceCalls.Within(source, (deadline - clock.GetUtcNow(), clock), t => source.Fetch(hit.Ref, t), ct).ConfigureAwait(false);
-            if (record.IsError)
-            {
-                if (record.Error.Kind != ErrorKind.NotFound && degraded.TrueForAll(d => d.Source != hit.Ref.Source))
-                {
-                    degraded.Add(SourceCalls.Degraded(hit.Ref.Source, record.Error, clock.GetUtcNow()));
-                }
-
-                continue;   // a record gone since the search, or a source that stopped answering: no claim without a citation
-            }
-
-            var text = record.Value.Blocked   // the adapter's own whole-document clean withheld it: cite it as scrub-blocked
-                ? new ScrubbedField(string.Empty, Redacted: false, Blocked: true)
-                : ingest.Clean(record.Value.Text, singleLine: false);   // cleaned whole, then cut, so a cut never splits a secret
-            var cut = text with { Text = UntrustedFence.Prefix(text.Text, MaxRecordText) };
-            var aliases = item.Aliases.Select(a => ingest.Clean(a, singleLine: true)).ToList();   // record text too: cleaned like the title
-            fetched.Add(new FetchedRecord(item, source, ingest.Clean(record.Value.Title, singleLine: true), cut, aliases));
-        }
-
-        return fetched;
     }
 
     /// <summary>

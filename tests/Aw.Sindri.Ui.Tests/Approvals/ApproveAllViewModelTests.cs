@@ -143,7 +143,7 @@ public sealed class ApproveAllViewModelTests
 
         Assert.Equal("2 workflows approved", dialog.Outcome);
         var refused = Assert.Single(dialog.Refused);
-        Assert.Equal(("Work item", "Work item changed while Sindri was approving. Read the new plan.", "sindri-app recipe approve <id>"), (refused.Name, refused.Text, refused.Cli));
+        Assert.Equal(("Work item", "Work item changed while Sindri was approving. Read the new plan.", "sindri recipe approve <id>"), (refused.Name, refused.Text, refused.Cli));
         Assert.Equal("Review loop waits for Work item", Assert.Single(dialog.Skipped).Text);
     }
 

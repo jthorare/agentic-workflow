@@ -11,7 +11,7 @@ namespace Aw.Context.Core.Engine;
 /// <param name="Item">A Sindri item id or tracker key, or null.</param>
 /// <param name="Symbol">A file path or symbol, or null.</param>
 /// <param name="Depth">The cascade depth (a depth past 8 is read as 8), or null for the profile's.</param>
-/// <param name="Budget">The token budget, or null for the default; capped at 'context.maxBudget'.</param>
+/// <param name="Budget">Retired: the answer holds the whole ranked result set, so a budget is read and ignored (old clients may still send one).</param>
 /// <param name="Draft">True to read the draft map instead of the current one.</param>
 /// <param name="Diff">A commit range (two shas): the files changed from their merge base to the second, mapped to nodes (the diff shape), or null. Left out of JSON when null.</param>
 /// <param name="Repo">The repo a diff is read in; only valid with <paramref name="Diff"/>, and optional when the caller's scope holds one repo. Left out of JSON when null.</param>

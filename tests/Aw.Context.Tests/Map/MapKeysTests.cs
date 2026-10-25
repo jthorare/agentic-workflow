@@ -11,6 +11,7 @@ public sealed class MapKeysTests
     [InlineData("surface:command/split-vertical", NodeKind.Surface)]
     [InlineData("code:src/layout/SplitPane.ts#setOrientation", NodeKind.Code)]
     [InlineData("record:linear:issue/0e5a1b00-0000-4000-8000-000000000103", NodeKind.Record)]
+    [InlineData("concept:scheduling", NodeKind.Concept)]
     public void A_key_names_its_kind_by_its_scheme(string key, NodeKind kind) => Assert.Equal(kind, NodeKey.From(key).Kind);
 
     [Theory, Trait("Lane", "unit")]
@@ -31,6 +32,7 @@ public sealed class MapKeysTests
     [InlineData("code:src/layout/SplitPane.ts", "code:src/layout/SplitPane.ts")]
     [InlineData("feature:café", "feature:café")]
     [InlineData("record:linear:issue/ABC", "record:linear:issue/ABC")]
+    [InlineData("concept:Self-Scheduling", "concept:self-scheduling")]
     public void EntryKey_v1_golden_snapshot(string written, string key)
     {
         Assert.Equal(1, EntryKey.Version);

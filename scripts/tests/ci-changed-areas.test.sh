@@ -16,151 +16,137 @@ expect() {
   echo "PASS: $name"
 }
 
-ALL='["scorer","judge","sindri","skills/ui-evidence","skills/bugFixOrchestrator"]'
-
 expect "docs-only change runs nothing area-specific" \
   "$(printf 'docs/readme.md\nplanning/TESTING.md\n')" \
-  "$(printf 'bash=false\ndotnet=false\npackages=[]')"
-
-expect "one package change runs that package and the bash tests" \
-  "$(printf 'scorer/src/index.ts\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=["scorer"]')"
-
-expect "nested skill package is matched by its full path" \
-  "$(printf 'skills/ui-evidence/src/run.ts\nskills/review/SKILL.md\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=["skills/ui-evidence"]')"
-
-expect "a judge change also runs scorer, whose tests import judge's source" \
-  "$(printf 'judge/src/db.ts\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=["judge","scorer"]')"
+  "$(printf 'bash=false\ndotnet=false')"
 
 expect "a hook change runs the bash tests and dotnet (its hook-contract step runs the hooks against the C# judge)" \
   "$(printf 'config/hooks/send-gate.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the statusline, the hooks' shared libraries or the hook-contract test also run dotnet" \
   "$(printf 'config/statusline.sh\nconfig/lib/failopen.sh\nconfig/lib/locks.sh\nconfig/lib/tests/judge-cs-hook-surface.test.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "another config/lib change runs bash tests only" \
   "$(printf 'config/lib/merge-hook.sh\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "a devcontainer or .env.example change runs the bash tests (their checks are bash suites)" \
   "$(printf '.devcontainer/Dockerfile\n.env.example\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "an SDK pin change runs dotnet and the bash tests (the devcontainer pin check)" \
   "$(printf 'global.json\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the devcontainer doc runs the bash tests (repo-templates checks its wording)" \
   "$(printf 'docs/devcontainer.md\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "a schema or rule record change runs the bash tests (their checks' suites copy them; deps.yaml is below)" \
   "$(printf 'schemas/rule-record.schema.json\nrules/engineering/csharp/method-length.yaml\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "the shared lock library runs dotnet too (Evidence's lock interop tests source it)" \
   "$(printf 'config/lib/locks.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the launcher checks' inputs run the bash tests (check-launcher.mjs and check-profile-doc.mjs suites)" \
   "$(printf 'tests/fixtures/launcher/manifest.json\nconfig/launcher/builtins.json\nschemas/launcher.schema.json\ndocs/csharp/sindri-profile.md\ndocs/csharp/sindri-launcher.md\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the fleet fixtures and the sessions tree run the bash tests (check-fleet.mjs reads them) and dotnet (the C# readers will)" \
   "$(printf 'tests/fixtures/fleet/claude-code/stop.json\ntests/fixtures/sessions/proc/211/stat\nschemas/fleet-state.schema.json\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the shipped recipes run dotnet (the Sindri tests embed them) and the bash tests (the scoping schema check reads them)" \
   "$(printf 'recipes/sindri/workflow.scoping.yaml\nrecipes/sindri/evals/workflow.scoping/brief-happy.jsonl\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the sessions doc alone runs bash only" \
   "$(printf 'docs/csharp/sindri-sessions.md\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "the scoping fixture runs the bash tests (scoping-fixture.test.sh builds its history)" \
   "$(printf 'tests/fixtures/scoping/gold/expiry.json\ntests/fixtures/scoping/history/build.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the line fixture runs the bash tests (line-fixture.test.sh builds its history)" \
   "$(printf 'tests/fixtures/line/gold/plan/expiry/packet.json\ntests/fixtures/line/history/build.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "SindriProfile.cs runs bash and dotnet" \
   "$(printf 'src/Sindri/Aw.Sindri.Core/Profile/SindriProfile.cs\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "WorkflowSettings.cs (any Profile record) runs bash and dotnet" \
   "$(printf 'src/Sindri/Aw.Sindri.Core/Profile/WorkflowSettings.cs\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "a launcher doc alone runs bash only" \
   "$(printf 'docs/csharp/sindri-launcher.md\n')" \
-  "$(printf 'bash=true\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=false')"
 
 expect "a C# change runs dotnet only" \
   "$(printf 'src/Aw.Kernel/Result.cs\nDirectory.Packages.props\n')" \
-  "$(printf 'bash=false\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=true')"
 
 expect "an AOT smoke script or its expected output runs dotnet" \
   "$(printf 'src/Aw.Kernel.AotSmoke/run.sh\nsrc/Aw.Kernel.Data.AotSmoke/expected.txt\n')" \
-  "$(printf 'bash=false\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=true')"
 
 expect "a packet JSON Schema change runs dotnet (its golden test compares it with the records)" \
   "$(printf 'schemas/packets/tasks.schema.json\n')" \
-  "$(printf 'bash=false\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=true')"
 
 expect "a .NET tool manifest change runs dotnet" \
   "$(printf '.config/dotnet-tools.json\n')" \
-  "$(printf 'bash=false\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=true')"
 
 expect "deps.yaml or its parser runs dotnet (lane budgets group test projects by package) and the bash tests" \
   "$(printf 'deps.yaml\nscripts/deps/yaml.mjs\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "Lanes.cs also runs the bash tests (ci-lane-budgets checks lane-budgets.mjs against its numbers)" \
   "$(printf 'tests/Aw.Kernel.Testing/Lanes.cs\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the NuGet supply-chain script runs dotnet (where CI runs it) and bash (its test)" \
   "$(printf 'scripts/dotnet-verify-packages.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "a binaries.lock pin runs dotnet (it fetches and sha256-checks the pins, and its Temporal tests and host smoke run them) and bash (its test)" \
   "$(printf 'binaries.lock\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the binaries.lock script runs dotnet (where CI fetches with it) and bash (its test)" \
   "$(printf 'scripts/binaries-lock.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "the Onyx pins run dotnet (embedded in the Sindri build, parsed by its tests) and bash (their check)" \
   "$(printf 'context/onyx.lock\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=[]')"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "spike projects never run dotnet" \
   "$(printf 'spikes/aot/Spike.csproj\nspikes/aot/Program.cs\nspikes/Directory.Build.props\n')" \
-  "$(printf 'bash=false\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=false')"
 
 expect "a workflow change runs everything" \
   "$(printf '.github/workflows/ci.yml\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "a Node version change runs everything" \
   "$(printf '.nvmrc\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")"
+  "$(printf 'bash=true\ndotnet=true')"
 
 expect "a CI script change runs everything" \
   "$(printf 'scripts/ci/bash-tests.sh\n')" \
-  "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")"
+  "$(printf 'bash=true\ndotnet=true')"
 
-expect "a lookalike prefix is not a package" \
+expect "a lookalike prefix is not an area" \
   "$(printf 'judgement/notes.md\n')" \
-  "$(printf 'bash=false\ndotnet=false\npackages=[]')"
+  "$(printf 'bash=false\ndotnet=false')"
 
 # A throwaway git repo with git's defaults pinned on (rename detection, quoted
 # paths), so the real `main` diff is exercised, not just classify_changes.
@@ -171,34 +157,34 @@ scratch_repo() {
   git -C "$repo" config user.name ci
   git -C "$repo" config diff.renames true
   git -C "$repo" config core.quotePath true
-  mkdir -p "$repo/scorer/src" "$repo/docs"
-  printf 'export const db = 1;\n' > "$repo/scorer/src/db.ts"
+  mkdir -p "$repo/scripts" "$repo/docs"
+  printf 'echo db\n' > "$repo/scripts/db.sh"
   printf '# readme\n' > "$repo/docs/readme.md"
   git -C "$repo" add -A && git -C "$repo" commit -qm base
   echo "$repo"
 }
 
-test_rename_out_of_a_package_selects_the_package() {
+test_rename_out_of_an_area_selects_the_area() {
   local repo base got
   repo="$(scratch_repo)"; base="$(git -C "$repo" rev-parse HEAD)"
-  git -C "$repo" mv scorer/src/db.ts docs/db.ts && git -C "$repo" commit -qm move
+  git -C "$repo" mv scripts/db.sh docs/db.sh && git -C "$repo" commit -qm move
   got="$(cd "$repo" && main pull_request "$base" trunk trunk)"
   rm -rf "$repo"
-  [ "$got" = "$(printf 'bash=true\ndotnet=false\npackages=["scorer"]')" ] \
-    || { echo "FAIL: a rename out of scorer must select it, got: $got"; exit 1; }
-  echo "PASS: test_rename_out_of_a_package_selects_the_package"
+  [ "$got" = "$(printf 'bash=true\ndotnet=false')" ] \
+    || { echo "FAIL: a rename out of scripts/ must select bash, got: $got"; exit 1; }
+  echo "PASS: test_rename_out_of_an_area_selects_the_area"
 }
 
-test_non_ascii_filename_in_a_package_selects_the_package() {
+test_non_ascii_filename_in_an_area_selects_the_area() {
   local repo base got
   repo="$(scratch_repo)"; base="$(git -C "$repo" rev-parse HEAD)"
-  printf 'export const e = 1;\n' > "$repo/scorer/src/$(printf '\303\251').ts"
+  printf 'echo e\n' > "$repo/scripts/$(printf '\303\251').sh"
   git -C "$repo" add -A && git -C "$repo" commit -qm accent
   got="$(cd "$repo" && main pull_request "$base" trunk trunk)"
   rm -rf "$repo"
-  [ "$got" = "$(printf 'bash=true\ndotnet=false\npackages=["scorer"]')" ] \
-    || { echo "FAIL: a non-ASCII file in scorer must select it, got: $got"; exit 1; }
-  echo "PASS: test_non_ascii_filename_in_a_package_selects_the_package"
+  [ "$got" = "$(printf 'bash=true\ndotnet=false')" ] \
+    || { echo "FAIL: a non-ASCII file in scripts/ must select bash, got: $got"; exit 1; }
+  echo "PASS: test_non_ascii_filename_in_an_area_selects_the_area"
 }
 
 test_a_stacked_pr_runs_everything() {
@@ -210,7 +196,7 @@ test_a_stacked_pr_runs_everything() {
   # GitHub retargets the PR without a new run, so the filter must not narrow here.
   got="$(cd "$repo" && main pull_request "$base" feat/parent trunk)"
   rm -rf "$repo"
-  [ "$got" = "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")" ] \
+  [ "$got" = "$(printf 'bash=true\ndotnet=true')" ] \
     || { echo "FAIL: a PR into a non-default branch must run everything, got: $got"; exit 1; }
   echo "PASS: test_a_stacked_pr_runs_everything"
 }
@@ -218,7 +204,7 @@ test_a_stacked_pr_runs_everything() {
 test_a_pr_with_an_unknown_default_branch_runs_everything() {
   local got
   got="$(main pull_request deadbeef feat/x "")"
-  [ "$got" = "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")" ] \
+  [ "$got" = "$(printf 'bash=true\ndotnet=true')" ] \
     || { echo "FAIL: an unknown default branch must fail closed, got: $got"; exit 1; }
   echo "PASS: test_a_pr_with_an_unknown_default_branch_runs_everything"
 }
@@ -226,7 +212,7 @@ test_a_pr_with_an_unknown_default_branch_runs_everything() {
 test_non_pr_event_runs_everything() {
   local got
   got="$(main push "")"
-  [ "$got" = "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")" ] \
+  [ "$got" = "$(printf 'bash=true\ndotnet=true')" ] \
     || { echo "FAIL: push event should run everything, got: $got"; exit 1; }
   echo "PASS: test_non_pr_event_runs_everything"
 }
@@ -234,14 +220,14 @@ test_non_pr_event_runs_everything() {
 test_pr_without_base_fails_closed() {
   local got
   got="$(main pull_request "")"
-  [ "$got" = "$(printf 'bash=true\ndotnet=true\npackages=%s' "$ALL")" ] \
+  [ "$got" = "$(printf 'bash=true\ndotnet=true')" ] \
     || { echo "FAIL: a PR with no base sha should run everything, got: $got"; exit 1; }
   echo "PASS: test_pr_without_base_fails_closed"
 }
 
 test_non_pr_event_runs_everything
 test_pr_without_base_fails_closed
-test_rename_out_of_a_package_selects_the_package
-test_non_ascii_filename_in_a_package_selects_the_package
+test_rename_out_of_an_area_selects_the_area
+test_non_ascii_filename_in_an_area_selects_the_area
 test_a_stacked_pr_runs_everything
 test_a_pr_with_an_unknown_default_branch_runs_everything

@@ -15,8 +15,8 @@ Docker-in-Docker, no host Docker socket and no privileged mode, because Docker-i
 
 It runs as the non-root `ubuntu` user. `AW_STATE_DIR` points at `/home/ubuntu/.agentic-workflow` inside the
 container, so a session there never touches the host's toolkit state. After creation it prints the tool
-versions and runs a locked `dotnet restore` (`.devcontainer/post-create.sh`); the TS packages stay
-`npm ci` per package, on demand.
+versions and runs a locked `dotnet restore` (`.devcontainer/post-create.sh`). There is no per-package Node install: no
+toolkit package is built with Node.
 
 `scripts/tests/repo-templates.test.sh` checks that the image tag matches `global.json`, the Node major matches
 `.nvmrc`, every image is pinned by digest, and nothing adds Docker-in-Docker, a socket or host mount, a host-side

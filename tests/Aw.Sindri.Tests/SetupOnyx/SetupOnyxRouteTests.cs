@@ -112,7 +112,7 @@ public sealed class SetupOnyxRouteTests
 
         Assert.Equal([job.Value], waiting.GetProperty("jobs").EnumerateArray().Select(static j => j.GetProperty("id").GetString()), StringComparer.Ordinal);
         Assert.Equal(("needs-you", "ConnectOnyx"), (step.GetProperty("state").GetString(), step.GetProperty("action").GetString()));
-        Assert.Contains("http://127.0.0.1:3000/auth/signup", step.GetProperty("detail").GetString(), StringComparison.Ordinal);
+        Assert.Contains("http://127.0.0.1:3189/auth/signup", step.GetProperty("detail").GetString(), StringComparison.Ordinal);
         Assert.Equal("ConnectOnyx", row.GetProperty("primaryAction").GetString());
         await JobHost.Cancel(host, job, Token);
         await JobHost.Settle(host, Token);
@@ -141,7 +141,7 @@ public sealed class SetupOnyxRouteTests
         Assert.Equal(job.Value, Json(connected).GetProperty("jobId").GetString());
         Assert.Equal("succeeded", Json(view).GetProperty("state").GetString());
         Assert.Equal("keychain:onyx/sindri-onyx", Json(view).GetProperty("result").GetProperty("keyPointer").GetString());
-        Assert.Equal(("http://127.0.0.1:3000", "keychain:onyx/sindri-onyx", "v4.9.0"), fakes.Profile.Section!.Value);
+        Assert.Equal(("http://127.0.0.1:3189", "keychain:onyx/sindri-onyx", "v4.9.0"), fakes.Profile.Section!.Value);
         var written = string.Join('\n', (await Ledger(host)).SelectMany(static e => new[] { e.Envelope.Type, e.IdempotencyKey, e.Envelope.Payload }));
         Assert.Contains("job.waiting", written, StringComparison.Ordinal);
         Assert.Contains("job.resumed", written, StringComparison.Ordinal);

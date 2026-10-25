@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Item">An item anchor, or null.</param>
 /// <param name="Symbol">A file or symbol anchor, or null.</param>
 /// <param name="Depth">The cascade depth as sent (a whole number 0 to 4; anything else is SND-CONTEXT-006), or null.</param>
-/// <param name="Budget">The token budget as sent (a whole number of 1 or more; anything else is SND-CONTEXT-006), or null.</param>
+/// <param name="Budget">Retired: read and ignored (the answer holds the whole ranked result set), so an old client that still sends one keeps working.</param>
 /// <param name="Draft">True to read the draft map.</param>
 /// <param name="Diff">Two commit shas, 'base..head' (the diff shape), or null.</param>
 /// <param name="Repo">The repo the diff is read in, or null (the only repo in the caller's scope).</param>
