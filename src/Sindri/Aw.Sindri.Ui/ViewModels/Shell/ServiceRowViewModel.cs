@@ -18,8 +18,8 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     /// <summary>"every 5s".</summary>
     public string Every { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>One plain sentence for what it does, or empty for a service the app does not know.</summary>
-    public string What { get; } = Labels.ServiceWhat(name);
+    /// <summary>One plain sentence for what it does: the app's own for a service it knows, else the served description, else "No description yet".</summary>
+    public string What { get; private set => Set(ref field, value); } = Described(name, null);
 
     /// <summary>Why the row is failed or paused, as far as the API serves it; empty when it says nothing.</summary>
     public string Reason { get; private set => Set(ref field, value); } = string.Empty;
@@ -130,6 +130,9 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     /// <summary>True when <see cref="Toggle"/> was made for a paused service (it resumes).</summary>
     internal bool ToggleResumes { get; set; }
 
+    private static string Described(string service, string? served) =>
+        Labels.ServiceWhat(service) is { Length: > 0 } own ? own : string.IsNullOrWhiteSpace(served) ? Labels.ServiceNoDescription : served;
+
     /// <summary>Shows the service as the API serves it.</summary>
     /// <param name="view">The row.</param>
     internal void Show(ServiceRowView view)
@@ -139,6 +142,7 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
         IsRunning = !string.IsNullOrEmpty(view.Job);
         HasFailed = view.LastRun is { } run && string.Equals(run.Outcome, "failed", StringComparison.Ordinal);
         JobId = view.Job ?? string.Empty;
+        What = Described(Name, view.Description);
         LastRun = view.LastRun is { } last ? "last run " + StatusText.Time(last.RanAt) : Labels.ServiceNotRun;
         Status = (IsRunning, IsPaused, HasFailed) switch
         {
@@ -147,5 +151,13 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
             (false, false, true) => Labels.ServiceLastRunFailed,
             (false, false, false) => Labels.ServiceScheduled,
         };
+        Reason = (IsRunning, IsPaused, HasFailed) switch
+        {
+            (true, _, _) => string.Empty,
+            (false, true, _) => Labels.ServicePausedBy(view.PausedBy, view.PausedAt),
+            (false, false, true) => Labels.ServiceFailedBecause(view.LastRun?.Code, view.LastRun?.Detail),
+            (false, false, false) => string.Empty,
+        };
+        OnChanged(nameof(HasReason));
     }
 }

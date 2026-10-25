@@ -6,7 +6,7 @@
              x:DataType="start:StartFormViewModel">
   <!-- Start workflow (screens spec §4.2, U5'): a modal form over a scrim. Recipe, item and one field for each input of the recipe; sent once by
        the Start button or Ctrl+Enter. A refusal is read in the error line, which takes focus. Esc or Cancel closes it with nothing sent. Every
-       field is named by the words it shows; the lines that change are one static wrapper each, named by a view-model string, with the
+       field is named by the words it shows; the error lines sit in a row that keeps its height while empty, so nothing moves when one shows; the lines that change are one static wrapper each, named by a view-model string, with the
        text inside left raw (a TextBlock's peer ignores a Name). -->
   <UserControl.Styles>
     <Style Selector="Border.scrim">
@@ -53,8 +53,9 @@
           <TextBlock Classes="caption subtle" Text="{Binding Text.Item}" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="StartItem" Text="{Binding ItemId}" AutomationProperties.Name="{Binding Text.Item}"
                    AutomationProperties.HelpText="{Binding ItemError}" />
+          <TextBlock Classes="caption subtle" Text="{Binding Text.PickCaption}" AutomationProperties.AccessibilityView="Raw" />
           <ComboBox x:Name="StartItemPick" ItemsSource="{Binding Items}" SelectedItem="{Binding PickedItem}" PlaceholderText="{Binding Text.PickItem}"
-                    HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.PickItem}">
+                    HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.PickCaption}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="start:ItemChoice">
                 <TextBlock Text="{Binding Display}" />
@@ -77,17 +78,21 @@
                     <TextBlock Classes="caption" Text="{Binding FileLine}" VerticalAlignment="Center" />
                   </StackPanel>
                   <TextBlock Classes="caption subtle" Text="{Binding Hint}" IsVisible="{Binding HasHint}" />
-                  <Border Classes="start-field-error" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding Error}"
-                          AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                    <TextBlock Classes="caption error" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <Border MinHeight="20">
+                    <Border Classes="start-field-error" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding Error}"
+                            AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                      <TextBlock Classes="caption error" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                    </Border>
                   </Border>
                 </StackPanel>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Border x:Name="StartError" Focusable="True" IsVisible="{Binding ShowsSummary}" AutomationProperties.Name="{Binding Error}"
-                  AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <TextBlock Classes="caption error" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <Border MinHeight="20">
+            <Border x:Name="StartError" Focusable="True" IsVisible="{Binding ShowsSummary}" AutomationProperties.Name="{Binding Error}"
+                    AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption error" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
           </Border>
           <!-- The one polite live region, on CreateItemDialog's pattern (docs "LiveSetting on macOS"): always in the tree, live only while it speaks, resting text while dark. -->
           <TextBlock x:Name="StartLive" Classes="caption live-region" Classes.live="{Binding IsAnnouncing}" Text="{Binding Announcement}" Width="0" Opacity="0"

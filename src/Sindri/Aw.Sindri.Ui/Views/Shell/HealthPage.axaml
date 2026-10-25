@@ -349,7 +349,7 @@
             <DataTemplate x:DataType="shell:ServiceRowViewModel">
               <Border Classes="section" Padding="16,8">
                 <Panel>
-                  <Grid ColumnDefinitions="180,90,140,*,130,250" IsVisible="{Binding IsWide}" AutomationProperties.Name="{Binding Name}">
+                  <Grid ColumnDefinitions="180,90,140,*,130,250" RowDefinitions="Auto,Auto" IsVisible="{Binding IsWide}" AutomationProperties.Name="{Binding Name}">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Every}" />
                     <TextBlock Grid.Column="2" Classes="body" Classes.error="{Binding HasFailed}" Text="{Binding Status}" VerticalAlignment="Center"
@@ -363,8 +363,10 @@
                       <Button Classes="row-title" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
                               AutomationProperties.Name="{Binding ViewJobName}" />
                     </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="6" Classes="caption" Classes.error="{Binding HasFailed}" Text="{Binding Reason}" IsVisible="{Binding HasReason}"
+                               TextWrapping="Wrap" Margin="0,4,0,0" AutomationProperties.Name="{Binding Reason}" />
                   </Grid>
-                  <Grid ColumnDefinitions="*,140,Auto" IsVisible="{Binding IsCompact}" AutomationProperties.Name="{Binding Name}">
+                  <Grid ColumnDefinitions="*,140,Auto" RowDefinitions="Auto,Auto" IsVisible="{Binding IsCompact}" AutomationProperties.Name="{Binding Name}">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     <TextBlock Grid.Column="1" Classes="body" Classes.error="{Binding HasFailed}" Text="{Binding Status}" VerticalAlignment="Center"
                                AutomationProperties.Name="{Binding Status}" />
@@ -374,6 +376,8 @@
                       <Button Classes="row-title" IsVisible="{Binding IsRunning}" Click="OnViewJob" Content="{Binding ViewJobText}"
                               AutomationProperties.Name="{Binding ViewJobName}" />
                     </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Classes="caption" Classes.error="{Binding HasFailed}" Text="{Binding Reason}" IsVisible="{Binding HasReason}"
+                               TextWrapping="Wrap" Margin="0,4,0,0" AutomationProperties.Name="{Binding Reason}" />
                   </Grid>
                 </Panel>
               </Border>

@@ -39,15 +39,15 @@
 
     <!-- The copy block. It never offers to run the command. -->
     <StackPanel x:Name="CopyBlock" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsCopyOnly}">
-      <Border Classes="command">
-        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+      <Border Classes="command" HorizontalAlignment="Stretch">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Space.XS}">
           <TextBlock x:Name="TerminalGlyph" Classes="mono subtle" Text="&gt;_" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock x:Name="CliText" Classes="mono" Text="{Binding Cli}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Cli}" />
-          <Button x:Name="BlockCopy" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}"
+          <TextBlock x:Name="CliText" Grid.Column="1" Classes="mono" Text="{Binding Cli}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Cli}" />
+          <Button x:Name="BlockCopy" Grid.Column="2" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" VerticalAlignment="Center"
                   AutomationProperties.Name="{Binding CopyName}">
             <TextBlock Classes="caption" Text="{Binding CopyLabel}" />
           </Button>
-        </StackPanel>
+        </Grid>
       </Border>
     </StackPanel>
 
