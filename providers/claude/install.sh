@@ -184,17 +184,15 @@ claude_install_hooks() {
 
   # judge's SessionStart health hook lands after settings.json is seeded.
   if aw_dry; then
-    echo "  [dry-run] would run scripts/install-judge.sh --hook-only"
+    echo "  [dry-run] would run scripts/install-judge-hooks.sh"
   else
-    bash "$TOOLKIT_DIR/scripts/install-judge.sh" --hook-only
+    bash "$TOOLKIT_DIR/scripts/install-judge-hooks.sh"
   fi
-  # sindri's SessionStart nudge (setup.sh --with-sindri).
-  if [ "${WITH_SINDRI:-0}" = "1" ]; then
-    if aw_dry; then
-      echo "  [dry-run] would run scripts/install-sindri.sh --hook-only (sindri-nudge)"
-    else
-      bash "$TOOLKIT_DIR/scripts/install-sindri.sh" --hook-only
-    fi
+  # sindri's SessionStart nudge.
+  if aw_dry; then
+    echo "  [dry-run] would run scripts/install-sindri-hooks.sh (sindri-nudge)"
+  else
+    bash "$TOOLKIT_DIR/scripts/install-sindri-hooks.sh"
   fi
   aw_install_levers claude
 }

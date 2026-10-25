@@ -1,8 +1,8 @@
 # Sindri profile reference
 
 The profile of the C# Sindri app (`src/Sindri`), schema version 1. It documents the keys of `SindriProfile`
-(`src/Sindri/Aw.Sindri.Core/Profile/`), read through `AwJson`. It replaces the reference of the TypeScript profile
-(`sindri/src/profile/schema.ts`), which is generated separately and stays until the switch. Unknown keys are errors;
+(`src/Sindri/Aw.Sindri.Core/Profile/`), read through `AwJson`. It replaced the TypeScript profile
+reference (`sindri/src/profile/schema.ts`, gone), and `docs/sindri/profile.md` points here. Unknown keys are errors;
 new optional keys join version 1, renames and removals bump it. `node scripts/check-profile-doc.mjs` fails when a
 `SindriProfile` key is missing from this page.
 

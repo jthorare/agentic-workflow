@@ -17,7 +17,7 @@
       "hash": "sha256:9f8e7d6c5b4a0000000000000000000000000000000000000000000000000000",
       "code": "SND-RECIPE-009",
       "sentence": "Work item changed while Sindri was approving. Read the new plan.",
-      "cli": "sindri-app recipe approve <id>"
+      "cli": "sindri recipe approve <id>"
     }
   ],
   "skipped": [

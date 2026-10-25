@@ -8,13 +8,9 @@ rules themselves live in `.agents/rules/` (one file per domain); this guide is t
 ## Scope
 
 - [ ] **One logical change per PR**, with atomic commits (`type: short description`, `planning/COMMIT_STRATEGY.md`).
-- [ ] **TypeScript packages take bug fixes only** -- they are being replaced by the C# build (spec
-  `docs/superpowers/specs/2026-10-09-agent-readiness-design.md` §4a). New behavior goes into C#.
-- [ ] **The hook contract is unchanged** -- only what the hooks read stays frozen until the switch: the commands and
+- [ ] **The hook contract is unchanged** -- only what the hooks read stays frozen: the commands and
   arguments they call, the JSON fields they `jq`, the exit codes and stderr prefixes they branch on, and the files they
   write (`judge/sessions`, `judge/outbox`, `judge/teammate-names.jsonl`). Spec §4c.
-- [ ] **A C# port is idiomatic C#, not a translation of the TS** -- no TS formatting, quirks or workarounds
-  reproduced (spec §4a step 1, `.agents/rules/csharp.md` "Porting a TS package").
 
 ---
 
@@ -30,15 +26,6 @@ rules themselves live in `.agents/rules/` (one file per domain); this guide is t
 
 ---
 
-## TypeScript (bug fixes)
-
-- [ ] **Strict mode passes** -- `npm run typecheck` in the package.
-- [ ] **No `any`** -- use `unknown` with runtime narrowing, or a real type (`node scripts/ci/no-any.mjs`).
-- [ ] **`.js` extension on relative imports** (Node16 ESM).
-- [ ] **A regression test pins the fix**, and coverage stays at 100% (`npm run test:coverage`; no `/* v8 ignore */`).
-
----
-
 ## Shell and hooks
 
 - [ ] **Hooks follow `.agents/rules/hooks.md`** -- one canonical script, a provider adapter, fail-open logged as
@@ -51,8 +38,7 @@ rules themselves live in `.agents/rules/` (one file per domain); this guide is t
 
 ## Security
 
-- [ ] **No secrets in code, config or logs** -- `Aw.Redaction` scrubs C# log lines and exports; TS code never logs
-  secrets.
+- [ ] **No secrets in code, config or logs** -- `Aw.Redaction` scrubs C# log lines and exports.
 - [ ] **SQL uses typed parameters** -- never interpolate input into SQL.
 - [ ] **An http host binds to loopback in code** (the `/new-package` http shape: `LoopbackBinding`, Host and Origin
   checks); nothing in the environment or on the command line can widen it.

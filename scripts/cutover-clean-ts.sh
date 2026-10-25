@@ -125,6 +125,8 @@ cs_env() {
 
 # ts_db: the judge database has the TS shape (the stamped C# judge refuses it with AW-DATA-009; that check is read-only).
 DB="$STATE/judge/decisions.sqlite"
+# refuses_ts <judge health output>: the AW-DATA-009 refusal. `judge health` prints the error's message without its code.
+refuses_ts() { case "$1" in *AW-DATA-009* | *"has tables but no schema_version table"*) return 0 ;; esac; return 1; }
 ts_db() {
   local d out
   [ -f "$DB" ] || return 1
@@ -132,8 +134,7 @@ ts_db() {
   [ -x "$d/judge" ] || return 1
   cs_env
   out="$(AW_STATE_DIR="$STATE" AW_JUDGE_PROVIDERS=rules "$d/judge" health 2>&1 < /dev/null)"
-  case "$out" in *AW-DATA-009*) return 0 ;; esac
-  return 1
+  refuses_ts "$out"
 }
 
 latest_log() { ls -t "$LOGDIR"/cutover-*.log 2>/dev/null | head -n 1; }
@@ -244,9 +245,11 @@ pre_link() {
   local sindri_bin work=0 name path plist label uid
   read_repos
   [ -d "$PROFILE" ] || [ -L "$PROFILE" ] && work=1
-  for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
-    [ -f "$LA/com.agentic-workflow.$label.plist" ] && work=1
-  done
+  if [ "$(uname)" = Darwin ]; then
+    for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
+      [ -f "$LA/com.agentic-workflow.$label.plist" ] && work=1
+    done
+  fi
   tmpl_matches && work=1
   ts_db && work=1
   if [ "$work" = 0 ]; then return 0; fi
@@ -279,10 +282,16 @@ pre_link() {
           if [ ! -d "$path/.git" ] && ! git -C "$path" rev-parse --git-dir > /dev/null 2>&1; then
             say "hook v3 not installed in $name: $path is not a readable git repo"; L "hook skipped $name $path"; continue
           fi
-          if "$sindri_bin" scrub --install-pre-commit --repo "$path" --bin "$BIN/sindri" > /dev/null 2>&1 < /dev/null; then
+          if hook_out="$("$sindri_bin" scrub --install-pre-commit --repo "$path" --bin "$BIN/sindri" 2>&1 < /dev/null)"; then
             say "installed hook v3 in $name ($path)"; L "hook v3 $name $path"
+          elif printf '%s' "$hook_out" | grep -q 'SND-SCRUB-003'; then
+            # The repo has its own pre-commit hook (husky, core.hooksPath, ...): Sindri never replaces it, so this is a
+            # skip with the manual line to add (the same answer `sindri doctor` gives), not a step-2 failure (#1029).
+            say "hook v3 skipped in $name ($path): it has its own pre-commit hook; add 'sindri scrub --staged || exit 1' to it by hand"
+            L "hook skipped (SND-SCRUB-003) $name $path: $(printf '%s' "$hook_out" | redact | tr '\n' ' ')"
           else
-            say "hook v3 failed in $name ($path)"; L "hook failed $name $path"; partial=1
+            say "hook v3 failed in $name ($path): $(printf '%s' "$hook_out" | redact | tail -n 3 | tr '\n' ' ')"
+            L "hook failed $name $path: $(printf '%s' "$hook_out" | redact | tr '\n' ' ')"; partial=1
           fi
         done <<EOF
 $REPOS
@@ -292,17 +301,20 @@ EOF
   fi
   [ "$partial" = 0 ] || { say "stopped at step 2; re-run ./setup.sh"; exit 3; }
 
-  # step 3: launchd
+  # step 3: launchd (macOS only; Linux has no launchd jobs, so it only gets the cron reminder)
   uid="$(id -u)"
-  for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
-    plist="$LA/com.agentic-workflow.$label.plist"
-    [ -f "$plist" ] || continue
-    if [ "$dry" = 0 ] && [ "$(uname)" = Darwin ] && command -v launchctl > /dev/null 2>&1; then
-      launchctl bootout "gui/$uid" "$plist" > /dev/null 2>&1 || true
-    fi
-    del_file "$plist" "launchd job com.agentic-workflow.$label"
-  done
-  [ "$(uname)" = Darwin ] || say "remove any cron line you added by hand for scorer or sindri"
+  if [ "$(uname)" = Darwin ]; then
+    for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
+      plist="$LA/com.agentic-workflow.$label.plist"
+      [ -f "$plist" ] || continue
+      if [ "$dry" = 0 ] && command -v launchctl > /dev/null 2>&1; then
+        launchctl bootout "gui/$uid" "$plist" > /dev/null 2>&1 || true
+      fi
+      del_file "$plist" "launchd job com.agentic-workflow.$label"
+    done
+  else
+    say "remove any cron line you added by hand for scorer or sindri"
+  fi
 
   # step 4: the git template
   if tmpl_matches; then
@@ -368,9 +380,7 @@ post_link() {
     fi
     if [ "$dry" = 0 ] && [ -x "$BIN/judge" ]; then
       out="$("$BIN/judge" health 2>&1 < /dev/null)"; rc=$?
-      case "$out" in
-        *AW-DATA-009*) say "judge health gate failed: AW-DATA-009 (a TS-shaped judge database). Re-run ./setup.sh"; exit 3 ;;
-      esac
+      if refuses_ts "$out"; then say "judge health gate failed: AW-DATA-009 (a TS-shaped judge database). Re-run ./setup.sh"; exit 3; fi
       if [ "$rc" -ge 126 ]; then say "judge health gate failed: $BIN/judge does not run (exit $rc). Re-run ./setup.sh"; exit 3; fi
       [ "$rc" = 0 ] || warn "judge health exited $rc: $(printf '%s' "$out" | head -n 1)"
     elif [ "$dry" = 0 ]; then
@@ -438,8 +448,7 @@ ts_db_linked() {
   [ -f "$DB" ] || return 1
   [ -x "$BIN/judge" ] || return 1
   out="$(AW_JUDGE_PROVIDERS=rules "$BIN/judge" health 2>&1 < /dev/null)"
-  case "$out" in *AW-DATA-009*) return 0 ;; esac
-  return 1
+  refuses_ts "$out"
 }
 
 # ---- run --------------------------------------------------------------------------------------------------------------

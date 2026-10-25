@@ -39,9 +39,9 @@
 #   FIRST_RUN_INDEX_TIMEOUT   seconds to wait for the first build; default 1800
 #   FIRST_RUN_MAP_POLL_SECONDS  seconds between map status reads while it is held; default 10
 #   FIRST_RUN_MAP_TIMEOUT     seconds to wait for a held map; default 1020
-#   SINDRI                    the sindri command line, split on spaces; default scripts/sindri-app.sh (publishes the C# build
-#                             into $AW_STATE_DIR/bin/sindri-app/ when its source changed, then runs it)
-#   AW_SINDRI_UI              the sindri-ui binary; default the newest $AW_STATE_DIR/bin/sindri-app/*/sindri-ui
+#   SINDRI                    the sindri command line, split on spaces; default `sindri` on the PATH (the C# build
+#                             scripts/install-cs.sh links; run it first)
+#   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
 # It exports AW_SINDRI_APP_NO_MCP=1 for every Sindri it starts, so the scratch plane never registers a 'sindri' MCP server in ~/.claude.json.
 #
 # Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve something.
@@ -73,7 +73,7 @@ done
 unset TMUX TMUX_PANE
 # The real profile must never steer the scratch instance (owner-check.sh does the same).
 unset AW_SINDRI_PROFILE
-# Every Sindri this script starts is throwaway: sindri-app.sh must not register it as the 'sindri' MCP server in the real ~/.claude.json.
+# Every Sindri this script starts is throwaway: sindri must not register it as the 'sindri' MCP server in the real ~/.claude.json.
 export AW_SINDRI_APP_NO_MCP=1
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -84,7 +84,7 @@ timeout_s="${FIRST_RUN_INDEX_TIMEOUT:-1800}"
 map_poll="${FIRST_RUN_MAP_POLL_SECONDS:-10}"
 map_timeout="${FIRST_RUN_MAP_TIMEOUT:-1020}"
 brief="${FIRST_RUN_BRIEF:-docs/sindri/README.md}"
-sindri_cmd="${SINDRI:-$root/scripts/sindri-app.sh}"
+sindri_cmd="${SINDRI:-sindri}"
 read -r -a SX <<<"$sindri_cmd"
 real_home="$state/sindri-app"
 self="scripts/context-first-run.sh"
@@ -215,7 +215,7 @@ preflight() {
     fi
   fi
   # shellcheck disable=SC2231
-  ls -d "$state"/cache/bin/temporal-* >/dev/null 2>&1 || miss "the pinned temporal binary" "scripts/binaries-lock.sh fetch temporal (scripts/sindri-app.sh also fetches it)"
+  ls -d "$state"/cache/bin/temporal-* >/dev/null 2>&1 || miss "the pinned temporal binary" "scripts/binaries-lock.sh fetch temporal (scripts/install-cs.sh also fetches it)"
   if listening && [ ! -f "$home/control.json" ]; then
     miss "port $port is in use by something that is not this script's plane" "stop it, or set FIRST_RUN_PORT"
   fi
@@ -387,20 +387,19 @@ publish_map() {
 # ---- 7. the app ----
 find_ui() {
   if [ -n "${AW_SINDRI_UI:-}" ]; then printf '%s\n' "$AW_SINDRI_UI"; return; fi
-  # shellcheck disable=SC2012
-  ls -dt "$state"/bin/sindri-app/*/sindri-ui 2>/dev/null | head -1
+  printf '%s\n' "$state/bin/cs/current/sindri-ui"
 }
 open_ui() {
   step "7. open the Sindri app on the scratch home (Context page)"
   if [ "$no_ui" = 1 ]; then note "skipped (--no-ui)"; return 0; fi
   if [ "$dry" = 1 ]; then
-    echo "+ AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port AW_SINDRI_APP_NO_MCP=1 <sindri-ui: \$AW_SINDRI_UI, else the newest $state/bin/sindri-app/*/sindri-ui> > $home/logs/ui.log 2>&1 &"
+    echo "+ AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port AW_SINDRI_APP_NO_MCP=1 <sindri-ui: \$AW_SINDRI_UI, else $state/bin/cs/current/sindri-ui> > $home/logs/ui.log 2>&1 &"
     check "the process is alive 2 s later; its pid is kept in $home/first-run/ui.pid"
     return 0
   fi
   if [ -f "$home/first-run/ui.pid" ] && kill -0 "$(cat "$home/first-run/ui.pid")" 2>/dev/null; then note "the app is already open"; return 0; fi
   local ui; ui="$(find_ui)"
-  [ -n "$ui" ] && [ -x "$ui" ] || broke "step 7 (app): no sindri-ui found; build it with scripts/sindri-app.sh --publish-only, or set AW_SINDRI_UI, or use --no-ui"
+  [ -n "$ui" ] && [ -x "$ui" ] || broke "step 7 (app): no sindri-ui found; build it with scripts/install-cs.sh, or set AW_SINDRI_UI, or use --no-ui"
   AW_SINDRI_HOME="$home" AW_SINDRI_PORT="$port" nohup "$ui" >"$home/logs/ui.log" 2>&1 &
   echo $! >"$home/first-run/ui.pid"
   sleep 2
@@ -514,7 +513,7 @@ do_down() {
   fi
   [ -f "$home/.first-run-scratch" ] || die "refusing to delete $home: no .first-run-scratch marker"
   rm -rf "$home"
-  echo "deleted $home; stopped port $port. The published build under $state/bin/sindri-app and the pulled models stay (they aren't this script's)."
+  echo "deleted $home; stopped port $port. The installed build under $state/bin/cs and the pulled models stay (they aren't this script's)."
 }
 
 "do_$action"

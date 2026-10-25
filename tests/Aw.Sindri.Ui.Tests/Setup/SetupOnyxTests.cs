@@ -244,8 +244,8 @@ public sealed class SetupOnyxTests
         var shown = (setup.IsFootnoteShown, setup.Footnote.Cli);
         await setup.Footnote.Copy(Token);
 
-        Assert.Equal((true, "sindri-app onyx up"), shown);
-        Assert.Equal("sindri-app onyx up", _f.Clipboard.Text);
+        Assert.Equal((true, "sindri onyx up"), shown);
+        Assert.Equal("sindri onyx up", _f.Clipboard.Text);
     }
 
     [Theory]

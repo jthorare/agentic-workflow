@@ -32,6 +32,9 @@ internal static class ContextApiScenarios
     /// <summary>The QUERY body: a mixed set of four keys (a surface, a code file, a decision, one absent), not the GET's three feature keys.</summary>
     internal const string SubgraphBody = """{"nodes":["surface:command/switch-tab","code:src/tabs/TabManager.ts","decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b","feature:nope.x"]}""";   // a real mixed set: a surface, a code file, a decision, one absent key
 
+    /// <summary>The QUERY body of the search golden: a word only a decision's quote holds.</summary>
+    internal const string SearchBody = """{"q":"single","limit":5}""";
+
     private static string Subgraph(string query) => "/sindri/context/subgraph?" + query;
 
     private static string WholeRoute(string? query = null) => "/sindri/context/map/whole" + (query is null ? string.Empty : "?" + query);
@@ -64,6 +67,11 @@ internal static class ContextApiScenarios
         ("context-subgraph", "too-many-006", async (s, ct) => await s.Fetch(Subgraph(string.Join('&', Enumerable.Range(0, 21).Select(i => "nodes=feature%3Anope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))), ct)),
         ("context-subgraph", "not-retained-120", async (s, ct) => await s.Fetch(Subgraph(ThreeKeys) + "&mapVersion=v99", ct)),
         ("context-subgraph", "query-refused-origin", async (s, ct) => await s.QueryForeignOrigin("/sindri/context/subgraph", SubgraphBody, ct)),
+        ("context-search", "get-tab-manager", async (s, ct) => await s.Fetch("/sindri/context/search?q=tab+manager", ct)),
+        ("context-search", "query-decision-text", async (s, ct) => await s.Query("/sindri/context/search", SearchBody, ct)),
+        ("context-search", "session-own-repo", async (s, ct) => await s.FetchAsSession("/sindri/context/search?q=tab", ct)),
+        ("context-search", "empty-q-006", async (s, ct) => await s.Fetch("/sindri/context/search?q=", ct)),
+        ("context-search", "limit-201-006", async (s, ct) => await s.Fetch("/sindri/context/search?q=tab&limit=201", ct)),
         ("context-code", "edges-and-lexical", async (s, ct) => await s.Fetch(CodeRoute(), ct)),
         ("context-code", "two-anchors", async (s, ct) => await s.Fetch(CodeRoute("feature%3Aaudit"), ct)),
         ("context-code", "schema-off", async (s, ct) => await s.Fetch(CodeRoute(), ct)),

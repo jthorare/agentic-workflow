@@ -44,7 +44,6 @@ AW_JUDGE_CHILD # recursion guard the judge sets on the agent CLIs it starts
 AW_SINDRI_CHILD # recursion guard sindri sets on the processes it starts; sindri's CLI classes itself as a session under it
 AW_SINDRI_PROVER # set by scripts/sindri-prove.sh human; labels sindri's CLI calls 'prover'
 LOCK_NAME # a parameter callers set before sourcing skills/_shared/skill-lock.sh
-REF # install-sindri.sh's --ref value
 REPO # sync-rules.sh's positional argument; the script resets it before reading arguments, so the environment can't set it
 
 # Script-local UPPER_CASE variables the scan can't tell from overrides (config/statusline.sh).

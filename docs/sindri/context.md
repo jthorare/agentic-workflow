@@ -6,16 +6,14 @@ the C# package is described in `docs/csharp/sindri-context.md`. Each stage adds 
 
 ## S-1A: repo docs, `context query`, `context sources`
 
-### Running the C# Sindri before the switch
+### Running Sindri
 
-Until the switch, `~/.local/bin/sindri` is the TypeScript CLI. Every example here uses `$SINDRI`, the C# build:
+Every example here uses `$SINDRI`, the installed `sindri`. From the toolkit repo you can run the source instead:
 
 ```bash
-SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolkit repo; or the published binary:
-SINDRI=artifacts/aot-sindri-smoke/bin/sindri                     # after bash src/Sindri/aot-smoke/run.sh
+SINDRI=sindri                                                     # the installed wrapper (scripts/install-cs.sh)
+SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolkit repo
 ```
-
-Nothing in `setup.sh`, the providers or MCP registration points at it.
 
 ### Profile
 
@@ -173,7 +171,7 @@ $SINDRI mcp register --apply    # writes it: a human at a terminal only (a sessi
 $SINDRI mcp register --apply --providers claude,codex,cursor|all   # more than Claude Code (the default is claude alone)
 ```
 
-`scripts/sindri-app.sh` (a bare run) prints the last line, with `--repo` when it applies, once the control plane's port
+A bare `sindri` run prints the last line, with `--repo` when it applies, once the control plane's port
 is known. It can't run it for you (`--apply` needs a terminal, and the script's watcher has none), so you run it once and
 again when the port moves; it is idempotent (an entry that is already right is not written).
 `AW_SINDRI_MCP_REPO` is passed through as `--repo`. Without it, from a linked worktree the script passes the main

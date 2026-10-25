@@ -4712,6 +4712,28 @@ static Aw.Sindri.Features.Scrub.ScrubRequest.operator !=(Aw.Sindri.Features.Scru
 static Aw.Sindri.Features.Scrub.ScrubRequest.operator ==(Aw.Sindri.Features.Scrub.ScrubRequest? left, Aw.Sindri.Features.Scrub.ScrubRequest? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator !=(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
 static Aw.Sindri.Features.Scrub.ScrubResponse.operator ==(Aw.Sindri.Features.Scrub.ScrubResponse? left, Aw.Sindri.Features.Scrub.ScrubResponse? right) -> bool
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.SearchContextMapRequest!
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Q.get -> string?
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Q.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Limit.get -> int?
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Limit.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Area.get -> string?
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Area.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Repo.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Draft.get -> bool
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Draft.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.MapVersion.get -> string?
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Deconstruct(out string? Q, out int? Limit, out string? Area, out string? Repo, out bool Draft, out string? MapVersion) -> void
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Equals(Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.SearchContextMapRequest(string? Q = null, int? Limit = null, string? Area = null, string? Repo = null, bool Draft = false, string? MapVersion = null) -> void
+override Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.operator !=(Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? left, Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.SearchContextMapRequest.operator ==(Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? left, Aw.Sindri.Features.ContextCalls.SearchContextMapRequest? right) -> bool
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.<Clone>$() -> Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest!
 Aw.Sindri.Features.GetInstanceLine.GetInstanceLineRequest.Instance.get -> Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId

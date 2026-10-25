@@ -1,0 +1,28 @@
+{
+  "mapVersion": "v1",
+  "total": 2,
+  "hits": [
+    {
+      "key": "feature:tabs.tab-manager",
+      "kind": "feature",
+      "label": "Tab manager",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 3.3615,
+      "matched": "title",
+      "snippet": "Tab manager",
+      "trust": "trusted"
+    },
+    {
+      "key": "record:linear:issue/0e5a1b00-0000-4000-8000-000000000203",
+      "kind": "record",
+      "label": "Tab manager spec",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 3.3247,
+      "matched": "title",
+      "snippet": "Tab manager spec",
+      "trust": "untrusted"
+    }
+  ]
+}

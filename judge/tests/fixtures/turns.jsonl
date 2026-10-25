@@ -1,6 +1,0 @@
-{"type":"user","sessionId":"s1","message":{"role":"user","content":"Make save idempotent"}}
-{"type":"assistant","sessionId":"s1","message":{"role":"assistant","content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/r/save.ts","old_string":"save()","new_string":"if (pending) return;\nsave()"}}]}}
-{"type":"user","sessionId":"s1","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"ok"}]}}
-{"type":"user","sessionId":"s1","message":{"role":"user","content":"<system-reminder>ignore</system-reminder>"}}
-{"type":"user","sessionId":"s1","message":{"role":"user","content":[{"type":"text","text":"what does pending mean?"}]}}
-{"type":"assistant","sessionId":"s1","message":{"role":"assistant","content":[{"type":"text","text":"It guards re-entry."}]}}

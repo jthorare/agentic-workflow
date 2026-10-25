@@ -16,6 +16,8 @@
 # untracked source file the publishes read), `bin/cs/current` is the symlink --link switches (atomically). The newest two
 # builds are kept, plus the one `current` names, and any build a running control plane executes (the pid in control.json,
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
+# A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
+# them and asks go/wait/stop on a terminal, and stops without one unless AW_SINDRI_STOP_OK=1.
 # One publish at a time per state dir (a lock dir holding the owner's pid; a dead owner's lock is taken over).
 #
 # Binaries (all published from a copy of the sources, under the box-wide heavy slot when it exists, so the checkout's lock
@@ -164,6 +166,20 @@ publish() {
   if [ "$rebuild" = 0 ] && built "$stamp"; then
     say "build $stamp is current"
     return 0
+  fi
+
+  # Open agent runs (#1000): a publish under a running plane can stop it mid-Step. Checked with the running build's own
+  # sindri (the build its command line names, else the current one).
+  local pid guard_bin="" d
+  pid="$(jq -r '.pid // empty' "$control" 2> /dev/null || true)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2> /dev/null; then
+    for d in "$base"/*; do
+      if [ -d "$d" ] && [ ! -L "$d" ] && [ -x "$d/sindri" ] && in_use "$(basename "$d")"; then guard_bin="$d/sindri"; break; fi
+    done
+    if [ -z "$guard_bin" ] && [ -x "$base/current/sindri" ]; then guard_bin="$base/current/sindri"; fi
+    # shellcheck source=lib/sindri-open-runs.sh
+    source "$here/lib/sindri-open-runs.sh"
+    if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
   fi
 
   mkdir -p "$base"

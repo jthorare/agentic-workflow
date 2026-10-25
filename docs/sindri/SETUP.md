@@ -17,9 +17,6 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
 - **Human-only**: you type it in your own terminal (Terminal, iTerm, Warp), not inside Claude Code, Codex or Cursor.
 - **Agent OK**: read-only or harmless; an agent session may run it for you.
 
-Type `sindri-app`, never `sindri`, until the switch (step 2 says why). Sindri's own hints say `sindri …`: read them as
-`sindri-app …`.
-
 ## 0. The pieces
 
 ```
@@ -49,15 +46,14 @@ Type `sindri-app`, never `sindri`, until the switch (step 2 says why). Sindri's 
 | Recipes | Declarative YAML workflows. `workflow.line` runs scoping, design, plan and a phase (build, prove, review, ship) as children | `recipes/sindri/` in this repo |
 | The app | `sindri-ui`, an Avalonia desktop app. A window onto the control plane with no logic of its own | next to the `sindri` binary |
 
-`$AW_SINDRI_HOME` defaults to `~/.agentic-workflow/sindri-app`. It is separate from the TypeScript Sindri's
-`~/.agentic-workflow/sindri`.
+`$AW_SINDRI_HOME` defaults to `~/.agentic-workflow/sindri-app`.
 
 ## 1. Prerequisites
 
 | Need | Version or size | How |
 |---|---|---|
-| .NET SDK | `10.0.401` exactly (`global.json`) | `scripts/sindri-app.sh` installs it into `~/.dotnet` when missing |
-| Temporal CLI | the pin in `binaries.lock` | `scripts/binaries-lock.sh fetch temporal` (`sindri-app.sh` runs it too) |
+| .NET SDK | `10.0.401` exactly (`global.json`) | `scripts/install-cs.sh` (run by `setup.sh`) installs it into `~/.dotnet` when missing |
+| Temporal CLI | the pin in `binaries.lock` | `scripts/binaries-lock.sh fetch temporal` (`install-cs.sh` runs it too) |
 | Docker | Docker Desktop, OrbStack or Docker Engine, with Compose v2 at 2.24.0 or later | install it yourself |
 | Docker memory | about 5.5 GiB free for Onyx | Docker Desktop: Settings → Resources |
 | Disk | about 10.5 GiB free under `$AW_SINDRI_HOME` for Onyx, plus room for the map build | |
@@ -67,63 +63,46 @@ Type `sindri-app`, never `sindri`, until the switch (step 2 says why). Sindri's 
 `scripts/install-deps.sh` installs host packages (Homebrew, or `sudo` with your Linux package manager), so run it
 yourself (**Human-only**); `AW_DRY_RUN=1 scripts/install-deps.sh` only prints what it would do (**Agent OK**).
 
-Check what this box can run for Onyx (**Agent OK**; it needs no control plane). `sindri-app` exists after step 2, so
-before that run it through the script from the checkout:
+Check what this box can run for Onyx (**Agent OK**; it needs no control plane). `sindri` exists after step 2, so
+before that run it from the checkout:
 
 ```bash
-scripts/sindri-app.sh onyx status   # docker, compose, memory, disk and port, each ok / warn / fail with the fix
+dotnet run --project src/Sindri/Aw.Sindri.Host -- onyx status   # docker, compose, memory, disk and port, each ok / warn / fail with the fix
 ```
 
 ## 2. Install and publish
 
-From the agentic-workflow checkout (**Human-only**: the first run publishes the build, links `~/.local/bin/sindri-app` and may install the .NET SDK and Temporal):
+From the agentic-workflow checkout (**Human-only**: it publishes the builds, links `~/.local/bin/sindri` and may install the .NET SDK and Temporal):
 
 ```bash
 cd ~/code/agentic-workflow
-scripts/sindri-app.sh status
+./setup.sh                       # everything; or just the binaries:
+scripts/install-cs.sh            # --publish, then --link
+sindri status
 ```
 
-What the script does on every run:
+What `scripts/install-cs.sh` does:
 
-1. Links `~/.local/bin/sindri-app` to itself (only from the main checkout, never from a linked worktree; set
-   `AW_SINDRI_APP_NO_LINK=1` to skip). From then on, type `sindri-app`.
-2. Installs the pinned .NET SDK and fetches the pinned Temporal CLI when missing.
-3. Hashes the build's source files, the SDK and the platform into a **stamp**. When no build exists for the stamp, it
-   publishes `sindri` (framework-dependent: the Temporal SDK can't be trimmed) and `sindri-ui` (NativeAOT) into
-   `~/.agentic-workflow/bin/sindri-app/<stamp>/`. Any source change, committed or not, makes a new stamp; nothing
-   else does.
-4. Runs `sindri` with your arguments.
+1. Installs the pinned .NET SDK and fetches the pinned Temporal CLI when missing.
+2. Hashes the build's source files, the SDK and the platform into a **stamp**. When no build exists for the stamp, it
+   publishes `sindri` (framework-dependent: the Temporal SDK can't be trimmed), `sindri-ui` (NativeAOT) and the other
+   binaries (`judge`, `aw-packets`, `bugfix-state`, `ui-evidence`, `aw-readiness`) into
+   `~/.agentic-workflow/bin/cs/<stamp>/`. Any source change, committed or not, makes a new stamp; nothing else does.
+3. `--link` points `bin/cs/current` at the new build and writes the wrappers in `~/.local/bin` (`sindri`, `judge`, ...),
+   replacing any older wrapper of the same name.
 
 | Flag or rule | What it means |
 |---|---|
-| `--rebuild` | Publish again even though a build for this stamp exists. Declined for the build a running control plane uses: `sindri-app stop` first |
-| The publish lock | One publish at a time per state dir (`bin/sindri-app/.lock` holding the owner's pid). A second run prints `waiting for another sindri-app publish (pid N)`; a dead owner's lock is taken over |
-| The heavy-job slot | A publish runs under the box-wide heavy-job slot when `bin-r1b/heavy` exists, so it never overlaps a test suite or map build |
-| Kept builds | The current and the previous build, plus any build a running control plane executes |
-| Publish log | `~/.agentic-workflow/cache/sindri-app-build/publish.log`; its tail is printed when a publish fails |
+| `--publish` / `--link` | Only the first or only the second step; with neither it does both. `--publish` leaves `current` alone |
+| `--rebuild` | Publish again even though a build for this stamp exists. Declined for the build a running control plane uses: `sindri stop` first |
+| `--dry-run` | Print what it would do |
+| The heavy-job slot | A publish runs under the box-wide heavy-job slot, so it never overlaps a test suite or map build |
+| Kept builds | The newest two, plus any build a running control plane executes |
 
-You should see, on a first run:
-
-```text
-sindri-app: linked /Users/you/.local/bin/sindri-app -> /Users/you/personal/agentic-workflow/scripts/sindri-app.sh
-sindri-app: publishing sindri (framework-dependent) and sindri-ui (NativeAOT, osx-arm64), build 1538a9f30cfc7caf; log: …
-sindri-app: built /Users/you/.agentic-workflow/bin/sindri-app/1538a9f30cfc7caf
-```
-
-**Why `sindri-app` and not `sindri`.** Until the C# build is complete, `~/.local/bin/sindri` is still the
-TypeScript Sindri, with its own launchd jobs, state and profile. The C# build has a side name so the two never meet.
-Always type `sindri-app`.
-
-> **Before the switch, read every `sindri` in a hint as `sindri-app`.** The C# app's help text, fix hints and approve
-> prompts say `sindri …`. Copy one as it is and you run the TypeScript CLI against its own profile. A copied
-> `sindri profile approve <hash>` then answers `SND-PROFILE-006 <hash> does not match the current profile (…); it
-> changed since you viewed it`, because it compares the C# hash with the TypeScript profile. Retype it as
-> `sindri-app profile approve <hash>`.
-
-**Publish from the main checkout.** `sindri-app` publishes from the checkout the link points at. Keep that checkout up
-to date (`git pull`) before you rebuild: a checkout that is behind gives you an older build, and a fix you expect (for
-example, the dedicated Onyx user) is missing from it. Running `scripts/sindri-app.sh` from a linked worktree publishes
-that worktree's source and makes it the current build for everyone on the box.
+**Publish from the main checkout.** The wrappers run what the last `install-cs.sh` published. Keep that checkout up
+to date (`git pull`) before you rebuild: a checkout that is behind gives you an older build, and a fix you expect is
+missing from it. Running `scripts/install-cs.sh` from a linked worktree publishes that worktree's source and makes it
+the current build for everyone on the box.
 
 ## 3. The profile
 
@@ -161,7 +140,7 @@ Notes:
 Check it (**Agent OK**):
 
 ```bash
-sindri-app profile validate
+sindri profile validate
 ```
 
 ```text
@@ -173,8 +152,8 @@ Approve it (**Human-only**). Without a hash it shows the hash and what changed; 
 challenge back:
 
 ```bash
-sindri-app profile approve              # preview: the live hash and the key paths changed since the last approval
-sindri-app profile approve 73ce9910…    # the full 64-digit hash; type 'approve profile 73ce99' when asked
+sindri profile approve              # preview: the live hash and the key paths changed since the last approval
+sindri profile approve 73ce9910…    # the full 64-digit hash; type 'approve profile 73ce99' when asked
 ```
 
 Approving starts the control plane if it isn't running. Every later change to the profile (a new repo, a deny path, a
@@ -188,11 +167,11 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 
 | Command | Who | What it does |
 |---|---|---|
-| `sindri-app` | Human-only | Starts the control plane if it isn't running (detached, so closing the terminal doesn't stop it), opens the app, prints the startup summary, and prints the command that registers MCP for the repo you are in (step 7; it can't run it for you: no terminal) |
-| `sindri-app --headless` | Human-only | The same without the app: for a box you reach over SSH or one that stays on |
-| `sindri-app status` | Agent OK | The running control plane's summary; never starts it |
-| `sindri-app doctor` | Agent OK | One line per check, each `ok`, `warn` or `fail` with a fix; works while the control plane is down |
-| `sindri-app stop` | Human-only | Stops it: a managed Onyx's containers and Temporal, then releases the lease |
+| `sindri` | Human-only | Starts the control plane if it isn't running (detached, so closing the terminal doesn't stop it), opens the app, prints the startup summary, and prints the command that registers MCP for the repo you are in (step 7; it can't run it for you: no terminal) |
+| `sindri --headless` | Human-only | The same without the app: for a box you reach over SSH or one that stays on |
+| `sindri status` | Agent OK | The running control plane's summary; never starts it |
+| `sindri doctor` | Agent OK | One line per check, each `ok`, `warn` or `fail` with a fix; works while the control plane is down |
+| `sindri stop` | Human-only | Stops it: a managed Onyx's containers and Temporal, then releases the lease |
 
 A first start on a box without Onyx asks "Set up Onyx (Sindri's business-context search) now? [Y/n]". Answer `n` if
 you want to finish this step first; the needs-you list keeps a "Set up Onyx" row until you run step 5.
@@ -235,10 +214,10 @@ warn  codex:read-only   pending: owner probe (fix: …)
 |---|---|---|
 | `lease` | One control plane holds the host lease | `warn` when nothing runs: start it |
 | `ledger` | The ledger's schema matches this build | `fail` `SND-LEDGER-001/002`: a build from another branch, or a disk problem |
-| `views` | The views have caught up with the ledger | `fail` stalled: `sindri-app views rebuild` |
-| `profile` | The live profile is the approved one | `warn` changed since approval: `sindri-app profile approve` |
-| `api` | The control plane answers on its port | not running: `sindri-app` |
-| `temporal` | The dev server answers, at the pinned version, with the `sindri` namespace | `fail`: `sindri-app stop`, then start again; see `logs/temporal.log` |
+| `views` | The views have caught up with the ledger | `fail` stalled: `sindri views rebuild` |
+| `profile` | The live profile is the approved one | `warn` changed since approval: `sindri profile approve` |
+| `api` | The control plane answers on its port | not running: `sindri` |
+| `temporal` | The dev server answers, at the pinned version, with the `sindri` namespace | `fail`: `sindri stop`, then start again; see `logs/temporal.log` |
 | `context:map` | A current product map exists | none yet: [OPERATIONS.md](OPERATIONS.md) |
 | `context:onyx` | Onyx answers and the key is Sindri's dedicated user | `warn` `SND-CONTEXT-053` "not a dedicated service account": rerun `onyx up` on a current build (step 5) |
 | `context:sources` | Every context source answered; whether sessions may read | `warn` some degraded (`SND-CONTEXT-010`), `fail` all down (`011`) |
@@ -247,14 +226,14 @@ warn  codex:read-only   pending: owner probe (fix: …)
 | `onyx:stack` | Every Onyx container runs healthy, on loopback, at the pinned digests | `warn` Docker not answering or stack stopped; `fail` a container down or a port not on 127.0.0.1 |
 | harness probes (`claude-code`, `codex:*`, `cursor-*`) | The installed agent CLI matches the probe pinned in the build | `warn` "differs" or "pending: owner probe" is normal on a dev box and doesn't block a run |
 
-**After a new build.** A control plane keeps running the build it started with. When `sindri-app.sh` publishes a new
-one it says `a control plane from an earlier build is running (pid N); 'sindri-app stop', then 'sindri-app', runs this
+**After a new build.** A control plane keeps running the build it started with. When `install-cs.sh` publishes a new
+one it says `a control plane from an earlier build is running (pid N); 'sindri stop', then 'sindri', runs this
 one`. Do exactly that (**Human-only**):
 
 ```bash
-sindri-app stop
-sindri-app            # or: sindri-app --headless
-sindri-app status     # a new lease pid and epoch
+sindri stop
+sindri            # or: sindri --headless
+sindri status     # a new lease pid and epoch
 ```
 
 ## 5. Onyx
@@ -264,8 +243,8 @@ for you in Docker, bound to `127.0.0.1` only. Connecting Linear and Slack uses y
 first. Sindri never connects a source itself. Full reference: [onyx.md](onyx.md).
 
 ```bash
-sindri-app onyx status     # Agent OK: where Onyx stands, and whether this box can run it
-sindri-app onyx up         # Human-only: everything below, idempotent and resumable
+sindri onyx status     # Agent OK: where Onyx stands, and whether this box can run it
+sindri onyx up         # Human-only: everything below, idempotent and resumable
 ```
 
 `onyx up` does, in order (`state.json` records each step, so a rerun repeats nothing that is already right):
@@ -301,7 +280,7 @@ ok    context:sources   2 of 2 sources ok; session reads on
 ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3000, digests match the pins
 ```
 
-With a managed Onyx, `sindri-app` starts its containers and `sindri-app stop` stops them. `onyx down` (**Human-only**)
+With a managed Onyx, `sindri` starts its containers and `sindri stop` stops them. `onyx down` (**Human-only**)
 stops them by hand. Neither deletes Onyx's data.
 
 ## 6. Agent Steps
@@ -313,8 +292,8 @@ names. Without both, agent Steps fall to your desk too.
 1. Write the launcher file (**Human-only** by convention: it writes a file in your home; Sindri doesn't refuse an agent here):
 
    ```bash
-   sindri-app launch init              # detects the terminal (Warp, or another template) and writes ~/.agentic-workflow/launcher.json (0600)
-   sindri-app launch init --stdout     # Agent OK: prints what it would write, writes nothing
+   sindri launch init              # detects the terminal (Warp, or another template) and writes ~/.agentic-workflow/launcher.json (0600)
+   sindri launch init --stdout     # Agent OK: prints what it would write, writes nothing
    ```
 
    An existing file is refused without `--force`.
@@ -334,7 +313,7 @@ names. Without both, agent Steps fall to your desk too.
 ok    launcher          no launcher.json at /Users/you/.agentic-workflow/launcher.json; this box's viewer is Warp (warp) (sindri launch init writes it); …
 ```
 
-After, it names the file instead of saying there is none. `sindri-app launch show` (**Agent OK**) lists the merged
+After, it names the file instead of saying there is none. `sindri launch show` (**Agent OK**) lists the merged
 agent catalog: each agent, its resolved binary, and whether Steps may run it.
 
 ## 7. MCP for agent sessions
@@ -344,11 +323,11 @@ never user-wide, so work context never shows up in your personal repos.
 
 ```bash
 cd ~/code/my-app
-sindri-app mcp register                            # Agent OK: prints what it would change
-sindri-app mcp register --apply --providers all    # Human-only: Claude Code (local scope), Cursor and Codex project files
+sindri mcp register                            # Agent OK: prints what it would change
+sindri mcp register --apply --providers all    # Human-only: Claude Code (local scope), Cursor and Codex project files
 ```
 
-A bare `sindri-app` run from the repo prints that `--apply` command (with `--repo` when it applies) once the control plane
+A bare `sindri` run from the repo prints that `--apply` command (with `--repo` when it applies) once the control plane
 is up. It can't run it for you: sindri only takes `--apply` from a terminal, and the watcher that waits for the plane has
 none. Run it once, and again when the port changes. Each provider line is `registered`, `unchanged`, `skipped` (not installed), `registered, needs trust` or
 `failed` with a fix. A tracked `.cursor/mcp.json` or `.codex/config.toml` that would change is `failed`, not edited:
@@ -360,7 +339,7 @@ Sessions can read context only while `context.sessions.enabled` is `true`; other
 ## 8. Open the app
 
 ```bash
-sindri-app            # Human-only: starts the control plane if needed and opens the app
+sindri            # Human-only: starts the control plane if needed and opens the app
 ```
 
 The startup summary's `ui` line says what opening the app did: `opened (sindri-ui, pid N)`, or where it looked when it
@@ -389,21 +368,20 @@ run with its launch secret; that is a different path, class `step-report`.)
 The CLI calls as `human` whenever it can read Sindri's per-start token file, so an agent session you start uses it as you
 would. A CLI that can't read the token calls as `session`, and the API refuses those classes with `SND-AUTH-002`.
 
-Fix: run Sindri first (`sindri-app`), then run the command.
+Fix: run Sindri first (`sindri`), then run the command.
 
 ### The codes you're most likely to meet
 
 | Code | What it means | Fix |
 |---|---|---|
-| `SND-API-001` | The control plane isn't running | `sindri-app` (Human-only) |
-| `SND-API-002` | It didn't answer in time | `sindri-app status`; check `logs/serve.log` |
+| `SND-API-001` | The control plane isn't running | `sindri` (Human-only) |
+| `SND-API-002` | It didn't answer in time | `sindri status`; check `logs/serve.log` |
 | `SND-AUTH-001` | The per-start human token is missing or stale | Rerun the command, or restart the app, after a restart of the control plane |
-| `SND-LEASE-001` | Another live process holds the host lease | One control plane per box: use the running one, or `sindri-app stop` |
+| `SND-LEASE-001` | Another live process holds the host lease | One control plane per box: use the running one, or `sindri stop` |
 | `SND-CLI-002` | `serve` didn't come up, or Temporal didn't | `logs/serve.log`, `logs/temporal.log`; `scripts/binaries-lock.sh fetch temporal` |
 | `SND-PROFILE-003` | The hash you approved isn't the live profile's | Run `profile approve` without a hash and copy the new one |
-| `SND-PROFILE-006` "does not match the current profile" | You ran the TypeScript `sindri` (copied from a hint), which checks its own profile | Before the switch, read every `sindri` in a hint as `sindri-app`: rerun as `sindri-app profile approve <hash>` |
-| `SND-PROFILE-006` from `sindri-app` | The approved snapshots can't be read or written | Check the permissions and free disk under `~/.agentic-workflow/sindri-app/approved/` |
-| `SND-VIEW-001` | The views stalled | `sindri-app views rebuild` |
+| `SND-PROFILE-006` | The approved snapshots can't be read or written | Check the permissions and free disk under `~/.agentic-workflow/sindri-app/approved/` |
+| `SND-VIEW-001` | The views stalled | `sindri views rebuild` |
 | `SND-ONYX-001` | Docker isn't usable (not installed, not running, still starting) | Start Docker, then rerun |
 | `SND-ONYX-003` | Not enough disk or Docker memory for Onyx | The message says how much; raise Docker's memory in its settings |
 | `SND-ONYX-007` | The login you gave `onyx up` isn't an Onyx admin | Use the first account you signed up with |
@@ -415,7 +393,7 @@ The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/con
 ### Gotchas from the first setup
 
 - **An old build after a merge.** A fix merged upstream isn't in your build until the main checkout has it and you
-  rebuild and restart: `git pull`, `scripts/sindri-app.sh --rebuild status`, `sindri-app stop`, `sindri-app`.
+  rebuild and restart: `git pull`, `scripts/install-cs.sh --rebuild`, `sindri stop`, `sindri`.
 - **A first Onyx key from an older build** was an admin person's token, so `doctor` warned `SND-CONTEXT-053`. Rerunning
   `onyx up` on a current build moves Sindri to its dedicated user and revokes the old token.
 

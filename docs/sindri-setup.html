@@ -230,8 +230,8 @@ details.more .body li { margin: 4px 0; }
   <p class="lede">Eight steps take a new Mac to this picture: Sindri running, Onyx connected, agents able to reach it, and the app open.</p>
   <figure class="sys"></figure>
   <p><span class="chip human">HUMAN-ONLY</span> type it in your own terminal, not in an agent session. <span class="chip agent">AGENT OK</span> an agent may run it for you.</p>
-  <details class="more"><summary>Always type <code>sindri-app</code></summary><div class="body">
-    <p>Until the C# build replaces it, <code>sindri</code> on your PATH is the TypeScript Sindri, with its own profile. Sindri's hints say <code>sindri …</code>: read every one as <code>sindri-app …</code>. A copied <code>sindri profile approve &lt;hash&gt;</code> answers <code>SND-PROFILE-006 … does not match the current profile</code>.</p>
+  <details class="more"><summary>Sindri's hints</summary><div class="body">
+    <p>Sindri's hints say <code>sindri …</code>: type them as written.</p>
   </div></details>
   <details class="more"><summary>Why some commands are human-only (<code>SND-AUTH-002</code>)</summary><div class="body">
     <p>Approving the profile, starting Sindri, <code>onyx up</code>, MCP registration and every later approval are a person's decisions: an agent that could run them could widen its own config and approve its own work.</p>
@@ -264,25 +264,24 @@ details.more .body li { margin: 4px 0; }
 
 <section class="step" data-slug="install" data-n="2" data-title="Install" data-k="2">
   <p class="kicker">Step 2</p>
-  <h1 tabindex="-1">Build and link <code>sindri-app</code></h1>
-  <p class="lede">One script builds the C# Sindri for this Mac and puts <code>sindri-app</code> on your PATH.</p>
+  <h1 tabindex="-1">Build and link <code>sindri</code></h1>
+  <p class="lede">One script builds the C# Sindri for this Mac and puts <code>sindri</code> on your PATH.</p>
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">From the agentic-workflow checkout (a heavy build)</span></div>
-  <pre><code>scripts/sindri-app.sh status</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <pre><code>scripts/install-cs.sh &amp;&amp; sindri status</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
   <div class="see"><p class="lbl">You should see</p>
-<pre class="term">sindri-app: linked ~/.local/bin/sindri-app -> …/scripts/sindri-app.sh
-sindri-app: built ~/.agentic-workflow/bin/sindri-app/1538a9f30cfc7caf
+<pre class="term">install-cs: linked ~/.local/bin/sindri
+install-cs: built ~/.agentic-workflow/bin/cs/1538a9f30cfc7caf
 SND-API-001 not running: … <span class="dim">(expected: step 4 starts it)</span></pre></div>
-  <details class="more"><summary>Why <code>sindri-app</code>, and how builds work</summary><div class="body"><ul>
-    <li><code>sindri</code> stays the TypeScript Sindri until the switch, so the C# build has its own name.</li>
+  <details class="more"><summary>How builds work</summary><div class="body"><ul>
     <li>A build is stamped with a hash of its source: a source change rebuilds, nothing else does. <code>--rebuild</code> forces it.</li>
     <li>One build at a time (a lock), in the box-wide heavy-job slot; the current and the previous builds are kept.</li>
     <li>It builds from the checkout its link points at: <code>git pull</code> there first, or you get an older build.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
-    <li><code>publishing sindri failed</code>: the log's tail is printed; the full log is <code>~/.agentic-workflow/cache/sindri-app-build/publish.log</code>.</li>
+    <li><code>publishing sindri failed</code>: the log's tail is printed; the full log is the publish log under <code>~/.agentic-workflow/cache/</code>.</li>
     <li><code>… is not on your PATH</code>: add <code>~/.local/bin</code> to PATH.</li>
-    <li><code>waiting for another sindri-app publish</code>: another build runs; this one continues when it ends.</li>
+    <li><code>waiting for another publish</code>: another build runs; this one continues when it ends.</li>
   </ul></div></details>
 </section>
 
@@ -305,8 +304,8 @@ context:
   docs: { globs: ["AGENTS.md", "README.md", "docs/**/*.md"] }
   sessions: { enabled: true }</code></pre></div>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Shows the hash; run it again with the hash and type <code>approve profile &lt;6 digits&gt;</code></span></div>
-  <pre><code>sindri-app profile approve</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri-app profile validate</code>)</p>
+  <pre><code>sindri profile approve</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="see"><p class="lbl">You should see (<code>sindri profile validate</code>)</p>
 <pre class="term">Profile valid: ~/.agentic-workflow/sindri-app/profile/profile.yaml
 hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <details class="more"><summary>What the keys do</summary><div class="body"><ul>
@@ -318,7 +317,7 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-PROFILE-002</code>: a typo or unknown key; the message names the key path.</li>
     <li><code>SND-PROFILE-003</code>: the file changed since you copied the hash; run the preview again.</li>
-    <li><code>SND-PROFILE-006 … does not match the current profile</code>: you typed <code>sindri</code>, the TypeScript CLI. Use <code>sindri-app</code>. (From <code>sindri-app</code>, 006 means the approved snapshots can't be read or written: check permissions and disk.)</li>
+    <li><code>SND-PROFILE-006</code>: the approved snapshots can't be read or written; check permissions and disk.</li>
   </ul></div></details>
 </section>
 
@@ -327,9 +326,9 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <h1 tabindex="-1">Start Sindri</h1>
   <p class="lede">Start it once; it keeps running when you close the terminal. <code>doctor</code> checks every part.</p>
   <figure class="sys"></figure>
-  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Starts it in the background (plain <code>sindri-app</code> also opens the app)</span></div>
-  <pre><code>sindri-app --headless</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri-app doctor</code>, agent OK)</p>
+  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Starts it in the background (plain <code>sindri</code> also opens the app)</span></div>
+  <pre><code>sindri --headless</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="see"><p class="lbl">You should see (<code>sindri doctor</code>, agent OK)</p>
 <pre class="term"><span class="ok">ok</span>    lease             held by my-mac/53290 since …, epoch 6
 <span class="ok">ok</span>    ledger            schema 6/6
 <span class="ok">ok</span>    profile           approved, hash 73ce99
@@ -338,7 +337,7 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <details class="more"><summary>Reading <code>doctor</code></summary><div class="body"><ul>
     <li>Each line is <code>ok</code>, <code>warn</code> or <code>fail</code>, with its fix. The <code>context:*</code> and <code>onyx:stack</code> lines turn ok in step 5.</li>
     <li>Agent-probe lines (<code>claude-code</code>, <code>codex:*</code>, <code>cursor-*</code>) that say "differs" or "pending" are normal on a dev box.</li>
-    <li>After a new build the running Sindri keeps its old one: <code>sindri-app stop</code>, then start again.</li>
+    <li>After a new build the running Sindri keeps its old one: <code>sindri stop</code>, then start again.</li>
     <li>The first start without Onyx offers to set it up: say no here and do step 5.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
@@ -358,8 +357,8 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
     <span>check the Mac</span><b aria-hidden="true">→</b><span>pinned files</span><b aria-hidden="true">→</b><span>pull images</span><b aria-hidden="true">→</b><span>start</span><b aria-hidden="true">→</b><span class="you">you: sign up</span><b aria-hidden="true">→</b><span class="you">you: your admin login</span><b aria-hidden="true">→</b><span>Sindri's user + key</span><b aria-hidden="true">→</b><span class="you">you: approve profile</span>
   </div>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Safe to rerun: it resumes where it stopped</span></div>
-  <pre><code>sindri-app onyx up</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri-app doctor</code>)</p>
+  <pre><code>sindri onyx up</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="see"><p class="lbl">You should see (<code>sindri doctor</code>)</p>
 <pre class="term"><span class="ok">ok</span>    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3000 (pinned v4.9.0); key: admin, Sindri's dedicated user
 <span class="ok">ok</span>    context:sources   2 of 2 sources ok; session reads on
 <span class="ok">ok</span>    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3000, digests match the pins</pre></div>
@@ -371,7 +370,7 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <details class="more"><summary>Your login and Sindri's user</summary><div class="body"><ul>
     <li>It asks once for <em>your own</em> Onyx admin login (the account you just signed up with). The password isn't shown or stored.</li>
     <li>With it, Sindri makes its own user, <code>sindri@example.com</code>, and a token kept in the macOS keychain. You never type that address.</li>
-    <li>Onyx's data survives <code>sindri-app stop</code> and <code>onyx down</code>.</li>
+    <li>Onyx's data survives <code>sindri stop</code> and <code>onyx down</code>.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-ONYX-001</code>: Docker isn't running. <code>SND-ONYX-003</code>: not enough memory or disk (the message says how much).</li>
@@ -387,11 +386,11 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   <p class="lede">A launcher file tells Sindri how this Mac opens a terminal; the profile names the agent it starts there.</p>
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Finds your terminal and writes <code>~/.agentic-workflow/launcher.json</code> (your call: Sindri doesn't refuse an agent here)</span></div>
-  <pre><code>sindri-app launch init</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <pre><code>sindri launch init</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
   <div class="cmd file"><div class="head"><span class="chip file">PROFILE</span><span class="what">Add to the profile, then approve it again (step 3)</span></div>
   <pre><code>workflow:
   agent: { target: claude-code }</code></pre></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri-app launch show</code>, agent OK)</p>
+  <div class="see"><p class="lbl">You should see (<code>sindri launch show</code>, agent OK)</p>
 <pre class="term">Terminal: warp (file) · ~/.agentic-workflow/launcher.json
 claude-code  builtin  /opt/homebrew/bin/claude  sha256:658e…3acd  Steps: <span class="ok">ok</span>
 codex        builtin  ~/.local/bin/codex        sha256:3a5a…7c7f  Steps: <span class="ok">ok</span>
@@ -415,14 +414,14 @@ cursor       builtin  ~/.local/bin/agent        sha256:1e0a…9495  Steps: <span
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">In the work repo: Claude Code, Cursor and Codex, for this repo only</span></div>
   <pre><code>cd ~/code/my-app
-sindri-app mcp register --apply --providers all</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri-app doctor</code>)</p>
+sindri mcp register --apply --providers all</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="see"><p class="lbl">You should see (<code>sindri doctor</code>)</p>
 <pre class="term"><span class="ok">ok</span>    context:sources   2 of 2 sources ok; session reads on
 <span class="ok">ok</span>    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor</pre></div>
   <details class="more"><summary>Why per repo</summary><div class="body"><ul>
     <li>Registration is never user-wide, so work context never shows up in personal repos.</li>
-    <li>Starting Sindri with plain <code>sindri-app</code> from the repo prints this command; it can't run it for you, so run it once, and again when the port changes.</li>
-    <li><code>sindri-app mcp register</code> without <code>--apply</code> previews it (agent OK).</li>
+    <li>Starting Sindri with plain <code>sindri</code> from the repo prints this command; it can't run it for you, so run it once, and again when the port changes.</li>
+    <li><code>sindri mcp register</code> without <code>--apply</code> previews it (agent OK).</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-CONTEXT-024</code>: this folder isn't a profile repo; <code>cd</code> into it or pass <code>--repo my-app</code>.</li>
@@ -437,7 +436,7 @@ sindri-app mcp register --apply --providers all</code></pre><p class="note">Your
   <p class="lede">The app is a window onto Sindri: what needs you, its health, and your workflows.</p>
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Finds the running Sindri and opens the app</span></div>
-  <pre><code>sindri-app</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <pre><code>sindri</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
   <div class="see"><p class="lbl">You should see</p>
 <pre class="term">  profile   ~/.agentic-workflow/sindri-app/profile/profile.yaml (approved, hash 73ce99)
   health    <span class="ok">healthy</span>
@@ -449,8 +448,8 @@ sindri-app mcp register --apply --providers all</code></pre><p class="note">Your
     <p>Building the product map, approving recipes and running workflows move into the app. Until they land there, they're in <a href="sindri/OPERATIONS.md">OPERATIONS.md</a>.</p>
   </div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
-    <li><code>ui not found at …</code>: <code>sindri-ui</code> sits beside <code>sindri</code> in the build; rebuild with <code>scripts/sindri-app.sh --rebuild</code>, or set <code>AW_SINDRI_UI</code>.</li>
-    <li>The app can't reach Sindri: <code>sindri-app status</code>, and start it again if it stopped.</li>
+    <li><code>ui not found at …</code>: <code>sindri-ui</code> sits beside <code>sindri</code> in the build; rebuild with <code>scripts/install-cs.sh --rebuild</code>, or set <code>AW_SINDRI_UI</code>.</li>
+    <li>The app can't reach Sindri: <code>sindri status</code>, and start it again if it stopped.</li>
   </ul></div></details>
 </section>
 
@@ -495,7 +494,7 @@ sindri-app mcp register --apply --providers all</code></pre><p class="note">Your
     { at: 1, label: "Docker", w: [214, 328, 96, 32], n: [184, 446, 154, 30] },
     { at: 1, label: "Temporal CLI", w: [318, 328, 110, 32], n: [22, 484, 154, 30] },
     { at: 1, label: "graphify", w: [436, 328, 96, 32], n: [184, 484, 154, 30] },
-    { at: 2, label: "sindri-app", sub: "built and linked", tick: true, w: [556, 322, 150, 44], n: [22, 524, 316, 44] }
+    { at: 2, label: "sindri", sub: "built and linked", tick: true, w: [556, 322, 150, 44], n: [22, 524, 316, 44] }
   ];
   // Edges: a path per layout, the step that adds it, and a label with its place in each layout.
   var EDGES = [

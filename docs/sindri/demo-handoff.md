@@ -30,9 +30,9 @@ You can run these (no human needed): `sindri profile validate`, `sindri --headle
 2. At the **08:00 PT merge freeze**, run `git pull` once. Do not pull after that. Record the commit with `git rev-parse --short HEAD`.
 3. `scripts/install-deps.sh` (installs uv, graphify at Sindri's pin, the Temporal binaries and missing system packages). `AW_DRY_RUN=1` prints only. `AW_NO_SYSTEM_INSTALL=1` prints the commands and exits 1 instead of installing; with that set, hand the printed commands to the owner.
 4. `scripts/binaries-lock.sh fetch temporal` (pinned `temporal` CLI; verifies its sha256).
-5. .NET: the SDK `global.json` pins (`10.0.401` at the time of writing; read the file). `scripts/sindri-app.sh` installs it into `$DOTNET_ROOT` (default `~/.dotnet`) if it is missing.
-6. `scripts/sindri-app.sh`. Bare, it publishes `sindri` (framework-dependent) and `sindri-ui` (NativeAOT) for this platform under `$AW_STATE_DIR/bin/sindri-app/<stamp>/` when the source changed, starts the control plane and opens the app. The first publish takes a few minutes (about 3 minutes on an idle box; the heavy-job slot can queue it). It links `sindri-app` into `~/.local/bin`. Any other arguments go to `sindri`, so `sindri-app status` is `sindri status`.
-7. Needs on PATH: `git`, and your agent CLI (`claude`, `codex` or `cursor`). `sindri-app` is the command to use below; where this file says `sindri`, run `sindri-app <args>` unless `sindri` resolves to the C# build (the older TypeScript `sindri` may also be on PATH and is a different tool; check `sindri help` lists `workflow`).
+5. .NET: the SDK `global.json` pins (`10.0.401` at the time of writing; read the file). `scripts/install-cs.sh` installs it into `$DOTNET_ROOT` (default `~/.dotnet`) if it is missing.
+6. `./setup.sh` (or `scripts/install-cs.sh`) publishes `sindri` (framework-dependent) and `sindri-ui` (NativeAOT) for this platform under `$AW_STATE_DIR/bin/cs/<stamp>/` when the source changed; then bare `sindri` starts the control plane and opens the app. The first publish takes a few minutes (about 3 minutes on an idle box; the heavy-job slot can queue it). It links `sindri` into `~/.local/bin`. Any other arguments go to `sindri`, so `sindri status` is `sindri status`.
+7. Needs on PATH: `git`, and your agent CLI (`claude`, `codex` or `cursor`). `sindri` is the command to use below.
 
 State lives in `$AW_SINDRI_HOME` (default `$AW_STATE_DIR/sindri-app`, and `$AW_STATE_DIR` defaults to `~/.agentic-workflow`). Use one terminal environment for every step, and do not change `AW_SINDRI_HOME` between steps.
 
@@ -60,7 +60,7 @@ workflow:
 `workflow.agent.target` is any agent id by pattern; `claude-code` is the built-in entry. Its model and policy forms are already set in `config/launcher/builtins.json` (`claude-flag`, `claude-settings-file`), so the demo needs **no `launcher.json` edit**. Only an entry you add yourself must set `model` and `policy`; one without a policy form parks its Steps with `SND-LAUNCH-013` (a Step never launches unrestricted). See `docs/csharp/sindri-launcher.md`. Setting the target alone switches agents on. Optional: `api: { port: <n> }` to pin the port. The full key list is in `docs/csharp/sindri-profile.md`.
 
 1. Agent: `sindri profile validate`. Expect `Profile valid ... hash <64 hex>, not approved`.
-2. Agent: start the control plane: `sindri-app` (opens the app) or `sindri --headless` (no app, about 3 s). An agent session may start it (`--headless`, or `serve`; the lease refuses a second one).
+2. Agent: start the control plane: `sindri` (opens the app) or `sindri --headless` (no app, about 3 s). An agent session may start it (`--headless`, or `serve`; the lease refuses a second one).
 3. **Owner types:** `sindri profile approve <hash>`, then `approve profile <first 6 of hash>`. After this `sindri status` shows the `context-docs-refresh` service and `health healthy`.
 
 Important: the approval holds while the profile file is unchanged. Edit the file and the owner must approve again.
@@ -69,15 +69,15 @@ Important: the approval holds while the profile file is unchanged. Edit the file
 
 Registration is per work repo, never user-wide. Run it from the checkout `<path>` (a git worktree of it is refused with `SND-CONTEXT-024`; add `--repo <work-repo>` to override). Note the port: `sindri status` shows the one the control plane is on. If the control plane comes back on another port, register again.
 
-**Path A: on main (bb26d9a).** The argv fix (#367) and #386 are merged: a bare `sindri-app` (or `serve`) registers Sindri's `/sindri/mcp` with every installed provider once the port is known (Claude Code's local scope, the checkout's `.cursor/mcp.json` and `.codex/config.toml`, and Codex's project trust row in its user config), idempotent, and again when the port changes. By hand it is `sindri mcp register --apply --providers all --repo <work-repo>` (**owner types it**; `--providers claude,codex,cursor` picks some). Older builds failed with `error: missing required argument 'name'` (`SND-CONTEXT-025`) because the variadic `--header` swallowed the server name; use Path B there. Check what your checkout has:
+**Path A: on main (bb26d9a).** The argv fix (#367) and #386 are merged: a bare `sindri` (or `serve`) registers Sindri's `/sindri/mcp` with every installed provider once the port is known (Claude Code's local scope, the checkout's `.cursor/mcp.json` and `.codex/config.toml`, and Codex's project trust row in its user config), idempotent, and again when the port changes. By hand it is `sindri mcp register --apply --providers all --repo <work-repo>` (**owner types it**; `--providers claude,codex,cursor` picks some). Older builds failed with `error: missing required argument 'name'` (`SND-CONTEXT-025`) because the variadic `--header` swallowed the server name; use Path B there. Check what your checkout has:
 
 ```bash
 sindri help | grep -n "mcp"             # the mcp verbs this build has
-grep -n "mcp" scripts/sindri-app.sh      # any hits mean sindri-app.sh registers agents itself
+grep -n "mcp" scripts/install-cs.sh      # any hits mean install-cs.sh registers agents itself
 git log --oneline -20 -- src/Sindri/Aw.Sindri.Core/Mcp/McpRegistration.cs   # #367's argv fix shows here
 ```
 
-If `scripts/sindri-app.sh` mentions `mcp`, read its header comment for what it registers and what the owner must confirm, then go to the next paragraph. Otherwise use `sindri mcp register --apply --repo <work-repo>` (**owner types it**).
+If `scripts/install-cs.sh` mentions `mcp`, read its header comment for what it registers and what the owner must confirm, then go to the next paragraph. Otherwise use `sindri mcp register --apply --repo <work-repo>` (**owner types it**).
 
 **Path B: workaround (main without the fix).** Run in `<path>`, replacing `<port>` with the port from `sindri status`:
 
@@ -88,7 +88,7 @@ claude mcp get sindri        # expect: Status: Connected
 
 The server name comes first, then the URL, then the flags. Remove later with `claude mcp remove --scope local sindri` (same directory).
 
-For **Codex** and **Cursor**, `sindri mcp register` only prints a `claude` command. Register the same URL by hand in that tool's MCP settings: an HTTP MCP server at `http://127.0.0.1:<port>/sindri/mcp` with the header `X-Sindri-Repo: <work-repo>`. Without that header every tool answers `SND-CONTEXT-021`. On a build with #386 (Path A), `sindri-app` does this for Codex and Cursor itself; confirm the Codex trust row with the owner. On an older build it is a manual step the owner confirms.
+For **Codex** and **Cursor**, `sindri mcp register` only prints a `claude` command. Register the same URL by hand in that tool's MCP settings: an HTTP MCP server at `http://127.0.0.1:<port>/sindri/mcp` with the header `X-Sindri-Repo: <work-repo>`. Without that header every tool answers `SND-CONTEXT-021`. On a build with #386 (Path A), `sindri` does this for Codex and Cursor itself; confirm the Codex trust row with the owner. On an older build it is a manual step the owner confirms.
 
 Check without any agent: `curl -s -H 'X-Sindri-Repo: <work-repo>' -H 'Content-Type: application/json' -H 'Accept: application/json,text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' http://127.0.0.1:<port>/sindri/mcp` lists 12 tools (the five `context_*` and `sindri_status|queue|item|item_timeline|pending_decisions|job|request`). The answers come as SSE (`data:` lines).
 
@@ -155,11 +155,11 @@ sindri context lenses <anchor-key> --json            # the anchor key comes from
 
 ### Optional for the demo: Onyx
 
-Onyx is the intent-source engine (trackers, notes). The demo does not need it: repo docs and the map are enough. `./setup.sh --with-sindri` builds the sindri CLI and, by default, stands the pinned Onyx up. Opt out with `./setup.sh --with-sindri --no-onyx`; start it later with `scripts/sindri-app.sh onyx up`. Do not add it the morning of the demo.
+Onyx is the intent-source engine (trackers, notes). The demo does not need it: repo docs and the map are enough. `./setup.sh` builds the sindri CLI and, by default, stands the pinned Onyx up. Opt out with `./setup.sh --no-onyx`; start it later with `sindri onyx up`. Do not add it the morning of the demo.
 
 ## 6. Recipes
 
-**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the Onyx P2 to P5 stack), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri-app connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
+**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the Onyx P2 to P5 stack), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
 
 **Merged since:** #405 (P8: agents run the line's agent Steps) and #403 (the map extractor reads C# API routes). Main was `ea2bc59`.
 
@@ -224,7 +224,7 @@ Order: the station recipes `workflow.line` names, then `workflow.scoping` (and i
 
 ### Demo script (the order the proof ran, mapped to a real box)
 
-1. Build and start: `scripts/sindri-app.sh` (the proof published the host with `heavy`, then ran serve headless). One terminal environment for everything.
+1. Build and start: `scripts/install-cs.sh`, then `sindri` (the proof published the host with `heavy`, then ran serve headless). One terminal environment for everything.
 2. Profile with `workflow.agent.target: claude-code` (and your repo, `context.sessions.enabled: true`); `sindri profile validate`; the owner approves it with the typed line.
 3. Approve every recipe, children first (the proof approved all 19; the shipped `workflow.scoping` approves). Owner types each `sindri recipe approve <file|id@hash>`.
 4. `sindri item add "<title>" --repo <work-repo>`.
@@ -239,7 +239,7 @@ Do this twice: once now, once the morning of the demo after the 08:00 pull. The 
 
 | # | Who | Action | Expect | App page to show |
 |---|---|---|---|---|
-| 1 | Owner | `sindri-app` (bare) | the app opens, control plane running | Home: health strip `Running`, profile approved, services |
+| 1 | Owner | `sindri` (bare) | the app opens, control plane running | Home: health strip `Running`, profile approved, services |
 | 2 | Agent | `sindri status`; `sindri context sources status`; `sindri context map status` | healthy; `repo-docs ... ok`; `map vN current` | Home (the health strip opens Health) |
 | 3 | Agent, new session in `<path>` | the prompt below | the session calls the Sindri tools in order and returns a cited plan | none (the terminal) |
 | 4 | Agent | `sindri item add "<project title>" --repo <work-repo>` | an `ITM-...` id | Home (Queued) |
@@ -251,7 +251,7 @@ Do this twice: once now, once the morning of the demo after the 08:00 pull. The 
 
 ### Page tour (final, on main bb26d9a; the Agents page is where P8 sessions show)
 
-Launch with `scripts/sindri-app.sh` (bare `sindri` also opens the app). Start it from a folder that stays put. Click into a text box before you type: keys typed before focus reaches the box go to the window and can create junk queue items.
+Launch with bare `sindri`. Start it from a folder that stays put. Click into a text box before you type: keys typed before focus reaches the box go to the window and can create junk queue items.
 
 | Page / screen | Keys | What it shows |
 |---|---|---|
@@ -304,7 +304,7 @@ An interactive agent asks to approve the five `mcp__sindri__context_*` tools onc
 | `SND-CONTEXT-040` | The heavy-job lock stayed busy (often during `map build`) | Wait for the other job, then retry on a quiet box; or author the map |
 | `SND-WF-016` "uses input.context.lenses, which this build has no runtime for" | An older build (before #394) | `git pull` to a main with #394 |
 | `SND-CONTEXT-045` on start | `fact:item` has no repo, or one the session's scope does not cover | Pass `{id, repo, spec}` with the profile repo name |
-| `SND-AUTH-002` | The CLI couldn't read the per-start token (Sindri isn't running, or another home) | Start Sindri (`sindri-app`), then rerun with the same `AW_SINDRI_HOME` |
+| `SND-AUTH-002` | The CLI couldn't read the per-start token (Sindri isn't running, or another home) | Start Sindri (`sindri`), then rerun with the same `AW_SINDRI_HOME` |
 | `SND-RECIPE-003` "isn't approved" | A recipe or one of its children is unapproved | Owner approves children first, then the parent |
 | `SND-CLI-003` on `workflow start` | A declared input fact is missing | `sindri recipe show <id>`; pass each as `--fact fact:<name>=<file.json>` |
 | Tools return nothing / MCP "failed to connect" | The control plane restarted on another port | `sindri status` for the port; remove and re-add the MCP entry; start a new agent session |
@@ -326,7 +326,7 @@ The gold facts make a short demo of their own: `sindri scoping check --facts tes
 Tick each. Report any miss to the owner at once.
 
 - [ ] Main is pulled once at the 08:00 PT freeze, `git rev-parse --short HEAD` is recorded, and nothing was pulled after.
-- [ ] `sindri-app` is started: `sindri-app status` shows `Running` and `health healthy`.
+- [ ] `sindri` is started: `sindri status` shows `Running` and `health healthy`.
 - [ ] The three providers are registered (Claude Code, Codex, Cursor). `claude mcp get sindri` shows `Connected`; the Codex and Cursor entries (`.codex/config.toml` with its trust row, `.cursor/mcp.json`) point at the port `sindri status` shows. If the port changed, `sindri mcp register --apply --providers all --repo <work-repo>` (owner types it) and a new agent session.
 - [ ] The profile is approved and unchanged since (`context.sessions.enabled: true`), and `sindri context sources status` shows `repo-docs <work-repo> ok`.
 - [ ] A fresh `sindri context map build` has run on this main (#403 extracts C# API routes; it takes a heavy-job slot, about 3 to 4 minutes on a quiet box, `SND-CONTEXT-040` if the box is busy), then `sindri context map review --accept-deterministic`, then the owner types `sindri context map promote` and its typed line. If the result is thin, author and import one (Plan B).
@@ -395,9 +395,9 @@ Everything else below is manual only because the automation is not built:
 | Sources sync on a schedule | context spec §8.8 | `ContextSyncService` (`context-sync: {every: 15m}`), `ContextSyncGapsService` (syncs a never-synced source by itself) | neither is in the default or handoff profile, so the owner syncs by hand (OPERATIONS.md §1). `context-rebuild` and `context-purge` are also not in the profile |
 | Profile authoring | — (no C# spec found) | the profile is hand-written (SETUP.md §3); only the TypeScript `sindri` has `profile init` | a C# `sindri profile init` that writes a working profile (repo, `context-docs-refresh`, `context-sync`, `context-rebuild`, `sessions.enabled: true`, `workflow.agent.target`); without those keys context reads fail with `SND-CONTEXT-020` or "never refreshed". `docs/sindri-setup.html` is a static page, not a guided flow |
 | Recipe approval, children first | — | OPERATIONS.md §2 lists 19 recipes in order and suggests a shell loop | a command that prints the tree in approval order and walks the owner through each typed challenge (the challenge stays per recipe); `--stale` re-approvals after block changes are manual; drift detection at startup is not wired (`docs/csharp/sindri-workflow.md`: "nothing sends `RecipeWakeKind.Drifted` yet") |
-| MCP registration | context spec §3 | a bare `sindri-app` or `serve` registers every provider once the port is known | a worktree guesses the repo name from the folder (`AW_SINDRI_MCP_REPO` overrides); tracked `.cursor/mcp.json` / `.codex/config.toml` are reported `failed`, not edited; a port change needs a new agent session |
-| Install | — | `scripts/install-deps.sh`, `scripts/sindri-app.sh` (SDK, temporal, publish, link) | the name clash with the TypeScript `sindri`; Claude's folder-trust prompt in launched sessions (accepted by hand; launcher follow-up); the opt-in session hook (`./setup.sh --with-fleet`) |
-| Launcher setup | — | `sindri-app launch init`, `workflow.agent.target` | part of profile init above |
+| MCP registration | context spec §3 | a bare `sindri` or `serve` registers every provider once the port is known | a worktree guesses the repo name from the folder (`AW_SINDRI_MCP_REPO` overrides); tracked `.cursor/mcp.json` / `.codex/config.toml` are reported `failed`, not edited; a port change needs a new agent session |
+| Install | — | `scripts/install-deps.sh`, `scripts/install-cs.sh` (SDK, temporal, publish, link) | Claude's folder-trust prompt in launched sessions (accepted by hand; launcher follow-up); the opt-in session hook (`./setup.sh --with-fleet`) |
+| Launcher setup | — | `sindri launch init`, `workflow.agent.target` | part of profile init above |
 | Onyx | Onyx spec O1/O6, P5 | `sindri onyx up/status/open/down`, the first-run offer, the "Set up Onyx" row, `install-onyx.sh` | built. Docker install and the owner's steps remain by design |
 
 ### 9d. The app: CLI-only functionality

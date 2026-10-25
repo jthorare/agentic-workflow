@@ -6918,6 +6918,130 @@ static readonly Aw.Context.Core.ContextErrors.AreaUnknown -> Aw.Kernel.ErrorDefi
 Aw.Context.Core.WholeMap.WholeMapView.Deconstruct(out int SchemaVersion, out string! MapVersion, out bool Draft, out System.DateTimeOffset AsOf, out string? Repo, out Aw.Context.Core.WholeMap.WholeMapDetail Detail, out Aw.Context.Core.WholeMap.WholeMapCounts! Counts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, out bool Truncated) -> void
 Aw.Context.Core.WholeMap.WholeMapView.WholeMapView(int SchemaVersion, string! MapVersion, bool Draft, System.DateTimeOffset AsOf, string? Repo, Aw.Context.Core.WholeMap.WholeMapDetail Detail, Aw.Context.Core.WholeMap.WholeMapCounts! Counts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapArea!>! Areas, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapAreaEdge!>! AreaEdges, bool Truncated) -> void
 static Aw.Context.Core.WholeMap.MapAreas.Assign(Aw.Context.Core.Graph.GraphSnapshot! graph, int areaCap) -> Aw.Context.Core.WholeMap.AreaIndex!
+Aw.Context.Core.Search.MapSearchQuery
+Aw.Context.Core.Search.MapSearchQuery.<Clone>$() -> Aw.Context.Core.Search.MapSearchQuery!
+Aw.Context.Core.Search.MapSearchQuery.Q.get -> string!
+Aw.Context.Core.Search.MapSearchQuery.Q.init -> void
+Aw.Context.Core.Search.MapSearchQuery.Limit.get -> int?
+Aw.Context.Core.Search.MapSearchQuery.Limit.init -> void
+Aw.Context.Core.Search.MapSearchQuery.Area.get -> string?
+Aw.Context.Core.Search.MapSearchQuery.Area.init -> void
+Aw.Context.Core.Search.MapSearchQuery.Repo.get -> string?
+Aw.Context.Core.Search.MapSearchQuery.Repo.init -> void
+Aw.Context.Core.Search.MapSearchQuery.Read.get -> Aw.Context.Core.Map.MapRead
+Aw.Context.Core.Search.MapSearchQuery.Read.init -> void
+Aw.Context.Core.Search.MapSearchQuery.Deconstruct(out string! Q, out int? Limit, out string? Area, out string? Repo, out Aw.Context.Core.Map.MapRead Read) -> void
+Aw.Context.Core.Search.MapSearchQuery.Equals(Aw.Context.Core.Search.MapSearchQuery? other) -> bool
+Aw.Context.Core.Search.MapSearchQuery.MapSearchQuery(string! Q, int? Limit, string? Area, string? Repo, Aw.Context.Core.Map.MapRead Read) -> void
+override Aw.Context.Core.Search.MapSearchQuery.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchQuery.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchQuery.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchQuery.operator !=(Aw.Context.Core.Search.MapSearchQuery? left, Aw.Context.Core.Search.MapSearchQuery? right) -> bool
+static Aw.Context.Core.Search.MapSearchQuery.operator ==(Aw.Context.Core.Search.MapSearchQuery? left, Aw.Context.Core.Search.MapSearchQuery? right) -> bool
+Aw.Context.Core.Search.MapSearchHit
+Aw.Context.Core.Search.MapSearchHit.<Clone>$() -> Aw.Context.Core.Search.MapSearchHit!
+Aw.Context.Core.Search.MapSearchHit.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Search.MapSearchHit.Key.init -> void
+Aw.Context.Core.Search.MapSearchHit.Kind.get -> Aw.Context.Core.Graph.NodeKind
+Aw.Context.Core.Search.MapSearchHit.Kind.init -> void
+Aw.Context.Core.Search.MapSearchHit.Label.get -> string!
+Aw.Context.Core.Search.MapSearchHit.Label.init -> void
+Aw.Context.Core.Search.MapSearchHit.Repo.get -> string?
+Aw.Context.Core.Search.MapSearchHit.Repo.init -> void
+Aw.Context.Core.Search.MapSearchHit.Area.get -> string!
+Aw.Context.Core.Search.MapSearchHit.Area.init -> void
+Aw.Context.Core.Search.MapSearchHit.Score.get -> double
+Aw.Context.Core.Search.MapSearchHit.Score.init -> void
+Aw.Context.Core.Search.MapSearchHit.Matched.get -> string!
+Aw.Context.Core.Search.MapSearchHit.Matched.init -> void
+Aw.Context.Core.Search.MapSearchHit.Snippet.get -> string!
+Aw.Context.Core.Search.MapSearchHit.Snippet.init -> void
+Aw.Context.Core.Search.MapSearchHit.Trust.get -> Aw.Context.Core.Results.Trust
+Aw.Context.Core.Search.MapSearchHit.Trust.init -> void
+Aw.Context.Core.Search.MapSearchHit.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out Aw.Context.Core.Graph.NodeKind Kind, out string! Label, out string? Repo, out string! Area, out double Score, out string! Matched, out string! Snippet, out Aw.Context.Core.Results.Trust Trust) -> void
+Aw.Context.Core.Search.MapSearchHit.Equals(Aw.Context.Core.Search.MapSearchHit? other) -> bool
+Aw.Context.Core.Search.MapSearchHit.MapSearchHit(Aw.Context.Core.Graph.NodeKey Key, Aw.Context.Core.Graph.NodeKind Kind, string! Label, string? Repo, string! Area, double Score, string! Matched, string! Snippet, Aw.Context.Core.Results.Trust Trust) -> void
+override Aw.Context.Core.Search.MapSearchHit.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchHit.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchHit.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchHit.operator !=(Aw.Context.Core.Search.MapSearchHit? left, Aw.Context.Core.Search.MapSearchHit? right) -> bool
+static Aw.Context.Core.Search.MapSearchHit.operator ==(Aw.Context.Core.Search.MapSearchHit? left, Aw.Context.Core.Search.MapSearchHit? right) -> bool
+Aw.Context.Core.Search.MapSearchView
+Aw.Context.Core.Search.MapSearchView.<Clone>$() -> Aw.Context.Core.Search.MapSearchView!
+Aw.Context.Core.Search.MapSearchView.MapVersion.get -> string!
+Aw.Context.Core.Search.MapSearchView.MapVersion.init -> void
+Aw.Context.Core.Search.MapSearchView.Total.get -> int
+Aw.Context.Core.Search.MapSearchView.Total.init -> void
+Aw.Context.Core.Search.MapSearchView.Hits.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchHit!>!
+Aw.Context.Core.Search.MapSearchView.Hits.init -> void
+Aw.Context.Core.Search.MapSearchView.Deconstruct(out string! MapVersion, out int Total, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchHit!>! Hits) -> void
+Aw.Context.Core.Search.MapSearchView.Equals(Aw.Context.Core.Search.MapSearchView? other) -> bool
+Aw.Context.Core.Search.MapSearchView.MapSearchView(string! MapVersion, int Total, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchHit!>! Hits) -> void
+override Aw.Context.Core.Search.MapSearchView.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchView.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchView.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchView.operator !=(Aw.Context.Core.Search.MapSearchView? left, Aw.Context.Core.Search.MapSearchView? right) -> bool
+static Aw.Context.Core.Search.MapSearchView.operator ==(Aw.Context.Core.Search.MapSearchView? left, Aw.Context.Core.Search.MapSearchView? right) -> bool
+Aw.Context.Core.Search.MapSearchDoc
+Aw.Context.Core.Search.MapSearchDoc.<Clone>$() -> Aw.Context.Core.Search.MapSearchDoc!
+Aw.Context.Core.Search.MapSearchDoc.Id.get -> int
+Aw.Context.Core.Search.MapSearchDoc.Id.init -> void
+Aw.Context.Core.Search.MapSearchDoc.Title.get -> string!
+Aw.Context.Core.Search.MapSearchDoc.Title.init -> void
+Aw.Context.Core.Search.MapSearchDoc.Path.get -> string!
+Aw.Context.Core.Search.MapSearchDoc.Path.init -> void
+Aw.Context.Core.Search.MapSearchDoc.Text.get -> string!
+Aw.Context.Core.Search.MapSearchDoc.Text.init -> void
+Aw.Context.Core.Search.MapSearchDoc.Area.get -> string!
+Aw.Context.Core.Search.MapSearchDoc.Area.init -> void
+Aw.Context.Core.Search.MapSearchDoc.Deconstruct(out int Id, out string! Title, out string! Path, out string! Text, out string! Area) -> void
+Aw.Context.Core.Search.MapSearchDoc.Equals(Aw.Context.Core.Search.MapSearchDoc? other) -> bool
+Aw.Context.Core.Search.MapSearchDoc.MapSearchDoc(int Id, string! Title, string! Path, string! Text, string! Area) -> void
+override Aw.Context.Core.Search.MapSearchDoc.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchDoc.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchDoc.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchDoc.operator !=(Aw.Context.Core.Search.MapSearchDoc? left, Aw.Context.Core.Search.MapSearchDoc? right) -> bool
+static Aw.Context.Core.Search.MapSearchDoc.operator ==(Aw.Context.Core.Search.MapSearchDoc? left, Aw.Context.Core.Search.MapSearchDoc? right) -> bool
+Aw.Context.Core.Search.MapSearchMatch
+Aw.Context.Core.Search.MapSearchMatch.<Clone>$() -> Aw.Context.Core.Search.MapSearchMatch!
+Aw.Context.Core.Search.MapSearchMatch.Doc.get -> int
+Aw.Context.Core.Search.MapSearchMatch.Doc.init -> void
+Aw.Context.Core.Search.MapSearchMatch.Score.get -> double
+Aw.Context.Core.Search.MapSearchMatch.Score.init -> void
+Aw.Context.Core.Search.MapSearchMatch.Deconstruct(out int Doc, out double Score) -> void
+Aw.Context.Core.Search.MapSearchMatch.Equals(Aw.Context.Core.Search.MapSearchMatch? other) -> bool
+Aw.Context.Core.Search.MapSearchMatch.MapSearchMatch(int Doc, double Score) -> void
+override Aw.Context.Core.Search.MapSearchMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchMatch.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchMatch.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchMatch.operator !=(Aw.Context.Core.Search.MapSearchMatch? left, Aw.Context.Core.Search.MapSearchMatch? right) -> bool
+static Aw.Context.Core.Search.MapSearchMatch.operator ==(Aw.Context.Core.Search.MapSearchMatch? left, Aw.Context.Core.Search.MapSearchMatch? right) -> bool
+Aw.Context.Core.Search.MapSearchPage
+Aw.Context.Core.Search.MapSearchPage.<Clone>$() -> Aw.Context.Core.Search.MapSearchPage!
+Aw.Context.Core.Search.MapSearchPage.Total.get -> int
+Aw.Context.Core.Search.MapSearchPage.Total.init -> void
+Aw.Context.Core.Search.MapSearchPage.Matches.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchMatch!>!
+Aw.Context.Core.Search.MapSearchPage.Matches.init -> void
+Aw.Context.Core.Search.MapSearchPage.Deconstruct(out int Total, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchMatch!>! Matches) -> void
+Aw.Context.Core.Search.MapSearchPage.Equals(Aw.Context.Core.Search.MapSearchPage? other) -> bool
+Aw.Context.Core.Search.MapSearchPage.MapSearchPage(int Total, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchMatch!>! Matches) -> void
+override Aw.Context.Core.Search.MapSearchPage.Equals(object? obj) -> bool
+override Aw.Context.Core.Search.MapSearchPage.GetHashCode() -> int
+override Aw.Context.Core.Search.MapSearchPage.ToString() -> string!
+static Aw.Context.Core.Search.MapSearchPage.operator !=(Aw.Context.Core.Search.MapSearchPage? left, Aw.Context.Core.Search.MapSearchPage? right) -> bool
+static Aw.Context.Core.Search.MapSearchPage.operator ==(Aw.Context.Core.Search.MapSearchPage? left, Aw.Context.Core.Search.MapSearchPage? right) -> bool
+Aw.Context.Core.Search.IMapSearchIndex
+Aw.Context.Core.Search.IMapSearchIndex.Search(System.Collections.Generic.IReadOnlyList<string!>! terms, string? area, int limit) -> Aw.Kernel.Result<Aw.Context.Core.Search.MapSearchPage!>!
+Aw.Context.Core.Search.IMapSearchIndexFactory
+Aw.Context.Core.Search.IMapSearchIndexFactory.Build(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Search.MapSearchDoc!>! docs) -> Aw.Kernel.Result<Aw.Context.Core.Search.IMapSearchIndex!>!
+Aw.Context.Core.Search.MapSearchRules
+const Aw.Context.Core.Search.MapSearchRules.DefaultLimit = 50 -> int
+const Aw.Context.Core.Search.MapSearchRules.MaxLimit = 200 -> int
+const Aw.Context.Core.Search.MapSearchRules.MaxTerms = 12 -> int
+static Aw.Context.Core.Search.MapSearchRules.CheckLimit(int? limit) -> Aw.Kernel.Result<int>!
+static Aw.Context.Core.Search.MapSearchRules.Terms(string? q) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Context.Core.Facade.IContextLenses.Search(Aw.Context.Core.Search.MapSearchQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Search.MapSearchView!>!>
+Aw.Context.Core.Map.MapText.Cleaned(string! text, bool singleLine) -> string!
 Aw.Context.Core.Lenses.LensItem.Repo.get -> string?
 Aw.Context.Core.Lenses.LensItem.Repo.init -> void
 Aw.Context.Core.Lenses.LensFile.Repo.get -> string?

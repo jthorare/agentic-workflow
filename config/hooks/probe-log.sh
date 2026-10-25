@@ -3,8 +3,8 @@
 # Usage: probe-log.sh <event> [provider]
 # Appends the raw hook input to $AW_PROBE_DIR/<event>.jsonl (Claude Code,
 # the default) or $AW_PROBE_DIR/<provider>/<event>.jsonl for any other
-# provider, so `scorer probe` (which reads only the top-level *.jsonl files)
-# keeps summarizing Claude Code input unchanged.
+# provider, so a reader of the top-level *.jsonl files sees Claude Code input
+# unchanged.
 # Logging only: prints nothing and always exits 0, so it can never block work.
 EVENT="${1:-unknown}"
 PROVIDER="${2:-claude}"

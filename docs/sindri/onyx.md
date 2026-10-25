@@ -5,15 +5,14 @@ Community Edition. Onyx stays unmodified; Sindri uses it for recall only and doe
 D3). Connecting Onyx to company Linear and Slack uses company OAuth: get sign-off first. Sindri never connects a
 source itself.
 
-`$SINDRI` is the C# Sindri build (before the switch, `~/.local/bin/sindri` is still the TS one); see
-[context.md](context.md).
+`$SINDRI` is the installed `sindri`; see [context.md](context.md).
 
 ## Quick start: Sindri sets Onyx up
 
 Docker (Docker Desktop, OrbStack, or Docker Engine with Compose v2) is the one thing you install yourself. Then, at a terminal:
 
 ```bash
-sindri-app onyx up        # or: $SINDRI onyx up (`./setup.sh --with-sindri` runs it for you). The first bare `sindri` at a terminal offers the same thing.
+$SINDRI onyx up           # `./setup.sh` runs it for you. The first bare `sindri` at a terminal offers the same thing.
 ```
 
 It runs the pinned Onyx v4.9.0 (`context/onyx.lock`) as the compose project `sindri-onyx-<hash>` under `$AW_SINDRI_HOME/onyx/`: preflight
