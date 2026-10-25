@@ -33,7 +33,7 @@ internal sealed class SystemdScope(string unit, ISandboxProcesses processes, IHo
     public ValueTask<string?> Result(CancellationToken cancellationToken)
     {
         var shown = Show();
-        return ValueTask.FromResult(shown.GetValueOrDefault("ActiveState") == "failed" ? shown.GetValueOrDefault("Result") : null);
+        return ValueTask.FromResult(string.Equals(shown.GetValueOrDefault("ActiveState"), "failed", StringComparison.Ordinal) ? shown.GetValueOrDefault("Result") : null);
     }
 
     /// <inheritdoc />
@@ -59,7 +59,7 @@ internal sealed class SystemdScope(string unit, ISandboxProcesses processes, IHo
         }
 
         var shown = Show();
-        if (shown.GetValueOrDefault("ActiveState") != "active" || shown.GetValueOrDefault("ControlGroup") is not { Length: > 0 } relative)
+        if (!string.Equals(shown.GetValueOrDefault("ActiveState"), "active", StringComparison.Ordinal) || shown.GetValueOrDefault("ControlGroup") is not { Length: > 0 } relative)
         {
             return null;
         }
