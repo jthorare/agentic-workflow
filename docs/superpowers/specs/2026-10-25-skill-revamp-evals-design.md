@@ -93,11 +93,11 @@ Every SKILL.md frontmatter gains `requires:` listing binaries, agents and MCP se
 | `<s>-near-miss` | routing | a request that belongs to the skill's closest sibling (§3.1a), so it must not fire this one; a skill with no sibling uses a request that only looks close |
 | `<s>-forced` | behaviour | "use the `<s>` skill on ..." and grade what it does |
 
-Tier D skills have no forced case (§3.3). Counting it all: 33 skills × 4 + 19 × 3 = 189 cases, plus one held-out natural prompt per skill (§7.2, 52) and the family case sets (§3.1a, about 30 prompts): about 270 cases, of which 33 are behaviour cases and the rest are routing.
+Tier D skills have no forced case (§3.3). Counting it all: 33 skills × 4 + 19 × 3 = 189 cases, plus one held-out natural prompt per skill (§7.2, 52) and the family case sets (§3.1a, about 40 prompts): about 280 cases, of which 33 are behaviour cases and the rest are routing.
 
 ### 3.1a Sibling families
 
-The real routing risk is a skill stealing a sibling's prompts, not firing on an unrelated request. `rootCause`'s merged description ("Use BEFORE fixing any bug, even when the fix looks small") can win prompts meant for `bugHunt`, `bugFixOrchestrator` or `bugReport`, and each skill's own gate would still pass. So skills are grouped into families, and each family has one **family case set** in `evals/_families/<family>/`: one prompt per member, graded on *which* skill fired (a `regex` on the Skill tool's argument), run with `--ablation none` whenever any member's description changes.
+The real routing risk is a skill stealing a sibling's prompts, not firing on an unrelated request. `rootCause`'s merged description ("Use BEFORE fixing any bug, even when the fix looks small") can win prompts meant for `bugHunt`, `bugFixOrchestrator` or `bugReport`, and each skill's own gate would still pass. So skills are grouped into families, and each family has one **family case set** in `evals/_families/<family>/`: one prompt per member, graded on *which* skill fired first (a `regex` on the first Skill tool call's argument; later calls don't count, since `bugFixOrchestrator` calls `rootCause` on purpose), run with `--ablation none` whenever any member's description changes. The design dispatch family is too big to run whole (about 19 prompts): a change runs only the changed skill's dispatcher and its members. A family run has its own per-PR cap of $12, separate from the skill's $8.
 
 | Family | Members |
 |---|---|
@@ -208,7 +208,7 @@ The per-PR job also reads the JSON for the **routing gate**: on a skill's two na
 
 ### 6.2 Cost budget per change
 
-Pilot rates: about $0.18 per run (Opus default, judges included), $0.46 for the heaviest. A skill's 4 cases plus its held-out prompt at 3 runs, one arm, is 15 runs, about $2.70 to $7. The $8 cap per PR holds that; a family case set adds about $2 to $5 and is counted in the same cap.
+Pilot rates: about $0.18 per run (Opus default, judges included), $0.46 for the heaviest. A skill's 4 cases plus its held-out prompt at 3 runs, one arm, is 15 runs, about $2.70 to $7. The $8 cap per PR holds that. A family case set (3 to 7 prompts at 3 runs, about $2 to $10) runs under its own $12 cap (§3.1a).
 
 The per-PR gate is a cheap, one-arm check for later edits. It is not the table a group PR carries: a group PR (§8) runs its own full measurement once (`--runs 3`, with-without on behaviour cases), and that is the table in its body. A change that touches many skills runs them in sequence and stops at its cap; the PR body says which skills were skipped.
 
@@ -244,7 +244,7 @@ Two lessons. First, a "Use when" opener is not enough: Claude reads a bug as som
 2. **Add the exclusion.** One clause for the near miss ("not for writing new features").
 3. **Never paraphrase a case prompt into a description.** A description may not contain a phrase of five or more words that also appears in any of that skill's case prompts. The script checks this mechanically (`scripts/skill-evals.sh --lint-descriptions`, part of the gate).
 4. **Hold out phrasings.** Each skill has 2 natural cases for tuning and one more natural prompt kept in `evals/<skill>/routing/_heldout/`, written by someone other than the person editing the description and never read while editing. After a description change, the held-out prompt must fire as often as the tuned ones. If tuned cases fire and the held-out case does not, the description is overfitted; revert and widen it.
-5. **Keep it short.** One to three sentences; the trigger cases come first. Long descriptions cost context in every session, so `--lint-descriptions` also fails when a PR grows the total bytes of all descriptions by more than 10% over the Phase 0 baseline.
+5. **Keep it short.** One to three sentences; the trigger cases come first. Long descriptions cost context in every session, so `--lint-descriptions` fails any single description over 400 characters, and fails a PR that takes the total bytes of all descriptions past the Phase 0 baseline plus 25%. The rewrites add a trigger clause and an exclusion to most descriptions, so a tighter total would trip by the third group for no real cost.
 6. **Re-measure.** A description PR carries the before and after fire rates for all three natural cases at the default three runs; a single run is noise.
 
 ## 8. Rollout
@@ -259,7 +259,7 @@ Eval runs are for lane leads. Builders write cases and skill text only (standing
 4. `evals/` skeleton, `plugin.json`, stubs for `gh`, `curl`; `scripts/skill-evals.sh` and its bash test (§4, §5).
 5. Move the pilot's three suites into the new layout; re-run once as the baseline row. The baseline also records: (a) the 3 pilot skills' forced cases once with `AW_PREAMBLE` on and once off, so we know whether the eval's mode changes Δ (if it moves by more than 0.1, one preamble-on behaviour case per tier B skill joins the nightly); (b) the bug family's case set (§3.1a) on today's descriptions; (c) the total bytes of all 52 descriptions.
 6. Update `.agents/rules/skills.md` and `planning/TESTING.md`.
-7. `evals/STATUS.md`: one row per skill (fire rate on its natural cases, behaviour Δ, date of the last run, the PR). Each group PR updates its skills' rows, so the current state is one committed file anyone can read, not a PR body.
+7. Per-skill status: one small committed file per skill, `evals/<skill>/status.md` (fire rate on its natural cases, behaviour Δ, date of the last run, the PR), and `scripts/skill-evals.sh --status` prints them as one table. One file per skill, so parallel group PRs never edit the same file.
 
 Proof: the pilot's `rootCause` forced case runs in fewer turns than before; the three pilot skills score the same or better; `scripts/skill-evals.sh --dry-run` passes in CI. One lane, builders split by step 1 / step 2-3 / step 4-5 (they touch different files).
 
