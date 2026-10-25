@@ -95,8 +95,12 @@ drv click --node-id "$open_id" >/dev/null 2>&1 || setup_fail "the Open Fixture a
   || setup_fail "no Watch the agent control on the instance (see $OUT/app.log)"
 "$DRIVER" screenshot --out "$OUT/before-click.png" >/dev/null 2>&1
 before="$("$PROVE" human ledger --json --item "$item" --max 1000 2>&1 | tr -d '\r')"
-# Take over is a MenuItem in the chevron's flyout (AttachButton.axaml), which joins the tree only once the menu is open.
-"$DRIVER" click --type Button --text "▾" --index 0 >/dev/null 2>&1 || setup_fail "the chevron click was not accepted by the driver"
+# Take over is a MenuItem in the chevron's flyout (AttachButton.axaml). The driver walks only the main window's visual tree, so the menu
+# is findable only because a driven run draws popups inside the window (Composition.WithOverlayPopups). The chevron is the Button named
+# "More actions for <address>" (its text "▾" is not unique on a page with other Attach controls); Take over's text is its Header.
+chevron_id="$(drv search --type Button --limit 5000 2>/dev/null | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("More actions for")))][0].id // empty')"
+[ -n "$chevron_id" ] || setup_fail "no visible More actions chevron on the instance"
+drv click --node-id "$chevron_id" >/dev/null 2>&1 || setup_fail "the chevron click was not accepted by the driver"
 "$DRIVER" wait-for --type MenuItem --text "Take over" --state visible --wait-ms 5000 >/dev/null 2>&1 \
   || setup_fail "the chevron menu shows no Take over (see $OUT/app.log)"
 "$DRIVER" click --type MenuItem --text "Take over" >/dev/null 2>&1 || setup_fail "the Take over click was not accepted by the driver"

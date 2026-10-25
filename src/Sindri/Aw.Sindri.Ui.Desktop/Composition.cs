@@ -53,12 +53,23 @@ internal static class Composition
     /// <param name="clock">The clock for every timing rule.</param>
     /// <param name="args">The command line; <code language="csharp">--ui-driver</code> (like AW_UI_DRIVER=1) makes the app drivable by aw-ui-driver, which desktop UI evidence uses. A normal launch opens no port.</param>
     /// <returns>The app's builder.</returns>
-    internal static AppBuilder Compose(SindriPlatform platform, TimeProvider clock, IReadOnlyList<string> args) =>
-        AppBuilder.Configure(() => SindriApp.Create(platform, clock))
+    internal static AppBuilder Compose(SindriPlatform platform, TimeProvider clock, IReadOnlyList<string> args)
+    {
+        var builder = AppBuilder.Configure(() => SindriApp.Create(platform, clock))
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace()
-            .UseAwUiDriver(args);
+            .LogToTrace();
+        return (IsDriven(args) ? WithOverlayPopups(builder) : builder).UseAwUiDriver(args);
+    }
+
+    // A driven run draws menus and flyouts inside the window (its visual tree), not in a separate popup window the driver cannot see.
+    private static bool IsDriven(IReadOnlyList<string> args) =>
+        string.Equals(Environment.GetEnvironmentVariable("AW_UI_DRIVER"), "1", StringComparison.Ordinal) || args.Contains("--ui-driver", StringComparer.Ordinal);
+
+    private static AppBuilder WithOverlayPopups(AppBuilder builder) =>
+        builder.With(new X11PlatformOptions { OverlayPopups = true })
+            .With(new Win32PlatformOptions { OverlayPopups = true })
+            .With(new AvaloniaNativePlatformOptions { OverlayPopups = true });
 
     /// <summary>This OS's reduce-motion reader: macOS NSWorkspace, Windows SPI_GETCLIENTAREAANIMATION, GNOME enable-animations; elsewhere never.</summary>
     /// <returns>The reader.</returns>
