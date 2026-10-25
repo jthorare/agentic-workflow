@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -46,6 +47,6 @@ public sealed class CommandControlLayoutTests
         });
 
         Assert.True(copyEnabled);
-        Assert.True(copyRight <= cardWidth + 0.5, $"Copy ends at x={copyRight} in a card {cardWidth} px wide");
+        Assert.True(copyRight <= cardWidth + 0.5, "Copy ends at x=" + copyRight.ToString(CultureInfo.InvariantCulture) + " in a card " + cardWidth.ToString(CultureInfo.InvariantCulture) + " px wide");
     }
 }

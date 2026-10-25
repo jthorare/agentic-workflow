@@ -6,7 +6,6 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
@@ -48,8 +47,8 @@ public sealed class StartDialogReserveTests : FrameHost
         var (window, _) = await Open();
 
         var captions = window.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Contains(Labels.StartItem, captions);
-        Assert.Contains(Labels.StartPickCaption, captions);
+        Assert.Contains(Labels.StartItem, captions, StringComparer.Ordinal);
+        Assert.Contains(Labels.StartPickCaption, captions, StringComparer.Ordinal);
         Assert.Equal(Labels.StartPickCaption, AutomationProperties.GetName(Named<ComboBox>(window, "StartItemPick")));
     });
 }
