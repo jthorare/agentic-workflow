@@ -41,6 +41,9 @@ public sealed class IndexConceptsTests : IDisposable
     [InlineData("Bad Id")]
     [InlineData("Scheduling")]
     [InlineData("-lead")]
+    [InlineData(".lead")]
+    [InlineData("tabs.")]
+    [InlineData("tabs..manager")]
     public async Task An_id_that_is_not_a_slug_is_refused_with_its_key_path(string id)
     {
         _files.Write(Base + "index:\n  concepts:\n    - { id: " + id + ", name: Billing }\nrepos:\n  - { name: web, path: /work/web }\n");
@@ -49,6 +52,16 @@ public sealed class IndexConceptsTests : IDisposable
 
         Assert.True(loaded.IsError);
         Assert.Contains("index.concepts[0].id", loaded.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("tabs.tab-manager")]
+    [InlineData("billing.invoices")]
+    public void A_pin_may_name_a_derived_id_with_a_dot(string id)
+    {
+        var profile = Profile(Pins(new ConceptSettings(ConceptPinId.From(id), "Tab manager")));
+
+        Assert.True(ProfileRules.Check(profile).IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]

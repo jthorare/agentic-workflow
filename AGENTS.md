@@ -202,6 +202,7 @@ bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/ci-recipe-versions.test.sh  # scripts/ci/recipe-versions.sh: `recipe manifest` over HEAD and `git archive origin/main`, `recipe validate --against` every recipe (CI's version rule)
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
+bash scripts/tests/ui-checks-xvfb-lib.test.sh   # tests/ui-checks/xvfb-lib.sh with a fake Xvfb: the display is stopped by pid on exit and an existing EXIT trap still runs
 bash scripts/tests/test-tmux.test.sh
 bash scripts/tests/sindri-smoke-normalize.test.sh
 bash scripts/tests/scoping-fixture.test.sh

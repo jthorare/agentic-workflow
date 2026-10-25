@@ -116,4 +116,40 @@ public sealed class CliRunTests
         Assert.Contains("no driver directory", none.Error, StringComparison.Ordinal);
         Assert.StartsWith("aw-ui-driver: usage:", usage.Error, StringComparison.Ordinal);
     }
+
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task A_driver_that_never_answers_is_a_timeout_not_a_hang()
+    {
+        await using var driver = new StubDriver { Silent = true };
+        var error = new StringWriter();
+        var run = new CliRun(new StringWriter(), error, name => name switch
+        {
+            "AW_UI_DRIVER_DIR" => driver.Folder,
+            "AW_UI_DRIVER_TIMEOUT_MS" => "300",
+            _ => null,
+        });
+
+        var exit = await run.RunAsync(["tree", "--depth", "80"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, exit);
+        Assert.StartsWith("aw-ui-driver: AW-UIDRIVER-004 ", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task The_timeout_flag_beats_the_environment()
+    {
+        await using var driver = new StubDriver { Silent = true };
+        var error = new StringWriter();
+        var run = new CliRun(new StringWriter(), error, name => name switch
+        {
+            "AW_UI_DRIVER_DIR" => driver.Folder,
+            "AW_UI_DRIVER_TIMEOUT_MS" => "600000",
+            _ => null,
+        });
+
+        var exit = await run.RunAsync(["tree", "--timeout-ms", "300"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("AW-UIDRIVER-004", error.ToString(), StringComparison.Ordinal);
+    }
 }

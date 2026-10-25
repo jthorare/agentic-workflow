@@ -2,20 +2,24 @@ using System.Globalization;
 using System.Text;
 using Aw.Kernel;
 using Aw.UiDriver.Core;
+using Aw.UiDriver.Core.Protocol;
 
 namespace Aw.UiDriver.Cli;
 
 /// <summary>
 /// The command: parse the arguments, find the driver (--dir, else AW_UI_DRIVER_DIR), send the verb and print the answer on standard output. A failure is one
 /// line on standard error, 'aw-ui-driver: AW-UIDRIVER-NNN message'. Exit: 0 done · 1 usage or an invalid request · 2 no element, the element can't take the
-/// action, or a wait timed out (a check failed) · 4 the driver is unreachable or the app failed.
+/// action, or a wait or the call itself timed out (a check failed) · 4 the driver is unreachable or the app failed.
 /// </summary>
 /// <param name="output">Standard output.</param>
 /// <param name="error">Standard error.</param>
 /// <param name="environment">Reads an environment variable.</param>
 internal sealed class CliRun(TextWriter output, TextWriter error, Func<string, string?> environment)
 {
+    private const int DefaultTimeoutMs = 60_000;
+
     private static readonly TimeSpan _poll = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan _waitGrace = TimeSpan.FromSeconds(5);
 
     internal async Task<int> RunAsync(IReadOnlyList<string> args, CancellationToken cancellationToken)
     {
@@ -78,7 +82,7 @@ internal sealed class CliRun(TextWriter output, TextWriter error, Func<string, s
         }
 
         using var client = opened.Value;
-        var answer = await client.CallAsync(request.Value.Verb, request.Value.Body, cancellationToken).ConfigureAwait(false);
+        var answer = await client.CallAsync(request.Value.Verb, request.Value.Body, TimeoutFor(a, request.Value.Verb), cancellationToken).ConfigureAwait(false);
         if (answer.IsError)
         {
             return await FailAsync(answer.Error).ConfigureAwait(false);
@@ -91,6 +95,14 @@ internal sealed class CliRun(TextWriter output, TextWriter error, Func<string, s
         }
 
         return await SavePictureAsync(a, answer.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The whole-answer budget: --timeout-ms, else AW_UI_DRIVER_TIMEOUT_MS, else 60 s; a wait-for adds the wait it asks for and 5 s.
+    private TimeSpan TimeoutFor(CliArguments a, string verb)
+    {
+        var fromEnvironment = int.TryParse(environment("AW_UI_DRIVER_TIMEOUT_MS"), NumberStyles.None, CultureInfo.InvariantCulture, out var ms) && ms > 0 ? ms : (int?)null;
+        var budget = TimeSpan.FromMilliseconds(a.Number("--timeout-ms") ?? fromEnvironment ?? DefaultTimeoutMs);
+        return verb == "wait-for" ? budget + TimeSpan.FromMilliseconds(a.Number("--wait-ms") ?? WaitForRequest.DefaultTimeoutMs) + _waitGrace : budget;
     }
 
     private async Task<int> SavePictureAsync(CliArguments a, byte[] png, CancellationToken cancellationToken)

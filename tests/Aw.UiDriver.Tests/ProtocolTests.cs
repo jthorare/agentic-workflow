@@ -61,4 +61,20 @@ public sealed class ProtocolTests
 
         Assert.Equal("""{"schema":"aw-ui-driver/1","url":"http://127.0.0.1:5000","pid":42}""", json);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_tree_as_deep_as_the_depth_cap_serializes()
+    {
+        var node = Leaf("0/0");
+        for (var level = 0; level < TreeRequest.MaxDepth; level++)
+        {
+            node = node with { Children = [node] };
+        }
+
+        var json = Encoding.UTF8.GetString(AwJson.Serialize(new TreeResponse(node), UiDriverJson.Options));
+
+        Assert.StartsWith("{\"root\":{\"id\":\"0/0\"", json, StringComparison.Ordinal);
+    }
+
+    private static NodeInfo Leaf(string id) => new(id, "Border", AutomationId: null, Name: null, Text: null, Visible: true, Enabled: true, X: 0, Y: 0, Width: 10, Height: 10, Children: []);
 }

@@ -70,13 +70,13 @@ internal static class IndexRules
         {
             null => null,
             { Value: ConceptOther } => Invalid(path, "'other' is reserved for the concept that holds what no other takes"),
-            { } pinned when !IsSlug(pinned.Value) => Invalid(path, "must be a slug of lowercase letters, digits and '-' (like 'scheduling')"),
+            { } pinned when !IsSlug(pinned.Value) => Invalid(path, "must be a slug of lowercase letters, digits, '-' and '.' (like 'scheduling' or 'tabs.tab-manager')"),
             _ => null,
         };
 
+    // Lowercase words joined by single '-' or '.', the shape derived concept ids have, so a pin can name one.
     private static bool IsSlug(string id) =>
-        id.All(static c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-')
-        && !id.StartsWith('-') && !id.EndsWith('-') && !id.Contains("--", StringComparison.Ordinal);
+        id.Split('-', '.').All(static word => word.Length > 0 && word.All(static c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9')));
 
     private static Error? Features(string path, IReadOnlyList<string>? features)
     {
