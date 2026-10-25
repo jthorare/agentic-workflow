@@ -12,6 +12,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The whole map the page opens on.</summary>
     public WholeMapViewModel Whole { get; } = new();
 
+    /// <summary>The list of a search's hits, beside the map.</summary>
+    public Hits.MapHitsViewModel Hits { get; } = new();
+
     /// <summary>Whether the whole map is on the stage: it is read, and neither a query's neighbourhood, the No map state nor a running build covers it.</summary>
     public bool ShowWhole => ShowMap && Whole.IsReady && !NoMap && !IsBuilding;
 
