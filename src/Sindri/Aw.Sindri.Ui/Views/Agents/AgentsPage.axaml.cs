@@ -60,7 +60,15 @@ internal sealed partial class AgentsPage : UserControl
     }
 
     // Where focus last went: a re-read only claims lost focus for the page when the human was last on it.
-    private void OnFocusMoved(object? sender, RoutedEventArgs e) => _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+    // Focus going somewhere else with the sheet closed also drops the row's highlight, so a closed sheet leaves no row marked.
+    private void OnFocusMoved(object? sender, RoutedEventArgs e)
+    {
+        _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+        if (!_focusWasHere && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Page?.ClearSelection();
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnDataContextChanged(EventArgs e)
