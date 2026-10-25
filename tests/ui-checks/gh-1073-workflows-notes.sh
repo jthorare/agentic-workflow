@@ -30,8 +30,9 @@ timeout 120 "$DRIVER" window --width 900 --height 900 >/dev/null 2>&1 || setup_f
 timeout 120 "$DRIVER" click --type ListBoxItem --name Workflows >/dev/null 2>&1 || setup_fail "no Workflows tab"
 timeout 120 "$DRIVER" wait-for --type ListBoxItem --name List --state visible --wait-ms 30000 >/dev/null 2>&1 || setup_fail "no List view switch"
 timeout 120 "$DRIVER" click --type ListBoxItem --name List >/dev/null 2>&1 || setup_fail "the List view switch did not click"
-timeout 120 "$DRIVER" wait-for --type Border --automation-id WorkflowColumnHead --state visible --wait-ms 30000 >/dev/null 2>&1 \
-  || setup_fail "the list never showed its column head"
+# The column head is a Raw (peerless) border, so it is found by its texts: the Updated head is on screen at every width.
+timeout 120 "$DRIVER" wait-for --type TextBlock --contains Updated --state visible --wait-ms 60000 >/dev/null 2>&1 \
+  || { timeout 120 "$DRIVER" tree --depth 12 >"$OUT/tree.json" 2>&1; setup_fail "the list never showed its column head (tree in $OUT/tree.json)"; }
 sleep 1.5
 
 num() { jq -r "$1" <<<"$2"; }
