@@ -20,4 +20,17 @@ internal sealed partial class NeedsYouRowViewModel
 
     /// <summary>True when the served command shows under the lines: not when Details already holds it.</summary>
     public bool ShowsCliUpFront => Cli.Length > 0 && !HasMoreDetails;
+
+    /// <summary>The ready Complete action of an open desk task, which the sheet offers as a button; null for any other row.</summary>
+    internal NeedsYouAction? SheetComplete => null;
+
+    /// <summary>True when the sheet shows the Complete button.</summary>
+    public bool ShowsComplete => SheetComplete is not null;
+
+    /// <summary>The words on the Complete button.</summary>
+    public string CompleteLabel => string.Empty;
+
+    /// <summary>The Complete button's accessible name: the words and the instance's address ("Complete ITM-.../dev-desk-round-trip/1").</summary>
+    public string CompleteName => string.Empty;
 }
+

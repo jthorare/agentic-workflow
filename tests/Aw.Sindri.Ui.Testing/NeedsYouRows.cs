@@ -29,6 +29,7 @@ internal static class NeedsYouRows
         Subject = new NeedsYouSubject("instance", instance),
         ItemId = "ITM-01JL1",
         Cli = "sindri workflow complete ITM-01JL1/dev-desk-round-trip/1 --run <run> --outcome <outcome>",
+        Open = new Aw.Sindri.Ui.Api.Workflow.NeedsYouOpenView("workflow/ITM-01JL1/dev-desk-round-trip/1", "Answer the question"),
     };
 
     /// <summary>A paused run whose rounds are used up: "Grant rounds" is protected, so the app shows its command.</summary>
