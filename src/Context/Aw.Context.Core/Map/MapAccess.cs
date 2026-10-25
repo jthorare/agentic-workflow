@@ -157,6 +157,15 @@ public static class MapAccess
         return (cut.Apply(current), cut.UndoRows(overrides, at));
     }
 
+    /// <summary>What a build keeps of a graph under the mapped repos' demote globs (#1043): the 'implements' edges of demoted files are dropped, and the accepts standing on them are undone (the build writes the undo rows with the draft).</summary>
+    /// <param name="graph">The graph a build keeps.</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="mapped">The repos the map is built from: only their demote globs judge a <c xml:lang="en">code:</c> key.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The graph itself and no rows when nothing is demoted.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Undo) WithoutDemoted(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, IReadOnlyList<ContextRepo> mapped, DateTimeOffset at) =>
+        DemoteCut.Apply(graph, overrides, mapped, at);
+
     /// <summary>The export document for a version's visible graph: decision nodes and 'quotes' edges are left to the decisions, which imply them.</summary>
     /// <param name="version">The version.</param>
     /// <param name="graph">The visible graph.</param>

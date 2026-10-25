@@ -95,7 +95,7 @@ public sealed class StartCommandTests : IDisposable
         var found = await Drive(Command(launcher).FindOrLaunch(Token));
 
         Assert.Equal(SindriErrors.StartFailed.Code, found.Error.Code);
-        Assert.Contains("didn't answer within 30 s: the started one exited with SND-LEASE-001 held by host/77 since then (epoch 3)", found.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("didn't answer within 120 s: the started one exited with SND-LEASE-001 held by host/77 since then (epoch 3)", found.Error.Message, StringComparison.Ordinal);
         Assert.Equal(1 + (int)(StartCommand.Budget / StartCommand.Poll), _probe.Calls);   // the first check, then every poll to the deadline
     }
 

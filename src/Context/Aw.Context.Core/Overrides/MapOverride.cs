@@ -39,6 +39,9 @@ public sealed record MapOverride(
     /// <summary>The 'who' of an undo row a deny cut writes for a decision about a node or link it takes out (see <see cref="UndoingCut"/>).</summary>
     public const string CutMarker = "service:deny-cut";
 
+    /// <summary>The 'who' of an undo row a build writes for an accept of an 'implements' edge from a file its repo demotes (see <see cref="UndoingDemote"/>).</summary>
+    public const string DemoteMarker = "service:demote-cut";
+
     /// <summary>Whether this is an undo row a deny cut wrote (never a person's).</summary>
     [JsonIgnore]
     public bool IsCutUndo => Action == OverrideAction.Undo && Who == CutMarker;
@@ -51,6 +54,16 @@ public sealed record MapOverride(
     {
         ArgumentNullException.ThrowIfNull(decision);
         return new MapOverride(OverrideAction.Undo, decision.Target, CutMarker, at, Undoes: decision.ToId());
+    }
+
+    /// <summary>The undo row that takes an accept out with the 'implements' edge a demote glob drops from the map.</summary>
+    /// <param name="decision">The accept.</param>
+    /// <param name="at">When.</param>
+    /// <returns>The undo row, marked as the demote cut's.</returns>
+    public static MapOverride UndoingDemote(MapOverride decision, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(decision);
+        return new MapOverride(OverrideAction.Undo, decision.Target, DemoteMarker, at, Undoes: decision.ToId());
     }
 
     /// <summary>Whether this reject names a proposal of the given <see cref="RejectionIdentity"/>: any proposal when it has no identity, otherwise by the identity it was written with or the one the deny cut gave it.</summary>

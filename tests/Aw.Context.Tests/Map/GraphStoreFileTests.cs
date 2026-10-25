@@ -46,8 +46,8 @@ public sealed class GraphStoreFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_map_review_columns_are_migration_0004_after_the_scrub_ruleset_one_and_the_proposal_runs_table_0005_and_the_intent_links_0006_and_their_creation_time_0007_and_the_map_publish_tables_0010_and_the_name_link_rule_0011() =>
-        Assert.Equal("1 s1a_repo_docs, 2 s3a_graph, 3 s2w_scrub_ruleset, 4 s4_map_review, 5 s4_proposal_runs, 6 s5b_intent_links, 7 s5b_intent_created, 8 s5c_change_stamp, 9 s5c_intent_stamp, 10 s4p_map_publish, 11 s5e_intent_link_name", string.Join(", ", ContextDatabase.Migrations.Select(m => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{m.Version} {m.Name}"))));
+    public void The_map_review_columns_are_migration_0004_after_the_scrub_ruleset_one_and_the_proposal_runs_table_0005_and_the_intent_links_0006_and_their_creation_time_0007_and_the_map_publish_tables_0010_and_the_name_link_rule_0011_and_the_map_ruleset_0012() =>
+        Assert.Equal("1 s1a_repo_docs, 2 s3a_graph, 3 s2w_scrub_ruleset, 4 s4_map_review, 5 s4_proposal_runs, 6 s5b_intent_links, 7 s5b_intent_created, 8 s5c_change_stamp, 9 s5c_intent_stamp, 10 s4p_map_publish, 11 s5e_intent_link_name, 12 s5f_map_ruleset", string.Join(", ", ContextDatabase.Migrations.Select(m => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{m.Version} {m.Name}"))));
 
     [Fact, Trait("Lane", "integration")]
     public async Task The_fixture_map_round_trips_through_yaml_the_store_and_back()

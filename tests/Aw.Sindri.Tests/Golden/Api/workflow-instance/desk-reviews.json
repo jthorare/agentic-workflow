@@ -7,7 +7,7 @@
   "recipe": {
     "id": "workflow.design",
     "hash": "sha256:e975aac700000000000000000000000000000000000000000000000000000000",
-    "version": 7,
+    "version": 8,
     "urgency": "work",
     "displayName": "Design"
   },
@@ -283,7 +283,7 @@
         "address": "ITM-01JN2/design/1",
         "recipe": "workflow.design",
         "hash12": "e975aac70000",
-        "version": 7,
+        "version": 8,
         "state": "ask",
         "detail": "desk task",
         "since": "2026-10-12T12:22:00.0000000Z",
@@ -330,7 +330,7 @@
           "confirm": "Cancel ITM-01JN2/design/1? 0 running steps stop; 0 children are cancelled."
         }
       ],
-      "text": "ITM-01JN2/design/1  workflow.design@e975aac70000  v7  ask: desk task  since 12:22 (4m)\n  next      Answer the 3 questions the reviewers raised on ITM-01JN2, then run: sindri workflow complete\n            ITM-01JN2/design/1 --run 4.1 --outcome done --output fact:answers=<file>\n  inputs    fact:escalation  escalation.json  sha256:5c1e...\n  timeout   parks in 6d 23h 56m (desk)\n  commands  complete, takeover, cancel\n",
+      "text": "ITM-01JN2/design/1  workflow.design@e975aac70000  v8  ask: desk task  since 12:22 (4m)\n  next      Answer the 3 questions the reviewers raised on ITM-01JN2, then run: sindri workflow complete\n            ITM-01JN2/design/1 --run 4.1 --outcome done --output fact:answers=<file>\n  inputs    fact:escalation  escalation.json  sha256:5c1e...\n  timeout   parks in 6d 23h 56m (desk)\n  commands  complete, takeover, cancel\n",
       "injection": []
     }
   },

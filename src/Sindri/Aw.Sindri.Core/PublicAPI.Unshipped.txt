@@ -2769,6 +2769,8 @@ Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.get -> boo
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.init -> void
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.get -> bool
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyUnavailable.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyUnavailable.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.DeskTimeout.get -> System.TimeSpan
@@ -11173,6 +11175,7 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Exit = 1 -> Aw.Sindri.Cor
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Lost = 2 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Idle = 3 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.Bound(System.TimeSpan max, System.TimeSpan? timerLeft) -> System.TimeSpan
+static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.IsExplicit(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Rules.BlockStepTriggers.IsBlockActor(string! actor) -> bool
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockFactUnreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockProfileUnreadable -> Aw.Kernel.ErrorDefinition!
@@ -18499,8 +18502,8 @@ static Aw.Sindri.Core.Prove.RedTest.operator ==(Aw.Sindri.Core.Prove.RedTest? le
 static Aw.Sindri.Core.Prove.RedTestsFact.operator !=(Aw.Sindri.Core.Prove.RedTestsFact? left, Aw.Sindri.Core.Prove.RedTestsFact? right) -> bool
 static Aw.Sindri.Core.Prove.RedTestsFact.operator ==(Aw.Sindri.Core.Prove.RedTestsFact? left, Aw.Sindri.Core.Prove.RedTestsFact? right) -> bool
 static Aw.Sindri.Core.Prove.RedTestsFact.Parse(System.Text.Json.Nodes.JsonNode? fact) -> Aw.Sindri.Core.Prove.RedTestsFact!
-Aw.Sindri.Core.Commands.LaunchedCallers
-static Aw.Sindri.Core.Commands.LaunchedCallers.RefuseOnHumanStep(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView! view, string! action) -> Aw.Kernel.Error?
+Aw.Sindri.Core.Workflow.Engine.Runtime.LaunchedCallers
+static Aw.Sindri.Core.Workflow.Engine.Runtime.LaunchedCallers.RefuseOnHumanStep(Aw.Sindri.Core.Commands.CallerContext! caller, Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView! view, string! action) -> Aw.Kernel.Error?
 static Aw.Sindri.Core.Commands.CallerContext.Http(Aw.Sindri.Core.Commands.HttpCaller! caller, Aw.Kernel.Ids.IIdGenerator! ids) -> Aw.Sindri.Core.Commands.CallerContext!
 Aw.Sindri.Core.Commands.HttpCaller
 Aw.Sindri.Core.Commands.HttpCaller.<Clone>$() -> Aw.Sindri.Core.Commands.HttpCaller!
@@ -18612,9 +18615,30 @@ Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.ShippedApprovalPlans(Aw.Sindri.Core.Workflow.Registry.RecipeApprovalPlanner! planner, Aw.Sindri.Core.Workflow.ApproveAll.ShippedRecipeRegistration? registration = null) -> void
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, int version, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.ApprovalPlan!>!>
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, string! hash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.ApprovalPlan!>!>
+Aw.Sindri.Core.Scheduling.MainMoveInput
+Aw.Sindri.Core.Scheduling.MainMoveInput.<Clone>$() -> Aw.Sindri.Core.Scheduling.MainMoveInput!
+Aw.Sindri.Core.Scheduling.MainMoveInput.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! OnDefaultHeads, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LastSucceededHeads, out bool RulesChanged) -> void
+Aw.Sindri.Core.Scheduling.MainMoveInput.Equals(Aw.Sindri.Core.Scheduling.MainMoveInput? other) -> bool
+Aw.Sindri.Core.Scheduling.MainMoveInput.LastSucceededHeads.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Sindri.Core.Scheduling.MainMoveInput.LastSucceededHeads.init -> void
+Aw.Sindri.Core.Scheduling.MainMoveInput.MainMoveInput(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! OnDefaultHeads, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LastSucceededHeads, bool RulesChanged) -> void
+Aw.Sindri.Core.Scheduling.MainMoveInput.OnDefaultHeads.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Scheduling.MainMoveInput.OnDefaultHeads.init -> void
+Aw.Sindri.Core.Scheduling.MainMoveInput.RulesChanged.get -> bool
+Aw.Sindri.Core.Scheduling.MainMoveInput.RulesChanged.init -> void
+override Aw.Sindri.Core.Scheduling.MainMoveInput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Scheduling.MainMoveInput.GetHashCode() -> int
+override Aw.Sindri.Core.Scheduling.MainMoveInput.ToString() -> string!
+static Aw.Sindri.Core.Scheduling.MainMoveInput.operator !=(Aw.Sindri.Core.Scheduling.MainMoveInput? left, Aw.Sindri.Core.Scheduling.MainMoveInput? right) -> bool
+static Aw.Sindri.Core.Scheduling.MainMoveInput.operator ==(Aw.Sindri.Core.Scheduling.MainMoveInput? left, Aw.Sindri.Core.Scheduling.MainMoveInput? right) -> bool
+static Aw.Sindri.Core.Scheduling.MainMoveDecision.Decide(Aw.Sindri.Core.Scheduling.MainMoveInput! input, bool running, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scheduling.SyncAttempt!>! finishedNewestFirst, System.DateTimeOffset now) -> Aw.Sindri.Core.Scheduling.MainMoveAction
 Aw.Sindri.Core.Profile.IndexSettings.Ignore.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Profile.IndexSettings.Ignore.init -> void
 Aw.Sindri.Core.Profile.IndexSettings.Demote.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Profile.IndexSettings.Demote.init -> void
 Aw.Sindri.Core.Profile.RepoDemoteGlobs
 static Aw.Sindri.Core.Profile.RepoDemoteGlobs.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Scoping.ChallengeRoundShape
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Covers(Aw.Sindri.Core.Workflow.Ids.FactKey fact) -> bool
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.LogShape(System.Text.Json.Nodes.JsonObject! round) -> string?
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Violation(System.ReadOnlySpan<byte> content) -> string?

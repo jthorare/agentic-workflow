@@ -1,7 +1,7 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Commands;
 
-namespace Aw.Sindri.Core.Commands;
+namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 /// <summary>
 /// What a session Sindri itself launched may not do (owner decision q100): answer a human step through a command that carries no launch secret.

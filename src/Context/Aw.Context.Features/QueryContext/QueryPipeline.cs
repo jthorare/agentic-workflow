@@ -79,7 +79,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
     // A demoted file's code item ranks after every other item of the answer (it is still there: a direct read of its node finds it).
     private static GraphPart DemotedLast(GraphPart graph, IReadOnlyList<ContextRepo> repos) =>
-        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedFiles.IsDemoted(key, repos)) };
+        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedCode.IsDemoted(key, repos)) };
 
     /// <summary>
     /// The anchors and their graph sections, and the terms the sources are searched with. The node shape needs the map
@@ -119,8 +119,8 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty);
         var repos = request.Scope.Repos;
-        var anchors = found.Anchors.Where(k => !DemotedFiles.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
-        var suggested = found.Suggested.Where(k => !DemotedFiles.IsDemoted(k, repos)).ToList();
+        var anchors = found.Anchors.Where(k => !DemotedCode.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
+        var suggested = found.Suggested.Where(k => !DemotedCode.IsDemoted(k, repos)).ToList();
         return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)), valid.Terms);
     }
 

@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "SND-RECIPE-001",
   "status": 400,
-  "detail": "workflow.legacy@a97fd73f06ae was registered before input kinds (RCP-INPUT-001: input fact:spec declares no kind); nothing was started (fix: register the current file at a new version and approve it)",
+  "detail": "workflow.legacy@e1ad83d3462c was registered before input kinds (RCP-INPUT-001: input fact:spec declares no kind); nothing was started (fix: register the current file at a new version and approve it)",
   "traceId": "<trace>"
 }

@@ -41,8 +41,15 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
         }
 
         var orphaned = OverrideApplier.Apply(shown, layer).Orphaned.Count;
-        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, versions.Value.Count(v => v.Status == MapVersionStatus.Retained), ScopedTo(request.Scope.Caller), coverage.Value);
+        return new MapStatusView(version, MapCounts.Of(shown, layer.Count), orphaned, versions.Value.Count(v => v.Status == MapVersionStatus.Retained), ScopedTo(request.Scope.Caller), coverage.Value)
+        {
+            RulesOlder = RulesOlder(version, request.Scope),
+        };
     }
+
+    // Only a map that recorded its rules can be said to differ from the running ones; one built before they were recorded says nothing here (the doctor row and the refresh handle it).
+    private static bool RulesOlder(MapVersion version, ContextScope scope) =>
+        version.Ruleset is { } recorded && MapRuleset.Running(scope) is { } running && !string.Equals(recorded, running, StringComparison.Ordinal);
 
     private static ContextRepoName? ScopedTo(ContextCaller caller) => caller.Kind == ContextCallerKind.Session ? caller.Repo : null;
 

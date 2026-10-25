@@ -104,12 +104,12 @@ public sealed class RegisterRecipeTests
     {
         await using var r = new RegistryHarness();
         _ = await r.H.HoldLease();
-        _ = await r.RegisterText(Edited().Replace("version: 4\n", "version: 6\n", StringComparison.Ordinal), "workflow.step.yaml");
+        _ = await r.RegisterText(Edited().Replace("version: 5\n", "version: 7\n", StringComparison.Ordinal), "workflow.step.yaml");
 
-        var refused = await r.RegisterText(Edited().Replace("version: 4\n", "version: 5\n", StringComparison.Ordinal), "workflow.step.yaml");
+        var refused = await r.RegisterText(Edited().Replace("version: 5\n", "version: 6\n", StringComparison.Ordinal), "workflow.step.yaml");
 
         Assert.Equal(WorkflowErrors.RecipeInvalid.Code, refused.Error.Code);
-        Assert.Contains("RCP-VERSION-002: workflow.step version 5 isn't registered and is below version 6", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("RCP-VERSION-002: workflow.step version 6 isn't registered and is below version 7", refused.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
