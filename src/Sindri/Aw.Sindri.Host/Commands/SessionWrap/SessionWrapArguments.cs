@@ -7,9 +7,10 @@ namespace Aw.Sindri.Host.Commands.SessionWrap;
 /// <summary>'session wrap --launch &lt;id&gt; -- &lt;agent cli …&gt;' (API spec §8.1): the launch and the command to run under it.</summary>
 /// <param name="Launch">The launch.</param>
 /// <param name="Argv">The agent's command line; the first element is the executable.</param>
-internal sealed record SessionWrapArguments(LaunchId Launch, IReadOnlyList<string> Argv)
+/// <param name="LimitsFile">The sandbox limits file ('--limits'), or null for a session that runs unwatched.</param>
+internal sealed record SessionWrapArguments(LaunchId Launch, IReadOnlyList<string> Argv, string? LimitsFile = null)
 {
-    internal const string Usage = "session wrap --launch <id> -- <agent cli …>";
+    internal const string Usage = "session wrap --launch <id> [--limits <file>] -- <agent cli …>";
 
     /// <summary>Reads the arguments after 'session wrap'.</summary>
     /// <param name="args">The arguments.</param>

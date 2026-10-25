@@ -17,7 +17,8 @@ namespace Aw.Sindri.Host.Commands.SessionWrap;
 /// <param name="errors">Where wrap writes its own messages (never the agent's output).</param>
 /// <param name="ids">Where the session id is looked for.</param>
 /// <param name="hangup">Completes when wrap is told to hang up or terminate (its terminal closed); null when nothing can tell it.</param>
-internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher children, Func<string, string?> environment, TimeProvider clock, TextWriter errors, ISessionIdSource ids, Task? hangup = null)
+/// <param name="limitsSource">Opens the sandbox limits file '--limits' names; null when this wrap holds no session to limits.</param>
+internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher children, Func<string, string?> environment, TimeProvider clock, TextWriter errors, ISessionIdSource ids, Task? hangup = null, IWrapLimitsSource? limitsSource = null)
 {
     private static readonly TimeSpan _idWait = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan _idPoll = TimeSpan.FromMilliseconds(500);
@@ -30,6 +31,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
     internal async Task<int> Run(string[] args, CancellationToken cancellationToken)
     {
         _resolved = WithSecretFromFile(environment);
+        _ = limitsSource;   // red: wired in the fix
         var (failed, begunLaunch, started) = await Begin(args).ConfigureAwait(false);
         if (failed is { } failure)
         {
