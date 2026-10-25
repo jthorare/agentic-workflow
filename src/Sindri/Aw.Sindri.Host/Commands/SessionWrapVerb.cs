@@ -16,7 +16,7 @@ internal static class SessionWrapVerb
     internal static async Task<int> Run(string[] args, ControlPlaneClient client, ISindriHome home, Func<string, string?> environment, CancellationToken ct)
     {
         using var held = WrapSignals.Hold();
-        var command = new SessionWrapCommand(new ControlPlaneWrapCalls(client), new ProcessChildLauncher(), environment, TimeProvider.System, Console.Error, new SessionIdFiles(home.Path), held.Hangup);
+        var command = new SessionWrapCommand(new ControlPlaneWrapCalls(client), new ProcessChildLauncher(), environment, TimeProvider.System, Console.Error, new SessionIdFiles(home.Path), held.Hangup, new WrapLimitsFile());
         return await command.Run(args, ct).ConfigureAwait(false);
     }
 }

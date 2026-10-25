@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -8,7 +9,7 @@ namespace Aw.Sindri.Host.Commands.SessionWrap;
 /// <summary>
 /// 'sindri session wrap --launch &lt;id&gt; -- &lt;agent cli …&gt;' (API spec §8.1, launcher spec §3, §4): runs the agent as a child, sets its Sindri environment, checks the
 /// CLI is there (exit 127, SND-LAUNCH-003), sends a heartbeat every 30 s, waits up to 30 s for the agent's own session id and sends it on the next heartbeat,
-/// and reports the exit. It exits with the agent's code.
+/// and reports the exit. With '--limits' it also runs the sandbox watchdog (wall clock, memory) and reports a session a limit ended as a limit. It exits with the agent's code.
 /// </summary>
 /// <param name="calls">The control plane calls.</param>
 /// <param name="children">Starts the agent.</param>
@@ -31,8 +32,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
     internal async Task<int> Run(string[] args, CancellationToken cancellationToken)
     {
         _resolved = WithSecretFromFile(environment);
-        _ = limitsSource;   // red: wired in the fix
-        var (failed, begunLaunch, started) = await Begin(args).ConfigureAwait(false);
+        var (failed, begunLaunch, started, limits) = await Begin(args).ConfigureAwait(false);
         if (failed is { } failure)
         {
             return failure;
@@ -48,6 +48,12 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
 
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var watchers = new List<Task> { WaitForId(launch, clock.GetUtcNow(), stop.Token) };
+        var watchdog = limits is null ? null : new LimitWatchdog(limits.Limits, limits.Scope, calls, clock, errors);
+        if (watchdog is not null)
+        {
+            watchers.Add(watchdog.Run(launch, proof, child.Exited, stop.Token));
+        }
+
         if (proof is { } secret)
         {
             watchers.Add(Beats(launch, secret, stop.Token));
@@ -58,7 +64,8 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         await Task.WhenAll(watchers).ConfigureAwait(false);
         if (proof is { } last)
         {
-            await Exit(launch, last, code, cancellationToken).ConfigureAwait(false);
+            var limit = watchdog is null ? null : await watchdog.Conclude(cancellationToken).ConfigureAwait(false);
+            await Exit(launch, last, code, limit, cancellationToken).ConfigureAwait(false);
         }
 
         return code;
@@ -106,31 +113,41 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         return await child.Exited.ConfigureAwait(false);
     }
 
-    private async Task<(int? Failed, LaunchId? Launch, IWrapChild? Child)> Begin(string[] args)
+    private async Task<(int? Failed, LaunchId? Launch, IWrapChild? Child, WrapLimitsSetup? Limits)> Begin(string[] args)
     {
         var parsed = SessionWrapArguments.Parse(args);
         if (parsed.IsError)
         {
             await errors.WriteLineAsync($"{parsed.Error.Code}: {parsed.Error.Message}").ConfigureAwait(false);
-            return (2, null, null);
+            return (2, null, null, null);
         }
 
         var (launch, argv) = (parsed.Value.Launch, parsed.Value.Argv);
+        var limits = parsed.Value.LimitsFile is { } file ? OpenLimits(file) : null;
+        if (limits is { IsError: true })
+        {
+            await errors.WriteLineAsync($"{limits.Error.Code}: {limits.Error.Message}").ConfigureAwait(false);   // never run a sandboxed agent unwatched
+            return (2, launch, null, null);
+        }
+
         if (!BinOnPath.Resolves(argv[0], Env("PATH")))
         {
             await errors.WriteLineAsync($"{argv[0]} not found ({SindriErrors.LaunchAgentMissing.Code}): install it, or run `sindri launch show` to see the catalog").ConfigureAwait(false);
-            return (127, launch, null);
+            return (127, launch, null, null);
         }
 
         var started = children.Start(argv, WrapEnvironment.For(launch, Env, Environment.ProcessPath ?? string.Empty));
         if (started.IsError)
         {
             await errors.WriteLineAsync($"{started.Error.Code}: {started.Error.Message}").ConfigureAwait(false);
-            return (127, launch, null);
+            return (127, launch, null, null);
         }
 
-        return (null, launch, started.Value);
+        return (null, launch, started.Value, limits?.Value);
     }
+
+    private Result<WrapLimitsSetup>? OpenLimits(string file) =>
+        limitsSource is null ? SindriErrors.InvalidInput.With("this wrap holds no session to limits (--limits is not available here)") : limitsSource.Open(file);
 
     private async Task Beats(LaunchId launch, LaunchSecret proof, CancellationToken token)
     {
@@ -197,11 +214,14 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
     }
 
-    private async Task Exit(LaunchId launch, LaunchSecret proof, int code, CancellationToken cancellationToken)
+    private async Task Exit(LaunchId launch, LaunchSecret proof, int code, LimitEnd? limit, CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= ExitAttempts; attempt++)
         {
-            if ((await calls.Exit(launch, proof, code, _found, cancellationToken).ConfigureAwait(false)).IsSuccess || attempt == ExitAttempts)
+            var sent = limit is { } ended
+                ? await calls.ExitByLimit(launch, proof, code, _found, ended, cancellationToken).ConfigureAwait(false)
+                : await calls.Exit(launch, proof, code, _found, cancellationToken).ConfigureAwait(false);
+            if (sent.IsSuccess || attempt == ExitAttempts)
             {
                 return;   // after the last try the 120 s silence timer ends the session
             }

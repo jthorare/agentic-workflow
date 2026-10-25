@@ -17,13 +17,19 @@ internal sealed record SessionWrapArguments(LaunchId Launch, IReadOnlyList<strin
     /// <returns>The launch and command, or SND-CLI-003 for a missing or malformed part.</returns>
     internal static Result<SessionWrapArguments> Parse(string[] args)
     {
+        string? limitsFile = null;
+        if (args is ["--launch", var first, "--limits", var file, .. var tail])
+        {
+            (limitsFile, args) = (file, ["--launch", first, .. tail]);
+        }
+
         if (args is not ["--launch", var id, "--", var bin, .. var rest])
         {
             return SindriErrors.InvalidInput.With("usage: sindri " + Usage);
         }
 
         return LaunchId.TryParse(id, provider: null, out var launch)
-            ? new SessionWrapArguments(launch, [bin, .. rest])
+            ? new SessionWrapArguments(launch, [bin, .. rest], limitsFile)
             : SindriErrors.InvalidInput.With("'" + id + "' isn't a launch id (LCH-…)");
     }
 }

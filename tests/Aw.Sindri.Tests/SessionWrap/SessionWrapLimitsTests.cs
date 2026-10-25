@@ -95,7 +95,6 @@ public sealed class SessionWrapLimitsTests : IDisposable
     [Fact]
     public async Task A_session_the_kernel_killed_for_memory_is_reported_as_a_memory_limit()
     {
-        _ = new FakeScope();
         var run = Command(Source(Limits(), _scope)).Run(Args, TestContext.Current.CancellationToken);
         await Until(() => _children.Child is not null);
         _scope.Current = FakeScope.Reading(memory: 4 * Gib, peak: 4 * Gib, oomKill: 1);
