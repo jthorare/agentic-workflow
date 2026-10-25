@@ -55,6 +55,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Context.LensesQuery))]
 [JsonSerializable(typeof(Context.CodeQuery))]
 [JsonSerializable(typeof(Context.QueryAnchorsView))]
+[JsonSerializable(typeof(Context.MapSearchView))]
 [JsonSerializable(typeof(Context.ReviewQueueView))]
 [JsonSerializable(typeof(Context.ReviewDecisionRequest))]
 [JsonSerializable(typeof(Context.ReviewDecisionResponse))]

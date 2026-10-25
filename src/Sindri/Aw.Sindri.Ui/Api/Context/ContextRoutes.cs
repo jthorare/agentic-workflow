@@ -72,6 +72,16 @@ internal static class ContextRoutes
         return With(Root + "/filemap", parts);
     }
 
+    internal static string Search(MapSearchQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string> { "q=" + Uri.EscapeDataString(query.Q) };
+        parts.AddRange(Limit(query.Limit));
+        Add(parts, "area", query.Area);
+        Add(parts, "repo", query.Repo);
+        return With(Root + "/search", parts);
+    }
+
     internal static string ReviewQueue(int? limit) => With(Review, Limit(limit));
 
     internal static string ReviewHistory(int? limit) => With(Review + "/history", Limit(limit));

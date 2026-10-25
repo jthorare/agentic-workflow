@@ -26,6 +26,9 @@ internal static partial class Labels
     /// <summary>The note by the search box when nothing on the map matches.</summary>
     internal const string ContextSearchNoMatches = "No matches";
 
+    /// <summary>The line when the search words are longer than the API takes.</summary>
+    internal const string ContextSearchTooLong = "The search is too long; it takes at most 512 characters.";
+
     /// <summary>The button that empties the search box and returns to the full map.</summary>
     internal const string ContextSearchClear = "Clear search";
 
