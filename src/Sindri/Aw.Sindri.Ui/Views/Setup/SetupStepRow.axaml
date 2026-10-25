@@ -21,10 +21,13 @@
         <controls:StateChipView x:Name="SetupStepChip" Grid.Column="2" Chip="{Binding Chip}" Margin="0,0,8,0" />
       </Grid>
     </Expander.Header>
-    <StackPanel x:Name="SetupStepBody" Margin="36,0,0,16" Spacing="8">
+    <StackPanel x:Name="SetupStepBody" Margin="36,0,12,16" Spacing="8">
       <Border IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <Button x:Name="SetupStepLink" Classes="command-control" IsVisible="{Binding HasLink}" Click="OnOpenLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding OpenLinkLabel}">
+        <TextBlock Classes="button" Text="{Binding OpenLinkLabel}" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
       <StackPanel IsVisible="{Binding HasProgress}" Spacing="4">
         <ProgressBar x:Name="SetupStepMeter" Classes="map-meter" Classes.failed="{Binding IsMeterFailed}" Minimum="0" Maximum="1" Value="{Binding ProgressFraction}" AutomationProperties.AccessibilityView="Raw" />
         <Border AutomationProperties.Name="{Binding ProgressText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -35,11 +38,13 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="sv:SetupItemViewModel">
             <Border AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-              <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
-                <TextBlock Classes="caption subtle" Text="{Binding ChipText}" Width="64" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock Classes="caption" Text="{Binding Repo}" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock Classes="caption subtle" Text="{Binding DetailText}" IsVisible="{Binding HasDetail}" AutomationProperties.AccessibilityView="Raw" />
-              </StackPanel>
+              <Grid ColumnDefinitions="64,*" ColumnSpacing="8" AutomationProperties.AccessibilityView="Raw">
+                <TextBlock Classes="caption subtle" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+                <StackPanel Grid.Column="1" AutomationProperties.AccessibilityView="Raw">
+                  <TextBlock Classes="caption" Text="{Binding Repo}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding DetailText}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+              </Grid>
             </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -72,8 +77,8 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="sv:SetupRecipeLineViewModel">
               <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2" Focusable="True" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                <TextBlock Grid.Column="0" Classes="caption" Text="{Binding Name}" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Status}" Classes.error="{Binding IsOutdated}" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Grid.Column="0" Classes="caption" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Grid.Column="1" Classes="caption subtle" TextWrapping="Wrap" Margin="8,0,0,0" Text="{Binding Status}" Classes.error="{Binding IsOutdated}" AutomationProperties.AccessibilityView="Raw" />
               </Grid>
             </DataTemplate>
           </ItemsControl.ItemTemplate>

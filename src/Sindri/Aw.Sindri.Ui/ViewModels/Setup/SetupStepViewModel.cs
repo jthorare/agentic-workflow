@@ -12,7 +12,7 @@ internal sealed class SetupStepViewModel : ObservableObject
 {
     private static readonly string[] _all =
     [
-        nameof(Title), nameof(NumberText), nameof(Chip), nameof(ChipWord), nameof(Sub), nameof(DetailText), nameof(ProgressText), nameof(ProgressFraction), nameof(ErrorText), nameof(Items), nameof(Preview), nameof(HasPreview), nameof(Action), nameof(Fields),
+        nameof(Title), nameof(NumberText), nameof(LinkUrl), nameof(HasLink), nameof(Chip), nameof(ChipWord), nameof(Sub), nameof(DetailText), nameof(ProgressText), nameof(ProgressFraction), nameof(ErrorText), nameof(Items), nameof(Preview), nameof(HasPreview), nameof(Action), nameof(Fields),
         nameof(IsMeterFailed), nameof(HintText), nameof(HasHint), nameof(Agents), nameof(HasAgents), nameof(TrustOnceText), nameof(AgentsNoteText),
         nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction),
     ];
@@ -37,7 +37,16 @@ internal sealed class SetupStepViewModel : ObservableObject
     public int Number { get; }
 
     /// <summary>What the number circle shows: the number, or a tick once the step is done or skipped.</summary>
-    public string NumberText => IsFinished ? "✓" : Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public string NumberText => IsSkipped ? Labels.SetupSkippedMark : IsFinished ? "✓" : Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>The web address in the line under the title or in the detail; null when the words carry none.</summary>
+    public Uri? LinkUrl => SetupLinks.UrlIn(Sub) ?? SetupLinks.UrlIn(DetailText);
+
+    /// <summary>True when the row offers a link.</summary>
+    public bool HasLink => LinkUrl is not null;
+
+    /// <summary>The link button's word.</summary>
+    public string OpenLinkLabel => Labels.SetupOpenLink;
 
     /// <summary>What the step is, in a few words (the app's own title).</summary>
     public string Title { get; private set; } = string.Empty;
@@ -152,8 +161,11 @@ internal sealed class SetupStepViewModel : ObservableObject
     /// <summary>True when the step needs the person.</summary>
     internal bool NeedsYou => string.Equals(Step.State, "needs-you", StringComparison.Ordinal);
 
+    /// <summary>True when the step was skipped.</summary>
+    internal bool IsSkipped => string.Equals(Step.State, "skipped", StringComparison.Ordinal);
+
     /// <summary>True when the step is done or skipped: setup is finished when every step is.</summary>
-    internal bool IsFinished => string.Equals(Step.State, "done", StringComparison.Ordinal) || string.Equals(Step.State, "skipped", StringComparison.Ordinal);
+    internal bool IsFinished => IsDone || IsSkipped;
 
     /// <summary>True while Sindri works on it, as served.</summary>
     internal bool IsRunning => string.Equals(Step.State, "running", StringComparison.Ordinal);

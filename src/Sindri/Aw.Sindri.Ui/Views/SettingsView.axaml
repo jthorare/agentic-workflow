@@ -6,7 +6,7 @@
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
   <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480"
-              MaxWidth="760" HorizontalAlignment="Left">
+              MaxWidth="1100" HorizontalAlignment="Stretch">
     <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
@@ -42,10 +42,18 @@
             <TextBlock x:Name="TextScaleValueText" Grid.Column="1" Classes="body" Foreground="{DynamicResource Brush.InkMuted}"
                        Text="{Binding TextScaleText}" AutomationProperties.Name="{Binding TextScaleText}" />
           </Grid>
-          <Slider x:Name="TextScaleSlider" Minimum="{Binding MinTextScale}" Maximum="{Binding MaxTextScale}"
+          <Slider x:Name="TextScaleSlider" TickPlacement="BottomRight" Minimum="{Binding MinTextScale}" Maximum="{Binding MaxTextScale}"
                   Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" IsSnapToTickEnabled="True"
                   SmallChange="0.1" LargeChange="0.1"
                   AutomationProperties.Name="{Binding TextSizeLabel}" />
+          <Grid ColumnDefinitions="*,Auto">
+            <Border x:Name="MinScaleName" AutomationProperties.Name="{Binding MinTextScaleText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding MinTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Border x:Name="MaxScaleName" Grid.Column="1" AutomationProperties.Name="{Binding MaxTextScaleText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding MaxTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+          </Grid>
         </StackPanel>
       </StackPanel>
     </Border>

@@ -50,6 +50,12 @@ internal static partial class Labels
     /// <summary>Home's one line while any step is open.</summary>
     internal const string SetupHomeLine = "Finish setting up Sindri";
 
+    /// <summary>What a skipped step's number circle shows: a dash, not the tick of a done step.</summary>
+    internal const string SetupSkippedMark = "\u2013";
+
+    /// <summary>The button that opens the web address a step's words carry.</summary>
+    internal const string SetupOpenLink = "Open link";
+
     /// <summary>Home's control that opens Settings at the first step still to do.</summary>
     internal const string SetupContinue = "Continue";
 

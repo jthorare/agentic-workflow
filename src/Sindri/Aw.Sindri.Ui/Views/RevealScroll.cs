@@ -8,5 +8,5 @@ internal static class RevealScroll
     /// <param name="rowBottom">The step's bottom edge, from the top of the page.</param>
     /// <param name="viewportHeight">How tall the page's visible area is.</param>
     /// <returns>0 when the step is in the first screenful, else the step's top.</returns>
-    internal static double Offset(double rowTop, double rowBottom, double viewportHeight) => throw new NotSupportedException();
+    internal static double Offset(double rowTop, double rowBottom, double viewportHeight) => rowBottom <= viewportHeight ? 0 : rowTop;
 }

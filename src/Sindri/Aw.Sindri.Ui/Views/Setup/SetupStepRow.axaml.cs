@@ -37,6 +37,15 @@ internal sealed partial class SetupStepRow : UserControl
         NameToggle();
     }
 
+    // The step's web address goes to the system browser.
+    private void OnOpenLink(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_step?.LinkUrl is { } url && TopLevel.GetTopLevel(this) is { } top)
+        {
+            _ = top.Launcher.LaunchUriAsync(url);
+        }
+    }
+
     private void OnStepChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(SetupStepViewModel.Name), StringComparison.Ordinal))

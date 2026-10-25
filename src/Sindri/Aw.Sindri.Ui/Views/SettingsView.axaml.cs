@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -42,8 +43,25 @@ internal sealed partial class SettingsView : UserControl
     }
 
     // Opened by a link, G U, ⌘, or Home's line: the checklist is the first section, so it is brought to the top of the page.
+    // The page keeps its title in view when the step fits in the first screenful; a step lower down scrolls to its top.
     private void OnRevealRequested(object? sender, SetupRevealEventArgs e) =>
-        Dispatcher.UIThread.Post(() => ((Control?)StepRow(e.StepId) ?? _checklist)?.BringIntoView(), DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() => Reveal((Control?)StepRow(e.StepId) ?? _checklist), DispatcherPriority.Loaded);
+
+    private void Reveal(Control? target)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        if (this.FindAncestorOfType<ScrollViewer>() is not { } scroll || target.TranslatePoint(default, this) is not { } top)
+        {
+            target.BringIntoView();
+            return;
+        }
+
+        scroll.Offset = new Vector(scroll.Offset.X, RevealScroll.Offset(top.Y, top.Y + target.Bounds.Height, scroll.Viewport.Height));
+    }
 
     private SetupStepRow? StepRow(string? id) =>
         id is null ? null : _checklist?.GetVisualDescendants().OfType<SetupStepRow>().FirstOrDefault(r => r.DataContext is SetupStepViewModel step && string.Equals(step.Id, id, StringComparison.Ordinal));
