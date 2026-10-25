@@ -114,6 +114,20 @@ public sealed class ContextWholeZoomTests
         Assert.False(page.BackToWholeMap());
     }
 
+    // C-16 (#1083): the lone top "~" is a stray mark above the size line; the trail shows once there is a level to go back from.
+    [Fact]
+    public async Task The_breadcrumb_is_drawn_only_when_it_has_more_than_the_top()
+    {
+        var page = Page(new FakeSindriApi());
+        await page.Opened(Token);
+        Assert.False(page.Whole.ShowsCrumbs);
+
+        page.AnchorText = Anchor;
+        await page.Submit(Token);
+
+        Assert.True(page.Whole.ShowsCrumbs);
+    }
+
     private static IEnumerable<(string Text, bool IsLink)> Trail(ContextPageViewModel page) => page.Whole.Crumbs.Select(c => (c.Text, c.IsLink));
 
     [Fact]

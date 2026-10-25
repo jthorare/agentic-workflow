@@ -53,6 +53,19 @@ public sealed class CreateItemViewModelTests
         Assert.Equal((false, string.Empty, string.Empty), (form.IsOpen, form.Title, form.Repo));
     }
 
+    // C-14 (#1083): Esc is not "throw it away": the draft is still there when C opens the form again.
+    [Fact]
+    public async Task Esc_then_C_keeps_the_typed_draft()
+    {
+        var form = await Form();
+        (form.Title, form.Repo, form.Body) = ("Half typed", "agentic-workflow", "More to say");
+
+        form.Close();
+        form.Open();
+
+        Assert.Equal((true, "Half typed", "agentic-workflow", "More to say"), (form.IsOpen, form.Title, form.Repo, form.Body));
+    }
+
     // §4.1 Error: a refusal is the API's code and detail inline; the form keeps its text.
     [Fact]
     public async Task A_refused_create_keeps_the_form_and_shows_the_apis_detail()
