@@ -21,7 +21,7 @@ internal sealed partial class ShellViewModel
         {
             if (string.Equals(e.PropertyName, nameof(SessionSheetViewModel.Heading), StringComparison.Ordinal))
             {
-                Changed(nameof(SheetName), nameof(EdgeTabName));
+                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName));
             }
         };
         AgentSheet.Wire(Health.Catalog, _clock);

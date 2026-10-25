@@ -11,6 +11,9 @@ internal sealed partial class ShellViewModel
     /// <summary>The sheet's subject (the deep link's subject); kept after the sheet closes for the edge tab; empty before the first.</summary>
     public string SheetSubject => SheetLink?.Subject ?? string.Empty;
 
+    /// <summary>The sheet's visible title: the subject's name once drawn (an agent's heading), else the subject itself; the ref stays in the tooltip.</summary>
+    public string SheetTitle => NamedSubject;
+
     /// <summary>The link the sheet was opened by (its kind and subject); null before the first.</summary>
     public DeepLink? SheetLink { get; private set; }
 
@@ -56,7 +59,7 @@ internal sealed partial class ShellViewModel
         IsSheetOpen = true;
         ForgetRowSheetUnless(link);
         OnSheetOpened(link);
-        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetName), nameof(EdgeTabName), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
+        Changed(nameof(IsItemSheet), nameof(IsNeedsYouSheet), nameof(IsDecisionSheet), nameof(SheetLink), nameof(SheetSubject), nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(IsSheetOpen), nameof(HasEdgeTab), nameof(IsSheetShown), nameof(IsEdgeTabShown), nameof(IsSheetPlaceholderShown));
     }
 
     /// <summary>Closes the sheet (Esc); its subject stays on the edge tab.</summary>
