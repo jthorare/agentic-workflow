@@ -305,7 +305,8 @@ fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one f
       printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
       printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
     *dev-agent-hold)
-      jq -nc --arg id "$2" --arg repo "$AGENT_REPO" '{id: $id, repo: $repo}' > "$dir/$2.item.json" || return
+      # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
+      jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
       printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
     *desk-round-trip)
       printf 'Fixture request for %s\n' "$3" > "$dir/$2.request.txt" || return
