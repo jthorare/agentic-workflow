@@ -10,6 +10,9 @@ namespace Aw.Context.Core.Symbols;
 /// <param name="Code">The block's SND-CODEIDX code that explains the state, or null.</param>
 public sealed record CodeIndexHead(CodeIndexState State, string? Commit, DateTimeOffset? BuiltAt, string? AsOfCommit, string? Layer, string? Code)
 {
+    /// <summary>The files changed between the index's commit and the map's, when the index is <see cref="CodeIndexState.CatchingUp"/>; null otherwise.</summary>
+    public IReadOnlyList<string>? Pending { get; init; }
+
     /// <summary>No readable index and nothing to say about why: the head of a repo the code index has no file for, and of the source Context registers until Sindri's Host replaces it.</summary>
     public static CodeIndexHead None { get; } = new(CodeIndexState.Missing, Commit: null, BuiltAt: null, AsOfCommit: null, Layer: null, Code: null);
 }

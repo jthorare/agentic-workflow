@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { boundedInput } from "../question.js";
 import type { Provider, ProviderResult, QuestionRef } from "../types.js";
 import { ALL_CLASSES, childEnv, laxSchema, lastJsonObject, spawnFailure, toDecided, type ImageInput, type Spawn, type SpawnResult } from "./cli-common.js";
 
@@ -61,7 +62,8 @@ export function makeCursorCliProvider(deps: { spawn: Spawn; tmpDirFactory: () =>
   return {
     name: "cursor-cli",
     classes: new Set(ALL_CLASSES),
-    decide: async <O extends string>(question: QuestionRef<O>, input: unknown, budgetMs: number): Promise<ProviderResult<O>> => {
+    decide: async <O extends string>(question: QuestionRef<O>, rawInput: unknown, budgetMs: number): Promise<ProviderResult<O>> => {
+      const input = boundedInput(question, rawInput);
       let workspace: string;
       let prompt: string;
       if (question.contentClass === "image") {

@@ -1,5 +1,6 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.LensSupport;
@@ -16,7 +17,7 @@ namespace Aw.Context.Features.GetLenses;
 /// to its repo) as of the current version, the draft or a retained version, the anchor resolved like any node name, the view built by
 /// <see cref="LensesBuilder"/> to the profile's cascade depth, and every label cleaned like every answer's. Only text a model wrote and nobody confirmed is fenced; file names are not.
 /// </summary>
-internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, ICodeSymbolSource symbols) : IService<GetLensesRequest, LensesView>
+internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, ICodeSymbolSource symbols, IRepoReader repoReader) : IService<GetLensesRequest, LensesView>
 {
     public async ValueTask<Result<LensesView>> Handle(GetLensesRequest request, CancellationToken cancellationToken)
     {
@@ -65,7 +66,7 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
         }
 
         var links = code.Files.Where(f => f.Implements.Count > 0).Select(f => (f.Path, f.Implements)).ToList();
-        var column = await SymbolColumn.Read(symbols, new SymbolColumnReading(repos.Value[0], version, [.. code.Files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false);
+        var column = await SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repoReader, repos.Value[0]), new SymbolColumnReading(repos.Value[0], version, [.. code.Files.Select(f => f.Path)], links), cancellationToken).ConfigureAwait(false);
         var answered = column.State != SymbolsState.Unavailable;   // an index that answers (ok, or stale with both commits named) makes the code coverage symbol-level
         var coverage = answered ? view.Coverage with { Code = view.Coverage.Code with { Level = SymbolLevel } } : view.Coverage;
         return view with { Bands = view.Bands with { Code = code with { Symbols = column } }, Coverage = coverage };

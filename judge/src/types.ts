@@ -41,6 +41,8 @@ export interface QuestionRef<O extends string> {
   // mode) can only return fields declared here; they ride back as `extra`.
   extraProperties?: Readonly<Record<string, JsonSchemaFragment>>;
   criteria?: Readonly<Record<string, string>>;
+  // How the question bounds the input before a provider uses it (see boundedInput).
+  providerInput?: (input: unknown) => unknown;
 }
 
 export interface Provider {

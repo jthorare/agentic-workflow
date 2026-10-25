@@ -1,3 +1,4 @@
+import { boundedInput } from "../question.js";
 import type { Provider, ProviderResult, QuestionRef } from "../types.js";
 import { ALL_CLASSES, childEnv, laxSchema, spawnFailure, toDecided, type ImageInput, type Spawn, type SpawnResult } from "./cli-common.js";
 
@@ -50,10 +51,10 @@ export function makeClaudeCliProvider(deps: { spawn: Spawn; tmpDirFactory: () =>
   // actually think, so neither the env cap nor alwaysThinkingEnabled:false apply.
   const fast = deps.effort === undefined || deps.effort === "low";
   const settings = fast ? '{"disableAllHooks":true,"alwaysThinkingEnabled":false}' : '{"disableAllHooks":true}';
-  const run = async <O extends string>(args: string[], cwd: string, budgetMs: number): Promise<ProviderResult<O>> => {
+  const run = async <O extends string>(args: string[], cwd: string, budgetMs: number, stdin?: string): Promise<ProviderResult<O>> => {
     let raw: SpawnResult;
     try {
-      raw = await deps.spawn(args, { cwd, env: childEnv(fast ? { MAX_THINKING_TOKENS: "0" } : {}), timeoutMs: budgetMs });
+      raw = await deps.spawn(args, { cwd, env: childEnv(fast ? { MAX_THINKING_TOKENS: "0" } : {}), timeoutMs: budgetMs, ...(stdin === undefined ? {} : { stdin }) });
     } catch {
       return { status: "error", reason_code: "spawn-failed" };
     }
@@ -63,7 +64,8 @@ export function makeClaudeCliProvider(deps: { spawn: Spawn; tmpDirFactory: () =>
   return {
     name: "claude-cli",
     classes: new Set(ALL_CLASSES),
-    decide: async <O extends string>(question: QuestionRef<O>, input: unknown, budgetMs: number): Promise<ProviderResult<O>> => {
+    decide: async <O extends string>(question: QuestionRef<O>, rawInput: unknown, budgetMs: number): Promise<ProviderResult<O>> => {
+      const input = boundedInput(question, rawInput);
       // Image branch (Task 5, F8): uses the Read tool instead of the
       // --tools "" structured-text invocation, with cwd scoped to the run's
       // own evidence directory — the CLI's file-access sandbox is scoped to
@@ -105,8 +107,7 @@ export function makeClaudeCliProvider(deps: { spawn: Spawn; tmpDirFactory: () =>
         "--system-prompt", question.prompt,
         "--json-schema", JSON.stringify(laxSchema(question)),
         "--output-format", "json",
-        JSON.stringify(input),
-      ], deps.tmpDirFactory(), budgetMs);
+      ], deps.tmpDirFactory(), budgetMs, JSON.stringify(input)); // no prompt argument: `claude -p` reads it from stdin
     },
   };
 }

@@ -14,7 +14,8 @@ export interface SpawnResult {
 }
 
 export interface Spawn {
-  (args: string[], opts: { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number }): Promise<SpawnResult>;
+  // stdin carries the user content (it can be far past the argv limit); absent, the child's stdin is closed at once.
+  (args: string[], opts: { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number; stdin?: string }): Promise<SpawnResult>;
 }
 
 export const NON_IMAGE_CLASSES: readonly ContentClass[] = ["code", "diff", "brief", "transcript", "message-meta"];

@@ -22,7 +22,7 @@ describe("claude-cli provider", () => {
     const provider = makeClaudeCliProvider({ spawn, tmpDirFactory: () => "/tmp/judge-abc" });
     await provider.decide(question, { text: "hi" }, 5000);
     expect(spawn).toHaveBeenCalledTimes(1);
-    const [args, opts] = spawn.mock.calls[0] as [string[], { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number }];
+    const [args, opts] = spawn.mock.calls[0] as [string[], { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number; stdin?: string }];
     expect(args).toEqual([
       "-p", "--model", "haiku", "--effort", "low", "--no-session-persistence",
       "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
@@ -32,8 +32,8 @@ describe("claude-cli provider", () => {
       "--system-prompt", "Classify this message.",
       "--json-schema", '{"type":"object","properties":{"decision":{"type":"string","enum":["send","batch","drop"]}},"required":["decision"]}',
       "--output-format", "json",
-      JSON.stringify({ text: "hi" }),
     ]);
+    expect(opts.stdin).toBe(JSON.stringify({ text: "hi" }));
     expect(opts.cwd).toBe("/tmp/judge-abc");
     expect(opts.env.MAX_THINKING_TOKENS).toBe("0");
     expect(opts.env.AW_JUDGE_CHILD).toBe("1");

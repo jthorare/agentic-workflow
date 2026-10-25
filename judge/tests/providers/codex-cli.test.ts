@@ -42,7 +42,7 @@ describe("codex-cli provider", () => {
     const { spawn, provider } = setup(events('{"decision":"send"}'));
     await provider.decide(question, { text: "hi" }, 5000);
     expect(spawn).toHaveBeenCalledTimes(1);
-    const [args, opts] = spawn.mock.calls[0] as [string[], { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number }];
+    const [args, opts] = spawn.mock.calls[0] as [string[], { cwd: string; env: NodeJS.ProcessEnv; timeoutMs: number; stdin?: string }];
     expect(args).toEqual([
       "exec", "--model", CODEX_MODEL, "-c", 'model_reasoning_effort="low"',
       "--ephemeral", "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
@@ -50,8 +50,8 @@ describe("codex-cli provider", () => {
       "--disable", "shell_tool", "--disable", "unified_exec",
       "--sandbox", "read-only", "-C", "/tmp/judge-codex",
       "--output-schema", "/tmp/judge-codex/schema.json", "--json",
-      "--", 'Classify this message.\n\nInput:\n{"text":"hi"}',
     ]);
+    expect(opts.stdin).toBe('Classify this message.\n\nInput:\n{"text":"hi"}');
     expect(opts.cwd).toBe("/tmp/judge-codex");
     expect(opts.env.AW_JUDGE_CHILD).toBe("1");
     expect(opts.timeoutMs).toBe(5000);

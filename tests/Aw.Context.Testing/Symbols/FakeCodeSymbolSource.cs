@@ -31,14 +31,13 @@ public sealed class FakeCodeSymbolSource : ICodeSymbolSource
     {
         ArgumentNullException.ThrowIfNull(query);
         var head = HeadOf(repo, asOf);
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         if (!Readable(repo, head, out var held))
         {
             return Done(new SymbolAnswer<SymbolHit>(head, []));
         }
 
         var found = held.Symbols.Where(s => Matches(s, query)).OrderBy(s => s.Ref, StringComparer.Ordinal).Take(Math.Min(query.Max, 200))
-            .Select(s => new SymbolHit(s, head.Commit!, asOfCommit, state)).ToList();
+            .Select(s => new SymbolHit(s, head.Commit!, CodeIndexReading.Stamp(head, s.Path).AsOfCommit, CodeIndexReading.Stamp(head, s.Path).State)).ToList();
         return Done(new SymbolAnswer<SymbolHit>(head, found));
     }
 
@@ -47,7 +46,6 @@ public sealed class FakeCodeSymbolSource : ICodeSymbolSource
     {
         ArgumentNullException.ThrowIfNull(paths);
         var head = HeadOf(repo, asOf);
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         if (!Readable(repo, head, out var held))
         {
             return Done(new SymbolAnswer<FileSymbolsRow>(head, []));
@@ -56,7 +54,7 @@ public sealed class FakeCodeSymbolSource : ICodeSymbolSource
         var rows = paths.Take(200).Distinct(StringComparer.Ordinal)
             .Select(p => (Path: p, Symbols: held.Symbols.Where(s => string.Equals(s.Path, p, StringComparison.Ordinal)).OrderBy(s => s.StartLine).ToList()))
             .Where(f => f.Symbols.Count > 0)
-            .Select(f => new FileSymbolsRow(f.Path, f.Symbols, head.Commit!, asOfCommit, state)).ToList();
+            .Select(f => new FileSymbolsRow(f.Path, f.Symbols, head.Commit!, CodeIndexReading.Stamp(head, f.Path).AsOfCommit, CodeIndexReading.Stamp(head, f.Path).State)).ToList();
         return Done(new SymbolAnswer<FileSymbolsRow>(head, rows));
     }
 
@@ -89,7 +87,6 @@ public sealed class FakeCodeSymbolSource : ICodeSymbolSource
             return new CallAnswer(head, [], 0);
         }
 
-        var (state, asOfCommit) = CodeIndexReading.Stamp(head);
         var sites = held.Symbols.ToDictionary(s => s.Ref, StringComparer.Ordinal);
         var rows = new List<CallEdgeRow>();
         var seen = new HashSet<string>(StringComparer.Ordinal) { symbolRef };
@@ -106,6 +103,7 @@ public sealed class FakeCodeSymbolSource : ICodeSymbolSource
                 }
 
                 next.Add(other);
+                var (state, asOfCommit) = CodeIndexReading.Stamp(head, site.Path);
                 rows.Add(new CallEdgeRow(site, call.Basis, call.Confidence, call.Coverage, level, head.Commit!, asOfCommit, state));
             }
 

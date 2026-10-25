@@ -193,6 +193,78 @@ public sealed class CodeIndexReadingTests
         Assert.Equal(CodeIndexState.Ok, CodeIndexReading.Worst([ok]).State);
     }
 
+    private static readonly string[] _pending = ["src/layout/SplitPane.ts", "src/new.ts"];
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_index_that_is_an_ancestor_of_the_maps_commit_is_catching_up_with_the_files_changed_since_pending()
+    {
+        var head = CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), mergeBase: Indexed, _pending);
+
+        Assert.Equal((CodeIndexState.CatchingUp, Indexed, Other), (head.State, head.Commit, head.AsOfCommit));
+        Assert.Equal(_pending, head.Pending);
+        Assert.True(CodeIndexReading.Readable(head));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_catching_up_index_reads_ok_with_the_limit_catching_up_naming_both_commits_and_the_pending_files()
+    {
+        var row = CodeIndexReading.Row(CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), Indexed, _pending));
+
+        Assert.Equal((SearchedState.Ok, "catching-up", null), (row.State, row.Reason, row.Code));
+        var catching = Assert.IsType<SearchedCatchingUp>(row.CatchingUp);
+        Assert.Equal((Indexed, Other), (catching.IndexCommit, catching.MapCommit));
+        Assert.Equal(_pending, catching.Pending, StringComparer.Ordinal);
+        Assert.Equal(_built, row.AsOf);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_catching_up_rows_state_depends_on_whether_its_file_is_pending()
+    {
+        var head = CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), Indexed, _pending);
+
+        Assert.Equal((SymbolsState.Stale, Other), CodeIndexReading.Stamp(head, "src/layout/SplitPane.ts"));
+        Assert.Equal((SymbolsState.Ok, null), CodeIndexReading.Stamp(head, "src/tabs/Manager.ts"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_edges_of_a_catching_up_index_are_stale_only_when_one_of_them_is()
+    {
+        var head = CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), Indexed, _pending);
+
+        var mixed = CodeIndexReading.Calls(head, [Edge(SymbolsState.Stale, Other), Edge(SymbolsState.Ok, asOf: null)], unresolved: 0);
+        var current = CodeIndexReading.Calls(head, [Edge(SymbolsState.Ok, asOf: null)], unresolved: 0);
+
+        Assert.Equal((SymbolsState.Stale, "catching-up", Indexed, Other, true), (mixed.State, mixed.Reason, mixed.Commit, mixed.AsOfCommit, mixed.AsOfMismatch));
+        Assert.Equal((SymbolsState.Ok, "catching-up"), (current.State, current.Reason));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_merge_base_that_is_not_the_indexs_commit_stays_stale_and_degraded()
+    {
+        var head = CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), mergeBase: "fedcba9876543210fedcba9876543210fedcba98", _pending);
+
+        Assert.Equal((CodeIndexState.Stale, null), (head.State, head.Pending));
+        Assert.Equal((SearchedState.Degraded, "stale", null), (CodeIndexReading.Row(head).State, CodeIndexReading.Row(head).Reason, CodeIndexReading.Row(head).CatchingUp));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_layer_that_is_down_stays_degraded_even_when_the_index_is_an_ancestor()
+    {
+        var head = CodeIndexReading.CatchingUp(Head(CodeIndexState.LayerUnavailable, asOf: Other, layer: "graph", code: "SND-CODEIDX-020"), Indexed, _pending);
+
+        Assert.Equal((CodeIndexState.Stale, null), (head.State, head.Pending));
+        Assert.Equal(SearchedState.Degraded, CodeIndexReading.Row(head).State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_worst_head_ranks_a_catching_up_index_above_a_fresh_one_and_below_a_layer_down()
+    {
+        var catching = CodeIndexReading.CatchingUp(Head(CodeIndexState.Ok, asOf: Other), Indexed, _pending);
+
+        Assert.Equal(CodeIndexState.CatchingUp, CodeIndexReading.Worst([Head(CodeIndexState.Ok), catching]).State);
+        Assert.Equal(CodeIndexState.LayerUnavailable, CodeIndexReading.Worst([catching, Head(CodeIndexState.LayerUnavailable, layer: "graph")]).State);
+    }
+
     private static (SymbolsState, string?, string?) Pick(CodeSymbols s) => (s.State, s.Reason, s.Code);
 
     private static (SymbolsState, string?) Words(LensSymbols s) => (s.State, s.Reason);

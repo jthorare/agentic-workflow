@@ -48,7 +48,7 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
         }
 
         var done = await embed.Handle(new EmbedCodeIndexRequest(registered, progress), cancellationToken).ConfigureAwait(false);
-        return done.IsError ? done.Error : new EmbedReport(done.Value.Repo, done.Value.Embedded, done.Value.Embeddable, done.Value.Embeddings);
+        return done.IsError ? done.Error : new EmbedReport(done.Value.Repo, done.Value.Embedded, done.Value.Embeddable, done.Value.Carried, done.Value.Made, done.Value.Embeddings);
     }
 
     /// <inheritdoc />

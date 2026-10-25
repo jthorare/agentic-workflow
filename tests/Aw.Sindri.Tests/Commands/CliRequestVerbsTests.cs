@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Decisions;
@@ -14,7 +15,6 @@ using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Host;
-using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 

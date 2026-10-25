@@ -7,7 +7,7 @@ namespace Aw.Context.Core.Symbols;
 /// <summary>
 /// Symbols, callers and callees from the code index block (code index spec §7.2). Context never sees the index's file, SQLite or paths: Sindri's Host adapts the block's facade to this port.
 /// Every call takes 'asOf', the commit the map version recorded for the repo (or null), and the rows say when the index is at another commit: 'asOfCommit' set and 'state' 'stale', computed at
-/// read time (<see cref="CodeIndexReading.Stamp"/>), so they turn fresh by themselves once the index for the map's commit lands. A repo without a readable index is an answer
+/// read time (<see cref="CodeIndexReading.Stamp(CodeIndexHead)"/>), so they turn fresh by themselves once the index for the map's commit lands. A repo without a readable index is an answer
 /// (<see cref="CodeIndexState.Missing"/>, no rows), never an error; an error is a read that failed.
 /// </summary>
 public interface ICodeSymbolSource

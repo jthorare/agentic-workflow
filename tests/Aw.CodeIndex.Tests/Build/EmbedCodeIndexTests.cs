@@ -103,4 +103,37 @@ public sealed class EmbedCodeIndexTests
         Assert.Equal(first.Embeddable / 3, resent.Count);
         Assert.Empty(removed);
     }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_first_embed_carries_nothing_and_makes_every_vector()
+    {
+        using var git = A.GitRepo().WithFile("src/A.cs", Class("A", "")).Build();
+        using var index = new RealIndex(embedder: new FakeEmbedder());
+        var repo = git.AsRepo("shop");
+        _ = await Build(index, repo, git.Head);
+
+        var response = await EmbedToOk(index, repo);
+
+        Assert.Equal(0, response.Carried);
+        Assert.Equal(response.Embeddable, response.Made);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_move_carries_the_unchanged_vectors_and_makes_only_the_new_ones()
+    {
+        using var git = A.GitRepo().WithFile("src/A.cs", Class("A", "")).WithFile("src/B.cs", Class("B", "")).WithFile("src/C.cs", Class("C", "")).Build();
+        using var index = new RealIndex(embedder: new FakeEmbedder());
+        var repo = git.AsRepo("shop");
+        _ = await Build(index, repo, git.Head);
+        var first = await EmbedToOk(index, repo);
+        git.WriteFile("src/B.cs", Class("B", "10"));
+        var second = git.Commit("change b");
+
+        _ = await Build(index, repo, second);
+        var moved = await EmbedToOk(index, repo);
+
+        Assert.Equal(first.Embeddable / 3 * 2, moved.Carried);
+        Assert.Equal(first.Embeddable / 3, moved.Made);
+        Assert.Equal(moved.Embeddable, moved.Carried + moved.Made);
+    }
 }

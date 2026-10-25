@@ -109,7 +109,7 @@ public sealed class FakeCodeIndex : ICodeIndex
         }
 
         index.Embeddings = index.AfterEmbed;
-        return Ok(new EmbedReport(repo, Embedded: 1, Embeddable: 1, index.Embeddings ?? LayerState.Ok));
+        return Ok(new EmbedReport(repo, Embedded: 1, Embeddable: 1, Carried: 0, Made: 1, index.Embeddings ?? LayerState.Ok));
     }
 
     public ValueTask<Result<StatusAnswer>> Status(CodeIndexScope scope, CancellationToken cancellationToken)

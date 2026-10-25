@@ -58,6 +58,16 @@ export const resolutionCheck: QuestionModule<ResolutionCheckInput, "resolved" | 
   timeBudgetMs: 15000,
   threshold: 0.8,
   extraProperties: { reasons: { type: "array", items: { type: "string" } } },
+  providerInput: (input) => ({
+    ...input,
+    brief: capped(input.brief, BRIEF_CAP),
+    expected: capped(input.expected, FIELD_CAP),
+    actual: capped(input.actual, FIELD_CAP),
+    rootCause: capped(input.rootCause, FIELD_CAP),
+    checkSummary: capped(input.checkSummary, FIELD_CAP),
+    diffStat: capped(input.diffStat, FIELD_CAP),
+    ...(input.diff === undefined ? {} : { diff: capped(input.diff, DIFF_CAP) }),
+  }),
   preRules: (input) => {
     if (!input.afterPassed) return "unresolved";
     // A check that already passed on the unfixed code never reproduced the bug,

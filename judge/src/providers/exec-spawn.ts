@@ -17,7 +17,9 @@ export function makeExecSpawn(bin: string): Spawn {
       });
       // Every supported CLI waits on (or reads) stdin when it's an open pipe —
       // `claude -p` for up to 3s, `codex exec` appends it to the prompt. The
-      // judge never pipes input to the child, so close it immediately.
-      child.stdin?.end();
+      // judge pipes input to the child only when a provider asks for it (opts.stdin,
+      // which keeps big prompts out of argv); otherwise close it immediately.
+      child.stdin?.on("error", () => undefined); // the child may exit before reading it all
+      child.stdin?.end(opts.stdin);
     });
 }

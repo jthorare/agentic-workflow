@@ -66,8 +66,8 @@ Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest.Repo.get -> Aw.CodeIn
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest.Repo.init -> void
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.<Clone>$() -> Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse!
-Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Deconstruct(out Aw.CodeIndex.Core.Values.RepoName Repo, out int Embedded, out int Embeddable, out Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
-Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.EmbedCodeIndexResponse(Aw.CodeIndex.Core.Values.RepoName Repo, int Embedded, int Embeddable, Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Deconstruct(out Aw.CodeIndex.Core.Values.RepoName Repo, out int Embedded, out int Embeddable, out int Carried, out int Made, out Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.EmbedCodeIndexResponse(Aw.CodeIndex.Core.Values.RepoName Repo, int Embedded, int Embeddable, int Carried, int Made, Aw.CodeIndex.Core.Model.LayerState Embeddings) -> void
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Embeddable.get -> int
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Embeddable.init -> void
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Embedded.get -> int
@@ -89,5 +89,8 @@ static Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest.operator !=(Aw
 static Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest.operator ==(Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest? left, Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexRequest? right) -> bool
 static Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.operator !=(Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse? left, Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse? right) -> bool
 static Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.operator ==(Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse? left, Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse? right) -> bool
-
 Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexService.EmbedCodeIndexService(Aw.CodeIndex.Core.Ports.IIndexStore! store, Aw.CodeIndex.Core.Embedding.EmbeddingsLayer! layer, System.TimeProvider! clock) -> void
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Carried.get -> int
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Made.get -> int
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Carried.init -> void
+Aw.CodeIndex.Features.EmbedCodeIndex.EmbedCodeIndexResponse.Made.init -> void

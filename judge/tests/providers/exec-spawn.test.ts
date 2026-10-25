@@ -15,6 +15,11 @@ describe("makeExecSpawn", () => {
     expect(result).toEqual({ stdout: "yes", code: 0, timedOut: false });
   });
 
+  it("writes opts.stdin to the child and then closes it", async () => {
+    const result = await node(["-e", "let s='';process.stdin.on('data',(d)=>s+=d);process.stdin.on('end',()=>process.stdout.write(s))"], { ...opts, stdin: "x".repeat(200_000) });
+    expect(result).toEqual({ stdout: "x".repeat(200_000), code: 0, timedOut: false });
+  });
+
   it("reports a non-zero exit code with whatever stdout was written", async () => {
     const result = await node(["-e", "process.stdout.write('partial');process.exit(3)"], opts);
     expect(result).toEqual({ stdout: "partial", code: 3, timedOut: false });
