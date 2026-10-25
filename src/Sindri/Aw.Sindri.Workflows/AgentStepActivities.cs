@@ -16,7 +16,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="sessions">The session's state.</param>
 /// <param name="options">The poll interval.</param>
 /// <param name="refusals">Why a session was ended for a refused report, for the Step that fails on it.</param>
-internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing closing, IAgentSessions sessions, AgentRuntimeOptions options, ReportRefusals refusals)
+/// <param name="recovering">Reads the output folder of a session that ended without a report.</param>
+internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing closing, IAgentSessions sessions, AgentRuntimeOptions options, ReportRefusals refusals, AgentRecovering recovering)
 {
     /// <summary>Starts the run's session and records the outcome.</summary>
     /// <param name="run">The run.</param>
@@ -50,6 +51,12 @@ internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing
             _ = await timer.WaitForNextTickAsync(context.CancellationToken).ConfigureAwait(false);
         }
     }
+
+    /// <summary>Reads the output folder of a session that ended without a report: the result it proves, or why it parks (issue #1000).</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The report to complete with, the reason to park with, or nothing.</returns>
+    [Activity("RecoverAgentStep")]
+    public Task<AgentRecovered> RecoverAsync(AgentRecoverRun run) => recovering.Recover(run, ActivityExecutionContext.Current.CancellationToken);
 
     /// <summary>Reads the usage and the diff signal, then stops the session.</summary>
     /// <param name="run">The run.</param>

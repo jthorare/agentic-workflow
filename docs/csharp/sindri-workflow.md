@@ -1444,7 +1444,22 @@ usage, the measured empty diff, and the stop of the session) before it decides.
   nonce). While the instance is taken over the secret is refused and only the human completes it, through the desk.
 - **A park or a takeover leaves the session running;** the watch resumes after the handback and attaches to the same
   launch id. A `cancel` or the end of the run stops the session. A session that ends without a report is
-  `step.failed` (`exit`, or `lost` when it vanished), and the loop rules apply to it as to any failure.
+  `step.failed` (`exit`, `lost` when it vanished, or `idle` when its turn ended and nothing happened for 120 s), and the loop
+  rules apply to it as to any failure, after the recovery below.
+- **A restart does not strand a result (issue #1000).** `workflow complete` from a launched session (it carries
+  `AW_SINDRI_LAUNCH_SECRET`) waits out a control plane that is down: on `SND-API-001` (no control plane recorded, or the
+  connection refused or broken) it tries again for up to 2 minutes, pausing 1 s and doubling to 15 s, one line on standard
+  error per wait (`SND-API-001 the control plane isn't answering; retrying in 4 s (up to 113 s more)`). It keeps the nonce it
+  was issued across the waits. A refusal, an invalid answer and a timeout are not retried, and a human's call (no secret) is
+  never held: it says `not running` at once. If the session ends first (its turn over, or the agent gone), the watch reads the
+  run directory's `.sindri-out` folder before it fails the Step (`RecoverAgentStep`, patched `recover-stranded-agent-result`;
+  only files written after the launch count, because a phase workspace is shared by its Steps). `AgentRecovery.Decide` completes the
+  run, as an `agent:recovered` report with the tokens and diff signal the close step read, only when exactly one of the Step's
+  outcomes has outputs the caller writes and every one of them is in the folder (`challengeRound` for `fact:challengeRound`);
+  the outcome is never guessed. A Step that picks its outcome from its parameters, one that needs no output, outputs that fit
+  two outcomes, or some of an outcome's outputs park instead: the Step fails with the session's own reason and the question
+  adds "the agent finished but its result was not recorded: `<run dir>/.sindri-out`". An empty or absent folder fails the Step
+  as before. The pass runs the moment the watch sees the end, so a restart that finds an ended session finishes it in one tick.
 - **Status:** an open agent run adds `run: { runtime: "agent", launch: "LCH-…" }` to the status fields and a `run` line to
   the text (`run       agent LCH-…`). A desk run and a block run have neither; the member is left out of the JSON when
   null, so every other status golden is unchanged. An agent run has no desk task, so `commands` lists `takeover` and

@@ -68,7 +68,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var summary = check.Kind == CheckKind.Test
             ? $"the regression test {check.Path}, run as `{string.Join(' ', check.Command ?? [])}`"
             : $"the ui-evidence script {check.Path}";
-        return git.Diff(candidate.Worktree, baseline.Commit, candidate.Commit).Map(diff => new ResolutionCheckInput(
+        return git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline.Commit, candidate.Commit), candidate.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
             BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full)));
     }

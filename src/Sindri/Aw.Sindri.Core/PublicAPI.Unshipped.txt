@@ -18529,6 +18529,30 @@ Aw.Sindri.Core.Prove.PhaseSignals
 static Aw.Sindri.Core.Prove.PhaseSignals.Check(System.Text.Json.Nodes.JsonNode? signals) -> string?
 static Aw.Sindri.Core.Prove.PhaseSignals.Of(System.Text.Json.Nodes.JsonNode? signals, string! item) -> System.Collections.Generic.IReadOnlyList<System.Text.Json.Nodes.JsonObject!>!
 static Aw.Sindri.Core.Prove.PhaseSignals.Shape.get -> string!
+static Aw.Sindri.Core.Launches.LaunchRules.IdleTurn(System.DateTimeOffset turnEnded, System.DateTimeOffset now) -> bool
+static Aw.Sindri.Core.Health.HealthSummary.WithStalledAgents(Aw.Sindri.Core.Health.HealthReport! report, int stalled) -> Aw.Sindri.Core.Health.HealthReport!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForStalledAgent(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Needed(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor, Aw.Sindri.Core.Workflow.Ids.OutcomeName outcome) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
+Aw.Sindri.Core.Launches.StalledAgentRun
+Aw.Sindri.Core.Launches.StalledAgentRun.<Clone>$() -> Aw.Sindri.Core.Launches.StalledAgentRun!
+Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Equals(Aw.Sindri.Core.Launches.StalledAgentRun? other) -> bool
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Launches.StalledAgentRun.Item.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Launches.StalledAgentRun.Launch.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.init -> void
+override Aw.Sindri.Core.Launches.StalledAgentRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launches.StalledAgentRun.GetHashCode() -> int
+override Aw.Sindri.Core.Launches.StalledAgentRun.ToString() -> string!
+static Aw.Sindri.Core.Launches.StalledAgentRun.operator !=(Aw.Sindri.Core.Launches.StalledAgentRun? left, Aw.Sindri.Core.Launches.StalledAgentRun? right) -> bool
+static Aw.Sindri.Core.Launches.StalledAgentRun.operator ==(Aw.Sindri.Core.Launches.StalledAgentRun? left, Aw.Sindri.Core.Launches.StalledAgentRun? right) -> bool
+Aw.Sindri.Core.Launches.IStalledAgentRuns
+Aw.Sindri.Core.Launches.IStalledAgentRuns.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledAgentRun!>!>
 Aw.Sindri.Core.Profile.ConceptSettings
 Aw.Sindri.Core.Profile.ConceptSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ConceptSettings!
 Aw.Sindri.Core.Profile.ConceptSettings.ConceptSettings(Aw.Sindri.Core.Ids.ConceptPinId? Id = null, string? Name = null, string? Summary = null, System.Collections.Generic.IReadOnlyList<string!>? Features = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null) -> void

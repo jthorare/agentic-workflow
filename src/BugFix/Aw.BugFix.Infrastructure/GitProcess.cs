@@ -52,6 +52,30 @@ internal sealed class GitProcess : IGit
     public Result<bool> SameTree(string directory, string first, string second) =>
         Value(directory, "rev-parse", $"{first}^{{tree}}").Bind(a => Value(directory, "rev-parse", $"{second}^{{tree}}").Map(b => a == b));
 
+    // The baseline merged with the main commit the candidate merged: the replay of that merge onto the baseline, so
+    // the diff from it holds only the fix. Any trouble (no main ref, a conflict, an old git) falls back to the baseline.
+    public string NetBase(string directory, string baseline, string candidate)
+    {
+        foreach (var main in new[] { "origin/HEAD", "origin/main", "main" })
+        {
+            if (Run(directory, "rev-parse", "--verify", "--quiet", $"{main}^{{commit}}").ExitCode != 0)
+            {
+                continue;
+            }
+
+            var mergeBase = Run(directory, "merge-base", candidate, main);
+            if (mergeBase.ExitCode != 0 || mergeBase.Output.Trim() is not { Length: > 0 } mainCommit)
+            {
+                return baseline;
+            }
+
+            var merged = Run(directory, "merge-tree", "--write-tree", baseline, mainCommit);
+            return merged.ExitCode == 0 && merged.Output.Split('\n')[0].Trim() is { Length: > 0 } tree ? tree : baseline;
+        }
+
+        return baseline;
+    }
+
     // -z: raw (unquoted) paths; --no-renames: a moved test reports its old path too.
     public Result<IReadOnlyList<string>> ChangedFiles(string directory, string from, string to) =>
         Paths(directory, "diff", "--name-only", "--no-renames", "-z", from, to);

@@ -36,7 +36,10 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
             return records.Error;
         }
 
-        var rows = await joins.Apply(NeedsYouOrder.Sort([.. records.Value.Select(static r => r.Row), .. await live.Read(cancellationToken).ConfigureAwait(false)]), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        var folded = records.Value.Select(static r => r.Row).ToList();
+        var seen = folded.Select(static r => r.Id).ToHashSet();
+        var read = (await live.Read(cancellationToken).ConfigureAwait(false)).Where(r => !seen.Contains(r.Id));   // a stalled run's row gives way to the park row the run's own failure folds
+        var rows = await joins.Apply(NeedsYouOrder.Sort([.. folded, .. read]), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         var empty = current.Text;
         if (empty is null && rows.Count == 0)
         {

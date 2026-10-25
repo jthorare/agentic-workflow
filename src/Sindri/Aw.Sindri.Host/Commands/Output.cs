@@ -40,6 +40,11 @@ internal sealed class Output(TextWriter stdout, TextWriter stderr, JsonSerialize
         return exitCode;
     }
 
+    /// <summary>Prints one progress line on standard error, so a --json run's one document on standard output stays whole.</summary>
+    /// <param name="line">The line.</param>
+    /// <returns>When it is written.</returns>
+    public Task Notice(string line) => stderr.WriteLineAsync(line);
+
     public async Task<int> Text(string text, int exitCode)
     {
         await Out.WriteAsync(text).ConfigureAwait(false);
