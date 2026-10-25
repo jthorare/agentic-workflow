@@ -29,6 +29,15 @@
 #   sindri-ui-fixture.sh workflows [--large]
 #                                  start the strip's instances through the CLI (sindri workflow start, as the owner, each on a
 #                                  new item): one triage and two work instances; --large starts twelve roots across three recipes
+#   sindri-ui-fixture.sh park-timeout
+#                                  start workflow.dev-timeout (a desk Step with a 1m timeout that parks) on a new item and print the item; after
+#                                  about a minute the instance is parked by its timeout and offers answer kind resume (ApplyCommand:answer-resume).
+#                                  Run 'up' with FIXTURE_DESK_TIMEOUT=1m first, or the desk floor (default 2d) holds the park back
+#   sindri-ui-fixture.sh changed-recipe
+#                                  Needs-you rows for workflows (run after 'up'): approves an older, smaller version of the shipped
+#                                  workflow.hand-test as the owner (a desk step instead of the agent step, so the shipped version gains a
+#                                  capability), which gives Home a "Approve a changed workflow" row for it, and, since no other shipped
+#                                  workflow is approved, the "Approve all new workflows" row as well
 #   sindri-ui-fixture.sh incident start|stop
 #                                  start an incident-urgency instance (recipes/dev/incident-hold.yaml; it tops the strip) or cancel it
 #   sindri-ui-fixture.sh context up|draft|down
@@ -78,6 +87,7 @@
 #                                  down never restarts. Needs jq.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
+# FIXTURE_DESK_TIMEOUT (up only): writes workflow.deskTimeout into the fixture profile, the floor of every desk Step timeout (park-timeout).
 # Environment: AW_SINDRI_HOME (required: sindri-prove.sh's guard, a temp or proof folder), SINDRI (the built C# CLI,
 # as sindri-prove.sh reads it), STALL_TYPE (the stalled row's type; default service.ran, a type the projector reads),
 # SINDRI_UI_FIXTURE_SQL=python (use python3's sqlite3 module even when the sqlite3 CLI is installed; without the CLI it is
@@ -148,6 +158,10 @@ services:
   heartbeat: { every: 5s }
 api: { port: 0 }
 YAML
+  # The desk floor (workflow.deskTimeout, default 2d) raises every desk Step's timeout; park-timeout needs it low.
+  if [ -n "${FIXTURE_DESK_TIMEOUT:-}" ]; then
+    printf 'workflow:\n  deskTimeout: %s\n' "$FIXTURE_DESK_TIMEOUT" >> "$profile"
+  fi
   approve || return
   "$PROVE" human --headless
 }
@@ -297,9 +311,20 @@ fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one f
   esac
 }
 
+# The dev recipes are not shipped ones: register and approve each as the owner (typing id and version) before its first start.
+approve_dev_recipe() { # $1 recipe id
+  local file version out
+  file="$(grep -lx "id: $1" "$ROOT"/recipes/dev/*.yaml | head -1)"
+  [ -n "$file" ] || return 0
+  version="$(sed -n 's/^version: *//p' "$file" | head -1)"
+  out="$(printf 'approve %s %s\n' "$1" "$version" | "$PROVE" human recipe approve "$file" 2>&1)"
+  printf '%s\n' "$out" | grep -qE '^(approved|already approved)' || die "recipe approve $1 was refused: $out"
+}
+
 start_on_new_item() { # $1 recipe, $2 item title; prints the item
   local item facts=() line out
   need jq
+  approve_dev_recipe "$1" || return
   item="$(new_item "$2")" || return
   while IFS= read -r line; do facts+=("$line"); done < <(fact_args "$1" "$item" "$2")
   # The pty the owner's verbs run under joins stderr into stdout, so the output is kept to show on a refusal.
@@ -324,6 +349,45 @@ workflows() {
   start_on_new_item workflow.dev-triage-three-state "Fixture triage" >/dev/null || return
   start_on_new_item workflow.dev-desk-round-trip "Fixture work one" >/dev/null || return
   start_on_new_item workflow.dev-desk-round-trip "Fixture work two" >/dev/null
+}
+
+park-timeout() {
+  start_on_new_item workflow.dev-timeout "Fixture timeout park"
+}
+
+# The older version of a shipped workflow, approved by the owner so the shipped one waits for its own approval (it can do more): a "workflow . changed" row.
+changed-recipe() {
+  local dir="$AW_SINDRI_HOME/ui-fixture-recipes" file out
+  mkdir -p "$dir" || return
+  file="$dir/workflow.hand-test.yaml"
+  cat > "$file" <<'YAML' || return
+schema: 1
+id: workflow.hand-test
+version: 2
+description: "Block recipe: an earlier, smaller version of the hand test for the fixture (a desk step, no agent)."
+displayName: "Try the change by hand in the running app"
+inputs:
+  - { key: fact:phasePacket, label: "Phase packet", type: packet, kind: packet }
+  - { key: fact:workspace, label: "Workspace", type: text, kind: text }
+outputs:
+  - { key: fact:output, label: "Output", type: text, from: handtest }
+initial: handtest
+states:
+  handtest: { kind: active, step: step.produce, timeout: { after: 4h, then: park },
+              next: "Try the change for {item} by hand, then complete this Step." }
+  works:    { kind: terminal, outcome: resolved }
+transitions:
+  - { from: handtest, to: works, on: step.completed, when: { outcome: done }, produces: [fact:output] }
+evals: [evals/workflow.hand-test/happy.jsonl]
+YAML
+  # The registry refuses an approval without eval cases (SND-RECIPE-008): the file the yaml names sits next to it.
+  mkdir -p "$dir/evals/workflow.hand-test" || return
+  cat > "$dir/evals/workflow.hand-test/happy.jsonl" <<'JSONL' || return
+{"start":{"inputs":{"fact:phasePacket":{"phase":"1","goal":"Export works"},"fact:workspace":"/work/tree"}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Clicked export; a CSV downloaded."}},"expect":{"state":"works","outcome":"resolved"}}
+JSONL
+  out="$(printf 'approve workflow.hand-test 2\n' | "$PROVE" human recipe approve "$file" 2>&1)"
+  printf '%s\n' "$out" | grep -qE '^(approved|already approved)' || die "recipe approve of the older workflow.hand-test was refused: $out"
 }
 
 incident_file() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-incident-item"; }
@@ -688,6 +752,7 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   workflows) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: workflows [--large]" ;;
+  park-timeout | changed-recipe) [ "$#" -eq 1 ] || die "'$verb' takes no arguments" ;;
   incident) { [ "$#" -eq 2 ] && { [ "$2" = start ] || [ "$2" = stop ]; }; } || die "usage: incident start|stop" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
