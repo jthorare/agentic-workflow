@@ -8,7 +8,7 @@
 #   bash tests/ui-checks/gh-1004-takeover.sh        exit 0 pass; 1 FAIL (one line on stderr); 2 the setup broke
 # Env: GH1004_OUT (screenshots; default a new temp dir), SINDRI (a built sindri for sindri-prove.sh; default dotnet run).
 set -uo pipefail
-unset TMUX
+unset TMUX DISPLAY
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FIXTURE="$ROOT/scripts/sindri-ui-fixture.sh"
@@ -26,7 +26,13 @@ OUT="${GH1004_OUT:-$(mktemp -d "$TMP_ROOT/gh1004-out-XXXXXX")}"
 mkdir -p "$OUT" || exit 2
 
 APP_WRAPPER_PID=""
-setup_fail() { echo "gh-1004-takeover: setup failed: $*" >&2; exit 2; }
+drv() { timeout 120 "$DRIVER" "$@"; }
+# A setup miss keeps a screenshot of what the app showed, so the next miss can be read.
+setup_fail() {
+  drv screenshot --out "$OUT/setup-fail.png" >/dev/null 2>&1 || true
+  echo "gh-1004-takeover: setup failed: $* (screenshot in $OUT)" >&2
+  exit 2
+}
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 cleanup() {
@@ -58,11 +64,10 @@ if [ -z "${AW_SINDRI_UI:-}" ]; then
   export AW_SINDRI_UI="$ROOT/artifacts/bin/Aw.Sindri.Ui.Desktop/debug/sindri-ui"
 fi
 [ -x "$AW_SINDRI_UI" ] || setup_fail "no sindri-ui at $AW_SINDRI_UI"
-if [ -n "${DISPLAY:-}" ]; then
-  bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
-else
-  xvfb-run -a bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
-fi
+# An Xvfb this check owns and stops by pid on exit (xvfb-run leaves its Xvfb behind when a timeout kills the check).
+source "$ROOT/tests/ui-checks/xvfb-lib.sh"
+xvfb_start || setup_fail "no Xvfb display could be started"
+bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
 APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
@@ -73,13 +78,19 @@ APP_WRAPPER_PID=$!
 # The page opens as the board, which holds only runs on a lane; the List toggle shows every run.
 "$DRIVER" click --type ListBoxItem --name List >"$OUT/list.log" 2>&1 \
   || setup_fail "the List toggle was not clicked (driver: $(tr -d '\n' <"$OUT/list.log" | cut -c1-160))"
-"$DRIVER" wait-for --type Button --text "Fixture agent run" --state visible --wait-ms 60000 >/dev/null 2>&1 \
-  || setup_fail "Workflows shows no run titled Fixture agent run (see $OUT/app.log)"
-buttons="$(timeout 120 "$DRIVER" search --type Button --limit 5000 2>/dev/null)" || setup_fail "the button search failed"
-[ "$(printf '%s' "$buttons" | jq '(.total // 0) > (.matches | length)')" = false ] || setup_fail "the button search is incomplete (more buttons than --limit 5000)"
-open_id="$(printf '%s' "$buttons" | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("Open Fixture agent run")))][0].id // empty')"
-[ -n "$open_id" ] || setup_fail "no visible Open Fixture agent run button on Workflows"
-"$DRIVER" click --node-id "$open_id" >/dev/null 2>&1 || setup_fail "the Open Fixture agent run click was not accepted"
+# The title button's text is in a child TextBlock; its NAME is "Open <title>, <workflow>". Poll a complete search (up to 60 s) for it.
+open_id=""
+for _ in $(seq 1 30); do
+  buttons="$(drv search --type Button --limit 5000 2>/dev/null)" || buttons=""
+  if [ -n "$buttons" ]; then
+    [ "$(printf '%s' "$buttons" | jq '(.total // 0) > (.matches | length)')" = false ] || setup_fail "the button search is incomplete (more buttons than --limit 5000)"
+    open_id="$(printf '%s' "$buttons" | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("Open Fixture agent run")))][0].id // empty')"
+    [ -n "$open_id" ] && break
+  fi
+  sleep 2
+done
+[ -n "$open_id" ] || setup_fail "no visible Open Fixture agent run button on Workflows (see $OUT/app.log)"
+drv click --node-id "$open_id" >/dev/null 2>&1 || setup_fail "the Open Fixture agent run click was not accepted"
 "$DRIVER" wait-for --type Button --text "Watch the agent" --state visible --wait-ms 30000 >/dev/null 2>&1 \
   || setup_fail "no Watch the agent control on the instance (see $OUT/app.log)"
 "$DRIVER" screenshot --out "$OUT/before-click.png" >/dev/null 2>&1
