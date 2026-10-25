@@ -97,13 +97,24 @@ drv click --node-id "$open_id" >/dev/null 2>&1 || setup_fail "the Open Fixture a
 before="$("$PROVE" human ledger --json --item "$item" --max 1000 2>&1 | tr -d '\r')"
 # Take over is a MenuItem in the chevron's flyout (AttachButton.axaml). The driver walks only the main window's visual tree, so the menu
 # is findable only because a driven run draws popups inside the window (Composition.WithOverlayPopups). The chevron is the Button named
-# "More actions for <address>" (its text "▾" is not unique on a page with other Attach controls); Take over's text is its Header.
+# "More actions for <address>" (its text "▾" is not unique on a page with other Attach controls); 
 chevron_id="$(drv search --type Button --limit 5000 2>/dev/null | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("More actions for")))][0].id // empty')"
 [ -n "$chevron_id" ] || setup_fail "no visible More actions chevron on the instance"
 drv click --node-id "$chevron_id" >/dev/null 2>&1 || setup_fail "the chevron click was not accepted by the driver"
-"$DRIVER" wait-for --type MenuItem --text "Take over" --state visible --wait-ms 5000 >/dev/null 2>&1 \
-  || setup_fail "the chevron menu shows no Take over (see $OUT/app.log)"
-"$DRIVER" click --type MenuItem --text "Take over" >/dev/null 2>&1 || setup_fail "the Take over click was not accepted by the driver"
+# A MenuItem is a HeaderedSelectingItemsControl, so the driver reports no text for it; what it reports is its automation name,
+# "Take over <address>" (AttachButton.FillMenu). Matching the MenuItem by that name also keeps the Stage details "Take over" label out.
+take_id=""
+for _ in $(seq 1 10); do
+  take_id="$(drv search --type MenuItem --limit 5000 2>/dev/null | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("Take over ")))][0].id // empty')"
+  [ -n "$take_id" ] && break
+  sleep 0.5
+done
+[ -n "$take_id" ] || setup_fail "the chevron menu shows no Take over (see $OUT/app.log)"
+# Click invokes the item through its automation peer; if the peer offers no invoke, focus it and press Enter, as a keyboard user would.
+if ! drv click --node-id "$take_id" >/dev/null 2>&1; then
+  drv action --node-id "$take_id" --do focus >/dev/null 2>&1 && drv key --node-id "$take_id" --chord Enter >/dev/null 2>&1 \
+    || setup_fail "the Take over item was neither clicked nor focused and entered by the driver"
+fi
 
 # 5. Within 5 s: the ledger records the takeover from the UI, and the app shows the viewer's outcome.
 sent=0
