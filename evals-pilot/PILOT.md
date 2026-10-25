@@ -155,7 +155,7 @@ and read the Skill-fired rate from the JSON, or give those cases `arm: both` gra
 23-27 turns). Full suite as proposed: 208 cases x 3 runs x 2 arms = 1,248 runs, about $225 at pilot rates and likely $300-400
 once orchestrator skills (`review`, `autoplan`, `shipRelease`) are in; I did not measure those. Cheaper loop: `--runs 1
 --ablation none` is 208 runs, about $40; use `--model sonnet` (not measured here, expected well under half). Wall time at `-j 3`
-was 711 s for 66 runs, so the full suite is about 4 hours serial-equivalent per 3 slots; use `-j 6` nightly.
+was 711 s for 66 runs, so the full 1,248-run suite is about 3.7 hours at `-j 3` (about 11 s of wall clock per run); use `-j 6` nightly if the rate limit allows.
 
 **CI.** Two jobs, both in a clean clone (avoids Blocker 1), `--trust-plugin --scaffold --no-publish --json`:
 1. *Per PR that touches `skills/<x>/`:* only that skill's cases, `--runs 2 --ablation none`, free graders where possible,
