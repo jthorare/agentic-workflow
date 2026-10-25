@@ -92,7 +92,7 @@ public sealed class SessionIdTimeoutTests
     public async Task An_exit_whose_id_pattern_times_out_still_ends_the_session_and_says_why()
     {
         await _s.Started();
-        var exit = new SessionExitService(_s.Events(Claude));
+        var exit = new SessionExitService(_s.Events(Claude), new RecordingUsageSampler(_s));
 
         var result = await exit.Handle(A.SessionExitRequest().WithSessionId(_id).Build(), Token);
 

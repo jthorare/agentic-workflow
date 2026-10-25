@@ -2513,6 +2513,8 @@ Aw.Sindri.Features.ProbeLaunchTargets.ProbeLaunchTargetsRequest.ProbeLaunchTarge
 Aw.Sindri.Features.SessionExit.SessionExitRequest
 Aw.Sindri.Features.SessionExit.SessionExitRequest.<Clone>$() -> Aw.Sindri.Features.SessionExit.SessionExitRequest!
 Aw.Sindri.Features.SessionExit.SessionExitRequest.Equals(Aw.Sindri.Features.SessionExit.SessionExitRequest? other) -> bool
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Limit.get -> Aw.Sindri.Core.Events.LimitEnd?
+Aw.Sindri.Features.SessionExit.SessionExitRequest.Limit.init -> void
 Aw.Sindri.Features.SessionExit.SessionExitRequest.LaunchId.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
 Aw.Sindri.Features.SessionExit.SessionExitRequest.LaunchId.init -> void
 Aw.Sindri.Features.SessionExit.SessionExitResponse

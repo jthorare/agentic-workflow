@@ -17,7 +17,7 @@ public sealed class SessionExitTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SessionExitService Service() => new(_s.Events());
+    private SessionExitService Service() => new(_s.Events(), new RecordingUsageSampler(_s));
 
     [Fact]
     public async Task SessionExit_records_session_ended_with_the_exit_code()
