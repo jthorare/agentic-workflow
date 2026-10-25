@@ -49,20 +49,20 @@ context services here. The routes are `GET /sindri/context/query` and
 ### Query pipeline (Phase 1, text shape)
 
 1. `SettingsReader.Read`, then `ScopeRules.Resolve`: sessions are gated (020), and a session is scoped to its repo (003).
-2. `QueryRules.Check`: one shape. Text becomes at most 16 lower-case terms. The budget is capped. Anchor shapes are 003
+2. `QueryRules.Check`: one shape. Text becomes at most 64 lower-case terms. There is no token budget: `ContextQuery.Budget` and the profile key `context.maxBudget` are retired (read and ignored, so an old client or profile still works). Anchor shapes are 003
    until the graph exists.
 3. Every source in `ISourceCatalog.For(settings, repos)` is searched in parallel under the deadline. An error or a
    missed deadline makes that source degraded (010); all of them failing is 011.
 4. `RankFusion.Fuse`: hits sharing a canonical key merge, keeping each source's best rank. Each source is re-ranked
    densely, then RRF with k = 60 runs across sources.
 5. The top 20 are fetched in turn until the deadline (what isn't fetched in time isn't shown), cleaned whole by
-   `IIngestFilter` (sanitize, collapse titles, scrub; line-preserving), then cut to 64 KB. The sanitizer drops inline and
+   `IIngestFilter` (sanitize, collapse titles, scrub; line-preserving), kept whole. The sanitizer drops inline and
    HTML images and reduces reference-style ones to their text, so no image survives ingest wherever its definition sits, and removes
    remote reference definitions also inside block quotes and list items (one-token destination, optional title).
 6. One batched `Versions` call per source, each with only its own references, gives each citation its state.
 7. `ResultAssembly`: one `record` item and one citation each. Every field, the citation's key and ids included, is
    scrubbed again on egress (a blocked field is `[REDACTED:blocked]` alone). The title (at most 200 characters) and
-   the text are fenced as untrusted, and the items are packed into the budget.
+   the text are fenced as untrusted, and the items are grouped into sections with none dropped (`Packer.Pack` has no budget; the retired `truncated`, `budget` and per-section `more` fields are gone from the wire). A caller pages the result set (MCP `limit` and `offset`, `McpPages`: both optional, offset 0 and limit 100 by default, limit under 1 or offset under 0 is 006; only top-level lists page, each by its own index, never inside an item; `page.more` and `page.lists` are computed on the whole set).
 
 No model is called on the query path.
 
@@ -106,7 +106,7 @@ and the status reads "never refreshed".
 | `SND-CONTEXT-003` | NotFound (404) | 1 | Unknown anchor, or a record or decision linked only to nodes outside a session's repo scope (the same answer). When the graph has near misses, the problem body also has the top-level member `suggestedAnchors` (an array of at most 5 node keys, in scope for the caller; the detail text still says `try …`) |
 | `SND-CONTEXT-004` | Unavailable (503) | 2 | The store can't be opened or migrated (the message keeps the AW-DATA code) |
 | `SND-CONTEXT-005` | Invalid (400) | 1 | A map file or an output path inside a git worktree (links resolved) |
-| `SND-CONTEXT-006` | Invalid (400) | 1 | The question is invalid: no words, two shapes, depth or budget out of range |
+| `SND-CONTEXT-006` | Invalid (400) | 1 | The question is invalid: no words, two shapes, depth out of range |
 | `SND-CONTEXT-010` | Unavailable | — | One source is unavailable: a `degraded` entry, never the answer's error |
 | `SND-CONTEXT-011` | Unavailable (503) | 2 | Every source is unavailable |
 | `SND-CONTEXT-020` | Forbidden (403) | 1 | Session reads are off (`context.sessions.enabled: false`, on by default since owner q93, 2026-10-23), on every transport; also a session asking for a human or service job (map import, export, hold, release, eval purge). Defined by S-1A (spec §3); S-1M maps it to the MCP tool error |
@@ -381,7 +381,7 @@ routes through the real pipeline (preview, protected import and its refusals, ev
 | `SND-CONTEXT-037` | Conflict (409) | 1 | A node name matches several nodes; the message lists their keys (fix: ask by key); the problem body also has `candidates`, an array of at most 100 keys the caller may see |
 | `SND-CONTEXT-038` | Conflict (409) | 1 | A probe run scored lower than the baseline of the same file (its newest complete run that did not regress) in precision@5 or citation correctness, or a probe returned more absent nodes than it did there |
 
-039 is reserved. A depth (neighbors, query) or a budget that is out of range (depth negative, budget 1 or more; a depth past 8 is read as 8) is `SND-CONTEXT-006` on every transport, and one that is not a whole number is 006 in the CLI (exit 1) and HTTP (MCP's binder answers `SND-CONTEXT-022` for an argument that isn't a 32-bit JSON integer, even one that is only too large), parsed once in `QueryRules.ParseDepth` and `ParseBudget`; the CLI also refuses a question or `--node` over `QueryRules.MaxEncodedText` (6000) characters once percent-encoded with 006 before sending, so Kestrel's 8 KB request line never answers 414; the CLI adds its own `--depth` or `--budget` hint; a graph read with no map reuses 030; a key, alias
+039 is reserved. A depth (neighbors, query) that is out of range (depth negative; a depth past 8 is read as 8) is `SND-CONTEXT-006` on every transport, and one that is not a whole number is 006 in the CLI (exit 1) and HTTP (MCP's binder answers `SND-CONTEXT-022` for an argument that isn't a 32-bit JSON integer, even one that is only too large), parsed once in `QueryRules.ParseDepth`; the CLI also refuses a question or `--node` over `QueryRules.MaxEncodedText` (6000) characters once percent-encoded with 006 before sending, so Kestrel's 8 KB request line never answers 414; the CLI adds its own `--depth` hint; a graph read with no map reuses 030; a key, alias
 or name not in the caller's map reuses 003.
 
 ### Tests
@@ -435,7 +435,7 @@ User-facing behaviour is in `docs/sindri/context.md` (S-4). This is where the co
 - **Sindri Host.** Routes: `GET /sindri/context/map/review`, `/review/history`, `/review/export`, `/map/proposals`, `/lenses`, `/filemap`; `POST /sindri/context/map/review`,
   `/promote`, `/proposals`. CLI: `ContextReviewVerbs` (review, promote, propose, proposals), `ContextLensVerbs` (lenses, filemap), `ReviewArguments` (the pure parse),
   `ReviewSession` (the review loop as a state machine; the TTY shell only reads lines and sends), `ContextExit` (040 is 75), text in `Text/ContextReviewText` and `ContextLensText`.
-  MCP: `context_lenses {anchor? | anchors?, mapVersion?}` in `ContextTools` (a lone anchor stays schema 1, several distinct anchors answer schema 2; `context_query` also takes `mapVersion?`; no new tool, the session reads sets through S-LB2); `context_node {key}` and `context_neighbors {key, depth?}` in `GraphTools` (S-3M; the same services as the HTTP routes, 022 for bad arguments, summaries in `McpSummaries.Node` and `.Neighbors`, tested in `ContextGraphMcpTests`). `Models/JudgeModelPort` adapts Judge's `IProviderCatalog` as `IModelPort` (agent CLIs only, never `jev`), the catalog built in a container of its own (`JudgeCatalog`).
+  MCP: `context_lenses {anchor? | anchors?, mapVersion?}` in `ContextTools` (a lone anchor stays schema 1, several distinct anchors answer schema 2; `context_query` also takes `mapVersion?`; no new tool, the session reads sets through S-LB2); `context_node {key}` and `context_neighbors {key, depth?}` in `GraphTools` (S-3M; the same services as the HTTP routes, 022 for bad arguments, summaries in `McpSummaries.Node` and `.Neighbors`, tested in `ContextGraphMcpTests`). `context_lenses` is paged by `LensPages` for every transport: `limit` (default 100) and `offset` cut each band list and `edges` on their own, `page.totals` holds each list's full count, and nothing else is cut (no payload cap). `ClusterFeatures` leaves tests, fixtures, demos, icons, deprecated trees, shells, routers and crons out of a feature's implementers and proposes nothing for a cluster made only of them (`SharedFileClusterTests`); `Packer` splits the budget across the sections that have candidates and gives unused budget back to earlier overflowed sections (`PackerTests`). `Models/JudgeModelPort` adapts Judge's `IProviderCatalog` as `IModelPort` (agent CLIs only, never `jev`), the catalog built in a container of its own (`JudgeCatalog`).
 
 ### Classes (README X63)
 

@@ -13,7 +13,7 @@ internal static class SindriBindings
 {
     internal static Result<FileRequestRequest> Request(IDictionary<string, JsonElement>? arguments, JsonTypeInfo<RequestKind> kinds)
     {
-        if (McpArguments.Only(SindriTools.Request, arguments, "kind", "text", "itemId") is { } refused)
+        if (McpArguments.Only(SindriTools.Request, arguments, ["kind", "text", "itemId"]) is { } refused)
         {
             return refused;
         }
@@ -25,13 +25,13 @@ internal static class SindriBindings
     }
 
     internal static Result<ItemRef> Item(string tool, IDictionary<string, JsonElement>? arguments, params string[] more) =>
-        McpArguments.Only(tool, arguments, ["itemId", .. more]) is { } refused
+        McpArguments.Only(tool, arguments, ["itemId", .. more, .. McpArguments.PageNames]) is { } refused
             ? refused
             : McpArguments.RequiredString(tool, arguments, "itemId", "ITM-...").Bind(ItemRoute.Item);
 
     internal static Result<ItemRef?> OptionalItem(string tool, IDictionary<string, JsonElement>? arguments)
     {
-        if (McpArguments.Only(tool, arguments, "itemId") is { } refused)
+        if (McpArguments.Only(tool, arguments, ["itemId", .. McpArguments.PageNames]) is { } refused)
         {
             return refused;
         }

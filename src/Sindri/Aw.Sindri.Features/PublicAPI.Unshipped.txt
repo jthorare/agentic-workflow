@@ -2685,8 +2685,12 @@ Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Depth.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Draft.get -> bool
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Draft.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Limit.get -> int?
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Limit.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.MapVersion.get -> string?
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Offset.get -> int?
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Offset.init -> void
 Aw.Sindri.Features.ContextCalls.LensesAnswer
 Aw.Sindri.Features.ContextCalls.LensesAnswer.<Clone>$() -> Aw.Sindri.Features.ContextCalls.LensesAnswer!
 Aw.Sindri.Features.ContextCalls.LensesAnswer.Equals(Aw.Sindri.Features.ContextCalls.LensesAnswer? other) -> bool
@@ -3367,8 +3371,8 @@ static Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.operator !=(Aw.Sindri.F
 static Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.operator ==(Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? right) -> bool
 static Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.operator !=(Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? right) -> bool
 static Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.operator ==(Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? right) -> bool
-Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Anchors, out bool Draft, out int? Depth, out string? MapVersion, out string? Hops) -> void
-Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.GetContextLensesAnswerRequest(System.Collections.Generic.IReadOnlyList<string!>! Anchors, bool Draft = false, int? Depth = null, string? MapVersion = null, string? Hops = null) -> void
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Anchors, out bool Draft, out int? Depth, out string? MapVersion, out string? Hops, out int? Limit, out int? Offset) -> void
+Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.GetContextLensesAnswerRequest(System.Collections.Generic.IReadOnlyList<string!>! Anchors, bool Draft = false, int? Depth = null, string? MapVersion = null, string? Hops = null, int? Limit = null, int? Offset = null) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Hops.get -> string?
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Hops.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesRequest.Deconstruct(out string! Anchor, out bool Draft, out int? Depth, out string? MapVersion, out string? Hops) -> void

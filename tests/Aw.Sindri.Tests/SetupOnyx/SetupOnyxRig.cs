@@ -114,12 +114,12 @@ internal sealed class SetupOnyxRig : IAsyncDisposable
 
     public ValueTask DisposeAsync() => Runtime.DisposeAsync();
 
-    /// <summary>Onyx's `up`, stubbed: it answers a running Onyx on 3000, or the error a test sets.</summary>
+    /// <summary>Onyx's `up`, stubbed: it answers a running Onyx on 3189, or the error a test sets.</summary>
     internal sealed class StubOnyxUp : IService<OnyxUpRequest, OnyxUpResponse>
     {
         public Error? Fails { get; set; }
 
         public ValueTask<Result<OnyxUpResponse>> Handle(OnyxUpRequest request, CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Result<OnyxUpResponse>>(Fails is { } error ? error : new OnyxUpResponse(3000, "http://127.0.0.1:3000", "v4.9.0", [], []));
+            ValueTask.FromResult<Result<OnyxUpResponse>>(Fails is { } error ? error : new OnyxUpResponse(3189, "http://127.0.0.1:3189", "v4.9.0", [], []));
     }
 }

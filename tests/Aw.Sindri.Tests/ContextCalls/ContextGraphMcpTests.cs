@@ -73,11 +73,11 @@ public sealed class ContextGraphMcpTests : IDisposable
             Assert.False(t.JsonSchema.GetProperty("additionalProperties").GetBoolean());
         });
         Assert.Equal(["key"], node.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
-        Assert.Equal(["key"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "limit", "offset"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
         Assert.Equal(["key"], neighbors.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
         var depth = neighbors.JsonSchema.GetProperty("properties").GetProperty("depth");
         Assert.Equal(("integer", 0), (depth.GetProperty("type").GetString(), depth.GetProperty("minimum").GetInt32()));
-        Assert.Equal(["key", "depth"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "depth", "limit", "offset"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
@@ -91,8 +91,8 @@ public sealed class ContextGraphMcpTests : IDisposable
         var http = await Http(host, "/sindri/context/node?key=" + Uri.EscapeDataString(InRecord));
 
         Assert.NotEqual(true, result.IsError);
-        Assert.True(JsonNode.DeepEquals(http, JsonNode.Parse(result.StructuredContent!.Value.GetRawText())));
-        Assert.Equal("<untrusted source=\"map\">Mentions in</untrusted>", result.StructuredContent.Value.GetProperty("node").GetProperty("label").GetString());
+        Assert.True(JsonNode.DeepEquals(http, WithoutPage(result)));
+        Assert.Equal("<untrusted source=\"map\">Mentions in</untrusted>", result.StructuredContent!.Value.GetProperty("node").GetProperty("label").GetString());
         var outs = http["out"]!.AsArray().Count;
         var ins = http["in"]!.AsArray().Count;
         var summary = Text(result);
@@ -114,14 +114,14 @@ public sealed class ContextGraphMcpTests : IDisposable
         var httpDefault = await Http(host, "/sindri/context/neighbors?key=" + Uri.EscapeDataString(Key));
 
         Assert.NotEqual(true, result.IsError);
-        Assert.True(JsonNode.DeepEquals(http, JsonNode.Parse(result.StructuredContent!.Value.GetRawText())));
-        Assert.True(JsonNode.DeepEquals(httpDefault, JsonNode.Parse(defaulted.StructuredContent!.Value.GetRawText())));
+        Assert.True(JsonNode.DeepEquals(http, WithoutPage(result)));
+        Assert.True(JsonNode.DeepEquals(httpDefault, WithoutPage(defaulted)));
         var summary = Text(result);
         Assert.Contains(Key, summary, StringComparison.Ordinal);
         Assert.Contains(string.Create(CultureInfo.InvariantCulture, $"{http["nodes"]!.AsArray().Count} nodes and {http["edges"]!.AsArray().Count} edges"), summary, StringComparison.Ordinal);
         Assert.DoesNotContain("Mentions in", summary, StringComparison.Ordinal);
         Assert.DoesNotContain("In scope", summary, StringComparison.Ordinal);
-        Assert.Contains(result.StructuredContent.Value.GetProperty("nodes").EnumerateArray(), n => n.GetProperty("node").GetProperty("label").GetString() == "<untrusted source=\"map\">Mentions in</untrusted>");
+        Assert.Contains(result.StructuredContent!.Value.GetProperty("nodes").EnumerateArray(), n => n.GetProperty("node").GetProperty("label").GetString() == "<untrusted source=\"map\">Mentions in</untrusted>");
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
@@ -176,4 +176,12 @@ public sealed class ContextGraphMcpTests : IDisposable
 
     private static string? Code(CallToolResult result) =>
         result.StructuredContent is { } s && s.TryGetProperty("code", out var code) ? code.GetString() : null;
+
+    // why: the MCP answer carries the window it was cut with ('page'); the HTTP body has none
+    private static JsonObject WithoutPage(CallToolResult result)
+    {
+        var body = JsonNode.Parse(result.StructuredContent!.Value.GetRawText())!.AsObject();
+        _ = body.Remove("page");
+        return body;
+    }
 }

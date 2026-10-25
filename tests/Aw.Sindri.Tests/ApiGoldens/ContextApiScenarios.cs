@@ -215,15 +215,17 @@ internal static class ContextApiScenarios
         (string.Equals(slug, "context-whole", StringComparison.Ordinal) && new[] { "no-map-030", "no-map-never-run", "no-map-approved", "building-in-progress" }.Contains(scenario, StringComparer.Ordinal))
         || (string.Equals(slug, "context-concepts", StringComparison.Ordinal) && string.Equals(scenario, "no-map-unavailable", StringComparison.Ordinal));
 
+    private const string CodeTestGlobs = "[\"**/tests/**\", \"**/*.test.*\"]";
+
     // The code goldens read the CodeLensRepo (a fixed sha); the map names no commit, so the lexical search reads HEAD, except where a scenario says otherwise.
     private static async Task<GoldenHost> StartCode(string scenario, CancellationToken ct)
     {
         var repo = CodeLensRepo.Build(extraTests: scenario == "capped" ? 105 : 0);
         var extra = scenario switch
         {
-            "schema-off" => "  code: { schemaGlobs: [] }\n",
-            "deadline-152" => "  deadline: 100ms\n  code: { deadline: 100ms }\n",   // the lexical search reads context.code.deadline (#553)
-            _ => null,
+            "schema-off" => $"  code: {{ schemaGlobs: [], testGlobs: {CodeTestGlobs} }}\n",
+            "deadline-152" => $"  deadline: 100ms\n  code: {{ deadline: 100ms, testGlobs: {CodeTestGlobs} }}\n",   // the lexical search reads context.code.deadline (#553)
+            _ => $"  code: {{ testGlobs: {CodeTestGlobs} }}\n",   // why: the engine has no built-in test globs
         };
         Action<IServiceCollection>? wire = scenario == "deadline-152" ? HangingCodeSearch.Install : null;   // a search that never answers: the 100ms code deadline decides
         var host = await ContextHosts.Approved(repo.Path, sessions: true, ct, wire, CodeLensRepo.Repo, contextExtra: extra);

@@ -15,7 +15,7 @@ public sealed class OnyxEnsureTests
         public Rig()
         {
             Managed.Managed = true;
-            Workspace.State = new OnyxSetupState(3000, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" });
+            Workspace.State = new OnyxSetupState(3189, new Dictionary<string, string>(StringComparer.Ordinal) { [OnyxSteps.Start] = "x" });
             foreach (var path in new[] { Paths.Compose, Paths.Override, Paths.Env })
             {
                 Workspace.Files[path] = "x";
@@ -73,7 +73,7 @@ public sealed class OnyxEnsureTests
         var response = (await rig.Run()).Value;
 
         Assert.Equal("running", response.Endpoint!.State);
-        Assert.Equal("http://127.0.0.1:3000", response.Endpoint.Url);
+        Assert.Equal("http://127.0.0.1:3189", response.Endpoint.Url);
         Assert.StartsWith("sindri-onyx-", response.Endpoint.Project, StringComparison.Ordinal);
         Assert.Contains("Up", rig.Up.Runtime.Calls, StringComparer.Ordinal);
         Assert.DoesNotContain("Pull", rig.Up.Runtime.Calls, StringComparer.Ordinal);

@@ -120,14 +120,14 @@ The stock compose file publishes nginx on all interfaces (`"${HOST_PORT:-3000}:8
 services:
   nginx:
     ports: !override
-      - "127.0.0.1:3000:80"
+      - "127.0.0.1:3189:80"
 ```
 
 Leave every other service's `ports:` commented out, as shipped. Start it:
 
 ```bash
 docker compose up -d
-lsof -nP -iTCP:3000 -sTCP:LISTEN     # must show 127.0.0.1:3000 only
+lsof -nP -iTCP:3189 -sTCP:LISTEN     # must show 127.0.0.1:3189 only
 ```
 
 ### A one-user dev box (optional)
@@ -219,7 +219,7 @@ Linux (install `libsecret-tools` on Debian/Ubuntu if `secret-tool` is missing; i
 ```yaml
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3000", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }
+    onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }
     linear: { teams: [ENG] }        # team keys whose ENG-n identifiers become aliases
 ```
 

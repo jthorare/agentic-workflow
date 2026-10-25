@@ -54,7 +54,7 @@ public sealed class ContextReviewTextTests
         var text = ContextReviewText.Result("review", new ReviewResult(written, [], Undecided: 18_900));
 
         Assert.Contains("review: 7795 rows written, 18900 undecided", text, StringComparison.Ordinal);
-        Assert.Contains("sindri context map review --history --limit 1000", text, StringComparison.Ordinal);
+        Assert.Contains("sindri context map review --history", text, StringComparison.Ordinal);
         Assert.Contains("every id: add --json", text, StringComparison.Ordinal);
         Assert.DoesNotContain(written[0].Value, text, StringComparison.Ordinal);
         Assert.Equal(2, text.TrimEnd('\n').Split('\n').Length);
@@ -70,7 +70,7 @@ public sealed class ContextReviewTextTests
         var text = ContextReviewText.Result("review", new ReviewResult(written, ["one skipped: no match"], Undecided: 0));
 
         Assert.Equal(listed, text.Contains(written[^1].Value, StringComparison.Ordinal));
-        Assert.Equal(!listed, text.Contains("--history --limit", StringComparison.Ordinal));
+        Assert.Equal(!listed, text.Contains("review --history", StringComparison.Ordinal));
         Assert.Contains("skipped: one skipped: no match", text, StringComparison.Ordinal);
     }
 

@@ -32,6 +32,22 @@ public sealed class DeniedPathReadTests : IDisposable
         Assert.DoesNotContain(after.Bands.Code.Files, f => string.Equals(f.Path, Denied, StringComparison.Ordinal));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("prefix:SplitPane")]
+    [InlineData("suffix:Pane.ts")]
+    [InlineData("regex:^split.*\\.ts$")]
+    [InlineData("**/layout/**")]
+    public async Task A_role_entry_added_after_the_map_exists_filters_its_nodes_at_query_time(string entry)
+    {
+        _ = await _world.ImportFixture();
+
+        var after = (await _world.Engine.Lenses("feature:layout.split-pane", read: MapRead.Current, depth: null, Denying(entry), MapWorld.None)).Value;
+        var query = await _world.Engine.Query(new ContextQuery(Text: null, Symbol: Denied), Denying(entry), MapWorld.None);
+
+        Assert.DoesNotContain(after.Bands.Code.Files, f => string.Equals(f.Path, Denied, StringComparison.Ordinal));
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, query.Error.Code);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_symbol_query_for_a_denied_file_is_003_like_any_unknown_anchor()
     {

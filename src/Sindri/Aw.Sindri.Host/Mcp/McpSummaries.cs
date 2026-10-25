@@ -33,7 +33,7 @@ internal static class McpSummaries
         var items = result.Sections.Sum(s => s.Items.Count);
         var degraded = result.Degraded.Count == 0 ? "none" : string.Join(", ", result.Degraded.Select(d => d.Source.Value));
         var text = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{items} items in {result.Sections.Count} sections; {result.Conflicts.Count} conflicts; degraded: {degraded}"))
-            .AppendLine(result.Truncated ? "; truncated to the budget" : string.Empty)
+            .AppendLine()
             .AppendLine($"anchors: {(result.Anchors.Count == 0 ? "none" : string.Join(", ", result.Anchors))}");
         if (result.Diff is { } diff)
         {

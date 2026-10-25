@@ -10034,9 +10034,9 @@ Aw.Sindri.Core.Onyx.PreflightReport.Ok.get -> bool
 Aw.Sindri.Core.Onyx.PreflightReport.Port.get -> int
 Aw.Sindri.Core.Onyx.PreflightReport.Port.init -> void
 Aw.Sindri.Core.Onyx.PreflightReport.PreflightReport(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.PreflightCheck!>! Checks, int Port) -> void
-const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackFirst = 3001 -> int
-const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackLast = 3010 -> int
-const Aw.Sindri.Core.Onyx.OnyxPreflight.PreferredPort = 3000 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackFirst = 3190 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackLast = 3199 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.PreferredPort = 3189 -> int
 override Aw.Sindri.Core.Onyx.DiskFacts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Onyx.DiskFacts.GetHashCode() -> int
 override Aw.Sindri.Core.Onyx.DiskFacts.ToString() -> string!
@@ -13853,8 +13853,8 @@ override Aw.Sindri.Core.Profile.GraphSettings.ToString() -> string!
 static Aw.Sindri.Core.Profile.GraphSettings.operator !=(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 static Aw.Sindri.Core.Profile.GraphSettings.operator ==(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 const Aw.Sindri.Core.Profile.GraphSettings.DefaultMaxMB = 1024 -> int
-Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts) -> void
-Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts = null) -> void
+Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts) -> void
+Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts = null) -> void
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxFileKB = 4096 -> int
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxTotalMB = 4096 -> int
 Aw.Sindri.Core.Profile.IndexSettings.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -13869,6 +13869,8 @@ Aw.Sindri.Core.Profile.IndexSettings.Embeddings.get -> Aw.Sindri.Core.Profile.Em
 Aw.Sindri.Core.Profile.IndexSettings.Embeddings.init -> void
 Aw.Sindri.Core.Profile.IndexSettings.Graph.get -> Aw.Sindri.Core.Profile.GraphSettings?
 Aw.Sindri.Core.Profile.IndexSettings.Graph.init -> void
+Aw.Sindri.Core.Profile.IndexSettings.Roles.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Sindri.Core.Profile.IndexSettings.Roles.init -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.BlockCatalog(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>! blocks, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>! events, Aw.Sindri.Core.Workflow.Blocks.IBlockSentences? sentences = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.get -> string?
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.init -> void

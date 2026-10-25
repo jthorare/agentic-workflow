@@ -8,9 +8,9 @@ namespace Aw.Sindri.Tests.OnyxAccount;
 [Lane(TestLane.Integration)]
 public sealed class YamlOnyxProfileWriterTests : IDisposable
 {
-    private const string Url = "http://127.0.0.1:3000";
+    private const string Url = "http://127.0.0.1:3189";
     private const string Token = "keychain:onyx/sindri-onyx";
-    private const string Entry = "onyx: { url: \"http://127.0.0.1:3000\", token: \"keychain:onyx/sindri-onyx\", version: \"v4.9.0\", managed: true }";
+    private const string Entry = "onyx: { url: \"http://127.0.0.1:3189\", token: \"keychain:onyx/sindri-onyx\", version: \"v4.9.0\", managed: true }";
 
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-profile-" + RealTime.NewGuid().ToString("N"));
 

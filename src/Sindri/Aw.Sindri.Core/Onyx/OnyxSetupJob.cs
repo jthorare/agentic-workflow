@@ -20,6 +20,6 @@ public static class OnyxSetupJob
 
     /// <summary>The sign-up page of the Onyx at <paramref name="port"/>.</summary>
     /// <param name="port">Onyx's loopback port.</param>
-    /// <returns>For example 'http://127.0.0.1:3000/auth/signup'.</returns>
+    /// <returns>For example 'http://127.0.0.1:3189/auth/signup'.</returns>
     public static string SignupUrl(int port) => string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/auth/signup");
 }

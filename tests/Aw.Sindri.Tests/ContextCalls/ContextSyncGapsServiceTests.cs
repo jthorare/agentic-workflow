@@ -34,7 +34,7 @@ public sealed class ContextSyncGapsServiceTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3000","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
     private readonly GapEngineProxy _engine = GapEngineProxy.Create();
     private readonly CountingJobViews _counted;
     private readonly CapturingLogger _log = new();

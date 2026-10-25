@@ -31,7 +31,7 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
   └──────────────────────────────────────────────────────────────────────────────────────────┘
         ▲ reads only the approved profile             │ searches
         │                                             ▼
-   profile.yaml ── `profile approve` ──►     Onyx (Docker, 127.0.0.1:3000): Linear, Slack
+   profile.yaml ── `profile approve` ──►     Onyx (Docker, 127.0.0.1:3189): Linear, Slack
    recipes/*.yaml ── `recipe approve` ──►    the registry (workflow.line and its children)
 ```
 
@@ -199,13 +199,13 @@ ok    api               127.0.0.1:7410 answers (pid 53290, epoch 6)
 ok    temporal          127.0.0.1:53876 answers (pid 53346), version 1.9.1 as pinned, namespace sindri present
 ok    context:map       map v2 current (my-app, 412 nodes, 655 edges)
 ok    context:retention no expired exports; retained map versions are within the newest 20 and the 90-day eval window
-ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3000 (pinned v4.9.0); key: admin, Sindri's dedicated user
+ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
 ok    context:sources   2 of 2 sources ok; session reads on
 ok    context:sync      1 intent source(s) synced
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
 ok    launcher          no launcher.json at …; this box's viewer is Warp (warp) (sindri launch init writes it); …
 ok    launcher:agents   claude-code (builtin): …/claude; codex (builtin): …/codex; cursor (builtin): …/agent
-ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3000, digests match the pins
+ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins
 warn  claude-code       re-probed: claude 2.1.303 differs from the pinned probe (2.1.299) (fix: …)
 warn  codex:read-only   pending: owner probe (fix: …)
 ```
@@ -249,7 +249,7 @@ sindri onyx up         # Human-only: everything below, idempotent and resumable
 
 `onyx up` does, in order (`state.json` records each step, so a rerun repeats nothing that is already right):
 
-1. **Preflight**: Docker, Compose, memory, disk, port (3000, or the first free of 3001-3010).
+1. **Preflight**: Docker, Compose, memory, disk, port (3189, or the first free of 3190-3199).
 2. **Fetch**: the pinned deployment files from GitHub, each checked against its sha256.
 3. **Config**: `.env` and a compose override (nginx on `127.0.0.1` only, every image by digest, telemetry off).
 4. **Pull** by digest, then **start**, waiting up to 15 minutes for Onyx to answer.
@@ -275,9 +275,9 @@ Indexing runs inside Onyx and can take a while on a large workspace.
 You should see, in `doctor`:
 
 ```text
-ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3000 (pinned v4.9.0); key: admin, Sindri's dedicated user
+ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
 ok    context:sources   2 of 2 sources ok; session reads on
-ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3000, digests match the pins
+ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins
 ```
 
 With a managed Onyx, `sindri` starts its containers and `sindri stop` stops them. `onyx down` (**Human-only**)

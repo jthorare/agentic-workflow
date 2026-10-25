@@ -46,6 +46,39 @@ public static class InputRules
     /// <returns>True when the path is denied.</returns>
     public static bool IsDenied(string path, IReadOnlyList<string> addedGlobs) => MatchesAny(path, SecretGlobs.Concat(addedGlobs));
 
+    // A role entry in place of a glob ('prefix:', 'suffix:' or 'regex:' text, matched against any one path segment, ignoring case); null for a glob.
+    private static bool? Tagged(string entry, string[] segments)
+    {
+        if (entry.StartsWith("prefix:", StringComparison.Ordinal))
+        {
+            return entry.Length > 7 && segments.Any(s => s.StartsWith(entry[7..], StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (entry.StartsWith("suffix:", StringComparison.Ordinal))
+        {
+            return entry.Length > 7 && segments.Any(s => s.EndsWith(entry[7..], StringComparison.OrdinalIgnoreCase));
+        }
+
+        return entry.StartsWith("regex:", StringComparison.Ordinal) ? AnySegmentMatchesRegex(entry[6..], segments) : null;
+    }
+
+    // An invalid or runaway expression matches nothing (the profile check refuses a bad one; a hand-written settings file must not throw inside a snapshot).
+    private static bool AnySegmentMatchesRegex(string pattern, string[] segments)
+    {
+        try
+        {
+            return segments.Any(s => System.Text.RegularExpressions.Regex.IsMatch(s, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)));
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Whether a path matches any of the globs, ignoring case ('*' and '?' inside a segment, '**' across segments).</summary>
     /// <param name="path">The repo-relative path, with '/' separators.</param>
     /// <param name="globs">The globs; an empty one matches nothing.</param>
@@ -55,7 +88,7 @@ public static class InputRules
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(globs);
         var segments = path.Split('/');
-        return globs.Any(glob => glob.Length > 0 && Matches(glob.Split('/'), 0, segments, 0));
+        return globs.Any(glob => glob.Length > 0 && (Tagged(glob, segments) ?? Matches(glob.Split('/'), 0, segments, 0)));
     }
 
     /// <summary>Applies the rules to a commit's tree.</summary>
@@ -127,7 +160,7 @@ public static class InputRules
     {
         if (g == glob.Length)
         {
-            return p == path.Length;
+            return true;   // the glob ended on a file or a directory: a directory covers everything under it, as in .gitignore
         }
 
         if (glob[g] == "**")
