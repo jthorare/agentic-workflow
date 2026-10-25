@@ -109,6 +109,13 @@ internal sealed partial class WholeMapViewModel
     /// <returns>The smallest and the largest scale.</returns>
     internal static (double Min, double Max) ZoomLimits(double fit) => (Math.Clamp(Math.Min(fit, FirstOpenFloor), 0.02, FirstOpenFloor), MaxScale);
 
+    /// <summary>Whether the view refits the map when its stage or its answer changes.</summary>
+    /// <param name="fitted">Whether the map has been fitted once.</param>
+    /// <param name="viewUnmoved">Whether the view is still the one the last fit set.</param>
+    /// <param name="filtering">Whether a search or a zoom onto an answer is on the map.</param>
+    /// <returns>True when the view is fitted again.</returns>
+    internal static bool RefitsOnArrange(bool fitted, bool viewUnmoved, bool filtering) => throw new NotSupportedException();
+
     /// <summary>Whether Zoom in can act.</summary>
     /// <param name="scale">The zoom now.</param>
     /// <param name="max">The largest scale.</param>
