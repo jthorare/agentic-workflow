@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
@@ -14,6 +15,7 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     private readonly DecisionSender _sender;
     private readonly Platform.IClipboard? _clipboard;
     private readonly Func<DecideState> _readiness;
+    private readonly TimeProvider _clock;
     private DecisionList? _served;
     private Uri? _url;
     private string _item = "";
@@ -22,21 +24,23 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     /// <param name="api">The API.</param>
     /// <param name="sender">Sends Decide, with the guard the decision sheet shares.</param>
     /// <param name="readiness">What the catalog says of Decide now; the options take input only when it is ready.</param>
+    /// <param name="clock">Now, for how long ago an answered decision was answered.</param>
     /// <param name="clipboard">Where the line's Copy puts the served command; null for none.</param>
-    internal ItemNeedsViewModel(ISindriApi api, DecisionSender sender, Func<DecideState> readiness, Platform.IClipboard? clipboard = null)
+    internal ItemNeedsViewModel(ISindriApi api, DecisionSender sender, Func<DecideState> readiness, TimeProvider clock, Platform.IClipboard? clipboard = null)
     {
-        (_api, _sender, _readiness, _clipboard) = (api, sender, readiness, clipboard);
+        (_api, _sender, _readiness, _clock, _clipboard) = (api, sender, readiness, clock, clipboard);
     }
 
     /// <summary>The item's needs, reading Decide from <paramref name="catalog"/> and rebuilding the options when the catalog arrives or changes.</summary>
     /// <param name="api">The API.</param>
     /// <param name="sender">Sends Decide.</param>
     /// <param name="catalog">The command catalog.</param>
+    /// <param name="clock">Now.</param>
     /// <returns>The needs.</returns>
-    internal static ItemNeedsViewModel Create(ISindriApi api, DecisionSender sender, CatalogViewModel catalog)
+    internal static ItemNeedsViewModel Create(ISindriApi api, DecisionSender sender, CatalogViewModel catalog, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        var needs = new ItemNeedsViewModel(api, sender, () => StateOf(catalog.For("Decide"), catalog.For("Decide") is not null, catalog.Listed is not null), catalog.Clipboard);
+        var needs = new ItemNeedsViewModel(api, sender, () => StateOf(catalog.For("Decide"), catalog.For("Decide") is not null, catalog.Listed is not null), clock, catalog.Clipboard);
         catalog.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(CatalogViewModel.Controls), StringComparison.Ordinal))
@@ -141,7 +145,20 @@ internal sealed class ItemNeedsViewModel : ObservableObject
         }
     }
 
-    /// <summary>Decides one of the item's decisions with an option: sent once, never retried; a refusal shows as served.</summary>
+    // A decision answered elsewhere is put in words (from the decided list); any other refusal, a voided decision or a closed item, shows as served.
+    private async Task<string> RefusalLine(Uri url, string decisionId, Error error)
+    {
+        if (!DecisionRefusals.IsDecidedElsewhere(error.Code, error.Message))
+        {
+            return error.Message;
+        }
+
+        var decided = await _api.Decisions(url, pending: false, item: null, CancellationToken.None).ConfigureAwait(true);
+        var row = decided.IsSuccess ? decided.Value.Decisions.FirstOrDefault(d => string.Equals(d.Id, decisionId, StringComparison.Ordinal)) : null;
+        return DecisionRefusals.Explained(row, _clock) is { Length: > 0 } words ? words : Labels.AlreadyDecidedBare;
+    }
+
+    /// <summary>Decides one of the item's decisions with an option: sent once, never retried; a refusal shows as served unless the decision was answered elsewhere.</summary>
     /// <param name="decisionId">The decision.</param>
     /// <param name="optionId">The option.</param>
     /// <returns>A task that completes when Decide was answered and the lists re-read.</returns>
@@ -154,7 +171,7 @@ internal sealed class ItemNeedsViewModel : ObservableObject
             return;   // not sent, or the sheet moved to another item while Decide was on its way: its refusal is not this item's
         }
 
-        Refusal = answer.IsError ? answer.Error.Message : "";
+        Refusal = answer.IsError ? await RefusalLine(url, decisionId, answer.Error).ConfigureAwait(true) : "";
         await Read(url, _item, CancellationToken.None).ConfigureAwait(true);
     }
 }

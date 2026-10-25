@@ -39,7 +39,7 @@ internal sealed class RecipeRowViewModel : ObservableObject
         }
 
         return served.Stats is { } stats
-            ? (stats.Runs.ToString(CultureInfo.InvariantCulture), Labels.StatShare(stats.Done, stats.Runs), stats.MedianSeconds is { } seconds ? Labels.Duration(seconds) : Labels.StatNone)
+            ? (stats.Runs.ToString(CultureInfo.InvariantCulture), stats.Runs <= 0 ? Labels.StatNone : Labels.StatFinishedShare(stats.Done, stats.Failed, 0), stats.MedianSeconds is { } seconds ? Labels.Duration(seconds) : Labels.StatNone)
             : (Labels.StatNone, Labels.StatNone, Labels.StatNone);
     }
 

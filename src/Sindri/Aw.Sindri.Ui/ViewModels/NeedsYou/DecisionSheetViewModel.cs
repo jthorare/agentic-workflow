@@ -9,8 +9,6 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// </summary>
 internal sealed partial class DecisionSheetViewModel(ISindriApi api, Func<Uri?> apiUrl, TimeProvider clock, DecisionSender sender, Platform.IClipboard? clipboard = null) : ObservableObject
 {
-    private const string Conflict = "SND-ITEM-409";
-    private const string DecidedElsewhere = "decided elsewhere";
     private static readonly TimeSpan _outcomeShown = TimeSpan.FromSeconds(2);
     private NeedsYouRowViewModel? _row;
 
@@ -139,12 +137,7 @@ internal sealed partial class DecisionSheetViewModel(ISindriApi api, Func<Uri?> 
         return decided.IsSuccess ? decided.Value.Decisions.FirstOrDefault(d => string.Equals(d.Id, id, StringComparison.Ordinal)) : null;
     }
 
-    // How a decision that was answered reads: what was chosen, by whom (the app's words for the actor) and how long ago.
-    private string WordsOf(DecisionView row)
-    {
-        var label = row.Options.FirstOrDefault(o => string.Equals(o.Id, row.Choice, StringComparison.Ordinal))?.Label ?? row.Choice ?? "";
-        return Labels.DecidedWords(row.Choice ?? "", label, row.DecidedBy ?? "", row.DecidedAt is { } at ? clock.GetUtcNow() - at : null);
-    }
+    private string WordsOf(DecisionView row) => DecisionRefusals.Words(row, clock);
 
     /// <summary>True when this row is the decision shown.</summary>
     /// <param name="rowId">The row's id.</param>
@@ -186,7 +179,7 @@ internal sealed partial class DecisionSheetViewModel(ISindriApi api, Func<Uri?> 
             if (shown)
             {
                 // Only "decided elsewhere" is put in words; a voided decision or a closed item keeps the sentence the server served.
-                var conflict = string.Equals(answer.Error.Code, Conflict, StringComparison.Ordinal) && answer.Error.Message.Contains(DecidedElsewhere, StringComparison.Ordinal);
+                var conflict = DecisionRefusals.IsDecidedElsewhere(answer.Error.Code, answer.Error.Message);
                 (RefusalCode, Refusal, IsRefusedAsDecided) = (answer.Error.Code, conflict ? Labels.AlreadyDecidedBare : answer.Error.Message, conflict);
                 Say(Refusal);
                 Raise();
