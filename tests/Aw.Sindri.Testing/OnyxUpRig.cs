@@ -91,12 +91,12 @@ public sealed class OnyxUpRig
     public async Task<Kernel.Result<OnyxUpResponse>> Up(CancellationToken cancellationToken)
         => await Service().Handle(new OnyxUpRequest(), cancellationToken);
 
-    // Compose reads HOST_PORT from the rendered .env, so the fake config answers with it (3000 before the env exists).
+    // Compose reads HOST_PORT from the rendered .env, so the fake config answers with it (3189 before the env exists).
     private int RenderedPort()
         => (Workspace.Read(Paths.Env) is { IsSuccess: true } read ? read.Value : null)?.Split('\n').FirstOrDefault(static l => l.StartsWith("HOST_PORT=", StringComparison.Ordinal)) is { } line
             && int.TryParse(line["HOST_PORT=".Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var port)
                 ? port
-                : 3000;
+                : 3189;
 
     // A file the fake fetch "wrote" is on disk for the workspace too.
     private void Mirror(string path, byte[] bytes) => Workspace.Files[Paths.DeployDir + "/" + path] = System.Text.Encoding.UTF8.GetString(bytes);

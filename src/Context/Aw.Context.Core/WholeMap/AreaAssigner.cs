@@ -7,7 +7,7 @@ namespace Aw.Context.Core.WholeMap;
 /// one would hold more than half the nodes or more than the area cap, or when there are fewer than 3 (at most two passes, each replacing a feature by its child features; the replaced feature
 /// and what reaches only it are unassigned). A feature's area is the area-feature at or above it; every other node
 /// takes the area most of the nodes it points at (or that point at it) are in, one vote per edge, ties to the smallest key, the other areas it reaches in 'also in' (at most five).
-/// An area no vote reaches is the unassigned group, and unassigned votes count for nothing.
+/// An area no vote reaches is the unassigned group, and unassigned votes count for nothing. Concept nodes (and the edges to them) are left out: they are a band of their own, never an area.
 /// </summary>
 internal sealed class AreaAssigner
 {
@@ -24,7 +24,7 @@ internal sealed class AreaAssigner
     internal AreaAssigner(GraphSnapshot graph, int areaCap)
     {
         _areaCap = areaCap;
-        _kinds = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key.Kind, StringComparer.Ordinal);
+        _kinds = graph.Nodes.Where(n => n.Key.Kind != NodeKind.Concept).GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key.Kind, StringComparer.Ordinal);
         foreach (var edge in graph.Edges.Where(e => _kinds.ContainsKey(e.From.Value) && _kinds.ContainsKey(e.To.Value)))
         {
             Add(_out, edge.From.Value, edge);

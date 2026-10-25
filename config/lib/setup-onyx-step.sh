@@ -3,7 +3,7 @@
 # 0 (Onyx is up) and 3 (skipped, its warning and the command to run later already printed) return 0; any other code is a failure
 # (1 is `onyx up` failing; 2, 126, 127 and the like are the script itself aborting) and is returned with the message.
 aw_setup_onyx_finish() {
-  local rc="${1:-0}" later="${2:-scripts/sindri-app.sh onyx up}"
+  local rc="${1:-0}" later="${2:-sindri onyx up}"
   case "$rc" in
     0|3) return 0 ;;
   esac

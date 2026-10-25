@@ -34,7 +34,8 @@ internal sealed partial class ItemSheetViewModel
         var shown = new List<ControlViewModel>();
         foreach (var action in _allowed.Concat(_controls.Keys.Except(_allowed, StringComparer.Ordinal)).ToList())
         {
-            if (!_controls.TryGetValue(action, out var control) && catalog.On(action, ItemId, Sender(action)) is { } made)
+            // Close item ends the item in one press, so the close actions ask first (Confirm and Keep, as Cancel job does), whatever the catalog says (ux-A-3).
+            if (!_controls.TryGetValue(action, out var control) && catalog.On(action, ItemId, Sender(action), confirm: IsSheetAction(action)) is { } made)
             {
                 control = _controls[action] = made;
                 control.PropertyChanged += OnControlChanged;

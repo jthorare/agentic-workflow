@@ -22,7 +22,7 @@ public abstract class OnyxProvisioningContract
     {
         var (provisioning, _) = Create();
         string password;
-        var owner = (await provisioning.SignIn(3000, "owner@example.net", "pw", Token)).Value;
+        var owner = (await provisioning.SignIn(3189, "owner@example.net", "pw", Token)).Value;
         await using (owner)
         {
             Expect.True(!(await owner.RetireLegacyUser(Token)).Value);
@@ -35,7 +35,7 @@ public abstract class OnyxProvisioningContract
 
         string old;
         string token;
-        var dedicated = (await provisioning.SignIn(3000, OnyxAccounts.DedicatedEmail, password, Token)).Value;
+        var dedicated = (await provisioning.SignIn(3189, OnyxAccounts.DedicatedEmail, password, Token)).Value;
         await using (dedicated)
         {
             Expect.Equal(0, (await dedicated.RevokeTokens("sindri-onyx", Token)).Value);
@@ -45,10 +45,10 @@ public abstract class OnyxProvisioningContract
         }
 
         Expect.True(token.Length > 0 && !string.Equals(old, token, StringComparison.Ordinal));
-        Expect.True((await provisioning.TokenIsAdmin(3000, token, OnyxAccounts.DedicatedEmail, Token)).Value);
-        Expect.True(!(await provisioning.TokenIsAdmin(3000, old, OnyxAccounts.DedicatedEmail, Token)).Value);
-        Expect.True(!(await provisioning.TokenIsAdmin(3000, token, "someone@example.net", Token)).Value);
-        Expect.True(!(await provisioning.TokenIsAdmin(3000, "stranger-token", OnyxAccounts.DedicatedEmail, Token)).Value);
+        Expect.True((await provisioning.TokenIsAdmin(3189, token, OnyxAccounts.DedicatedEmail, Token)).Value);
+        Expect.True(!(await provisioning.TokenIsAdmin(3189, old, OnyxAccounts.DedicatedEmail, Token)).Value);
+        Expect.True(!(await provisioning.TokenIsAdmin(3189, token, "someone@example.net", Token)).Value);
+        Expect.True(!(await provisioning.TokenIsAdmin(3189, "stranger-token", OnyxAccounts.DedicatedEmail, Token)).Value);
     }
 
     /// <summary>Disposing a session logs it out, once.</summary>
@@ -56,7 +56,7 @@ public abstract class OnyxProvisioningContract
     public async Task Disposing_the_session_logs_out_once()
     {
         var (provisioning, logouts) = Create();
-        var session = (await provisioning.SignIn(3000, "owner@example.net", "pw", Token)).Value;
+        var session = (await provisioning.SignIn(3189, "owner@example.net", "pw", Token)).Value;
 
         await session.DisposeAsync();
 

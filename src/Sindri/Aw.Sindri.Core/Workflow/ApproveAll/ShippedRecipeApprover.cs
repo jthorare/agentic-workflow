@@ -70,7 +70,7 @@ public sealed class ShippedRecipeApprover(
     /// <summary>Registers and approves one row; null when it is approved, else why it was refused.</summary>
     private async ValueTask<ApproveAllRefused?> ApproveOne(ApproveAllRow row, ShippedFile? file, (string Actor, ApprovalBatch Batch) hold, CancellationToken cancellationToken)
     {
-        var cli = $"sindri-app recipe approve {row.Id.Value}";
+        var cli = $"sindri recipe approve {row.Id.Value}";
         if (file is null)
         {
             return new ApproveAllRefused(row.Id, row.Hash, WorkflowErrors.RecipeNotShipped.Code, $"{row.DisplayName} is not one this build ships.", cli);

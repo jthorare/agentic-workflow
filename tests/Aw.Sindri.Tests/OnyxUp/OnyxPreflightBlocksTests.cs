@@ -10,7 +10,7 @@ public sealed class OnyxPreflightBlocksTests
 
     private static readonly OnyxPins _pins = new("v4.9.0", new string('0', 40), [], [], DiskBytes: 30 * Gib, DockerMemoryBytes: 5_905_580_032);
     private static readonly DiskFacts _roomy = new("/h", 80 * Gib);
-    private static readonly PortFacts _free = new(3000, PreferredFree: true, FirstFreeFallback: null);
+    private static readonly PortFacts _free = new(3189, PreferredFree: true, FirstFreeFallback: null);
 
     private static PreflightReport Evaluate(ContainerRuntimeFacts docker, DiskFacts? home = null, PortFacts? port = null, int? ownPort = null)
         => OnyxPreflight.Evaluate(docker, new HostFacts(home ?? _roomy, DataRoot: null, port ?? _free), _pins, ownPort);
@@ -66,7 +66,7 @@ public sealed class OnyxPreflightBlocksTests
     [Fact, Trait("Lane", "unit")]
     public void Own_port_makes_the_port_row_ok_even_when_taken()
     {
-        var report = Evaluate(FakeContainerRuntime.Healthy, port: new PortFacts(3000, PreferredFree: false, FirstFreeFallback: null), ownPort: 3002);
+        var report = Evaluate(FakeContainerRuntime.Healthy, port: new PortFacts(3189, PreferredFree: false, FirstFreeFallback: null), ownPort: 3002);
 
         var port = Check(report, "port");
         Assert.Equal(CheckState.Ok, port.State);

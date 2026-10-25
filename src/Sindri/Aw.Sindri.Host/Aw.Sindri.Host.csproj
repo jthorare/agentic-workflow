@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <!-- The shipped recipes (setup-once spec §5.3): every file of the directory AwRecipesDir names is embedded as
-       aw-recipes/sindri/<path relative to it>, '/' separated, README.md excluded. scripts/sindri-app.sh stages `git archive
+       aw-recipes/sindri/<path relative to it>, '/' separated, README.md excluded. scripts/install-cs.sh stages `git archive
        HEAD recipes/sindri` into its build copy and passes that directory; an ordinary build or publish that names none embeds
        the checkout's recipes/sindri (a published binary with an empty set has nothing for approve-all to plan); a build outside a checkout
        embeds nothing (an empty set is legal). The reader is the engine's IEmbeddedRecipes. -->

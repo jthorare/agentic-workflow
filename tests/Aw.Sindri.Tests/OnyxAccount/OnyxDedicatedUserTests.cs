@@ -38,7 +38,7 @@ public sealed class OnyxDedicatedUserTests
         public async Task<Kernel.Result<OnyxAccountResponse>> Run()
         {
             var minter = new OnyxKeyMinter(Prompts, Provisioning, Secrets, Secrets, new FakeRandomHex(), Progress);
-            return await new OnyxAccountService(Workspace, Prompts, new FakeBrowser(), minter, Profile, Progress).Handle(new OnyxAccountRequest(3000, "v4.9.0"), Token);
+            return await new OnyxAccountService(Workspace, Prompts, new FakeBrowser(), minter, Profile, Progress).Handle(new OnyxAccountRequest(3189, "v4.9.0"), Token);
         }
     }
 
@@ -107,7 +107,7 @@ public sealed class OnyxDedicatedUserTests
         var failing = new FailDedicatedLogin(rig.Provisioning);
 
         var minter = new OnyxKeyMinter(rig.Prompts, failing, rig.Secrets, rig.Secrets, new FakeRandomHex(), rig.Progress);
-        var result = await new OnyxAccountService(rig.Workspace, rig.Prompts, new FakeBrowser(), minter, rig.Profile, rig.Progress).Handle(new OnyxAccountRequest(3000, "v4.9.0"), Token);
+        var result = await new OnyxAccountService(rig.Workspace, rig.Prompts, new FakeBrowser(), minter, rig.Profile, rig.Progress).Handle(new OnyxAccountRequest(3189, "v4.9.0"), Token);
 
         Assert.Equal(SindriErrors.OnyxKeyFailed.Code, result.Error.Code);
         Assert.Contains(OnyxAccounts.DedicatedEmail, result.Error.Message, StringComparison.Ordinal);
@@ -176,7 +176,7 @@ public sealed class OnyxDedicatedUserTests
         prompts.Answer(typed, OwnerLogin);
         var minter = new OnyxKeyMinter(prompts, rig.Provisioning, rig.Secrets, rig.Secrets, new FakeRandomHex(), rig.Progress);
 
-        var result = await minter.Mint(3000, Token);
+        var result = await minter.Mint(3189, Token);
 
         Assert.Equal(SindriErrors.OnyxKeyFailed.Code, result.Error.Code);
         Assert.Contains("Sindri creates itself", result.Error.Message, StringComparison.Ordinal);

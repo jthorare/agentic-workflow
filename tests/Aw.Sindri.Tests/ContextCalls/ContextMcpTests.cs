@@ -36,7 +36,7 @@ public sealed class ContextMcpTests : IDisposable
         var tools = await mcp.Client.ListToolsAsync(cancellationToken: ct);
 
         var context = tools.Where(t => t.Name.StartsWith("context_", StringComparison.Ordinal)).ToList();
-        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_node", "context_neighbors"], context.Select(t => t.Name), StringComparer.Ordinal);
+        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_concepts", "context_node", "context_neighbors"], context.Select(t => t.Name), StringComparer.Ordinal);
         Assert.Equal(context.Select(t => t.Name), tools.Take(context.Count).Select(t => t.Name), StringComparer.Ordinal);   // why: the context tools come first
         Assert.All(context, t => Assert.True(t.ProtocolTool.Annotations?.ReadOnlyHint));
         var query = tools.Single(t => t.Name == "context_query").JsonSchema;
@@ -119,12 +119,34 @@ public sealed class ContextMcpTests : IDisposable
         Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":null,"node":null}""", ct)).IsError);   // why: null is absent
         Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":2}""", ct)).IsError);
         Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","depth":9}""", ct)).IsError);   // a depth past the old cap of 4 is read, and past 8 is read as 8 (owner q93, 2026-10-23)
-        Assert.Equal("SND-CONTEXT-006", Code(await own.Call("context_query", """{"q":"orientation","budget":0}""", ct)));
+        Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","budget":0}""", ct)).IsError);   // why: budget is read and ignored
+        Assert.NotEqual(true, (await own.Call("context_query", """{"q":"orientation","budget":-5}""", ct)).IsError);
         Assert.Equal(
             [(true, "SND-CONTEXT-020"), (true, "SND-CONTEXT-020"), (true, "SND-CONTEXT-003"), (true, "SND-CONTEXT-021"), (true, "SND-CONTEXT-022"),
              (true, "SND-CONTEXT-022"), (true, "SND-CONTEXT-006"), (true, "SND-CONTEXT-023"), (true, "SND-CONTEXT-020"), (true, "SND-CONTEXT-021"),
              (true, "SND-CONTEXT-022")],
             codes);
+    }
+
+    [Theory(Timeout = 60_000), Trait("Lane", "integration")]
+    [InlineData("context_query", """{"q":"orientation",""")]
+    [InlineData("context_lenses", """{"anchor":"feature:layout.split-pane",""")]
+    [InlineData("context_node", """{"key":"feature:layout.split-pane",""")]
+    [InlineData("context_neighbors", """{"key":"feature:layout.split-pane",""")]
+    [InlineData("context_sources", """{""")]
+    public async Task Every_context_tool_refuses_a_limit_under_1_and_an_offset_under_0_the_same_way(string tool, string prefix)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var on = await ContextHosts.Approved(_repo, sessions: true, ct);
+        await using var own = await McpSession.Open(on, "split-panes", ct);
+
+        var codes = new List<string?>();
+        foreach (var window in new[] { "\"limit\":0}", "\"limit\":-1}", "\"offset\":-1}" })
+        {
+            codes.Add(Code(await own.Call(tool, prefix + window, ct)));
+        }
+
+        Assert.All(codes, c => Assert.Equal("SND-CONTEXT-006", c));
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]

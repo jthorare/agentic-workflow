@@ -125,6 +125,8 @@ cs_env() {
 
 # ts_db: the judge database has the TS shape (the stamped C# judge refuses it with AW-DATA-009; that check is read-only).
 DB="$STATE/judge/decisions.sqlite"
+# refuses_ts <judge health output>: the AW-DATA-009 refusal. `judge health` prints the error's message without its code.
+refuses_ts() { case "$1" in *AW-DATA-009* | *"has tables but no schema_version table"*) return 0 ;; esac; return 1; }
 ts_db() {
   local d out
   [ -f "$DB" ] || return 1
@@ -132,8 +134,7 @@ ts_db() {
   [ -x "$d/judge" ] || return 1
   cs_env
   out="$(AW_STATE_DIR="$STATE" AW_JUDGE_PROVIDERS=rules "$d/judge" health 2>&1 < /dev/null)"
-  case "$out" in *AW-DATA-009*) return 0 ;; esac
-  return 1
+  refuses_ts "$out"
 }
 
 latest_log() { ls -t "$LOGDIR"/cutover-*.log 2>/dev/null | head -n 1; }
@@ -172,20 +173,42 @@ read_repos() {
   done
 }
 
+# The running Sindri control plane (#1032). serve writes control.json as one compact line, {"url":..,"pid":N,"epoch":..,
+# "temporal":{"pid":M,..}}: the serve's pid is the TOP-LEVEL one, never the Temporal server's. (Same helper as install-cs.sh;
+# the two scripts are copied alone in their tests, so it is repeated, not sourced.)
+serve_pid() { # the live serve pid, or nothing
+  local f="${AW_SINDRI_HOME:-$STATE/sindri-app}/control.json" pid
+  [ -f "$f" ] || return 0
+  pid="$(jq -r '.pid // empty' "$f" 2> /dev/null || true)"
+  if [ -z "$pid" ]; then
+    pid="$(tr -d '\n' < "$f" | sed -E 's/"temporal"[ ]*:.*//' | sed -nE 's/.*"pid"[ ]*:[ ]*([0-9]+).*/\1/p' | head -n 1)"
+  fi
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac
+  if kill -0 "$pid" 2> /dev/null; then echo "$pid"; fi
+}
+serve_cmd() { # $1 = pid: its executable (Linux, " (deleted)" stripped) and its command line, one per line
+  local exe=""
+  if [ -d /proc/self ]; then exe="$(readlink "/proc/$1/exe" 2> /dev/null || true)"; exe="${exe% (deleted)}"; fi
+  printf '%s\n%s\n' "$exe" "$(ps -o args= -p "$1" 2> /dev/null || true)"
+}
+serve_runs_in() { # $1 = a directory: does the running serve execute from it?
+  local pid
+  pid="$(serve_pid)"
+  [ -n "$pid" ] || return 1
+  case "$(serve_cmd "$pid")" in *"$1/"*) return 0 ;; *) return 1 ;; esac
+}
+
 # ---- step 1: refuse while a TS job runs -------------------------------------------------------------------------------
 
 step1() {
   local pid cmd label uid
   # a C# serve running from the retired bin/sindri-app/ build
-  if [ -d "$STATE/bin/sindri-app" ] && [ -f "$STATE/sindri-app/control.json" ]; then
-    pid="$(sed -nE 's/.*"pid"[ ]*:[ ]*([0-9]+).*/\1/p' "$STATE/sindri-app/control.json" | head -n 1)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      cmd="$(ps -o args= -p "$pid" 2>/dev/null)"
-      case "$cmd" in *"$STATE/bin/sindri-app/"*)
-        say "refused: the Sindri control plane (pid $pid) runs from $STATE/bin/sindri-app/. Nothing was changed. Run: sindri-app stop, then re-run ./setup.sh"
-        exit 1 ;;
-      esac
-    fi
+  pid="$(serve_pid)"
+  if [ -n "$pid" ]; then
+    case "$(serve_cmd "$pid")" in *"$STATE/bin/sindri-app/"*)
+      say "refused: the Sindri control plane (pid $pid) runs from $STATE/bin/sindri-app/. Nothing was changed. Run: sindri-app stop (or sindri stop), then re-run ./setup.sh"
+      exit 1 ;;
+    esac
   fi
   # a loaded launchd job that is running (macOS)
   if [ "$(uname)" = Darwin ] && command -v launchctl > /dev/null 2>&1; then
@@ -244,9 +267,11 @@ pre_link() {
   local sindri_bin work=0 name path plist label uid
   read_repos
   [ -d "$PROFILE" ] || [ -L "$PROFILE" ] && work=1
-  for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
-    [ -f "$LA/com.agentic-workflow.$label.plist" ] && work=1
-  done
+  if [ "$(uname)" = Darwin ]; then
+    for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
+      [ -f "$LA/com.agentic-workflow.$label.plist" ] && work=1
+    done
+  fi
   tmpl_matches && work=1
   ts_db && work=1
   if [ "$work" = 0 ]; then return 0; fi
@@ -279,10 +304,16 @@ pre_link() {
           if [ ! -d "$path/.git" ] && ! git -C "$path" rev-parse --git-dir > /dev/null 2>&1; then
             say "hook v3 not installed in $name: $path is not a readable git repo"; L "hook skipped $name $path"; continue
           fi
-          if "$sindri_bin" scrub --install-pre-commit --repo "$path" --bin "$BIN/sindri" > /dev/null 2>&1 < /dev/null; then
+          if hook_out="$("$sindri_bin" scrub --install-pre-commit --repo "$path" --bin "$BIN/sindri" 2>&1 < /dev/null)"; then
             say "installed hook v3 in $name ($path)"; L "hook v3 $name $path"
+          elif printf '%s' "$hook_out" | grep -q 'SND-SCRUB-003'; then
+            # The repo has its own pre-commit hook (husky, core.hooksPath, ...): Sindri never replaces it, so this is a
+            # skip with the manual line to add (the same answer `sindri doctor` gives), not a step-2 failure (#1029).
+            say "hook v3 skipped in $name ($path): it has its own pre-commit hook; add 'sindri scrub --staged || exit 1' to it by hand"
+            L "hook skipped (SND-SCRUB-003) $name $path: $(printf '%s' "$hook_out" | redact | tr '\n' ' ')"
           else
-            say "hook v3 failed in $name ($path)"; L "hook failed $name $path"; partial=1
+            say "hook v3 failed in $name ($path): $(printf '%s' "$hook_out" | redact | tail -n 3 | tr '\n' ' ')"
+            L "hook failed $name $path: $(printf '%s' "$hook_out" | redact | tr '\n' ' ')"; partial=1
           fi
         done <<EOF
 $REPOS
@@ -292,17 +323,20 @@ EOF
   fi
   [ "$partial" = 0 ] || { say "stopped at step 2; re-run ./setup.sh"; exit 3; }
 
-  # step 3: launchd
+  # step 3: launchd (macOS only; Linux has no launchd jobs, so it only gets the cron reminder)
   uid="$(id -u)"
-  for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
-    plist="$LA/com.agentic-workflow.$label.plist"
-    [ -f "$plist" ] || continue
-    if [ "$dry" = 0 ] && [ "$(uname)" = Darwin ] && command -v launchctl > /dev/null 2>&1; then
-      launchctl bootout "gui/$uid" "$plist" > /dev/null 2>&1 || true
-    fi
-    del_file "$plist" "launchd job com.agentic-workflow.$label"
-  done
-  [ "$(uname)" = Darwin ] || say "remove any cron line you added by hand for scorer or sindri"
+  if [ "$(uname)" = Darwin ]; then
+    for label in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do
+      plist="$LA/com.agentic-workflow.$label.plist"
+      [ -f "$plist" ] || continue
+      if [ "$dry" = 0 ] && command -v launchctl > /dev/null 2>&1; then
+        launchctl bootout "gui/$uid" "$plist" > /dev/null 2>&1 || true
+      fi
+      del_file "$plist" "launchd job com.agentic-workflow.$label"
+    done
+  else
+    say "remove any cron line you added by hand for scorer or sindri"
+  fi
 
   # step 4: the git template
   if tmpl_matches; then
@@ -368,9 +402,7 @@ post_link() {
     fi
     if [ "$dry" = 0 ] && [ -x "$BIN/judge" ]; then
       out="$("$BIN/judge" health 2>&1 < /dev/null)"; rc=$?
-      case "$out" in
-        *AW-DATA-009*) say "judge health gate failed: AW-DATA-009 (a TS-shaped judge database). Re-run ./setup.sh"; exit 3 ;;
-      esac
+      if refuses_ts "$out"; then say "judge health gate failed: AW-DATA-009 (a TS-shaped judge database). Re-run ./setup.sh"; exit 3; fi
       if [ "$rc" -ge 126 ]; then say "judge health gate failed: $BIN/judge does not run (exit $rc). Re-run ./setup.sh"; exit 3; fi
       [ "$rc" = 0 ] || warn "judge health exited $rc: $(printf '%s' "$out" | head -n 1)"
     elif [ "$dry" = 0 ]; then
@@ -385,7 +417,12 @@ post_link() {
   if [ -L "$BIN/sindri-app" ]; then
     case "$(readlink "$BIN/sindri-app")" in */sindri-app.sh) del_file "$BIN/sindri-app" "the sindri-app link" ;; esac
   fi
-  del_state "$STATE/bin/sindri-app" "the retired sindri-app builds"
+  if serve_runs_in "$STATE/bin/sindri-app"; then
+    say "kept $STATE/bin/sindri-app: Sindri is still running from it; run \`sindri stop\`, then re-run ./setup.sh"
+    L "kept $STATE/bin/sindri-app: Sindri is still running from it"
+  else
+    del_state "$STATE/bin/sindri-app" "the retired sindri-app builds"
+  fi
   left=""
   for f in "$BIN"/sindri-*; do
     [ -e "$f" ] || [ -L "$f" ] || continue
@@ -438,8 +475,7 @@ ts_db_linked() {
   [ -f "$DB" ] || return 1
   [ -x "$BIN/judge" ] || return 1
   out="$(AW_JUDGE_PROVIDERS=rules "$BIN/judge" health 2>&1 < /dev/null)"
-  case "$out" in *AW-DATA-009*) return 0 ;; esac
-  return 1
+  refuses_ts "$out"
 }
 
 # ---- run --------------------------------------------------------------------------------------------------------------

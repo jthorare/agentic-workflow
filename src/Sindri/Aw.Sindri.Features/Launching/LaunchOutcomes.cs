@@ -31,7 +31,7 @@ internal sealed class LaunchOutcomes(ILedgerStore ledger, EventFactory events, I
 
     /// <summary>The viewer part of 'launch.started'.</summary>
     /// <param name="outcome">What the viewer did.</param>
-    /// <param name="attended">Whether a person opened it; an unattended launch skips the viewer and records kind 'none'.</param>
+    /// <param name="attended">Whether a person opened it; an unattended launch skips the viewer and records the viewer that opens on takeover, with the reason it was skipped.</param>
     /// <param name="cancellationToken">Cancels the viewer probe.</param>
     /// <returns>The recorded form, with the kind and label the viewer's own probe reports (no label for 'print').</returns>
     public async ValueTask<LaunchViewer> ViewerOf(ViewerOutcome outcome, bool attended, CancellationToken cancellationToken)
@@ -39,7 +39,7 @@ internal sealed class LaunchOutcomes(ILedgerStore ledger, EventFactory events, I
         ArgumentNullException.ThrowIfNull(outcome);
         if (!attended)
         {
-            return ViewerFrom(new TerminalFacts("none", "none", Present: false, "none", ConfigPath: null, Problem: null, Detail: null), outcome, attended);   // an unattended launch skips the viewer (launcher L-1)
+            return LaunchViewer.Background(outcome);   // an unattended launch skips the viewer (launcher L-1), saying which one opens on takeover and why it didn't now
         }
 
         if (outcome.ViewerKind is { } kind)
@@ -62,7 +62,7 @@ internal sealed class LaunchOutcomes(ILedgerStore ledger, EventFactory events, I
         ArgumentNullException.ThrowIfNull(outcome);
         return attended
             ? new LaunchViewer(facts.Kind, string.Equals(facts.Kind, "print", StringComparison.Ordinal) ? null : facts.Label, outcome.Kind, outcome.Code, outcome.Detail)
-            : new LaunchViewer("none", Label: null, outcome.Kind, outcome.Code, outcome.Detail);
+            : LaunchViewer.Background(outcome);
     }
 
     /// <summary>Records the session <paramref name="started"/> as the outcome of <paramref name="request"/>.</summary>

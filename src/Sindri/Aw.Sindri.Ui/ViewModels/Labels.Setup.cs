@@ -75,7 +75,7 @@ internal static partial class Labels
     internal const string SetupReconnects = "The app reconnects on its own when Sindri starts.";
 
     /// <summary>The launcher command the daily path uses.</summary>
-    internal const string SetupLauncher = "sindri-app";
+    internal const string SetupLauncher = "sindri";
 
     /// <summary>The disclosure that holds ids and codes.</summary>
     internal const string SetupDetails = "Details";
@@ -177,11 +177,11 @@ internal static partial class Labels
     /// <returns>The command, or empty for an action this build doesn't know.</returns>
     internal static string SetupCli(string action) => action switch
     {
-        "AddRepo" => "sindri-app repo add <path>",
-        "ApproveProfile" => "sindri-app profile approve <hash>",
-        "ApproveAllRecipes" => "sindri-app recipe approve-all",
-        "RegisterMcp" => "sindri-app mcp register --apply",
-        "SetupOnyx" => "sindri-app onyx up",
+        "AddRepo" => "sindri repo add <path>",
+        "ApproveProfile" => "sindri profile approve <hash>",
+        "ApproveAllRecipes" => "sindri recipe approve-all",
+        "RegisterMcp" => "sindri mcp register --apply",
+        "SetupOnyx" => "sindri onyx up",
         "RefreshContextMap" => "sindri context map refresh",
         _ => string.Empty,
     };

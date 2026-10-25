@@ -4,6 +4,8 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$DIR/../readiness-baseline.mjs"
 TMP="$(mktemp -d)"
+# The script scores no apps by default; the fixtures name six (alpha is the one the trees below build).
+export READINESS_APPS="beta,alpha,gamma,delta,epsilon,apps/live"
 trap 'rm -rf "$TMP"' EXIT
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -11,13 +13,13 @@ fail() { echo "FAIL: $*"; exit 1; }
 # A minimal tree: README, AGENTS.md, one app with a lockfile, strict tsconfig and a unit test.
 make_tree() {
   local root="$1"
-  mkdir -p "$root/judge/tests" "$root/judge/src"
+  mkdir -p "$root/alpha/tests" "$root/alpha/src"
   echo "# demo" > "$root/README.md"
-  printf '# Agents\n\n## Commands\n\n```bash\ncd judge && npm run build\n```\n' > "$root/AGENTS.md"
-  echo '{"name":"judge","scripts":{"build":"tsc","test":"vitest run"}}' > "$root/judge/package.json"
-  echo '{}' > "$root/judge/package-lock.json"
-  echo '{"compilerOptions":{"strict": true}}' > "$root/judge/tsconfig.json"
-  echo 'test("x", () => {})' > "$root/judge/tests/a.test.ts"
+  printf '# Agents\n\n## Commands\n\n```bash\ncd alpha && npm run build\n```\n' > "$root/AGENTS.md"
+  echo '{"name":"alpha","scripts":{"build":"tsc","test":"vitest run"}}' > "$root/alpha/package.json"
+  echo '{}' > "$root/alpha/package-lock.json"
+  echo '{"compilerOptions":{"strict": true}}' > "$root/alpha/tsconfig.json"
+  echo 'test("x", () => {})' > "$root/alpha/tests/a.test.ts"
 }
 
 row_state() { # row_state <file> <criterion-id> -> state column of that criterion's table row
@@ -64,7 +66,7 @@ test_deterministic_for_fixed_date() {
 test_app_fraction_counts_present_apps() {
   local t="$TMP/frac"; make_tree "$t"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md"
-  # TS-1 is per app over six apps; only judge exists and has a test.
+  # TS-1 is per app over six apps; only alpha exists and has a test.
   grep -E '^\| TS-1 \|.*\| 1 / 6 \|' "$t/o.md" >/dev/null || fail "TS-1 should report 1 / 6"
   echo "PASS: test_app_fraction_counts_present_apps"
 }
@@ -143,12 +145,12 @@ test_pe_scored_against_w9_page() {
 
 test_app_na_leaves_denominator() {
   local t="$TMP/na"; make_tree "$t"
-  mkdir -p "$t/mods/aw-live/hooks"; echo 'export {}' > "$t/mods/aw-live/hooks/index.ts"
+  mkdir -p "$t/apps/live/hooks"; echo 'export {}' > "$t/apps/live/hooks/index.ts"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md"
-  # BS-2: judge passes, aw-live is n/a (no package.json), the other four are absent -> 1 / 5
+  # BS-2: alpha passes, live is n/a (no package.json), the other four are absent -> 1 / 5
   row "$t/o.md" BS-2 | grep -E '\| 1 / 5 \|' >/dev/null || fail "BS-2 should be 1 / 5: $(row "$t/o.md" BS-2)"
-  row "$t/o.md" BS-2 | grep -F 'n/a: mods/aw-live (no package.json' >/dev/null || fail "BS-2 should list aw-live as n/a"
-  # BS-1: per app; judge has scripts.build and AGENTS.md documents it
+  row "$t/o.md" BS-2 | grep -F 'n/a: apps/live (no package.json' >/dev/null || fail "BS-2 should list live as n/a"
+  # BS-1: per app; alpha has scripts.build and AGENTS.md documents it
   row "$t/o.md" BS-1 | grep -E '\| app \|.*\| 1 / 5 \|' >/dev/null || fail "BS-1 should be app-scope 1 / 5: $(row "$t/o.md" BS-1)"
   echo "PASS: test_app_na_leaves_denominator"
 }
@@ -248,7 +250,7 @@ test_gh_large_payload_is_scored() {
 test_unexpected_shapes_and_fs_errors_are_unknown() {
   local t="$TMP/shape"; make_tree "$t"; make_gh_stub "$TMP/stub"
   export GH_LOG="$TMP/shape.log"; : > "$GH_LOG"
-  mkdir -p "$t/scorer"; echo '{"name":"scorer"}' > "$t/scorer/package.json"; echo 'not a dir' > "$t/scorer/src"
+  mkdir -p "$t/beta"; echo '{"name":"beta"}' > "$t/beta/package.json"; echo 'not a dir' > "$t/beta/src"
   mkdir -p "$t/.github"; echo 'not a dir' > "$t/.github/workflows"
   local rc=0
   GH_STUB_SHAPE=object PATH="$TMP/stub:$PATH" node "$SCRIPT" --root "$t" --repo o/r --date 2026-10-10 --out "$t/o.md" 2>"$TMP/err" || rc=$?
@@ -261,10 +263,10 @@ test_unexpected_shapes_and_fs_errors_are_unknown() {
 
 test_malformed_package_json_fails() {
   local t="$TMP/badpkg"; make_tree "$t"
-  echo '{bad' > "$t/judge/package.json"
+  echo '{bad' > "$t/alpha/package.json"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md"
   for id in BS-1 BS-2; do
-    row "$t/o.md" "$id" | grep -E 'fail: .*judge \(package.json is not valid JSON\)' >/dev/null || fail "$id should fail judge on bad JSON: $(row "$t/o.md" "$id")"
+    row "$t/o.md" "$id" | grep -E 'fail: .*alpha \(package.json is not valid JSON\)' >/dev/null || fail "$id should fail alpha on bad JSON: $(row "$t/o.md" "$id")"
   done
   echo "PASS: test_malformed_package_json_fails"
 }
@@ -295,8 +297,8 @@ test_walk_sorted_and_skips_symlinks() {
   echo 'name: z flaky quarantine' > "$t/.github/workflows/z.yml"
   echo 'name: a flaky quarantine' > "$t/.github/workflows/a.yml"
   mkdir "$t/.github/workflows/dir.yml"
-  ln -s "$t/missing-target" "$t/judge/src/broken-link.ts"
-  ln -s "$t/judge" "$t/judge/src/cycle"
+  ln -s "$t/missing-target" "$t/alpha/src/broken-link.ts"
+  ln -s "$t/alpha" "$t/alpha/src/cycle"
   local rc=0
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md" 2>"$TMP/err" || rc=$?
   [ "$rc" -eq 0 ] || fail "broken symlink / cycle / *.yml dir should not crash ($(head -c 300 "$TMP/err"))"
@@ -306,57 +308,57 @@ test_walk_sorted_and_skips_symlinks() {
 
 test_unreadable_files_have_their_own_reason() {
   local t="$TMP/perm"; make_tree "$t"
-  chmod 000 "$t/AGENTS.md" "$t/judge/package.json"
+  chmod 000 "$t/AGENTS.md" "$t/alpha/package.json"
   local rc=0
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md" 2>"$TMP/err" || rc=$?
-  chmod 644 "$t/AGENTS.md" "$t/judge/package.json"
+  chmod 644 "$t/AGENTS.md" "$t/alpha/package.json"
   [ "$rc" -eq 0 ] || fail "unreadable files should not abort the run, got $rc ($(head -c 300 "$TMP/err"))"
   row "$t/o.md" DOC-1 | grep -E '\| unknown \|.*AGENTS.md is not readable' >/dev/null || fail "DOC-1 should be unknown: $(row "$t/o.md" DOC-1)"
   for id in BS-1 BS-2; do
-    row "$t/o.md" "$id" | grep -E 'fail: .*judge \(package.json is not readable' >/dev/null || fail "$id should say not readable: $(row "$t/o.md" "$id")"
+    row "$t/o.md" "$id" | grep -E 'fail: .*alpha \(package.json is not readable' >/dev/null || fail "$id should say not readable: $(row "$t/o.md" "$id")"
     row "$t/o.md" "$id" | grep -F 'not valid JSON' >/dev/null && fail "$id should not claim bad JSON"
   done
   # only AGENTS.md unreadable: rows that read it name that cause, not "not documented"
   chmod 000 "$t/AGENTS.md"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/p.md" 2>/dev/null || true
   chmod 644 "$t/AGENTS.md"
-  row "$t/p.md" BS-1 | grep -E 'fail: .*judge \(AGENTS.md is not readable \(EACCES\)\)' >/dev/null || fail "BS-1 should blame the unreadable AGENTS.md: $(row "$t/p.md" BS-1)"
+  row "$t/p.md" BS-1 | grep -E 'fail: .*alpha \(AGENTS.md is not readable \(EACCES\)\)' >/dev/null || fail "BS-1 should blame the unreadable AGENTS.md: $(row "$t/p.md" BS-1)"
   row "$t/p.md" BS-3 | grep -F 'AGENTS.md is not readable (EACCES)' >/dev/null || fail "BS-3 should blame the unreadable AGENTS.md: $(row "$t/p.md" BS-3)"
   echo "PASS: test_unreadable_files_have_their_own_reason"
 }
 
 test_bs1_needs_the_commands_block() {
   local t="$TMP/bs1"; make_tree "$t"
-  # judge named only in a directory tree; a build mention elsewhere; no Commands block -> not documented
-  printf '# Agents\n\n```\njudge/   # the judge CLI\n```\n\nRun npm run build in a package.\n' > "$t/AGENTS.md"
+  # alpha named only in a directory tree; a build mention elsewhere; no Commands block -> not documented
+  printf '# Agents\n\n```\nalpha/   # the alpha CLI\n```\n\nRun npm run build in a package.\n' > "$t/AGENTS.md"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/a.md"
-  row "$t/a.md" BS-1 | grep -E 'fail: .*judge \(scripts.build not documented' >/dev/null || fail "BS-1 should not credit a tree mention: $(row "$t/a.md" BS-1)"
+  row "$t/a.md" BS-1 | grep -E 'fail: .*alpha \(scripts.build not documented' >/dev/null || fail "BS-1 should not credit a tree mention: $(row "$t/a.md" BS-1)"
   # the package line sits in the Commands block under a comment that names build -> documented
-  printf '# Agents\n\n## Commands\n\n```bash\n# TypeScript packages (each has test, typecheck, build)\ncd judge && npm test\n```\n' > "$t/AGENTS.md"
+  printf '# Agents\n\n## Commands\n\n```bash\n# TypeScript packages (each has test, typecheck, build)\ncd alpha && npm test\n```\n' > "$t/AGENTS.md"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/b.md"
-  row "$t/b.md" BS-1 | grep -E 'pass: judge \(heuristic: ' >/dev/null || fail "BS-1 should credit the Commands block: $(row "$t/b.md" BS-1)"
+  row "$t/b.md" BS-1 | grep -E 'pass: alpha \(heuristic: ' >/dev/null || fail "BS-1 should credit the Commands block: $(row "$t/b.md" BS-1)"
   echo "PASS: test_bs1_needs_the_commands_block"
 }
 
 test_sv2_reads_compiler_options() {
   local t="$TMP/sv2"; make_tree "$t"
   # strict only in a comment and in a nested object -> not strict
-  printf '{\n  // "strict": true,\n  "compilerOptions": { "paths": { "x": ["src/**/*"] }, "plugins": [{ "strict": true }] },\n  "include": ["src/**/*"]\n}\n' > "$t/judge/tsconfig.json"
+  printf '{\n  // "strict": true,\n  "compilerOptions": { "paths": { "x": ["src/**/*"] }, "plugins": [{ "strict": true }] },\n  "include": ["src/**/*"]\n}\n' > "$t/alpha/tsconfig.json"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/a.md"
-  row "$t/a.md" SV-2 | grep -E 'fail: .*judge \(' >/dev/null || fail "SV-2 should not credit a comment or nested key: $(row "$t/a.md" SV-2)"
+  row "$t/a.md" SV-2 | grep -E 'fail: .*alpha \(' >/dev/null || fail "SV-2 should not credit a comment or nested key: $(row "$t/a.md" SV-2)"
   # strict inherited through a relative extends -> strict
-  echo '{ "compilerOptions": { "strict": true, }, }' > "$t/judge/tsconfig.base.json"
-  printf '{\n  /* base */ "extends": "./tsconfig.base.json",\n  "compilerOptions": { "outDir": "dist" }\n}\n' > "$t/judge/tsconfig.json"
+  echo '{ "compilerOptions": { "strict": true, }, }' > "$t/alpha/tsconfig.base.json"
+  printf '{\n  /* base */ "extends": "./tsconfig.base.json",\n  "compilerOptions": { "outDir": "dist" }\n}\n' > "$t/alpha/tsconfig.json"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/b.md"
-  row "$t/b.md" SV-2 | grep -F 'pass: judge (compilerOptions.strict via ./tsconfig.base.json)' >/dev/null || fail "SV-2 should follow extends: $(row "$t/b.md" SV-2)"
+  row "$t/b.md" SV-2 | grep -F 'pass: alpha (compilerOptions.strict via ./tsconfig.base.json)' >/dev/null || fail "SV-2 should follow extends: $(row "$t/b.md" SV-2)"
   echo "PASS: test_sv2_reads_compiler_options"
 }
 
 test_ts2_evidence_says_heuristic() {
   local t="$TMP/ts2"; make_tree "$t"
-  echo '{"name":"judge","scripts":{"build":"tsc","test":"vitest run","test:heavy":"vitest run heavy"}}' > "$t/judge/package.json"
+  echo '{"name":"alpha","scripts":{"build":"tsc","test":"vitest run","test:heavy":"vitest run heavy"}}' > "$t/alpha/package.json"
   node "$SCRIPT" --root "$t" --no-remote --date 2026-10-10 --out "$t/o.md"
-  row "$t/o.md" TS-2 | grep -F 'judge (heuristic: matched script test:heavy)' >/dev/null || fail "TS-2 evidence should say heuristic: $(row "$t/o.md" TS-2)"
+  row "$t/o.md" TS-2 | grep -F 'alpha (heuristic: matched script test:heavy)' >/dev/null || fail "TS-2 evidence should say heuristic: $(row "$t/o.md" TS-2)"
   echo "PASS: test_ts2_evidence_says_heuristic"
 }
 

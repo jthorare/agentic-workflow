@@ -41,8 +41,8 @@ public sealed class ContextGraphApiTests
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (deep.Status, deep.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (word.Status, word.Code));
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (queryWord.Status, queryWord.Code));
-        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (budgetWord.Status, budgetWord.Code));
-        Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (budgetZero.Status, budgetZero.Code));
+        Assert.Equal(HttpStatusCode.OK, budgetWord.Status);   // why: there is no budget; the parameter is read and ignored, never validated
+        Assert.Equal(HttpStatusCode.OK, budgetZero.Status);
         Assert.Equal(HttpStatusCode.OK, budgetOk.Status);
         Assert.Equal(HttpStatusCode.Forbidden, origin.Status);
     }

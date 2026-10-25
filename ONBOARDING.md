@@ -8,7 +8,7 @@ A how-to guide for engineers and PMs who want to use Agentic Workflow in their o
 >
 > | Where | Looks like | How to run it |
 > |-------|------------|---------------|
-> | **Terminal** | `bash` blocks: `./setup.sh`, `git pull`, `scorer --since 7d` | Your shell (zsh, bash) |
+> | **Terminal** | `bash` blocks: `./setup.sh`, `git pull`, `sindri status` | Your shell (zsh, bash) |
 > | **Agent session** | Blocks labeled *In your agent session*: `/bootstrap`, `/review 123` | Start `claude`, `codex`, or `cursor-agent` in the repo, then type the skill at the agent's prompt |
 >
 > Skills are written `/<name>`, the Claude Code and Cursor syntax. In Codex, use `$<name>` (for example, `$review`). If you type a skill into your terminal, the shell treats it as a file path and fails with `zsh: no such file or directory: /prismStatus`.
@@ -25,7 +25,7 @@ Once it's installed, every Claude Code, Codex, or Cursor session on your machine
 | **Safety hooks** | Block `rm -rf`, `git reset --hard`, force-push, pushes to `main`/`master`, and commands that contain secrets. They also add git context when a session starts. |
 | **MCP servers** | `serena` (symbol navigation), `prism-mcp` (memory across sessions), `xcodebuildmcp` (iOS simulator, macOS only) |
 | **Token savers** | `rtk` rewrites noisy shell commands into compact ones. |
-| **Judge + scorer** | `judge` makes quick, low-cost decisions for the hooks. `scorer` reports what your agent sessions cost and how much input they needed from you. |
+| **Judge** | `judge` makes quick, low-cost decisions for the hooks. |
 
 You don't install anything per repo. Skills and hooks are global. The only per-repo step is running `/bootstrap` once (see [§4](#4-bootstrap-a-repo-once-per-repo)).
 
@@ -36,7 +36,7 @@ You don't install anything per repo. Skills and hooks are global. The only per-r
 ### Prerequisites
 
 - At least one agent CLI: `claude`, `codex`, or `cursor-agent`
-- Node.js >= 22 (see `.nvmrc`)
+- Node.js >= 22 (see `.nvmrc`; only for `dembrandt`, `prism-mcp`, `xcodebuildmcp` and the schema checkers)
 - Docker Desktop, **installed and running** (Serena needs it)
 - `gh`, installed and logged in (`gh auth login`)
 - `jq` (`brew install jq`)
@@ -238,7 +238,6 @@ Everything in the right-hand column is a skill, so type it in your agent session
 | `~/.agentic-workflow/<repo-slug>/plans/` | Output from `/officeHours` and the plan reviews |
 | `~/.agentic-workflow/<repo-slug>/reviews/<pr>.json` | `/review` state, the source of truth for `/postReview` and `/addressReview` |
 | `~/.agentic-workflow/<repo-slug>/…` | Other skill artifacts, such as evidence packs and design baselines, grouped by domain |
-| `~/.agentic-workflow/scorer/reports/` | Scorer reports |
 | `<repo>/AGENTS.md`, `<repo>/.agents/rules/` | Per-repo agent context written by `/bootstrap` |
 
 Skill output lives outside your repo, so it never clutters your git status. Treat plan files as short-lived. Once the plan is captured in GitHub issues (an epic plus one issue per `TASKS.md` entry), the issues are the source of truth.
@@ -246,15 +245,6 @@ Skill output lives outside your repo, so it never clutters your git status. Trea
 ---
 
 ## 8. Day-to-day extras
-
-### See what your sessions cost
-
-```bash
-scorer --since 7d                     # every provider with transcripts on this machine
-scorer --since 1d --provider codex
-```
-
-The report lands in `~/.agentic-workflow/scorer/reports/`. For Cursor, the report only shows how much input you gave, because Cursor transcripts don't record tokens or cost.
 
 ### Coordinate multiple agents
 
@@ -269,18 +259,19 @@ Agents hand off through Prism handoffs (`session_save_handoff` / `session_load_c
 
 A profile turns off skills that don't apply to a repo (for example, the iOS design skills in a web app). Profiles: `web-app`, `ios`, `personal`. The changes go to that repo's `.claude/settings.local.json`.
 
-### Try Sindri *(opt-in)*
+### Sindri
+
+`./setup.sh` installs the C# Sindri (control plane, workflow engine, context engine and a desktop UI) with the other binaries; there is no opt-in flag (`--with-sindri` is accepted and does nothing). It also stands the pinned Onyx up unless you pass `--no-onyx`; that step needs Docker and you at a terminal.
 
 ```bash
-./setup.sh --with-sindri          # build and install the sindri CLI, plus its SessionStart nudge
-./setup.sh --with-sindri --no-onyx # ... without standing the pinned Onyx up (--with-sindri otherwise runs `onyx up` through `scripts/sindri-app.sh` after the other installs; it needs Docker and you at a terminal)
-sindri profile init               # scaffold your profile (shadow mode: records only, starts nothing)
-sindri repo onboard .             # add this repo, approve the profile at a terminal, install the hook, build the index
 sindri doctor                     # expect every line ok
-sindri observe                    # the backlog, with sizes
+sindri                            # start the control plane and open the app
+sindri status                     # where it stands
+sindri profile init               # scaffold your profile
+sindri profile validate           # check it; `sindri profile approve` at a terminal
 ```
 
-This is the TypeScript `sindri` that runs today: backlog sizing, scoping, the code index and offline self-evolution. The new C# Sindri app (control plane, workflow engine, context engine and a desktop UI) is being built in `src/Sindri` and isn't installed until the switch. See [`docs/sindri/README.md`](docs/sindri/README.md), or open `docs/sindri.html` for the visual walkthrough.
+See [`docs/sindri/README.md`](docs/sindri/README.md), or open `docs/sindri.html` for the visual walkthrough.
 
 ### Tune the judge
 

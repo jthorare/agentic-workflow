@@ -69,7 +69,7 @@ Answer these in the code or the docs the query command points at:
 
 Live failure, unchanged by #938:
 
-- `SND-CONTEXT-050`: Onyx v4.9.0 on `127.0.0.1:3000` refused the key on `GET /api/me` (HTTP 403). The key is missing, wrong, or lacks the admin role `POST /api/admin/search` needs.
+- `SND-CONTEXT-050`: Onyx v4.9.0 on `127.0.0.1:3189` refused the key on `GET /api/me` (HTTP 403). The key is missing, wrong, or lacks the admin role `POST /api/admin/search` needs.
 - The same message says sessions do not search it until `context.repoTeams` maps its teams to a repo.
 - `lastSync: null`, `records: 0`.
 - Onyx was on a port shared with another local dev server, and another tool has also been seen there. Check what actually answers before treating the 403 as only a bad key.

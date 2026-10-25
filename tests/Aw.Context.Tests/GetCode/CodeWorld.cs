@@ -71,6 +71,12 @@ internal sealed class CodeWorld : IDisposable
                 .. extraEdges ?? [],
             ]) + "\n");
 
+    /// <summary>The 'context.code.testGlobs' a profile writes: the engine has no built-in list, so a test that expects test files sets them.</summary>
+    internal const string TestGlobs = "[\"**/tests/**\",\"**/*.test.*\"]";
+
+    /// <summary>A human's scope whose 'context.code.testGlobs' are <see cref="TestGlobs"/>.</summary>
+    internal static ContextScope WithTestGlobs => MapWorld.HumanWith("{\"code\":{\"testGlobs\":" + TestGlobs + "}}");
+
     internal ValueTask<Result<CodeView>> Code(ContextScope? scope = null, string[]? anchors = null, bool draft = false, string? mapVersion = null) =>
-        World.Engine.Code(anchors ?? [Anchor], draft, mapVersion, scope ?? MapWorld.Human, MapWorld.None);
+        World.Engine.Code(anchors ?? [Anchor], draft, mapVersion, scope ?? WithTestGlobs, MapWorld.None);
 }

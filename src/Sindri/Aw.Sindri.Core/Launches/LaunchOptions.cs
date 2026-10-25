@@ -67,7 +67,7 @@ public static class LaunchOptions
     private static LaunchLastStarted? LastOf(LaunchRow? row) =>
         row is null ? null : new LaunchLastStarted(row.Target, row.RequestedAt, row.TabTitle, Public(row.Viewer), row.Late, row.Attach);
 
-    private static LaunchViewerPublic? Public(LaunchViewer? viewer) => viewer is null ? null : new LaunchViewerPublic(viewer.Kind, viewer.Label, viewer.Outcome, viewer.Code);
+    private static LaunchViewerPublic? Public(LaunchViewer? viewer) => viewer is null ? null : new LaunchViewerPublic(viewer.Kind, viewer.Label, viewer.Outcome, viewer.Code) { Reason = viewer.Reason };
 
     /// <summary>A blocker's text for a terminal detail: the line it points at, then the reason.</summary>
     private static string? Sentence(TerminalDetail? detail) =>

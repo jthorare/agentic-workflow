@@ -152,15 +152,15 @@ public sealed class DiffAnchorsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Over_1000_changed_files_truncates_and_keeps_the_full_count()
+    public void Over_1000_changed_files_are_all_listed_and_never_cut()
     {
         var files = Enumerable.Range(0, 1_200).Select(i => ("gen/f" + i.ToString("0000", CultureInfo.InvariantCulture) + ".ts", ChangeKind.Added)).ToArray();
 
         var (part, _) = Build(Changes(files));
 
-        Assert.True(part.Truncated);
-        Assert.Equal(1_000, part.Files.Count);
-        Assert.Equal(1_000, part.Unmapped.Count);
+        Assert.False(part.Truncated);
+        Assert.Equal(1_200, part.Files.Count);
+        Assert.Equal(1_200, part.Unmapped.Count);
         Assert.Equal(new DiffCounts(Changed: 1_200, Mapped: 0, Suggested: 0, Unmapped: 1_200, Denied: 0), part.Counts);
         Assert.Equal("gen/f0000.ts", part.Files[0].Path);
     }

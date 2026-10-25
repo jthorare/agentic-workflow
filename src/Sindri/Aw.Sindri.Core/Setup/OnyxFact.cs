@@ -22,7 +22,7 @@ public sealed record OnyxFact(OnyxState State, bool Unreachable, string? Blocked
     public (string Code, string Sentence)? JobFailure { get; init; }
 
     /// <summary>Gets the loopback port Onyx answers on (the sign-up page is on it).</summary>
-    public int Port { get; init; } = 3000;
+    public int Port { get; init; } = 3189;
 
     /// <summary>The fact from Onyx's status: unreachable when it runs and doesn't answer, blocked by the first failed preflight check's code.</summary>
     /// <param name="report">The status.</param>

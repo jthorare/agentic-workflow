@@ -256,7 +256,7 @@ public sealed class ContextLensesApiTests : IDisposable
         var wrongType = await mcp.Call("context_lenses", """{"anchors":"feature:a"}""", ct);
         var wrongItem = await mcp.Call("context_lenses", """{"anchors":[1]}""", ct);
 
-        Assert.Equal(["anchor", "anchors", "mapVersion", "hops"], tool.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["anchor", "anchors", "mapVersion", "hops", "limit", "offset"], tool.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
         Assert.False(tool.TryGetProperty("required", out _));
         Assert.Equal((1, Anchor), (lone.StructuredContent!.Value.GetProperty("schemaVersion").GetInt32(), lone.StructuredContent!.Value.GetProperty("anchor").GetProperty("key").GetString()));
         Assert.Equal((2, 2), (set.StructuredContent!.Value.GetProperty("schemaVersion").GetInt32(), set.StructuredContent!.Value.GetProperty("anchors").GetArrayLength()));

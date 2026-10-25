@@ -56,6 +56,37 @@ public sealed class ItemSheetActionsTests
         return spoken;
     }
 
+    // ux-A-3: Close item is one press away from ending the item, so it asks first like Close as cancelled: nothing is sent until Confirm.
+    [Fact]
+    public async Task Close_item_asks_before_it_sends_and_Confirm_sends_once()
+    {
+        var sheet = await Sheet();
+        await sheet.Open(_api, A.NewItem, Token);
+        var close = sheet.Actions[0];
+
+        await close.Press(Token);
+
+        Assert.Equal(("Close item", true), (close.Label, close.IsConfirming));
+        Assert.Empty(_server.Closed);
+
+        await close.Confirm(Token);
+
+        Assert.Equal([(A.NewItem, new Ui.Api.CloseItemRequest("done", 1))], _server.Closed);
+    }
+
+    [Fact]
+    public async Task Keeping_Close_item_sends_nothing()
+    {
+        var sheet = await Sheet();
+        await sheet.Open(_api, A.NewItem, Token);
+        var close = sheet.Actions[0];
+        await close.Press(Token);
+
+        close.Keep();
+
+        Assert.Equal((false, 0), (close.IsConfirming, _server.Closed.Count));
+    }
+
     // L8: the item moved on before the answer came back; the control that sent the command stays to show its outcome.
     [Fact]
     public async Task A_control_in_flight_stays_until_it_settles_even_when_the_item_no_longer_allows_it()
@@ -67,6 +98,7 @@ public sealed class ItemSheetActionsTests
         var spoken = Spoken(close);
 
         await close.Press(Token);
+        await close.Confirm(Token);
         await sheet.Refresh(_api, Token);
 
         Assert.Equal((CommandPhase.Accepted, "Done", true), (close.Phase, sheet.StateWord, sheet.Actions.Contains(close)));
@@ -122,6 +154,7 @@ public sealed class ItemSheetActionsTests
         var close = sheet.Actions[0];
 
         await close.Press(Token);
+        await close.Confirm(Token);
 
         Assert.Equal((false, "SND-ITEM-409", A.Detail("items-id-close", "stale-version")), (sheet.HasProblem, close.ErrorCode, close.ErrorDetail));
         Assert.Equal("2", sheet.VersionText);
@@ -129,6 +162,7 @@ public sealed class ItemSheetActionsTests
 
         _server.Close = RouteAnswer.SpecShaped("items-id-close", "accepted");
         await close.Press(Token);
+        await close.Confirm(Token);
 
         Assert.Equal([(A.NewItem, new Ui.Api.CloseItemRequest("done", 1)), (A.NewItem, new Ui.Api.CloseItemRequest("done", 2))], _server.Closed);
     }
@@ -188,7 +222,8 @@ public sealed class ItemSheetActionsTests
         var calls = _server.ItemCalls;
         try
         {
-            var press = sheet.Actions[0].Press(Token);
+            await sheet.Actions[0].Press(Token);
+            var press = sheet.Actions[0].Confirm(Token);
             await Until(() => _server.ItemCalls == calls + 1);
             var refresh = sheet.Refresh(_api, Token);
             await Until(() => _server.ItemCalls == calls + 2);
@@ -222,7 +257,8 @@ public sealed class ItemSheetActionsTests
         var calls = _server.ItemCalls;
         try
         {
-            var press = close.Press(Token);
+            await close.Press(Token);
+            var press = close.Confirm(Token);
             await Until(() => _server.ItemCalls == calls + 1);
             var refresh = sheet.Refresh(_api, Token);
             await Until(() => _server.ItemCalls == calls + 2);
@@ -251,7 +287,8 @@ public sealed class ItemSheetActionsTests
         var spoken = Spoken(sheet);
         try
         {
-            var press = sheet.Actions[0].Press(Token);
+            await sheet.Actions[0].Press(Token);
+            var press = sheet.Actions[0].Confirm(Token);
             await Until(() => _server.Closed.Count == 1);
             await sheet.Open(_api, A.DecisionItem, Token);
 
@@ -275,6 +312,7 @@ public sealed class ItemSheetActionsTests
         _server.Close = RouteAnswer.Problem("items-id-close", "stale-version");
         _server.Items[A.NewItem] = RouteAnswer.SpecShaped("items-id", "after-close");
         await sheet.Actions[0].Press(Token);
+        await sheet.Actions[0].Confirm(Token);
         Assert.True(sheet.HasProblem);
 
         _server.Items[A.NewItem] = NewAtVersion(5);
@@ -295,6 +333,7 @@ public sealed class ItemSheetActionsTests
         _server.Close = RouteAnswer.Problem("items-id-close", "stale-version");
         _server.Items[A.NewItem] = RouteAnswer.SpecShaped("items-id", "after-close");   // version 2, Close not allowed
         await sheet.Actions[0].Press(Token);
+        await sheet.Actions[0].Confirm(Token);
         Assert.True(sheet.HasProblem);
 
         _server.Items[A.NewItem] = arm switch
@@ -318,7 +357,8 @@ public sealed class ItemSheetActionsTests
         var gate = _server.ItemGates[A.NewItem] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var close = sheet.Actions[0];
         var calls = _server.ItemCalls;
-        var press = close.Press(Token);
+        await close.Press(Token);
+        var press = close.Confirm(Token);
         await Until(() => _server.ItemCalls == calls + 1);
         var refreshing = CancellationTokenSource.CreateLinkedTokenSource(Token);
         return (sheet, close, gate, press, refreshing);

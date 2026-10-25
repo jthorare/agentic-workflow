@@ -5,9 +5,8 @@
 # and exits 0. Never blocks a tool call — it can only add additionalContext.
 #
 # Cost discipline (2026-09-27 review): this fires on EVERY tool call in
-# EVERY session on the box (matcher .*). It must never spawn Node — no
-# `scorer` subprocess here (that stays the scorer report's own accurate,
-# TypeScript-tested path). A byte-growth gate skips the real check unless the
+# EVERY session on the box (matcher .*). It must never spawn a heavy
+# subprocess (no .NET or Node start-up here). A byte-growth gate skips the real check unless the
 # transcript has grown enough since the last real check to plausibly matter.
 #
 # Latency fix (2026-09-27, review #2): the skip path (the common case, run on

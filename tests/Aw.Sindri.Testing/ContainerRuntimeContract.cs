@@ -111,7 +111,7 @@ public abstract class ContainerRuntimeContract
         var running = runtime.Ps(Project, Token).Value;
         var nginx = running.Single(static c => c.Service == "nginx");
         Expect.Equal("running", nginx.State);
-        Expect.Equal(new ComposePublisher("127.0.0.1", 3000, 80), nginx.Publishers.Single());
+        Expect.Equal(new ComposePublisher("127.0.0.1", 3189, 80), nginx.Publishers.Single());
         Expect.True(running.Any(static c => c.Service == "api_server" && c.State == "running"));
 
         _ = runtime.Stop(Project, Token);
@@ -134,7 +134,7 @@ public abstract class ContainerRuntimeContract
     /// <summary>The rendered compose's published ports are what a healthy box's Onyx publishes: nginx's 80 on loopback.</summary>
     [Fact]
     public void The_published_ports_of_a_healthy_box_are_nginx_on_loopback()
-        => Expect.Equal(new ComposePublishedPort("nginx", "127.0.0.1", 3000, 80), Create(FakeContainerRuntime.Healthy).RenderedConfig(Project, Token).Value.Ports.Single());
+        => Expect.Equal(new ComposePublishedPort("nginx", "127.0.0.1", 3189, 80), Create(FakeContainerRuntime.Healthy).RenderedConfig(Project, Token).Value.Ports.Single());
 
     /// <summary>A present image maps to its digests and a missing one to an empty list.</summary>
     [Fact]

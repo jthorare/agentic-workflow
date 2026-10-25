@@ -298,8 +298,8 @@ public sealed class SetupFactsTests
         var problem = SindriErrors.OnyxDockerUnavailable.With("docker isn't running");
         PreflightCheck[] checks = [new("docker", CheckState.Fail, "no daemon", problem), new("disk", CheckState.Ok, "plenty", Problem: null)];
 
-        var blocked = OnyxFact.From(new OnyxStatusReport(OnyxState.NotSetUp, "v4.9.0", "abc", checks, 3000, 1, Url: null, RunningVersion: null));
-        var silent = OnyxFact.From(new OnyxStatusReport(OnyxState.Running, "v4.9.0", "abc", [], 3000, 0, "http://127.0.0.1:3000", "unreachable"));
+        var blocked = OnyxFact.From(new OnyxStatusReport(OnyxState.NotSetUp, "v4.9.0", "abc", checks, 3189, 1, Url: null, RunningVersion: null));
+        var silent = OnyxFact.From(new OnyxStatusReport(OnyxState.Running, "v4.9.0", "abc", [], 3189, 0, "http://127.0.0.1:3189", "unreachable"));
 
         Assert.Equal(("SND-ONYX-001", false), (blocked.BlockedByCode, blocked.Unreachable));
         Assert.True(silent.Unreachable);

@@ -22,9 +22,9 @@ public readonly partial struct NodeKey : ITypedId<NodeKey, string>
 
     private static Validation Validate(string value) =>
         Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid(
-            "A node key is a kind (feature, surface, action, thing, flow, decision, record or code), a colon and 1 to 1024 characters with no control or format characters");
+            "A node key is a kind (feature, surface, action, thing, flow, decision, record, concept or code), a colon and 1 to 1024 characters with no control or format characters");
 
-    [GeneratedRegex("^(feature|surface|action|thing|flow|decision|record|code):[^\\p{C}\\s][^\\p{C}]{0,1023}\\z",
+    [GeneratedRegex("^(feature|surface|action|thing|flow|decision|record|concept|code):[^\\p{C}\\s][^\\p{C}]{0,1023}\\z",
         RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 

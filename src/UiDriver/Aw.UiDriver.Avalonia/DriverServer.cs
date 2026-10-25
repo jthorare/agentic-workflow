@@ -114,7 +114,16 @@ internal sealed class DriverServer : IAsyncDisposable
                 return;
             }
 
-            await AnswerAsync(context).ConfigureAwait(false);
+            try
+            {
+                await AnswerAsync(context).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // why: nothing a request does may end the accept loop; a failure is logged and the next call is served
+            catch (Exception e) when (e is not OperationCanceledException)
+#pragma warning restore CA1031
+            {
+                Console.Error.WriteLine("aw-ui-driver: a call failed after its answer: " + e.Message.ReplaceLineEndings(" "));
+            }
         }
     }
 
@@ -122,7 +131,7 @@ internal sealed class DriverServer : IAsyncDisposable
     {
         try
         {
-            var reply = await RouteAsync(context.Request).ConfigureAwait(false);
+            var reply = await AnswerOrFailureAsync(context.Request).ConfigureAwait(false);
             context.Response.StatusCode = reply.Status;
             context.Response.ContentType = reply.ContentType;
             context.Response.ContentLength64 = reply.Body.Length;
@@ -135,6 +144,23 @@ internal sealed class DriverServer : IAsyncDisposable
         finally
         {
             context.Response.Close();
+        }
+    }
+
+    // A verb that throws (an exception on the UI thread, an answer that won't serialize) is AW-UIDRIVER-007 for that call, never the end of the server.
+    private async Task<Reply> AnswerOrFailureAsync(HttpListenerRequest request)
+    {
+        try
+        {
+            return await RouteAsync(request).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // why: see above, every failure of one call becomes that call's answer
+        catch (Exception e) when (e is not OperationCanceledException)
+#pragma warning restore CA1031
+        {
+            var message = e.Message.ReplaceLineEndings(" ");
+            Console.Error.WriteLine("aw-ui-driver: " + request.Url?.AbsolutePath + " failed: " + message);
+            return Failure(UiDriverErrors.Failed.With(message));
         }
     }
 

@@ -175,6 +175,14 @@
       ]
     },
     {
+      "type": "launch.takeover-opened",
+      "keyShape": "launch.takeover-opened:<nonce>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
       "type": "launch.viewer-attached",
       "keyShape": "launch.viewer-attached:<launch>",
       "invalidates": [

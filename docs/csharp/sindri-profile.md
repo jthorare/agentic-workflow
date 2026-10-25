@@ -1,8 +1,8 @@
 # Sindri profile reference
 
 The profile of the C# Sindri app (`src/Sindri`), schema version 1. It documents the keys of `SindriProfile`
-(`src/Sindri/Aw.Sindri.Core/Profile/`), read through `AwJson`. It replaces the reference of the TypeScript profile
-(`sindri/src/profile/schema.ts`), which is generated separately and stays until the switch. Unknown keys are errors;
+(`src/Sindri/Aw.Sindri.Core/Profile/`), read through `AwJson`. It replaced the TypeScript profile
+reference (`sindri/src/profile/schema.ts`, gone), and `docs/sindri/profile.md` points here. Unknown keys are errors;
 new optional keys join version 1, renames and removals bump it. `node scripts/check-profile-doc.mjs` fails when a
 `SindriProfile` key is missing from this page.
 
@@ -161,13 +161,39 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `denyPaths` | string[] | no | none | Repo-relative globs map extraction never reads (`private/**`, `**/*.generated.ts`), added to the built-in secret globs and never replacing them (context spec §6.2). A repo's own are added to the profile's |
+| `roles` | map of string to string[] | no | none | File roles this repo does not index: a role name to its repo-relative globs (`cron: ["**/*cron*"]`, `fixture: ["**/fixtures/**"]`; same glob rules as `denyPaths`). The files of a named role are never extracted, clustered, cited or searched, exactly as if their globs were in `denyPaths`; roles are per repo only; a profile-level `index.roles` is refused. A glob that matches a directory covers everything under it (`**/*cron*` denies `src/crons/run.ts`). An entry may instead be `prefix:<text>`, `suffix:<text>` or `regex:<pattern>`, matched against any one path segment (a directory or the file name) ignoring case (`suffix:.generated.ts`, `regex:^v\\d+$`); a bad regex or a `/` in a prefix or suffix is refused with the key path. Roles apply when the map is built and again on every read, so a role added later hides its nodes and evidence at once. There are no built-in roles: without `roles`, nothing extra is hidden |
 | `utilityGlobs` | string[] | no | none | Globs (same rules as `denyPaths`) of internal utility modules; the code index flags their exports `utility`. A repo's own are added to the profile's |
 | `maxFileKB` | whole number | no | `4096` | The code index skips larger files as `too-large`. 1 to 102400 |
 | `maxTotalMB` | whole number | no | `4096` | Larger tracked code input (code files only; docs, assets and lockfiles do not count) stops a code index build (`SND-CODEIDX-003`). 1 to 102400 |
+| `concepts` | list of mappings | no | none | Concepts you pin for the context map, below. A repo's own are added to the profile's |
 | `embeddings` | mapping | no | none | The code index's embeddings layer, below |
 | `graph` | mapping | no | none | The code index's graph layer, below |
 
 A repo's `index:` replaces each scalar key it names (and each `embeddings` and `graph` key it names) and adds its list keys to the profile's. Unknown keys fail validation, in `embeddings` and `graph` too; a bad value is refused with its key path (`index.graph.maxMB: must be 1 to 4096`).
+
+#### `index.concepts`
+
+Each entry pins one concept: it takes its members first, derived concepts fill the rest from what is left, and `concept:other` keeps the leftovers. An entry with no members still shows, empty. A change is part of the profile hash, so it needs approval, and the next map build or refresh applies it.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `id` | text | no | derived from `name` | The slug of the concept's key (`scheduling` pins `concept:scheduling`): lowercase words of letters and digits joined by single `-` or `.` (`tabs.tab-manager` pins a derived id). `other` is reserved; ids are unique across the profile's list and the repo's |
+| `name` | text | yes | none | What the map shows. Not empty |
+| `summary` | text | no | none | A line about the concept |
+| `features` | string[] | no | none | Feature node keys or key globs (`feature:shifts`, `feature:shifts.*`); each must start with `feature:` |
+| `paths` | string[] | no | none | Repo-relative file globs (same rules as `denyPaths`); the features implemented there belong to the concept |
+
+```yaml
+index:
+  concepts:
+    - id: scheduling
+      name: Self scheduling
+      summary: Shifts, swaps and time off
+      features: ["feature:shifts", "feature:shifts.*"]
+      paths: ["apps/web/src/Schedule/**"]
+```
+
+A bad entry is refused with its key path (`index.concepts[0].features[1]: must be a feature: key or glob, like 'feature:shifts' or 'feature:shifts.*'`).
 
 #### `index.embeddings`
 

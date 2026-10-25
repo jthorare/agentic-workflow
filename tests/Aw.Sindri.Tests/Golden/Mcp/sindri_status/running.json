@@ -40,6 +40,17 @@
       "live": 0,
       "asking": 0,
       "problems": 0
+    },
+    "page": {
+      "offset": 0,
+      "limit": 100,
+      "more": false,
+      "lists": {
+        "services": {
+          "total": 1,
+          "more": false
+        }
+      }
     }
   },
   "content": [

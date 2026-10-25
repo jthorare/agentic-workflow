@@ -66,7 +66,7 @@ if [ "${1:-}" = "--uninstall" ]; then
 fi
 
 if ! command -v "$JUDGE_BIN" > /dev/null 2>&1; then
-  echo "  wake-gating: refusing to install — judge is not installed (run scripts/install-judge.sh first, or set AW_JUDGE_BIN)" >&2
+  echo "  wake-gating: refusing to install — judge is not installed (run ./setup.sh, or set AW_JUDGE_BIN)" >&2
   exit 1
 fi
 

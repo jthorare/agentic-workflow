@@ -16,7 +16,8 @@
       "flow": 0,
       "decision": 2,
       "record": 3,
-      "code": 2
+      "code": 2,
+      "concept": 0
     }
   },
   "areas": [
@@ -124,6 +125,18 @@
       "provenance": "human",
       "confidence": 1,
       "confirmed": true
+    },
+    {
+      "key": "code:src/tabs/TabGroups.ts",
+      "label": "TabGroups.ts",
+      "kind": "code",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "deterministic",
+      "confidence": 1,
+      "confirmed": false,
+      "repo": "aw-split-panes"
     }
   ],
   "edges": [
@@ -135,6 +148,15 @@
       "provenance": "human",
       "confidence": 1,
       "confirmed": true
+    },
+    {
+      "from": "code:src/tabs/TabGroups.ts",
+      "to": "feature:tabs.tab-groups",
+      "type": "implements",
+      "link": "edge:402b8bed42f6611c",
+      "provenance": "model",
+      "confidence": 0.74,
+      "confirmed": false
     },
     {
       "from": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
@@ -175,7 +197,7 @@
   ],
   "area": {
     "key": "feature:tabs.tab-groups",
-    "truncated": true,
+    "truncated": false,
     "counts": {
       "nodes": 6,
       "edges": 6,
@@ -187,11 +209,12 @@
         "flow": 0,
         "decision": 2,
         "record": 0,
-        "code": 1
+        "code": 1,
+        "concept": 0
       }
     }
   },
-  "truncated": true,
+  "truncated": false,
   "repos": [
     {
       "name": "aw-split-panes",

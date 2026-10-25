@@ -122,15 +122,10 @@ expect "a graphify.pin with no row fails" 1 'CODEIDX-LOCK-007 .*absent'
 run check --file "$f" --requirements "$TMPROOT/code-index-requirements.txt" --pin "$TMPROOT/absent.pin"
 expect "a missing graphify.pin is a usage or I/O error" 2 'cannot read'
 
-# The shipped lock, graphify.pin and (until the switch) sindri/package.json agree.
+# The shipped lock and graphify.pin agree (graphify.pin is the one pin source).
 want="$(awk '$1 == "graphify" { print $2 }' "$REPO/context/graphify.pin")"
-want_date="$(awk '$1 == "graphify" { print $3 }' "$REPO/context/graphify.pin")"
 got="$(bash "$SCRIPT" get graphify-version)"
 [ "$want" = "$got" ] && ok "the lock's graphify version is graphify.pin's ($want)" || fail "lock $got, graphify.pin $want"
-if [ -r "$REPO/sindri/package.json" ]; then   # the TS index reads it until the switch deletes sindri/
-  [ "$(jq -r '.sindri.graphifyPin' "$REPO/sindri/package.json")" = "$want" ] && [ "$(jq -r '.sindri.graphifyPinDate' "$REPO/sindri/package.json")" = "$want_date" ] \
-    && ok "sindri/package.json carries graphify.pin's pair" || fail "sindri/package.json's graphify pin differs from graphify.pin"
-fi
 
 echo "code-index-lock get"
 

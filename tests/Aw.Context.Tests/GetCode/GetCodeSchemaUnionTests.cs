@@ -40,7 +40,7 @@ public sealed class GetCodeSchemaUnionTests
         using var world = new CodeWorld(decorateTimed: (inner, expire) => new StallingSearch(inner, q => IsSchemaQuery(q) && ++schemaCalls > 1, expire));   // a second schema call would never answer
         _ = await world.ImportSharing(extraNodes: nodes, extraEdges: edges);
 
-        var view = (await world.Code(MapWorld.HumanWith("""{"deadline":"100ms"}"""))).Value;
+        var view = (await world.Code(MapWorld.HumanWith("{\"deadline\":\"100ms\",\"code\":{\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         Assert.Equal(SearchedState.Ok, Row(view, "lexical-schema").State);
         _ = Assert.Single(view.Data.Files);
@@ -52,7 +52,7 @@ public sealed class GetCodeSchemaUnionTests
         using var world = new CodeWorld(decorateTimed: (inner, expire) => new StallingSearch(inner, IsSchemaQuery, expire));
         _ = await world.ImportSharing();
 
-        var view = (await world.Code(MapWorld.HumanWith("""{"deadline":"100ms"}"""))).Value;
+        var view = (await world.Code(MapWorld.HumanWith("{\"deadline\":\"100ms\",\"code\":{\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         var tests = Row(view, "lexical-tests");
         var schema = Row(view, "lexical-schema");

@@ -24,7 +24,7 @@ public sealed class OnyxRegistrationTests
             .AddSingleton(FixtureMap.Json)   // the host's AwJson options; the map reader and exports folder take them (S-3a)
             .AddContextInfrastructure(static _ => null);
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
-        var settings = OnyxSettings.Create("http://127.0.0.1:3000", OnyxSourceHarness.Pointer, "v4.9.0").Value;
+        var settings = OnyxSettings.Create("http://127.0.0.1:3189", OnyxSourceHarness.Pointer, "v4.9.0").Value;
 
         var source = provider.GetRequiredService<OnyxSources>().Create(settings, new HashSet<string>(StringComparer.Ordinal) { "SPL" });
 
@@ -46,7 +46,7 @@ public sealed class OnyxRegistrationTests
         var plain = new ContextSettings();
         var named = plain with
         {
-            Onyx = OnyxSettings.Create("http://127.0.0.1:3000", OnyxSourceHarness.Pointer, "v4.9.0").Value,
+            Onyx = OnyxSettings.Create("http://127.0.0.1:3189", OnyxSourceHarness.Pointer, "v4.9.0").Value,
             LinearTeams = ["SPL"],
         };
 

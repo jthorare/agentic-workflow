@@ -79,7 +79,7 @@ internal static partial class ContextReviewText
         else if (result.Written.Count > ListedIds)
         {
             // a bulk accept writes thousands: the count and the verb that lists them, not a line of ids
-            _ = text.AppendLine(Invariant($"  the newest {ReviewLimits.Max}: sindri context map review --history --limit {ReviewLimits.Max}; every id: add --json to this command"));
+            _ = text.AppendLine(Invariant($"  every row: sindri context map review --history; every id: add --json to this command"));
         }
 
         if (result.Skipped.Count <= ListedSkips)

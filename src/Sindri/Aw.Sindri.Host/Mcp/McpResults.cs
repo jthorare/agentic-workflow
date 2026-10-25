@@ -17,12 +17,17 @@ internal static class McpResults
     /// <param name="value">The answer.</param>
     /// <param name="summary">The text block.</param>
     /// <param name="fence">The free-text fields to fence in the answer, or null when it carries none.</param>
+    /// <param name="page">The page of each top-level list, or null for the whole answer (a tool call always passes one).</param>
     /// <returns>The tool result.</returns>
-    internal static CallToolResult Success<T>(IServiceProvider services, T value, string summary, FencePlan? fence = null) => new()
+    internal static CallToolResult Success<T>(IServiceProvider services, T value, string summary, FencePlan? fence = null, McpWindow? page = null)
     {
-        StructuredContent = fence is null ? Element(services, value) : McpFencing.Apply(Element(services, value), fence),
-        Content = [new TextContentBlock { Text = summary }],
-    };
+        var content = fence is null ? Element(services, value) : McpFencing.Apply(Element(services, value), fence);
+        return new CallToolResult
+        {
+            StructuredContent = page is { } window ? McpPages.Apply(content, window) : content,
+            Content = [new TextContentBlock { Text = summary }],
+        };
+    }
 
     /// <summary>A refused call.</summary>
     /// <param name="services">The request's services.</param>
@@ -41,9 +46,10 @@ internal static class McpResults
     /// <param name="result">The service's result.</param>
     /// <param name="summary">Summarises a successful answer.</param>
     /// <param name="fence">The free-text fields to fence in the answer, or null when it carries none.</param>
+    /// <param name="page">The page of each top-level list, or null for the whole answer (a tool call always passes one).</param>
     /// <returns>The tool result.</returns>
-    internal static CallToolResult From<T>(IServiceProvider services, Result<T> result, Func<T, string> summary, FencePlan? fence = null) =>
-        result.IsError ? Failure(services, result.Error) : Success(services, result.Value, summary(result.Value), fence);
+    internal static CallToolResult From<T>(IServiceProvider services, Result<T> result, Func<T, string> summary, FencePlan? fence = null, McpWindow? page = null) =>
+        result.IsError ? Failure(services, result.Error) : Success(services, result.Value, summary(result.Value), fence, page);
 
     private static JsonElement Element<T>(IServiceProvider services, T value)
     {

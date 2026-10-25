@@ -36,8 +36,23 @@ public sealed class BuildShipStepTests
         Assert.Equal("ready", result.Result!.Outcome.Value);
         Assert.Equal("sha256:aa", (string?)Out(result, "activePacket")["hash"]);
         Assert.Equal(Tree, (string?)Out(result, "activePacket")["repo"]);   // the checkout step.build.amend gives aw-packets
+        Assert.Equal("c1", (string?)Out(result, "activePacket")["startHead"]);   // where the round started: red-check tells a rework round from code committed too early
         _ = Assert.IsType<JsonObject>(Out(result, "answers"));   // the scope desk writes an object ({ allow: [...] }); amend reads it
         Assert.Equal(["activePacket", "answers", "built", "change", "findings", "redTests"], result.Result.Outputs.Keys.Select(static k => k.Value[5..]).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Prepare_marks_a_round_that_starts_with_notes_as_a_rework_and_a_first_round_not()
+    {
+        var diff = new FakeRunDiff();
+        diff.Add(Tree);
+        var first = await new BuildPrepareStep(diff).Run(BuildShipContexts.Of("step.build.prepare", PrepareFacts()), TestContext.Current.CancellationToken);
+        var facts = PrepareFacts();
+        facts["buildNotes"] = """["the proof failed on the empty state"]""";
+        var again = await new BuildPrepareStep(diff).Run(BuildShipContexts.Of("step.build.prepare", facts), TestContext.Current.CancellationToken);
+
+        Assert.Null(Out(first, "activePacket")["rework"]);
+        Assert.True((bool?)Out(again, "activePacket")["rework"]);
     }
 
     [Fact]

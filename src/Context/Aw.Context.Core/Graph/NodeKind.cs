@@ -37,4 +37,8 @@ public enum NodeKind
     /// <summary>A pointer to a file or symbol.</summary>
     [JsonStringEnumMemberName("code")]
     Code,
+
+    /// <summary>One of the product's core concepts: a band above features that members belong to.</summary>
+    [JsonStringEnumMemberName("concept")]
+    Concept,
 }

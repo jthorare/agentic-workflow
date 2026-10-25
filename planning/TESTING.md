@@ -2,45 +2,27 @@
 
 ## Overview
 
-Each test sets up its own state: `sindri` opens a fresh in-memory SQLite ledger, and suites that touch files use a temp directory (temp git repos, transcript fixtures, a scratch `HOME`). No test shares state with another or touches the real `~/.agentic-workflow`.
+Each test sets up its own state: SQLite-backed suites open a temp file, and suites that touch files use a temp directory (temp git repos, transcript fixtures, a scratch `HOME`). No test shares state with another or touches the real `~/.agentic-workflow`.
 
-The test suite uses **Vitest** with explicit imports (globals are disabled in the config).
-
-## Coverage Policy
-
-**`/* v8 ignore */` annotations are prohibited.** Never use `/* v8 ignore next */`, `/* v8 ignore start */`, or any v8 ignore variant to reach coverage targets. Coverage must be earned through real tests, not hidden with annotations.
-
-`scorer`, `judge`, `sindri`, `skills/ui-evidence` and `skills/bugFixOrchestrator` each set 100% line/function/branch/statement thresholds in `vitest.config.ts`, so `npm run test:coverage` fails below 100%. Gaps are closed by writing the missing tests, not by ignoring lines.
-
-| Metric | Target (all five packages) |
-|--------|----------------------|
-| Statements | 100% (through real tests) |
-| Branches | 100% (through real tests) |
-| Functions | 100% (through real tests) |
-| Lines | 100% (through real tests) |
-
-Entry-point and OS-bound files are excluded from coverage collection (each package's `vitest.config.ts` is the source): `src/cli.ts` in `scorer` and `judge`; `src/cli.ts`, `src/gen.ts`, `src/system-real.ts`, `src/scope/model-real.ts` and `src/scope/io-real.ts` in `sindri`; `src/run-script.ts`, `src/parity-run.ts`, `src/step-exec.ts`, `src/bin.ts` and `src/pixelmatch.d.ts` in `skills/ui-evidence`; `src/bin.ts` in `skills/bugFixOrchestrator`.
+The C# tests (xUnit v3 on Microsoft.Testing.Platform) follow `.agents/rules/csharp-testing.md`: TDD order, the `unit`, `integration` and `heavy` lanes with their time budgets, fakes with contract tests, builders, golden files and the architecture tests. The bash suites follow `.agents/rules/testing.md`. There is no TypeScript test infrastructure.
 
 ## Running Tests
 
 ```bash
-cd scorer              # or judge, sindri, skills/ui-evidence, skills/bugFixOrchestrator
-npm test               # Vitest single run (CI-friendly)
-npm run test:coverage  # Run with coverage report (fails below 100%)
-npm run typecheck      # tsc --noEmit
-
+dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8          # unit lane
+dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=integration" --ignore-exit-code 8   # integration lane
+dotnet test --solution AgenticWorkflow.slnx --filter-not-trait "Lane=heavy" --ignore-exit-code 8     # everything but containers, browsers and index builds
+node scripts/ci/lane-budgets.mjs                                                                     # after a Release build: each package's lane wall clock vs its budget
+bash scripts/ci/bash-tests.sh                                                                        # every tracked bash suite
 ```
 
-## Test Patterns
+The full list is under Commands in `AGENTS.md`.
 
-### Coverage Gaps
+## Coverage Policy
 
-Some paths are hard to exercise in unit tests (process entry points, real timers, filesystem races). Keep them out of `src/**` logic where possible (entry points are excluded above) and test the rest directly — never annotate them away.
-
-`/* v8 ignore */` annotations are prohibited in this codebase.
+Coverage is earned through real tests; nothing is hidden with an ignore annotation. The C# build's coverage and mutation targets are the ones in the `csharp-testing` rule and the spec it cites.
 
 ## Writing New Tests
 
-1. Add test files to the package's `tests/` directory with `.test.ts` suffix.
-2. Import from `vitest` explicitly (globals are off).
-3. Never add `/* v8 ignore */` annotations — write the test instead.
+1. C#: write the failing test first, in `tests/Aw.<Pkg>.Tests/<Slice>/` (`/new-slice` generates it red).
+2. Bash: add `scripts/tests/<name>.test.sh` (or under `config/**/tests/`), point `HOME` and `AW_STATE_DIR` at a `mktemp -d` directory, and add the suite to `scripts/ci/bash-tests.sh` and the `AGENTS.md` list.

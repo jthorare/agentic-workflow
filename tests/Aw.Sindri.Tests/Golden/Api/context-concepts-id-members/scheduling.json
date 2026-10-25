@@ -1,0 +1,18 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "concept": "concept:scheduling",
+  "members": [
+    {
+      "key": "feature:shifts",
+      "kind": "feature",
+      "label": "Shifts"
+    },
+    {
+      "key": "feature:swaps",
+      "kind": "feature",
+      "label": "Swaps"
+    }
+  ]
+}

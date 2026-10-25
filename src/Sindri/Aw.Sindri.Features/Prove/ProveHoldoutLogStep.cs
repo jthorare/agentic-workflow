@@ -106,19 +106,25 @@ internal sealed class ProveHoldoutLogStep(IHoldoutStore store, ICommitText commi
         }
 
         results.Add(new JsonObject { ["scenario"] = canary.Key, ["item"] = null, ["kind"] = HoldoutScenario.CanaryKind, ["verdict"] = "pass", ["category"] = HoldoutScenario.CanaryKind, ["observed"] = string.Empty });
-        var recorded = new JsonObject { ["commit"] = inputs.Report["commit"]?.DeepClone(), ["canary"] = "clean", ["results"] = new JsonArray([.. results]) };
+        var recorded = new JsonObject { ["commit"] = inputs.Report["head"]?.DeepClone(), ["canary"] = "clean", ["results"] = new JsonArray([.. results]) };
         return failed.Count == 0
             ? StepFacts.Done("passed", ("fact:holdoutResult", recorded))
             : StepFacts.Done("failed", ("fact:holdoutResult", recorded), ("fact:findings", new JsonArray([.. failed.Select(static r => (JsonNode)HoldoutFindings.Failed((string?)r["item"], (string?)r["observed"]))])));
     }
 
-    // The report's hidden-scenario results, each checked against the set; a result for the canary is the Step's to write, not the evaluator's.
+    // The report's hidden-scenario results, each checked against the set; a result for the canary is the Step's to write, not the evaluator's. The evaluator's report is
+    // schemas/line/holdout-result.json's ({head, scenarios[{id, ...}]}); the record keeps the shape the proof checks read ({commit, results[{scenario, ...}]}).
     private static (List<JsonObject> Results, string? Refusal) Reported(JsonObject report, HoldoutSet set)
     {
-        var results = new List<JsonObject>();
-        foreach (var entry in (report["results"] as JsonArray ?? []).OfType<JsonObject>())
+        if (report["scenarios"] is not JsonArray listed)
         {
-            var key = (string?)entry["scenario"];
+            return ([], "refuses the report: it has no 'scenarios' list; schemas/line/holdout-result.json wants { \"head\": \"<sha>\", \"scenarios\": [ { \"id\", \"item\", \"verdict\": \"pass|fail\", \"category\", \"observed\" } ] }");
+        }
+
+        var results = new List<JsonObject>();
+        foreach (var entry in listed.OfType<JsonObject>())
+        {
+            var key = (string?)entry["id"];
             if (key is not null && set.Scenarios.FirstOrDefault(s => string.Equals(s.Key, key, StringComparison.Ordinal)) is { IsCanary: true })
             {
                 continue;
@@ -134,7 +140,10 @@ internal sealed class ProveHoldoutLogStep(IHoldoutStore store, ICommitText commi
                 return ([], $"refuses the report for {scenario.Item}: its observed line repeats a run of {HoldoutOverlap.RunWords} or more words of the scenario's text");
             }
 
-            results.Add((JsonObject)entry.DeepClone());
+            var kept = (JsonObject)entry.DeepClone();
+            _ = kept.Remove("id");
+            kept["scenario"] = key;
+            results.Add(kept);
         }
 
         return (results, null);
