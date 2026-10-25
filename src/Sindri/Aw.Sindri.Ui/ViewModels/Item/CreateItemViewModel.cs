@@ -81,7 +81,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
         }
     } = string.Empty;
 
-    /// <summary>`C`: opens the form, empty, with the catalog's control as it is now.</summary>
+    /// <summary>`C`: opens the form with the catalog's control as it is now. The form is empty after a created item; after Esc or Cancel it keeps the draft.</summary>
     internal void Open()
     {
         if (Control is { } old)
@@ -97,7 +97,11 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
             control.Precondition = Ready;
         }
 
-        (Title, Repo, Body, CreatedId) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        if (CreatedId.Length > 0)
+        {
+            (Title, Repo, Body, CreatedId) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        }
+
         ClearTitleError();
         IsOpen = true;
         OnChanged(nameof(CanSubmit));

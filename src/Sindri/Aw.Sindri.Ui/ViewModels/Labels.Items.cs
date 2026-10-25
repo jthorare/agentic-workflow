@@ -44,6 +44,9 @@ internal static partial class Labels
     /// <summary>The repo column.</summary>
     internal const string ColumnRepo = "Repo";
 
+    /// <summary>The Repo cell of an item with no repo.</summary>
+    internal const string NoRepo = "—";
+
     /// <summary>The state column.</summary>
     internal const string ColumnState = "Status";
 

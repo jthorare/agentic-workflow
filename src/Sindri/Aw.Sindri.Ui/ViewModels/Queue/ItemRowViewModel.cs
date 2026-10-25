@@ -26,7 +26,10 @@ internal sealed class ItemRowViewModel : ObservableObject
     public string Title { get; private set => Set(ref field, value); }
 
     /// <summary>The repo, or empty.</summary>
-    public string Repo { get; private set => Set(ref field, value); }
+    public string Repo { get; private set { Set(ref field, value); OnChanged(nameof(RepoShown)); } }
+
+    /// <summary>The repo as the Repo column draws it: a dash when the item has none, so the cell is never blank.</summary>
+    public string RepoShown => Repo.Length == 0 ? Labels.NoRepo : Repo;
 
     /// <summary>The item state as a word.</summary>
     public string StateWord { get; private set => Set(ref field, value); }

@@ -20,7 +20,7 @@
           <TextBlock x:Name="IdText" Classes="mono subtle" Text="{Binding Id}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>
       </Button>
-      <TextBlock x:Name="RepoText" AutomationProperties.Name="{Binding Repo}" Grid.Column="1" Classes="caption subtle" Text="{Binding Repo}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      <TextBlock x:Name="RepoText" AutomationProperties.Name="{Binding RepoShown}" Grid.Column="1" Classes="caption subtle" Text="{Binding RepoShown}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <TextBlock x:Name="StateText" AutomationProperties.Name="{Binding StateWord}" Classes="body" Text="{Binding StateWord}" VerticalAlignment="Center" />
         <Border x:Name="Badge" Classes="badge" IsVisible="{Binding HasBadge}" VerticalAlignment="Center">

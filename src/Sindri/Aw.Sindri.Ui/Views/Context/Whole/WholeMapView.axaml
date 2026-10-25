@@ -10,7 +10,7 @@
   <!-- The whole map (whole-map spec §3): the size line and, when a feature is cut, a note; the pannable canvas with the mini-map and the zoom pill over it. -->
   <Grid RowDefinitions="Auto,*" RowSpacing="8">
     <StackPanel Spacing="2">
-      <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CrumbsName}" />
+      <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" IsVisible="{Binding ShowsCrumbs}" AutomationProperties.Name="{Binding CrumbsName}" />
       <TextBlock x:Name="WholeSize" Classes="caption subtle" Text="{Binding SizeText}" AutomationProperties.Name="{Binding SizeText}" />
       <TextBlock x:Name="WholeNote" Classes="body" Text="{Binding ByAreaNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ByAreaNote}" />
       <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />

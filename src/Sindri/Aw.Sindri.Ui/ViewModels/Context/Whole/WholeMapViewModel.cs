@@ -56,6 +56,9 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         : IsAreaOpen ? [Crumb.Top(isLink: true), new Crumb(AreaTitle, Path: null, IsLink: false)]
         : [Crumb.Top(isLink: false)];
 
+    /// <summary>True when the breadcrumb has somewhere to go back from: the lone top "~" is a stray mark, so it is not drawn.</summary>
+    public bool ShowsCrumbs => Crumbs.Count > 1;
+
     /// <summary>The breadcrumb's name.</summary>
     public string CrumbsName { get; } = Labels.ContextMapCrumbsName;
 
@@ -224,7 +227,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowsCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched)])
         {
             OnChanged(name);
         }

@@ -71,6 +71,7 @@
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="Padding" Value="16,0" />
     <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Margin" Value="0,12,0,0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
