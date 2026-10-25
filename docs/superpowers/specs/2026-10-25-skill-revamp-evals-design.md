@@ -196,15 +196,17 @@ The cap is **$60 per day** of eval spend for this work (the owner's number, issu
 
 Skills are chosen by their `description`, so routing is fixed first, before behaviour is measured.
 
-### 7.1 Worked example: `rootCause` step 1
+### 7.1 Worked example: `rootCause` step 1 (merged as #1110)
 
-Natural-trigger fire rates, 3 runs each, two prompts (a failing test; a customer complaint):
+Natural-trigger fire rates, 3 runs each, two prompts (a failing test; a customer complaint), with-without ablation:
 
-| Description | Fire rate |
-|---|---|
-| main: "4-phase systematic debugging, investigate, analyze, hypothesize, implement. ..." (what it is) | 0/3 and 0/3 |
-| "Use when a test fails..." | 0/3 and 1/3 |
-| "Use BEFORE fixing any bug ..., even when the fix looks small" | fires on single runs |
+| Description | Fire rate | Mean Δ (4 cases) |
+|---|---|---|
+| old: "4-phase systematic debugging, investigate, analyze, hypothesize, implement. ..." (what it is) | 0/3 and 0/3 | +0.03 |
+| "Use when a test fails, a bug or customer complaint is reported..." | 0/3 and 1/3 | +0.06 |
+| "Use BEFORE fixing any bug ..., even when the fix looks small" (merged) | 3/3 and 3/3; near miss not fired | +0.18 (4/4 pass) |
+
+Spend for the whole step: $13.17.
 
 Two lessons. First, a "Use when" opener is not enough: Claude reads a bug as something it can fix directly, so the description must say the skill comes *before* the fix and applies even when the fix looks small. Second, one more version quoted words from the eval prompts and fired, and was rejected, because it passed by echoing the test, not by describing the skill.
 
