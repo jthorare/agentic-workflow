@@ -66,7 +66,17 @@ fi
 APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
-# 4. Open the instance (its expanded state carries the Attach control); its chevron menu offers Take over.
+# 4. Open the instance (its expanded state carries the Attach control); its chevron menu offers Take over. The top bar's pages are
+#    ListBoxItems named by their label; the Workflows list has one title button per run, named "Open <title>, <workflow>".
+"$DRIVER" click --type ListBoxItem --name Workflows >"$OUT/nav.log" 2>&1 \
+  || setup_fail "the Workflows nav item was not clicked (driver: $(tr -d '\n' <"$OUT/nav.log" | cut -c1-160))"
+"$DRIVER" wait-for --type Button --text "Fixture agent run" --state visible --wait-ms 60000 >/dev/null 2>&1 \
+  || setup_fail "Workflows shows no run titled Fixture agent run (see $OUT/app.log)"
+buttons="$(timeout 120 "$DRIVER" search --type Button --limit 5000 2>/dev/null)" || setup_fail "the button search failed"
+[ "$(printf '%s' "$buttons" | jq '(.total // 0) > (.matches | length)')" = false ] || setup_fail "the button search is incomplete (more buttons than --limit 5000)"
+open_id="$(printf '%s' "$buttons" | jq -r '[.matches[] | select(.visible == true and ((.name // "") | startswith("Open Fixture agent run")))][0].id // empty')"
+[ -n "$open_id" ] || setup_fail "no visible Open Fixture agent run button on Workflows"
+"$DRIVER" click --node-id "$open_id" >/dev/null 2>&1 || setup_fail "the Open Fixture agent run click was not accepted"
 "$DRIVER" wait-for --type Button --text "Watch the agent" --state visible --wait-ms 30000 >/dev/null 2>&1 \
   || setup_fail "no Watch the agent control on the instance (see $OUT/app.log)"
 "$DRIVER" screenshot --out "$OUT/before-click.png" >/dev/null 2>&1
