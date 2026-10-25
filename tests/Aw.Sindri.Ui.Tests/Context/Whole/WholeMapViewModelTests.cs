@@ -98,14 +98,14 @@ public sealed class WholeMapViewModelTests
     }
 
     [Fact]
-    public void A_feature_cut_at_the_cap_says_how_much_is_not_shown()
+    public void A_large_feature_is_served_whole_so_there_is_no_cut_note()
     {
         var map = new WholeMapViewModel(() => _utc);
         map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
 
         map.ShowArea(WholeMapLayoutTests.Draft("area-truncated"));
 
-        Assert.Equal("Showing 5 of 6 items; the rest are not shown.", map.ByAreaNote);
+        Assert.Equal(string.Empty, map.ByAreaNote);   // why: the engine no longer cuts an opened area, so nothing is left to say is not shown
     }
 
     [Fact]

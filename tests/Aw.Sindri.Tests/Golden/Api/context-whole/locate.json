@@ -16,7 +16,8 @@
       "flow": 0,
       "decision": 2,
       "record": 3,
-      "code": 2
+      "code": 2,
+      "concept": 0
     }
   },
   "areas": [
@@ -371,11 +372,13 @@
   "located": [
     {
       "key": "surface:command/switch-tab",
-      "area": "area:unassigned"
+      "area": "area:unassigned",
+      "concept": []
     },
     {
       "key": "feature:nope.x",
-      "area": null
+      "area": null,
+      "concept": []
     }
   ],
   "truncated": false,

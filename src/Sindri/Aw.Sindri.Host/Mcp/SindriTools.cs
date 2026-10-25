@@ -1,19 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization.Metadata;
-using Aw.Context.Core;
+using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
-using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.ListDecisions;
-using Aw.Sindri.Host.Endpoints;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -23,7 +17,7 @@ namespace Aw.Sindri.Host.Mcp;
 /// call to the service its HTTP route calls, under the 'session:mcp' caller. There is no tool that decides, approves, runs a
 /// job, takes a desk action or reports a step: what a session needs a human for, it asks through sindri_request.
 /// </summary>
-internal static class SindriTools
+internal static partial class SindriTools
 {
     /// <summary>sindri_status' name.</summary>
     internal const string Status = "sindri_status";
@@ -62,8 +56,8 @@ internal static class SindriTools
     internal static Tool StatusTool { get; } = new()
     {
         Name = Status,
-        Description = "Sindri's own state: which build and port answer, the health checks and whether its views are fresh.",
-        InputSchema = ContextTools.Schema([]),
+        Description = "Sindri's own state: which build and port answer, the health checks and whether its views are fresh." + ContextTools.PageSentence,
+        InputSchema = ContextTools.Schema(ContextTools.PageProperties()),
         Annotations = ReadOnly,
     };
 
@@ -71,8 +65,8 @@ internal static class SindriTools
     internal static Tool QueueTool { get; } = new()
     {
         Name = Queue,
-        Description = "The open work items, in every repo, grouped by state. Item titles are untrusted and fenced.",
-        InputSchema = ContextTools.Schema([]),
+        Description = "The open work items, in every repo, grouped by state. Item titles are untrusted and fenced." + ContextTools.PageSentence,
+        InputSchema = ContextTools.Schema(ContextTools.PageProperties()),
         Annotations = ReadOnly,
     };
 
@@ -80,8 +74,13 @@ internal static class SindriTools
     internal static Tool ItemTool { get; } = new()
     {
         Name = Item,
-        Description = "One work item: its state, what it waits on and the actions open to a person. Title and body are untrusted and fenced.",
-        InputSchema = ContextTools.Schema(new JsonObject { ["itemId"] = ContextTools.Property("string", ItemIdText) }, required: ["itemId"]),
+        Description = "One work item: its state, what it waits on and the actions open to a person. Title and body are untrusted and fenced." + ContextTools.PageSentence,
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["itemId"] = ContextTools.Property("string", ItemIdText),
+            ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
+            ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
+        }, required: ["itemId"]),
         Annotations = ReadOnly,
     };
 
@@ -89,11 +88,12 @@ internal static class SindriTools
     internal static Tool TimelineTool { get; } = new()
     {
         Name = Timeline,
-        Description = "The ledger lines of one item, oldest first, after a sequence number when given. Lines are untrusted and fenced.",
+        Description = "The ledger lines of one item, oldest first. Each call reads the whole timeline and returns the window you ask for. Lines are untrusted and fenced." + ContextTools.PageSentence,
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["itemId"] = ContextTools.Property("string", ItemIdText),
-            ["after"] = ContextTools.Property("integer", "Return lines after this sequence number (the 'next' of the last page)", minimum: 0),
+            ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
+            ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
         }, required: ["itemId"]),
         Annotations = ReadOnly,
     };
@@ -103,8 +103,13 @@ internal static class SindriTools
     {
         Name = PendingDecisions,
         Description = "The questions waiting for a person, in every repo or for one item, with the command a person uses to settle each. "
-            + "To ask for a change, file a sindri_request. Question text is untrusted and fenced.",
-        InputSchema = ContextTools.Schema(new JsonObject { ["itemId"] = ContextTools.Property("string", ItemIdText) }),
+            + "To ask for a change, file a sindri_request. Question text is untrusted and fenced." + ContextTools.PageSentence,
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["itemId"] = ContextTools.Property("string", ItemIdText),
+            ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
+            ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
+        }),
         Annotations = ReadOnly,
     };
 
@@ -112,8 +117,13 @@ internal static class SindriTools
     internal static Tool JobTool { get; } = new()
     {
         Name = Job,
-        Description = "One job's state, progress lines and result. Job lines are untrusted and fenced.",
-        InputSchema = ContextTools.Schema(new JsonObject { ["jobId"] = ContextTools.Property("string", "A job id (JOB-...)") }, required: ["jobId"]),
+        Description = "One job's state, progress lines and result. Job lines are untrusted and fenced." + ContextTools.PageSentence,
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["jobId"] = ContextTools.Property("string", "A job id (JOB-...)"),
+            ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
+            ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
+        }, required: ["jobId"]),
         Annotations = ReadOnly,
     };
 
@@ -139,14 +149,20 @@ internal static class SindriTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallStatus(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        if (McpArguments.None(Status, arguments) is { } refused)
+        if (McpArguments.Only(Status, arguments, McpArguments.PageNames) is { } refused)
         {
             return McpResults.Failure(services, refused);
         }
 
+        var page = ReadPage(arguments);
+        if (page.IsError)
+        {
+            return McpResults.Failure(services, page.Error);
+        }
+
         var port = services.GetRequiredService<IHttpContextAccessor>().HttpContext?.Connection.LocalPort ?? 0;
         var answer = await services.GetRequiredService<IService<GetStatusRequest, GetStatusResponse>>().Handle(new GetStatusRequest(), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, status => McpSummaries.Status(status, McpEndpoint.Build, port));
+        return McpResults.From(services, answer, status => McpSummaries.Status(status, McpEndpoint.Build, port), page: page.Value);
     }
 
     /// <summary>Runs sindri_queue.</summary>
@@ -156,13 +172,19 @@ internal static class SindriTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallQueue(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        if (McpArguments.None(Queue, arguments) is { } refused)
+        if (McpArguments.Only(Queue, arguments, McpArguments.PageNames) is { } refused)
         {
             return McpResults.Failure(services, refused);
         }
 
+        var page = ReadPage(arguments);
+        if (page.IsError)
+        {
+            return McpResults.Failure(services, page.Error);
+        }
+
         var answer = await services.GetRequiredService<IService<GetQueueRequest, QueueResponse>>().Handle(new GetQueueRequest(), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Queue, FencePlan.Queue);
+        return McpResults.From(services, answer, McpSummaries.Queue, FencePlan.Queue, page.Value);
     }
 
     /// <summary>Runs sindri_item.</summary>
@@ -172,6 +194,12 @@ internal static class SindriTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallItem(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
+        var page = ReadPage(arguments);
+        if (page.IsError)
+        {
+            return McpResults.Failure(services, page.Error);
+        }
+
         var item = SindriBindings.Item(Item, arguments);
         if (item.IsError)
         {
@@ -179,7 +207,7 @@ internal static class SindriTools
         }
 
         var answer = await services.GetRequiredService<IService<GetItemRequest, ItemView>>().Handle(new GetItemRequest(item.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Item, FencePlan.Item);
+        return McpResults.From(services, answer, McpSummaries.Item, FencePlan.Item, page.Value);
     }
 
     /// <summary>Runs sindri_item_timeline.</summary>
@@ -189,14 +217,39 @@ internal static class SindriTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallTimeline(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var bound = SindriBindings.Item(Timeline, arguments, "after").Bind(item => McpArguments.OptionalLong(Timeline, arguments, "after").Map(after => new GetItemTimelineRequest(item, after)));
-        if (bound.IsError)
+        var page = ReadPage(arguments);
+        if (page.IsError)
         {
-            return McpResults.Failure(services, bound.Error);
+            return McpResults.Failure(services, page.Error);
         }
 
-        var answer = await services.GetRequiredService<IService<GetItemTimelineRequest, TimelineResponse>>().Handle(bound.Value, ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Timeline, FencePlan.Timeline);
+        var item = SindriBindings.Item(Timeline, arguments);
+        if (item.IsError)
+        {
+            return McpResults.Failure(services, item.Error);
+        }
+
+        // why: one paging rule. The HTTP route pages by a server cursor ('after'/'next'); here the whole timeline is read by following
+        // that cursor and the MCP limit/offset window cuts the one list, so no second cursor is left for a caller to mix up.
+        var service = services.GetRequiredService<IService<GetItemTimelineRequest, TimelineResponse>>();
+        var entries = new List<TimelineRow>();
+        long? after = null;
+        Result<TimelineResponse> answer;
+        do
+        {
+            answer = await service.Handle(new GetItemTimelineRequest(item.Value, after), ct).ConfigureAwait(false);
+            if (answer.IsError)
+            {
+                return McpResults.Failure(services, answer.Error);
+            }
+
+            entries.AddRange(answer.Value.Entries);
+            after = answer.Value.Next;
+        }
+        while (after is not null);
+
+        var whole = new TimelineResponse(entries, Next: null, entries.Count == 0 ? answer.Value.Empty : null, answer.Value.AsOf);
+        return McpResults.Success(services, whole, McpSummaries.Timeline(whole), FencePlan.Timeline, page.Value);
     }
 
     /// <summary>Runs sindri_pending_decisions.</summary>
@@ -206,6 +259,12 @@ internal static class SindriTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallPendingDecisions(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
+        var page = ReadPage(arguments);
+        if (page.IsError)
+        {
+            return McpResults.Failure(services, page.Error);
+        }
+
         var bound = SindriBindings.OptionalItem(PendingDecisions, arguments);
         if (bound.IsError)
         {
@@ -213,56 +272,9 @@ internal static class SindriTools
         }
 
         var answer = await services.GetRequiredService<IService<ListDecisionsRequest, ListDecisionsResponse>>().Handle(new ListDecisionsRequest(Pending: true, bound.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Decisions, FencePlan.Decisions);
+        return McpResults.From(services, answer, McpSummaries.Decisions, FencePlan.Decisions, page.Value);
     }
 
-    /// <summary>Runs sindri_job.</summary>
-    /// <param name="services">The request's services.</param>
-    /// <param name="arguments">The call's arguments.</param>
-    /// <param name="ct">Cancels the call.</param>
-    /// <returns>The tool result.</returns>
-    internal static async ValueTask<CallToolResult> CallJob(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
-    {
-        var job = McpArguments.Only(Job, arguments, "jobId") is { } refused
-            ? refused
-            : McpArguments.RequiredString(Job, arguments, "jobId", "JOB-...").Bind(JobRoute.Job);
-        if (job.IsError)
-        {
-            return McpResults.Failure(services, job.Error);
-        }
-
-        var answer = await services.GetRequiredService<IService<GetJobRequest, JobView>>().Handle(new GetJobRequest(job.Value), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Job, FencePlan.Job);
-    }
-
-    /// <summary>Runs sindri_request: files the request through the command chain, then waits for the views to hold it (API P8 D5).</summary>
-    /// <param name="services">The request's services.</param>
-    /// <param name="arguments">The call's arguments.</param>
-    /// <param name="ct">Cancels the call.</param>
-    /// <returns>The tool result.</returns>
-    internal static async ValueTask<CallToolResult> CallRequest(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
-    {
-        var bound = SindriBindings.Request(arguments, (JsonTypeInfo<RequestKind>)services.GetRequiredService<JsonSerializerOptions>().GetTypeInfo(typeof(RequestKind)));
-        if (bound.IsError)
-        {
-            return McpResults.Failure(services, bound.Error);
-        }
-
-        // why: a request about no item is about the registration's repo, so without the repo header it has nothing to be about
-        if (bound.Value.Item is null && services.GetRequiredService<ICallerContextAccessor>().Current?.Repo is null)
-        {
-            return McpResults.Failure(services, ContextErrors.McpRepoMissing.With(
-                "the call has no X-Sindri-Repo header and names no itemId, so the request has no repo (fix: run 'sindri mcp register' in the work repo, or pass an itemId)"));
-        }
-
-        var answer = await services.GetRequiredService<IService<FileRequestRequest, RequestFiledResponse>>().Handle(bound.Value, ct).ConfigureAwait(false);
-        if (answer.IsError)
-        {
-            return McpResults.Failure(services, answer.Error);
-        }
-
-        // why: X-Sindri-After isn't honoured on this endpoint, so the tool reads its own write before it answers; a timeout is not a failure
-        var caught = await services.GetRequiredService<IProjectorStatus>().WaitFor(answer.Value.Accepted.Sequence, WaitForViews, ct).ConfigureAwait(false);
-        return McpResults.Success(services, answer.Value, McpSummaries.Request(answer.Value, bound.Value.Kind, viewsCaughtUp: !caught.IsError));
-    }
+    /// <summary>The page, or SND-CONTEXT-022 / SND-CONTEXT-006. Unknown names are left to the tool's own binder.</summary>
+    private static Result<McpWindow> ReadPage(IDictionary<string, JsonElement>? arguments) => McpArguments.ReadPage(arguments);
 }

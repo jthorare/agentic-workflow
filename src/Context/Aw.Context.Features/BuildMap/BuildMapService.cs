@@ -1,10 +1,12 @@
 using System.Globalization;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
+using Aw.Context.Core.Results;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
@@ -21,7 +23,7 @@ namespace Aw.Context.Features.BuildMap;
 internal sealed class BuildMapService(
     IRepoReader repos,
     IClusterSource clusterSource,
-    ILabeler labeler,
+    MapNamers namers,
     MapBuildGate gate,
     IDefaultBranch defaults,
     IGraphStore store,
@@ -76,7 +78,7 @@ internal sealed class BuildMapService(
         }
 
         // why: mappedRepos is not empty, so the loop set the primary
-        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads);
+        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads, settings);
     }
 
     private async ValueTask<Result<MapBuildReport>> Save(Reading read, IReadOnlyList<ContextRepo> profileRepos, IReadOnlyList<ContextRepo> mappedRepos, CancellationToken cancellationToken)
@@ -97,11 +99,12 @@ internal sealed class BuildMapService(
         var at = clock.GetUtcNow();
         var (kept, undo) = MapAccess.WithoutDenied(basis, current.Value?.Overrides ?? [], profileRepos, mappedRepos, at);
         undo = UndoAlso(undo, open.Value, profileRepos, mappedRepos, at);
-        var draft = await store.SaveDraft(new MapImport(read.Name, read.Commit, Join(kept, read.Found), undo, read.Heads), at, cancellationToken).ConfigureAwait(false);
-        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found), read.Degraded, read.Heads);
+        var (graph, note) = await WithConcepts(read.Settings, Join(WithoutDerivedConcepts(kept), read.Found), [.. mappedRepos.SelectMany(r => r.Concepts)], cancellationToken).ConfigureAwait(false);
+        var draft = await store.SaveDraft(new MapImport(read.Name, read.Commit, graph, undo, read.Heads), at, cancellationToken).ConfigureAwait(false);
+        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found), note is null ? read.Degraded : [.. read.Degraded, note], read.Heads);
     }
 
-    private sealed record Reading(ExtractedMap Found, IReadOnlyList<string> Degraded, ContextRepoName Name, string Commit, IReadOnlyList<MapHead> Heads);
+    private sealed record Reading(ExtractedMap Found, IReadOnlyList<string> Degraded, ContextRepoName Name, string Commit, IReadOnlyList<MapHead> Heads, ContextSettings Settings);
 
     // Whether the default branch holds the commit the build read; a checkout whose default ref can't be read counts as no (the repo is then not waited on), never a failed build.
     private async ValueTask<bool> OnDefault(ContextRepo repo, string commit, CancellationToken cancellationToken)
@@ -203,11 +206,41 @@ internal sealed class BuildMapService(
         }
 
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"labeling {clusters.Clusters.Count} clusters"));
-        return await labeler.Label(clusters.Clusters, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
+        return await namers.Labeler.Label(clusters.Clusters, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
     }
 
     private static void Tell(IProgress<string>? progress, int done, int total) =>
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"extracting {done}/{total} files"));
+
+    // The concepts the last build derived are rebuilt from scratch with the new features; a person's own concept nodes (human provenance) stay.
+    private static GraphSnapshot WithoutDerivedConcepts(GraphSnapshot kept)
+    {
+        var derived = kept.Nodes.Where(n => n.Key.Kind == NodeKind.Concept && n.Provenance != Provenance.Human).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        return derived.Count == 0
+            ? kept
+            : kept with { Nodes = [.. kept.Nodes.Where(n => !derived.Contains(n.Key.Value))], Edges = [.. kept.Edges.Where(e => !derived.Contains(e.To.Value) && !derived.Contains(e.From.Value))] };
+    }
+
+    // The concepts ('index.concepts' pins of the mapped repos first) are derived over the whole joined graph (records and decisions included) and saved in the draft, so reads never call a model. A namer that can't answer leaves the deterministic names and says so as a degraded note.
+    private async ValueTask<(GraphSnapshot Graph, string? Note)> WithConcepts(ContextSettings settings, GraphSnapshot joined, IReadOnlyList<ConceptPin> pins, CancellationToken cancellationToken)
+    {
+        ConceptNames? names = null;
+        string? note = null;
+        var groups = ConceptDeriver.Groups(joined, pins);
+        if (settings.Labeling.Enabled && groups.Count > 0)
+        {
+            var named = await namers.Concepts.Name(groups, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
+            names = named.IsError ? null : named.Value;
+            note = named.IsError ? "concepts" : null;
+        }
+
+        var concepts = ConceptDeriver.Derive(joined, pins, names);
+        return (joined with
+        {
+            Nodes = [.. joined.Nodes.Concat(concepts.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
+            Edges = [.. joined.Edges.Concat(concepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
+        }, note);
+    }
 
     // The current map first (already without what the built repos' deny globs take out, spec §6.2): what a person put there wins over what the build found, and a promote loses nothing.
     private static GraphSnapshot Join(GraphSnapshot kept, ExtractedMap found) =>

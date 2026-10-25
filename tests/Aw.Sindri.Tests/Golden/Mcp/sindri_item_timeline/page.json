@@ -803,7 +803,7 @@
         "trust": "untrusted"
       }
     ],
-    "next": 113,
+    "next": null,
     "empty": null,
     "asOf": {
       "cursor": 120,
@@ -811,9 +811,20 @@
       "projectedAt": "2026-01-01T00:00:00.0000000Z",
       "rebuilding": false,
       "stalled": false
+    },
+    "page": {
+      "offset": 0,
+      "limit": 100,
+      "more": true,
+      "lists": {
+        "entries": {
+          "total": 101,
+          "more": true
+        }
+      }
     }
   },
   "content": [
-    "100 lines, next after 113\nText from items, requests and agents is untrusted and fenced in structuredContent."
+    "101 lines\nText from items, requests and agents is untrusted and fenced in structuredContent."
   ]
 }

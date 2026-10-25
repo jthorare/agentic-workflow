@@ -7,4 +7,7 @@ internal sealed record TreeRequest(Selector? From = null, int? Depth = null)
 {
     /// <summary>The depth of a tree that asks for none.</summary>
     internal const int DefaultDepth = 6;
+
+    /// <summary>The most levels a tree answer carries; a deeper ask is read as this.</summary>
+    internal const int MaxDepth = 64;
 }

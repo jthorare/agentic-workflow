@@ -10,20 +10,28 @@ internal sealed partial class ContextPageViewModel
     private const int SoftNodeGuard = 5000;   // opening stops once this many nodes are drawn; the rest are counted
     private const int MaxLocate = 100;
 
+    private int? _searchTotal;   // how many items the last search matched in all, when it said
+    private string _searchProblem = string.Empty;   // what the last search said when it was refused
     private IReadOnlyCollection<string> _unopenedHitAreas = [];   // the features a search touched that stay tiles
 
     /// <summary>Whether the camera is on a query's answer.</summary>
     public bool IsZoomedIn => Whole.IsZoomed;
 
+    // The last search's problem and total go before a new search asks; the search's callbacks fill them again.
+    private void ForgetSearchAnswer() => (_searchProblem, _searchTotal) = (string.Empty, null);
+
     // After the existing read drew its answer: it is shown as a zoom onto the whole map when the map is there (the map behind it stays), else as the neighbourhood.
     private async Task ZoomIntoWhole(Uri api, CancellationToken cancellationToken)
     {
+        Hits.Clear();
         if (!Whole.IsReady || Map is not { } map)
         {
             return;
         }
 
+        ForgetSearchAnswer();
         var hits = await MapSearch.Search(AnchorText, cancellationToken).ConfigureAwait(true);
+        Hits.Show(hits, _searchTotal ?? hits.Count);
         IReadOnlyList<string> keys = [.. hits.Select(h => h.Key)];
         _unopenedHitAreas = [];
         var zoomed = Whole.AnswerByArea ? await ZoomIntoAreas(api, keys, cancellationToken).ConfigureAwait(true) : Whole.Zoom(keys);
@@ -32,7 +40,11 @@ internal sealed partial class ContextPageViewModel
             Whole.ApplySearch(hits, _unopenedHitAreas, zoomed);   // an answer with none of its items on the map is not a search
         }
 
-        if (!zoomed)
+        if (_searchProblem.Length > 0)
+        {
+            Problem = _searchProblem;   // a refused search is not "no match"
+        }
+        else if (!zoomed)
         {
             Problem = Labels.ContextWholeNoMatch;
         }
@@ -143,6 +155,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when the camera was on an answer.</returns>
     internal bool BackToWholeMap()
     {
+        Hits.Clear();
         var ended = Concepts.EndSearch();   // the concept layer's own search ends the same way
         if (ended)
         {

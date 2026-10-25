@@ -97,6 +97,7 @@ internal sealed partial class ContextPageViewModel
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
             Choices = Suggestions(result.Error);
             Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
+            Hits.Clear();   // the hits belonged to the search that missed
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 

@@ -10,6 +10,7 @@
              xmlns:mv="using:Aw.Sindri.Ui.Views.Context.Map"
              xmlns:wv="using:Aw.Sindri.Ui.Views.Context.Whole"
              xmlns:cv2="using:Aw.Sindri.Ui.Views.Context.Concepts"
+             xmlns:hv="using:Aw.Sindri.Ui.Views.Context.Hits"
              xmlns:wvm="using:Aw.Sindri.Ui.ViewModels.Context.Whole"
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
@@ -125,7 +126,13 @@
       </StackPanel>
 
       <!-- The stage: the page scrolls, so the stage is given the height the window leaves (ContextPage.axaml.cs). -->
-      <Panel x:Name="ContextStageHost" Grid.Row="1" MinHeight="420" VerticalAlignment="Top">
+      <Grid x:Name="ContextStageRow" Grid.Row="1" ColumnDefinitions="Auto,*">
+      <!-- The hits of a search sit beside the map; the map still filters to the matches and their links. -->
+      <Border x:Name="ContextHitsHost" IsVisible="{Binding Hits.IsVisible}" Width="300" Margin="0,0,12,0" Padding="10" VerticalAlignment="Top"
+              Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}">
+        <hv:MapHitsList x:Name="ContextHits" DataContext="{Binding Hits}" />
+      </Border>
+      <Panel x:Name="ContextStageHost" Grid.Column="1" MinHeight="420" VerticalAlignment="Top">
         <!-- The concept band: the first layer, over the whole map; a concept opens the bands scoped to it. -->
         <Panel x:Name="ConceptsHost" IsVisible="{Binding ShowConcepts}">
           <cv2:ConceptLayerView x:Name="ConceptLayer" DataContext="{Binding Concepts}" />
@@ -188,6 +195,7 @@
           </StackPanel>
         </Border>
       </Panel>
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

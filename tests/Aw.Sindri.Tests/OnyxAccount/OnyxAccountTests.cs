@@ -37,7 +37,7 @@ public sealed class OnyxAccountTests
         public OnyxAccountService Service(FakeOnyxPrompts? prompts = null)
             => new(Workspace, prompts ?? Prompts, Browser, new OnyxKeyMinter(prompts ?? Prompts, Provisioning, Secrets, Secrets, new FakeRandomHex(), Progress), Profile, Progress);
 
-        public async Task<Kernel.Result<OnyxAccountResponse>> Run() => await Service().Handle(new OnyxAccountRequest(3000, "v4.9.0"), Token);
+        public async Task<Kernel.Result<OnyxAccountResponse>> Run() => await Service().Handle(new OnyxAccountRequest(3189, "v4.9.0"), Token);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -51,8 +51,8 @@ public sealed class OnyxAccountTests
         Assert.All(response.Steps, static s => Assert.Equal(OnyxStepOutcome.Ran, s.Outcome));
         Assert.Equal("keychain:onyx/sindri-onyx", response.KeyPointer);
         Assert.True(response.ProfileChanged);
-        Assert.Equal(new Uri("http://127.0.0.1:3000/auth/signup"), Assert.Single(rig.Browser.Opened));
-        Assert.Equal(("http://127.0.0.1:3000", "keychain:onyx/sindri-onyx", "v4.9.0"), rig.Profile.Section);
+        Assert.Equal(new Uri("http://127.0.0.1:3189/auth/signup"), Assert.Single(rig.Browser.Opened));
+        Assert.Equal(("http://127.0.0.1:3189", "keychain:onyx/sindri-onyx", "v4.9.0"), rig.Profile.Section);
         Assert.Equal(MadeKey, rig.Secrets.Stored["keychain:onyx/sindri-onyx"]);
         Assert.Equal(2, rig.Provisioning.LoggedOut);   // the owner's session and the dedicated user's
         Assert.Equal("keychain:onyx/sindri-onyx", rig.Workspace.State!.KeyPointer);
@@ -169,7 +169,7 @@ public sealed class OnyxAccountTests
         var empty = new FakeOnyxPrompts();
         empty.Answer(string.Empty, null);
 
-        var result = await rig.Service(empty).Handle(new OnyxAccountRequest(3000, "v4.9.0"), Token);
+        var result = await rig.Service(empty).Handle(new OnyxAccountRequest(3189, "v4.9.0"), Token);
 
         Assert.Equal(SindriErrors.OnyxKeyFailed.Code, result.Error.Code);
         Assert.Equal(0, rig.Provisioning.SignIns);
@@ -236,7 +236,7 @@ public sealed class OnyxAccountTests
 
         _ = await rig.Run();
 
-        Assert.Contains(rig.Progress.Lines, static l => l.Contains("http://127.0.0.1:3000/auth/signup", StringComparison.Ordinal));
+        Assert.Contains(rig.Progress.Lines, static l => l.Contains("http://127.0.0.1:3189/auth/signup", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]

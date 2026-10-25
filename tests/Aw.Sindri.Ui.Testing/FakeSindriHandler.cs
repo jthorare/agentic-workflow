@@ -219,6 +219,10 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 var asked = query["q"] ?? string.Empty;
                 _ = await server.QueryAnchors(uri, asked, cancellationToken);
                 return Answer(server.QueryAnswer(asked));
+            case "search":
+                var search = new MapSearchQuery(query["q"] ?? string.Empty, int.TryParse(query["limit"], NumberStyles.None, CultureInfo.InvariantCulture, out var searchLimit) ? searchLimit : null, query["area"], query["repo"]);
+                _ = await server.ContextSearch(uri, search, cancellationToken);
+                return Answer(server.ContextSearchAnswer(search));
             case "sources":
                 _ = await server.Sources(uri, cancellationToken);
                 return Answer(server.SourcesAnswer);
@@ -240,7 +244,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
             case "concepts":
-                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
+                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
                 _ = await server.ContextConcepts(uri, concepts, cancellationToken);
                 return Answer(server.ContextConceptsAnswer(concepts));
             case "map/publish":

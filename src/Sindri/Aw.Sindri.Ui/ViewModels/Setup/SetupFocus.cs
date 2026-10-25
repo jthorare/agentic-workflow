@@ -14,4 +14,7 @@ internal enum SetupFocus
 
     /// <summary>The button that opens the Onyx form again (after Esc closed it).</summary>
     OnyxConnect,
+
+    /// <summary>The heading of the setup step the form is in (its header toggle), after the form's control left the tree.</summary>
+    StepHeading,
 }

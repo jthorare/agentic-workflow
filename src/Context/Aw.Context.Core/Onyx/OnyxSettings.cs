@@ -148,7 +148,7 @@ public sealed partial record OnyxSettings
 
     private static Error NotLoopback(string why) => ContextErrors.OnyxNotPinnedOrLoopback.With(
         $"{UrlKey}: Onyx must be on a loopback address (127.0.0.0/8, [::1] or localhost) over http or https, but {why}. "
-        + "Bind Onyx's published ports to 127.0.0.1 and point the url there, e.g. http://127.0.0.1:3000 (spec §8.8).");
+        + "Bind Onyx's published ports to 127.0.0.1 and point the url there, e.g. http://127.0.0.1:3189 (spec §8.8).");
 
     private static Error NotPinned(string why) => ContextErrors.OnyxNotPinnedOrLoopback.With($"{VersionKey}: {why} (spec §8.8).");
 

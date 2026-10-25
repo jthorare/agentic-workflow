@@ -1007,7 +1007,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/recipes/approve-all",
-      "cli": "sindri-app recipe approve-all",
+      "cli": "sindri recipe approve-all",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

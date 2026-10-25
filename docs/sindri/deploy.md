@@ -9,7 +9,7 @@ The `Dockerfile` at the repo root has three stages, every `FROM` pinned by diges
 
 | Stage | Does |
 |---|---|
-| build | Publishes the Sindri host the way `scripts/sindri-app.sh` does (framework-dependent, the shipped recipes embedded through `AwRecipesDir`), then `judge` and `aw-packets` NativeAOT for the target platform, then runs `sindri recipe eval --shipped` and fails the build if an eval fails or the embedded recipe count differs from `recipes/sindri/*.yaml`. `sindri-ui` is not built: the image has no desktop |
+| build | Publishes the Sindri host the way `scripts/install-cs.sh` does (framework-dependent, the shipped recipes embedded through `AwRecipesDir`), then `judge` and `aw-packets` NativeAOT for the target platform, then runs `sindri recipe eval --shipped` and fails the build if an eval fails or the embedded recipe count differs from `recipes/sindri/*.yaml`. `sindri-ui` is not built: the image has no desktop |
 | tools | The `temporal` CLI from `binaries.lock` (downloaded and sha256-checked by `scripts/binaries-lock.sh fetch temporal`), and graphify in a hash-pinned venv at `context/code-index.lock`'s pin (`uv`, the same install `scripts/install-deps.sh` does) |
 | runtime | `aspnet` plus `git`, `bubblewrap`, `tini`, `curl` (the chart's exec probes) and `procps` (the Temporal dev server is found and signalled with `ps` and `kill`); uid 1000; everything Sindri ships under `/opt/sindri` |
 
@@ -89,7 +89,7 @@ and 4 are per verb, below. Output is plain: no colour or spinner.
 
 `scripts/sindri-pod.sh connect [--onyx [--adopt]] [--port PORT] [--check] [--dry-run]` opens the desktop
 app on a Sindri that runs in a cluster (spec `2026-10-23-sindri-deployable-context-design.md` K8, §C.3). You need `kubectl`
-with exec and port-forward rights on the namespace, `jq`, and `sindri-ui` (`scripts/sindri-app.sh --publish-only`, or
+with exec and port-forward rights on the namespace, `jq`, and `sindri-ui` (`scripts/install-cs.sh --publish`, or
 `AW_SINDRI_UI`).
 
 The app only follows a `control.json` in a home on your machine, so `connect` builds one in a temporary directory
@@ -101,7 +101,7 @@ The app only follows a `control.json` in a home on your machine, so `connect` bu
 
 Before anything else `connect` checks its prerequisites; each failure is one line and exit 2: `kubectl` missing or refused a
 verb (`create pods/exec` or `create pods/portforward`, named in the line), the `sindri` container of the pod not ready (named; `connect` waits for it up to `AW_SINDRI_POD_RETRIES` attempts first, `--check` only reports; other containers, such as a crash-looping Onyx one, are mentioned only as information and never fail `connect`), the local port
-taken (named, with `--port`), or `sindri-ui` not found (the line names `sindri-app`). `connect --check` reports every
+taken (named, with `--port`), or `sindri-ui` not found (the line names `sindri`). `connect --check` reports every
 prerequisite and exits 0 or 2 without starting anything.
 
 The mirror home is a fresh `$TMPDIR/aw-sindri-pod.XXXXXX` (0700), removed when the script exits, Ctrl-C included. A crash leaves

@@ -61,7 +61,7 @@ public sealed class OnyxUpStepsTests
             new OnyxPullStep(rig.Runtime, rig.Workspace, compose, rig.Progress),
             new OnyxStartStep(rig.Runtime, rig.Health, new OnyxReadiness(rig.Health, rig.Runtime, rig.Clock), rig.Progress, rig.Clock),
         ];
-        return (rig, new OnyxUpContext(rig.Pins.Pins, rig.Paths, 3000, "linux/arm64"), steps);
+        return (rig, new OnyxUpContext(rig.Pins.Pins, rig.Paths, 3189, "linux/arm64"), steps);
     }
 
     [Fact, Trait("Lane", "unit")]

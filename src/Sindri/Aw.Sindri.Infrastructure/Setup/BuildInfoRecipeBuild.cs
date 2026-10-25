@@ -4,7 +4,7 @@ using Aw.Sindri.Infrastructure.Workflow;
 namespace Aw.Sindri.Infrastructure.Setup;
 
 /// <summary>
-/// Reads the 'recipes-tree=' line of the 'build-info' file scripts/sindri-app.sh writes beside the published binary, and asks git in the current folder for 'HEAD:recipes/sindri'.
+/// Reads the 'recipes-tree=' line of the 'build-info' file scripts/install-cs.sh writes beside the published binary, and asks git in the current folder for 'HEAD:recipes/sindri'.
 /// No stamp (a dev run) is no answer; no checkout, or a checkout without the folder, leaves <see cref="RecipeTrees.Head"/> null.
 /// </summary>
 internal sealed class BuildInfoRecipeBuild : IRecipeBuild

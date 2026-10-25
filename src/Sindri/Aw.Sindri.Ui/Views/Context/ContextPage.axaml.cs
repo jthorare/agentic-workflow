@@ -230,5 +230,6 @@ internal sealed partial class ContextPage : UserControl
         {
             ContextStageHost.Height = height;
         }
+        ContextHitsHost.Height = ContextStageHost.Height;   // the list scrolls inside the height the stage has
     }
 }

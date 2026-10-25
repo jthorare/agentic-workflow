@@ -189,6 +189,26 @@ The `mcp-client` subject is internal to T3. Once `t3 thread start --worktree-pat
 [pingdotgg/t3code#23945](https://github.com/pingdotgg/t3code/discussions/23945)), the host can call the `t3 thread` CLI instead,
 which signs itself in, and the token handling goes away.
 
+## Background launches and takeover (issue 1004)
+
+A Step the engine launches runs unattended: it opens no window, whatever `viewer` says. `launch.started` says so instead of recording kind `none`: `viewer` is
+`{ kind: <the configured or detected viewer, e.g. "warp">, label, outcome: "skipped", reason: "background: viewer opens on takeover" }` (`reason` is
+additive and omitted when null; the kind is `none` only when no viewer could be probed, with reason `background: no viewer is configured`).
+
+The viewer opens when a person takes the Step over (`sindri workflow takeover`, or the app's Takeover). After the takeover applies, Sindri looks for a live launch
+of that instance (or of an instance under it) and opens its tmux session in the one viewer the launcher uses: `launcher.json`'s `viewer` when it is valid, else the
+terminal the box's detection chose; a T3 session goes to T3. The takeover never waits on this and never fails because of it (the Step is taken over first, the
+viewer gets 10 s). The attempt is recorded as `launch.takeover-opened` (public, key `launch.takeover-opened:<nonce>`, payload
+`{ launchId, item, instance, viewer, attach }`); the launches view takes `viewer` as the launch's latest, so `GET /sindri/launches/{id}` shows it, and the takeover's
+response carries it as `viewer` beside `attach`, with the launch's own viewer record:
+
+```json
+{ "viewer": { "kind": "warp", "label": "Warp", "outcome": "opened|unconfirmed|failed", "code": null, "detail": null, "reason": "…or absent" },
+  "attach": ["tmux", "-L", "sindri-launch", "attach", "-t", "=snd-LCH-…"] }
+```
+
+`outcome` is `failed` with a `reason` when nothing opened: `code` `no-viewer` when no viewer on the box can open a window, `SND-LAUNCH-001` when the viewer was tried and failed, `SND-LAUNCH-009` on a timeout. (`skipped` is only a background launch's.) Both fields are absent when the instance has no live session, and on a repeat of a takeover that had already applied.
+
 ## What a launched Step can't do
 
 A Sindri-launched agent Step (an unattended launch; line spec LN-LCH1) can't hold a forge credential or push. Sindri pushes. Three things enforce it,

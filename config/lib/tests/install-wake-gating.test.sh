@@ -20,11 +20,11 @@ test_install_judge_no_longer_touches_pretooluse_or_teammateidle() {
   local settings home
   settings="$(mktemp -d)/settings.json"; home="$(mktemp -d)"
   echo '{}' > "$settings"
-  CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-judge.sh" > /dev/null
+  CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-judge-hooks.sh" > /dev/null
   jq -e '.hooks.PreToolUse' "$settings" > /dev/null 2>&1 \
-    && { echo "FAIL: install-judge.sh must not touch PreToolUse"; exit 1; }
+    && { echo "FAIL: install-judge-hooks.sh must not touch PreToolUse"; exit 1; }
   jq -e '.hooks.TeammateIdle' "$settings" > /dev/null 2>&1 \
-    && { echo "FAIL: install-judge.sh must not touch TeammateIdle"; exit 1; }
+    && { echo "FAIL: install-judge-hooks.sh must not touch TeammateIdle"; exit 1; }
   echo "PASS: test_install_judge_no_longer_touches_pretooluse_or_teammateidle"
 }
 

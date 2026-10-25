@@ -1,2 +1,0 @@
-{"role": "user", "message": {"content": [{"type": "text", "text": "<user_query>\nExplore the routes folder\n</user_query>"}]}}
-{"role": "assistant", "message": {"content": [{"type": "text", "text": "Working on it."}, {"type": "tool_use", "name": "Read", "input": {"path": "src/app.ts"}}]}}

@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONTEXT-006",
+  "status": 400,
+  "detail": "'cursor' isn't from this map version (fix: start again without a cursor)",
+  "traceId": "<trace>"
+}

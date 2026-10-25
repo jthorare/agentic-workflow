@@ -9,7 +9,7 @@ namespace Aw.UiDriver.Cli;
 internal sealed class CliArguments
 {
     internal const string Usage =
-        "aw-ui-driver [--dir D] <ready|tree|search|props|click|type|key|scroll|wait-for|screenshot|window|action|call> [flags]\n"
+        "aw-ui-driver [--dir D] [--timeout-ms N] <ready|tree|search|props|click|type|key|scroll|wait-for|screenshot|window|action|call> [flags]\n"
         + "  selector flags: --node-id --automation-id --name --type --text --contains --index\n"
         + "  tree --depth N · search --limit N · type --value TEXT [--replace] · key --chord Ctrl+K · scroll --dx N --dy N\n"
         + "  wait-for --state exists|visible|hidden|gone|enabled|disabled|textEquals|textContains [--expect-text T] [--wait-ms N]\n"
@@ -19,7 +19,7 @@ internal sealed class CliArguments
     private static readonly string[] _valueFlags =
     [
         "--dir", "--node-id", "--automation-id", "--name", "--type", "--text", "--contains", "--index", "--depth", "--limit", "--value", "--chord", "--dx", "--dy",
-        "--state", "--expect-text", "--wait-ms", "--out", "--width", "--height", "--do", "--path", "--json",
+        "--state", "--expect-text", "--wait-ms", "--timeout-ms", "--out", "--width", "--height", "--do", "--path", "--json",
     ];
 
     private static readonly string[] _switches = ["--replace"];
@@ -111,7 +111,7 @@ internal sealed class CliArguments
 
     private static bool IsNumberFlagOk(string flag, string value) => flag switch
     {
-        "--index" or "--depth" or "--limit" or "--wait-ms" or "--width" or "--height" => int.TryParse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _),
+        "--index" or "--depth" or "--limit" or "--wait-ms" or "--timeout-ms" or "--width" or "--height" => int.TryParse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _),
         "--dx" or "--dy" => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
         _ => true,
     };

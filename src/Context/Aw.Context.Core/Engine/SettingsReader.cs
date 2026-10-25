@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, maxBudget, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -79,7 +79,6 @@ public static partial class SettingsReader
                     Repos = section.Repos?.Select(ContextRepoName.From).ToList(),
                     DocGlobs = globs,
                     Deadline = deadline.Value,
-                    MaxBudget = section.MaxBudget ?? settings.MaxBudget,
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
                     SessionsEnabled = section.Sessions?.Enabled ?? true,
@@ -215,7 +214,6 @@ public static partial class SettingsReader
 
         return section switch
         {
-            { MaxBudget: < 1_000 or > 1_000_000 } => Invalid("context.maxBudget", "is 1000 to 1000000 tokens"),
             { MinHits: < 0 or > 50 } => Invalid("context.minHits", "is 0 to 50"),
             { Labeling.MaxTokens: < 1_000 or > 20_000_000 } => Invalid("context.labeling.maxTokens", "is 1000 to 20000000 tokens"),
             { Labeling.MaxTokensPerSync: < 1 or > 20_000_000 } => Invalid("context.labeling.maxTokensPerSync", "is 1 to 20000000 tokens"),

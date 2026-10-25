@@ -34,9 +34,6 @@
 - name: "area:judge"
   color: 1d76db
   description: judge (decisions, health, prompt sorter)
-- name: "area:scorer"
-  color: 1d76db
-  description: scorer (cost and involvement reports)
 - name: "area:sindri"
   color: 1d76db
   description: sindri (profile, ledger, scrub, observe, index, scope, evolve)

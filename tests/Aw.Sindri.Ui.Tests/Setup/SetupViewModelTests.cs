@@ -303,9 +303,9 @@ public sealed class SetupViewModelTests
         var setup = await _f.Read(Token);
 
         Assert.Equal((true, false, false), (setup.IsNotRunning, setup.IsFailed, setup.IsHomeLineShown));
-        Assert.Equal(("Sindri isn't running.", "sindri-app", "The app reconnects on its own when Sindri starts."), (setup.NotRunningText, setup.Launcher.Cli, setup.ReconnectsText));
+        Assert.Equal(("Sindri isn't running.", "sindri", "The app reconnects on its own when Sindri starts."), (setup.NotRunningText, setup.Launcher.Cli, setup.ReconnectsText));
         await setup.Launcher.Copy(Token);
-        Assert.Equal("sindri-app", _f.Clipboard.Text);
+        Assert.Equal("sindri", _f.Clipboard.Text);
     }
 
     [Fact]

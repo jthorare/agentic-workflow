@@ -15,7 +15,7 @@ alwaysApply: false
 
 # C# Testing Rules
 
-Source of truth: spec §4b.5 (`docs/superpowers/specs/2026-10-09-agent-readiness-design.md`). The TypeScript test rules (`.agents/rules/testing.md`) still apply to the TS packages until the cutover.
+Source of truth: spec §4b.5 (`docs/superpowers/specs/2026-10-09-agent-readiness-design.md`).
 
 Each rule names the check that enforces it. "Gap — R1b" means the check doesn't exist yet: follow the rule by hand.
 

@@ -5910,7 +5910,7 @@ const Aw.Sindri.Core.Views.ViewNames.NeedsYou = "needs_you" -> string!
 const Aw.Sindri.Core.Views.ViewNames.Profile = "profile" -> string!
 const Aw.Sindri.Core.Views.ViewNames.Requests = "requests" -> string!
 const Aw.Sindri.Core.Views.ViewNames.Services = "services" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 11 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 12 -> int
 const Aw.Sindri.Core.Workflow.Engine.Effects.OutboxEvents.Cancelled = "outbox.cancelled" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Effects.OutboxEvents.Dispatched = "outbox.dispatched" -> string!
 const Aw.Sindri.Core.Workflow.Engine.Effects.OutboxEvents.Pending = "outbox.pending" -> string!
@@ -10034,9 +10034,9 @@ Aw.Sindri.Core.Onyx.PreflightReport.Ok.get -> bool
 Aw.Sindri.Core.Onyx.PreflightReport.Port.get -> int
 Aw.Sindri.Core.Onyx.PreflightReport.Port.init -> void
 Aw.Sindri.Core.Onyx.PreflightReport.PreflightReport(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.PreflightCheck!>! Checks, int Port) -> void
-const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackFirst = 3001 -> int
-const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackLast = 3010 -> int
-const Aw.Sindri.Core.Onyx.OnyxPreflight.PreferredPort = 3000 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackFirst = 3190 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.FallbackLast = 3199 -> int
+const Aw.Sindri.Core.Onyx.OnyxPreflight.PreferredPort = 3189 -> int
 override Aw.Sindri.Core.Onyx.DiskFacts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Onyx.DiskFacts.GetHashCode() -> int
 override Aw.Sindri.Core.Onyx.DiskFacts.ToString() -> string!
@@ -13853,8 +13853,8 @@ override Aw.Sindri.Core.Profile.GraphSettings.ToString() -> string!
 static Aw.Sindri.Core.Profile.GraphSettings.operator !=(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 static Aw.Sindri.Core.Profile.GraphSettings.operator ==(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 const Aw.Sindri.Core.Profile.GraphSettings.DefaultMaxMB = 1024 -> int
-Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph) -> void
-Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null) -> void
+Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts) -> void
+Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts = null) -> void
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxFileKB = 4096 -> int
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxTotalMB = 4096 -> int
 Aw.Sindri.Core.Profile.IndexSettings.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -13869,6 +13869,8 @@ Aw.Sindri.Core.Profile.IndexSettings.Embeddings.get -> Aw.Sindri.Core.Profile.Em
 Aw.Sindri.Core.Profile.IndexSettings.Embeddings.init -> void
 Aw.Sindri.Core.Profile.IndexSettings.Graph.get -> Aw.Sindri.Core.Profile.GraphSettings?
 Aw.Sindri.Core.Profile.IndexSettings.Graph.init -> void
+Aw.Sindri.Core.Profile.IndexSettings.Roles.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
+Aw.Sindri.Core.Profile.IndexSettings.Roles.init -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.BlockCatalog(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>! blocks, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>! events, Aw.Sindri.Core.Workflow.Blocks.IBlockSentences? sentences = null) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.get -> string?
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Sentence.init -> void
@@ -18262,7 +18264,6 @@ Aw.Sindri.Core.Workflow.ApproveAll.ShippedFile.Deconstruct(out Aw.Sindri.Core.Wo
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedFile.Hash.init -> void
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedFile.Id.init -> void
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedFile.ShippedFile(Aw.Sindri.Core.Workflow.Ids.RecipeId Id, Aw.Sindri.Core.Workflow.Ids.RecipeHash Hash, Aw.Sindri.Core.Workflow.Validation.RecipeDocument! Document, string! File, string! Text) -> void
-
 Aw.Sindri.Core.Setup.HookKind
 Aw.Sindri.Core.Setup.HookKind.Foreign = 4 -> Aw.Sindri.Core.Setup.HookKind
 Aw.Sindri.Core.Setup.HookKind.None = 0 -> Aw.Sindri.Core.Setup.HookKind
@@ -18501,6 +18502,75 @@ Aw.Sindri.Core.Prove.PhaseSignals
 static Aw.Sindri.Core.Prove.PhaseSignals.Check(System.Text.Json.Nodes.JsonNode? signals) -> string?
 static Aw.Sindri.Core.Prove.PhaseSignals.Of(System.Text.Json.Nodes.JsonNode? signals, string! item) -> System.Collections.Generic.IReadOnlyList<System.Text.Json.Nodes.JsonObject!>!
 static Aw.Sindri.Core.Prove.PhaseSignals.Shape.get -> string!
+Aw.Sindri.Core.Profile.ConceptSettings
+Aw.Sindri.Core.Profile.ConceptSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ConceptSettings!
+Aw.Sindri.Core.Profile.ConceptSettings.ConceptSettings(Aw.Sindri.Core.Ids.ConceptPinId? Id = null, string? Name = null, string? Summary = null, System.Collections.Generic.IReadOnlyList<string!>? Features = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null) -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId? Id, out string? Name, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>? Features, out System.Collections.Generic.IReadOnlyList<string!>? Paths) -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Equals(Aw.Sindri.Core.Profile.ConceptSettings? other) -> bool
+Aw.Sindri.Core.Profile.ConceptSettings.Features.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.ConceptSettings.Features.init -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId?
+Aw.Sindri.Core.Profile.ConceptSettings.Id.init -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Name.get -> string?
+Aw.Sindri.Core.Profile.ConceptSettings.Name.init -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.ConceptSettings.Paths.init -> void
+Aw.Sindri.Core.Profile.ConceptSettings.Summary.get -> string?
+Aw.Sindri.Core.Profile.ConceptSettings.Summary.init -> void
+override Aw.Sindri.Core.Profile.ConceptSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ConceptSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ConceptSettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.ConceptSettings.operator !=(Aw.Sindri.Core.Profile.ConceptSettings? left, Aw.Sindri.Core.Profile.ConceptSettings? right) -> bool
+static Aw.Sindri.Core.Profile.ConceptSettings.operator ==(Aw.Sindri.Core.Profile.ConceptSettings? left, Aw.Sindri.Core.Profile.ConceptSettings? right) -> bool
+Aw.Sindri.Core.Profile.IndexSettings.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>?
+Aw.Sindri.Core.Profile.IndexSettings.Concepts.init -> void
+Aw.Sindri.Core.Profile.RepoConcepts
+static Aw.Sindri.Core.Profile.RepoConcepts.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>!
+Aw.Sindri.Core.Ids.ConceptPinId
+Aw.Sindri.Core.Ids.ConceptPinId.Equals(Aw.Sindri.Core.Ids.ConceptPinId other) -> bool
+Aw.Sindri.Core.Ids.ConceptPinId.Equals(Aw.Sindri.Core.Ids.ConceptPinId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.ConceptPinId>! comparer) -> bool
+Aw.Sindri.Core.Ids.ConceptPinId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.ConceptPinId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.ConceptPinId.ConceptPinId() -> void
+Aw.Sindri.Core.Ids.ConceptPinId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.ConceptPinId.Value.get -> string!
+override Aw.Sindri.Core.Ids.ConceptPinId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.ConceptPinId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.ConceptPinId.ToString() -> string!
+static Aw.Sindri.Core.Ids.ConceptPinId.From(string! value) -> Aw.Sindri.Core.Ids.ConceptPinId
+static Aw.Sindri.Core.Ids.ConceptPinId.operator !=(Aw.Sindri.Core.Ids.ConceptPinId left, Aw.Sindri.Core.Ids.ConceptPinId right) -> bool
+static Aw.Sindri.Core.Ids.ConceptPinId.operator ==(Aw.Sindri.Core.Ids.ConceptPinId left, Aw.Sindri.Core.Ids.ConceptPinId right) -> bool
+static Aw.Sindri.Core.Ids.ConceptPinId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.ConceptPinId
+static Aw.Sindri.Core.Ids.ConceptPinId.TryFrom(string? value, out Aw.Sindri.Core.Ids.ConceptPinId vo) -> bool
+static Aw.Sindri.Core.Ids.ConceptPinId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.ConceptPinId result) -> bool
+const Aw.Sindri.Core.Events.EventTypes.LaunchTakeoverOpened = "launch.takeover-opened" -> string!
+Aw.Sindri.Core.Events.LaunchViewer.Reason.get -> string?
+Aw.Sindri.Core.Events.LaunchViewer.Reason.init -> void
+static Aw.Sindri.Core.Events.LaunchViewer.Background(Aw.Sindri.Core.Launch.ViewerOutcome! outcome) -> Aw.Sindri.Core.Events.LaunchViewer!
+Aw.Sindri.Core.Events.LaunchViewerPublic.Reason.get -> string?
+Aw.Sindri.Core.Events.LaunchViewerPublic.Reason.init -> void
+Aw.Sindri.Core.Launch.ViewerOutcome.Reason.get -> string?
+Aw.Sindri.Core.Launch.ViewerOutcome.Reason.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.<Clone>$() -> Aw.Sindri.Core.Events.LaunchTakeoverOpened!
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out Aw.Sindri.Core.Events.LaunchViewer! Viewer, out System.Collections.Generic.IReadOnlyList<string!>! Attach) -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Equals(Aw.Sindri.Core.Events.LaunchTakeoverOpened? other) -> bool
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Launch.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Item.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Instance.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Viewer.get -> Aw.Sindri.Core.Events.LaunchViewer!
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Viewer.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Attach.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.Attach.init -> void
+Aw.Sindri.Core.Events.LaunchTakeoverOpened.LaunchTakeoverOpened(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, Aw.Sindri.Core.Events.LaunchViewer! Viewer, System.Collections.Generic.IReadOnlyList<string!>! Attach) -> void
+override Aw.Sindri.Core.Events.LaunchTakeoverOpened.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.LaunchTakeoverOpened.GetHashCode() -> int
+override Aw.Sindri.Core.Events.LaunchTakeoverOpened.ToString() -> string!
+static Aw.Sindri.Core.Events.LaunchTakeoverOpened.operator !=(Aw.Sindri.Core.Events.LaunchTakeoverOpened? left, Aw.Sindri.Core.Events.LaunchTakeoverOpened? right) -> bool
+static Aw.Sindri.Core.Events.LaunchTakeoverOpened.operator ==(Aw.Sindri.Core.Events.LaunchTakeoverOpened? left, Aw.Sindri.Core.Events.LaunchTakeoverOpened? right) -> bool
 Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalRow.Hash.get -> Aw.Sindri.Core.Workflow.Ids.RecipeHash?
 Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalRow.Hash.init -> void
 Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalRow.Version.get -> int?

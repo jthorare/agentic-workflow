@@ -562,5 +562,11 @@ absent "a repeat of context whole over imports nothing" "$(cat "$STUB_LOG")" "co
 out="$(AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole under 2>/dev/null)"; check "context whole under exits 0 and prints its word" "$out" "under"
 contains "context whole under imports the tabs map again" "$(cat "$STUB_LOG")" "context map import"
 check "the under map is the tabs map (10 nodes)" "$(jq '.nodes | length' "$W/ui-fixture-context/tabs-map.json")" "10"
+: > "$STUB_LOG"
+out="$(AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole concepts 2>/dev/null)"; check "context whole concepts exits 0 and prints its word" "$out" "concepts"
+contains "context whole concepts imports the map as the owner" "$(cat "$STUB_LOG")" "context map import"
+M="$W/ui-fixture-context/concepts-map.json"
+check "the concepts map has two concepts" "$(jq '[.nodes[] | select(.key | startswith("concept:"))] | length' "$M")" "2"
+check "every edge of the concepts map joins two of its nodes" "$(jq '[.nodes[].key] as $k | [.edges[] | select((.from as $f | $k | index($f)) == null or (.to as $t | $k | index($t)) == null)] | length' "$M")" "0"
 
 exit "$fail"

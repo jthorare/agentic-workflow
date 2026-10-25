@@ -19,6 +19,37 @@ public sealed class AnchorMatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_name_whose_words_all_sit_in_one_feature_label_resolves_to_that_feature_in_any_order()
+    {
+        var graph = new GraphBuilder().Node("feature:staff.self-scheduling", "Staff self scheduling").Node("feature:staff.pay", "Staff pay").Build();
+
+        var node = AnchorMatch.Resolve(graph, "scheduling, staff");
+
+        Assert.Equal("feature:staff.self-scheduling", node.Value.Key.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_name_whose_words_sit_in_two_feature_labels_stays_unknown()
+    {
+        var graph = new GraphBuilder().Node("feature:a", "Staff self scheduling").Node("feature:b", "Staff open scheduling").Build();
+
+        var node = AnchorMatch.Resolve(graph, "staff scheduling");
+
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, node.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Suggestions_list_a_test_file_after_other_nodes_with_the_same_word_count()
+    {
+        var graph = new GraphBuilder().Node("code:src/a/__tests__/widget.test.ts", "widget.test.ts").Node("feature:widget", "Widget").Build();
+
+        var node = AnchorMatch.Resolve(graph, "widget gadget");
+
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, node.Error.Code);
+        Assert.True(node.Error.Message.IndexOf("feature:widget", StringComparison.Ordinal) < node.Error.Message.IndexOf("code:src/a", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_label_two_nodes_share_is_SND_CONTEXT_037_listing_both()
     {
         var graph = new GraphBuilder().Node("feature:a", "Same").Node("feature:b", "same").Build();
@@ -66,7 +97,7 @@ public sealed class AnchorMatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void SND_CONTEXT_037_candidates_stop_at_a_hundred_keys_while_the_detail_lists_all()
+    public void SND_CONTEXT_037_candidates_list_every_key_and_so_does_the_detail()
     {
         var builder = new GraphBuilder();
         foreach (var i in Enumerable.Range(0, 120))
@@ -76,7 +107,7 @@ public sealed class AnchorMatchTests
 
         var node = AnchorMatch.Resolve(builder.Build(), "Same");
 
-        Assert.Equal(100, Members(node.Error, "candidates").Count);
+        Assert.Equal(120, Members(node.Error, "candidates").Count);   // why: no cap, so a list past 100 is whole
         Assert.Contains("feature:n119", node.Error.Message, StringComparison.Ordinal);
     }
 

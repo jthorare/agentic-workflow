@@ -32,7 +32,7 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null,
         {
             checks.Add(string.Equals(trees.Embedded, head, StringComparison.Ordinal)
                 ? new DoctorCheck("setup:recipes-tree", CheckState.Ok, "the embedded recipe set is HEAD's", Fix: null)
-                : new DoctorCheck("setup:recipes-tree", CheckState.Warn, $"the embedded recipe set ({trees.Embedded}) is not this checkout's HEAD ({head})", "sindri-app --rebuild"));
+                : new DoctorCheck("setup:recipes-tree", CheckState.Warn, $"the embedded recipe set ({trees.Embedded}) is not this checkout's HEAD ({head})", "scripts/install-cs.sh --rebuild"));
         }
 
         return checks;

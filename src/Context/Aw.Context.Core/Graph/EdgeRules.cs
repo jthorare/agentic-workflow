@@ -5,6 +5,7 @@ public static class EdgeRules
 {
     private static readonly NodeKind[] _any = Enum.GetValues<NodeKind>();
     private static readonly NodeKind[] _implemented = [NodeKind.Feature, NodeKind.Surface, NodeKind.Action];
+    private static readonly NodeKind[] _members = [NodeKind.Feature, NodeKind.Record, NodeKind.Decision];
     private static readonly NodeKind[] _onSurface = [NodeKind.Surface, NodeKind.Action];
 
     private static readonly Dictionary<EdgeType, (string Name, NodeKind[] From, NodeKind[] To)> _table = new()
@@ -21,6 +22,7 @@ public static class EdgeRules
         [EdgeType.Decides] = ("decides", [NodeKind.Decision], _any),
         [EdgeType.Mentions] = ("mentions", [NodeKind.Record], _any),
         [EdgeType.Quotes] = ("quotes", [NodeKind.Decision], [NodeKind.Record]),
+        [EdgeType.BelongsTo] = ("belongs-to", _members, [NodeKind.Concept]),
         [EdgeType.Supersedes] = ("supersedes", [NodeKind.Decision], [NodeKind.Decision]),
     };
 

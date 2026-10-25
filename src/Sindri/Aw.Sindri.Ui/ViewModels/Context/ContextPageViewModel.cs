@@ -14,7 +14,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
     internal ContextPageViewModel(ContextPorts ports)
     {
         Ports = ports;
-        MapSearch = new DrawnMapSearch(() => Map);
+        MapSearch = new ApiMapSearch(Ports.Api, Ports.ApiUrl, () => _repo, new DrawnMapSearch(() => Map), said => _searchProblem = said, total: total => _searchTotal = total);
         InitReview();
         InitFileMap();
         InitSide();
@@ -56,6 +56,6 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         }
     } = string.Empty;
 
-    /// <summary>The search over the map; the ranked full-text endpoint replaces it with one change.</summary>
+    /// <summary>The search over the map: the ranked full-text endpoint, or what the page drew when the server has no such route.</summary>
     internal IMapSearch MapSearch { get; set; }
 }

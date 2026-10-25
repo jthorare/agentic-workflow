@@ -16,7 +16,7 @@ public abstract partial class SindriApiContract
         Expect.Equal(("ok", "concept:self-scheduling", "Self scheduling", "People book their own slots."), (view.State, first.Id, first.Name, first.Summary));
         Expect.Equal(new ConceptSize(4, 3, 2, 40), first.Size);
         Expect.Equal(("concept:other", 4), (view.Other!.Id, view.Other.Size.Total));   // why: the answer names Other
-        Expect.Sequence([new ConceptLink("concept:self-scheduling", "concept:billing", 0.8)], view.Links);
+        Expect.Sequence([new ConceptLink("concept:self-scheduling", "concept:billing", 1)], view.Links);
     }
 
     [Fact]

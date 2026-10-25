@@ -6,8 +6,8 @@ namespace Aw.Sindri.Tests.OnyxAccount;
 public sealed class SystemBrowserTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData("https://127.0.0.1:3000/")]
-    [InlineData("http://localhost:3000/")]
+    [InlineData("https://127.0.0.1:3189/")]
+    [InlineData("http://localhost:3189/")]
     [InlineData("http://example.com/")]
     [InlineData("file:///etc/passwd")]
     public void An_address_that_is_not_http_on_127_0_0_1_is_refused(string address)

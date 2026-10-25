@@ -15,12 +15,12 @@ namespace Aw.Sindri.Host.Mcp;
 /// </summary>
 internal static class McpToolTable
 {
-    private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, GraphTools.NodeTool, GraphTools.NeighborsTool,
+    private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
         SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.RequestTool];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,
-        ContextTools.Query, ContextTools.Sources, ContextTools.Lenses, GraphTools.Node, GraphTools.Neighbors);
+        ContextTools.Query, ContextTools.Sources, ContextTools.Lenses, ConceptTools.Name, GraphTools.Node, GraphTools.Neighbors);
 
     /// <summary>tools/list: every tool, whatever the profile says (a refused call explains itself; context spec §8.6).</summary>
     /// <param name="_">The request (unused).</param>
@@ -55,6 +55,7 @@ internal static class McpToolTable
             ContextTools.Query => ContextTools.CallQuery(services, call.Arguments, cancellationToken),
             ContextTools.Sources => ContextTools.CallSources(services, call.Arguments, cancellationToken),
             ContextTools.Lenses => ContextTools.CallLenses(services, call.Arguments, cancellationToken),
+            ConceptTools.Name => ConceptTools.Call(services, call.Arguments, cancellationToken),
             GraphTools.Node => GraphTools.CallNode(services, call.Arguments, cancellationToken),
             GraphTools.Neighbors => GraphTools.CallNeighbors(services, call.Arguments, cancellationToken),
             SindriTools.Status => SindriTools.CallStatus(services, call.Arguments, cancellationToken),
