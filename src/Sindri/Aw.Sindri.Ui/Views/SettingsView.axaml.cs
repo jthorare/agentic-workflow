@@ -26,7 +26,7 @@ internal sealed partial class SettingsView : UserControl
         _setup?.RevealRequested -= OnRevealRequested;
         _setup = (DataContext as SettingsViewModel)?.Setup;
         _setup?.RevealRequested += OnRevealRequested;
-        if (Content is StackPanel page)
+        if (this.FindControl<StackPanel>("SettingsPage") is { } page)
         {
             if (_checklist is not null)
             {

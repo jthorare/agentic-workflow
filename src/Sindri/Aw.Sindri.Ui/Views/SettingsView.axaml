@@ -5,8 +5,13 @@
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
-  <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480"
-              MaxWidth="1100" HorizontalAlignment="Left">
+  <!-- The page fills a column that grows from the shared left inset up to 1100 px: the title stays where every page title sits and the body is not a narrow strip. -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" MinWidth="480" MaxWidth="1100" />
+      <ColumnDefinition Width="0" />
+    </Grid.ColumnDefinitions>
+  <StackPanel x:Name="SettingsPage" Spacing="{StaticResource Space.LG}">
     <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
@@ -58,4 +63,5 @@
       </StackPanel>
     </Border>
   </StackPanel>
+  </Grid>
 </UserControl>
