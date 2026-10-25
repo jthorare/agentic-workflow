@@ -101,7 +101,7 @@ R="$WORK/repo"
 mkdir -p "$R/scripts" "$R/src/Sindri/Aw.Sindri.Host" "$R/src/Sindri/Aw.Sindri.Ui.AotSmoke"
 mkdir -p "$R/scripts/lib" "$R/config/launcher"
 cp "$DIR/sindri-app.sh" "$R/scripts/"
-cp "$DIR/lib/sindri-build-inputs.sh" "$R/scripts/lib/"
+cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$R/scripts/lib/"
 echo '{}' > "$R/config/launcher/builtins.json"
 echo 'T:System.X' > "$R/BannedSymbols.All.txt"
 echo 'T:System.Y' > "$R/BannedSymbols.NonHost.txt"
@@ -413,7 +413,7 @@ check "eval: with the right count the same commit publishes" "$RC:$([ "$(cat "$B
 
 # A tree that is not a git checkout cannot be published.
 NG="$WORK/nogit"; mkdir -p "$NG/scripts/lib" "$NG/src/Sindri/Aw.Sindri.Host"
-cp "$DIR/sindri-app.sh" "$NG/scripts/"; cp "$DIR/lib/sindri-build-inputs.sh" "$NG/scripts/lib/"
+cp "$DIR/sindri-app.sh" "$NG/scripts/"; cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$NG/scripts/lib/"
 cp "$R/global.json" "$NG/"; cp "$R/scripts/binaries-lock.sh" "$NG/scripts/"
 (cd "$WORK" && GIT_CEILING_DIRECTORIES="$WORK" bash "$NG/scripts/sindri-app.sh" --publish-only >/dev/null 2>"$WORK/err"); RC=$?
 check "not a git checkout: exit 1 with the sentence" "$RC:$(grep -c 'Sindri can only be published from a git checkout' "$WORK/err")" "1:1"

@@ -35,6 +35,8 @@
 # copy and, when its digest differs from the last successful publish's ($base/recipes-digest), `recipe eval --shipped --json`;
 # a failing eval, or an embedded recipe count that differs from the staged recipes/sindri/*.yaml count, fails the publish (exit 1,
 # no build for the stamp, the digest not recorded). An unchanged digest skips the evals and the count check (the set was verified).
+# A publish while the control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists them
+# and asks go/wait/stop on a terminal, stops without one unless AW_SINDRI_STOP_OK=1; making an already built stamp current is not guarded.
 # Progress goes to stderr, so stdout is only sindri's (`sindri-app status --json` stays parseable).
 #
 # Every run also: installs the .NET SDK global.json pins into $DOTNET_ROOT (default: where the pinned SDK is found, else ~/.dotnet) when missing, with
@@ -187,6 +189,17 @@ make_current() { # $1 = stamp; the earlier current becomes previous
 if [ "$rebuild" = 0 ] && built "$stamp"; then
   if [ "$current" != "$stamp" ]; then make_current "$stamp"; fi
 else
+  # Open agent runs (#1000): a publish under a running plane can stop it mid-Step. Checked with the running build's own sindri.
+  if [ -n "$(running_pid)" ]; then
+    guard_bin=""
+    for d in "$base"/*; do
+      n="$(basename "$d")"
+      if [ -d "$d" ] && [ -x "$d/sindri" ] && in_use "$n"; then guard_bin="$d/sindri"; break; fi
+    done
+    # shellcheck source=lib/sindri-open-runs.sh
+    source "$here/lib/sindri-open-runs.sh"
+    if [ -n "$guard_bin" ] && ! sindri_open_runs_guard "$guard_bin"; then exit 1; fi
+  fi
   lock="$base/.lock"
   until mkdir "$lock" 2>/dev/null; do
     owner="$(cat "$lock/pid" 2>/dev/null || true)"
