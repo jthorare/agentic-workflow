@@ -35,7 +35,7 @@ public sealed class ScopingRunsTests
     }
 
     private static LaunchRow Row(string state, string agent) =>
-        new(LaunchId.From("LCH-" + (state == "draft" ? new string('a', 32) : new string('b', 32))), A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From(agent), "engine", LaunchState.Started,
+        new(LaunchId.From("LCH-" + (string.Equals(state, "draft", StringComparison.Ordinal) ? new string('a', 32) : new string('b', 32))), A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From(agent), "engine", LaunchState.Started,
             DateTimeOffset.UnixEpoch, OutcomeAt: null, Code: null, Message: null, Stage: null, SessionId: null, ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null,
             CatalogSource: null, ArgvHash: null, Ended: null, new LaunchStep(InstanceAddress.From(_address), state, Attempt: 1), Sequence: 1);
 
