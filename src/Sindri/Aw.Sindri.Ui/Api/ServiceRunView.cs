@@ -5,4 +5,5 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="Outcome">'ok' or 'failed'.</param>
 /// <param name="Code">The SND code of a failed run, or null.</param>
 /// <param name="RanAt">When it ran.</param>
-internal sealed record ServiceRunView(DateTimeOffset Slot, string Outcome, string? Code, DateTimeOffset RanAt);
+/// <param name="Detail">The failure in words, as the API serves it; null when it does not say.</param>
+internal sealed record ServiceRunView(DateTimeOffset Slot, string Outcome, string? Code, DateTimeOffset RanAt, string? Detail = null);

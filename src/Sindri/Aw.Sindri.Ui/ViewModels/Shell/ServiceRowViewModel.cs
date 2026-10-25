@@ -21,6 +21,12 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     /// <summary>One plain sentence for what it does, or empty for a service the app does not know.</summary>
     public string What { get; } = Labels.ServiceWhat(name);
 
+    /// <summary>Why the row is failed or paused, as far as the API serves it; empty when it says nothing.</summary>
+    public string Reason { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when <see cref="Reason"/> shows.</summary>
+    public bool HasReason => Reason.Length > 0;
+
     /// <summary>Scheduled, Running now, Paused or Last run failed.</summary>
     public string Status { get; private set => Set(ref field, value); } = Labels.ServiceScheduled;
 

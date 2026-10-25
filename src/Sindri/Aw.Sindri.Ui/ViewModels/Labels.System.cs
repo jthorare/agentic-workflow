@@ -136,4 +136,26 @@ internal static partial class Labels
         "workflow-events" => "Passes ledger events to the running workflows.",
         _ => string.Empty,
     };
+
+    /// <summary>A service that has no sentence of its own and none served.</summary>
+    internal const string ServiceNoDescription = "No description yet";
+
+    /// <summary>Why a run failed: its code, with the served detail after it when there is one.</summary>
+    /// <param name="code">The SND code of the failed run, or null.</param>
+    /// <param name="detail">The served detail, or null.</param>
+    /// <returns>"SND-SVC-404: no such command", the bare code, or empty when neither is served.</returns>
+    internal static string ServiceFailedBecause(string? code, string? detail) =>
+        string.IsNullOrWhiteSpace(code) ? string.Empty : string.IsNullOrWhiteSpace(detail) ? code : code + ": " + detail;
+
+    /// <summary>Who paused a service and when, as far as the API serves it.</summary>
+    /// <param name="by">Who paused it, or null.</param>
+    /// <param name="at">When, or null.</param>
+    /// <returns>"Paused by human:ui at 12:01:30", a part of it, or empty when neither is served.</returns>
+    internal static string ServicePausedBy(string? by, DateTimeOffset? at) => (string.IsNullOrWhiteSpace(by), at) switch
+    {
+        (true, null) => string.Empty,
+        (true, { } time) => "Paused at " + StatusText.Time(time),
+        (false, null) => "Paused by " + by,
+        (false, { } time) => "Paused by " + by + " at " + StatusText.Time(time),
+    };
 }
