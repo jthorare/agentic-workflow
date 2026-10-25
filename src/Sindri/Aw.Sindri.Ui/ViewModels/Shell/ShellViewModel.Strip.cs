@@ -98,8 +98,7 @@ internal sealed partial class ShellViewModel
         switch (key)
         {
             case "Enter":
-                Navigate(row.Link);
-                OpenerStrip = row.Address;
+                OpenStripRowByKey(row);
                 return true;
             case "A" when row.CanAnswer:
                 Answer(row);
@@ -123,6 +122,19 @@ internal sealed partial class ShellViewModel
     {
         Strip.Deselect();
         NavigateToRowSheet(ParkRowFor(row) is { } park ? LinkOf(park.Id) : row.Link);
+        OpenerStrip = row.Address;
+    }
+
+    // Enter opens what A opens when the instance has a park row (its sheet, over Home, with Esc returning to the strip row); else the instance's link.
+    private void OpenStripRowByKey(StripRowViewModel row)
+    {
+        if (ParkRowFor(row) is not null)
+        {
+            Answer(row);
+            return;
+        }
+
+        Navigate(row.Link);
         OpenerStrip = row.Address;
     }
 
