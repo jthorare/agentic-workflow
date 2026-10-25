@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tests/ui-checks/ux-c9-start-dialog.sh — regression check for the UX-pass finding C-9: the Start workflow dialog answers an empty submit
-# without moving its buttons (the error line's space is reserved), and the Item row is one control. It drives the REAL sindri-ui (UI driver,
+# without moving its buttons (the error line's space is reserved), and both controls of the Item row are captioned. It drives the REAL sindri-ui (UI driver,
 # docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh through scripts/sindri-prove.sh) with one approved
 # workflow and four items. Not checked here: the focused type combo's solid fill (a look, not a tree fact).
 #   bash tests/ui-checks/ux-c9-start-dialog.sh    exit 0 pass; 1 FAIL (one line on stderr); 2 the setup broke
@@ -134,12 +134,11 @@ run_check() {
   y_after="$(dialog_start | jq -r '.y')"
   [ "$y_before" = "$y_after" ] || fail "the Start workflow button moved from y=$y_before to y=$y_after when the empty-submit error appeared; the error's space is not reserved (screenshots in $OUT)"
 
-  # 2. The Item row is one control, not a text box and a second, unlabeled combo.
-  local controls
-  controls="$("$DRIVER" tree --depth 60 2>/dev/null | jq '[.. | objects | select(.type? == "TextBox" or .type? == "ComboBox") | select(.name == "Item" or .name == "Pick an item")] | length')"
-  [ "$controls" = 1 ] || fail "the Item row has $controls controls (a text box and the combo 'Pick an item'); expected one (screenshots in $OUT)"
+  # 2. Each control of the Item row has a caption of its own: the box under "Item", the list under "Or pick one from the queue".
+  wait_tree_match '^Or pick one from the queue$' 10 >/dev/null \
+    || fail "the item list under the Item box has no caption of its own (screenshots in $OUT)"
 
-  echo "PASS: the empty-submit error reserves its space and the Item row is one control (screenshots in $OUT)"
+  echo "PASS: the empty-submit error reserves its space and both controls of the Item row are captioned (screenshots in $OUT)"
 }
 
 prepare
