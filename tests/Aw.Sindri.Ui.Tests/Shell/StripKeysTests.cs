@@ -171,6 +171,24 @@ public sealed class StripKeysTests
         Assert.Null(shell.Strip.SelectedAddress);
     }, Token);
 
+    // gh-1062: Enter and A open the same sheet for a strip row, so Enter does not leave Home and Esc returns to the strip row.
+    [Fact]
+    public Task Enter_on_a_strip_row_with_a_park_row_opens_the_park_rows_sheet_over_Home() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var row = Where(IsDeskAnswer);
+        var park = NeedsYouRows.Park("park:" + row.Address) with { Subject = new NeedsYouSubject("workflow", row.Address) };
+        shell.ShowNeedsYou(Feed(NeedsYouRows.Failure(), park));
+        shell.Strip.Update(Listing(row));
+        _ = shell.Strip.Select(row.Address);
+
+        Assert.True(shell.Press("Enter"));
+
+        Assert.Equal(new DeepLink(DeepLinkKind.NeedsYou, park.Id), shell.SheetLink);
+        Assert.Equal(PageId.Home, shell.CurrentPage);
+        Assert.Equal(row.Address, shell.OpenerStrip);
+    }, Token);
+
     // review run 1, K18: the park row is found by its served kind, never by the words its chip happens to show.
     [Fact]
     public Task The_park_row_is_found_by_its_kind_and_not_by_its_chip_word() => UiThread.Run(async () =>
