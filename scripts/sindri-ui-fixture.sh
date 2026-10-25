@@ -715,7 +715,9 @@ agent_files() {
     "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$repo/.no-hooks" && "${g[@]}" add -A \
       && "${g[@]}" commit -q --no-gpg-sign -m "Agent fixture" || die "agent-run: can't build the repo in $repo"
   fi
-  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-agent" && chmod 755 "$dir/stub-agent"
+  # Named claude: the argv hash keeps only bin's base name, so a stub with another name is not a bin-only override (#1134).
+  mkdir -p "$dir/stub-bin" || return
+  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude"
 }
 
 # The live profile gets the repo and workflow.agent.target (a workflow: block after user: when there is none).
@@ -750,7 +752,7 @@ agent_run() {
   agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
   if needs_approval; then approve >&2 || return; fi
   # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
-  jq --arg bin "$dir/stub-agent" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
+  jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
     || die "agent-run: can't update $launcher"
   unset TMUX   # the control plane starts its own tmux server on its own socket; it must not inherit the caller's
   sessions_restart >&2 || return
