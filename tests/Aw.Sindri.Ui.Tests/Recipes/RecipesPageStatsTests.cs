@@ -19,14 +19,22 @@ public sealed class RecipesPageStatsTests
     private static RecipeSummaryView Served(RecipeListStats? stats, bool childOnly = false) =>
         new("workflow.phase", Version: 1, Hash, "approved", Name: null, DisplayName: null, Stale: [], Inputs: [], Outputs: [], States: [], Status: "approved", ChildOnly: childOnly, Stats: stats);
 
-    private static RecipeListStats Figures(int runs, int done, long? median) => new(runs, done, Failed: 0, HumanRate: null, median, TokensP50: null, Buckets: []);
+    private static RecipeListStats Figures(int runs, int done, long? median, int failed = 0) => new(runs, done, failed, HumanRate: null, median, TokensP50: null, Buckets: []);
 
     [Fact]
     public void A_row_reads_runs_the_finished_share_and_the_typical_time()
     {
-        var row = new RecipeRowViewModel(Served(Figures(runs: 10, done: 8, median: 2700)));
+        var row = new RecipeRowViewModel(Served(Figures(runs: 10, done: 6, median: 2700, failed: 2)));
 
-        Assert.Equal(("10", "80%", "45m"), (row.RunsText, row.FinishedText, row.TypicalText));
+        Assert.Equal(("10", "75%", "45m"), (row.RunsText, row.FinishedText, row.TypicalText));   // 6 of the 8 runs that ended; the 2 still open are not in it
+    }
+
+    [Fact]
+    public void A_row_whose_runs_are_all_still_open_says_none_yet()
+    {
+        var row = new RecipeRowViewModel(Served(Figures(runs: 3, done: 0, median: null)));
+
+        Assert.Equal(("3", "None yet", "–"), (row.RunsText, row.FinishedText, row.TypicalText));
     }
 
     [Fact]

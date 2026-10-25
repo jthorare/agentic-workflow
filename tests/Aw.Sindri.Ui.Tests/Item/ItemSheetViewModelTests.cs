@@ -567,13 +567,29 @@ public sealed class ItemSheetViewModelTests
     }
 
     [Fact]
-    public async Task A_refused_Decide_shows_the_served_detail_inline()
+    public async Task A_Decide_refused_as_decided_elsewhere_says_so_once_in_words()
     {
         var sheet = await SheetWithNeeds();
+        var id = sheet.Needs.Decisions[0].Id;
+        var served = GoldenFiles.Node("decisions", "decided")["decisions"]![0]!;
+        _server.DecidedDecisions = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("decisions", "decided")
+            .Replace((string)served["id"]!, id, StringComparison.Ordinal)
+            .Replace("2026-01-01T00:00:00.0000000Z", "2026-10-11T11:57:00.0000000Z", StringComparison.Ordinal));
         _server.Decided = RouteAnswer.Problem("decisions-id", "decided-elsewhere");
+
+        await sheet.Needs.Choose(id, "decline");
+
+        Assert.Equal("Already decided: accepted by you at the terminal, 3m ago", sheet.Needs.Refusal);
+    }
+
+    [Fact]
+    public async Task A_Decide_refused_for_a_voided_decision_keeps_the_served_sentence()
+    {
+        var sheet = await SheetWithNeeds();
+        _server.Decided = RouteAnswer.Problem("decisions-id", "voided");
 
         await sheet.Needs.Choose(sheet.Needs.Decisions[0].Id, "accept");
 
-        Assert.Contains((string)GoldenFiles.Node("decisions-id", "decided-elsewhere")["detail"]!, sheet.Needs.Refusal, StringComparison.Ordinal);
+        Assert.Equal((string)GoldenFiles.Node("decisions-id", "voided")["detail"]!, sheet.Needs.Refusal);
     }
 }
