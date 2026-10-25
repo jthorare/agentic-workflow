@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Context.Whole;
 public sealed class WholeMapBandsFilterTests
 {
     private static readonly string[] _kinds = ["record", "decision", "feature", "surface", "action", "thing", "flow", "code", "mystery"];
+    private static readonly string[] _areaKeys = ["a", "b"];
 
     private static void AssertInBands(WholeMapGeometry geometry) =>
         Assert.All(geometry.Nodes, node =>
@@ -22,8 +23,8 @@ public sealed class WholeMapBandsFilterTests
     [Fact]
     public void A_filtered_map_keeps_every_kept_node_inside_a_kept_band()
     {
-        var areas = new[] { "a", "b" }.Select(a => new WholeArea(a, a, "trusted", 1, new Dictionary<string, int>(StringComparer.Ordinal), Unassigned: false)).ToList();
-        var nodes = _kinds.SelectMany((k, i) => new[] { "a", "b" }.Select(a => new WholeNode(a + ":" + i.ToString(CultureInfo.InvariantCulture), k, k, a, [], "trusted", "human", 1, Confirmed: true))).ToList();
+        var areas = _areaKeys.Select(a => new WholeArea(a, a, "trusted", 1, new Dictionary<string, int>(StringComparer.Ordinal), Unassigned: false)).ToList();
+        var nodes = _kinds.SelectMany((k, i) => _areaKeys.Select(a => new WholeNode(a + ":" + i.ToString(CultureInfo.InvariantCulture), k, k, a, [], "trusted", "human", 1, Confirmed: true))).ToList();
         var geometry = WholeMapLayout.Place(WholeMapLayoutTests.Draft("nodes-small") with { Areas = areas, AreaEdges = [], Nodes = nodes, Edges = [] });
         var keep = nodes.Where((_, i) => i % 3 == 0).Select(n => n.Key).ToHashSet(StringComparer.Ordinal);
 
