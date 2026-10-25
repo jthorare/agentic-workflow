@@ -167,7 +167,15 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
         return Send<T>(HttpMethod.Post, route, content, after: null, ct);
     }
 
-    private async Task<Result<ApiAnswer<T>>> Send<T>(HttpMethod method, string route, HttpContent? content, long? after, CancellationToken ct)
+    /// <summary>GET a route a launch's own proof authorizes (API spec §8.1): the proof goes in X-Sindri-Launch-Secret, with the caller headers.</summary>
+    /// <param name="route">The route.</param>
+    /// <param name="proof">The launch's proof.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <typeparam name="T">The response type.</typeparam>
+    /// <returns>The answer, or the API's error.</returns>
+    public Task<Result<ApiAnswer<T>>> GetProven<T>(string route, string proof, CancellationToken ct) => Send<T>(HttpMethod.Get, route, content: null, after: null, ct, proof);
+
+    private async Task<Result<ApiAnswer<T>>> Send<T>(HttpMethod method, string route, HttpContent? content, long? after, CancellationToken ct, string? proof = null)
     {
         if (SettingRefusal is { } refused)
         {
@@ -184,6 +192,11 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
 
         using var request = new HttpRequestMessage(method, new Uri(found.Value.Endpoint.Url, route)) { Content = content };
         await _headers.Apply(request, ct).ConfigureAwait(false);
+        if (proof is not null)
+        {
+            request.Headers.Add(SindriHeaders.LaunchSecret, proof);
+        }
+
         if (after is { } sequence)
         {
             request.Headers.Add(SindriHeaders.After, sequence.ToString(System.Globalization.CultureInfo.InvariantCulture));

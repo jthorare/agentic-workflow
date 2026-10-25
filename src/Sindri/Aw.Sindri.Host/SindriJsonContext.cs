@@ -121,6 +121,7 @@ using Aw.Sindri.Host.Commands.Line;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Commands.Recipe;
 using Aw.Sindri.Host.Commands.Scoping;
+using Aw.Sindri.Host.Commands.SessionWrap;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Host.Onyx;
@@ -229,7 +230,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CodeIndexRow))]
 [JsonSerializable(typeof(LaunchRow)), JsonSerializable(typeof(LaunchEnd)), JsonSerializable(typeof(LaunchViewer)), JsonSerializable(typeof(LaunchViewerPublic))]   // API P10a (U8): the launches view
 [JsonSerializable(typeof(OpenItemRequest)), JsonSerializable(typeof(OpenItemBody)), JsonSerializable(typeof(LaunchRequested)), JsonSerializable(typeof(GetLaunchRequest)), JsonSerializable(typeof(LaunchView))]
-[JsonSerializable(typeof(SessionHeartbeatBody)), JsonSerializable(typeof(SessionHeartbeatResponse)), JsonSerializable(typeof(SessionExitBody)), JsonSerializable(typeof(SessionExitResponse)), JsonSerializable(typeof(CaptureRule))]   // API P10a (U10)
+[JsonSerializable(typeof(SessionHeartbeatBody)), JsonSerializable(typeof(SessionHeartbeatResponse)), JsonSerializable(typeof(SessionExitBody)), JsonSerializable(typeof(SessionExitResponse)), JsonSerializable(typeof(CaptureRule)), JsonSerializable(typeof(WrapLimits)), JsonSerializable(typeof(SuspendedAnswer))]   // API P10a (U10); sandbox SB-3a
 // Two LaunchId types meet here: the collector's looser one (Core.Launch) and the engine's 'LCH-…' one the launch events carry (SYSLIB1031).
 [JsonSerializable(typeof(Core.Workflow.Engine.LaunchId), TypeInfoPropertyName = "EngineLaunchId")]
 [JsonSerializable(typeof(SyncContextSourcesRequest)), JsonSerializable(typeof(SyncContextSourcesResult))]

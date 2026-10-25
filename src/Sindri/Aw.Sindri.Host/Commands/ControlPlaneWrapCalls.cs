@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -23,5 +24,17 @@ internal sealed class ControlPlaneWrapCalls(ControlPlaneClient client) : IWrapCa
     {
         var sent = await client.PostProven<SessionExitBody, SessionExitResponse>($"/sindri/sessions/{launch.Value}/exit", new SessionExitBody(exitCode, session), proof.Value, cancellationToken).ConfigureAwait(false);
         return sent.IsError ? sent.Error : Unit.Value;
+    }
+
+    public async ValueTask<Result<Unit>> ExitByLimit(LaunchId launch, LaunchSecret proof, int exitCode, SessionId? session, LimitEnd limit, CancellationToken cancellationToken)
+    {
+        var sent = await client.PostProven<SessionExitBody, SessionExitResponse>($"/sindri/sessions/{launch.Value}/exit", new SessionExitBody(exitCode, session, limit), proof.Value, cancellationToken).ConfigureAwait(false);
+        return sent.IsError ? sent.Error : Unit.Value;
+    }
+
+    public async ValueTask<Result<bool>> Suspended(LaunchId launch, LaunchSecret proof, CancellationToken cancellationToken)
+    {
+        var asked = await client.GetProven<SuspendedAnswer>($"/sindri/launches/{launch.Value}/suspended", proof.Value, cancellationToken).ConfigureAwait(false);
+        return asked.IsError ? asked.Error : asked.Value.Value.Suspended;
     }
 }
