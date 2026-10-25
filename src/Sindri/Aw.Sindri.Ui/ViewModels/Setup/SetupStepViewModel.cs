@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Setup;
 /// the ids and codes it holds are for the closed Details, never the words up front. A step opens by itself when it needs the person or failed; the person's own choice to open or
 /// close a row is kept across reads.
 /// </summary>
-internal sealed class SetupStepViewModel : ObservableObject
+internal sealed partial class SetupStepViewModel : ObservableObject
 {
     private static readonly string[] _all =
     [
@@ -39,14 +39,6 @@ internal sealed class SetupStepViewModel : ObservableObject
     /// <summary>What the number circle shows: the number, or a tick once the step is done or skipped.</summary>
     public string NumberText => IsSkipped ? Labels.SetupSkippedMark : IsFinished ? "✓" : Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-    /// <summary>The web address in the line under the title or in the detail; null when the words carry none.</summary>
-    public Uri? LinkUrl => SetupLinks.UrlIn(Sub) ?? SetupLinks.UrlIn(DetailText);
-
-    /// <summary>True when the row offers a link.</summary>
-    public bool HasLink => LinkUrl is not null;
-
-    /// <summary>The link button's word.</summary>
-    public string OpenLinkLabel => Labels.SetupOpenLink;
 
     /// <summary>What the step is, in a few words (the app's own title).</summary>
     public string Title { get; private set; } = string.Empty;

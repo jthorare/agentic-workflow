@@ -10,10 +10,10 @@ internal static partial class SetupLinks
     /// <returns>The address, or null.</returns>
     internal static Uri? UrlIn(string text)
     {
-        var found = Address().Match(text);
+        var found = Address.Match(text);
         return found.Success && Uri.TryCreate(found.Value.TrimEnd('.', ',', ';', ':', '!', '?', ')'), UriKind.Absolute, out var url) ? url : null;
     }
 
     [GeneratedRegex(@"https?://[^\s<>""]+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 250)]
-    private static partial Regex Address();
+    private static partial Regex Address { get; }
 }
