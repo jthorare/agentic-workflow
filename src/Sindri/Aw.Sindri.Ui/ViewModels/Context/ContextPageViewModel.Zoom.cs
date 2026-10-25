@@ -10,6 +10,7 @@ internal sealed partial class ContextPageViewModel
     private const int SoftNodeGuard = 5000;   // opening stops once this many nodes are drawn; the rest are counted
     private const int MaxLocate = 100;
 
+    private string _searchProblem = string.Empty;   // what the last search said when it was refused
     private IReadOnlyCollection<string> _unopenedHitAreas = [];   // the features a search touched that stay tiles
 
     /// <summary>Whether the camera is on a query's answer.</summary>
@@ -23,6 +24,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        _searchProblem = string.Empty;
         var hits = await MapSearch.Search(AnchorText, cancellationToken).ConfigureAwait(true);
         IReadOnlyList<string> keys = [.. hits.Select(h => h.Key)];
         _unopenedHitAreas = [];
@@ -32,7 +34,11 @@ internal sealed partial class ContextPageViewModel
             Whole.ApplySearch(hits, _unopenedHitAreas, zoomed);   // an answer with none of its items on the map is not a search
         }
 
-        if (!zoomed)
+        if (_searchProblem.Length > 0)
+        {
+            Problem = _searchProblem;   // a refused search is not "no match"
+        }
+        else if (!zoomed)
         {
             Problem = Labels.ContextWholeNoMatch;
         }

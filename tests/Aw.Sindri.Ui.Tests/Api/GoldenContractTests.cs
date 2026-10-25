@@ -66,6 +66,7 @@ public sealed class GoldenContractTests
         ["context-map-review"] = AsReview,
         ["context-map-review-history"] = As<ReviewHistoryView>,
         ["context-node"] = As<NodeView>,
+        ["context-search"] = As<MapSearchView>,   // GET /sindri/context/search: the map search (ui map-search); the 006 refusals are ProblemDetails
         ["items-id-open"] = As<OpenAcceptedView>,   // POST /items/{id}/open: the accepted answer (the refusals are ProblemDetails)
         ["jobs"] = As<JobList>,   // GET /jobs: the Jobs page's list; the 400 SND-CLI-003 bodies are ProblemDetails
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
@@ -96,7 +97,7 @@ public sealed class GoldenContractTests
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
-        "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph", "context-search",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
+        "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume",   // API P6: the services calls are U4's (Services); the job calls are read below
