@@ -8,13 +8,13 @@ namespace Aw.Sindri.Core.Onyx;
 public static class OnyxPreflight
 {
     /// <summary>The port Onyx's web server wants on 127.0.0.1.</summary>
-    public const int PreferredPort = 3000;
+    public const int PreferredPort = 3189;
 
     /// <summary>The first fallback port.</summary>
-    public const int FallbackFirst = 3001;
+    public const int FallbackFirst = 3190;
 
     /// <summary>The last fallback port, inclusive.</summary>
-    public const int FallbackLast = 3010;
+    public const int FallbackLast = 3199;
 
     /// <summary>Judges the facts against the pins.</summary>
     /// <param name="docker">What the container runtime reports.</param>

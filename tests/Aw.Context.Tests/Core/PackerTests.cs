@@ -10,25 +10,24 @@ public sealed class PackerTests
         marker);
 
     [Fact, Trait("Lane", "unit")]
-    public void Sections_fill_in_order_and_overflow_is_listed_as_references_only()
+    public void Sections_come_in_fill_order_and_every_item_is_kept_in_the_given_order()
     {
-        var packed = Packer.Pack([Candidate("records", "C1", 40), Candidate("graph", "C2", 50), Candidate("records", "C3", 30), Candidate("records", "C4", 10)], budget: 100);
+        var packed = Packer.Pack([Candidate("records", "C1", 40), Candidate("graph", "C2", 50), Candidate("records", "C3", 30), Candidate("records", "C4", 10)]);
 
         Assert.Equal(["graph", "records"], packed.Sections.Select(s => s.Name), StringComparer.Ordinal);
-        Assert.Equal(["C1", "C4"], packed.Sections[1].Items.Select(i => i.Title ?? ""), StringComparer.Ordinal);
-        Assert.Equal(["C3"], packed.Sections[1].More);
-        Assert.Equal(100, packed.Used);
-        Assert.True(packed.Truncated);
+        Assert.Equal(["C1", "C3", "C4"], packed.Sections[1].Items.Select(i => i.Title ?? ""), StringComparer.Ordinal);
+        Assert.Equal(130, packed.Used);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_item_is_never_cut_mid_way()
+    public void A_big_result_set_is_never_cut_by_size()
     {
-        var packed = Packer.Pack([Candidate("graph", "C1", tokens: 101)], budget: 100);
+        var candidates = Enumerable.Range(0, 500).Select(i => Candidate("graph", "G" + i.ToString(System.Globalization.CultureInfo.InvariantCulture), tokens: 5_000)).ToList();
 
-        Assert.Empty(packed.Sections.Single().Items);
-        Assert.Equal(["C1"], packed.Sections.Single().More);
-        Assert.Equal(0, packed.Used);
+        var packed = Packer.Pack(candidates);
+
+        Assert.Equal(500, packed.Sections.Single().Items.Count);
+        Assert.Equal(2_500_000, packed.Used);
     }
 
     [Fact, Trait("Lane", "unit")]

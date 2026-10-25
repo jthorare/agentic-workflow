@@ -21,7 +21,7 @@ internal sealed class ListNeighborsService(MapReader reader, IScrubberFactory sc
         var depth = Math.Min(asked, QueryRules.MaxDepth);
 
         var call = await reader.Open(request.Scope, scrubbers, cancellationToken).ConfigureAwait(false);
-        var node = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.Key));
+        var node = call.Bind(c => AnchorMatch.Resolve(c.Map.Graph, request.Key, request.Scope.Repos));
         if (node.IsError)
         {
             return node.Error;

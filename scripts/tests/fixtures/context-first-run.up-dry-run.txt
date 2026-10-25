@@ -6,13 +6,13 @@
   check: the code-index graphify under <T>/state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox
   check: the pinned temporal binary under <T>/state/cache/bin/temporal-*
   check: nothing but this script's own plane listens on port 7481
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh onyx status   # optional: Onyx isn't required
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri onyx status   # optional: Onyx isn't required
 
 == 1. scratch home <T>/state/sindri-app-firstrun (port 7481)
 + mkdir -p <T>/state/sindri-app-firstrun/profile && chmod 700 <T>/state/sindri-app-firstrun && touch <T>/state/sindri-app-firstrun/.first-run-scratch
 
 == 2. profile that onboards agentic-workflow
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh profile init
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri profile init
 + append to <T>/state/sindri-app-firstrun/profile/profile.yaml:
     | repos:
     |   - name: agentic-workflow
@@ -24,49 +24,49 @@
     |   graph: { enabled: true }
     | context:
     |   publish: { waitForIndexMinutes: 15 }
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh profile validate --json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri profile validate --json
   check: profile validate gives a hash (exit 0 approved, 1 not approved yet, 2 invalid)
 
 == 3. profile approval (yours, at a terminal)
 + (stop here unless 'profile validate' exits 0) print:
-    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 <ROOT>/scripts/sindri-app.sh profile approve <hash>
+    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 sindri profile approve <hash>
   and exit 3; after you approve, 'scripts/context-first-run.sh continue' resumes at step 4
 
 == 4. start the control plane
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh --headless
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh status --json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri --headless
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri status --json
   check: status --json has running true and profile.needsApproval false (its exit code is 1 while health isn't healthy; that's fine)
 
 == 5. first code index build for agentic-workflow
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh code-index status --repo agentic-workflow --json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri code-index status --repo agentic-workflow --json
   check: skip the build when that exits 0 (the repo's index is ok)
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh services run code-index-main-move
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri services run code-index-main-move
   check: the service starts the BuildCodeIndex job and the verb follows it; exit 0 succeeded
-+ repeat 'AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh code-index status --repo agentic-workflow --json' every 10 s for up to 1800 s until it exits 0
++ repeat 'AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri code-index status --repo agentic-workflow --json' every 10 s for up to 1800 s until it exits 0
 
 == 6. publish the context map
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh context map status --json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri context map status --json
   check: skip when .state is published, published-without-waiting or published-by-hand (no map is a non-zero exit)
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh context map refresh
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri context map refresh
   check: builds a draft, cleans the review queue and promotes it as you (no typed phrase); with the index built it is not held; exit 0
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh context map status --json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri context map status --json
   check: wait up to 1020 s (every 10 s) while .state is held or overdue (waitForIndexMinutes 15 plus two ticks); fail on published-stale or anything else
 
 == 7. open the Sindri app on the scratch home (Context page)
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <sindri-ui: $AW_SINDRI_UI, else the newest <T>/state/bin/sindri-app/*/sindri-ui> > <T>/state/sindri-app-firstrun/logs/ui.log 2>&1 &
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <sindri-ui: $AW_SINDRI_UI, else <T>/state/bin/cs/current/sindri-ui> > <T>/state/sindri-app-firstrun/logs/ui.log 2>&1 &
   check: the process is alive 2 s later; its pid is kept in <T>/state/sindri-app-firstrun/first-run/ui.pid
 
 == 8. the scoping recipe must be approved (yours, at a terminal)
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh recipe list
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri recipe list
 + (stop here unless a 'workflow.scoping@… approved' line shows) print:
-    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 <ROOT>/scripts/sindri-app.sh recipe approve-all
+    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 sindri recipe approve-all
   and exit 3; after you approve, 'scripts/context-first-run.sh continue' resumes at step 9
 
 == 9. an item and the scoping recipe on it
 + write <T>/state/sindri-app-firstrun/first-run/scope-input.json: {"kind":"brief","repo":"agentic-workflow","path":"docs/sindri/README.md"}
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh item add "First context run: scope docs/sindri/README.md" --repo agentic-workflow --no-start
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri item add "First context run: scope docs/sindri/README.md" --repo agentic-workflow --no-start
   check: prints 'ITM-… created (sequence N)'; the id is kept in <T>/state/sindri-app-firstrun/first-run/item.id
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <ROOT>/scripts/sindri-app.sh workflow start workflow.scoping --item <ITM-id> --fact fact:scopeInput=<T>/state/sindri-app-firstrun/first-run/scope-input.json
++ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri workflow start workflow.scoping --item <ITM-id> --fact fact:scopeInput=<T>/state/sindri-app-firstrun/first-run/scope-input.json
   check: prints the instance's status header; then: workflow status <ITM-id>
 
 context-first-run up: done. Look at the app, then clean up with: scripts/context-first-run.sh down

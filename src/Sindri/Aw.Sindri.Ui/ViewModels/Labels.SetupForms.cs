@@ -104,7 +104,7 @@ internal static partial class Labels
     internal const string SetupOnyxFoot = "Prefer a terminal? Run";
 
     /// <summary>The command the footnote names.</summary>
-    internal const string SetupOnyxFootCommand = "sindri-app onyx up";
+    internal const string SetupOnyxFootCommand = "sindri onyx up";
 
     /// <summary>The Onyx button that sends the login (and opens the form again).</summary>
     internal const string SetupActConnect = "Connect";

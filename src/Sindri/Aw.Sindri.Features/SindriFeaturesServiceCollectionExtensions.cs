@@ -228,7 +228,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<RerunInstanceRequest>, AcceptAllValidator<RerunInstanceRequest>>().AddCommand<RerunInstanceRequest, StartInstanceResponse, RerunInstanceService>();
         _ = services.AddScoped<StartFacts>().AddSingleton<IStartFactCheck, ScopeInputStartCheck>().AddScoped<ClaimHolders>().AddScoped<EngineFilledReport>().AddSingleton<ReportOutputTypes>();
         services.TryAddSingleton<ReportRefusals>();   // the Workflows watch takes what the check records; one instance, whichever registers first   // engine P6 unit (d): SND-WF-012 against workflow_claims
-        _ = services.AddScoped<IValidator<ApplyCommandRequest>, AcceptAllValidator<ApplyCommandRequest>>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, ApplyCommandService>();
+        _ = services.AddScoped<IValidator<ApplyCommandRequest>, ApplyCommandValidator>().AddScoped<ApplyCommandService>().AddScoped<TakeoverViewing>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, TakeoverViewingCommand>()
+            .AddScoped(static sp => new TakeoverViewingCommand(sp.GetRequiredService<ApplyCommandService>(), sp.GetRequiredService<TakeoverViewing>()));   // the last registration wins: the inner service is the apply service, not the chain around this one
         _ = services.AddScoped<IValidator<CompleteStepRequest>, AcceptAllValidator<CompleteStepRequest>>().AddCommand<CompleteStepRequest, CompleteStepResponse, CompleteStepService>();
         _ = services.AddScoped<IValidator<IssueNonceRequest>, AcceptAllValidator<IssueNonceRequest>>().AddIssue<IssueNonceRequest, IssueNonceResponse, IssueNonceService>();
         _ = services.AddScoped<IStepRunSource, LedgerStepRunSource>();

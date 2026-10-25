@@ -4,7 +4,7 @@ Sindri's native `linear` source reads Linear directly, read-only, with hand-writ
 sits beside the `onyx` source (see [onyx.md](onyx.md)) and adds what Onyx's Linear connector does not read. Nothing is
 written to Linear, and Sindri never connects a source on its own: you create the key and put its pointer in the profile.
 
-`$SINDRI` is the C# Sindri build (before the switch, `~/.local/bin/sindri` is still the TS one); see [context.md](context.md).
+`$SINDRI` is the installed `sindri`; see [context.md](context.md).
 
 ## What Linear adds over Onyx's connector (D17)
 

@@ -1,8 +1,8 @@
 # Agentic Workflow
 
-A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 55 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, a cost/involvement scorer, and a token-efficiency tool (the rtk command rewriter).
+A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 53 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
 
-There is one canonical core: skills, hook logic, MCP servers, judge, and scorer. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
+There is one canonical core: skills, hook logic, MCP servers, and judge. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
 
 > **New here?** Start with the onboarding guide: [`ONBOARDING.md`](ONBOARDING.md), or the visual walkthrough in [`docs/onboarding.html`](docs/onboarding.html) (open it in a browser).
 
@@ -133,7 +133,7 @@ After setup, a couple of provider-specific steps remain:
 ## Prerequisites
 
 - At least one agent CLI: [Claude Code](https://claude.com/claude-code) (`claude`), [Codex](https://github.com/openai/codex) (`codex`), or [Cursor CLI](https://cursor.com/cli) (`cursor-agent`)
-- Node.js >= 22
+- Node.js >= 22 (only for `dembrandt`, `prism-mcp`, `xcodebuildmcp` and the schema checkers; no toolkit package is built with it). The .NET SDK is pinned in `global.json` and installed by `setup.sh` when missing
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running (required for Serena LSP)
 - [GitHub CLI (`gh`)](https://cli.github.com/) installed and authenticated (required by review skills)
 - [`jq`](https://jqlang.github.io/jq/) installed (required by hooks and the statusline; `brew install jq` on macOS)
@@ -152,6 +152,7 @@ The setup script:
 - Creates the `~/.agentic-workflow/toolkit` symlink and writes the `~/.agentic-workflow/providers` registry
 - Symlinks native skills, `/bootstrap`, and the external design packs (cloned at pinned commits from `EXTERNAL_PINS.env`) into each selected provider's skills directory
 - Installs the safety hooks (`block-destructive.sh`, `block-push-main.sh`, `detect-secrets.sh`, `rtk-rewrite.sh`) and session-context hooks for each provider. Claude Code uses them natively; Codex and Cursor go through their hook adapters.
+- Publishes the C# binaries (`sindri`, `sindri-ui`, `judge`, `aw-packets`, `bugfix-state`, `ui-evidence`, `aw-readiness`) with `scripts/install-cs.sh` into `$AW_STATE_DIR/bin/cs/` and links them into `~/.local/bin`; removes what an older TypeScript install left (`scripts/cutover-clean-ts.sh`)
 - Builds the Serena Docker images (base TS/Python image; opt-in C# and Swift extensions) and installs the `serena-docker` wrapper to `~/.local/bin/`
 - Registers the MCP servers (`serena`, `prism-mcp`, and `xcodebuildmcp` on macOS) with each selected provider, and removes old `agentic-bridge` and `headroom` registrations and the leftover `mcp-bridge/` build output (the MCP bridge was retired)
 - Configures `prism-mcp` (persistent memory, downloaded on first use) with its Mind Palace dashboard at `http://localhost:7180` (`PRISM_DASHBOARD_PORT`). The `prism-context.sh` session-start hook warns if the dashboard is unreachable; `/prismStatus` runs a full health check
@@ -163,7 +164,7 @@ The setup script:
 
 ### 1. Skills
 
-55 native skills, installed as symlinks into each provider's skills directory. Every skill uses the same text for every provider: steps name a capability, and the running agent uses its host's tool for it (see `skills/_shared/capabilities.md`).
+53 native skills, installed as symlinks into each provider's skills directory. Every skill uses the same text for every provider: steps name a capability, and the running agent uses its host's tool for it (see `skills/_shared/capabilities.md`).
 
 | Stage | Skills |
 |-------|--------|
@@ -175,7 +176,6 @@ The setup script:
 | Debug & QA | `rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit` |
 | Ship & operate | `shipRelease`, `landAndDeploy`, `canary`, `syncDocs`, `weeklyRetro`, `prismStatus`, `judge`, `meta` (opt-in: `./setup.sh --with-meta`; Linux and macOS) |
 | Repo setup | `bootstrap` |
-| Self-evolution | `reflect`, `correct` |
 
 Skills write their artifacts to `~/.agentic-workflow/<repo-slug>/<domain>/`, and downstream skills discover them from there.
 
@@ -193,10 +193,9 @@ Run `/bootstrap` (`$bootstrap` in Codex) in any repo to generate its documentati
 
 Agents hand off through Prism handoffs (`session_save_handoff` / `session_load_context`), judge's outbox and teammate names (agent teams), and Sindri's ledger; there is no bridge server.
 
-### 4. Judge and Scorer
+### 4. Judge
 
-- **`judge/`** makes cheap, typed decisions: a rules fast path, then a per-content-class model chain. Model calls go through a headless provider CLI: `claude-cli` (`claude -p`), `codex-cli` (`codex exec`), or `cursor-cli` (`cursor-agent -p`). Any one of them on `PATH` is enough. The order is `providers.agentClis` in the judge config if set; otherwise claude, codex, cursor, with the current host (`AW_PROVIDER`) first. Cursor is slow (~8–13s per call), so on Cursor-only machines text questions often time out and fall back to rules.
-- **`scorer/`** produces a daily cost and involvement report from agent transcripts. Each provider has its own transcript source: Claude Code (`~/.claude/projects/`), Codex (`~/.codex/sessions/`), and Cursor (`~/.cursor/projects/`). By default it reads every provider whose directory exists. `--provider claude|codex|cursor|all` narrows that, and `--codex-dir` / `--cursor-dir` override the paths. The report includes a "By provider" section. Cursor data is involvement-only because its transcripts carry no token or cost data. Codex rollouts imported from Claude are skipped so they aren't counted twice. Run `scorer --since 7d` to write a report to `~/.agentic-workflow/scorer/reports/`. Install it with `scripts/install-scorer.sh`.
+- **`judge`** (C#, `src/Judge`) makes cheap, typed decisions: a rules fast path, then a per-content-class model chain. Model calls go through a headless provider CLI: `claude-cli` (`claude -p`), `codex-cli` (`codex exec`), or `cursor-cli` (`cursor-agent -p`). Any one of them on `PATH` is enough. The order is `providers.agentClis` in the judge config if set; otherwise claude, codex, cursor, with the current host (`AW_PROVIDER`) first. Cursor is slow (~8–13s per call), so on Cursor-only machines text questions often time out and fall back to rules.
 
 ### 5. Statusline (Claude Code only)
 
@@ -234,8 +233,7 @@ The statusline reads the size of the tty its own Claude Code process is attached
 ## Testing
 
 ```bash
-cd scorer && npm test
-cd judge && npm test
+dotnet test --solution AgenticWorkflow.slnx --filter-not-trait "Lane=heavy" --ignore-exit-code 8
 bash providers/tests/install.test.sh
 bash scripts/tests/sync-rules.test.sh
 bash config/hooks/tests/codex-adapter.test.sh
@@ -248,20 +246,17 @@ scripts/sync-rules.sh --check
 
 The full list is under Commands in [`AGENTS.md`](AGENTS.md).
 
-`/* v8 ignore */` annotations are prohibited; write the test instead.
-
 ## Repository Layout
 
 ```
 agentic-workflow/
 ├── AGENTS.md                # Canonical repo instructions (CLAUDE.md is a symlink to it)
 ├── .agents/rules/           # Glob-scoped rules, the only copy (.claude/rules, .cursor/rules/*.mdc are symlinks)
-├── skills/                  # 55 native skills (+ _shared/ fragments, incl. capabilities.md)
+├── skills/                  # 53 native skills (+ _shared/ fragments, incl. capabilities.md)
 ├── bootstrap/               # /bootstrap — repo documentation generator
 ├── providers/<name>/        # Per-provider installers: install.sh, install-hooks.sh (claude, codex, cursor)
 ├── config/                  # Settings, MCP config, statusline, hooks (+ hooks/adapters/ for codex, cursor)
-├── judge/                   # Cheap typed decisions (rules → model chain via claude/codex/cursor CLI)
-├── scorer/                  # Cost/involvement report from provider transcripts
+├── src/ · tests/            # The C# build: judge, Sindri, evidence, bugfix, packets, readiness, meta, forge
 ├── scripts/                 # sync-rules.sh, serena-docker, probe.sh, install-*.sh, refresh-external-pins.sh
 ├── planning/                # Project documentation (see planning/PROVIDERS.md)
 ├── Dockerfile.serena*       # Serena base image + opt-in C# / Swift extensions

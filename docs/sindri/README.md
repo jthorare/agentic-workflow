@@ -14,26 +14,23 @@ The **Sindri app** (`sindri-ui`) is a desktop window onto the control plane. You
 
 ```bash
 cd ~/code/agentic-workflow
-scripts/sindri-app.sh status            # publishes the C# Sindri for this platform and links ~/.local/bin/sindri-app
+./setup.sh                              # publishes the C# binaries (scripts/install-cs.sh) and links ~/.local/bin/sindri
 $EDITOR ~/.agentic-workflow/sindri-app/profile/profile.yaml   # your repos and the context section
-sindri-app profile validate
-sindri-app profile approve <hash>       # in your own terminal: type the challenge it shows
-sindri-app                              # start the control plane and open the app (--headless: no app)
-sindri-app doctor                       # one line per check: ok / warn / fail with a fix
+sindri profile validate
+sindri profile approve <hash>           # in your own terminal: type the challenge it shows
+sindri                                  # start the control plane and open the app (--headless: no app)
+sindri doctor                           # one line per check: ok / warn / fail with a fix
 ```
 
-Use `sindri-app`, not `sindri`: until the C# build replaces it, `sindri` on your PATH is the TypeScript Sindri, with its own profile. Sindri's own hints say `sindri …`; read them as `sindri-app …`. Some commands (approvals, starting and answering workflows, map builds, `onyx up`) only run from a person's terminal and refuse agent sessions with `SND-AUTH-002`.
+Some commands (approvals, starting and answering workflows, map builds, `onyx up`) only run from a person's terminal and refuse agent sessions with `SND-AUTH-002`.
 
 The full setup, from prerequisites through Onyx, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 
 Demo handoff and remaining work: [demo-handoff.md](demo-handoff.md) is a prompt for an agent on a fresh machine to set up and rehearse the Sindri demo, and its section 9 lists what is not built yet against the spec.
 
-## Two builds
+## What it is
 
-Two things carry the name today:
-
-- **The Sindri application**, designed below and built new in C# (not ported from TypeScript): `src/Sindri`, the `sindri` CLI and control plane (run as `sindri-app` before the switch), documented in `docs/csharp/sindri.md` with its own `SND-*` catalogue. `errors.md` is the TypeScript sindri's catalogue.
-- **The TypeScript `sindri/` package** ([below](#today-the-typescript-reference-sindri)). It runs at the desk now and is the reference for what each part does. It keeps running until the switch (readiness spec §4a step 3).
+**The Sindri application** is built new in C# (not ported from TypeScript): `src/Sindri`, the `sindri` CLI and control plane, documented in `docs/csharp/sindri.md` with its own `SND-*` catalogue. The TypeScript `sindri/` package it replaced is gone (the switch, `docs/superpowers/specs/2026-10-23-cutover-design.md`); `errors.md` is that package's old catalogue and is kept only for the codes the C# docs still cite.
 
 Visual guides: `docs/sindri-setup.html` (setting it up, step by step), `docs/sindri-architecture.html` (the map and step-by-step flows of using and building Sindri), `docs/sindri.html` (every feature, with status) and `docs/sindri-course/` (the concepts).
 
@@ -75,7 +72,7 @@ It doesn't replace your terminal or your agent tool. Agent work, yours and the f
 
 `sindri` starts the control-plane process under the host lease, starts the UI app and prints what's running: the approved profile, the index, intake sources, background services, the API address and what needs you. `sindri --headless` starts it without the UI, for the always-on box. Every other `sindri <verb>` is a client call to the running process, and starts the process first if needed.
 
-Config is the profile (`profile.md`); changes still go through `sindri profile approve`. Background services run inside the process on the profile's cadence: the code index (watch, quick builds on change, nightly full build), intake polling, scorer and metrics, the weekly evolve job, and webhook listeners. These are today's launchd jobs moved into the process; launchd only keeps the process alive (A §17.29.1).
+Config is the profile (`profile.md`); changes still go through `sindri profile approve`. Background services run inside the process on the profile's cadence: the code index (watch, quick builds on change, nightly full build), intake polling and webhook listeners (the scorer's reports and the weekly evolve job return later as recipes). launchd only keeps the process alive (A §17.29.1).
 
 ### The factory line
 
@@ -101,13 +98,13 @@ Design freezes the **packet** (`packet.json`, A §17.4), the handoff spec the re
 
 ### Build order
 
-Not a module-by-module port of `sindri/` (A §17.29.4):
+Not a module-by-module port of the TypeScript `sindri/` (A §17.29.4):
 1. app shell: the process and CLI, profile, ledger, host lease, command layer and API, scheduler, UI app shell;
 2. the workflow engine and recipe format;
 3. the context retrieval engine, over the sources already reachable;
-4. blocks, each when the first recipe needs it (the code index, scorer, scoping and evolve are rebuilt from their TS reference);
+4. blocks, each when the first recipe needs it (the code index and scoping; the scorer's reports and evolve return later as recipes);
 5. workflows down the factory line, intake first;
-6. the switch, once every desk tool has its C# form.
+6. the switch (done: `docs/superpowers/specs/2026-10-23-cutover-design.md`).
 
 Within steps 1–3 the specs' phases land in this order. It is the only cross-spec order: each wave is one more than the latest wave a phase needs, from each spec's own dependency column. Each spec's internal wave table only orders its own phases inside it (X19, X39).
 
@@ -148,7 +145,7 @@ parallel across lanes. The lane leads talk only through merged code and these do
 Rules every lane follows:
 - The specs win over the reference branches #166, #167, #169 (X17); reuse their code only where it matches.
 - Every proof uses `scripts/sindri-prove.sh`; nothing touches the owner's real `$AW_SINDRI_HOME`, `setup.sh`, the
-  providers or MCP registration before the switch.
+  providers or MCP registration.
 - Hotspot files (`PublicAPI.Unshipped.txt`, error catalogues, `Add…()` methods, the command and endpoint tables, JSON
   contexts, `deps.yaml`) are appended at their anchors; the lane that merges second rebases.
 - At most two heavy builds run at once across all lanes (the heavy-job lock's two slots).
@@ -169,8 +166,8 @@ Where the API (API), workflow engine (WF) and context retrieval (CTX) specs disa
 | X7 | **Item state from the engine.** API §3.6: once S2 runs, `needs-answer`, `parked`, `running`, `queued` and `taken-over` "come from the engine's item projection". Nobody owns that projection | WF P4 emits the events; API owns the projection, in the first API phase after WF P4 | API §3.6, Phases |
 | X8 | **One MCP server.** API §8: `sindri mcp`, stdio, `sindri_*` tools, repo from the working directory. CTX §8.5: Streamable HTTP at `/mcp`, `context_*` tools, registered per work repo | One server with both tool sets, stamped `session`, repo-scoped the same way. Recommended transport: HTTP on the API port (it survives a restart, and S3 is building toward it), with the repo carried by the per-repo registration | API §8; CTX §3, §8.5 |
 | X9 | **Context routes and CQRS.** CTX: `POST /sindri/context/query` (a query on a POST), and map import, build, promote and review as routes with their own terminal rule. API: `ARCH-CQRS-001` (every POST is a command), the action classes, and `GET /context?q=` in §11. S3 (#166) already maps the POST | Query by `GET /context` (or, for a question too large for a URL, the HTTP `QUERY` method with a body (the IETF safe method with a body, draft; `QUERY /sindri/context/subgraph`); never a POST, no carve-out list). Map `build` is `job`, `import` and `promote` are `desk`, `review --apply` is `protected`. Every route gets a catalog row | CTX §8.5; API §3, §11 |
-| X10 | **State home.** S1 and API: `$AW_SINDRI_HOME` (default `$AW_STATE_DIR/sindri-app`). WF §6.1 and §6.3: `AW_STATE_DIR=$(mktemp -d)` and `$AW_STATE_DIR/sindri/notifications.jsonl`, which is the TS Sindri's folder | Everything under `$AW_SINDRI_HOME`; WF's dev loop uses API §12's `scripts/sindri-prove.sh` | WF §6.1, §6.3, Phases |
-| X11 | **Where the C# docs and error codes live.** API: `docs/csharp/sindri.md`. WF: `docs/csharp/sindri-workflow.md`. PR babysitter: `docs/csharp/sindri-pr.md`. CTX: `docs/sindri/context.md` and `docs/sindri/errors.md` (which is generated from the TS build) | Contracts and codes in `docs/csharp/sindri*.md` (add `sindri-context.md`); `docs/sindri/` stays the human overview | CTX §8.4–§8.6, Phases |
+| X10 | **State home.** S1 and API: `$AW_SINDRI_HOME` (default `$AW_STATE_DIR/sindri-app`). WF §6.1 and §6.3: `AW_STATE_DIR=$(mktemp -d)` and `$AW_STATE_DIR/sindri/notifications.jsonl` | Everything under `$AW_SINDRI_HOME`; WF's dev loop uses API §12's `scripts/sindri-prove.sh` | WF §6.1, §6.3, Phases |
+| X11 | **Where the C# docs and error codes live.** API: `docs/csharp/sindri.md`. WF: `docs/csharp/sindri-workflow.md`. PR babysitter: `docs/csharp/sindri-pr.md`. CTX: `docs/sindri/context.md` and `docs/sindri/errors.md` (the TypeScript build's old catalogue, no longer generated) | Contracts and codes in `docs/csharp/sindri*.md` (add `sindri-context.md`); `docs/sindri/` stays the human overview | CTX §8.4–§8.6, Phases |
 | X12 | **Exit codes.** S1, API and WF: 0, 1, 2. CTX adds 75 for a busy heavy-job lock | Adopt 75 app-wide for "lock busy" (Evidence already uses it) and add it to S1's table | `docs/csharp/sindri.md`; API §9 |
 | X13 | **The heavy-job lock.** WF: `waitFor: { resource: heavy }` has no allocator. CTX: `IHeavyJobLock`, supplied by Sindri over the two-slot lock | One Sindri lock port is both the engine's `heavy` allocator and CTX's `IHeavyJobLock` | WF §3.4; CTX §4 |
 | X14 | **The `context.retrieve` block** (CTX Phase 10) fills a Step's injection plan. WF's block kinds are gate, evidence provider, Step and effect, and none of them is "input to a Step" | WF adds a Step-input kind (or a documented use of `IEvidenceProvider`) before CTX Phase 10 | WF §2; CTX Phase 10 |
@@ -181,7 +178,7 @@ Where the API (API), workflow engine (WF) and context retrieval (CTX) specs disa
 | X19 | One build order, stated four ways (E3) | The build-order table above; every spec cites it | README; all three |
 | X20 | `SND-API-004` and `-005` were reserved anew but S1 already uses them (E1) | The API's new codes are `SND-API-011` (views not reached) and `-012` (stream limits) | API §1, §9 |
 | X21 | Nothing let a launched agent session report its Step (E2) | Owner decision: an engine-owned agent runtime launches sessions through `ILauncher`; the session reports with a run-scoped `step-report` class; the engine still decides through gates; tokens are metered through the provider port | WF §6.5, P8; API §4.1, P10 |
-| X22 | Codex and Cursor MCP registration (E6) | Owner decision (revised 2026-10-18): `sindri-app.sh` / `sindri mcp register --apply --providers all` write the project files (`.cursor/mcp.json`, `.codex/config.toml`) and Codex's trust row; `ILauncher` also passes the endpoint at launch time. Doctor warns on user-wide entries for all three providers | API §8, P10 |
+| X22 | Codex and Cursor MCP registration (E6) | Owner decision (revised 2026-10-18): `sindri mcp register --apply --providers all` write the project files (`.cursor/mcp.json`, `.codex/config.toml`) and Codex's trust row; `ILauncher` also passes the endpoint at launch time. Doctor warns on user-wide entries for all three providers | API §8, P10 |
 | X23 | Engine P4 started instances on items nothing created; `T-n` ids (E4) | Engine P4 depends on API P3; signals create the item first. Context Phase 6 links items to Linear records (`item.linked`) | WF Phases; CTX Phase 6 |
 | X24 | Three ways to act as the human in proofs (E5) | `scripts/sindri-prove.sh` everywhere: `<verb>` as the agent, `human <verb>` as the owner | API §12; WF Phases; CTX |
 | X25 | Context reads skipped the egress switch and repo scope on CLI and HTTP (E7) | `context.sessions.enabled` gates every session read on any transport; repo scope defined over files, nodes and mapped Linear teams | CTX §3 |
@@ -224,70 +221,22 @@ Where the API (API), workflow engine (WF) and context retrieval (CTX) specs disa
 | X62 | **The UI's revision-8 edits (E-20–E-31, screens spec §6).** The seven screens need instance, recipe, stats, engine, status, lens and file-map views the three specs didn't serve | **Written into the specs (2026-10-14), the UI spec winning where texts differed (the X52 rule):** API §3.8 (instance list and view with `states[]` in path order, `StatusFields`, `FactRow`, `ChildGroup`; `RecipeView`, `RecipeStats`, `RecipeList`; `GET /engine…`; `GET /status` `dependencies`; agent budgets and `SND-LAUNCH-010`), §9 (`SND-API-013`, `SND-ENGINE-001/404`), phases P2, P10a, P11 extended, **P12 recipe stats** and **P13 engine** added; WF §3.2 (`urgency`, `outputs`, `inputs[].kind`), §3.3, §3.10 (path order), §5.6 (`temporal_event_id` on mirrored rows; the UI reads Temporal only through the API), §9.1 (`RCP-URG-001`, `RCP-OUT-001…003`, `RCP-TYPE-001…003`), §12 (the scoping recipe's requirements), P2 (before the hash format is pinned) and P4; CTX §8.5 (`lenses`, `filemap`, `map/proposals`, `context_lenses`), §8.6 (`SND-CONTEXT-044/045`, renumbered from 031/032, which S-3a's map-file codes took), §8.7 (scoping proposals; graph status `mapped \| new \| unmapped`), new §8.9, §6.1 (`propose` override), Phases 4 and 9; `docs/csharp/sindri.md` ledger table (the column) | API §3.8, §9, Phases; WF §3, §5.6, §9.1, §12, Phases; CTX §6.1, §8.5–§8.9, Phases |
 | X63 | **Map review's single accept and reject.** CTX §8.7 makes `POST map/review` `protected` (a typed confirmation at a terminal); the UI's Context page (screens §4.4) and the mockups draw Accept, Reject and "Accept all deterministic" inline with an Undo | **Decided (owner, 2026-10-14): desk for the reversible overrides.** Single accept, reject, skip, rename, move and the bulk deterministic accept become `desk` actions (each one reversible `map_override` row, the Undo toast is the recovery), while `map promote` and `map import` stay `protected`. CTX §3, §8.5-§8.7, §8.9 and API §3.7 are edited to match in stage S-4's PR (the map-review PR), test-first. Owner's rulings (2026-10-14): undo and the orphan repoint and drop are `desk` too; `review --apply <file>`, merge, add and delete are `protected`, with the typed challenge. Until that PR merges the app renders them as protected (the locked button and the command) | CTX §3, §8.7; API §3.7; screens §4.4 |
 | X64 | **Sindri stands Onyx up (spec `2026-10-16-sindri-onyx-managed-design.md`, O1-O6).** Onyx was a page of manual steps; the owner wants to log in and connect sources, nothing else | **Decided (owner, 2026-10-16; build 2026-10-17/18).** O1: Sindri fetches the pinned pieces, writes the config, starts and stops the containers, mints its key. O2: the setup-only requests (five, a separate allowlist) go beyond the query adapter's five. O3: the owner makes their own Onyx account; Sindri never registers or stores a password. O4 (builder's call): `serve` starts a managed Onyx, `stop` stops it, an unmanaged one is never touched. O5 (builder's call): Docker is a prerequisite. O6: bare `sindri` offers the setup once at a terminal; no leaves a needs-you row. Built as `sindri onyx status|up|down|open`, doctor `onyx:stack`, `context.sources.onyx.managed` | `docs/sindri/onyx.md`, `docs/csharp/sindri.md` |
-| X65 | **Setup once (SO-16).** After the demo the owner wanted setup to be "Sindri once, then Onyx" with no other CLI | **Approved, rev 4 (owner, 2026-10-20, the recommended answers to its §14 questions; spec `docs/superpowers/specs/2026-10-19-sindri-setup-once-design.md`).** One command (`./setup.sh --with-sindri`: it publishes the app first with `sindri-app --publish-only`, starts it detached when a desktop session exists, then installs the rest; it no longer runs Onyx unless `--with-onyx`); Onyx is a step in the app, with `sindri-app onyx up` as the terminal fallback; repos, MCP, recipes and the map are app actions or background work; the app confirms the profile and recipes by typing or holding (approve-all is a job; its shipped set is the recipe files embedded from `git archive HEAD` at publish, hashed at serve start); `GET /sindri/setup`, a Setup card on Home; the map has no manual promote step (owner rule). Folds PR #433: the CI map-promote half is superseded | `2026-10-19-sindri-setup-once-design.md`; API §3.1, §3.6, §4, §6; WF §3.2, §4 |
-
-## Today: the TypeScript reference (`sindri/`)
-
-The TS package was built in plans, and is what runs now. What exists (the code index is documented in `index.md`):
-
-| Command | What it does |
-|---|---|
-| `sindri profile init [--ring0 [--plans <pattern>]...] [--dir DIR] [--force]` | Scaffold a profile in `mode: shadow`. `--ring0` makes one for the current repo, using its plan files as the backlog; `--plans` limits it to matching plan files; `--force` overwrites an existing profile |
-| `sindri profile validate \| explain <key> \| migrate \| approve [hash]` | Check the profile, show where a value comes from, upgrade it, approve a change. Changes take effect only once approved, and approving needs you at a terminal |
-| `sindri observe [--no-record]` | List open work with sizes and what auto-small would start. Records it in the ledger when the profile is approved and this is the active host |
-| `sindri ledger [--item ID] [--since 7d]` | Show recorded events |
-| `sindri scrub [--staged] [--install-pre-commit [--repo PATH]]` | Redact secrets from stdin, check staged changes, or install the pre-commit hook that refuses secret-shaped strings (in the current repo, or the one `--repo` names) |
-| `sindri index setup \| build \| status \| query` | The code index: set up Ollama, graphify and the sandbox; build it; show its freshness and layers; look up a symbol's clones. See `index.md` |
-| `sindri repo add <path> [--name NAME]` | Add a repo to the profile (then `sindri profile approve`) |
-| `sindri repo onboard [<path>] [--name NAME] [--no-build]` | Onboard a repo in one command: add it to the profile, stop for `sindri profile approve` (exit 1 until a human approves at a terminal), then install the pre-commit hook and build its index |
-| `sindri repo onboard --template` / `sindri repo status [<path>] [--nudge]` | Opt-in git template so new clones get the pre-commit hook (a no-op until the repo is approved); whether a repo is onboarded (the SessionStart nudge uses `--nudge`) |
-| `sindri scope <brief.md \| linear:<project>> [--section N] [--sources LIST] [--out DIR] [--dry-run]` | Turn a brief into a cited scope map: surfaces, implications, workstreams, acceptance checks, open questions. Inside a git worktree only `--sources file,code` is allowed. See `scope.md` |
-| `sindri scope --backtest linear:<project> [--window 1d] [--with-index]` | Replay a past project: recall, precision and a brief-only baseline against a pass bar |
-| `sindri scope runs [--json]` | The latest scoping runs: mode, status, surfaces, recall, precision, output file |
-| `sindri shape --record --staged \| report` | Record shape signals for staged changes (the pre-commit hook runs this); report signals, outcomes and precision. Record-only: nothing blocks a commit |
-| `sindri evolve <init\|status\|check\|telemetry\|reflect\|correct\|proposals\|show\|reject\|tier\|compare\|stage\|publish\|adopt\|revert\|weekly>` | Self-evolution: an artifact registry, module eval suites, typed proposals from merged PRs, repeated corrections and hook telemetry, offline blind comparisons. See `evolve.md` |
-| `sindri channel <status\|promote\|rollback>` | Stable and next installs of sindri itself; promotion needs a passing suite at that sha, a soak and a typed confirmation. See `evolve.md` |
-| `/reflect`, `/correct` (skills) | Review finished work, or find a repeated mistake class, and print typed proposals without editing anything; `sindri evolve reflect` and `correct` record them. See `evolve.md` |
-| `sindri doctor` | One line per health check, `ok` / `warn` / `fail`, each with a fix |
-
-Every read command takes `--json`. Exit codes: `0` ok, `1` attention needed, `2` error. Errors carry a stable code (`SND-<AREA>-<NNN>`); see `errors.md`.
+| X65 | **Setup once (SO-16).** After the demo the owner wanted setup to be "Sindri once, then Onyx" with no other CLI | **Approved, rev 4 (owner, 2026-10-20, the recommended answers to its §14 questions; spec `docs/superpowers/specs/2026-10-19-sindri-setup-once-design.md`).** One command (`./setup.sh`: it publishes the app first with `scripts/install-cs.sh --publish`, starts it detached when a desktop session exists, then installs the rest; it no longer runs Onyx unless `--with-onyx`); Onyx is a step in the app, with `sindri onyx up` as the terminal fallback; repos, MCP, recipes and the map are app actions or background work; the app confirms the profile and recipes by typing or holding (approve-all is a job; its shipped set is the recipe files embedded from `git archive HEAD` at publish, hashed at serve start); `GET /sindri/setup`, a Setup card on Home; the map has no manual promote step (owner rule). Folds PR #433: the CI map-promote half is superseded | `2026-10-19-sindri-setup-once-design.md`; API §3.1, §3.6, §4, §6; WF §3.2, §4 |
 
 ## Design language
 
 Sindri's UI (the dashboard and any other screen it grows) follows `DESIGN.md` in this folder: Linear's design language (near-black canvas, light gray text, one lavender-blue accent, hairline-bordered charcoal panels). It was added with `npx getdesign@latest add linear.app --out docs/sindri/DESIGN.md` from [awesome-design-md](https://github.com/VoltAgent/awesome-design-md/tree/main/design-md/linear.app) (MIT; also at https://getdesign.md/linear.app/design-md). Agents read it before writing any Sindri UI, and it's the reference to feed `/design-language` when the dashboard's tokens are made. Edit it as Sindri's look evolves.
 
-## Quick start (this repo, ring 0)
-
-```bash
-scripts/install-sindri.sh                 # or ./setup.sh --with-sindri
-sindri profile init --ring0 --plans '*-sindri-plan-*'   # profile for this repo; backlog = the Sindri plans
-sindri profile validate
-sindri profile approve                    # shows the hash and what changed
-sindri profile approve <hash>             # you, at a terminal: type the challenge's 'approve profile <hash6>' to confirm
-sindri repo onboard .              # add, approve (at a terminal), hook, index
-sindri doctor                             # expect every line ok
-sindri observe                            # the remaining Sindri plan tasks, in order
-```
-
 ## Where things live
 
 | Path | What |
 |---|---|
-| `$AW_STATE_DIR/sindri/ledger.db` | The ledger (SQLite, 0600). Schema in `planning/ERD.md` |
-| `$AW_STATE_DIR/sindri/sindri.lock/` | The singleton lock (spec §9.1) |
-| `$AW_STATE_DIR/sindri/profile-approved/<hash>/` | Snapshots of approved profiles. Runtime commands such as `observe` load the latest approval's snapshot, not the live files (spec §8.7); `approve` diffs against it |
-| `$AW_STATE_DIR/sindri/index/<repo>.db` | The code index, one per repo (rebuilt, never migrated). See `index.md` |
-| `$AW_STATE_DIR/sindri/spool/` | Shape-signal files the pre-commit hook writes; the hourly `observe` and `shape reconcile` move them into the ledger |
-| `$AW_STATE_DIR/sindri/mirrors/<repo>.git` | Bare mirror of each indexed repo, made by `index build` (full history, 0700) |
-| `$AW_STATE_DIR/profile` | The profile, or a link to your private profile repo (`--profile` and `AW_PROFILE_DIR` override it) |
+| `$AW_SINDRI_HOME` (default `$AW_STATE_DIR/sindri-app`) | Sindri's home: the ledger, views, approved profile snapshots, the Temporal dev server's file, logs. Layout in `docs/csharp/sindri.md`; schemas in `planning/ERD.md` |
+| `$AW_STATE_DIR/bin/cs/<stamp>/` | The published binaries; `bin/cs/current` points at the one the `~/.local/bin` wrappers run (`scripts/install-cs.sh`) |
 
 `$AW_STATE_DIR` defaults to `~/.agentic-workflow`.
 
 Not to be confused with `./setup.sh --profile <web-app|ios|personal>`, which applies a Claude Code settings profile to a repo. A Sindri profile is the `profile.yaml` described in `profile.md`.
-
-## Plan files as a backlog
-
-The `plan-file` tracker reads each `### Task N: …` heading as one item and its `- [ ]` / `- [x]` steps as progress. A task is done when every step is ticked. Code inside fenced blocks is ignored, so keep shell snippets fenced: an unfenced `# comment` line would end the task early.
 
 ## When to use which
 
@@ -296,5 +245,5 @@ The `plan-file` tracker reads each `### Task N: …` heading as one item and its
 | Fix one bug ticket, by hand, now | `/bugFixOrchestrator <ticket>` |
 | Turn an approved spec into proven PRs, by hand | `/specToProvenPR` |
 | Review a plan before building it | `/autoplan` |
-| See the backlog and what Sindri would start | `sindri observe` |
+| See the backlog and what Sindri would start | `sindri queue` and `sindri items` |
 | Have work picked up, run and shipped for you | The factory line in the Sindri application (not built yet; see "The application") |

@@ -25,6 +25,8 @@ internal sealed class CallerHeaders
     /// <summary>No headers at all (what S1's client sent): the API reads it as a session.</summary>
     internal static CallerHeaders None { get; } = new(session: null, tokens: null, static _ => ValueTask.FromResult<RepoName?>(null));
 
+    private const string LaunchedReason = "a session Sindri launched (AW_SINDRI_LAUNCH is set)";
+
     private const string NoToken = "the per-start human token isn't readable";
 
     /// <summary>Why this CLI calls as a session, or null for a human (or for <see cref="None"/>); as of the last <see cref="Resolve"/> (each call makes one).</summary>
@@ -39,13 +41,13 @@ internal sealed class CallerHeaders
     internal async ValueTask<string?> Resolve(CancellationToken cancellationToken)
     {
         _token = await ReadToken(cancellationToken).ConfigureAwait(false);
-        _reason = _session is null || _token is not null ? null : NoToken;
+        _reason = _session is null || _token is not null ? null : _session.Launch is null ? NoToken : LaunchedReason;
         return _reason;
     }
 
     private async ValueTask<HumanToken?> ReadToken(CancellationToken cancellationToken)
     {
-        if (_tokens is null)
+        if (_tokens is null || _session?.Launch is not null)   // a session Sindri launched never calls as a human, whatever it can read
         {
             return null;
         }
@@ -85,6 +87,11 @@ internal sealed class CallerHeaders
             }
 
             headers.Add(SindriHeaders.Token, token.Value);
+        }
+
+        if (session.Launch is { } launch)
+        {
+            headers.Add(SindriHeaders.Launch, launch);
         }
 
         if (await Repo(cancellationToken).ConfigureAwait(false) is { } repo)

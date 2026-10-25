@@ -18,7 +18,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed class TemporalDevServer
 {
     private readonly TimeSpan _adoptWait = TimeSpan.FromSeconds(3);
-    private readonly TimeSpan _readyWait = TimeSpan.FromSeconds(30);
+    private readonly TimeSpan _readyWait = TimeSpan.FromSeconds(120);
     private readonly TimeSpan _stopWait = TimeSpan.FromSeconds(10);
     private readonly Func<int> _pickPort;
     private readonly Func<string, IEnumerable<string>?, IReadOnlyDictionary<string, string?>?, ProcessStartInfo> _start;

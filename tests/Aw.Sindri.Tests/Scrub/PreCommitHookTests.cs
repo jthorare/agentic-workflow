@@ -29,7 +29,7 @@ public sealed class PreCommitHookTests
         Assert.Contains("not found", body, StringComparison.Ordinal);
         Assert.Contains("exit 1", body, StringComparison.Ordinal);
         Assert.Contains("./setup.sh", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("install-sindri.sh", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("install-sindri", body, StringComparison.Ordinal);
     }
 
     [Fact]

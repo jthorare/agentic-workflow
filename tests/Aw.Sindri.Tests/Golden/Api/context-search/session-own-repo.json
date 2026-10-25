@@ -1,0 +1,116 @@
+{
+  "mapVersion": "v1",
+  "total": 10,
+  "hits": [
+    {
+      "key": "feature:tabs.tab-groups",
+      "kind": "feature",
+      "label": "Tab groups",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Tab groups",
+      "trust": "trusted"
+    },
+    {
+      "key": "feature:tabs.tab-manager",
+      "kind": "feature",
+      "label": "Tab manager",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Tab manager",
+      "trust": "trusted"
+    },
+    {
+      "key": "code:src/tabs/TabGroups.ts",
+      "kind": "code",
+      "label": "TabGroups.ts",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "TabGroups.ts",
+      "trust": "trusted"
+    },
+    {
+      "key": "code:src/tabs/TabManager.ts",
+      "kind": "code",
+      "label": "TabManager.ts",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 0,
+      "matched": "title",
+      "snippet": "TabManager.ts",
+      "trust": "trusted"
+    },
+    {
+      "key": "record:linear:issue/0e5a1b00-0000-4000-8000-000000000203",
+      "kind": "record",
+      "label": "<untrusted source=\"map\">Tab manager spec</untrusted>",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 0,
+      "matched": "title",
+      "snippet": "<untrusted source=\"map\">Tab manager spec</untrusted>",
+      "trust": "untrusted"
+    },
+    {
+      "key": "surface:command/group-tabs",
+      "kind": "surface",
+      "label": "Group tabs (command)",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Group tabs (command)",
+      "trust": "trusted"
+    },
+    {
+      "key": "surface:command/switch-tab",
+      "kind": "surface",
+      "label": "Switch tab (command)",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Switch tab (command)",
+      "trust": "trusted"
+    },
+    {
+      "key": "action:tab-manager.restore-layout",
+      "kind": "action",
+      "label": "Restore a tab's pane layout",
+      "repo": "aw-split-panes",
+      "area": "area:unassigned",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Restore a tab's pane layout",
+      "trust": "trusted"
+    },
+    {
+      "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
+      "kind": "decision",
+      "label": "A tab group collapses to one tab in the strip.",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "A tab group collapses to one tab in the strip.",
+      "trust": "trusted"
+    },
+    {
+      "key": "decision:ef895edc359f6f847ce34baeacb3670a81a824b521e4cd14371b5dc8894ea1c2",
+      "kind": "decision",
+      "label": "A tab group stays expanded; collapsing is a per-user setting.",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "A tab group stays expanded; collapsing is a per-user setting.",
+      "trust": "trusted"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Tests for config/statusline.sh's Live column. Temp HOME / AW_STATE_DIR; fake `scorer` and
-# `judge` on PATH. The statusline must read a cached snapshot, refresh it in the background,
-# and never block on scorer or judge.
+# Tests for config/statusline.sh's Live column (the judge segment). Temp HOME / AW_STATE_DIR; fake
+# `judge` on PATH. The statusline must read a cached `judge health`, refresh it in the background,
+# and never block on judge.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -18,30 +18,26 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 export HOME="$TMP/home"
 export AW_STATE_DIR="$TMP/state"
-mkdir -p "$HOME/.claude" "$TMP/bin" "$AW_STATE_DIR/scorer/live"
+mkdir -p "$HOME/.claude" "$TMP/bin"
 STRICT_PATH="/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin"
 SID="sess-123"
-CACHE="$AW_STATE_DIR/scorer/live/$SID.statusline.json"
+CACHE="$AW_STATE_DIR/statusline/judge-health.json"
 
-# scorer: logs its argv, sleeps SCORER_SLEEP seconds, prints a snapshot.
-cat >"$TMP/bin/scorer" <<'EOF'
+# judge: logs its argv, sleeps JUDGE_SLEEP seconds, prints a health document.
+cat >"$TMP/bin/judge" <<'JEOF'
 #!/usr/bin/env bash
 echo "$*" >>"$FAKE_LOG"
-sleep "${SCORER_SLEEP:-0}"
-echo '{"v":1,"usage":{"calls": 500,"callsOver200k":7},"judge":{"state":"ok","calls":4}}'
-EOF
-cat >"$TMP/bin/judge" <<'EOF'
-#!/usr/bin/env bash
-echo '{"status":"ok","failures24h":0}'
-EOF
-chmod +x "$TMP/bin/scorer" "$TMP/bin/judge"
-export FAKE_LOG="$TMP/scorer.log"
+sleep "${JUDGE_SLEEP:-0}"
+if [ -n "${JUDGE_HEALTH:-}" ]; then echo "$JUDGE_HEALTH"; else echo '{"status":"ok","failures24h":0}'; fi
+JEOF
+chmod +x "$TMP/bin/judge"
+export FAKE_LOG="$TMP/judge.log"
 : >"$FAKE_LOG"
 
 now() { date +%s; }
-write_cache() { # at calls over judgeCalls judge
+write_cache() { # at judge-status failures
   mkdir -p "$(dirname "$CACHE")"
-  printf '{"at":%s,"calls":%s,"over200k":%s,"judgeCalls":%s,"judge":"%s","failures":0}\n' "$1" "$2" "$3" "$4" "$5" >"$CACHE"
+  printf '{"at":%s,"judge":"%s","failures":%s}\n' "$1" "$2" "$3" >"$CACHE"
 }
 
 input() { # session id
@@ -129,17 +125,17 @@ PY
 fi
 
 # --- WIDE and MEDIUM show Live from a fresh cache; NARROW hides it ---
-write_cache "$(now)" 1289 351 12 ok
+write_cache "$(now)" ok 0
 wide="$(run 200 "$SID")"
 assert_contains "$wide" "Live" "WIDE: header has Live"
-assert_contains "$wide" "1289 calls · 351 >200k · judge ✓ 12" "WIDE: Live value from cache"
+assert_contains "$wide" "judge ✓" "WIDE: Live value from cache"
 assert_contains "$wide" "Lines" "WIDE: Lines still shown"
 medium="$(run 145 "$SID")"
-assert_contains "$medium" "1289 calls · 351 >200k · judge ✓ 12" "MEDIUM: Live value from cache"
+assert_contains "$medium" "judge ✓" "MEDIUM: Live value from cache"
 assert_not_contains "$medium" "Lines" "MEDIUM: no Lines"
 narrow="$(run 90 "$SID")"
 assert_not_contains "$narrow" "Live" "NARROW: no Live header"
-assert_not_contains "$narrow" "calls" "NARROW: no Live value"
+assert_not_contains "$narrow" "judge" "NARROW: no Live value"
 assert_contains "$narrow" "Context" "NARROW: existing columns kept"
 [ ! -s "$FAKE_LOG" ] && ok "fresh cache starts no refresh" || bad "fresh cache started a refresh: $(cat "$FAKE_LOG")"
 
@@ -154,24 +150,24 @@ assert_contains "$line2" "50%" "WIDE: api"
 assert_contains "$line2" "Opus 5" "WIDE: model"
 
 # --- judge glyphs ---
-write_cache "$(now)" 5 0 3 degraded
-assert_contains "$(run 200 "$SID")" "5 calls · 0 >200k · judge ⚠ 3" "degraded judge shows the warning glyph"
-write_cache "$(now)" 5 0 3 down
-assert_contains "$(run 200 "$SID")" "judge ✗ 3" "down judge shows the cross glyph"
+write_cache "$(now)" degraded 3
+assert_contains "$(run 200 "$SID")" "judge ⚠" "degraded judge shows the warning glyph"
+write_cache "$(now)" down 0
+assert_contains "$(run 200 "$SID")" "judge ✗" "down judge shows the cross glyph"
 
 # --- stale cache: output is immediate, refresh runs in the background ---
-write_cache "$(( $(now) - 120 ))" 1289 351 12 ok
+write_cache "$(( $(now) - 120 ))" ok 0
 : >"$FAKE_LOG"
 start=$(now)
-stale="$(SCORER_SLEEP=3 run 200 "$SID")"
+stale="$(JUDGE_SLEEP=3 JUDGE_HEALTH='{"status":"degraded","failures24h":2}' run 200 "$SID")"
 elapsed=$(( $(now) - start ))
-assert_contains "$stale" "1289 calls · 351 >200k · judge ✓ 12" "stale: prints the cached value"
-[ "$elapsed" -le 1 ] && ok "stale: statusline returned in ${elapsed}s (did not wait for the 3s scorer)" || bad "stale: statusline blocked ${elapsed}s"
+assert_contains "$stale" "judge ✓" "stale: prints the cached value"
+[ "$elapsed" -le 1 ] && ok "stale: statusline returned in ${elapsed}s (did not wait for the 3s judge)" || bad "stale: statusline blocked ${elapsed}s"
 deadline=$(( $(now) + 10 ))
-while [ "$(now)" -lt "$deadline" ] && ! grep -q '"calls": 500' "$CACHE" 2>/dev/null; do sleep 0.2; done
-if grep -q '"calls": 500' "$CACHE"; then ok "stale: background refresh rewrote the cache"; else bad "stale: cache never refreshed"; fi
-assert_contains "$(cat "$FAKE_LOG")" "live --session $SID --cwd /tmp --json" "refresh passes --session and --cwd"
-assert_contains "$(run 200 "$SID")" "500 calls · 7 >200k · judge ✓ 4" "next render shows the refreshed numbers"
+while [ "$(now)" -lt "$deadline" ] && ! grep -q '"degraded"' "$CACHE" 2>/dev/null; do sleep 0.2; done
+if grep -q '"degraded"' "$CACHE"; then ok "stale: background refresh rewrote the cache"; else bad "stale: cache never refreshed"; fi
+assert_contains "$(cat "$FAKE_LOG")" "health" "refresh calls judge health"
+assert_contains "$(run 200 "$SID")" "judge ⚠" "next render shows the refreshed status"
 [ ! -d "$CACHE.lock" ] && ok "refresh lock released" || bad "refresh lock left behind"
 
 # --- no cache yet: shows --, then a background refresh fills it ---
@@ -182,87 +178,61 @@ assert_contains "$(sed -n 2p <<<"$first")" "│ --" "no cache: Live shows --"
 deadline=$(( $(now) + 10 ))
 while [ "$(now)" -lt "$deadline" ] && [ ! -f "$CACHE" ]; do sleep 0.2; done
 [ -f "$CACHE" ] && ok "no cache: background refresh created it" || bad "no cache: never created"
+assert_contains "$(run 200 "$SID")" "judge ✓" "no cache: next render shows the judge segment"
 
-# --- missing scorer: -- and no refresh ---
+# --- missing judge: -- and no refresh ---
 mkdir -p "$TMP/emptybin"
 ln -sf "$(command -v jq)" "$TMP/emptybin/jq"
 rm "$CACHE"
-: >"$FAKE_LOG"
 nos="$(run 200 "$SID" "$TMP/emptybin:$STRICT_PATH")"
-assert_contains "$(sed -n 2p <<<"$nos")" "│ --" "missing scorer: Live shows --"
-assert_not_contains "$nos" "calls" "missing scorer: no counts"
+assert_contains "$(sed -n 2p <<<"$nos")" "│ --" "missing judge: Live shows --"
+assert_not_contains "$nos" "judge" "missing judge: no judge segment"
 sleep 1
-[ ! -f "$CACHE" ] && ok "missing scorer: no cache written" || bad "missing scorer: cache appeared"
+[ ! -f "$CACHE" ] && ok "missing judge: no cache written" || bad "missing judge: cache appeared"
 
-# --- negative caching: a failing scorer is not re-run on every render ---
+# --- negative caching: a failing judge is not re-run on every render ---
 mkdir -p "$TMP/failbin"
-printf '#!/usr/bin/env bash\necho "$*" >>"$FAKE_LOG"\nexit 1\n' >"$TMP/failbin/scorer"
-cp "$TMP/bin/judge" "$TMP/failbin/judge"
-chmod +x "$TMP/failbin/scorer" "$TMP/failbin/judge"
-rm "$CACHE" 2>/dev/null; : >"$FAKE_LOG"
+printf '#!/usr/bin/env bash\necho "$*" >>"$FAKE_LOG"\nexit 1\n' >"$TMP/failbin/judge"
+chmod +x "$TMP/failbin/judge"
+: >"$FAKE_LOG"
 run 200 "$SID" "$TMP/failbin:$STRICT_PATH" >/dev/null
 deadline=$(( $(now) + 10 ))
 while [ "$(now)" -lt "$deadline" ] && [ ! -f "$CACHE" ]; do sleep 0.2; done
 sleep 0.5
-[ -f "$CACHE" ] && ok "failed refresh writes a stub cache" || bad "no stub cache after failure"
-fail2="$(run 200 "$SID" "$TMP/failbin:$STRICT_PATH")"
+[ -f "$CACHE" ] && ok "failed refresh writes a cache" || bad "no cache after failure"
+assert_contains "$(sed -n 2p <<<"$(run 200 "$SID" "$TMP/failbin:$STRICT_PATH")")" "judge ✗" "a failing judge renders as down"
 sleep 1
-assert_contains "$(sed -n 2p <<<"$fail2")" "│ --" "stub renders --"
-[ "$(wc -l <"$FAKE_LOG" | tr -d ' ')" = 1 ] && ok "second render within TTL does not call scorer again" || bad "scorer invoked $(wc -l <"$FAKE_LOG") times"
+[ "$(wc -l <"$FAKE_LOG" | tr -d ' ')" = 1 ] && ok "second render within TTL does not call judge again" || bad "judge invoked $(wc -l <"$FAKE_LOG") times"
 
 # --- non-numeric failures24h still renders ---
-printf '#!/usr/bin/env bash\necho '"'"'{"status":"degraded","failures24h":"lots"}'"'"'\n' >"$TMP/bin/judge"
 rm "$CACHE"
-run 200 "$SID" >/dev/null
+JUDGE_HEALTH='{"status":"degraded","failures24h":"lots"}' run 200 "$SID" >/dev/null
 deadline=$(( $(now) + 10 ))
-while [ "$(now)" -lt "$deadline" ] && ! grep -q '"calls": 500' "$CACHE" 2>/dev/null; do sleep 0.2; done
-assert_contains "$(run 200 "$SID")" "500 calls · 7 >200k · judge ⚠ 4" "non-numeric failures24h: still renders"
-printf '#!/usr/bin/env bash\necho '"'"'{"status":"ok","failures24h":0}'"'"'\n' >"$TMP/bin/judge"
+while [ "$(now)" -lt "$deadline" ] && [ ! -f "$CACHE" ]; do sleep 0.2; done
+sleep 0.5
+assert_contains "$(run 200 "$SID")" "judge ⚠" "non-numeric failures24h: still renders"
 
-# --- long values are cut to the column width ---
-write_cache "$(now)" 12345 3512 123 degraded
-long="$(sed -n 2p <<<"$(run 200 "$SID")")"
-assert_contains "$long" "12345 calls · 3512 >200k · judge ⚠ " "long value drops the judge count first"
-assert_not_contains "$long" "judge ⚠ 123" "long value does not overflow"
-assert_not_contains "$long" "…" "dropping the count needs no cut"
-write_cache "$(now)" 12345678 987654 123 degraded
-assert_contains "$(sed -n 2p <<<"$(run 200 "$SID")")" "12345678 c · 987654 >200k · judge ⚠ " "then calls shortens to c"
-write_cache "$(now)" 123456789 9876543 123 degraded
-cut="$(sed -n 2p <<<"$(run 200 "$SID")")"
-assert_contains "$cut" "…" "only then is the value cut"
-echo "$cut" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1 && ok "cut value is valid UTF-8" || bad "cut value is invalid UTF-8"
-
-# --- multibyte: widths are characters, under the C locale and a UTF-8 one ---
+# --- multibyte: the glyph row aligns, under the C locale and a UTF-8 one ---
 vw() { printf '%s' "$1" | LC_ALL=C tr -d '\200-\277' | wc -c | tr -d ' '; }
 for loc in C en_US.UTF-8; do
-  write_cache "$(now)" 1346 370 6 degraded
+  write_cache "$(now)" degraded 6
   out="$(LC_ALL=$loc run 200 "$SID")"
   echo "$out" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1 && ok "[$loc] output is valid UTF-8" || bad "[$loc] invalid UTF-8"
-  assert_contains "$out" "1346 calls · 370 >200k · judge ⚠ 6" "[$loc] full value renders untruncated"
+  assert_contains "$out" "judge ⚠" "[$loc] value renders"
   h="$(sed 's/\x1b\[[0-9;]*m//g' <<<"$out" | sed -n 1p)"; v="$(sed 's/\x1b\[[0-9;]*m//g' <<<"$out" | sed -n 2p)"
   lh="${h##*│ }"; lv="${v##*│ }"
   [ "$(vw "$lh")" = "$(vw "$lv")" ] && ok "[$loc] Live header and value have the same visible width" || bad "[$loc] widths differ: $(vw "$lh") vs $(vw "$lv")"
   [ "$(vw "$h")" = "$(vw "$v")" ] && ok "[$loc] whole header and value rows align" || bad "[$loc] rows differ: $(vw "$h") vs $(vw "$v")"
-  write_cache "$(now)" 123456789 9876543 123 degraded
-  echo "$(LC_ALL=$loc run 200 "$SID")" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1 && ok "[$loc] cut value is valid UTF-8" || bad "[$loc] cut invalid UTF-8"
 done
 
-# --- first render has no numbers, the next one does ---
-rm "$CACHE" 2>/dev/null
-first="$(LC_ALL=C run 200 "$SID")"
-assert_contains "$(sed -n 2p <<<"$first")" "│ --" "first render without cache shows --"
-deadline=$(( $(now) + 10 ))
-while [ "$(now)" -lt "$deadline" ] && ! grep -q '"calls": 500' "$CACHE" 2>/dev/null; do sleep 0.2; done
-assert_contains "$(LC_ALL=C run 200 "$SID")" "500 calls · 7 >200k · judge ✓ 4" "next render shows numbers"
-
-# --- hostile session ids never reach a path or the scorer ---
-: >"$FAKE_LOG"
+# --- hostile session ids: Live shows -- and nothing is written ---
+rm -f "$CACHE"; : >"$FAKE_LOG"
 for hostile in '../../evil' 'a/b' '$(touch pwned)' 'x y' ''; do
   out="$(run 200 "$hostile")"
   assert_contains "$(sed -n 2p <<<"$out")" "│ --" "hostile id '$hostile': Live shows --"
 done
 sleep 1
-[ ! -s "$FAKE_LOG" ] && ok "hostile ids: scorer never called" || bad "hostile ids reached scorer: $(cat "$FAKE_LOG")"
+[ ! -s "$FAKE_LOG" ] && ok "hostile ids: judge never called" || bad "hostile ids reached judge: $(cat "$FAKE_LOG")"
 [ -z "$(find "$TMP" -name 'evil*' -o -name pwned -o -name 'a' 2>/dev/null)" ] && ok "hostile ids: nothing written outside the cache dir" || bad "hostile id wrote a file"
 
 # --- empty stdin still prints the placeholder header, Live included at WIDE ---

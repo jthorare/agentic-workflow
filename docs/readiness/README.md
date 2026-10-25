@@ -7,7 +7,7 @@ Agent-readiness measurements for this repo (spec: `docs/superpowers/specs/2026-1
 |---|---|
 | `readiness.yaml` (repo root) | The repo's name, ring, scope and each ring's target level |
 | `src/Readiness/` | `Aw.Readiness`: the `aw-readiness` NativeAOT CLI (`Aw.Readiness.Core` + `Aw.Readiness.App`) |
-| `baseline-2026-10.md` | The R0 baseline of the TS apps, from the throwaway `scripts/readiness-baseline.mjs` |
+| `baseline-2026-10.md` | The R0 baseline of the TS apps (historical: they are gone), from the throwaway `scripts/readiness-baseline.mjs` |
 | `aot-spike.md` | The R1a AOT spike (R7, R8, R9) |
 | `r2-estimate.md` | The R2 estimate fixed at the R1b exit: per-packet hours from the template packages' measured throughput, and the §10 stop-rule thresholds |
 
@@ -66,8 +66,7 @@ gets) is unread. A repo admin seeing no `security_and_analysis` is a known fail 
 `AGENTS.md`, the rules and the repo-level files (templates, devcontainer, CODEOWNERS, dependency updates) — against the
 R0 baseline's 34 criteria, with the same ids and levels. Two read narrower than R0: TS-4 checks the CI configuration
 only (no run or its time), and TD-2 needs both the scheme file (`.github/labels.yml`, the type:, area:, size: and
-ring: families) and labels of each family on the repo (R0 read only the repo's labels). The TS apps are not scored: they are frozen until the
-cutover. The criteria live in `src/Readiness/Aw.Readiness.Core/Criteria/` (one file per pair of pillars); a change
+ring: families) and labels of each family on the repo (R0 read only the repo's labels). The TS apps are not scored: they were removed at the switch. The criteria live in `src/Readiness/Aw.Readiness.Core/Criteria/` (one file per pair of pillars); a change
 to a criterion is a reviewed change to its check and its test in `tests/Aw.Readiness.Tests/Criteria/`.
 
 ## readiness.yaml
@@ -89,7 +88,7 @@ refused with `AW-READINESS-003` naming the line, the key and the fix.
 
 `baseline-2026-10.md` scored the TS apps with `scripts/readiness-baseline.mjs`, a **throwaway** script (Node ≥ 20, no
 dependencies). Its scope differs from `aw-readiness`'s (the TS apps, not the C# template), so `aw-readiness` does not
-diff against it: its first run records its own baseline. The script stays until the switch for comparison.
+diff against it: its first run records its own baseline. The baseline is kept as a record of where the TS apps stood.
 
 ```bash
 node scripts/readiness-baseline.mjs --out docs/readiness/baseline-2026-10.md   # regenerate (reads gh api, GET only)

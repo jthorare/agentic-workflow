@@ -35,7 +35,7 @@ internal static class ApproveAllFixtures
         new(Step, "One step", Hash("1a2b3c4d5e6f"), [], [_produce], Hash("0f1e2d3c4b5a"), Version: 2),
         new(Note, "Note", Hash("2c3d4e5f6a7b"), [], [], Version: 1),
         new(Item, "Work item", Hash("9f8e7d6c5b4a"), [Step], [], Version: 3,
-            Refusal: new SeededRefusal("SND-RECIPE-009", "Work item changed while Sindri was approving. Read the new plan.", "sindri-app recipe approve <id>")),
+            Refusal: new SeededRefusal("SND-RECIPE-009", "Work item changed while Sindri was approving. Read the new plan.", "sindri recipe approve <id>")),
         new(Review, "Review loop", Hash("4e5f6a7b8c9d"), [Item], [], Version: 1),
     ];
 

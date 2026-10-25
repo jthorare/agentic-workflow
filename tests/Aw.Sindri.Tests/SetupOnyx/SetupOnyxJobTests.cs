@@ -30,8 +30,8 @@ public sealed class SetupOnyxJobTests
         await rig.Waiting(job);
 
         Expect.Equal(0, rig.Runtime.Runner.Running);   // parked: no slot
-        Expect.Equal(new Uri("http://127.0.0.1:3000/auth/signup"), Assert.Single(rig.Browser.Opened));
-        Assert.Contains(rig.Progress.Lines, static l => l.Contains("http://127.0.0.1:3000/auth/signup", StringComparison.Ordinal));
+        Expect.Equal(new Uri("http://127.0.0.1:3189/auth/signup"), Assert.Single(rig.Browser.Opened));
+        Assert.Contains(rig.Progress.Lines, static l => l.Contains("http://127.0.0.1:3189/auth/signup", StringComparison.Ordinal));
         Expect.Sequence(["job.started", "job.waiting"], JobEvents(rig));
         _ = await rig.Runtime.Cancel(job);
         await rig.Runtime.Quiesce();
@@ -68,7 +68,7 @@ public sealed class SetupOnyxJobTests
         var finished = Finished(rig);
         Expect.Equal(JobOutcome.Succeeded, finished.Outcome);
         Expect.Equal("keychain:onyx/sindri-onyx", finished.Result!.Value.GetProperty("keyPointer").GetString());
-        Expect.Equal(("http://127.0.0.1:3000", "keychain:onyx/sindri-onyx", "v4.9.0"), rig.Profile.Section!.Value);
+        Expect.Equal(("http://127.0.0.1:3189", "keychain:onyx/sindri-onyx", "v4.9.0"), rig.Profile.Section!.Value);
         Assert.Null(rig.Slots.Take(job));   // used and gone
         Assert.False(rig.Signals.IsWaiting(job, OnyxSetupJob.Signal));
         Expect.Equal(0, rig.Prompts.Asked.Count);   // nothing was asked at a terminal

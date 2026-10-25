@@ -9,14 +9,12 @@ packages:
     kind: package
     tier: 0
     projectPrefix: Aw.Kernel
-    ts: null
     src: src/Aw.Kernel
     note: "kernel"
   - id: Alpha
     kind: package
     tier: 1
     projectPrefix: Aw.Alpha
-    ts: alpha
     src: src/Alpha
     scan: [alpha/src]
     bins: [alpha]
@@ -28,7 +26,6 @@ packages:
     kind: package
     tier: 2
     projectPrefix: Aw.Beta
-    ts: beta
     src: src/Beta
     scan: [beta/src]
     bins: [beta]
@@ -37,13 +34,11 @@ packages:
     kind: package
     tier: 2
     projectPrefix: Aw.Delta
-    ts: delta
     src: src/Delta
     scan: [delta/src]
     note: delta
   - id: Hooks
     kind: shell
-    ts: hooks
     src: null
     scan: [hooks]
     note: shell hooks

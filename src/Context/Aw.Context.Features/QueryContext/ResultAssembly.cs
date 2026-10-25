@@ -11,14 +11,14 @@ namespace Aw.Context.Features.QueryContext;
 /// Turns the graph's sections and the fetched records into the result (spec §7, §8.3, §8.4): the graph's items and the map's
 /// citation first, then one 'record' item and one citation per record, every field from a record scrubbed on its own
 /// before it is written (title, text, key, ids, versions, aliases, permalink, and the degraded sources' messages; a
-/// blocked field is '[REDACTED:blocked]' in that field only), untrusted text inside the fence, then packed into the budget.
+/// blocked field is '[REDACTED:blocked]' in that field only), untrusted text inside the fence, then grouped into sections (every item kept; there is no token budget).
 /// </summary>
 /// <param name="egress">The per-field scrubber.</param>
 /// <param name="queryId">The query's id.</param>
 /// <param name="asOf">When the answer is assembled.</param>
 internal sealed class ResultAssembly(IEgressScrubber egress, QueryId queryId, DateTimeOffset asOf)
 {
-    internal ContextResult Build(ContextQuery query, int budget, RecordPart records, GraphPart graph)
+    internal ContextResult Build(ContextQuery query, RecordPart records, GraphPart graph)
     {
         var cites = new Dictionary<string, Citation>(graph.Cites, StringComparer.Ordinal);
         var candidates = new List<PackCandidate>(graph.Candidates);
@@ -32,10 +32,10 @@ internal sealed class ResultAssembly(IEgressScrubber egress, QueryId queryId, Da
         var recordMarkers = cites.Where(c => c.Key != GraphAnswer.MapMarker).GroupBy(c => c.Value.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key, StringComparer.Ordinal);
         candidates = [.. candidates.Select(c => CiteRecord(c, graph, recordMarkers))];
         var conflicts = graph.Conflicts.Select(c => c with { Intent = [.. c.Intent.Select(k => MarkerOf(k, graph, recordMarkers)).Distinct(StringComparer.Ordinal)] }).ToList();
-        var packed = Packer.Pack(candidates, budget);
+        var packed = Packer.Pack(candidates);
         return new ContextResult(ContextResult.CurrentSchemaVersion, queryId, query, graph.Anchors, graph.MapVersion, asOf, packed.Sections,
-            conflicts, graph.Suggested, [.. records.Degraded.Select(d => d with { Message = egress.Scrub(d.Message).Text })], packed.Truncated,
-            new BudgetUse(budget, packed.Used, Estimate: true), cites, graph.Diff)
+            conflicts, graph.Suggested, [.. records.Degraded.Select(d => d with { Message = egress.Scrub(d.Message).Text })],
+            cites, graph.Diff)
         {
             SkippedComponents = graph.SkippedComponents.Count == 0 ? null : graph.SkippedComponents,
         };

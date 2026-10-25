@@ -1,6 +1,6 @@
 # AGENTS.md — Agentic Workflow
 
-> Agentic Workflow — provider-agnostic agent workflow toolkit for Claude Code, Codex, and Cursor: 55 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill), config archive, repo bootstrapper, and a token-efficiency tool (rtk).
+> Agentic Workflow — provider-agnostic agent workflow toolkit for Claude Code, Codex, and Cursor: 53 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill), config archive, repo bootstrapper, and a token-efficiency tool (rtk).
 
 Domain-specific rules live in `.agents/rules/` — one file per rule, the only copy. `.claude/rules` and `.cursor/rules/*.mdc` are symlinks to it (auto-loaded by Claude Code and Cursor), and `CLAUDE.md` is a symlink to this file. Codex reads the Rules Index at the bottom of this file. After adding or removing a rule, run `scripts/sync-rules.sh`.
 
@@ -11,7 +11,7 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 | `planning/ARCHITECTURE.md` | System components and data flow |
 | `planning/PROVIDERS.md` | Claude Code / Codex / Cursor support matrix and canonical layout |
 | `planning/API_CONTRACT.md` | Sindri CLI output contract |
-| `planning/CODE_STYLE.md` | Code style: C# by its rule files, TypeScript for bug fixes |
+| `planning/CODE_STYLE.md` | Code style: C# by its rule files |
 | `planning/TESTING.md` | Test strategy and coverage targets |
 | `planning/ERD.md` | Sindri ledger and code-index SQLite schemas |
 | `skills/_shared/capabilities.md` | Capability → tool map used by all skill text |
@@ -20,17 +20,12 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 | Layer | Technology |
 |-------|------------|
-| Runtime | Node.js >= 22 (`.nvmrc`; better-sqlite3 13 requires it), ES2022 target |
-| Language | TypeScript 5.7, strict mode |
-| Database | SQLite via better-sqlite3, WAL mode |
 | LSP (Serena) | Docker (Dockerized Serena MCP server via `scripts/serena-docker`) |
-| Validation | Zod 3 |
-| Test | Vitest (in-memory SQLite) |
-| Build | tsc (ESM, Node16 module resolution) |
+| Node | Setup prerequisite only (`.nvmrc`): `dembrandt`, `prism-mcp` and `xcodebuildmcp` through `npx`, and Ajv for the schema checkers in `scripts/package.json`. No toolkit package is built with it |
 
-**C# build — in progress, not installed until the cutover.** The toolkit is moving to C# (spec `docs/superpowers/specs/2026-10-09-agent-readiness-design.md` §4a–§4e). The tool ports stop after `Judge` (#156) and `Evidence` (#158); `scorer` and `sindri` are not ported. Sindri is **built new in C# as an application** (control plane, workflow engine, context retrieval engine; factory addendum §17.29, decision Q7; overview in `docs/sindri/README.md`), the finished tool ports become its blocks, and the TS `sindri/` stays the reference and keeps running until the switch. This is a clean cutover and a **reimplementation in idiomatic C#, not a translation**: the TS package is a guideline for what a package does, never for how (no TS formatting, quirks or workarounds; type-driven JSON through `AwJson`; contracts defined by the C# tests; `.agents/rules/csharp.md` "Porting a TS package"). The C# build keeps no byte or state compatibility with the TS build, and no TS state is migrated. The one exception is the **hook contract**: only what the bash hooks and statusline that keep running read (the commands and arguments they call, the JSON fields they `jq`, the exit codes and stderr prefixes they branch on, and the files they write, such as `judge/sessions`, `judge/outbox` and `judge/teammate-names.jsonl`; spec §4c). It stays frozen until the switch, checked in CI by running the real hook scripts against the C# binaries. The installed toolkit stays TypeScript until the C# build is complete; then one switch moves the install. Before that, nothing in `setup.sh`, the providers, MCP registration or launchd points at the C# build, with one exception: `./setup.sh --with-sindri` also stands the pinned Onyx up by running the C# Sindri's `sindri-app onyx up` (`scripts/install-onyx.sh`; opt out with `--no-onyx`; owner, 2026-10-18; spec `2026-10-16-sindri-onyx-managed-design.md` P5). Separately, `aw-readiness` and `aw-packets` run before the switch as standalone NativeAOT CLIs that write only under `readiness/` and `packets/` (spec §4c), and so does `aw-meta` (the `/meta` harness), which keeps its state under `meta/` and appends to its team's running log (its gate and merge commands also act on the team's checkout and PRs: `git fetch`, a gate worktree, the configured gate steps, `gh pr merge`, and removing finished worktrees with `git worktree remove` on merge, close and sweep triggers, never by age and never forced); it is one of two C# tools installed before the switch, and aw-meta is only opt-in through `./setup.sh --with-meta`, on Linux and macOS (macOS reads memory, swap and the process table through `sysctl`, `vm_stat`, `ps` and `lsof` where Linux reads `/proc`; a macOS tool that can't run makes that figure `AW-META-010` "unavailable on macOS", never a guess; any other OS fails the install loudly; `docs/csharp/meta.md` "OS support") (owner, 2026-10-14; macOS 2026-10-17). The other is `sindri-app` (`scripts/sindri-app.sh`, owner-approved), which publishes the C# Sindri for this platform and runs it; setup.sh builds and links it only through the Onyx step of `--with-sindri` (skip with `--no-onyx`); otherwise you run the script yourself.
+**The installed build is C#.** The toolkit moved to C# in one switch (spec `docs/superpowers/specs/2026-10-23-cutover-design.md`; earlier design `2026-10-09-agent-readiness-design.md` §4a–§4e). `scripts/install-cs.sh` (run by `setup.sh`) publishes the binaries `sindri`, `sindri-ui`, `judge`, `aw-packets`, `bugfix-state`, `ui-evidence` and `aw-readiness` into `$AW_STATE_DIR/bin/cs/<stamp>/` and links wrappers into `~/.local/bin`; `aw-meta` stays opt-in through `./setup.sh --with-meta` (`scripts/install-meta.sh`; Linux and macOS, any other OS fails the install loudly; `docs/csharp/meta.md` "OS support"). There is no Node-built toolkit package, no `scorer` and no TS `sindri`; `scripts/cutover-clean-ts.sh` removes what an older install left. Node stays a setup prerequisite for `dembrandt`, `prism-mcp`, `xcodebuildmcp` and the schema checkers only. Sindri is a C# **application** (control plane, workflow engine, context retrieval engine; factory addendum §17.29, decision Q7; overview in `docs/sindri/README.md`), and the finished tool ports are its blocks. The C# code is a **reimplementation in idiomatic C#, not a translation** (type-driven JSON through `AwJson`; contracts defined by the C# tests; `.agents/rules/csharp.md` "Porting a TS package" for any future port). No TS state is migrated. The **hook contract** stays frozen: only what the bash hooks and statusline read (the commands and arguments they call, the JSON fields they `jq`, the exit codes and stderr prefixes they branch on, and the files they write, such as `judge/sessions`, `judge/outbox` and `judge/teammate-names.jsonl`; spec §4c), checked in CI by running the real hook scripts against the C# binaries. `aw-readiness`, `aw-packets` and `aw-meta` write only under `readiness/`, `packets/` and `meta/` (`aw-meta` also appends to its team's running log, and its gate and merge commands act on the team's checkout and PRs: `git fetch`, a gate worktree, the configured gate steps, `gh pr merge`, and removing finished worktrees with `git worktree remove` on merge, close and sweep triggers, never by age and never forced; macOS reads memory, swap and the process table through `sysctl`, `vm_stat`, `ps` and `lsof` where Linux reads `/proc`, and a figure a macOS tool can't read is `AW-META-010` "unavailable on macOS", never a guess; owner, 2026-10-14; macOS 2026-10-17). `./setup.sh` also stands the pinned Onyx up by running `sindri onyx up` (`scripts/install-onyx.sh`; opt out with `--no-onyx`; owner, 2026-10-18; spec `2026-10-16-sindri-onyx-managed-design.md` P5). `--with-sindri` is accepted and does nothing: the C# Sindri is always installed.
 
-| Layer | Technology (C# build) |
+| Layer | Technology |
 |-------|------------|
 | Runtime | .NET 10 (LTS), SDK pinned in `global.json`; NativeAOT for hook and CLI entry points. The Sindri host is framework-dependent (its Temporal worker can't be trimmed; README X54) |
 | Language | C# (latest), nullable on, warnings as errors |
@@ -49,22 +44,18 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 ```
 agentic-workflow/
-├── skills/        # 54 provider-neutral skills (linked into each provider's skills dir)
+├── skills/        # 52 provider-neutral skills (linked into each provider's skills dir)
 ├── bootstrap/     # /bootstrap skill — repo documentation generator
 ├── config/        # Settings, MCP config, statusline, safety hooks, sindri-nudge SessionStart hook, meta Stop/outbox hooks, non-Claude lane hooks (meta-lane-gate, session-id-report), the opt-in aw:fleet session-state hook (fleet-state, `--with-fleet`), the reply voice (`voice/`, inlined into each provider's global instructions) (+ hooks/adapters/ per provider)
 ├── providers/     # Per-provider installers (claude, codex, cursor)
-├── scorer/        # Daily cost/involvement report from provider session transcripts
-├── judge/         # Cheap-agent-harness judge CLI (decisions, config, health)
-├── sindri/        # Sindri in TypeScript (runs until the switch; reference for the C# app): profile, ledger, lock, scrubber, observe, index, scope, evolve, doctor (CLI)
 ├── context/       # Pinned external deployments: onyx.lock (Onyx v4.9.0 pins)
-├── mods/          # Claude Code mods (in-process function hooks): aw-live /live pane. Claude-only
 ├── planning/      # Project documentation
-├── src/           # C# build (in progress): Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
+├── src/           # C# build: Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
 ├── tests/         # C# tests: Aw.<Pkg>.Tests (by feature), Aw.<Pkg>.Testing (fakes, builders, contract bases), Aw.Architecture.Tests
 ├── global.json · AgenticWorkflow.slnx · Directory.Build.props · Directory.Build.targets · Directory.Packages.props · nuget.config · .editorconfig · CodeMetricsConfig.txt · BannedSymbols.txt
 ├── .agents/rules/ # Glob-scoped domain rules (.claude/rules and .cursor/rules link here)
 ├── .serena/       # Serena LSP project configuration
-├── scripts/       # Utility scripts (sync-rules.sh, check-deps.mjs, serena-docker, probe.sh, install-scorer.sh)
+├── scripts/       # Utility scripts (sync-rules.sh, check-deps.mjs, serena-docker, probe.sh, install-cs.sh, cutover-clean-ts.sh)
 ├── schemas/       # JSON Schemas for repo config (deps.schema.json, rule-record.schema.json)
 ├── rules/         # Rule records (factory addendum §17.6): rules/engineering/csharp/*.yaml, one per §4b rule
 ├── deps.yaml      # Declared package graph: tiers and every project/compose/cli/db/file edge (spec §4b.1a)
@@ -74,19 +65,8 @@ agentic-workflow/
 ## Commands
 
 ```bash
-# TypeScript packages (each has test, test:coverage, typecheck, build)
-cd scorer && npm test                   # Vitest
-cd judge && npm test                    # Vitest
-cd sindri && npm test                   # Vitest
-(cd skills/ui-evidence && npm test)     # Vitest (skill package; includes a real-browser test)
-(cd skills/bugFixOrchestrator && npm test)  # Vitest (bugfix-state CLI)
-claude plugin validate mods/aw-live && claude plugin test mods/aw-live  # the aw-live mod (needs claude >= 2.1.289)
-scorer --since 7d [--provider claude|codex|cursor|all]  # Report to ~/.agentic-workflow/scorer/reports/
-scorer live --session <id> [--cwd DIR] [--json]  # This session's numbers (the aw-live mod calls it)
-scorer probe                            # Summarize the hook-input probe
-scorer audit [--since 60d; default 1d] [--items FILE] [--max-size XS] [--label N]   # Human-turn baseline → ~/.agentic-workflow/audit/; --label sends sampled turn text to your Claude login's provider
 
-# C# build (in progress; the merge-gate lines below apply once src/ has projects)
+# C# build
 dotnet build -warnaserror               # Whole solution (AgenticWorkflow.slnx); zero warnings
 # Lane runs (xUnit v3 on Microsoft.Testing.Platform, MTP options only). Exit 8 = no test matched the filter in some
 # project (e.g. an integration-only project in the unit lane): ignored for filtered runs only. The unfiltered
@@ -201,17 +181,20 @@ bash scripts/tests/owner-check.test.sh
 bash scripts/tests/context-first-run.test.sh   # dry-run golden, the refusal of a real-looking home, the approval stops, a whole run on a stub sindri
 bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
+bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/dotnet-verify-packages.test.sh
-bash scripts/tests/install-scorer-audit.test.sh
-bash scripts/tests/install-sindri.test.sh
-bash scripts/tests/install-onyx.test.sh      # the Onyx step of setup.sh: dry run, Docker missing or silent, no terminal, the call, a failure, a rerun, --no-onyx (stub docker and sindri-app)
+bash scripts/tests/install-onyx.test.sh      # the Onyx step of setup.sh: dry run, Docker missing or silent, no terminal, the call, a failure, a rerun, --no-onyx (stub docker and sindri)
 bash scripts/tests/sindri-prove.test.sh
+bash scripts/tests/evidence-one-path.test.sh   # cutover §3.4: Playwright only in src/Evidence, SKILL.md runs checks only through ui-evidence verbs
 bash scripts/tests/sindri-sandbox-e2e.test.sh   # scripts/sindri-sandbox-e2e.sh: arguments, the --sindri apphost rewrite and the scratch guard (no serve)
 bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/forge-fixture.test.sh    # scripts/forge-fixture.sh over the real aw-forge-fake (dotnet build once): the PR babysitter's fixture PR set, every variant, the guard, --github refusals and dry run
-bash scripts/tests/sindri-app.test.sh
-bash scripts/tests/sindri-open-runs.test.sh     # the open agent runs guard sindri-app runs before a publish (#1000): stub sindri, tty go/wait under script
+bash scripts/tests/cutover-clean-ts.test.sh   # scripts/cutover-clean-ts.sh on a scratch box: what the TS install left, removed and nothing else; its last case runs the real bugfix-state (needs dotnet, or BUGFIX_STATE_BIN)
+bash scripts/tests/cutover-prove.test.sh      # the switch proof: setup.sh on a scratch box, the C# binaries linked, the TS wrappers gone
+bash scripts/tests/install-cs.test.sh         # scripts/install-cs.sh: publish, link, the wrappers, the stamps, the running-serve guard
+bash scripts/tests/serve-build-guard.test.sh    # #1032: a running serve keeps its build dir (cutover-clean-ts refuses or keeps it), install-cs --link names the still-running build
+bash scripts/tests/sindri-open-runs.test.sh     # the open agent runs guard install-cs.sh runs before a publish under a running serve (#1000): stub sindri, tty go/wait under script
 bash scripts/tests/sindri-pod.test.sh      # scripts/sindri-pod.sh (connect, profile edit, repo add, approve, doctor) with a fake kubectl, sindri-ui and EDITOR: --pod/--release, the dry run, the mirror home and its modes, the container wait and its state, restart and forward retry, refusals, the per-verb exit codes, --onyx (the pod's port, override warning, Onyx off, --adopt), profile edit (init, unchanged, valid, invalid then fixed or aborted, conflict, approve refused), the thin verbs' exit-code passthrough
 bash scripts/tests/readiness-baseline.test.sh
 bash scripts/tests/agent-token.test.sh
@@ -219,8 +202,8 @@ bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/ci-recipe-versions.test.sh  # scripts/ci/recipe-versions.sh: `recipe manifest` over HEAD and `git archive origin/main`, `recipe validate --against` every recipe (CI's version rule)
-bash scripts/tests/ci-no-any.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
+bash scripts/tests/ui-checks-xvfb-lib.test.sh   # tests/ui-checks/xvfb-lib.sh with a fake Xvfb: the display is stopped by pid on exit and an existing EXIT trap still runs
 bash scripts/tests/test-tmux.test.sh
 bash scripts/tests/sindri-smoke-normalize.test.sh
 bash scripts/tests/scoping-fixture.test.sh
@@ -242,34 +225,22 @@ bash scripts/tests/install-headroom.test.sh   # aw-headroom.sh and install-headr
 bash scripts/tests/install-tldraw.test.sh     # install-tldraw.sh: brew cask on macOS, the pinned AppImage on Linux (sha256 refusal), the agent-skills marker check, fail-open, --no-tldraw
 bash config/hooks/tests/failopen.test.sh
 bash config/hooks/tests/meta-hooks.test.sh
-for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, judge-cs-hook-surface (the hook contract: real hooks vs the C# judge, and the TS judge when judge/dist is built; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
+for t in config/lib/tests/*.test.sh; do bash "$t" || echo "FAILED: $t"; done  # merge-hook, levers, installers, judge-cs-hook-surface (the hook contract: real hooks vs the C# judge; needs dotnet) and sindri-cs-hook-surface (the sindri-nudge SessionStart hook vs the C# `sindri repo status --nudge`: one line, silence, exit 0, read-only, bounded; builds the Sindri host, needs dotnet)
 
 # Levers and probe (default provider: claude)
 scripts/install-<lever>.sh --provider claude|codex|cursor
 scripts/probe.sh [--provider claude|codex|cursor] on|off|status
-scripts/install-scorer.sh               # Build scorer, install CLI + launchd job
 scripts/install-headroom.sh --provider claude|codex   # headroom as a proxy wrapper only (no MCP server): installs the CLI when missing and the `aw-headroom` launcher; setup.sh runs it per provider (Cursor: skipped), fail-open
 scripts/install-tldraw.sh [--dry-run]   # tldraw offline, the canvas agents drive for diagrams: brew cask on macOS, the pinned AppImage on Linux; prints the app's Develop → Install Agent Skills step until a provider has its skill (setup.sh runs it; skip with --no-tldraw), fail-open
 aw-headroom claude|codex [args]         # Run the tool through a loopback headroom proxy chained in front of its current upstream (e.g. EasyCLIProxyAPI); nothing on disk is edited; `aw-headroom upstream|status|stop`
 sindri doctor                           # Sindri health checks (ok / warn / fail + fix)
-sindri index setup && sindri index build    # code index (Ollama + graphify, offline)
-sindri evolve init && sindri evolve check --changed   # registry + module eval suites (heavy: takes a heavy-job slot)
-sindri evolve status                                   # artifacts, proposals, merge rate, corpus
-sindri evolve reflect --pr <n>                         # proposals from a merged PR
-sindri evolve weekly                                   # the Monday job (launchd runs it)
-sindri evolve publish                                  # staged proposals -> this week's plan file (on a branch)
 sindri repo onboard [<path>]            # add + approval check + pre-commit hook + first index build (never approves)
-sindri scope <brief.md> --out DIR            # cited scope map; --backtest linear:<project> for recall, precision and a baseline
-sindri shape report                      # record-only shape signals and their outcomes (read-only)
-sindri shape reconcile                   # move the spool into the ledger and label outcomes now (observe does it hourly)
-sindri observe                          # Backlog with sizes; records to the ledger when the profile is approved
-scripts/install-sindri.sh               # Build sindri, install the CLI wrapper (or ./setup.sh --with-sindri)
-scripts/install-onyx.sh                 # Stand the pinned Onyx up through `sindri-app onyx up` (setup.sh --with-sindri runs it unless --no-onyx; AW_DRY_RUN=1 prints; exit 0 up, 3 skipped with the command to run later, 1 failed)
+scripts/install-onyx.sh                 # Stand the pinned Onyx up through `sindri onyx up` (setup.sh runs it unless --no-onyx; AW_DRY_RUN=1 prints; exit 0 up, 3 skipped with the command to run later, 1 failed)
 GH_TOKEN="$(scripts/agent-token.sh [--repo NAME])"  # Owner/session launcher only, never inside an agent session: 1h agent App token
 AW_DENYLIST=<file:ABSPATH|env:VAR> scripts/denylist-check.sh <file>...   # Work identifiers in PR text; the list is injected through AW_DENYLIST (0600-or-stricter file or env var), never an argument: prints only file:line and a hit count; exit 0 none, 1 hits, 2 fails closed (unset/invalid pointer, bad or missing list; see the script header)
 scripts/owner-check.sh <stage> up [--seed] [--services a,b] [--labeling] [--session] [--repo NAME] | down   # Owner only: the scratch Sindri instance (port 7480) for a stage's owner check (context spec, owner-check outline steps 1-4 and 7)
 scripts/context-first-run.sh up|continue|status|down [--dry-run] [--no-ui] [--no-embeddings] [--no-graph]   # Owner only: the first real context run on this repo in a scratch home (port 7481): profile, approval stop, serve, first code index build, map publish, the app, an item and the scoping recipe; docs/sindri/first-context-run.md
-scripts/sindri-app.sh [--rebuild] [<sindri args>]   # `sindri-app`: the C# Sindri in one command; publishes sindri (framework-dependent) + sindri-ui (NativeAOT) for this platform into $AW_STATE_DIR/bin/sindri-app/<stamp>/ when the source changed, runs `recipe eval --shipped` with the published binary when the shipped recipes' manifest digest changed (a failing eval or an embedded-vs-staged recipe count mismatch fails the publish), then runs it (bare: start the control plane and open the app); links ~/.local/bin/sindri-app (AW_SINDRI_APP_NO_LINK=1 skips). The TS `sindri` is untouched
+scripts/install-cs.sh [--publish | --link] [--rebuild] [--dry-run]   # The one install of the C# binaries (sindri, sindri-ui, judge, aw-packets, bugfix-state, ui-evidence, aw-readiness): publishes sindri (framework-dependent), ui-evidence (framework-dependent) and the rest (NativeAOT) for this platform into $AW_STATE_DIR/bin/cs/<stamp>/ when the source changed, runs `recipe eval --shipped` with the published binary when the shipped recipes' manifest digest changed (a failing eval or an embedded-vs-staged recipe count mismatch fails the publish), `--link` points `bin/cs/current` at it and writes the ~/.local/bin wrappers. Bare `sindri` starts the control plane and opens the app
 scripts/forge-fixture.sh up --fake <comments|ciRed|ciFlaky|conflict|stacked|noDocs|sourceFix|foreignPush|secret|all> | event merge-base | status | list | down [--all]   # The PR babysitter's fixture PR set (tests/fixtures/forge/pr-set/) loaded into the file-backed fake forge in a guarded temp home; prints the PR link and the answer key (PB-X). `up --github <owner/repo> <variant>` is the owner's, on a scratch repo (FORGE_FIXTURE_GITHUB_SCRATCH confirms it)
 scripts/sindri-ui-fixture.sh up|stall|unstall|drift|down   # The Sindri UI's proof fixture in a guarded temp AW_SINDRI_HOME, through sindri-prove.sh (UI spec §18.2; --large reserved)
 
@@ -277,7 +248,8 @@ scripts/sindri-ui-fixture.sh up|stall|unstall|drift|down   # The Sindri UI's pro
 ./setup.sh --providers claude,codex,cursor --dry-run   # Print every change, write nothing
 ./setup.sh [--providers ...]            # Default: detect installed CLIs. Links skills, installs
                                         # hooks + levers + MCP servers per provider (and removes retired ones), builds
-                                        # judge, scorer, Serena image
+                                        # the C# binaries (install-cs.sh), Serena image
+scripts/cutover-clean-ts.sh [--dry-run]  # Remove what a TS install left (wrappers, launchd jobs, TS state); setup.sh runs it before linking the C# binaries
 ```
 
 After installing for Codex, open `codex` and run `/hooks` to trust the `aw:*` hooks.
@@ -285,15 +257,12 @@ After installing for Codex, open `codex` and run `/hooks` to trust the `aw:*` ho
 ## Merge Gate
 
 Before merging any PR:
-1. `npm run typecheck` passes with zero errors in `scorer`, `judge`, `sindri`, `skills/ui-evidence`, and `skills/bugFixOrchestrator`
-2. `npm test` passes in `scorer`, `judge`, `sindri`, `skills/ui-evidence`, and `skills/bugFixOrchestrator`, every bash test listed above passes, and `claude plugin validate mods/aw-live` and `claude plugin test mods/aw-live` pass
+1. `dotnet build -warnaserror` reports zero warnings; `dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8` and `dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=integration" --ignore-exit-code 8` pass within their budgets (`node scripts/ci/lane-budgets.mjs`, LANE-PKG-001; the heavy lane runs nightly); `dotnet format --verify-no-changes` is clean, `scripts/dotnet-verify-packages.sh` passes, and the ratchet baseline block at the end of `.editorconfig` didn't grow
+2. Every bash test listed above passes
 3. `scripts/sync-rules.sh --check` passes (rule links and Rules Index match `.agents/rules/`)
 4. `node scripts/check-deps.mjs` passes (`deps.yaml` declares every edge the code has; a new edge is a reviewed change to it); `scripts/check-env-example.sh` passes (`.env.example` lists every environment variable the code reads)
 5. `./setup.sh --providers claude,codex,cursor --dry-run` runs cleanly
-6. No `/* v8 ignore */` annotations in source files (prohibited — write the test instead)
-7. No `any` types in TypeScript source (`node scripts/ci/no-any.mjs`; existing ones are held in `scripts/ci/no-any-baseline.json`, which only shrinks)
-8. C# build (active once `src/` has projects): `dotnet build -warnaserror` reports zero warnings; `dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8` and `dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=integration" --ignore-exit-code 8` pass within their budgets (`node scripts/ci/lane-budgets.mjs`, LANE-PKG-001; the heavy lane runs nightly); `dotnet format --verify-no-changes` is clean, `scripts/dotnet-verify-packages.sh` passes, and the ratchet baseline block at the end of `.editorconfig` didn't grow
-9. `node scripts/check-rules.mjs` passes (every §4b rule has a rule record, and every check a record calls active exists in the tree)
+6. `node scripts/check-rules.mjs` passes (every §4b rule has a rule record, and every check a record calls active exists in the tree)
 
 ## C# slice recipe
 
@@ -328,5 +297,5 @@ Domain rules live in `.agents/rules/`. Before editing a file, read every rule be
 | `hooks` | Safety and context hooks — per-provider adapters, protocols, installation | `config/hooks/**`, `config/settings.json` | `.agents/rules/hooks.md` |
 | `mcp-servers` | MCP servers registered globally with every provider — available in every session | always | `.agents/rules/mcp-servers.md` |
 | `skills` | Skill structure, preamble, output directories, pipeline, and installation | `skills/**`, `bootstrap/**` | `.agents/rules/skills.md` |
-| `testing` | Test infrastructure, coverage policy, and test count baseline | `**/*.test.ts`, `**/*.spec.ts`, `**/vitest.config.ts` | `.agents/rules/testing.md` |
+| `testing` | Test infrastructure for the bash suites; C# tests have their own rule | `**/tests/*.test.sh` | `.agents/rules/testing.md` |
 <!-- === RULES INDEX END === -->

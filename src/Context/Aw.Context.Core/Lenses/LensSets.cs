@@ -183,12 +183,13 @@ internal static class LensSets
     private static (CodeBand Band, HashSet<string> Keys) Code(GraphSnapshot graph, List<LensScope> scopes, HashSet<string> ownUnion)
     {
         var edges = scopes.SelectMany(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Where(e => s.Nodes.ContainsKey(e.From.Value))).DistinctBy(e => (e.From.Value, e.To.Value, e.Type)).ToList();
-        var files = LensCode.Files(edges).Select(f => f with { Anchors = ReachedFile(scopes, f), Depth = 0 }).ToList();
+        var names = scopes.Select(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Select(e => e.From.Name).ToHashSet(StringComparer.Ordinal)).ToList();
+        var files = LensCode.Files(edges).Select(f => f with { Anchors = ReachedFile(scopes, names, f), Depth = 0 }).ToList();
         var noCode = LensCode.NoCode(graph, ownUnion.Select(NodeKey.From));
         var keys = scopes.SelectMany(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Select(e => e.From.Value)).ToHashSet(StringComparer.Ordinal);
         return (LensCode.Band(files, noCode), keys);
     }
 
-    private static List<string> ReachedFile(List<LensScope> scopes, LensFile file) =>
-        [.. scopes.Where(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Any(e => e.From.Name == file.Path)).Select(s => s.Anchor.Key.Value)];
+    private static List<string> ReachedFile(List<LensScope> scopes, List<HashSet<string>> names, LensFile file) =>
+        [.. scopes.Where((_, i) => names[i].Contains(file.Path)).Select(s => s.Anchor.Key.Value)];
 }

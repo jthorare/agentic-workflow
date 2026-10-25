@@ -220,8 +220,8 @@ reset
 OUT="$(PATH="/usr/bin:/bin" bash "$DIR/sindri-pod.sh" connect 2>&1)"; RC=$?
 check "no kubectl: exit 2 with one line" "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c 'kubectl is not on the PATH')" "2:1:1"
 OUT="$(AW_SINDRI_UI="$WORK/nope" conn)"; RC=$?
-check "no sindri-ui: exit 2, one line naming sindri-app, nothing forwarded" \
-  "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c 'sindri-app'):$(count port-forward)" "2:1:1:0"
+check "no sindri-ui: exit 2, one line naming install-cs.sh, nothing forwarded" \
+  "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c 'install-cs.sh'):$(count port-forward)" "2:1:1:0"
 touch "$POD/deny-pods_exec"
 OUT="$(conn)"; RC=$?
 check "no exec right: exit 2, one line naming the verb" "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c "create pods/exec")" "2:1:1"
@@ -286,7 +286,7 @@ check "--check: forwards nothing, starts nothing, writes no mirror home" \
 touch "$POD/deny-pods_exec"; echo false > "$POD/sindri-ready"
 OUT="$(AW_SINDRI_UI="$WORK/nope" conn --check)"; RC=$?
 check "--check: reports every failure, not just the first, exit 2" \
-  "$RC:$(printf '%s' "$OUT" | grep -c -e 'sindri-app' -e 'create pods/exec' -e 'sindri container of pod sindri-0 is not running')" "2:3"
+  "$RC:$(printf '%s' "$OUT" | grep -c -e 'install-cs.sh' -e 'create pods/exec' -e 'sindri container of pod sindri-0 is not running')" "2:3"
 rm -f "$POD/deny-pods_exec" "$POD/sindri-ready"
 reset
 OUT="$(conn --check --onyx)"; RC=$?

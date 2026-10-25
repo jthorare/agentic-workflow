@@ -21,7 +21,7 @@ public sealed class OnyxFacts(IContainerRuntime runtime, IHostProbes probes, ISi
     public (ContainerRuntimeFacts Docker, HostFacts Host) Read(CancellationToken cancellationToken) => Read(stickyPort: null, cancellationToken);
 
     /// <summary>Reads the facts, preferring the port a previous `onyx up` settled on: it stays while it is free (or ours) and the search moves on to the usual ports only when something else holds it.</summary>
-    /// <param name="stickyPort">The port state.json recorded, or null for a first run (3000 first).</param>
+    /// <param name="stickyPort">The port state.json recorded, or null for a first run (3189 first).</param>
     /// <param name="cancellationToken">Cancels the reading.</param>
     /// <returns>The runtime's facts and the host's.</returns>
     public (ContainerRuntimeFacts Docker, HostFacts Host) Read(int? stickyPort, CancellationToken cancellationToken)

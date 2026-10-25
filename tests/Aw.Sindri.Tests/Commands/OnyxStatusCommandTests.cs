@@ -69,7 +69,7 @@ public sealed class OnyxStatusCommandTests : IDisposable
                 "compose   ok v2.40.3",
                 "memory    ok 15.7 GiB for Docker, 0.0 GiB used by other containers, needs 5.5 GiB free",
                 "disk      fail 9.0 GiB free at /sindri-home, needs 10.5 GiB; Docker's data lives in a VM here; its disk image size is capped separately (Docker Desktop: Settings → Resources) (SND-ONYX-003: Not enough disk: 9.0 GiB free at /sindri-home, needs 10.5 GiB; Docker's data lives in a VM here; its disk image size is capped separately (Docker Desktop: Settings → Resources). Free space on that volume, then run this again)",
-                "port      ok 3000 free",
+                "port      ok 3189 free",
             ],
             lines,
             StringComparer.Ordinal);
@@ -122,10 +122,10 @@ public sealed class OnyxStatusCommandTests : IDisposable
         Assert.Equal(0, code);
         var lines = _out.ToString().TrimEnd('\n').Split('\n');
         Assert.Equal(
-            ["onyx      running", "url       http://127.0.0.1:3000", "running   v4.9.0", "pinned    v4.9.0 (f1738ed)"],
+            ["onyx      running", "url       http://127.0.0.1:3189", "running   v4.9.0", "pinned    v4.9.0 (f1738ed)"],
             lines.Take(4),
             StringComparer.Ordinal);
-        Assert.Contains("port      ok 3000 (Onyx's own)", lines, StringComparer.Ordinal);
+        Assert.Contains("port      ok 3189 (Onyx's own)", lines, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

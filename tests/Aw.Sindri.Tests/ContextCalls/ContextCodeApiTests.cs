@@ -15,7 +15,7 @@ public sealed class ContextCodeApiTests : IDisposable
 
     private async Task<GoldenHost> Host()
     {
-        var host = await ContextHosts.Approved(_repo.Path, sessions: true, TestContext.Current.CancellationToken, name: CodeLensRepo.Repo);
+        var host = await ContextHosts.Approved(_repo.Path, sessions: true, TestContext.Current.CancellationToken, name: CodeLensRepo.Repo, contextExtra: "  code: { testGlobs: [\"**/tests/**\", \"**/*.test.*\"] }\n");
         await ContextMapApiTests.Import(host, CodeLensRepo.WriteMap(host.Home, CodeLensRepo.MapYaml()));
         return host;
     }

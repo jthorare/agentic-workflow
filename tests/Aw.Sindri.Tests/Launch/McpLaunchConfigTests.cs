@@ -26,6 +26,7 @@ public sealed class McpLaunchConfigTests : IDisposable
         Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(path));
         Assert.Contains("http://127.0.0.1:7410/sindri/mcp", text, StringComparison.Ordinal);
         Assert.Contains("\"X-Sindri-Repo\": \"web\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"X-Sindri-Launch\": \"" + _launch.Value + "\"", text, StringComparison.Ordinal);
         Assert.DoesNotContain("secret", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("X-Sindri-Run", text, StringComparison.Ordinal);
         Assert.DoesNotContain("sindri-step", text, StringComparison.Ordinal);
@@ -40,12 +41,12 @@ public sealed class McpLaunchConfigTests : IDisposable
     [Fact]
     public void Each_form_adds_its_arguments_and_none_adds_nothing()
     {
-        var claude = McpLaunchConfig.Arguments(McpForm.ClaudeConfigFile, _target, "/home/x/launch/mcp-LCH.json");
-        var codex = McpLaunchConfig.Arguments(McpForm.CodexOverrides, _target, configPath: null);
+        var claude = McpLaunchConfig.Arguments(McpForm.ClaudeConfigFile, _target, _launch, "/home/x/launch/mcp-LCH.json");
+        var codex = McpLaunchConfig.Arguments(McpForm.CodexOverrides, _target, _launch, configPath: null);
 
         Assert.Equal(["--mcp-config", "/home/x/launch/mcp-LCH.json"], claude);
-        Assert.Equal(["-c", "mcp_servers.sindri.url=\"http://127.0.0.1:7410/sindri/mcp\"", "-c", "mcp_servers.sindri.http_headers={ X-Sindri-Repo = \"web\" }"], codex);
-        Assert.Empty(McpLaunchConfig.Arguments(McpForm.None, _target, configPath: null));
+        Assert.Equal(["-c", "mcp_servers.sindri.url=\"http://127.0.0.1:7410/sindri/mcp\"", "-c", "mcp_servers.sindri.http_headers={ X-Sindri-Repo = \"web\", X-Sindri-Launch = \"" + _launch.Value + "\" }"], codex);
+        Assert.Empty(McpLaunchConfig.Arguments(McpForm.None, _target, _launch, configPath: null));
         Assert.DoesNotContain(codex, static a => a.Contains("X-Sindri-Run", StringComparison.Ordinal));
     }
 }

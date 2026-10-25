@@ -8,18 +8,18 @@ namespace Aw.Sindri.Tests.Commands.Authorization;
 /// <summary>API spec §4.2's table, restated here independently of the code, and the refusal it gives.</summary>
 public sealed class AuthorizationTests
 {
-    /// <summary>Who may run each class: h = human at a terminal, a = human in the app, s = session, v = any service.</summary>
+    /// <summary>Who may run each class: h = human at a terminal, a = human in the app, s = session, l = a session Sindri launched, v = any service.</summary>
     private static readonly Dictionary<ActionClass, string> _table = new()
     {
-        [ActionClass.Request] = "hasv",
-        [ActionClass.StepReport] = "s",      // only a session; the service checks its launch secret (SND-AUTH-003)
-        [ActionClass.Pause] = "hasv",
-        [ActionClass.Job] = "hasv",
+        [ActionClass.Request] = "haslv",
+        [ActionClass.StepReport] = "sl",     // only a session; the service checks its launch secret (SND-AUTH-003)
+        [ActionClass.Pause] = "hasv",        // a launched session can't take over (#1002)
+        [ActionClass.Job] = "haslv",
         [ActionClass.Decision] = "has",
         [ActionClass.Desk] = "has",          // plus a service the row grants
         [ActionClass.Protected] = "has",
         [ActionClass.Local] = "",            // never through the API
-        [ActionClass.Issue] = "has",
+        [ActionClass.Issue] = "hasl",        // its nonce, heartbeat and exit
     };
 
     public static TheoryData<ActionClass, string, bool> Cases()
@@ -27,7 +27,7 @@ public sealed class AuthorizationTests
         var cases = new TheoryData<ActionClass, string, bool>();
         foreach (var actionClass in Enum.GetValues<ActionClass>())
         {
-            foreach (var caller in (string[])["human", "session", "service", "none"])
+            foreach (var caller in (string[])["human", "session", "launched", "service", "none"])
             {
                 foreach (var terminal in (bool[])[false, true])
                 {
@@ -47,10 +47,11 @@ public sealed class AuthorizationTests
         {
             "human" => terminal ? A.Caller().AtTerminal().Build() : A.Caller().Human().Build(),
             "session" => A.Caller().Session().Build() with { Terminal = terminal },   // a claimed terminal counts only for a human
+            "launched" => A.Caller().Launched().Build() with { Terminal = terminal },
             "service" => A.Caller().Service("jobs").Build() with { Terminal = terminal },
             _ => null,
         };
-        var who = caller switch { "human" => terminal ? 'h' : 'a', "session" => 's', "service" => 'v', _ => '-' };
+        var who = caller switch { "human" => terminal ? 'h' : 'a', "session" => 's', "launched" => 'l', "service" => 'v', _ => '-' };
 
         var decision = Table.Decide(actionClass, context, Rows.Of(actionClass));
 

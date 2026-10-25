@@ -37,7 +37,7 @@ internal static partial class McpEndpoint
 
     /// <summary>
     /// Before the caller middleware: an MCP request is always a session (API §6), so every X-Sindri-* header is
-    /// dropped but X-Sindri-Repo, and 'X-Sindri-Client: mcp' is set. MCP clients send no Origin,
+    /// dropped but X-Sindri-Repo and X-Sindri-Launch (a Sindri child carries its launch, q100), and 'X-Sindri-Client: mcp' is set. MCP clients send no Origin,
     /// so any Origin is refused here (403, SND-API-008), loopback ones included.
     /// </summary>
     /// <param name="app">The app.</param>
@@ -61,7 +61,7 @@ internal static partial class McpEndpoint
                 return;
             }
 
-            foreach (var name in headers.Keys.Where(IsStripped).ToList())   // why: nothing but the repo may ride an MCP call (a launch secret, a read-your-writes sequence, a token)
+            foreach (var name in headers.Keys.Where(IsStripped).ToList())   // why: nothing but the repo and the launch may ride an MCP call (a launch secret, a read-your-writes sequence, a token)
             {
                 _ = headers.Remove(name);
             }
@@ -73,7 +73,8 @@ internal static partial class McpEndpoint
     }
 
     private static bool IsStripped(string name) =>
-        name.StartsWith("X-Sindri-", StringComparison.OrdinalIgnoreCase) && !string.Equals(name, SindriHeaders.Repo, StringComparison.OrdinalIgnoreCase);
+        name.StartsWith("X-Sindri-", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(name, SindriHeaders.Repo, StringComparison.OrdinalIgnoreCase) && !string.Equals(name, SindriHeaders.Launch, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Maps the endpoint.</summary>
     /// <param name="app">The app.</param>

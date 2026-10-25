@@ -13,10 +13,9 @@ import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from '
 import { dirname, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const APPS = [
-  'scorer', 'judge', 'sindri',
-  'skills/ui-evidence', 'skills/bugFixOrchestrator', 'mods/aw-live',
-];
+// The Node/TypeScript apps the per-app criteria score. The toolkit has none since the C# cutover; READINESS_APPS
+// (comma-separated repo-relative directories) names some, which is how the fixture tests exercise the per-app code.
+const APPS = (process.env.READINESS_APPS ?? '').split(',').map((a) => a.trim()).filter(Boolean);
 
 const PILLARS = [
   'Style & Validation', 'Build System', 'Testing', 'Documentation', 'Development Environment',

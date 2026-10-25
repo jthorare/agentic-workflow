@@ -39,6 +39,12 @@ public sealed partial class MapText(Scrubbers scrubbers, FencePolicy policy)
     /// <returns>The text to write.</returns>
     public string Body(string text, Results.Trust trust) => Fenced(Clean(text, singleLine: false), trust);
 
+    /// <summary>Text cleaned like every answer's but not fenced: what the search index holds, so the fence is added once, on the way out.</summary>
+    /// <param name="text">The text as stored.</param>
+    /// <param name="singleLine">True to make it one line of at most 200 characters.</param>
+    /// <returns>The cleaned text.</returns>
+    public string Cleaned(string text, bool singleLine) => singleLine ? UntrustedFence.Cap(Clean(text, singleLine: true)) : Clean(text, singleLine: false);
+
     /// <summary>A short plain-text summary of a longer text: one line, cut on a word to at most <paramref name="max"/> characters with '…', fenced when untrusted. It is scrubbed before the cut, so a cut never splits a secret the scrubber would have caught.</summary>
     /// <param name="text">The text as stored.</param>
     /// <param name="trust">Its trust.</param>

@@ -7,6 +7,9 @@ namespace Aw.Context.Core.WholeMap;
 /// <param name="Area">The key of one area to open on its own, or null.</param>
 public sealed record WholeMapAsk(WholeMapBasis Basis, WholeMapDetail Detail, IReadOnlyList<string> Locate, string? Area = null)
 {
+    /// <summary>The key of one concept to open on its own (its members and what lies two levels below them), or null; 'concept:other' opens the members no concept takes.</summary>
+    public string? Concept { get; init; }
+
     /// <summary>The repos the whole map holds nodes of (counted over the map before any repo cut), for the page's repo picker.</summary>
     public IReadOnlyList<WholeMapRepo> Repos { get; init; } = [];
 

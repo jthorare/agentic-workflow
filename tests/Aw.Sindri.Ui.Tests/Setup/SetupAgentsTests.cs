@@ -136,7 +136,7 @@ public sealed class SetupAgentsTests
 
         var action = Mcp(await f.Read(Token)).Action!;
 
-        Assert.Equal((false, "sindri-app mcp register --apply"), (action.IsInApp, action.Cli?.Cli));
+        Assert.Equal((false, "sindri mcp register --apply"), (action.IsInApp, action.Cli?.Cli));
     }
 
     [Fact]

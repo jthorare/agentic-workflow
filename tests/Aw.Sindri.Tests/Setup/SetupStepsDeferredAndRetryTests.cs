@@ -52,10 +52,10 @@ public sealed class SetupStepsDeferredAndRetryTests
     [Fact, Trait("Lane", "unit")]
     public void Onyx_whose_setup_waits_for_the_login_needs_you_with_the_sign_up_address_even_while_the_stack_runs()
     {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null) { Job = OnyxJobPhase.WaitingForLogin, Port = 3001 });
+        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null) { Job = OnyxJobPhase.WaitingForLogin, Port = 3190 });
 
         Assert.Equal((SetupState.NeedsYou, "ConnectOnyx", "Create your Onyx account in the browser, then enter your login here."), (step.State, step.Action, step.Why));
-        Assert.Equal("Sign up at http://127.0.0.1:3001/auth/signup", step.Detail);
+        Assert.Equal("Sign up at http://127.0.0.1:3190/auth/signup", step.Detail);
     }
 
     [Fact, Trait("Lane", "unit")]

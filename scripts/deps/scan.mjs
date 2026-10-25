@@ -338,20 +338,22 @@ export function scanCSharp(root, nodes) {
 const stripXmlComments = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
 const projName = (p) => path.basename(p.replace(/\\/g, "/")).replace(/\.csproj$/i, "");
 
-// ProjectReferences in one file: { name, analyzer } where analyzer means OutputItemType="Analyzer"
-// (a build-time Roslyn reference, attribute or child element).
+// ProjectReferences in one file: { name, analyzer, buildOrder } where analyzer means OutputItemType="Analyzer"
+// (a build-time Roslyn reference, attribute or child element) and buildOrder means a non-analyzer
+// ReferenceOutputAssembly="false" (it orders the build and links nothing).
 function projectRefs(xml) {
   const refs = [];
   for (const m of xml.matchAll(/<ProjectReference\b([^>]*?)(?:\/>|>([\s\S]*?)<\/ProjectReference>)/g)) {
     const inc = /\bInclude\s*=\s*(["'])(.*?)\1/.exec(m[1]);
     if (!inc) continue;
     const analyzer = /\bOutputItemType\s*=\s*(["'])Analyzer\1/i.test(m[1]) || /<OutputItemType>\s*Analyzer\s*<\/OutputItemType>/i.test(m[2] ?? "");
-    refs.push({ name: projName(inc[2]), analyzer });
+    const noOutput = /\bReferenceOutputAssembly\s*=\s*(["'])false\1/i.test(m[1]) || /<ReferenceOutputAssembly>\s*false\s*<\/ReferenceOutputAssembly>/i.test(m[2] ?? "");
+    refs.push({ name: projName(inc[2]), analyzer, buildOrder: !analyzer && noOutput });
   }
   return refs;
 }
 
-// Every *.csproj under src/ and tests/ (any case): runtime refs, analyzer refs, third-party packages.
+// Every *.csproj under src/ and tests/ (any case): runtime refs, analyzer refs, build-order refs, third-party packages.
 export function readProjects(root) {
   const files = ["src", "tests"].flatMap((d) => walk(path.join(root, d), SKIP_PROJECT_DIRS, (p) => /\.csproj$/i.test(p)));
   return files.map((file) => {
@@ -366,7 +368,8 @@ export function readProjects(root) {
     }
     return {
       file: path.relative(root, file).split(path.sep).join("/"), name: projName(file),
-      refs: [...new Set(all.filter((r) => !r.analyzer).map((r) => r.name))],
+      refs: [...new Set(all.filter((r) => !r.analyzer && !r.buildOrder).map((r) => r.name))],
+      buildOrder: [...new Set(all.filter((r) => r.buildOrder).map((r) => r.name))],
       analyzers: [...new Set(all.filter((r) => r.analyzer).map((r) => r.name))],
       packages: [...new Set(packages)].sort(),
     };

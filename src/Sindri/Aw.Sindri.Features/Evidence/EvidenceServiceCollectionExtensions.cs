@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.Evidence;
@@ -11,5 +12,16 @@ internal static class EvidenceServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddEvidenceSlices(this IServiceCollection services) => services
         .AddBlockRuntime<EvidenceNoneStep>()
-        .AddBlockRuntime<EvidenceCombineStep>();
+        .AddBlockRuntime<EvidenceCombineStep>()
+        .AddEvidenceInstructions();
+
+    private static IServiceCollection AddEvidenceInstructions(this IServiceCollection services)
+    {
+        foreach (var instructions in EvidenceStepInstructions.All)
+        {
+            _ = services.AddSingleton<IAgentStepInstructions>(instructions);
+        }
+
+        return services;
+    }
 }

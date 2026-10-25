@@ -20,16 +20,16 @@ public sealed class OnyxUpTests
         Assert.Equal(["Inspect", "Ps", "MemoryUsedOutside", "ServerPlatform", "Pull", "RepoDigests", "RenderedConfig", "Up"], rig.Runtime.Calls, StringComparer.Ordinal);
         Assert.Equal(_allSteps, response.Ran, StringComparer.Ordinal);
         Assert.Empty(response.Skipped);
-        Assert.Equal("http://127.0.0.1:3000", response.Url);
-        Assert.Equal(3000, response.Port);
+        Assert.Equal("http://127.0.0.1:3189", response.Url);
+        Assert.Equal(3189, response.Port);
         Assert.Equal("v4.9.0", response.Version);
         var state = rig.Workspace.State!;
-        Assert.Equal(3000, state.Port);
+        Assert.Equal(3189, state.Port);
         Assert.Equal(_allSteps.Order(StringComparer.Ordinal), state.Steps.Keys.Order(StringComparer.Ordinal));
         var env = rig.Workspace.Files[rig.Paths.Env];
-        Assert.Contains("HOST_PORT=3000\n", env, StringComparison.Ordinal);
+        Assert.Contains("HOST_PORT=3189\n", env, StringComparison.Ordinal);
         Assert.Contains("USER_AUTH_SECRET=" + new string('0', 63) + "1\n", env, StringComparison.Ordinal);
-        Assert.Contains("\"127.0.0.1:3000:80\"", rig.Workspace.Files[rig.Paths.Override], StringComparison.Ordinal);
+        Assert.Contains("\"127.0.0.1:3189:80\"", rig.Workspace.Files[rig.Paths.Override], StringComparison.Ordinal);
         Assert.Contains(("" + rig.Paths.Env, true), rig.Workspace.Writes);
         Assert.False(rig.Workspace.LockHeld);
     }
@@ -173,14 +173,14 @@ public sealed class OnyxUpTests
     public async Task A_taken_preferred_port_moves_setup_to_the_first_free_fallback()
     {
         var rig = new OnyxUpRig();
-        _ = rig.Probes.TakenPorts.Add(3000);
+        _ = rig.Probes.TakenPorts.Add(3189);
 
         var response = (await rig.Up(Token)).Value;
 
-        Assert.Equal(3001, response.Port);
-        Assert.Contains("HOST_PORT=3001\n", rig.Workspace.Files[rig.Paths.Env], StringComparison.Ordinal);
-        Assert.Contains("\"127.0.0.1:3001:80\"", rig.Workspace.Files[rig.Paths.Override], StringComparison.Ordinal);
-        Assert.Equal(3001, rig.Workspace.State!.Port);
+        Assert.Equal(3190, response.Port);
+        Assert.Contains("HOST_PORT=3190\n", rig.Workspace.Files[rig.Paths.Env], StringComparison.Ordinal);
+        Assert.Contains("\"127.0.0.1:3190:80\"", rig.Workspace.Files[rig.Paths.Override], StringComparison.Ordinal);
+        Assert.Equal(3190, rig.Workspace.State!.Port);
     }
 
     [Fact, Trait("Lane", "unit")]

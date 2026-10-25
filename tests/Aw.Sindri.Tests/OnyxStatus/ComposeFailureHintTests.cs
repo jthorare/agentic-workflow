@@ -56,7 +56,7 @@ public sealed class ComposeFailureHintTests
     [Fact, Trait("Lane", "unit")]
     public void A_project_without_files_is_listed_through_docker_ps_by_label()
     {
-        var runner = new FakeToolRunner((_, _) => new ToolRun(ToolOutcome.Exited, 0, "abc123def456|running|nginx|nginx@sha256:aaa|127.0.0.1:3000->80/tcp, [::]:3000->80/tcp\n0123456789ab|exited|api_server|onyx@sha256:bbb|\n"));
+        var runner = new FakeToolRunner((_, _) => new ToolRun(ToolOutcome.Exited, 0, "abc123def456|running|nginx|nginx@sha256:aaa|127.0.0.1:3189->80/tcp, [::]:3189->80/tcp\n0123456789ab|exited|api_server|onyx@sha256:bbb|\n"));
 
         var containers = new DockerCliRuntime(runner, static _ => null).Ps(ComposeProject.ByLabel("sindri-onyx-0a1b2c3d"), Token).Value;
 
@@ -64,7 +64,7 @@ public sealed class ComposeFailureHintTests
         Assert.Contains(Label, Assert.Single(runner.Calls).Arguments, StringComparer.Ordinal);
         var nginx = Assert.Single(containers, static c => c.Service == "nginx");
         Assert.Equal("running", nginx.State);
-        Assert.Contains(new ComposePublisher("127.0.0.1", 3000, 80), nginx.Publishers);
+        Assert.Contains(new ComposePublisher("127.0.0.1", 3189, 80), nginx.Publishers);
         Assert.Equal("exited", Assert.Single(containers, static c => c.Service == "api_server").State);
     }
 

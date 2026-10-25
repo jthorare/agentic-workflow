@@ -1,7 +1,7 @@
 # Providers
 
 Agentic Workflow supports three agent hosts: **Claude Code**, **Codex**, and **Cursor**.
-One canonical core (skills, hook logic, MCP servers, judge, scorer) plus a thin adapter per
+One canonical core (skills, hook logic, MCP servers, judge) plus a thin adapter per
 provider. Skill text names capabilities, not tools — see `skills/_shared/capabilities.md`.
 
 ## Observed on this machine (2026-09-28)
@@ -36,9 +36,7 @@ relying on them; record corrections here.
 | Reply voice | `config/voice/joi.md` (inline) + `joi-examples.md` (read on demand) | Claude: `aw:voice` block in `~/.claude/CLAUDE.md`. Codex: same block in `$CODEX_HOME/AGENTS.md`. Cursor: no global rules file, setup prints a paste note. Every skill reads it through `skills/_preamble.md`. No uninstall: removing a provider leaves its `aw:voice` block in place |
 | Hooks | `config/hooks/*.sh` (Claude protocol: JSON stdin, exit 2 = deny) | Claude: run directly. Codex/Cursor: `config/hooks/adapters/{codex,cursor}.sh` (export `AW_PROVIDER`); mapping in `config/hooks/adapters/README.md` |
 | Installer | `setup.sh --providers claude,codex,cursor [--dry-run]` (default: detect installed CLIs) | `providers/<name>/install.sh` + `install-hooks.sh`; levers via `scripts/install-*.sh --provider <name>` |
-| Judge | `judge/src/providers/` | `claude-cli`, `codex-cli`, `cursor-cli` (+ `rules`, `jev`) |
-| Scorer | `scorer/src/transcript/` | One transcript source per provider (`--provider claude\|codex\|cursor\|all`) |
-| Live pane | `mods/aw-live` (a Claude Code mod) + `scorer live` | Claude only. Codex and Cursor keep the statusline segments and the daily report |
+| Judge | `src/Judge` (C#) | `claude-cli`, `codex-cli`, `cursor-cli` (+ `rules`, `jev`) |
 
 ## Notes
 
@@ -61,15 +59,3 @@ agent CLIs → `rules`.
 
 Cursor's CLI is slow (~8–13s per call), so on Cursor-only machines text questions often time out
 and fall through to `rules`.
-
-**Scorer.** `scorer --provider claude|codex|cursor|all` (comma-separated is fine). By default it
-reads every provider whose transcript dir exists. Override the dirs with `--projects-dir`,
-`--codex-dir`, and `--cursor-dir`. The report has a "By provider" section. Cursor data is
-involvement-only because its transcripts carry no token or cost data. Codex rollouts that were
-imported from Claude (listed in `~/.codex/external_agent_session_imports.json`) are skipped so they
-aren't counted twice.
-
-**Mods.** `mods/aw-live` is a Claude Code mod (in-process function hooks, `claude plugin test`). It shows
-this session's `scorer live` numbers in a `/live` pane. The headline numbers (calls, >200k, judge) are the Live column of `config/statusline.sh`, which calls the same `scorer live --json`. Mods have no Codex or Cursor
-equivalent, so `scripts/install-live-pane.sh --provider codex|cursor` prints a skip note and writes
-nothing. Install: `scripts/install-live-pane.sh` (a folder marketplace named `agentic-workflow-mods`).

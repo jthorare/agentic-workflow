@@ -4,10 +4,10 @@
 
 | Requirement | Minimum Version | Purpose |
 |-------------|----------------|---------|
-| Node.js | >= 22 (`.nvmrc`) | Runtime for the TypeScript packages (`scorer`, `judge`, `sindri`) and build tooling; better-sqlite3 13 requires 22 |
+| .NET SDK | Pinned in `global.json` | Builds the C# binaries (`setup.sh` installs it when missing) |
+| Node.js | >= 22 (`.nvmrc`) | `dembrandt`, `prism-mcp`, `xcodebuildmcp` and the schema checkers only; no toolkit package is built with it |
 | GitHub CLI (`gh`) | Latest | Required by review skills for PR interaction |
 | Claude Code, Codex, or Cursor CLI | Latest | At least one agent host for skills and MCP server registration |
-| npm | Bundled with Node | Dependency management |
 
 ## Initial Setup
 
@@ -42,36 +42,20 @@ The setup script performs the following (per-provider steps live in `providers/<
 ## Running Tests
 
 ```bash
-cd ~/repos/agentic-workflow/scorer   # or judge, sindri
-
-# Single run
-npm run test
-
-# Type-check without emitting files
-npm run typecheck
+cd ~/repos/agentic-workflow
+dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8
+bash scripts/ci/bash-tests.sh
 ```
 
 ## Building
 
 ```bash
-cd ~/repos/agentic-workflow/scorer   # or judge, sindri
-npm run build
+dotnet build -warnaserror               # whole solution, zero warnings
+scripts/install-cs.sh --publish         # publish the C# binaries into $AW_STATE_DIR/bin/cs/<stamp>/
+scripts/install-cs.sh --link            # point bin/cs/current at the newest build and write the ~/.local/bin wrappers
 ```
 
-Build configuration (from `tsconfig.json`):
-
-| Setting | Value |
-|---------|-------|
-| Target | ES2022 |
-| Module | Node16 |
-| Module Resolution | Node16 |
-| Output Directory | `dist/` |
-| Source Directory | `src/` |
-| Strict Mode | Enabled |
-| Source Maps | Enabled |
-| Declaration Files | Enabled |
-
-The build compiles `src/**/*` to `dist/`, excluding `node_modules`, `dist`, and `tests`.
+The .NET SDK is pinned in `global.json`; `setup.sh` installs it when missing.
 
 ## Project Structure
 
@@ -86,9 +70,7 @@ agentic-workflow/
 ├── config/                    # Settings & MCP config archive
 │   ├── settings.json
 │   └── mcp.json
-├── judge/                     # Cheap-agent-harness judge CLI
-├── scorer/                    # Daily cost/involvement report
-├── sindri/                    # Sindri core CLI
+├── src/ · tests/              # The C# build: judge, Sindri, evidence, bugfix, packets, readiness, meta, forge
 ├── setup.sh                   # One-command setup script
 └── README.md
 ```

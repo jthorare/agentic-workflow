@@ -12,12 +12,15 @@ public sealed class BuildRedCheckStepTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static StepContext Context(string redTests = """{"A1":{"tests":["T1","T2"],"commit":"h1"},"A2":{"tests":["T3"],"commit":"h1"},"A3":{"appOnly":{"signal":"SG-1"}}}""") =>
-        StepRig.Context("step.build.red-check", new Dictionary<string, string>(StringComparer.Ordinal)
+    private static StepContext Context(string redTests = """{"A1":{"tests":["T1","T2"],"commit":"h1"},"A2":{"tests":["T3"],"commit":"h1"},"A3":{"appOnly":{"signal":"SG-1"}}}""", string? startHead = null, bool rework = false)
+    {
+        var start = startHead is null ? string.Empty : $",\"startHead\":\"{startHead}\"{(rework ? ",\"rework\":true" : string.Empty)}";   // prepare records where the round started, and that it began with notes
+        return StepRig.Context("step.build.red-check", new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["activePacket"] = $$"""{"hash":"sha256:x","dir":"{{StepRig.PacketDir}}","repo":"{{StepRig.Tree}}"}""",
+            ["activePacket"] = $$"""{"hash":"sha256:x","dir":"{{StepRig.PacketDir}}","repo":"{{StepRig.Tree}}"{{start}} }""",
             ["redTests"] = redTests,
         });
+    }
 
     private static BuildRedCheckStep Step(StepRig rig) => new(rig.Diff, rig.Runner);
 
@@ -88,6 +91,69 @@ public sealed class BuildRedCheckStepTests
         var result = await Step(rig).Run(Context(), Token);
 
         Assert.Contains("not the red commit h1", result.Failure, StringComparison.Ordinal);
+        Assert.Empty(rig.Commands.Calls);
+    }
+
+    // A rework round starts from the earlier round's code head (prepare records it as the packet's startHead), so HEAD is not the red commit; the red tests were
+    // proven red on that commit in the round that wrote them.
+    [Fact]
+    public async Task A_rework_round_that_adds_no_tests_passes_on_the_earlier_red_commit_without_running_anything()
+    {
+        var rig = new StepRig("red-tests");   // the worktree is at h1, the code head the round started from
+        rig.Diff.Differ(StepRig.Tree, "src/a.cs");   // r0 is behind it
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"r0"}}""", startHead: "h1", rework: true), Token);
+
+        Assert.Null(result.Failure);
+        Assert.Equal("red", result.Result!.Outcome.Value);
+        Assert.Empty(rig.Commands.Calls);
+        Assert.Equal(0, rig.Slots.Taken);
+    }
+
+    [Fact]
+    public async Task A_rework_round_that_adds_tests_runs_them_at_its_own_red_commit()
+    {
+        var rig = new StepRig("red-tests");
+        rig.Diff.Advance(StepRig.Tree);   // the round's red commit: h1+
+        _ = rig.Commands.Answer("red-tests", StepRig.Fail());
+
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"h1+"}}""", startHead: "h1", rework: true), Token);
+
+        Assert.Equal("red", result.Result!.Outcome.Value);
+        _ = Assert.Single(rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task A_rework_round_whose_code_moved_on_past_the_head_it_started_from_still_fails_the_Step()
+    {
+        var rig = new StepRig("red-tests");
+        rig.Diff.Advance(StepRig.Tree);   // h1+, not the red commit r0 and not where the round started
+
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"r0"}}""", startHead: "h1", rework: true), Token);
+
+        Assert.Contains("not the red commit r0", result.Failure, StringComparison.Ordinal);
+        Assert.Empty(rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task A_first_round_citing_an_older_commit_with_nothing_committed_fails_BLD_RED_001()
+    {
+        var rig = new StepRig("red-tests");
+        rig.Diff.Differ(StepRig.Tree, "src/a.cs");   // the commit is real and behind HEAD, but no rework began this round
+
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"base0"}}""", startHead: "h1"), Token);
+
+        Assert.Contains("not the red commit base0", result.Failure, StringComparison.Ordinal);
+        Assert.Empty(rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task A_rework_citing_a_commit_that_is_not_behind_the_head_it_started_at_fails_BLD_RED_001()
+    {
+        var rig = new StepRig("red-tests");   // nothing differs between that commit and HEAD, so it is no earlier red commit
+
+        var result = await Step(rig).Run(Context("""{"A1":{"tests":["T1"],"commit":"other"}}""", startHead: "h1", rework: true), Token);
+
+        Assert.Contains("not the red commit other", result.Failure, StringComparison.Ordinal);
         Assert.Empty(rig.Commands.Calls);
     }
 

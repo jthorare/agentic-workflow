@@ -29,6 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Build order only: the real-binary tests (BugFix/RealBugFixState, Packets/RealAwPackets, ...) run the built bugfix-state and aw-packets from artifacts/bin, so a scoped build of this project builds them too (#1128). -->
+    <ProjectReference Include="../../src/Packets/Aw.Packets.App/Aw.Packets.App.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 8 parallel test classes: most of the lane is spent waiting on Temporal servers, not on CPU (the TemporalServerFixture start retries a lost port). -->
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

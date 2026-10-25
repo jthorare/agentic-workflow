@@ -1,4 +1,5 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Overrides;
@@ -156,6 +157,25 @@ public static class MapAccess
         var cut = DenyCut.Of(current, overrides, profile, mapped);
         return (cut.Apply(current), cut.UndoRows(overrides, at));
     }
+
+    /// <summary>What a build keeps of a graph under the mapped repos' demote globs (#1043): the 'implements' edges of demoted files are dropped, and the accepts standing on them are undone (the build writes the undo rows with the draft).</summary>
+    /// <param name="graph">The graph a build keeps.</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="mapped">The repos the map is built from: only their demote globs judge a <c xml:lang="en">code:</c> key.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The graph itself and no rows when nothing is demoted.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Undo) WithoutDemoted(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, IReadOnlyList<ContextRepo> mapped, DateTimeOffset at) =>
+        DemoteCut.Apply(graph, overrides, mapped, at);
+
+    /// <summary>What a build keeps of a graph when the map rules changed (#1043): an edge only the engine's accept holds up, which the new build no longer finds, is dropped and its accepts are undone (the build writes the undo rows with the draft).</summary>
+    /// <param name="graph">The graph a build keeps.</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="found">What this build found.</param>
+    /// <param name="rulesChanged">Whether the build's rules differ from the ones the map was built under.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The graph itself and no rows when the rules did not change or nothing is lost.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Undo) WithoutLostEngineAccepts(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, ExtractedMap found, bool rulesChanged, DateTimeOffset at) =>
+        RulesRedecide.Apply(graph, overrides, found, rulesChanged, at);
 
     /// <summary>The export document for a version's visible graph: decision nodes and 'quotes' edges are left to the decisions, which imply them.</summary>
     /// <param name="version">The version.</param>

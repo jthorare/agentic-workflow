@@ -139,7 +139,7 @@ expect "duplicate key fails" 1 "DEPS-YAML-001" "duplicate key"
 # The per-package cap (DEPS-FANOUT-001) was removed by the owner, 2026-10-12: a package may declare project edges
 # to any number of lower-tier packages; only the per-project limits remain.
 d="$(fixture fanout-wide)"
-for t in P1 P2 P3 P4; do perl -0pi -e "s/(  - id: Beta\n)/  - id: $t\n    kind: package\n    tier: 1\n    projectPrefix: Aw.$t\n    ts: null\n    src: src\/$t\n    note: $t\n\$1/" "$d/deps.yaml"; done
+for t in P1 P2 P3 P4; do perl -0pi -e "s/(  - id: Beta\n)/  - id: $t\n    kind: package\n    tier: 1\n    projectPrefix: Aw.$t\n    src: src\/$t\n    note: $t\n\$1/" "$d/deps.yaml"; done
 for t in Alpha P1 P2 P3 P4; do edge "$d" Beta "$t" project planned; done; run "$d"
 expect "a package with project edges to 6 packages passes" 0 "deps: ok"
 refuse "  ... with no package fan-out rule" "DEPS-FANOUT-001"
@@ -305,7 +305,7 @@ expect "top-level tests/ is walked; nothing may reference a test project" 1 "DEP
 d="$(fixture csproj-dbp)"; csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj
 printf '<Project><ItemGroup><ProjectReference Include="Aw.Kernel/Aw.Kernel.csproj" /></ItemGroup></Project>\n' > "$d/src/Directory.Build.props"; run "$d"
 expect "a ProjectReference in Directory.Build.props fails" 1 "DEPS-PROJ-005" "src/Directory.Build.props"
-d="$(fixture csproj-testing)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    ts: null\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
+d="$(fixture csproj-testing)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
 csproj "$d" src/KTest/Aw.KTest/Aw.KTest.csproj; csproj "$d" src/Beta/Aw.Beta.Tests/Aw.Beta.Tests.csproj ../../KTest/Aw.KTest/Aw.KTest.csproj; run "$d"
 expect "a test project may reference a test-support package without a declared edge" 0 "deps: ok"
 csproj "$d" src/Beta/Aw.Beta.Core/Aw.Beta.Core.csproj ../../KTest/Aw.KTest/Aw.KTest.csproj; run "$d"
@@ -380,7 +380,7 @@ d="$(fixture ns-nested)"; perl -pi -e 's/^    note: delta\n/    files: [alpha\/e
 expect "a file inside another package's namespace fails" 1 "DEPS-REF-005" "alpha/extra"
 
 # ---- test code (*.Tests, *.Testing) follows its owner's rules ----
-d="$(fixture testing-support)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    ts: null\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
+d="$(fixture testing-support)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
 perl -0pi -e 's/kind: project\n    status: planned/kind: project\n    status: current/' "$d/deps.yaml"
 csproj "$d" src/KTest/Aw.KTest/Aw.KTest.csproj; csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj
 csproj "$d" src/Beta/Aw.Beta.Core/Aw.Beta.Core.csproj ../../Aw.Kernel/Aw.Kernel.csproj
@@ -403,7 +403,7 @@ expect "*.Testing projects are exempt from fan-out and don't make edges current"
 
 d="$(fixture scaffold-shape)"; perl -pi -e 's/thirdPartyFanOut: 6/thirdPartyFanOut: 1/' "$d/deps.yaml"
 perl -0pi -e 's/kind: project\n    status: planned/kind: project\n    status: current/' "$d/deps.yaml"
-perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    ts: null\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
+perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
 csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj; csproj "$d" src/KTest/Aw.KTest/Aw.KTest.csproj
 csproj "$d" src/Beta/Aw.Beta.Core/Aw.Beta.Core.csproj ../../Aw.Kernel/Aw.Kernel.csproj
 mkdir -p "$d/tests/Aw.Beta.Testing" "$d/tests/Aw.Beta.Tests"
@@ -413,7 +413,7 @@ run "$d"
 expect "a scaffold-shaped package (Core -> Kernel current, Tests and Testing with xunit) passes" 0 "deps: ok" "checked 5 C# projects"
 
 # ---- analyzers ----
-d="$(fixture analyzers)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: Analyzers\n    kind: package\n    tier: 0\n    analyzer: true\n    projectPrefix: Aw.Analyzers\n    ts: null\n    src: src\/Aw.Analyzers\n    note: build-time Roslyn rules\n$1/' "$d/deps.yaml"
+d="$(fixture analyzers)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: Analyzers\n    kind: package\n    tier: 0\n    analyzer: true\n    projectPrefix: Aw.Analyzers\n    src: src\/Aw.Analyzers\n    note: build-time Roslyn rules\n$1/' "$d/deps.yaml"
 perl -pi -e 's/^  projectFanOut: 4\n/  projectFanOut: 1\n/' "$d/deps.yaml"
 perl -0pi -e 's/kind: project\n    status: planned/kind: project\n    status: current/' "$d/deps.yaml"
 csproj "$d" src/Aw.Analyzers/Aw.Analyzers.csproj; csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj
@@ -429,12 +429,12 @@ printf '<Project><ItemGroup><ProjectReference Include="../../Aw.Kernel/Aw.Kernel
 expect "an analyzer-style reference to a non-analyzer package fails" 1 "DEPS-PROJ-006" "Aw.Beta.Core -> Aw.Kernel"
 
 # ---- review run 3 (PR #92) ----
-d="$(fixture analyzer-tests)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: Analyzers\n    kind: package\n    tier: 0\n    analyzer: true\n    projectPrefix: Aw.Analyzers\n    ts: null\n    src: src\/Aw.Analyzers\n    note: build-time Roslyn rules\n$1/' "$d/deps.yaml"
+d="$(fixture analyzer-tests)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: Analyzers\n    kind: package\n    tier: 0\n    analyzer: true\n    projectPrefix: Aw.Analyzers\n    src: src\/Aw.Analyzers\n    note: build-time Roslyn rules\n$1/' "$d/deps.yaml"
 csproj "$d" src/Aw.Analyzers/Aw.Analyzers.csproj; csproj "$d" tests/Aw.Analyzers.Tests/Aw.Analyzers.Tests.csproj ../../src/Aw.Analyzers/Aw.Analyzers.csproj
 csproj "$d" tests/Aw.Architecture.Tests/Aw.Architecture.Tests.csproj ../../src/Aw.Analyzers/Aw.Analyzers.csproj; run "$d"
 expect "test code may reference an analyzer normally" 0 "deps: ok"
 
-d="$(fixture tests-dir)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    ts: null\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
+d="$(fixture tests-dir)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    test: true\n    projectPrefix: Aw.KTest\n    src: src\/KTest\n    note: test support\n$1/' "$d/deps.yaml"
 perl -pi -e 's/^  projectFanOut: 4\n/  projectFanOut: 1\n/' "$d/deps.yaml"
 csproj "$d" src/KTest/Aw.KTest/Aw.KTest.csproj; csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj
 csproj "$d" tests/Aw.Beta.Tests.Integration/Aw.Beta.Tests.Integration.csproj ../../src/KTest/Aw.KTest/Aw.KTest.csproj ../../src/Aw.Kernel/Aw.Kernel.csproj
@@ -493,7 +493,7 @@ for p in Core Infrastructure; do
   csproj "$d" "src/Beta/Aw.Beta.$p/Aw.Beta.$p.csproj" ../../Aw.Kernel/Aw.Kernel.csproj
 done
 
-d="$(fixture kernel-testing-tests)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    sublevel: 2\n    test: true\n    projectPrefix: Aw.KTest\n    ts: null\n    src: tests\/Aw.KTest.Testing\n    note: test support\n$1/' "$d/deps.yaml"
+d="$(fixture kernel-testing-tests)"; perl -0pi -e 's/(  - id: Alpha\n)/  - id: KTest\n    kind: package\n    tier: 0\n    sublevel: 2\n    test: true\n    projectPrefix: Aw.KTest\n    src: tests\/Aw.KTest.Testing\n    note: test support\n$1/' "$d/deps.yaml"
 edge "$d" KTest Kernel project current
 csproj "$d" src/Aw.Kernel/Aw.Kernel.csproj; csproj "$d" tests/Aw.KTest.Testing/Aw.KTest.Testing.csproj ../../src/Aw.Kernel/Aw.Kernel.csproj
 csproj "$d" tests/Aw.Beta.Tests/Aw.Beta.Tests.csproj ../Aw.KTest.Testing/Aw.KTest.Testing.csproj; run "$d"
@@ -503,7 +503,7 @@ expect "a test-support package under tests/ makes its own edges current and is u
 http_fixture() { # http_fixture <name> — Beta serves /beta/; a tier-4 Gamma client package lives inside Beta's src dir
   local d; d="$(fixture "$1")"
   perl -0pi -e 's/(    bins: \[beta\]\n)/$1    routes: [\/beta\/]\n/' "$d/deps.yaml"
-  perl -0pi -e 's/(  - id: Hooks\n)/  - id: Gamma\n    kind: package\n    tier: 4\n    projectPrefix: Aw.Beta.Ui\n    ts: null\n    src: src\/Beta\/Aw.Beta.Ui\n    note: the client app\n$1/' "$d/deps.yaml"
+  perl -0pi -e 's/(  - id: Hooks\n)/  - id: Gamma\n    kind: package\n    tier: 4\n    projectPrefix: Aw.Beta.Ui\n    src: src\/Beta\/Aw.Beta.Ui\n    note: the client app\n$1/' "$d/deps.yaml"
   csproj "$d" src/Beta/Aw.Beta.Host/Aw.Beta.Host.csproj
   printf 'app.MapGet("/beta/status", () => 1);\n' > "$d/src/Beta/Aw.Beta.Host/Endpoints.cs"
   csproj "$d" src/Beta/Aw.Beta.Ui/Aw.Beta.Ui.csproj
@@ -532,11 +532,11 @@ d="$(http_fixture http-no-routes)"; edge "$d" Gamma Delta http planned; run "$d"
 expect "an http edge to a package with no routes fails" 1 "DEPS-KIND-004" "Gamma -> Delta (http)"
 
 # Review run 3 (kieran-typescript-reviewer-0): DEPS-KIND-004 depends only on the target, so an http edge from a shell
-# or mod node to a package with no routes fails too.
+# node to a package with no routes fails too.
 d="$(http_fixture http-no-routes-shell)"; edge "$d" Hooks Delta http planned; run "$d"
 expect "an http edge from a shell node to a package with no routes fails" 1 "DEPS-KIND-004" "Hooks -> Delta (http)"
 
-# Review run 4 (kieran-typescript-reviewer-0): no scan covers http calls from shell or mod sources, so a current http
+# Review run 4 (kieran-typescript-reviewer-0): no scan covers http calls from shell sources, so a current http
 # edge from one can't be stale. It passes with an info line saying it isn't scanned, and nothing names C# projects for it.
 d="$(http_fixture http-shell-current)"; edge "$d" Hooks Beta http current
 printf 'curl -s "http://127.0.0.1:7480/beta/status"\n' >> "$d/hooks/gate.sh"; run "$d"
@@ -702,6 +702,21 @@ d="$(fixture cycle-excepted-unnamed)"; exc "$d" DEPS-CYCLE-001 Alpha 2026-10-10 
 expect "a cycle exception names the edge it excuses" 1 "DEPS-SCHEMA-001" "/exceptions/0: missing required property excuses"
 d="$(over fanout-excuses)"; perl -pi -e "s/^exceptions: \[\]\n/exceptions:\n  - rule: DEPS-FANOUT-002\n    subject: Beta\n    excuses:\n      from: Beta\n      to: Alpha\n      kind: cli\n    reason: test\n    recorded: 2026-10-10\n    expires: 2026-12-01\n/" "$d/deps.yaml"; run "$d"
 expect "only a cycle exception names an excused edge" 1 "DEPS-SCHEMA-001" "/exceptions/0"
+
+# ---- build-order references (ReferenceOutputAssembly="false", not an analyzer) ----
+bo() { printf '<Project><ItemGroup><ProjectReference Include="%s" ReferenceOutputAssembly="false" /></ItemGroup></Project>\n' "$2" > "$1"; }
+d="$(fixture build-order)"; mkdir -p "$d/tests/Aw.Beta.Tests" "$d/src/Beta/Aw.Beta.Core"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/tests/Aw.Beta.Tests/Aw.Beta.Tests.csproj" ../../src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "test code's build-order reference passes when its owner has a cli edge to the target" 0 "deps: ok"
+d="$(fixture build-order-no-edge)"; mkdir -p "$d/tests/Aw.Delta.Tests"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/tests/Aw.Delta.Tests/Aw.Delta.Tests.csproj" ../../src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "a build-order reference without the owner's cli edge fails" 1 "DEPS-PROJ-009" "Aw.Delta.Tests -> Aw.Alpha.Host"
+d="$(fixture build-order-prod)"; mkdir -p "$d/src/Beta/Aw.Beta.Host"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/src/Beta/Aw.Beta.Host/Aw.Beta.Host.csproj" ../../Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "a production project's build-order reference fails even with a cli edge" 1 "DEPS-PROJ-009" "Aw.Beta.Host -> Aw.Alpha.Host"
 
 # ---- parser, validator and schema drift (node unit table) ----
 set +e; UNIT="$(node "$HERE/check-deps.unit.mjs" 2>&1)"; UCODE=$?; set -e

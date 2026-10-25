@@ -30,13 +30,12 @@ shared main checkout by derivation. That checkout must have a clean tree and a H
 | ollama, running, with the pinned model | the embeddings layer | `scripts/install-deps.sh`, then `ollama pull nomic-embed-text:latest` (the model is the one in `context/code-index.lock`) |
 | the code-index graphify | the graph layer | `scripts/install-deps.sh` |
 | bubblewrap (Linux) | graphify never runs unsandboxed | `scripts/install-deps.sh` (`sudo apt-get install bubblewrap`) |
-| the pinned temporal binary | the workflow engine | `scripts/binaries-lock.sh fetch temporal` (`scripts/sindri-app.sh` also fetches it) |
+| the pinned temporal binary | the workflow engine | `scripts/binaries-lock.sh fetch temporal` (`scripts/install-cs.sh` also fetches it) |
 
 If you don't want a layer yet, pass `--no-embeddings` or `--no-graph`: the profile turns that layer off and the check is
 skipped. Onyx is optional and not needed here; `sindri onyx status` tells you whether the box could run it.
 
-The first `sindri` call publishes the C# build into `$AW_STATE_DIR/bin/sindri-app/` when its source changed
-(`scripts/sindri-app.sh`), which can take several minutes. It also installs the pinned .NET SDK and links `sindri-app` into
+`./setup.sh` (or `scripts/install-cs.sh`) publishes the C# build into `$AW_STATE_DIR/bin/cs/` when its source changed, which can take several minutes. It also installs the pinned .NET SDK and links `sindri` into
 `~/.local/bin` when those are missing. Set `SINDRI` to use a binary you built yourself.
 
 ## The steps
@@ -86,7 +85,7 @@ anything else fails the step. If no model answers, the job still finishes and sa
 only makes a draft that you review and `promote` with a typed phrase; `refresh` is the no-human-step job.)
 
 **7. The app.** Starts `sindri-ui` on the scratch home (`AW_SINDRI_UI`, else the newest
-`$AW_STATE_DIR/bin/sindri-app/*/sindri-ui`) and keeps its pid in `<home>/first-run/ui.pid`. Click Context in the rail: you
+`$AW_STATE_DIR/bin/cs/*/sindri-ui`) and keeps its pid in `<home>/first-run/ui.pid`. Click Context in the rail: you
 should see the map and, on Health, a Code index card for `agentic-workflow`. Skip it with `--no-ui`.
 
 **8. Your approval of the recipes.** The scoping recipe has to be approved before it can start. If
@@ -109,7 +108,7 @@ nothing. It exits 1 when the home doesn't exist.
 
 `scripts/context-first-run.sh down` runs `sindri stop` (which stops the Temporal dev server too), closes the app it opened
 by its recorded pid, checks nothing still listens on the port, and deletes the scratch home. It does not remove the
-published build under `$AW_STATE_DIR/bin/sindri-app`, the pulled ollama model or the graphify environment. On a missing home
+published build under `$AW_STATE_DIR/bin/cs`, the pulled ollama model or the graphify environment. On a missing home
 it says `nothing to clean` and exits 0. If something still listens on the port after `sindri stop`, it keeps the home, names
 the check to run (`lsof -nP -iTCP:7481 -sTCP:LISTEN`) and exits 1; stop that process by hand.
 

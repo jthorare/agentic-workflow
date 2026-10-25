@@ -1,7 +1,7 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:9968fa7b2aae1c5969316cb1988751e6efde47ae814f8b327378d2723b21e21b",
-  "version": 9,
+  "hash": "sha256:84ed8d02a3d8f20b6aa910a904e9b036e98bf766e54202e21e978abef89d0b1f",
+  "version": 11,
   "name": null,
   "inputs": [
     {

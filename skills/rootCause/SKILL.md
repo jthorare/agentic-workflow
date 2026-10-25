@@ -1,6 +1,6 @@
 ---
 name: rootCause
-description: 4-phase systematic debugging — investigate, analyze, hypothesize, implement. Auto-freezes scope to the module boundary to prevent scope creep.
+description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first (investigate, analyze, hypothesize, then implement) with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
 argument-hint: "[--depth N] [--investigate-only] [error-message-or-issue-description | canary incident JSON]"
 allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

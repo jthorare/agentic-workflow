@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Profile;
 
@@ -11,9 +12,12 @@ internal static class IndexRules
 {
     private const int MaxMegabytes = 102_400;
     private const int MaxGraphMegabytes = 4_096;
+    private const string ConceptOther = "other";
+    private const string FeaturePrefix = "feature:";
 
     internal static Error? Check(SindriProfile profile) =>
-        Section("index", profile.Index) ?? (profile.Repos ?? []).Select(r => Section($"repos.{r.Name}.index", r.Index)).FirstOrDefault(static e => e is not null);
+        Section("index", profile.Index)
+        ?? (profile.Repos ?? []).Select(r => Section($"repos.{r.Name}.index", r.Index) ?? SharedIds($"repos.{r.Name}.index.concepts", profile.Index?.Concepts, r.Index?.Concepts)).FirstOrDefault(static e => e is not null);
 
     private static Error? Section(string path, IndexSettings? index)
     {
@@ -26,7 +30,85 @@ internal static class IndexRules
             ?? Range($"{path}.maxTotalMB", index.MaxTotalMB, MaxMegabytes)
             ?? Range($"{path}.graph.maxMB", index.Graph?.MaxMB, MaxGraphMegabytes)
             ?? Embeddings($"{path}.embeddings", index.Embeddings)
-            ?? Globs($"{path}.utilityGlobs", index.UtilityGlobs);
+            ?? Globs($"{path}.utilityGlobs", index.UtilityGlobs)
+            ?? Concepts($"{path}.concepts", index.Concepts);
+    }
+
+    private const int MaxName = 200;
+
+    private static Error? Concepts(string path, IReadOnlyList<ConceptSettings>? concepts)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < (concepts?.Count ?? 0); i++)
+        {
+            var at = string.Create(CultureInfo.InvariantCulture, $"{path}[{i}]");
+            // why: the loop bound is zero when concepts is null
+            if (Pin(at, concepts![i]) is { } problem)
+            {
+                return problem;
+            }
+
+            if (concepts[i].Id is { } id && !seen.Add(id.Value))
+            {
+                return Invalid($"{at}.id", $"'{id.Value}' is already used by an earlier entry");
+            }
+        }
+
+        return null;
+    }
+
+    private static Error? Pin(string at, ConceptSettings pin) =>
+        Name($"{at}.name", pin.Name) ?? Reserved($"{at}.id", pin.Id) ?? Features($"{at}.features", pin.Features) ?? Globs($"{at}.paths", pin.Paths);
+
+    private static Error? Name(string path, string? name) =>
+        string.IsNullOrWhiteSpace(name) || name.Length > MaxName || name.Any(char.IsControl)
+            ? Invalid(path, string.Create(CultureInfo.InvariantCulture, $"must not be empty, over {MaxName} characters or hold control characters"))
+            : null;
+
+    private static Error? Reserved(string path, ConceptPinId? id) =>
+        id switch
+        {
+            null => null,
+            { Value: ConceptOther } => Invalid(path, "'other' is reserved for the concept that holds what no other takes"),
+            { } pinned when !IsSlug(pinned.Value) => Invalid(path, "must be a slug of lowercase letters, digits, '-' and '.' (like 'scheduling' or 'tabs.tab-manager')"),
+            _ => null,
+        };
+
+    // Lowercase words joined by single '-' or '.', the shape derived concept ids have, so a pin can name one.
+    private static bool IsSlug(string id) =>
+        id.Split('-', '.').All(static word => word.Length > 0 && word.All(static c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9')));
+
+    private static Error? Features(string path, IReadOnlyList<string>? features)
+    {
+        for (var i = 0; i < (features?.Count ?? 0); i++)
+        {
+            // why: the loop bound is zero when features is null
+            if (!IsFeatureKey(features![i]))
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"{path}[{i}]"), "must be a feature: key or glob, like 'feature:shifts' or 'feature:shifts.*'");
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsFeatureKey(string key) =>
+        key.Length > FeaturePrefix.Length && key.StartsWith(FeaturePrefix, StringComparison.Ordinal) && !key.Any(c => char.IsWhiteSpace(c) || char.IsControl(c));
+
+    /// <summary>A repo's pins may not reuse an id the profile's own already pin (a repo's list is added to the profile's).</summary>
+    private static Error? SharedIds(string path, IReadOnlyList<ConceptSettings>? top, IReadOnlyList<ConceptSettings>? own)
+    {
+        var shared = (top ?? []).Select(c => c.Id?.Value).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        for (var i = 0; i < (own?.Count ?? 0); i++)
+        {
+            // why: the loop bound is zero when own is null
+            if (own![i].Id is { } id && shared.Contains(id.Value))
+            {
+                return Invalid(string.Create(CultureInfo.InvariantCulture, $"{path}[{i}].id"), $"'{id.Value}' is already used by the profile's index.concepts");
+            }
+        }
+
+        return null;
     }
 
     private static Error? Range(string path, int? value, int max) =>

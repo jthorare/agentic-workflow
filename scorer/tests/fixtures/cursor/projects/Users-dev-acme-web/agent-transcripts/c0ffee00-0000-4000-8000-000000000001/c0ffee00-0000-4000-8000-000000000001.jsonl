@@ -1,9 +1,0 @@
-{"role": "user", "message": {"content": [{"type": "text", "text": "<timestamp>Saturday, Sep 26, 2026, 3:00 AM (UTC-7)</timestamp>\n<user_query>\nAdd a health endpoint\n</user_query>"}]}}
-{"role": "assistant", "message": {"content": [{"type": "text", "text": "Working on it."}, {"type": "tool_use", "name": "Read", "input": {"path": "src/app.ts"}}]}}
-{"type": "turn_ended", "status": "success"}
-{"role": "user", "message": {"content": [{"type": "text", "text": "<timestamp>Saturday, Sep 26, 2026, 3:05 AM (UTC-7)</timestamp>\n<user_query>\nno, keep the old route\n</user_query>"}]}}
-{"role": "assistant", "message": {"content": [{"type": "text", "text": "Working on it."}, {"type": "tool_use", "name": "Read", "input": {"path": "src/app.ts"}}]}}
-{"type": "turn_ended", "status": "aborted", "error": "User aborted request."}
-{"role": "user", "message": {"content": [{"type": "text", "text": "<cursor_commands>\n<login>dev</login>\n</cursor_commands>\n<timestamp>Saturday, Sep 26, 2026, 3:07 AM (UTC-7)</timestamp>\n<user_query>\nyes\n</user_query>"}]}}
-{"role": "assistant", "message": {"content": [{"type": "text", "text": "Working on it."}, {"type": "tool_use", "name": "Read", "input": {"path": "src/app.ts"}}]}}
-{"type": "turn_ended", "status": "error", "error": "Provider error"}

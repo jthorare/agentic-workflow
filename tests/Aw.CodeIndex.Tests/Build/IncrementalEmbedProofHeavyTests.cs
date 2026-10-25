@@ -24,14 +24,14 @@ public sealed class IncrementalEmbedProofHeavyTests(ITestOutputHelper output)
         var (root, from, to) = (Env("AW_CODEINDEX_PROOF_REPO"), Env("AW_CODEINDEX_PROOF_FROM"), Env("AW_CODEINDEX_PROOF_TO"));
         Assert.SkipWhen(root is null || from is null || to is null, "set AW_CODEINDEX_PROOF_REPO, AW_CODEINDEX_PROOF_FROM and AW_CODEINDEX_PROOF_TO to run the #990 proof");
         var embedder = new OllamaEmbedder();
-        var repo = new Core.Facade.CodeIndexRepo(RepoName.From(Path.GetFileName(root!)), root!, Core.CodeIndexSettings.Default);
+        var repo = new CodeIndexRepo(RepoName.From(Path.GetFileName(root)), root, Core.CodeIndexSettings.Default);
         var probe = await embedder.Probe(repo.Settings.Embeddings, Token);
         Assert.SkipWhen(probe.IsError, "no Ollama with the pinned model on this box");
         using var index = new RealIndex(embedder, new GraphifyRunner(GraphifyOptions.FromEnvironment(Environment.GetEnvironmentVariable), new RedactingBodyScrubber()));
 
-        var first = await Step(index, repo, from!);
-        var second = await Step(index, repo, to!);
-        var changed = ChangedFiles(root!, from!, to!);
+        var first = await Step(index, repo, from);
+        var second = await Step(index, repo, to);
+        var changed = ChangedFiles(root, from, to);
 
         output.WriteLine($"changed code files {from}..{to}: {changed.Count}");
         Assert.Equal(0, first.Embed.Carried);
@@ -41,7 +41,7 @@ public sealed class IncrementalEmbedProofHeavyTests(ITestOutputHelper output)
         Assert.Equal(LayerState.Ok, second.Embed.Embeddings);
     }
 
-    private async Task<(BuildReport Build, EmbedCodeIndexResponse Embed)> Step(RealIndex index, Core.Facade.CodeIndexRepo repo, string commit)
+    private async Task<(BuildReport Build, EmbedCodeIndexResponse Embed)> Step(RealIndex index, CodeIndexRepo repo, string commit)
     {
         var watch = Stopwatch.StartNew();
         var build = (await index.Service.Handle(new BuildCodeIndexRequest(repo, CommitSha.From(commit), new Lines()), Token)).Value;

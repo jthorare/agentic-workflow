@@ -27,6 +27,7 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         || string.Equals(eventType, EventTypes.LaunchStarted, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.LaunchFailed, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.LaunchViewerAttached, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.LaunchTakeoverOpened, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.LaunchSessionReported, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.SessionEnded, StringComparison.Ordinal);
 
@@ -40,6 +41,7 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
             EventTypes.LaunchStarted => await Started(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.LaunchFailed => await Change<LaunchFailed>(recorded, rows, static f => f.Launch, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.LaunchViewerAttached => await Change<LaunchViewerAttached>(recorded, rows, static a => a.Launch, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.LaunchTakeoverOpened => await Change<LaunchTakeoverOpened>(recorded, rows, static o => o.Launch, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.LaunchSessionReported => await Change<LaunchSessionReported>(recorded, rows, static r => r.Launch, Fold, cancellationToken).ConfigureAwait(false),
             _ => await Change<SessionEnded>(recorded, rows, static e => e.Launch, Fold, cancellationToken).ConfigureAwait(false),
         };
@@ -205,6 +207,19 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
         return row.Viewer is { Outcome: ViewerOutcomeKind.Unconfirmed } viewer
             ? row with { Viewer = viewer with { Outcome = ViewerOutcomeKind.Opened }, Late = true, Sequence = recorded.Sequence }
             : row;
+    }
+
+    /// <summary>The row after a 'launch.takeover-opened': the takeover's viewer outcome is the launch's latest, its attach command is kept, and a late attach no longer applies to it.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="opened">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static LaunchRow Fold(LaunchRow row, LaunchTakeoverOpened opened, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(opened);
+        ArgumentNullException.ThrowIfNull(recorded);
+        return row with { Viewer = opened.Viewer, Attach = opened.Attach, Late = false, Sequence = recorded.Sequence };
     }
 
     /// <summary>The row after a 'launch.session-reported': the id is kept (the first one wins).</summary>

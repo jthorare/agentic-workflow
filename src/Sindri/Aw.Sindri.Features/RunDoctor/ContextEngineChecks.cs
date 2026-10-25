@@ -35,7 +35,7 @@ internal sealed class ContextEngineChecks(IContextEngine context, OnyxDoctor ony
     // The approved profile's scope as a service reads it (the deny globs apply); null while no profile is approved.
     private static ContextScope? ScopeOf(LoadedProfile? approved) => approved is null
         ? null
-        : new ContextScope(approved.Profile.Context, ScopeRules.Usable([.. RepoDenyGlobs.Entries(approved.Profile).Select(e => new ProfileRepoEntry(e.Name, e.Path, e.DenyPaths))]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
+        : new ContextScope(approved.Profile.Context, ScopeRules.Usable([.. (approved.Profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(approved.Profile, r), [.. RepoConcepts.For(approved.Profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths))], DemotePaths: RepoDemoteGlobs.For(approved.Profile, r)))]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));
 
     private static DoctorCheck Line(string name, Result<MapHealth> health) => health.IsError
         ? new DoctorCheck(name, CheckState.Fail, $"{health.Error.Code}: {health.Error.Message}", "check $AW_SINDRI_HOME/context")

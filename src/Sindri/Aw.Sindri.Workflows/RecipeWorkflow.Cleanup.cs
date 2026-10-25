@@ -15,7 +15,7 @@ internal sealed partial class RecipeWorkflow
 {
     private static readonly ActivityOptions _cleanupOptions = new()
     {
-        StartToCloseTimeout = TimeSpan.FromSeconds(60),
+        StartToCloseTimeout = ActivityBounds.Long,
         RetryPolicy = new RetryPolicy { MaximumAttempts = 5 },
         CancellationToken = CancellationToken.None,   // detached: a cancelled workflow still runs its cleanup
     };

@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONTEXT-006",
+  "status": 400,
+  "detail": "limit is 201; it is 1 to 200 (fix: ask for fewer hits; 'total' says how many matched)",
+  "traceId": "<trace>"
+}

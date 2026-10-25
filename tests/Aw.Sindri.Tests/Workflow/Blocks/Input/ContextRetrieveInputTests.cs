@@ -27,9 +27,8 @@ public sealed class ContextRetrieveInputTests
 
     internal static Result<ContextResult> Result(string queryId = "q_one", DateTimeOffset? asOf = null, Trust trust = Trust.Trusted, string text = "Panes split on a drag.", bool degraded = false) =>
         new ContextResult(ContextResult.CurrentSchemaVersion, QueryId.From(queryId), new ContextQuery("split"), ["feature:layout.split-pane"], "v3", asOf ?? _at,
-            [new ResultSection("graph", [new ResultItem("feature", "feature:layout.split-pane", "Split pane", text, Score: 0.9, ["matched the question"], Provenance.Deterministic, Confirmed: true, trust, ["C1"])], [])],
-            [], [], degraded ? [new DegradedSource(SourceId.From("onyx"), "SND-CONTEXT-010", "Onyx did not answer", asOf ?? _at)] : [], Truncated: false, new BudgetUse(4000, 120, Estimate: true),
-            new Dictionary<string, Citation>(StringComparer.Ordinal) { ["C1"] = new(RecordKey.From("map:web/v3"), [new CitationRef(SourceId.From("map"), ExternalId.From("v3"), SourceVersion.From("v3"))], Permalink: null, Trust.Trusted, CitationState.Current) });
+            [new ResultSection("graph", [new ResultItem("feature", "feature:layout.split-pane", "Split pane", text, Score: 0.9, ["matched the question"], Provenance.Deterministic, Confirmed: true, trust, ["C1"])])],
+            [], [], degraded ? [new DegradedSource(SourceId.From("onyx"), "SND-CONTEXT-010", "Onyx did not answer", asOf ?? _at)] : [], new Dictionary<string, Citation>(StringComparer.Ordinal) { ["C1"] = new(RecordKey.From("map:web/v3"), [new CitationRef(SourceId.From("map"), ExternalId.From("v3"), SourceVersion.From("v3"))], Permalink: null, Trust.Trusted, CitationState.Current) });
 
     private static StepInputContext Context(RepoName? repo, params (string Name, object Value)[] with) => new(
         BlockId.From(ContextRetrieveInput.Id), BlockId.From("step.scope.gather"),

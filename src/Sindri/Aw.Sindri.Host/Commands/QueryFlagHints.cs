@@ -18,7 +18,6 @@ internal static class QueryFlagHints
         return error.Message switch
         {
             var m when m.StartsWith(QueryRules.DepthMessage, StringComparison.Ordinal) => error with { Message = m + " (fix: --depth 2)" },
-            var m when m.StartsWith(QueryRules.BudgetMessage, StringComparison.Ordinal) => error with { Message = m + " (fix: --budget 4000)" },
             var m when m == QueryRules.ShapeMessage => error with { Message = m + " (CLI: text, --node, --item or --symbol)" },
             var m when m == QueryRules.NodeMessage => error with { Message = m + " (CLI: --node)" },
             _ => error,

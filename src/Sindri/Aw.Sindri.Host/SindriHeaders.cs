@@ -15,6 +15,9 @@ internal static class SindriHeaders
     /// <summary>The repo a session caller is scoped to.</summary>
     internal const string Repo = "X-Sindri-Repo";
 
+    /// <summary>The launch id of a session Sindri itself started (its AW_SINDRI_LAUNCH): tells a step child from an owner-started session; a malformed id is SND-API-007, an unknown or closed launch SND-AUTH-003.</summary>
+    internal const string Launch = "X-Sindri-Launch";
+
     /// <summary>The per-start human token.</summary>
     internal const string Token = "X-Sindri-Token";
 

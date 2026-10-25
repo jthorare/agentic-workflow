@@ -1,6 +1,0 @@
-schemaVersion: 1
-name: example
-path: /path/to/repo     # absolute path of the local checkout
-defaultBranch: main
-protectedPaths:         # a diff touching these parks for approval (spec §8.5)
-  - .github/**
