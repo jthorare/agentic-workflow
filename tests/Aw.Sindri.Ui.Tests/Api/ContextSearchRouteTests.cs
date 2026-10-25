@@ -24,6 +24,6 @@ public sealed class ContextSearchRouteTests
 
         var seen = Assert.Single(handler.Requests);
         Assert.Equal(("GET", "/sindri/context/search", "?q=tab%20%26%20manager%3F&limit=20&area=feature%3Atabs&repo=aw%20split"), (seen.Method, seen.Path, seen.Query));
-        Assert.Equal(["feature:tabs.tab-manager", "record:linear:issue/0e5a1b00-0000-4000-8000-000000000203"], answer.Value.Hits.Select(h => h.Key));
+        Assert.Equal(["feature:tabs.tab-manager", "record:linear:issue/0e5a1b00-0000-4000-8000-000000000203"], answer.Value.Hits.Select(h => h.Key), StringComparer.Ordinal);
     }
 }

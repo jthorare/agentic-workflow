@@ -1,7 +1,6 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -46,7 +45,7 @@ public sealed class ContextHitsListTests
         await page.Submit(Token);
 
         Assert.True(page.Hits.IsVisible);
-        Assert.Equal(["Second", "First"], page.Hits.Rows.Select(r => r.Name));
+        Assert.Equal(["Second", "First"], page.Hits.Rows.Select(r => r.Name), StringComparer.Ordinal);
         Assert.Equal(("feature", "matched in: path", "src/second.ts"), (page.Hits.Rows[0].Kind, page.Hits.Rows[0].MatchedText, page.Hits.Rows[0].Snippet));
     }
 
