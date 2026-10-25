@@ -81,11 +81,12 @@ if [ -z "${AW_SINDRI_UI:-}" ]; then
   export AW_SINDRI_UI="$ROOT/artifacts/bin/Aw.Sindri.Ui.Desktop/debug/sindri-ui"
 fi
 [ -x "$AW_SINDRI_UI" ] || setup_fail "no sindri-ui at $AW_SINDRI_UI"
-if [ -n "${DISPLAY:-}" ]; then
-  bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
-else
-  xvfb-run -a bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
+if [ -z "${DISPLAY:-}" ]; then
+  # An Xvfb this check owns and stops by pid on exit (xvfb-run leaves its Xvfb behind when a timeout kills the check).
+  source "$ROOT/tests/ui-checks/xvfb-lib.sh"
+  xvfb_start || setup_fail "no Xvfb display could be started"
 fi
+bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
 APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 

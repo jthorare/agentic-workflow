@@ -173,20 +173,42 @@ read_repos() {
   done
 }
 
+# The running Sindri control plane (#1032). serve writes control.json as one compact line, {"url":..,"pid":N,"epoch":..,
+# "temporal":{"pid":M,..}}: the serve's pid is the TOP-LEVEL one, never the Temporal server's. (Same helper as install-cs.sh;
+# the two scripts are copied alone in their tests, so it is repeated, not sourced.)
+serve_pid() { # the live serve pid, or nothing
+  local f="${AW_SINDRI_HOME:-$STATE/sindri-app}/control.json" pid
+  [ -f "$f" ] || return 0
+  pid="$(jq -r '.pid // empty' "$f" 2> /dev/null || true)"
+  if [ -z "$pid" ]; then
+    pid="$(tr -d '\n' < "$f" | sed -E 's/"temporal"[ ]*:.*//' | sed -nE 's/.*"pid"[ ]*:[ ]*([0-9]+).*/\1/p' | head -n 1)"
+  fi
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac
+  if kill -0 "$pid" 2> /dev/null; then echo "$pid"; fi
+}
+serve_cmd() { # $1 = pid: its executable (Linux, " (deleted)" stripped) and its command line, one per line
+  local exe=""
+  if [ -d /proc/self ]; then exe="$(readlink "/proc/$1/exe" 2> /dev/null || true)"; exe="${exe% (deleted)}"; fi
+  printf '%s\n%s\n' "$exe" "$(ps -o args= -p "$1" 2> /dev/null || true)"
+}
+serve_runs_in() { # $1 = a directory: does the running serve execute from it?
+  local pid
+  pid="$(serve_pid)"
+  [ -n "$pid" ] || return 1
+  case "$(serve_cmd "$pid")" in *"$1/"*) return 0 ;; *) return 1 ;; esac
+}
+
 # ---- step 1: refuse while a TS job runs -------------------------------------------------------------------------------
 
 step1() {
   local pid cmd label uid
   # a C# serve running from the retired bin/sindri-app/ build
-  if [ -d "$STATE/bin/sindri-app" ] && [ -f "$STATE/sindri-app/control.json" ]; then
-    pid="$(sed -nE 's/.*"pid"[ ]*:[ ]*([0-9]+).*/\1/p' "$STATE/sindri-app/control.json" | head -n 1)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      cmd="$(ps -o args= -p "$pid" 2>/dev/null)"
-      case "$cmd" in *"$STATE/bin/sindri-app/"*)
-        say "refused: the Sindri control plane (pid $pid) runs from $STATE/bin/sindri-app/. Nothing was changed. Run: sindri-app stop, then re-run ./setup.sh"
-        exit 1 ;;
-      esac
-    fi
+  pid="$(serve_pid)"
+  if [ -n "$pid" ]; then
+    case "$(serve_cmd "$pid")" in *"$STATE/bin/sindri-app/"*)
+      say "refused: the Sindri control plane (pid $pid) runs from $STATE/bin/sindri-app/. Nothing was changed. Run: sindri-app stop (or sindri stop), then re-run ./setup.sh"
+      exit 1 ;;
+    esac
   fi
   # a loaded launchd job that is running (macOS)
   if [ "$(uname)" = Darwin ] && command -v launchctl > /dev/null 2>&1; then
@@ -395,7 +417,12 @@ post_link() {
   if [ -L "$BIN/sindri-app" ]; then
     case "$(readlink "$BIN/sindri-app")" in */sindri-app.sh) del_file "$BIN/sindri-app" "the sindri-app link" ;; esac
   fi
-  del_state "$STATE/bin/sindri-app" "the retired sindri-app builds"
+  if serve_runs_in "$STATE/bin/sindri-app"; then
+    say "kept $STATE/bin/sindri-app: Sindri is still running from it; run \`sindri stop\`, then re-run ./setup.sh"
+    L "kept $STATE/bin/sindri-app: Sindri is still running from it"
+  else
+    del_state "$STATE/bin/sindri-app" "the retired sindri-app builds"
+  fi
   left=""
   for f in "$BIN"/sindri-*; do
     [ -e "$f" ] || [ -L "$f" ] || continue

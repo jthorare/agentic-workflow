@@ -177,7 +177,7 @@ Each entry pins one concept: it takes its members first, derived concepts fill t
 
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
-| `id` | text | no | derived from `name` | The slug of the concept's key (`scheduling` pins `concept:scheduling`): lowercase letters, digits and `-`. `other` is reserved; ids are unique across the profile's list and the repo's |
+| `id` | text | no | derived from `name` | The slug of the concept's key (`scheduling` pins `concept:scheduling`): lowercase words of letters and digits joined by single `-` or `.` (`tabs.tab-manager` pins a derived id). `other` is reserved; ids are unique across the profile's list and the repo's |
 | `name` | text | yes | none | What the map shows. Not empty |
 | `summary` | text | no | none | A line about the concept |
 | `features` | string[] | no | none | Feature node keys or key globs (`feature:shifts`, `feature:shifts.*`); each must start with `feature:` |
