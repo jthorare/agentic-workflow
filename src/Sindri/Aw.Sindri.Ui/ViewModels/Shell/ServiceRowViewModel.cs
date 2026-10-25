@@ -19,7 +19,7 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     public string Every { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>One plain sentence for what it does: the app's own for a service it knows, else the served description, else "No description yet".</summary>
-    public string What { get; private set => Set(ref field, value); } = Described(name, null);
+    public string What { get; private set => Set(ref field, value); } = Described(name, served: null);
 
     /// <summary>Why the row is failed or paused, as far as the API serves it; empty when it says nothing.</summary>
     public string Reason { get; private set => Set(ref field, value); } = string.Empty;
