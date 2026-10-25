@@ -70,6 +70,9 @@ APP_WRAPPER_PID=$!
 #    ListBoxItems named by their label; the Workflows list has one title button per run, named "Open <title>, <workflow>".
 "$DRIVER" click --type ListBoxItem --name Workflows >"$OUT/nav.log" 2>&1 \
   || setup_fail "the Workflows nav item was not clicked (driver: $(tr -d '\n' <"$OUT/nav.log" | cut -c1-160))"
+# The page opens as the board, which holds only runs on a lane; the List toggle shows every run.
+"$DRIVER" click --type ListBoxItem --name List >"$OUT/list.log" 2>&1 \
+  || setup_fail "the List toggle was not clicked (driver: $(tr -d '\n' <"$OUT/list.log" | cut -c1-160))"
 "$DRIVER" wait-for --type Button --text "Fixture agent run" --state visible --wait-ms 60000 >/dev/null 2>&1 \
   || setup_fail "Workflows shows no run titled Fixture agent run (see $OUT/app.log)"
 buttons="$(timeout 120 "$DRIVER" search --type Button --limit 5000 2>/dev/null)" || setup_fail "the button search failed"
