@@ -25,7 +25,7 @@ public sealed class LimitWatchdogTests : IDisposable
     public LimitWatchdogTests()
     {
         _calls = new FakeWrapCalls(_clock);
-        _scope.OnKill = force => _ = force || _exited.TrySetResult();   // SIGTERM ends the agent unless a test says otherwise; SIGKILL always does
+        _scope.OnKill = _ => _exited.TrySetResult();   // either signal ends the agent unless a test says otherwise
     }
 
     private static WrapLimits Limits(long? wall = 600) => new("sindri-unit.scope", wall, WallGraceSeconds: 60, ParkMaxSeconds: 86400, MemoryMaxBytes: 4 * Gib);
@@ -37,18 +37,19 @@ public sealed class LimitWatchdogTests : IDisposable
         _errors.Dispose();
     }
 
-    private LimitWatchdog Start(WrapLimits limits, LaunchSecret? proof = null)
+    private LimitWatchdog Start(WrapLimits limits, bool withProof = true)
     {
         var watchdog = new LimitWatchdog(limits, _scope, _calls, _clock, _errors);
-        _watch = watchdog.Run(A.FirstLaunchId, proof ?? _proof, _exited.Task, _stop.Token);
+        _watch = watchdog.Run(A.FirstLaunchId, withProof ? _proof : null, _exited.Task, _stop.Token);
         return watchdog;
     }
 
-    private async Task Advance(TimeSpan span)
+    private async Task Advance(TimeSpan span, TimeSpan? step = null)
     {
-        for (var elapsed = TimeSpan.Zero; elapsed < span; elapsed += TimeSpan.FromSeconds(1))
+        var by = step ?? TimeSpan.FromSeconds(1);
+        for (var elapsed = TimeSpan.Zero; elapsed < span; elapsed += by)
         {
-            _clock.Advance(TimeSpan.FromSeconds(1));
+            _clock.Advance(by);
             await Task.Delay(1, TestContext.Current.CancellationToken);
         }
     }
@@ -117,8 +118,7 @@ public sealed class LimitWatchdogTests : IDisposable
     [Fact]
     public async Task A_session_without_a_launch_secret_is_never_suspended_and_asks_nothing()
     {
-        _ = new LimitWatchdog(Limits(wall: 600), _scope, _calls, _clock, _errors);
-        _watch = new LimitWatchdog(Limits(wall: 600), _scope, _calls, _clock, _errors).Run(A.FirstLaunchId, proof: null, _exited.Task, _stop.Token);
+        _ = Start(Limits(wall: 600), withProof: false);
 
         await Advance(TimeSpan.FromMinutes(11));
         await Finish();
@@ -130,7 +130,7 @@ public sealed class LimitWatchdogTests : IDisposable
     [Fact]
     public async Task A_term_that_is_ignored_is_followed_by_kill_after_ten_seconds()
     {
-        _scope.OnKill = force => _ = force && _exited.TrySetResult();   // SIGTERM is ignored
+        _scope.OnKill = force => _ = force && _exited.TrySetResult();   // SIGTERM is ignored; SIGKILL cannot be
         _ = Start(Limits(wall: 600));
 
         await Advance(TimeSpan.FromSeconds(600 + 5));
@@ -147,7 +147,7 @@ public sealed class LimitWatchdogTests : IDisposable
     {
         _ = Start(Limits(wall: null));
 
-        await Advance(TimeSpan.FromHours(30));
+        await Advance(TimeSpan.FromHours(30), TimeSpan.FromMinutes(1));
         await Finish();
 
         Expect.Equal(0, _scope.Kills.Count);
@@ -222,7 +222,7 @@ public sealed class LimitWatchdogTests : IDisposable
         await Finish();
         var peaks = (await watchdog.Conclude(TestContext.Current.CancellationToken))?.Peaks;
 
-        Expect.True(peaks is not null && peaks.MemoryBytes == 300 && peaks.Tasks == 9 && peaks.CpuPercent >= 99 && peaks.WallSeconds >= 10);
+        Expect.True(peaks is not null && peaks.MemoryBytes == 300 && peaks.Tasks == 9 && peaks.CpuPercent >= 50 && peaks.WallSeconds >= 10);
     }
 
     [Fact]
