@@ -72,14 +72,14 @@ public sealed class ServicesTabTests
     }
 
     [Fact]
-    public async Task A_known_service_says_what_it_does_and_an_unknown_one_says_nothing()
+    public async Task A_known_service_says_what_it_does_and_an_unknown_one_says_it_has_no_description_yet()
     {
         var system = new SystemTestHarness("running-job");
 
         await system.Show();
 
         Assert.NotEmpty(system.Vm.ServiceTable.Single(r => string.Equals(r.Name, "heartbeat", StringComparison.Ordinal)).What);
-        Assert.Empty(system.Vm.ServiceTable.Single(r => string.Equals(r.Name, "stuck", StringComparison.Ordinal)).What);
+        Assert.Equal(Labels.ServiceNoDescription, system.Vm.ServiceTable.Single(r => string.Equals(r.Name, "stuck", StringComparison.Ordinal)).What);
     }
 
     [Fact]
