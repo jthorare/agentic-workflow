@@ -27,4 +27,7 @@ public enum CodeIndexState
 
     /// <summary>The repo has no approved profile entry for the index.</summary>
     NotConfigured,
+
+    /// <summary>The index trails the map along main: its commit is an ancestor of the map's, so only the files changed since (<see cref="CodeIndexHead.Pending"/>) may be out of date.</summary>
+    CatchingUp,
 }

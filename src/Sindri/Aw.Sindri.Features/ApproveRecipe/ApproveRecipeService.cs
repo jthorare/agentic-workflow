@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Workflow.ApproveAll;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Core.Workflow.RegistryWrites;
@@ -22,13 +23,15 @@ namespace Aw.Sindri.Features.ApproveRecipe;
 /// <param name="wake">Reaches the running instances.</param>
 /// <param name="clock">When the row says it happened.</param>
 /// <param name="callers">The caller: the approver and the command id.</param>
+/// <param name="shipped">Registers a shipped version that waits for its own approval, so it can be approved by id and hash (#983).</param>
 internal sealed class ApproveRecipeService(
     RecipeApprovalPlanner planner,
     RecipeEvents events,
     IRecipeApprovals approvals,
     IRecipeWake wake,
     TimeProvider clock,
-    ICallerContextAccessor callers)
+    ICallerContextAccessor callers,
+    ShippedRecipeRegistration? shipped = null)
     : IService<ApproveRecipeRequest, ApproveRecipeResponse>
 {
     public async ValueTask<Result<ApproveRecipeResponse>> Handle(ApproveRecipeRequest request, CancellationToken cancellationToken)
@@ -39,7 +42,8 @@ internal sealed class ApproveRecipeService(
             return SindriErrors.AuthRefused.With("ApproveRecipe needs a caller");
         }
 
-        var plan = await planner.Approve(request.Id, request.Hash, cancellationToken).ConfigureAwait(false);
+        var registered = shipped is null ? Results.Success(value: false) : await shipped.EnsureHash(request.Id, request.Hash.Value, cancellationToken).ConfigureAwait(false);
+        var plan = registered.IsError ? registered.Error : await planner.Approve(request.Id, request.Hash, cancellationToken).ConfigureAwait(false);
         if (plan.IsError)
         {
             return plan.Error;

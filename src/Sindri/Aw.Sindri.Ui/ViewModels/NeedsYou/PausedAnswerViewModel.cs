@@ -1,37 +1,31 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
 using Aw.Sindri.Ui.Api.Workflow;
-using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
-/// The answer form of a paused run's card (F3 needs-you spec §3, §5): three options and the one button under them. Allow more tries is
-/// protected, so its button copies the row's served command with the stepper's rounds filled in and sends nothing; a hint and a stop go
-/// to the instance as ApplyCommand:answer-text and ApplyCommand:answer-reject, once per press.
+/// The answer form of a paused run's card (F3 needs-you spec §3, §5): three options and the one button under them. Allow more tries, a hint
+/// and a stop each go to the instance in one click, as ApplyCommand:answer-grant (with the stepper's rounds), ApplyCommand:answer-text and
+/// ApplyCommand:answer-reject, once per press.
 /// </summary>
 internal sealed partial class PausedAnswerViewModel : ObservableObject
 {
     internal const int MinTries = 1;
     internal const int MaxTries = 100;
 
-    private static readonly TimeSpan _copiedShown = TimeSpan.FromMilliseconds(1500);
     private static readonly string[] _all =
     [
         nameof(Option), nameof(ShowsMoreTries), nameof(MoreTriesSelected), nameof(HintSelected), nameof(StopSelected), nameof(ShowsStepper), nameof(ShowsHintBox),
-        nameof(SendWord), nameof(CanSend), nameof(IsSending), nameof(IsSent), nameof(Refusal), nameof(HasRefusal), nameof(Line), nameof(HasLine), nameof(TerminalCli),
+        nameof(SendWord), nameof(CanSend), nameof(IsSending), nameof(IsSent), nameof(Refusal), nameof(HasRefusal), nameof(Line), nameof(HasLine),
     ];
 
     private readonly InstanceCommander _commands;
-    private readonly IClipboard _clipboard;
-    private readonly TimeProvider _clock;
     private string? _instance;
     private string _cli = "";
-    private bool _copied;
 
-    internal PausedAnswerViewModel(InstanceCommander commands, IClipboard clipboard, TimeProvider clock)
+    internal PausedAnswerViewModel(InstanceCommander commands)
     {
-        (_commands, _clipboard, _clock) = (commands, clipboard, clock);
+        _commands = commands;
     }
 
     /// <summary>The caption over the options.</summary>
@@ -102,8 +96,8 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
         }
     } = "";
 
-    /// <summary>The button's words: the terminal's for more tries, else "Send answer".</summary>
-    public string SendWord => MoreTriesSelected ? Labels.NeedsYouTerminalButton(Labels.NeedsYouMoreTries) : Labels.NeedsYouSendAnswer;
+    /// <summary>The button's words: "Send answer".</summary>
+    public string SendWord { get; } = Labels.NeedsYouSendAnswer;
 
     /// <summary>True while an answer is in flight.</summary>
     public bool IsSending { get; private set; }
@@ -117,14 +111,11 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
     /// <summary>True when there is a refusal to show.</summary>
     public bool HasRefusal => Refusal.Length > 0;
 
-    /// <summary>The line under the button: sent or copied.</summary>
-    public string Line => IsSent ? Labels.NeedsYouAnswerSent : _copied ? Labels.NeedsYouAnswerCopied : "";
+    /// <summary>The line under the button: sent.</summary>
+    public string Line => IsSent ? Labels.NeedsYouAnswerSent : "";
 
     /// <summary>True when the line shows.</summary>
     public bool HasLine => Line.Length > 0;
-
-    /// <summary>The command more tries copies: the row's served command with the stepper's rounds.</summary>
-    public string TerminalCli => GrantFlag.Replace(_cli, string.Create(CultureInfo.InvariantCulture, $"--grant {ExtraTries}"));
 
     /// <summary>True when the button can be pressed: not sending, not sent, and the chosen option has what it needs.</summary>
     public bool CanSend => _instance is not null && !IsSending && !IsSent && Option switch
@@ -135,9 +126,6 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
         _ => false,
     };
 
-    /// <summary>Completes when the copied line has been shown for its time and dropped.</summary>
-    internal Task CopiedExpiry { get; private set; } = Task.CompletedTask;
-
     /// <summary>Shows a paused run's row; another run starts fresh, the same one is updated in place.</summary>
     /// <param name="entry">The row; null, or a row that is not a paused run, for none.</param>
     internal void Show(NeedsYouEntry? entry)
@@ -147,7 +135,7 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
         (_instance, _cli) = (instance, entry?.Cli ?? "");
         if (!same)
         {
-            (IsSent, IsSending, _copied, Refusal, HintText, ExtraTries) = (false, false, false, "", "", MinTries);
+            (IsSent, IsSending, Refusal, HintText, ExtraTries) = (false, false, "", "", MinTries);
             Option = ShowsMoreTries ? PausedAnswerOption.MoreTries : PausedAnswerOption.Hint;
         }
 
@@ -163,7 +151,7 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
             return;
         }
 
-        (Option, Refusal, _copied) = (option, "", false);
+        (Option, Refusal) = (option, "");
         Refresh();
     }
 
@@ -177,10 +165,9 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
     {
         ExtraTries = Math.Clamp(ExtraTries + by, MinTries, MaxTries);
         OnChanged(nameof(ExtraTries));
-        OnChanged(nameof(TerminalCli));
     }
 
-    /// <summary>The button, or Ctrl+Enter: copies the terminal command (more tries) or sends the hint or the stop, once per press.</summary>
+    /// <summary>The button, or Ctrl+Enter: sends the grant, the hint or the stop, once per press.</summary>
     /// <returns>A task that completes when the press was handled.</returns>
     internal async Task Send()
     {
@@ -189,15 +176,13 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
             return;
         }
 
-        if (Option == PausedAnswerOption.MoreTries)
+        var body = Option switch
         {
-            await CopyTerminal().ConfigureAwait(true);
-            return;
-        }
-
-        var body = Option == PausedAnswerOption.Hint
-            ? new ApplyCommandBody(instance, CommandKind.Answer, AnswerVariant.Text, HintText.Trim())
-            : new ApplyCommandBody(instance, CommandKind.Answer, AnswerVariant.Reject);
+            PausedAnswerOption.MoreTries => new ApplyCommandBody(instance, CommandKind.Answer, AnswerVariant.Grant, Amount: ExtraTries),
+            PausedAnswerOption.Hint => new ApplyCommandBody(instance, CommandKind.Answer, AnswerVariant.Text, HintText.Trim()),
+            PausedAnswerOption.Stop => new ApplyCommandBody(instance, CommandKind.Answer, AnswerVariant.Reject),
+            _ => throw new InvalidOperationException("an option the answer form doesn't know"),
+        };
         (IsSending, Refusal) = (true, "");   // set before the first await: a second press finds it busy
         Refresh();
         var answer = await _commands.Send(body).ConfigureAwait(true);
@@ -216,23 +201,6 @@ internal sealed partial class PausedAnswerViewModel : ObservableObject
             IsSent = true;
         }
 
-        Refresh();
-    }
-
-    private async Task CopyTerminal()
-    {
-        if (await _clipboard.SetText(TerminalCli, CancellationToken.None).ConfigureAwait(true))
-        {
-            _copied = true;
-            Refresh();
-            CopiedExpiry = DropCopied();
-        }
-    }
-
-    private async Task DropCopied()
-    {
-        await Task.Delay(_copiedShown, _clock).ConfigureAwait(true);
-        _copied = false;
         Refresh();
     }
 

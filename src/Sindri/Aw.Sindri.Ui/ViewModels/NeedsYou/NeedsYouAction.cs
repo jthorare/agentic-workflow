@@ -11,9 +11,6 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// <param name="RejectLike">True for the option that turns the request down (X picks it).</param>
 internal sealed record NeedsYouAction(string CatalogId, string Label, ActionReadiness Readiness, string Cli, bool RejectLike)
 {
-    /// <summary>For a pending action: the phase that brings it ("P4"); empty otherwise.</summary>
-    internal string Stage { get; init; } = "";
-
     /// <summary>False when the catalog the action was read against was empty (not read yet).</summary>
     internal bool CatalogRead { get; init; } = true;
 
@@ -26,9 +23,9 @@ internal sealed record NeedsYouAction(string CatalogId, string Label, ActionRead
     /// <summary>When <see cref="Cli"/> still has a placeholder the row's subject could not fill: the words that say which ("fill in name"); empty otherwise. Kept apart from the command so a copy takes the command alone.</summary>
     internal string FillInHint { get; init; } = "";
 
+    /// <summary>True for a protected action (the catalog's class): the key A never runs it; a click on its button does.</summary>
+    internal bool IsProtected { get; init; }
+
     /// <summary>True when the app can run it (the catalog says ready).</summary>
     internal bool IsReady => Readiness == ActionReadiness.Ready;
-
-    /// <summary>True for a protected action, one that needs a typed confirmation at a terminal (the app shows its command and runs nothing).</summary>
-    internal bool IsProtected => Readiness == ActionReadiness.CliOnly;
 }

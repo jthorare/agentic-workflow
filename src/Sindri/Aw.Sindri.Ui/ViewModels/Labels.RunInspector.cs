@@ -178,7 +178,7 @@ internal static partial class Labels
         Api.Workflow.RecipeStateKind.Agent => KindAgent,
         Api.Workflow.RecipeStateKind.Automatic => "Automatic",
         Api.Workflow.RecipeStateKind.You => KindYou,
-        Api.Workflow.RecipeStateKind.OnlyYou => "Only you",
+        Api.Workflow.RecipeStateKind.OnlyYou => "You or your agent",
         Api.Workflow.RecipeStateKind.SubWorkflow => "Sub-workflow",
         _ => string.Empty,
     };

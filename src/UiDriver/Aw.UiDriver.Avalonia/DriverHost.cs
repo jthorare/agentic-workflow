@@ -19,12 +19,15 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
 {
     private static readonly TimeSpan _poll = TimeSpan.FromMilliseconds(50);
 
+    // How long one verb may hold the UI thread's turn before the caller is answered AW-UIDRIVER-004.
+    private static readonly TimeSpan _uiBudget = TimeSpan.FromSeconds(20);
+
     internal Task<Result<TreeResponse>> Tree(TreeRequest request) => OnUi<TreeResponse>(tree =>
     {
         var start = request.From is { } origin ? tree.Resolve(origin) : Results.Success(tree.Nodes[0]);
         return start.IsError
             ? start.Error
-            : new TreeResponse(tree.InfoOf(start.Value.Facts.Id, start.Value.Visual, Math.Clamp(request.Depth ?? TreeRequest.DefaultDepth, 0, 64)));
+            : new TreeResponse(tree.InfoOf(start.Value.Facts.Id, start.Value.Visual, Math.Clamp(request.Depth ?? TreeRequest.DefaultDepth, 0, TreeRequest.MaxDepth)));
     });
 
     internal Task<Result<SearchResponse>> Search(SearchRequest request) => OnUi<SearchResponse>(tree =>
@@ -152,8 +155,9 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
         return UiDriverErrors.NoMatch.With("nothing has keyboard focus; name an element");
     }
 
-    private async Task<Result<T>> OnUi<T>(Func<UiTree, Result<T>> work) =>
-        await Dispatcher.UIThread.InvokeAsync(() =>
+    private async Task<Result<T>> OnUi<T>(Func<UiTree, Result<T>> work)
+    {
+        var run = Dispatcher.UIThread.InvokeAsync(() =>
         {
             if (window() is not { } root)
             {
@@ -162,5 +166,14 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
 
             root.UpdateLayout();
             return work(new UiTree(root));
-        });
+        }).GetTask();
+        try
+        {
+            return await run.WaitAsync(_uiBudget, clock).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            return UiDriverErrors.TimedOut.With($"the app's UI thread did not finish within {((int)_uiBudget.TotalMilliseconds).ToString(CultureInfo.InvariantCulture)} ms");
+        }
+    }
 }

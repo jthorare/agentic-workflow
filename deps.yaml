@@ -4,13 +4,12 @@
 # Check:   node scripts/check-deps.mjs            (add --mermaid [--base-file F] for the PR graph)
 # Schema:  schemas/deps.schema.json
 #
-# packages  Each node: a C# package (kind: package, with a tier), the bash hooks and statusline (kind: shell)
-#           or the Claude Code mod (kind: mod). `ts` is where the code lives today, `src` where the C#
-#           package lands after its port. `scan` lists the source the checker reads for cli/db/file edges.
+# packages  Each node: a C# package (kind: package, with a tier) or the bash hooks and statusline (kind: shell).
+#           `src` is where the C# package lives. `scan` lists the source the checker reads for cli/db/file edges.
 #           `bins`, `binPaths`, `db`, `files` and `namespace` are what other nodes need an edge to use:
 #           db, files and namespace are relative to the state root (${AW_STATE_DIR:-~/.agentic-workflow}),
 #           and `namespace` owns every path under that directory, listed or not. `routes` lists the HTTP
-#           route prefixes a package serves (e.g. /sindri/). Shell and mod nodes own nothing: they only
+#           route prefixes a package serves (e.g. /sindri/). Shell nodes own nothing: they only
 #           consume.
 # edges     kind: project (a C# ProjectReference), cli (runs the other's binary), db (opens the other's
 #           SQLite file, read-only), file (shared state files), http (calls the other's HTTP API, which
@@ -22,7 +21,7 @@
 #           planned edges are allowed but not built yet. Both directions are checked: a current edge
 #           the scan can't find, and a planned edge it does find, both fail. Adding an edge is a reviewed
 #           change to this file.
-# rules     Nothing depends on a shell or mod node. Project and compose edges point strictly down the
+# rules     Nothing depends on a shell node. Project and compose edges point strictly down the
 #           tiers (a compose edge never into tier 0, which has no Features or Infrastructure); `sublevel`
 #           orders the kernel family inside tier 0 and is allowed on tier 0 only. db and file edges point
 #           down or across, never up; cli and http edges may point anywhere (a contract, §4b.1a). No cycles across
@@ -100,14 +99,12 @@ packages:
     kind: package
     tier: 0
     projectPrefix: Aw.Kernel
-    ts: null
     src: src/Aw.Kernel
     note: "Result<T>, Error, IService<,> and decorators, clock and id ports, envelope and outbox contracts, source-generated JSON settings (§4b.1)"
   - id: Redaction
     kind: package
     tier: 0
     projectPrefix: Aw.Redaction
-    ts: null
     src: src/Redaction
     note: "the scrubbing patterns copied between judge and sindri today, merged into one package; tier 0 per §4e B10"
   - id: Analyzers
@@ -115,7 +112,6 @@ packages:
     tier: 0
     analyzer: true
     projectPrefix: Aw.Analyzers
-    ts: null
     src: src/Aw.Analyzers
     note: "repo-specific Roslyn rules (§4b.6); build-time only, wired with OutputItemType=Analyzer, never a runtime reference"
   - id: KernelData
@@ -123,7 +119,6 @@ packages:
     tier: 0
     sublevel: 1
     projectPrefix: Aw.Kernel.Data
-    ts: null
     src: src/Aw.Kernel.Data
     note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite)"
   - id: KernelTelemetry
@@ -131,7 +126,6 @@ packages:
     tier: 0
     sublevel: 1
     projectPrefix: Aw.Kernel.Telemetry
-    ts: null
     src: src/Aw.Kernel.Telemetry
     note: "logging and OpenTelemetry setup with the scrubbing processor (§4d runtime hardening)"
   - id: KernelTesting
@@ -140,7 +134,6 @@ packages:
     sublevel: 2
     test: true
     projectPrefix: Aw.Kernel.Testing
-    ts: null
     src: tests/Aw.Kernel.Testing
     note: "fakes base, builders, contract-test bases and the Kernel ports' in-memory fakes, golden files, the CTRF lane cap (LaneCap); lives under tests/ next to every package's Aw.<Pkg>.Testing, and only test code references it"
 
@@ -149,9 +142,7 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Judge
-    ts: judge
     src: src/Judge
-    scan: [judge/src]
     bins: [judge]
     db: [judge/decisions.sqlite]
     files: [judge/outbox, judge/sessions]
@@ -164,7 +155,6 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Packets
-    ts: null
     src: src/Packets
     bins: [aw-packets]
     namespace: packets
@@ -174,7 +164,6 @@ packages:
     tier: 1
     projectPrefix: Aw.UiDriver
     exports: [Aw.UiDriver.Avalonia]
-    ts: null
     src: src/UiDriver
     bins: [aw-ui-driver]
     note: "a free, generic, Playwright-like driver for any Avalonia app, modelled on the DevTools MCP tool set: Aw.UiDriver.Core (protocol, selectors, wait rules), Aw.UiDriver.Avalonia (the in-app loopback server an app opts into with UseAwUiDriver(); unshaped, like the UI projects) and Aw.UiDriver.Cli (the client and the aw-ui-driver command; unshaped). `exports` lists Aw.UiDriver.Avalonia because an app has to link the in-app server to be drivable (a reviewed DEPS-PROJ-007 carve-out; the CLI and Core stay the contract for everyone else). It knows no app; a scripted run (desktop evidence) uses the CLI, so other packages need no project edge"
@@ -182,7 +171,6 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Readiness
-    ts: null
     src: src/Readiness
     bins: [aw-readiness]
     namespace: readiness
@@ -194,7 +182,6 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Context
-    ts: null
     src: src/Context
     note: "context retrieval engine: product graph, source adapters, query planner (context spec §4); the package lands in stage S-1A"
 
@@ -203,10 +190,7 @@ packages:
     kind: package
     tier: 2
     projectPrefix: Aw.Evidence
-    ts: skills/ui-evidence
     src: src/Evidence
-    scan: [skills/ui-evidence/src, skills/ui-evidence/scripts]
-    binPaths: [ui-evidence/dist/bin.js]
     files: [ui-evidence/runs, locks/heavy-job.lock, locks/qa-stack.lock]
     namespace: ui-evidence
     note: "Playwright UI evidence and the db-run/api-run data evidence (third-party packages in Aw.Evidence.Infrastructure: Playwright for the browser, Npgsql 10.0.3 for a Postgres target, behind the IDatabaseReader port); owns the box-wide heavy-job lock (AW_HEAVY_SLOTS slots, default 2: locks/heavy-job.lock and .2) and the one-slot QA-stack lock. In the C# build they sit behind Evidence's own Core port IMachineLocks, with a directory adapter (atomic mkdir, owner file) that interoperates with config/lib/locks.sh and the heavy wrapper. A tier-0 or tier-1 package can't take those locks (that would be an upward file edge, DEPS-TIER-002)"
@@ -214,9 +198,7 @@ packages:
     kind: package
     tier: 2
     projectPrefix: Aw.BugFix
-    ts: skills/bugFixOrchestrator
     src: src/BugFix
-    scan: [skills/bugFixOrchestrator/src]
     bins: [bugfix-state]
     namespace: bugfix
     note: "bugfix-state CLI for /bugFixOrchestrator; its state lives under the --state directory the skill passes, bugfix/<repo-slug>/<ticket-slug> after the switch (spec §4c)"
@@ -226,52 +208,40 @@ packages:
     kind: package
     tier: 3
     projectPrefix: Aw.Sindri
-    ts: sindri
     src: src/Sindri
-    scan: [sindri/src]
     bins: [sindri]
-    db: [sindri/ledger.db, sindri-app/ledger.db, sindri-app/views.db]
+    db: [sindri-app/ledger.db, sindri-app/views.db]
     files: [sindri-app/control.json, sindri-app/auth/human.token, fleet]
     namespace: sindri
     routes: [/sindri/]
-    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; ts: sindri (profile, ledger, scrub, observe, index, scope, evolve) is the reference and runs until the switch; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) and workflow engine P1 (the recipe model and validator, `sindri recipe validate`) are in src/Sindri; API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text); P6 adds effects (EffectActivities: RecordEffect, RecheckEffect, RunEffect with the outbox retry policy, outbox.* rows), the registry wake (TemporalRecipeWake over the RecipeHash search attribute), effect.notify.desk (notifications.jsonl, digest, OS banner) and effect.claim.ref (git update-ref through GitClaimRefs)"
+    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) and workflow engine P1 (the recipe model and validator, `sindri recipe validate`) are in src/Sindri; API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text); P6 adds effects (EffectActivities: RecordEffect, RecheckEffect, RunEffect with the outbox retry policy, outbox.* rows), the registry wake (TemporalRecipeWake over the RecipeHash search attribute), effect.notify.desk (notifications.jsonl, digest, OS banner) and effect.claim.ref (git update-ref through GitClaimRefs)"
 
   # ---- tier 4 ----
   - id: SindriUi
     kind: package
     tier: 4
     projectPrefix: Aw.Sindri.Ui
-    ts: null
     src: src/Sindri/Aw.Sindri.Ui
     bins: [sindri-ui]
     files: [sindri-app/ui/preferences.json, sindri-app/ui/instance.sock, sindri-app/ui/instance.lock, sindri-app/ui/instance.pid]
     note: "the Avalonia desktop app (readiness spec §4a UI): Aw.Sindri.Ui (views, view models, the typed API client, platform ports) and the thin Aw.Sindri.Ui.Desktop head (NativeAOT, binary sindri-ui). It references no Sindri project and holds no logic: Sindri's HTTP API and two files under AW_SINDRI_HOME, the endpoint record (control.json) and the per-start human token (auth/human.token), are its only contract (docs/csharp/sindri-ui.md). It owns its own files in a ui/ directory (0700) of Sindri's home: the local preferences and the single-instance lock and socket (instance.sock falls back to an owner-only temp directory when its path is too long for sun_path). Bare `sindri` starts sindri-ui: that Sindri -> SindriUi launch is declared as a cli edge (status planned only because check-deps does not scan C# for cli edges) and closes a cycle with the http edge, so it carries a DEPS-CYCLE-001 exception (owner decision 2026-10-12): the launch only spawns a separate process, shares no code or data, and the HTTP API (with control.json and auth/human.token) stays the app's only contract"
 
-  # ---- outside the tiers: code that stays bash or TypeScript and calls the CLIs (§4a) ----
+  # ---- outside the tiers: code that stays bash and calls the CLIs (§4a) ----
   - id: Hooks
     kind: shell
-    ts: config/hooks
     src: null
     scan: [config/hooks]
     note: "safety and context hooks, per-provider adapters"
   - id: Statusline
     kind: shell
-    ts: config/statusline.sh
     src: null
     scan: [config/statusline.sh]
-    note: "the statusline reads a cache and refreshes it from the judge and scorer CLIs in the background"
-  - id: AwLive
-    kind: mod
-    ts: mods/aw-live
-    src: null
-    scan: [mods/aw-live/hooks]
-    note: "Claude Code mod (stays TypeScript, §4a); calls `scorer live --json`"
+    note: "the statusline reads a cache and refreshes it from the judge CLI in the background"
   - id: Meta
     kind: package
     tier: 2
     projectPrefix: Aw.Meta
     bins: [aw-meta]
-    ts: null
     src: src/Meta
     scan: [scripts/meta-launch.sh, scripts/meta-lane.sh, scripts/launcher-lib.sh]
     note: "aw-meta CLI for the /meta skill: the meta orchestrator's obligations (inbox/outbox), lane map, gate and merge runner, owner queue, health and running log; state under $AW_STATE_DIR/meta; a thin harness Sindri absorbs later"
@@ -280,7 +250,6 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Launcher
-    ts: null
     src: null
     files: [launcher.json]
     note: "the session launcher's machine file and its contract (spec 2026-10-15-sindri-session-launcher-design.md, SL-0): $AW_STATE_DIR/launcher.json is read by aw-meta-launch (bash, SL-1) and by the C# Sindri launcher (SL-2). The repo-side contract files are schemas/launcher.schema.json, config/launcher/builtins.json and config/launcher/terminals.json (shared fixtures: tests/fixtures/launcher); no C# code of its own, so no projects. The bash reader lives with its only user, Meta (scripts/launcher-lib.sh), and is declared by the Meta -> Launcher file edge"
@@ -288,14 +257,12 @@ packages:
     kind: package
     tier: 1
     projectPrefix: Aw.Forge
-    ts: null
     src: src/Forge
     note: "the forge port (IForge): GitHub and file-backed adapters, a fake and its contract tests"
   - id: CodeIndex
     kind: package
     tier: 1
     projectPrefix: Aw.CodeIndex
-    ts: null
     src: src/CodeIndex
     note: "code index: symbols, callers and callees per repo, built in the background when trunk moves (code-index spec)"
 
@@ -304,17 +271,17 @@ edges:
   - from: Evidence
     to: Judge
     kind: cli
-    status: current
+    status: planned
     note: "ui-evidence asks judge for selector repair and visual critique"
   - from: BugFix
     to: Judge
     kind: cli
-    status: current
+    status: planned
     note: "bugfix-state runs judge resolution-check and judge why"
   - from: BugFix
     to: Evidence
     kind: cli
-    status: current
+    status: planned
     note: "bugfix-state runs the sibling ui-evidence entry point (same tier, through its CLI contract)"
   - from: Hooks
     to: Meta

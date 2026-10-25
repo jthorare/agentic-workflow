@@ -207,16 +207,16 @@ public sealed class NeedsYouMapperTests
         Assert.Contains(new SheetDetail("Changed", servedProfile), ProfileDetails.Build(profile));
     }
 
-    // review run 1, K16: a catalog word this build doesn't know cannot run, in the list as in the palette.
+    // q93: the catalog's ui word gates nothing; an action the catalog lists is ready, one it does not list waits for the catalog.
     [Fact]
-    public void An_unknown_catalog_word_is_cli_only_on_a_row_and_on_a_control()
+    public void A_listed_action_is_ready_whatever_its_ui_word_and_an_unlisted_one_is_pending()
     {
         var catalog = Catalog() with { Rows = [.. Catalog().Rows.Select(r => r.Action == "Decide" ? r with { Ui = "from-the-future" } : r)] };
         var feed = NeedsYouMapper.Map(Golden<NeedsYouList>("needs-you", "fixture"), catalog, Pending(), _counts);
-        var control = new ViewModels.Controls.ControlViewModel(catalog.Rows.First(r => r.Action == "Decide"), send: null, new FakeClipboard(), new FakeTimeProvider(A.Noon));
+        var without = NeedsYouMapper.Map(Golden<NeedsYouList>("needs-you", "fixture"), catalog with { Rows = [.. catalog.Rows.Where(r => r.Action != "Decide")] }, Pending(), _counts);
 
-        Assert.All(feed.Rows[0].Actions, a => Assert.Equal(ActionReadiness.CliOnly, a.Readiness));
-        Assert.Equal(ViewModels.Controls.ControlKind.CliOnly, control.Kind);
+        Assert.All(feed.Rows[0].Actions, a => Assert.Equal(ActionReadiness.Ready, a.Readiness));
+        Assert.All(without.Rows[0].Actions, a => Assert.Equal(ActionReadiness.Pending, a.Readiness));
     }
 
     // review run 1, K17: one chip type. The served chip goes onto the row as it is served, tone included.

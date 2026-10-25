@@ -156,7 +156,7 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(CodexRef);
 
-        Assert.True(sheet.Focus?.IsPending);
+        Assert.True(sheet.Focus?.IsCopyOnly);   // the control has no send yet: it is the command to copy
         Assert.Equal("sindri agents focus " + CodexRef, sheet.FocusCli);
         Assert.Equal("Coming soon · sindri agents focus " + CodexRef, sheet.FocusLine);
         Assert.False(sheet.IsFocusEnabled);

@@ -128,14 +128,16 @@ public sealed class EvalRecorderAnswerTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Two_identical_text_answers_on_a_failing_step_are_both_recorded_as_text_with_their_text()
+    public void Two_identical_text_answers_on_a_refused_step_are_both_recorded_as_text_with_their_text()
     {
-        var failed = """{"kind":"step.failed"}""";
+        // A refused report parks the Step with needs-answer; a failed Step no transition takes now retries and parks as unavailable, which takes no text answer.
+        var refused = """{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"x"}}""";
+        var gate = """{"gate.test.model":"fail"}""";
         var parked = """{"state":"parked","park":"needs-answer"}""";
-        var recorded = RoundTrip(StepGated(),
-            Line(failed, gates: null, parked),
+        var recorded = RoundTripReportingSteps(StepGated(),
+            Line(refused, gate, parked),
             Line("""{"kind":"answer","variant":"text","outputs":{"fact:answer":"Yes."}}""", gates: null, """{"state":"produce"}"""),
-            Line(failed, gates: null, parked),
+            Line(refused, gate, parked),
             Line("""{"kind":"answer","variant":"text","outputs":{"fact:answer":"Yes."}}""", gates: null, """{"state":"produce"}"""));
 
         Assert.Equal([EvalVariant.Text, EvalVariant.Text], recorded.Steps.Where(s => s.Trigger.Kind == "answer").Select(s => s.Trigger.Variant));

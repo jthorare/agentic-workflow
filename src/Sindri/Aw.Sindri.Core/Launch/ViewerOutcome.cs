@@ -12,6 +12,9 @@ public sealed record ViewerOutcome(ViewerOutcomeKind Kind, string? Code = null, 
     /// <summary>The viewer's label ('Warp', the terminal's name), none for 'print'.</summary>
     public string? ViewerLabel { get; init; }
 
+    /// <summary>Why no viewer ran, for a skip that has a reason ('background: viewer opens on takeover'); recorded on 'launch.started''s viewer.</summary>
+    public string? Reason { get; init; }
+
     /// <summary>A client attached in time.</summary>
     public static ViewerOutcome Opened { get; } = new(ViewerOutcomeKind.Opened);
 

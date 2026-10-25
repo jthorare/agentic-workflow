@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.Palette;
 
 /// <summary>
-/// One palette entry (UI spec §8): a catalog row (its control, and its status: "ready", "arrives in P3" or
+/// One palette entry (UI spec §8): a catalog row (its control, and its status: "ready" or
 /// "Copy: sindri …", "Copied" for 1.5 s after a copy) or a page to go to, each with its key.
 /// </summary>
 internal sealed class PaletteEntry : ObservableObject
@@ -23,8 +23,11 @@ internal sealed class PaletteEntry : ObservableObject
         control?.PropertyChanged += OnControlChanged;
     }
 
-    // What a ready row that Enter skips says instead of "ready".
+    // What a sendable row that Enter skips says instead of "ready".
     private string NotRun { get; }
+
+    // A row the app has no sender for but opens a form (or dialog) for: it is called ready all the same.
+    private bool OpensForm { get; init; }
 
     /// <summary>Stops listening to its control (the palette rebuilt its entries; the control outlives them).</summary>
     internal void Detach() => Control?.PropertyChanged -= OnControlChanged;
@@ -48,8 +51,9 @@ internal sealed class PaletteEntry : ObservableObject
         { IsSending: true } => Control.IsAnnouncingSending ? Labels.Sending : string.Empty,   // "Sending…" after 300 ms, as the control's own live region says it; silent before, never "ready"
         { IsAccepted: true } => Control.Outcome,
         { IsFailed: true } => Control.ErrorCode,
-        { IsReady: true } => Runs ? Labels.Ready : NotRun,   // a ready row is called ready only when Enter does something with it
-        { IsPending: true } => Labels.NotInApp,
+        { IsSendable: true } => Runs ? Labels.Ready : NotRun,   // a sendable row is called ready only when Enter does something with it
+        _ when OpensForm => Runs ? Labels.Ready : NotRun,
+        _ when !Runs => NotRun,   // a copy-only row Enter does nothing with (the item sheet's close actions) says where it lives
         { CopyLabel: Labels.Copied } => Labels.Copied,
         _ => Labels.CopyCli(Control.Cli),
     };
@@ -63,7 +67,7 @@ internal sealed class PaletteEntry : ObservableObject
     /// <summary>The refusal's detail as served, or empty.</summary>
     public string ErrorDetail => Control?.ErrorDetail ?? string.Empty;
 
-    /// <summary>True when Enter does something with it at all (a pending row never does), even while it sends.</summary>
+    /// <summary>True when Enter does something with it at all, even while it sends.</summary>
     internal bool Runs { get; }
 
     /// <summary>True when it has a status.</summary>
@@ -77,7 +81,7 @@ internal sealed class PaletteEntry : ObservableObject
     /// <summary>True for a catalog row.</summary>
     public bool IsAction => Control is not null;
 
-    /// <summary>True when Enter does something (a pending row never does, nor a command already sending).</summary>
+    /// <summary>True when Enter does something (not a command already sending).</summary>
     public bool IsEnabled => Runs && !IsSending;
 
     /// <summary>True while it is the palette's selection.</summary>
@@ -89,13 +93,14 @@ internal sealed class PaletteEntry : ObservableObject
     /// <summary>A page entry's page, or null.</summary>
     public PageId? Page { get; }
 
-    /// <summary>A catalog row's entry: it runs when ready and wired, or for Stop Sindri (which goes to Health), and copies when cli-only.</summary>
+    /// <summary>A catalog row's entry: it runs when wired, or for Stop Sindri (which goes to Health), and copies when the app has no form for it.</summary>
     /// <param name="control">The row's control.</param>
     /// <param name="runs">True when Enter does something with it.</param>
-    /// <param name="notRun">What a ready row that Enter skips says instead of "ready".</param>
+    /// <param name="notRun">What a sendable row that Enter skips says instead of "ready".</param>
+    /// <param name="opensForm">True when the row opens a form or dialog of the app.</param>
     /// <returns>The entry.</returns>
-    internal static PaletteEntry For(ControlViewModel control, bool runs, string notRun = Labels.NotInApp) =>
-        new(control.Action, control.Label, control.Shortcut, runs, control, page: null, notRun);
+    internal static PaletteEntry For(ControlViewModel control, bool runs, string notRun = Labels.NotInApp, bool opensForm = false) =>
+        new(control.Action, control.Label, control.Shortcut, runs, control, page: null, notRun) { OpensForm = opensForm };
 
     /// <summary>A page's entry.</summary>
     /// <param name="page">The page.</param>

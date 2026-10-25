@@ -3,9 +3,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// <summary>The action bar (<see cref="NeedsYouBarViewModel"/>, continued): what A, D, Ctrl+Enter, Esc and the buttons do.</summary>
 internal sealed partial class NeedsYouBarViewModel
 {
-    private static readonly TimeSpan _copiedShown = TimeSpan.FromMilliseconds(1500);
-
-    /// <summary>A, or the primary button: approve, accept, or copy the terminal command. On a desk request not read to the end the first press only asks.</summary>
+    /// <summary>A, or the primary button: approve or accept. On a desk request not read to the end the first press only asks.</summary>
     /// <returns>A task that completes when the press was handled.</returns>
     internal async Task PressApprove()
     {
@@ -14,13 +12,12 @@ internal sealed partial class NeedsYouBarViewModel
             return;
         }
 
-        if (ShowsConfirm)
+        if (Kind == BarKind.Settings)
         {
-            ConfirmFocusRequested?.Invoke(this, EventArgs.Empty);   // a protected row's A only moves to its control: the hold or the typed box does the approving
-        }
-        else if (ShowsTerminal)
-        {
-            await CopyTerminal().ConfigureAwait(true);
+            if (PrimaryEnabled && _confirm is { } confirm)
+            {
+                await confirm.Approve().ConfigureAwait(true);
+            }
         }
         else if (Kind == BarKind.Decision)
         {
@@ -169,30 +166,6 @@ internal sealed partial class NeedsYouBarViewModel
         {
             await Report(NeedsYouBarOutcome.Drop, answers: null).ConfigureAwait(true);
         }
-    }
-
-    /// <summary>Copies the served command the terminal button stands for.</summary>
-    /// <returns>A task that completes when the clipboard answered.</returns>
-    internal async Task CopyTerminal()
-    {
-        if (!ShowsTerminal || TerminalCli.Length == 0)
-        {
-            return;
-        }
-
-        if (await _clipboard.SetText(TerminalCli, CancellationToken.None).ConfigureAwait(true))
-        {
-            HintIsSuccess = true;
-            Refresh();
-            CopiedExpiry = DropCopied();
-        }
-    }
-
-    private async Task DropCopied()
-    {
-        await Task.Delay(_copiedShown, _clock).ConfigureAwait(true);
-        HintIsSuccess = false;
-        Refresh();
     }
 
     // One report per press: the flag is set before the first await. A refusal shows as served and leaves the request pressable.

@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "SND-CONTEXT-200",
+  "status": 404,
+  "detail": "that concept isn't in this map (fix: read the concepts first, and name one of their ids)",
+  "traceId": "<trace>"
+}

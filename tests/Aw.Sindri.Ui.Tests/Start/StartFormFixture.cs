@@ -74,14 +74,6 @@ internal sealed class StartFormFixture
         Server.StartAnswer = new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
     }
 
-    /// <summary>The catalog with the StartInstance row's ui word changed.</summary>
-    internal void CatalogSays(string ui)
-    {
-        var catalog = JsonNode.Parse(GoldenFiles.Api("commands", "catalog"))!; // why: the golden is a JSON document
-        catalog["rows"]!.AsArray().Single(r => (string?)r!["action"] == "StartInstance")!["ui"] = ui; // why: the catalog has the row
-        Server.Catalog = new RouteAnswer(HttpStatusCode.OK, catalog.ToJsonString());
-    }
-
     private static JsonNode Row(JsonNode template, (string Id, string Standing, int Version) row)
     {
         var clone = template.DeepClone();

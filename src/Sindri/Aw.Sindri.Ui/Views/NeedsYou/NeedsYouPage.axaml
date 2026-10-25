@@ -197,13 +197,11 @@
                     <StackPanel Orientation="Horizontal" Spacing="6">
                       <Button Classes="command-control" Classes.primary="{Binding IsPrimary}" IsEnabled="{Binding IsEnabled}" Content="{Binding Action.Label}"
                               Click="OnAction" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.HelpText="{Binding Tooltip}" AutomationProperties.Name="{Binding Name}" />
-                      <TextBlock Classes="caption subtle mono" Text="{Binding Action.Cli}" IsVisible="{Binding IsProtected}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Action.Cli}" />
-                      <TextBlock Classes="caption subtle" Text="{Binding Action.FillInHint}" IsVisible="{Binding IsProtectedWithHint}" VerticalAlignment="Center" />
                     </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <!-- A paused run's answer form (F3 needs-you spec §3, slice 4): three options and one button. More tries is protected, so its button copies the command. -->
+              <!-- A paused run's answer form (F3 needs-you spec §3, slice 4): three options and one button; each option is one click. -->
               <Border x:Name="NeedsYouAnswer" Classes="card-section" IsVisible="{Binding ShowsAnswer}">
                 <StackPanel Spacing="8" DataContext="{Binding Answer}" x:DataType="ny:PausedAnswerViewModel">
                   <TextBlock Classes="eyebrow" Text="{Binding Caption}" />
@@ -386,13 +384,6 @@
                 <Border Classes="kbd"><TextBlock Classes="kbd" Text="A" /></Border>
               </StackPanel>
             </Button>
-            <Button x:Name="NeedsYouTerminal" Classes="bar-button terminal" IsVisible="{Binding Bar.ShowsTerminal}" Click="OnTerminal" AutomationProperties.Name="{Binding Bar.TerminalName}"
-                    ToolTip.Tip="{Binding Bar.TerminalTip}">
-              <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
-                <TextBlock Text="⌂" VerticalAlignment="Center" />
-                <TextBlock Classes="mono" Text="{Binding Bar.TerminalButton}" VerticalAlignment="Center" />
-              </StackPanel>
-            </Button>
             <Button x:Name="NeedsYouSendBack" Classes="bar-button" IsVisible="{Binding Bar.ShowsSendBack}" IsEnabled="{Binding Bar.SendBackEnabled}" Click="OnSendBack"
                     ToolTip.Tip="{Binding Bar.SendBackTooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{Binding Bar.SendBackName}" AutomationProperties.HelpText="{Binding Bar.SendBackTooltip}">
               <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
@@ -431,16 +422,6 @@
               </StackPanel>
             </Panel>
           </WrapPanel>
-          <!-- The shared confirmation controls (F3 needs-you spec §8.3): the typed box of a drifted profile and the hold of approve-all, shown only when the catalog lets the app confirm.
-               A moves focus here and nothing more; the control approves, and the bar sends what it reports. -->
-          <StackPanel x:Name="NeedsYouConfirm" Spacing="6" IsVisible="{Binding Bar.ShowsConfirm}" IsEnabled="{Binding Bar.ConfirmEnabled}">
-            <Border x:Name="NeedsYouTypedRow" IsVisible="{Binding Bar.ShowsTyped}">
-              <ctl:TypedConfirmBox x:Name="NeedsYouTypedBox" PartPrefix="NeedsYouTyped" DataContext="{Binding Bar.TypedBox}" />
-            </Border>
-            <Border x:Name="NeedsYouHoldRow" IsVisible="{Binding Bar.ShowsHold}">
-              <ctl:HoldButton x:Name="NeedsYouHoldControl" PartName="NeedsYouHold" DataContext="{Binding Bar.HoldBox}" HorizontalAlignment="Left" />
-            </Border>
-          </StackPanel>
           <StackPanel x:Name="NeedsYouReasonBox" Spacing="6" IsVisible="{Binding Bar.IsSendingBack}">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="body-strong" Text="{Binding Bar.ReasonLabel}" />
@@ -474,7 +455,7 @@
             </Button>
           </StackPanel>
           <TextBlock x:Name="NeedsYouBarRefusal" Classes="caption attention" Text="{Binding Bar.Refusal}" IsVisible="{Binding Bar.HasRefusal}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-          <TextBlock x:Name="NeedsYouBarHint" Classes="caption muted" Classes.attention="{Binding Bar.HintIsAttention}" Classes.success="{Binding Bar.HintIsSuccess}" Text="{Binding Bar.Hint}"
+          <TextBlock x:Name="NeedsYouBarHint" Classes="caption muted" Classes.attention="{Binding Bar.HintIsAttention}" Text="{Binding Bar.Hint}"
                      IsVisible="{Binding Bar.HasHint}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
        </Border>

@@ -81,7 +81,7 @@ internal sealed class RegistryHarness : IAsyncDisposable
             .AddEffectPorts(H)
             .AddRecipeBlocks()
             .AddSingleton<BlockCatalog>().AddSingleton<StepInputRuntimes>()
-            .AddScoped<RecipeApprovalPlanner>().AddScoped<RecipeRevokePlanner>()
+            .AddScoped<RecipeApprovalPlanner>().AddScoped<Core.Workflow.ApproveAll.ShippedApprovalPlans>().AddScoped<RecipeRevokePlanner>()
             .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
             .AddScoped<RecipeRegistryReader>()
             .AddSingleton(Workflow.RecipeReaderTests.Reader)

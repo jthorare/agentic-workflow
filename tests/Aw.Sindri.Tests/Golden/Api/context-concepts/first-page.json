@@ -1,0 +1,44 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "state": "ok",
+  "concepts": [
+    {
+      "id": "concept:billing",
+      "name": "Billing",
+      "summary": "Invoices and payment.",
+      "source": "override",
+      "size": {
+        "features": 1,
+        "records": 0,
+        "decisions": 0,
+        "code": 1
+      },
+      "citations": []
+    }
+  ],
+  "other": {
+    "id": "concept:other",
+    "name": "Other",
+    "size": {
+      "features": 1,
+      "records": 0,
+      "decisions": 0,
+      "code": 0
+    }
+  },
+  "links": [
+    {
+      "from": "concept:billing",
+      "to": "concept:scheduling",
+      "weight": 1
+    },
+    {
+      "from": "concept:scheduling",
+      "to": "concept:billing",
+      "weight": 1
+    }
+  ],
+  "next": "v1:1"
+}

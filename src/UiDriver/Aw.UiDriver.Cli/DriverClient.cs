@@ -19,6 +19,8 @@ internal sealed class DriverClient : IDisposable
         [HttpStatusCode.RequestTimeout] = ErrorKind.Timeout,
     };
 
+    private static readonly TimeSpan _pingBudget = TimeSpan.FromSeconds(5);
+
     private readonly HttpClient _http;
     private readonly Uri _origin;
 
@@ -61,17 +63,24 @@ internal sealed class DriverClient : IDisposable
     /// <summary>Calls a verb.</summary>
     /// <param name="verb">The verb's name.</param>
     /// <param name="body">The request's JSON.</param>
+    /// <param name="timeout">How long to wait for the whole answer.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The answer's bytes (JSON, or PNG for a screenshot), or the driver's failure, or AW-UIDRIVER-006 when it does not answer.</returns>
-    internal async Task<Result<byte[]>> CallAsync(string verb, byte[] body, CancellationToken cancellationToken)
+    /// <returns>The answer's bytes (JSON, or PNG for a screenshot), or the driver's failure, AW-UIDRIVER-004 when it does not answer within <paramref name="timeout"/>, or AW-UIDRIVER-006 when it is unreachable.</returns>
+    internal async Task<Result<byte[]>> CallAsync(string verb, byte[] body, TimeSpan timeout, CancellationToken cancellationToken)
     {
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(timeout);
         try
         {
             using var content = new ByteArrayContent(body);
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            using var response = await _http.PostAsync(new Uri(_origin, "/v1/" + verb), content, cancellationToken).ConfigureAwait(false);
-            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            using var response = await _http.PostAsync(new Uri(_origin, "/v1/" + verb), content, budget.Token).ConfigureAwait(false);
+            var bytes = await response.Content.ReadAsByteArrayAsync(budget.Token).ConfigureAwait(false);
             return response.StatusCode == HttpStatusCode.OK ? bytes : FailureOf(response.StatusCode, bytes);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return UiDriverErrors.TimedOut.With($"the driver at {_origin} did not answer {verb} within {((int)timeout.TotalMilliseconds).ToString(CultureInfo.InvariantCulture)} ms");
         }
         catch (HttpRequestException e)
         {
@@ -84,12 +93,18 @@ internal sealed class DriverClient : IDisposable
     /// <returns>True when GET /v1/ping answered 200.</returns>
     internal async Task<bool> PingAsync(CancellationToken cancellationToken)
     {
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(_pingBudget);
         try
         {
-            using var response = await _http.GetAsync(new Uri(_origin, "/v1/ping"), cancellationToken).ConfigureAwait(false);
+            using var response = await _http.GetAsync(new Uri(_origin, "/v1/ping"), budget.Token).ConfigureAwait(false);
             return response.StatusCode == HttpStatusCode.OK;
         }
         catch (HttpRequestException)
+        {
+            return false;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return false;
         }

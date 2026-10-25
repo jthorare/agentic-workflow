@@ -291,17 +291,6 @@ public sealed class StartFormSendTests
 
     // Q7: readiness is the catalog row's: pending until its phase ships, and nothing is known before the catalog is read.
     [Fact]
-    public async Task A_start_the_catalog_says_is_pending_cannot_be_pressed_and_names_its_phase()
-    {
-        _fixture.CatalogSays("pending:P5");
-        var form = await Filled(_fixture);
-
-        await form.Submit(Token);
-
-        Assert.Equal((false, Labels.Arrives("P5"), false, 0), (form.IsReady, form.Readiness, form.CanStart, _fixture.Server.Started.Count));
-    }
-
-    [Fact]
     public async Task Before_the_catalog_is_read_start_is_not_ready()
     {
         var form = new StartFormViewModel(new ViewModels.Controls.CatalogViewModel(new FakeClipboard(), _fixture.Clock), () => StartFormFixture.Api, _fixture.Server, _fixture.Files);

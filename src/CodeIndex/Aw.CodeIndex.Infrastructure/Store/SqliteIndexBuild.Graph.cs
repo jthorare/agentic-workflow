@@ -33,7 +33,7 @@ internal sealed partial class SqliteIndexBuild
     public ValueTask<Result<EmbeddingProgress>> CountEmbeddings(CancellationToken cancellationToken)
         => SqliteFailure.Guard<EmbeddingProgress>("Counting embeddings", async () => new EmbeddingProgress(
             (int)await Sql.Count(connection, "SELECT COUNT(*) FROM embeddings", cancellationToken).ConfigureAwait(false),
-            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols", cancellationToken).ConfigureAwait(false)));
+            (int)await Sql.Count(connection, "SELECT COUNT(*) FROM symbols s WHERE EXISTS (SELECT 1 FROM bodies b WHERE b.symbol_id = s.id) OR EXISTS (SELECT 1 FROM embeddings e WHERE e.symbol_id = s.id)", cancellationToken).ConfigureAwait(false)));
 
     private async Task<Result<Unit>> WriteGraph(GraphSnapshot graph, CancellationToken cancellationToken)
     {

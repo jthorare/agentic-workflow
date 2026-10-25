@@ -81,6 +81,7 @@ internal static class ContextCodeText
         {
             var why = source.Code ?? source.Reason;
             _ = text.AppendLine(Invariant($"  {source.Id.Value} {SourceWord(source.State)}{(why is null ? string.Empty : " (" + why + ")")}"));
+            _ = text.Append(SymbolWords.Pending(source.CatchingUp));
         }
 
         foreach (var line in view.Degraded)

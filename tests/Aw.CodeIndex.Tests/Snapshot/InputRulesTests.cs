@@ -121,6 +121,20 @@ public sealed class InputRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_role_added_after_a_build_removes_its_files_from_the_next_build_of_the_same_tree()
+    {
+        // why: an index is built per commit from this inventory, so a role takes effect on the next build; an index already built keeps its files until then
+        TreeEntry[] tree = [Regular("src/a.cs", "1", 1), Regular("tests/fixtures/data.ts", "2", 1)];
+
+        var before = InputRules.Apply(_commit, tree, _limits).Value;
+        var after = InputRules.Apply(_commit, tree, _limits with { DenyPaths = ["**/*fixture*/**"] }).Value;
+
+        Assert.Equal(["src/a.cs", "tests/fixtures/data.ts"], before.Files.Select(f => f.Path), StringComparer.Ordinal);
+        Assert.Equal(["src/a.cs"], after.Files.Select(f => f.Path), StringComparer.Ordinal);
+        Assert.Equal(1, after.Skipped[SkipReason.Denied]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_total_cap_counts_only_kept_code_files_and_stops_with_SND_CODEIDX_003_one_byte_over()
     {
         var atCap = InputRules.Apply(_commit, [Regular("a.cs", "1", 60), Regular("b.ts", "2", 40), Regular("big.cs", "3", 5_000)], _limits with { MaxTotalBytes = 100 });
@@ -135,9 +149,21 @@ public sealed class InputRulesTests
     [InlineData("src/util/strings.cs", "SRC/UTIL/*.cs", true)]
     [InlineData("src/Other/Strings.cs", "src/Util/**", false)]
     [InlineData("a/b/c.cs", "**/c.cs", true)]
+    [InlineData("tests/fixtures/data.ts", "**/*fixture*", true)]
+    [InlineData("tests/fixtures/data.ts", "**/*fixture*/**", true)]
+    [InlineData("src/orders/place.ts", "**/*fixture*", false)]
     [InlineData("a.cs", "", false)]
     public void MatchesAny_applies_a_glob_ignoring_case(string path, string glob, bool expected)
         => Assert.Equal(expected, InputRules.MatchesAny(path, [glob]));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("src/Test_a.py", "prefix:test_", true)]
+    [InlineData("src/a.Generated.ts", "suffix:.generated.ts", true)]
+    [InlineData("src/v2/a.ts", "regex:^v\\d+$", true)]
+    [InlineData("src/v2b/a.ts", "regex:^v\\d+$", false)]
+    [InlineData("src/a.ts", "regex:(", false)]   // an invalid expression matches nothing and never throws
+    public void MatchesAny_applies_a_prefix_suffix_or_regex_role_entry_to_a_segment(string path, string entry, bool expected)
+        => Assert.Equal(expected, InputRules.MatchesAny(path, [entry]));
 
     private static TreeEntry Regular(string path, string blob, long? size) => Entry("100644", path, blob, size);
 

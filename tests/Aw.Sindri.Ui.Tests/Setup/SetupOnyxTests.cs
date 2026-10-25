@@ -82,7 +82,7 @@ public sealed class SetupOnyxTests
     [Fact]
     public async Task Without_a_ready_catalog_row_the_step_is_the_command_to_copy_and_nothing_else()
     {
-        var (_, onyx, step) = await Open(Golden("first-run"), new SetupFixture("extra-onyx-pending"));   // the served catalog with SetupOnyx, ConnectOnyx and DeferOnyx still pending (all three are ready since api SO-A5)
+        var (_, onyx, step) = await Open(Golden("first-run"), new SetupFixture("extra-onyx-pending", "SetupOnyx", "ConnectOnyx", "DeferOnyx"));   // a catalog that lists SetupOnyx, ConnectOnyx and DeferOnyx as cli-only
 
         Assert.Equal((false, false, false, "sindri onyx up"), (onyx.ShowStart, onyx.ShowDefer, onyx.ShowForm, step.Action?.Cli?.Cli));
     }
@@ -90,7 +90,7 @@ public sealed class SetupOnyxTests
     [Fact]
     public async Task A_waiting_login_without_a_ready_row_is_the_terminal_command_not_a_form()
     {
-        var (_, onyx, step) = await Open(Waiting(), new SetupFixture("extra-onyx-pending"));
+        var (_, onyx, step) = await Open(Waiting(), new SetupFixture("extra-onyx-pending", "SetupOnyx", "ConnectOnyx", "DeferOnyx"));
 
         Assert.Equal((false, "sindri onyx connect"), (onyx.ShowForm, step.Action?.Cli?.Cli));
     }
@@ -186,7 +186,7 @@ public sealed class SetupOnyxTests
         (onyx.Email, onyx.Password) = ("me@example.com", Sentinel);
         await onyx.Connect(Token);
 
-        Assert.Equal(("Only you can do this from the app. An agent session can't.", Labels.SetupOnyxFailed), (refused, onyx.FormError));
+        Assert.Equal(("Sindri's own steps can't answer this.", Labels.SetupOnyxFailed), (refused, onyx.FormError));
     }
 
     [Fact]
@@ -244,8 +244,8 @@ public sealed class SetupOnyxTests
         var shown = (setup.IsFootnoteShown, setup.Footnote.Cli);
         await setup.Footnote.Copy(Token);
 
-        Assert.Equal((true, "sindri-app onyx up"), shown);
-        Assert.Equal("sindri-app onyx up", _f.Clipboard.Text);
+        Assert.Equal((true, "sindri onyx up"), shown);
+        Assert.Equal("sindri onyx up", _f.Clipboard.Text);
     }
 
     [Theory]

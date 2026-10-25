@@ -1,11 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ap="using:Aw.Sindri.Ui.ViewModels.Approvals"
-             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Setup.SetupWorkflowsConfirmView"
              x:DataType="ap:ApproveAllViewModel">
-  <!-- The workflows row's plan, hold and typed alternative (setup spec §2.2, §8.3) on the approve-all dialog's own view model: what each workflow may do, the ones that need their own
-       look, then a hold for the served time or the phrase typed. It shows only while the catalog lets the app approve; otherwise the row keeps the terminal copy. -->
+  <!-- The workflows row's plan and its Approve button (setup spec §2.2, §8.3) on the approve-all dialog's own view model: what each workflow may do, the ones that need their own
+       look, then one Approve click. -->
   <StackPanel x:Name="SetupWorkflowsPanel" Spacing="8" IsVisible="{Binding IsOpen}">
     <Border x:Name="SetupWorkflowsReading" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="caption subtle" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
@@ -67,17 +66,9 @@
     <Border x:Name="SetupWorkflowsNotice" IsVisible="{Binding HasNotice}" AutomationProperties.Name="{Binding Notice}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="caption" Text="{Binding Notice}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
-    <Button x:Name="SetupWorkflowsRetry" Classes="command-control" IsVisible="{Binding CanRetry}" Click="OnRetry" AutomationProperties.Name="{Binding RetryLabel}">
-      <TextBlock Classes="button" Text="{Binding RetryLabel}" AutomationProperties.AccessibilityView="Raw" />
+    <Button x:Name="SetupWorkflowsApprove" Classes="command-control" IsVisible="{Binding CanApprove}" Click="OnApprove" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ApproveLabel}">
+      <TextBlock Classes="button" Text="{Binding ApproveLabel}" AutomationProperties.AccessibilityView="Raw" />
     </Button>
-
-    <StackPanel x:Name="SetupWorkflowsConfirm" Spacing="8" IsVisible="{Binding CanApprove}">
-      <Border x:Name="SetupWorkflowsHoldRow" IsVisible="{Binding OffersHold}">
-        <ctl:HoldButton x:Name="SetupWorkflowsHold" PartName="SetupWorkflowsHoldPart" DataContext="{Binding Hold}" HorizontalAlignment="Left" />
-      </Border>
-      <TextBlock Classes="caption subtle" Text="{Binding TypeCaption}" AutomationProperties.AccessibilityView="Raw" />
-      <ctl:TypedConfirmBox x:Name="SetupWorkflowsTypedBox" PartPrefix="SetupWorkflowsTyped" DataContext="{Binding TypedBox}" />
-    </StackPanel>
 
     <Border x:Name="SetupWorkflowsRunning" IsVisible="{Binding IsApplying}" AutomationProperties.Name="{Binding Progress}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="body" Text="{Binding Progress}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

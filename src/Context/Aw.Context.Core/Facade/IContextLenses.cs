@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
@@ -61,6 +62,13 @@ public interface IContextLenses
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The view, or SND-CONTEXT-001/003/004/006/020/030/044/045/120.</returns>
     public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>Ranked full-text search over everything in the map the caller may read: node labels, file paths, record titles, decision wording and quotes, descriptive attributes (title over path over text).</summary>
+    /// <param name="query">The words, the limit, the area and repo, and which map.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The hits best first and how many matched in all (a session whose repo implements nothing gets none), or SND-CONTEXT-001/004/006/020/030/044/045/120.</returns>
+    public ValueTask<Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>The direct children of a repo path with their status.</summary>
     /// <param name="query">The repo, the path and the filters.</param>

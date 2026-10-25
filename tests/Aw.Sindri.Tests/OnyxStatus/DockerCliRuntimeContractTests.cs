@@ -26,7 +26,7 @@ public sealed class DockerCliRuntimeContractTests : ContainerRuntimeContract
     // A box with the given facts: answers each docker command as its CLI would, and remembers whether the stack was started and stopped.
     private sealed class Box(ContainerRuntimeFacts facts, IReadOnlyDictionary<string, string[]> localImages)
     {
-        private const string NginxRow = """{"Service":"nginx","State":"STATE","Health":"","Image":"nginx@sha256:aaa","Publishers":[{"URL":"127.0.0.1","TargetPort":80,"PublishedPort":3000,"Protocol":"tcp"},{"URL":"","TargetPort":8080,"PublishedPort":0,"Protocol":"tcp"}]}""";
+        private const string NginxRow = """{"Service":"nginx","State":"STATE","Health":"","Image":"nginx@sha256:aaa","Publishers":[{"URL":"127.0.0.1","TargetPort":80,"PublishedPort":3189,"Protocol":"tcp"},{"URL":"","TargetPort":8080,"PublishedPort":0,"Protocol":"tcp"}]}""";
         private const string ApiRow = """{"Service":"api_server","State":"STATE","Health":"healthy","Image":"onyxdotapp/onyx-backend@sha256:bbb","Publishers":[]}""";
 
         private bool _started;
@@ -67,7 +67,7 @@ public sealed class DockerCliRuntimeContractTests : ContainerRuntimeContract
 
             if (arguments.Contains("config", StringComparer.Ordinal))
             {
-                return Exited("{\"services\":{\"nginx\":{\"ports\":[{\"mode\":\"ingress\",\"host_ip\":\"127.0.0.1\",\"target\":80,\"published\":\"3000\",\"protocol\":\"tcp\"}]}}}");
+                return Exited("{\"services\":{\"nginx\":{\"ports\":[{\"mode\":\"ingress\",\"host_ip\":\"127.0.0.1\",\"target\":80,\"published\":\"3189\",\"protocol\":\"tcp\"}]}}}");
             }
 
             return arguments.Contains("ps", StringComparer.Ordinal) ? Exited(Ps()) : Exited("");
@@ -108,7 +108,7 @@ public sealed class DockerCliRuntimeContractTests : ContainerRuntimeContract
             }
 
             var state = live ? "running" : "exited";
-            return $"a1b2c3d4e5f6|{state}|nginx|nginx@sha256:aaa|127.0.0.1:3000->80/tcp\nb2c3d4e5f6a1|{state}|api_server|onyxdotapp/onyx-backend@sha256:bbb|\n";
+            return $"a1b2c3d4e5f6|{state}|nginx|nginx@sha256:aaa|127.0.0.1:3189->80/tcp\nb2c3d4e5f6a1|{state}|api_server|onyxdotapp/onyx-backend@sha256:bbb|\n";
         }
 
         private ToolRun StopByIds()

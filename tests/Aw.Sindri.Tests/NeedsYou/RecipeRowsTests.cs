@@ -50,6 +50,17 @@ public sealed class RecipeRowsTests
     }
 
     [Fact]
+    public void A_workflow_row_carries_the_waiting_versions_id_and_hash_in_its_cli_line()
+    {
+        var hash = ApproveAllFixtures.Hash("5d4c3b2a1f0e");
+        var own = ApproveAllFixtures.ShipNeedsItsOwn() with { Hash = hash, Version = 2 };
+
+        var row = Assert.Single(NeedsYouRows.ForRecipes(new ShippedRecipePlan([], [own]), _t, _plain).Value);
+
+        Assert.Equal($"sindri recipe approve workflow.ship@{hash.Value}", row.Cli);
+    }
+
+    [Fact]
     public void A_plan_with_nothing_waiting_has_no_row() => Assert.Empty(NeedsYouRows.ForRecipes(new ShippedRecipePlan([], []), _t, _plain).Value);
 
     [Fact]

@@ -6,8 +6,8 @@ using Aw.Sindri.Ui.ViewModels.Item;
 namespace Aw.Sindri.Ui.ViewModels.Palette;
 
 /// <summary>
-/// The command palette (UI spec §8). Sections: <b>Actions</b>, every catalog row not in Sindri, ready first, then
-/// pending (shown, never run), then cli-only (copied); <b>Go to</b>, the pages with their keys; <b>Sindri</b>, Rebuild
+/// The command palette (UI spec §8). Sections: <b>Actions</b>, every catalog row not in Sindri, the ones the app runs first, then
+/// the ones it copies; <b>Go to</b>, the pages with their keys; <b>Sindri</b>, Rebuild
 /// views, Stop Sindri (which goes to Health, where it lives: §4.8; its confirm is U4) and Health. Typing filters by a
 /// fuzzy match on labels and ids; ↑/↓ move between entries that do something; Enter runs one and Esc closes. U1 has no
 /// selected row, so Actions lists the whole catalog. It decides nothing about an action: the catalog says what runs.
@@ -147,10 +147,10 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Runs an entry (Enter, or a click): a page is shown, Stop Sindri goes to Health, a ready row is sent once as
+    /// Runs an entry (Enter, or a click): a page is shown, Stop Sindri goes to Health, a row with a sender is sent once as
     /// <see cref="RunPolicy"/> says (by default the palette stays open and the entry shows §4.1's lifecycle; Esc still
-    /// closes it and the command keeps running), and a cli-only row is copied ("Copied", the palette stays open). A
-    /// pending entry, or one already sending, does nothing. What ran is remembered.
+    /// closes it and the command keeps running), and a copy-only row is copied ("Copied", the palette stays open). An
+    /// entry already sending does nothing. What ran is remembered.
     /// </summary>
     /// <param name="entry">The entry.</param>
     /// <param name="cancellationToken">Cancels a send or a copy.</param>
@@ -170,9 +170,6 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
                 _goTo(page);
                 Close();
                 break;
-            case { Control.IsCliOnly: true }:
-                await Copy(entry, entry.Control, cancellationToken).ConfigureAwait(true);
-                break;
             case { Control.Action: "StopProcess" }:
                 Close();
                 _goTo(PageId.System);
@@ -181,6 +178,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
                 // The form's or dialog's own control sends it; it opens first, so the window hands the palette's opener on to it.
                 OpenerOf(entry.Control.Action)?.Invoke();
                 Close();
+                break;
+            case { Control.IsCopyOnly: true }:
+                await Copy(entry, entry.Control, cancellationToken).ConfigureAwait(true);
                 break;
             default:
                 // why: an enabled entry without a page has a control
@@ -198,9 +198,9 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
 
     private List<PaletteSection> Build()
     {
-        var actions = _catalog.Controls.Where(c => !_sindri.Contains(c.Action, StringComparer.Ordinal)).OrderBy(c => c.Kind)
-            .Select(c => PaletteEntry.For(c, Runs(c), NotRun(c)));
-        var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c)))
+        var actions = _catalog.Controls.Where(c => !_sindri.Contains(c.Action, StringComparer.Ordinal)).OrderBy(c => c.IsCopyOnly && !OpensForm(c))
+            .Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)));
+        var sindri = _sindri.Select(_catalog.For).OfType<ControlViewModel>().Select(c => PaletteEntry.For(c, Runs(c), NotRun(c), OpensForm(c)))
             .Append(PaletteEntry.For(PageId.System, "G ."));
         return
         [
@@ -210,19 +210,24 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
         ];
     }
 
-    // Enter does something with a ready row that has a sender, with Stop Sindri (it goes to Health) and with a cli-only row it can copy.
+    // Enter does something with a row that has a sender, with Stop Sindri (it goes to Health) and with a row the app has no form for, which it copies.
     // Never sends a destructive one: its in-app confirm is on its own control (Stop Sindri's is on Health, where Enter goes).
-    // Create item opens its form (when the shell has one); the item sheet's close actions need the version the sheet shows.
+    // Create item opens its form (when the shell has one); the item sheet's close actions need the version the sheet shows, so they point at the sheet.
     private bool Runs(ControlViewModel control) =>
-        (control.IsSendable && !control.IsDestructive) || (control.IsReady && control.Action == "StopProcess")
-        || OpensForm(control) || (control.IsCliOnly && control.CanCopy);
+        (control.IsSendable && !control.IsDestructive) || control.Action == "StopProcess"
+        || OpensForm(control) || (control.IsCopyOnly && control.CanCopy && !NeedsForm(control) && !ItemSheetViewModel.IsSheetAction(control.Action));
+
+    // Create item, Start workflow and Approve all are done in a form or dialog of the app: with none to open (no shell) they are not a command to copy here, and not runnable.
+    private static bool NeedsForm(ControlViewModel control) => string.Equals(control.Action, "CreateItem", StringComparison.Ordinal)
+        || string.Equals(control.Action, "StartInstance", StringComparison.Ordinal)
+        || string.Equals(control.Action, "ApproveAllRecipes", StringComparison.Ordinal);
 
     // Create item and Start workflow open their forms (when the shell has them).
     private bool OpensForm(ControlViewModel control) =>
-        control.IsReady && ((control.Action == "CreateItem" && CreateItem is not null) || (control.Action == "StartInstance" && StartWorkflow is not null)
-            || (control.Action == "ApproveAllRecipes" && ApproveAll is not null));
+        (control.Action == "CreateItem" && CreateItem is not null) || (control.Action == "StartInstance" && StartWorkflow is not null)
+            || (control.Action == "ApproveAllRecipes" && ApproveAll is not null);
 
-    // What a ready row that Enter skips says instead of "ready": where it lives, or that the app has no sender for it.
+    // What a sendable row that Enter skips says instead of "ready": where it lives, or that the app has no sender for it.
     private static string NotRun(ControlViewModel control) =>
         ItemSheetViewModel.IsSheetAction(control.Action) ? Labels.OnItemSheet : Labels.NotInApp;
 

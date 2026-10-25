@@ -41,9 +41,6 @@ internal static partial class Labels
     /// <summary>The line after an answer was taken.</summary>
     internal const string NeedsYouAnswerSent = "Answer sent. The run carries on.";
 
-    /// <summary>The line after the more-tries command was copied.</summary>
-    internal const string NeedsYouAnswerCopied = "Copied. Paste it in your terminal to allow more tries.";
-
     /// <summary>The badge, node footer and step row of a run the user took over.</summary>
     internal const string NeedsYouTookOver = "You took over";
 

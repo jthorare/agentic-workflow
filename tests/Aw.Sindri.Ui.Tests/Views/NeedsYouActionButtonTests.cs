@@ -126,6 +126,7 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         await SentOnce(window);
     });
 
+
     private const string Unfillable = "sindri services pause <itemId>";
 
     private static T Golden<T>(string slug, string scenario)
@@ -161,39 +162,26 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         Assert.Empty(line.Hint);
     });
 
+    // q93: the catalog's ui word gates nothing; a Pause the catalog does not list is pending and carries the row's served command.
     [Fact]
-    public Task A_pending_Pauses_tooltip_help_text_and_sheet_line_carry_the_pause_command() => OnUi(async () =>
+    public Task A_pending_Pauses_tooltip_help_text_and_sheet_line_carry_the_row_command() => OnUi(async () =>
     {
-        var (feed, pause) = FailureFeed(r => r with { Ui = "pending:P9" });
+        var list = Golden<NeedsYouList>("needs-you", "fixture");
+        var catalog = Golden<CommandList>("commands", "catalog");
+        var failure = list.Rows.Single(r => r.Kind == NeedsYouKinds.Failure);
+        var unlisted = catalog with { Rows = [.. catalog.Rows.Where(r => r.Action != "PauseService")] };
+        var feed = NeedsYouMapper.Map(list with { Rows = [failure] }, unlisted, decisions: null, new HomeCounts(0, 0, 0));
         var (window, _) = await WithFeed(feed);
 
         var row = Rows(window).Single();
-        var button = PauseButton(row);
+        var pause = failure.Cli;
 
-        Assert.Equal(pause, ToolTip.GetTip(button));
-        Assert.Equal(pause, AutomationProperties.GetHelpText(button));
+        Assert.Equal(pause, ToolTip.GetTip(PauseButton(row)));
+        Assert.Equal(pause, AutomationProperties.GetHelpText(PauseButton(row)));
         Assert.Equal(Labels.NotInTheAppYet(pause), PauseLine(row).Value);
         Assert.Equal(pause, PauseLine(row).Command);
     });
 
-    [Fact]
-    public Task A_pending_Pause_with_an_unfillable_placeholder_names_it_in_the_tooltip_and_beside_the_sheet_line() => OnUi(async () =>
-    {
-        var (feed, _) = FailureFeed(r => r with { Ui = "pending:P9", Cli = Unfillable });
-        var (window, _) = await WithFeed(feed);
-        var hint = Labels.FillInHint(["itemId"]);
-
-        var row = Rows(window).Single();
-        var line = PauseLine(row);
-
-        Assert.Equal(Labels.WithHint(Unfillable, hint), ToolTip.GetTip(PauseButton(row)));
-        Assert.Equal(Labels.WithHint(Unfillable, hint), AutomationProperties.GetHelpText(PauseButton(row)));
-        Assert.Equal(Labels.NotInTheAppYet(Unfillable), line.Value);
-        Assert.Equal(hint, line.Hint);
-        Assert.Equal(Unfillable, line.Command);
-    });
-
-    // The sheet's hint caption: a visible TextBlock whose own text and screen-reader name are the hint; none when there is no hint.
     private static List<TextBlock> SheetHintCaptions(ShellWindow window, string hint) =>
         [.. window.GetVisualDescendants().OfType<NeedsYouSheet>().Single().GetVisualDescendants().OfType<TextBlock>()
             .Where(t => t.IsEffectivelyVisible && string.Equals(t.Text, hint, StringComparison.Ordinal))];
@@ -201,7 +189,7 @@ public sealed class NeedsYouActionButtonTests : IDisposable
     [Fact]
     public Task The_failure_sheet_draws_the_hint_as_a_caption_a_screen_reader_names() => OnUi(async () =>
     {
-        var (feed, _) = FailureFeed(r => r with { Ui = "pending:P9", Cli = Unfillable });
+        var (feed, _) = FailureFeed(r => r with { Cli = Unfillable });
         var (window, shell) = await WithFeed(feed);
         var hint = Labels.FillInHint(["itemId"]);
 
@@ -215,7 +203,7 @@ public sealed class NeedsYouActionButtonTests : IDisposable
     [Fact]
     public Task The_failure_sheet_draws_no_hint_caption_when_the_command_is_complete() => OnUi(async () =>
     {
-        var (feed, _) = FailureFeed(r => r with { Ui = "pending:P9" });
+        var (feed, _) = FailureFeed(r => r);
         var (window, shell) = await WithFeed(feed);
 
         shell.NavigateToRowSheet(new DeepLink(DeepLinkKind.NeedsYou, feed.Rows[0].Id));
@@ -224,19 +212,5 @@ public sealed class NeedsYouActionButtonTests : IDisposable
         var sheet = window.GetVisualDescendants().OfType<NeedsYouSheet>().Single();
         Assert.True(sheet.IsEffectivelyVisible);
         Assert.DoesNotContain(sheet.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Text?.StartsWith("fill in", StringComparison.Ordinal) == true);
-    });
-
-    [Fact]
-    public Task A_protected_Pause_with_an_unfillable_placeholder_shows_the_hint_beside_its_inline_command() => OnUi(async () =>
-    {
-        var (feed, _) = FailureFeed(r => r with { Ui = "cli-only:typed", Cli = Unfillable });
-        var (window, _) = await WithFeed(feed);
-
-        var texts = Rows(window).Single().GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
-
-        Assert.Contains(texts, t => string.Equals(t, Unfillable, StringComparison.Ordinal));
-        Assert.Contains(texts, t => string.Equals(t, Labels.FillInHint(["itemId"]), StringComparison.Ordinal));
-        var button = PauseButton(Rows(window).Single());
-        Assert.Equal(Labels.WithHint(Labels.ProtectedTooltip, Labels.FillInHint(["itemId"])), AutomationProperties.GetHelpText(button));
     });
 }

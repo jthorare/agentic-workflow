@@ -2,8 +2,8 @@
 
 `bugfix-state` is the state helper the `/bugFixOrchestrator` skill drives a bug fix through. It owns the state file and
 refuses every step the rules don't allow, so the skill can't skip a gate or edit evidence. It is the C# port of
-`skills/bugFixOrchestrator/src` (spec §4a step 1): a reimplementation, not a translation. The TypeScript helper stays
-installed until the switch, and nothing in `setup.sh` points at this build.
+the TypeScript helper `skills/bugFixOrchestrator/src` (spec §4a step 1): a reimplementation, not a translation. The
+TypeScript helper is gone; `scripts/install-cs.sh` publishes this binary and links it as `bugfix-state`.
 
 Source: `src/BugFix` (full shape: `Core`, `Features`, `Infrastructure`, `Host`; NativeAOT binary `bugfix-state`).
 Tests: `tests/Aw.BugFix.Tests` (slices, rules, contract bindings, the CLI end to end) and `tests/Aw.BugFix.Testing`
@@ -14,7 +14,7 @@ Tests: `tests/Aw.BugFix.Tests` (slices, rules, contract bindings, the CLI end to
 The skill text is this CLI's only caller. It keeps working through these points; everything else is this package's own
 design.
 
-- Every command takes `--state <dir>`. After the switch the skill passes `bugfix/<repo-slug>/<ticket-slug>` (spec §4c).
+- Every command takes `--state <dir>`. The skill passes `bugfix/<repo-slug>/<ticket-slug>` (spec §4c).
 - The commands and flags below.
 - Exit 0 on success, 3 on a refusal. A refusal prints one stderr line starting with `refused:`, and the skill reports
   the reason.
@@ -205,7 +205,7 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 
 ## Files
 
-Everything lives under the `--state` directory; the C# build never reads TS-written state (spec §4c).
+Everything lives under the `--state` directory; nothing reads state a TypeScript helper wrote (spec §4c).
 
 - `digest.key`: the bug fix's random HMAC key for the environment digests (64 hex characters, owner-only), made by `init`
   before the state (written to a temporary file and moved into place; `init` keeps a valid key and replaces a missing or

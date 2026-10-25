@@ -58,13 +58,24 @@ internal static partial class ScopePacketChecks
         foreach (var source in ScopeJson.Items(ScopeJson.Obj(row, "searched"), "sources").OfType<JsonObject>())
         {
             var state = ScopeJson.Str(source, "state");
-            if (string.IsNullOrEmpty(state) || string.Equals(state, "ok", StringComparison.Ordinal))
+            var reason = ScopeJson.Str(source, "reason");
+            if (string.IsNullOrEmpty(state))
             {
                 continue;
             }
 
+            // An ok source is no fault; one with a recorded reason (catching-up) is a limit the row has to list.
+            if (string.Equals(state, "ok", StringComparison.Ordinal))
+            {
+                if (ScopeFixLines.Match(lens, state, reason) is { } okLimit)
+                {
+                    recorded.Add(okLimit.Name);
+                }
+
+                continue;
+            }
+
             var id = ScopeJson.Str(source, "id") ?? "source";
-            var reason = ScopeJson.Str(source, "reason");
             if (string.Equals(state, "degraded", StringComparison.Ordinal))
             {
                 s.Fail(lens, $"the {lens} lens's {id} is degraded, which is no recorded limit", "Run the lens again (regather); a degraded source is a fault, not a limit.");

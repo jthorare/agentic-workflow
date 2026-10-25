@@ -9,14 +9,11 @@ internal static partial class Labels
     /// <summary>The primary action while it asks first (the request was not read to the end).</summary>
     internal const string NeedsYouApproveAsk = "Approve?";
 
-    /// <summary>Said when the typed challenge ran out before it was sent: a new phrase is shown.</summary>
-    internal const string NeedsYouTypedExpired = "That took too long. A new phrase is shown: type it again.";
-
     /// <summary>Said when Sindri answered but did not approve the profile.</summary>
     internal const string NeedsYouNotApproved = "Sindri did not approve it. Ask again from the box.";
 
     /// <summary>Said when the workflow a row names is not in the list Sindri serves any more.</summary>
-    internal const string NeedsYouRecipeGone = "Sindri doesn't list that workflow any more. Reload and try again.";
+    internal const string NeedsYouRecipeGone = "There is no waiting version of that workflow to approve.";
 
     /// <summary>The secondary action of a request.</summary>
     internal const string NeedsYouSendBack = "Send back";
@@ -81,34 +78,11 @@ internal static partial class Labels
     /// <summary>The done card's sentence after a drop.</summary>
     internal const string NeedsYouDroppedBody = "This run has ended.";
 
-    /// <summary>The bar's line after the terminal command was copied.</summary>
-    internal const string NeedsYouCopied = "Copied. Paste it in your terminal to approve.";
-
-    /// <summary>The bar's line under a merge: the command is the user's to run.</summary>
-    internal const string NeedsYouTerminalOnly = "Only you can approve a merge, and only from your terminal. The button copies the command.";
-
-    /// <summary>The bar's line under any other protected action.</summary>
-    internal const string NeedsYouProtectedHint = "Protected: only you can do this, from a terminal.";
-
     /// <summary>The bar's line under a settings or workflow approval.</summary>
     internal const string NeedsYouKeepSettings = "Leave it here to keep the current settings.";
 
     /// <summary>Why send back is off for a settings or workflow approval.</summary>
     internal const string NeedsYouSendBackLocked = "These can only be approved. Change the settings or workflow file to undo.";
-
-    /// <summary>The terminal button's words: the action and where it goes.</summary>
-    /// <param name="action">The action's words.</param>
-    /// <returns>The words.</returns>
-    internal static string NeedsYouTerminalButton(string action) => action + " · terminal";
-
-    /// <summary>The terminal button's accessible name.</summary>
-    /// <param name="action">The action's words.</param>
-    /// <param name="subject">What it acts on.</param>
-    /// <returns>The name.</returns>
-    internal static string NeedsYouTerminalName(string action, string subject) => $"{action} {subject}, copies a command to run in your terminal";
-
-    /// <summary>The words of a merge's terminal button.</summary>
-    internal const string NeedsYouApproveMerge = "Approve merge";
 
     /// <summary>The words of the terminal button for more tries.</summary>
     internal const string NeedsYouMoreTries = "Allow more tries";
@@ -156,9 +130,6 @@ internal static partial class Labels
     /// <param name="subject">The request's title.</param>
     /// <returns>The name.</returns>
     internal static string NeedsYouMoreName(string subject) => $"More actions for {subject}";
-
-    /// <summary>What hovering the terminal button says.</summary>
-    internal const string NeedsYouTerminalTip = "Copies a command to run in your terminal";
 
     /// <summary>The action bar's accessible name.</summary>
     /// <param name="subject">The request's title.</param>

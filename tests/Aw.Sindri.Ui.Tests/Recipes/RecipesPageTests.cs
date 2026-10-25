@@ -65,6 +65,40 @@ public sealed class RecipesPageTests
     }
 
     [Fact]
+    public async Task A_recipe_listed_twice_shows_its_new_version_as_a_row_of_its_own_saying_it_waits()
+    {
+        var waitingHash = "sha256:" + new string('b', 64);
+        _f.Serve(RecipesPageFixture.Row("workflow.phase"), RecipesPageFixture.WaitingRow("workflow.phase", waitingHash));
+
+        var page = await _f.Shown(Token);
+
+        Assert.Equal(2, page.Rows.Count);
+        var (approved, waiting) = (page.Rows[0], page.Rows[1]);
+        Assert.Equal((false, true, true), (approved.GainsCapability, waiting.GainsCapability, waiting.NeedsApproval));
+        Assert.Equal("New version waiting for approval: it can now do more.", waiting.WaitingText);
+        Assert.Contains(waiting.WaitingText, waiting.AccessibleName, StringComparison.Ordinal);
+        Assert.Equal(new DeepLink(DeepLinkKind.Recipe, "workflow.phase@" + waitingHash["sha256:".Length..][..12]), waiting.Link);
+
+        page.ShowNeeds();
+        Assert.Same(waiting, Assert.Single(page.Rows));   // the filter that needs approval still finds it
+    }
+
+    [Fact]
+    public async Task A_read_again_keeps_the_waiting_row_selected_and_does_not_hop_to_the_approved_one()
+    {
+        var waitingHash = "sha256:" + new string('b', 64);
+        _f.Serve(RecipesPageFixture.Row("workflow.phase"), RecipesPageFixture.WaitingRow("workflow.phase", waitingHash));
+        var page = await _f.Shown(Token);
+        Assert.True(page.Press("J"));
+        Assert.True(page.Press("J"));
+        Assert.True(page.Selected?.GainsCapability);
+
+        await page.Refresh(RecipesPageFixture.Url, Token);
+
+        Assert.True(page.Selected?.GainsCapability);
+    }
+
+    [Fact]
     public async Task A_row_asks_the_shell_to_open_its_sheet()
     {
         _f.ServeThree();

@@ -59,6 +59,7 @@ public static class SindriCoreServiceCollectionExtensions
             .AddScoped<ReportedIdAdmission>()
             .AddScoped<LaunchSessionEvents>()
             .AddScoped<RecipeApprovalPlanner>()
+            .AddScoped<Workflow.ApproveAll.ShippedApprovalPlans>()
             .AddScoped<RecipeRevokePlanner>()
             .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
             .AddScoped<RecipeRegistryReader>()

@@ -37,7 +37,7 @@ internal sealed partial class SetupViewModel
             || (string.Equals(step.Id, ProfileStep, StringComparison.Ordinal) && string.Equals(action, ProfileAction, StringComparison.Ordinal))
             || (string.Equals(step.Id, RecipesStep, StringComparison.Ordinal) && string.Equals(action, ApproveAllViewModel.Action, StringComparison.Ordinal)));
 
-    private bool Ready(string action) => _catalog.For(action) is { IsReady: true };
+    private bool Ready(string action) => _catalog.IsReady(action);
 
     // The refresh and the agents' registration are the app's own button when the catalog lists them as ready.
     private bool OpensHere(string action) => (string.Equals(action, MapRefresh, StringComparison.Ordinal) || string.Equals(action, RegisterAction, StringComparison.Ordinal)) && Ready(action);
@@ -68,11 +68,11 @@ internal sealed partial class SetupViewModel
         }
         else if (string.Equals(row.Id, ProfileStep, StringComparison.Ordinal))
         {
-            row.Profile = new SetupProfileConfirmViewModel(_catalog, () => _url, _profileHash, _api, _clock);
+            row.Profile = new SetupProfileConfirmViewModel(() => _url, _profileHash, _api, () => _catalog.Row("ApproveProfile")?.Cli ?? "");
         }
         else if (string.Equals(row.Id, RecipesStep, StringComparison.Ordinal))
         {
-            row.Workflows = new ApproveAllViewModel(_catalog, () => _url, _api, _clock, _reducedMotion);
+            row.Workflows = new ApproveAllViewModel(_catalog, () => _url, _api, _clock);
         }
         else if (string.Equals(row.Id, OnyxStep, StringComparison.Ordinal))
         {
@@ -98,7 +98,7 @@ internal sealed partial class SetupViewModel
         }
         else if (row.Workflows is { } all)
         {
-            if (row.NeedsYou && all.IsReady)
+            if (row.NeedsYou)
             {
                 if (!all.IsOpen)
                 {

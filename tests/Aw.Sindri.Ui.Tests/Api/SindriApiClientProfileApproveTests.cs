@@ -7,7 +7,7 @@ using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
 
-/// <summary>The client's profile approval (needs-you slice 3): a POST of the full hash and the answer to the typed challenge, made as the human, and the server's own answers read back.</summary>
+/// <summary>The client's profile approval (needs-you slice 3): a POST of the full hash and nothing else, made as the human, and the server's own answers read back.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SindriApiClientProfileApproveTests
 {
@@ -18,18 +18,19 @@ public sealed class SindriApiClientProfileApproveTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task ApproveProfile_posts_the_hash_and_the_typed_answer_to_the_profile_route_as_the_human()
+    public async Task ApproveProfile_posts_the_hash_alone_to_the_profile_route_as_the_human()
     {
         var canned = new Canned(HttpStatusCode.OK, GoldenFiles.Api("profile-approve", "approved"));
         var client = new SindriApiClient(new HttpClient(canned), new InMemoryHumanToken("tok-1"), TimeProvider.System);
 
-        var done = await client.ApproveProfile(_api, new ApproveProfileRequest(Hash, new ProfileAnswer("CHL-1", "approve profile 70e158")), Token);
+        var done = await client.ApproveProfile(_api, new ApproveProfileRequest(Hash), Token);
 
         Assert.True(done.IsSuccess);
         Assert.Equal((true, 3L), (done.Value.Approved, done.Value.Sequence));
         Assert.Equal((HttpMethod.Post, "/sindri/profile/approve", "human", "ui"), (canned.Method, canned.Path, canned.Caller, canned.Client));
         var body = JsonNode.Parse(canned.Body!)!;
-        Assert.Equal((Hash, "CHL-1", "approve profile 70e158"), (body["hash"]!.GetValue<string>(), body["answer"]!["challenge"]!.GetValue<string>(), body["answer"]!["typed"]!.GetValue<string>()));
+        Assert.Equal(Hash, body["hash"]!.GetValue<string>());
+        Assert.Equal(["hash"], body.AsObject().Select(p => p.Key), StringComparer.Ordinal);   // no challenge, typed or heldMs
     }
 
     [Fact]
@@ -38,7 +39,7 @@ public sealed class SindriApiClientProfileApproveTests
         var canned = new Canned(HttpStatusCode.Forbidden, RouteAnswer.Refused().Body);
         var client = new SindriApiClient(new HttpClient(canned), new InMemoryHumanToken("tok-1"), TimeProvider.System);
 
-        var done = await client.ApproveProfile(_api, new ApproveProfileRequest(Hash, new ProfileAnswer("CHL-1", "x")), Token);
+        var done = await client.ApproveProfile(_api, new ApproveProfileRequest(Hash), Token);
 
         Assert.True(done.IsError);
         Assert.Equal("SND-AUTH-002", done.Error.Code);

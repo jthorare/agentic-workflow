@@ -36,7 +36,7 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     internal static ItemNeedsViewModel Create(ISindriApi api, DecisionSender sender, CatalogViewModel catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        var needs = new ItemNeedsViewModel(api, sender, () => StateOf(catalog.For("Decide"), catalog.Listed is not null), catalog.Clipboard);
+        var needs = new ItemNeedsViewModel(api, sender, () => StateOf(catalog.For("Decide"), catalog.For("Decide") is not null, catalog.Listed is not null), catalog.Clipboard);
         catalog.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(CatalogViewModel.Controls), StringComparison.Ordinal))
@@ -48,13 +48,10 @@ internal sealed class ItemNeedsViewModel : ObservableObject
     }
 
     // A catalog that has not named Decide yet is read as pending, as the mapper reads an action it has no row for.
-    private static DecideState StateOf(ControlViewModel? decide, bool read) => decide switch
-    {
-        null => new DecideState(ActionReadiness.Pending, "", "", read),
-        { Kind: ControlKind.Ready } => new DecideState(ActionReadiness.Ready, "", decide.Cli),
-        { Kind: ControlKind.Pending } => new DecideState(ActionReadiness.Pending, decide.Stage, decide.Cli),
-        _ => new DecideState(ActionReadiness.CliOnly, "", decide.Cli),
-    };
+    // Decide runs when the catalog lists it as ready; listed otherwise, it is the served command to copy.
+    private static DecideState StateOf(ControlViewModel? decide, bool ready, bool read) => decide is null
+        ? new DecideState(ActionReadiness.Pending, "", read)
+        : new DecideState(ready ? ActionReadiness.Ready : ActionReadiness.Pending, decide.Cli);
 
     /// <summary>The item's pending decisions, in the API's order.</summary>
     internal IReadOnlyList<ItemDecisionRow> Decisions { get; private set { Set(ref field, value); OnChanged(nameof(HasDecisions)); } } = [];

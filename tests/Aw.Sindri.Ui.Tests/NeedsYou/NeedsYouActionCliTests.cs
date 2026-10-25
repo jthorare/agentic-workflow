@@ -3,7 +3,6 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.Tests.Controls;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
@@ -72,28 +71,5 @@ public sealed class NeedsYouActionCliTests
 
         Assert.Equal(CatalogCli("PauseService"), pause.Cli);
         Assert.Equal(Labels.FillInHint(["name"]), pause.FillInHint);
-    }
-
-    [Fact]
-    public async Task Profile_row_shows_terminal_copy_until_the_catalog_is_ready()
-    {
-        var fixture = new AppConfirmFixture();
-        var server = new FakeSindriApi();
-        var api = new Uri("http://127.0.0.1:7410/");
-
-        async Task<NeedsYouBarViewModel> Bar(string ui, NeedsYouEntry entry)
-        {
-            var bar = new NeedsYouBarViewModel(new DeskReporter(server, () => api), fixture.Clipboard, fixture.Clock, new NeedsYouConfirm(fixture.Catalog(ui), () => api, server, fixture.Clock));
-            bar.Show(new NeedsYouRowViewModel(entry, seen: true, reducedMotion: false, arrived: false, fixture.Clock));
-            await bar.Loaded;
-            return bar;
-        }
-
-        var held = await Bar("cli-only", NeedsYouRows.Profile(new NeedsYouSubject("profile", NeedsYouRows.ProfileHash)));
-        Assert.Equal((true, false, false), (held.ShowsTerminal, held.ShowsTyped, held.ShowsConfirm));
-        Assert.Empty(server.Challenges);   // no challenge is asked for a button the app doesn't offer
-
-        var ready = await Bar("ready", NeedsYouRows.ProfileReady());
-        Assert.Equal((false, true, true), (ready.ShowsTerminal, ready.ShowsTyped, ready.ShowsConfirm));
     }
 }

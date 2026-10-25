@@ -1,5 +1,4 @@
 using System.Collections.Frozen;
-using System.Globalization;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -97,9 +96,6 @@ internal static partial class Labels
     /// <summary>The button that copies a whole hash where the screen shows its first digits.</summary>
     internal const string CopyHash = "Copy hash";
 
-    /// <summary>The copy block's line (§7, §12.4).</summary>
-    internal const string TypedConfirmation = "Needs a typed confirmation at a terminal.";
-
     /// <summary>An action's label, keyed by its catalog id; an id the app has no label for shows a humanised form of it ("Some new thing"), never the raw "X:y".</summary>
     /// <param name="action">The action id.</param>
     /// <returns>The label.</returns>
@@ -147,8 +143,8 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string DecideLineName(string decisionId, string line) => decisionId + ": " + line;
 
-    /// <summary>A pending control's phase: "arrives in P2".</summary>
-    /// <param name="phase">The phase the catalog names.</param>
+    /// <summary>A spec'd phase that has not shipped: "arrives in U8b".</summary>
+    /// <param name="phase">The phase.</param>
     /// <returns>The words.</returns>
     internal static string Arrives(string phase) => "arrives in " + phase;
 
@@ -161,12 +157,6 @@ internal static partial class Labels
     /// <param name="named">The control's label and subject.</param>
     /// <returns>The question.</returns>
     internal static string ConfirmQuestion(string named) => named + "?";
-
-    /// <summary>Health's line over the pending rows (§4.8): "12 actions arrive in later phases".</summary>
-    /// <param name="count">How many rows are pending.</param>
-    /// <returns>The words.</returns>
-    internal static string PendingSummary(int count) =>
-        string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "action arrives" : "actions arrive")} in later phases");
 
     /// <summary>The health pill's word for the status's health.word (E-14); a word this build doesn't know shows as served.</summary>
     /// <param name="word">'healthy', 'degraded', 'stalled' or 'rebuilding'.</param>

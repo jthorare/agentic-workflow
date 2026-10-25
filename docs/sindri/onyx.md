@@ -5,15 +5,14 @@ Community Edition. Onyx stays unmodified; Sindri uses it for recall only and doe
 D3). Connecting Onyx to company Linear and Slack uses company OAuth: get sign-off first. Sindri never connects a
 source itself.
 
-`$SINDRI` is the C# Sindri build (before the switch, `~/.local/bin/sindri` is still the TS one); see
-[context.md](context.md).
+`$SINDRI` is the installed `sindri`; see [context.md](context.md).
 
 ## Quick start: Sindri sets Onyx up
 
 Docker (Docker Desktop, OrbStack, or Docker Engine with Compose v2) is the one thing you install yourself. Then, at a terminal:
 
 ```bash
-sindri-app onyx up        # or: $SINDRI onyx up (`./setup.sh --with-sindri` runs it for you). The first bare `sindri` at a terminal offers the same thing.
+$SINDRI onyx up           # `./setup.sh` runs it for you. The first bare `sindri` at a terminal offers the same thing.
 ```
 
 It runs the pinned Onyx v4.9.0 (`context/onyx.lock`) as the compose project `sindri-onyx-<hash>` under `$AW_SINDRI_HOME/onyx/`: preflight
@@ -121,14 +120,14 @@ The stock compose file publishes nginx on all interfaces (`"${HOST_PORT:-3000}:8
 services:
   nginx:
     ports: !override
-      - "127.0.0.1:3000:80"
+      - "127.0.0.1:3189:80"
 ```
 
 Leave every other service's `ports:` commented out, as shipped. Start it:
 
 ```bash
 docker compose up -d
-lsof -nP -iTCP:3000 -sTCP:LISTEN     # must show 127.0.0.1:3000 only
+lsof -nP -iTCP:3189 -sTCP:LISTEN     # must show 127.0.0.1:3189 only
 ```
 
 ### A one-user dev box (optional)
@@ -220,7 +219,7 @@ Linux (install `libsecret-tools` on Debian/Ubuntu if `secret-tool` is missing; i
 ```yaml
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3000", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }
+    onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }
     linear: { teams: [ENG] }        # team keys whose ENG-n identifiers become aliases
 ```
 

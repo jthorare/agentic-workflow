@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
@@ -69,22 +68,6 @@ public sealed class CreateItemViewModelTests
     }
 
     // §7: while the catalog says pending:P3 (it did before P3 shipped), the form's button is drawn disabled with its phase and CLI.
-    [Fact]
-    public async Task Before_p3_the_create_control_is_pending()
-    {
-        var catalog = JsonNode.Parse(GoldenFiles.Api("commands", "catalog"))!;
-        catalog["rows"]!.AsArray().Single(r => (string?)r!["action"] == "CreateItem")!["ui"] = "pending:P3";
-        _server.Catalog = new RouteAnswer(HttpStatusCode.OK, catalog.ToJsonString());
-        var form = await Form();
-        form.Title = "Not yet";
-
-        Assert.Equal((true, false), (form.Control!.IsPending, form.CanSubmit));
-        Assert.Equal("arrives in P3 · sindri item add <title> [--repo <repo>]", form.Control.PendingLine);
-
-        await form.Submit(Token);
-        Assert.Empty(_server.Created);
-    }
-
     // L10 (corr-5): the second press, and one in the 2 s the accepted outcome shows, send nothing more: one create.
     [Fact]
     public async Task Submit_twice_while_sending_and_again_while_the_outcome_shows_creates_once()

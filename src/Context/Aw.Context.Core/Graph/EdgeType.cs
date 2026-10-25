@@ -57,4 +57,8 @@ public enum EdgeType
     /// <summary>Decision → Decision.</summary>
     [JsonStringEnumMemberName("supersedes")]
     Supersedes,
+
+    /// <summary>Feature, Record or Decision → Concept.</summary>
+    [JsonStringEnumMemberName("belongs-to")]
+    BelongsTo,
 }

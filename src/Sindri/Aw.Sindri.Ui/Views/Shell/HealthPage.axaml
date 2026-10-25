@@ -300,37 +300,18 @@
         </Border>
 
         <Border Classes="panel" Width="440" Margin="0,0,12,12">
-          <!-- The catalog (§4.8): its pending rows by the phase that ships them, then the actions that stay at a terminal
-             (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
+          <!-- The catalog (§4.8): the actions the app has no form for (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
         <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock x:Name="ActionsEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}"
                          AutomationProperties.Name="{Binding $parent[UserControl].((shell:HealthViewModel)DataContext).Text.ActionsCard}" />
-              <TextBlock x:Name="PendingSummaryText" Grid.Column="1" Classes="body subtle" Text="{Binding PendingSummary}"
-                         AutomationProperties.Name="{Binding PendingSummary}" />
             </Grid>
             <TextBlock x:Name="ActionCountsText" Classes="body subtle" Text="{Binding Counts}" TextWrapping="Wrap"
                        AutomationProperties.Name="{Binding Counts}" />
             <ccontrols:CommandControl x:Name="StopControl" DataContext="{Binding Stop}"
                                       IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" />
-            <ItemsControl x:Name="PendingPhases" ItemsSource="{Binding Pending}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="controls:PendingPhase">
-                  <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">
-                    <TextBlock Classes="caption subtle" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-                    <ItemsControl ItemsSource="{Binding Controls}">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="controls:ControlViewModel">
-                          <ccontrols:CommandControl Margin="0,0,0,6" />
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </StackPanel>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <ItemsControl x:Name="CliOnlyActions" ItemsSource="{Binding CliOnly}">
+            <ItemsControl x:Name="CopyOnlyActions" ItemsSource="{Binding CopyOnly}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="controls:ControlViewModel">
                   <StackPanel Spacing="{StaticResource Space.XXS}" Margin="0,0,0,8">

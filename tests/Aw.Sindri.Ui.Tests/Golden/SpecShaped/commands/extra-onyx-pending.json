@@ -6,6 +6,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -22,13 +23,15 @@
       "action": "ApplyCommand:answer-accept",
       "class": "protected",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/instances/{instanceId}/commands",
       "cli": "sindri workflow answer <address> --accept",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -38,13 +41,15 @@
       "action": "ApplyCommand:answer-grant",
       "class": "protected",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/instances/{instanceId}/commands",
       "cli": "sindri workflow answer <address> --grant <rounds>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -54,13 +59,15 @@
       "action": "ApplyCommand:answer-grant-tokens",
       "class": "protected",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/instances/{instanceId}/commands",
       "cli": "sindri workflow answer <address> --grant-tokens <tokens>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -71,7 +78,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -88,7 +96,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -105,7 +114,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -122,7 +132,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -139,7 +150,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -156,7 +168,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -192,9 +205,11 @@
       "class": "job",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session",
+        "service"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/recipes/approve-all",
       "cli": "sindri recipe approve-all",
@@ -202,16 +217,17 @@
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
-      "confirm": "held"
+      "confirm": null
     },
     {
       "action": "ApproveProfile",
       "class": "protected",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/profile/approve",
       "cli": "sindri profile approve [<hash>]",
@@ -219,16 +235,17 @@
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
-      "confirm": "typed"
+      "confirm": null
     },
     {
       "action": "ApproveRecipe",
       "class": "protected",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/recipes/{id}@{hash}/approve",
       "cli": "sindri recipe approve <recipe>",
@@ -236,7 +253,7 @@
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
-      "confirm": "typed"
+      "confirm": null
     },
     {
       "action": "BuildContextMap",
@@ -244,6 +261,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -262,6 +280,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -279,7 +298,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -296,7 +316,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -313,7 +334,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -346,13 +368,14 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
       "route": "/sindri/onyx/account",
       "cli": "sindri onyx connect",
-      "ui": "pending:SO-A5",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -363,7 +386,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -380,7 +404,8 @@
       "class": "decision",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -397,13 +422,14 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
       "route": "/sindri/onyx/defer",
       "cli": "sindri onyx defer",
-      "ui": "pending:SO-A5",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -433,7 +459,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -449,13 +476,15 @@
       "action": "ImportContextMap",
       "class": "protected",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/import",
       "cli": "sindri context map import <file>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -466,7 +495,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -482,9 +512,11 @@
       "action": "IssueChallenge",
       "class": "issue",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/challenges",
       "cli": "sindri recipe approve <recipe>",
@@ -545,7 +577,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -562,7 +595,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -579,7 +613,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -596,7 +631,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -614,6 +650,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -628,15 +665,17 @@
     },
     {
       "action": "PromoteContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/promote",
       "cli": "sindri context map promote",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -648,6 +687,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -666,6 +706,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -683,7 +724,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -701,6 +743,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -719,6 +762,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -736,7 +780,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -753,7 +798,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -770,7 +816,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -787,7 +834,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -801,15 +849,17 @@
     },
     {
       "action": "ReviewContextMap:add",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review add <node> <name> [--under <node>]",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -817,15 +867,17 @@
     },
     {
       "action": "ReviewContextMap:apply-file",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review --apply <file>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -833,15 +885,17 @@
     },
     {
       "action": "ReviewContextMap:delete",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review delete <node>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -852,7 +906,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -866,15 +921,17 @@
     },
     {
       "action": "ReviewContextMap:merge",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/context/map/review",
       "cli": "sindri context map review merge <node> --into <node>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -885,7 +942,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -902,7 +960,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -919,7 +978,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -936,7 +996,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -953,7 +1014,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -969,13 +1031,15 @@
       "action": "RevokeRecipe",
       "class": "protected",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/recipes/{id}@{hash}/revoke",
       "cli": "sindri recipe revoke <recipe>",
-      "ui": "cli-only:typed-confirmation",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -987,6 +1051,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -1019,6 +1084,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
@@ -1073,13 +1139,14 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,
       "method": "POST",
       "route": "/sindri/onyx/setup",
       "cli": "sindri onyx up",
-      "ui": "pending:SO-A5",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -1090,7 +1157,8 @@
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
-        "human"
+        "human",
+        "session"
       ],
       "terminal": false,
       "method": "POST",
@@ -1108,6 +1176,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service:host"
       ],
       "terminal": false,
@@ -1126,6 +1195,7 @@
       "allowedCallers": [
         "human+terminal",
         "human",
+        "session",
         "service"
       ],
       "terminal": false,

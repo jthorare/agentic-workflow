@@ -104,7 +104,7 @@ internal static partial class Labels
     internal const string SetupOnyxFoot = "Prefer a terminal? Run";
 
     /// <summary>The command the footnote names.</summary>
-    internal const string SetupOnyxFootCommand = "sindri-app onyx up";
+    internal const string SetupOnyxFootCommand = "sindri onyx up";
 
     /// <summary>The Onyx button that sends the login (and opens the form again).</summary>
     internal const string SetupActConnect = "Connect";
@@ -142,8 +142,8 @@ internal static partial class Labels
     /// <summary>Under the form when Docker is missing (SND-ONYX-001).</summary>
     internal const string SetupDockerMissing = "Docker isn't installed.";
 
-    /// <summary>A refusal by an agent session (SND-AUTH-002) in words.</summary>
-    internal const string SetupAuthRefused = "Only you can do this from the app. An agent session can't.";
+    /// <summary>A refusal of one of Sindri's own steps (SND-AUTH-002) in words.</summary>
+    internal const string SetupAuthRefused = "Sindri's own steps can't answer this.";
 
     /// <summary>Under the form when the profile changed while Sindri was writing it (SND-PROFILE-002).</summary>
     internal const string SetupProfileChanged = "The profile changed while Sindri was writing it. Try again.";

@@ -3,7 +3,7 @@ using Aw.Context.Core.Engine;
 
 namespace Aw.Context.Core.Results;
 
-/// <summary>A query's answer (spec §8.4). Conflicts and degraded sources sit outside the budget and are always whole.</summary>
+/// <summary>A query's answer (spec §8.4). Nothing is cut: conflicts, degraded sources and every ranked item are always whole.</summary>
 /// <param name="SchemaVersion">The result format version (<see cref="CurrentSchemaVersion"/>).</param>
 /// <param name="QueryId">The query's id in the query log.</param>
 /// <param name="Query">The question as asked.</param>
@@ -14,8 +14,6 @@ namespace Aw.Context.Core.Results;
 /// <param name="Conflicts">Typed disagreements between intent and behavior.</param>
 /// <param name="SuggestedAnchors">Anchors the caller may use next.</param>
 /// <param name="Degraded">Sources that didn't answer, each with its code.</param>
-/// <param name="Truncated">True when an item didn't fit the budget and is listed as a reference only.</param>
-/// <param name="Budget">The budget asked and used.</param>
 /// <param name="Cites">The citations, by marker ('C1', 'C2', …).</param>
 /// <param name="Diff">The diff shape's facts, or null for every other shape (left out of JSON).</param>
 public sealed record ContextResult(
@@ -29,8 +27,6 @@ public sealed record ContextResult(
     IReadOnlyList<ResultConflict> Conflicts,
     IReadOnlyList<string> SuggestedAnchors,
     IReadOnlyList<DegradedSource> Degraded,
-    bool Truncated,
-    BudgetUse Budget,
     IReadOnlyDictionary<string, Citation> Cites,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DiffPart? Diff = null)
 {

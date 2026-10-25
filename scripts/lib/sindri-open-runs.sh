@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/lib/sindri-open-runs.sh — sourced by scripts/sindri-app.sh: warns, or waits, before a publish when Sindri has agent
+# scripts/lib/sindri-open-runs.sh — sourced by scripts/install-cs.sh: warns, or waits, before a publish when Sindri has agent
 # runs open (#1000: a reinstall republished Sindri while an agent Step was running, serve died during the publish and the
 # agent's result was stranded).
 #
@@ -36,18 +36,18 @@ sindri_open_runs_guard() { # $1 = the sindri binary
   case "$rc" in
     0) ;;
     2) return 0 ;;
-    *) echo "sindri-app: couldn't read the open agent runs ($rows); going on" >&2; return 0 ;;
+    *) echo "sindri: couldn't read the open agent runs ($rows); going on" >&2; return 0 ;;
   esac
   [ -n "$rows" ] || return 0
   n="$(printf '%s\n' "$rows" | wc -l | tr -d ' ')"
   {
-    echo "sindri-app: $n agent run(s) are open in Sindri; publishing now can stop the control plane mid-Step (#1000):"
+    echo "sindri: $n agent run(s) are open in Sindri; publishing now can stop the control plane mid-Step (#1000):"
     printf '%s\n' "$rows" | while IFS="$(printf '\t')" read -r ref inst lstate state; do
       echo "  $ref  $inst · $lstate  $state"
     done
   } >&2
   if [ "${AW_SINDRI_STOP_OK:-0}" = 1 ]; then
-    echo "sindri-app: AW_SINDRI_STOP_OK=1: going on" >&2
+    echo "sindri: AW_SINDRI_STOP_OK=1: going on" >&2
     return 0
   fi
   if [ -t 0 ] && [ -t 2 ]; then
@@ -64,10 +64,10 @@ sindri_open_runs_guard() { # $1 = the sindri binary
           rc=0
           rows="$(_sindri_open_runs_read "$1")" || rc=$?
           if [ "$rc" -eq 2 ]; then return 0; fi
-          if [ "$rc" -ne 0 ]; then echo "sindri-app: couldn't read the open agent runs ($rows); going on" >&2; return 0; fi
+          if [ "$rc" -ne 0 ]; then echo "sindri: couldn't read the open agent runs ($rows); going on" >&2; return 0; fi
           [ -n "$rows" ] || return 0
           n="$(printf '%s\n' "$rows" | wc -l | tr -d ' ')"
-          if [ "$n" != "$last" ]; then echo "sindri-app: $n agent run(s) still open" >&2; last="$n"; fi
+          if [ "$n" != "$last" ]; then echo "sindri: $n agent run(s) still open" >&2; last="$n"; fi
         done
         ;;
       *) echo "stopped; nothing was changed" >&2; return 1 ;;

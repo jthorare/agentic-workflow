@@ -3,7 +3,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.NeedsYou;
 
@@ -13,13 +12,11 @@ public sealed class PausedAnswerViewModelTests
 {
     private const string Instance = "WFI-1";
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
-    private readonly FakeTimeProvider _clock = new(A.Noon);
-    private readonly FakeClipboard _clipboard = new();
     private readonly FakeSindriApi _server = new();
 
     private PausedAnswerViewModel Form(NeedsYouEntry? row = null)
     {
-        var form = new PausedAnswerViewModel(new InstanceCommander(_server, () => _api), _clipboard, _clock);
+        var form = new PausedAnswerViewModel(new InstanceCommander(_server, () => _api));
         form.Show(row ?? Paused());
         return form;
     }
@@ -70,16 +67,21 @@ public sealed class PausedAnswerViewModelTests
     }
 
     [Fact]
-    public async Task More_tries_copies_the_served_command_with_the_stepper_rounds_and_sends_nothing()
+    public async Task More_tries_sends_the_stepper_rounds_once_as_an_answer_grant()
     {
         var form = Form();
         form.Increase();
         form.Increase();
+        _server.WorkflowCommandGate = new TaskCompletionSource();
 
-        await form.Send();
+        var first = form.Send();
+        await form.Send();   // a second press while the first is out
+        _server.WorkflowCommandGate.SetResult();
+        await first;
 
-        Assert.Equal(("Allow more tries · terminal", "sindri workflow answer ITM-01JC8/step/1 --grant 3"), (form.SendWord, _clipboard.Text));
-        Assert.Empty(_server.CommandCalls);
+        var (instance, body) = Assert.Single(_server.CommandCalls);
+        Assert.Equal((Instance, CommandKind.Answer, (AnswerVariant?)AnswerVariant.Grant, 3, null), (instance, body.Kind, body.Answer, body.Amount, body.Text));
+        Assert.Equal(("Send answer", true), (form.SendWord, form.IsSent));
     }
 
     [Fact]

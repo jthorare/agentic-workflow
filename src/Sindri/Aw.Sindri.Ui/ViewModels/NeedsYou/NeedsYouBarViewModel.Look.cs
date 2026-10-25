@@ -30,9 +30,6 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>Closes the reason box or the drop question.</summary>
     public string CancelWord { get; } = Labels.NeedsYouCancel;
 
-    /// <summary>What hovering the terminal button says.</summary>
-    public string TerminalTip { get; } = Labels.NeedsYouTerminalTip;
-
     /// <summary>The reason box's caption.</summary>
     public string ReasonLabel { get; } = Labels.NeedsYouReasonLabel;
 
@@ -40,7 +37,7 @@ internal sealed partial class NeedsYouBarViewModel
     public string BarName => Labels.NeedsYouBarGroupName(Subject);
 
     /// <summary>True when the request has a bar of its own.</summary>
-    public bool HasBar => Kind != BarKind.None && (ShowsPrimary || ShowsTerminal || ShowsSendBack || ShowsConfirm || HasVerbs || IsApproved);
+    public bool HasBar => Kind != BarKind.None && (ShowsPrimary || ShowsSendBack || HasVerbs || IsApproved);
 
     /// <summary>True in the resting modes (Approve and Send back show).</summary>
     public bool IsPending => Mode is NeedsYouBarMode.Pending or NeedsYouBarMode.Confirming;
@@ -83,34 +80,32 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>The primary button's accessible name: the words and the request.</summary>
     public string ApproveName => Labels.NeedsYouBarName(ApproveWord, Subject);
 
-    /// <summary>True when the primary button shows: a desk request whose step the person completes here, or a decision with a recommended option.</summary>
+    /// <summary>True when the primary button shows: a desk request whose step the person completes here, a decision with a recommended option, or one of the three approvals.</summary>
     public bool ShowsPrimary => Kind switch
     {
-        BarKind.Desk => DeskControl is not null && !TerminalOnly,
+        BarKind.Desk => DeskControl is not null,
         BarKind.Decision => AcceptControl is not null,
-        BarKind.None or BarKind.Settings or BarKind.Run => false,
+        BarKind.Settings => ConfirmKind != NeedsYouConfirmKind.None,
+        BarKind.None or BarKind.Run => false,
+        _ => throw new InvalidOperationException("a kind the bar doesn't know"),
+    };
+
+    // The kind's own condition for the primary: a decision's accept is enabled, an approval can be sent.
+    private bool KindAllowsPrimary => Kind switch
+    {
+        BarKind.Decision => AcceptControl is { IsEnabled: true },
+        BarKind.Settings => _confirm?.CanApprove == true,
+        BarKind.None or BarKind.Desk or BarKind.Run => true,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
     /// <summary>True when the primary can be pressed now.</summary>
-    public bool PrimaryEnabled => ShowsPrimary && Enabled && !IsSending && (Kind != BarKind.Desk || _target is not null) && (!HasAsk || AskReady) && (Kind != BarKind.Decision || AcceptControl is { IsEnabled: true });
-
-    /// <summary>True when the terminal button shows: a merge, or a protected action the app does not confirm itself (yet); it copies the served command and sends nothing.</summary>
-    public bool ShowsTerminal => !ShowsConfirm && (TerminalOnly || ConfirmKind == NeedsYouConfirmKind.Terminal || (Kind is BarKind.Settings or BarKind.Run && PrimaryControl is { IsProtected: true }));
-
-    /// <summary>The terminal button's action words ("Allow more tries").</summary>
-    public string TerminalWord => Kind == BarKind.Desk ? Labels.NeedsYouApproveMerge : PrimaryControl is { } primary ? WordsOf(primary.Action) : "";
-
-    /// <summary>The terminal button's visible words.</summary>
-    public string TerminalButton => Labels.NeedsYouTerminalButton(TerminalWord);
-
-    /// <summary>The terminal button's accessible name.</summary>
-    public string TerminalName => Labels.NeedsYouTerminalName(TerminalWord, Subject);
+    public bool PrimaryEnabled => ShowsPrimary && Enabled && !IsSending && (Kind != BarKind.Desk || _target is not null) && (!HasAsk || AskReady) && KindAllowsPrimary;
 
     /// <summary>True when the send back button shows (disabled with its reason on a settings request).</summary>
     public bool ShowsSendBack => Kind switch
     {
-        BarKind.Desk => (DeskControl is not null || TerminalOnly) && !HasAsk,
+        BarKind.Desk => DeskControl is not null && !HasAsk,
         BarKind.Decision => RejectControl is not null,
         BarKind.Settings => true,
         BarKind.None or BarKind.Run => false,
@@ -139,10 +134,10 @@ internal sealed partial class NeedsYouBarViewModel
     public bool ShowsEditChip => Kind == BarKind.Desk;
 
     /// <summary>True when the card's More menu offers dropping the request (a desk request whose run is open).</summary>
-    public bool ShowsDrop => Kind == BarKind.Desk && _target is not null && !TerminalOnly;
+    public bool ShowsDrop => Kind == BarKind.Desk && _target is not null;
 
     /// <summary>True when the card keeps the row's own controls: no bar takes the request's primary.</summary>
-    public bool ShowsRowControls => Kind == BarKind.None || (Kind is BarKind.Settings or BarKind.Run && !ShowsTerminal && !ShowsConfirm);
+    public bool ShowsRowControls => Kind == BarKind.None || Kind == BarKind.Run || (Kind == BarKind.Settings && ConfirmKind == NeedsYouConfirmKind.None);
 
     /// <summary>The line under the buttons.</summary>
     public string Hint => Mode switch
@@ -162,10 +157,7 @@ internal sealed partial class NeedsYouBarViewModel
     };
 
     private string RestingHint =>
-        HintIsSuccess ? Labels.NeedsYouCopied
-        : Kind == BarKind.Desk && _targetKnown && _target is null ? Labels.NeedsYouNotOpen
-        : TerminalOnly ? Labels.NeedsYouTerminalOnly
-        : ShowsTerminal ? Labels.NeedsYouProtectedHint
+        Kind == BarKind.Desk && _targetKnown && _target is null ? Labels.NeedsYouNotOpen
         : Kind == BarKind.Settings ? Labels.NeedsYouKeepSettings
         : SuggestedHint;
 

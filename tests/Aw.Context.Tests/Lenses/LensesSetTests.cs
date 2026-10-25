@@ -316,7 +316,7 @@ public sealed class LensesSetTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Map_coverage_paths_cap_at_50_with_truncated()
+    public void Map_coverage_lists_every_directory_and_never_cuts()
     {
         var builder = new GraphBuilder().Node("feature:wide");
         var files = new List<string>();
@@ -329,9 +329,9 @@ public sealed class LensesSetTests
 
         var map = One(builder.Build(), "feature:wide", depth: 0, basis: Basis(files)).Coverage.Map!;
 
-        Assert.Equal((50, true), (map.Paths.Count, map.Truncated));
+        Assert.Equal((60, false), (map.Paths.Count, map.Truncated));
         Assert.Equal("src/d00/", map.Paths[0]);
-        Assert.Equal(50, map.Files);
+        Assert.Equal(60, map.Files);
     }
 
     [Fact, Trait("Lane", "unit")]

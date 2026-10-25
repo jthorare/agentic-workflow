@@ -7,38 +7,20 @@
 # touches, so each CI job can decide between real work and a no-op success:
 #   bash=true|false      the bash tests need to run
 #   dotnet=true|false    the .NET solution needs to build (spikes/ never counts)
-#   packages=[...]       JSON array of the TS packages that changed
 #
 # Anything other than a pull_request into the default branch with a known base
 # runs everything: a filter that can't tell must not skip a check. A stacked PR
 # (based on another branch) runs everything too, because when its parent merges
 # GitHub retargets it without a new run, and a narrowed result would carry over.
 
-TS_PACKAGES=(scorer judge sindri skills/ui-evidence skills/bugFixOrchestrator)
-
-# Packages whose tests import another package's source: a change to the key also
-# runs the listed dependents (scorer's tests import judge/src/db.ts).
-dependents_of() {
-  case "$1" in
-    judge) echo scorer ;;
-  esac
-}
-
-json_array() {
-  local out="" item
-  for item in "$@"; do out+="${out:+,}\"$item\""; done
-  printf '[%s]' "$out"
-}
-
 print_all() {
-  printf 'bash=true\ndotnet=true\npackages=%s' "$(json_array "${TS_PACKAGES[@]}")"
+  printf 'bash=true\ndotnet=true'
 }
 
 # Reads changed paths, NUL-separated (git diff -z), on stdin and prints the outputs.
 # NUL separation means no quoting: a non-ASCII or oddly named path arrives verbatim.
 classify_changes() {
-  local bash=false dotnet=false file pkg
-  local -a changed_packages=()
+  local bash=false dotnet=false file
   while IFS= read -r -d '' file || [ -n "$file" ]; do
     [ -n "$file" ] || continue
     case "$file" in
@@ -58,7 +40,7 @@ classify_changes() {
       global.json|docs/devcontainer.md) bash=true ;;
     esac
     case "$file" in
-      config/*|scripts/*|providers/*|setup.sh|mods/*|skills/*|.agents/*|AGENTS.md|CLAUDE.md|.claude/*|.cursor/*|.devcontainer/*|.env.example)
+      config/*|scripts/*|providers/*|setup.sh|skills/*|.agents/*|AGENTS.md|CLAUDE.md|.claude/*|.cursor/*|.devcontainer/*|.env.example)
         bash=true ;;
       src/*|tests/*|schemas/packets/*|*.cs|*.csproj|*.props|*.targets|*.slnx|global.json|nuget.config|.editorconfig|BannedSymbols*.txt|packages.lock.json|.config/dotnet-tools.json)
         dotnet=true ;;
@@ -95,23 +77,8 @@ classify_changes() {
       tests/fixtures/fleet/*|tests/fixtures/fleet-input/*|tests/fixtures/sessions/*) bash=true ;;
       docs/csharp/sindri-sessions.md) bash=true ;;
     esac
-    for pkg in "${TS_PACKAGES[@]}"; do
-      case "$file" in
-        "$pkg"/*)
-          bash=true
-          local p
-          for p in "$pkg" $(dependents_of "$pkg"); do
-            case " ${changed_packages[*]-} " in
-              *" $p "*) ;;
-              *) changed_packages+=("$p") ;;
-            esac
-          done
-          ;;
-      esac
-    done
   done
-  printf 'bash=%s\ndotnet=%s\npackages=%s' "$bash" "$dotnet" \
-    "$(json_array ${changed_packages[@]+"${changed_packages[@]}"})"
+  printf 'bash=%s\ndotnet=%s' "$bash" "$dotnet"
 }
 
 main() {

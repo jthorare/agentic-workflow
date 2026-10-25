@@ -4,10 +4,10 @@
 
 Agentic Workflow (repo: `agentic-workflow`) is a portable, provider-agnostic workflow toolkit for AI coding agents. It supports **Claude Code**, **Codex**, and **Cursor** as equal hosts. The canonical core has these parts:
 
-- 55 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
+- 53 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
 - a documentation bootstrapper skill
 - canonical safety hooks
-- the judge and scorer packages
+- the C# binaries: `judge` and the other tool ports, and Sindri (control plane, workflow engine, context engine), published by `scripts/install-cs.sh`
 - a centralized output directory for cross-skill artifact sharing
 
 A thin **provider adapter layer** (see below and `planning/PROVIDERS.md`) installs that core into each provider. Skills are symlinked into each installed provider's skills directory. They are invoked as `/<name>` in Claude Code and Cursor and as `$<name>` in Codex. Agents hand off through Prism handoffs (`session_save_handoff` / `session_load_context`), judge's outbox and teammate names (agent teams), and Sindri's ledger; there is no bridge server.
@@ -113,7 +113,7 @@ graph LR
 - **Capabilities, not tools.** Skill text names capabilities (**Ask the user**, **Spawn a subagent**, **Dispatch in parallel**, **Invoke skill**, `mcp: <server>/<tool>`). `skills/_shared/capabilities.md` maps each one to the right tool on each provider. `allowed-tools` frontmatter uses Claude Code names, and the other providers ignore it.
 - **Hooks.** `config/hooks/*.sh` speak one protocol (JSON on stdin, exit 2 = deny). Claude Code runs them directly. `config/hooks/adapters/{codex,cursor}.sh` translate each provider's hook payloads, event names, and exit semantics to that protocol, so the safety logic exists once.
 - **Repo instructions.** `AGENTS.md` and `.agents/rules/*.md` (frontmatter `description`, `globs`, `paths`, `alwaysApply`) are the only copies. `scripts/sync-rules.sh` symlinks `.claude/rules` → `.agents/rules`, `.cursor/rules/<name>.mdc` → `.agents/rules/<name>.md`, and `CLAUDE.md` → `AGENTS.md`, and it regenerates the Rules Index in `AGENTS.md` for Codex.
-- **Judge and scorer.** `judge/src/providers/` has `claude-cli`, `codex-cli`, and `cursor-cli` model providers. `scorer/src/transcript/` has one transcript source per provider, selected with `--provider`.
+- **Judge.** The C# `judge` (`src/Judge`) has `claude-cli`, `codex-cli`, and `cursor-cli` model providers (`docs/csharp/judge.md`).
 
 ### Skill Pipeline
 
@@ -206,8 +206,7 @@ agentic-workflow/
 │       ├── rtk-rewrite.sh              #     PreToolUse — rewrites eligible bash commands to rtk equivalents for token compression (runs 4th)
 │       ├── git-context.sh              #     SessionStart — injects current branch, recent commits, working tree status
 │       └── prism-context.sh            #     SessionStart — one-line warning if the prism-mcp dashboard is unreachable
-├── judge/                               # Cheap typed decisions (providers: claude-cli, codex-cli, cursor-cli)
-├── scorer/                              # Cost/involvement report (transcript sources: claude, codex, cursor)
+├── src/ · tests/                        # The C# build: judge (claude-cli, codex-cli, cursor-cli), Sindri, evidence, bugfix, packets, readiness, meta, forge
 ├── scripts/                             # Utility scripts
 │   ├── sync-rules.sh                    #   Emit .claude/rules/, .cursor/rules/*.mdc, AGENTS.md rules index
 │   └── serena-docker                    #   Serena MCP wrapper — mounts repo into Docker at invocation time
@@ -350,40 +349,18 @@ Archived configuration for replication across machines. `settings.json`, the sta
 - **`.claude/settings.json`** — Project-level settings: disables bypass-permissions mode (`"disable"` string, not boolean per Claude Code 1.x schema).
 - **`.agents/rules/`** — Canonical glob-scoped rule files. `scripts/sync-rules.sh` emits them as `.claude/rules/` (Claude Code), `.cursor/rules/*.mdc` (Cursor), and a rules index in `AGENTS.md` (Codex). Detailed domain rules were moved out of the monolithic instructions file into these files: `csharp.md`, `csharp-testing.md`, `design.md`, `hooks.md`, `mcp-servers.md`, `skills.md`, `testing.md`.
 
-## Scorer
-
-`scorer/` reads agent transcripts through pluggable per-provider transcript sources, selected with `--provider`. The sources cover Claude Code (`~/.claude/projects/<project>/<session>.jsonl`, plus `<session>/subagents/agent-<id>.jsonl` with its `.meta.json`), Codex (`~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`), and Cursor (`~/.cursor/projects/<proj>/agent-transcripts/`). Transcripts are read incrementally, tracking a byte offset per file in `~/.agentic-workflow/scorer/scorer.sqlite`. API calls are deduplicated by `message.id`. User lines are classified into the user's prompts, continues, corrections, interrupts and teammate wakes. PR links are checked against `gh` for merge state. A daily launchd job writes `reports/<date>.md` and `.json`. When the transcript format changes, the report shows only an "unknown format" warning and the CLI exits 3. `scorer probe` summarizes the hook-input probe logs in `~/.agentic-workflow/probe/`. Scorer isn't ported to C# as a standalone CLI: in the C# build it comes back as a block of the Sindri application (factory addendum §17.29.4).
-
-`scorer live --session <id> [--cwd DIR] [--json]` is the per-session, incremental view of the same
-figures: it ingests only that session's transcripts into `~/.agentic-workflow/scorer/live/<session>.sqlite`
-(never `scorer.sqlite`), reads the judge database read-only, and shares its SQL and statistics with the
-daily report (`CTX`, `OVER_200K`, `percentile`, `summarizeDecisions`). The `aw-live` mod (`mods/aw-live/`)
-renders it in a `/live` pane (and `/live status`) inside Claude Code. `config/statusline.sh` shows the headline in its `Live` column (`calls · >200k · judge`, at 141 columns and up), reading a per-session cache `~/.agentic-workflow/scorer/live/<session>.statusline.json` (15 s TTL) that a detached background `scorer live --json` refreshes, so the statusline never waits on scorer or judge. Judge health (`judge health`) is cached the same way.
-
 ## Sindri
 
-**Direction (2026-10-11).** Sindri is being built new in C# as one application (factory addendum
+**Direction (2026-10-11).** Sindri is new in C# as one application (factory addendum
 `docs/superpowers/specs/2026-10-09-sindri-factory-addendum.md` §17.29, decision Q7), not ported module by module. `sindri`
 starts a control-plane process per host, with a UI app as its client, and three engines: the control plane (ledger,
 command layer, scheduler and lease, outbox, API, webhooks), a workflow engine that runs every piece of work from a
-declarative recipe built from registered C# blocks (§17.28), and a context retrieval engine (§17.3). The launchd jobs
-below become background services scheduled inside that process. Agent work stays in Claude Code sessions in the
+declarative recipe built from registered C# blocks (§17.28), and a context retrieval engine (§17.3). Background work is
+scheduled inside that process as services. Agent work stays in Claude Code sessions in the
 human's terminal; the human interjects by attaching or with `sindri open <item>`, and sessions reach Sindri through
-the CLI and a Sindri MCP server, as requests, never decisions. Build order: app shell → workflow engine → context
-retrieval → blocks as recipes need them → workflows. Overview: `docs/sindri/README.md`.
+the CLI and a Sindri MCP server, as requests, never decisions. Overview: `docs/sindri/README.md`.
 
-The rest of this section describes the TypeScript `sindri/` that runs today. It is the reference for what each part
-does, and it keeps running until the switch.
-
-`sindri/` is the core of the always-on harness in `docs/superpowers/specs/2026-10-07-sindri-design.md`, built in plans. Plan 2 ships the profile (`profile.yaml` + `repos/<repo>.yaml`, Zod-validated, approved by hash), the ledger (`$AW_STATE_DIR/sindri/ledger.db`, SQLite WAL, sindri the only writer), the singleton lock with a fencing epoch, the scrubber, the `plan-file` tracker that reads plan task checkboxes as work items, and the `observe`, `ledger`, `scrub` and `doctor` commands. Every command is a function of `(args, deps)`. `deps` carries the environment, clock, `SystemProbe` and `GitRunner`, so the package is tested without spawning itself.
-
-Plan 3 adds the code index (`sindri/src/index/`, doc: `docs/sindri/index.md`): one SQLite file per repo with five layers (structure, clones, deps, embeddings, graph) built from tracked files only. Code never leaves the machine: embeddings go to Ollama on a loopback IP literal, and graphify runs in a network-less sandbox on a snapshot of the tracked files. A build writes a temp copy and renames it, under a slot of the box-wide heavy-job lock (`AW_HEAVY_SLOTS` slots, default 2, so at most two heavy jobs at a time: slot 1 is `${AW_HEAVY_JOB_LOCK:-$AW_STATE_DIR/locks/heavy-job.lock}`, slot k that path plus `.k`, each the `mkdir` primitive of `config/lib/locks.sh`, at the default path ui-evidence's `skills/ui-evidence/scripts/lib/locks.sh` uses; two builds of one repo never run at once). An hourly quick build (structure, clones, deps) and a nightly full build run from launchd. The git pre-commit hook records shape signals through a spool: it opens the ledger read-only, never blocks, and the hourly `observe` ingests the spool. Outcome labels (kept, acted-on, dropped, n/a) come from reconciling each run's staged tree hash against the default branch after 14 days.
-
-Plan 4 adds the scoping harness (`sindri/src/scope/`, doc: `docs/sindri/scope.md`). `sindri scope` gathers evidence from query-based sources (the brief file, a notes dir, opt-in transcripts, Linear, and the code index); every record is stripped of HTML comments, hidden characters, encoded blobs and remote links, then scrubbed, and fenced as untrusted data. A model runner spawns `claude -p` with no tools and an allowlisted environment, and meters every call into the ledger's `model_calls` table under a per-run token budget. A drafter model proposes the scope map; deterministic checks (cited sources, every surface in a workstream, acyclic dependencies, acceptance checks) send failures back for a bounded number of rounds; a challenger on a different model hunts for missing surfaces until none is new. `--backtest` replays a past Linear project from its creation date: an adjudicator model, run twice with the order reversed, scores recall and precision against the issues filed later, a brief-only baseline gives the comparison, and a printed pass bar decides the result. The map is written with mode 0600; inside a git worktree only `--sources file,code` is allowed, and when git cannot answer the guard fails closed.
-
-### Self-evolution
-
-`sindri/src/evolve/` registers every module of this repo as an artifact with its existing tests as its eval suite, and turns three evidence sources (merged PRs, repeated corrections, adjudicated hook false positives) into typed proposals. Proposals are classified into tiers by path, failing closed, and reach the repo only as plan tasks that a builder publishes after a privacy check and a person merges. Prompt variants are compared offline, blind, on a sealed holdout, and adopted by a person into a hash-bound overlay. Evolve commands never hold the tick lock across model or suite work (`withLockedWrite`). See `docs/sindri/evolve.md`.
+Sindri is C# (`src/Sindri`), installed by `scripts/install-cs.sh` as `sindri` (framework-dependent; the Temporal worker cannot be trimmed) and `sindri-ui` (NativeAOT). State lives in `$AW_SINDRI_HOME` (ledger, views, the Temporal dev server's file); the reference for each part is `docs/csharp/sindri.md` (app shell), `docs/csharp/sindri-workflow.md` (the workflow engine and recipes), `docs/csharp/sindri-context.md` and `docs/sindri/context.md` (context retrieval), `docs/csharp/code-index.md` (the code index) and `docs/csharp/sindri-ui.md` (the app). The TypeScript Sindri (profile, ledger, observe, index, scope, evolve) is gone; its observe, scope and evolve ideas return as recipes, not commands.
 
 ## Key Rules
 
@@ -399,4 +376,4 @@ Plan 4 adds the scoping harness (`sindri/src/scope/`, doc: `docs/sindri/scope.md
 
 6. **Zero telemetry.** No session tracking, no analytics logging, no external service calls. Skills do not phone home. All data stays local.
 
-7. **`/* v8 ignore */` annotations are prohibited.** Write the test instead. The TypeScript packages use Vitest with v8 coverage.
+7. **Tests are earned.** C# tests follow `.agents/rules/csharp-testing.md`; nothing is hidden with an ignore annotation.

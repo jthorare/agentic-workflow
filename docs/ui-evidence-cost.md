@@ -13,7 +13,7 @@ The model calls are: one planning call (`qa-runner`), selector repair
 
 | Step | State | Notes |
 |---|---|---|
-| 00 baseline | **Instrumented; not yet measured on real PRs** | `summary.json` records every invocation; `scorer` renders per-phase and per-PR/route tables. Tokens are `unknown` because the `judge` CLI does not surface provider usage — only count and elapsed time are recorded (a proxy, labelled as such). |
+| 00 baseline | **Instrumented; not yet measured on real PRs** | `summary.json` records every invocation; a reader can build per-phase and per-PR/route tables from them (the scorer's report is gone; its rebuild inside Sindri is later). Tokens are `unknown` because the `judge` CLI does not surface provider usage — only count and elapsed time are recorded (a proxy, labelled as such). |
 | 01 false-pass | **Done** | Structured `expectedState`, asserted per step; repair executes the mapped action on a DOM-validated candidate and re-checks. Real-Chromium fixture tests cover both. |
 | 02 spend models where needed | **Gate done; planner pilot pending** | Pixel gate skips the image model on unchanged runs; Jev never receives image bytes (tests). `qa-runner.md` still says `model: sonnet` (the rollback value) — no cheaper model is switched in until the pilot below is run. |
 | 03 verdict cache | **Done** | Keyed on actual image hashes + prompt/model, app build, script, fixtures, viewport, browser version. Never skips the browser run. |
@@ -33,7 +33,7 @@ now go through `judge-exec.ts`, which writes and closes stdin.
    `qa-runner`, put `planning: { pr, model, elapsedMs }` (plus token counts if
    the harness exposes them) in the script, and run `runScript` against a
    main-branch baseline.
-2. `scorer --since 1d` and keep the "UI evidence" tables as the **before**.
+2. Total the `invocations` of the baseline runs' `summary.json` files (per phase, per PR/route) and keep that as the **before**.
 3. Pilot the cheaper planner model on the *same* PRs; compare scripts on
    affected routes, edge states, and assertion quality (not just cost).
    Roll back (`model: sonnet`) if detection weakens.

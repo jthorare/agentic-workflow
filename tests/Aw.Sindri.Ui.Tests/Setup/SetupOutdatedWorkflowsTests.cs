@@ -1,6 +1,6 @@
-using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Setup;
 using static Aw.Sindri.Ui.Tests.Setup.SetupFixture;
 
@@ -10,16 +10,7 @@ namespace Aw.Sindri.Ui.Tests.Setup;
 [Lane(TestLane.Unit)]
 public sealed class SetupOutdatedWorkflowsTests
 {
-    private const string Sentence = "approve-all";
-
     private readonly SetupFixture _f = new("extra-setup-ready");
-
-    public SetupOutdatedWorkflowsTests()
-    {
-        var challenge = JsonNode.Parse(GoldenFiles.Api("workflow-challenges-app", "approve-all"))!;   // why: the golden is a JSON document
-        challenge["expiresAt"] = _f.Clock.GetUtcNow().AddMinutes(5).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
-        _f.Server.AppChallengeAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, challenge.ToJsonString());
-    }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -37,6 +28,18 @@ public sealed class SetupOutdatedWorkflowsTests
 
         Assert.Equal(["approved", "approved v4, v5 available", "Out of date"], row.Recipes.Lines.Select(r => r.Status), StringComparer.Ordinal);
         Assert.Equal(["Plain step", "Review", "Triage"], row.Recipes.Lines.Select(r => r.Name), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_workflow_listed_twice_is_one_line_that_says_a_new_version_waits()
+    {
+        var approved = new Ui.Api.Workflow.RecipeSummaryView("workflow.step", 1, "sha256:aa", "approved", Name: null);
+        var waiting = new Ui.Api.Workflow.RecipeSummaryView("workflow.step", 2, "sha256:bb", "unapproved", Name: null, GainsCapability: true);
+
+        var list = new SetupRecipeListViewModel([approved, waiting]);
+
+        var line = Assert.Single(list.Lines);
+        Assert.Equal((true, 1, Labels.RecipeGainsCapability), (line.IsOutdated, list.OutdatedCount, line.Status));
     }
 
     [Fact]
@@ -68,8 +71,7 @@ public sealed class SetupOutdatedWorkflowsTests
         var all = row.Workflows!;
 
         Assert.NotEmpty(all.Rows);   // the plan lists the versions it covers, children first
-        all.Typed = all.TypedAlternative;
-        var submitted = all.SubmitTyped();
+        var submitted = all.Approve();
         while (!submitted.IsCompleted)
         {
             _f.Clock.Advance(TimeSpan.FromMilliseconds(500));
@@ -78,8 +80,7 @@ public sealed class SetupOutdatedWorkflowsTests
 
         await submitted;
 
-        var sent = Assert.Single(_f.Server.Approvals);
-        Assert.StartsWith(Sentence, sent.Typed, StringComparison.Ordinal);
+        _ = Assert.Single(_f.Server.Approvals);
     }
 
     [Fact]

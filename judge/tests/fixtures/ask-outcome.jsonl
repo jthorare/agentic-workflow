@@ -1,4 +1,0 @@
-{"type":"user","timestamp":"2026-10-03T10:00:00.000Z","message":{"role":"user","content":"Refactor chain.ts"}}
-{"type":"user","timestamp":"2026-10-03T10:05:00.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t","content":"ok"}]}}
-{"type":"user","timestamp":"2026-10-03T10:06:00.000Z","message":{"role":"user","content":"<system-reminder>x</system-reminder>"}}
-{"type":"user","timestamp":"2026-10-03T10:10:00.000Z","message":{"role":"user","content":[{"type":"text","text":"no, don't touch the tests"}]}}

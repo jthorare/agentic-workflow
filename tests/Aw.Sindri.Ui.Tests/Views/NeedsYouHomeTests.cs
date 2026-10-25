@@ -270,13 +270,14 @@ public sealed class NeedsYouHomeTests : IDisposable
         Assert.Equal((string)GoldenFiles.Node("requests", "list-by-item")["requests"]![0]!["text"]!, Named<Control>(window, "ItemRequestList").GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("body")).Text);
     });
 
-    // Review run 3 (a11y-r3-0): a pending Decide leaves the options disabled with their help text and one focusable line naming the phase.
+    // Review run 3 (a11y-r3-0): a pending Decide leaves the options disabled with their help text and one focusable line naming the command.
     [Fact]
     public Task A_pending_Decide_gives_the_item_sheet_options_help_text_and_a_focusable_line() => OnUi(async () =>
     {
         const string item = "ITM-0000000000000000000000000000000e";
         var catalog = GoldenFiles.Node("commands", "catalog");
-        catalog["rows"]!.AsArray().First(r => (string?)r!["action"] == "Decide")!["ui"] = "pending:P4";
+        var rows = catalog["rows"]!.AsArray();
+        _ = rows.Remove(rows.First(r => (string?)r!["action"] == "Decide")!);   // not listed: Decide waits
         _server.Catalog = new RouteAnswer(System.Net.HttpStatusCode.OK, catalog.ToJsonString());
         _server.DecisionsByItem[item] = RouteAnswer.Api("decisions", "by-item");
         _server.RequestsByItem[item] = RouteAnswer.Api("requests", "list-by-item");
@@ -291,6 +292,6 @@ public sealed class NeedsYouHomeTests : IDisposable
         Assert.All(options, b => Assert.Contains("sindri decide", Avalonia.Automation.AutomationProperties.GetHelpText(b), StringComparison.Ordinal));
         var line = Named<Control>(window, "ItemDecisionList").GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("pending-line"));
         Assert.True(line.IsEffectivelyVisible && line.Focusable);
-        Assert.Contains("P4", Avalonia.Automation.AutomationProperties.GetName(line), StringComparison.Ordinal);
+        Assert.Contains("sindri decide", Avalonia.Automation.AutomationProperties.GetName(line), StringComparison.Ordinal);   // the served command is what the line says
     });
 }

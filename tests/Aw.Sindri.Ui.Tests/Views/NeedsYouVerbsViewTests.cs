@@ -48,7 +48,6 @@ public sealed class NeedsYouVerbsViewTests : FrameHost
             Verbs(window).Select(b => b.GetVisualDescendants().OfType<TextBlock>().Single().Text), StringComparer.Ordinal);
         Assert.Contains("destructive", Verbs(window)[0].Classes, StringComparer.Ordinal);
         Assert.All(Verbs(window).Skip(1), b => Assert.DoesNotContain("destructive", b.Classes, StringComparer.Ordinal));
-        Assert.False(Visible(window, "NeedsYouTerminal"));
     });
 
     [Fact]

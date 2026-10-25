@@ -88,7 +88,7 @@ internal sealed partial class RecipeSheetViewModel
         OnChanged(nameof(HasStaleReasons));
         CalloutText = row.Standing switch
         {
-            RecipeStanding.NotApproved => Labels.RecipeNotApprovedCallout,
+            RecipeStanding.NotApproved => row.GainsCapability ? Labels.RecipeGainsCapability : Labels.RecipeNotApprovedCallout,
             RecipeStanding.Revoked => Labels.RecipeRevokedCallout,
             RecipeStanding.Approved => row.IsOutOfDate ? Labels.RecipeOutOfDateCallout : string.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(row), row.Standing, message: null),

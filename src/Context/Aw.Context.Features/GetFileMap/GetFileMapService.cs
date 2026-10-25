@@ -38,7 +38,7 @@ internal sealed class GetFileMapService(MapReader reader, IRepoReader repos, ICo
     {
         var files = view.Entries.Where(e => e.Type == FileEntryType.File).ToList();
         var links = files.Select(e => (e.Path, (IReadOnlyList<NodeKey>)[.. e.Features.Where(f => f.Edge == EdgeType.Implements).Select(f => f.Key)])).Where(l => l.Item2.Count > 0).ToList();
-        return SymbolColumn.Read(symbols, new SymbolColumnReading(repo, version, [.. files.Select(e => e.Path)], links), cancellationToken);
+        return SymbolColumn.Read(new TrailingCodeSymbolSource(symbols, repos, repo), new SymbolColumnReading(repo, version, [.. files.Select(e => e.Path)], links), cancellationToken);
     }
 
     private static Result<ContextRepo> Addressed(ContextScope scope, ContextRepoName name)

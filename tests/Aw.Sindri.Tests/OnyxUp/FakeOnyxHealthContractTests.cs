@@ -15,6 +15,6 @@ public sealed class FakeOnyxHealthContractTests : OnyxHealthContract
 
         public override IOnyxHealth Health => _fake;
 
-        public override int Port => 3000;
+        public override int Port => 3189;
     }
 }

@@ -109,7 +109,7 @@ out="$(LC_ALL=C awk '
 ' "$file")" || rc=1
 [ -z "$out" ] || printf '%s\n' "$out"
 
-# The requirements file the graphify row hashes, and the TS pin it must equal (only when the row itself parsed).
+# The requirements file the graphify row hashes, (only when the row itself parsed).
 want_sha="$(awk '$1 == "graphify" && NF == 4 { print $4; exit }' "$file")"
 if [ -n "$want_sha" ]; then
   if [ ! -r "$reqs" ]; then

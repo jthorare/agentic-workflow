@@ -64,11 +64,19 @@ public sealed class ShippedPlanRows(IRecipeStore store, BlockCatalog catalog, Js
         if (item.Change != PlanChange.SecondLook && delta.Added.Count > 0)
         {
             return new OwnApprovalRow(item.Shipped.Id, name, OwnApprovalReason.GainsCapability,
-                $"{name} can now do more: {string.Join("; ", delta.Added.Select(static c => c.Sentence))}.", delta.Added);
+                $"{name} can now do more: {string.Join("; ", delta.Added.Select(static c => c.Sentence))}.", delta.Added)
+            {
+                Hash = item.Shipped.Hash,
+                Version = item.Shipped.Version,
+            };
         }
 
         var child = RecipeChildren.Of(item.Shipped.Recipe).Where(own.ContainsKey).Select(id => own[id]).FirstOrDefault();
-        return child is null ? null : new OwnApprovalRow(item.Shipped.Id, name, OwnApprovalReason.WaitsForChild, $"{name} waits for {child.DisplayName}, which gained a capability.", []);
+        return child is null ? null : new OwnApprovalRow(item.Shipped.Id, name, OwnApprovalReason.WaitsForChild, $"{name} waits for {child.DisplayName}, which gained a capability.", [])
+        {
+            Hash = item.Shipped.Hash,
+            Version = item.Shipped.Version,
+        };
     }
 
     /// <summary>The capabilities of the last approved hash, from its stored recipe; empty when that text is gone (every capability then looks new, the safe direction).</summary>

@@ -22,7 +22,7 @@ public sealed class OnyxSourceContractTests : ContextSourceContract<IContextSour
     [Fact]
     public void Describe_says_a_live_local_intent_source_that_cannot_cut_to_a_past_time_and_declares_no_limits()
     {
-        using var harness = new OnyxSourceHarness(new Uri("http://127.0.0.1:3000"), "on_x");
+        using var harness = new OnyxSourceHarness(new Uri("http://127.0.0.1:3189"), "on_x");
 
         var descriptor = harness.Source.Describe();
 
@@ -67,6 +67,8 @@ public sealed class OnyxSourceContractTests : ContextSourceContract<IContextSour
         Assert.True(all.Count > 1);
         Assert.Equal(all[0].Ref, Assert.Single(one).Ref);
         Assert.Equal(2, onyx.Requests.Count);
+        var note = Assert.Single(((ISourceNotes)harness.Source).TakeNotes());   // the first search dropped nothing; the second names the cut
+        Assert.Contains("past the limit of 1", note, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -81,6 +83,9 @@ public sealed class OnyxSourceContractTests : ContextSourceContract<IContextSour
         Assert.NotEmpty(hits);
         Assert.DoesNotContain(hits, h => h.Ref.Id.Value == Spl105);
         Assert.Equal(Enumerable.Range(1, hits.Count), hits.Select(h => h.Rank));
+        var note = Assert.Single(((ISourceNotes)harness.Source).TakeNotes());
+        Assert.Contains("1 hidden by an Onyx admin", note, StringComparison.Ordinal);
+        Assert.Empty(((ISourceNotes)harness.Source).TakeNotes());   // read once
     }
 
     [Fact]

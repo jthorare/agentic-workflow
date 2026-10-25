@@ -18,6 +18,9 @@ internal static class ShippedRecipesRegistration
         services.TryAddScoped<ShippedRecipeSet>();
         services.TryAddScoped<ShippedPlanRows>();
         services.TryAddScoped<ShippedRecipePlanner>();
+        services.TryAddScoped<ShippedRecipeRegistration>();
+        services.TryAddScoped<WaitingShippedLines>();
+        services.TryAddScoped<ShippedApprovalPlans>();
         services.TryAddScoped<ShippedRecipeApprover>();
         services.TryAddScoped<IShippedRecipes, ShippedRecipes>();
         return services;

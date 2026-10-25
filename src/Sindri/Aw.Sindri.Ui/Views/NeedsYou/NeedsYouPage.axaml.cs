@@ -31,8 +31,6 @@ internal sealed partial class NeedsYouPage : UserControl
         AddHandler(LostFocusEvent, (_, e) => Look(e, looking: false));
         // Tunnel: the multi-line box handles Enter itself before a bubbling handler would see Ctrl+Enter.
         NeedsYouReason.AddHandler(KeyDownEvent, OnReasonKey, RoutingStrategies.Tunnel);
-        NeedsYouHoldControl.Held += (_, e) => _ = _page?.Bar.HoldReached(e.HeldMs);   // the hold that reached the server's time is the person's: the bar sends it once
-        NeedsYouTypedBox.Submitted += (_, e) => _ = _page?.Bar.SubmitTyped(e.Text);
         SizeChanged += (_, e) => NeedsYouColumns.ColumnDefinitions[0].Width = new GridLength(e.NewSize.Width < NarrowBelow ? NarrowColumn : WideColumn);
     }
 
@@ -66,7 +64,6 @@ internal sealed partial class NeedsYouPage : UserControl
         {
             _page.PropertyChanged -= OnPageChanged;
             _page.Bar.ReasonRequested -= OnReasonRequested;
-            _page.Bar.ConfirmFocusRequested -= OnConfirmFocusRequested;
             _page.Bar.PropertyChanged -= OnBarChanged;
             _page.CardFocusRequested -= OnCardFocusRequested;
         }
@@ -76,7 +73,6 @@ internal sealed partial class NeedsYouPage : UserControl
         {
             _page.PropertyChanged += OnPageChanged;
             _page.Bar.ReasonRequested += OnReasonRequested;
-            _page.Bar.ConfirmFocusRequested += OnConfirmFocusRequested;
             _page.Bar.PropertyChanged += OnBarChanged;
             _mode = _page.Bar.Mode;
             _page.CardFocusRequested += OnCardFocusRequested;
@@ -110,20 +106,6 @@ internal sealed partial class NeedsYouPage : UserControl
     private void OnReasonRequested(object? sender, EventArgs e) =>
         Dispatcher.UIThread.Post(() => _ = NeedsYouReason.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
-    // A: focus moves to the confirmation control (the typed box's field, or the hold button), so Enter types or Space holds there. Nothing is approved by it.
-    private void OnConfirmFocusRequested(object? sender, EventArgs e) =>
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (_page?.Bar.ShowsTyped == true)
-            {
-                NeedsYouTypedBox.FocusField();
-            }
-            else if (_page?.Bar.ShowsHold == true)
-            {
-                _ = NeedsYouHoldControl.Part.Focus(NavigationMethod.Tab);
-            }
-        }, DispatcherPriority.Loaded);
-
     // What closes under the keyboard takes its focus with it: a closed question hands focus back to Send back (or Approve), and a report that went through hands it to the
     // list row, so focus never falls to the window.
     private void OnBarChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -147,7 +129,7 @@ internal sealed partial class NeedsYouPage : UserControl
 
     private void FocusBar(NeedsYouBarMode was)
     {
-        Button[] order = was == NeedsYouBarMode.Confirming ? [NeedsYouApprove, NeedsYouSendBack] : [NeedsYouSendBack, NeedsYouApprove, NeedsYouTerminal];
+        Button[] order = was == NeedsYouBarMode.Confirming ? [NeedsYouApprove, NeedsYouSendBack] : [NeedsYouSendBack, NeedsYouApprove];
         _ = order.FirstOrDefault(b => b.IsEffectivelyVisible && b.IsEnabled)?.Focus(NavigationMethod.Tab);
     }
 
@@ -190,8 +172,6 @@ internal sealed partial class NeedsYouPage : UserControl
     private void OnReview(object? sender, RoutedEventArgs e) => _ = ((sender as Button)?.DataContext as ViewModels.Components.DeskReviewViewModel)?.Open();
 
     private void OnSession(object? sender, RoutedEventArgs e) => _page?.Bar.OpenSession();
-
-    private void OnTerminal(object? sender, RoutedEventArgs e) => _ = _page?.Bar.CopyTerminal();
 
     private void OnSendBack(object? sender, RoutedEventArgs e) => _ = _page?.Bar.PressSendBack();
 

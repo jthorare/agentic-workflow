@@ -74,7 +74,7 @@ public sealed class ProfileSummaryViewModelTests
             connections: ["c1"],
             humanOnly: ["h1"]));
 
-        Assert.Equal(["a", "b", "Services", "What workflows may do", "Outside systems", "Kept for you"], summary.Groups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal(["a", "b", "Services", "What workflows may do", "Outside systems", "Waits for your answer"], summary.Groups.Select(g => g.Heading), StringComparer.Ordinal);
     }
 
     [Theory]

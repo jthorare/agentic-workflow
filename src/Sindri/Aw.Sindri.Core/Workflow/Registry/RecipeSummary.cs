@@ -44,4 +44,8 @@ public sealed record RecipeSummary(RecipeId Id, int Version, RecipeHash Hash, Re
     /// <summary>The recipe's stats at the list's window; left out of the JSON for a draft, a child-only recipe and a list read without them.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Stats.RecipeListStats? Stats { get; init; }
+
+    /// <summary>True for a shipped version that waits for its own typed approval because it gains a capability (approve-all leaves it out); null, and left out of the JSON, otherwise.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public bool? GainsCapability { get; init; }
 }

@@ -14,7 +14,8 @@ internal sealed class SetupRecipeListViewModel
     {
         ArgumentNullException.ThrowIfNull(served);
         // why: a group is never empty, so MaxBy finds a row
-        Lines = [.. served.GroupBy(r => r.Id, StringComparer.Ordinal).Select(g => g.MaxBy(r => r.Version)!).Select(r => new SetupRecipeLineViewModel(r))];
+        // A recipe listed twice (the approved version and the one waiting that gained a capability) is one line, marked as waiting.
+        Lines = [.. served.GroupBy(r => r.Id, StringComparer.Ordinal).Select(g => new SetupRecipeLineViewModel(g.MaxBy(r => r.Version)!, waiting: g.Any(r => r.GainsCapability == true)))];
         OutdatedCount = Lines.Count(l => l.IsOutdated);
     }
 

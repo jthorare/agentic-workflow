@@ -29,6 +29,11 @@ public sealed class FakeRunDiff : IRunDiff
         _changed[worktree].UnionWith(paths);
     }
 
+    /// <summary>Makes <paramref name="paths"/> differ between older commits and HEAD, without leaving anything uncommitted.</summary>
+    /// <param name="worktree">The path.</param>
+    /// <param name="paths">The paths that differ from any earlier commit.</param>
+    public void Differ(string worktree, params string[] paths) => _changed[worktree].UnionWith(paths);
+
     /// <summary>Commits in <paramref name="worktree"/>: a new HEAD, clean.</summary>
     /// <param name="worktree">The path.</param>
     public void Advance(string worktree) => _worktrees[worktree] = (_worktrees[worktree].Head + "+", false);

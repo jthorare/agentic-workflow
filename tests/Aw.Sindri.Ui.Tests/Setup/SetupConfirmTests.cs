@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -7,142 +6,154 @@ using static Aw.Sindri.Ui.Tests.Setup.SetupFixture;
 
 namespace Aw.Sindri.Ui.Tests.Setup;
 
-/// <summary>The two confirmations in their rows (setup spec §8.3): the profile's typed approval and the workflows' plan with its hold and typed alternative, each behind catalog readiness with the terminal copy until then.</summary>
+/// <summary>The two approvals in their rows (setup spec §8.3; q93): the profile's Approve button and the workflows' plan with its Approve button, each one plain click.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SetupConfirmTests
 {
-    private const string PhraseText = "approve profile 70e158";
     private const string LiveHash = "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261";
 
-    private readonly SetupFixture _f;
+    private readonly SetupFixture _f = new("extra-setup-ready") { Hash = LiveHash };
 
-    public SetupConfirmTests() : this("extra-approve-all-cli-only")
-    {
-    }
-
-    private SetupConfirmTests(string catalog)
-    {
-        _f = new SetupFixture(catalog) { Hash = LiveHash };
-        var challenge = JsonNode.Parse(GoldenFiles.Api("workflow-challenges-app", "profile"))!;   // why: the golden is a JSON document
-        challenge["expiresAt"] = _f.Clock.GetUtcNow().AddMinutes(5).ToString("O", System.Globalization.CultureInfo.InvariantCulture);   // valid for five minutes from the fixture's clock
-        _f.Server.AppChallengeAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, challenge.ToJsonString());
-    }
+    private const string ServedCli = "sindri profile approve [<hash>]";   // the ApproveProfile row of the served catalog fixture
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static SetupStepViewModel Step(SetupViewModel setup, string id) => setup.Steps.Single(s => s.Id == id);
 
-    private async Task<SetupStepViewModel> ProfileRow(SetupConfirmTests? ready = null)
+    private async Task<SetupStepViewModel> ProfileRow()
     {
-        var f = ready is null ? _f : ready._f;
-        f.Serve("profile-needs-approval");
-        return Step(await f.Read(Token), "profile");
+        _f.Serve("profile-needs-approval");
+        return Step(await _f.Read(Token), "profile");
     }
 
     [Fact]
-    public async Task Profile_row_shows_terminal_copy_until_the_catalog_is_ready()
+    public async Task The_profile_row_offers_one_approve_button_in_place_of_the_terminal_copy()
     {
-        var waiting = await ProfileRow();
+        var row = await ProfileRow();
 
-        Assert.Equal((true, false, false), (waiting.Action!.HasProtected, waiting.Profile!.ShowsTyped, waiting.Action.IsInApp));
-        Assert.Empty(_f.Server.Challenges);   // nothing is asked for while the app may not approve
-        Assert.Empty(_f.Server.ProfileApprovals);
-
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        var row = await ProfileRow(ready);
-
-        Assert.Null(row.Action);   // the typed box takes the button's place
-        Assert.True(row.Profile!.ShowsTyped);
-        Assert.Equal(["approve profile " + LiveHash[..6]], ready._f.Server.Challenges.Select(c => c.Action), StringComparer.Ordinal);
-        Assert.Equal(PhraseText, row.Profile.TypedBox.Phrase);
+        Assert.Null(row.Action);   // the Approve button takes the lock button's place
+        Assert.Equal((true, true), (row.Profile!.ShowsApprove, row.Profile.CanApprove));
+        Assert.Empty(_f.Server.ProfileApprovals);   // showing it approves nothing
     }
 
     [Fact]
-    public async Task The_typed_phrase_sends_the_live_hash_once_and_approves_the_row()
+    public async Task One_click_sends_the_live_hash_once_with_no_challenge_and_approves_the_row()
     {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        var profile = (await ProfileRow(ready)).Profile!;
-        profile.TypedBox.Text = PhraseText;
+        var profile = (await ProfileRow()).Profile!;
 
-        await profile.SubmitTyped(profile.TypedBox.Submit()!);
-        await profile.SubmitTyped(PhraseText);   // a second press after the approval sends nothing
+        await profile.Approve();
+        await profile.Approve();   // a second press after the approval sends nothing
 
-        var sent = Assert.Single(ready._f.Server.ProfileApprovals);
-        Assert.Equal((LiveHash, "CHL-00000000000000000000000000000006", PhraseText), (sent.Hash, sent.Answer.Challenge, sent.Answer.Typed));
+        Assert.Equal(LiveHash, Assert.Single(_f.Server.ProfileApprovals).Hash);
         Assert.True(profile.IsDone);
     }
 
     [Fact]
-    public async Task A_phrase_that_is_not_exact_sends_nothing()
+    public async Task A_second_change_to_the_profile_offers_the_button_again()
     {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        var profile = (await ProfileRow(ready)).Profile!;
+        var profile = (await ProfileRow()).Profile!;
+        await profile.Approve();
+        await profile.Follow(wanted: false);   // the row is done and leaves Needs you
 
-        await profile.SubmitTyped("approve profile 70e15");
+        _f.Hash = "b" + LiveHash[1..];   // the profile changed again
+        await profile.Follow(wanted: true);
 
-        Assert.Empty(ready._f.Server.ProfileApprovals);
+        Assert.Equal((false, true, true), (profile.IsDone, profile.ShowsApprove, profile.CanApprove));
     }
 
     [Fact]
-    public async Task A_stale_hash_says_to_read_it_again_and_asks_for_a_fresh_phrase()
+    public async Task A_second_approval_sends_the_new_hash()
     {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        ready._f.Server.ApproveProfileAnswer = RouteAnswer.Problem("profile-approve", "stale-hash");
-        var profile = (await ProfileRow(ready)).Profile!;
+        var profile = (await ProfileRow()).Profile!;
+        await profile.Approve();
+        await profile.Follow(wanted: false);
+        _f.Hash = "b" + LiveHash[1..];
+        await profile.Follow(wanted: true);
 
-        await profile.SubmitTyped(PhraseText);
+        await profile.Approve();
 
-        Assert.Equal((Labels.SetupProfileChangedWhileReading, false, 2), (profile.Refusal, profile.IsDone, ready._f.Server.Challenges.Count));   // one phrase for the first ask, one after the refusal
-        Assert.True(profile.ShowsTyped);
+        Assert.Equal([LiveHash, "b" + LiveHash[1..]], _f.Server.ProfileApprovals.Select(a => a.Hash), StringComparer.Ordinal);
     }
 
     [Fact]
-    public async Task Without_a_profile_hash_the_row_says_it_is_reading_and_asks_for_nothing()
+    public async Task A_successful_approval_asks_for_focus_on_the_step_heading()
     {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        ready._f.Hash = null;
+        var step = await ProfileRow();
+        var asked = new List<SetupFocus>();
+        step.Profile!.FocusRequested += (_, e) => asked.Add(e.Target);
 
-        var profile = (await ProfileRow(ready)).Profile!;
+        await step.Profile.Approve();
 
-        Assert.Equal((false, true), (profile.ShowsTyped, profile.IsWaiting));
-        Assert.Empty(ready._f.Server.Challenges);
+        Assert.Equal([SetupFocus.StepHeading], asked);
     }
 
     [Fact]
-    public async Task Workflows_row_keeps_the_terminal_copy_and_reads_no_plan_until_the_catalog_is_ready()
+    public async Task A_refused_approval_keeps_focus_where_it_is()
+    {
+        _f.Server.ApproveProfileAnswer = RouteAnswer.Refused();
+        var step = await ProfileRow();
+        var asked = new List<SetupFocus>();
+        step.Profile!.FocusRequested += (_, e) => asked.Add(e.Target);
+
+        await step.Profile.Approve();
+
+        Assert.Empty(asked);
+    }
+
+    [Fact]
+    public async Task A_stale_hash_says_to_read_it_again_and_leaves_the_button_pressable()
+    {
+        _f.Server.ApproveProfileAnswer = RouteAnswer.Problem("profile-approve", "stale-hash");
+        var profile = (await ProfileRow()).Profile!;
+
+        await profile.Approve();
+
+        Assert.Equal(("SND-PROFILE-003: " + Labels.SetupProfileChangedWhileReading + " Run: " + ServedCli, false, true), (profile.Refusal, profile.IsDone, profile.CanApprove));
+    }
+
+    [Fact]
+    public async Task A_refused_approval_names_its_code_and_the_catalogs_command()
+    {
+        _f.Server.ApproveProfileAnswer = RouteAnswer.Refused();
+        var profile = (await ProfileRow()).Profile!;
+
+        await profile.Approve();
+
+        Assert.Equal(("SND-AUTH-002: " + Labels.ApproveSessionRefused + " Run: " + ServedCli, false), (profile.Refusal, profile.IsDone));
+    }
+
+    [Fact]
+    public async Task Without_a_profile_hash_the_row_says_it_is_reading_and_offers_no_button()
+    {
+        _f.Hash = null;
+
+        var profile = (await ProfileRow()).Profile!;
+
+        Assert.Equal((false, true), (profile.ShowsApprove, profile.IsWaiting));
+    }
+
+    [Fact]
+    public async Task Workflows_row_shows_the_plan_with_its_change_words_and_the_approve_button()
     {
         _f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
 
         var row = Step(await _f.Read(Token), "recipes");
-
-        Assert.Equal((true, 0), (row.Action!.HasProtected, _f.Server.PlanCalls));
-        Assert.False(row.Workflows!.IsOpen);
-    }
-
-    [Fact]
-    public async Task Workflows_row_shows_the_plan_with_its_change_words_and_no_button_when_ready()
-    {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        ready._f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
-
-        var row = Step(await ready._f.Read(Token), "recipes");
         var all = row.Workflows!;
 
         Assert.Null(row.Action);
-        Assert.Equal((true, true), (all.IsOpen, all.ShowsPlan));
+        Assert.Equal((true, true, true), (all.IsOpen, all.ShowsPlan, all.CanApprove));
         Assert.NotEmpty(all.Rows);
         Assert.All(all.Rows, r => Assert.NotEmpty(r.Reason));   // New, Updated or Needs a second look, as the plan serves it
-        Assert.Empty(ready._f.Server.Approvals);   // reading the plan approves nothing
+        Assert.Empty(_f.Server.Approvals);   // reading the plan approves nothing
     }
 
     [Fact]
     public async Task A_workflows_row_that_stops_needing_the_person_closes_its_plan()
     {
-        var ready = new SetupConfirmTests("extra-setup-ready");
-        ready._f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
-        var setup = await ready._f.Read(Token);
+        _f.Serve(With("profile-needs-approval", "recipes", "needs-you", "ApproveAllRecipes"));
+        var setup = await _f.Read(Token);
 
-        ready._f.Serve(With("profile-needs-approval", "recipes", "todo"));
+        _f.Serve(With("profile-needs-approval", "recipes", "todo"));
         await setup.Refresh(Url, Token);
 
         Assert.False(Step(setup, "recipes").Workflows!.IsOpen);
@@ -158,7 +169,7 @@ public sealed class SetupConfirmTests
         await setup.Refresh(Url, Token);
 
         var profile = Step(setup, "profile").Profile!;
-        Assert.False(profile.ShowsTyped);   // the catalog is not ready here: terminal copy
+        Assert.True(profile.ShowsApprove);
         Assert.Equal(["demo"], profile.Summary.Groups.Select(g => g.Heading), StringComparer.Ordinal);
         Assert.Equal(1, _f.Server.ProfileCalls);
     }

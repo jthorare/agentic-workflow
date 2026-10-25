@@ -1,16 +1,14 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.ViewModels.Components;
-using Aw.Sindri.Ui.ViewModels.Confirmations;
 using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Approvals;
 
 /// <summary>
-/// The approve-all dialog (setup-once spec §4, §5.3): the plan in words, then one confirmation, held or typed, against a server
-/// challenge bound to the plan. The approval runs as a job the dialog follows. A challenge is asked for once the plan is shown and
-/// again after it ran out; any answer other than a short hold uses it up. Nothing here approves on its own: only the person's hold
-/// or typed text, and an agent session is refused by the server (SND-AUTH-002), which the dialog says in plain words.
+/// The approve-all dialog (setup-once spec §4, §5.3): the plan in words, then one Approve click. The approval runs as a job the dialog
+/// follows. Nothing here approves on its own: only the person's click, and one of Sindri's own steps is refused by the server (SND-AUTH-002),
+/// which the dialog says in plain words.
 /// </summary>
 internal sealed partial class ApproveAllViewModel : ObservableObject
 {
@@ -18,49 +16,28 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
     internal const string Action = "ApproveAllRecipes";
 
     private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(500);
-    private const int DefaultHoldMs = HoldButtonViewModel.DefaultHoldMs;
     private const int ReadFailuresAllowed = 3;
 
     private readonly CatalogViewModel _catalog;
     private readonly Func<Uri?> _url;
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
-    private AppChallengeView? _challenge;
     private ApproveAllPlan? _plan;
-    private bool _asking;   // a challenge is being asked for; one at a time
     private int _session;   // which opening this is; an answer is for the one that asked
 
     /// <summary>The dialog over its ports.</summary>
-    /// <param name="catalog">The command catalog: its ApproveAllRecipes row says whether the app may approve.</param>
+    /// <param name="catalog">The command catalog, for its clipboard.</param>
     /// <param name="url">The API now, or null when none is running.</param>
     /// <param name="api">The API.</param>
-    /// <param name="clock">The clock for the hold, the challenge's expiry and the job's polling.</param>
-    /// <param name="reducedMotion">True when the OS or the in-app switch asks for reduced motion: the hold shows its text count and no animated fill. None means motion is allowed.</param>
-    internal ApproveAllViewModel(CatalogViewModel catalog, Func<Uri?> url, ISindriApi api, TimeProvider clock, Func<bool>? reducedMotion = null)
+    /// <param name="clock">The clock for the job's polling.</param>
+    internal ApproveAllViewModel(CatalogViewModel catalog, Func<Uri?> url, ISindriApi api, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(url);
         ArgumentNullException.ThrowIfNull(api);
         ArgumentNullException.ThrowIfNull(clock);
         (_catalog, _url, _api, _clock) = (catalog, url, api, clock);
-        Hold = new HoldButtonViewModel(Action, catalog, clock, reducedMotion) { Gate = BeginGate };
-        TypedBox = new TypedConfirmBoxViewModel(Action, catalog, clock);
-        Hold.Started += (_, _) => Live.Say(Labels.ApproveHoldStarted);
-        Hold.Cancelled += (_, _) => Notice = Labels.ApproveHoldAgain;
-        TypedBox.PropertyChanged += (_, e) =>
-        {
-            if (string.Equals(e.PropertyName, nameof(TypedConfirmBoxViewModel.Text), StringComparison.Ordinal))
-            {
-                OnChanged(nameof(CanSubmitTyped));
-            }
-        };
     }
-
-    /// <summary>The hold button the dialog is rebuilt on (the shared control: it times and draws; the dialog owns the challenge).</summary>
-    public HoldButtonViewModel Hold { get; }
-
-    /// <summary>The typed alternative, on the shared control.</summary>
-    public TypedConfirmBoxViewModel TypedBox { get; }
 
     /// <summary>The polite live region (a hold starting, being let go, the result).</summary>
     public LiveAnnouncer Live { get; } = new(Labels.ApproveAllTitle);
@@ -87,20 +64,11 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
     /// <summary>The Details disclosure's heading.</summary>
     public string DetailsHeading => Labels.ApproveDetails;
 
-    /// <summary>The typed field's caption.</summary>
-    public string TypeCaption => Labels.ApproveTypeCaption;
-
-    /// <summary>The typed field's accessible name.</summary>
-    public string TypeName => Labels.ApproveTypeName;
-
-    /// <summary>The typed answer's button.</summary>
-    public string TypeButton => Labels.ApproveTypeButton;
+    /// <summary>The Approve button's word.</summary>
+    public string ApproveLabel => Labels.ApproveAllButton;
 
     /// <summary>The heading over what was not approved.</summary>
     public string NotApprovedHeading => Labels.ApproveNotApproved;
-
-    /// <summary>The retry button's word.</summary>
-    public string RetryLabel => Labels.ApproveTryAgain;
 
     /// <summary>The heading over what waits on those.</summary>
     public string WaitingHeading => Labels.ApproveWaiting;
@@ -131,9 +99,6 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
         nameof(IsReading), nameof(ShowsPlan), nameof(IsEmpty), nameof(IsApplying), nameof(IsDone), nameof(IsFailed), nameof(CloseLabel), nameof(CanApprove),
     ];
 
-    /// <summary>True when the catalog says the app may approve (a cli-only row, or none, is not).</summary>
-    internal bool IsReady => AppConfirm.IsReady(_catalog, Action);
-
     /// <summary>True while the plan is read.</summary>
     public bool IsReading => Phase == ApproveAllPhase.Reading;
 
@@ -152,12 +117,12 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
     /// <summary>True when the plan or the approval could not be read or run.</summary>
     public bool IsFailed => Phase == ApproveAllPhase.Failed;
 
-    /// <summary>Opens the dialog and reads the plan; the challenge is asked for once the plan shows.</summary>
+    /// <summary>Opens the dialog and reads the plan.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>A task that completes when the plan is shown (or failed) and the challenge answered.</returns>
+    /// <returns>A task that completes when the plan is shown (or failed).</returns>
     internal async Task Open(CancellationToken cancellationToken)
     {
-        if (!IsReady || _url() is not { } api)
+        if (_url() is not { } api)
         {
             return;
         }
@@ -171,7 +136,7 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
             return;
         }
 
-        await ShowPlan(api, read, session, cancellationToken).ConfigureAwait(true);
+        ShowPlan(read);
     }
 
     /// <summary>Copies a command (a refused workflow's own approval) to the clipboard.</summary>
@@ -194,8 +159,7 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
         }
 
         _session++;
-        _challenge = null;
-        ResetAnswerState();   // a hold in progress lets go: the view's timer stops on its next step
+        ResetAnswerState();
         IsOpen = false;
         Phase = ApproveAllPhase.Closed;
         Live.Quiet();
@@ -205,7 +169,7 @@ internal sealed partial class ApproveAllViewModel : ObservableObject
     private int Restart()
     {
         _session++;
-        (_challenge, _plan, IsSending, _asking) = (null, null, false, false);
+        (_plan, IsSending) = (null, false);
         ResetPlanState();
         ResetAnswerState();
         return _session;

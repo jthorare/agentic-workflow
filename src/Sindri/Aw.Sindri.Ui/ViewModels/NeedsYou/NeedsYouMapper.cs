@@ -1,6 +1,5 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
-using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
@@ -21,7 +20,7 @@ internal static class NeedsYouMapper
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(catalog);
-        var readiness = catalog.Rows.ToDictionary(r => r.Action, r => (ReadinessOf(r.Ui), CatalogReadiness.Parse(r.Ui).Stage, r.Cli), StringComparer.Ordinal);
+        var readiness = catalog.Rows.ToDictionary(r => r.Action, r => (r.Cli, Protected: string.Equals(r.Class, "protected", StringComparison.Ordinal)), StringComparer.Ordinal);
         var read = catalog.Rows.Count > 0;
         return new NeedsYouFeed([.. list.Rows.Select(row => Entry(row, readiness, decisions, read, readAt))], list.Empty ?? string.Empty)
         {
@@ -31,16 +30,7 @@ internal static class NeedsYouMapper
         };
     }
 
-    // The catalog's ui word, read once for the whole app (CatalogReadiness): anything it does not know cannot run.
-    internal static ActionReadiness ReadinessOf(string ui) => CatalogReadiness.Parse(ui).Kind switch
-    {
-        ControlKind.Ready => ActionReadiness.Ready,
-        ControlKind.Pending => ActionReadiness.Pending,
-        ControlKind.CliOnly => ActionReadiness.CliOnly,
-        _ => ActionReadiness.CliOnly,
-    };
-
-    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, (ActionReadiness Readiness, string Stage, string Cli)> readiness, DecisionList? decisions, bool read, DateTimeOffset readAt)
+    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions, bool read, DateTimeOffset readAt)
     {
         var subject = row.Subject is { } s ? new NeedsYouSubject(s.Kind, s.Id) : null;
         row = Unanswerable(row);
@@ -89,20 +79,20 @@ internal static class NeedsYouMapper
         decisionId is null ? null : decisions?.Decisions.FirstOrDefault(d => string.Equals(d.Id, decisionId, StringComparison.Ordinal));
 
     // A Decide on a decision row is one button per option the pending list offers; every other action is one button with its own catalog command.
-    private static IEnumerable<NeedsYouAction> Actions(NeedsYouRowView row, NeedsYouSubject? subject, string id, Dictionary<string, (ActionReadiness Readiness, string Stage, string Cli)> readiness, DecisionList? decisions)
+    private static IEnumerable<NeedsYouAction> Actions(NeedsYouRowView row, NeedsYouSubject? subject, string id, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions)
     {
-        var (ready, stage, catalogCli) = readiness.GetValueOrDefault(id, (ActionReadiness.Pending, "", ""));
+        var (ready, catalogCli, isProtected) = readiness.TryGetValue(id, out var listed) ? (ActionReadiness.Ready, listed.Cli, listed.Protected) : (ActionReadiness.Pending, "", false);
         var decision = string.Equals(id, Decide, StringComparison.Ordinal) ? PendingDecision(subject?.DecisionId, decisions) : null;
         if (decision is null)
         {
             var (cli, hint) = ActionCommand.For(catalogCli, string.Equals(id, row.PrimaryAction, StringComparison.Ordinal), row.Cli, subject, row.Item);
-            yield return new NeedsYouAction(id, Labels.Action(id), ready, cli, RejectLike: false) { Stage = stage, FillInHint = hint };
+            yield return new NeedsYouAction(id, Labels.Action(id), ready, cli, RejectLike: false) { FillInHint = hint, IsProtected = isProtected };
             yield break;
         }
 
         foreach (var option in decision.Options)
         {
-            yield return new NeedsYouAction(id, option.Label, ready, option.Cli, option.RejectLike) { Stage = stage, OptionId = option.Id, Recommended = string.Equals(option.Id, decision.Recommended, StringComparison.Ordinal) };
+            yield return new NeedsYouAction(id, option.Label, ready, option.Cli, option.RejectLike) { IsProtected = isProtected, OptionId = option.Id, Recommended = string.Equals(option.Id, decision.Recommended, StringComparison.Ordinal) };
         }
     }
 

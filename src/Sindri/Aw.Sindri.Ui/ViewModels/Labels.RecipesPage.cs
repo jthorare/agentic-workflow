@@ -31,6 +31,9 @@ internal static partial class Labels
     /// <summary>The second, grey word of an approved workflow that has changed since.</summary>
     internal const string OutOfDate = "Out of date";
 
+    /// <summary>The line on a recipe's pending new version: it waits for its own approval and can now do more than the approved one.</summary>
+    internal const string RecipeGainsCapability = "New version waiting for approval: it can now do more.";
+
     /// <summary>The word for a standing.</summary>
     /// <param name="standing">The standing.</param>
     /// <returns>"Approved", "Not approved" or "Revoked".</returns>

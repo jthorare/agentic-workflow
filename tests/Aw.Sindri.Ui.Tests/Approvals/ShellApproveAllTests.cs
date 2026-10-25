@@ -43,7 +43,7 @@ public sealed class ShellApproveAllTests
         var row = Assert.Single(shell.NeedsYou.Rows);
         var button = Assert.Single(row.Controls);
 
-        Assert.Equal(("Approve all workflows", true, true, false), (button.Action.Label, button.IsPrimary, button.IsEnabled, button.IsProtected));
+        Assert.Equal(("Approve all workflows", true, true), (button.Action.Label, button.IsPrimary, button.IsEnabled));
     }, Token);
 
     [Fact]

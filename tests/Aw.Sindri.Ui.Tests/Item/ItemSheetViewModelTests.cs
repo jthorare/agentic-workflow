@@ -134,7 +134,7 @@ public sealed class ItemSheetViewModelTests
 
         Assert.Equal(["Close item", "Close as cancelled"], sheet.Actions.Select(a => a.Label), StringComparer.Ordinal);
         Assert.All(sheet.Actions, a => Assert.True(a.CanRun));
-        Assert.Equal((false, true), (sheet.Actions[0].IsDestructive, sheet.Actions[1].IsDestructive));
+        Assert.Equal((true, true), (sheet.Actions[0].IsDestructive, sheet.Actions[1].IsDestructive));   // both close actions ask first (ux-A-3)
         Assert.Equal("Close item " + A.NewItem, sheet.Actions[0].Name);
     }
 
@@ -147,6 +147,7 @@ public sealed class ItemSheetViewModelTests
         var close = sheet.Actions[0];
 
         await close.Press(Token);
+        await close.Confirm(Token);
         _server.Items[A.NewItem] = RouteAnswer.SpecShaped("items-id", "after-close");
         await sheet.Refresh(_api, Token);
 
@@ -212,7 +213,6 @@ public sealed class ItemSheetViewModelTests
 
         Assert.Equal((true, "DEC-0192a1b2c3d4e5f6a7b8c9d0e1f2c501", "Needs decision"), (sheet.HasWaitingOn, sheet.WaitingOn, sheet.StateWord));
         Assert.Equal(["Decide", "Close item", "Close as cancelled"], sheet.Actions.Select(a => a.Label), StringComparer.Ordinal);
-        Assert.False(sheet.Actions[0].IsPending);   // API P4 made Decide ready
     }
 
     private static Task Within(Task task) => task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);

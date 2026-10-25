@@ -59,8 +59,9 @@ public sealed class NeedsYouFramesTests : FrameHost
     [Fact]
     public Task A_disabled_row_control_says_why_on_hover_and_to_assistive_technology() => OnUi(async () =>
     {
-        var catalog = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("commands", "catalog"))!;   // ApproveProfile is ready now; a row that is still cli-only is what disables a control
-        catalog["rows"]!.AsArray().Single(r => (string?)r!["action"] == "ApproveProfile")!["ui"] = "cli-only:typed-confirmation";
+        var catalog = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("commands", "catalog"))!;   // an action the catalog does not list is what disables a control
+        var rows = catalog["rows"]!.AsArray();
+        _ = rows.Remove(rows.Single(r => (string?)r!["action"] == "ApproveProfile"));
         Server.Catalog = new RouteAnswer(System.Net.HttpStatusCode.OK, catalog.ToJsonString());
         var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
 

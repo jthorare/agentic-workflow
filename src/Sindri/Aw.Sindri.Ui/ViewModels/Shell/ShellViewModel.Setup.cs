@@ -19,10 +19,10 @@ internal sealed partial class ShellViewModel
     /// <summary>The setup checklist behind Settings' first section and Home's line.</summary>
     public SetupViewModel Setup { get; }
 
-    // The app does approve-all itself once the catalog says it may, and opens the profile's approval row when Needs you has it; every other action is a command to copy until its form exists.
+    // The app does approve-all itself, and opens the profile's approval row when Needs you has it; every other action is a command to copy until its form exists.
     private bool OpensInApp(string action) => action switch
     {
-        ApproveAllViewModel.Action => ApproveAll.IsReady,
+        ApproveAllViewModel.Action => true,
         "ApproveProfile" => _needsYou?.Rows.Any(r => string.Equals(r.Id, ProfileDriftRow, StringComparison.Ordinal)) == true,   // the unfiltered feed: Home's Decisions filter trims what NeedsYou lists
         _ => false,
     };

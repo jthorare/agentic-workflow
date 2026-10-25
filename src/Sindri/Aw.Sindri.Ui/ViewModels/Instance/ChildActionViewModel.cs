@@ -1,7 +1,6 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Components;
-using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Instance;
 
@@ -16,7 +15,7 @@ internal sealed class ChildActionViewModel
     {
         Label = Labels.Action(action);
         Protected = served is not null && string.Equals(served.Class, "protected", StringComparison.Ordinal) ? new ProtectedActionViewModel(new ProtectedAction(Label, Cli: string.Empty, address), clipboard, clock) : null;
-        PendingChip = Protected is not null ? string.Empty : served is not null && CatalogReadiness.Parse(served.Ui) is (ControlKind.Pending, { } stage) ? Labels.Arrives(stage) : Labels.AvailableWithU8b;
+        PendingChip = Protected is not null ? string.Empty : Labels.AvailableWithU8b;
         Name = Labels.ChildActionName(Label, address, PendingChip);
     }
 

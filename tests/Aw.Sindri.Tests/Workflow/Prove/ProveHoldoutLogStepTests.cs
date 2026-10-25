@@ -30,11 +30,11 @@ public sealed class ProveHoldoutLogStepTests
     private static JsonNode Out(BlockStepResult result, string key) => JsonNode.Parse(result.Result!.Outputs[FactKey.From("fact:" + key)].GetRawText())!;
 
     private static JsonObject Verdict(string scenario, string item, string verdict, string observed) =>
-        new() { ["scenario"] = scenario, ["item"] = item, ["verdict"] = verdict, ["category"] = "api", ["observed"] = observed };
+        new() { ["id"] = scenario, ["item"] = item, ["verdict"] = verdict, ["category"] = "api", ["observed"] = observed };
 
     private static Dictionary<string, string> Facts(params JsonObject[] results) => new(StringComparer.Ordinal)
     {
-        ["holdoutResult"] = new JsonObject { ["commit"] = Head, ["results"] = new JsonArray([.. results]) }.ToJsonString(),
+        ["holdoutResult"] = new JsonObject { ["head"] = Head, ["scenarios"] = new JsonArray([.. results]) }.ToJsonString(),
         ["built"] = $$"""{"head":"{{Head}}","commits":[]}""",
         ["phasePacket"] = """{"hash":"sha256:aa","dir":"/packets/p1"}""",
     };
@@ -276,5 +276,55 @@ public sealed class ProveHoldoutLogStepTests
 
         Assert.Null(result.Result);
         Assert.NotNull(result.Failure);
+    }
+
+    // The evaluator's report as schemas/line/holdout-result.json has it (run33: it was read as holdout of nothing and recorded as passed).
+    private static Dictionary<string, string> SchemaShaped(string scenarios) => new(StringComparer.Ordinal)
+    {
+        ["holdoutResult"] = $$"""{"head":"{{Head}}","scenarios":{{scenarios}}}""",
+        ["built"] = $$"""{"head":"{{Head}}","commits":[]}""",
+        ["phasePacket"] = """{"hash":"sha256:aa","dir":"/packets/p1"}""",
+    };
+
+    [Fact]
+    public async Task A_report_in_the_schemas_shape_is_recorded_with_every_scenario_and_the_head()
+    {
+        var facts = SchemaShaped("""[{"id":"P1-H1","item":"AC-1","verdict":"pass","category":"api","observed":"the link answered 410"},{"id":"P1-H2","item":"AC-2","verdict":"pass","category":"ui","observed":"one record was saved"}]""");
+
+        var result = await new Rig().Step().Run(Context(facts), Token);
+
+        Assert.Equal("passed", result.Result!.Outcome.Value);
+        var recorded = Out(result, "holdoutResult");
+        Assert.Equal(Head, (string?)recorded["commit"]);
+        Assert.Equal(["P1-H1", "P1-H2", "P1-C"], recorded["results"]!.AsArray().Select(static r => (string?)r!["scenario"]), StringComparer.Ordinal);
+        Assert.Equal(["AC-1", "AC-2"], ProofChecks.HiddenResults(recorded).Select(static r => (string?)r["item"]), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_failed_scenario_in_the_schemas_shape_is_marked_spent_and_fails_the_log()
+    {
+        var rig = new Rig();
+        var facts = SchemaShaped("""[{"id":"P1-H1","item":"AC-1","verdict":"pass","category":"api","observed":"the link answered 410"},{"id":"P1-H2","item":"AC-2","verdict":"fail","category":"ui","observed":"saving twice made two records"}]""");
+
+        var result = await rig.Step().Run(Context(facts), Token);
+
+        Assert.Equal("failed", result.Result!.Outcome.Value);
+        Assert.Equal("P1-H2", Assert.Single((await rig.Store.Spent(Line, Phase, Token)).Value));
+    }
+
+    [Fact]
+    public async Task A_report_holding_no_scenario_list_fails_the_Step_instead_of_passing_with_nothing_run()
+    {
+        var facts = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["holdoutResult"] = $$"""{"head":"{{Head}}"}""",
+            ["built"] = $$"""{"head":"{{Head}}","commits":[]}""",
+            ["phasePacket"] = """{"hash":"sha256:aa","dir":"/packets/p1"}""",
+        };
+
+        var result = await new Rig().Step().Run(Context(facts), Token);
+
+        Assert.Null(result.Result);
+        Assert.Contains("scenarios", result.Failure, StringComparison.Ordinal);
     }
 }

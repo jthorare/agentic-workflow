@@ -13,14 +13,13 @@ public sealed class NeedsYouBarViewModelTests
 {
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
     private readonly FakeTimeProvider _clock = new(A.Noon);
-    private readonly FakeClipboard _clipboard = new();
     private readonly FakeSindriApi _server = new();
     private readonly List<NeedsYouDecisionEventArgs> _decisions = [];
     private Func<NeedsYouDecisionEventArgs, Task<string>> _decisionAnswer = _ => Task.FromResult("");
 
     private async Task<NeedsYouBarViewModel> Bar(NeedsYouEntry entry, bool read = false)
     {
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), _clipboard, _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), _clock);
         bar.DecisionRequested += (_, e) =>
         {
             _decisions.Add(e);
@@ -302,18 +301,15 @@ public sealed class NeedsYouBarViewModelTests
     }
 
     [Fact]
-    public async Task A_step_that_serves_its_complete_command_as_protected_shows_the_terminal_button_and_sends_nothing()
+    public async Task A_step_that_serves_its_complete_command_as_protected_still_shows_the_approve_button_and_reports_on_a_press()
     {
         ServeProtectedComplete();
-        var bar = await Bar(NeedsYouRows.Desk());
+        var bar = await Bar(NeedsYouRows.Desk(), read: true);
 
-        Assert.Equal((false, true), (bar.ShowsPrimary, bar.ShowsTerminal));
+        Assert.Equal((true, true), (bar.ShowsPrimary, bar.PrimaryEnabled));
         await bar.PressApprove();
-        await bar.CopyTerminal();
 
-        Assert.Empty(_server.CompleteCalls);
-        Assert.StartsWith("sindri workflow complete ITM-01JL1/dev-desk-round-trip/1", _clipboard.Text, StringComparison.Ordinal);
-        Assert.Equal("Copied. Paste it in your terminal to approve.", bar.Hint);
+        Assert.Equal("approve", Assert.Single(_server.CompleteCalls).Body.Outcome);
     }
 
     [Fact]
@@ -342,13 +338,11 @@ public sealed class NeedsYouBarViewModelTests
     }
 
     [Fact]
-    public async Task A_protected_primary_shows_the_terminal_button_and_the_words_for_more_tries()
+    public async Task A_park_keeps_the_rows_own_controls_and_has_no_bar_button()
     {
         var bar = await Bar(NeedsYouRows.Grant());
 
-        Assert.Equal((true, "Allow more tries"), (bar.ShowsTerminal, bar.TerminalWord));
-        await bar.CopyTerminal();
-        Assert.Equal(NeedsYouRows.Grant().Cli, _clipboard.Text);
+        Assert.Equal((true, false), (bar.ShowsRowControls, bar.ShowsPrimary));
         Assert.Empty(_server.CompleteCalls);
     }
 
@@ -357,7 +351,7 @@ public sealed class NeedsYouBarViewModelTests
     {
         var bar = await Bar(NeedsYouRows.Failure());
 
-        Assert.Equal((true, false, false, false), (bar.ShowsRowControls, bar.ShowsPrimary, bar.ShowsTerminal, bar.ShowsSendBack));
+        Assert.Equal((true, false, false), (bar.ShowsRowControls, bar.ShowsPrimary, bar.ShowsSendBack));
     }
 
     [Fact]

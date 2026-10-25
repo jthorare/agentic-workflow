@@ -14,6 +14,7 @@ public sealed record RecipeStatus(string Word, string? Detail)
         return line.Standing switch
         {
             RecipeStanding.Revoked => new RecipeStatus("revoked", Detail: null),
+            RecipeStanding.Unapproved when line.GainsCapability == true => new RecipeStatus("changed", "it can now do more and waits for its own approval"),
             RecipeStanding.Unapproved => new RecipeStatus("draft", Detail: null),
             RecipeStanding.Approved when line.Stale.Count > 0 => new RecipeStatus("changed", string.Join(", ", line.Stale.Select(Reason))),
             RecipeStanding.Approved => new RecipeStatus("approved", Detail: null),

@@ -28,7 +28,7 @@ public sealed class SetupFormsFramesTests : FrameHost
     {
         Server.Catalog = RouteAnswer.SpecShaped("commands", "extra-setup-ready");
         Server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
-        var (window, shell) = await Connected(s => s.Setup.Steps.Count > 0 && s.Health.Catalog.For("AddRepo") is { IsReady: true }, width, 900);
+        var (window, shell) = await Connected(s => s.Setup.Steps.Count > 0 && s.Health.Catalog.For("AddRepo") is not null, width, 900);
         window.SettingsSlot.Content = new SettingsView { DataContext = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), Motion, _ => { }, shell.Setup) };
         shell.GoTo(PageId.Settings);
         Settle(window);

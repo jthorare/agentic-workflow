@@ -4,11 +4,10 @@ using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Approvals;
 
-/// <summary>The approve-all dialog (<see cref="ApproveAllViewModel"/>, continued): the plan, its challenge, and the words for a refusal.</summary>
+/// <summary>The approve-all dialog (<see cref="ApproveAllViewModel"/>, continued): the plan and the words for a refusal.</summary>
 internal sealed partial class ApproveAllViewModel
 {
     private const string SessionRefusal = "SND-AUTH-002";
-    private const string HoldRefusal = "SND-SETUP-003";
     private const string RunningRefusal = "SND-JOB-409";
     private const string PlanChangedRefusal = "SND-RECIPE-009";
 
@@ -51,7 +50,7 @@ internal sealed partial class ApproveAllViewModel
     /// <summary>True when <see cref="Error"/> shows.</summary>
     public bool HasError => Error.Length > 0;
 
-    /// <summary>A line that is not a refusal (the hold was let go; the plan changed; the challenge ran out); empty for none.</summary>
+    /// <summary>A line that is not a refusal (the plan changed); empty for none.</summary>
     public string Notice
     {
         get;
@@ -69,20 +68,11 @@ internal sealed partial class ApproveAllViewModel
     /// <summary>True when <see cref="Notice"/> shows.</summary>
     public bool HasNotice => Notice.Length > 0;
 
-    /// <summary>The text that redeems the challenge when typed instead of held; empty before a challenge.</summary>
-    public string TypedAlternative { get; private set => Set(ref field, value); } = string.Empty;
+    /// <summary>True when there is a plan to approve and nothing on its way: the Approve button is live.</summary>
+    public bool CanApprove => Phase == ApproveAllPhase.Plan && !IsSending && Rows.Count > 0;
 
-    /// <summary>The shortest hold the server accepts, in milliseconds.</summary>
-    public int MinHoldMs => Hold.MinHoldMs;
-
-    /// <summary>True when there is a challenge to answer and a plan to approve: the hold and the typed field are live.</summary>
-    public bool CanApprove => Phase == ApproveAllPhase.Plan && _challenge is not null && !IsSending && Rows.Count > 0;
-
-    /// <summary>True when the challenge is a held one (the hold button shows); a typed one offers the field alone.</summary>
-    public bool OffersHold => _challenge is { } c && string.Equals(c.Confirm, "held", StringComparison.Ordinal);
-
-    // Reads the plan's answer: it fills the lists, then asks for the challenge when there is something to approve.
-    private async Task ShowPlan(Uri api, Result<ApproveAllPlan> read, int session, CancellationToken cancellationToken)
+    // Reads the plan's answer: it fills the lists.
+    private void ShowPlan(Result<ApproveAllPlan> read)
     {
         if (read.IsError)
         {
@@ -104,7 +94,7 @@ internal sealed partial class ApproveAllViewModel
         }
 
         Phase = ApproveAllPhase.Plan;
-        await Ask(api, session, cancellationToken).ConfigureAwait(true);
+        Live.Say(Labels.ApproveReady);
     }
 
     private void Fill(ApproveAllPlan plan)
@@ -113,84 +103,12 @@ internal sealed partial class ApproveAllViewModel
         OwnApproval = [.. plan.OwnApproval.Select(OwnLine)];
         EmptyText = plan.Empty ?? string.Empty;
         Heading = Labels.ApprovePlanHeading(plan.Recipes.Count);
-        Hold.SetCount(Rows.Count);
         DetailLines = [.. Rows.Select(r => r.Detail).Prepend("plan " + plan.Digest)];
         OnChanged(nameof(HasOwnApproval));
     }
 
-    // The challenge for this plan; the server binds it to the digest, so a plan that changes meanwhile is refused at the answer.
-    private async Task Ask(Uri api, int session, CancellationToken cancellationToken)
-    {
-        if (_plan is not { } plan)
-        {
-            return;
-        }
-
-        if (_asking)
-        {
-            return;
-        }
-
-        var asked = await Request(api, plan, session, cancellationToken).ConfigureAwait(true);
-        if (session != _session)
-        {
-            return;
-        }
-
-        if (asked.IsError)
-        {
-            _challenge = null;
-            AskFailed(asked.Error);
-            return;
-        }
-
-        _challenge = asked.Value;
-        TypedAlternative = asked.Value.TypedAlternative ?? asked.Value.Action;
-        Hold.Offer(asked.Value);
-        TypedBox.Offer(asked.Value);
-        Notice = string.Empty;   // "that took too long" is over once the fresh challenge is here
-        OnChanged(nameof(CanApprove));
-        OnChanged(nameof(CanRetry));
-        OnChanged(nameof(OffersHold));
-        Live.Say(Labels.ApproveReady);
-    }
-
-    // The one challenge request in flight: a second ask waits for it to end.
-    private async Task<Result<AppChallengeView>> Request(Uri api, ApproveAllPlan plan, int session, CancellationToken cancellationToken)
-    {
-        _asking = true;
-        OnChanged(nameof(CanRetry));
-        try
-        {
-            return await _api.IssueAppChallenge(api, new AppChallengeRequest(ActionText(plan)), cancellationToken).ConfigureAwait(true);
-        }
-        finally
-        {
-            if (session == _session)
-            {
-                _asking = false;
-            }
-        }
-    }
-
-    // No challenge could be had. A refusal already on show stays (it is why the challenge was asked for); the failure is then a line beside it.
-    private void AskFailed(Error error)
-    {
-        if (HasError)
-        {
-            Notice = Labels.ApproveAskFailed;
-            OnChanged(nameof(CanApprove));
-            OnChanged(nameof(CanRetry));
-            return;
-        }
-
-        Fail(error, keepPlan: true);
-    }
-
     private static ApproveAllLine OwnLine(OwnApprovalRecipe own) =>
         new(WorkflowNames.Of(own.Id, own.DisplayName), own.Sentence, Extra: own.Added.Count > 0 ? Labels.ApproveNewlyAllowed(string.Join("; ", own.Added.Select(a => a.Sentence))) : string.Empty);
-
-    private static string ActionText(ApproveAllPlan plan) => "approve-all " + (plan.Digest.Length > 6 ? plan.Digest[..6] : plan.Digest);
 
     // A refusal in words: the sentence first, its code after. An agent session is told in plain words that the app is the person's.
     private void Fail(Error error, bool keepPlan = false)
@@ -204,16 +122,12 @@ internal sealed partial class ApproveAllViewModel
         };
         Phase = keepPlan ? Phase : ApproveAllPhase.Failed;
         OnChanged(nameof(CanApprove));
-        OnChanged(nameof(CanRetry));
     }
 
     private void ResetPlanState()
     {
         (Rows, OwnApproval, DetailLines) = ([], [], []);
-        (Heading, EmptyText, Error, ErrorCode, Notice, TypedAlternative) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-        Hold.SetMinHold(DefaultHoldMs);
-        Hold.SetCount(0);
-        TypedBox.Clear();
+        (Heading, EmptyText, Error, ErrorCode, Notice) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         OnChanged(nameof(HasOwnApproval));
         OnChanged(nameof(HasNotice));
     }

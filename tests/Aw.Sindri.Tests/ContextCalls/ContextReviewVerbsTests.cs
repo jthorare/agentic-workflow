@@ -1,7 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Auth;
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 

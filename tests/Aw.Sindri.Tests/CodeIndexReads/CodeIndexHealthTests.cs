@@ -3,10 +3,10 @@ using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Testing;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Ids;
-using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Testing;
+using RepoName = Aw.CodeIndex.Core.Values.RepoName;
 
 namespace Aw.Sindri.Tests.CodeIndexReads;
 

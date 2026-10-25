@@ -4,10 +4,10 @@ using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Approvals;
 
-/// <summary>The approve-all dialog (<see cref="ApproveAllViewModel"/>, continued): the answer sent once, the job followed, the result in words.</summary>
+/// <summary>The approve-all dialog (<see cref="ApproveAllViewModel"/>, continued): the approval sent once, the job followed, the result in words.</summary>
 internal sealed partial class ApproveAllViewModel
 {
-    /// <summary>True while an answer is on its way to Sindri.</summary>
+    /// <summary>True while the approval is on its way to Sindri.</summary>
     public bool IsSending { get; private set; }
 
     /// <summary>What the job is on now, from its latest line; empty before.</summary>
@@ -31,7 +31,7 @@ internal sealed partial class ApproveAllViewModel
     /// <summary>True when something was skipped.</summary>
     public bool HasSkipped => Skipped.Count > 0;
 
-    // The answer goes once: the guard is set before the first await, and the challenge is used up by anything but a short hold.
+    // The approval goes once: the guard is set before the first await.
     private async Task Redeem(ApproveAllRequest request)
     {
         if (IsSending || _url() is not { } api)
@@ -51,7 +51,6 @@ internal sealed partial class ApproveAllViewModel
             if (session == _session)   // a closed or reopened dialog has its own guard
             {
                 IsSending = false;
-                TypedBox.SetSending(sending: false);
                 OnChanged(nameof(IsSending));
             }
         }
@@ -67,40 +66,29 @@ internal sealed partial class ApproveAllViewModel
             return;
         }
 
-        _challenge = null;
         Progress = Labels.ApproveRunning(string.Empty);
         Phase = ApproveAllPhase.Applying;
         await Follow(api, started.Value.JobId, session).ConfigureAwait(true);
     }
 
-    // The answer is on its way: the guard, the hold button and the typed box all say so, and the last refusal is cleared.
+    // The approval is on its way: the guard says so, and the last refusal is cleared.
     private void MarkSending()
     {
         IsSending = true;
-        Hold.Busy();
-        TypedBox.SetSending(sending: true);
         (Error, ErrorCode, Notice) = (string.Empty, string.Empty, string.Empty);
         OnChanged(nameof(CanApprove));
         OnChanged(nameof(IsSending));
     }
 
-    // A refusal: a short hold keeps the challenge (hold again); the plan having changed reads it again; the rest used it up, so a fresh one is asked for.
+    // A refusal is shown in words; the plan having changed reads it again.
     private async Task OnRefused(Uri api, Error error, int session)
     {
-        Hold.Reset();
-        if (string.Equals(error.Code, HoldRefusal, StringComparison.Ordinal))
-        {
-            Fail(error, keepPlan: true);
-            return;
-        }
-
-        _challenge = null;
         if (string.Equals(error.Code, PlanChangedRefusal, StringComparison.Ordinal))
         {
             var read = await _api.ApproveAllPlan(api, CancellationToken.None).ConfigureAwait(true);
             if (session == _session)
             {
-                await ShowPlan(api, read, session, CancellationToken.None).ConfigureAwait(true);
+                ShowPlan(read);
                 Notice = Labels.ApprovePlanChanged;
             }
 
@@ -108,10 +96,6 @@ internal sealed partial class ApproveAllViewModel
         }
 
         Fail(error, keepPlan: true);
-        if (!string.Equals(error.Code, SessionRefusal, StringComparison.Ordinal))
-        {
-            await Ask(api, session, CancellationToken.None).ConfigureAwait(true);
-        }
     }
 
     // Reads the job until it ends. A few failed reads in a row end the wait with words, a long job does not; closing the dialog (or opening again) ends it silently.

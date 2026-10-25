@@ -1,11 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ap="using:Aw.Sindri.Ui.ViewModels.Approvals"
-             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Approvals.ApproveAllDialog"
              x:DataType="ap:ApproveAllViewModel">
   <!-- Approve all workflows (setup-once spec §4, §5.3): a modal over a scrim. The plan in words (one row for each workflow: its name, why it is
-       there, what it can do; ids and hashes wait in Details), then the one confirmation: a button held for the whole time (the shared HoldButton) or the challenge's text typed (both are the shared HoldButton and TypedConfirmBox). Esc or Close shuts it with
+       there, what it can do; ids and hashes wait in Details), then one Approve button. Esc or Close shuts it with
        nothing sent. The lines that change are one static wrapper each, named by a view-model string, with the text inside left raw (a TextBlock's
        peer ignores a Name). -->
   <UserControl.Styles>
@@ -92,17 +91,9 @@
             <TextBlock Classes="caption" Text="{Binding Notice}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
 
-          <Button x:Name="ApproveRetry" Classes="command-control" IsVisible="{Binding CanRetry}" Click="OnRetry" AutomationProperties.Name="{Binding RetryLabel}">
-            <TextBlock Classes="button" Text="{Binding RetryLabel}" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="ApproveButton" Classes="command-control" IsVisible="{Binding CanApprove}" Click="OnApprove" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ApproveLabel}">
+            <TextBlock Classes="button" Text="{Binding ApproveLabel}" AutomationProperties.AccessibilityView="Raw" />
           </Button>
-
-          <StackPanel x:Name="ApproveConfirm" Spacing="8" IsVisible="{Binding CanApprove}">
-            <Border x:Name="ApproveHoldRow" IsVisible="{Binding OffersHold}">
-              <ctl:HoldButton x:Name="ApproveHoldControl" PartName="ApproveHold" DataContext="{Binding Hold}" HorizontalAlignment="Left" />
-            </Border>
-            <TextBlock Classes="caption subtle" Text="{Binding TypeCaption}" AutomationProperties.AccessibilityView="Raw" />
-            <ctl:TypedConfirmBox x:Name="ApproveTypedBox" PartPrefix="ApproveTyped" DataContext="{Binding TypedBox}" />
-          </StackPanel>
 
           <Border x:Name="ApproveRunning" IsVisible="{Binding IsApplying}" AutomationProperties.Name="{Binding Progress}"
                   AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">

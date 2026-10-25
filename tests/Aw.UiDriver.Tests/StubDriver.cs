@@ -34,6 +34,9 @@ internal sealed class StubDriver : IAsyncDisposable
     /// <summary>Each call: the path, the secret header and the body.</summary>
     internal List<(string Path, string? Secret, string Body)> Calls { get; } = [];
 
+    /// <summary>When true, a call other than ping is read and never answered.</summary>
+    internal bool Silent { get; set; }
+
     /// <summary>What the next calls answer: status, media type, body.</summary>
     internal (int Status, string ContentType, byte[] Body) Answer { get; set; } = (200, "application/json", "{}"u8.ToArray());
 
@@ -74,6 +77,11 @@ internal sealed class StubDriver : IAsyncDisposable
             using var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8);
             var body = await reader.ReadToEndAsync(_stop.Token);
             Calls.Add((context.Request.Url!.AbsolutePath, context.Request.Headers["X-Ui-Driver-Token"], body));
+            if (Silent && context.Request.Url.AbsolutePath != "/v1/ping")
+            {
+                await Task.Delay(Timeout.Infinite, _stop.Token);
+            }
+
             var (status, contentType, bytes) = context.Request.Url.AbsolutePath == "/v1/ping" ? (200, "application/json", "{\"ok\":true}"u8.ToArray()) : Answer;
             context.Response.StatusCode = status;
             context.Response.ContentType = contentType;

@@ -4,11 +4,10 @@
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Controls.CommandControl"
              x:DataType="controls:ControlViewModel">
-  <!-- One catalog row as a control (UI spec §7, U3) with its §4.1 lifecycle. ready: a button; pending: the same button
-       disabled, and its phase and CLI on the next line in InkSubtle, focusable and copyable (disabled ink never carries
-       information); cli-only: the copy block (terminal glyph, the CLI, Copy, and its one line). -->
+  <!-- One catalog row as a control (UI spec §7, U3) with its §4.1 lifecycle. A row the app can send: a button; a row it has no form
+       for: the copy block (terminal glyph, the CLI, Copy). -->
   <StackPanel Spacing="{StaticResource Space.XXS}">
-    <StackPanel x:Name="ButtonRow" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding !IsCliOnly}">
+    <StackPanel x:Name="ButtonRow" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding !IsCopyOnly}">
       <Button x:Name="RunButton" Classes="command-control" IsEnabled="{Binding IsSendable}" Click="OnRun"
               AutomationProperties.Name="{Binding Name}">
         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -38,18 +37,8 @@
       </StackPanel>
     </StackPanel>
 
-    <!-- pending: the phase and the CLI, focusable so the keyboard reaches it, with Copy. -->
-    <WrapPanel x:Name="PendingRow" Orientation="Horizontal" IsVisible="{Binding IsPending}">
-      <Border x:Name="PendingLine" Classes="pending-line" Focusable="True" AutomationProperties.Name="{Binding PendingName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock x:Name="PendingText" Classes="caption subtle" TextWrapping="Wrap" Margin="0,0,6,0" Text="{Binding PendingLine}" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
-      <Button x:Name="PendingCopy" Classes="copy" Click="OnCopy" IsEnabled="{Binding CanCopy}" AutomationProperties.Name="{Binding CopyName}">
-        <TextBlock Classes="caption" Text="{Binding CopyLabel}" />
-      </Button>
-    </WrapPanel>
-
-    <!-- cli-only: the copy block. It never offers to run the command. -->
-    <StackPanel x:Name="CopyBlock" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsCliOnly}">
+    <!-- The copy block. It never offers to run the command. -->
+    <StackPanel x:Name="CopyBlock" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsCopyOnly}">
       <Border Classes="command">
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
           <TextBlock x:Name="TerminalGlyph" Classes="mono subtle" Text="&gt;_" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
@@ -60,8 +49,6 @@
           </Button>
         </StackPanel>
       </Border>
-      <TextBlock x:Name="CopyNoteText" Classes="caption subtle" Text="{Binding CopyNote}" IsVisible="{Binding CopyNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                 AutomationProperties.Name="{Binding CopyNote}" />
     </StackPanel>
 
     <!-- refused / failed: the API's title (the SND code) and detail as served, under the control. -->

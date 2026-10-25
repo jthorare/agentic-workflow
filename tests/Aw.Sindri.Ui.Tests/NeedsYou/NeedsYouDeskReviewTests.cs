@@ -21,7 +21,7 @@ public sealed class NeedsYouDeskReviewTests
         var node = JsonNode.Parse(GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"))!;
         edit(node);
         _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, node.ToJsonString());
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api, _launcher), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api, _launcher), _clock);
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
         return bar;

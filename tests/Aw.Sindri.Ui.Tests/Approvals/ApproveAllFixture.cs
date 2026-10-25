@@ -7,8 +7,8 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Ui.Tests.Approvals;
 
 /// <summary>
-/// The approve-all dialog over the fake API. The plan, challenge, job and catalog row are spec-shaped (Golden/SpecShaped), PROVISIONAL until the
-/// engine's recipes-approve-all goldens land (setup-once spec §8); the clock starts where the challenge golden's expiry is five minutes away.
+/// The approve-all dialog over the fake API. The plan, job and catalog row are spec-shaped (Golden/SpecShaped), PROVISIONAL until the
+/// engine's recipes-approve-all goldens land (setup-once spec §8).
 /// </summary>
 internal sealed class ApproveAllFixture
 {
@@ -26,28 +26,23 @@ internal sealed class ApproveAllFixture
     internal static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>A dialog over the catalog as served.</summary>
-    internal async Task<ApproveAllViewModel> Dialog(bool reducedMotion = false)
+    internal async Task<ApproveAllViewModel> Dialog()
     {
         var catalog = new CatalogViewModel(new FakeClipboard(), Clock);
         catalog.Show(Api, Server, (await Server.Commands(Api, Token)).Value);
-        return new ApproveAllViewModel(catalog, () => Api, Server, Clock, () => reducedMotion);
+        return new ApproveAllViewModel(catalog, () => Api, Server, Clock);
     }
 
-    /// <summary>A dialog opened on the plan, with its challenge.</summary>
-    internal async Task<ApproveAllViewModel> Opened(bool reducedMotion = false)
+    /// <summary>A dialog opened on the plan.</summary>
+    internal async Task<ApproveAllViewModel> Opened()
     {
-        var dialog = await Dialog(reducedMotion);
+        var dialog = await Dialog();
         await dialog.Open(Token);
         return dialog;
     }
 
-    /// <summary>Holds the button for the server's minimum and a little more, and lets the answer, and the job it starts, finish.</summary>
-    internal async Task Hold(ApproveAllViewModel dialog)
-    {
-        dialog.BeginHold();
-        Clock.Advance(TimeSpan.FromMilliseconds(dialog.MinHoldMs + 100));
-        await Finish(dialog.Tick());
-    }
+    /// <summary>Clicks Approve and lets the answer, and the job it starts, finish.</summary>
+    internal async Task Approve(ApproveAllViewModel dialog) => await Finish(dialog.Approve());
 
     /// <summary>Lets a task that waits on the clock finish: the clock moves a beat at a time, bounded, so a job that never ends fails the test instead of hanging it.</summary>
     internal async Task Finish(Task task)

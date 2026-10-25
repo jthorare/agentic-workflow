@@ -13,7 +13,7 @@ internal sealed partial class InstanceFrameViewModel
     // A re-read serves the same answer again: the control stays (with an amount the person is editing) unless the answer changed.
     private void ShowGrant(InstanceDetail detail)
     {
-        if (detail.Current.Status.Answer is not { Kind: AnswerKind.GrantTokens, Via: null } answer || _id is not { } id || catalog is null)
+        if (detail.Current.Status.Answer is not { Kind: AnswerKind.GrantTokens, Via: null } answer || _id is not { } id)
         {
             (Grant, _grantSignature) = (null, string.Empty);
             return;
@@ -25,7 +25,7 @@ internal sealed partial class InstanceFrameViewModel
             return;
         }
 
-        var grant = new GrantTokensViewModel(api, catalog, clock, () => _url, (id, detail.Address), answer.Cli);
+        var grant = new GrantTokensViewModel(api, () => _url, (id, detail.Address), answer.Cli);
         grant.Granted += async (_, _) => await AfterGrant().ConfigureAwait(true);
         (Grant, _grantSignature) = (grant, signature);
     }

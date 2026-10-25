@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.ViewModels.Controls;
 /// <summary>
 /// One catalog row as a control (UI spec U3, §7) and its command lifecycle (§4.1). It maps the row's UI status to how
 /// the control is drawn and says what the API answered; it decides nothing about whether the action is allowed: a
-/// 'ready' row runs only when a sender is wired, and a 'pending' or 'cli-only' row never runs.
+/// row with a sender is a button that runs, and a row the app has no form for shows its command to copy.
 /// </summary>
 internal sealed partial class ControlViewModel : ObservableObject
 {
@@ -43,12 +43,9 @@ internal sealed partial class ControlViewModel : ObservableObject
         Action = row.Action;
         Label = Labels.Action(row.Action);
         Shortcut = row.Shortcut ?? string.Empty;
-        (Kind, Stage) = CatalogReadiness.Parse(row.Ui);
         Cli = Safe(row.Cli) ? row.Cli : string.Empty;
-        PendingLine = Kind == ControlKind.Pending ? Labels.Arrives(Stage) + " · " + Cli : string.Empty;
-        CopyNote = row.Ui == "cli-only:typed-confirmation" ? Labels.TypedConfirmation : string.Empty;
         var named = subject is { Length: > 0 } ? Label + " " + subject : Label;
-        Name = Kind == ControlKind.Pending ? named + ", " + Labels.Arrives(Stage) : named;
+        Name = named;
         IsDestructive = row.Destructive;
         ConfirmQuestion = Labels.ConfirmQuestion(named);
     }
@@ -59,35 +56,17 @@ internal sealed partial class ControlViewModel : ObservableObject
     /// <summary>The control's label (keyed by action id; an unknown id shows itself).</summary>
     public string Label { get; }
 
-    /// <summary>The control's accessible name: its label, and its phase when pending.</summary>
+    /// <summary>The control's accessible name: its label and subject.</summary>
     public string Name { get; }
 
     /// <summary>The catalog's default key, or empty.</summary>
     public string Shortcut { get; }
 
-    /// <summary>How the control is drawn.</summary>
-    public ControlKind Kind { get; }
-
-    /// <summary>A pending row's phase ("P2"); empty otherwise.</summary>
-    public string Stage { get; }
-
-    /// <summary>True for a ready row.</summary>
-    public bool IsReady => Kind == ControlKind.Ready;
-
-    /// <summary>True for a pending row.</summary>
-    public bool IsPending => Kind == ControlKind.Pending;
-
-    /// <summary>True for a cli-only row.</summary>
-    public bool IsCliOnly => Kind == ControlKind.CliOnly;
+    /// <summary>True when the app has no form for the action: the control is the command to copy.</summary>
+    public bool IsCopyOnly => _send is null;
 
     /// <summary>The CLI as served, or empty when it holds a control or bidi character (§7's backstop).</summary>
     public string Cli { get; }
-
-    /// <summary>A pending row's line: "arrives in P2 · sindri views rebuild".</summary>
-    public string PendingLine { get; }
-
-    /// <summary>A copy block's line ("Needs a typed confirmation at a terminal."), or empty.</summary>
-    public string CopyNote { get; }
 
     /// <summary>True when the CLI can be copied.</summary>
     public bool CanCopy => Cli.Length > 0;
@@ -106,11 +85,11 @@ internal sealed partial class ControlViewModel : ObservableObject
         }
     }
 
-    /// <summary>True when a click sends it: a ready row with a sender, not already in flight.</summary>
-    public bool CanRun => IsReady && _send is not null && Phase != CommandPhase.Sending;
+    /// <summary>True when a click sends it: a row with a sender, not already in flight.</summary>
+    public bool CanRun => _send is not null && Phase != CommandPhase.Sending;
 
-    /// <summary>True when the control is a live button: a ready row with a sender, even while it sends (so focus stays on it).</summary>
-    public bool IsSendable => IsReady && _send is not null;
+    /// <summary>True when the control is a live button: a row with a sender, even while it sends (so focus stays on it).</summary>
+    public bool IsSendable => _send is not null;
 
     /// <summary>True while sending (the spinner).</summary>
     public bool IsSending => Phase == CommandPhase.Sending;
@@ -129,9 +108,6 @@ internal sealed partial class ControlViewModel : ObservableObject
 
     /// <summary>The refusal's detail as served, or empty.</summary>
     public string ErrorDetail { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>A pending row's line with its subject: "Cancel job, arrives in P6 · sindri jobs cancel &lt;jobId&gt;".</summary>
-    public string PendingName => PendingLine.Length > 0 ? Label + ", " + PendingLine : string.Empty;
 
     /// <summary>The Copy button's accessible name: "Copy: Cancel job", then "Copied".</summary>
     public string CopyName => string.Equals(CopyLabel, Labels.Copied, StringComparison.Ordinal) ? Labels.Copied : Labels.Copy + ": " + Label;

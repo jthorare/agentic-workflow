@@ -92,6 +92,29 @@
       "projectedAt": "2026-01-01T00:00:00.0000000Z",
       "rebuilding": false,
       "stalled": false
+    },
+    "page": {
+      "offset": 0,
+      "limit": 100,
+      "more": false,
+      "lists": {
+        "groups.waitingOnYou.items": {
+          "total": 1,
+          "more": false
+        },
+        "groups.withYou.items": {
+          "total": 0,
+          "more": false
+        },
+        "groups.running.items": {
+          "total": 0,
+          "more": false
+        },
+        "groups.queued.items": {
+          "total": 3,
+          "more": false
+        }
+      }
     }
   },
   "content": [

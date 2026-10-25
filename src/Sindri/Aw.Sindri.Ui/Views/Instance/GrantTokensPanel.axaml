@@ -1,28 +1,23 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:inst="using:Aw.Sindri.Ui.ViewModels.Instance"
-             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
-             xmlns:comp="using:Aw.Sindri.Ui.Views.Components"
              x:Class="Aw.Sindri.Ui.Views.Instance.GrantTokensPanel"
              x:DataType="inst:GrantTokensViewModel">
   <!-- Grant tokens (per-round budgets brief, engine spec W7): the instance frame's header actions while the instance is parked on its budget.
-       An amount that starts at the suggestion, then the shared hold or the challenge's text typed. While the catalog row is not ready the
-       lock button with the served command stands in place of all of it, as for every protected answer. -->
+       An amount that starts at the suggestion, and one click that grants it. -->
   <Border x:Name="GrantPanel" Classes="frame-panel" Padding="12">
     <StackPanel Spacing="8">
       <TextBlock x:Name="GrantTitle" Classes="body-strong" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
-      <comp:ProtectedActionButton x:Name="GrantProtected" DataContext="{Binding Terminal}" HorizontalAlignment="Left"
-                                  IsVisible="{Binding $parent[UserControl].((inst:GrantTokensViewModel)DataContext).Terminal, Converter={x:Static ObjectConverters.IsNotNull}}" />
-      <StackPanel x:Name="GrantConfirm" Spacing="8" IsVisible="{Binding IsReady}">
+      <StackPanel x:Name="GrantConfirm" Spacing="8">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <TextBlock Classes="caption subtle" Text="Tokens" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="GrantAmount" Text="{Binding Amount}" Width="140" IsEnabled="{Binding !IsSending}" AutomationProperties.Name="{Binding AmountName}" />
           <TextBlock x:Name="GrantAmountProblem" Classes="caption error" Text="Write tokens as 500k, 1M or a whole number." IsVisible="{Binding ShowsAmountProblem}" VerticalAlignment="Center" />
         </StackPanel>
-        <TextBlock x:Name="GrantNotice" Classes="caption" Text="{Binding Notice}" TextWrapping="Wrap" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Notice}" />
         <TextBlock x:Name="GrantError" Classes="caption error" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
-        <ctl:HoldButton x:Name="GrantHoldControl" PartName="GrantHold" DataContext="{Binding Hold}" HorizontalAlignment="Left" />
-        <ctl:TypedConfirmBox x:Name="GrantTypedBox" PartPrefix="GrantTyped" DataContext="{Binding TypedBox}" />
+        <Button x:Name="GrantButton" Classes="command-control" HorizontalAlignment="Left" IsEnabled="{Binding CanGrant}" Click="OnGrant" AutomationProperties.Name="{Binding Title}">
+          <TextBlock Classes="button" Text="{Binding Title}" />
+        </Button>
       </StackPanel>
     </StackPanel>
   </Border>

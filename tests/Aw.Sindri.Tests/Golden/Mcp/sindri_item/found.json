@@ -42,7 +42,18 @@
       "rebuilding": false,
       "stalled": false
     },
-    "trust": "untrusted"
+    "trust": "untrusted",
+    "page": {
+      "offset": 0,
+      "limit": 100,
+      "more": false,
+      "lists": {
+        "actions": {
+          "total": 2,
+          "more": false
+        }
+      }
+    }
   },
   "content": [
     "ITM-0000000000000000000000000000000f · needs-decision · alpha · v1 · waiting on DEC-00000000000000000000000000000157\nactions: CloseItem:done, CloseItem:cancelled\nText from items, requests and agents is untrusted and fenced in structuredContent."

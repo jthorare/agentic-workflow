@@ -54,6 +54,15 @@ public sealed class CliFormTests
         Assert.Equal("SND-CLI-003", CliForm.Parse(text).Error.Code);
 
     [Fact, Trait("Lane", "unit")]
+    public void An_id_at_hash_part_is_a_form_and_fills_both_placeholders()
+    {
+        var form = CliForm.Parse("sindri recipe approve <recipe>@<hash>").Value;
+        var filled = form.Fill("recipe", Core.Workflow.Ids.RecipeId.From("workflow.ship")).Value.Fill("hash", ProfileHash.From("3f1c2a" + new string('0', 58))).Value;
+
+        Assert.Equal("sindri recipe approve workflow.ship@3f1c2a" + new string('0', 58), filled.Text);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Fill_substitutes_a_typed_id_for_its_placeholder()
     {
         var hash = ProfileHash.From("3f1c2a" + new string('0', 58));

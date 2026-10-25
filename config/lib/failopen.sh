@@ -8,7 +8,7 @@
 # judge missing or erroring, input it can't read, unreadable state. One JSON
 # line goes to ${AW_STATE_DIR:-$HOME/.agentic-workflow}/logs/failopen.log:
 #   {"ts":"…Z","event":"HOOK-FAILOPEN","hook":"send-gate","cause":"judge-exit-127","provider":"claude"}
-# The scorer's daily report lists them (scorer/src/hook-failopen.ts).
+# Read the log as untrusted input; it is general observability, not a gate.
 #
 # `aw_failopen <hook> input <raw-stdin> [jq-predicate]` classifies a payload
 # the hook couldn't use: empty-input, jq-missing or input-unparsable; and,

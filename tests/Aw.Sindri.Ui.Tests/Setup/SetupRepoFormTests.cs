@@ -31,7 +31,7 @@ public sealed class SetupRepoFormTests
         var (_, closed, closedStep) = await Open(new SetupFixture("extra-approve-all-ready"));   // this catalog has no AddRepo row (the served one is ready since api #528)
 
         Assert.Equal((true, false), (form.IsAvailable, step.HasAction));
-        Assert.Equal((false, "sindri-app repo add <path>"), (closed.IsAvailable, closedStep.Action?.Cli?.Cli));
+        Assert.Equal((false, "sindri repo add <path>"), (closed.IsAvailable, closedStep.Action?.Cli?.Cli));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class SetupRepoFormTests
     [InlineData("already-added", "That repository is already added, or another repository has its name.")]
     [InlineData("name-taken", "That repository is already added, or another repository has its name.")]
     [InlineData("profile-changed", "The profile changed while Sindri was writing it. Try again.")]
-    [InlineData("refused-session", "Only you can do this from the app. An agent session can't.")]
+    [InlineData("refused-session", "Sindri's own steps can't answer this.")]
     public async Task A_refusal_is_said_in_words_under_the_field_with_the_path_kept_and_focus_back_in_it(string scenario, string sentence)
     {
         var (_, form, step) = await Open();

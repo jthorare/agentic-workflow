@@ -119,6 +119,56 @@ test_any_lock_with_one_slot_is_the_plain_lock() {
   echo "PASS: test_any_lock_with_one_slot_is_the_plain_lock"
 }
 
+test_a_dead_holders_lock_is_reclaimed() {
+  local lock; lock="$(mktemp -d)/lock"
+  local dead; sleep 0 & dead=$!; wait "$dead" || true
+  mkdir "$lock"; printf '%s\n' "$dead" > "$lock/pid"
+  acquire_lock "$lock" 3 2>/dev/null || { echo "FAIL: a dead holder's lock was not reclaimed"; exit 1; }
+  [ "$(cat "$lock/pid")" = "$$" ] || { echo "FAIL: the new holder did not record its pid"; exit 1; }
+  release_lock "$lock"
+  echo "PASS: test_a_dead_holders_lock_is_reclaimed"
+}
+
+test_any_lock_reclaims_a_dead_holders_slot() {
+  local base; base="$(mktemp -d)/heavy.lock"
+  local dead; sleep 0 & dead=$!; wait "$dead" || true
+  mkdir "$base"; printf '%s\n' "$dead" > "$base/pid"
+  local a; a="$(acquire_any_lock "$base" 1 3 2>/dev/null)" || { echo "FAIL: a dead holder's slot was not reclaimed"; exit 1; }
+  [ "$a" = "$base" ] || { echo "FAIL: expected $base, got $a"; exit 1; }
+  release_lock "$a"
+  echo "PASS: test_any_lock_reclaims_a_dead_holders_slot"
+}
+
+test_a_live_holders_lock_is_not_reclaimed() {
+  local lock; lock="$(mktemp -d)/lock"
+  sleep 30 & local live=$!
+  mkdir "$lock"; printf '%s\n' "$live" > "$lock/pid"
+  local rc=0
+  acquire_lock "$lock" 1 2>/dev/null || rc=$?
+  kill "$live" 2>/dev/null || true; wait "$live" 2>/dev/null || true
+  [ "$rc" -ne 0 ] || { echo "FAIL: a live holder's lock was taken"; exit 1; }
+  [ "$(cat "$lock/pid")" = "$live" ] || { echo "FAIL: the live holder's pid file changed"; exit 1; }
+  echo "PASS: test_a_live_holders_lock_is_not_reclaimed"
+}
+
+test_a_lock_with_no_pid_file_is_not_reclaimed() {
+  local lock; lock="$(mktemp -d)/lock"
+  mkdir "$lock"
+  if acquire_lock "$lock" 1 2>/dev/null; then echo "FAIL: a lock with no pid file was reclaimed"; exit 1; fi
+  [ -d "$lock" ] || { echo "FAIL: the lock dir was removed"; exit 1; }
+  rmdir "$lock"
+  echo "PASS: test_a_lock_with_no_pid_file_is_not_reclaimed"
+}
+
+test_release_removes_the_dir_and_its_pid_file() {
+  local lock; lock="$(mktemp -d)/lock"
+  acquire_lock "$lock" 0
+  [ -f "$lock/pid" ] || { echo "FAIL: acquire did not write a pid file"; exit 1; }
+  release_lock "$lock"
+  [ ! -e "$lock" ] || { echo "FAIL: release left $lock"; exit 1; }
+  echo "PASS: test_release_removes_the_dir_and_its_pid_file"
+}
+
 test_acquire_then_release_allows_a_second_acquire
 test_acquire_times_out_when_held
 test_release_on_an_already_gone_lock_is_a_no_op
@@ -129,4 +179,9 @@ test_any_lock_waiter_gets_a_slot_freed_while_it_waits
 test_any_lock_shares_slot_1_with_plain_acquire_lock
 test_any_lock_release_leaves_nothing
 test_any_lock_with_one_slot_is_the_plain_lock
+test_a_dead_holders_lock_is_reclaimed
+test_any_lock_reclaims_a_dead_holders_slot
+test_a_live_holders_lock_is_not_reclaimed
+test_a_lock_with_no_pid_file_is_not_reclaimed
+test_release_removes_the_dir_and_its_pid_file
 echo "All locks tests passed."

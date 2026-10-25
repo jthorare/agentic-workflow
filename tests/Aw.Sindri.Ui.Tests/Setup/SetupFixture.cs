@@ -30,13 +30,36 @@ internal sealed class SetupFixture
     /// <summary>The actions the card opens in the app, as the shell decides it; none by default.</summary>
     internal HashSet<string> InApp { get; } = new(StringComparer.Ordinal);
 
-    internal SetupFixture(string catalog = "catalog")
+    /// <param name="catalog">The catalog scenario.</param>
+    /// <param name="cliOnly">Actions the served catalog lists as cli-only (Sindri does not let the app do them): each is the command to copy.</param>
+    internal SetupFixture(string catalog = "catalog", params string[] cliOnly)
     {
         Catalog = new CatalogViewModel(Clipboard, Clock);
-        var extra = IsExtra(catalog);   // "extra-" catalogs are the app's own (SpecShaped), for a catalog the API has no golden for
-        Server.Catalog = extra ? RouteAnswer.SpecShaped("commands", catalog) : RouteAnswer.Api("commands", catalog);
-        Catalog.Show(Url, Server, AwJson.Deserialize<CommandList>(System.Text.Encoding.UTF8.GetBytes(extra ? GoldenFiles.SpecShaped("commands", catalog) : GoldenFiles.Api("commands", catalog)), SindriApiClient.Json).Value);
+        var json = CatalogJson(catalog, cliOnly);
+        Server.Catalog = new RouteAnswer(HttpStatusCode.OK, json);
+        Catalog.Show(Url, Server, AwJson.Deserialize<CommandList>(System.Text.Encoding.UTF8.GetBytes(json), SindriApiClient.Json).Value);
     }
+
+    /// <summary>The served catalog of a scenario ("extra-" ones are the app's own, SpecShaped, for a catalog the API has no golden for), with some actions listed as cli-only.</summary>
+    /// <param name="catalog">The catalog scenario.</param>
+    /// <param name="cliOnly">The actions to list as cli-only.</param>
+    /// <returns>The catalog as JSON.</returns>
+    internal static string CatalogJson(string catalog, params string[] cliOnly)
+    {
+        var node = JsonNode.Parse(IsExtra(catalog) ? GoldenFiles.SpecShaped("commands", catalog) : GoldenFiles.Api("commands", catalog))!;   // why: the golden is a JSON document
+        foreach (var row in node["rows"]!.AsArray().Where(r => cliOnly.Contains((string?)r!["action"], StringComparer.Ordinal)))   // why: the catalog has rows
+        {
+            row!["ui"] = "cli-only:local";   // why: a row of the catalog
+        }
+
+        return node.ToJsonString();
+    }
+
+    /// <summary>The route answer for <see cref="CatalogJson"/>.</summary>
+    /// <param name="catalog">The catalog scenario.</param>
+    /// <param name="cliOnly">The actions to list as cli-only.</param>
+    /// <returns>The answer.</returns>
+    internal static RouteAnswer CatalogAnswer(string catalog, params string[] cliOnly) => new(HttpStatusCode.OK, CatalogJson(catalog, cliOnly));
 
     internal void Serve(string scenario) => Server.SetupAnswer = Answer(scenario);
 

@@ -12,7 +12,7 @@ public sealed class OnyxConfigTests
         "# a comment\nIMAGE_TAG=latest\nPOSTGRES_USER=postgres\n# DISABLE_TELEMETRY=\nUSER_AUTH_SECRET=\"\"\n# AUTH_TYPE=\n"
         + "INDEXING_MODEL_SERVER_HOST=indexing_model_server\nCOMPOSE_PROFILES=s3-filestore";
 
-    private static readonly EnvSettings _settings = new("v4.9.0", 3000, Secret);
+    private static readonly EnvSettings _settings = new("v4.9.0", 3189, Secret);
 
     private static readonly string[] _keys = ["IMAGE_TAG", "DISABLE_TELEMETRY", "AUTH_TYPE", "USER_AUTH_SECRET", "INDEXING_MODEL_SERVER_HOST", "HOST_PORT"];
 
@@ -41,7 +41,7 @@ public sealed class OnyxConfigTests
         Assert.Contains("AUTH_TYPE=basic\n", env, StringComparison.Ordinal);
         Assert.Contains("USER_AUTH_SECRET=" + Secret + "\n", env, StringComparison.Ordinal);
         Assert.Contains("INDEXING_MODEL_SERVER_HOST=inference_model_server\n", env, StringComparison.Ordinal);
-        Assert.Contains("HOST_PORT=3000\n", env, StringComparison.Ordinal);
+        Assert.Contains("HOST_PORT=3189\n", env, StringComparison.Ordinal);
         Assert.Contains("# a comment\n", env, StringComparison.Ordinal);
         Assert.Contains("POSTGRES_USER=postgres\n", env, StringComparison.Ordinal);
         Assert.Contains("COMPOSE_PROFILES=s3-filestore\n", env, StringComparison.Ordinal);
@@ -56,7 +56,7 @@ public sealed class OnyxConfigTests
 
         Assert.Equal("DISABLE_TELEMETRY=true", lines[3]);
         Assert.Equal("AUTH_TYPE=basic", lines[5]);
-        Assert.Equal("HOST_PORT=3000", lines[^2]);
+        Assert.Equal("HOST_PORT=3189", lines[^2]);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -100,7 +100,7 @@ public sealed class OnyxConfigTests
         var text = OnyxConfig.RenderOverride(_services, _settings, _pins, "linux/arm64").Value;
 
         Golden.Match(text, typeof(OnyxConfigTests).Assembly, "OnyxUp/Golden/override.arm64.yml", Normalization.None);
-        Assert.Contains("ports: !override\n      - \"127.0.0.1:3000:80\"", text, StringComparison.Ordinal);
+        Assert.Contains("ports: !override\n      - \"127.0.0.1:3189:80\"", text, StringComparison.Ordinal);
         Assert.Equal(2, text.Split('\n').Count(l => l.Contains("onyx-backend@sha256:7c3877", StringComparison.Ordinal)));
     }
 

@@ -58,9 +58,6 @@ internal static partial class Labels
     /// <returns>The line.</returns>
     internal static string MarkedSeen(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} marked seen");
 
-    /// <summary>The tooltip of a protected action's control (screens fixture, "The protected-action label").</summary>
-    internal const string ProtectedTooltip = "Needs a typed confirmation at a terminal";
-
     /// <summary>The tooltip of an action that reads the views while they rebuild (UI spec §4.1, SND-API-010).</summary>
     internal const string RetryAfterRebuild = "Retry after the rebuild";
 

@@ -9,6 +9,17 @@
       "projectedAt": "2026-01-01T00:00:00.0000000Z",
       "rebuilding": false,
       "stalled": false
+    },
+    "page": {
+      "offset": 0,
+      "limit": 100,
+      "more": false,
+      "lists": {
+        "decisions": {
+          "total": 0,
+          "more": false
+        }
+      }
     }
   },
   "content": [

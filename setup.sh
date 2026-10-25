@@ -4,15 +4,15 @@
 # Usage:
 #   ./setup.sh [--providers claude,codex,cursor] [--dry-run]
 #   ./setup.sh --install-agents [--providers ...] [--dry-run]
-#   ./setup.sh [--providers ...] --with-sindri   # also build and install the sindri CLI (opt-in), and stand the pinned Onyx up
-#   ./setup.sh [--providers ...] --with-sindri --no-onyx   # ... without the Onyx step (run `scripts/sindri-app.sh onyx up` later)
+#   ./setup.sh [--providers ...] --with-sindri   # also stand the pinned Onyx up (the C# Sindri itself is always installed)
+#   ./setup.sh [--providers ...] --with-sindri --no-onyx   # ... without the Onyx step (run `sindri onyx up` later)
 #   ./setup.sh [--providers ...] --with-meta     # also install the /meta harness: aw-meta CLI, hooks, launcher (opt-in)
 #   ./setup.sh [--providers ...] --with-fleet    # also install the aw:fleet session-state hook for Sindri's session collector (opt-in)
 #   ./setup.sh [--providers ...] --no-tldraw     # skip the tldraw offline app (the canvas agents draw diagrams on)
 #   ./setup.sh --profile <web-app|ios|personal> --target <dir> [--dry-run]
 #
 # --providers defaults to every provider whose CLI is installed
-# (`claude`, `codex`, `cursor-agent`/`cursor`). Shared steps (scorer/judge,
+# (`claude`, `codex`, `cursor-agent`/`cursor`). Shared steps (C# binaries,
 # Serena image, external pack clone, rtk) run once;
 # per-provider steps live in providers/<name>/install.sh.
 #
@@ -148,7 +148,7 @@ while [ $# -gt 0 ]; do
     --providers=*) PROVIDERS_ARG="${1#--providers=}"; shift ;;
     --install-agents) MODE="agents"; shift ;;
     --dry-run) AW_DRY_RUN=1; shift ;;
-    --with-sindri) WITH_SINDRI=1; shift ;;
+    --with-sindri) WITH_SINDRI=1; echo "--with-sindri: the C# Sindri is always installed (this flag now only stands the pinned Onyx up)"; shift ;;
     --with-meta) WITH_META=1; shift ;;
     --no-onyx) WITH_ONYX=0; shift ;;
     --with-fleet) WITH_FLEET=1; shift ;;
@@ -206,33 +206,17 @@ if [ "$MODE" = "agents" ]; then
   exit 0
 fi
 
-# Native build tools (required by better-sqlite3 when no prebuilt binary exists). On macOS Homebrew brought the
-# Command Line Tools; on Linux build-essential (or the distro's equivalent) is installed.
-if ! command -v make &>/dev/null || ! command -v g++ &>/dev/null; then
-  if [ "$(uname)" = "Darwin" ]; then
-    if aw_dry; then echo "  [dry-run] would run: xcode-select --install"; else
-      echo "FATAL: make/g++ are missing: the Xcode Command Line Tools are not installed. Run: xcode-select --install"; exit 1
-    fi
-  else
-    echo "Installing build tools (make, g++) for native Node addons..."
-    aw_sys_install build-tools || { echo "FATAL: build tools could not be installed (see above)."; exit 1; }
-    if ! aw_dry && { ! command -v make &>/dev/null || ! command -v g++ &>/dev/null; }; then
-      echo "FATAL: make/g++ still missing after the install."; exit 1
-    fi
-  fi
-fi
-
 # Canonical list of skills managed by this toolkit.
 # Note: skills/_shared/ is intentionally excluded from MANAGED_SKILLS. It is not
 # linked into any provider's skills dir — skills read it through the stable path
 # $HOME/.agentic-workflow/toolkit/skills/_shared (toolkit symlink created below).
-MANAGED_SKILLS=(review postReview addressReview enhancePrompt rootCause bugHunt bugReport shipRelease syncDocs weeklyRetro officeHours productReview archReview withInterview design-analyze design-analyze-web design-analyze-ios design-language design-evolve design-evolve-web design-evolve-ios design-mockup design-mockup-web design-mockup-ios design-implement design-implement-web design-implement-ios design-refine design-verify design-verify-web design-verify-ios design-verify-desktop verify-app verify-web verify-ios verify-desktop autoplan planDesignReview planDevexReview cso design-shotgun landAndDeploy canary prismStatus specToProvenPR testAudit judge ui-evidence bugFixOrchestrator reflect correct new-package new-slice meta)
+MANAGED_SKILLS=(review postReview addressReview enhancePrompt rootCause bugHunt bugReport shipRelease syncDocs weeklyRetro officeHours productReview archReview withInterview design-analyze design-analyze-web design-analyze-ios design-language design-evolve design-evolve-web design-evolve-ios design-mockup design-mockup-web design-mockup-ios design-implement design-implement-web design-implement-ios design-refine design-verify design-verify-web design-verify-ios design-verify-desktop verify-app verify-web verify-ios verify-desktop autoplan planDesignReview planDevexReview cso design-shotgun landAndDeploy canary prismStatus specToProvenPR testAudit judge ui-evidence bugFixOrchestrator new-package new-slice meta)
 
 # Stale standalone copies of impeccable skills from an older setup.sh that
 # copied (cp -r) individual skills. Canonical pbakaus/impeccable v3.1.1+ is a
 # single umbrella skill, fetched via the External Skill Packs section.
 # Removed from every provider skills dir on each run (idempotent).
-DEPRECATED_SKILLS=(bolder critique audit polish animate distill colorize typeset arrange quieter harden onboard delight clarify normalize extract adapt optimize overdrive teach-impeccable)
+DEPRECATED_SKILLS=(reflect correct bolder critique audit polish animate distill colorize typeset arrange quieter harden onboard delight clarify normalize extract adapt optimize overdrive teach-impeccable)
 
 echo "=== Agentic Workflow Setup ==="
 echo "  providers: $PROVIDERS"
@@ -251,46 +235,35 @@ aw_run mkdir -p "$AW_STATE_ROOT"
 echo "  $AW_STATE_ROOT/: output + state directory"
 aw_link_toolkit
 
-# --- Scorer + judge (shared CLIs) ---
-if aw_dry; then
-  echo "  [dry-run] would run scripts/install-scorer.sh and scripts/install-judge.sh --build-only"
-else
-  "$SCRIPT_DIR/scripts/install-scorer.sh"
-  bash "$SCRIPT_DIR/scripts/install-judge.sh" --build-only
-fi
-
-# --- Sindri (opt-in: ./setup.sh --with-sindri) ---
-if [ "$WITH_SINDRI" = "1" ]; then
-  if aw_dry; then
-    echo "  [dry-run] would run scripts/install-sindri.sh"
-  else
-    bash "$SCRIPT_DIR/scripts/install-sindri.sh"
-  fi
-  # uv installs graphify (the code index graph layer) at its pin: sindri index setup
-  if aw_dry; then
-    echo "  [dry-run] would install uv (brew) if missing"
-  elif command -v uv &>/dev/null; then
-    echo "  uv: already installed ($(uv --version 2>/dev/null || echo 'unknown version'))"
-  elif command -v brew &>/dev/null; then
-    echo "Installing uv (required for the sindri index graph layer)..."
-    brew install uv || echo "  WARN: uv install failed; the sindri index graph layer stays unavailable. Install uv (https://docs.astral.sh/uv/getting-started/installation/), then run: sindri index setup"
-  else
-    echo "WARN: 'uv' not found and Homebrew is not available; the sindri index graph layer stays unavailable."
-    echo "      Install uv, then run: sindri index setup"
-    echo "        https://docs.astral.sh/uv/getting-started/installation/"
-  fi
-fi
-
-# --- External tools: uv, graphify (pinned), Temporal binaries, system packages ---
+# --- External tools: uv, graphify (pinned), Temporal binaries, system packages, the NativeAOT toolchain ---
 # User-level installs happen here; missing system packages are installed through config/lib/sys-pkg.sh (sudo on Linux).
+# Before the C# install: its publish needs the toolchain this installs.
 echo ""
 bash "$SCRIPT_DIR/scripts/install-deps.sh" || { echo "FATAL: external tools missing (see above). Fix, then re-run setup.sh."; exit 1; }
 
-
-# --- Skill packages (TypeScript helpers run by SKILL.md) ---
+# --- The C# toolkit (cutover spec 7.1, 8): publish, drop the TypeScript install, link, check ---
+# install-cs.sh --publish changes nothing on PATH (a failure stops here with the box untouched); cutover-clean-ts.sh
+# --pre-link removes the TS state the C# judge would refuse; install-cs.sh --link switches the wrappers; cutover-clean-ts.sh
+# --post-link finishes and checks `judge health`. The lever installers run after, because they need `judge` on PATH.
+# cutover-clean-ts.sh exits 1 (refused, nothing changed) or 3 (stopped partway): setup stops and no lever installer runs.
 echo ""
-echo "Building skill packages..."
-aw_build_skill_packages "$SCRIPT_DIR"
+echo "=== The C# toolkit ==="
+bash "$SCRIPT_DIR/scripts/install-cs.sh" --publish $(aw_dry && echo --dry-run) || { echo "FATAL: the C# publish failed (see above); nothing on PATH changed. Fix, then re-run setup.sh."; exit 1; }
+aw_cutover() { # <--pre-link|--post-link>
+  local flag="$1" rc=0
+  if [ ! -f "$SCRIPT_DIR/scripts/cutover-clean-ts.sh" ] && aw_dry; then
+    echo "  [dry-run] would run scripts/cutover-clean-ts.sh $flag"
+    return 0
+  fi
+  bash "$SCRIPT_DIR/scripts/cutover-clean-ts.sh" "$flag" $(aw_dry && echo --dry-run) || rc=$?
+  if [ "$rc" != "0" ]; then
+    echo "FATAL: cutover-clean-ts.sh $flag exited $rc (see above; the log path is printed above). No lever installer ran. Re-run ./setup.sh." >&2
+    exit 1
+  fi
+}
+aw_cutover --pre-link
+bash "$SCRIPT_DIR/scripts/install-cs.sh" --link $(aw_dry && echo --dry-run) || { echo "FATAL: linking the C# wrappers failed (see above). Re-run ./setup.sh."; exit 1; }
+aw_cutover --post-link
 
 # --- Serena MCP (Docker image + wrapper) ---
 echo ""
@@ -714,5 +687,5 @@ if [ "$WITH_META" = "1" ]; then aw_setup_meta_finish "$META_RC" || exit "$?"; fi
 if [ "$WITH_SINDRI" = "1" ] && [ "$WITH_ONYX" = "1" ]; then
   # shellcheck source=config/lib/setup-onyx-step.sh
   source "$SCRIPT_DIR/config/lib/setup-onyx-step.sh"
-  aw_setup_onyx_finish "$ONYX_RC" "$SCRIPT_DIR/scripts/sindri-app.sh onyx up" || exit "$?"
+  aw_setup_onyx_finish "$ONYX_RC" "sindri onyx up" || exit "$?"
 fi

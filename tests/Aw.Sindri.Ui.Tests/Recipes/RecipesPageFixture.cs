@@ -16,6 +16,10 @@ internal sealed class RecipesPageFixture
     internal static string Row(string id, string standing = "approved", string stale = "") =>
         $$"""{"id":"{{id}}","version":1,"hash":"{{Hash}}","standing":"{{standing}}","via":"desk","stale":[{{stale}}],"inputs":[],"urgency":"work","outputs":[],"orderedBy":"path","states":[{"id":"a","order":1,"branchOf":null}],"loops":[],"name":null}""";
 
+    // The shipped version that gained a capability, listed as a row of its own beside the approved one (#983).
+    internal static string WaitingRow(string id, string hash) =>
+        $$"""{"id":"{{id}}","version":2,"hash":"{{hash}}","standing":"unapproved","via":null,"stale":[],"inputs":[],"urgency":"work","outputs":[],"orderedBy":"path","states":[{"id":"a","order":1,"branchOf":null}],"loops":[],"name":null,"status":"changed","gainsCapability":true}""";
+
     internal void Serve(params string[] rows) => Server.RecipeListAnswer = new RouteAnswer(HttpStatusCode.OK, "{\"recipes\":[" + string.Join(',', rows) + "]}");
 
     internal void ServeThree() => Serve(Row("workflow.phase"), Row("workflow.pr-babysitter", "unapproved"), Row("workflow.review-loop", stale: "\"child-stale\""));

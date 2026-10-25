@@ -1,26 +1,22 @@
-using Aw.Sindri.Ui.Platform;
-
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
 /// The action bar under the inbox's request card (F3 needs-you spec §3, §5). It follows the card's row and decides, per kind of
-/// request, what the primary action, send back and the terminal button are, and sends nothing a catalog row calls protected: a desk
-/// request is reported once through <see cref="DeskReporter"/>, a decision goes to the shell as its option, and a protected action is
-/// only its command copied. A, D and Ctrl+Enter reach the same methods the buttons do. This file holds the state and what the bar
+/// request, what the primary action and send back are: a desk request is reported once through <see cref="DeskReporter"/>, a decision
+/// goes to the shell as its option, and one of the three approvals is one plain click through <see cref="NeedsYouConfirm"/>. A, D and Ctrl+Enter reach the same methods the buttons do. This file holds the state and what the bar
 /// shows for a request; the words are in NeedsYouBarViewModel.Look.cs and the presses in NeedsYouBarViewModel.Actions.cs.
 /// </summary>
 internal sealed partial class NeedsYouBarViewModel : ObservableObject
 {
     private const string InstanceKind = "instance";
     private const string CompleteStepAction = "CompleteStep";
-    private const string GrantAction = "ApplyCommand:answer-grant";
 
     private static readonly string[] _all =
     [
         nameof(Mode), nameof(IsPending), nameof(IsSendingBack), nameof(IsConfirmingDrop), nameof(IsApproved), nameof(ShowsActions), nameof(ApproveWord), nameof(ApproveName), nameof(IsAsking), nameof(ShowsPrimary), nameof(PrimaryEnabled),
-        nameof(ShowsTerminal), nameof(TerminalWord), nameof(TerminalButton), nameof(TerminalName), nameof(ShowsSendBack), nameof(SendBackEnabled), nameof(SendBackWord), nameof(SendBackName), nameof(SendBackTooltip), nameof(ShowsEditChip),
-        nameof(ShowsDrop), nameof(ShowsRowControls), nameof(Hint), nameof(HasHint), nameof(HintIsAttention), nameof(HintIsSuccess), nameof(Refusal), nameof(HasRefusal), nameof(ReasonRequired), nameof(ReasonPlaceholder), nameof(CanSend),
-        nameof(SendWord), nameof(IsSending), nameof(DoneTitle), nameof(DoneBody), nameof(HasBar), nameof(MoreName), nameof(BarName), nameof(ShowsTyped), nameof(TypedBox), nameof(ShowsHold), nameof(ShowsConfirm), nameof(ConfirmEnabled),
+        nameof(ShowsSendBack), nameof(SendBackEnabled), nameof(SendBackWord), nameof(SendBackName), nameof(SendBackTooltip), nameof(ShowsEditChip),
+        nameof(ShowsDrop), nameof(ShowsRowControls), nameof(Hint), nameof(HasHint), nameof(HintIsAttention), nameof(Refusal), nameof(HasRefusal), nameof(ReasonRequired), nameof(ReasonPlaceholder), nameof(CanSend),
+        nameof(SendWord), nameof(IsSending), nameof(DoneTitle), nameof(DoneBody), nameof(HasBar), nameof(MoreName), nameof(BarName), nameof(ConfirmEnabled),
         nameof(MergeCard), nameof(HasMergeCard),
         nameof(DeskWhy), nameof(IfApprove), nameof(IfSendBack), nameof(HasIfApprove), nameof(HasIfSendBack),
         nameof(ApproveSuggested), nameof(SendBackSuggested), nameof(Questions), nameof(HasQuestions), nameof(AllAnswered), nameof(QuestionsHint),
@@ -29,7 +25,6 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     ];
 
     private readonly DeskReporter _desk;
-    private readonly IClipboard _clipboard;
     private readonly TimeProvider _clock;
     private readonly NeedsYouConfirm? _confirm;
     private NeedsYouRowViewModel? _row;
@@ -38,12 +33,11 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     private NeedsYouBarOutcome _done;
 
     /// <param name="desk">Reports an open desk run.</param>
-    /// <param name="clipboard">Copies a protected action's command.</param>
-    /// <param name="clock">The clock for "Copied".</param>
-    /// <param name="confirm">The typed and held confirmations of the three protected approvals the app confirms; null shows their terminal copy only.</param>
-    internal NeedsYouBarViewModel(DeskReporter desk, IClipboard clipboard, TimeProvider clock, NeedsYouConfirm? confirm = null)
+    /// <param name="clock">Stamps the scoping interview's answers.</param>
+    /// <param name="confirm">The three approvals the app does with one click; null offers none.</param>
+    internal NeedsYouBarViewModel(DeskReporter desk, TimeProvider clock, NeedsYouConfirm? confirm = null)
     {
-        (_desk, _clipboard, _clock, _confirm) = (desk, clipboard, clock, confirm);
+        (_desk, _clock, _confirm) = (desk, clock, confirm);
         _confirm?.Changed += OnConfirmChanged;
     }
 
@@ -58,9 +52,6 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
 
     /// <summary>Completes when the desk run of the shown row has been read.</summary>
     internal Task Loaded { get; private set; } = Task.CompletedTask;
-
-    /// <summary>Completes when the copied line has been shown for its time and dropped.</summary>
-    internal Task CopiedExpiry { get; private set; } = Task.CompletedTask;
 
     /// <summary>True once the card has been scrolled to its end (a card shorter than its viewport counts as read at once). Reading to the end ends the question "Approve?".</summary>
     internal bool ReadToEnd
@@ -114,9 +105,6 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     /// <summary>The served refusal of the last report, as served; empty for none.</summary>
     public string Refusal { get; private set; } = "";
 
-    /// <summary>True when the command was just copied (the success line shows).</summary>
-    public bool HintIsSuccess { get; private set; }
-
     private enum BarKind
     {
         None,
@@ -138,22 +126,16 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         _ => throw new InvalidOperationException("a group the app doesn't know"),
     };
 
-    private NeedsYouActionControl? PrimaryControl => _row?.Controls.FirstOrDefault(c => c.IsPrimary);
-
     // A desk request is reported by the engine's CompleteStep; the row must serve it ready for the bar to offer it.
     private NeedsYouActionControl? DeskControl => _row?.Controls.FirstOrDefault(c => string.Equals(c.Action.CatalogId, CompleteStepAction, StringComparison.Ordinal) && c.Action.IsReady && c.IsEnabled);
+
+    // A desk step whose complete command is protected (and that has no merge verb): a send back is the step's own "rework" outcome.
+    private bool TerminalOnly => Kind == BarKind.Desk && _target?.IsTerminalOnly == true && !HasMergeVerb;
 
     private NeedsYouActionControl? AcceptControl => _row?.Controls.FirstOrDefault(c => c is { IsPrimary: true, Action.OptionId.Length: > 0 });
 
     private NeedsYouActionControl? RejectControl => _row?.Controls.FirstOrDefault(c => c.Action is { RejectLike: true, OptionId.Length: > 0 });
 
-    private bool TerminalOnly => Kind == BarKind.Desk && _target?.IsTerminalOnly == true && !HasMergeVerb;
-
-    // The command the terminal button copies: the step's served complete command for a merge, else the action's own served command.
-    private string TerminalCli => TerminalOnly ? _target?.Complete?.Cli ?? "" : PrimaryControl?.Action.Cli is { Length: > 0 } cli ? cli : _row?.Cli ?? "";
-
-    private static string WordsOf(NeedsYouAction action) =>
-        string.Equals(action.CatalogId, GrantAction, StringComparison.Ordinal) ? Labels.NeedsYouMoreTries : action.Label;
 
     /// <summary>True while the bar asks something Esc withdraws: the reason box, the drop question or "Approve?".</summary>
     internal bool HasOpenQuestion => Mode is NeedsYouBarMode.SendingBack or NeedsYouBarMode.ConfirmingDrop or NeedsYouBarMode.Confirming;
@@ -173,7 +155,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         (_target, _targetKnown, _done, Questions, Scoping) = (null, false, NeedsYouBarOutcome.None, [], []);
         DrawVerbs();
         DrawReviews();
-        (IsSending, HintIsSuccess) = (false, false);
+        IsSending = false;
         (Mode, ReasonText, Refusal, ReadToEnd) = (NeedsYouBarMode.Pending, "", "", false);
         var read = row is not null && Kind == BarKind.Desk && InstanceOf(row) is { } instance ? Read(instance, row.Id) : Task.CompletedTask;
         Loaded = Task.WhenAll(read, _confirm?.Show(row) ?? Task.CompletedTask);

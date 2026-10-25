@@ -25,7 +25,7 @@ public sealed class NeedsYouScopingFormTests
             "fact:answers" when answersSoFar is not null => new RouteAnswer(HttpStatusCode.OK, $$"""{"key":"fact:answers","type":"payload","body":{{answersSoFar}},"truncated":false}"""),
             _ => null,
         };
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), _clock);
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
         return bar;
@@ -186,7 +186,7 @@ public sealed class NeedsYouScopingFormTests
         _server.FactBody = (_, key) => string.Equals(key, "fact:escalation", StringComparison.Ordinal)
             ? new RouteAnswer(HttpStatusCode.OK, """{"key":"fact:escalation","type":"payload","body":[{"id":"q1","question":"Keep it?","options":["Yes","No"]}],"truncated":false}""")
             : null;
-        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), new FakeClipboard(), _clock);
+        var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), _clock);
         bar.Show(new NeedsYouRowViewModel(NeedsYouRows.Desk(), seen: true, reducedMotion: false, arrived: false, _clock));
         await bar.Loaded;
 

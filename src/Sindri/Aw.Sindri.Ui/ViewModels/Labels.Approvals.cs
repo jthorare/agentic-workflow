@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Ui.ViewModels.Confirmations;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
@@ -21,36 +20,6 @@ internal static partial class Labels
     /// <summary>What the own-look list says about itself.</summary>
     internal const string ApproveOwnHint = "These can now do something new, so they are not part of this approval. Approve each one on its own.";
 
-    /// <summary>The hold button while idle: the shortest hold is the server's, shown as served.</summary>
-    /// <param name="minHoldMs">The shortest hold in milliseconds.</param>
-    /// <returns>"Hold to approve, 1.5 seconds".</returns>
-    internal static string ApproveHold(int minHoldMs) => string.Create(CultureInfo.InvariantCulture, $"Hold to approve, {minHoldMs / 1000d:0.#} seconds");
-
-    /// <summary>While the button is held.</summary>
-    /// <param name="heldMs">How long it has been held.</param>
-    /// <param name="minHoldMs">The shortest hold.</param>
-    /// <returns>"Keep holding, 0.8 of 1.5 seconds".</returns>
-    internal static string ApproveHolding(int heldMs, int minHoldMs) =>
-        string.Create(CultureInfo.InvariantCulture, $"Keep holding, {Math.Min(heldMs, minHoldMs) / 1000d:0.#} of {minHoldMs / 1000d:0.#} seconds");
-
-    /// <summary>Spoken when the hold starts.</summary>
-    internal const string ApproveHoldStarted = "Holding. Keep holding to approve.";
-
-    /// <summary>Spoken and shown when the button is let go early.</summary>
-    internal const string ApproveHoldAgain = "Not approved, hold again";
-
-    /// <summary>Shown when the challenge ran out while the dialog waited.</summary>
-    internal const string ApproveExpired = "That took too long. Asking again: hold once more.";
-
-    /// <summary>The line over the typed alternative.</summary>
-    internal const string ApproveTypeCaption = "Or type this text to approve:";
-
-    /// <summary>The typed field's accessible name.</summary>
-    internal const string ApproveTypeName = "Type the text to approve";
-
-    /// <summary>The typed answer's button.</summary>
-    internal const string ApproveTypeButton = "Approve with the typed text";
-
     /// <summary>The close button.</summary>
     internal const string ApproveClose = "Close";
 
@@ -67,10 +36,18 @@ internal static partial class Labels
     internal const string ApproveWaiting = "Waiting on those";
 
     /// <summary>Spoken when the plan is ready to approve.</summary>
-    internal const string ApproveReady = "Ready to approve. Hold the button or type the text.";
+    internal const string ApproveReady = "Ready to approve. Press the Approve button.";
 
-    /// <summary>An agent session asked: only the person at the app may approve.</summary>
-    internal const string ApproveSessionRefused = "Only you can approve from the app. An agent session can't.";
+    /// <summary>A refused approval as the app shows it: the code, the words, and the row's served command to run instead; never a silent failure.</summary>
+    /// <param name="code">The error code; empty for none.</param>
+    /// <param name="words">What went wrong, in words.</param>
+    /// <param name="cli">The row's served command; empty when it served none.</param>
+    /// <returns>The line.</returns>
+    internal static string ApproveRefusal(string code, string words, string cli) =>
+        (code.Length > 0 ? code + ": " : "") + words + (cli.Length > 0 ? " Run: " + cli : "");
+
+    /// <summary>A step Sindri launched itself answered: Sindri's own steps are refused.</summary>
+    internal const string ApproveSessionRefused = "Sindri's own steps can't answer this.";
 
     /// <summary>A second approval was asked for while one runs (SND-JOB-409).</summary>
     internal const string ApproveAlreadyRunning = "Approve all is already running.";
@@ -90,29 +67,11 @@ internal static partial class Labels
     /// <summary>Nothing waits for approval and the server gave no sentence for it.</summary>
     internal const string ApproveNothingWaiting = "Nothing is waiting for your approval.";
 
-    /// <summary>A fresh confirmation could not be had.</summary>
-    internal const string ApproveAskFailed = "Sindri did not give a new confirmation. Try again.";
-
-    /// <summary>The retry button.</summary>
-    internal const string ApproveTryAgain = "Try again";
-
     /// <summary>How many workflows the approval covers.</summary>
     /// <param name="count">The count.</param>
     /// <returns>"3 workflows will be approved".</returns>
     internal static string ApprovePlanHeading(int count) =>
         string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "workflow" : "workflows")} will be approved");
-
-    /// <summary>The hold button's accessible name once it counts the workflows.</summary>
-    /// <param name="count">The count.</param>
-    /// <param name="minHoldMs">The shortest hold.</param>
-    /// <returns>"Hold to approve, 1.5 seconds, 3 workflows": it starts with the words the button shows.</returns>
-    internal static string ApproveHoldName(int count, int minHoldMs) =>
-        string.Create(CultureInfo.InvariantCulture, $"{ApproveHold(minHoldMs)}, {count} {(count == 1 ? "workflow" : "workflows")}");
-
-    /// <summary>The typed text did not match.</summary>
-    /// <param name="expected">What to type.</param>
-    /// <returns>The sentence.</returns>
-    internal static string ApproveTypedMismatch(string expected) => "That doesn't match. Type exactly: " + expected;
 
     /// <summary>Why a workflow is in the plan, by the change the server serves.</summary>
     /// <param name="change">'new', 'updated' or 'second-look'.</param>
@@ -159,48 +118,12 @@ internal static partial class Labels
     /// <returns>The name.</returns>
     internal static string ApproveRowName(string name, string reason) => name + ", " + reason;
 
-    /// <summary>The typed confirmation's lead-in, before the phrase.</summary>
-    internal const string TypedAsk = "To approve, type";
+    /// <summary>The approve-all button.</summary>
+    internal const string ApproveAllButton = "Approve all workflows";
 
-    /// <summary>The typed confirmation's note: the phrase belongs to exactly what was read.</summary>
-    internal const string TypedNote = "The phrase is tied to exactly this list. If your settings change before you press the button, Sindri asks again.";
+    /// <summary>The profile approval's button.</summary>
+    internal const string ApproveSettings = "Approve settings";
 
-    /// <summary>The typed confirmation's mark for a match, read aloud in place of the tick glyph.</summary>
-    internal const string TypedMatches = "Matches";
-
-    /// <summary>The hold button while the answer is on its way.</summary>
-    internal const string HoldApproving = "Approving...";
-
-    /// <summary>The typed confirmation's button, by what it approves.</summary>
-    /// <param name="action">ApproveProfile, ApproveRecipe or ApproveAllRecipes.</param>
-    /// <returns>The button's words.</returns>
-    internal static string TypedButton(string action) => action switch
-    {
-        "ApproveProfile" => "Approve settings",
-        "ApproveRecipe" => "Approve workflow",
-        AppConfirm.GrantTokens => "Grant tokens",
-        _ => "Approve all workflows",
-    };
-
-    /// <summary>The lock button's verb for a confirmation that is terminal copy for now.</summary>
-    /// <param name="action">ApproveProfile, ApproveRecipe or ApproveAllRecipes.</param>
-    /// <returns>The verb.</returns>
-    internal static string TerminalVerb(string action) => action switch
-    {
-        "ApproveProfile" => "Approve settings",
-        "ApproveRecipe" => "Approve workflow",
-        AppConfirm.GrantTokens => "Grant tokens",
-        _ => "Approve all",
-    };
-
-    /// <summary>What a confirmation acts on, for accessible names.</summary>
-    /// <param name="action">ApproveProfile, ApproveRecipe or ApproveAllRecipes.</param>
-    /// <returns>The subject.</returns>
-    internal static string ConfirmSubject(string action) => action switch
-    {
-        "ApproveProfile" => "settings",
-        "ApproveRecipe" => "workflow",
-        AppConfirm.GrantTokens => "token grant",
-        _ => "workflows",
-    };
+    /// <summary>The Grant tokens control's title and button.</summary>
+    internal const string GrantTokens = "Grant tokens";
 }

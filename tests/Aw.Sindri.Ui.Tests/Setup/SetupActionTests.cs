@@ -29,7 +29,7 @@ public sealed class SetupActionTests
     [Fact]
     public async Task Approve_all_is_an_app_button_when_the_app_can_open_it()
     {
-        var f = new SetupFixture("extra-approve-all-cli-only");   // where the catalog lets the app confirm in the row, the plan and hold stand in for the button
+        var f = new SetupFixture("extra-approve-all-ready", "ApproveAllRecipes");   // listed cli-only, so the row has no plan of its own; the app opens the dialog itself, one click
         f.Serve(With("first-run", "recipes", "needs-you", "ApproveAllRecipes"));
         _ = f.InApp.Add("ApproveAllRecipes");
         var setup = await f.Read(Token);
@@ -47,22 +47,22 @@ public sealed class SetupActionTests
     [Fact]
     public async Task A_protected_action_the_app_cannot_open_shows_the_terminal_copy_of_the_catalogs_command()
     {
-        var f = new SetupFixture("extra-approve-all-cli-only");   // the row is not ready here, so it keeps the terminal copy
+        var f = new SetupFixture("extra-approve-all-ready", "ApproveAllRecipes");   // listed cli-only and the app does not open it here (no InApp entry), so it keeps the terminal copy
         f.Serve(With("first-run", "recipes", "needs-you", "ApproveAllRecipes"));
 
         var action = Step(await f.Read(Token), "recipes").Action!;
 
         Assert.Equal((false, null, true), (action.IsInApp, action.Cli, action.HasProtected));
-        Assert.Equal("sindri-app recipe approve-all", action.Protected!.Cli);   // the catalog's own CLI form wins over the app's table
+        Assert.Equal("sindri recipe approve-all", action.Protected!.Cli);   // the catalog's own CLI form wins over the app's table
         Assert.Equal("⌂ Approve all workflows · terminal", action.Protected.Label);
         await action.Protected.Copy(Token);
-        Assert.Equal("sindri-app recipe approve-all", f.Clipboard.Text);
+        Assert.Equal("sindri recipe approve-all", f.Clipboard.Text);
     }
 
     [Fact]
     public async Task The_profile_approval_is_terminal_copy_until_the_app_can_open_it()
     {
-        var f = new SetupFixture("extra-approve-all-cli-only");
+        var f = new SetupFixture("extra-approve-all-ready", "ApproveProfile");
         f.Serve("profile-needs-approval");
         var setup = await f.Read(Token);
 
@@ -79,7 +79,7 @@ public sealed class SetupActionTests
 
         var action = Step(await f.Read(Token), "repo").Action!;
 
-        Assert.Equal(("Add a repo", "sindri-app repo add <path>", false), (action.Label, action.Cli?.Cli, action.IsInApp));
+        Assert.Equal(("Add a repo", "sindri repo add <path>", false), (action.Label, action.Cli?.Cli, action.IsInApp));
     }
 
     [Fact]

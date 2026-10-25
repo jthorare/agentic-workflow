@@ -36,8 +36,6 @@
               <StackPanel Orientation="Horizontal" Spacing="6" Margin="8,0,0,0">
                 <Button Classes="command-control" Classes.primary="{Binding IsPrimary}" IsEnabled="{Binding IsEnabled}" Content="{Binding Action.Label}"
                         Click="OnAction" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.HelpText="{Binding Tooltip}" AutomationProperties.Name="{Binding Name}" />
-                <TextBlock Classes="caption subtle mono" Text="{Binding Action.Cli}" IsVisible="{Binding IsProtected}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Action.Cli}" />
-                <TextBlock Classes="caption subtle" Text="{Binding Action.FillInHint}" IsVisible="{Binding IsProtectedWithHint}" VerticalAlignment="Center" />
               </StackPanel>
             </DataTemplate>
           </ItemsControl.ItemTemplate>

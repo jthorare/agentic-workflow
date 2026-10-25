@@ -5,7 +5,7 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Extract;
 
-/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their files.</summary>
+/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their source files. Files a repo's 'index.roles' names never get here: they are not indexed.</summary>
 public static class ClusterFeatures
 {
     /// <summary>Proposes a feature per cluster.</summary>

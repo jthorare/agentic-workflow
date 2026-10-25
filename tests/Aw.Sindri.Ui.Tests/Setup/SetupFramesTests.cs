@@ -108,7 +108,7 @@ public sealed class SetupFramesTests : FrameHost
     public Task A_protected_approval_row_shows_the_locked_terminal_copy_button() => OnUi(async () =>
     {
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "empty");   // no profile approval row to open in the app: the button is the terminal copy
-        Server.Catalog = RouteAnswer.SpecShaped("commands", "extra-approve-all-ready");   // ApproveProfile is not ready here
+        Server.Catalog = SetupFixture.CatalogAnswer("extra-approve-all-ready", "ApproveProfile");   // listed cli-only and the app opens no approval here: the button is the terminal copy
         var (window, _) = await OnSettings("profile-needs-approval", 1440);
 
         var profile = Rows(window).Single(r => ((ViewModels.Setup.SetupStepViewModel)r.DataContext!).Id == "profile");

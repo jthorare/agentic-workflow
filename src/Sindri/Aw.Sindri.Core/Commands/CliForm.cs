@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Commands;
 
 /// <summary>
 /// A catalog row's CLI form (UI spec E-16): 'sindri' and checked parts only, so a copied command can't carry a newline,
-/// a bidi override or a second command. Parts are lower-case words, a fixed '--flag', a '&lt;placeholder&gt;' or an
+/// a bidi override or a second command. Parts are lower-case words, a fixed '--flag', a '&lt;placeholder&gt;' (or '&lt;id&gt;@&lt;hash&gt;', two of them joined by an '@') or an
 /// '[optional part]' made of those; no control, bidi or invisible character anywhere. <see cref="Fill"/> puts typed
 /// ids in place of placeholders, and only ids whose text is safe on a command line.
 /// </summary>
@@ -49,7 +49,7 @@ public sealed partial record CliForm
         ArgumentNullException.ThrowIfNull(placeholder);
         var token = "<" + placeholder + ">";
         var parts = Text.Split(' ');
-        if (!parts.Any(part => string.Equals(part.Trim('[', ']'), token, StringComparison.Ordinal)))
+        if (!parts.Any(part => part.Contains(token, StringComparison.Ordinal)))
         {
             return SindriErrors.InvalidInput.With($"'{Text}' has no <{Printable(placeholder)}> to fill");
         }
@@ -60,7 +60,7 @@ public sealed partial record CliForm
                 $"The value for <{Printable(placeholder)}> isn't safe on a command line: letters, digits, '.', '_', ':' and '-' only, starting with a letter or digit");
         }
 
-        var filled = parts.Select(part => string.Equals(part.Trim('[', ']'), token, StringComparison.Ordinal) ? part.Replace(token, value, StringComparison.Ordinal) : part);
+        var filled = parts.Select(part => part.Replace(token, value, StringComparison.Ordinal));
         return new CliForm(string.Join(' ', filled));
     }
 
@@ -92,7 +92,7 @@ public sealed partial record CliForm
     /// <summary>A placeholder name for an error message: itself when it is a plain name, else a fixed word.</summary>
     private static string Printable(string placeholder) => Placeholder.IsMatch(placeholder) ? placeholder : "that placeholder";
 
-    private const string Part = "(?:[a-z][a-z-]*|--[a-z][a-z-]*|<[a-zA-Z]+>)";
+    private const string Part = "(?:[a-z][a-z-]*|--[a-z][a-z-]*|<[a-zA-Z]+>(?:@<[a-zA-Z]+>)?)";
 
     [GeneratedRegex("^sindri(?: " + Part + "| \\[" + Part + "(?: " + Part + ")*\\])*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

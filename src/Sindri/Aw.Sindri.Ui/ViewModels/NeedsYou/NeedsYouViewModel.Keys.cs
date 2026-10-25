@@ -115,7 +115,7 @@ internal sealed partial class NeedsYouViewModel
     private bool RunPrimary(NeedsYouRowViewModel row)
     {
         var decision = row.Entry.DecisionId is not null;
-        var primary = row.Controls.FirstOrDefault(c => c.IsPrimary && c.IsEnabled);
+        var primary = row.Controls.FirstOrDefault(c => c.IsPrimary && c.IsEnabled && !c.Action.IsProtected);   // a protected action is a click, never a key
         return primary is not null && (!decision || (primary.Action.OptionId.Length > 0 && string.Equals(SheetRowId, row.Id, StringComparison.Ordinal))) && Act(row, primary.Action);
     }
 

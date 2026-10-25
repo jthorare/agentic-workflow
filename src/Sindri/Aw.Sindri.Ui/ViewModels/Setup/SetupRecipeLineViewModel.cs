@@ -8,13 +8,14 @@ internal sealed class SetupRecipeLineViewModel
 {
     /// <summary>The line over what the list served.</summary>
     /// <param name="served">The workflow's row, at its highest version.</param>
-    internal SetupRecipeLineViewModel(RecipeSummaryView served)
+    /// <param name="waiting">True when a version that gained a capability waits for its own approval.</param>
+    internal SetupRecipeLineViewModel(RecipeSummaryView served, bool waiting = false)
     {
         ArgumentNullException.ThrowIfNull(served);
         Name = RecipeNames.Of(served.Id, served.DisplayName);
         var newer = ShippedIsNewer(served);
-        IsOutdated = newer || ChangedSinceApproval(served);
-        Status = newer ? Labels.SetupRecipeNewer(served.ApprovedVersion.GetValueOrDefault(), served.Version) : StatusOf(served, IsOutdated);
+        IsOutdated = waiting || newer || ChangedSinceApproval(served);
+        Status = waiting ? Labels.RecipeGainsCapability : newer ? Labels.SetupRecipeNewer(served.ApprovedVersion.GetValueOrDefault(), served.Version) : StatusOf(served, IsOutdated);
         AccessibleName = Name + ": " + Status;
     }
 

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 9
+version: 10
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 why: "Pins down exactly what will change and what done means, then waits for your approval before anything is designed."
@@ -123,7 +123,7 @@ transitions:
   - { from: challenge, to: challenge-log, on: step.completed, when: { outcome: found },      produces: [fact:challengeRound] }
   - { from: challenge-log, to: size,  on: step.completed, when: { outcome: nothingNew }, produces: [fact:challenge] }
   - { label: "second opinion found gaps: draft again", from: challenge-log, to: draft, on: step.completed,
-      when: { all: [ { outcome: found }, { loop: challenge, below: cap } ] }, produces: [fact:challenge, fact:findings] }
+      when: { all: [ { outcome: found }, { loop: challenge, below: cap }, { loop: rounds, below: cap } ] }, produces: [fact:challenge, fact:findings] }
   - { label: "gaps remain: you answer them", from: challenge-log, to: questions, on: step.completed,
       when: { all: [ { outcome: found }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] }, produces: [fact:challenge, fact:findings] }
   - { label: "gaps remain, nothing to ask: size it, findings open", from: challenge-log, to: size, on: step.completed, when: { outcome: found }, produces: [fact:challenge, fact:findings] }
@@ -164,6 +164,8 @@ evals:   # 33 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/challenge-found-twice.jsonl
   - evals/workflow.scoping/challenge-cap-questions.jsonl
   - evals/workflow.scoping/challenge-cap-size.jsonl
+  - evals/workflow.scoping/challenge-cap-check-size.jsonl
+  - evals/workflow.scoping/challenge-log-rounds-spent-size.jsonl
   - evals/workflow.scoping/challenge-spent-walk-gap-stops.jsonl
   - evals/workflow.scoping/challenge-spent-same-model-stops.jsonl
   - evals/workflow.scoping/evidence-lens-regather.jsonl

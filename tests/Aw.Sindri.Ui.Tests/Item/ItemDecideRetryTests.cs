@@ -118,21 +118,4 @@ public sealed class ItemDecideRetryTests
         Assert.Equal(string.Empty, sheet.Needs.Refusal);
         Assert.Empty(sheet.Needs.Decisions);
     }, Token);
-
-    [Fact]
-    public Task The_item_sheet_disables_the_options_when_the_catalog_serves_decide_as_cli_only() => UiThread.Run(async () =>
-    {
-        _server.DecisionsByItem[DecisionItem] = RouteAnswer.Api("decisions", "by-item");
-        _server.RequestsByItem[DecisionItem] = RouteAnswer.Api("requests", "list-by-item");
-        _server.Items[DecisionItem] = _server.Items[A.NewItem];
-        var served = (await _server.Commands(_api, Token)).Value;
-        var catalog = new CatalogViewModel(new FakeClipboard(), _clock);
-        catalog.Show(_api, _server, served with { Rows = [.. served.Rows.Select(r => string.Equals(r.Action, "Decide", StringComparison.Ordinal) ? r with { Ui = "cli-only:typed-confirmation" } : r)] });
-        var sheet = new ItemSheetViewModel(_server, catalog, _clock);
-
-        await sheet.Open(_api, DecisionItem, Token);
-
-        Assert.NotEmpty(sheet.Needs.Decisions);
-        Assert.All(sheet.Needs.Decisions.SelectMany(d => d.Options), o => Assert.False(o.IsEnabled));
-    }, Token);
 }

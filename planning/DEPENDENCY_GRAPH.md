@@ -4,15 +4,12 @@
 
 | Requirement | Value |
 |-------------|-------|
-| Node.js | >= 22 |
-| TypeScript target | ES2022 |
-| Module system | Node16 (ESM — `"type": "module"` in package.json) |
-| Module resolution | Node16 |
-| Strict mode | Enabled |
+| .NET | 10 (LTS), SDK pinned in `global.json`; NativeAOT for hook and CLI entry points, `sindri` and `ui-evidence` framework-dependent |
+| Node.js | >= 22, setup prerequisite only (`dembrandt`, `prism-mcp`, `xcodebuildmcp`, the schema checkers) |
 
 ## Package Dependencies
 
-Each TypeScript package (`scorer`, `judge`, `sindri`, `skills/ui-evidence`, `skills/bugFixOrchestrator`) declares its own runtime and dev dependencies in its `package.json`. The declared package graph (tiers and every project, compose, CLI, database and file edge) lives in `deps.yaml` and is checked by `node scripts/check-deps.mjs`.
+The C# packages declare their NuGet dependencies in `Directory.Packages.props` (Central Package Management, locked restore, nuget.org only). The declared package graph (tiers and every project, compose, CLI, database and file edge) lives in `deps.yaml` and is checked by `node scripts/check-deps.mjs`.
 
 ## External System Dependencies
 

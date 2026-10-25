@@ -23,7 +23,8 @@ internal sealed class RecipeRowViewModel : ObservableObject
         StepsText = Labels.StepsWord(Listed(served.States).Count);
         FlowText = Labels.FlowWord(Listed(served.Inputs).Count, Listed(served.Outputs).Count);
         Fingerprint = Labels.Fingerprint(served.Hash);
-        AccessibleName = Labels.RecipeRowName(Name, Id, StandingText, IsOutOfDate, served.Version);
+        GainsCapability = served.GainsCapability == true;
+        AccessibleName = Labels.RecipeRowName(Name, Id, StandingText, IsOutOfDate, served.Version) + (GainsCapability ? ". " + Labels.RecipeGainsCapability : "");
         Link = new DeepLink(DeepLinkKind.Recipe, Standing == RecipeStanding.Approved ? Id : Id + "@" + Labels.Hash12(served.Hash));
         (RunsText, FinishedText, TypicalText) = StatsOf(served);
         Signature = SignatureOf(served) + "|" + RunsText + "|" + FinishedText + "|" + TypicalText;
@@ -52,7 +53,7 @@ internal sealed class RecipeRowViewModel : ObservableObject
     };
 
     private static string SignatureOf(RecipeSummaryView served) =>
-        string.Join('|', served.Id, served.Version, served.Hash, served.Standing, served.DisplayName, string.Join(',', Listed(served.Stale)), Listed(served.States).Count, Listed(served.Inputs).Count, Listed(served.Outputs).Count);
+        string.Join('|', served.Id, served.Version, served.Hash, served.Standing, served.DisplayName, string.Join(',', Listed(served.Stale)), Listed(served.States).Count, Listed(served.Inputs).Count, Listed(served.Outputs).Count, served.GainsCapability);
 
     /// <summary>The recipe id.</summary>
     public string Id { get; }
@@ -89,6 +90,14 @@ internal sealed class RecipeRowViewModel : ObservableObject
 
     /// <summary>True when something it relies on changed since it was approved (or it is in an old format).</summary>
     public bool IsOutOfDate => StaleReasons.Count > 0;
+
+    /// <summary>True on the shipped version that gained a capability and waits for its own approval: the recipe's pending new version, a row of its own beside the approved one.</summary>
+    public bool GainsCapability { get; }
+
+    /// <summary>The line under its name: a new version waits for approval, and it can now do more.</summary>
+#pragma warning disable CA1822, MA0041 // why: the view binds it as an instance property of the view model
+    public string WaitingText => Labels.RecipeGainsCapability;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>The second, grey word.</summary>
     public string OutOfDateText { get; } = Labels.OutOfDate;

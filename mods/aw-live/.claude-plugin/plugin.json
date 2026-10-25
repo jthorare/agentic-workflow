@@ -1,7 +1,0 @@
-{
-  "name": "aw-live",
-  "version": "0.1.0",
-  "description": "Live scorer numbers inside Claude Code: a /live pane (and /live status) for context, cost, judge activity, gates and wakes.",
-  "author": { "name": "agentic-workflow" },
-  "types": "./types/index.d.ts"
-}

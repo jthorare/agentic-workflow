@@ -125,4 +125,37 @@ public sealed class DriverServerTests : IAsyncLifetime
     [Fact, Trait("Lane", "integration")]
     public void The_verbs_are_the_ones_the_command_line_sends() =>
         Assert.Equal(["tree", "search", "props", "click", "type", "key", "scroll", "wait-for", "screenshot", "window", "action"], Verbs.Names);
+
+    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
+    public async Task A_verb_that_throws_answers_500_and_the_next_call_is_still_served()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var calls = 0;
+        var files = DriverFiles.Create(Directory.CreateTempSubdirectory("aw-uidriver-throw-").FullName);
+        var server = DriverServer.Start(
+            new DriverHost(() => Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("boom") : screen.Window, TimeProvider.System),
+            files.Secret);
+        Assert.NotNull(server);
+        try
+        {
+            using var http = new HttpClient { BaseAddress = new Uri(server.Origin) };
+            using var first = await PostAs(http, files.Secret);
+            using var second = await PostAs(http, files.Secret);
+
+            Assert.Equal([HttpStatusCode.InternalServerError, HttpStatusCode.OK], [first.StatusCode, second.StatusCode]);
+            Assert.Contains("AW-UIDRIVER-007", await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        }
+        finally
+        {
+            await server.DisposeAsync();
+            files.Remove();
+        }
+    }
+
+    private static async Task<HttpResponseMessage> PostAs(HttpClient http, string secret)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/tree") { Content = new StringContent("{}", Encoding.UTF8, "application/json") };
+        request.Headers.Add(DriverEndpoint.TokenHeader, secret);
+        return await http.SendAsync(request, TestContext.Current.CancellationToken);
+    }
 }

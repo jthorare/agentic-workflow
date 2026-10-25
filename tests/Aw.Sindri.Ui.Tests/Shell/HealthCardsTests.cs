@@ -75,6 +75,6 @@ public sealed class HealthCardsTests
         await system.Show();
 
         var catalog = system.Vm.Catalog;
-        Assert.Equal(Labels.ActionCounts(catalog.Controls.Count(c => c.IsReady), catalog.CliOnly.Count, catalog.Controls.Count(c => c.IsPending)), catalog.Counts);
+        Assert.Equal(Labels.ActionCounts(catalog.Controls.Count(c => !c.IsCopyOnly), catalog.CopyOnly.Count), catalog.Counts);
     }
 }

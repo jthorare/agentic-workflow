@@ -188,7 +188,9 @@ internal sealed partial class RecipesPageViewModel(ISindriApi api) : ObservableO
         IsEmpty = _all.Count == 0;
         if (Selected is { } selected)
         {
-            var again = _all.Find(r => string.Equals(r.Id, selected.Id, StringComparison.Ordinal));
+            // a recipe can be listed twice (its approved version and the new one waiting): the very row first, else the recipe's first
+            var again = _all.Find(r => string.Equals(r.Id, selected.Id, StringComparison.Ordinal) && string.Equals(r.Hash, selected.Hash, StringComparison.Ordinal))
+                ?? _all.Find(r => string.Equals(r.Id, selected.Id, StringComparison.Ordinal));
             Mark(again);
         }
 

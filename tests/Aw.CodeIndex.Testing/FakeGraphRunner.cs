@@ -13,7 +13,7 @@ public sealed class FakeGraphRunner : IGraphRunner
     private readonly List<GraphRequest> _requests = [];
 
     /// <summary>What the tool names; null runs as an empty graph.</summary>
-    public GraphSnapshot? Graph { get; init; }
+    public GraphSnapshot? Graph { get; set; }
 
     /// <summary>The error <see cref="Probe"/> answers, or null for success.</summary>
     public Error? ProbeError { get; set; }
