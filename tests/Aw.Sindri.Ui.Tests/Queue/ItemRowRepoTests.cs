@@ -22,8 +22,5 @@ public sealed class ItemRowRepoTests
     }
 
     [Fact]
-    public void An_item_with_a_repo_shows_it()
-    {
-        Assert.Equal("agentic-workflow", Row("agentic-workflow").RepoShown);
-    }
+    public void An_item_with_a_repo_shows_it() => Assert.Equal("agentic-workflow", Row("agentic-workflow").RepoShown);
 }
