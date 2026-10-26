@@ -101,7 +101,7 @@ internal static class ShippedDescriptorHashes
         ["step.scope.check"] = "sha256:92e5aeddc9a6273fe2d02e112134cce57d146dc1dae98dc2c51aa326b0a3775c",
         ["step.scope.draft"] = "sha256:0a88de2a7ee4ebdc321460e1f0d84b4b6a7a7ad8a0229e2ac50bc9d081147df9",
         ["step.scope.evidence"] = "sha256:0399777e021284ff84db274fc37482f347da4f2b0f22197024c09fa6173da8c8",
-        ["step.scope.exclude"] = "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        ["step.scope.exclude"] = "sha256:ad2ca916f8f812f0081b047a3d7e7a8f1dc15b3ef7d8e62f0fb52e63ae73c688",
         ["step.scope.freeze"] = "sha256:8f8134030f9d583280dce7cd7aa211a23cdaba2aa146319f0743605bb927a1ab",
         ["step.scope.gap-judge"] = "sha256:44be6fbace363693cbaf1f75b84c1a0aeea03134fcf29e17796b42159693707b",
         ["step.scope.gap-log"] = "sha256:66af080e2131f37f8185d40e9e09951f0a3175c99440087cd1d15eed8105c080",

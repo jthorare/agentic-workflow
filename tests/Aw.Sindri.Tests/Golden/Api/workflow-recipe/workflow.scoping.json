@@ -1,6 +1,6 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:9a85e7d43fc1505e8914edbe7a330f11cd449d06ec926072d384af6f95333c44",
+  "hash": "sha256:8f46d44016729bfd93777d521d5dbbddfbc46ea60ff571ca8c410625ca33108c",
   "version": 13,
   "name": null,
   "inputs": [
@@ -437,7 +437,7 @@
       ],
       "to": "stop",
       "on": "step.completed",
-      "label": "an answer nothing cites, which a redraft can't fix: you decide, findings open"
+      "label": "an answer nothing cites: you decide, findings open"
     },
     {
       "from": [
@@ -901,7 +901,7 @@
       "on": "step.completed",
       "to": "stop",
       "outcome": "open",
-      "label": "an answer nothing cites, which a redraft can't fix: you decide, findings open"
+      "label": "an answer nothing cites: you decide, findings open"
     },
     {
       "from": [
