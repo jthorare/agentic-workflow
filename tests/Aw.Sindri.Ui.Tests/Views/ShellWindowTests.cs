@@ -489,6 +489,26 @@ public sealed class ShellWindowTests : IDisposable
         Frame(window, "edge-tab-narrow");
     });
 
+    [Fact]
+    public Task The_edge_tab_leaves_the_tree_when_its_page_is_left() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        var (window, shell) = await Show(s => s.State == ShellState.Normal);
+        Assert.True(DeepLink.TryParse("item/ITM-01JC8", out var link));
+        shell.Navigate(link);
+        shell.CloseSheet();
+        Settle(window);
+        Assert.Contains(window.GetVisualDescendants(), v => v is Control c && string.Equals(c.Name, "EdgeTab", StringComparison.Ordinal));
+
+        shell.GoTo(PageId.Agents);
+        Settle(window);
+        Assert.DoesNotContain(window.GetVisualDescendants(), v => v is Control c && string.Equals(c.Name, "EdgeTab", StringComparison.Ordinal));
+
+        shell.GoTo(PageId.Home);
+        Settle(window);
+        Assert.Contains(window.GetVisualDescendants(), v => v is Control c && string.Equals(c.Name, "EdgeTab", StringComparison.Ordinal));
+    });
+
     // Lead (6), §11.2: F6 lands on the page region itself, and Tab then moves inside it.
     [Fact]
     public Task F6_lands_on_the_page_region_on_Home() => OnUi(async () =>
