@@ -124,7 +124,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     public bool HasNoStep => !HasAsking && !HasStep;
 
     /// <summary>What the doing cell says then.</summary>
-    public string NoStepText => Labels.SessionNoStep;
+    public string NoStepText { get; } = Labels.SessionNoStep;
 
     /// <summary>Opens the frame of the Step the session works on; nothing without one.</summary>
     internal void OpenFrame()
