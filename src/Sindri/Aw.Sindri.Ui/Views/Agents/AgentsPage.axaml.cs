@@ -17,7 +17,6 @@ internal sealed partial class AgentsPage : UserControl
         AddHandler(SessionRow.OpenEvent, OnOpen);
         AddHandler(SessionRow.SelectEvent, OnSelect);
         AddHandler(EndedSessionRow.SelectEvent, OnSelectEnded);
-        AddHandler(SessionGroup.ToggleEvent, OnToggle);
         SizeChanged += OnSized;
     }
 
@@ -50,12 +49,14 @@ internal sealed partial class AgentsPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         TopLevel.GetTopLevel(this)?.AddHandler(GotFocusEvent, OnFocusMoved, RoutingStrategies.Bubble, handledEventsToo: true);
+        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.PropertyChanged += OnShellChanged;
     }
 
     /// <inheritdoc />
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         TopLevel.GetTopLevel(this)?.RemoveHandler(GotFocusEvent, OnFocusMoved);
+        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.PropertyChanged -= OnShellChanged;
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -65,6 +66,24 @@ internal sealed partial class AgentsPage : UserControl
     {
         _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
         if (!_focusWasHere && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Page?.ClearSelection();
+        }
+    }
+
+    // The sheet closing may leave focus nowhere (no GotFocus follows): once the close has settled, a focus outside the page drops the row's highlight.
+    private void OnShellChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ViewModels.Shell.ShellViewModel.IsSheetOpen), StringComparison.Ordinal) && sender is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Dispatcher.UIThread.Post(DropHighlightIfFocusLeft, DispatcherPriority.Loaded);
+        }
+    }
+
+    private void DropHighlightIfFocusLeft()
+    {
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual;
+        if ((focused is null || !this.IsVisualAncestorOf(focused)) && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
         {
             Page?.ClearSelection();
         }
@@ -130,7 +149,7 @@ internal sealed partial class AgentsPage : UserControl
         }
     }
 
-    private void OnToggle(object? sender, RoutedEventArgs e) => (e.Source as SessionGroup)?.Group?.Toggle();
+    private void OnGroupToggle(object? sender, RoutedEventArgs e) => ((sender as Control)?.DataContext as SessionGroupViewModel)?.Toggle();
 
     private void OnEndedToggle(object? sender, RoutedEventArgs e) => Page?.ToggleEnded();
 

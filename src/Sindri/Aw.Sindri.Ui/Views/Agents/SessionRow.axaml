@@ -31,9 +31,8 @@
       <StackPanel Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding IsWide}">
         <TextBlock Classes="caption" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock Classes="caption quiet" Text="{Binding NoStepText}" IsVisible="{Binding HasNoStep}" AutomationProperties.AccessibilityView="Raw" />
-        <Button x:Name="SessionRowStep" Classes="row-title" Click="OnOpenFrame" HorizontalAlignment="Left" IsVisible="{Binding HasStep}" AutomationProperties.Name="{Binding StepName}">
-          <TextBlock Classes="caption" Text="{Binding StepText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-        </Button>
+        <Button x:Name="SessionRowStep" Classes="row-title" Click="OnOpenFrame" HorizontalAlignment="Left" IsVisible="{Binding HasStep}" Content="{Binding StepText}"
+                FontFamily="{DynamicResource Font.Text}" FontSize="{DynamicResource Type.Caption.Size}" AutomationProperties.Name="{Binding StepName}" />
       </StackPanel>
       <Border x:Name="SessionRowSince" Grid.Column="5" VerticalAlignment="Center" AutomationProperties.Name="{Binding SinceText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding SinceText}" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />

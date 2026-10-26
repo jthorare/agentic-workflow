@@ -278,6 +278,31 @@ public sealed class AgentsPageViewModelTests
     }
 
     [Fact]
+    public async Task ClearSelection_drops_the_highlight_and_a_second_call_changes_nothing()
+    {
+        var page = await _f.Shown(Token);
+        var codex = RowOf(page, Codex);
+        _ = page.Select(codex.Ref);
+
+        page.ClearSelection();
+        page.ClearSelection();
+
+        Assert.Null(page.SelectedKey);
+        Assert.False(codex.IsSelected);
+    }
+
+    [Fact]
+    public async Task A_row_with_neither_an_ask_nor_a_step_says_so_in_its_doing_cell()
+    {
+        var page = await _f.Shown(Token);
+
+        foreach (var row in page.Groups.SelectMany(g => g.Rows))
+        {
+            Assert.Equal(!row.HasAsking && !row.HasStep, row.HasNoStep);
+        }
+    }
+
+    [Fact]
     public async Task A_row_that_leaves_moves_selection_to_its_neighbour()
     {
         var page = await _f.Shown(Token);

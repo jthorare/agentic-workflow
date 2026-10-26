@@ -80,10 +80,29 @@
             <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
           </Grid>
         </Border>
+        <!-- The groups and their rows are drawn without wrapper controls (no templated border, no group control): the driver's tree reaches a row's cells
+             within a bounded depth (B-11). A group is a header button that collapses its rows, then the rows. -->
         <ItemsControl x:Name="AgentGroups" ItemsSource="{Binding Groups}">
+          <ItemsControl.Template>
+            <ControlTemplate><ItemsPresenter /></ControlTemplate>
+          </ItemsControl.Template>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="ag:SessionGroupViewModel">
-              <agv:SessionGroup />
+              <StackPanel>
+                <Button x:Name="AgentGroupToggle" Classes="group-toggle" Click="OnGroupToggle" AutomationProperties.Name="{Binding ToggleName}">
+                  <TextBlock Classes="body-strong" Text="{Binding Header}" AutomationProperties.AccessibilityView="Raw" />
+                </Button>
+                <ItemsControl x:Name="AgentGroupRows" ItemsSource="{Binding Rows}" IsVisible="{Binding IsExpanded}">
+                  <ItemsControl.Template>
+                    <ControlTemplate><ItemsPresenter /></ControlTemplate>
+                  </ItemsControl.Template>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="ag:SessionRowViewModel">
+                      <agv:SessionRow />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
