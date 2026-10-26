@@ -10,7 +10,7 @@ using Aw.Sindri.Ui.Views.Workflows;
 namespace Aw.Sindri.Ui.Tests.Views;
 
 /// <summary>
-/// The Workflows board's widths (F3 workflows spec §2, §7): six lanes, each no narrower than Size.LaneMin (Done, the last, Size.LaneMinLast), the lane row no narrower than
+/// The Workflows board's widths (F3 workflows spec §2, §7): the line's six lanes and Not on a line (the golden holds runs of other workflows), each no narrower than Size.LaneMin (Done, the last, Size.LaneMinLast), the lane row no narrower than
 /// Size.BoardMin so the board scrolls inside its host as the window narrows, and the run drawer at 48 % of the window clamped to 360 to 480.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -33,16 +33,16 @@ public sealed class WorkflowsBoardLayoutTests : FrameHost
     [Theory]
     [InlineData(1440)]
     [InlineData(900)]
-    public Task Six_lanes_keep_their_minimum_widths_and_the_lane_row_its_minimum(double width) => OnUi(async () =>
+    public Task The_lanes_keep_their_minimum_widths_and_the_lane_row_its_minimum(double width) => OnUi(async () =>
     {
         var (window, _) = await OnBoard(width);
 
         var grid = Assert.Single(window.GetVisualDescendants().OfType<LaneGrid>());
-        Assert.Equal(6, grid.Children.Count);
+        Assert.Equal(7, grid.Children.Count);
         var widths = grid.Children.Select(c => c.Bounds.Width).ToList();
-        Assert.All(widths.Take(5), w => Assert.True(w >= LaneMin - 0.5, "a lane is narrower than Size.LaneMin"));
-        Assert.True(widths[5] >= LaneMinLast - 0.5, "the Done lane is narrower than Size.LaneMinLast");
-        Assert.True(widths[5] < widths[0]);   // Done is the narrower lane (star 0.6)
+        Assert.All(widths.Take(6), w => Assert.True(w >= LaneMin - 0.5, "a lane is narrower than Size.LaneMin"));
+        Assert.True(widths[^1] >= LaneMinLast - 0.5, "the Done lane is narrower than Size.LaneMinLast");
+        Assert.True(widths[^1] < widths[0]);   // Done is the narrower lane (star 0.6)
         Assert.True(Named<ItemsControl>(window, "WorkflowsBoardLanes").Bounds.Width >= BoardMin - 0.5);
         Assert.True(Named<ScrollViewer>(window, "WorkflowsBoardScroll").Bounds.Width <= width + 0.5);   // the page itself never scrolls sideways
     });

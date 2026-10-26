@@ -62,8 +62,6 @@
     <TextBlock x:Name="WorkflowsBoardUnreadable" Classes="caption quiet" Text="{Binding UnreadableText}" IsVisible="{Binding IsBoardUnreadable}" TextWrapping="Wrap"
                AutomationProperties.Name="{Binding UnreadableText}" />
     <wfv:BoardView x:Name="WorkflowsBoard" IsVisible="{Binding ShowBoard}" />
-    <TextBlock x:Name="WorkflowsOffBoard" Classes="caption quiet" Text="{Binding OffBoardText}" IsVisible="{Binding HasOffBoard}" TextWrapping="Wrap"
-               AutomationProperties.Name="{Binding OffBoardText}" />
 
     <wfv:RunListView x:Name="WorkflowsList" IsVisible="{Binding IsList}" />
   </StackPanel>
