@@ -30,5 +30,17 @@ public sealed class TempStateDirectory : IDisposable
         return new(JudgeDatabase.OptionsFor(System.IO.Path.Combine(file, "judge")), new FakeTimeProvider());
     }
 
+    /// <summary>Copies the standard transcript fixture to projects/&lt;project&gt;/sess-1.jsonl under this directory.</summary>
+    /// <param name="project">The project directory name.</param>
+    /// <returns>The path of the copy.</returns>
+    public string Standard(string project)
+    {
+        var directory = System.IO.Path.Combine(Path, "projects", project);
+        Directory.CreateDirectory(directory);
+        var target = System.IO.Path.Combine(directory, "sess-1.jsonl");
+        File.Copy(System.IO.Path.Combine(AppContext.BaseDirectory, "Transcripts", "Fixtures", "standard.jsonl"), target);
+        return target;
+    }
+
     public void Dispose() => Directory.Delete(Path, recursive: true);
 }

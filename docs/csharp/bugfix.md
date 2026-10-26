@@ -21,7 +21,7 @@ design.
 - `run-test` and `run-ui` print `evidence`, the run record path the skill passes back to `advance reproduce` and
   `record-run`.
 - `resume` prints `next`; `status` prints the state with `baseline.commit`.
-- `judge` prints `decision`, `reasons` and `status` (an escalation is asked once more, then falls back to `unresolved`; the status stays `active`). A `partial` or `unresolved` answer with no reasons counts as an escalation (code `no-reasons`): it names nothing the implementer can act on.
+- `judge` prints `decision`, `reasons` and `status`, and records the reasons with the verdict (`status` shows them; `resume` adds them to "start-attempt with the failure reasons") (an escalation is asked once more, then falls back to `unresolved`; the status stays `active`). A `partial` or `unresolved` answer with no reasons counts as an escalation (code `no-reasons`): it names nothing the implementer can act on.
 
 ## Commands
 
@@ -117,7 +117,7 @@ not with another rule.
   of main's own commits, from the baseline up to the net base, whose message says `Part of #N` or `Fixes #N` for that number
   (not `#N0`): a fix that main already had through a merged "Part of" PR is still the fix. Any other ticket gets the net-base
   diff alone. The input also carries `checkSource`, the frozen check's own file as committed at the candidate's commit, so a
-  candidate whose red commit already holds the test isn't judged "proofs missing".
+  candidate whose red commit already holds the test isn't judged "proofs missing". For a `.csproj` check (`dotnet test --project X.csproj`), `checkSource` is the test class files `--filter-class` names (`<project dir>/<class path under the project's namespace>.cs`, else `<project dir>/<Class>.cs`), read at the baseline commit, capped like the diff. `baselineFailure` holds the failure lines (`fail`, `error`, `exception`, `assert`, `expected`, `not ok`, `panic`) of the baseline run's log, capped at 8000 characters; absent when there are none.
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that
   shadows another could change what the check does while the commit stays the same. Each test run record keeps the
@@ -205,7 +205,7 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 | AW-BUGFIX-009 | conflict | The evidence isn't a registered, unchanged run record |
 | AW-BUGFIX-010 | conflict | No new attempt now |
 | AW-BUGFIX-011 | conflict | The candidate can't be recorded |
-| AW-BUGFIX-012 | conflict | The test command could pass without running the check |
+| AW-BUGFIX-012 | conflict | The test command could pass without running the check. For `dotnet test` the message adds the fix: pass the test project's `.csproj` as `--project` and use the same `.csproj` as `--check` |
 | AW-BUGFIX-013 | notFound | Unknown candidate |
 | AW-BUGFIX-014 | conflict | The run can't be recorded for the candidate |
 | AW-BUGFIX-015 | conflict | The candidate can't be judged (no passing run, already judged) |
@@ -230,7 +230,7 @@ Everything lives under the `--state` directory; nothing reads state a TypeScript
 - `state.json`: the state (`schemaVersion` 1), written to a temporary file and renamed, under `state.lock`. Fields: `ticket`, `phase`,
   `status`, `attempt`, `mode`, `investigation` (`handoff`, `rootCause`, `hypotheses`), `check` (`kind` test or ui,
   `path`, `sha256`, `command`, `directory`, `programSha256`, `environment` (digests), `commandFiles`), `baseline` (`evidence`, `commit`), `candidates` (`id`, `attempt`, `mode`, `branch`,
-  `worktree`, `commit`, `hypothesis`, `changedFiles`, `run`, `verdict`, `judgeAsked`), `runs` (`evidence`, `sha256`), `resolvedBy`,
+  `worktree`, `commit`, `hypothesis`, `changedFiles`, `run`, `verdict` (`decision`, `decisionId`, `reasonCode`, `inputSha256`, `reasons`: judge's reasons; absent in a state file written before they were kept, read as not recorded), `judgeAsked`), `runs` (`evidence`, `sha256`), `resolvedBy`,
   `history`.
 - `runs/<stamp>-<test|ui>-<n>.json`: a run record (`kind`, `outcome` passed, failed or broken, `commit`, `directory`,
   `checkSha256`, `command`, `programSha256`, `environment` (keyed digests), `exitCode`, `output`, `leftovers`, `checkout`); a ui run that produced nothing gives its slot back, with its `.log` (and, for ui, the ui-evidence run directory `<stem>/`).

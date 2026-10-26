@@ -25,6 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Transcript fixtures (tests/fixtures/judge-transcripts) for the Claude transcript reader. -->
+    <None Include="../fixtures/judge-transcripts/*.jsonl" Link="Transcripts/Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Golden files (Aw.Kernel.Testing Golden, through CliGolden) live in this project's source tree. -->
     <AssemblyMetadata Include="AwGoldenSourceRoot" Value="$(MSBuildProjectDirectory)" />
   </ItemGroup>

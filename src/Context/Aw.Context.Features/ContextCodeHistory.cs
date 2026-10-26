@@ -8,8 +8,6 @@ using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.GetCode;
-using Aw.Context.Features.GetConceptMembers;
-using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
@@ -26,8 +24,7 @@ internal sealed class ContextCodeHistory(
     IService<GetSubgraphRequest, SubgraphView> subgraph,
     IService<GetWholeMapRequest, WholeMapView> wholeMap,
     IService<SearchMapRequest, MapSearchView> search,
-    IService<GetConceptsRequest, ConceptsView> concepts,
-    IService<GetConceptMembersRequest, ConceptMembersView> members) : IContextCode, IContextHistory, IContextConcepts
+    ContextConceptReads conceptReads) : IContextCode, IContextHistory, IContextConcepts
 {
     public ValueTask<Result<CodeView>> Code(IReadOnlyList<string> anchors, bool draft, string? mapVersion, ContextScope scope, CancellationToken cancellationToken) =>
         code.Handle(new GetCodeRequest(anchors, draft, mapVersion, scope), cancellationToken);
@@ -45,8 +42,11 @@ internal sealed class ContextCodeHistory(
         search.Handle(new SearchMapRequest(query, scope), cancellationToken);
 
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
+        conceptReads.Concepts(query, scope, cancellationToken);
 
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        members.Handle(new GetConceptMembersRequest(query, scope), cancellationToken);
+        conceptReads.ConceptMembers(query, scope, cancellationToken);
+
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        conceptReads.ConceptGlossary(query, scope, cancellationToken);
 }

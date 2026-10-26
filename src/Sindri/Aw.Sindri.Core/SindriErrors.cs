@@ -164,8 +164,8 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-023: printed by the pre-push hook Sindri installs when an agent Step tries to push; the push is refused (line spec LN-LCH1).</summary>
     public static readonly ErrorDefinition LaunchPushRefused = new("SND-LAUNCH-023", ErrorKind.Forbidden, "Agent Steps can't push; Sindri pushes");
 
-    /// <summary>SND-LAUNCH-025: a fact a Step reads would be written over a file git tracks in the Step's worktree; the launch is refused and the file is left as it is.</summary>
-    public static readonly ErrorDefinition LaunchFactFileTracked = new("SND-LAUNCH-025", ErrorKind.Conflict, "A Step's fact file would overwrite a tracked file");
+    /// <summary>SND-LAUNCH-029: a fact a Step reads would be written over a file git tracks in the Step's worktree; the launch is refused and the file is left as it is.</summary>
+    public static readonly ErrorDefinition LaunchFactFileTracked = new("SND-LAUNCH-029", ErrorKind.Conflict, "A Step's fact file would overwrite a tracked file");
 
     /// <summary>SND-LAUNCH-024: the agent CLI's trust file can't be updated for the Step's worktree (unparseable, locked or not writable); the file is left untouched and the launch is refused.</summary>
     public static readonly ErrorDefinition LaunchTrustUnavailable = new("SND-LAUNCH-024", ErrorKind.Unavailable, "The agent CLI's trust file couldn't be updated");
@@ -265,9 +265,9 @@ public static partial class SindriErrors
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, ServiceNotFound, OnyxDockerUnavailable, OnyxComposeMissing, OnyxNotEnoughResources, OnyxPinsMalformed, OnyxPortTaken, OnyxNotAdmin, OnyxKeyFailed, OnyxSecretNotStored, OnyxNotReady, OnyxRemoteDocker, OnyxComposeFailed, OnyxWorkspaceUnusable, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
-        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
+        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
         WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupOnyxCredentialsMissing, SetupOnyxNotWaiting, SetupProfileNotApproved,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
     ];
 }

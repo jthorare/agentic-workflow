@@ -280,11 +280,13 @@ Aw.BugFix.Core.Model.JudgeVerdict.Decision.get -> Aw.BugFix.Core.Model.JudgeDeci
 Aw.BugFix.Core.Model.JudgeVerdict.Decision.init -> void
 Aw.BugFix.Core.Model.JudgeVerdict.DecisionId.get -> Aw.BugFix.Core.Ids.JudgeDecisionId?
 Aw.BugFix.Core.Model.JudgeVerdict.DecisionId.init -> void
-Aw.BugFix.Core.Model.JudgeVerdict.Deconstruct(out Aw.BugFix.Core.Model.JudgeDecision Decision, out Aw.BugFix.Core.Ids.JudgeDecisionId? DecisionId, out string! ReasonCode, out string! InputSha256) -> void
+Aw.BugFix.Core.Model.JudgeVerdict.Deconstruct(out Aw.BugFix.Core.Model.JudgeDecision Decision, out Aw.BugFix.Core.Ids.JudgeDecisionId? DecisionId, out string! ReasonCode, out string! InputSha256, out System.Collections.Generic.IReadOnlyList<string!>? Reasons) -> void
 Aw.BugFix.Core.Model.JudgeVerdict.Equals(Aw.BugFix.Core.Model.JudgeVerdict? other) -> bool
 Aw.BugFix.Core.Model.JudgeVerdict.InputSha256.get -> string!
 Aw.BugFix.Core.Model.JudgeVerdict.InputSha256.init -> void
-Aw.BugFix.Core.Model.JudgeVerdict.JudgeVerdict(Aw.BugFix.Core.Model.JudgeDecision Decision, Aw.BugFix.Core.Ids.JudgeDecisionId? DecisionId, string! ReasonCode, string! InputSha256) -> void
+Aw.BugFix.Core.Model.JudgeVerdict.JudgeVerdict(Aw.BugFix.Core.Model.JudgeDecision Decision, Aw.BugFix.Core.Ids.JudgeDecisionId? DecisionId, string! ReasonCode, string! InputSha256, System.Collections.Generic.IReadOnlyList<string!>? Reasons = null) -> void
+Aw.BugFix.Core.Model.JudgeVerdict.Reasons.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.BugFix.Core.Model.JudgeVerdict.Reasons.init -> void
 Aw.BugFix.Core.Model.JudgeVerdict.ReasonCode.get -> string!
 Aw.BugFix.Core.Model.JudgeVerdict.ReasonCode.init -> void
 Aw.BugFix.Core.Model.Names
@@ -700,8 +702,11 @@ Aw.BugFix.Core.Model.MainCommit.Sha.get -> string!
 Aw.BugFix.Core.Model.MainCommit.Sha.init -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSource.get -> string?
 Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSource.init -> void
-Aw.BugFix.Core.Model.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.BugFix.Core.Model.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
-Aw.BugFix.Core.Model.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.BugFix.Core.Model.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff, string? CheckSource = null) -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.BugFix.Core.Model.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource, out string? BaselineFailure) -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.BugFix.Core.Model.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff, string? CheckSource = null, string? BaselineFailure = null) -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.BaselineFailure.get -> string?
+Aw.BugFix.Core.Model.ResolutionCheckInput.BaselineFailure.init -> void
+const Aw.BugFix.Core.Model.ResolutionCheckInput.FailureCap = 8000 -> int
 override Aw.BugFix.Core.Model.MainCommit.Equals(object? obj) -> bool
 override Aw.BugFix.Core.Model.MainCommit.GetHashCode() -> int
 override Aw.BugFix.Core.Model.MainCommit.ToString() -> string!

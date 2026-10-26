@@ -153,7 +153,7 @@ true
 "http=404"
 post http=405
 ## sindri services --json | jq (name, every, paused, job)
-[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"pr-watch","every":"5s","paused":false,"job":null},{"name":"router-stub","every":"5s","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-events","every":"5s","paused":false,"job":null}]
+[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"pr-watch","every":"5s","paused":false,"job":null},{"name":"router-stub","every":"5s","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-events","every":"5s","paused":false,"job":null}]
 ## sindri services run heartbeat (human, terminal)
 job JOB-ID started
 run heartbeat (manual)
@@ -178,6 +178,7 @@ heartbeat paused (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
 heartbeat  every 5s  paused  last: ok  next: paused
@@ -190,6 +191,7 @@ heartbeat resumed (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
 heartbeat  every 5s  last: ok  next: TIME

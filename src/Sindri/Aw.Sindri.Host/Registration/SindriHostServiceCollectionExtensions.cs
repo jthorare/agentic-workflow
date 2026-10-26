@@ -28,6 +28,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<ScheduleInputs>()
         .AddScoped<CodeIndexHost.ICodeIndexScopeSource, CodeIndexHost.ProfileCodeIndexScopeSource>()
         .AddScoped<Context.Core.Symbols.ICodeSymbolSource, CodeIndexHost.CodeIndexSymbolSource>()   // Context reads the index through the CodeIndex facade (S-9); replaces the no-index default (TryAdd in AddContextFeatures)
+        .AddScoped<Context.Core.Glossary.ISymbolVectors, CodeIndexHost.CodeIndexSymbolVectors>()   // Context reads the stored symbol embeddings through the CodeIndex facade (the concept glossary); replaces the no-vectors default (TryAdd in AddContextFeatures)
         .AddSingleton<IOnyxProgress>(static sp => new JobOnyxProgress(new ConsoleOnyxProgress(Console.Error), sp.GetRequiredService<IJobContextAccessor>()));   // `onyx up`'s lines and dots on standard error, or the Onyx setup job's own lines
 
     /// <summary>

@@ -20,4 +20,11 @@ public interface IContextConcepts
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The view, or SND-CONTEXT-003 for a concept the map lacks, else as <see cref="Concepts"/>.</returns>
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>The glossary of the map <paramref name="query"/> names: the words that characterize each concept, and for each word the concepts it characterizes.</summary>
+    /// <param name="query">Which map and whose repo.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The view (state 'empty' when no concept carries a term), else as <see cref="Concepts"/>.</returns>
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken);
 }

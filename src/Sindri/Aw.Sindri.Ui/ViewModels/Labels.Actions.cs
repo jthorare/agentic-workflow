@@ -29,6 +29,7 @@ internal static partial class Labels
         ["BuildContextMap"] = "Build map",
         ["RefreshContextMap"] = "Refresh map",
         ["PublishContextMap"] = "Publish map",
+        ["ScanContextConcepts"] = "Scan for concepts",
         ["RunContextBacktest"] = "Run map backtest",
         ["CancelJob"] = "Cancel job",
         ["CloseItem:cancelled"] = "Close as cancelled",

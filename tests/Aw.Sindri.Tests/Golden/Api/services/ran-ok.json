@@ -23,6 +23,17 @@
       ]
     },
     {
+      "name": "context-concept-scan",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ]
+    },
+    {
       "name": "context-map-refresh",
       "every": "1m",
       "paused": false,

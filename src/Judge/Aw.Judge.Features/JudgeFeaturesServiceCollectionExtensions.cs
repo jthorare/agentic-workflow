@@ -136,9 +136,10 @@ public static class JudgeFeaturesServiceCollectionExtensions
                     sp.GetRequiredService<IValidator<SetBriefAgentIdRequest>>()));
     }
 
-    // The verbs the cutover builds on: SortPrompt and SetPromptSort (unit 6.1), CheckTraits (unit 6.2).
+    // The verbs the cutover builds on: SortPrompt and SetPromptSort (unit 6.1), CheckTraits (unit 6.2), and the by-hand verbs (ByHandVerbs).
     private static void AddCutoverVerbs(IServiceCollection services)
     {
+        ByHandVerbs.Add(services);
         _ = services
             .AddScoped<SortRecorder>()
             .AddScoped<SortPromptService>()

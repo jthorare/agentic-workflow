@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Judge.Infrastructure.Sqlite;
 
-/// <summary>Maps DecisionSql.Find's columns: the decision (0-14), then its detail row (15-20, null when absent).</summary>
+/// <summary>Maps DecisionSql.Find's columns: the decision (0-14), then its detail row (15-21, null when absent).</summary>
 /// <param name="json">Reads the JSON text columns.</param>
 internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRecord>
 {
@@ -36,5 +36,6 @@ internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRec
         RulesOpinion = reader.IsDBNull(18) ? null : reader.GetString(18),
         Agreement = reader.IsDBNull(19) ? null : DecisionText.AgreementOf(reader.GetString(19)),
         SessionId = reader.IsDBNull(20) ? null : SessionId.From(reader.GetString(20)),
+        Reasons = json.Reasons(reader.IsDBNull(21) ? null : reader.GetString(21)),
     };
 }

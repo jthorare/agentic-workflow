@@ -31,7 +31,7 @@ public sealed partial class QuestionEvaluator
         QuestionDefinition<TInput> question, EvaluationRun run, Settlement settlement, JsonObject? extra, CancellationToken cancellationToken)
         where TInput : class
     {
-        await Record(question, run, settlement, run.Input, cancellationToken).ConfigureAwait(false);
+        await Record(question, run, settlement with { Reasons = extra?[ResolutionCheckQuestion.Reasons] }, run.Input, cancellationToken).ConfigureAwait(false);
         // why: a settlement that decides always carries its decision (Rule and Decided set it).
         var decision = settlement.Decision!;
         // why: a settlement that decides always names who decided.
@@ -79,6 +79,7 @@ public sealed partial class QuestionEvaluator
             {
                 // Redact the parsed values first, then cap, so a secret cut at the cap can't survive.
                 InputJson = InputCap.Write(redactor.Redact(input), InputCap.MaxChars, json),
+                Reasons = StoredReasons(settlement.Reasons),
                 Probabilities = settlement.Probabilities,
                 RulesOpinion = settlement.RulesOpinion,
                 Agreement = settlement.Agreement,
@@ -90,6 +91,20 @@ public sealed partial class QuestionEvaluator
         {
             await Fail(question.Name, settlement.ProviderColumn, EvaluationReasons.DecisionWriteFailed, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    // The model's reasons, redacted then capped like the input; null when the answer carried none.
+    private IReadOnlyList<string>? StoredReasons(JsonNode? reasons)
+    {
+        if (reasons is not JsonArray)
+        {
+            return null;
+        }
+
+        var capped = JsonNode.Parse(InputCap.Write(redactor.Redact(reasons), InputCap.MaxChars, json));
+        return capped is JsonArray array
+            ? [.. array.OfType<JsonValue>().Select(static v => v.TryGetValue<string>(out var text) ? text : null).OfType<string>()]
+            : [capped?.ToJsonString() ?? ""];   // over the cap even with cut strings: the stub object, kept as one line
     }
 
     private ValueTask Fail(string question, ProviderName provider, string reasonCode, CancellationToken cancellationToken) =>

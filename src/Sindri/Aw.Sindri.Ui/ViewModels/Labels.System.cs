@@ -128,6 +128,7 @@ internal static partial class Labels
     internal static string ServiceWhat(string name) => name switch
     {
         "heartbeat" => "Records that Sindri is alive.",
+        "context-concept-scan" => "Has a cheap model look for product concepts in each new map.",
         "context-map-refresh" => "Builds the context map again so it stays current.",
         "context-sync-gaps" => "Starts a sync for a source that has never synced.",
         "pr-watch" => "Watches the pull requests that wait on the forge.",

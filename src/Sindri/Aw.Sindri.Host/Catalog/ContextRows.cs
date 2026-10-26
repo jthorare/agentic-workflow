@@ -42,6 +42,10 @@ internal static class ContextRows
         new(ActionId.From("PublishContextMap"), typeof(PublishContextMapRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
+        // ScanContextConcepts has no route and no verb of its own (q110 C): the context-concept-scan service starts it as itself, so the row names the verb that runs that service.
+        new(ActionId.From("ScanContextConcepts"), typeof(ScanContextConceptsRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            Method: null, Route: null, ShellRows.Form("sindri services run context-concept-scan"), "ready"),
         // BuildCodeIndex has no route and no verb of its own (code index spec 8): the code-index-main-move service starts it as itself, so the row names the verb that runs that service.
         new(ActionId.From("BuildCodeIndex"), typeof(BuildCodeIndexRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,

@@ -4837,7 +4837,54 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.Equals(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.ScanContextConceptsRequest() -> void
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.operator !=(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.operator ==(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Deconstruct(out int Version, out bool OnDraft, out string! Outcome, out int Hints, out int Searches, out string? Reason) -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Equals(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.ScanContextConceptsResult(int Version, bool OnDraft, string! Outcome, int Hints, int Searches, string? Reason) -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Version.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Version.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.OnDraft.get -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.OnDraft.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Outcome.get -> string!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Outcome.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Hints.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Hints.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Searches.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Searches.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Reason.get -> string?
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Reason.init -> void
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.operator !=(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.operator ==(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? right) -> bool
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.get -> string?
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest!
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Repo.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Draft.get -> bool
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Draft.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.MapVersion.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Deconstruct(out string? Repo, out bool Draft, out string? MapVersion) -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.GetContextConceptGlossaryRequest(string? Repo = null, bool Draft = false, string? MapVersion = null) -> void
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? right) -> bool
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.get -> bool
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.init -> void

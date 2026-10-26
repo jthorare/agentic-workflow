@@ -102,7 +102,8 @@ public static class ConceptBuilder
         var summary = Attribute(node, "summary") is { Length: > 0 } written ? text.Excerpt(written, trust, SummaryMax) : string.Empty;
         var source = string.Equals(Attribute(node, "source"), "override", StringComparison.Ordinal) ? "override" : "derived";
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations);
+        var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms };
     }
 
     private static ConceptSize Size(ConceptIndex index, IReadOnlyList<string> members) =>

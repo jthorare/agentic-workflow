@@ -1187,6 +1187,25 @@
       "confirm": null
     },
     {
+      "action": "ScanContextConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-concept-scan",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "SessionExit",
       "class": "issue",
       "allowedCallers": [

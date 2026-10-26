@@ -25,9 +25,13 @@ public static class RoleHealth
         return new MapHealth(Name, MapHealthState.Warn, detail, "add a glob to index.demote or index.ignore in the profile");
     }
 
+    // An ignored role shows what its globs dropped at the build (its indexed files are always 0); every other role shows its indexed files.
+    private static string Count(RoleCount c) =>
+        c.Ignored is { } dropped ? string.Create(CultureInfo.InvariantCulture, $"{c.Role} {dropped} dropped") : string.Create(CultureInfo.InvariantCulture, $"{c.Role} {c.Files}");
+
     private static string Counted(IReadOnlyList<RepoRoles> roles)
     {
-        var words = roles.Where(static r => r.Roles.Count > 0).Select(r => $"{r.Repo}: {string.Join(", ", r.Roles.Select(c => string.Create(CultureInfo.InvariantCulture, $"{c.Role} {c.Files}")))}").ToList();
+        var words = roles.Where(static r => r.Roles.Count > 0).Select(r => $"{r.Repo}: {string.Join(", ", r.Roles.Select(c => Count(c)))}").ToList();
         return words.Count == 0 ? "no role globs configured, no role-like file outside one" : $"every role-like file is in a role glob ({string.Join("; ", words)})";
     }
 }

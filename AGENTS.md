@@ -187,6 +187,7 @@ bash scripts/tests/dotnet-verify-packages.test.sh
 bash scripts/tests/install-onyx.test.sh      # the Onyx step of setup.sh: dry run, Docker missing or silent, no terminal, the call, a failure, a rerun, --no-onyx (stub docker and sindri)
 bash scripts/tests/sindri-prove.test.sh
 bash scripts/tests/evidence-one-path.test.sh   # cutover §3.4: Playwright only in src/Evidence, SKILL.md runs checks only through ui-evidence verbs
+bash scripts/tests/executable-script.test.sh   # tests that write a shell script and run it go through ExecutableScript.Write (ETXTBSY, #1251): a test .cs file with a `#!` line and a hand-set exec bit fails
 bash scripts/tests/sindri-sandbox-e2e.test.sh   # scripts/sindri-sandbox-e2e.sh: arguments, the --sindri apphost rewrite and the scratch guard (no serve)
 bash scripts/tests/sindri-ui-fixture.test.sh
 bash scripts/tests/forge-fixture.test.sh    # scripts/forge-fixture.sh over the real aw-forge-fake (dotnet build once): the PR babysitter's fixture PR set, every variant, the guard, --github refusals and dry run

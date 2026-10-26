@@ -57,7 +57,7 @@ internal sealed class ShowMapStatusService(IGraphStore store) : IService<ShowMap
     private static IReadOnlyList<RepoRoles>? Roles(GraphSnapshot shown, MapVersion version, ContextScope scope)
     {
         var own = ScopedTo(scope.Caller);
-        var counted = RoleCounter.Of([.. scope.Repos.Where(r => own is null || r.Name == own)], RoleCounter.CodePaths(shown, version.Repo.Value));
+        var counted = RoleCounter.Of([.. scope.Repos.Where(r => own is null || r.Name == own)], RoleCounter.CodePaths(shown, version.Repo.Value), version.Dropped);
         return counted.Count == 0 ? null : counted;
     }
 

@@ -42,9 +42,13 @@ Area `SND-CODEIDX` (`CodeIndexErrors` in `Aw.CodeIndex.Core`); 017 to 029 are re
 - Every Callers/Callees row carries `coverage` (`full` for C#, `partial` for a graphify language, `unavailable` for an unmeasured one), and the answer carries one too (`CallCoverage.Of`): any partial row, or a partial language, marks the whole answer partial, and an empty partial answer reads "none found", never "none".
 - An incremental build carries the vectors of every unchanged file, graph files included: the graph layer rewrites a non-C# file only when its blob or the symbols graphify plans for it differ from the stored ones (rewriting a file drops its symbols' vectors), so a main move re-embeds only what changed (#990).
 - Ports, each documented with what an implementation must guarantee: `IRepoSnapshot` (+ `IBlobReader`), `IIndexStore` (+ `IIndexReader`, `IIndexBuild`), `ISymbolParser`, `IGraphRunner`, `IEmbedder`, `IRepoHeads`, `IBodyScrubber`.
-- The facade `ICodeIndex`: `Build`, `Status`, `Heads`, `ProbeLayers`, `FindSymbols`, `FileSymbols`, `Callers`, `Callees`, `Similar`, `Neighbors`; every call takes a `CodeIndexScope` (the caller's repos, each with its effective settings, and the caller).
+- The facade `ICodeIndex`: `Build`, `Status`, `Heads`, `ProbeLayers`, `FindSymbols`, `FileSymbols`, `Callers`, `Callees`, `Similar`, `Neighbors`, `SymbolVectors`; every call takes a `CodeIndexScope` (the caller's repos, each with its effective settings, and the caller).
 - `Aw.CodeIndex.Testing`: `GitRepoBuilder` / `TempGitRepo` (git init, commits, symlinks, a submodule entry, a path swapped after the commit, a promisor clone), `FakeRepoSnapshot`, `FakeIndexStore`, `FakeRepoHeads`, `FakeBodyScrubber`, `FakeSymbolParser`. The contract bases come with the adapters (CI-2, CI-3, ...).
 - `Aw.CodeIndex.Infrastructure` is `AwAotCompatible=false`: the C# parser (CI-4) uses Roslyn, which is not trim or NativeAOT safe.
+
+## Stored vectors (q110)
+
+`ICodeIndex.SymbolVectors(scope, repo, SymbolVectorsQuery, ct)` is an in-process read for the context engine's glossary signal; it has no HTTP route or CLI command. Given 1 to 2,000 repo-relative file paths (`CodeIndexRules.MaxSymbolVectorPaths`; more, none or a blank path is `SND-CODEIDX-012`), it returns every embedded symbol in those files (`SymbolVector`: ref, path, name, kind and the stored float vector, by path then line), the `Model` they came from, and `Missing`, the asked paths with no embedded symbol. It reads the `embeddings` table only: it never embeds and never calls the model, and only rows of the index's current model count. A repo with no index, outside the scope, or with the embeddings layer off answers `SND-CODEIDX-013`; an unavailable layer answers its own code (005, 006, 009), the same as `Neighbors`. The SQLite reader (`IIndexReader.SymbolVectors`) reads in IN lists of 200 paths.
 
 ## Read surfaces (CI-10a)
 

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -75,6 +76,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
+            .AddSingleton<IConceptHintStore>(Hints)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
             .AddSingleton<IScrubberFactory>(new FakeScrubberFactory())
@@ -110,6 +112,8 @@ internal sealed class MapWorld : IDisposable
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
+
+    public FakeConceptHintStore Hints { get; } = new();
 
     public FakeDefaultBranch DefaultBranch { get; } = new();
 

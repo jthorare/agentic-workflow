@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -141,6 +142,9 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => NoMap<CleanupReport>();
 
     /// <inheritdoc/>
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => NoMap<ConceptScanReport>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<MapPublishState>> Held(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new MapPublishState(Hold: null, LatestDraft: null, Current: null, CurrentHeads: [])));   // no map, so nothing is held
 
@@ -199,6 +203,9 @@ public sealed class FakeContextEngine : IContextEngine
 
     /// <inheritdoc/>
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptMembersView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptGlossaryView>();
 
     /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) =>
