@@ -4,7 +4,7 @@ using Aw.Kernel.Testing;
 
 namespace Aw.BugFix.Tests.Cli;
 
-/// <summary>The judge sees a cause-site file's whole change from the baseline, even when main already holds the fix, and still not main's unrelated changes.</summary>
+/// <summary>The judge sees the fix a "Part of" commit already put on main, and still not main's unrelated changes (#1189).</summary>
 [Lane(TestLane.Integration)]
 public sealed class CauseSiteDiffTests : IDisposable
 {
@@ -15,13 +15,16 @@ public sealed class CauseSiteDiffTests : IDisposable
     public void Dispose() => _w.Dispose();
 
     [Fact]
-    public void The_judge_diff_holds_a_cause_site_fix_that_main_already_had_when_the_candidate_adds_only_a_test()
+    public void The_judge_diff_holds_a_part_of_commit_main_already_had_when_the_candidate_adds_only_a_test()
     {
+        _ = _w.Write("ticket.json", """{"source":"github","id":"#1189","title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}""");
         var worktree = StartedWorktree();
         TempDirectory.Write(_w.Repo, "src/app.txt", "keep cookie\n");
+        _ = TempDirectory.Git(_w.Repo, "add", "-A");
+        _ = TempDirectory.Git(_w.Repo, "commit", "-q", "-m", "fix: keep the cookie", "-m", "Part of #1189");
         TempDirectory.Write(_w.Repo, "src/other.txt", "from main\n");
         _ = TempDirectory.Git(_w.Repo, "add", "-A");
-        _ = TempDirectory.Git(_w.Repo, "commit", "-q", "-m", "main gets the fix and another change");
+        _ = TempDirectory.Git(_w.Repo, "commit", "-q", "-m", "chore: another change");
         _ = TempDirectory.Git(worktree, "merge", "-q", "--no-edit", "main");
         TempDirectory.Write(worktree, "tests/extra.test.sh", "grep -q keep src/app.txt\n");
         _ = TempDirectory.Git(worktree, "add", "-A");
@@ -36,7 +39,7 @@ public sealed class CauseSiteDiffTests : IDisposable
     }
 
     [Fact]
-    public void A_cause_site_file_the_candidate_changed_appears_once()
+    public void A_file_the_candidate_changed_appears_once()
     {
         StartAttempt();
         var worktree = _w.Fix(Branch);
