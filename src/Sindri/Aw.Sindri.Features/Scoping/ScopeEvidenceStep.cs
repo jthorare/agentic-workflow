@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel;
-using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
 
@@ -17,15 +17,16 @@ namespace Aw.Sindri.Features.Scoping;
 /// <param name="area">The instance's run area.</param>
 /// <param name="checkouts">Where the item's repo checkout is.</param>
 /// <param name="diff">Names the checkout's head, the scope map's baseSha.</param>
-/// <param name="launches">The launches view, for the 'runs' fact an engine run never stores (#1008); null reads none, so the runs stay as stored.</param>
 /// <param name="packets">Hashes the assembled packet, which 'complete' records as fact:scopePacket for the owner's approval and the freeze.</param>
-internal sealed class ScopeEvidenceStep(IRunArea area, IPackets packets, IRepoCheckouts checkouts, IRunDiff diff, ILaunchViews? launches = null) : ScopingCodeStep(Id), IBlockStepId, IRepoStep
+/// <param name="runs">The instance's agent runs from the ledger, which the model checks compare and 'complete' records as fact:runs.</param>
+internal sealed class ScopeEvidenceStep(IRunArea area, IPackets packets, IRepoCheckouts checkouts, IRunDiff diff, IScopeRunRecords runs) : ScopingCodeStep(Id), IBlockStepId, IRepoStep
 {
     /// <inheritdoc/>
     public static BlockId Id { get; } = BlockId.From("step.scope.evidence");
 
     /// <summary>
-    /// The commit of the checkout the scoping read, as the 'baseSha' fact the packet's scope map is stamped with (by code, never a model: the facts' own 'baseSha' is replaced).
+    /// The agent runs of the instance, as the 'runs' fact (from the ledger, never a model: a 'runs' fact already held is replaced), and the commit of the checkout the scoping read,
+    /// as the 'baseSha' fact the packet's scope map is stamped with (by code, never a model: the facts' own 'baseSha' is replaced).
     /// An item with no repo has no checkout, so its map carries none and the design station stops at intake.
     /// </summary>
     /// <param name="context">The Step's context.</param>
@@ -34,41 +35,35 @@ internal sealed class ScopeEvidenceStep(IRunArea area, IPackets packets, IRepoCh
     protected override async ValueTask<Result<IReadOnlyDictionary<string, string>>> Extra(StepContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var extra = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (context.Repo is { } repo)
+        var recorded = context.Address is { } text && InstanceAddress.TryFrom(text, out var address)
+            ? await runs.Of(address, cancellationToken).ConfigureAwait(false)
+            : Results.Success<IReadOnlyList<ScopeRunRecord>>([]);
+        if (recorded.IsError)
         {
-            var root = await checkouts.Of(repo, cancellationToken).ConfigureAwait(false);
-            if (root.IsError)
-            {
-                return root.Error;
-            }
-
-            var head = await diff.Head(root.Value, cancellationToken).ConfigureAwait(false);
-            if (head.IsError)
-            {
-                return head.Error;
-            }
-
-            var sha = JsonValue.Create(head.Value) ?? throw new InvalidOperationException("a string is always a value"); // why: Create returns null only for a null string, and a head is not null
-            extra["baseSha"] = ScopeJson.Write(sha);
+            return recorded.Error;
         }
 
-        // why: a stored 'runs' (the desk flow keeps one) is the record; only an engine run, which stores none, reads the launches
-        if (launches is not null && !context.Facts.ContainsKey(FactKey.From("fact:runs")))
+        var facts = new Dictionary<string, string>(StringComparer.Ordinal) { ["runs"] = ScopeJson.Write(ScopeRunFacts.Of(recorded.Value)) };
+        if (context.Repo is not { } repo)
         {
-            var runs = await ScopingRuns.Of(launches, context.Address, cancellationToken).ConfigureAwait(false);
-            if (runs.IsError)
-            {
-                return runs.Error;
-            }
-
-            if (runs.Value is { } json)
-            {
-                extra["runs"] = json;
-            }
+            return Facts(facts);
         }
 
-        return Facts(extra);
+        var root = await checkouts.Of(repo, cancellationToken).ConfigureAwait(false);
+        if (root.IsError)
+        {
+            return root.Error;
+        }
+
+        var head = await diff.Head(root.Value, cancellationToken).ConfigureAwait(false);
+        if (head.IsError)
+        {
+            return head.Error;
+        }
+
+        var sha = JsonValue.Create(head.Value) ?? throw new InvalidOperationException("a string is always a value"); // why: Create returns null only for a null string, and a head is not null
+        facts["baseSha"] = ScopeJson.Write(sha);
+        return Facts(facts);
     }
 
     /// <inheritdoc/>

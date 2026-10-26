@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/relevance-verdicts.json",
+  "title": "The relevance review agent's verdicts (fact:relevanceVerdicts)",
+  "description": "Issue 966 spec 4.1: one verdict per entry of fact:lenses (a node or an item, by its lensItem id): in, out or noise, a one-sentence reason and a citation (a lens item id, a brief ref R<n> or a node key). Every out or noise verdict names the map fix it implies (relabel with relabelTo, demote or ignore); an in verdict has none. model is the agent's own statement of its model, 'unknown' allowed.",
+  "type": "object",
+  "properties": {
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^L-(code|product|related|history)-[1-9][0-9]*$",
+            "description": "The lens item id of the entry."
+          },
+          "class": {
+            "enum": [
+              "in",
+              "out",
+              "noise"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "citation": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A lens item id, a brief ref R<n> or a node key from the lenses. A removal is only trusted when it resolves (relevance-apply)."
+          },
+          "fix": {
+            "enum": [
+              "relabel",
+              "demote",
+              "ignore"
+            ]
+          },
+          "relabelTo": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "class",
+          "reason",
+          "citation"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "class": {
+                  "const": "in"
+                }
+              },
+              "required": [
+                "class"
+              ]
+            },
+            "then": {
+              "properties": {
+                "fix": {
+                  "not": {}
+                },
+                "relabelTo": {
+                  "not": {}
+                }
+              }
+            },
+            "else": {
+              "required": [
+                "fix"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "fix": {
+                  "const": "relabel"
+                }
+              },
+              "required": [
+                "fix"
+              ]
+            },
+            "then": {
+              "required": [
+                "relabelTo"
+              ]
+            },
+            "else": {
+              "properties": {
+                "relabelTo": {
+                  "not": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "model",
+    "verdicts"
+  ],
+  "additionalProperties": false
+}

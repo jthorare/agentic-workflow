@@ -219,6 +219,7 @@ invalid input, unknown question).
 | AW-JUDGE-005 | NotFound | `brief get` of a tool use id with no brief |
 | AW-JUDGE-007 | Invalid | `config.json` can't be read as a judge config |
 | AW-JUDGE-010 | Invalid | The `--providers` flag or `AW_JUDGE_PROVIDERS` is malformed (a usage error, 64) |
+| AW-JUDGE-011 | Invalid | `why` found the decision row but a column can't be read (a timestamp that isn't ISO-8601 UTC text): exit 2, one stderr line naming the decision and the column |
 
 ## Providers
 

@@ -37,6 +37,7 @@
   "sessions": {
     "live": 3,
     "asking": 1,
-    "problems": 1
+    "problems": 1,
+    "running": 1
   }
 }

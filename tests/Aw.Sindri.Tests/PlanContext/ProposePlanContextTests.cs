@@ -14,7 +14,7 @@ public sealed class ProposePlanContextTests
 {
     private static readonly InstanceAddress _run = InstanceAddress.From("ITM-1/plan/1");
     private static readonly RepoName _repo = RepoName.From("notes");
-    private const string Packet = "sha256:3deb049307bf38e0981ed4ed374f7d84a63f305f0067a247c10f839dfd4f87e4";
+    private const string Packet = "sha256:a034b1f35f8ca257d23db5b1bef971adaecd161565a7962c0445c271917ef05c";
 
     private static (ProposePlanContextService Service, InMemoryScopeRunProposals Proposals, InMemoryOwnerDecisions Decisions) Subject(Error? proposalError = null, Error? decisionError = null)
     {

@@ -16,7 +16,7 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Unit)]
 public sealed class ChallengerPickTests
 {
-    private static readonly InstanceAddress _instance = InstanceAddress.From(A.FirstItemId.Value + "/workflow.scoping/1");
+    private static readonly InstanceAddress _instance = InstanceAddress.From(A.FirstItemId.Value + "/scoping/1");
     private static readonly LaunchId _draft = LaunchId.From("LCH-" + new string('a', 32));
     private static readonly LaunchId _challenge = LaunchId.From("LCH-" + new string('b', 32));
 

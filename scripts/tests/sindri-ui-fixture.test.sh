@@ -302,7 +302,7 @@ for f in src/tabs/TabManager.ts src/tabs/TabGroups.ts src/tabs/Pinned.ts src/lay
 done
 check "the repo is a git repo on main with one commit" "$(git -C "$R" rev-list --count main 2>/dev/null)" "1"
 check "the repo is clean" "$(git -C "$R" status --porcelain)" ""
-check "the repo's sha is the same on every run (fixed author and date)" "$(git -C "$R" log -1 --format='%an|%aI')" "Fixture Author|2026-07-01T09:00:00+00:00"
+check "the repo's sha is the same on every run (fixed author and date)" "$(git -C "$R" log -1 --format='%an|%at')" "Fixture Author|1782896400"
 contains "the repo is one of the profile's repos" "$(cat "$C/profile/profile.yaml")" "name: aw-split-panes, path: $R"
 contains "the profile keeps its other keys" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
 calls="$(tr '\n' ';' < "$STUB_LOG")"

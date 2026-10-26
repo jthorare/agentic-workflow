@@ -17,7 +17,7 @@ public sealed class DesignPacketTests
     ];
 
     private static readonly PacketIdentity _identity = new("design-expiry", "fixture-labs/fixture-notes", "3288642cd47359fff2642b8bf429976915ca4894");
-    private const string ScopeHash = "sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973";
+    private const string ScopeHash = "sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24";
 
     private static Dictionary<string, string> Built(LineFixture facts) => DesignPacket.Build(new LineFacts(facts), _identity, ScopeHash).ToDictionary(static f => f.Path, static f => f.Content, StringComparer.Ordinal);
 

@@ -2,25 +2,25 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace Aw.Sindri.Features.Scoping;
+namespace Aw.Sindri.Core.Scoping;
 
 /// <summary>
 /// The JSON Schema subset the scoping schemas use (schemas/scoping, draft 2020-12): type, const, enum, the string, number, array and
-/// object keywords, $ref into $defs, allOf, anyOf, oneOf and if/then/else, contains with minContains and maxContains. It reports every
+/// object keywords, $ref into $defs, allOf, anyOf, oneOf, not and if/then/else, contains with minContains and maxContains. It reports every
 /// place a value breaks the schema; it is not a general validator, and a keyword it does not know is ignored.
 /// </summary>
-internal sealed class JsonSchemaLite(JsonNode root)
+public sealed class JsonSchemaLite(JsonNode root)
 {
     private static readonly TimeSpan _patternTimeout = TimeSpan.FromSeconds(1);
 
     private readonly Dictionary<string, Regex> _patterns = new(StringComparer.Ordinal);
 
     /// <summary>Checks <paramref name="instance"/> against <paramref name="schema"/> (a node of this validator's document).</summary>
-    internal IReadOnlyList<SchemaError> Validate(JsonNode? instance, JsonNode? schema)
+    public IReadOnlyList<(string Path, string Message)> Validate(JsonNode? instance, JsonNode? schema)
     {
         var errors = new List<SchemaError>();
         Check(instance, schema, string.Empty, errors);
-        return errors;
+        return [.. errors.Select(static e => (e.Path, e.Message))];
     }
 
     private void Check(JsonNode? value, JsonNode? schema, string path, List<SchemaError> errors)
@@ -62,7 +62,7 @@ internal sealed class JsonSchemaLite(JsonNode root)
     {
         if (rules.ContainsKey("const") && !JsonNode.DeepEquals(rules["const"], value))
         {
-            errors.Add(new SchemaError(path, $"must be {(rules["const"] is { } expected ? ScopeJson.Write(expected) : "null")}"));
+            errors.Add(new SchemaError(path, $"must be {(rules["const"] is { } expected ? expected.ToJsonString() : "null")}"));
         }
 
         if (rules["enum"] is JsonArray allowed && !allowed.Any(a => JsonNode.DeepEquals(a, value)))
@@ -114,7 +114,7 @@ internal sealed class JsonSchemaLite(JsonNode root)
 
     private void CheckObject(JsonObject obj, JsonObject rules, string path, List<SchemaError> errors)
     {
-        foreach (var name in ScopeJson.Strings(rules, "required").Where(n => !obj.ContainsKey(n)))
+        foreach (var name in Required(rules).Where(n => !obj.ContainsKey(n)))
         {
             errors.Add(new SchemaError(path, $"missing '{name}'"));
         }
@@ -204,6 +204,7 @@ internal sealed class JsonSchemaLite(JsonNode root)
             errors.Add(new SchemaError(path, "does not match exactly one of the allowed shapes"));
         }
 
+        CheckNot(value, rules, path, errors);
         if (rules["if"] is { } condition)
         {
             var branch = Validate(value, condition).Count == 0 ? rules["then"] : rules["else"];
@@ -211,6 +212,15 @@ internal sealed class JsonSchemaLite(JsonNode root)
             {
                 Check(value, branch, path, errors);
             }
+        }
+    }
+
+    // 'not': the value must break the subschema, so '"not": {}' forbids a property that is present.
+    private void CheckNot(JsonNode? value, JsonObject rules, string path, List<SchemaError> errors)
+    {
+        if (rules["not"] is { } forbidden && Validate(value, forbidden).Count == 0)
+        {
+            errors.Add(new SchemaError(path, "is not allowed here"));
         }
     }
 
@@ -277,4 +287,7 @@ internal sealed class JsonSchemaLite(JsonNode root)
     private static string Escape(string name) => name.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
 
     private static string Clip(string text) => text.Length <= 40 ? text : text[..40] + "...";
+
+    private static IEnumerable<string> Required(JsonObject rules) =>
+        rules["required"] is JsonArray names ? names.Select(static n => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null).OfType<string>() : [];
 }

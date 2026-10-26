@@ -321,7 +321,7 @@ start_on_new_item() { # $1 recipe, $2 item title; prints the item
   item="$(new_item "$2")" || return
   while IFS= read -r line; do facts+=("$line"); done < <(fact_args "$1" "$item" "$2")
   # The pty the owner's verbs run under joins stderr into stdout, so the output is kept to show on a refusal.
-  if ! out="$("$PROVE" human workflow start "$1" --item "$item" "${facts[@]}" 2>&1)"; then
+  if ! out="$("$PROVE" human workflow start "$1" --item "$item" ${facts[@]+"${facts[@]}"} 2>&1)"; then
     die "workflow start $1 on $item was refused: $out"
   fi
   printf 'started %s on %s\n' "$1" "$item" >&2
@@ -378,7 +378,7 @@ context_repo() {
   printf 'PRIVATE=1\n' > "$dir/.env"
   local g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_AUTHOR_NAME="Fixture Author" GIT_AUTHOR_EMAIL=fixture@example.invalid
      GIT_COMMITTER_NAME="Fixture Author" GIT_COMMITTER_EMAIL=fixture@example.invalid
-     GIT_AUTHOR_DATE=2026-07-01T09:00:00Z GIT_COMMITTER_DATE=2026-07-01T09:00:00Z git -C "$dir")
+     GIT_AUTHOR_DATE="@1782896400 +0000" GIT_COMMITTER_DATE="@1782896400 +0000" git -C "$dir")
   "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$dir/.no-hooks" && "${g[@]}" add -A \
     && "${g[@]}" commit -q --no-gpg-sign -m "Tabs fixture" || die "context up: can't build the repo in $dir"
 }

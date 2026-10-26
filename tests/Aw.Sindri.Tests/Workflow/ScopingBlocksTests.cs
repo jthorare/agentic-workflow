@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Workflow;
 /// <summary>The scoping station's Steps and the context Step inputs it names, as descriptors (scoping spec §9, SC-Y): what each runs on, reads, reports and writes.</summary>
 public sealed class ScopingBlocksTests
 {
-    private const string Seeds = "fact:scopeMap,fact:acceptance,fact:findings,fact:answers,fact:answerLog,fact:challenge,fact:questions,fact:openQuestions";
+    private const string Seeds = "fact:scopeMap,fact:acceptance,fact:findings,fact:answers,fact:answerLog,fact:challenge,fact:questions,fact:openQuestions,fact:gapSearch,fact:gapAnchors";
 
     private static BlockDescriptor Block(string id) => FixtureCatalog.Shipped().Find(BlockId.From(id))!;   // why: ShippedBlocksTests pins every shipped id
 
@@ -28,13 +28,19 @@ public sealed class ScopingBlocksTests
     [InlineData("step.interview.answer", BlockRuntime.Desk, true, "fact:questions,fact:answerLog", "answered,doneAsking", "", "fact:answers=answered,doneAsking;fact:interviewClosed=doneAsking", Capability.None)]
     [InlineData("step.interview.record", BlockRuntime.Block, false, "fact:answers,fact:answerLog", "recorded", "", "fact:answerLog=recorded", Capability.None)]
     [InlineData("step.interview.apply", BlockRuntime.Agent, false, "fact:brief,fact:lenses,fact:coverage,fact:questions,fact:answers,fact:answerLog,fact:scopeMap,fact:acceptance,fact:openQuestions,fact:anchors", "updated,rescope", "", "fact:scopeMap=updated,rescope;fact:acceptance=updated,rescope;fact:openQuestions=updated,rescope", Capability.Tools)]
-    [InlineData("step.scope.reanchor", BlockRuntime.Block, false, "fact:scopeMap,fact:anchors,fact:lenses", "anchored", "", "fact:anchors=anchored", Capability.Tools)]
+    [InlineData("step.scope.reanchor", BlockRuntime.Block, false, "fact:scopeMap,fact:anchors,fact:lenses,fact:gapAnchors", "anchored", "", "fact:anchors=anchored", Capability.Tools)]
     [InlineData("step.scope.challenge", BlockRuntime.Agent, false, "fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answerLog,fact:challenge", "nothingNew,found", "fact:challengeRound", "", Capability.Tools)]
     [InlineData("step.scope.challenge-log", BlockRuntime.Block, false, "fact:challenge,fact:challengeRound", "nothingNew,found", "fact:challenge", "fact:findings=found", Capability.None)]
-    [InlineData("step.scope.propose", BlockRuntime.Block, false, "fact:scopeMap", "proposed,skipped", "fact:scopeMap", "", Capability.Tools)]
-    [InlineData("step.scope.evidence", BlockRuntime.Block, false, "fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions", "complete,incomplete,regather", "", "fact:scopeMap=complete;fact:acceptance=complete;fact:coverage=complete;fact:openQuestions=complete;fact:scopePacket=complete;fact:recommendation=;fact:findings=incomplete,regather", Capability.Tools)]
+    [InlineData("step.scope.propose", BlockRuntime.Block, false, "fact:scopeMap,fact:mapFixes", "proposed,skipped", "fact:scopeMap,fact:mapFixes", "", Capability.Tools)]
+    [InlineData("step.scope.evidence", BlockRuntime.Block, false, "fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions,fact:relevance,fact:gapSearch,fact:mapFixes", "complete,incomplete,regather", "", "fact:scopeMap=complete;fact:acceptance=complete;fact:coverage=complete;fact:openQuestions=complete;fact:scopePacket=complete;fact:runs=complete;fact:recommendation=;fact:findings=incomplete,regather", Capability.Tools)]
+    [InlineData("step.scope.relevance-review", BlockRuntime.Agent, false, "fact:brief,fact:lenses,fact:coverage,fact:anchors", "reviewed", "", "fact:relevanceVerdicts=reviewed", Capability.Tools)]
+    [InlineData("step.scope.relevance-judge", BlockRuntime.Block, false, "fact:brief,fact:lenses,fact:relevanceVerdicts", "ruled", "", "fact:relevanceRulings=ruled", Capability.None)]
+    [InlineData("step.scope.relevance-apply", BlockRuntime.Block, false, "fact:lenses,fact:coverage,fact:brief,fact:relevanceVerdicts,fact:relevanceRulings", "applied", "", "fact:lenses=applied;fact:coverage=applied;fact:relevance=applied;fact:mapFixes=applied", Capability.None)]
+    [InlineData("step.scope.gap-search", BlockRuntime.Agent, false, "fact:brief,fact:acceptance,fact:answerLog", "searched", "", "fact:gapCandidates=searched", Capability.Tools)]
+    [InlineData("step.scope.gap-judge", BlockRuntime.Block, false, "fact:brief,fact:acceptance,fact:scopeMap,fact:lenses,fact:gapCandidates", "ruled", "", "fact:gapRulings=ruled", Capability.None)]
+    [InlineData("step.scope.gap-log", BlockRuntime.Block, false, "fact:gapSearch,fact:gapCandidates,fact:gapRulings,fact:findings", "clear,confirmed", "", "fact:gapSearch=clear,confirmed;fact:gapAnchors=clear,confirmed;fact:findings=confirmed;fact:gapSearchClosed=clear", Capability.None)]
     [InlineData("step.scope.review", BlockRuntime.Desk, true, "fact:scopePacket", "approve,revise,drop", "", "fact:answers=revise", Capability.None)]
-    [InlineData("step.scope.freeze", BlockRuntime.Block, false, "fact:scopePacket,fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions", "frozen,mismatch", "", "fact:scopePacket=frozen;fact:findings=mismatch", Capability.Tools)]
+    [InlineData("step.scope.freeze", BlockRuntime.Block, false, "fact:scopePacket,fact:brief,fact:lenses,fact:coverage,fact:scopeMap,fact:acceptance,fact:answers,fact:answerLog,fact:challenge,fact:openQuestions,fact:decision,fact:anchors,fact:questions,fact:relevance,fact:gapSearch,fact:mapFixes,fact:runs", "frozen,mismatch", "", "fact:scopePacket=frozen;fact:findings=mismatch", Capability.Tools)]
     [InlineData("step.scope.withdraw", BlockRuntime.Block, false, "", "withdrawn", "", "", Capability.Tools)]
     public void Each_scoping_step_declares_what_it_runs_reads_reports_and_writes(
         string id, BlockRuntime runtime, bool humanOnly, string inputs, string outcomes, string every, string required, Capability capabilities)
@@ -58,14 +64,14 @@ public sealed class ScopingBlocksTests
     {
         var intake = Block("step.scope.intake");
 
-        Assert.Equal(Seeds.Split(','), intake.Outputs.Select(o => o.Fact.Value), StringComparer.Ordinal);   // §6.1: all eight, RequiredOn each of the four outcomes
+        Assert.Equal(Seeds.Split(','), intake.Outputs.Select(o => o.Fact.Value), StringComparer.Ordinal);   // §6.1: all ten, RequiredOn each of the four outcomes
         Assert.All(intake.Outputs, o => Assert.Equal(intake.Outcomes.Select(x => x.Value), o.RequiredOn.Select(x => x.Value), StringComparer.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
     public void Every_scoping_agent_step_declares_tools_and_neither_effects_nor_write_scope_nor_network()
     {
-        string[] ids = ["step.brief.questions", "step.brief.write", "step.scope.draft", "step.interview.questions", "step.interview.apply", "step.scope.challenge"];
+        string[] ids = ["step.brief.questions", "step.brief.write", "step.scope.draft", "step.interview.questions", "step.interview.apply", "step.scope.challenge", "step.scope.relevance-review", "step.scope.gap-search"];
         var agents = ids.Select(Block).ToList();
 
         Assert.All(agents, a => Assert.Equal(Capability.Tools, a.Capabilities));   // the read-only capability is W9/L-17's and has no descriptor field yet; this only pins what the descriptor can say

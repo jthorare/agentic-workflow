@@ -39,7 +39,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
 
     /// <summary>The collector's last pass in three numbers; zeros before the first pass (collector spec CA-8).</summary>
     private SessionStatus SessionCounts() =>
-        sessions.Current is { } pass ? new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), pass.Problems.Count) : new SessionStatus(0, 0, 0);
+        sessions.Current is { } pass ? new SessionStatus(pass.Sessions.Count, pass.Sessions.Count(static s => s.State == SessionState.Asking), pass.Problems.Count, pass.Sessions.Count(static s => s.State == SessionState.Running)) : new SessionStatus(0, 0, 0, 0);
 
     /// <summary>The projector's status with the ledger's head read fresh, not the projector's last-seen one: cursor below ledgerHead is the real lag.</summary>
     private async ValueTask<ViewsStatus> Views(CancellationToken cancellationToken)

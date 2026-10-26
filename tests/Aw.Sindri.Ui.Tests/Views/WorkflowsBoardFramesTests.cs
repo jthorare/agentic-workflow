@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.Views.Workflows;
 namespace Aw.Sindri.Ui.Tests.Views;
 
 /// <summary>
-/// F3 workflows slice 2 key frames (UI spec §18.2: one per state, integration lane) for the board: the six lanes with their cards and
+/// F3 workflows slice 2 key frames (UI spec §18.2: one per state, integration lane) for the board: the line's six lanes and Not on a line with their cards and
 /// counts at 1440 and 900 (the board scrolls inside its host, the page does not), the filter with no match, and no runs at all.
 /// Saved under frames/ as f3-workflows-board-*.png.
 /// </summary>
@@ -38,14 +38,14 @@ public sealed class WorkflowsBoardFramesTests : FrameHost
     [Theory]
     [InlineData(1440)]
     [InlineData(900)]
-    public Task The_board_draws_six_lanes_with_the_runs_in_their_lanes(int width) => OnUi(async () =>
+    public Task The_board_draws_the_line_lanes_and_Not_on_a_line_with_the_runs_in_their_lanes(int width) => OnUi(async () =>
     {
         Lines();
         var (window, shell) = await OnBoard(width, Drawn);
 
         var grid = Assert.Single(window.GetVisualDescendants().OfType<LaneGrid>());
-        Assert.Equal(6, grid.Children.Count);
-        Expect.Sequence(["Scoping", "Design", "Plan", "Build and prove", "Merge", "Done"], shell.Workflows.Lanes.Select(l => l.Name));
+        Assert.Equal(7, grid.Children.Count);
+        Expect.Sequence(["Scoping", "Design", "Plan", "Build and prove", "Merge", "Not on a line", "Done"], shell.Workflows.Lanes.Select(l => l.Name));
         Expect.Sequence(shell.Workflows.Lanes.SelectMany(l => l.Cards).Select(c => c.Address), Cards(window).Select(c => c.Address));
         Assert.Equal(shell.Workflows.Lanes.Sum(l => l.Cards.Count), Cards(window).Count);
         Assert.True(Visible(window, "WorkflowsBoard"));
@@ -69,7 +69,7 @@ public sealed class WorkflowsBoardFramesTests : FrameHost
         Assert.True(Visible(window, "WorkflowsNoRunsMatch"));
         Assert.Empty(Cards(window));
         var words = window.GetVisualDescendants().OfType<TextBlock>().Count(t => t.IsEffectivelyVisible && string.Equals(t.Text, Labels.WorkflowsNoRunsMatch, StringComparison.Ordinal));
-        Assert.Equal(6, words);
+        Assert.Equal(7, words);
         Frame(window, "workflows-board-no-match", Prefix);
     });
 

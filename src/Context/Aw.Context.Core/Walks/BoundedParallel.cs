@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Aw.Context.Core.Walks;
 
 /// <summary>
@@ -56,7 +58,16 @@ public static class BoundedParallel
             return results;
         }
 
-        _ = Parallel.For(0, results.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Min(degree, results.Length) }, index => results[index] = work(items[index]));
+        try
+        {
+            _ = Parallel.For(0, results.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Min(degree, results.Length) }, index => results[index] = work(items[index]));
+        }
+        catch (AggregateException failed)
+        {
+            // A serial run throws the work's own exception; so does this one (the first the loop collected when several items failed).
+            ExceptionDispatchInfo.Capture(failed.InnerExceptions[0]).Throw();
+        }
+
         return results;
     }
 }

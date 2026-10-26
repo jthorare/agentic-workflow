@@ -15,4 +15,8 @@ public sealed record SearchedSource(Sources.SourceId Id, SearchedState State, st
     /// <summary>Both commits and the pending files when the index trails the map along main (reason 'catching-up'); null otherwise.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public SearchedCatchingUp? CatchingUp { get; init; }
+
+    /// <summary>A sentence about the limit this row records (the deadline that applied and how long the read took), or null; the row stays ok.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Note { get; init; }
 }

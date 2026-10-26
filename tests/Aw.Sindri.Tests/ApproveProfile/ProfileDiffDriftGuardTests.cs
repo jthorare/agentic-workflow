@@ -1,4 +1,5 @@
 using System.Reflection;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Tests.ApproveProfile;
@@ -7,6 +8,7 @@ namespace Aw.Sindri.Tests.ApproveProfile;
 /// The drift guard for issue 1147: the profile diff is a hand-written list of paths (ProfileDiff.Flatten), and the hash covers every property of these records. A property added to one of
 /// them fails here until it is pinned below, and pinning it means giving it a path in <see cref="ProfileDiff"/> (and a case in <see cref="DiffCoversHashedKeysCheckTests"/>).
 /// </summary>
+[Lane(TestLane.Unit)]
 public sealed class ProfileDiffDriftGuardTests
 {
     private static readonly (Type Type, string[] Properties)[] _pinned =

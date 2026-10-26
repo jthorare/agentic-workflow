@@ -13,5 +13,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="LensQueue">The instance's stored 'fact:lensQueue', whose head lens's prompt a 'lenses' bundle holds; null when it has none.</param>
 /// <param name="Facts">The instance's stored facts; the launch writes those the Step declares as inputs into its run directory.</param>
 /// <param name="Payloads">The payload facts the Step writes under its recipe (<see cref="PayloadFacts.OutputsOf"/>), whose shape its brief states; null for none.</param>
+/// <param name="Model">The Step's 'model' parameter, a model id; null runs the agent's default.</param>
+/// <param name="ModelProfile">The profile key when the Step's 'model' is '{ profile: … }'; the launch refuses it (<see cref="AgentModels.Refusal"/>).</param>
 /// <param name="DrafterState">The state id of the Step whose agent this Step's must differ from, in the same instance (#1008); null for a Step that runs on the profile's agent.</param>
-internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null, IReadOnlyDictionary<FactKey, FactValue>? Facts = null, IReadOnlyList<FactKey>? Payloads = null, string? DrafterState = null);
+internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null, IReadOnlyDictionary<FactKey, FactValue>? Facts = null, IReadOnlyList<FactKey>? Payloads = null, string? Model = null, string? ModelProfile = null, string? DrafterState = null);

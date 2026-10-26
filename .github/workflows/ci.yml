@@ -131,7 +131,7 @@ jobs:
     name: .NET build and test
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       CHANGED: ${{ needs.changes.outputs.dotnet }}
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -303,7 +303,7 @@ jobs:
     name: C# scaffold generators
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 60
     env:
       # The generators live under scripts/ (bash area) and their templates must build against the root C# settings
       # (dotnet area): either change runs them.

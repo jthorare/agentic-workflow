@@ -27,7 +27,7 @@ design.
 
 | Command | Phase | Does |
 |---|---|---|
-| `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear or text, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
+| `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear, text or github, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
 | `advance investigate --evidence <handoff.md>` | intake → investigate | Snapshots the `/rootCause` handoff: status `diagnosed`, a `## Root Cause` section, and a `confirmed` hypothesis or at least two hypotheses not ruled out (without a confirmed one the first attempt must be mode B) |
 | `run-test --check <file> [--cwd <dir>] -- <command…>` | any | Runs the test command on a clean tree and registers a run record (with the commit and the working directory) |
 | `run-ui --check <script.json> [--cwd <dir>]` | any | Runs the ui-evidence script on a clean tree and registers a run record |
@@ -112,6 +112,12 @@ not with another rule.
   baseline plus what main added by a merge, as `record-candidate` and the judge diff use). A shared project file that main
   changes is no weakening of the check; the history step says so (`record-run c1; the check file … changed on main …`). A
   change the fix made, or one that can't be told from the fix's (no main ref, a merge conflict), is still AW-BUGFIX-008.
+- **The judge's diff.** It is the candidate's change from the net base, so what a main merge brought in stays out. For a
+  `github` ticket (`id` is the issue number: `#1189`, `1189`, `owner/repo#1189` or the issue URL) it also starts with the diffs
+  of main's own commits, from the baseline up to the net base, whose message says `Part of #N` or `Fixes #N` for that number
+  (not `#N0`): a fix that main already had through a merged "Part of" PR is still the fix. Any other ticket gets the net-base
+  diff alone. The input also carries `checkSource`, the frozen check's own file as committed at the candidate's commit, so a
+  candidate whose red commit already holds the test isn't judged "proofs missing".
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that
   shadows another could change what the check does while the commit stays the same. Each test run record keeps the

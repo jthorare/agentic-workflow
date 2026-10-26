@@ -184,9 +184,12 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
     private static string ApprovalText(ApproveProfileResponse a, bool preview) => (preview, a.Approved) switch
     {
         (_, true) when preview => $"Approved already: {a.Hash.Value}\n",
-        (true, _) => $"hash {a.Hash.Value}\n{(a.Unreadable is null ? string.Empty : $"the stored approval can't be read by this build ({a.Unreadable}); approving the hash below replaces it\n")}changed since the last approval: {(a.Changes.Count == 0 ? (a.UnlistedChange ? "no listed key, yet the hash differs (this build may write the profile differently from the one that approved it; if not, a key is missing from this list: report it)" : "nothing") : string.Join(", ", a.Changes))}\n{StepArgvText(a)}to approve: sindri profile approve {a.Hash.Value}\n",
+        (true, _) => $"hash {a.Hash.Value}\n{(a.Unreadable is null ? string.Empty : $"the stored approval can't be read by this build ({a.Unreadable}); approving the hash below replaces it\n")}changed since the last approval: {(a.Changes.Count == 0 ? (a.UnlistedChange ? "no listed key, yet the hash differs (this build may write the profile differently from the one that approved it; if not, a key is missing from this list: report it)" : "nothing") : string.Join(", ", a.Changes))}\n{RoleCountsText(a)}{StepArgvText(a)}to approve: sindri profile approve {a.Hash.Value}\n",
         _ => $"Approved {a.Hash.Value}\n",
     };
+
+    /// <summary>One line per changed role key: the files it matches on the repo's HEAD, or that the count is unavailable (#1148).</summary>
+    private static string RoleCountsText(ApproveProfileResponse a) => string.Concat((a.RoleCounts ?? []).Select(static line => line + "\n"));
 
     /// <summary>One line per step hash: the entry on this box that has it, or that none does (launcher L-16).</summary>
     private static string StepArgvText(ApproveProfileResponse a) => string.Concat(a.StepArgv.Select(static line => line.Entry is { } entry

@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -28,44 +29,58 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
     public async Task<AgentLaunched> Launch(AgentLaunchRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var prepared = await Prepare(run, cancellationToken).ConfigureAwait(false);
-        return prepared.Request is { } request
-            ? await Start(request, cancellationToken).ConfigureAwait(false)
-            : new AgentLaunched(Worktree: null, StartHead: null, prepared.Failure);   // nothing was asked of the launcher, so there is no outcome to record
-    }
-
-    // The launcher's request for the run, or why there is none: the target and its agent, the workspace, the pack and the brief.
-    private async ValueTask<(LaunchRequest? Request, AgentLaunchFailure? Failure)> Prepare(AgentLaunchRun run, CancellationToken cancellationToken)
-    {
-        var target = await targets.Resolve(run.Item, run.Run.Address, cancellationToken).ConfigureAwait(false);
+        var target = await Target(run, cancellationToken).ConfigureAwait(false);
         if (target.IsError)
         {
-            return (null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));
+            return TargetFailed(target.Error);   // nothing was asked of the launcher, so there is no outcome to record
         }
 
-        var contrast = await Contrast(run, target.Value, cancellationToken).ConfigureAwait(false);
-        if (contrast.IsError)
-        {
-            return (null, new AgentLaunchFailure(AgentLaunchFailureKind.Park, contrast.Error.Code, contrast.Error.Message));   // no second agent: the owner fixes the approvals
-        }
-
-        var chosen = target.Value with { Agent = contrast.Value };
         var workspace = await WorkspaceOf(run, cancellationToken).ConfigureAwait(false);
         if (workspace.IsError)
         {
-            return (null, StepFailure(workspace.Error));
+            return StepFailed(workspace.Error);
         }
 
-        var bundle = await Bundle(run, chosen, cancellationToken).ConfigureAwait(false);
+        var bundle = await Bundle(run, target.Value, cancellationToken).ConfigureAwait(false);
         if (bundle.IsError)
         {
-            return (null, new AgentLaunchFailure(string.Equals(bundle.Error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, bundle.Error.Code, bundle.Error.Message));   // an unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step
+            return BundleFailed(bundle.Error);
         }
 
-        var asked = await Request(run, chosen, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
-        return asked.IsError ? (null, StepFailure(asked.Error)) : (asked.Value, null);
+        if (run.ModelProfile is { } profile)
+        {
+            return StepFailed("SND-LAUNCH-013", AgentModels.Refusal(profile));   // the launcher's own refusal of a model it can't express
+        }
+
+        var asked = await Request(run, target.Value, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
+        if (asked.IsError)
+        {
+            return StepFailed(asked.Error);
+        }
+
+        return await Start(asked.Value, cancellationToken).ConfigureAwait(false);
     }
 
+    // Where the Step runs: the profile's agent, or for a second-opinion Step an agent other than its drafter's (#1008).
+    private async ValueTask<Result<AgentStepTarget>> Target(AgentLaunchRun run, CancellationToken cancellationToken)
+    {
+        var target = await targets.Resolve(run.Item, run.Run.Address, cancellationToken).ConfigureAwait(false);
+        if (target.IsError || run.DrafterState is not { } drafter)
+        {
+            return target;
+        }
+
+        var agent = await challenger.Pick(new ChallengerAsk(target.Value.Item, run.Run.Address, AgentLaunches.LaunchIdFor(run.Run), drafter, target.Value.Agent), cancellationToken).ConfigureAwait(false);
+        return agent.IsError ? agent.Error : target.Value with { Agent = agent.Value };
+    }
+
+    // No second agent parks for the owner, who fixes the approvals (SND-LAUNCH-028); any other target failure ends the Step.
+    private static AgentLaunched TargetFailed(Error error) =>
+        string.Equals(error.Code, SindriErrors.LaunchNoSecondAgent.Code, StringComparison.Ordinal)
+            ? new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.Park, error.Code, error.Message))
+            : StepFailed(error);
+
+    // Asks the launcher for the session and records the outcome; the worktree and start commit, or the failure.
     private async Task<AgentLaunched> Start(LaunchRequest request, CancellationToken cancellationToken)
     {
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
@@ -83,22 +98,22 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
         }
     }
 
-    // The agent the Step runs on: the target's, or for a second-opinion Step one other than its drafter's (#1008).
-    private async ValueTask<Result<AgentId>> Contrast(AgentLaunchRun run, AgentStepTarget target, CancellationToken cancellationToken) =>
-        run.DrafterState is { } drafter
-            ? await challenger.Pick(new ChallengerAsk(target.Item, run.Run.Address, AgentLaunches.LaunchIdFor(run.Run), drafter, target.Agent), cancellationToken).ConfigureAwait(false)
-            : target.Agent;
-
     // The launcher's request: the Step's brief and policy, its pack, and its declared read facts as files (read and scrubbed here); the failure when a fact can't be read.
     private async ValueTask<Result<LaunchRequest>> Request(AgentLaunchRun run, AgentStepTarget target, string? workspace, PackBundle? bundle, CancellationToken cancellationToken)
     {
         var block = BlockId.From(run.Run.Step.Block);
         var descriptor = catalog.Find(block);
         var facts = await StepFactFiles.Build(new FactFileStep(descriptor, run.Subject), run.Facts, inputs.Contents, inputs.Scrubber, cancellationToken).ConfigureAwait(false);
-        return facts.IsError ? facts.Error : AgentLaunches.RequestFor(run.Run, target, descriptor, new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value));   // the Step's own lines, then the shape of each payload output
+        return facts.IsError ? facts.Error : AgentLaunches.RequestFor(run.Run, target, descriptor, new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model));   // the Step's own lines, then the shape of each payload output
     }
 
-    private static AgentLaunchFailure StepFailure(Error error) => new(AgentLaunchFailureKind.StepFailed, error.Code, error.Message);
+    // An unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step.
+    private static AgentLaunched BundleFailed(Error error) =>
+        new(Worktree: null, StartHead: null, new AgentLaunchFailure(string.Equals(error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, error.Code, error.Message));
+
+    private static AgentLaunched StepFailed(Error error) => StepFailed(error.Code, error.Message);
+
+    private static AgentLaunched StepFailed(string code, string message) => new(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, code, message));
 
     // What the Step is told to do (its instructions), after the brief's first line; null when it has none.
     private IReadOnlyList<string>? Told(BlockId block) => inputs.Instructions.FirstOrDefault(i => i.IsFor(block))?.Lines;

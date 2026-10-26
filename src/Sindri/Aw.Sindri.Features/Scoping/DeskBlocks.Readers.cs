@@ -94,6 +94,7 @@ internal static partial class DeskBlocks
         var keys = ScopeJson.Items(facts["scopeMap"], "surfaces").Select(static s => ScopeJson.Str(s, "key")).OfType<string>().ToList();
         var suggested = Suggested(facts["contextQuery"], required: false);
         var ordered = ScopeJson.Strings(facts["anchors"]).Where(static a => a.StartsWith("code:", StringComparison.Ordinal))
+            .Concat(ScopeJson.Strings(facts["gapAnchors"]))
             .Concat(keys.Where(static k => !k.StartsWith("code:", StringComparison.Ordinal)))
             .Concat(keys.Where(static k => k.StartsWith("code:", StringComparison.Ordinal)))
             .Concat(suggested.Anchors)
@@ -142,7 +143,26 @@ internal static partial class DeskBlocks
             }
         }
 
-        return Reply("step.scope.propose", facts.Has("proposeResult") ? "proposed" : "skipped", Outputs(("scopeMap", map)), []);
+        var proposed = facts.Has("proposeResult");
+        return Reply("step.scope.propose", proposed ? "proposed" : "skipped", Outputs(("scopeMap", map), ("mapFixes", FixesWithStatus(facts, proposed ? "recorded" : "skipped"))), []);
+    }
+
+    // The relevance review's map fixes, carried through with the status of what became of them: recorded, none are submitted to the context engine yet. No fixes fact is an empty list.
+    private static JsonObject FixesWithStatus(ScopeFacts facts, string status)
+    {
+        var fixes = facts.ObjectCopy("mapFixes");
+        if (fixes["fixes"] is not JsonArray list)
+        {
+            fixes["fixes"] = new JsonArray();
+            return fixes;
+        }
+
+        foreach (var fix in list.OfType<JsonObject>())
+        {
+            fix["status"] = status;
+        }
+
+        return fixes;
     }
 
     private static string Status(JsonNode? answer)

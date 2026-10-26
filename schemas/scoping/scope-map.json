@@ -183,14 +183,22 @@
                 "minLength": 1,
                 "description": "A lens item id or a surface id."
               },
+              "glob": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A path glob ('**' crosses directories, '*' and '?' stay in one segment) that excludes every near code node whose path matches, for example src/gen/**."
+              },
               "reason": {
                 "type": "string",
                 "minLength": 1
               }
             },
             "required": [
-              "item",
               "reason"
+            ],
+            "oneOf": [
+              { "required": ["item"] },
+              { "required": ["glob"] }
             ],
             "additionalProperties": false
           }

@@ -12362,6 +12362,8 @@ Aw.Sindri.Core.Scoping.IRepoCheckouts
 Aw.Sindri.Core.Scoping.IRepoCheckouts.Of(Aw.Sindri.Core.Ids.RepoName repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Scoping.IScopeRunProposals
 Aw.Sindri.Core.Scoping.IScopeRunProposals.Replace(Aw.Sindri.Core.Workflow.Engine.InstanceAddress run, Aw.Sindri.Core.Ids.RepoName repo, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scoping.ProposedScopeSurface!>! surfaces, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scoping.ScopeSurfaceStatus!>!>!>
+Aw.Sindri.Core.Scoping.IScopeRunRecords
+Aw.Sindri.Core.Scoping.IScopeRunRecords.Of(Aw.Sindri.Core.Workflow.Engine.InstanceAddress run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Scoping.ScopeRunRecord!>!>!>
 Aw.Sindri.Core.Scoping.IScopingTextShape
 Aw.Sindri.Core.Scoping.IScopingTextShape.Anchors(Aw.Sindri.Core.Ids.RepoName? repo, string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Sindri.Core.Scoping.ProposedScopeSurface
@@ -12373,6 +12375,31 @@ Aw.Sindri.Core.Scoping.ProposedScopeSurface.Kind.init -> void
 Aw.Sindri.Core.Scoping.ProposedScopeSurface.ProposedScopeSurface(string! Title, string? Kind) -> void
 Aw.Sindri.Core.Scoping.ProposedScopeSurface.Title.get -> string!
 Aw.Sindri.Core.Scoping.ProposedScopeSurface.Title.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord
+Aw.Sindri.Core.Scoping.ScopeRunRecord.<Clone>$() -> Aw.Sindri.Core.Scoping.ScopeRunRecord!
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Deconstruct(out string! Step, out string! State, out int Round, out string! Via, out string? Model, out string? Requested, out string? Vendor, out long Tokens, out string? Launch, out string? Target) -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Equals(Aw.Sindri.Core.Scoping.ScopeRunRecord? other) -> bool
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Launch.get -> string?
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Launch.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Model.get -> string?
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Model.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Requested.get -> string?
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Requested.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Round.get -> int
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Round.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.ScopeRunRecord(string! Step, string! State, int Round, string! Via, string? Model, string? Requested, string? Vendor, long Tokens, string? Launch, string? Target = null) -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.State.get -> string!
+Aw.Sindri.Core.Scoping.ScopeRunRecord.State.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Step.get -> string!
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Step.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Tokens.get -> long
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Tokens.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Target.get -> string?
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Target.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Vendor.get -> string?
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Vendor.init -> void
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Via.get -> string!
+Aw.Sindri.Core.Scoping.ScopeRunRecord.Via.init -> void
 Aw.Sindri.Core.Scoping.ScopeSurfaceStatus
 Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.<Clone>$() -> Aw.Sindri.Core.Scoping.ScopeSurfaceStatus!
 Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.Deconstruct(out string! Surface, out string? Node, out string! Status) -> void
@@ -12390,11 +12417,16 @@ Aw.Sindri.Core.Workflow.Blocks.StepContext.Address.get -> string?
 override Aw.Sindri.Core.Scoping.ProposedScopeSurface.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Scoping.ProposedScopeSurface.GetHashCode() -> int
 override Aw.Sindri.Core.Scoping.ProposedScopeSurface.ToString() -> string!
+override Aw.Sindri.Core.Scoping.ScopeRunRecord.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Scoping.ScopeRunRecord.GetHashCode() -> int
+override Aw.Sindri.Core.Scoping.ScopeRunRecord.ToString() -> string!
 override Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.GetHashCode() -> int
 override Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.ToString() -> string!
 static Aw.Sindri.Core.Scoping.ProposedScopeSurface.operator !=(Aw.Sindri.Core.Scoping.ProposedScopeSurface? left, Aw.Sindri.Core.Scoping.ProposedScopeSurface? right) -> bool
 static Aw.Sindri.Core.Scoping.ProposedScopeSurface.operator ==(Aw.Sindri.Core.Scoping.ProposedScopeSurface? left, Aw.Sindri.Core.Scoping.ProposedScopeSurface? right) -> bool
+static Aw.Sindri.Core.Scoping.ScopeRunRecord.operator !=(Aw.Sindri.Core.Scoping.ScopeRunRecord? left, Aw.Sindri.Core.Scoping.ScopeRunRecord? right) -> bool
+static Aw.Sindri.Core.Scoping.ScopeRunRecord.operator ==(Aw.Sindri.Core.Scoping.ScopeRunRecord? left, Aw.Sindri.Core.Scoping.ScopeRunRecord? right) -> bool
 static Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.operator !=(Aw.Sindri.Core.Scoping.ScopeSurfaceStatus? left, Aw.Sindri.Core.Scoping.ScopeSurfaceStatus? right) -> bool
 static Aw.Sindri.Core.Scoping.ScopeSurfaceStatus.operator ==(Aw.Sindri.Core.Scoping.ScopeSurfaceStatus? left, Aw.Sindri.Core.Scoping.ScopeSurfaceStatus? right) -> bool
 static Aw.Sindri.Core.Workflow.Blocks.BlockServiceCollectionExtensions.AddBlockRuntime<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -16805,6 +16837,8 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Bundle.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras? other) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Instructions.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Instructions.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Model.get -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Model.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Workspace.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Workspace.init -> void
 override Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Equals(object? obj) -> bool
@@ -18086,8 +18120,8 @@ Aw.Sindri.Core.Launch.StepArgs.Deconstruct(out string? Model, out Aw.Sindri.Core
 Aw.Sindri.Core.Launch.StepArgs.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Sindri.Core.Launch.StepArgs.Facts.init -> void
 Aw.Sindri.Core.Launch.StepArgs.StepArgs(string? Model, Aw.Sindri.Core.Launch.StepPolicy? Policy, Aw.Sindri.Core.Launch.StepRef! Ref, string? Brief = null, Aw.Sindri.Core.LensPacks.PackBundle? Bundle = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Facts = null) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.AgentLaunchExtras(System.Collections.Generic.IReadOnlyList<string!>? Instructions = null, string? Workspace = null, Aw.Sindri.Core.LensPacks.PackBundle? Bundle = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Facts = null) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Instructions, out string? Workspace, out Aw.Sindri.Core.LensPacks.PackBundle? Bundle, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Facts) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.AgentLaunchExtras(System.Collections.Generic.IReadOnlyList<string!>? Instructions = null, string? Workspace = null, Aw.Sindri.Core.LensPacks.PackBundle? Bundle = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Facts = null, string? Model = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Instructions, out string? Workspace, out Aw.Sindri.Core.LensPacks.PackBundle? Bundle, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Facts, out string? Model) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Facts.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentLaunchExtras.Facts.init -> void
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Render(Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepRun! run, Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor? descriptor, System.Collections.Generic.IReadOnlyList<string!>? instructions = null, System.Collections.Generic.IEnumerable<string!>? factFiles = null) -> string!
@@ -18691,6 +18725,9 @@ Aw.Sindri.Core.Scoping.ChallengeRoundShape
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Covers(Aw.Sindri.Core.Workflow.Ids.FactKey fact) -> bool
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.LogShape(System.Text.Json.Nodes.JsonObject! round) -> string?
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Violation(System.ReadOnlySpan<byte> content) -> string?
+Aw.Sindri.Core.Scoping.JsonSchemaLite
+Aw.Sindri.Core.Scoping.JsonSchemaLite.JsonSchemaLite(System.Text.Json.Nodes.JsonNode! root) -> void
+Aw.Sindri.Core.Scoping.JsonSchemaLite.Validate(System.Text.Json.Nodes.JsonNode? instance, System.Text.Json.Nodes.JsonNode? schema) -> System.Collections.Generic.IReadOnlyList<(string! Path, string! Message)>!
 Aw.Sindri.Core.Profile.RepoRoleSets
 static Aw.Sindri.Core.Profile.RepoRoleSets.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ProfileRole!>?
 Aw.Sindri.Core.Profile.ProfileRole

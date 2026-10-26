@@ -14,7 +14,6 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Tests.Scoping.Steps;
 
 /// <summary>'step.scope.read-tracker' on the block runtime (scoping spec §4, §8.2): the record through the tracker port, scrubbed, the text shape's anchors, then the desk helper's code.</summary>
-[Lane(TestLane.Unit)]
 public sealed class ScopingReadTrackerStepTests
 {
     private static readonly RepoName _web = RepoName.From("web");
@@ -37,7 +36,7 @@ public sealed class ScopingReadTrackerStepTests
 
     private static string Input(string key) => $$"""{"kind":"tracker","repo":"web","key":"{{key}}"}""";
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task An_issue_is_the_brief_with_its_comments_scrubbed_and_the_text_shapes_anchors()
     {
         var shape = new InMemoryScopingTextShape(["feature:links"]);
@@ -59,7 +58,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Equal((_web, text), (repo!.Value, asked));
     }
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task A_project_brief_lists_its_issues()
     {
         var result = await Step(new InMemoryTrackerSource(Seed()), new InMemoryScopingTextShape([])).Run(Context(Input("Notes app")), TestContext.Current.CancellationToken);
@@ -69,7 +68,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Contains("A weekly digest.", text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task An_issue_with_no_description_and_no_comments_is_empty_and_never_asks_the_engine()
     {
         var shape = new InMemoryScopingTextShape(["feature:x"]);
@@ -80,7 +79,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Empty(shape.Asked);
     }
 
-    [Theory]
+    [Theory, Lane(TestLane.Unit)]
     [InlineData("""{"kind":"tracker","repo":"web"}""", "key")]
     [InlineData("""{"kind":"brief","repo":"web","path":"a.md"}""", "tracker")]
     public async Task A_scope_input_that_is_not_a_tracker_with_a_key_fails_the_Step(string input, string mentions)
@@ -91,7 +90,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Contains(mentions, result.Failure, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task No_tracker_configured_fails_the_Step_with_the_code()
     {
         var result = await Step(InMemoryTrackerSource.Unconfigured, new InMemoryScopingTextShape([])).Run(Context(Input("NTS-2")), TestContext.Current.CancellationToken);
@@ -100,7 +99,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Contains("SND-SCOPING-005", result.Failure, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task A_key_that_names_nothing_fails_the_Step()
     {
         var result = await Step(new InMemoryTrackerSource(Seed()), new InMemoryScopingTextShape([])).Run(Context(Input("NTS-99")), TestContext.Current.CancellationToken);
@@ -109,7 +108,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Contains("NTS-99", result.Failure, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Fact, Lane(TestLane.Unit)]
     public async Task The_engine_unable_to_answer_fails_the_Step()
     {
         var result = await Step(new InMemoryTrackerSource(Seed()), new InMemoryScopingTextShape(SindriErrors.InvalidInput.With("no map"))).Run(Context(Input("NTS-2")), TestContext.Current.CancellationToken);
@@ -118,7 +117,7 @@ public sealed class ScopingReadTrackerStepTests
         Assert.Contains("no map", result.Failure, StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Lane", "integration")]
+    [Fact, Lane(TestLane.Integration)]
     public async Task The_fixtures_expiry_issue_reads_through_the_file_adapter()
     {
         var result = await Step(new FileTrackerSource(FileTrackerSourceFixtureTests.Export()), new InMemoryScopingTextShape(["feature:links"])).Run(Context(Input("NTS-135")), TestContext.Current.CancellationToken);

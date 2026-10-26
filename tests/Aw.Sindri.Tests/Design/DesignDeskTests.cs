@@ -8,7 +8,7 @@ namespace Aw.Sindri.Tests.Design;
 /// <summary>The design block Steps run at the desk (line spec §4.1): 'check' reports pass or gaps, 'evidence' assembles the candidate packet or reports it incomplete.</summary>
 public sealed class DesignDeskTests
 {
-    private static readonly LineDeskContext _context = new(new PacketIdentity("design-expiry", "fixture-labs/fixture-notes", "3288642cd47359fff2642b8bf429976915ca4894"), ScopeHash: "sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973");
+    private static readonly LineDeskContext _context = new(new PacketIdentity("design-expiry", "fixture-labs/fixture-notes", "3288642cd47359fff2642b8bf429976915ca4894"), ScopeHash: "sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24");
 
     private static async Task<(bool IsError, string Code, LineDeskResponse Value)> Run(string block, LineFixture facts, LineDeskContext? context = null)
     {

@@ -96,6 +96,28 @@ public sealed class BoundedParallelTests
         Assert.Equal(one, single);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(1)]
+    [InlineData(8)]
+    public void The_synchronous_map_throws_the_work_s_own_exception_type_at_any_degree(int degree)
+    {
+        static int Work(int item) => item == 3 ? throw new InvalidOperationException("item 3") : item;
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => BoundedParallel.MapSync(_items, Work, degree));
+
+        Assert.Equal("item 3", thrown.Message);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(1)]
+    [InlineData(8)]
+    public async Task The_async_map_throws_the_work_s_own_exception_type_at_any_degree(int degree)
+    {
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(async () => await BoundedParallel.Map(_items, (item, _) => item == 3 ? throw new InvalidOperationException("item 3") : ValueTask.FromResult(item), degree, TestContext.Current.CancellationToken));
+
+        Assert.Equal("item 3", thrown.Message);
+    }
+
     private static void Track(ref int inFlight, ref int peak, int by)
     {
         var now = Interlocked.Add(ref inFlight, by);

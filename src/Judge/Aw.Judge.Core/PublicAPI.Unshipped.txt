@@ -453,6 +453,7 @@ static Aw.Judge.Core.Ids.ToolUseId.TryParse(string? s, System.IFormatProvider? p
 static readonly Aw.Judge.Core.Errors.JudgeErrors.BriefExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Judge.Core.Errors.JudgeErrors.DecisionExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Judge.Core.Errors.JudgeErrors.UnknownDecision -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.UnreadableDecision -> Aw.Kernel.ErrorDefinition!
 Aw.Judge.Core.Health.HealthStatus
 Aw.Judge.Core.Health.HealthStatus.Degraded = 2 -> Aw.Judge.Core.Health.HealthStatus
 Aw.Judge.Core.Health.HealthStatus.Down = 3 -> Aw.Judge.Core.Health.HealthStatus
@@ -664,7 +665,9 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.get -> Aw.Judge.Core.Ques
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.get -> string?
+Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.get -> string?
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.get -> string!
@@ -672,7 +675,7 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Equals(Aw.Judge.Core.Questions.ResolutionCheckInput? other) -> bool
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null) -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckQuestion

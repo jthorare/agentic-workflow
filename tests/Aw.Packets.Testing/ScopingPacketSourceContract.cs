@@ -11,14 +11,14 @@ public abstract class ScopingPacketSourceContract
     /// <summary>Every listed file is read with its bytes, and nothing is unlisted.</summary>
     /// <returns>A task.</returns>
     [Fact]
-    public async Task A_scope_packet_reads_all_twelve_files()
+    public async Task A_scope_packet_reads_all_fourteen_files()
     {
         var files = A.ScopingPacket().Build();
 
         var read = await Create(files).Read(Directory, CancellationToken.None);
 
         Expect.That(read.IsSuccess, "a well-formed directory reads");
-        Expect.That(read.Value.Present.Count == PacketKinds.Scoping.Files.Count, "all twelve files are present");
+        Expect.That(read.Value.Present.Count == PacketKinds.Scoping.Files.Count, "all fourteen files are present");
         Expect.That(files.All(f => read.Value.Present[f.Key].Span.SequenceEqual(f.Value)), "each file's bytes are as written");
         Expect.That(read.Value.Unlisted.Count == 0, "nothing else is in the directory");
     }
@@ -32,7 +32,7 @@ public abstract class ScopingPacketSourceContract
 
         var read = await Create(files).Read(Directory, CancellationToken.None);
 
-        Expect.That(read.IsSuccess && !read.Value.Present.ContainsKey("lenses.json") && read.Value.Present.Count == 11, "the other eleven are read");
+        Expect.That(read.IsSuccess && !read.Value.Present.ContainsKey("lenses.json") && read.Value.Present.Count == 13, "the other thirteen are read");
     }
 
     /// <summary>Other entries are named, sorted, with a sub-directory ending in '/'.</summary>

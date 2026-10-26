@@ -44,7 +44,9 @@ case "$FAKE_NAME" in
         else
           echo "eval-call" >> "$FAKE_CALLS"
           if [ "${EVAL_FAIL:-}" = 1 ]; then echo "workflow.a@1: happy fail"; exit 1; fi
-          echo "{\"recipes\":[$(seq -s, 1 $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})))]}"
+          list="" i=0   # no seq: BSD seq differs from GNU (-s, count-down on an empty range)
+          while [ "$i" -lt $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})) ]; do i=$((i + 1)); list="${list:+$list,}$i"; done
+          echo "{\"recipes\":[$list]}"
         fi ;;
       agents) if [ -n "${FAKE_OPEN_RUNS:-}" ]; then echo '{"sessions":[{"ref":"claude/abc","state":"running","launch":{"instance":"ITM-1/line/3/scoping.1","state":"challenge","attempt":1}}]}'; else echo '{"sessions":[]}'; fi ;;
       profile) echo "${FAKE_PROFILE_OUT:-}"; exit "${FAKE_PROFILE_RC:-0}" ;;
