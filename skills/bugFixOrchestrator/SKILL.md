@@ -78,7 +78,7 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 1. Linear ID or URL → `mcp: linear/get_issue`. Otherwise use the pasted text.
 2. Write `$STATE/ticket.json`:
    ```json
-   { "source": "linear|text", "id": "ENG-123 or null", "title": "...",
+   { "source": "linear|text|github", "id": "ENG-123, #123 for a GitHub issue, or null", "title": "...",
      "brief": "<title + full description, VERBATIM — do not summarise or edit>",
      "expected": "<the expected behaviour>", "actual": "<the observed behaviour>" }
    ```

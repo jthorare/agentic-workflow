@@ -11,6 +11,7 @@ namespace Aw.BugFix.Core.Model;
 /// <param name="AfterPassed">Whether the check passed on the candidate (true: judge requires it).</param>
 /// <param name="DiffStat">git diff --stat from the baseline to the candidate.</param>
 /// <param name="Diff">The diff (lock files and build output excluded), capped; null when git couldn't produce it.</param>
+/// <param name="CheckSource">The frozen check's own file as it is at the candidate's commit, capped; null when git couldn't read it.</param>
 public sealed record ResolutionCheckInput(
     string Brief,
     string Expected,
@@ -21,7 +22,8 @@ public sealed record ResolutionCheckInput(
     bool BeforePassed,
     bool AfterPassed,
     string DiffStat,
-    string? Diff)
+    string? Diff,
+    string? CheckSource = null)
 {
     /// <summary>The most diff characters the input carries; longer diffs are cut and marked.</summary>
     public const int DiffCap = 1_000_000;

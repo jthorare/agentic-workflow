@@ -88,19 +88,20 @@ public interface IGit
     /// <returns>The diff stat and the diff (null when git can't produce the full diff).</returns>
     public Result<CommitDiff> Diff(string directory, string from, string to);
 
-    /// <summary>The change between two commits to <paramref name="paths"/> only, as <see cref="Diff(string, string, string)"/>.</summary>
+    /// <summary>
+    /// The commits main has that the baseline lacks, up to the point the candidate's branch last met main (the commits
+    /// <see cref="NetBase"/> adds to the baseline), oldest first, merges left out. Empty when main can't be found.
+    /// </summary>
     /// <param name="directory">A directory inside the repository.</param>
-    /// <param name="from">The base commit.</param>
-    /// <param name="to">The candidate commit.</param>
-    /// <param name="paths">The repository-relative files, with '/'.</param>
-    /// <returns>The diff stat and the diff of those files.</returns>
-    public Result<CommitDiff> Diff(string directory, string from, string to, IReadOnlyList<string> paths);
+    /// <param name="baseline">The baseline commit.</param>
+    /// <param name="candidate">The candidate commit.</param>
+    /// <returns>The commits, each with its parent and full message.</returns>
+    public Result<IReadOnlyList<MainCommit>> MainCommits(string directory, string baseline, string candidate);
 
-    /// <summary>The change between two commits to everything except <paramref name="paths"/>, as <see cref="Diff(string, string, string)"/>.</summary>
+    /// <summary>The text of <paramref name="path"/> as committed at <paramref name="commit"/>.</summary>
     /// <param name="directory">A directory inside the repository.</param>
-    /// <param name="from">The base commit.</param>
-    /// <param name="to">The candidate commit.</param>
-    /// <param name="paths">The repository-relative files left out, with '/'.</param>
-    /// <returns>The diff stat and the diff without those files.</returns>
-    public Result<CommitDiff> DiffExcept(string directory, string from, string to, IReadOnlyList<string> paths);
+    /// <param name="commit">The commit.</param>
+    /// <param name="path">The repository-relative path, with '/'.</param>
+    /// <returns>The file's text, or a git failure when the commit has no such file.</returns>
+    public Result<string> FileAt(string directory, string commit, string path);
 }

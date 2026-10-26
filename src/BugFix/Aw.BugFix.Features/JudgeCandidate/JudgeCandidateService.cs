@@ -70,48 +70,48 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var summary = check.Kind == CheckKind.Test
             ? $"the regression test {check.Path}, run as `{string.Join(' ', check.Command ?? [])}`"
             : $"the ui-evidence script {check.Path}";
-        return JudgeDiff(state, candidate, baseline.Commit).Map(diff => new ResolutionCheckInput(
+        return JudgeDiff(state.Ticket, candidate, baseline.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
-            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full)));
+            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full), CheckSource(candidate, check)));
     }
 
-    // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), except that a cause-site file
-    // of the investigation is shown from the baseline: a fix main already had, through a merged "Part of" PR, is still the fix.
-    private Result<CommitDiff> JudgeDiff(BugFixState state, Candidate candidate, string baseline)
+    // The frozen check's own file at the candidate's commit: a red commit that already holds the test is not "no proof".
+    private string? CheckSource(Candidate candidate, FrozenCheck check)
     {
-        var net = git.NetBase(candidate.Worktree, baseline, candidate.Commit);
-        var sites = CauseSites(state);
-        if (sites.Count == 0)
+        var source = git.FileAt(candidate.Worktree, candidate.Commit, check.Path);
+        return source.IsSuccess ? Capped(source.Value) : null;
+    }
+
+    // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), after the changes of the
+    // commits main already had for this GitHub issue ("Part of #N" / "Fixes #N" in the message): a fix a merged "Part of" PR
+    // made is still the fix. Another kind of ticket gets the candidate's change alone.
+    private Result<CommitDiff> JudgeDiff(Ticket ticket, Candidate candidate, string baseline)
+    {
+        var own = git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline, candidate.Commit), candidate.Commit);
+        if (own.IsError || GithubIssue.Number(ticket) is not { } issue)
         {
-            return git.Diff(candidate.Worktree, net, candidate.Commit);
+            return own;
         }
 
-        return git.ChangedFiles(candidate.Worktree, baseline, candidate.Commit).Bind(changed =>
+        var already = git.MainCommits(candidate.Worktree, baseline, candidate.Commit);
+        var named = already.IsSuccess ? already.Value.Where(commit => GithubIssue.Names(commit.Message, issue)).ToList() : [];
+        var diffs = new List<CommitDiff>();
+        foreach (var commit in named)
         {
-            var named = sites.Where(site => changed.Contains(site, StringComparer.Ordinal)).ToList();
-            return named.Count == 0
-                ? git.Diff(candidate.Worktree, net, candidate.Commit)
-                : git.DiffExcept(candidate.Worktree, net, candidate.Commit, named)
-                    .Bind(rest => git.Diff(candidate.Worktree, baseline, candidate.Commit, named).Map(site => Joined(rest, site)));
-        });
+            var diff = git.Diff(candidate.Worktree, commit.Parent, commit.Sha);
+            if (diff.IsError)
+            {
+                return diff.Error;
+            }
+
+            diffs.Add(diff.Value);
+        }
+
+        return diffs.Count == 0 ? own : Joined([.. diffs, own.Value]);
     }
 
-    private static CommitDiff Joined(CommitDiff rest, CommitDiff site) =>
-        new($"{rest.Stat}\n{site.Stat}", rest.Full is null || site.Full is null ? null : rest.Full + site.Full);
-
-    // The files the hypotheses not ruled out name ("path" or "path:line"), once each.
-    private static List<string> CauseSites(BugFixState state) =>
-        [.. (state.Investigation?.Hypotheses ?? []).Where(static h => h.Result != HypothesisResult.RuledOut)
-            .SelectMany(static h => h.Files)
-            .Select(static file => WithoutLine(file.Trim()))
-            .Where(static file => file.Length > 0)
-            .Distinct(StringComparer.Ordinal)];
-
-    private static string WithoutLine(string file)
-    {
-        var colon = file.LastIndexOf(':');
-        return colon > 0 && colon < file.Length - 1 && file[(colon + 1)..].All(static c => char.IsAsciiDigit(c) || c == '-') ? file[..colon] : file;
-    }
+    private static CommitDiff Joined(IReadOnlyList<CommitDiff> parts) =>
+        new(string.Join('\n', parts.Select(static p => p.Stat)), parts.Any(static p => p.Full is null) ? null : string.Concat(parts.Select(static p => p.Full)));
 
     private static string? Capped(string? diff) =>
         diff is null || diff.Length <= ResolutionCheckInput.DiffCap

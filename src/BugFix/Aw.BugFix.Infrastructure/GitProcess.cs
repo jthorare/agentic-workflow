@@ -56,6 +56,39 @@ internal sealed class GitProcess : IGit
     // the diff from it holds only the fix. Any trouble (no main ref, a conflict, an old git) falls back to the baseline.
     public string NetBase(string directory, string baseline, string candidate)
     {
+        if (MainCommitOf(directory, candidate) is not { } mainCommit)
+        {
+            return baseline;
+        }
+
+        var merged = Run(directory, "merge-tree", "--write-tree", baseline, mainCommit);
+        return merged.ExitCode == 0 && merged.Output.Split('\n')[0].Trim() is { Length: > 0 } tree ? tree : baseline;
+    }
+
+    // Main's commits the baseline lacks, up to the one the candidate's branch last met: what NetBase adds to the baseline.
+    public Result<IReadOnlyList<MainCommit>> MainCommits(string directory, string baseline, string candidate)
+    {
+        if (MainCommitOf(directory, candidate) is not { } mainCommit)
+        {
+            return Results.Success<IReadOnlyList<MainCommit>>([]);
+        }
+
+        var run = Run(directory, "log", "--no-merges", "--reverse", "--format=%H%x1f%P%x1f%B%x1e", $"{baseline}..{mainCommit}");
+        return run.ExitCode == 0
+            ? Results.Success<IReadOnlyList<MainCommit>>([.. run.Output.Split('\u001e', StringSplitOptions.RemoveEmptyEntries).Select(static r => r.Trim('\n').Split('\u001f')).Where(static f => f.Length == 3 && f[1].Length > 0)
+                .Select(static f => new MainCommit(f[0], f[1], f[2]))])
+            : Failed(run, "log");
+    }
+
+    public Result<string> FileAt(string directory, string commit, string path)
+    {
+        var run = Run(directory, "show", $"{commit}:{path}");
+        return run.ExitCode == 0 ? run.Output : Failed(run, "show");
+    }
+
+    // The commit of main the candidate's branch last met, or null when main can't be found.
+    private static string? MainCommitOf(string directory, string candidate)
+    {
         foreach (var main in new[] { "origin/HEAD", "origin/main", "main" })
         {
             if (Run(directory, "rev-parse", "--verify", "--quiet", $"{main}^{{commit}}").ExitCode != 0)
@@ -64,16 +97,10 @@ internal sealed class GitProcess : IGit
             }
 
             var mergeBase = Run(directory, "merge-base", candidate, main);
-            if (mergeBase.ExitCode != 0 || mergeBase.Output.Trim() is not { Length: > 0 } mainCommit)
-            {
-                return baseline;
-            }
-
-            var merged = Run(directory, "merge-tree", "--write-tree", baseline, mainCommit);
-            return merged.ExitCode == 0 && merged.Output.Split('\n')[0].Trim() is { Length: > 0 } tree ? tree : baseline;
+            return mergeBase.ExitCode == 0 && mergeBase.Output.Trim() is { Length: > 0 } mainCommit ? mainCommit : null;
         }
 
-        return baseline;
+        return null;
     }
 
     // -z: raw (unquoted) paths; --no-renames: a moved test reports its old path too.
@@ -84,18 +111,10 @@ internal sealed class GitProcess : IGit
         Paths(directory, "diff", "--name-only", "--no-renames", "--diff-filter=A", "-z", from, to);
 
     // Lock files and build output are noise to judge; without the full diff judge still has the stat.
-    public Result<CommitDiff> Diff(string directory, string from, string to) => DiffOf(directory, from, to, ["."]);
-
-    public Result<CommitDiff> Diff(string directory, string from, string to, IReadOnlyList<string> paths) =>
-        DiffOf(directory, from, to, [.. paths.Select(static p => $":(top,literal){p}")]);
-
-    public Result<CommitDiff> DiffExcept(string directory, string from, string to, IReadOnlyList<string> paths) =>
-        DiffOf(directory, from, to, [".", .. paths.Select(static p => $":(top,exclude,literal){p}")]);
-
-    private static Result<CommitDiff> DiffOf(string directory, string from, string to, string[] pathspec) =>
-        Value(directory, ["diff", "--stat", from, to, "--", .. pathspec]).Map(stat =>
+    public Result<CommitDiff> Diff(string directory, string from, string to) =>
+        Value(directory, "diff", "--stat", from, to).Map(stat =>
         {
-            var full = Run(directory, ["diff", from, to, "--", .. pathspec, ":(glob,exclude)**/package-lock.json", ":(glob,exclude)**/*.lock", ":(glob,exclude)**/pnpm-lock.yaml", ":(glob,exclude)**/packages.lock.json", ":(glob,exclude)**/dist/**"]);
+            var full = Run(directory, "diff", from, to, "--", ".", ":(glob,exclude)**/package-lock.json", ":(glob,exclude)**/*.lock", ":(glob,exclude)**/pnpm-lock.yaml", ":(glob,exclude)**/packages.lock.json", ":(glob,exclude)**/dist/**");
             return new CommitDiff(stat, full.ExitCode == 0 ? full.Output : null);
         });
 
