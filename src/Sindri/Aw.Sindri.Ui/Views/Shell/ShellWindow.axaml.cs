@@ -38,6 +38,7 @@ internal sealed partial class ShellWindow : Window
     public ShellWindow()
     {
         InitializeComponent();
+        RememberEdgeTabSlot();
         AddHandler(GotFocusEvent, OnGotFocus, handledEventsToo: true);
         PagePanel.SizeChanged += (_, e) => PageLayout.SetTier(PagePanel, PageLayout.For(e.NewSize.Width));
         WatchNavigationKeys();
@@ -80,6 +81,7 @@ internal sealed partial class ShellWindow : Window
         }
 
         Cover(Bounds.Width);
+        SyncEdgeTab();
         base.OnDataContextChanged(e);
     }
 
@@ -176,6 +178,9 @@ internal sealed partial class ShellWindow : Window
                 break;
             case nameof(ShellViewModel.CurrentPage):
                 OnPageChanged();
+                break;
+            case nameof(ShellViewModel.IsEdgeTabShown):
+                SyncEdgeTab();
                 break;
             case nameof(ShellViewModel.IsNeedsYouInbox):
                 FollowInbox();
