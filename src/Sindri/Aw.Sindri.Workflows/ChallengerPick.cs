@@ -45,6 +45,20 @@ internal sealed class ChallengerPick(IAgentCatalog catalog, ILaunchViews launche
             return kept.Target;
         }
 
+        var drafter = await DrafterAgent(ask, cancellationToken).ConfigureAwait(false);
+        if (drafter.IsError)
+        {
+            return drafter.Error;
+        }
+
+        return drafter.Value is not { } drafted
+            ? ask.Default   // the drafter ran at the desk or not yet: there is no agent to differ from
+            : await Other(drafted, ask.Default, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The agent of the latest run of the drafter's state in the instance; null when there is none.
+    private async ValueTask<Result<AgentId?>> DrafterAgent(ChallengerAsk ask, CancellationToken cancellationToken)
+    {
         var rows = await launches.ForItem(ask.Item, cancellationToken).ConfigureAwait(false);
         if (rows.IsError)
         {
@@ -53,25 +67,26 @@ internal sealed class ChallengerPick(IAgentCatalog catalog, ILaunchViews launche
 
         // why: the view lists the newest request first, so the first row of the drafter's state is its latest run
         var drafter = rows.Value.FirstOrDefault(r => r.Step.Instance is { } instance && instance.Equals(ask.Instance) && string.Equals(r.Step.State, ask.DrafterState, StringComparison.Ordinal));
-        if (drafter is null)
-        {
-            return ask.Default;   // the drafter ran at the desk or not yet: there is no agent to differ from
-        }
+        return drafter is null ? (AgentId?)null : drafter.Target;
+    }
 
+    // A usable agent other than the drafter's: the profile default when it qualifies, else the first in catalog order.
+    private async ValueTask<Result<AgentId>> Other(AgentId drafter, AgentId preferred, CancellationToken cancellationToken)
+    {
         var latest = await approved.Latest(cancellationToken).ConfigureAwait(false);
         if (latest.IsError)
         {
             return latest.Error;
         }
 
-        var others = catalog.All.Where(e => e.Id != drafter.Target && Usable(e, latest.Value?.Profile.Agents)).Select(static e => e.Id).ToList();
+        var others = catalog.All.Where(e => e.Id != drafter && Usable(e, latest.Value?.Profile.Agents)).Select(static e => e.Id).ToList();
         if (others.Count == 0)
         {
             return SindriErrors.LaunchNoSecondAgent.With(
-                $"the second opinion needs an agent other than {drafter.Target.Value}, and no other agent is usable by Steps (fix: run `sindri launch show`, put another entry's argvHash under agents.<id>.stepArgvHash and approve the profile)");
+                $"the second opinion needs an agent other than {drafter.Value}, and no other agent is usable by Steps (fix: run `sindri launch show`, put another entry's argvHash under agents.<id>.stepArgvHash and approve the profile)");
         }
 
-        return others.Contains(ask.Default) ? ask.Default : others[0];
+        return others.Contains(preferred) ? preferred : others[0];
     }
 
     private static bool Usable(AgentEntry entry, AgentSettings? settings) =>

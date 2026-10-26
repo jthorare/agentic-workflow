@@ -42,7 +42,8 @@ internal static class ScopingRuns
                 return (string?)null;
             }
 
-            runs.Add(new JsonObject { ["step"] = step, ["via"] = "agent", ["target"] = row.Target.Value });
+            JsonNode record = new JsonObject { ["step"] = step, ["via"] = "agent", ["target"] = row.Target.Value };   // why: typed as JsonNode so Add(JsonNode) binds, not the generic Add<T> that isn't AOT-safe
+            runs.Add(record);
         }
 
         return runs.ToJsonString();

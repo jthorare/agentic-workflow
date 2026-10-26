@@ -28,38 +28,46 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
     public async Task<AgentLaunched> Launch(AgentLaunchRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
+        var prepared = await Prepare(run, cancellationToken).ConfigureAwait(false);
+        return prepared.Request is { } request
+            ? await Start(request, cancellationToken).ConfigureAwait(false)
+            : new AgentLaunched(Worktree: null, StartHead: null, prepared.Failure);   // nothing was asked of the launcher, so there is no outcome to record
+    }
+
+    // The launcher's request for the run, or why there is none: the target and its agent, the workspace, the pack and the brief.
+    private async ValueTask<(LaunchRequest? Request, AgentLaunchFailure? Failure)> Prepare(AgentLaunchRun run, CancellationToken cancellationToken)
+    {
         var target = await targets.Resolve(run.Item, run.Run.Address, cancellationToken).ConfigureAwait(false);
         if (target.IsError)
         {
-            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));   // nothing was asked of the launcher, so there is no outcome to record
+            return (null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, target.Error.Code, target.Error.Message));
         }
 
         var contrast = await Contrast(run, target.Value, cancellationToken).ConfigureAwait(false);
         if (contrast.IsError)
         {
-            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.Park, contrast.Error.Code, contrast.Error.Message));   // no second agent: the owner fixes the approvals, nothing was asked of the launcher
+            return (null, new AgentLaunchFailure(AgentLaunchFailureKind.Park, contrast.Error.Code, contrast.Error.Message));   // no second agent: the owner fixes the approvals
         }
 
         var chosen = target.Value with { Agent = contrast.Value };
         var workspace = await WorkspaceOf(run, cancellationToken).ConfigureAwait(false);
         if (workspace.IsError)
         {
-            return StepFailed(workspace.Error);
+            return (null, StepFailure(workspace.Error));
         }
 
         var bundle = await Bundle(run, chosen, cancellationToken).ConfigureAwait(false);
         if (bundle.IsError)
         {
-            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(string.Equals(bundle.Error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, bundle.Error.Code, bundle.Error.Message));   // an unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step
+            return (null, new AgentLaunchFailure(string.Equals(bundle.Error.Code, PackErrors.PinMismatch.Code, StringComparison.Ordinal) ? AgentLaunchFailureKind.Park : AgentLaunchFailureKind.StepFailed, bundle.Error.Code, bundle.Error.Message));   // an unpinned or changed pack parks for the owner (SND-PACK-002); any other pack failure ends the Step
         }
 
         var asked = await Request(run, chosen, workspace.Value, bundle.Value, cancellationToken).ConfigureAwait(false);
-        if (asked.IsError)
-        {
-            return StepFailed(asked.Error);
-        }
+        return asked.IsError ? (null, StepFailure(asked.Error)) : (asked.Value, null);
+    }
 
-        var request = asked.Value;
+    private async Task<AgentLaunched> Start(LaunchRequest request, CancellationToken cancellationToken)
+    {
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
         switch (result)
         {
@@ -90,7 +98,7 @@ internal sealed class AgentLaunching(ILauncher launcher, AgentTargetResolver tar
         return facts.IsError ? facts.Error : AgentLaunches.RequestFor(run.Run, target, descriptor, new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value));   // the Step's own lines, then the shape of each payload output
     }
 
-    private static AgentLaunched StepFailed(Error error) => new(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, error.Code, error.Message));
+    private static AgentLaunchFailure StepFailure(Error error) => new(AgentLaunchFailureKind.StepFailed, error.Code, error.Message);
 
     // What the Step is told to do (its instructions), after the brief's first line; null when it has none.
     private IReadOnlyList<string>? Told(BlockId block) => inputs.Instructions.FirstOrDefault(i => i.IsFor(block))?.Lines;
