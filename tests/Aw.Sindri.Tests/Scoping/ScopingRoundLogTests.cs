@@ -28,7 +28,7 @@ public sealed class ScopingRoundLogTests
         var area = new InMemoryRunArea();
         var first = await Check(area, ScopingFacts.Expiry().Edit("acceptance", n => n["items"] = new JsonArray()).Without("rounds"));
         var firstLog = Log(first);
-        var facts = ScopingFacts.Expiry().Edit("acceptance", n => n["items"]![0]!["text"] = "no form").Without("rounds");   // why: the fixture acceptance holds items
+        var facts = ScopingFacts.Expiry().Edit("acceptance", n => n["items"]![0]!["form"] = "bogus").Without("rounds");   // why: the fixture acceptance holds items
         facts["roundLog"] = firstLog.ToJsonString();
         var second = await Check(area, facts);
 
