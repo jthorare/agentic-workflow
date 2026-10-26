@@ -452,6 +452,7 @@ Aw.BugFix.Core.Ports.IGit.IsAncestor(string! directory, string! ancestor, string
 Aw.BugFix.Core.Ports.IGit.IsClean(string! directory) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.IsCommittedUnchanged(string! root, string! file) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.RelativeDirectory(string! directory) -> Aw.Kernel.Result<string!>!
+Aw.BugFix.Core.Ports.IGit.NetBase(string! directory, string! baseline, string! candidate) -> string!
 Aw.BugFix.Core.Ports.IGit.Root(string! directory) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Ports.IGit.SameTree(string! directory, string! first, string! second) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.Untracked(string! directory) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
@@ -478,6 +479,9 @@ Aw.BugFix.Core.Rules.CheckCommandRule
 Aw.BugFix.Core.Rules.CheckLocator
 Aw.BugFix.Core.Rules.CheckLocator.CheckLocator(Aw.BugFix.Core.Ports.IGit! git, Aw.BugFix.Core.Ports.IFiles! files) -> void
 Aw.BugFix.Core.Rules.CheckLocator.Locate(string! directory, string! path) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.CheckFile!>!
+Aw.BugFix.Core.Rules.CheckPin
+Aw.BugFix.Core.Rules.CheckPin.CheckPin(Aw.BugFix.Core.Ports.IGit! git, Aw.BugFix.Core.Ports.IFiles! files, Aw.BugFix.Core.Rules.WorkTree! tree) -> void
+Aw.BugFix.Core.Rules.CheckPin.Verify(Aw.BugFix.Core.Model.FrozenCheck! check, string! baseline, Aw.BugFix.Core.Model.Candidate! candidate, Aw.BugFix.Core.Model.RunRecord! record) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Rules.CommandFilesRule
 Aw.BugFix.Core.Rules.EvidenceRule
 Aw.BugFix.Core.Rules.HandoffParser
@@ -639,7 +643,7 @@ static Aw.BugFix.Core.Model.UiRunRequest.operator !=(Aw.BugFix.Core.Model.UiRunR
 static Aw.BugFix.Core.Model.UiRunRequest.operator ==(Aw.BugFix.Core.Model.UiRunRequest? left, Aw.BugFix.Core.Model.UiRunRequest? right) -> bool
 static Aw.BugFix.Core.Ports.StateStoreExtensions.Locked<T>(this Aw.BugFix.Core.Ports.IStateStore! store, string! directory, System.Func<Aw.Kernel.Result<T>!>! work, bool create = false) -> Aw.Kernel.Result<T>!
 static Aw.BugFix.Core.Rules.AttemptRule.Candidates(Aw.BugFix.Core.Model.FixMode? mode) -> int
-static Aw.BugFix.Core.Rules.AttemptRule.CanStart(Aw.BugFix.Core.Model.BugFixState! state, Aw.BugFix.Core.Model.FixMode mode, bool abandonJudge = false) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.BugFix.Core.Rules.AttemptRule.CanStart(Aw.BugFix.Core.Model.BugFixState! state, Aw.BugFix.Core.Model.FixMode mode, bool abandonJudge = false, bool abandonUnrun = false) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 static Aw.BugFix.Core.Rules.CandidateRule.CanRecord(Aw.BugFix.Core.Model.BugFixState! state, string! commit, int? hypothesis) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 static Aw.BugFix.Core.Rules.CheckCommandRule.Refusal(System.Collections.Generic.IReadOnlyList<string!>! command) -> string?
 static Aw.BugFix.Core.Rules.CommandFilesRule.LoaderCandidates(string! path) -> System.Collections.Generic.IEnumerable<string!>!

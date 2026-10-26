@@ -36,4 +36,8 @@ public sealed record ContextResult(
     /// <summary>The code units the component hop skipped for the fan-out cap; left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SkippedComponent>? SkippedComponents { get; init; }
+
+    /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public FilteredCounts? Filtered { get; init; }
 }

@@ -281,6 +281,12 @@ function checkProjects(root, doc, byId, declared, edges, { fail, info, excepted,
     if (!owner && !testCode) { fail("DEPS-PROJ-002", "C# project no package owns", `${pj.file} (${pj.name})`, "every project name starts with a package's projectPrefix (test assemblies such as Aw.Architecture.Tests excepted)", "rename the project, or declare its package in deps.yaml"); continue; }
     if (role === "prod" || role === "analyzer" || (owner?.test && role === "testing")) owners.add(owner.id);
     for (const a of pj.analyzers) if (!analyzerOk(a)) fail("DEPS-PROJ-006", "analyzer reference to a project that is not an analyzer", `${pj.name} -> ${a}`, "OutputItemType=\"Analyzer\" references point at an analyzer: true package", `point the reference at an analyzer project, or drop OutputItemType="Analyzer"`);
+    for (const ref of pj.buildOrder) {
+      const refOwner = ownerOf(ref, doc.packages);
+      if (!refOwner) { fail("DEPS-PROJ-002", "C# project no package owns", `${pj.name} -> ${ref}`, "every project name starts with a package's projectPrefix", "rename the project, or declare its package in deps.yaml"); continue; }
+      if (testCode && owner && (refOwner.id === owner.id || declared.has(`${owner.id}|${refOwner.id}|cli`))) continue; // build order only: no project edge, no fan-out
+      fail("DEPS-PROJ-009", "build-order reference without a cli edge", `${pj.name} -> ${ref} (${owner?.id ?? "no owner"} -> ${refOwner.id})`, "a ReferenceOutputAssembly=\"false\" ProjectReference only orders the build, for test code that runs the other package's binary through its declared cli edge", `declare (from: ${owner?.id ?? "<owner>"}, to: ${refOwner.id}, kind: cli) in deps.yaml, or drop the reference`);
+    }
     for (const ref of pj.refs) {
       const refOwner = ownerOf(ref, doc.packages);
       const refRole = roleOfRef(ref, refOwner);

@@ -65,6 +65,22 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
     }
 
     [Fact(Timeout = 120_000)]
+    public async Task A_block_step_without_a_maxDuration_is_given_no_short_bound()
+    {
+        var fake = FakeBlockStep.Hanging();
+        var ct = TestContext.Current.CancellationToken;
+        await Run(fake, maxDuration: null, async (handle, _) =>
+        {
+            await WaitFor(() => fake.Runs > 0, ct);
+
+            var scheduled = (await handle.FetchHistoryAsync()).Events
+                .Select(static e => e.ActivityTaskScheduledEventAttributes).Single(static a => a is not null && a.ActivityId.StartsWith("block:", StringComparison.Ordinal));
+            Assert.True(scheduled.StartToCloseTimeout.ToTimeSpan() > TimeSpan.FromDays(1), "the old two-minute default must be gone");   // owner q93: the state timer bounds it
+            Assert.Equal(0, fake.Cancelled);
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
     public async Task The_block_activity_is_attempted_once_and_a_thrown_Step_is_failed_with_its_type_and_message()
     {
         var ct = TestContext.Current.CancellationToken;

@@ -28,14 +28,14 @@ public sealed class RegisterRecipeTests
 
         Assert.True(registered.IsSuccess, registered.IsError ? registered.Error.ToString() : null);
         var response = registered.Value;
-        Assert.Equal((RecipeId.From("workflow.step"), 4, expected.Hash, true, RecipeStanding.Unapproved),
+        Assert.Equal((RecipeId.From("workflow.step"), 5, expected.Hash, true, RecipeStanding.Unapproved),
             (response.Id, response.Version, response.Hash, response.Added, response.Standing));
         var stored = (await r.Recipes.Find(expected.Hash, Token)).Value;
         Assert.NotNull(stored);
         Assert.Equal(expected.Hash, RecipeHashing.Of(RegistryHarness.Parse(stored), SliceHarness.Json));
         var recorded = Assert.Single(r.Events(EventTypes.RecipeRegistered));
         Assert.Equal(recorded.Sequence, response.Accepted.Sequence);
-        Assert.Equal((expected.Recipe.Id, 4, expected.Hash), Payload(r, recorded));
+        Assert.Equal((expected.Recipe.Id, 5, expected.Hash), Payload(r, recorded));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -93,8 +93,8 @@ public sealed class RegisterRecipeTests
         var refused = await r.RegisterText(edited, "workflow.step.yaml");
 
         Assert.Equal(WorkflowErrors.RecipeVersionTaken.Code, refused.Error.Code);
-        Assert.Contains("RCP-VERSION-001: workflow.step version 4 is registered with hash ", refused.Error.Message, StringComparison.Ordinal);
-        Assert.Contains("raise version to 5", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("RCP-VERSION-001: workflow.step version 5 is registered with hash ", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("raise version to 6", refused.Error.Message, StringComparison.Ordinal);
         _ = Assert.Single((await r.Recipes.All(Token)).Value);
         _ = Assert.Single(r.Events(EventTypes.RecipeRegistered));
     }
@@ -104,12 +104,12 @@ public sealed class RegisterRecipeTests
     {
         await using var r = new RegistryHarness();
         _ = await r.H.HoldLease();
-        _ = await r.RegisterText(Edited().Replace("version: 4\n", "version: 6\n", StringComparison.Ordinal), "workflow.step.yaml");
+        _ = await r.RegisterText(Edited().Replace("version: 5\n", "version: 7\n", StringComparison.Ordinal), "workflow.step.yaml");
 
-        var refused = await r.RegisterText(Edited().Replace("version: 4\n", "version: 5\n", StringComparison.Ordinal), "workflow.step.yaml");
+        var refused = await r.RegisterText(Edited().Replace("version: 5\n", "version: 6\n", StringComparison.Ordinal), "workflow.step.yaml");
 
         Assert.Equal(WorkflowErrors.RecipeInvalid.Code, refused.Error.Code);
-        Assert.Contains("RCP-VERSION-002: workflow.step version 5 isn't registered and is below version 6", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("RCP-VERSION-002: workflow.step version 6 isn't registered and is below version 7", refused.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

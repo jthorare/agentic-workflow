@@ -4833,3 +4833,7 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.get -> string?
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.init -> void
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.get -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.init -> void

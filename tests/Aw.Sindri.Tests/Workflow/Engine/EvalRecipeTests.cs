@@ -254,9 +254,13 @@ public sealed class EvalRecipeTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_deadline_line_on_a_park_state_fires_its_timeout_and_parks()
+    public async Task Two_deadline_lines_on_a_park_state_retry_it_once_and_then_park()
     {
-        var response = await EvalTimed("park", ["""{"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}"""]);
+        var response = await EvalTimed("park",
+        [
+            """{"trigger":{"kind":"deadline"},"expect":{"state":"waiting"}}""",
+            """{"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}""",
+        ]);
 
         Assert.Equal(["happy pass"], response.Cases.Select(c => c.ToLine()), StringComparer.Ordinal);
     }
@@ -291,12 +295,13 @@ public sealed class EvalRecipeTests
     {
         var response = await EvalTimed("park",
         [
+            """{"trigger":{"kind":"deadline"},"expect":{"state":"waiting"}}""",
             """{"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}""",
             """{"trigger":{"kind":"deadline"},"expect":{"state":"parked","park":"timeout"}}""",
         ]);
 
         var failed = response.Cases[0];
-        Assert.Equal((false, 3), (failed.Passed, failed.Line));
+        Assert.Equal((false, 4), (failed.Passed, failed.Line));
         Assert.Contains("no running timer", failed.Detail, StringComparison.Ordinal);
     }
 

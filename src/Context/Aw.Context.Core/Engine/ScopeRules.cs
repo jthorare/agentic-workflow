@@ -71,7 +71,7 @@ public static class ScopeRules
     public static IReadOnlyList<ContextRepo> Usable(IReadOnlyList<ProfileRepoEntry> repos)
     {
         ArgumentNullException.ThrowIfNull(repos);
-        return [.. repos.Where(r => ContextRepoName.TryFrom(r.Name, out _)).Select(r => new ContextRepo(ContextRepoName.From(r.Name), r.Path) { DenyPaths = [.. PathDenylist.Defaults, .. r.DenyPaths ?? []], Concepts = r.Concepts ?? [], DemotePaths = r.DemotePaths ?? [] })];
+        return [.. repos.Where(r => ContextRepoName.TryFrom(r.Name, out _)).Select(r => new ContextRepo(ContextRepoName.From(r.Name), r.Path) { DenyPaths = [.. PathDenylist.Defaults, .. r.DenyPaths ?? []], Concepts = r.Concepts ?? [], DemotePaths = r.DemotePaths ?? [], Roles = r.Roles ?? [] })];
     }
 
     /// <summary>

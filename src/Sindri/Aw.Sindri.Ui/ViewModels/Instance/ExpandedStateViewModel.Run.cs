@@ -2,6 +2,7 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Components;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 
 namespace Aw.Sindri.Ui.ViewModels.Instance;
 
@@ -151,7 +152,13 @@ internal sealed partial class ExpandedStateViewModel
             return;
         }
 
-        // The app sends no command yet (U8b): a takeover's CLI is copied; Cancel (the component asked first, with the served
+        if (action == AttachAction.TakeOver && Commander is not null && InstanceId is not null)
+        {
+            await SendTakeover().ConfigureAwait(true);
+            return;
+        }
+
+        // Without a way to send: a takeover's CLI is copied; Cancel (the component asked first, with the served
         // sentence) and File a request say the send arrives later.
         if (action == AttachAction.TakeOver && Commands.FirstOrDefault(c => c.Verb == StatusVerb.Takeover) is { } takeover)
         {
@@ -190,6 +197,50 @@ internal sealed partial class ExpandedStateViewModel
             _sending = false;
             Attach?.Update(AttachFor(_address));
         }
+    }
+
+    // Sends the takeover once per press and says what its viewer did: opened or unconfirmed in words; anything else, or no viewer, as the
+    // reason with the attach command to copy. A server that served no viewer is asked for the launch. A refusal shows as served.
+    private async Task SendTakeover()
+    {
+        if (_sendingCommand || Commander is not { } commander || InstanceId is not { } instance)
+        {
+            return;
+        }
+
+        (_sendingCommand, AttachOutcomeLine, AttachCommand) = (true, Labels.AttachSending, string.Empty);
+        OnChanged(nameof(HasAttachCommand));
+        try
+        {
+            var answer = await commander.Send(new ApplyCommandBody(instance, CommandKind.Takeover)).ConfigureAwait(true);
+            if (answer is not { } result)
+            {
+                Pending();
+                return;
+            }
+
+            (AttachOutcomeLine, AttachCommand) = result.IsError
+                ? (Labels.AttachRefusal(result.Error.Code) ?? $"{result.Error.Message} ({result.Error.Code})", string.Empty)
+                : await TakeoverOutcome(result.Value).ConfigureAwait(true);
+            OnChanged(nameof(HasAttachCommand));
+            PendingVoice.Say(AttachOutcomeLine);
+        }
+        finally
+        {
+            _sendingCommand = false;
+        }
+    }
+
+    private async Task<(string Line, string Command)> TakeoverOutcome(ApplyCommandAccepted accepted)
+    {
+        var (viewer, attach) = (accepted.Viewer, accepted.Attach);
+        var launchId = _current.Status.Run?.Launch ?? _item?.Launch?.InFlight;
+        if (viewer is null && Attacher is { } attacher && launchId is not null && await attacher.ReadLaunch(launchId, CancellationToken.None).ConfigureAwait(true) is { } launch)
+        {
+            (viewer, attach) = (launch.Viewer, attach ?? launch.Attach);
+        }
+
+        return ViewerWords.TakeoverOutcome(viewer, attach);
     }
 
     /// <summary>Copies the attach command, whole.</summary>

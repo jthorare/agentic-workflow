@@ -56,6 +56,17 @@ public interface IGit
     /// <returns>True when the trees are identical.</returns>
     public Result<bool> SameTree(string directory, string first, string second);
 
+    /// <summary>
+    /// The tree-ish a candidate is diffed against: the baseline plus whatever main added to the candidate's branch by a merge, so a
+    /// merge of main after the baseline doesn't count as the fix's change. It is the baseline itself when main can't be found, when
+    /// the merge can't be replayed cleanly, or on any git failure.
+    /// </summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="baseline">The baseline commit.</param>
+    /// <param name="candidate">The candidate commit.</param>
+    /// <returns>The "from" tree-ish.</returns>
+    public string NetBase(string directory, string baseline, string candidate);
+
     /// <summary>The files changed between two commits, renames as delete plus add, paths raw with '/'.</summary>
     /// <param name="directory">A directory inside the repository.</param>
     /// <param name="from">The base commit.</param>

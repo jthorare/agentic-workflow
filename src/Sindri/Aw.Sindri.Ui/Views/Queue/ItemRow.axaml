@@ -14,11 +14,13 @@
         <ColumnDefinition Width="*" MinWidth="160" /><ColumnDefinition Width="150" /><ColumnDefinition Width="130" />
         <ColumnDefinition Width="110" /><ColumnDefinition Width="70" /><ColumnDefinition Width="260" />
       </Grid.ColumnDefinitions>
-      <Button x:Name="TitleButton" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
-        <StackPanel Orientation="Horizontal" Spacing="8">
+      <!-- The title and the id share the title column: the title takes what is left and trims, the id trims inside its own
+           cap, and the right margin keeps a gap before the Repo cell (A-11). -->
+      <Button x:Name="TitleButton" Classes="row-title" Click="OnOpen" Margin="0,0,8,0" ClipToBounds="True" AutomationProperties.Name="{Binding OpenName}">
+        <Grid ColumnDefinitions="*,Auto">
           <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
-          <TextBlock x:Name="IdText" Classes="mono subtle" Text="{Binding Id}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-        </StackPanel>
+          <TextBlock x:Name="IdText" Grid.Column="1" Margin="8,0,0,0" MaxWidth="120" Classes="mono subtle" Text="{Binding Id}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </Grid>
       </Button>
       <TextBlock x:Name="RepoText" AutomationProperties.Name="{Binding Repo}" Grid.Column="1" Classes="caption subtle" Text="{Binding Repo}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">

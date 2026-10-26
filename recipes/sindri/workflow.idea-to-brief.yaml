@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.idea-to-brief
-version: 3
+version: 4
 description: "Block recipe: turn a rough idea typed in the app into a cited brief through a short interview."
 displayName: "Turn a rough idea into a brief"
 inputs:
@@ -11,17 +11,17 @@ outputs:
   - { key: fact:anchors,   label: "Anchors",    type: payload, from: anchor }
 initial: seed
 states:
-  seed:    { kind: active, step: step.brief.seed, timeout: { after: 4h, then: park },
+  seed:    { kind: active, step: step.brief.seed, timeout: { after: 1d, then: park },
              next: "Start {item}'s idea interview with an empty answer log." }
-  ask:     { kind: active, step: step.brief.questions, loop: rounds, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  ask:     { kind: active, step: step.brief.questions, loop: rounds, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
              next: "Find what the idea for {item} leaves open and draft up to five questions with options (round {loop.rounds}/{loop.rounds.cap})." }
-  answer:  { kind: active, step: step.interview.answer, timeout: { after: 2d, then: park },
+  answer:  { kind: active, step: step.interview.answer, timeout: { after: 14d, then: park },
              next: "Answer the questions about your idea: pick an option, write your own under other, or skip one." }
-  record:  { kind: active, step: step.interview.record, timeout: { after: 4h, then: park },
+  record:  { kind: active, step: step.interview.record, timeout: { after: 1d, then: park },
              next: "Append the latest answers about {item}'s idea to the answer log." }
-  write:   { kind: active, step: step.brief.write, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  write:   { kind: active, step: step.brief.write, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
              next: "Write the brief for {item} from the idea and your answers." }
-  anchor:  { kind: active, step: step.scope.anchor, timeout: { after: 4h, then: park },
+  anchor:  { kind: active, step: step.scope.anchor, timeout: { after: 1d, then: park },
              next: "Find where {item}'s brief lands in the product map." }
   done:    { kind: terminal, outcome: resolved }
   dropped: { kind: terminal, outcome: unresolved }

@@ -158,6 +158,12 @@ public sealed class InMemoryRepos : IGit, IFiles
     public Result<bool> SameTree(string directory, string first, string second) =>
         Same(_commits[first].Files, _commits[second].Files);
 
+    /// <summary>The tree-ish <see cref="NetBase"/> returns instead of the baseline; null keeps the baseline.</summary>
+    public string? NetBaseOverride { get; set; }
+
+    /// <inheritdoc/>
+    public string NetBase(string directory, string baseline, string candidate) => NetBaseOverride ?? baseline;
+
     /// <inheritdoc/>
     public Result<IReadOnlyList<string>> ChangedFiles(string directory, string from, string to)
     {

@@ -15,6 +15,8 @@ namespace Aw.BugFix.Features.JudgeCandidate;
 internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger, IGit git, IJudge judge, TimeProvider clock)
     : IService<JudgeCandidateRequest, JudgeCandidateResponse>
 {
+    private const string NoReasons = "no-reasons";
+
     public ValueTask<Result<JudgeCandidateResponse>> Handle(JudgeCandidateRequest request, CancellationToken cancellationToken)
     {
         var question = store.Locked(request.StateDirectory, () => Ask(request));
@@ -68,7 +70,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var summary = check.Kind == CheckKind.Test
             ? $"the regression test {check.Path}, run as `{string.Join(' ', check.Command ?? [])}`"
             : $"the ui-evidence script {check.Path}";
-        return git.Diff(candidate.Worktree, baseline.Commit, candidate.Commit).Map(diff => new ResolutionCheckInput(
+        return git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline.Commit, candidate.Commit), candidate.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
             BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full)));
     }
@@ -108,6 +110,12 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         if (answer.Decision == JudgeDecision.Escalated)
         {
             return Escalated(request, fresh.Value, candidate.Value, answer);
+        }
+
+        // A partial or unresolved answer that names nothing gives the implementer nothing to act on: treated as an escalation.
+        if (answer.Decision != JudgeDecision.Resolved && answer.Reasons.All(string.IsNullOrWhiteSpace))
+        {
+            return Escalated(request, fresh.Value, candidate.Value, answer with { ReasonCode = NoReasons });
         }
 
         var status = answer.Decision == JudgeDecision.Resolved ? BugFixStatus.Active : fresh.Value.Status;   // a resolving candidate supersedes an earlier escalation in the attempt

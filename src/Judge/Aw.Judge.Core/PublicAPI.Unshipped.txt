@@ -327,6 +327,7 @@ const Aw.Judge.Core.Evaluation.EvaluationReasons.FallbackAfterUndecided = "fallb
 const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidInput = "invalid-input" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProvider = "none" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProviderDecided = "no-provider-decided" -> string!
+const Aw.Judge.Core.Evaluation.EvaluationReasons.NoReasons = "no-reasons" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.OutOfEnum = "out-of-enum" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.PreRule = "pre-rule" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.QuestionDisabled = "question-disabled" -> string!
@@ -785,6 +786,7 @@ const Aw.Judge.Core.Questions.UiElementRepairQuestion.Repaired = "repaired" -> s
 const Aw.Judge.Core.Questions.UntrustedText.BriefCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.DiffCap = 12000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.FieldCap = 2000 -> int
+const Aw.Judge.Core.Questions.UntrustedText.ResolutionDiffCap = 100000 -> int
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksOff = "looks-off" -> string!
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksRight = "looks-right" -> string!
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.Name = "visual-critique" -> string!
@@ -846,6 +848,7 @@ static Aw.Judge.Core.Questions.UiCandidate.operator ==(Aw.Judge.Core.Questions.U
 static Aw.Judge.Core.Questions.UiElementRepairInput.operator !=(Aw.Judge.Core.Questions.UiElementRepairInput? left, Aw.Judge.Core.Questions.UiElementRepairInput? right) -> bool
 static Aw.Judge.Core.Questions.UiElementRepairInput.operator ==(Aw.Judge.Core.Questions.UiElementRepairInput? left, Aw.Judge.Core.Questions.UiElementRepairInput? right) -> bool
 static Aw.Judge.Core.Questions.UiElementRepairQuestion.Definition.get -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.UiElementRepairInput!>!
+static Aw.Judge.Core.Questions.UntrustedText.CappedDiff(string! diff, int cap) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.Capped(string! text, int cap) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.Neutralized(string! text) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.OneLine(string! text) -> string!
@@ -988,6 +991,9 @@ Aw.Judge.Core.Questions.CheckKind.ApiEvidence = 3 -> Aw.Judge.Core.Questions.Che
 Aw.Judge.Core.Questions.CheckKind.DbEvidence = 4 -> Aw.Judge.Core.Questions.CheckKind
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.AskConfidence.get -> bool
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.AskConfidence.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.LacksReasons(Aw.Judge.Core.Providers.ProviderDecided! decided) -> bool
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReasonedOutputs.get -> System.Collections.Generic.IReadOnlySet<string!>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReasonedOutputs.init -> void
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReportsTrace.get -> bool
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReportsTrace.init -> void
 Aw.Judge.Core.Evaluation.QuestionEvaluator.EvaluateChoose(string! rawInput, Aw.Judge.Core.Evaluation.EvaluationContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Evaluation.EvaluationOutcome!>

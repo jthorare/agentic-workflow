@@ -56,7 +56,9 @@
 #           Aw.LaneCap.Testing CI tool) may reference every package. Analyzer packages (analyzer: true, Aw.Analyzers) are referenced from
 #           production code only with OutputItemType="Analyzer" (in a .csproj or a Directory.Build file);
 #           they need no edge and don't count as fan-out. Any other ProjectReference in a Directory.Build
-#           file fails.
+#           file fails. A ReferenceOutputAssembly="false" reference (not an analyzer) from test code is build
+#           order only: it needs its owner's cli edge to the target's package, makes no project edge current
+#           and is not fan-out (DEPS-PROJ-009).
 # scan      A heuristic, not a proof. It reads *.ts/*.js and *.sh under `scan` (not tests, node_modules or
 #           dist) and finds: spawn/exec*(…"bin…" calls, also wrapped over lines; `?? "bin"` and `|| "bin"`
 #           fallbacks; *Bin = "bin" and *Bin("bin"); BIN_BIN env names; shell commands after VAR=, env,
@@ -469,12 +471,12 @@ edges:
     to: Packets
     kind: cli
     status: planned
-    note: "every port and factory run is a packet; sindri runs aw-packets, since the use cases live in App and a project edge reaches only Core (spec §4c)"
+    note: "every port and factory run is a packet; sindri runs aw-packets, since the use cases live in App and a project edge reaches only Core (spec §4c); Aw.Sindri.Tests holds a build-order ProjectReference to the binary's project so a scoped test build builds it (#1128)"
   - from: Sindri
     to: BugFix
     kind: cli
     status: planned
-    note: "the bugfix block Steps (step.bugfix.start-attempt, record-candidate, recheck, judge; DT spec 5.5, 6.1) run bugfix-state, which owns the attempt count, the candidate rules, the frozen check and the once-per-candidate verdict; Sindri reaches it through the IBugFixState port and its CLI adapter (AW_BUGFIX_BIN, else bugfix-state on the PATH), since the use cases live in Host and a project edge reaches only Core (spec 4c)"
+    note: "the bugfix block Steps (step.bugfix.start-attempt, record-candidate, recheck, judge; DT spec 5.5, 6.1) run bugfix-state, which owns the attempt count, the candidate rules, the frozen check and the once-per-candidate verdict; Sindri reaches it through the IBugFixState port and its CLI adapter (AW_BUGFIX_BIN, else bugfix-state on the PATH), since the use cases live in Host and a project edge reaches only Core (spec 4c); Aw.Sindri.Tests holds a build-order ProjectReference to the binary's project so a scoped test build builds it (#1128)"
   - from: Sindri
     to: Judge
     kind: cli

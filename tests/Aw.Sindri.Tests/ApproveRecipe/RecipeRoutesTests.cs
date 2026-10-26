@@ -32,7 +32,7 @@ public sealed class RecipeRoutesTests : IAsyncLifetime
         var step = await Register();
         var human = Human(_host.Token.Value);
 
-        var issued = await Challenge("approve workflow.step 4", human);
+        var issued = await Challenge("approve workflow.step 5", human);
         var approved = await _host.Http.Ask(Post($"/sindri/workflow/recipes/workflow.step@{step.Hash.Digest}/approve", Answer(issued), human));
         var revoke = await Challenge($"revoke workflow.step@{step.Hash.Display}", human);
         var revoked = await _host.Http.Ask(Post($"/sindri/workflow/recipes/workflow.step@{step.Hash.Value}/revoke", Answer(revoke), human));
@@ -52,7 +52,7 @@ public sealed class RecipeRoutesTests : IAsyncLifetime
     public async Task Malformed_id_or_hash_in_the_route_is_a_400(string segment)
     {
         var answer = await _host.Http.Ask(Post($"/sindri/workflow/recipes/{Uri.EscapeDataString(segment).Replace("%40", "@", StringComparison.Ordinal)}/approve",
-            """{"challenge":"CHL-00000000000000000000000000000000","typed":"approve workflow.step 4"}""", Human(_host.Token.Value)));
+            """{"challenge":"CHL-00000000000000000000000000000000","typed":"approve workflow.step 5"}""", Human(_host.Token.Value)));
 
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CLI-003"), (answer.Status, answer.Code));
     }

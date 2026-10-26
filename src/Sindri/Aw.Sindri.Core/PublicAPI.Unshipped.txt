@@ -2769,6 +2769,8 @@ Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.get -> boo
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.PooledBudget.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyLaunchRound.init -> void
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.get -> bool
+Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyTimeoutPark.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyUnavailable.get -> bool
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.LegacyUnavailable.init -> void
 Aw.Sindri.Core.Workflow.Engine.Decisions.DecisionContext.DeskTimeout.get -> System.TimeSpan
@@ -11178,6 +11180,7 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Exit = 1 -> Aw.Sindri.Cor
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Lost = 2 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd.Idle = 3 -> Aw.Sindri.Core.Workflow.Engine.Runtime.AgentSessionEnd
 static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.Bound(System.TimeSpan max, System.TimeSpan? timerLeft) -> System.TimeSpan
+static Aw.Sindri.Core.Workflow.Blocks.BlockLimits.IsExplicit(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor) -> bool
 static Aw.Sindri.Core.Workflow.Engine.Rules.BlockStepTriggers.IsBlockActor(string! actor) -> bool
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockFactUnreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.Workflow.WorkflowErrors.BlockProfileUnreadable -> Aw.Kernel.ErrorDefinition!
@@ -18531,6 +18534,30 @@ Aw.Sindri.Core.Prove.PhaseSignals
 static Aw.Sindri.Core.Prove.PhaseSignals.Check(System.Text.Json.Nodes.JsonNode? signals) -> string?
 static Aw.Sindri.Core.Prove.PhaseSignals.Of(System.Text.Json.Nodes.JsonNode? signals, string! item) -> System.Collections.Generic.IReadOnlyList<System.Text.Json.Nodes.JsonObject!>!
 static Aw.Sindri.Core.Prove.PhaseSignals.Shape.get -> string!
+static Aw.Sindri.Core.Launches.LaunchRules.IdleTurn(System.DateTimeOffset turnEnded, System.DateTimeOffset now) -> bool
+static Aw.Sindri.Core.Health.HealthSummary.WithStalledAgents(Aw.Sindri.Core.Health.HealthReport! report, int stalled) -> Aw.Sindri.Core.Health.HealthReport!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForStalledAgent(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Needed(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor, Aw.Sindri.Core.Workflow.Ids.OutcomeName outcome) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
+Aw.Sindri.Core.Launches.StalledAgentRun
+Aw.Sindri.Core.Launches.StalledAgentRun.<Clone>$() -> Aw.Sindri.Core.Launches.StalledAgentRun!
+Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Equals(Aw.Sindri.Core.Launches.StalledAgentRun? other) -> bool
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Launches.StalledAgentRun.Item.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Launches.StalledAgentRun.Launch.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.init -> void
+override Aw.Sindri.Core.Launches.StalledAgentRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launches.StalledAgentRun.GetHashCode() -> int
+override Aw.Sindri.Core.Launches.StalledAgentRun.ToString() -> string!
+static Aw.Sindri.Core.Launches.StalledAgentRun.operator !=(Aw.Sindri.Core.Launches.StalledAgentRun? left, Aw.Sindri.Core.Launches.StalledAgentRun? right) -> bool
+static Aw.Sindri.Core.Launches.StalledAgentRun.operator ==(Aw.Sindri.Core.Launches.StalledAgentRun? left, Aw.Sindri.Core.Launches.StalledAgentRun? right) -> bool
+Aw.Sindri.Core.Launches.IStalledAgentRuns
+Aw.Sindri.Core.Launches.IStalledAgentRuns.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledAgentRun!>!>
 Aw.Sindri.Core.Profile.ConceptSettings
 Aw.Sindri.Core.Profile.ConceptSettings.<Clone>$() -> Aw.Sindri.Core.Profile.ConceptSettings!
 Aw.Sindri.Core.Profile.ConceptSettings.ConceptSettings(Aw.Sindri.Core.Ids.ConceptPinId? Id = null, string? Name = null, string? Summary = null, System.Collections.Generic.IReadOnlyList<string!>? Features = null, System.Collections.Generic.IReadOnlyList<string!>? Paths = null) -> void
@@ -18617,6 +18644,24 @@ Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.ShippedApprovalPlans(Aw.Sindri.Core.Workflow.Registry.RecipeApprovalPlanner! planner, Aw.Sindri.Core.Workflow.ApproveAll.ShippedRecipeRegistration? registration = null) -> void
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, int version, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.ApprovalPlan!>!>
 Aw.Sindri.Core.Workflow.ApproveAll.ShippedApprovalPlans.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, string! hash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Workflow.Registry.ApprovalPlan!>!>
+Aw.Sindri.Core.Workflow.Engine.Runtime.FilledInput.DurationMs.get -> long?
+Aw.Sindri.Core.Workflow.Engine.Runtime.FilledInput.DurationMs.init -> void
+Aw.Sindri.Core.Events.WorkflowEventDetail.Inputs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming!>?
+Aw.Sindri.Core.Events.WorkflowEventDetail.Inputs.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming!
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Input, out long DurationMs) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.DurationMs.get -> long
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.DurationMs.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.Equals(Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming? other) -> bool
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.Input.get -> Aw.Sindri.Core.Workflow.Ids.BlockId
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.Input.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.InputTiming(Aw.Sindri.Core.Workflow.Ids.BlockId Input, long DurationMs) -> void
+override Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.operator !=(Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming? left, Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming? right) -> bool
+static Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming.operator ==(Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming? left, Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming? right) -> bool
 Aw.Sindri.Core.Scheduling.MainMoveInput
 Aw.Sindri.Core.Scheduling.MainMoveInput.<Clone>$() -> Aw.Sindri.Core.Scheduling.MainMoveInput!
 Aw.Sindri.Core.Scheduling.MainMoveInput.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! OnDefaultHeads, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? LastSucceededHeads, out bool RulesChanged) -> void
@@ -18640,3 +18685,27 @@ Aw.Sindri.Core.Profile.IndexSettings.Demote.get -> System.Collections.Generic.IR
 Aw.Sindri.Core.Profile.IndexSettings.Demote.init -> void
 Aw.Sindri.Core.Profile.RepoDemoteGlobs
 static Aw.Sindri.Core.Profile.RepoDemoteGlobs.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<string!>?
+static Aw.Sindri.Core.Checks.TestPaths.UnnamedExisting(System.Collections.Generic.IEnumerable<string!>! allowed, System.Collections.Generic.IReadOnlyCollection<string!>! named) -> System.Collections.Generic.IEnumerable<string!>!
+static Aw.Sindri.Core.Checks.TestPaths.AllowedEntries(System.Collections.Generic.IReadOnlyList<string!>! writeScope, System.Collections.Generic.IReadOnlyList<string!>! allowedFiles) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Scoping.ChallengeRoundShape
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Covers(Aw.Sindri.Core.Workflow.Ids.FactKey fact) -> bool
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.LogShape(System.Text.Json.Nodes.JsonObject! round) -> string?
+static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Violation(System.ReadOnlySpan<byte> content) -> string?
+Aw.Sindri.Core.Profile.RepoRoleSets
+static Aw.Sindri.Core.Profile.RepoRoleSets.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ProfileRole!>?
+Aw.Sindri.Core.Profile.ProfileRole
+Aw.Sindri.Core.Profile.ProfileRole.<Clone>$() -> Aw.Sindri.Core.Profile.ProfileRole!
+Aw.Sindri.Core.Profile.ProfileRole.Deconstruct(out string! Name, out bool Demoted, out System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Sindri.Core.Profile.ProfileRole.Equals(Aw.Sindri.Core.Profile.ProfileRole? other) -> bool
+Aw.Sindri.Core.Profile.ProfileRole.ProfileRole(string! Name, bool Demoted, System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Sindri.Core.Profile.ProfileRole.Name.get -> string!
+Aw.Sindri.Core.Profile.ProfileRole.Name.init -> void
+Aw.Sindri.Core.Profile.ProfileRole.Demoted.get -> bool
+Aw.Sindri.Core.Profile.ProfileRole.Demoted.init -> void
+Aw.Sindri.Core.Profile.ProfileRole.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Profile.ProfileRole.Globs.init -> void
+override Aw.Sindri.Core.Profile.ProfileRole.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ProfileRole.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ProfileRole.ToString() -> string!
+static Aw.Sindri.Core.Profile.ProfileRole.operator !=(Aw.Sindri.Core.Profile.ProfileRole? left, Aw.Sindri.Core.Profile.ProfileRole? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileRole.operator ==(Aw.Sindri.Core.Profile.ProfileRole? left, Aw.Sindri.Core.Profile.ProfileRole? right) -> bool

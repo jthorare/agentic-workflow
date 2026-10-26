@@ -16,7 +16,7 @@ internal sealed partial class RecipeWorkflow
 {
     private static readonly LocalActivityOptions _gateOptions = new()
     {
-        StartToCloseTimeout = TimeSpan.FromSeconds(30),
+        StartToCloseTimeout = ActivityBounds.Long,
         RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 3 },
     };
 

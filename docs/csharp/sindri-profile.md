@@ -251,3 +251,9 @@ A map of agent id to its limits, plus the reserved sibling `softLimit`. An id is
 | `dailyBudget` | decimal (USD) | no | none | `agents.<id>.dailyBudget`: the agent's daily budget; a target with no usage reader and a budget is refused (`SND-LAUNCH-010`; screens spec E-28) |
 | `stepArgvHash` | string or string[] | no | none | `agents.<id>.stepArgvHash`: one `argvHash` or a list, the hashes an unattended Step may run for this agent when its entry isn't built in or a `bin`-only override (SL8; session-launcher spec L-11) |
 | `softLimit` | fraction, `0 < x <= 1` | no | `0.8` | `agents.softLimit`: the share of a daily budget that raises the soft warning (screens spec E-28) |
+
+## Approvals across builds (#1143)
+
+An approval is the canonical JSON of the build that approved it, stored under the sha256 of those bytes. A later build checks the bytes against that
+hash and parses them to show the diff; it does not hash them again through its own model, so adding a profile key never invalidates an existing approval.
+The live profile is hashed by the running build, so after such an upgrade `sindri profile approve` shows the live hash as new (an empty or small diff) and approving it records the build's own form.

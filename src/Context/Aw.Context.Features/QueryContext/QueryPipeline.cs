@@ -74,8 +74,12 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        return assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos) };
     }
+
+    private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>
+        graph.Candidates.Select(c => c.Item.Node).OfType<string>().Select(n => NodeKey.TryFrom(n, out var key) ? key : (NodeKey?)null).OfType<NodeKey>();
 
     // A demoted file's code item ranks after every other item of the answer (it is still there: a direct read of its node finds it).
     private static GraphPart DemotedLast(GraphPart graph, IReadOnlyList<ContextRepo> repos) =>

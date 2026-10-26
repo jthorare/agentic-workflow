@@ -26,7 +26,7 @@ public sealed record FrozenCheck(CheckKind Kind, string Path, string Sha256, IRe
 
         if (record.Outcome == RunOutcome.Broken)
         {
-            return BugFixErrors.RunRefused.With("the run is broken (it didn't start, timed out, or only had broken steps); repair it and re-run, a broken run is not a verdict on the fix");
+            return BugFixErrors.RunRefused.With("the run is broken (it didn't start, timed out, was killed by a signal, left an empty log, or only had broken steps); repair it and re-run, a broken run is not a verdict on the fix");
         }
 
         return Kind == CheckKind.Test ? SameTestRun(record) : record;
@@ -51,8 +51,10 @@ public sealed record FrozenCheck(CheckKind Kind, string Path, string Sha256, IRe
             return BugFixErrors.RunRefused.With($"the test command's program `{(Command ?? ["?"])[0]}` resolved to a different file than at the baseline (check PATH)");
         }
 
-        var differ = Environment.Keys.Union(record.Environment.Keys, StringComparer.Ordinal)
-            .Where(name => Environment.GetValueOrDefault(name) != record.Environment.GetValueOrDefault(name))
+        // Only the names the baseline recorded: a baseline frozen before a variable joined the default list (DOTNET_ROOT) still
+        // accepts runs that carry it.
+        var differ = Environment.Keys
+            .Where(name => Environment[name] != record.Environment.GetValueOrDefault(name))
             .Order(StringComparer.Ordinal)
             .ToList();
         return differ.Count == 0
