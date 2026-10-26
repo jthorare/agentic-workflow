@@ -180,6 +180,22 @@ public sealed class AgentOutputTypeTests
         _ = Assert.Single(run.Sent);
     }
 
+    [Fact(Timeout = 30_000)]
+    public async Task A_challenge_round_that_is_the_challenge_log_is_refused_naming_the_shape_and_a_real_round_passes()
+    {
+        var run = new AgentRun();
+        var service = Service(run);
+        var round = FactKey.From("fact:challengeRound");
+
+        var log = await service.Handle(Report(1, (round, """{"rounds":[{"walked":[{"kind":"lens","name":"code"}],"verdict":"found","round":1}]}""")), TestContext.Current.CancellationToken);
+        var good = await service.Handle(Report(2, (round, """{"walked":[{"kind":"lens","name":"code"}],"verdict":"nothingNew"}""")), TestContext.Current.CancellationToken);
+
+        Assert.Equal("SND-WF-008", log.Error.Code);
+        Assert.Contains("fact:challengeRound is a challenge log, not a round", log.Error.Message, StringComparison.Ordinal);
+        Assert.False(good.IsError, good.IsError ? good.Error.Message : null);
+        _ = Assert.Single(run.Sent);
+    }
+
     private CompleteStepService Service(AgentRun run)
     {
         _files.Open(_launch, Proof);

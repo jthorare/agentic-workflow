@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Layout;
 
@@ -29,5 +30,32 @@ public sealed class PageLayoutBandTests
         PageLayout.Apply(grid, PageTier.Tight);
 
         Assert.Equal([true, false, true, false, true, true], grid.Children.Select(c => c.IsVisible));
+    }
+
+    [Theory]
+    [InlineData("Wide", 1120)]
+    [InlineData("Mid", 1000)]
+    [InlineData("Narrow", 760)]
+    public void The_columns_beside_the_title_leave_it_160_px_at_the_start_of_each_tier(string tier, double width)
+    {
+        var grid = SixColumns();
+
+        PageLayout.Apply(grid, Enum.Parse<PageTier>(tier));
+
+        var fixedWidth = grid.ColumnDefinitions.Skip(1).Sum(c => c.Width.Value);
+        Assert.True(width - fixedWidth >= 160, string.Create(CultureInfo.InvariantCulture, $"{tier}: the title column gets {width - fixedWidth} px"));
+        Assert.Equal(Avalonia.Controls.GridUnitType.Star, grid.ColumnDefinitions[0].Width.GridUnitType);
+    }
+
+    private static Avalonia.Controls.Grid SixColumns()
+    {
+        var grid = new Avalonia.Controls.Grid();
+        for (var i = 0; i < 6; i++)
+        {
+            grid.ColumnDefinitions.Add(new Avalonia.Controls.ColumnDefinition());
+            grid.Children.Add(new Avalonia.Controls.Border { [Avalonia.Controls.Grid.ColumnProperty] = i });
+        }
+
+        return grid;
     }
 }

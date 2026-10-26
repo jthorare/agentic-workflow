@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Testing;
 
@@ -12,6 +13,7 @@ public sealed class CallerContextBuilder
     private ClientLabel _client = ClientLabel.None;
     private RepoName? _repo;
     private string? _service;
+    private LaunchId? _launch;
 
     /// <summary>A human caller (no terminal unless <see cref="AtTerminal"/>).</summary>
     /// <returns>This builder.</returns>
@@ -48,6 +50,17 @@ public sealed class CallerContextBuilder
         return this;
     }
 
+    /// <summary>A session Sindri itself launched (its X-Sindri-Launch).</summary>
+    /// <param name="launch">The launch id.</param>
+    /// <returns>This builder.</returns>
+    public CallerContextBuilder Launched(string launch = "LCH-00000000000000000000000000000001")
+    {
+        _class = CallerClass.Session;
+        _terminal = false;
+        _launch = LaunchId.From(launch);
+        return this;
+    }
+
     /// <summary>An in-process 'service:&lt;name&gt;' caller.</summary>
     /// <param name="name">The service.</param>
     /// <returns>This builder.</returns>
@@ -74,6 +87,6 @@ public sealed class CallerContextBuilder
         var ids = new SequentialIdGenerator();
         return _class == CallerClass.Service
             ? CallerContext.Service(_service ?? "host", ids) with { Repo = _repo }
-            : CallerContext.Http(_class, _terminal, _client, _repo, ids);
+            : CallerContext.Http(new HttpCaller(_class, _terminal, _client, _repo, _launch), ids);
     }
 }

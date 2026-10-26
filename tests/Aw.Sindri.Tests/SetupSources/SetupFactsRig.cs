@@ -33,7 +33,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             new ProfileSetupReader(Profiles, Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
             _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
             new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
-            new OnyxSetupReader(new OnyxStatusReader(Onyx.Pins, new OnyxFacts(Onyx.Runtime, Onyx.Probes, new FakeSindriHome(OnyxUpRig.Home)), Onyx.Health, Onyx.Workspace), Slice.Store, Slice.Events, Jobs),
+            new OnyxSetupReader(new OnyxStatusReader(Onyx.Pins, new OnyxFacts(Onyx.Runtime, Onyx.Probes, new FakeSindriHome(OnyxUpRig.Home)), Onyx.Health, Onyx.Workspace), Slice.Store, Slice.Events, Jobs, TimeProvider.System),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
     }

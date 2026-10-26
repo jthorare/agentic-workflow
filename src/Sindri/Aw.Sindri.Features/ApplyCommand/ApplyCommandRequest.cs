@@ -29,6 +29,10 @@ public sealed record ApplyCommandRequest(
     CommandNonce? Nonce = null,
     ChallengeAnswer? Challenge = null) : ICommand<ApplyCommandResponse>, IClassifiedCommand
 {
+    /// <summary>True when <see cref="Instance"/> is a route segment (a client never sends an address there); set by the endpoint, never by a client: the validator then requires an instance id, after authorization has run.</summary>
+    [JsonIgnore]
+    public bool FromRoute { get; init; }
+
     /// <summary>
     /// The catalog variant (engine spec §6.2, UI spec E-12): 'answer-&lt;variant&gt;' ('answer-text', 'answer-grant' …),
     /// 'command' for every recipe verb, 'cancel', 'takeover' or 'handback'. An answer without a variant is 'answer', which no row names, so it is

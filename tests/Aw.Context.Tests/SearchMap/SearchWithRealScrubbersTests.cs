@@ -19,7 +19,7 @@ public sealed class SearchWithRealScrubbersTests
         var scrubbers = new RedactionScrubberFactory(new FakeTimeProvider()).For([]).Value;
         var graph = new GraphSnapshot(
             [
-                new GraphNode(NodeKey.From("code:src/tabs/TabManager.ts"), "TabManager.ts", Aw.Context.Core.Results.Provenance.Deterministic),
+                new GraphNode(NodeKey.From("code:src/tabs/TabManager.ts"), "TabManager.ts", Context.Core.Results.Provenance.Deterministic),
                 new GraphNode(NodeKey.From("feature:tabs.tab-manager"), "Tab manager"),
                 new GraphNode(NodeKey.From("feature:layout.split-pane"), "Split pane"),
             ],
@@ -54,8 +54,8 @@ public sealed class SearchWithRealScrubbersTests
         _ = await world.ImportYaml(FixtureMap.Yaml);
 
         // The fixture's rename override makes the feature's label "Tabs": the search reads the map the caller sees, so "tab manager" finds only the file.
-        var renamed = (await world.Engine.Search(new MapSearchQuery("tabs", Limit: null, Area: null, Repo: null, Aw.Context.Core.Map.MapRead.Current), MapWorld.Human, MapWorld.None)).Value;
-        var old = (await world.Engine.Search(new MapSearchQuery("tab manager", Limit: null, Area: null, Repo: null, Aw.Context.Core.Map.MapRead.Current), MapWorld.Human, MapWorld.None)).Value;
+        var renamed = (await world.Engine.Search(new MapSearchQuery("tabs", Limit: null, Area: null, Repo: null, MapRead.Current), MapWorld.Human, MapWorld.None)).Value;
+        var old = (await world.Engine.Search(new MapSearchQuery("tab manager", Limit: null, Area: null, Repo: null, MapRead.Current), MapWorld.Human, MapWorld.None)).Value;
 
         Assert.True(renamed.Hits.Count > 0 && renamed.Hits[0].Key.Value == "feature:tabs.tab-manager", string.Join(' ', renamed.Hits.Select(static h => h.Key.Value)));
         Assert.DoesNotContain(old.Hits, static h => h.Key.Value == "feature:tabs.tab-manager");

@@ -56,6 +56,17 @@ public interface IGit
     /// <returns>True when the trees are identical.</returns>
     public Result<bool> SameTree(string directory, string first, string second);
 
+    /// <summary>
+    /// The tree-ish a candidate is diffed against: the baseline plus whatever main added to the candidate's branch by a merge, so a
+    /// merge of main after the baseline doesn't count as the fix's change. It is the baseline itself when main can't be found, when
+    /// the merge can't be replayed cleanly, or on any git failure.
+    /// </summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="baseline">The baseline commit.</param>
+    /// <param name="candidate">The candidate commit.</param>
+    /// <returns>The "from" tree-ish.</returns>
+    public string NetBase(string directory, string baseline, string candidate);
+
     /// <summary>The files changed between two commits, renames as delete plus add, paths raw with '/'.</summary>
     /// <param name="directory">A directory inside the repository.</param>
     /// <param name="from">The base commit.</param>
@@ -76,4 +87,21 @@ public interface IGit
     /// <param name="to">The candidate commit.</param>
     /// <returns>The diff stat and the diff (null when git can't produce the full diff).</returns>
     public Result<CommitDiff> Diff(string directory, string from, string to);
+
+    /// <summary>
+    /// The commits main has that the baseline lacks, up to the point the candidate's branch last met main (the commits
+    /// <see cref="NetBase"/> adds to the baseline), oldest first, merges left out. Empty when main can't be found.
+    /// </summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="baseline">The baseline commit.</param>
+    /// <param name="candidate">The candidate commit.</param>
+    /// <returns>The commits, each with its parent and full message.</returns>
+    public Result<IReadOnlyList<MainCommit>> MainCommits(string directory, string baseline, string candidate);
+
+    /// <summary>The text of <paramref name="path"/> as committed at <paramref name="commit"/>.</summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="path">The repository-relative path, with '/'.</param>
+    /// <returns>The file's text, or a git failure when the commit has no such file.</returns>
+    public Result<string> FileAt(string directory, string commit, string path);
 }

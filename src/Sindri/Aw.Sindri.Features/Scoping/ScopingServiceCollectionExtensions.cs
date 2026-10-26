@@ -1,5 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Workflow.Blocks;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.Scoping;
@@ -15,6 +16,8 @@ internal static class ScopingServiceCollectionExtensions
         .AddScoped<IService<ScopingShowRequest, ScopingView>, ScopingShowService>()
         .AddScoped<IService<ScopingDeskRequest, ScopingDeskResponse>, ScopingDeskService>()
         .AddScoped<ScopingInstances>()
+        .AddSingleton<IAgentStepInstructions, ScopeChallengeInstructions>()
+        .AddSingleton<IAgentStepInstructions, ScopeMapInstructions>()
         .AddBlockRuntime<BriefSeedStep>()
         .AddBlockRuntime<InterviewRecordStep>()
         .AddBlockRuntime<ChallengeLogStep>()
@@ -29,5 +32,7 @@ internal static class ScopingServiceCollectionExtensions
         .AddBlockRuntime<ScopeReadChangeStep>()
         .AddBlockRuntime<ScopeReadTrackerStep>()
         .AddBlockRuntime<ScopeReanchorStep>()
-        .AddBlockRuntime<ScopeWithdrawStep>();
+        .AddBlockRuntime<ScopeWithdrawStep>()
+        .AddScopeRelevance()
+        .AddScopeGapSearch();
 }

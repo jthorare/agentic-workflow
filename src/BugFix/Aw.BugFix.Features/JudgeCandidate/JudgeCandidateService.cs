@@ -15,6 +15,8 @@ namespace Aw.BugFix.Features.JudgeCandidate;
 internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger, IGit git, IJudge judge, TimeProvider clock)
     : IService<JudgeCandidateRequest, JudgeCandidateResponse>
 {
+    private const string NoReasons = "no-reasons";
+
     public ValueTask<Result<JudgeCandidateResponse>> Handle(JudgeCandidateRequest request, CancellationToken cancellationToken)
     {
         var question = store.Locked(request.StateDirectory, () => Ask(request));
@@ -68,10 +70,48 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var summary = check.Kind == CheckKind.Test
             ? $"the regression test {check.Path}, run as `{string.Join(' ', check.Command ?? [])}`"
             : $"the ui-evidence script {check.Path}";
-        return git.Diff(candidate.Worktree, baseline.Commit, candidate.Commit).Map(diff => new ResolutionCheckInput(
+        return JudgeDiff(state.Ticket, candidate, baseline.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
-            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full)));
+            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full), CheckSource(candidate, check)));
     }
+
+    // The frozen check's own file at the candidate's commit: a red commit that already holds the test is not "no proof".
+    private string? CheckSource(Candidate candidate, FrozenCheck check)
+    {
+        var source = git.FileAt(candidate.Worktree, candidate.Commit, check.Path);
+        return source.IsSuccess ? Capped(source.Value) : null;
+    }
+
+    // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), after the changes of the
+    // commits main already had for this GitHub issue ("Part of #N" / "Fixes #N" in the message): a fix a merged "Part of" PR
+    // made is still the fix. Another kind of ticket gets the candidate's change alone.
+    private Result<CommitDiff> JudgeDiff(Ticket ticket, Candidate candidate, string baseline)
+    {
+        var own = git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline, candidate.Commit), candidate.Commit);
+        if (own.IsError || GithubIssue.Number(ticket) is not { } issue)
+        {
+            return own;
+        }
+
+        var already = git.MainCommits(candidate.Worktree, baseline, candidate.Commit);
+        var named = already.IsSuccess ? already.Value.Where(commit => GithubIssue.Names(commit.Message, issue)).ToList() : [];
+        var diffs = new List<CommitDiff>();
+        foreach (var commit in named)
+        {
+            var diff = git.Diff(candidate.Worktree, commit.Parent, commit.Sha);
+            if (diff.IsError)
+            {
+                return diff.Error;
+            }
+
+            diffs.Add(diff.Value);
+        }
+
+        return diffs.Count == 0 ? own : Joined([.. diffs, own.Value]);
+    }
+
+    private static CommitDiff Joined(IReadOnlyList<CommitDiff> parts) =>
+        new(string.Join('\n', parts.Select(static p => p.Stat)), parts.Any(static p => p.Full is null) ? null : string.Concat(parts.Select(static p => p.Full)));
 
     private static string? Capped(string? diff) =>
         diff is null || diff.Length <= ResolutionCheckInput.DiffCap
@@ -108,6 +148,12 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         if (answer.Decision == JudgeDecision.Escalated)
         {
             return Escalated(request, fresh.Value, candidate.Value, answer);
+        }
+
+        // A partial or unresolved answer that names nothing gives the implementer nothing to act on: treated as an escalation.
+        if (answer.Decision != JudgeDecision.Resolved && answer.Reasons.All(string.IsNullOrWhiteSpace))
+        {
+            return Escalated(request, fresh.Value, candidate.Value, answer with { ReasonCode = NoReasons });
         }
 
         var status = answer.Decision == JudgeDecision.Resolved ? BugFixStatus.Active : fresh.Value.Status;   // a resolving candidate supersedes an earlier escalation in the attempt

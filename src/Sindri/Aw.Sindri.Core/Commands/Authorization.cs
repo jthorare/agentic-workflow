@@ -7,6 +7,9 @@ namespace Aw.Sindri.Core.Commands;
 /// AuthorizingService asks it, and the command list renders <see cref="CallersFor(CommandRow)"/>. A human at a terminal, a human in the app
 /// and an agent session may run every class a human may (owner decision q93: no caller is refused a desk, job, decision or protected action). The one exception is a row that still needs a terminal (the line holdout read, which hides scenarios from the agent that implements them): it narrows any class to a human at one. A desk row may name the in-process services it grants ('service:host' →
 /// StopProcess). 'step-report' is a launched session's (its launch secret is checked by the service, API spec §8.1), and 'local' never runs through the API, so it refuses everyone.
+/// A session Sindri itself launched (its caller carries a launch, owner decisions q100 and #1002) is narrower than an owner-started one: it files requests, reports
+/// its own Step, runs jobs and takes the one-time issue rows (its nonce, heartbeat and exit), and is refused every pause, decision, desk and protected action.
+/// The command list still names both kinds of session 'session'.
 /// </summary>
 public static class Authorization
 {
@@ -16,15 +19,15 @@ public static class Authorization
 
     private static readonly Dictionary<ActionClass, Who> _table = new()
     {
-        [ActionClass.Request] = Who.Terminal | Who.App | Who.Session | Who.Service,
-        [ActionClass.StepReport] = Who.Session,
+        [ActionClass.Request] = Who.Terminal | Who.App | Who.Session | Who.Launched | Who.Service,
+        [ActionClass.StepReport] = Who.Session | Who.Launched,
         [ActionClass.Pause] = Who.Terminal | Who.App | Who.Session | Who.Service,
-        [ActionClass.Job] = Who.Terminal | Who.App | Who.Session | Who.Service,
+        [ActionClass.Job] = Who.Terminal | Who.App | Who.Session | Who.Launched | Who.Service,
         [ActionClass.Decision] = Who.Terminal | Who.App | Who.Session,
         [ActionClass.Desk] = Who.Terminal | Who.App | Who.Session,
         [ActionClass.Protected] = Who.Terminal | Who.App | Who.Session,
         [ActionClass.Local] = Who.None,
-        [ActionClass.Issue] = Who.Terminal | Who.App | Who.Session,
+        [ActionClass.Issue] = Who.Terminal | Who.App | Who.Session | Who.Launched,
     };
 
     [Flags]
@@ -35,6 +38,7 @@ public static class Authorization
         App = 2,
         Session = 4,
         Service = 8,
+        Launched = 16,
     }
 
     /// <summary>Decides whether <paramref name="caller"/> may run <paramref name="row"/>, whose class is <paramref name="actionClass"/>.</summary>
@@ -80,6 +84,7 @@ public static class Authorization
         null => Who.None,
         { Class: CallerClass.Human, Terminal: true } => Who.Terminal,
         { Class: CallerClass.Human } => Who.App,
+        { Class: CallerClass.Session, Launch: not null } => Who.Launched,
         { Class: CallerClass.Session } => Who.Session,
         { Class: CallerClass.Service } => Who.Service,
         _ => Who.None,

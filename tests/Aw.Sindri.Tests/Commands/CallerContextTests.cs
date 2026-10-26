@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Commands;
@@ -16,13 +17,25 @@ public sealed class CallerContextTests
     [InlineData(CallerClass.Session, ClientLabel.Prover, "session:http")]
     [InlineData(CallerClass.Service, ClientLabel.None, "session:http")]
     public void Http_composes_the_actor_from_the_class_and_the_label(CallerClass caller, ClientLabel client, string actor) =>
-        Assert.Equal(actor, CallerContext.Http(caller, terminal: false, client, repo: null, new SequentialIdGenerator()).Actor);
+        Assert.Equal(actor, CallerContext.Http(new HttpCaller(caller, Terminal: false, client, Repo: null), new SequentialIdGenerator()).Actor);
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(CallerClass.Session, true)]
+    [InlineData(CallerClass.Human, false)]
+    public void Http_carries_the_launch_only_for_a_session(CallerClass caller, bool kept)
+    {
+        var launch = LaunchId.From("LCH-00000000000000000000000000000001");
+
+        var context = CallerContext.Http(new HttpCaller(caller, Terminal: false, ClientLabel.Cli, Repo: null, launch), new SequentialIdGenerator());
+
+        Assert.Equal(kept ? launch : null, context.Launch);
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void Terminal_is_kept_only_for_a_human()
     {
         Assert.True(A.Caller().AtTerminal().Build().Terminal);
-        Assert.False(CallerContext.Http(CallerClass.Session, terminal: true, ClientLabel.Cli, repo: null, new SequentialIdGenerator()).Terminal);
+        Assert.False(CallerContext.Http(new HttpCaller(CallerClass.Session, Terminal: true, ClientLabel.Cli, Repo: null), new SequentialIdGenerator()).Terminal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -138,8 +138,8 @@ public sealed class SearchMapTests : IDisposable
         var terminal = (await Ask("tab manager spec", scope: MapWorld.HumanVia(ContextClient.Cli))).Value;
         var mcp = (await Ask("tab manager spec", scope: MapWorld.HumanVia(ContextClient.Mcp))).Value;
 
-        var plain = terminal.Hits.First(static h => h.Key.Kind == Aw.Context.Core.Graph.NodeKind.Record);
-        var fenced = mcp.Hits.First(static h => h.Key.Kind == Aw.Context.Core.Graph.NodeKind.Record);
+        var plain = terminal.Hits.First(static h => h.Key.Kind == Context.Core.Graph.NodeKind.Record);
+        var fenced = mcp.Hits.First(static h => h.Key.Kind == Context.Core.Graph.NodeKind.Record);
         Assert.DoesNotContain("<untrusted", plain.Label, StringComparison.Ordinal);
         Assert.Contains("<untrusted", fenced.Label, StringComparison.Ordinal);
         Assert.Contains("<untrusted", fenced.Snippet, StringComparison.Ordinal);

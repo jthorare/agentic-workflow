@@ -39,7 +39,7 @@ public sealed class RunDoctorTests
 
         var report = (await Service().Handle(new RunDoctorRequest(), Token)).Value;
 
-        Assert.Equal("lease,ledger,views,profile,api,temporal,context:map,context:retention,context:publish,context:onyx,context:linear,code-index", string.Join(',', report.Checks.Select(c => c.Name)));
+        Assert.Equal("lease,ledger,views,profile,api,temporal,context:map,context:roles,context:retention,context:publish,context:onyx,context:linear,code-index", string.Join(',', report.Checks.Select(c => c.Name)));
         Assert.All(report.Checks.Where(c => c.Name is not ("context:map" or "context:retention")), c => Assert.Equal(CheckState.Ok, c.State));
         Assert.Equal((CheckState.Warn, "no map yet", "sindri context map import <file>"), (report.Checks[6].State, report.Checks[6].Detail, report.Checks[6].Fix));
         Assert.Equal(1, report.ExitCode);   // the test engine has no map, so context:map warns (S-3a); everything else, context:onyx included, is green

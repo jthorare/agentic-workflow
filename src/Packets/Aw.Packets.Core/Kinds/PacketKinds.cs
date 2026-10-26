@@ -7,7 +7,7 @@ public static class PacketKinds
     public static PacketKind Build { get; } = new("build", []);
 
     /// <summary>
-    /// The scope packet of the scoping station (scoping spec §8.3): twelve fixed files. 'lenses.json' has a typed
+    /// The scope packet of the scoping station (scoping spec §8.3): fourteen fixed files. 'lenses.json' has a typed
     /// schema; the others are checked for their shape only, and Sindri's 'ScopePacketChecks' owns what they mean.
     /// </summary>
     public static PacketKind Scoping { get; } = new("scoping",
@@ -16,10 +16,12 @@ public static class PacketKinds
         new("acceptance.json", PacketFileFormat.Json),
         new("coverage.json", PacketFileFormat.Json),
         new("lenses.json", PacketFileFormat.Json),
+        new("relevance.json", PacketFileFormat.Json),
         new("size.json", PacketFileFormat.Json),
         new("questions.json", PacketFileFormat.Json),
         new("answers.jsonl", PacketFileFormat.JsonLines),
         new("challenge.json", PacketFileFormat.Json),
+        new("gap-search.json", PacketFileFormat.Json),
         new("rounds.jsonl", PacketFileFormat.JsonLines),
         new("runs.json", PacketFileFormat.Json),
         new("sources.json", PacketFileFormat.Json),

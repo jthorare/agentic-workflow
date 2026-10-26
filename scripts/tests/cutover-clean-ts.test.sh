@@ -2,8 +2,9 @@
 # Tests for scripts/cutover-clean-ts.sh (cutover spec §8, §8.1, P2). Run: bash scripts/tests/cutover-clean-ts.test.sh
 # Each scenario seeds a fake TS install in its own temp directory (state dir, ~/.local/bin, LaunchAgents, git config, a
 # profile with one repo that carries a v2 pre-commit hook, a TS-shaped judge database) and stub binaries in place of the
-# published C# ones. Nothing here builds, starts sindri, touches the real HOME or kills a process (the one background
-# process, a file holder for the step-1 refusal, is stopped by its recorded pid).
+# published C# ones. Apart from the bugfix-state case below, nothing here builds, starts sindri, touches the real HOME or kills a process (the one background
+# process, a file holder for the step-1 refusal, is stopped by its recorded pid). The last case before the log-dir check runs the
+# real bugfix-state: $BUGFIX_STATE_BIN, else one dotnet build of src/BugFix/Aw.BugFix.Host (needs dotnet; a missing SDK fails it).
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DIR/../.." && pwd)"
@@ -12,6 +13,7 @@ SCRIPT="$REPO_ROOT/scripts/cutover-clean-ts.sh"
 # The lane and agent environment must not steer the script or the stubs.
 for v in $(env | sed -n 's/^\(AW_META[A-Z_]*\|AW_SINDRI[A-Z_]*\|TMUX\|TMUX_PANE\|AW_PROFILE_DIR\|AW_JUDGE[A-Z_]*\)=.*/\1/p'); do unset "$v"; done
 ORIG_PATH="$PATH"
+REAL_HOME="$HOME"
 fail=0
 ok() { echo "ok - $1"; }
 bad() { echo "not ok - $1"; fail=1; }
@@ -82,13 +84,18 @@ EOF
   # --- the kept list
   mkdir -p "$s/judge/sessions" "$s/judge/outbox" "$s/judge/evals" "$s/judge/trait-check" "$s/context-guard" "$s/locks/heavy-job.lock" \
     "$s/hooks" "$s/fleet" "$s/ui-evidence/runs/r1" "$s/myrepo-slug/plans" "$s/myrepo-slug/reviews" "$s/digests" "$s/meta" "$s/cache" \
-    "$s/sindri-app" "$s/bugfix/myrepo-slug/t1" "$s/logs"
+    "$s/sindri-app" "$s/bugfix/myrepo-slug/t1" "$s/logs" "$s/myrepo-slug/bugfix/c1" "$s/myrepo-slug/bugfix/t2"
   echo '{"sid":"s1"}' > "$s/judge/sessions/s1.json"; echo '{}' > "$s/judge/outbox/s1.jsonl"; echo '{"name":"a"}' > "$s/judge/teammate-names.jsonl"
   echo e > "$s/judge/evals/e"; echo t > "$s/judge/trait-check/t"; echo g > "$s/context-guard/g.log"; echo me > "$s/locks/heavy-job.lock/owner"
   echo h > "$s/hooks/h.sh"; echo '{}' > "$s/fleet/f.json"; echo '{}' > "$s/ui-evidence/runs/r1/summary.json"
   echo p > "$s/myrepo-slug/plans/p.md"; echo '{}' > "$s/myrepo-slug/reviews/r.json"; echo d > "$s/digests/d.md"; echo '{}' > "$s/meta/m.json"
   echo c > "$s/cache/c"; echo cs > "$s/sindri-app/ledger.db"; echo '{"pid": 999999}' > "$s/sindri-app/control.json"
-  echo '{}' > "$s/bugfix/myrepo-slug/t1/state.json"; echo old > "$s/logs/older.log"; echo bin > "$s/bin/aw-meta"
+  echo '{}' > "$s/bugfix/myrepo-slug/t1/state.json"
+  # live bug-fix state at $AW_STATE_DIR/<slug>/bugfix/<ticket>/: the C# bugfix-state shape (schemaVersion) and the TS helper's
+  # shape (version) the lanes still run, both written by hand here (#1104); the last case runs the real bugfix-state binary
+  echo '{"schemaVersion":1,"ticket":"c1","phase":"reproduce"}' > "$s/myrepo-slug/bugfix/c1/state.json"; echo 'log' > "$s/myrepo-slug/bugfix/c1/events.jsonl"
+  echo '{"version":1,"ticket":"t2","phase":"fix"}' > "$s/myrepo-slug/bugfix/t2/state.json"
+  echo old > "$s/logs/older.log"; echo bin > "$s/bin/aw-meta"
   ln -s "$d/root" "$s/toolkit"
   cat > "$d/home/.claude/settings.json" <<'EOF'
 {"hooks":{"UserPromptSubmit":[{"hooks":[{"type":"command","command":"/x/prompt-sort.sh # aw:prompt-sort"}]}],"PreToolUse":[{"hooks":[{"type":"command","command":"/x/trait-check.sh # aw:trait-check"}]}]}}
@@ -108,9 +115,9 @@ EOF
   fi
   # --- the TS side
   mkdir -p "$s/sindri/git-template/hooks" "$s/sindri/channels/stable/abc" "$s/scorer/reports" "$s/scorer/live" "$s/audit/weekly" \
-    "$s/profile/repos" "$s/myrepo-slug/bugfix" "$s/bin/sindri-app/stampA"
+    "$s/profile/repos" "$s/bin/sindri-app/stampA"
   echo db > "$s/sindri/ledger.db"; echo t > "$s/sindri/git-template/hooks/pre-commit"; echo n > "$s/sindri/channels/stable/abc/x"
-  echo db > "$s/scorer/scorer.sqlite"; echo r > "$s/scorer/reports/r"; echo a > "$s/audit/weekly/a"; echo '{}' > "$s/myrepo-slug/bugfix/run.json"
+  echo db > "$s/scorer/scorer.sqlite"; echo r > "$s/scorer/reports/r"; echo a > "$s/audit/weekly/a"
   echo bin > "$s/bin/sindri-app/stampA/sindri"
   printf 'name: demo\ntoken: ghp_0123456789abcdefghijABCDEFGH\nrepos: [app]\n' > "$s/profile/profile.yaml"
   printf 'name: app\npath: %s\napi_key: hunter2supersecret\n' "$d/repo" > "$s/profile/repos/app.yaml"
@@ -145,7 +152,7 @@ snap() {
 # kept <dir>: the paths of the §8.1 kept list, checksummed.
 kept() {
   (cd "$1/state" && for p in judge/sessions judge/outbox judge/teammate-names.jsonl judge/evals judge/trait-check context-guard locks hooks fleet \
-      ui-evidence/runs myrepo-slug/plans myrepo-slug/reviews digests meta cache sindri-app bugfix bin/aw-meta bin/cs/stamp1; do
+      ui-evidence/runs myrepo-slug/plans myrepo-slug/reviews myrepo-slug/bugfix digests meta cache sindri-app bugfix bin/aw-meta bin/cs/stamp1; do
     find "$p" -type f -exec cksum {} \; 2> /dev/null; done | sort
     readlink toolkit
   ) ; cksum < "$1/home/.claude/settings.json"; cksum < "$1/state/logs/older.log"
@@ -163,6 +170,7 @@ for m in --pre-link --post-link --all; do
   check "dry-run $m changes nothing" "$(snap "$D1")" "$before"
 done
 check "dry-run creates no log" "$(ls "$D1/state/logs")" "older.log"
+[ ! -e "$D1/state/backups" ] && ok "dry-run creates no backups" || bad "dry-run created backups"
 
 # ---------------------------------------------------------------------------------------------------------------------
 echo "# a step-1 refusal changes nothing"
@@ -230,9 +238,23 @@ has "post-link prints the repo onboard line" "$out_post" "sindri repo onboard $D
 has "post-link reports what it left alone" "$out_post" "left alone (not a TS wrapper this script knows): sindri-view"
 check "judge health passed through the wrapper" "$("$D4/bin/judge" health | jq -r .status)" ok
 names_after="$(names "$D4")"
-expected="$(printf '%s\n' "$names_before" | grep -vE '^\./(state/(sindri|scorer|audit|profile)(/|$)|state/myrepo-slug/bugfix(/|$)|state/bin/sindri-app(/|$)|state/judge/(config\.json|decisions\.sqlite(-shm|-wal)?)$'"$plists"'|bin/(scorer|sindri-next|sindri-app)$|root/judge/node_modules(/|$)|root/sindri/dist(/|$))' | grep -vx './state/logs' )"
-check "exactly the §8 list was removed" "$names_after" "$expected"
+expected="$(printf '%s\n' "$names_before" | grep -vE '^\./(state/(sindri|scorer|audit|profile)(/|$)|state/bin/sindri-app(/|$)|state/judge/(config\.json|decisions\.sqlite(-shm|-wal)?)$'"$plists"'|bin/(scorer|sindri-next|sindri-app)$|root/judge/node_modules(/|$)|root/sindri/dist(/|$))' | grep -vx './state/logs' )"
+check "exactly the §8 list was removed (backups aside)" "$(printf '%s\n' "$names_after" | grep -vE '^\./state/backups(/|$)')" "$expected"
 check "the kept list is byte-identical" "$(kept "$D4")" "$kept_before"
+# live bug-fix state survives, byte for byte, both shapes (#1104)
+check "C#-shaped bug-fix state survives" "$(cat "$D4/state/myrepo-slug/bugfix/c1/state.json")" '{"schemaVersion":1,"ticket":"c1","phase":"reproduce"}'
+check "C# bug-fix event log survives" "$(cat "$D4/state/myrepo-slug/bugfix/c1/events.jsonl")" log
+check "TS-shaped bug-fix state survives" "$(cat "$D4/state/myrepo-slug/bugfix/t2/state.json")" '{"version":1,"ticket":"t2","phase":"fix"}'
+lacks "the log does not name bug-fix state as removed" "$(cat "$D4"/state/logs/cutover-*.log)" "bug-fix state"
+# what is removed is moved under backups/cutover-<stamp>/ with its relative path and content, not deleted (#1104)
+BK="$(ls -d "$D4"/state/backups/cutover-* 2> /dev/null | head -n 1)"
+check "one backup directory for the run" "$(ls -d "$D4"/state/backups/cutover-* 2> /dev/null | wc -l | tr -d ' ')" 1
+check "backup keeps the TS ledger" "$(cat "$BK/sindri/ledger.db" 2> /dev/null)" db
+check "backup keeps TS sindri channels" "$(cat "$BK/sindri/channels/stable/abc/x" 2> /dev/null)" n
+check "backup keeps the scorer database" "$(cat "$BK/scorer/scorer.sqlite" 2> /dev/null)" db
+check "backup keeps the audit report" "$(cat "$BK/audit/weekly/a" 2> /dev/null)" a
+check "backup keeps the TS profile" "$(cat "$BK/profile/repos/app.yaml" 2> /dev/null | head -n 1)" "name: app"
+check "backup keeps the retired sindri-app build" "$(cat "$BK/bin/sindri-app/stampA/sindri" 2> /dev/null)" bin
 [ -f "$D4/root/scorer/dist/notes.txt" ] && ok "uncommitted work in a retired dir is kept" || bad "uncommitted work was deleted"
 [ -f "$D4/root/judge/package.json" ] && ok "tracked files are kept" || bad "tracked file deleted"
 has "claude plugin uninstall ran" "$(cat "$D4/stubs/claude.log")" "plugin uninstall aw-live@agentic-workflow-mods --scope user"
@@ -265,7 +287,7 @@ echo "# the no-flag run does both halves and the link"
 D5="$WORK/all"; seed "$D5"; use "$D5"
 out="$(run "$D5")"; rc=$?
 check "no-flag run exits 0" "$rc" 0
-check "no-flag run leaves the same box as the split run" "$(names "$D5" | sed "s|^\./||")" "$(names "$D4" | sed "s|^\./||")"
+check "no-flag run leaves the same box as the split run" "$(names "$D5" | sed "s|^\./||" | grep -vE '^state/backups(/|$)')" "$(names "$D4" | sed "s|^\./||" | grep -vE '^state/backups(/|$)')"
 [ "$(sed -n 1p "$D5/bin/sindri")" = '#!/usr/bin/env bash' ] && grep -q 'bin/cs/current/sindri' "$D5/bin/sindri" && ok "the link step replaced the TS sindri wrapper" || bad "sindri wrapper is not the C# one"
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -276,6 +298,50 @@ out="$(run "$D6")"; rc=$?
 check "flipped run exits 0" "$rc" 0
 has "flipped run: nothing to remove" "$out" "nothing to remove"
 check "flipped run keeps the C# judge state" "$(snap "$D6")" "$before"
+# a box whose only "work" is live bug-fix state does not start a cutover (#1104)
+check "bug-fix state alone opens no log" "$(ls "$D6/state/logs")" "older.log"
+[ ! -e "$D6/state/backups" ] && ok "bug-fix state alone makes no backup" || bad "a backup was made for bug-fix state alone"
+check "bug-fix state alone is untouched" "$(cat "$D6/state/myrepo-slug/bugfix/c1/state.json" "$D6/state/myrepo-slug/bugfix/t2/state.json")" "$(printf '%s\n%s' '{"schemaVersion":1,"ticket":"c1","phase":"reproduce"}' '{"version":1,"ticket":"t2","phase":"fix"}')"
+
+echo "# bug-fix state written by the real C# bugfix-state survives a cutover run (#1104)"
+# The binary: $BUGFIX_STATE_BIN (a command line, split on spaces), else a dotnet build of src/BugFix/Aw.BugFix.Host once into
+# the suite's temp root. The build runs before any case points HOME at a box, so the SDK and NuGet cache stay the real ones.
+BF_BIN="${BUGFIX_STATE_BIN:-}"
+if [ -z "$BF_BIN" ]; then
+  if ! command -v dotnet > /dev/null 2>&1; then
+    bad "dotnet is needed to build the real bugfix-state (or set BUGFIX_STATE_BIN)"
+  else
+    mkdir -p "$WORK/bf-bin"
+    if HOME="$REAL_HOME" NUGET_PACKAGES="${NUGET_PACKAGES:-$REAL_HOME/.nuget/packages}" \
+        dotnet build "$REPO_ROOT/src/BugFix/Aw.BugFix.Host" -c Release -o "$WORK/bf-bin" -nologo -v q > "$WORK/bf-build.log" 2>&1; then
+      BF_BIN="dotnet $WORK/bf-bin/bugfix-state.dll"
+    else
+      bad "dotnet build of bugfix-state failed"; tail -20 "$WORK/bf-build.log"
+    fi
+  fi
+fi
+if [ -n "$BF_BIN" ]; then
+  D8="$WORK/realbf"; seed "$D8"; use "$D8"
+  export AW_LOG_LEVEL=none
+  bf() { (cd "$D8/bfrepo" && $BF_BIN "$@"); }
+  BFSTATE="$D8/state/myrepo-slug/bugfix/real1"
+  mkdir -p "$D8/bfrepo/src"; printf 'drop cookie\n' > "$D8/bfrepo/src/app.txt"
+  git -C "$D8/bfrepo" -c advice.ignoredHook=false init -q -b main
+  git -C "$D8/bfrepo" add -A
+  git -C "$D8/bfrepo" -c advice.ignoredHook=false -c user.name=t -c user.email=t@t commit -q -m base
+  printf '{"source":"text","id":null,"title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}' > "$D8/ticket.json"
+  printf 'status: diagnosed\n\n## Hypotheses\n\n| # | Hypothesis | Cause-site files | Likelihood | Result |\n|---|---|---|---|---|\n| 1 | Cookie dropped | `src/app.txt` | high | confirmed |\n\n## Root Cause\n\nThe cookie is dropped.\n' > "$D8/handoff.md"
+  bf init --state "$BFSTATE" --ticket "$D8/ticket.json" > /dev/null 2>&1; check "real bugfix-state init exits 0" "$?" 0
+  bf advance investigate --state "$BFSTATE" --evidence "$D8/handoff.md" > /dev/null 2>&1; check "real bugfix-state advance investigate exits 0" "$?" 0
+  bfsnap() { (cd "$BFSTATE" && find . -type f | sort | while IFS= read -r f; do echo "$f $(cksum < "$f")"; done); }
+  bf_before="$(bfsnap)"
+  [ -n "$bf_before" ] && ok "the real binary wrote state files" || bad "the real binary wrote no state files"
+  out="$(run "$D8")"; rc=$?
+  check "cutover over real bug-fix state exits 0" "$rc" 0
+  check "real bug-fix state is byte-identical after the cutover" "$(bfsnap)" "$bf_before"
+  check "no backup was made for real bug-fix state" "$(find "$D8/state/backups" -path '*real1*' 2> /dev/null | wc -l | tr -d ' ')" 0
+  check "the real bugfix-state still reads it: phase investigate" "$(bf status --state "$BFSTATE" 2> /dev/null | jq -r .phase)" investigate
+fi
 
 echo "# a log directory the script creates is 0700"
 D7="$WORK/newlogdir"; seed "$D7"; use "$D7"; wipe "$D7/state/logs"

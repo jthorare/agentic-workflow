@@ -41,7 +41,7 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
         }
 
         var read = await reader.ReadViewAt(request.Scope, request.Read, cancellationToken).ConfigureAwait(false);
-        var anchor = read.IsError ? read.Error : AnchorMatch.Resolve(read.Value.Graph, request.Anchor);
+        var anchor = read.IsError ? read.Error : AnchorMatch.Resolve(read.Value.Graph, request.Anchor, request.Scope.Repos);
         if (read.IsError || anchor.IsError)
         {
             return read.IsError ? read.Error : anchor.Error;
@@ -50,7 +50,7 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
         var basis = (await bases.For(read.Value, settings.Value, request.Scope, request.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = QueryRules.CascadeFor(hops.Value, settings.Value) };
         var lenses = LensesBuilder.Build(basis, read.Value.Graph, anchor.Value.Key, depth, read.Value.Conflicts);
         var view = lenses.IsError ? lenses : await WithSymbols(lenses.Value, settings.Value, request.Scope, read.Value.Snapshot.Version, cancellationToken).ConfigureAwait(false);
-        return view.Map(v => LensTexts.Clean(v, new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
+        return view.Map(v => LensTexts.Clean(DemotedFiles.Last(v, request.Scope.Repos), new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
     }
 
     private const string SymbolLevel = "symbol";

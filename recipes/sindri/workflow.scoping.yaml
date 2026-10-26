@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 10
+version: 12
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 why: "Pins down exactly what will change and what done means, then waits for your approval before anything is designed."
@@ -16,13 +16,13 @@ outputs:
   - { key: fact:scopePacket,   label: "Scope packet",    type: payload,   from: freeze }
 initial: intake
 states:
-  intake:       { displayName: "Take in the request", why: "Sorts a brief, ticket, idea or change into the right reader; without it the stage would guess the input.", kind: active, step: step.scope.intake, timeout: { after: 4h, then: park },
+  intake:       { displayName: "Take in the request", why: "Sorts a brief, ticket, idea or change into the right reader; without it the stage would guess the input.", kind: active, step: step.scope.intake, timeout: { after: 1d, then: park },
                   next: "Say what {item} asks to scope: a brief, a tracker item, a rough idea or a change." }
-  read-brief:   { kind: active, step: step.scope.read-brief, timeout: { after: 4h, then: park },
+  read-brief:   { kind: active, step: step.scope.read-brief, timeout: { after: 1d, then: park },
                   next: "Read the brief for {item}, the whole file or its named section." }
-  read-tracker: { kind: active, step: step.scope.read-tracker, timeout: { after: 4h, then: park },
+  read-tracker: { kind: active, step: step.scope.read-tracker, timeout: { after: 1d, then: park },
                   next: "Read {item}'s tracker project or issue through the tracker port." }
-  read-change:  { kind: active, step: step.scope.read-change, timeout: { after: 4h, then: park },
+  read-change:  { kind: active, step: step.scope.read-change, timeout: { after: 1d, then: park },
                   next: "Read {item}'s change: the diff against its merge base, the commits and the PR body." }
   idea:         { kind: wait, timeout: { after: 7d, then: park },
                   waitFor: { child: { recipe: workflow.idea-to-brief, onParked: propagate,
@@ -39,25 +39,56 @@ states:
         - { use: input.context.lenses,  with: { anchors: { fact: fact:anchors }, depth: 2, hops: [state, flow, dependency, component] } }
         - { use: input.context.code,    with: { anchors: { fact: fact:anchors } } }
         - { use: input.context.history, with: { anchors: { fact: fact:anchors }, window: { profile: workflow.scoping.historyWindow } } }
-    timeout: { after: 30m, then: park }
+    timeout: { after: 1d, then: park }
     next: "Run the four lenses for {item}: product surfaces and related features, code, then history (pass {loop.rescope}/{loop.rescope.cap})."
-  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: step.scope.draft, loop: rounds, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  relevance:
+    displayName: "Check what was found is on topic"
+    why: "Takes out shared shells, icons and unrelated clusters so they do not pad the coverage."
+    kind: active
+    step: { use: step.scope.relevance-review, with: { model: claude-sonnet-5-5 } }
+    budget: { tokens: 5M }
+    timeout: { after: 1d, then: park }
+    next: "Label each thing {item}'s lenses returned as on topic, off to the side or noise, with a reason and a citation."
+  relevance-judge:
+    kind: active
+    step: { use: step.scope.relevance-judge, with: { parallel: 4, threshold: 0.6, providers: { profile: workflow.judge.providers } } }
+    timeout: { after: 1d, then: park }
+    next: "A judge, who never sees those labels, rules on each thing {item}'s lenses returned."
+  relevance-apply: { kind: active, step: step.scope.relevance-apply, timeout: { after: 1d, then: park },
+                  next: "Drop what the judge and the AI both call off topic from {item}'s lenses and coverage; keep and flag what they dispute." }
+  draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: { use: step.scope.draft, with: { model: claude-sonnet-5-5 } }, loop: rounds, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
-  check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 4h, then: park },
+  check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1d, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
-  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  gap-search:
+    displayName: "Search for what is missing"
+    why: "A different AI searches on its own for parts of the product and code the scope never named."
+    kind: active
+    step: { use: step.scope.gap-search, with: { model: claude-opus-5-5 } }
+    loop: gapsearch
+    budget: { tokens: 5M }
+    timeout: { after: 1d, then: park }
+    next: "Search for what {item}'s scope misses, without seeing the lenses or the map (round {loop.gapsearch}/{loop.gapsearch.cap})."
+  gap-judge:
+    kind: active
+    step: { use: step.scope.gap-judge, with: { parallel: 4, threshold: 0.6, providers: { profile: workflow.judge.providers } } }
+    timeout: { after: 1d, then: park }
+    next: "A judge rules on each missing-part candidate for {item}: a real gap, already covered or not in scope."
+  gap-log:      { kind: active, step: step.scope.gap-log, timeout: { after: 1d, then: park },
+                  next: "Record the gap search round for {item}, the rulings and the real gaps to look at again." }
+  questions:    { displayName: "Write questions for you", why: "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.", kind: active, step: step.interview.questions, loop: interview, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Find {item}'s behaviour gaps and draft up to five questions with options (round {loop.interview}/{loop.interview.cap})." }
-  interview:    { kind: active, step: step.interview.answer, timeout: { after: 2d, then: park },
+  interview:    { kind: active, step: step.interview.answer, timeout: { after: 14d, then: park },
                   next: "Answer the questions on {item}: pick an option, write your own under other, or skip one." }
-  record:       { kind: active, step: step.interview.record, timeout: { after: 4h, then: park },
+  record:       { kind: active, step: step.interview.record, timeout: { after: 1d, then: park },
                   next: "Append {item}'s latest answers to the answer log." }
-  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  apply:        { kind: active, step: step.interview.apply, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Fold the answers into {item}'s answer log, scope map, acceptance list and open questions." }
-  reanchor:     { kind: active, step: step.scope.reanchor, timeout: { after: 4h, then: park },
+  reanchor:     { kind: active, step: step.scope.reanchor, timeout: { after: 1d, then: park },
                   next: "Turn {item}'s changed scope map into anchors the product map knows." }
-  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: step.scope.challenge, loop: challenge, budget: { tokens: 5M }, timeout: { after: 4h, then: park },
+  challenge:    { displayName: "Second opinion", why: "A different AI hunts for what the first one missed.", kind: active, step: { use: step.scope.challenge, with: { model: claude-opus-5-5 } }, loop: challenge, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Challenge {item}'s scope on another model: surfaces and behaviours the map misses (round {loop.challenge}/{loop.challenge.cap})." }
-  challenge-log: { kind: active, step: step.scope.challenge-log, timeout: { after: 4h, then: park },
+  challenge-log: { kind: active, step: step.scope.challenge-log, timeout: { after: 1d, then: park },
                   next: "Append the challenger's round to {item}'s challenge record, earlier rounds unchanged." }
   size:
     displayName: "Estimate size"
@@ -74,42 +105,68 @@ states:
           - "m: two or three workstreams, or a schema change with no data migration"
           - "s: one workstream with two or more surfaces, and no schema change"
           - "xs: one workstream with one surface, and no schema change"
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "The judge picks {item}'s size; `sindri workflow status {instance}` shows the choices."
-  size-desk:    { kind: active, step: { use: step.desk.choose, with: { from: size } }, timeout: { after: 2d, then: park },
+  size-desk:    { kind: active, step: { use: step.desk.choose, with: { from: size } }, timeout: { after: 14d, then: park },
                   next: "Pick the size of {item}. Each choice shows the model's lean, if it had one." }
-  propose:      { kind: active, step: step.scope.propose, timeout: { after: 4h, then: park },
+  propose:      { kind: active, step: step.scope.propose, timeout: { after: 1d, then: park },
                   next: "Propose {item}'s new surfaces to the draft map and record each surface's graph status." }
-  evidence:     { displayName: "Assemble the proof", why: "Packs every check into the document you approve.", kind: active, step: step.scope.evidence, timeout: { after: 4h, then: park },
+  evidence:     { displayName: "Assemble the proof", why: "Packs every check into the document you approve.", kind: active, step: step.scope.evidence, timeout: { after: 1d, then: park },
                   next: "Check {item}'s evidence and assemble the packet: citations, four coverage rows, a failing acceptance list, a clean challenge." }
   stop:         { displayName: "Approve the scope", why: "Last chance to change the scope before it is locked in.", kind: active, step: step.scope.review, loop: revise, timeout: { after: 7d, then: park },
                   onOutcome: { approve: "Locks the scope in and moves on to design.", revise: "Sends your notes back to the AI to change the scope, then asks you again.", drop: "Ends the work here and builds nothing." },
                   next: "Your stop: read the scope packet (`sindri scoping show {instance}` or the stop view), then answer the stop's form: approve, revise with notes, or drop." }
-  freeze:       { displayName: "Lock in the scope", why: "Locks the approved scope so later stages build exactly what you approved.", kind: active, step: step.scope.freeze, loop: refreeze, timeout: { after: 4h, then: park },
+  freeze:       { displayName: "Lock in the scope", why: "Locks the approved scope so later stages build exactly what you approved.", kind: active, step: step.scope.freeze, loop: refreeze, timeout: { after: 1d, then: park },
                   next: "Re-check {item}'s packet, confirm its hash, and freeze it." }
-  withdraw:     { kind: active, step: step.scope.withdraw, timeout: { after: 4h, then: park },
+  withdraw:     { kind: active, step: step.scope.withdraw, timeout: { after: 1d, then: park },
                   next: "Withdraw {item}'s undecided map proposals." }
   scoped:       { displayName: "Scope approved", kind: terminal, outcome: resolved }
   dropped:      { displayName: "Dropped", kind: terminal, outcome: unresolved }
 transitions:
   # intake seeds the round-1 values of every fact a later Step reads, so each declared input exists on every path (RCP-WIRE-001)
-  - { from: intake, to: read-brief,   on: step.completed, when: { outcome: brief },   produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions] }
-  - { from: intake, to: read-tracker, on: step.completed, when: { outcome: tracker }, produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions] }
-  - { from: intake, to: idea,         on: step.completed, when: { outcome: idea },    produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions] }
-  - { from: intake, to: read-change,  on: step.completed, when: { outcome: change },  produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions] }
+  - { from: intake, to: read-brief,   on: step.completed, when: { outcome: brief },   produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
+  - { from: intake, to: read-tracker, on: step.completed, when: { outcome: tracker }, produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
+  - { from: intake, to: idea,         on: step.completed, when: { outcome: idea },    produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
+  - { from: intake, to: read-change,  on: step.completed, when: { outcome: change },  produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
   - { from: [read-brief, read-tracker, read-change], to: gather,  on: step.completed, when: { outcome: read }, produces: [fact:brief, fact:anchors] }
   - { from: [read-brief, read-tracker, read-change], to: dropped, on: step.completed, when: { outcome: empty } }
   - { from: idea, to: gather,  on: wait.satisfied, when: { outcome: resolved }, produces: [fact:brief, fact:anchors, fact:answerLog] }
   - { from: idea, to: dropped, on: wait.satisfied, when: { outcome: unresolved } }
   - { from: idea, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: gather, to: draft, on: step.completed, when: { outcome: gathered }, produces: [fact:lenses, fact:coverage] }
+  - { from: gather, to: relevance, on: step.completed, when: { outcome: gathered }, produces: [fact:lenses, fact:coverage] }
+  - { from: relevance,       to: relevance-judge, on: step.completed, when: { outcome: reviewed }, produces: [fact:relevanceVerdicts] }
+  - { from: relevance-judge, to: relevance-apply, on: step.completed, when: { outcome: ruled },    produces: [fact:relevanceRulings] }
+  - { from: relevance-apply, to: draft,           on: step.completed, when: { outcome: applied },  produces: [fact:lenses, fact:coverage, fact:relevance, fact:mapFixes] }
   - { from: draft,  to: check, on: step.completed, when: { outcome: drafted },  produces: [fact:scopeMap, fact:acceptance] }
   - { label: "a source is missing: gather again", from: check,  to: gather,    on: step.completed, when: { outcome: regather }, produces: [fact:findings] }
   - { label: "gaps found: draft again", from: check,  to: draft,     on: step.completed, when: { outcome: gaps },     produces: [fact:findings] }
+  - { label: "the draft passed: another AI searches for what is missing", from: check, to: gap-search, on: step.completed,
+      when: { all: [ { outcome: pass }, { loop: gapsearch, below: cap }, { fact: fact:gapSearchClosed, is: absent } ] } }
   - { from: check,  to: questions, on: step.completed,
       when: { all: [ { outcome: pass }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] } }
   - { from: check,  to: challenge, on: step.completed, when: { all: [ { outcome: pass }, { loop: challenge, below: cap } ] } }
   - { label: "the second opinion is spent: size it", from: check,  to: size, on: step.completed, when: { outcome: pass } }
+  - { from: gap-search, to: gap-judge, on: step.completed, when: { outcome: searched }, produces: [fact:gapCandidates] }
+  - { from: gap-judge,  to: gap-log,   on: step.completed, when: { outcome: ruled },    produces: [fact:gapRulings] }
+  - { label: "a real gap was found: find starting points again", from: gap-log, to: reanchor, on: step.completed,
+      when: { all: [ { outcome: confirmed }, { loop: gapsearch, below: cap }, { loop: rescope, below: cap } ] },
+      produces: [fact:gapSearch, fact:gapAnchors, fact:findings] }
+  # a clear round ends the search for good: the latch is set
+  - { from: gap-log, to: questions, on: step.completed,
+      when: { all: [ { outcome: clear }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] },
+      produces: [fact:gapSearch, fact:gapAnchors, fact:gapSearchClosed] }
+  - { from: gap-log, to: challenge, on: step.completed,
+      when: { all: [ { outcome: clear }, { loop: challenge, below: cap } ] }, produces: [fact:gapSearch, fact:gapAnchors, fact:gapSearchClosed] }
+  - { label: "gap search is finished: size it", from: gap-log, to: size, on: step.completed,
+      when: { outcome: clear }, produces: [fact:gapSearch, fact:gapAnchors, fact:gapSearchClosed] }
+  # a confirmed round that cannot regather (the gap loop or the rescope loop is spent) goes on with its findings open and sets no latch
+  - { from: gap-log, to: questions, on: step.completed,
+      when: { all: [ { outcome: confirmed }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] },
+      produces: [fact:gapSearch, fact:gapAnchors, fact:findings] }
+  - { from: gap-log, to: challenge, on: step.completed,
+      when: { all: [ { outcome: confirmed }, { loop: challenge, below: cap } ] }, produces: [fact:gapSearch, fact:gapAnchors, fact:findings] }
+  - { label: "a gap is still open and cannot be rechecked: size it", from: gap-log, to: size, on: step.completed,
+      when: { outcome: confirmed }, produces: [fact:gapSearch, fact:gapAnchors, fact:findings] }
   - { from: questions, to: interview, on: step.completed, when: { outcome: asked }, produces: [fact:questions, fact:openQuestions] }
   - { from: questions, to: challenge, on: step.completed, when: { all: [ { outcome: none }, { loop: challenge, below: cap } ] },  produces: [fact:openQuestions] }
   - { label: "the second opinion is spent: size it", from: questions, to: size, on: step.completed, when: { outcome: none },  produces: [fact:openQuestions] }
@@ -134,7 +191,7 @@ transitions:
   - { from: size, to: size-desk, on: step.failed }
   - { from: propose, to: evidence, on: step.completed, when: { any: [ { outcome: proposed }, { outcome: skipped } ] }, produces: [fact:scopeMap] }
   - { from: evidence, to: stop, on: step.completed, when: { outcome: complete },
-      produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation] }
+      produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs] }
   - { label: "a source is missing: gather again", from: evidence, to: gather, on: step.completed, when: { outcome: regather },   produces: [fact:findings] }
   - { label: "proof is incomplete: draft again", from: evidence, to: draft,  on: step.completed, when: { outcome: incomplete }, produces: [fact:findings] }
   - { from: stop, to: freeze,   on: step.completed, when: { outcome: approve } }
@@ -143,8 +200,8 @@ transitions:
   - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
-loops: { rounds: { cap: 10 }, rescope: { cap: 6 }, interview: { cap: 6 }, challenge: { cap: 3 }, refreeze: { cap: 5 }, revise: { cap: 8 } }
-evals:   # 33 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap or whose model repeats the drafter's that reaches the stop, and a lens fault at evidence that regathers
+loops: { rounds: { cap: 10 }, rescope: { cap: 6 }, interview: { cap: 6 }, challenge: { cap: 3 }, gapsearch: { cap: 3 }, refreeze: { cap: 5 }, revise: { cap: 8 } }
+evals:   # 48 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap or whose model repeats the drafter's that reaches the stop, and a lens fault at evidence that regathers, and the 11 of the relevance review and the gap search (issue 966), where every older case also walks the relevance lines after gather and one clear gap round after its first passing check
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -182,3 +239,14 @@ evals:   # 33 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/drop-withdraws.jsonl
   - evals/workflow.scoping/budget-per-round.jsonl
   - evals/workflow.scoping/budget-backstop-parks.jsonl
+  - evals/workflow.scoping/relevance-removes-noise.jsonl
+  - evals/workflow.scoping/relevance-dispute-stays-in.jsonl
+  - evals/workflow.scoping/relevance-uncited-removal-stays-in.jsonl
+  - evals/workflow.scoping/relevance-judge-failed-parks.jsonl
+  - evals/workflow.scoping/gap-search-clear-first-round.jsonl
+  - evals/workflow.scoping/gap-search-confirmed-regather.jsonl
+  - evals/workflow.scoping/gap-search-cap-spent.jsonl
+  - evals/workflow.scoping/gap-search-rescope-spent.jsonl
+  - evals/workflow.scoping/gap-search-not-repeated-after-interview.jsonl
+  - evals/workflow.scoping/gap-judge-failed-parks.jsonl
+  - evals/workflow.scoping/evidence-gap-search-missing-goes-back-to-draft.jsonl

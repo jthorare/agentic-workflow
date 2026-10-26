@@ -26,7 +26,7 @@ public static class DiffAnchors
         var visible = ordered.Where(f => !repo.Denies(f.Path)).Select(f => Read(f, links)).ToList();
         var counts = new DiffCounts(ordered.Count, visible.Count(f => f.Status == DiffStatus.Mapped), visible.Count(f => f.Status == DiffStatus.Suggested),
             visible.Count(f => f.Status == DiffStatus.Unmapped), ordered.Count - visible.Count);
-        var claimed = visible.SelectMany(f => f.Nodes).GroupBy(n => n.Key, StringComparer.Ordinal)
+        var claimed = visible.Where(f => !repo.Demotes(f.Path)).SelectMany(f => f.Nodes).GroupBy(n => n.Key, StringComparer.Ordinal)
             .Select(g => (g.Key, Confirmed: g.Any(n => n.Confirmed)))
             .OrderByDescending(c => c.Confirmed).ThenBy(c => c.Key, StringComparer.Ordinal).ToList();
         var anchors = claimed.Select(c => graph.Resolve(NodeKey.From(c.Key))).OfType<GraphNode>().ToList();

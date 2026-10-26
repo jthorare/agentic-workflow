@@ -534,7 +534,7 @@ Aw.Context.Core.Engine.ProfileRecognizer.Pattern.get -> string!
 Aw.Context.Core.Engine.ProfileRecognizer.ProfileRecognizer(string! kind, string! glob, string! pattern, string! keyFrom) -> void
 Aw.Context.Core.Engine.ProfileRepoEntry
 Aw.Context.Core.Engine.ProfileRepoEntry.<Clone>$() -> Aw.Context.Core.Engine.ProfileRepoEntry!
-Aw.Context.Core.Engine.ProfileRepoEntry.Deconstruct(out string! Name, out string! Path, out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>? Concepts) -> void
+Aw.Context.Core.Engine.ProfileRepoEntry.Deconstruct(out string! Name, out string! Path, out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>? Concepts, out System.Collections.Generic.IReadOnlyList<string!>? DemotePaths) -> void
 Aw.Context.Core.Engine.ProfileRepoEntry.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Context.Core.Engine.ProfileRepoEntry.DenyPaths.init -> void
 Aw.Context.Core.Engine.ProfileRepoEntry.Equals(Aw.Context.Core.Engine.ProfileRepoEntry? other) -> bool
@@ -542,7 +542,7 @@ Aw.Context.Core.Engine.ProfileRepoEntry.Name.get -> string!
 Aw.Context.Core.Engine.ProfileRepoEntry.Name.init -> void
 Aw.Context.Core.Engine.ProfileRepoEntry.Path.get -> string!
 Aw.Context.Core.Engine.ProfileRepoEntry.Path.init -> void
-Aw.Context.Core.Engine.ProfileRepoEntry.ProfileRepoEntry(string! Name, string! Path, System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>? Concepts = null) -> void
+Aw.Context.Core.Engine.ProfileRepoEntry.ProfileRepoEntry(string! Name, string! Path, System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>? Concepts = null, System.Collections.Generic.IReadOnlyList<string!>? DemotePaths = null) -> void
 Aw.Context.Core.Engine.PublishSettings
 Aw.Context.Core.Engine.PublishSettings.<Clone>$() -> Aw.Context.Core.Engine.PublishSettings!
 Aw.Context.Core.Engine.PublishSettings.Equals(Aw.Context.Core.Engine.PublishSettings? other) -> bool
@@ -2299,6 +2299,8 @@ Aw.Context.Core.Lenses.LensBasis.Deconstruct(out string! Map, out bool Draft, ou
 Aw.Context.Core.Lenses.LensBasis.Draft.get -> bool
 Aw.Context.Core.Lenses.LensBasis.Draft.init -> void
 Aw.Context.Core.Lenses.LensBasis.Equals(Aw.Context.Core.Lenses.LensBasis? other) -> bool
+Aw.Context.Core.Lenses.LensBasis.Walk.get -> Aw.Context.Core.Walks.WalkOptions!
+Aw.Context.Core.Lenses.LensBasis.Walk.init -> void
 Aw.Context.Core.Lenses.LensBasis.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Lenses.LensBasis.Files.init -> void
 Aw.Context.Core.Lenses.LensBasis.IntentSources.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Lenses.SearchedSource!>!
@@ -2486,6 +2488,8 @@ Aw.Context.Core.Lenses.LensFile.Confidence.get -> double
 Aw.Context.Core.Lenses.LensFile.Confidence.init -> void
 Aw.Context.Core.Lenses.LensFile.Confirmed.get -> bool
 Aw.Context.Core.Lenses.LensFile.Confirmed.init -> void
+Aw.Context.Core.Lenses.LensFile.Demoted.get -> bool
+Aw.Context.Core.Lenses.LensFile.Demoted.init -> void
 Aw.Context.Core.Lenses.LensFile.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Implements, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Tests, out Aw.Context.Core.Results.Provenance Provenance, out double Confidence, out bool Confirmed, out bool Suggested, out Aw.Context.Core.Graph.LinkId? LinkId, out string! Label, out Aw.Context.Core.Graph.NodeKind Kind, out Aw.Context.Core.Results.Trust Trust) -> void
 Aw.Context.Core.Lenses.LensFile.Depth.get -> int?
 Aw.Context.Core.Lenses.LensFile.Depth.init -> void
@@ -4442,6 +4446,8 @@ Aw.Context.Core.Subgraph.SubgraphView.Edges.get -> System.Collections.Generic.IR
 Aw.Context.Core.Subgraph.SubgraphView.Edges.init -> void
 Aw.Context.Core.Subgraph.SubgraphView.Equals(Aw.Context.Core.Subgraph.SubgraphView? other) -> bool
 Aw.Context.Core.Subgraph.SubgraphView.MapCommit.get -> string?
+Aw.Context.Core.Subgraph.SubgraphView.Demoted.get -> int?
+Aw.Context.Core.Subgraph.SubgraphView.Demoted.init -> void
 Aw.Context.Core.Subgraph.SubgraphView.MapCommit.init -> void
 Aw.Context.Core.Subgraph.SubgraphView.MapVersion.get -> string!
 Aw.Context.Core.Subgraph.SubgraphView.MapVersion.init -> void
@@ -4698,6 +4704,9 @@ const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
 const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!
+const Aw.Context.Core.Overrides.MapOverride.DemoteMarker = "service:demote-cut" -> string!
+const Aw.Context.Core.Overrides.MapOverride.EngineWho = "service:engine" -> string!
+const Aw.Context.Core.Overrides.MapOverride.RedecideMarker = "service:rules-redecide" -> string!
 const Aw.Context.Core.Overrides.ProposalRows.Confidence = 0.5 -> double
 const Aw.Context.Core.Ranking.RankFusion.K = 60 -> int
 const Aw.Context.Core.Results.ContextResult.CurrentSchemaVersion = 1 -> int
@@ -5797,7 +5806,7 @@ static Aw.Context.Core.Extract.RepoFile.operator ==(Aw.Context.Core.Extract.Repo
 static Aw.Context.Core.Graph.AffectedNode.operator !=(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator ==(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question) -> Aw.Context.Core.Graph.TextAnchors!
-static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
+static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, Aw.Context.Core.Engine.CascadeOptions! options) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.OwnsHops(System.Collections.Generic.IReadOnlyList<string!>! path) -> int
@@ -6070,7 +6079,9 @@ static Aw.Context.Core.Map.MapAccess.Maps(Aw.Context.Core.Engine.ContextRepoName
 static Aw.Context.Core.Map.MapAccess.View(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending, bool callerScope = true) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
 static Aw.Context.Core.Map.MapAccess.ViewWithIntent(Aw.Context.Core.Linking.IntentLayer! intent, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
 static Aw.Context.Core.Map.MapAccess.ViewWithIntentOrEmpty(Aw.Context.Core.Linking.IntentLayer! intent, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Engine.ContextScope! scope, bool pending) -> Aw.Kernel.Result<Aw.Context.Core.Map.MapView!>!
+static Aw.Context.Core.Map.MapAccess.WithoutDemoted(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.DateTimeOffset at) -> (Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Undo)
 static Aw.Context.Core.Map.MapAccess.WithoutDenied(Aw.Context.Core.Graph.GraphSnapshot! current, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! profile, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.DateTimeOffset at) -> (Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Undo)
+static Aw.Context.Core.Map.MapAccess.WithoutLostEngineAccepts(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, Aw.Context.Core.Extract.ExtractedMap! found, bool rulesChanged, System.DateTimeOffset at) -> (Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Undo)
 static Aw.Context.Core.Map.MapBuildReport.operator !=(Aw.Context.Core.Map.MapBuildReport? left, Aw.Context.Core.Map.MapBuildReport? right) -> bool
 static Aw.Context.Core.Map.MapBuildReport.operator ==(Aw.Context.Core.Map.MapBuildReport? left, Aw.Context.Core.Map.MapBuildReport? right) -> bool
 static Aw.Context.Core.Map.MapCounts.Of(Aw.Context.Core.Graph.GraphSnapshot! graph, int overrides) -> Aw.Context.Core.Map.MapCounts!
@@ -6145,9 +6156,11 @@ static Aw.Context.Core.Onyx.OnyxSettings.operator ==(Aw.Context.Core.Onyx.OnyxSe
 static Aw.Context.Core.Overrides.AppliedMap.operator !=(Aw.Context.Core.Overrides.AppliedMap? left, Aw.Context.Core.Overrides.AppliedMap? right) -> bool
 static Aw.Context.Core.Overrides.AppliedMap.operator ==(Aw.Context.Core.Overrides.AppliedMap? left, Aw.Context.Core.Overrides.AppliedMap? right) -> bool
 static Aw.Context.Core.Overrides.Confirmation.Of(Aw.Context.Core.Results.Provenance provenance, bool accepted = false) -> bool
+static Aw.Context.Core.Overrides.MapOverride.UndoingRedecide(Aw.Context.Core.Overrides.MapOverride! decision, System.DateTimeOffset at) -> Aw.Context.Core.Overrides.MapOverride!
 static Aw.Context.Core.Overrides.MapOverride.operator !=(Aw.Context.Core.Overrides.MapOverride? left, Aw.Context.Core.Overrides.MapOverride? right) -> bool
 static Aw.Context.Core.Overrides.MapOverride.operator ==(Aw.Context.Core.Overrides.MapOverride? left, Aw.Context.Core.Overrides.MapOverride? right) -> bool
 static Aw.Context.Core.Overrides.MapOverride.UndoingCut(Aw.Context.Core.Overrides.MapOverride! decision, System.DateTimeOffset at) -> Aw.Context.Core.Overrides.MapOverride!
+static Aw.Context.Core.Overrides.MapOverride.UndoingDemote(Aw.Context.Core.Overrides.MapOverride! decision, System.DateTimeOffset at) -> Aw.Context.Core.Overrides.MapOverride!
 static Aw.Context.Core.Overrides.OverrideApplier.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides) -> Aw.Context.Core.Overrides.AppliedMap!
 static Aw.Context.Core.Overrides.OverrideId.From(string! value) -> Aw.Context.Core.Overrides.OverrideId
 static Aw.Context.Core.Overrides.OverrideId.operator !=(Aw.Context.Core.Overrides.OverrideId left, Aw.Context.Core.Overrides.OverrideId right) -> bool
@@ -6429,6 +6442,7 @@ static readonly Aw.Context.Core.ContextErrors.OnyxKeyRefused -> Aw.Kernel.ErrorD
 static readonly Aw.Context.Core.ContextErrors.OnyxNotPinnedOrLoopback -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.OnyxUnexpectedReply -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PathInWorktree -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PatternTimedOut -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.ProbeFileInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.ProbesRegressed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PromoteRefused -> Aw.Kernel.ErrorDefinition!
@@ -7058,6 +7072,8 @@ Aw.Context.Core.Graph.NodeFact.Repo.get -> string?
 Aw.Context.Core.Graph.NodeFact.Repo.init -> void
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.get -> string?
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.init -> void
+Aw.Context.Core.Lenses.LensBasis.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
+Aw.Context.Core.Lenses.LensBasis.Repos.init -> void
 Aw.Context.Core.Lenses.LensBasis.MapRepo.get -> string?
 Aw.Context.Core.Lenses.LensBasis.MapRepo.init -> void
 Aw.Context.Core.WholeMap.WholeMapAsk.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.WholeMap.WholeMapRepo!>!
@@ -7494,3 +7510,145 @@ Aw.Context.Core.Concepts.ConceptReader.Read(Aw.Context.Core.Engine.ContextScope!
 Aw.Context.Core.Engine.RepoAddressing
 static Aw.Context.Core.Engine.RepoAddressing.Addressed(Aw.Context.Core.Engine.ContextSettings! settings, Aw.Context.Core.Engine.ContextScope! scope, string? asked) -> Aw.Kernel.Result<Aw.Context.Core.Engine.RepoChoice!>!
 static Aw.Context.Core.Engine.ConceptPin.Of(Aw.Context.Core.Engine.ConceptId? id, string? name, string? summary, System.Collections.Generic.IEnumerable<string!>? features, System.Collections.Generic.IEnumerable<string!>? paths) -> Aw.Context.Core.Engine.ConceptPin!
+Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
+Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
+Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
+Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
+const Aw.Context.Core.Map.MapRuleset.RulesVersion = "1" -> string!
+Aw.Context.Core.Map.MapRuleset
+static Aw.Context.Core.Map.MapRuleset.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string!
+Aw.Context.Core.Map.MapImport.Ruleset.get -> string?
+Aw.Context.Core.Map.MapImport.Ruleset.init -> void
+Aw.Context.Core.Map.MapStatusView.RulesOlder.get -> bool
+Aw.Context.Core.Map.MapStatusView.RulesOlder.init -> void
+static Aw.Context.Core.Map.MapRuleset.Running(Aw.Context.Core.Engine.ContextScope? scope) -> string?
+Aw.Context.Core.Engine.ContextRepo.DemotePaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ContextRepo.DemotePaths.init -> void
+Aw.Context.Core.Engine.ContextRepo.Demotes(string! path) -> bool
+static Aw.Context.Core.Extract.ClusterFeatures.Propose(Aw.Context.Core.Engine.ContextRepo! repo, Aw.Context.Core.Extract.ClusterSet! clusters, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.ClusterLabel!>! labels, Aw.Context.Core.Extract.ExtractedMap! extracted) -> Aw.Context.Core.Extract.ExtractedMap!
+Aw.Context.Core.Engine.ProfileRepoEntry.DemotePaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Engine.ProfileRepoEntry.DemotePaths.init -> void
+static Aw.Context.Core.Graph.DemotedCode.IsDemoted(Aw.Context.Core.Graph.NodeKey key, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> bool
+static Aw.Context.Core.Lenses.DemotedFiles.Last(Aw.Context.Core.Lenses.CodeBand! band, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Lenses.CodeBand!
+static Aw.Context.Core.Lenses.DemotedFiles.Last<T>(System.Collections.Generic.IReadOnlyList<T>! items, System.Func<T, bool>! demoted) -> System.Collections.Generic.IReadOnlyList<T>!
+Aw.Context.Core.Lenses.DemotedFiles
+Aw.Context.Core.Graph.DemotedCode
+static Aw.Context.Core.Lenses.DemotedFiles.Last(Aw.Context.Core.Lenses.LensBands! bands, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Lenses.LensBands!
+Aw.Context.Core.Engine.FillBands
+const Aw.Context.Core.Engine.FillBands.CodeLexical = "context.fill.code.lexical" -> string!
+const Aw.Context.Core.Engine.FillBands.CodeSymbols = "context.fill.code.symbols" -> string!
+const Aw.Context.Core.Engine.FillBands.History = "context.fill.history" -> string!
+const Aw.Context.Core.Engine.FillBands.Lenses = "context.fill.lenses" -> string!
+static Aw.Context.Core.Engine.FillBands.Source.get -> System.Diagnostics.ActivitySource!
+static Aw.Context.Core.Engine.FillBands.Start(string! band) -> System.Diagnostics.Activity?
+Aw.Context.Core.Walks.BoundedParallel
+Aw.Context.Core.Walks.WalkOptions
+Aw.Context.Core.Walks.WalkOptions.Degree.get -> int
+static Aw.Context.Core.Walks.BoundedParallel.Map<TIn, TOut>(System.Collections.Generic.IReadOnlyList<TIn>! items, System.Func<TIn, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TOut>>! work, int degree, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<TOut[]!>
+static Aw.Context.Core.Walks.BoundedParallel.MapSync<TIn, TOut>(System.Collections.Generic.IReadOnlyList<TIn>! items, System.Func<TIn, TOut>! work, int degree) -> TOut[]!
+static Aw.Context.Core.Walks.WalkOptions.Of(int degree) -> Aw.Context.Core.Walks.WalkOptions!
+static Aw.Context.Core.Walks.WalkOptions.Serial.get -> Aw.Context.Core.Walks.WalkOptions!
+static Aw.Context.Core.Code.CodeLensBuilder.Build(Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Kernel.Result<Aw.Context.Core.Code.CodeView!>!
+static Aw.Context.Core.History.HistoryLens.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<string!>! anchors, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Kernel.Result<Aw.Context.Core.History.HistoryScope!>!
+static Aw.Context.Core.History.HistoryLens.Coverage(Aw.Context.Core.History.HistoryScope! scope, Aw.Context.Core.Lenses.LensBasis! basis, Aw.Context.Core.Walks.WalkOptions! walk) -> Aw.Context.Core.Lenses.LensCoverage!
+Aw.Context.Core.Engine.RepoRole
+Aw.Context.Core.Engine.RepoRole.<Clone>$() -> Aw.Context.Core.Engine.RepoRole!
+Aw.Context.Core.Engine.RepoRole.Deconstruct(out string! Name, out bool Demoted, out System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Context.Core.Engine.RepoRole.Equals(Aw.Context.Core.Engine.RepoRole? other) -> bool
+Aw.Context.Core.Engine.RepoRole.RepoRole(string! Name, bool Demoted, System.Collections.Generic.IReadOnlyList<string!>! Globs) -> void
+Aw.Context.Core.Engine.RepoRole.Name.get -> string!
+Aw.Context.Core.Engine.RepoRole.Name.init -> void
+Aw.Context.Core.Engine.RepoRole.Demoted.get -> bool
+Aw.Context.Core.Engine.RepoRole.Demoted.init -> void
+Aw.Context.Core.Engine.RepoRole.Globs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.RepoRole.Globs.init -> void
+override Aw.Context.Core.Engine.RepoRole.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.RepoRole.GetHashCode() -> int
+override Aw.Context.Core.Engine.RepoRole.ToString() -> string!
+static Aw.Context.Core.Engine.RepoRole.operator !=(Aw.Context.Core.Engine.RepoRole? left, Aw.Context.Core.Engine.RepoRole? right) -> bool
+static Aw.Context.Core.Engine.RepoRole.operator ==(Aw.Context.Core.Engine.RepoRole? left, Aw.Context.Core.Engine.RepoRole? right) -> bool
+Aw.Context.Core.Roles.RoleCount
+Aw.Context.Core.Roles.RoleCount.<Clone>$() -> Aw.Context.Core.Roles.RoleCount!
+Aw.Context.Core.Roles.RoleCount.Deconstruct(out string! Role, out bool Demoted, out int Files) -> void
+Aw.Context.Core.Roles.RoleCount.Equals(Aw.Context.Core.Roles.RoleCount? other) -> bool
+Aw.Context.Core.Roles.RoleCount.RoleCount(string! Role, bool Demoted, int Files) -> void
+Aw.Context.Core.Roles.RoleCount.Role.get -> string!
+Aw.Context.Core.Roles.RoleCount.Role.init -> void
+Aw.Context.Core.Roles.RoleCount.Demoted.get -> bool
+Aw.Context.Core.Roles.RoleCount.Demoted.init -> void
+Aw.Context.Core.Roles.RoleCount.Files.get -> int
+Aw.Context.Core.Roles.RoleCount.Files.init -> void
+override Aw.Context.Core.Roles.RoleCount.Equals(object? obj) -> bool
+override Aw.Context.Core.Roles.RoleCount.GetHashCode() -> int
+override Aw.Context.Core.Roles.RoleCount.ToString() -> string!
+static Aw.Context.Core.Roles.RoleCount.operator !=(Aw.Context.Core.Roles.RoleCount? left, Aw.Context.Core.Roles.RoleCount? right) -> bool
+static Aw.Context.Core.Roles.RoleCount.operator ==(Aw.Context.Core.Roles.RoleCount? left, Aw.Context.Core.Roles.RoleCount? right) -> bool
+Aw.Context.Core.Roles.UnassignedRoleFiles
+Aw.Context.Core.Roles.UnassignedRoleFiles.<Clone>$() -> Aw.Context.Core.Roles.UnassignedRoleFiles!
+Aw.Context.Core.Roles.UnassignedRoleFiles.Deconstruct(out int Count, out System.Collections.Generic.IReadOnlyList<string!>! Examples) -> void
+Aw.Context.Core.Roles.UnassignedRoleFiles.Equals(Aw.Context.Core.Roles.UnassignedRoleFiles? other) -> bool
+Aw.Context.Core.Roles.UnassignedRoleFiles.UnassignedRoleFiles(int Count, System.Collections.Generic.IReadOnlyList<string!>! Examples) -> void
+Aw.Context.Core.Roles.UnassignedRoleFiles.Count.get -> int
+Aw.Context.Core.Roles.UnassignedRoleFiles.Count.init -> void
+Aw.Context.Core.Roles.UnassignedRoleFiles.Examples.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Roles.UnassignedRoleFiles.Examples.init -> void
+override Aw.Context.Core.Roles.UnassignedRoleFiles.Equals(object? obj) -> bool
+override Aw.Context.Core.Roles.UnassignedRoleFiles.GetHashCode() -> int
+override Aw.Context.Core.Roles.UnassignedRoleFiles.ToString() -> string!
+static Aw.Context.Core.Roles.UnassignedRoleFiles.operator !=(Aw.Context.Core.Roles.UnassignedRoleFiles? left, Aw.Context.Core.Roles.UnassignedRoleFiles? right) -> bool
+static Aw.Context.Core.Roles.UnassignedRoleFiles.operator ==(Aw.Context.Core.Roles.UnassignedRoleFiles? left, Aw.Context.Core.Roles.UnassignedRoleFiles? right) -> bool
+Aw.Context.Core.Roles.RepoRoles
+Aw.Context.Core.Roles.RepoRoles.<Clone>$() -> Aw.Context.Core.Roles.RepoRoles!
+Aw.Context.Core.Roles.RepoRoles.Deconstruct(out string! Repo, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RoleCount!>! Roles, out Aw.Context.Core.Roles.UnassignedRoleFiles? Unassigned) -> void
+Aw.Context.Core.Roles.RepoRoles.Equals(Aw.Context.Core.Roles.RepoRoles? other) -> bool
+Aw.Context.Core.Roles.RepoRoles.RepoRoles(string! Repo, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RoleCount!>! Roles, Aw.Context.Core.Roles.UnassignedRoleFiles? Unassigned) -> void
+Aw.Context.Core.Roles.RepoRoles.Repo.get -> string!
+Aw.Context.Core.Roles.RepoRoles.Repo.init -> void
+Aw.Context.Core.Roles.RepoRoles.Roles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RoleCount!>!
+Aw.Context.Core.Roles.RepoRoles.Roles.init -> void
+Aw.Context.Core.Roles.RepoRoles.Unassigned.get -> Aw.Context.Core.Roles.UnassignedRoleFiles?
+Aw.Context.Core.Roles.RepoRoles.Unassigned.init -> void
+override Aw.Context.Core.Roles.RepoRoles.Equals(object? obj) -> bool
+override Aw.Context.Core.Roles.RepoRoles.GetHashCode() -> int
+override Aw.Context.Core.Roles.RepoRoles.ToString() -> string!
+static Aw.Context.Core.Roles.RepoRoles.operator !=(Aw.Context.Core.Roles.RepoRoles? left, Aw.Context.Core.Roles.RepoRoles? right) -> bool
+static Aw.Context.Core.Roles.RepoRoles.operator ==(Aw.Context.Core.Roles.RepoRoles? left, Aw.Context.Core.Roles.RepoRoles? right) -> bool
+Aw.Context.Core.Roles.RoleLikePaths
+const Aw.Context.Core.Roles.RoleLikePaths.ExampleLimit = 5 -> int
+static Aw.Context.Core.Roles.RoleLikePaths.Matches(string! path) -> bool
+static Aw.Context.Core.Roles.RoleLikePaths.Patterns.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Roles.RoleCounter
+static Aw.Context.Core.Roles.RoleCounter.CodePaths(Aw.Context.Core.Graph.GraphSnapshot! graph, string? mapRepo) -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Context.Core.Roles.RoleCounter.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! pathsByRepo) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RepoRoles!>!
+Aw.Context.Core.Map.RoleHealth
+static Aw.Context.Core.Map.RoleHealth.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RepoRoles!>! roles) -> Aw.Context.Core.Map.MapHealth!
+Aw.Context.Core.Engine.ContextRepo.Roles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.RepoRole!>!
+Aw.Context.Core.Engine.ContextRepo.Roles.init -> void
+Aw.Context.Core.Engine.ProfileRepoEntry.Roles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.RepoRole!>?
+Aw.Context.Core.Engine.ProfileRepoEntry.Roles.init -> void
+Aw.Context.Core.Map.MapStatusView.Roles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RepoRoles!>?
+Aw.Context.Core.Map.MapStatusView.Roles.init -> void
+Aw.Context.Core.Results.FilteredCounts
+Aw.Context.Core.Results.FilteredCounts.<Clone>$() -> Aw.Context.Core.Results.FilteredCounts!
+Aw.Context.Core.Results.FilteredCounts.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, int>! Demoted) -> void
+Aw.Context.Core.Results.FilteredCounts.Demoted.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.Results.FilteredCounts.Demoted.init -> void
+Aw.Context.Core.Results.FilteredCounts.Equals(Aw.Context.Core.Results.FilteredCounts? other) -> bool
+Aw.Context.Core.Results.FilteredCounts.FilteredCounts(System.Collections.Generic.IReadOnlyDictionary<string!, int>! Demoted) -> void
+override Aw.Context.Core.Results.FilteredCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.FilteredCounts.GetHashCode() -> int
+override Aw.Context.Core.Results.FilteredCounts.ToString() -> string!
+static Aw.Context.Core.Results.FilteredCounts.operator !=(Aw.Context.Core.Results.FilteredCounts? left, Aw.Context.Core.Results.FilteredCounts? right) -> bool
+static Aw.Context.Core.Results.FilteredCounts.operator ==(Aw.Context.Core.Results.FilteredCounts? left, Aw.Context.Core.Results.FilteredCounts? right) -> bool
+Aw.Context.Core.Results.ContextResult.Filtered.get -> Aw.Context.Core.Results.FilteredCounts?
+Aw.Context.Core.Results.ContextResult.Filtered.init -> void
+Aw.Context.Core.Lenses.LensesView.Filtered.get -> Aw.Context.Core.Results.FilteredCounts?
+Aw.Context.Core.Lenses.LensesView.Filtered.init -> void
+Aw.Context.Core.Lenses.LensesSetView.Filtered.get -> Aw.Context.Core.Results.FilteredCounts?
+Aw.Context.Core.Lenses.LensesSetView.Filtered.init -> void
+Aw.Context.Core.Engine.ContextRepo.DemoteRole(string! path) -> string?
+static Aw.Context.Core.Graph.DemotedCode.Role(Aw.Context.Core.Graph.NodeKey key, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string?
+static Aw.Context.Core.Lenses.DemotedFiles.Counts(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.NodeKey>! keys, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Results.FilteredCounts?
+static Aw.Context.Core.Lenses.DemotedFiles.Counts(Aw.Context.Core.Lenses.LensBands! bands, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Results.FilteredCounts?
+static Aw.Context.Core.Lenses.DemotedFiles.Last(Aw.Context.Core.Lenses.LensesView! view, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Lenses.LensesView!
+static Aw.Context.Core.Lenses.DemotedFiles.Last(Aw.Context.Core.Lenses.LensesSetView! view, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Lenses.LensesSetView!

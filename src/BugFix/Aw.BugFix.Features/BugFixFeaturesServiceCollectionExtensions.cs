@@ -31,6 +31,7 @@ public static class BugFixFeaturesServiceCollectionExtensions
             .AddScoped<IService<StartAttemptRequest, StartAttemptResponse>, StartAttemptService>()
             .AddScoped<IService<RecordCandidateRequest, RecordCandidateResponse>, RecordCandidateService>()
             .AddScoped<IService<RecordRunRequest, RecordRunResponse>, RecordRunService>()
+            .AddScoped<IService<RecordBuildFailedRequest, RecordRunResponse>, RecordBuildFailedService>()
             .AddScoped<IService<JudgeCandidateRequest, JudgeCandidateResponse>, JudgeCandidateService>()
             .AddScoped<IService<AdvanceReportRequest, AdvanceReportResponse>, AdvanceReportService>()
             .AddScoped<IService<RunTestRequest, RunTestResponse>, RunTestService>()

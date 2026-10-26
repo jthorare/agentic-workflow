@@ -18,6 +18,9 @@ internal enum StepVerdict
     /// <summary>Answered below threshold: skipped as 'below_threshold', no failure row; a fallback rule may settle.</summary>
     BelowThreshold = 5,
 
+    /// <summary>Answered in the outputs and above threshold, but an output that needs reasons came without any: skipped as 'failed', failure row 'no-reasons'.</summary>
+    NoReasons = 7,
+
     /// <summary>Decided.</summary>
     Decided = 6,
 }

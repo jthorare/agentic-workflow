@@ -1,6 +1,6 @@
 {
   "stage": "evidence",
-  "coverageHeader": "1 of 4 lenses limited",
+  "coverageHeader": "1 of 4 lenses limited; relevance: 29 in, 0 out, 0 noise, 0 disputed; gap search: 1 round, 0 found, 0 confirmed",
   "openInContext": {
     "enabled": true,
     "reason": null
@@ -124,6 +124,30 @@
         {
           "key": "SCP-MAP-001",
           "text": "SCP-MAP-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-REL-001",
+          "text": "SCP-REL-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-REL-002",
+          "text": "SCP-REL-002 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-GAP-001",
+          "text": "SCP-GAP-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-GAP-002",
+          "text": "SCP-GAP-002 pass",
           "status": "pass",
           "lines": []
         },

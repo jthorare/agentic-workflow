@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "rounds": [
+    {
+      "round": 1,
+      "agent": {
+        "reportedModel": "fixture-searcher-model"
+      },
+      "judge": {
+        "providers": [
+          "fixture-judge"
+        ]
+      },
+      "searches": [
+        {
+          "tool": "context_query",
+          "query": "link expiry time"
+        }
+      ],
+      "candidates": [],
+      "counts": {
+        "found": 0,
+        "confirmed": 0,
+        "alreadyCovered": 0,
+        "notInScope": 0,
+        "uncertain": 0
+      }
+    }
+  ],
+  "counts": {
+    "rounds": 1,
+    "found": 0,
+    "confirmed": 0
+  }
+}

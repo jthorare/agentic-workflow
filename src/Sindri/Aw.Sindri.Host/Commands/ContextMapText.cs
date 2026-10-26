@@ -23,6 +23,7 @@ internal static class ContextMapText
     internal static string Status(MapStatusView s) => string.Create(CultureInfo.InvariantCulture,
         $"map v{s.Version.Number} {Word(s.Version.Status)} · {s.Version.Repo.Value} · created {s.Version.Created:O}{(s.ScopedTo is { } repo ? $" · scoped to {repo.Value}" : string.Empty)}\n"
         + $"{Counts(s.Counts)}{Scope(s.ScopedTo)}; {s.Orphaned} orphaned overrides; {s.Retained} retained versions\n")
+        + (s.RulesOlder ? "built under older map rules; a refresh will rebuild it (sindri context map refresh)\n" : string.Empty)
         + (s.Coverage is { } coverage ? ContextLensText.Coverage(coverage) : string.Empty);
 
     /// <summary>The publish state as lines under the map's own status: the state in the spec's short form, then the sentences (code index spec 6.4).</summary>

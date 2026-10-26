@@ -31,14 +31,25 @@ public sealed class ScopingCheckRulesTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_depth_1_lens_node_that_is_neither_mapped_nor_excluded_is_SCP_COV_003()
     {
-        var facts = ScopingFacts.Expiry().Edit("lenses", n => n["code"]!["nodes"]!.AsArray().Add(new JsonObject
+        var facts = ScopingFacts.Expiry().Edit("lenses", n =>
         {
-            ["key"] = "surface:route/links-export",
-            ["kind"] = "surface",
-            ["label"] = "Export a link",
-            ["band"] = "product",
-            ["lensItem"] = "L-code-99",
-        }));
+            n["code"]!["nodes"]!.AsArray().Add(new JsonObject
+            {
+                ["key"] = "surface:route/links-export",
+                ["kind"] = "surface",
+                ["label"] = "Export a link",
+                ["band"] = "product",
+                ["lensItem"] = "L-code-99",
+            });
+            n["code"]!["edges"]!.AsArray().Add(new JsonObject
+            {
+                ["from"] = "surface:route/links-export",
+                ["to"] = "surface:route/links-create",
+                ["type"] = "part-of",
+                ["provenance"] = "deterministic",
+                ["confirmed"] = true,
+            });
+        });
 
         Fails(await Evidence(facts), "SCP-COV-003", "surface:route/links-export");
     }

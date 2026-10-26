@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Views;
@@ -66,6 +67,30 @@ public sealed class DecideTests
         Expect.Equal((A.FirstDecisionId, _accept, "Looks right.", "human:http"), (payload.Decision, payload.Choice, payload.Note, payload.By));
         Expect.Equal(recorded.Envelope.Actor, payload.By);
         Expect.Equal(payload.CommandId, result.Value.CommandId);
+    }
+
+    [Fact]
+    public async Task A_session_Sindri_launched_cant_decide_and_records_nothing()
+    {
+        await Pending();
+        using var entered = _h.Slice.Callers.Enter(A.Caller().Session().Build() with { Launch = LaunchId.From("LCH-00000000000000000000000000000001") });
+
+        var result = await Service().Handle(A.DecideRequest().Choosing(_accept).Build(), Token);
+
+        Assert.Equal("SND-AUTH-002", result.IsError ? result.Error.Code : "accepted");
+        Assert.Empty(_h.Slice.Store.Events);
+    }
+
+    [Fact]
+    public async Task An_owner_started_session_can_decide()
+    {
+        await Pending();
+        using var entered = _h.Slice.Callers.Enter(A.Caller().Session().Build());
+
+        var result = await Service().Handle(A.DecideRequest().Choosing(_accept).Build(), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        _ = Assert.Single(_h.Slice.Store.Events);
     }
 
     [Fact]

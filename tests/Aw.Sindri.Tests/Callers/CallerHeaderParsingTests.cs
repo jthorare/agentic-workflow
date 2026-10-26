@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
 
 namespace Aw.Sindri.Tests.Callers;
@@ -78,4 +79,29 @@ public sealed class CallerHeaderParsingTests
     [InlineData("")]
     public void A_malformed_repo_header_is_SND_API_007(string repo) =>
         Assert.Equal("SND-API-007", CallerHeaderParsing.Parse(caller: null, terminal: null, client: null, repo).Error.Code);
+
+    private const string Launch = "LCH-00000000000000000000000000000001";
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_launch_header_is_kept_for_a_session() =>
+        Assert.Equal(LaunchId.From(Launch), CallerHeaderParsing.Parse("session", terminal: null, client: null, repo: null, Launch).Value.Launch);
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_launch_header_means_no_launch() =>
+        Assert.Null(CallerHeaderParsing.Parse(caller: null, terminal: null, client: null, repo: null).Value.Launch);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_launch_makes_a_human_header_a_launched_session()
+    {
+        var parsed = CallerHeaderParsing.Parse("human", terminal: "1", client: null, repo: null, Launch).Value;
+
+        Assert.Equal((CallerClass.Session, false, LaunchId.From(Launch)), (parsed.Class, parsed.Terminal, parsed.Launch));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("not-a-launch")]
+    [InlineData("")]
+    [InlineData("LCH-ABC")]
+    public void A_malformed_launch_header_is_SND_API_007(string launch) =>
+        Assert.Equal("SND-API-007", CallerHeaderParsing.Parse(caller: null, terminal: null, client: null, repo: null, launch).Error.Code);
 }

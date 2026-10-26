@@ -40,7 +40,8 @@ public sealed class TakeoverTests
     [Fact, Trait("Lane", "unit")]
     public void A_takeover_over_a_park_has_no_timer_to_pause_and_the_handback_returns_to_the_park_with_no_timer()
     {
-        var parked = Applied(Agent(At(Step, "verify", entry: 3)), new DeadlineFired(Timers, 3, DeadlineKind.State));
+        var retried = Applied(Agent(At(Step, "verify", entry: 3)), new DeadlineFired(Timers, 3, DeadlineKind.State));   // a park timeout retries once first (owner q93)
+        var parked = Applied(retried, new DeadlineFired(Timers, 3, DeadlineKind.Retry));
         var taken = Applied(parked, Takeover());
         var back = Applied(taken, Handback());
 

@@ -53,7 +53,8 @@ public sealed class BuildMapRecognizerTests
         var files = Files();
         files["config/flags.yaml"] = new string('a', 60) + "!";
         using var world = new MapWorld(new LeakyRepoReader(MapWorld.Head, files));
-        var section = """{"repos":["aw-split-panes"],"extract":{"recognizers":[{"kind":"flag","glob":"config/*.yaml","pattern":"^(?<name>(a+)+)$","keyFrom":"name"}]}}""";
+        // A lookahead keeps this pattern on the backtracking engine (LinearRegex's fallback), the only path that can still time out.
+        var section = """{"repos":["aw-split-panes"],"extract":{"recognizers":[{"kind":"flag","glob":"config/*.yaml","pattern":"^(?=a)(?<name>(a+)+)$","keyFrom":"name"}]}}""";
 
         var report = await world.Map.BuildMap(progress: null, MapWorld.HumanWith(section), MapWorld.None);
 

@@ -63,8 +63,15 @@ public static class AgentStepBrief
         return needed.Count == 0 ? "no outputs needed" : "write " + string.Join(", ", needed.Select(static f => f.Value));
     }
 
-    private static List<FactKey> Needed(BlockDescriptor descriptor, OutcomeName outcome) =>
-        [.. descriptor.Outputs.Where(o => StepOutputs.CallerWritesOn(o, outcome)).Select(static o => o.Fact)];
+    /// <summary>The facts a caller writes when the Step reports <paramref name="outcome"/>: the outputs required on it that the engine doesn't fill.</summary>
+    /// <param name="descriptor">The Step's descriptor.</param>
+    /// <param name="outcome">The reported outcome.</param>
+    /// <returns>The facts, in declaration order.</returns>
+    public static IReadOnlyList<FactKey> Needed(BlockDescriptor descriptor, OutcomeName outcome)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        return [.. descriptor.Outputs.Where(o => StepOutputs.CallerWritesOn(o, outcome)).Select(static o => o.Fact)];
+    }
 
     private static string Name(FactKey fact) => fact.Value.StartsWith(FactPrefix, StringComparison.Ordinal) ? fact.Value[FactPrefix.Length..] : fact.Value;
 }

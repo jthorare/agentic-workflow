@@ -7,7 +7,7 @@ internal static class MapSearchSnippets
     private const int Lead = 60;
 
     /// <summary>The first of title, path and text that holds one of <paramref name="terms"/>, and a window of it around the first hit (the title or path whole when short). No field holds a word (the index matched a folded form): the title.</summary>
-    internal static (string Matched, string Snippet) Of(Aw.Context.Core.Search.MapSearchDoc doc, IReadOnlyList<string> terms)
+    internal static (string Matched, string Snippet) Of(Core.Search.MapSearchDoc doc, IReadOnlyList<string> terms)
     {
         foreach (var (name, raw) in new[] { ("title", doc.Title), ("path", doc.Path), ("text", doc.Text) })
         {

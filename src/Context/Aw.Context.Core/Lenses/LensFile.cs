@@ -40,4 +40,8 @@ public sealed record LensFile(
     /// <summary>Schema 2 only: the fewest edges or cascade levels from any anchor that reached it (0 for an anchor's own scope).</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Depth { get; init; }
+
+    /// <summary>True when the file's repo demotes it (index.demote): it stays readable and ranks last, but is never a scope surface.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Demoted { get; init; }
 }

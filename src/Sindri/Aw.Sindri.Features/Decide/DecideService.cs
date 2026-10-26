@@ -20,7 +20,7 @@ namespace Aw.Sindri.Features.Decide;
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="scrubber">Takes secrets out of the note before it reaches the ledger.</param>
-/// <param name="callers">The caller: the actor and the command id.</param>
+/// <param name="callers">The caller: the actor and the command id. A session Sindri launched is refused (SND-AUTH-002, q100): a pending decision is the owner's.</param>
 internal sealed class DecideService(IViewReader views, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber, ICallerContextAccessor callers)
     : IService<DecideRequest, CommandAccepted>
 {
@@ -30,6 +30,11 @@ internal sealed class DecideService(IViewReader views, ILedgerStore ledger, Held
         if (callers.Current is not { } caller)
         {
             return SindriErrors.AuthRefused.With("Decide needs a caller");
+        }
+
+        if (caller.Launch is not null)
+        {
+            return SindriErrors.AuthRefused.With("Decide is the owner's: a session Sindri launched can't decide a decision. Ask the human, or an agent session the owner started");
         }
 
         if (held.Current is not { } grant)

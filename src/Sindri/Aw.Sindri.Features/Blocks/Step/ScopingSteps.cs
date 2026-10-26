@@ -12,7 +12,7 @@ internal static class ScopingSteps
 {
     private static readonly string[] _fourReads = ["brief", "tracker", "idea", "change"];
 
-    /// <summary>'step.scope.intake': what to scope, sorted into one of four readers; every outcome carries the eight round-1 seeds.</summary>
+    /// <summary>'step.scope.intake': what to scope, sorted into one of four readers; every outcome carries the ten round-1 seeds.</summary>
     public static BlockDescriptor Intake { get; } = BlockStep("step.scope.intake", Capability.None)
         .Reads("fact:scopeInput").Reports(_fourReads)
         .Writes(Seeds());
@@ -55,6 +55,7 @@ internal static class ScopingSteps
     /// <summary>'step.scope.draft': the scope map and the acceptance list from the lenses; 'drafted'.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Draft { get; } = AgentStep("step.scope.draft", Capability.Tools)
+        .Takes(Text("model"))
         .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:findings", "fact:answerLog", "fact:challenge")
         .Reports("drafted").Writes(On("fact:scopeMap", "drafted"), On("fact:acceptance", "drafted"));
 
@@ -85,13 +86,14 @@ internal static class ScopingSteps
         .Reports("updated", "rescope")
         .Writes(On("fact:scopeMap", "updated", "rescope"), On("fact:acceptance", "updated", "rescope"), On("fact:openQuestions", "updated", "rescope"));
 
-    /// <summary>'step.scope.reanchor': anchors the changed map from the context engine's text shape; 'anchored'.</summary>
+    /// <summary>'step.scope.reanchor': anchors the changed map from the context engine's text shape, the anchors a confirmed gap named first; 'anchored'.</summary>
     public static BlockDescriptor Reanchor { get; } = BlockStep("step.scope.reanchor", Capability.Tools)
-        .Reads("fact:scopeMap", "fact:anchors", "fact:lenses").Reports("anchored").Writes(On("fact:anchors", "anchored"));
+        .Reads("fact:scopeMap", "fact:anchors", "fact:lenses", "fact:gapAnchors").Reports("anchored").Writes(On("fact:anchors", "anchored"));
 
     /// <summary>'step.scope.challenge': a second model's look for missed surfaces and behaviours; reports only its own round.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Challenge { get; } = AgentStep("step.scope.challenge", Capability.Tools)
+        .Takes(Text("model"))
         .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answerLog", "fact:challenge")
         .Reports("nothingNew", "found").Writes(Every("fact:challengeRound"));
 
@@ -100,15 +102,15 @@ internal static class ScopingSteps
         .Reads("fact:challenge", "fact:challengeRound").Reports("nothingNew", "found")
         .Writes(Every("fact:challenge"), On("fact:findings", "found"));
 
-    /// <summary>'step.scope.propose': submits the map's new surfaces as draft proposals and records each surface's graph status; 'proposed' or 'skipped'.</summary>
+    /// <summary>'step.scope.propose': submits the map's new surfaces as draft proposals and records each surface's graph status and the relevance review's map fixes; 'proposed' or 'skipped'.</summary>
     public static BlockDescriptor Propose { get; } = BlockStep("step.scope.propose", Capability.Tools)
-        .Reads("fact:scopeMap").Reports("proposed", "skipped").Writes(Every("fact:scopeMap"));
+        .Reads("fact:scopeMap", "fact:mapFixes").Reports("proposed", "skipped").Writes(Every("fact:scopeMap"), Every("fact:mapFixes"));
 
-    /// <summary>'step.scope.evidence': every check, the packet assembled in the run area; 'complete' re-reports five facts, 'incomplete' and 'regather' carry findings.</summary>
+    /// <summary>'step.scope.evidence': every check, the packet assembled in the run area; 'complete' re-reports five facts and records fact:runs from the ledger, 'incomplete' and 'regather' carry findings.</summary>
     public static BlockDescriptor Evidence { get; } = BlockStep("step.scope.evidence", Capability.Tools)
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions", "fact:decision", "fact:anchors", "fact:questions")
+        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions", "fact:decision", "fact:anchors", "fact:questions", "fact:relevance", "fact:gapSearch", "fact:mapFixes")
         .Reports("complete", "incomplete", "regather")
-        .Writes(On("fact:scopeMap", "complete"), On("fact:acceptance", "complete"), On("fact:coverage", "complete"), On("fact:openQuestions", "complete"), On("fact:scopePacket", "complete"), On("fact:recommendation"), On("fact:findings", "incomplete", "regather"));
+        .Writes(On("fact:scopeMap", "complete"), On("fact:acceptance", "complete"), On("fact:coverage", "complete"), On("fact:openQuestions", "complete"), On("fact:scopePacket", "complete"), On("fact:runs", "complete"), On("fact:recommendation"), On("fact:findings", "incomplete", "regather"));
 
     /// <summary>'step.scope.review': the owner's stop, human-only: approve, revise (notes become answers) or drop.</summary>
     public static BlockDescriptor Review { get; } = HumanDeskStep("step.scope.review", Capability.None)
@@ -116,7 +118,7 @@ internal static class ScopingSteps
 
     /// <summary>'step.scope.freeze': re-runs the evidence checks, confirms the packet's hash and freezes it through aw-packets; 'frozen' re-records fact:scopePacket as {hash, dir}, 'mismatch' carries findings.</summary>
     public static BlockDescriptor Freeze { get; } = BlockStep("step.scope.freeze", Capability.Tools)
-        .Reads("fact:scopePacket", "fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions", "fact:decision", "fact:anchors", "fact:questions")
+        .Reads("fact:scopePacket", "fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions", "fact:decision", "fact:anchors", "fact:questions", "fact:relevance", "fact:gapSearch", "fact:mapFixes", "fact:runs")
         .Reports("frozen", "mismatch").Writes(On("fact:scopePacket", "frozen"), On("fact:findings", "mismatch"));
 
     /// <summary>'step.scope.withdraw': withdraws the run's undecided map proposals; 'withdrawn'.</summary>
@@ -126,5 +128,6 @@ internal static class ScopingSteps
     [
         On("fact:scopeMap", _fourReads), On("fact:acceptance", _fourReads), On("fact:findings", _fourReads), On("fact:answers", _fourReads),
         On("fact:answerLog", _fourReads), On("fact:challenge", _fourReads), On("fact:questions", _fourReads), On("fact:openQuestions", _fourReads),
+        On("fact:gapSearch", _fourReads), On("fact:gapAnchors", _fourReads),
     ];
 }

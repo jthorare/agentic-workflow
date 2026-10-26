@@ -16,6 +16,8 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Graph">The graph layer's keys.</param>
 /// <param name="Roles">File roles this repo does not index: a role name to its repo-relative globs ('cron': ['**/*cron*']); roles are per repo only (a profile-level one is refused) and there are no built-in roles; the files they match are never extracted, clustered or cited, as with <c xml:lang="en">denyPaths</c>.</param>
 /// <param name="Concepts">Concepts the owner pins (context concepts note §3); a repo's own are added to the profile's.</param>
+/// <param name="Ignore">Role names (keys of <c xml:lang="en">roles</c>) whose files are not indexed and never cited; a role in neither <c xml:lang="en">ignore</c> nor <c xml:lang="en">demote</c> is ignored. Per repo only (a profile-level one is refused).</param>
+/// <param name="Demote">Role names (keys of <c xml:lang="en">roles</c>) whose files stay indexed and searchable but are never a feature implementer, anchor or scope surface, and rank last in answers and lenses. Per repo only; a role cannot be in both lists.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IndexSettings(
     IReadOnlyList<string>? DenyPaths = null,
@@ -25,7 +27,9 @@ public sealed record IndexSettings(
     EmbeddingSettings? Embeddings = null,
     GraphSettings? Graph = null,
     IReadOnlyDictionary<string, IReadOnlyList<string>>? Roles = null,
-    IReadOnlyList<ConceptSettings>? Concepts = null)
+    IReadOnlyList<ConceptSettings>? Concepts = null,
+    IReadOnlyList<string>? Ignore = null,
+    IReadOnlyList<string>? Demote = null)
 {
     /// <summary>The default for 'maxFileKB'.</summary>
     public const int DefaultMaxFileKB = 4_096;

@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.review-loop
-version: 5
+version: 6
 description: "Block recipe: review the phase's change one lens per run, a round per iteration, to zero blocking and issue findings, at most 5 rounds, then one narrow re-check; a review, clean or behaviour-wrong, ends through a recorded, frozen review packet; no lens applying ends stuck. The loop never asks a human by default: only an agent's typed escalation (ambiguousFix or productQuestion, outcome needsOwner) reaches the ask state, at most 3 asks. The round log is an input, so round 1 holds fact:lensRounds: the parent passes [] and each round appends to it."
 displayName: "Review the code until no blocking issues remain"
 inputs:
@@ -12,19 +12,19 @@ outputs:
   - { key: fact:review, label: "Review result", type: packet, from: record }
 initial: round
 states:
-  round:   { kind: active, step: step.review.round, loop: rounds, timeout: { after: 4h, then: park },
+  round:   { kind: active, step: step.review.round, loop: rounds, timeout: { after: 1d, then: park },
              next: "Start review round {loop.rounds}/{loop.rounds.cap} on {item}'s change: queue the review lenses that apply." }
-  lens:    { displayName: "Review pass", why: "One reviewer looks at the change from one angle.", kind: active, step: { use: step.lens.run, with: { subject: change, bundle: lenses } }, loop: lens-runs, timeout: { after: 4h, then: park },
+  lens:    { displayName: "Review pass", why: "One reviewer looks at the change from one angle.", kind: active, step: { use: step.lens.run, with: { subject: change, bundle: lenses } }, loop: lens-runs, timeout: { after: 1d, then: park },
              next: "Review {item}'s change through the next lens in the pack." }
-  lens-log: { kind: active, step: step.review.log, timeout: { after: 4h, then: park },
+  lens-log: { kind: active, step: step.review.log, timeout: { after: 1d, then: park },
              next: "Append the lens report to {item}'s review rounds and decide: next lens, clean or findings." }
-  fix:     { displayName: "Fix the findings", why: "Fixes what the review found.", kind: active, step: step.review.fix, timeout: { after: 4h, then: park },
+  fix:     { displayName: "Fix the findings", why: "Fixes what the review found.", kind: active, step: step.review.fix, timeout: { after: 1d, then: park },
              next: "Fix the blocking and issue findings of round {loop.rounds}; answer the rest in writing." }
-  resolve: { displayName: "Fix with your answer", why: "Fixes the findings the way you answered.", kind: active, step: step.review.apply-answer, timeout: { after: 4h, then: park },
+  resolve: { displayName: "Fix with your answer", why: "Fixes the findings the way you answered.", kind: active, step: step.review.apply-answer, timeout: { after: 1d, then: park },
              next: "Fix the findings of round {loop.rounds} the way the owner answered; ask again only if the answer leaves another question." }
-  recheck: { kind: active, step: step.review.recheck, timeout: { after: 4h, then: park },
+  recheck: { kind: active, step: step.review.recheck, timeout: { after: 1d, then: park },
              next: "Round cap reached: have one reviewer re-check only the fixes." }
-  record:  { kind: active, step: step.review.record, timeout: { after: 4h, then: park },
+  record:  { kind: active, step: step.review.record, timeout: { after: 1d, then: park },
              next: "Write and freeze {item}'s review result packet." }
   ask:     { displayName: "Answer a question", why: "A reviewer or the fixer needs your decision.", kind: active, step: step.lens.ask, loop: asks, timeout: { after: 7d, then: park },
              next: "A reviewer or the fixer can't decide {item}'s change alone (an ambiguous fix or a product question): answer it, or stop the review." }

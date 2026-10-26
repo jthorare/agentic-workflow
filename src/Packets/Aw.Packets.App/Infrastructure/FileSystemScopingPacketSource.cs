@@ -6,7 +6,7 @@ using Aw.Packets.Core.Kinds.Scoping;
 namespace Aw.Packets.App.Infrastructure;
 
 /// <summary>
-/// Reads a scope packet directory from disk: the twelve files the scoping kind lists (a symbolic link is refused rather
+/// Reads a scope packet directory from disk: the fourteen files the scoping kind lists (a symbolic link is refused rather
 /// than followed), and the names of every other top-level entry. Nothing in a sub-directory is read.
 /// </summary>
 internal sealed class FileSystemScopingPacketSource : IScopingPacketSource

@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Kernel.Data;
 using Microsoft.Data.Sqlite;
 
@@ -14,6 +15,7 @@ internal sealed class StampedCache<T>
 {
     private readonly Lock _gate = new();
     private readonly Dictionary<string, (long Stamp, T Value)> _held = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Flight> _flights = new(StringComparer.Ordinal);
 
     /// <summary>The map's counter (migration 0008).</summary>
     internal const string MapStamp = "SELECT seq FROM change_stamp WHERE id = 1";
@@ -37,6 +39,75 @@ internal sealed class StampedCache<T>
         }
     }
 
+    /// <summary>
+    /// What was kept under <paramref name="key"/> at <paramref name="stamp"/>, or <paramref name="load"/>'s result, run once however many callers miss together: the others await the
+    /// same load. A load that fails, finds nothing or throws is not kept, so the next caller loads again. Without a stamp nothing is shared.
+    /// </summary>
+    internal async ValueTask<Result<T?>> GetOrLoad(string key, long? stamp, Func<Task<Result<T?>>> load, CancellationToken cancellationToken)
+    {
+        if (stamp is not { } now)
+        {
+            return await load().ConfigureAwait(false);
+        }
+
+        while (true)
+        {
+            if (Get(key, now) is { } held)
+            {
+                return held;
+            }
+
+            var flight = Join(key, now, load);
+            try
+            {
+                var result = await flight.Load.Value.ConfigureAwait(false);
+                Settle(key, flight, result);
+                return result;
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // the first caller's token ended the shared load, not this caller's: load again
+                Settle(key, flight, result: null);
+            }
+            catch
+            {
+                Settle(key, flight, result: null);
+                throw;
+            }
+        }
+    }
+
+    private Flight Join(string key, long stamp, Func<Task<Result<T?>>> load)
+    {
+        lock (_gate)
+        {
+            if (_flights.TryGetValue(key, out var running) && running.Stamp == stamp)
+            {
+                return running;
+            }
+
+            var flight = new Flight(stamp, new Lazy<Task<Result<T?>>>(load, LazyThreadSafetyMode.ExecutionAndPublication));
+            _flights[key] = flight;
+            return flight;
+        }
+    }
+
+    private void Settle(string key, Flight flight, Result<T?>? result)
+    {
+        if (result is { IsSuccess: true, Value: { } value })
+        {
+            Put(key, flight.Stamp, value);
+        }
+
+        lock (_gate)
+        {
+            if (_flights.TryGetValue(key, out var running) && ReferenceEquals(running, flight))
+            {
+                _ = _flights.Remove(key);
+            }
+        }
+    }
+
     /// <summary>Keeps <paramref name="value"/> under <paramref name="key"/> at <paramref name="stamp"/> (nothing without a stamp).</summary>
     internal void Put(string key, long? stamp, T? value)
     {
@@ -56,6 +127,8 @@ internal sealed class StampedCache<T>
             _held[key] = (now, value);
         }
     }
+
+    private sealed record Flight(long Stamp, Lazy<Task<Result<T?>>> Load);
 
     // why: Store sits below Graph (Graph's store reads through it), so the counter has its own mapper rather than Graph's (ARCH-CYCLE-001)
     private sealed class StampMapper : IRowMapper<long>

@@ -284,7 +284,7 @@ publish() {
       staged_count="$(find "$tree/recipes/sindri" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
       embedded_count="$(printf '%s' "$evals" | jq -r '.recipes | length' 2> /dev/null || true)"
       [ "$embedded_count" = "$staged_count" ] \
-        || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir)"
+        || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir); eval output: $(printf '%s' "$evals" | head -c 300)"
     fi
   fi
 
@@ -355,6 +355,19 @@ write_wrapper() { # write_wrapper <name>
   mv -f "$tmp" "$target"
 }
 
+# A build swap can leave the stored profile approval unreadable or not current (#1143): say the one command, never fail the install over it.
+profile_hint() {
+  local out rc=0
+  [ -x "$link_dir/sindri" ] || return 0
+  out="$(cd / && "$link_dir/sindri" profile validate < /dev/null 2>&1)" || rc=$?
+  case "$rc:$out" in
+    0:*) ;;
+    *:*SND-PROFILE-005*) say "the profile approval can't be read by build $stamp; run \`sindri profile approve\` to see the live hash, then \`sindri profile approve <hash>\`" ;;
+    1:*) say "the profile isn't approved by this build; run \`sindri profile approve\`" ;;
+  esac
+  return 0
+}
+
 link() {
   local b sdk_dir
   if [ "$dry" = 1 ]; then
@@ -379,6 +392,7 @@ link() {
       || warn "ui-evidence install-browser failed (offline?); re-run: ui-evidence install-browser"
   fi
   prune
+  profile_hint
   local running
   running="$(running_build)"
   if [ -n "$running" ] && [ "$running" != "$stamp" ]; then

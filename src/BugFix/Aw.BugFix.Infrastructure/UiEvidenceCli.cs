@@ -16,7 +16,7 @@ namespace Aw.BugFix.Infrastructure;
 internal sealed class UiEvidenceCli(Func<string, string?> environment) : IUiEvidence
 {
     private const string Summary = "summary.json";
-    private readonly TimeSpan _timeout = BugFixSettings.Read(environment).CheckTimeout;
+    private readonly BugFixSettings _settings = BugFixSettings.Read(environment);
 
     public Result<UiRun> Run(UiRunRequest request)
     {
@@ -29,7 +29,7 @@ internal sealed class UiEvidenceCli(Func<string, string?> environment) : IUiEvid
         var summary = Path.Combine(Directory.CreateDirectory(request.RunDirectory).FullName, Summary);
         File.Delete(summary);   // a summary left by an earlier run is never this run's
         var start = ToolBinary.Start(environment, binary, ["run", request.Script, request.RunDirectory, "--app-build", request.Commit], request.WorkingDirectory);
-        var (code, ran) = Processes.ToLog(start, _timeout, request.Log);
+        var (code, ran) = Processes.ToLog(start, _settings.CheckTimeout, _settings.CheckGrace, request.Log);
         if (!ran)
         {
             return Unavailable($"ui-evidence didn't run to an exit (see {request.Log})");

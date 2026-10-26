@@ -15,6 +15,7 @@ using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Trust;
+using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Testing.Code;
@@ -65,12 +66,12 @@ internal sealed class MapWorld : IDisposable
         ["README.md"] = "# Split panes",
     };
 
-    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null)
+    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
         Exports = new FakeExportStore(Clock);
         Reader.Put(MapPath, Maps.Fixture(), FixtureMap.Yaml);
-        _provider = new ServiceCollection()
+        var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
@@ -95,9 +96,14 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IReviewFileStore>(ReviewFiles)
             .AddSingleton<ICurrentUser>(new FakeCurrentUser())
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
-            .AddSingleton<IMapSearchIndexFactory>(new Aw.Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
-            .AddContextFeatures()
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
+            .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
+            .AddContextFeatures();
+        if (walk is not null)
+        {
+            _ = services.AddSingleton(walk);
+        }
+
+        _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();
     }
 

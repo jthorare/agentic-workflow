@@ -349,7 +349,8 @@ order (`RecipeStateView.onOutcome`). Written into the hashed form only when set.
 (LN-WF3, see "The heavy resource" below); `slot` is a stub that is always free (P7), so a `slot` wait is reported as information
 (`RCP-RES-001`). `then: retry`
 re-arms the deadline in the same frame and re-sends the entering transition's effects; it isn't allowed on a child wait
-(`RCP-TIME-002`), nor on a state whose Step runs on the block runtime, whose timeout must also outlast the Step's `maxDuration` (`RCP-TIME-003`).
+(`RCP-TIME-002`), nor on a state whose Step runs on the block runtime, whose timeout must also outlast the Step's `maxDuration` when it sets one (`RCP-TIME-003`; a Step with none has no fixed limit, owner q93, 2026-10-23).
+A `then: park` timeout on an active or wait state (not a child wait, not a desk run) retries once, as `then: retry` does, and parks `timeout` on the second expiry (owner q93, 2026-10-23; patch `timeout-retries-before-park-v1`).
 
 ### Transitions
 
@@ -453,7 +454,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-EXIT-001` | Every non-terminal state has a path to a terminal state | Add a transition towards a terminal state |
 | `RCP-TIME-001` | Every active and wait state has a timeout | Add `timeout: { after, then }` |
 | `RCP-TIME-002` | A child wait doesn't `retry` | Use `park` or `escalate` |
-| `RCP-TIME-003` | A state whose Step's descriptor says `runtime: block` (whether or not this build registers a runtime for it) doesn't `retry`, and its `timeout.after` is longer than the Step's `maxDuration` (two minutes when the descriptor sets none) | Use `then: park` (a block call that runs out ends as `step.failed`, which the route sends to its desk twin); make the state timeout longer than the Step's `maxDuration` |
+| `RCP-TIME-003` | A state whose Step's descriptor says `runtime: block` (whether or not this build registers a runtime for it) doesn't `retry`, and its `timeout.after` is longer than the Step's `maxDuration` (when the descriptor sets none, the Step has no fixed limit: the state timer ends it; owner q93, 2026-10-23) | Use `then: park` (a block call that runs out ends as `step.failed`, which the route sends to its desk twin); make the state timeout longer than the Step's `maxDuration` |
 | `RCP-LOOP-001` | A state's `loop` is declared, every loop's `cap` is at least 1, and every cycle of step and wait transitions passes through a state with a `loop` (a cycle closed by a `command.<verb>` or by the answer to an `answer` wait is a human's, and a cycle with no way out is `RCP-EXIT-001`'s) | Declare it under `loops`, or add `loop` to a state on the cycle |
 | `RCP-LOOP-002` | A looped state has a transition back into it | Add it, or remove `loop` |
 | `RCP-LOOP-003` | `noProgress` isn't empty | Name a signal, or leave it out |
@@ -596,7 +597,7 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 
 | Step | Runtime | Inputs | Outcomes | Outputs |
 |---|---|---|---|---|
-| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the eight seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`) on all four |
+| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the ten seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`, `gapSearch`, `gapAnchors`) on all four |
 | `step.scope.read-brief`, `step.scope.read-change` | block | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.scope.read-tracker` | block (`Network`) | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.brief.seed` | block | - | `seeded` | `answers`, `answerLog` on seeded |
@@ -604,17 +605,23 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 | `step.brief.write` | agent | `idea`, `answers`, `answerLog` | `written`, `empty` | `brief` on written |
 | `step.scope.anchor` | block | `brief` | `anchored` | `anchors` on anchored |
 | `step.scope.gather` | block | `anchors` (+ its Step inputs) | `gathered` | `lenses`, `coverage` on gathered |
+| `step.scope.relevance-review` | agent | `brief`, `lenses`, `coverage`, `anchors` | `reviewed` | `relevanceVerdicts` on reviewed |
+| `step.scope.relevance-judge` | block (judge, long) | `brief`, `lenses`, `relevanceVerdicts` | `ruled` | `relevanceRulings` on ruled |
+| `step.scope.relevance-apply` | block | `lenses`, `coverage`, `brief`, `relevanceVerdicts`, `relevanceRulings` | `applied` | `lenses`, `coverage`, `relevance`, `mapFixes` on applied |
 | `step.scope.draft` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `findings`, `answerLog`, `challenge` | `drafted` | `scopeMap`, `acceptance` on drafted |
+| `step.scope.gap-search` | agent | `brief`, `acceptance`, `answerLog` | `searched` | `gapCandidates` on searched |
+| `step.scope.gap-judge` | block (judge, long) | `brief`, `acceptance`, `scopeMap`, `lenses`, `gapCandidates` | `ruled` | `gapRulings` on ruled |
+| `step.scope.gap-log` | block | `gapSearch`, `gapCandidates`, `gapRulings`, `findings` | `clear`, `confirmed` | `gapSearch`, `gapAnchors` on both; `findings` on confirmed; `gapSearchClosed` on clear |
 | `step.scope.check` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog` | `pass`, `gaps`, `regather` | `findings` on gaps, regather |
 | `step.interview.questions` | agent | `scopeMap`, `acceptance`, `lenses`, `answerLog`, `challenge`, `openQuestions` | `asked`, `none` | `questions` on asked; `openQuestions` on asked, none |
 | `step.interview.answer` | desk, human-only | `questions`, `answerLog` | `answered`, `doneAsking` | `answers` on both; `interviewClosed` on doneAsking |
 | `step.interview.record` | block | `answers`, `answerLog` | `recorded` | `answerLog` on recorded |
 | `step.interview.apply` | agent | ten facts (spec §9) | `updated`, `rescope` | `scopeMap`, `acceptance`, `openQuestions` on both |
-| `step.scope.reanchor` | block | `scopeMap`, `anchors`, `lenses` | `anchored` | `anchors` on anchored |
+| `step.scope.reanchor` | block | `scopeMap`, `anchors`, `lenses`, `gapAnchors` | `anchored` | `anchors` on anchored |
 | `step.scope.challenge` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answerLog`, `challenge` | `nothingNew`, `found` | `challengeRound` (every outcome) |
 | `step.scope.challenge-log` | block | `challenge`, `challengeRound` | `nothingNew`, `found` | `challenge` (every outcome); `findings` on found |
-| `step.scope.propose` | block | `scopeMap` | `proposed`, `skipped` | `scopeMap` (every outcome) |
-| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions` | `complete`, `incomplete`, `regather` | five facts on complete; `findings` on incomplete, regather |
+| `step.scope.propose` | block | `scopeMap`, `mapFixes` | `proposed`, `skipped` | `scopeMap`, `mapFixes` (every outcome) |
+| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions`, `relevance`, `gapSearch`, `mapFixes` | `complete`, `incomplete`, `regather` | six facts on complete (`runs` from the ledger among them); `findings` on incomplete, regather |
 | `step.scope.review` | desk, human-only | `scopePacket` | `approve`, `revise`, `drop` | `answers` on revise |
 | `step.scope.freeze` | block | `scopePacket` and the twelve facts `step.scope.evidence` reads (it re-runs the evidence checks) | `frozen`, `mismatch` | `scopePacket` = `{hash, dir}` on frozen (the run area's `scope-packet/` stays in place); `findings` on mismatch. The engine appends `scoping.approved` under the lease for each `frozen` report (key `scoping.approved:<packetHash>`; `Instance` is the address, the row's item is set, and the hash is aw-packets' hash of that directory) |
 | `step.scope.withdraw` | block | - | `withdrawn` | - |
@@ -1032,7 +1039,7 @@ refusal follows §5.8's precedence. A wait state's timer wakes the wait like a d
 | `Item`, `Recipe`, `Tenant`, `Ring` | From `InstanceStart`; `StartRequest` carries the tenant and ring into the instance |
 | `State` | The state after each change (`parked`, `escalated`, `taken-over` while suspended) |
 | `NeedsYou` | True while parked or escalated, or while an open desk task waits; false while taken over |
-| `Repo` | `fact:item`'s `repo`, read once on start by the `ReadItemRepo` local activity; unset without one |
+| `Repo` | `fact:item`'s `repo` (`{ id, repo?, spec? }`: `repo` and `spec` are optional), read once on start by the `ReadItemRepo` local activity; unset without one |
 
 The loop's tests run on the time-skipping server: `InterpreterEvalTests` runs every shipped `workflow.step` eval case
 through the interpreter and checks each line against the in-process `recipe eval`, and `InterpreterStateLoopTests`
@@ -1413,7 +1420,7 @@ sends it on to the desk twin. A Step with no registered runtime keeps opening a 
 
   (The workflow also falls back to `failed` and `the Step returned nothing` when Temporal reports no inner failure or
   the outcome is empty; the runner never produces either.)
-- **The bound:** the activity (queue time included, `ScheduleToCloseTimeout`) is bounded by the descriptor's `maxDuration`
+- **The bound:** the activity (queue time included, `ScheduleToCloseTimeout`) of a Step with no `maxDuration` is bounded by 30 days (`BlockLimits.Fallback`, owner q93, 2026-10-23): the state timer retries once and then parks it. One that sets a `maxDuration` is bounded by it
   and by the time left on the state timer less a second (`BlockLimits.Bound`), so after a takeover and handback, when the
   timer resumes with only what was left, the Step's own `timeout` still ends the run before the timer would park it.
 - **`providers` is checked at validate time:** a literal list may name only `jev`, `claude-cli`, `codex-cli`, `cursor-cli`
@@ -1438,12 +1445,31 @@ session once (`LaunchAgentStep`, id `agent-launch:{run}:{n}`; a repeated request
 session), watches it (`WatchAgentStep`, heartbeating), and on an accepted report closes the run (`CloseAgentStep`: the
 usage, the measured empty diff, and the stop of the session) before it decides.
 
+- **A restart does not drop the report (#1109, #1000 ask 1).** `workflow complete` from a launched session (`AW_SINDRI_LAUNCH_SECRET`
+  set) waits out a control plane that is down: on `SND-API-001` it tries again for `AW_SINDRI_COMPLETE_WAIT` seconds (default 900,
+  enough for a reinstall; 0 is one try), pausing 1 s and doubling to 15 s, with one line on standard error per wait. It keeps the
+  nonce it was issued across the waits. A refusal, an invalid answer and a timeout are never retried; a human's call is tried
+  once. If the window ends it exits 1 and says the output stays in the files it was given: Sindri completes the run from the
+  run's `.sindri-out` folder when it is back (#1000), so the agent must not report the Step again by hand.
 - **The report is the `complete` Update**, validated like a desk report. The session sends `X-Sindri-Launch-Secret`
   (`AW_SINDRI_LAUNCH_SECRET` for the CLI); another caller gets `SND-AUTH-002`, a wrong secret `SND-AUTH-003` (it consumes no
   nonce). While the instance is taken over the secret is refused and only the human completes it, through the desk.
 - **A park or a takeover leaves the session running;** the watch resumes after the handback and attaches to the same
   launch id. A `cancel` or the end of the run stops the session. A session that ends without a report is
-  `step.failed` (`exit`, or `lost` when it vanished), and the loop rules apply to it as to any failure.
+  `step.failed` (`exit`, `lost` when it vanished, or `idle` when its turn ended and nothing happened for 120 s), and the loop
+  rules apply to it as to any failure, after the recovery below.
+- **A restart does not strand a result (issue #1000).** `workflow complete` from a launched session (it carries
+  `AW_SINDRI_LAUNCH_SECRET`) waits out a control plane that is down: on `SND-API-001` (no control plane recorded, or the
+  connection refused or broken) it waits as the item above says (#1109: `AW_SINDRI_COMPLETE_WAIT`, default 15 minutes; a human's
+  call is never held). If the session ends first (its turn over, or the agent gone), the watch reads the
+  run directory's `.sindri-out` folder before it fails the Step (`RecoverAgentStep`, patched `recover-stranded-agent-result`;
+  only files written after the launch count, because a phase workspace is shared by its Steps). `AgentRecovery.Decide` completes the
+  run, as an `agent:recovered` report with the tokens and diff signal the close step read, only when exactly one of the Step's
+  outcomes has outputs the caller writes and every one of them is in the folder (`challengeRound` for `fact:challengeRound`);
+  the outcome is never guessed. A Step that picks its outcome from its parameters, one that needs no output, outputs that fit
+  two outcomes, or some of an outcome's outputs park instead: the Step fails with the session's own reason and the question
+  adds "the agent finished but its result was not recorded: `<run dir>/.sindri-out`". An empty or absent folder fails the Step
+  as before. The pass runs the moment the watch sees the end, so a restart that finds an ended session finishes it in one tick.
 - **Status:** an open agent run adds `run: { runtime: "agent", launch: "LCH-…" }` to the status fields and a `run` line to
   the text (`run       agent LCH-…`). A desk run and a block run have neither; the member is left out of the JSON when
   null, so every other status golden is unchanged. An agent run has no desk task, so `commands` lists `takeover` and

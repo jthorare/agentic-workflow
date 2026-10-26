@@ -89,7 +89,7 @@ internal sealed class PromoteMapService(IGraphStore store, TimeProvider clock) :
         var edges = view.Applied.Edges.Where(e => proposed.Contains(e.From.Value) && !facts.Contains((e.From.Value, e.To.Value, e.Type)));
         var joined = view.Graph with { Nodes = [.. view.Graph.Nodes, .. nodes], Edges = [.. view.Graph.Edges, .. edges] };
         var undo = view.UndoCutDecisions(draft.Overrides, clock.GetUtcNow());
-        var saved = await store.ReplaceDraft(draft.Version.Number, new MapImport(draft.Version.Repo, draft.Version.Commit, joined, undo), draft.Version.Created, cancellationToken).ConfigureAwait(false);
+        var saved = await store.ReplaceDraft(draft.Version.Number, new MapImport(draft.Version.Repo, draft.Version.Commit, joined, undo) { Ruleset = draft.Version.Ruleset }, draft.Version.Created, cancellationToken).ConfigureAwait(false);
         return saved.IsError ? saved.Error : saved.Value.Number;
     }
 }

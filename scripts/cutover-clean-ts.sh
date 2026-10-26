@@ -4,7 +4,7 @@
 #   cutover-clean-ts.sh [--pre-link | --post-link] [--dry-run]
 #
 #   --pre-link   steps 1 to 5: refuse if a TS job runs, reinstall the pre-commit hook of every repo in the TS profile,
-#                bootout and delete the launchd plists, unset the TS git template, delete a TS-shaped judge database
+#                bootout and delete the launchd plists, unset the TS git template, back up and remove a TS-shaped judge database
 #   --post-link  steps 6b to 10: the judge health gate, the TS wrappers, the TS state, the aw-live mod, retired build
 #                output, the report. Reuses the log the pre-link run opened
 #   (neither)    both halves, with `install-cs.sh --link` (step 6) between them
@@ -14,6 +14,10 @@
 #
 # Exit: 0 done or nothing to do; 1 refused at step 1 or the log could not be written (nothing changed); 2 usage;
 # 3 stopped partway or the judge health gate failed (re-run ./setup.sh: every step is idempotent). The log path is printed on exit.
+#
+# Nothing in $STATE is deleted outright: a removed state path is moved to $STATE/backups/cutover-<stamp>/<its path under $STATE>
+# (one stamp per run; nothing is created on a dry run). Bug-fix state ($STATE/<slug>/bugfix/) is kept: the C# bugfix-state and
+# the TS helper that lanes still run share that layout (#1104).
 #
 # It removes by shape and runs on every ./setup.sh, so each delete is gated on something only the TS install has. The C#
 # home ($AW_STATE_DIR/sindri-app) and the kept list of spec §8.1 are never touched. No process is killed: step 1 refuses.
@@ -85,27 +89,54 @@ in_state() {
 }
 count_entries() { find "$1" 2>/dev/null | wc -l | tr -d ' '; }
 
-# del_state <path> <label>: delete a file, a link (unlinked, never followed) or a tree inside the state dir.
+# backup_dest <path>: where a removed state path is kept: $STATE/backups/cutover-<stamp>/<path relative to $STATE>. One stamp
+# per run, taken from the log's name (the post-link half reuses the pre-link log, so both halves share one directory).
+BACKUP_STAMP=""
+backup_dest() {
+  local p="$1" parent real rel dest
+  if [ -z "$BACKUP_STAMP" ]; then
+    if [ -n "$LOG" ]; then BACKUP_STAMP="$(basename "$LOG" .log)"; BACKUP_STAMP="${BACKUP_STAMP#cutover-}"
+    else BACKUP_STAMP="$(date +%Y%m%dT%H%M%S)"; fi
+  fi
+  parent="$(cd -P "$(dirname "$p")" && pwd)"; real="$parent/$(basename "$p")"
+  rel="${real#"$STATE_REAL"/}"
+  dest="$STATE/backups/cutover-$BACKUP_STAMP/$rel"
+  [ ! -e "$dest" ] && [ ! -L "$dest" ] || dest="$dest.$$"
+  echo "$dest"
+}
+# keep_state <path>: move a state path (a link stays a link) under the backups directory. Returns 1 on failure.
+keep_state() {
+  local dest
+  dest="$(backup_dest "$1")" || return 1
+  mkdir -p "$(dirname "$dest")" && mv "$1" "$dest" || return 1
+  L "backed up $1 -> $dest"
+}
+
+# del_state <path> <label>: back up and remove a file, a link (moved as a link, never followed) or a tree inside the state dir.
 del_state() {
   local p="$1" label="$2" n
   [ -e "$p" ] || [ -L "$p" ] || return 0
-  if ! in_state "$p"; then warn "refusing to delete $p: it resolves outside $STATE"; partial=1; return 0; fi
+  if ! in_state "$p"; then warn "refusing to remove $p: it resolves outside $STATE"; partial=1; return 0; fi
   if [ -L "$p" ]; then
-    say "$(would "unlink $label ($p)")"
-    [ "$dry" = 1 ] || rm -f "$p" || { partial=1; return 0; }
+    say "$(would "back up and unlink $label ($p)")"
   else
     n="$(count_entries "$p")"
-    say "$(would "remove $label ($p, $n entries)")"
-    [ "$dry" = 1 ] || rm -rf "$p" || { partial=1; return 0; }
+    say "$(would "back up and remove $label ($p, $n entries)")"
   fi
+  [ "$dry" = 1 ] || keep_state "$p" || { partial=1; return 0; }
   removed=$((removed + 1))
   [ "$dry" = 1 ] || L "removed $label ($p)"
 }
-del_file() { # del_file <path> <label>: a plain file anywhere (a wrapper, a plist)
+del_file() { # del_file <path> <label>: a plain file anywhere (a wrapper, a plist); a file inside the state dir is backed up first
   local p="$1" label="$2"
   [ -e "$p" ] || [ -L "$p" ] || return 0
-  say "$(would "remove $label ($p)")"
-  [ "$dry" = 1 ] || rm -f "$p" || { partial=1; return 0; }
+  if in_state "$p"; then
+    say "$(would "back up and remove $label ($p)")"
+    [ "$dry" = 1 ] || keep_state "$p" || { partial=1; return 0; }
+  else
+    say "$(would "remove $label ($p)")"
+    [ "$dry" = 1 ] || rm -f "$p" || { partial=1; return 0; }
+  fi
   removed=$((removed + 1))
   [ "$dry" = 1 ] || L "removed $label ($p)"
 }
@@ -384,7 +415,6 @@ post_link() {
   [ -d "$STATE/bin/sindri-app" ] && work=1
   for f in sindri scorer audit; do [ -e "$STATE/$f" ] || [ -L "$STATE/$f" ] && work=1; done
   [ -e "$PROFILE" ] || [ -L "$PROFILE" ] && work=1
-  for d in "$STATE"/*/bugfix; do [ -d "$d" ] && work=1; done
   for f in judge scorer sindri; do for d in dist node_modules; do retirable "$ROOT" "$f/$d" && work=1; done; done
   if command -v claude > /dev/null 2>&1; then
     claude plugin list --json 2> /dev/null | grep -q 'aw-live@agentic-workflow-mods' && work=1
@@ -430,14 +460,9 @@ post_link() {
   done
   [ -z "$left" ] || { say "left alone (not a TS wrapper this script knows):$left"; L "left alone:$left"; }
 
-  # step 8: the TS state
+  # step 8: the TS state (bug-fix state, $STATE/<slug>/bugfix/, is never touched: the C# and TS helpers share that layout)
   for f in sindri scorer audit; do del_state "$STATE/$f" "TS state $f/"; done
   del_state "$PROFILE" "the TS profile"
-  for d in "$STATE"/*/bugfix; do
-    [ -d "$d" ] || continue
-    case "$(basename "$(dirname "$d")")" in bugfix|sindri-app|meta|bin|cache|logs|locks|hooks|fleet|context-guard|judge|digests|toolkit|ui-evidence) continue ;; esac
-    del_state "$d" "TS bug-fix state"
-  done
   [ "$partial" = 0 ] || { say "stopped at step 8; re-run ./setup.sh"; exit 3; }
 
   # step 9: the aw-live mod, retired build output

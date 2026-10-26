@@ -5,6 +5,7 @@ using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Context.Layout;
 using Aw.Sindri.Ui.ViewModels.Controls;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Run;
@@ -21,6 +22,7 @@ internal sealed partial class RunPageViewModel(ISindriApi api, CatalogViewModel 
     private const string RerunAction = "RerunInstance";
 
     private Uri? _url;
+    private TakeoverSender? _takeover;
     private string? _id;
     private int _generation;
     private string _state = string.Empty;   // the state the view served last, to compare with a frame's

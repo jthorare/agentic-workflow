@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Aw.Judge.Core.Evaluation;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
+using Aw.Judge.Core.Questions;
 using Aw.Judge.Core.Secrets;
 using Aw.Kernel.Json;
 
@@ -42,9 +43,9 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     {
         ArgumentNullException.ThrowIfNull(question);
         cancellationToken.ThrowIfCancellationRequested();
-        if (question.Outputs.Count > MaxOptions)
+        if (Refused(question) is { } refused)
         {
-            return new ProviderErrored(ProviderReasons.TooManyOptions);
+            return refused;
         }
 
         // The key read is inside the budget: with no key in the environment it asks the keychain, which can sit on its
@@ -77,6 +78,12 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
             return new ProviderUnavailable(ProviderReasons.NetworkError);
         }
     }
+
+    // What Jev can't take, decided before anything is read or sent: too many options, or a question that needs reasons (Jev only classifies).
+    private static ProviderResult? Refused(QuestionRef question) =>
+        question.Outputs.Count > MaxOptions ? new ProviderErrored(ProviderReasons.TooManyOptions)
+        : question.ExtraProperties?.ContainsKey(ResolutionCheckQuestion.Reasons) == true ? new ProviderUnavailable(ProviderReasons.CannotExplain)
+        : null;
 
     /// <inheritdoc />
     public void Dispose() => http.Dispose();
