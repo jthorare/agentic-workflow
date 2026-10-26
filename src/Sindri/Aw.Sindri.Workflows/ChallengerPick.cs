@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Core.Workflow.Ids;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -26,6 +27,13 @@ internal sealed class ChallengerPick(IAgentCatalog catalog, ILaunchViews launche
     /// <param name="block">The Step a run launches.</param>
     /// <returns>The scoping draft for the scoping challenge; null for any other Step, which runs on the profile's agent.</returns>
     public static BlockId? DrafterBlock(BlockId block) => block == _challenge ? _draft : null;
+
+    /// <summary>The state of the Step whose agent <paramref name="block"/>'s must differ from, in <paramref name="recipe"/>: read from the recipe, so it is the same on every replay.</summary>
+    /// <param name="recipe">The instance's recipe.</param>
+    /// <param name="block">The Step a run launches.</param>
+    /// <returns>The state id; null when the Step has no contrast or the recipe has no such state.</returns>
+    public static string? ContrastState(Recipe recipe, BlockId block) =>
+        DrafterBlock(block) is { } drafter ? recipe.States.FirstOrDefault(s => s.Value.Step?.Use == drafter).Key : null;
 
     /// <summary>The agent the contrast Step runs on.</summary>
     /// <param name="ask">The Step's launch and the Step it differs from.</param>
