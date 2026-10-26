@@ -12,7 +12,7 @@ public sealed class InterviewQuestionsStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => ScopingSteps.InterviewQuestions;
 
-    protected override string ExpectedHash => "sha256:cf99ec2b9591f96ad8ae5a65ce2a59cf5d02337ea21b581fb372167171986304";
+    protected override string ExpectedHash => "sha256:4da640943b6137c0e5c58248c472b1bb7a791f9b6b87deabff686d0a7e34e207";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
