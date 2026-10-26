@@ -1,7 +1,7 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:87fa88a031dbe2e04c019888edd78f1c1c7fe2ed6cecd273a682ca0375c1dfe4",
-  "version": 12,
+  "hash": "sha256:9a85e7d43fc1505e8914edbe7a330f11cd449d06ec926072d384af6f95333c44",
+  "version": 13,
   "name": null,
   "inputs": [
     {
@@ -213,6 +213,13 @@
       "branchOf": "gap-log"
     },
     {
+      "id": "exclude",
+      "order": null,
+      "branchOf": "gap-log",
+      "why": "Closes the files the scope map neither covers nor excludes without redrafting the whole scope.",
+      "displayName": "Rule out what the scope leaves out"
+    },
+    {
       "id": "size-desk",
       "order": null,
       "branchOf": "gap-log"
@@ -276,6 +283,12 @@
       "from": "evidence",
       "to": "gather",
       "cap": 6
+    },
+    {
+      "name": "exclusions",
+      "from": "exclude",
+      "to": "check",
+      "cap": 4
     },
     {
       "name": "rounds",
@@ -409,6 +422,30 @@
       "to": "gather",
       "on": "step.completed",
       "label": "a source is missing: gather again"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "stop",
+      "on": "step.completed",
+      "label": "the same findings twice: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "stop",
+      "on": "step.completed",
+      "label": "an answer nothing cites, which a redraft can't fix: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "exclude",
+      "on": "step.completed",
+      "label": "only code files left uncovered: rule them out"
     },
     {
       "from": [
@@ -847,6 +884,41 @@
       "to": "gather",
       "outcome": "regather",
       "label": "a source is missing: gather again"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "stop",
+      "outcome": "converged",
+      "label": "the same findings twice: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "stop",
+      "outcome": "open",
+      "label": "an answer nothing cites, which a redraft can't fix: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "exclude",
+      "outcome": "uncovered",
+      "label": "only code files left uncovered: rule them out"
+    },
+    {
+      "from": [
+        "exclude"
+      ],
+      "on": "step.completed",
+      "to": "check",
+      "outcome": "excluded"
     },
     {
       "from": [

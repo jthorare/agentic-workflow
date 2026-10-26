@@ -51,7 +51,7 @@ public sealed class ShippedBlocksTests
                 "step.recheck.log", "step.recheck.plan", "step.report.write", "step.reproduce.test-check", "step.reproduce.ui-check",
                 "step.review.apply-answer", "step.review.fix", "step.review.log", "step.review.recheck", "step.review.record",
                 "step.review.round", "step.rootcause.investigate", "step.scope.anchor", "step.scope.challenge", "step.scope.challenge-log",
-                "step.scope.check", "step.scope.draft", "step.scope.evidence", "step.scope.freeze", "step.scope.gap-judge", "step.scope.gap-log", "step.scope.gap-search", "step.scope.gather", "step.scope.intake",
+                "step.scope.check", "step.scope.draft", "step.scope.evidence", "step.scope.exclude", "step.scope.freeze", "step.scope.gap-judge", "step.scope.gap-log", "step.scope.gap-search", "step.scope.gather", "step.scope.intake",
                 "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor",
                 "step.scope.relevance-apply", "step.scope.relevance-judge", "step.scope.relevance-review", "step.scope.review", "step.scope.withdraw", "step.ship.freeze", "step.ship.green", "step.ship.open", "step.ship.pack",
                 "step.ship.return", "step.verify", "step.verify.design", "step.verify.journey",

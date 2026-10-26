@@ -25,7 +25,7 @@ public sealed class ScopingExclusionsRouteTests
             ["kind"] = "file",
             ["label"] = "src/new/near.ts",
             ["band"] = "code",
-            ["lensItem"] = "L-code-1000",
+            ["lensItem"] = "L-code-8",   // why: the lens ids must stay the coverage row's found ids, so the new node reuses one
         });
         n["code"]!["edges"]!.AsArray().Add(new JsonObject   // why: see above
         {

@@ -15,12 +15,24 @@ public sealed class ScopingUnrecordedAnswerRouteTests
 {
     private const string EvidenceEval = "sindri/evals/workflow.scoping/evidence-incomplete.jsonl";
 
-    // why: the gold answer log has an entry; renumbered to A9, no item, surface or open question cites it and it names no recordedAs
-    private static ScopingFacts Unrecorded() => ScopingFacts.Expiry().Edit("answerLog", n =>
+    // why: the gold answer log's first entry A1 is cited by acceptance items and surfaces; with those citations gone and no recordedAs, nothing records it
+    private static ScopingFacts Unrecorded() => ScopingFacts.Expiry()
+        .Edit("answerLog", static n => n[0]!["recordedAs"] = new JsonArray())
+        .Edit("acceptance", static n => Uncite(n["items"]))
+        .Edit("scopeMap", static n => Uncite(n["surfaces"]))
+        .Edit("openQuestions", static n => Uncite(n));
+
+    /// <summary>Takes A1 out of the citations of every object in the list: the places ACC-003 looks for a citation.</summary>
+    private static void Uncite(JsonNode? list)
     {
-        n[0]!["id"] = "A9";
-        n[0]!["recordedAs"] = new JsonArray();
-    });
+        foreach (var citations in (list as JsonArray ?? []).Select(static x => x?["citations"] as JsonArray).OfType<JsonArray>())
+        {
+            foreach (var cited in citations.Where(static c => string.Equals(c?.GetValue<string>(), "A1", StringComparison.Ordinal)).ToList())
+            {
+                _ = citations.Remove(cited);
+            }
+        }
+    }
 
     private static ScopingDeskResponse Evidence(ScopingFacts facts)
     {

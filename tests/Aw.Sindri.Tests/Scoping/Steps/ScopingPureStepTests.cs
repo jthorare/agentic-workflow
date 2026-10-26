@@ -70,7 +70,7 @@ public sealed class ScopingPureStepTests
         var result = await Run(new ScopeCheckStep(new InMemoryRunArea()), "step.scope.check", ScopingCheckTests.Limited("history", "degraded", "timeout", code: null, "not-searched", 0));
 
         Assert.Equal("regather", result.Result!.Outcome.Value);
-        Assert.Equal(["findings"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
+        Assert.Equal(["findings", "roundLog"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
     }
 
     [Fact]

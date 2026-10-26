@@ -58,7 +58,7 @@ states:
                   next: "Drop what the judge and the AI both call off topic from {item}'s lenses and coverage; keep and flag what they dispute." }
   draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: { use: step.scope.draft, with: { model: claude-sonnet-5-5 } }, loop: rounds, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
-  exclude:      { displayName: "Rule out what the scope leaves out", why: "Closes the files the scope map neither covers nor excludes without redrafting the whole scope.", kind: active, step: { use: step.scope.exclude, with: { model: claude-sonnet-5-5 } }, loop: exclusions, budget: { tokens: 2M }, timeout: { after: 1d, then: park },
+  exclude:      { displayName: "Rule out what the scope leaves out", why: "Closes the files the scope map neither covers nor excludes without redrafting the whole scope.", kind: active, step: { use: step.scope.exclude, with: { model: claude-sonnet-5-5 } }, loop: exclusions, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Rule out, with a reason each, the files {item}'s scope map neither covers nor excludes (round {loop.exclusions}/{loop.exclusions.cap})." }
   check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1d, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
@@ -197,7 +197,7 @@ transitions:
   - { label: "a source is missing: gather again", from: evidence, to: gather, on: step.completed, when: { outcome: regather },   produces: [fact:findings, fact:roundLog] }
   - { label: "the same findings twice: you decide, findings open", from: evidence, to: stop, on: step.completed, when: { outcome: converged },
       produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs, fact:findings, fact:roundLog] }
-  - { label: "an answer nothing cites, which a redraft can't fix: you decide, findings open", from: evidence, to: stop, on: step.completed, when: { outcome: open },
+  - { label: "an answer nothing cites: you decide, findings open", from: evidence, to: stop, on: step.completed, when: { outcome: open },
       produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs, fact:findings, fact:roundLog] }
   - { label: "only code files left uncovered: rule them out", from: evidence, to: exclude, on: step.completed, when: { outcome: uncovered }, produces: [fact:findings, fact:roundLog] }
   - { from: exclude, to: check, on: step.completed, when: { outcome: excluded }, produces: [fact:scopeMap] }
