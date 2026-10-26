@@ -18718,6 +18718,26 @@ Aw.Sindri.Core.Scoping.ChallengeRoundShape
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Covers(Aw.Sindri.Core.Workflow.Ids.FactKey fact) -> bool
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.LogShape(System.Text.Json.Nodes.JsonObject! round) -> string?
 static Aw.Sindri.Core.Scoping.ChallengeRoundShape.Violation(System.ReadOnlySpan<byte> content) -> string?
+Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.Timings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming!>?
+Aw.Sindri.Core.Workflow.Engine.Runtime.DeskTask.Timings.init -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.Timings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.Runtime.InputTiming!>?
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceViewContext.Timings.init -> void
+Aw.Sindri.Core.Workflow.Views.StatusFields.InputTimings.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Views.StatusTiming!>?
+Aw.Sindri.Core.Workflow.Views.StatusFields.InputTimings.init -> void
+Aw.Sindri.Core.Workflow.Views.StatusTiming
+Aw.Sindri.Core.Workflow.Views.StatusTiming.<Clone>$() -> Aw.Sindri.Core.Workflow.Views.StatusTiming!
+Aw.Sindri.Core.Workflow.Views.StatusTiming.Deconstruct(out string! Input, out long DurationMs) -> void
+Aw.Sindri.Core.Workflow.Views.StatusTiming.DurationMs.get -> long
+Aw.Sindri.Core.Workflow.Views.StatusTiming.DurationMs.init -> void
+Aw.Sindri.Core.Workflow.Views.StatusTiming.Equals(Aw.Sindri.Core.Workflow.Views.StatusTiming? other) -> bool
+Aw.Sindri.Core.Workflow.Views.StatusTiming.Input.get -> string!
+Aw.Sindri.Core.Workflow.Views.StatusTiming.Input.init -> void
+Aw.Sindri.Core.Workflow.Views.StatusTiming.StatusTiming(string! Input, long DurationMs) -> void
+override Aw.Sindri.Core.Workflow.Views.StatusTiming.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Workflow.Views.StatusTiming.GetHashCode() -> int
+override Aw.Sindri.Core.Workflow.Views.StatusTiming.ToString() -> string!
+static Aw.Sindri.Core.Workflow.Views.StatusTiming.operator !=(Aw.Sindri.Core.Workflow.Views.StatusTiming? left, Aw.Sindri.Core.Workflow.Views.StatusTiming? right) -> bool
+static Aw.Sindri.Core.Workflow.Views.StatusTiming.operator ==(Aw.Sindri.Core.Workflow.Views.StatusTiming? left, Aw.Sindri.Core.Workflow.Views.StatusTiming? right) -> bool
 Aw.Sindri.Core.Scoping.JsonSchemaLite
 Aw.Sindri.Core.Scoping.JsonSchemaLite.JsonSchemaLite(System.Text.Json.Nodes.JsonNode! root) -> void
 Aw.Sindri.Core.Scoping.JsonSchemaLite.Validate(System.Text.Json.Nodes.JsonNode? instance, System.Text.Json.Nodes.JsonNode? schema) -> System.Collections.Generic.IReadOnlyList<(string! Path, string! Message)>!

@@ -31,10 +31,21 @@ public static class RoleCounter
         return [.. repos.Select(r => One(r, pathsByRepo.TryGetValue(r.Name.Value, out var paths) ? paths : [])).Where(static r => r.Roles.Count > 0 || r.Unassigned is not null)];
     }
 
+    /// <summary>How many of <paramref name="paths"/> a role's globs match.</summary>
+    /// <param name="globs">The role's globs.</param>
+    /// <param name="paths">Repo-relative paths.</param>
+    /// <returns>The number of matching paths.</returns>
+    public static int Matching(IReadOnlyList<string> globs, IReadOnlyList<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(globs);
+        ArgumentNullException.ThrowIfNull(paths);
+        return paths.Count(p => PathDenylist.Matches(p, globs));
+    }
+
     private static RepoRoles One(ContextRepo repo, IReadOnlyList<string> paths)
     {
         var counts = repo.Roles.OrderBy(static r => r.Name, StringComparer.Ordinal)
-            .Select(r => new RoleCount(r.Name, r.Demoted, paths.Count(p => PathDenylist.Matches(p, r.Globs))))
+            .Select(r => new RoleCount(r.Name, r.Demoted, Matching(r.Globs, paths)))
             .ToList();
         var loose = paths.Where(p => RoleLikePaths.Matches(p) && !Covered(repo, p)).Order(StringComparer.Ordinal).ToList();
         return new RepoRoles(repo.Name.Value, counts, loose.Count == 0 ? null : new UnassignedRoleFiles(loose.Count, [.. loose.Take(RoleLikePaths.ExampleLimit)]));

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Core.Workflow.Validation;
@@ -10,6 +11,9 @@ internal static class LineTree
 {
     private const string Directory = "sindri";
 
+    private static readonly ConcurrentDictionary<string, RecipeDocument> _documents = new(StringComparer.Ordinal);
+    private static readonly Lazy<InMemoryChildRecipes> _siblings = new(BuildSiblings);
+
     /// <summary>The recipe at 'sindri/&lt;id&gt;.yaml'.</summary>
     /// <param name="id">For example 'workflow.phase'.</param>
     /// <returns>The bound recipe.</returns>
@@ -19,11 +23,13 @@ internal static class LineTree
     /// <param name="id">For example 'workflow.phase'.</param>
     /// <returns>The document.</returns>
     public static RecipeDocument Document(string id) =>
-        RecipeComposition.ReadClean(ShippedRecipes.Read($"{Directory}/{id}.yaml"), $"{id}.yaml");
+        _documents.GetOrAdd(id, static key => RecipeComposition.ReadClean(ShippedRecipes.Read($"{Directory}/{key}.yaml"), $"{key}.yaml"));
 
     /// <summary>Every shipped sibling of the recipes in recipes/sindri, as a child resolver.</summary>
     /// <returns>The resolver.</returns>
-    public static InMemoryChildRecipes Siblings()
+    public static InMemoryChildRecipes Siblings() => _siblings.Value;
+
+    private static InMemoryChildRecipes BuildSiblings()
     {
         var children = InMemoryChildRecipes.None;
         foreach (var path in ShippedRecipes.Recipes.Where(r => r.StartsWith(Directory + "/", StringComparison.Ordinal)))

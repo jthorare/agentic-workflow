@@ -120,6 +120,12 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>True when the row names the Step it works on.</summary>
     public bool HasStep => StepText.Length > 0;
 
+    /// <summary>True when the doing cell would be empty (the session neither asks nor runs a Step): it says so in words.</summary>
+    public bool HasNoStep => !HasAsking && !HasStep;
+
+    /// <summary>What the doing cell says then.</summary>
+    public string NoStepText { get; } = Labels.SessionNoStep;
+
     /// <summary>Opens the frame of the Step the session works on; nothing without one.</summary>
     internal void OpenFrame()
     {
@@ -159,7 +165,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         Name = Labels.SessionName(Row.ProviderLabel, title, chip.Word.ToLowerInvariant() + (EstimatedText.Length > 0 ? " (" + EstimatedText + ")" : string.Empty), string.Join(", ", new[] { AskingText, StepText }.Where(p => p.Length > 0)), HostText);
         Signature = string.Join('|', Row.State, AskingText, EstimatedText, title, WorktreeText, HostText, LaneText, StepText, Row.Focus.Method, Row.Repo);
         Focus.Show(Row.Ref);
-        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep)])
+        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
         {
             OnChanged(name);
         }

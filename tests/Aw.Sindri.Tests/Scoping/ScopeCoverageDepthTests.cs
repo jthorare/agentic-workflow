@@ -20,6 +20,27 @@ public sealed class ScopeCoverageDepthTests
     private static async Task<ScopingCheckResponse> Check(ScopingFacts facts, ScopeStage stage) =>
         (await new ScopingCheckService().Handle(new ScopingCheckRequest(facts, stage), TestContext.Current.CancellationToken)).Value;
 
+    /// <summary>The gold facts with "A1" stripped from every citations array of the acceptance items, map surfaces and open questions, so an emptied recordedAs really is recorded nowhere (#1205: a citing item records an answer).</summary>
+    private static ScopingFacts WithA1RecordedNowhere()
+    {
+        var facts = ScopingFacts.Expiry().Edit("answerLog", n => n[0]!["recordedAs"] = new JsonArray());
+        _ = facts.Edit("acceptance", n => StripA1(n["items"]!.AsArray()));
+        _ = facts.Edit("scopeMap", n => StripA1(n["surfaces"]!.AsArray()));
+        _ = facts.Edit("openQuestions", n => StripA1(n.AsArray()));
+        return facts;
+    }
+
+    private static void StripA1(JsonArray nodes)
+    {
+        foreach (var citations in nodes.Select(static x => x?["citations"]).OfType<JsonArray>())
+        {
+            foreach (var a1 in citations.Where(static c => string.Equals(c?.GetValue<string>(), "A1", StringComparison.Ordinal)).ToList())
+            {
+                _ = citations.Remove(a1);
+            }
+        }
+    }
+
     private static JsonObject FileNode(string path, int n) => new()
     {
         ["key"] = "code:" + path,
@@ -123,7 +144,7 @@ public sealed class ScopeCoverageDepthTests
     [Fact, Trait("Lane", "unit")]
     public async Task ACC_003_names_the_question_of_an_answer_recorded_nowhere()
     {
-        var facts = ScopingFacts.Expiry().Edit("answerLog", n => n[0]!["recordedAs"] = new JsonArray());
+        var facts = WithA1RecordedNowhere();
 
         var response = await Check(facts, ScopeStage.Evidence);
 

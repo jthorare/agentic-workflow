@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Workflow.Registry;
 namespace Aw.Sindri.Core.Workflow.ApproveAll;
 
 /// <summary>
-/// The shipped versions that wait for their own approval, in the recipe list (#983): a shipped version that gains a capability is left out of approve-all and is not registered until someone approves it,
+/// The shipped versions that wait for an approval, in the recipe list (#983, C-12): every shipped recipe the plan names that is not registered at its shipped hash gets a line, standing unapproved. A shipped version that gains a capability is left out of approve-all and is not registered until someone approves it,
 /// so the registry's lines show only the old approved hash. Each such version gets its line here, with its hash and a mark that it gains a capability, read from the same plan the needs-you row is.
 /// A version that is registered already is marked; one that is not is read from the embedded set the way a registration would store it.
 /// </summary>
@@ -31,14 +31,15 @@ public sealed class WaitingShippedLines(IShippedRecipes shipped, ShippedRecipeSe
 
         var lines = registered.ToList();
         var embedded = files.Files();
-        foreach (var own in plan.Value.OwnApproval)
+        var waiting = plan.Value.OwnApproval.Select(static o => (o.Id, Gains: o.Reason == OwnApprovalReason.GainsCapability))
+            .Concat(plan.Value.Recipes.Select(static r => (r.Id, Gains: false)));   // the rest of the plan: shipped recipes nobody registered yet (C-12) stand unapproved too
+        foreach (var (id, gains) in waiting)
         {
-            if (embedded.FirstOrDefault(f => f.Id == own.Id) is not { } file)
+            if (embedded.FirstOrDefault(f => f.Id == id) is not { } file)
             {
                 continue;
             }
 
-            var gains = own.Reason == OwnApprovalReason.GainsCapability;
             var at = lines.FindIndex(l => l.Hash == file.Hash);
             if (at >= 0)
             {

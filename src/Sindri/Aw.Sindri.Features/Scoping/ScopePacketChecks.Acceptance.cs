@@ -86,12 +86,18 @@ internal static partial class ScopePacketChecks
             .Concat(ScopeJson.Items(c.Facts["openQuestions"]).Select(static q => ScopeJson.Str(q, "id")))
             .Concat(ScopeJson.Items(c.Facts["questions"]).Select(static q => ScopeJson.Str(q, "id")))
             .OfType<string>().ToHashSet(StringComparer.Ordinal);
+        var cited = Items(c).Concat(Surfaces(c)).Concat(ScopeJson.Items(c.Facts["openQuestions"])).SelectMany(static x => ScopeJson.Strings(x, "citations")).ToHashSet(StringComparer.Ordinal);
         var log = ScopeJson.Items(c.Facts["answerLog"]).ToList();
         var superseded = log.SelectMany(static e => ScopeJson.Strings(e, "supersedes")).ToHashSet(StringComparer.Ordinal);
         foreach (var entry in log.Where(e => !superseded.Contains(ScopeJson.Str(e, "id") ?? string.Empty)))
         {
             var id = ScopeJson.Str(entry, "id") ?? "?";
             var recorded = ScopeJson.Strings(entry, "recordedAs").ToList();
+            if (recorded.Count == 0 && cited.Contains(id))
+            {
+                continue;   // why: nothing writes recordedAs; an item, surface or open question that cites the entry's id records it
+            }
+
             if (recorded.Count == 0)
             {
                 var questions = string.Join(", ", ScopeJson.Strings(entry, "questionIds"));

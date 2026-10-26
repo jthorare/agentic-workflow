@@ -9,11 +9,19 @@ internal sealed partial class ShellViewModel
     /// <summary>The session whose Agents row opened the sheet (its ref), where Esc returns focus; null when it was opened some other way.</summary>
     internal string? OpenerSession { get; private set; }
 
-    // A session or job sheet names its subject as the sheet does ("Session <provider> <title or id8>"), not by the ref, once the read has drawn.
-    private string NamedSubject =>
-        SheetLink?.Kind == DeepLinkKind.Session && AgentSheet.Heading.Length > 0 ? AgentSheet.Heading
-        : SheetLink?.Kind == DeepLinkKind.Job && JobSheet.Heading.Length > 0 ? JobSheet.Heading
-        : SheetSubject;
+    // A sheet names its subject as it reads once drawn ("Session <provider> <title or id8>", the item's or run's title), not by the ref.
+    private string NamedSubject => SheetHeading() is { Length: > 0 } heading ? heading : SheetSubject;
+
+#pragma warning disable IDE0072 // the other kinds have no heading of their own
+    private string SheetHeading() => SheetLink?.Kind switch
+    {
+        DeepLinkKind.Session => AgentSheet.Heading,
+        DeepLinkKind.Job => JobSheet.Heading,
+        DeepLinkKind.Item => Item.Title,
+        DeepLinkKind.Workflow => Instance.Title,
+        _ => string.Empty,
+    };
+#pragma warning restore IDE0072
 
     partial void InitAgentSheet()
     {
@@ -21,7 +29,7 @@ internal sealed partial class ShellViewModel
         {
             if (string.Equals(e.PropertyName, nameof(SessionSheetViewModel.Heading), StringComparison.Ordinal))
             {
-                Changed(nameof(SheetName), nameof(EdgeTabName));
+                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName));
             }
         };
         AgentSheet.Wire(Health.Catalog, _clock);

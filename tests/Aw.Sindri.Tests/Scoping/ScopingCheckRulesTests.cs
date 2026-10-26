@@ -13,6 +13,27 @@ public sealed class ScopingCheckRulesTests
     private static async Task<ScopingCheckResponse> Evidence(ScopingFacts facts) =>
         (await new ScopingCheckService().Handle(new ScopingCheckRequest(facts, ScopeStage.Evidence), CancellationToken.None)).Value;
 
+    /// <summary>The gold facts with "A1" stripped from every citations array of the acceptance items, map surfaces and open questions, so an emptied recordedAs really is recorded nowhere (#1205: a citing item records an answer).</summary>
+    private static ScopingFacts WithA1RecordedNowhere()
+    {
+        var facts = ScopingFacts.Expiry().Edit("answerLog", n => n[0]!["recordedAs"] = new JsonArray());
+        _ = facts.Edit("acceptance", n => StripA1(n["items"]!.AsArray()));
+        _ = facts.Edit("scopeMap", n => StripA1(n["surfaces"]!.AsArray()));
+        _ = facts.Edit("openQuestions", n => StripA1(n.AsArray()));
+        return facts;
+    }
+
+    private static void StripA1(JsonArray nodes)
+    {
+        foreach (var citations in nodes.Select(static x => x?["citations"]).OfType<JsonArray>())
+        {
+            foreach (var a1 in citations.Where(static c => string.Equals(c?.GetValue<string>(), "A1", StringComparison.Ordinal)).ToList())
+            {
+                _ = citations.Remove(a1);
+            }
+        }
+    }
+
     private static void Fails(ScopingCheckResponse response, string rule, string item, ScopeOutcome outcome = ScopeOutcome.Incomplete)
     {
         Assert.Equal(outcome, response.Outcome);
@@ -88,7 +109,7 @@ public sealed class ScopingCheckRulesTests
     [Fact, Trait("Lane", "unit")]
     public async Task An_answer_recorded_nowhere_is_SCP_ACC_003()
     {
-        var facts = ScopingFacts.Expiry().Edit("answerLog", n => n[0]!["recordedAs"] = new JsonArray());
+        var facts = WithA1RecordedNowhere();
 
         Fails(await Evidence(facts), "SCP-ACC-003", "A1");
     }

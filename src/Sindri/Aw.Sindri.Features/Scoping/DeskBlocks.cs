@@ -208,30 +208,32 @@ internal static partial class DeskBlocks
         }
 
         var log = (facts.Require("answerLog").DeepClone() as JsonArray) ?? [];
-        if (ScopeJson.Items(facts["answers"]).LastOrDefault() is { } batch)
+        var items = ScopeJson.Items(facts["answers"]).ToList();
+        // why: a batch carries its own answers[] (the latest one is this round's); a flat list is the round's answers, each logged on its own
+        var batches = items.Exists(static i => ScopeJson.Arr(i, "answers") is not null) ? items.TakeLast(1) : items;
+        foreach (var batch in batches)
         {
             var digest = $"sha256:{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(ScopeJson.Write(batch))))}";
             if (!ScopeJson.Items(log).Any(e => string.Equals(ScopeJson.Str(e, "digest"), digest, StringComparison.Ordinal)))
             {
-                var entry = new JsonObject { ["id"] = string.Create(CultureInfo.InvariantCulture, $"A{log.Count + 1}") };
-                foreach (var (name, value) in (batch as JsonObject ?? []).Where(static p => !string.Equals(p.Key, "id", StringComparison.Ordinal) && !string.Equals(p.Key, "digest", StringComparison.Ordinal)))
-                {
-                    entry[name] = value?.DeepClone();
-                }
-
-                entry["digest"] = digest;
-                if (!ScopeJson.Strings(entry, "recordedAs").Any())
-                {
-                    // why: an applied answer is recorded as the question it answers (SCP-ACC-003 accepts a Q id); the draft may refine it to the items and map changes it caused
-                    var answered = ScopeJson.Strings(entry, "questionIds").Concat(ScopeJson.Items(entry, "answers").Select(static a => ScopeJson.Str(a, "question")).OfType<string>()).Distinct(StringComparer.Ordinal);
-                    entry["recordedAs"] = new JsonArray([.. answered.Select(static q => (JsonNode)JsonValue.Create(q))]);
-                }
-
-                ScopeJson.Append(log, entry);
+                ScopeJson.Append(log, LogEntry(batch, log.Count + 1, digest));
             }
         }
 
         return Reply("step.interview.record", "recorded", Outputs(("answerLog", log)), []);
+    }
+
+    private static JsonObject LogEntry(JsonNode batch, int number, string digest)
+    {
+        var entry = new JsonObject { ["id"] = string.Create(CultureInfo.InvariantCulture, $"A{number}") };
+        foreach (var (name, value) in (batch as JsonObject ?? []).Where(static p => !string.Equals(p.Key, "id", StringComparison.Ordinal) && !string.Equals(p.Key, "digest", StringComparison.Ordinal)))
+        {
+            entry[name] = value?.DeepClone();
+        }
+
+        entry["digest"] = digest;
+        // why: recordedAs is never defaulted here; SCP-ACC-003 finds the entry through the items, surfaces and open questions that cite its id
+        return entry;
     }
 
     /// <summary>'fact:recommendation' for the owner's stop: approve when no question is left open, else revise (the stop's form shows it as the recommended outcome).</summary>

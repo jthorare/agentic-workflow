@@ -889,7 +889,7 @@ tuned; the verification plan is `~/.agentic-workflow/jthorare-agentic-workflow/p
 The measurements were taken while the work was still called Phase 0, so the units (a)–(d), the "P0 scratch dir" and
 the `proof/sindri-wf-p0/` paths below keep that name.
 
-**Pins.** `Temporalio` 1.19.0 (`Directory.Packages.props`), referenced only by `src/Sindri/Aw.Sindri.Workflows`
+**Pins.** `Temporalio` 1.20.0 (`Directory.Packages.props`), referenced only by `src/Sindri/Aw.Sindri.Workflows`
 (`AwAotCompatible=false`, temporalio/sdk-dotnet#286). `binaries.lock` pins the `temporal` CLI (1.9.1, the dev server)
 and the time-skipping `temporal-test-server` (1.39.0) for darwin-arm64, darwin-x64, linux-x64 and linux-arm64.
 `scripts/binaries-lock.sh fetch <name>` installs one for this platform under

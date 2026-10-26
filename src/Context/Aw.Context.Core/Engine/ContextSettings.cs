@@ -29,6 +29,9 @@ public sealed record ContextSettings
     /// <summary>The code lens's lexical search deadline: one git grep per implementing file and data thing, run in turn, so it gets longer than a query.</summary>
     public TimeSpan CodeDeadline { get; init; } = TimeSpan.FromSeconds(180);
 
+    /// <summary>The git-history read's own deadline ('context.history.deadline', #1221); null (the default) means none: only the caller's cancellation bounds it, and a repo with a long history is read to the end.</summary>
+    public TimeSpan? HistoryDeadline { get; init; }
+
     /// <summary>Below this many fused items a query reformulates once (Phase 8).</summary>
     public int MinHits { get; init; } = 3;
 

@@ -5,13 +5,16 @@ using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
+using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.StartInstance;
+using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.ApplyCommand;
 using Aw.Sindri.Tests.Callers;
 using Aw.Sindri.Tests.Workflows;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
@@ -192,7 +195,8 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
     public async Task List_recipes_serves_the_registered_recipes()
     {
         await using var env = await WorkflowsHarness.StartDevServer(ct: TestContext.Current.CancellationToken);
-        await using var served = await Served.Start(_harness.Home, env, TestContext.Current.CancellationToken);
+        // why: Served embeds the checkout's recipes, and every shipped recipe not registered at its shipped hash is listed as waiting (C-12, #1049); this golden is the registered ones only
+        await using var served = await Served.Start(_harness.Home, env, TestContext.Current.CancellationToken, static services => _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty)));
 
         var body = await Read(served, "/sindri/workflow/recipes");
 

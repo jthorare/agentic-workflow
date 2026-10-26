@@ -471,6 +471,8 @@ Aw.Context.Core.Engine.ContextSettings.CascadeDepth.get -> int
 Aw.Context.Core.Engine.ContextSettings.CascadeDepth.init -> void
 Aw.Context.Core.Engine.ContextSettings.CodeDeadline.get -> System.TimeSpan
 Aw.Context.Core.Engine.ContextSettings.CodeDeadline.init -> void
+Aw.Context.Core.Engine.ContextSettings.HistoryDeadline.get -> System.TimeSpan?
+Aw.Context.Core.Engine.ContextSettings.HistoryDeadline.init -> void
 Aw.Context.Core.Engine.ContextSettings.ContextSettings() -> void
 Aw.Context.Core.Engine.ContextSettings.Deadline.get -> System.TimeSpan
 Aw.Context.Core.Engine.ContextSettings.Deadline.init -> void
@@ -7449,6 +7451,8 @@ Aw.Context.Core.Symbols.CodeIndexHead.Pending.get -> System.Collections.Generic.
 Aw.Context.Core.Symbols.CodeIndexHead.Pending.init -> void
 Aw.Context.Core.Lenses.SearchedSource.CatchingUp.get -> Aw.Context.Core.Lenses.SearchedCatchingUp?
 Aw.Context.Core.Lenses.SearchedSource.CatchingUp.init -> void
+Aw.Context.Core.Lenses.SearchedSource.Note.get -> string?
+Aw.Context.Core.Lenses.SearchedSource.Note.init -> void
 Aw.Context.Core.Lenses.SearchedCatchingUp
 Aw.Context.Core.Lenses.SearchedCatchingUp.<Clone>$() -> Aw.Context.Core.Lenses.SearchedCatchingUp!
 Aw.Context.Core.Lenses.SearchedCatchingUp.Deconstruct(out string! IndexCommit, out string! MapCommit, out System.Collections.Generic.IReadOnlyList<string!>! Pending) -> void
@@ -7620,6 +7624,7 @@ static Aw.Context.Core.Roles.RoleLikePaths.Patterns.get -> System.Collections.Ge
 Aw.Context.Core.Roles.RoleCounter
 static Aw.Context.Core.Roles.RoleCounter.CodePaths(Aw.Context.Core.Graph.GraphSnapshot! graph, string? mapRepo) -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
 static Aw.Context.Core.Roles.RoleCounter.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! pathsByRepo) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RepoRoles!>!
+static Aw.Context.Core.Roles.RoleCounter.Matching(System.Collections.Generic.IReadOnlyList<string!>! globs, System.Collections.Generic.IReadOnlyList<string!>! paths) -> int
 Aw.Context.Core.Map.RoleHealth
 static Aw.Context.Core.Map.RoleHealth.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RepoRoles!>! roles) -> Aw.Context.Core.Map.MapHealth!
 Aw.Context.Core.Engine.ContextRepo.Roles.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.RepoRole!>!
