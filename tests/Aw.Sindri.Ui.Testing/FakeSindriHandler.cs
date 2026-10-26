@@ -240,7 +240,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
             case "concepts":
-                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
+                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
                 _ = await server.ContextConcepts(uri, concepts, cancellationToken);
                 return Answer(server.ContextConceptsAnswer(concepts));
             case "map/publish":

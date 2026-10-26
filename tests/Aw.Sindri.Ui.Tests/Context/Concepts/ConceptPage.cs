@@ -28,5 +28,5 @@ internal static class ConceptPage
     }
 
     /// <summary>A fake that serves concepts.</summary>
-    internal static FakeSindriApi Serving(Aw.Sindri.Ui.Api.Context.ContextConceptsView view) => new() { ContextConceptsAnswer = _ => AConcepts.Served(view) };
+    internal static FakeSindriApi Serving(Ui.Api.Context.ContextConceptsView view) => new() { ContextConceptsAnswer = _ => AConcepts.Served(view) };
 }
