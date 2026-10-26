@@ -26,7 +26,7 @@ public sealed class ResumeServiceTests
         _ = await _h.HoldLease();
     }
 
-    private IDisposable Human() => _h.Callers.Enter(CallerContext.Http(CallerClass.Human, terminal: false, ClientLabel.None, repo: null, _h.Ids));   // a fresh command id each time, as the chain gives
+    private IDisposable Human() => _h.Callers.Enter(CallerContext.Http(new HttpCaller(CallerClass.Human, Terminal: false, ClientLabel.None, Repo: null), _h.Ids));   // a fresh command id each time, as the chain gives
 
     [Fact]
     public async Task ResumeService_appends_service_resumed_for_the_named_service()

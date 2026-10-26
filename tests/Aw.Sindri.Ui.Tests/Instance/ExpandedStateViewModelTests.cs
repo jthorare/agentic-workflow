@@ -152,8 +152,10 @@ public sealed class ExpandedStateViewModelTests
         var served = FixtureInstances.Detail("dev-desk-round-trip").Current.Status.Commands;
 
         Expect.Sequence(served.Select(c => c.Cli), expanded.Commands.Select(c => c.Cli));
-        Assert.All(expanded.Commands, c => Assert.Equal((Labels.AvailableWithU8b, null), (c.PendingChip, c.Protected)));
-        Assert.All(expanded.Commands, c => Assert.Contains(c.PendingChip, c.Name, StringComparison.Ordinal));
+        var pending = expanded.Commands.Where(c => c.Verb != StatusVerb.Takeover).ToList();
+        Assert.All(pending, c => Assert.Equal((Labels.AvailableWithU8b, null), (c.PendingChip, c.Protected)));
+        Assert.All(pending, c => Assert.Contains(c.PendingChip, c.Name, StringComparison.Ordinal));
+        Assert.All(expanded.Commands.Where(c => c.Verb == StatusVerb.Takeover), c => Assert.Equal((string.Empty, true), (c.PendingChip, c.IsTakeOver)));   // Take over is sent by the app: a button, no pending chip
         await expanded.Commands[0].Copy(Token);
         Assert.Equal(served[0].Cli, _clipboard.Text);
     }

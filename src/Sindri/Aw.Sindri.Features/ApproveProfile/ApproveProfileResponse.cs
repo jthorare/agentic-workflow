@@ -11,4 +11,8 @@ public sealed record ApproveProfileResponse(ProfileHash Hash, IReadOnlyList<stri
 {
     /// <summary>For each <c lang="text">agents.&lt;id&gt;.stepArgvHash</c> the approval adds or changes, the entry on this box that has the hash (launcher L-16); empty when none changed.</summary>
     public IReadOnlyList<StepArgvLine> StepArgv { get; init; } = [];
+
+    /// <summary>Why the stored approval couldn't be read, when it couldn't (the changes then list every key); null, and left out of the JSON, otherwise (#1143).</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Unreadable { get; init; }
 }

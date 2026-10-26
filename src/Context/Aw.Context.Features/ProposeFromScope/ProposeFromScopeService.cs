@@ -18,7 +18,7 @@ namespace Aw.Context.Features.ProposeFromScope;
 /// </summary>
 internal sealed class ProposeFromScopeService(IGraphStore store, IProposalRuns runs, TimeProvider clock) : IService<ProposeFromScopeRequest, ProposeResult>
 {
-    internal const string Who = "service:engine";
+    internal const string Who = MapOverride.EngineWho;
 
     public async ValueTask<Result<ProposeResult>> Handle(ProposeFromScopeRequest request, CancellationToken cancellationToken)
     {

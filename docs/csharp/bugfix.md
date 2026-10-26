@@ -35,6 +35,7 @@ design.
 | `start-attempt --mode <A\|B\|C> [--abandon-judge]` | reproduce, evaluate → fix | Opens the next attempt (at most 5); `--abandon-judge` leaves behind a candidate whose judge question was asked twice without an answer, once no judge process is running |
 | `record-candidate --branch <b> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes [--reason <why>]]` | fix, evaluate | Records the worktree's commit as the next candidate (`c1`, `c2`, …) |
 | `record-run <candidate> --evidence <run>` | fix, evaluate → evaluate | Records the frozen check's run against the candidate |
+| `record-run <candidate> --build-failed --log <build.log>` | fix, evaluate → evaluate | Marks a candidate that doesn't build as failed (no check to run), with its non-empty build log, so `start-attempt` can follow |
 | `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict |
 | `advance report (--candidate <id> \| --unresolved)` | → report | Finishes resolved (only with a passing run and a `resolved` verdict) or unresolved |
 | `status` | any | Prints the whole state |
@@ -103,6 +104,7 @@ not with another rule.
   while `DOTNET_SYSTEM_IO_DISABLEFILELOCKING` is set. Residual risk: what lives outside the repository isn't frozen
   beyond that: installed tools other than the check's own program, files under `HOME` (`~/.npmrc`, shell startup
   files), and dependencies in gitignored directories (`node_modules`, `.venv`).
+- **No display.** A check never sees `DISPLAY` (the environment is an allowlist); a check that needs one, such as a desktop evidence run, names it in `AW_BUGFIX_CHECK_ENV=DISPLAY`, which freezes its value with the check.
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that
   shadows another could change what the check does while the commit stays the same. Each test run record keeps the
@@ -228,7 +230,7 @@ Everything lives under the `--state` directory; nothing reads state a TypeScript
 | `IStateStore` (load, save, exclusive lock) | `InMemoryStateStore` | `FileStateStore` (`state.lock`, `FileShare.None`) | `StateStoreContract` |
 | `IRunLedger` | `InMemoryRunLedger` | `FileRunLedger` | `RunLedgerContract` |
 | `IGit`, `IFiles` | `InMemoryRepos` (one fake: git answers about the files the file port reads) | `GitProcess` (git on PATH), `LocalFiles` | `ReposContract` |
-| `ICheckRunner` (returns the exit code and whether it ran to a verdict) | `ScriptedCheckRunner` | `ProcessCheckRunner`: output streamed to the log (16 MB cap); killed after `AW_BUGFIX_CHECK_TIMEOUT_SECONDS` (default 1800); a run that exits keeps its exit code even if background children still hold its output (output after the exit is dropped after 5 s, noted in the log; those children aren't killed: they left the process tree); a run killed at the limit or that couldn't start didn't run to a verdict (broken); runs without loader variables | `CheckRunnerContract` |
+| `ICheckRunner` (returns the exit code and whether it ran to a verdict) | `ScriptedCheckRunner` | `ProcessCheckRunner`: output streamed to the log (16 MB cap); every run's environment carries a unique `AW_BUGFIX_RUN=<token>`, which survives `setsid` and daemonizing (Linux reads `/proc/<pid>/environ`, macOS asks `ps -E`; Windows has the tree kill only); at `AW_BUGFIX_CHECK_TIMEOUT_SECONDS` (default 1800) SIGTERM goes to every process carrying the token (the shell and what it waits on, so its EXIT trap runs), then up to `AW_BUGFIX_CHECK_GRACE_SECONDS` (default 30) to exit, then SIGKILL to the tree and to what is left; a run that exits keeps its exit code, and the same stop (TERM, grace, KILL) runs on whatever it left running, noted in the log (output after the exit is dropped after 5 s when something still holds the pipes); a run stopped at the limit or by a signal (exit 129 to 192, the shell's 128 plus the signal), that left an empty log, or that couldn't start didn't run to a verdict (broken: `advance reproduce` and `record-run` refuse it, so a hang is never a reproduction); runs without loader variables | `CheckRunnerContract` |
 | `IJudge` (asks about the written input file; the answer names the judge's 16-hex input digest) | `ScriptedJudge` | `JudgeCli` (`judge resolution-check`, then `judge why`; `AW_JUDGE_BIN` else PATH; 5 minutes each) | `JudgeContract` |
 | `IUiEvidence` | `ScriptedUiEvidence` | `UiEvidenceCli` (`ui-evidence run <script> <run-dir> --app-build <commit>`; `AW_UI_EVIDENCE_BIN` else PATH) | `UiEvidenceContract` |
 

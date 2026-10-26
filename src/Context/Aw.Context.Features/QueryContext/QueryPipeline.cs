@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
+using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -73,8 +74,16 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        return assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), graph);
+        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos) };
     }
+
+    private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>
+        graph.Candidates.Select(c => c.Item.Node).OfType<string>().Select(n => NodeKey.TryFrom(n, out var key) ? key : (NodeKey?)null).OfType<NodeKey>();
+
+    // A demoted file's code item ranks after every other item of the answer (it is still there: a direct read of its node finds it).
+    private static GraphPart DemotedLast(GraphPart graph, IReadOnlyList<ContextRepo> repos) =>
+        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedCode.IsDemoted(key, repos)) };
 
     /// <summary>
     /// The anchors and their graph sections, and the terms the sources are searched with. The node shape needs the map
@@ -91,7 +100,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var map = await graphs.Read(request.Scope, read, cancellationToken).ConfigureAwait(false);
         if (query.Node is { } node)
         {
-            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node));
+            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos));
             if (anchor.IsError)
             {
                 return anchor.Error;
@@ -113,8 +122,10 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty);
-        var anchors = found.Anchors.Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
-        return (GraphAnswer.Build(map.Value, anchors, found.Suggested, reach, new MapText(scrubbers)), valid.Terms);
+        var repos = request.Scope.Repos;
+        var anchors = found.Anchors.Where(k => !DemotedCode.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
+        var suggested = found.Suggested.Where(k => !DemotedCode.IsDemoted(k, repos)).ToList();
+        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)), valid.Terms);
     }
 
     private static async ValueTask<Result<(GraphPart Graph, IReadOnlyList<string> Terms, ItemMiss? Miss)>> AnchorFor(QueryContextRequest request, CheckedQuery checkedQuery,

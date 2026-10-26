@@ -86,11 +86,12 @@
 #                                  approves the recipe as the owner, restarts the control plane (CLAUDE_CONFIG_DIR inside the home, so
 #                                  the launcher's trust mark never touches the real ~/.claude.json) and starts the recipe on a new item.
 #                                  The launch is real: a tmux session on Sindri's own socket, a worktree under the repo and a
-#                                  'session wrap' heartbeat; it waits (120 s) for launch.started in the ledger, then prints the item
+#                                  'session wrap' heartbeat; it waits (FIXTURE_AGENT_WAIT s, default 120) for launch.started in the ledger, then prints the item
 #                                  id on stdout (progress goes to stderr). The Step takes a slot of the box's heavy lock first, so a
 #                                  busy lock delays the launch. Exit 1 when no launch started in time; needs jq and git.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
+# FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
 # Environment: AW_SINDRI_HOME (required: sindri-prove.sh's guard, a temp or proof folder), SINDRI (the built C# CLI,
 # as sindri-prove.sh reads it), STALL_TYPE (the stalled row's type; default service.ran, a type the projector reads),
 # SINDRI_UI_FIXTURE_SQL=python (use python3's sqlite3 module even when the sqlite3 CLI is installed; without the CLI it is
@@ -743,7 +744,7 @@ agent_run() {
   need jq
   need git
   sessions_need_copy
-  local dir profile launcher recipe item n out
+  local dir profile launcher recipe item out
   dir="$(agent_dir)"
   profile="$(profile_path)"
   launcher="$(sessions_dir)/launcher.json"
@@ -760,14 +761,17 @@ agent_run() {
   out="$(printf 'approve %s %s\n' "$AGENT_RECIPE" "$(sed -n 's/^version: *//p' "$recipe" | head -1)" | "$PROVE" human recipe approve "$recipe" 2>&1)" \
     || die "agent-run: the recipe was not approved: $out"
   item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$AGENT_RECIPE" "Fixture agent run")" || return
-  for n in $(seq 1 120); do
+  local wait="${FIXTURE_AGENT_WAIT:-120}"
+  [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
+  local deadline=$((SECONDS + wait))
+  while [ "$SECONDS" -lt "$deadline" ]; do
     if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q 'launch.started'; then
       printf '%s\n' "$item"
       return 0
     fi
     sleep 1
   done
-  echo "sindri-ui-fixture: agent-run: no launch.started for $item in 120 s; the ledger says:" >&2
+  echo "sindri-ui-fixture: agent-run: no launch.started for $item in $wait s; the ledger says:" >&2
   "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
   return 1
 }

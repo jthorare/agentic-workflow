@@ -83,7 +83,7 @@ public sealed class TakeoverViewerCheckTests
             _ = services.Replace(ServiceDescriptor.Singleton(viewer));
             _ = services.Replace(ServiceDescriptor.Singleton<IInstanceRuntime>(runtime));
             _ = services.Replace(ServiceDescriptor.Singleton<IInstanceReader>(static sp => sp.GetRequiredService<IInstanceRuntime>()));
-            _ = services.Replace(ServiceDescriptor.Singleton<IInstanceDirectory>(static sp => (IInstanceDirectory)sp.GetRequiredService<IInstanceRuntime>()));
+            _ = services.Replace(ServiceDescriptor.Singleton(static sp => (IInstanceDirectory)sp.GetRequiredService<IInstanceRuntime>()));
         });
 
     /// <summary>An item, and a live engine launch of its instance's agent Step (as the engine's launch records it: unattended, the viewer skipped).</summary>
@@ -95,7 +95,7 @@ public sealed class TakeoverViewerCheckTests
         var address = InstanceAddress.From(item + "/step/1");
         runtime.Address = address;
         await LaunchScenarios.Started(host, _launch, item, ViewerOutcomeKind.Skipped, Token,
-            viewer: new Aw.Sindri.Core.Events.LaunchViewer("none", Label: null, ViewerOutcomeKind.Skipped, Code: null, Detail: null),
+            viewer: new Core.Events.LaunchViewer("none", Label: null, ViewerOutcomeKind.Skipped, Code: null, Detail: null),
             step: new LaunchStep(address, "build", 1));
         await ViewScenarios.CatchUp(host, Token);
         return WorkflowInstanceId.Of(address).Value;

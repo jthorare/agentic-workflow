@@ -181,7 +181,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(RoutedItem))]           // engine P7 plan D8: the router stub's item.routed event
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 [JsonSerializable(typeof(GetInstanceEventsResponse)), JsonSerializable(typeof(InstanceEventView)), JsonSerializable(typeof(InstanceEventFields)), JsonSerializable(typeof(StartInstanceResponse))]
-[JsonSerializable(typeof(StartInstanceRequest)), JsonSerializable(typeof(RerunInstanceRequest)), JsonSerializable(typeof(DeskRecommendation)), JsonSerializable(typeof(ApplyCommandRequest)), JsonSerializable(typeof(CompleteStepRequest)), JsonSerializable(typeof(ApplyCommandResponse))]
+[JsonSerializable(typeof(StartInstanceRequest)), JsonSerializable(typeof(RerunInstanceRequest)), JsonSerializable(typeof(DeskRecommendation)), JsonSerializable(typeof(ApplyCommandRequest)), JsonSerializable(typeof(ApplyCommandBody)), JsonSerializable(typeof(CompleteStepRequest)), JsonSerializable(typeof(ApplyCommandResponse))]
 [JsonSerializable(typeof(IssueNonceResponse)), JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 [JsonSerializable(typeof(RegisterRecipeRequest)), JsonSerializable(typeof(RegisterRecipeResponse)), JsonSerializable(typeof(ListRecipesResponse)), JsonSerializable(typeof(ApproveRecipeRequest))]
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app

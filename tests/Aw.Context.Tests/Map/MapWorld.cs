@@ -95,7 +95,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IReviewFileStore>(ReviewFiles)
             .AddSingleton<ICurrentUser>(new FakeCurrentUser())
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
-            .AddSingleton<IMapSearchIndexFactory>(new Aw.Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
+            .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
             .AddContextFeatures()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();

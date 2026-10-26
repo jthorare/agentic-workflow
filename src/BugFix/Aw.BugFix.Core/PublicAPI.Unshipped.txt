@@ -452,6 +452,7 @@ Aw.BugFix.Core.Ports.IGit.IsAncestor(string! directory, string! ancestor, string
 Aw.BugFix.Core.Ports.IGit.IsClean(string! directory) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.IsCommittedUnchanged(string! root, string! file) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.RelativeDirectory(string! directory) -> Aw.Kernel.Result<string!>!
+Aw.BugFix.Core.Ports.IGit.NetBase(string! directory, string! baseline, string! candidate) -> string!
 Aw.BugFix.Core.Ports.IGit.Root(string! directory) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Ports.IGit.SameTree(string! directory, string! first, string! second) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.Untracked(string! directory) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!

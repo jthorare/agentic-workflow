@@ -43,7 +43,8 @@ internal sealed class GetLensesSetService(MapReader reader, LensBasisReader base
         }
 
         var basis = (await bases.For(read.Value, settings.Value, request.Scope, request.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = QueryRules.CascadeFor(hops.Value, settings.Value) };
+        using var band = FillBands.Start(FillBands.Lenses);
         var view = LensesBuilder.BuildSet(basis, read.Value.Graph, anchors, depth, read.Value.Conflicts);
-        return view.Map(v => LensTexts.Clean(v, new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
+        return view.Map(v => LensTexts.Clean(DemotedFiles.Last(v, request.Scope.Repos), new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
     }
 }

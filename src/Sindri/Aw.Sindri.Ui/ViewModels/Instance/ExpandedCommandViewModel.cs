@@ -18,7 +18,7 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
         // Each answer variant is its own entry (answer-accept, answer-reject, ...), named by its own action id rather than the status line's kind.
         Label = command.Verb == StatusVerb.Answer && Labels.HasLabel(command.ActionId) ? Labels.Action(command.ActionId) : Labels.CommandLabel(command.Verb, command.Verb == StatusVerb.Answer ? answer : null);
         var isProtected = string.Equals(command.Class, "protected", StringComparison.Ordinal);
-        PendingChip = isProtected ? string.Empty : Labels.AvailableWithU8b;
+        PendingChip = isProtected || command.Verb == StatusVerb.Takeover ? string.Empty : Labels.AvailableWithU8b;
         Name = Labels.CommandName(Label, address, PendingChip);
         Cli = ControlViewModel.Safe(command.Cli) ? command.Cli : string.Empty;
         Confirm = command.Confirm;
@@ -42,8 +42,11 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
     /// <summary>True for Hand back on a command the app may send (not a protected one), which has its own button.</summary>
     public bool IsHandBack => Verb == StatusVerb.Handback && Protected is null;
 
+    /// <summary>True for Take over on a command the app may send (not a protected one), which has its own button.</summary>
+    public bool IsTakeOver => Verb == StatusVerb.Takeover && Protected is null;
+
     /// <summary>True when the words stand as text: a protected command has the lock button, Cancel and Hand back their own buttons.</summary>
-    public bool ShowsLabel => Protected is null && !IsCancel && !IsHandBack;
+    public bool ShowsLabel => Protected is null && !IsCancel && !IsHandBack && !IsTakeOver;
 
     /// <summary>The served CLI line, or empty when it can't be shown.</summary>
     public string Cli { get; }
@@ -59,6 +62,9 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
 
     /// <summary>True when the command shows its own CLI and Copy (a protected one does it in its popover).</summary>
     public bool ShowsCli => Protected is null && Cli.Length > 0;
+
+    /// <summary>True when the pending chip is drawn: the CLI is shown and the app has words for why it is not sent.</summary>
+    public bool ShowsChip => ShowsCli && PendingChip.Length > 0;
 
     /// <summary>The Copy control: its words and the live region that says "Copied".</summary>
     public CopyAction CliCopy { get; }

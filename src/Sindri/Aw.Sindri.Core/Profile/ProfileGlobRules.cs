@@ -21,7 +21,9 @@ internal static class ProfileGlobRules
             return Invalid("index.roles", "roles are per repo: move them to repos.<name>.index.roles");
         }
 
-        return FirstProblem(DenyLists(profile), GlobProblem) ?? FirstProblem((profile.Repos ?? []).SelectMany(r => Roles($"repos.{r.Name}.index", r.Index)), RoleProblem);
+        return FirstProblem(DenyLists(profile), GlobProblem)
+            ?? FirstProblem((profile.Repos ?? []).SelectMany(r => Roles($"repos.{r.Name}.index", r.Index)), RoleProblem)
+            ?? RoleLists.Check(profile);
     }
 
     internal static string? GlobProblem(string glob) => true switch

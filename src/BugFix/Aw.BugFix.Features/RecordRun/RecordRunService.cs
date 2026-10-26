@@ -24,9 +24,9 @@ internal sealed class RecordRunService(IStateStore store, IRunLedger ledger, IFi
         var check = state.Frozen.Check;
         var run = ledger.Read(request.Evidence)
             .Bind(stored => EvidenceRule.Accept(state, stored))
-            .Bind(check.Accepts)
             .Bind(record => Against(state, candidate.Value, record))
-            .Bind(record => Frozen(check, candidate.Value, record));
+            .Bind(record => Frozen(check, candidate.Value, record))
+            .Bind(check.Accepts);   // last: a rewritten check or a moved branch is a stronger finding than a run with no verdict
         if (run.IsError)
         {
             return run.Error;

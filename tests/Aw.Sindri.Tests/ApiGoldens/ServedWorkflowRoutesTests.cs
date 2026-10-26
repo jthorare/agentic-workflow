@@ -248,7 +248,7 @@ public sealed class ServedWorkflowRoutesTests : IDisposable
     {
         var step = WorkflowsHarness.Shipped("sindri/workflow.step.yaml");
         var original = _harness.Approve(step);
-        _ = _harness.Approve(Changed(step, "version: 4\n", "version: 5\n"));
+        _ = _harness.Approve(Changed(step, "version: 5\n", "version: 6\n"));
         _harness.Revoke(original);   // v3 stays approved, so the pinned v2 is found and then refused as revoked
         _ = _harness.RegisterLegacy(Changed(Changed(step, "id: workflow.step\n", "id: workflow.legacy\n"),
             "inputs:\n  - { key: fact:spec, label: \"Spec\", type: text, kind: text }\n", "inputs: [fact:spec]\n"));

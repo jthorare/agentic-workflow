@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.phase
-version: 4
+version: 5
 description: "The per-phase child of the line: build, prove, review and ship one phase as one PR, then babysit it (docs sync inside) to the owner's ready-to-merge stop and the merge."
 displayName: "Build, prove and ship one phase"
 urgency: work
@@ -14,7 +14,7 @@ outputs:
   - { key: fact:mergedSha, label: "Merged sha",   type: text,   from: babysit }
 initial: seed
 states:
-  seed:    { kind: active, step: step.phase.seed, timeout: { after: 4h, then: park },
+  seed:    { kind: active, step: step.phase.seed, timeout: { after: 1d, then: park },
              next: "Check {item}'s phase packet and dependencies, and prepare its worktree." }
   build:   { displayName: "Build", why: "Writes failing tests first, then the code inside the allowed files.", kind: wait, loop: stage, timeout: { after: 3d, then: park },
              waitFor: { child: { recipe: workflow.build, onParked: propagate,
@@ -30,7 +30,7 @@ states:
              waitFor: { child: { recipe: workflow.review-loop, onParked: propagate,
                                  inputs: { "fact:change": { fact: fact:change }, "fact:phasePacket": { fact: fact:phasePacket }, "fact:workspace": { fact: fact:workspace }, "fact:lensRounds": [] } } },
              next: "Waiting for {child}: {item}'s review to zero blocking and issue findings." }
-  drift:   { kind: active, step: step.phase.drift, loop: reprove, timeout: { after: 4h, then: park },
+  drift:   { kind: active, step: step.phase.drift, loop: reprove, timeout: { after: 1d, then: park },
              next: "Check that {item}'s review left the proven head unchanged." }
   ship:    { displayName: "Open the pull request", why: "Checks that the proof and review are for the exact commit being shipped, then opens the pull request.", kind: wait, timeout: { after: 1d, then: park },
              waitFor: { child: { recipe: workflow.ship, onParked: propagate,

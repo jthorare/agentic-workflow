@@ -31,8 +31,9 @@ public static class AnchorMatch
     /// <summary>The node <paramref name="name"/> names: a key, then an alias, then a label (case ignored).</summary>
     /// <param name="graph">The graph a caller may see.</param>
     /// <param name="name">A node key, alias or label.</param>
+    /// <param name="repos">The repos in scope; a demoted file's code node is never suggested. Null suggests every node.</param>
     /// <returns>The node; SND-CONTEXT-037 when a label names several (the message lists them); SND-CONTEXT-003 with suggestions when nothing matches.</returns>
-    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name)
+    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(name);
@@ -61,7 +62,7 @@ public static class AnchorMatch
             return near;
         }
 
-        var suggested = Suggest(graph, Words(trimmed), except: []);
+        var suggested = Suggest(graph, Words(trimmed), except: [], repos ?? []);
         var hint = suggested.Count == 0 ? "sindri context map status" : "try " + string.Join(", ", suggested.Select(k => k.Value));
         var unknown = ContextErrors.UnknownAnchor.With($"no node is named '{Shown(trimmed)}' (fix: {hint})");
         return suggested.Count == 0
@@ -82,7 +83,7 @@ public static class AnchorMatch
             .Where(m => m.Words.Count > 0 && m.Words.IsSubsetOf(words)).ToList();
         var anchors = whole.Where(m => !whole.Exists(o => o.Words.Count > m.Words.Count && m.Words.IsSubsetOf(o.Words)))
             .OrderByDescending(m => m.Words.Count).ThenBy(m => m.Node.Key.Value, StringComparer.Ordinal).Select(m => m.Node.Key).ToList();
-        return new TextAnchors(anchors, Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)]));
+        return new TextAnchors(anchors, Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)], []));
     }
 
     /// <summary>The most words of a question matching reads (raised from 256 per owner q93, 2026-10-23).</summary>
@@ -106,8 +107,8 @@ public static class AnchorMatch
         return hits.Count == 1 ? hits[0] : null;
     }
 
-    private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except) =>
-        [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal))
+    private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except, IReadOnlyList<ContextRepo> repos) =>
+        [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal) && !DemotedCode.IsDemoted(n.Key, repos))
             .Select(n => (n.Key, n.Label, Shared: Words(Unbracketed(n.Label)).Count(w => w.Length >= 3 && words.Contains(w))))
             .Where(m => m.Shared > 0)
             .OrderByDescending(m => m.Shared).ThenBy(m => TestLike(m.Key.Value) || TestLike(m.Label)).ThenBy(m => m.Key.Value, StringComparer.Ordinal)

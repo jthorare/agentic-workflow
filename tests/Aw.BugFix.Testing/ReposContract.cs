@@ -72,6 +72,19 @@ public abstract class ReposContract
         Expect.That((diff.Stat ?? string.Empty).Contains("2 files changed", StringComparison.Ordinal), "Contains('2 files changed', diff.Stat, StringComparison.Ordinal)");
     }
 
+    /// <summary>The net base is always something to diff from, and the baseline itself when nothing was merged.</summary>
+    [Fact]
+    public void Net_base_of_a_candidate_that_merged_nothing_is_the_baseline_tree()
+    {
+        var (root, first) = NewRepo();
+        Write(root, "src/a.txt", "fixed\n");
+        var second = Commit(root);
+
+        var net = Git.NetBase(root, first, second);
+
+        Expect.That(net.Length > 0, "NetBase returns a tree-ish");
+    }
+
     /// <summary>A directory outside any repository is AW-BUGFIX-018.</summary>
     [Fact]
     public void Outside_a_repository_is_AW_BUGFIX_018()

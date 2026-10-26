@@ -121,7 +121,7 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
 
         var extraction = MapExtractor.Extract(repo.Name, files, recognizers);
         var extracted = extraction.Map;
-        return new MapExtraction(extracted.Plus(ClusterFeatures.Propose(repo.Name, set, [], extracted)), extraction.TimedOut);
+        return new MapExtraction(extracted.Plus(ClusterFeatures.Propose(repo, set, [], extracted)), extraction.TimedOut);
     }
 
     // A cluster source that fails reads like one that is absent; a denied path never reaches the graph.

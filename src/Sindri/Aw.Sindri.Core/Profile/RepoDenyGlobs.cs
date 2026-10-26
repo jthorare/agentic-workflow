@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Profile;
 
-/// <summary>The deny globs that apply to one repo: the profile's <c xml:lang="en">index.denyPaths</c>, and the repo's own <c xml:lang="en">index.denyPaths</c> and the files of its own <c xml:lang="en">index.roles</c> (roles are per repo only), which the context engine adds to its built-in secret globs.</summary>
+/// <summary>The deny globs that apply to one repo: the profile's <c xml:lang="en">index.denyPaths</c>, and the repo's own <c xml:lang="en">index.denyPaths</c> and the files of its own ignored <c xml:lang="en">index.roles</c> (roles are per repo only; a demoted role is indexed, see <see cref="RepoDemoteGlobs"/>), which the context engine adds to its built-in secret globs.</summary>
 public static class RepoDenyGlobs
 {
     /// <summary>The globs of <paramref name="repo"/> under <paramref name="profile"/>.</summary>
@@ -15,9 +15,11 @@ public static class RepoDenyGlobs
         return globs.Length == 0 ? null : globs;
     }
 
-    // A role is a name for a list of globs; its files are denied like any other, roles in name order so the list is stable. There are no built-in roles.
+    // A role is a name for a list of globs; an ignored role (in index.ignore, or in neither list) is denied like any other glob, roles in name order so the list is stable. There are no built-in roles.
     private static IEnumerable<string> RoleGlobs(IndexSettings? index) =>
-        (index?.Roles ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)).OrderBy(r => r.Key, StringComparer.Ordinal).SelectMany(r => r.Value);
+        (index?.Roles ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal))
+            .Where(r => index?.Demote?.Contains(r.Key, StringComparer.Ordinal) != true)
+            .OrderBy(r => r.Key, StringComparer.Ordinal).SelectMany(r => r.Value);
 
     /// <summary>Every repo of <paramref name="profile"/> with its globs: the one mapping from the profile to the scope the context engine reads (every surface and the doctor use it).</summary>
     /// <param name="profile">The approved profile.</param>

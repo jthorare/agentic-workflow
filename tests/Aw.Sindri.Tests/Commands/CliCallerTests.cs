@@ -36,6 +36,34 @@ public sealed class CliCallerTests
             (Header(sent, SindriHeaders.Caller), Header(sent, SindriHeaders.Terminal), Header(sent, SindriHeaders.Client), Header(sent, SindriHeaders.Token), Header(sent, SindriHeaders.Repo)));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("LCH-00000000000000000000000000000001", "LCH-00000000000000000000000000000001")]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void Detect_reads_the_launch_variable(string? value, string? expected) =>
+        Assert.Equal(expected, AgentSession.Detect(n => n == "AW_SINDRI_LAUNCH" ? value : null, interactive: false).Launch);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_cli_sends_the_launch_header_when_it_has_a_launch()
+    {
+        var launched = await Sent(CallerHeaders.For(Human() with { Launch = "LCH-00000000000000000000000000000001" }, new InMemoryHumanTokenStore(), Repo(name: null)));
+        var owned = await Sent(CallerHeaders.For(Human(), InMemoryHumanTokenStore.WithToken(), Repo(name: null)));
+
+        Assert.Equal("LCH-00000000000000000000000000000001", Header(launched, SindriHeaders.Launch));
+        Assert.Null(Header(owned, SindriHeaders.Launch));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_launched_cli_calls_as_a_session_with_no_token_even_when_the_token_is_readable()
+    {
+        var headers = CallerHeaders.For(Human() with { Launch = "LCH-00000000000000000000000000000001" }, InMemoryHumanTokenStore.WithToken(), Repo(name: null));
+
+        var sent = await Sent(headers);
+
+        Assert.Equal(("session", "LCH-00000000000000000000000000000001", null, null), (Header(sent, SindriHeaders.Caller), Header(sent, SindriHeaders.Launch), Header(sent, SindriHeaders.Token), Header(sent, SindriHeaders.Terminal)));
+        Assert.Contains("AW_SINDRI_LAUNCH", headers.SessionReason, StringComparison.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Prover_marker_labels_the_human_cli_prover()
     {

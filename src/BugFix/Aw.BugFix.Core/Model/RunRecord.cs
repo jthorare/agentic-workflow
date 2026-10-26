@@ -38,7 +38,7 @@ public sealed record RunRecord(
         RunOutcome.Passed => BugFixErrors.NotReproduced.With(
             "the baseline check passed on the unfixed code; the bug is not reproduced, so this check cannot prove a fix"),
         RunOutcome.Broken => BugFixErrors.NotReproduced.With(
-            "the baseline run is broken (it didn't start, timed out, or only had broken steps, e.g. a bad selector); that is not a reproduction, so repair it and re-run"),
+            "the baseline run is broken (it didn't start, timed out, was killed by a signal, left an empty log, or only had broken steps, e.g. a bad selector); that is not a reproduction, so repair it and re-run"),
         _ => throw new ArgumentOutOfRangeException(nameof(Outcome), Outcome, "not an outcome"),
     };
 }

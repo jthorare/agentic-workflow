@@ -122,6 +122,8 @@ case "$*" in
   "workflow start "*)
     for a in "$@"; do case "$a" in fact:*=*) echo "fact ${a%%=*} $(cat "${a#*=}")" >> "$STUB_LOG" ;; esac; done
     if [ -n "${STUB_FAIL_START:-}" ]; then echo "SND-CLI-003 refused" >&2; exit 2; fi ;;
+  "recipe approve "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG" ;;
+  "ledger "*) sleep "${STUB_LEDGER_SLEEP:-0}" ;;
 esac
 exit 0
 EOF
@@ -569,5 +571,20 @@ absent "a repeat of context whole over imports nothing" "$(cat "$STUB_LOG")" "co
 out="$(AW_SINDRI_HOME="$W" SINDRI="$STUB" bash "$FIXTURE" context whole under 2>/dev/null)"; check "context whole under exits 0 and prints its word" "$out" "under"
 contains "context whole under imports the tabs map again" "$(cat "$STUB_LOG")" "context map import"
 check "the under map is the tabs map (10 nodes)" "$(jq '.nodes | length' "$W/ui-fixture-context/tabs-map.json")" "10"
+
+# agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
+# launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
+# only checks that its proc folder exists and edits its launcher.json.
+A="$TMPDIR/agentwait"
+mkdir -p "$A"
+AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+mkdir -p "$A/ui-fixture-sessions/proc"
+echo '{"schema":1}' > "$A/ui-fixture-sessions/launcher.json"
+start=$SECONDS
+out="$(STUB_LEDGER_SLEEP=2 FIXTURE_AGENT_WAIT=3 AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" agent-run 2>&1 >/dev/null)"; rc=$?
+took=$((SECONDS - start))
+check "agent-run's wait is bounded in seconds: exits 1 when launch.started never comes" "$rc" "1"
+contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
+check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
 
 exit "$fail"

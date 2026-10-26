@@ -104,6 +104,14 @@ to date (`git pull`) before you rebuild: a checkout that is behind gives you an 
 missing from it. Running `scripts/install-cs.sh` from a linked worktree publishes that worktree's source and makes it
 the current build for everyone on the box.
 
+**Setup with Sindri already running.** `./setup.sh` also runs `scripts/cutover-clean-ts.sh`, which removes the retired
+TS `sindri-app` builds. It finds the running control plane's pid in `${AW_SINDRI_HOME:-$AW_STATE_DIR/sindri-app}/control.json`
+(the same file `install-cs.sh` reads). If that control plane runs from `bin/sindri-app/`, the first step refuses with
+`cutover: refused: the Sindri control plane (pid N) runs from <state>/bin/sindri-app/. Nothing was changed. Run: sindri-app stop (or sindri stop), then re-run ./setup.sh`
+and exits 1. If it gets past that, the last step keeps the build dir instead of deleting it and prints
+``cutover: kept <state>/bin/sindri-app: Sindri is still running from it; run `sindri stop`, then re-run ./setup.sh``.
+Either way: `sindri stop`, then `./setup.sh` again.
+
 ## 3. The profile
 
 The profile is `~/.agentic-workflow/sindri-app/profile/profile.yaml` (`AW_SINDRI_PROFILE` moves it). Write it by
@@ -228,7 +236,9 @@ warn  codex:read-only   pending: owner probe (fix: …)
 
 **After a new build.** A control plane keeps running the build it started with. When `install-cs.sh` publishes a new
 one it says `a control plane from an earlier build is running (pid N); 'sindri stop', then 'sindri', runs this
-one`. Do exactly that (**Human-only**):
+one`. `install-cs.sh --link` (so `./setup.sh`) says the same after it switches: ``install-cs: Sindri is still running build
+<old>; run `sindri stop && sindri` to switch to <new>``, and exits 0. It never restarts the control plane for you, because a
+restart can strand open agent runs. Do exactly that (**Human-only**):
 
 ```bash
 sindri stop

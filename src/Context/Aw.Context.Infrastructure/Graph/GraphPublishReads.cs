@@ -10,7 +10,7 @@ internal static class GraphPublishReads
     // The versions, the hold and the heads in one read session.
     public static async ValueTask<Result<MapPublishState>> State(SqliteReadSession session, CancellationToken cancellationToken)
     {
-        var versions = await SqliteQueries.List(session, new SqlStatement(GraphSql.SelectVersions), GraphRows.Version, cancellationToken).ConfigureAwait(false);
+        var versions = await GraphVersionReads.List(session, cancellationToken).ConfigureAwait(false);
         var upgraded = await SqliteQueries.One(session, new SqlStatement(GraphSql.HasPublishTables), GraphRows.Id, cancellationToken).ConfigureAwait(false);
         if (versions.IsError || upgraded.IsError)
         {
@@ -19,7 +19,8 @@ internal static class GraphPublishReads
 
         var draft = versions.Value.Where(v => v.Status == MapVersionStatus.Draft).Select(v => (int?)v.Number).FirstOrDefault();
         var current = versions.Value.Where(v => v.Status == MapVersionStatus.Current).Select(v => (int?)v.Number).FirstOrDefault();
-        return upgraded.Value < 3 ? new MapPublishState(Hold: null, draft, current, CurrentHeads: []) : await WithHold(session, draft, current, cancellationToken).ConfigureAwait(false);
+        var state = upgraded.Value < 3 ? new MapPublishState(Hold: null, draft, current, CurrentHeads: []) : await WithHold(session, draft, current, cancellationToken).ConfigureAwait(false);
+        return state.IsError ? state : state.Value with { CurrentRuleset = versions.Value.FirstOrDefault(static v => v.Status == MapVersionStatus.Current)?.Ruleset };
     }
 
     public static async ValueTask<Result<IReadOnlyList<MapHead>>> Heads(SqliteReadSession session, int version, CancellationToken cancellationToken)

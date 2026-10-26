@@ -25,9 +25,9 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 internal sealed partial class RecipeWorkflow
 {
-    private static readonly AgentCall _launchCall = new("agent-launch", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _launchCall = new("agent-launch", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private static readonly AgentCall _watchCall = new("agent-watch", TimeSpan.FromDays(7), TimeSpan.FromSeconds(10), new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumInterval = TimeSpan.FromSeconds(10) });   // a heartbeat timeout or a restarted worker retries the watch, which attaches to the same session
-    private static readonly AgentCall _closeCall = new("agent-close", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _closeCall = new("agent-close", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private AgentRunning? _held;   // the launched run whose session is still live, so the interpreter loop can stop it when the instance ends or the run is replaced while it is parked or taken over (D11)
     private (string Token, AgentLaunched Launched)? _agent;   // the open run's launch, kept across a park or a takeover so the watch resumes without a second launch
 
@@ -92,6 +92,7 @@ internal sealed partial class RecipeWorkflow
         var run = AgentRunOf(instance, open, step);
         var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
         var workspace = (step.Use == _ciFix ? AgentWorkspace : PhaseWorkspaceLaunch) && instance.Facts.TryGetValue(_workspaceKey, out var held) ? held : null;   // LN-WF2: an instance that holds a workspace (the phase's worktree, or docs sync's own) runs its agent Steps there
+        _launchedAt = _launchedAt?.Entry == open.Token.Entry ? _launchedAt : (open.Token.Entry, new DateTimeOffset(Workflow.UtcNow));
         var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(Launch(run, item, step, instance, workspace)), AgentOptions(_launchCall, open, state, cancel.Token));
         var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
         if (end == AgentEnd.Over)
@@ -155,9 +156,16 @@ internal sealed partial class RecipeWorkflow
         }
 
         var ended = await watching.ConfigureAwait(true);
+        var recovery = await Recover(running).ConfigureAwait(true);
         var closed = await Close(running, measure: true).ConfigureAwait(true);
+        if (recovery?.Outcome is { } outcome)
+        {
+            var recovered = new StepCompleted("agent:recovered", open.Token, OutcomeName.From(outcome), recovery.Outputs, closed.Tokens, StepRuntime.Agent, recovery.Sha!, EmptyDiff: closed.EmptyDiff);   // why: an outcome comes with its digest
+            return await Decided(applied, open, recovered, reportId: null, context).ConfigureAwait(true);
+        }
+
         var reason = AgentEndReasons.Of(ended.EndedAs);
-        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, ended.Detail), reportId: null, context).ConfigureAwait(true);
+        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, recovery?.Reason ?? ended.Detail), reportId: null, context).ConfigureAwait(true);
     }
 
     // The session's own report: closes the run (usage, diff signal, stop), then decides it like a desk report and answers the Update that carried it.

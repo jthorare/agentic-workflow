@@ -201,11 +201,12 @@ public sealed class SindriRequestToolTests(SharedMcpWorld shared) : IClassFixtur
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task An_x_sindri_after_or_launch_secret_header_is_dropped_on_the_mcp_endpoint()
     {
+        // X-Sindri-Launch is not in this set on purpose: the MCP endpoint keeps it (a Sindri child carries its launch, q100), see McpLaunchHeaderTests
         var ct = TestContext.Current.CancellationToken;
         var seen = new HeaderTap();
         await using var host = await GoldenHost.Start(temporary: true, ct, SeededMcp.Profile, extra: services => services.Replace(ServiceDescriptor.Singleton<IHttpContextAccessor>(seen)));
         await using var mcp = await McpSession.Open(host, "alpha", ct,
-            (SindriHeaders.After, "99999"), ("X-Sindri-Launch-Secret", "s3cret"), (SindriHeaders.Caller, "human"), ("X-Sindri-Launch", "L-1"),
+            (SindriHeaders.After, "99999"), ("X-Sindri-Launch-Secret", "s3cret"), (SindriHeaders.Caller, "human"),
             ("x-sindri-caller", "human"), (SindriHeaders.Client, "ui"));
 
         var result = await mcp.Call("sindri_status", "{}", ct);

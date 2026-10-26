@@ -26,7 +26,7 @@ public sealed record FrozenCheck(CheckKind Kind, string Path, string Sha256, IRe
 
         if (record.Outcome == RunOutcome.Broken)
         {
-            return BugFixErrors.RunRefused.With("the run is broken (it didn't start, timed out, or only had broken steps); repair it and re-run, a broken run is not a verdict on the fix");
+            return BugFixErrors.RunRefused.With("the run is broken (it didn't start, timed out, was killed by a signal, left an empty log, or only had broken steps); repair it and re-run, a broken run is not a verdict on the fix");
         }
 
         return Kind == CheckKind.Test ? SameTestRun(record) : record;

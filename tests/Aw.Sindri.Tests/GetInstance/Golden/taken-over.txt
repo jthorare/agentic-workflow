@@ -1,4 +1,4 @@
-T-3/step/1  workflow.step@f511ce1fc529  v4  taken-over  since 11:55 (5m)
+T-3/step/1  workflow.step@4ca37bf46333  v4  taken-over  since 11:55 (5m)
   next      With you since 11:55. Run `sindri workflow handback T-3/step/1` when you're done.
   paused    timeout 40s left
   commands  handback, cancel

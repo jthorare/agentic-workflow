@@ -148,8 +148,12 @@ is not approved, and approving again records it. Every surface judges by this on
 validate`, the `profile approve` preview, `status` (`profile.needsApproval`) and the startup summary ("approval not recorded in
 the ledger as the latest one"), and `doctor`'s profile check (a `warn` with the fix `sindri profile approve`). A ledger or a
 saved approval that can't be read is an error on each of them, never "not approved": `profile validate`, `status` and bare
-`sindri` exit 2 with `SND-LEDGER-002` or `SND-PROFILE-006`, the preview refuses (approving a hash still works, and it repairs
-an unreadable snapshot), and `doctor` fails its profile check. `status`'s `profile.problem` names only a live file that doesn't load.
+`sindri` exit 2 with `SND-LEDGER-002` or `SND-PROFILE-006`, and `doctor` fails its profile check. An approval stays readable across
+builds (#1143): the snapshot's bytes are checked against the sha256 in its directory name, not re-hashed through today's profile model, so a
+model that gained a member doesn't invalidate it. A snapshot whose bytes don't hash to its name, or that today's model can't parse
+(SND-PROFILE-005), no longer stops the preview: `profile approve` still prints the live hash, lists every key as changed and says the stored
+approval can't be read (`unreadable` in `--json`'s response); approving a hash replaces it. A stale hash is SND-PROFILE-003 and its fix line is the whole command,
+`sindri profile approve <the live hash>`. `status`'s `profile.problem` names only a live file that doesn't load.
 
 ## Host lease
 
@@ -285,6 +289,7 @@ composed by the host from the class and the client label, never taken from a hea
 | `X-Sindri-Terminal` | `1` | Informational (sent with `human` when stdin is a terminal); it decides no authority |
 | `X-Sindri-Client` | `cli`, `ui`, `prover`, `mcp` | Names the actor: `human:cli`, `human:ui`, `human:prover`, else `human:http`; `session:cli`, `session:mcp`, else `session:http`. An unknown label counts as none (logged) |
 | `X-Sindri-Repo` | a repo name | Scopes the caller (enforced from P3); a malformed name is 400 `SND-API-007` |
+| `X-Sindri-Launch` | a launch id (`LCH-…`) | The launch Sindri started this session under (the CLI sends its `AW_SINDRI_LAUNCH`); `CallerContext.Launch` is set for a session caller only, so the engine can tell Sindri's own step children from an owner-started session; it makes the call a session even under `human` (#1002). A malformed id is 400 `SND-API-007`; one with no open launch is 403 `SND-AUTH-003` |
 | `X-Sindri-Token` | the per-start token | Required with `human`, on queries too: missing or stale is 403 `SND-AUTH-001` ("restart the app or rerun the command"), never a silent downgrade to `session` |
 
 - **The human token.** `sindri serve` mints `auth/human.token` under the home (32 random bytes, base64url; the file
@@ -451,18 +456,21 @@ or a command with no row of its own run as `protected` and, with no row, as term
 
 **Authorization table (API spec §4.2):**
 
-| Class | human + terminal | human (app) | session | service |
-|---|---|---|---|---|
-| `request`, `pause` | yes | yes | yes | yes |
-| `job` | yes | yes | yes | yes |
-| `decision` | yes | yes | yes | no |
-| `desk` | yes | yes | yes | only a service the row grants (`service:host` → `StopProcess`) |
-| `protected` | yes | yes | yes | no |
-| `issue` | yes | yes | yes | no |
-| `step-report` | no (the launched session only, once P10's launch proof exists) | no | no | no |
-| `local` | never through the API | | | |
+| Class | human + terminal | human (app) | session (owner-started) | session Sindri launched | service |
+|---|---|---|---|---|---|
+| `request` | yes | yes | yes | yes | yes |
+| `pause` | yes | yes | yes | no | yes |
+| `job` | yes | yes | yes | yes | yes |
+| `decision` | yes | yes | yes | no | no |
+| `desk` | yes | yes | yes | no | only a service the row grants (`service:host` → `StopProcess`) |
+| `protected` | yes | yes | yes | no | no |
+| `issue` | yes | yes | yes | yes (its nonce, heartbeat and exit) | no |
+| `step-report` | no | no | yes (the service checks the launch secret) | yes | no |
+| `local` | never through the API | | | | |
 
-Owner decision q93: an agent session may run every class a human may; there is no typed challenge and no per-row terminal or app gate. `NeedsTerminal` survives on the line holdout read alone (hidden scenarios stay from the agent), and `AppConfirm` and the `confirm` value stay in the catalog as data for the app, with no effect on authorization. `human:prover` needs no marker.
+A session Sindri launched is one whose call carries `X-Sindri-Launch` (an open launch) or `X-Sindri-Launch-Secret` (#1002, owner decision q100). Either header makes the call a session before the token check, whatever `X-Sindri-Caller` and `X-Sindri-Token` say, and a launched CLI never reads the human token. The launched agent runs as the same OS user, so nothing at the OS level stops it reading `auth/human.token`. The guard is that the server never honours the token alongside a launch. The command list names both kinds of session `session`.
+
+Owner decision q93: an owner-started agent session may run every class a human may; there is no typed challenge and no per-row terminal or app gate. `NeedsTerminal` survives on the line holdout read alone (hidden scenarios stay from the agent), and `AppConfirm` and the `confirm` value stay in the catalog as data for the app, with no effect on authorization. `human:prover` needs no marker.
 
 ## Command catalog
 
@@ -544,7 +552,7 @@ endpoints read instead of the ledger. It reads events after its cursor in pages,
 - **`asOf`.** Every view answer carries `{cursor, ledgerHead, projectedAt, rebuilding, stalled}`. `GET /status` carries the same shape as `views` (plus `stalledAt`, `stalledType` and `text`, the rebuilding or stalled sentence, null when fresh).
 - **Read your writes.** A query with `X-Sindri-After: <sequence>` (the `sequence` of a command's answer) waits up to 2 s for the cursor to reach it: a malformed value is 400 `SND-CLI-003`; still behind after 2 s, or stalled behind it (at once), is 503 `SND-API-011`. A command whose catalog row has `ReadsViews` waits for the ledger head the same way (stalled `SND-VIEW-001`, rebuilding `SND-API-010`); its handler doesn't run on any of them.
 - **Stalls.** An event a projection can't fold stops the projector at that sequence (`SND-VIEW-001`, logged with the sequence and type); it retries every 30 s, and `sindri views rebuild` replays from the start. A rebuild request while rebuilding restarts the replay, and a request survives a pass that failed before the reset. When the projector can't run at all (views.db can't be opened, written or reset, or the ledger can't be read) no event is to blame: it shows as `stalled` with a null `stalledAt` and a `stalledType` of `<code>: <detail>` (the failing call's own code: `SND-VIEW-001` for views.db, `SND-LEDGER-00x` for the ledger) until a pass works; the fix is `sindri views rebuild`, or `sindri doctor` when the ledger is the cause. The status text, the list answers' `empty` sentence and the SND-VIEW-001 and SND-API-011 messages all say "can't be updated (...)" then, not an event number.
-- **Health.** `GET /status` carries `health {word, problems, sentence}`. The word follows stalled, rebuilding, degraded, healthy; the problems come in fixed order: not running (`SND-API-001`), views, each failed service the approved profile names (its last run; a service an approval dropped doesn't count), the profile (`SND-PROFILE-005` not approved, `SND-PROFILE-003` changed since approval). A services view that can't be read is a views problem (`SND-VIEW-001`, "the views can't be read"), never zero services, unless the views are already stalled (that problem covers it). `sindri status` exits 1 unless the word is `healthy`.
+- **Health.** `GET /status` carries `health {word, problems, sentence}`. The word follows stalled, rebuilding, degraded, healthy; the problems come in fixed order: not running (`SND-API-001`), views, each failed service the approved profile names (its last run; a service an approval dropped doesn't count), the profile (`SND-PROFILE-005` not approved, `SND-PROFILE-003` changed since approval), then the engine's stuck instances (`SND-ENGINE-002`), the instances parked as unavailable (`SND-ENGINE-003`) and the agent runs whose session ended its turn at least `LaunchRules.IdleAfter` (120 s, the idle sweep's own rule) ago and is not ended yet (`SND-ENGINE-004`; a Step a person took over doesn't count; issue #1000). The same runs are rows in Needs you (label `agent · no progress`, id `park:<instance>` so the run's own park replaces it when the Step fails; action: cancel). A services view that can't be read is a views problem (`SND-VIEW-001`, "the views can't be read"), never zero services, unless the views are already stalled (that problem covers it). `sindri status` exits 1 unless the word is `healthy`.
 
 The API goldens of this phase sit beside the P1 ones in `tests/Aw.Sindri.Tests/Golden/Api/`: `services/` (`unapproved`, `approved`, `ran-ok`, `ran-failed`, `rebuilding`, `stalled`, `after-not-reached`, `after-malformed`), `profile/` (`unapproved`, `approved`, `changed`, `stalled`), `views-rebuild/` (`accepted`, `accepted-while-stalled`, `refused-session`, `refused-origin`) and `status/` (`views-stalled`, `views-rebuilding`, `service-failed`, plus `running-*` with `views` and `health`). The harness drives `Projector.CatchUp` on a fake clock; a stall comes from a `service.ran` with an unparseable payload.
 
@@ -693,6 +701,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-ENGINE-001` | The Temporal server, or the SDK call to it, didn't answer: the engine routes answer 503 (fix: `sindri doctor`; `sindri serve` starts the dev server). `GET /status` never fails with it: it counts no stuck instance then (API P13, E-30) |
 | `SND-ENGINE-002` | Not an error a call returns: the health problem `GET /status` lists when one or more workflow instances are stuck waiting on a signal or update with no timer, which makes a healthy `health.word` `degraded` (API P13, E-30) |
 | `SND-ENGINE-003` | Not an error a call returns: the health problem `GET /status` lists when one or more workflow instances are parked as `unavailable` (a Step's dependency stayed down through its retries); it makes a healthy `health.word` `degraded`, and each is run again with `sindri workflow answer <address> --resume` once the dependency is back |
+| `SND-ENGINE-004` | Not an error a call returns: the health problem `GET /status` lists when one or more agent runs have a live session whose turn ended at least 120 s ago (`LaunchRules.IdleAfter`) with no report and the idle sweep hasn't ended it, which makes a healthy `health.word` `degraded`; a `park:` row in Needs you carries each (issue #1000) |
 | `SND-ENGINE-404` | Temporal has no execution for that address or instance id: a retention edge, or one that never ran (404; `GET /engine/instances/{id}/history`) |
 | `SND-AUTH-001` | A `human` caller without the valid per-start token: missing or stale (403; restart the app or rerun the command), or a `prover` label outside a temp or proof home |
 | `SND-AUTH-002` | The caller may not run the command's action class (403; only the `command.handled` audit row is written) |

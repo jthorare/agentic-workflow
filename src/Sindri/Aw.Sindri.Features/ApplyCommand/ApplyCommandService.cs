@@ -61,16 +61,21 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
             return claim.Error;
         }
 
-        return await Deliver(request, address.Value, new SentCommand(nonce, subject, claim.Value), trigger, cancellationToken).ConfigureAwait(false);
+        return await Deliver(request, address.Value, new SentCommand(nonce, subject, claim.Value), (trigger, caller), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Routes the command (spec §5.8), checks it when this call created the claim, and sends it.</summary>
-    private async ValueTask<Result<ApplyCommandResponse>> Deliver(ApplyCommandRequest request, InstanceAddress address, SentCommand command, Trigger trigger, CancellationToken cancellationToken)
+    private async ValueTask<Result<ApplyCommandResponse>> Deliver(ApplyCommandRequest request, InstanceAddress address, SentCommand command, (Trigger Trigger, CallerContext Caller) call, CancellationToken cancellationToken)
     {
-        var route = await Route(request, address, new Dispatch(command.Nonce, trigger), cancellationToken).ConfigureAwait(false);
+        var route = await Route(request, address, new Dispatch(command.Nonce, call.Trigger), cancellationToken).ConfigureAwait(false);
         if (route.IsError)
         {
             return await Refused(route.Error, command.Nonce, command.Claim, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (await LaunchedRefusal(request, call.Caller, route.Value, cancellationToken).ConfigureAwait(false) is { } launched)
+        {
+            return await Refused(launched, command.Nonce, command.Claim, cancellationToken).ConfigureAwait(false);
         }
 
         // only a claim this call created is checked (a pending or applied one was checked by the call that made it: a protected
@@ -81,6 +86,24 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
         }
 
         return await Send(route.Value.Target, command, route.Value.Dispatch, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A launched session's answer or command on a human step (q100, <see cref="LaunchedCallers"/>); null for any other call.</summary>
+    private async ValueTask<Error?> LaunchedRefusal(ApplyCommandRequest request, CallerContext caller, Routing route, CancellationToken cancellationToken)
+    {
+        if (caller.Launch is null || request.Kind is not (ApplyCommandKind.Answer or ApplyCommandKind.Command))
+        {
+            return null;
+        }
+
+        var view = await ViewOf(route, cancellationToken).ConfigureAwait(false);
+        if (view.IsError)
+        {
+            return view.Error;
+        }
+
+        var action = request.Kind == ApplyCommandKind.Answer ? "workflow answer" : "workflow command " + request.Verb?.Value;
+        return LaunchedCallers.RefuseOnHumanStep(caller, view.Value, action);
     }
 
     /// <summary>A refusal before the Update gives back a claim this call created, so a refused command consumes nothing.</summary>

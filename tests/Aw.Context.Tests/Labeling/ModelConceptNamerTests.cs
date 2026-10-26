@@ -35,7 +35,7 @@ public sealed class ModelConceptNamerTests
     [Fact]
     public async Task A_model_that_cannot_answer_or_a_cap_that_is_too_small_names_nothing_without_failing()
     {
-        var down = new FakeModelPort { Fail = _ => Aw.Context.Core.ContextErrors.SourceUnavailable.With("no model") };
+        var down = new FakeModelPort { Fail = _ => Context.Core.ContextErrors.SourceUnavailable.With("no model") };
         var quiet = new FakeModelPort();
 
         var failed = await Namer(down).Name([Group("feature:a", ["A"])], [], 10_000, Ct);

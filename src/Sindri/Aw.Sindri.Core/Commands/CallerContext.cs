@@ -1,5 +1,6 @@
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Commands;
 
@@ -15,19 +16,18 @@ namespace Aw.Sindri.Core.Commands;
 /// own).</param>
 /// <param name="CorrelationId">The correlation every event of this call carries.</param>
 /// <param name="Repo">The repo a session caller is scoped to (X-Sindri-Repo), or null.</param>
-public sealed record CallerContext(CallerClass Class, bool Terminal, string Actor, CommandId CommandId, CorrelationId CorrelationId, RepoName? Repo)
+/// <param name="Launch">The launch of the session Sindri itself started (X-Sindri-Launch), or null for an owner-started session, a human or a service.</param>
+public sealed record CallerContext(CallerClass Class, bool Terminal, string Actor, CommandId CommandId, CorrelationId CorrelationId, RepoName? Repo, LaunchId? Launch = null)
 {
-    /// <summary>A caller over HTTP: the actor from the class and the label; the terminal flag is honoured only for a human.</summary>
-    /// <param name="caller">Human or session (service never arrives over HTTP; it is read as a session).</param>
-    /// <param name="terminal">The X-Sindri-Terminal claim.</param>
-    /// <param name="client">The X-Sindri-Client label.</param>
-    /// <param name="repo">The X-Sindri-Repo scope, or null.</param>
+    /// <summary>A caller over HTTP: the actor from the class and the label; the terminal flag is honoured only for a human, and a human never carries a launch.</summary>
+    /// <param name="caller">What the caller headers say.</param>
     /// <param name="ids">The id port, for this attempt's command and correlation ids.</param>
     /// <returns>The context.</returns>
-    public static CallerContext Http(CallerClass caller, bool terminal, ClientLabel client, RepoName? repo, IIdGenerator ids)
+    public static CallerContext Http(HttpCaller caller, IIdGenerator ids)
     {
-        var human = caller == CallerClass.Human;
-        return new CallerContext(human ? CallerClass.Human : CallerClass.Session, human && terminal, ActorOf(caller, client), ids.New<CommandId>(), ids.New<CorrelationId>(), repo);
+        ArgumentNullException.ThrowIfNull(caller);
+        var human = caller.Class == CallerClass.Human;
+        return new CallerContext(human ? CallerClass.Human : CallerClass.Session, human && caller.Terminal, ActorOf(caller.Class, caller.Client), ids.New<CommandId>(), ids.New<CorrelationId>(), caller.Repo, human ? null : caller.Launch);
     }
 
     /// <summary>The actor an HTTP caller of <paramref name="caller"/> labelled <paramref name="client"/> is: 'human:prover', 'session:mcp' and the like.</summary>
