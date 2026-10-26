@@ -53,6 +53,7 @@ namespace Aw.Judge.Host;
 [JsonSerializable(typeof(UiElementRepairInput))]
 [JsonSerializable(typeof(VisualCritiqueInput))]
 [JsonSerializable(typeof(ChooseInput))]
+[JsonSerializable(typeof(ModelPickInput))]
 [JsonSerializable(typeof(DecidedEnvelope))]
 [JsonSerializable(typeof(EscalatedEnvelope))]
 [JsonSerializable(typeof(GetHealthRequest))]

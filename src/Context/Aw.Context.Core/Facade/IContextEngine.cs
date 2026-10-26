@@ -100,4 +100,19 @@ public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IC
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The reads (none for a run that made none), or SND-CONTEXT-153 while the engine keeps no log.</returns>
     public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken);
+
+    /// <summary>Keeps the graph a scoping instance's agent Steps work from, so their context_* reads can be checked against it (issue 1005). A second call for the same instance replaces the first.</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="view">The graph the instance's agent Steps were given.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when stored, or an error.</returns>
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken);
+
+    /// <summary>Checks one context_node, context_neighbors or context_query call of a scoping Step run against its graph and logs it (issue 1005).</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="runToken">The Step run's token.</param>
+    /// <param name="read">The call: node, tool, whether it steps outside the graph and why, and when.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The logged read; SND-CONTEXT-154 (not logged) for a node outside the graph when the call does not step outside it with a reason; SND-CONTEXT-153 when the instance has no remembered graph (the caller reads unscoped).</returns>
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken);
 }

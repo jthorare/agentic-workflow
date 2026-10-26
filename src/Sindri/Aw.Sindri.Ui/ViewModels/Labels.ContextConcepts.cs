@@ -68,4 +68,27 @@ internal static partial class Labels
     /// <param name="size">The size line.</param>
     /// <returns>"Self scheduling, 4 features. Press Enter to open."</returns>
     internal static string ContextConceptTileName(string name, string size) => $"{name}, {size}. Press Enter to open.";
+
+    /// <summary>The segment that draws the links from a drilled band to the other bands.</summary>
+    internal const string ContextDrillCross = "Links to other bands";
+
+    /// <summary>The segment that draws a drilled band's own links.</summary>
+    /// <param name="band">The band's title.</param>
+    /// <returns>"Links inside Why".</returns>
+    internal static string ContextDrillOwn(string band) => $"Links inside {band}";
+
+    /// <summary>The button over a concept's map that drills into a band.</summary>
+    /// <param name="band">The band's title.</param>
+    /// <returns>"Open the Why band".</returns>
+    internal static string ContextDrillOpen(string band) => $"Open the {band} band";
+
+    /// <summary>The line when a drilled band has no links to the other bands.</summary>
+    /// <param name="band">The band's title.</param>
+    /// <returns>"No links from Why to the other bands."</returns>
+    internal static string ContextDrillNoCross(string band) => $"No links from {band} to the other bands.";
+
+    /// <summary>The line when a drilled band has no links of its own.</summary>
+    /// <param name="band">The band's title.</param>
+    /// <returns>"No links inside Why."</returns>
+    internal static string ContextDrillNoOwn(string band) => $"No links inside {band}.";
 }

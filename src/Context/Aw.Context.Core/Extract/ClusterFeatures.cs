@@ -92,12 +92,16 @@ public static class ClusterFeatures
         [.. cluster.Files.Where(f => NodeKey.TryFrom("code:" + f, out _)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
     // The key comes from the files, never from the cluster's id or label, so a rebuild, a renumbering or a relabel keeps it (and the decisions made on it).
+    // Files that share no directory are keyed by the first sorted file's directory (apps/a/index.ts -> apps.a); only a first file at the repo root falls back to its stem.
     private static NodeKey Unique(List<string> files, HashSet<string> taken)
     {
-        var dir = CommonDirectory(files);
+        var dir = KeyDirectory(files);
         var stem = Stem(files[0]);
-        string[] candidates = [dir.Length > 0 ? dir.Replace('/', '.') : stem, $"{(dir.Length > 0 ? dir.Replace('/', '.') : "root")}.{stem}"];
-        foreach (var name in candidates.Concat(Enumerable.Range(2, 1000).Select(n => $"{candidates[1]}-{n.ToString(System.Globalization.CultureInfo.InvariantCulture)}")))
+        var candidates = dir.Length > 0
+            ? new[] { dir.Replace('/', '.'), $"{dir.Replace('/', '.')}.{stem}" }
+            : [stem];
+        var numbered = dir.Length > 0 ? candidates[1] : stem;
+        foreach (var name in candidates.Concat(Enumerable.Range(2, 1000).Select(n => $"{numbered}-{n.ToString(System.Globalization.CultureInfo.InvariantCulture)}")))
         {
             if (NodeKey.TryFrom("feature:" + name, out var key) && taken.Add(EntryKey.For(key).Value))
             {
@@ -108,6 +112,15 @@ public static class ClusterFeatures
         throw new InvalidOperationException("no free feature key for a cluster");
     }
 
+    // The shared directory, else the first file's own directory (empty only for a file at the repo root).
+    private static string KeyDirectory(List<string> files)
+    {
+        var common = CommonDirectory(files);
+        return common.Length > 0 ? common : DirectoryOf(files[0]);
+    }
+
+    private static string DirectoryOf(string file) => file.Contains('/', StringComparison.Ordinal) ? file[..file.LastIndexOf('/')] : "";
+
     private static string CommonDirectory(List<string> files)
     {
         var dirs = files.Select(f => f.Contains('/', StringComparison.Ordinal) ? f[..f.LastIndexOf('/')].Split('/') : []).ToList();
@@ -117,7 +130,7 @@ public static class ClusterFeatures
 
     private static string Leaf(List<string> files)
     {
-        var dir = CommonDirectory(files);
+        var dir = KeyDirectory(files);
         return dir.Length > 0 ? dir[(dir.LastIndexOf('/') + 1)..] : Stem(files[0]);
     }
 

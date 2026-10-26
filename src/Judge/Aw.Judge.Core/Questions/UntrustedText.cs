@@ -65,11 +65,10 @@ public static partial class UntrustedText
             notes.Add(string.Create(CultureInfo.InvariantCulture, $"[diff cut: {files[cut].Path} after {texts[cut].Length} of {files[cut].Text.Length} chars]"));
         }
 
-        var dropped = files.Where((_, i) => i != cutIndex && !kept.Contains(i))
-            .Select(static f => string.Create(CultureInfo.InvariantCulture, $"{f.Path} ({f.Text.Length} chars)")).ToList();
+        var dropped = files.Where((_, i) => i != cutIndex && !kept.Contains(i)).Select(static f => (f.Path, Chars: f.Text.Length)).ToList();
         if (dropped.Count > 0)
         {
-            notes.Add(string.Create(CultureInfo.InvariantCulture, $"[omitted {dropped.Count} of {files.Count} files, over the {cap}-char cap: {string.Join(", ", dropped)}]"));
+            notes.Add(OmittedNote(dropped, files.Count, cap));
         }
 
         var body = string.Concat(texts);
@@ -85,6 +84,10 @@ public static partial class UntrustedText
     /// <param name="text">The text.</param>
     /// <returns>One line.</returns>
     public static string OneLine(string text) => LineBreak.Replace(Capped(text, FieldCap), " ");
+
+    // The note naming whole files left out for size, shared by the diff and the files cap.
+    internal static string OmittedNote(IReadOnlyList<(string Path, int Chars)> dropped, int total, int cap) =>
+        string.Create(CultureInfo.InvariantCulture, $"[omitted {dropped.Count} of {total} files, over the {cap}-char cap: {string.Join(", ", dropped.Select(static d => string.Create(CultureInfo.InvariantCulture, $"{d.Path} ({d.Chars} chars)")))}]");
 
     // The files, taken in priority order, that still fit whole under the cap.
     private static HashSet<int> Fitting(List<(string Path, string Text)> files, List<int> order, int cap)

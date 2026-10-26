@@ -7259,6 +7259,16 @@ override Aw.Context.Core.ScopeGraph.ScopeGraphCitation.GetHashCode() -> int
 override Aw.Context.Core.ScopeGraph.ScopeGraphCitation.ToString() -> string!
 static Aw.Context.Core.ScopeGraph.ScopeGraphCitation.operator !=(Aw.Context.Core.ScopeGraph.ScopeGraphCitation? left, Aw.Context.Core.ScopeGraph.ScopeGraphCitation? right) -> bool
 static Aw.Context.Core.ScopeGraph.ScopeGraphCitation.operator ==(Aw.Context.Core.ScopeGraph.ScopeGraphCitation? left, Aw.Context.Core.ScopeGraph.ScopeGraphCitation? right) -> bool
+static readonly Aw.Context.Core.ContextErrors.NodeNotInScopeGraph -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Facade.IContextEngine.RememberScopeGraph(string! instanceAddress, Aw.Context.Core.ScopeGraph.ScopeGraphView! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Facade.IContextEngine.ReadInScopeGraph(string! instanceAddress, string! runToken, Aw.Context.Core.ScopeGraph.GraphRead! read, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ScopeGraph.GraphRead!>!>
+Aw.Context.Core.ScopeGraph.IScopeRunStore
+Aw.Context.Core.ScopeGraph.IScopeRunStore.Remember(string! instance, Aw.Context.Core.ScopeGraph.ScopeGraphView! graph, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.ScopeGraph.IScopeRunStore.Holds(string! instance, string! node, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool?>!>
+Aw.Context.Core.ScopeGraph.IScopeRunStore.Log(string! instance, string! run, Aw.Context.Core.ScopeGraph.GraphRead! read, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.ScopeGraph.IScopeRunStore.Reads(string! instance, string! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ScopeGraph.GraphRead!>!>!>
+Aw.Context.Core.ScopeGraph.ScopeGraphBuilder
+static Aw.Context.Core.ScopeGraph.ScopeGraphBuilder.Build(Aw.Context.Core.ScopeGraph.ScopeGraphQuery! query, Aw.Context.Core.Lenses.LensesSetView! lenses, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Engine.CascadeHops hops, Aw.Context.Core.Map.MapText! text) -> Aw.Context.Core.ScopeGraph.ScopeGraphView!
 Aw.Context.Core.ScopeGraph.ScopeGraphNodeId
 Aw.Context.Core.ScopeGraph.ScopeGraphNodeId.Equals(Aw.Context.Core.ScopeGraph.ScopeGraphNodeId other) -> bool
 Aw.Context.Core.ScopeGraph.ScopeGraphNodeId.Equals(Aw.Context.Core.ScopeGraph.ScopeGraphNodeId other, System.Collections.Generic.IEqualityComparer<Aw.Context.Core.ScopeGraph.ScopeGraphNodeId>! comparer) -> bool
@@ -7980,8 +7990,10 @@ Aw.Context.Core.Engine.ConceptScanSettings.Tiers.get -> Aw.Context.Core.Engine.C
 Aw.Context.Core.Engine.ConceptScanSettings.Tiers.init -> void
 Aw.Context.Core.Engine.ConceptScanSettings.Models.get -> Aw.Context.Core.Engine.ConceptScanModels!
 Aw.Context.Core.Engine.ConceptScanSettings.Models.init -> void
-Aw.Context.Core.Models.ModelRequest.Deconstruct(out Aw.Context.Core.Models.ModelPurpose Purpose, out string! Prompt, out int MaxTokens, out System.TimeSpan Budget, out Aw.Context.Core.Models.ModelTier? Tier, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models) -> void
-Aw.Context.Core.Models.ModelRequest.ModelRequest(Aw.Context.Core.Models.ModelPurpose Purpose, string! Prompt, int MaxTokens, System.TimeSpan Budget, Aw.Context.Core.Models.ModelTier? Tier = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models = null) -> void
+Aw.Context.Core.Models.ModelRequest.Deconstruct(out Aw.Context.Core.Models.ModelPurpose Purpose, out string! Prompt, out int MaxTokens, out System.TimeSpan Budget, out Aw.Context.Core.Models.ModelTier? Tier, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models, out string? Model) -> void
+Aw.Context.Core.Models.ModelRequest.Model.get -> string?
+Aw.Context.Core.Models.ModelRequest.Model.init -> void
+Aw.Context.Core.Models.ModelRequest.ModelRequest(Aw.Context.Core.Models.ModelPurpose Purpose, string! Prompt, int MaxTokens, System.TimeSpan Budget, Aw.Context.Core.Models.ModelTier? Tier = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models = null, string? Model = null) -> void
 Aw.Context.Core.Models.ModelRequest.Models.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Models.ModelRequest.Models.init -> void
 Aw.Context.Core.Engine.ContextSettings.ConceptScan.get -> Aw.Context.Core.Engine.ConceptScanSettings!

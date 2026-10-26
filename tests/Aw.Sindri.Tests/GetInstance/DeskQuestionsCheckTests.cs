@@ -124,7 +124,7 @@ public sealed class DeskQuestionsCheckTests
     {
         using var routes = new Routes(new OneInstance(Desk("step.interview.answer")), Questions);
         var (stdout, stderr) = (new StringWriter(), new StringWriter());
-        var exit = await Aw.Sindri.Host.Commands.StatusCommand.Run(args, routes.Desk, new Output(stdout, stderr, SliceHarness.Json), cancellationToken);
+        var exit = await Host.Commands.StatusCommand.Run(args, routes.Desk, new Output(stdout, stderr, SliceHarness.Json), cancellationToken);
         return (exit, stdout.ToString());
     }
 

@@ -29,6 +29,8 @@
     <None Include="../fixtures/judge-transcripts/*.jsonl" Link="Transcripts/Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- The resolution-check input bugfix-state writes (tests/fixtures/judge-input), shared with Aw.BugFix.Tests so both digest it alike. -->
     <None Include="../fixtures/judge-input/*.json" Link="JudgeInput/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The sample inputs a contributor runs by hand (tests/fixtures/judge: judge model-pick < model-pick-input.json). -->
+    <None Include="../fixtures/judge/*.json" Link="JudgeFixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

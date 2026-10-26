@@ -1804,3 +1804,192 @@ Aw.Judge.Core.Labels.LabelQuestions
 const Aw.Judge.Core.Labels.LabelQuestions.Skip = "skip" -> string!
 static Aw.Judge.Core.Labels.LabelQuestions.Fits(string! question, string! inputJson, System.Text.Json.JsonSerializerOptions! json) -> bool
 static Aw.Judge.Core.Labels.LabelQuestions.Outputs(string! question) -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Evaluation.QuestionEvaluator.EvaluateModelPick(string! rawInput, Aw.Judge.Core.Evaluation.EvaluationContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Evaluation.EvaluationOutcome!>
+Aw.Judge.Core.Providers.QuestionRef.InputCapChars.get -> int?
+Aw.Judge.Core.Providers.QuestionRef.InputCapChars.init -> void
+Aw.Judge.Core.Questions.CappedFileSet
+Aw.Judge.Core.Questions.CappedFileSet.CappedFileSet(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Kept, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>! Omitted, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>! Cut) -> void
+Aw.Judge.Core.Questions.CappedFileSet.<Clone>$() -> Aw.Judge.Core.Questions.CappedFileSet!
+Aw.Judge.Core.Questions.CappedFileSet.Cut.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>!
+Aw.Judge.Core.Questions.CappedFileSet.Cut.init -> void
+Aw.Judge.Core.Questions.CappedFileSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Kept, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>! Omitted, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>! Cut) -> void
+Aw.Judge.Core.Questions.CappedFileSet.Equals(Aw.Judge.Core.Questions.CappedFileSet? other) -> bool
+Aw.Judge.Core.Questions.CappedFileSet.Kept.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>!
+Aw.Judge.Core.Questions.CappedFileSet.Kept.init -> void
+Aw.Judge.Core.Questions.CappedFileSet.Omitted.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>!
+Aw.Judge.Core.Questions.CappedFileSet.Omitted.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate
+Aw.Judge.Core.Questions.ModelPickCandidate.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickCandidate!
+Aw.Judge.Core.Questions.ModelPickCandidate.Deconstruct(out string! Key, out string! Model, out string! Tier, out double? Price) -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Equals(Aw.Judge.Core.Questions.ModelPickCandidate? other) -> bool
+Aw.Judge.Core.Questions.ModelPickCandidate.Key.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Key.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Model.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Model.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.ModelPickCandidate(string! Key, string! Model, string! Tier, double? Price = null) -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Price.get -> double?
+Aw.Judge.Core.Questions.ModelPickCandidate.Price.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Tier.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Tier.init -> void
+Aw.Judge.Core.Questions.ModelPickCut
+Aw.Judge.Core.Questions.ModelPickCut.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickCut!
+Aw.Judge.Core.Questions.ModelPickCut.Deconstruct(out string! Path, out int Kept, out int Of) -> void
+Aw.Judge.Core.Questions.ModelPickCut.Equals(Aw.Judge.Core.Questions.ModelPickCut? other) -> bool
+Aw.Judge.Core.Questions.ModelPickCut.Kept.get -> int
+Aw.Judge.Core.Questions.ModelPickCut.Kept.init -> void
+Aw.Judge.Core.Questions.ModelPickCut.ModelPickCut(string! Path, int Kept, int Of) -> void
+Aw.Judge.Core.Questions.ModelPickCut.Of.get -> int
+Aw.Judge.Core.Questions.ModelPickCut.Of.init -> void
+Aw.Judge.Core.Questions.ModelPickCut.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickCut.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickFile
+Aw.Judge.Core.Questions.ModelPickFile.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickFile!
+Aw.Judge.Core.Questions.ModelPickFile.Deconstruct(out string! Path, out string! Text) -> void
+Aw.Judge.Core.Questions.ModelPickFile.Equals(Aw.Judge.Core.Questions.ModelPickFile? other) -> bool
+Aw.Judge.Core.Questions.ModelPickFile.ModelPickFile(string! Path, string! Text) -> void
+Aw.Judge.Core.Questions.ModelPickFile.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickFile.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickFile.Text.get -> string!
+Aw.Judge.Core.Questions.ModelPickFile.Text.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory
+Aw.Judge.Core.Questions.ModelPickHistory.CheckFailed.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.CheckFailed.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickHistory!
+Aw.Judge.Core.Questions.ModelPickHistory.Deconstruct(out string! Key, out int Runs, out int Refused, out int CheckFailed, out int Redraft) -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Equals(Aw.Judge.Core.Questions.ModelPickHistory? other) -> bool
+Aw.Judge.Core.Questions.ModelPickHistory.Key.get -> string!
+Aw.Judge.Core.Questions.ModelPickHistory.Key.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.ModelPickHistory(string! Key, int Runs, int Refused, int CheckFailed, int Redraft) -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Redraft.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Redraft.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Refused.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Refused.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Runs.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Runs.init -> void
+Aw.Judge.Core.Questions.ModelPickInput
+Aw.Judge.Core.Questions.ModelPickInput.Brief.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Brief.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Candidates.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>!
+Aw.Judge.Core.Questions.ModelPickInput.Candidates.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickInput!
+Aw.Judge.Core.Questions.ModelPickInput.Cut.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>?
+Aw.Judge.Core.Questions.ModelPickInput.Cut.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Deconstruct(out string! Step, out string! Kind, out string! Brief, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Files, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>! Candidates, out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>? History, out Aw.Judge.Core.Questions.ModelPickPrevious? Previous, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>? Omitted, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>? Cut, out Aw.Judge.Core.Questions.ModelPickWithheld? Withheld) -> void
+Aw.Judge.Core.Questions.ModelPickInput.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Questions.ModelPickInput.DenyPaths.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Dropped.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>?
+Aw.Judge.Core.Questions.ModelPickInput.Dropped.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Equals(Aw.Judge.Core.Questions.ModelPickInput? other) -> bool
+Aw.Judge.Core.Questions.ModelPickInput.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>!
+Aw.Judge.Core.Questions.ModelPickInput.Files.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.History.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>?
+Aw.Judge.Core.Questions.ModelPickInput.History.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Kind.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Kind.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.ModelPickInput(string! Step, string! Kind, string! Brief, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Files, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>! Candidates, System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>? History = null, Aw.Judge.Core.Questions.ModelPickPrevious? Previous = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>? Omitted = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>? Cut = null, Aw.Judge.Core.Questions.ModelPickWithheld? Withheld = null) -> void
+Aw.Judge.Core.Questions.ModelPickInput.Omitted.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>?
+Aw.Judge.Core.Questions.ModelPickInput.Omitted.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Previous.get -> Aw.Judge.Core.Questions.ModelPickPrevious?
+Aw.Judge.Core.Questions.ModelPickInput.Previous.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Step.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Step.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Withheld.get -> Aw.Judge.Core.Questions.ModelPickWithheld?
+Aw.Judge.Core.Questions.ModelPickInput.Withheld.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted
+Aw.Judge.Core.Questions.ModelPickOmitted.Chars.get -> int
+Aw.Judge.Core.Questions.ModelPickOmitted.Chars.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickOmitted!
+Aw.Judge.Core.Questions.ModelPickOmitted.Deconstruct(out string! Path, out int Chars, out string! Why) -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Equals(Aw.Judge.Core.Questions.ModelPickOmitted? other) -> bool
+Aw.Judge.Core.Questions.ModelPickOmitted.ModelPickOmitted(string! Path, int Chars, string! Why) -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickOmitted.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Why.get -> string!
+Aw.Judge.Core.Questions.ModelPickOmitted.Why.init -> void
+Aw.Judge.Core.Questions.ModelPickPack
+Aw.Judge.Core.Questions.ModelPickPrevious
+Aw.Judge.Core.Questions.ModelPickPrevious.Check.get -> string?
+Aw.Judge.Core.Questions.ModelPickPrevious.Check.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickPrevious!
+Aw.Judge.Core.Questions.ModelPickPrevious.Deconstruct(out string! Model, out string! How, out string? Check) -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.Equals(Aw.Judge.Core.Questions.ModelPickPrevious? other) -> bool
+Aw.Judge.Core.Questions.ModelPickPrevious.How.get -> string!
+Aw.Judge.Core.Questions.ModelPickPrevious.How.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.Model.get -> string!
+Aw.Judge.Core.Questions.ModelPickPrevious.Model.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.ModelPickPrevious(string! Model, string! How, string? Check = null) -> void
+Aw.Judge.Core.Questions.ModelPickQuestion
+Aw.Judge.Core.Questions.ModelPickWithheld
+Aw.Judge.Core.Questions.ModelPickWithheld.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickWithheld!
+Aw.Judge.Core.Questions.ModelPickWithheld.Deconstruct(out int Secret, out int Denied) -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Denied.get -> int
+Aw.Judge.Core.Questions.ModelPickWithheld.Denied.init -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Equals(Aw.Judge.Core.Questions.ModelPickWithheld? other) -> bool
+Aw.Judge.Core.Questions.ModelPickWithheld.ModelPickWithheld(int Secret, int Denied) -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Secret.get -> int
+Aw.Judge.Core.Questions.ModelPickWithheld.Secret.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.get -> int?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.get -> System.Func<TInput!, Aw.Judge.Core.Ports.IInputRedactor!, TInput!>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.get -> System.Func<TInput!, System.Text.Json.Nodes.JsonNode?>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.init -> void
+const Aw.Judge.Core.Questions.ModelPickQuestion.DefaultThreshold = 0.6 -> double
+const Aw.Judge.Core.Questions.ModelPickQuestion.MaxCandidates = 32 -> int
+const Aw.Judge.Core.Questions.ModelPickQuestion.Name = "model-pick" -> string!
+const Aw.Judge.Core.Questions.ModelPickQuestion.PackCap = 100000 -> int
+override Aw.Judge.Core.Questions.CappedFileSet.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.CappedFileSet.GetHashCode() -> int
+override Aw.Judge.Core.Questions.CappedFileSet.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickCandidate.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickCandidate.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickCandidate.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickCut.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickCut.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickCut.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickFile.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickFile.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickFile.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickHistory.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickHistory.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickHistory.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickInput.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickInput.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickInput.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickOmitted.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickOmitted.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickOmitted.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickPrevious.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickPrevious.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickPrevious.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickWithheld.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickWithheld.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickWithheld.ToString() -> string!
+static Aw.Judge.Core.Questions.CappedFileSet.operator !=(Aw.Judge.Core.Questions.CappedFileSet? left, Aw.Judge.Core.Questions.CappedFileSet? right) -> bool
+static Aw.Judge.Core.Questions.CappedFileSet.operator ==(Aw.Judge.Core.Questions.CappedFileSet? left, Aw.Judge.Core.Questions.CappedFileSet? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCandidate.operator !=(Aw.Judge.Core.Questions.ModelPickCandidate? left, Aw.Judge.Core.Questions.ModelPickCandidate? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCandidate.operator ==(Aw.Judge.Core.Questions.ModelPickCandidate? left, Aw.Judge.Core.Questions.ModelPickCandidate? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCut.operator !=(Aw.Judge.Core.Questions.ModelPickCut? left, Aw.Judge.Core.Questions.ModelPickCut? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCut.operator ==(Aw.Judge.Core.Questions.ModelPickCut? left, Aw.Judge.Core.Questions.ModelPickCut? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickFile.operator !=(Aw.Judge.Core.Questions.ModelPickFile? left, Aw.Judge.Core.Questions.ModelPickFile? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickFile.operator ==(Aw.Judge.Core.Questions.ModelPickFile? left, Aw.Judge.Core.Questions.ModelPickFile? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickHistory.operator !=(Aw.Judge.Core.Questions.ModelPickHistory? left, Aw.Judge.Core.Questions.ModelPickHistory? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickHistory.operator ==(Aw.Judge.Core.Questions.ModelPickHistory? left, Aw.Judge.Core.Questions.ModelPickHistory? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickInput.operator !=(Aw.Judge.Core.Questions.ModelPickInput? left, Aw.Judge.Core.Questions.ModelPickInput? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickInput.operator ==(Aw.Judge.Core.Questions.ModelPickInput? left, Aw.Judge.Core.Questions.ModelPickInput? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickOmitted.operator !=(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickOmitted.operator ==(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickPack.Apply(Aw.Judge.Core.Questions.ModelPickInput! input, Aw.Judge.Core.Ports.IInputRedactor! redactor) -> Aw.Judge.Core.Questions.ModelPickInput!
+static Aw.Judge.Core.Questions.ModelPickPrevious.operator !=(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickPrevious.operator ==(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickQuestion.Budget.get -> System.TimeSpan
+static Aw.Judge.Core.Questions.ModelPickQuestion.For(Aw.Judge.Core.Questions.ModelPickInput! input) -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.ModelPickInput!>!
+static Aw.Judge.Core.Questions.ModelPickQuestion.Unreadable.get -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.ModelPickInput!>!
+static Aw.Judge.Core.Questions.ModelPickWithheld.operator !=(Aw.Judge.Core.Questions.ModelPickWithheld? left, Aw.Judge.Core.Questions.ModelPickWithheld? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickWithheld.operator ==(Aw.Judge.Core.Questions.ModelPickWithheld? left, Aw.Judge.Core.Questions.ModelPickWithheld? right) -> bool
+static Aw.Judge.Core.Questions.UntrustedText.CappedFiles(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! files, int cap) -> Aw.Judge.Core.Questions.CappedFileSet!
+const Aw.Judge.Core.Questions.ModelPickPack.Denied = "denied" -> string!
+const Aw.Judge.Core.Questions.ModelPickPack.Secret = "secret" -> string!
+const Aw.Judge.Core.Questions.ModelPickQuestion.JevInputCap = 130000 -> int
+static Aw.Judge.Core.Questions.ModelPickQuestion.Kinds.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.ModelPickInput -> Aw.Kernel.ErrorDefinition!

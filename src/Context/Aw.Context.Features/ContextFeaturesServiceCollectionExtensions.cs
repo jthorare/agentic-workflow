@@ -16,6 +16,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Symbols;
@@ -41,6 +42,7 @@ using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetProposals;
+using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
@@ -168,6 +170,8 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetLensesRequest, LensesView>, GetLensesService>()
         .AddScoped<IService<GetLensesSetRequest, LensesSetView>, GetLensesSetService>()
         .AddScoped<IService<GetSubgraphRequest, SubgraphView>, GetSubgraphService>()
+        .AddScoped<IService<GetScopeGraphRequest, ScopeGraphView>, GetScopeGraphService>()
+        .AddScoped<ContextScopeGraph>()
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()

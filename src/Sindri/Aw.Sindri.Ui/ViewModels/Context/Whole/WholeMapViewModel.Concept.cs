@@ -44,7 +44,13 @@ internal sealed partial class WholeMapViewModel
     }
 
     /// <summary>The back button was pressed.</summary>
-    internal void GoUp() => UpRequested?.Invoke(this, EventArgs.Empty);
+    internal void GoUp()
+    {
+        if (!ExitDrill())   // a drilled band goes first: back to the concept's whole map
+        {
+            UpRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     /// <summary>A step of the breadcrumb was pressed.</summary>
     /// <param name="crumb">The step.</param>
@@ -57,7 +63,14 @@ internal sealed partial class WholeMapViewModel
             return;
         }
 
-        if (string.Equals(crumb.Path, FeaturePath, StringComparison.Ordinal))
+        if (IsDrilled && string.Equals(crumb.Path, ConceptPath, StringComparison.Ordinal))
+        {
+            _ = Panel.Close();
+            _ = ExitDrill();
+            return;
+        }
+
+        if (string.Equals(crumb.Path, FeaturePath, StringComparison.Ordinal) || string.Equals(crumb.Path, BandPath, StringComparison.Ordinal))
         {
             _ = Panel.Close();   // the feature is where you are once the node's panel is shut
             return;
@@ -71,10 +84,8 @@ internal sealed partial class WholeMapViewModel
     private IReadOnlyList<Crumb> CrumbList()
     {
         var node = HasConcept && Panel.IsOpen && Panel.Title.Length > 0;
-        var deeper = IsZoomed || IsAreaOpen || node;
-        IReadOnlyList<Crumb> below = IsZoomed ? [new Crumb(Labels.ContextCrumbAnswer, FeaturePath, node)]
-            : IsAreaOpen ? [new Crumb(AreaTitle, FeaturePath, node)]
-            : [];
+        var deeper = IsZoomed || IsAreaOpen || IsDrilled || node;
+        var below = Below(node);
         IReadOnlyList<Crumb> head = HasConcept
             ? [new Crumb(Labels.ContextConceptsCrumb, ConceptsPath, IsLink: true), new Crumb(_conceptName ?? string.Empty, ConceptPath, deeper)]
             : [Crumb.Top(deeper)];
@@ -82,12 +93,20 @@ internal sealed partial class WholeMapViewModel
         return [.. head, .. below, .. last];
     }
 
+    // The step under the concept: the query's answer, the open feature or the drilled band.
+    private IReadOnlyList<Crumb> Below(bool node) =>
+        IsZoomed ? [new Crumb(Labels.ContextCrumbAnswer, FeaturePath, node)]
+        : IsAreaOpen ? [new Crumb(AreaTitle, FeaturePath, node)]
+        : _drilled is { } band ? [new Crumb(NodeBands.Title(band), BandPath, node)]
+        : [];
+
     // Forgets the map drawn: nothing is read and nothing is pending.
     private void Clear()
     {
         (_overview, _beforeZoom, IsAreaOpen, AreaTitle) = (null, null, false, string.Empty);
         (HitKeys, IsZoomed, MoreTouchedText, _zoomSet) = (new HashSet<string>(StringComparer.Ordinal), false, string.Empty, null);
         (SearchActive, NoMatches, _searchSet) = (false, false, null);
+        (_drilled, _drillOwn, _drillCut) = (null, false, null);
         _ = Panel.Close();
         (Answer, Geometry) = (null, null);
         Areas = [];

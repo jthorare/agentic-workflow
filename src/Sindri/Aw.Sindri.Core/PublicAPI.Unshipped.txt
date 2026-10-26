@@ -5795,6 +5795,7 @@ Aw.Sindri.Core.Workflow.Views.StatusTimeout.StatusTimeout(Aw.Sindri.Core.Workflo
 Aw.Sindri.Core.Workflow.Views.StatusVerb
 Aw.Sindri.Core.Workflow.Views.StatusVerb.Answer = 1 -> Aw.Sindri.Core.Workflow.Views.StatusVerb
 Aw.Sindri.Core.Workflow.Views.StatusVerb.Approve = 6 -> Aw.Sindri.Core.Workflow.Views.StatusVerb
+Aw.Sindri.Core.Workflow.Views.StatusVerb.Rewind = 7 -> Aw.Sindri.Core.Workflow.Views.StatusVerb
 Aw.Sindri.Core.Workflow.Views.StatusVerb.Cancel = 5 -> Aw.Sindri.Core.Workflow.Views.StatusVerb
 Aw.Sindri.Core.Workflow.Views.StatusVerb.Complete = 2 -> Aw.Sindri.Core.Workflow.Views.StatusVerb
 Aw.Sindri.Core.Workflow.Views.StatusVerb.Handback = 3 -> Aw.Sindri.Core.Workflow.Views.StatusVerb

@@ -23,6 +23,7 @@ using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetProposals;
+using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
@@ -53,6 +54,7 @@ using Aw.Context.Testing.History;
 using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Map;
 using Aw.Context.Testing.Review;
+using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
 using Aw.Kernel.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -83,7 +85,8 @@ internal static class Engines
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
                     new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
-                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))))),
+                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
+                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
             new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()));
     }

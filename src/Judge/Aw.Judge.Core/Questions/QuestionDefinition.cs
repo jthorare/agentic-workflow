@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 
 namespace Aw.Judge.Core.Questions;
@@ -45,6 +46,21 @@ public sealed record QuestionDefinition<TInput>
     /// <summary>Response fields beyond the decision, as JSON Schema fragments (chosenIndex, reasons); only these ride back to the caller.</summary>
     public IReadOnlyDictionary<string, JsonObject>? ExtraProperties { get; init; }
 
+    /// <summary>
+    /// Filters and caps a validated input before any provider sees it (the pack filters of model-pick); the result is what the
+    /// prompt, the providers and the digest see. Null leaves the input as it is.
+    /// </summary>
+    public Func<TInput, IInputRedactor, TInput>? Sanitize { get; init; }
+
+    /// <summary>
+    /// What the decision row stores in place of the input, for a question whose input holds text that must not be kept (model-pick's
+    /// files). A question that sets it never stores the caller's raw input, not even when the call escalates before it validates.
+    /// </summary>
+    public Func<TInput, JsonNode?>? StoredForm { get; init; }
+
+    /// <summary>The cap on the state and the instructions Jev is sent; null keeps the stored input's cap.</summary>
+    public int? InputCapChars { get; init; }
+
     /// <summary>What each output means.</summary>
     public IReadOnlyDictionary<string, string>? Criteria { get; init; }
 
@@ -80,5 +96,6 @@ public sealed record QuestionDefinition<TInput>
         ExtraProperties = ExtraProperties,
         Criteria = Criteria,
         AskConfidence = AskConfidence,
+        InputCapChars = InputCapChars,
     };
 }

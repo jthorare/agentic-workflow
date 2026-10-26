@@ -53,6 +53,14 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
         return inner.Query(query, scope, cancellationToken);
     }
 
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) => inner.ScopeGraph(query, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) => inner.GraphReads(instanceAddress, runToken, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) => inner.RememberScopeGraph(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) => inner.ReadInScopeGraph(instanceAddress, runToken, read, cancellationToken);
+
     public ValueTask<Result<SourcesView>> Sources(ContextScope scope, CancellationToken cancellationToken) => inner.Sources(scope, cancellationToken);
 
     public ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken) => inner.HasSyncGap(scope, cancellationToken);
@@ -163,10 +171,6 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         inner.WholeMap(query, scope, cancellationToken);
-
-    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) => inner.ScopeGraph(query, scope, cancellationToken);
-
-    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) => inner.GraphReads(instanceAddress, runToken, cancellationToken);
 
     public ValueTask<Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         inner.Search(query, scope, cancellationToken);

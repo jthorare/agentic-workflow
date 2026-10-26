@@ -196,7 +196,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when it went up.</returns>
     internal bool Up()
     {
-        if (Back())
+        if (Back() || Whole.ExitDrill())
         {
             return true;
         }

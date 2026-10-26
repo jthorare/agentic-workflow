@@ -41,7 +41,10 @@ public static class JudgeErrors
     /// <summary>AW-JUDGE-015: no readable transcript ('label outcomes', 'eval import-turns').</summary>
     public static readonly ErrorDefinition NoTranscript = new("AW-JUDGE-015", ErrorKind.NotFound, "no readable transcript");
 
+    /// <summary>AW-JUDGE-016: a model-pick input is invalid (no candidates, more than 32, a duplicate or malformed key, a blank step or an unknown kind); the call escalates as 'invalid-input'.</summary>
+    public static readonly ErrorDefinition ModelPickInput = new("AW-JUDGE-016", ErrorKind.Invalid, "invalid model-pick input");
+
     /// <summary>Every Judge error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, UnknownDecision, DecisionExists, BriefExists, NoBrief, ConfigMalformed, ProvidersFlag, UnreadableDecision, ProviderExcluded, ProviderUnavailable, UnknownItem, NoTranscript];
+        [Invalid, UnknownDecision, DecisionExists, BriefExists, NoBrief, ConfigMalformed, ProvidersFlag, UnreadableDecision, ProviderExcluded, ProviderUnavailable, UnknownItem, NoTranscript, ModelPickInput];
 }

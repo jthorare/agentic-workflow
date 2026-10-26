@@ -62,7 +62,7 @@ public sealed class StatusDeskQuestionsTests
     private static async Task<(int Exit, string Stdout, string Stderr)> Run(ReadApi api, CancellationToken cancellationToken, params string[] args)
     {
         var (stdout, stderr) = (new StringWriter(), new StringWriter());
-        var exit = await Aw.Sindri.Host.Commands.StatusCommand.Run(args, api.Desk, new Output(stdout, stderr, SliceHarness.Json), cancellationToken);
+        var exit = await Host.Commands.StatusCommand.Run(args, api.Desk, new Output(stdout, stderr, SliceHarness.Json), cancellationToken);
         return (exit, stdout.ToString(), stderr.ToString());
     }
 

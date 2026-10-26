@@ -110,7 +110,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     public bool ByArea => Geometry?.ByArea == true;
 
     /// <summary>The accessible name of the map: the bands top to bottom with what each holds, once they are drawn (#1281: what a screen reader and the UI checks read off the canvas).</summary>
-    public string CanvasName => Geometry is { Bands.Count: > 0 } geometry
+    public string CanvasName => (IsDrilled ? Shown : Geometry) is { Bands.Count: > 0 } geometry
         ? Labels.ContextWholeCanvasBands(geometry.Bands.OrderBy(b => b.Top).Select(b => (NodeBands.Title(b.Band), b.Meta)))
         : Labels.ContextWholeCanvasName;
 
@@ -230,7 +230,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(CanvasName)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled)])
         {
             OnChanged(name);
         }

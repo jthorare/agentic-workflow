@@ -60,6 +60,9 @@ public sealed partial class QuestionEvaluator
         QuestionDefinition<TInput> question, EvaluationRun run, Settlement settlement, JsonNode? input, CancellationToken cancellationToken)
         where TInput : class
     {
+        // A question that keeps no input text stores its own form, and never the caller's raw input, even for a call that
+        // escalated before it validated.
+        var stored = run.StoredInput ?? (question.StoredForm is null ? input : new JsonObject { ["input"] = "not kept" });
         var decision = new DecisionRecord
         {
             Id = run.Id,
@@ -78,7 +81,7 @@ public sealed partial class QuestionEvaluator
             Details = new DecisionDetails
             {
                 // Redact the parsed values first, then cap, so a secret cut at the cap can't survive.
-                InputJson = InputCap.Write(redactor.Redact(input), InputCap.MaxChars, json),
+                InputJson = InputCap.Write(redactor.Redact(stored), InputCap.MaxChars, json),
                 Reasons = StoredReasons(settlement.Reasons),
                 Probabilities = settlement.Probabilities,
                 RulesOpinion = settlement.RulesOpinion,

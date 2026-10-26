@@ -33,6 +33,8 @@ internal static class GraphTools
             ["key"] = ContextTools.Property("string", "A product-graph node key, name or alias"),
             ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
             ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
+            ["outside"] = ScopedReads.OutsideProperty(),
+            ["reason"] = ScopedReads.ReasonProperty(),
         }, required: ["key"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
@@ -49,6 +51,8 @@ internal static class GraphTools
             ["depth"] = ContextTools.Property("integer", "How many edges away to look (default 1; the engine bounds it)", minimum: 0),
             ["limit"] = ContextTools.Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
             ["offset"] = ContextTools.Property("integer", "How many items to skip in each list; omit for the start", minimum: 0),
+            ["outside"] = ScopedReads.OutsideProperty(),
+            ["reason"] = ScopedReads.ReasonProperty(),
         }, required: ["key"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
@@ -66,14 +70,24 @@ internal static class GraphTools
             return McpResults.Failure(services, page.Error);
         }
 
-        var bound = BindKey(Node, arguments, withDepth: false);
+        var split = ScopedReads.Separate(Node, arguments);
+        if (split.IsError)
+        {
+            return McpResults.Failure(services, split.Error);
+        }
+
+        var bound = BindKey(Node, split.Value.Rest, withDepth: false);
         if (bound.IsError)
         {
             return McpResults.Failure(services, bound.Error);
         }
 
         var answer = await services.GetRequiredService<IService<ShowContextNodeRequest, NodeView>>().Handle(new ShowContextNodeRequest(bound.Value.Key), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Node, page: page.Value);
+
+        // why: the key may be a name or an alias, so the graph check uses the node key the read resolved it to
+        return answer.IsSuccess && await ScopedReads.Check(services, Node, answer.Value.Node.Key.Value, split.Value, ct).ConfigureAwait(false) is { } refused
+            ? McpResults.Failure(services, refused)
+            : McpResults.From(services, answer, McpSummaries.Node, page: page.Value);
     }
 
     /// <summary>Runs context_neighbors.</summary>
@@ -89,7 +103,13 @@ internal static class GraphTools
             return McpResults.Failure(services, page.Error);
         }
 
-        var bound = BindKey(Neighbors, arguments, withDepth: true);
+        var split = ScopedReads.Separate(Neighbors, arguments);
+        if (split.IsError)
+        {
+            return McpResults.Failure(services, split.Error);
+        }
+
+        var bound = BindKey(Neighbors, split.Value.Rest, withDepth: true);
         if (bound.IsError)
         {
             return McpResults.Failure(services, bound.Error);
@@ -97,7 +117,11 @@ internal static class GraphTools
 
         var answer = await services.GetRequiredService<IService<ListContextNeighborsRequest, NeighborsView>>()
             .Handle(new ListContextNeighborsRequest(bound.Value.Key, bound.Value.Depth), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Neighbors, page: page.Value);
+
+        // why: the key may be a name or an alias, so the graph check uses the node key the read resolved it to
+        return answer.IsSuccess && await ScopedReads.Check(services, Neighbors, answer.Value.Center.Value, split.Value, ct).ConfigureAwait(false) is { } refused
+            ? McpResults.Failure(services, refused)
+            : McpResults.From(services, answer, McpSummaries.Neighbors, page: page.Value);
     }
 
     /// <summary>The key (and depth) of a graph call; SND-CONTEXT-022 for a missing or blank key, an unknown property or a wrong type.</summary>

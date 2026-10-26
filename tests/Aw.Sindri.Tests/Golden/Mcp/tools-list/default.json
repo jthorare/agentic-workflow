@@ -52,6 +52,14 @@
           "type": "integer",
           "description": "How many items to skip in each list (default 0)",
           "minimum": 0
+        },
+        "outside": {
+          "type": "boolean",
+          "description": "Set true, with a reason, to read a node outside this run's scoping graph; ignored by a session that has no scoping run"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why this read steps outside the scoping graph; required with outside"
         }
       }
     },
@@ -187,6 +195,14 @@
           "type": "integer",
           "description": "How many items to skip in each list; omit for the start",
           "minimum": 0
+        },
+        "outside": {
+          "type": "boolean",
+          "description": "Set true, with a reason, to read a node outside this run's scoping graph; ignored by a session that has no scoping run"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why this read steps outside the scoping graph; required with outside"
         }
       },
       "required": [
@@ -225,6 +241,14 @@
           "type": "integer",
           "description": "How many items to skip in each list; omit for the start",
           "minimum": 0
+        },
+        "outside": {
+          "type": "boolean",
+          "description": "Set true, with a reason, to read a node outside this run's scoping graph; ignored by a session that has no scoping run"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why this read steps outside the scoping graph; required with outside"
         }
       },
       "required": [

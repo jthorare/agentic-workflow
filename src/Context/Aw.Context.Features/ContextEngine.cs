@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
@@ -161,12 +160,17 @@ internal sealed class ContextEngine(
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.FileMap(query, scope, cancellationToken);
 
-    // Issue 1005: the context lane builds the scoping graph and keeps the call log; until then the engine answers a named error and Sindri's gather falls back to the lenses.
-    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query1, ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<ScopeGraphView>>(ContextErrors.ScopeGraphUnavailable.With("the engine does not build the scoping graph yet"));
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery graphQuery, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.ScopeGraph(graphQuery, scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<IReadOnlyList<GraphRead>>>(ContextErrors.ScopeGraphUnavailable.With("the engine keeps no graph call log yet"));
+        graph.GraphReads(instanceAddress, runToken, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) =>
+        graph.RememberScopeGraph(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) =>
+        graph.ReadInScopeGraph(instanceAddress, runToken, read, cancellationToken);
 
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.Concepts(query, scope, cancellationToken);

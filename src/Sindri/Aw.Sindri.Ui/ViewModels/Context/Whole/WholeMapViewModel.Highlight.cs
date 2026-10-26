@@ -65,6 +65,11 @@ internal sealed partial class WholeMapViewModel
     /// <param name="slop">How far outside a node still counts.</param>
     internal void PointerClicked(double x, double y, double slop = 0)
     {
+        if (LaneTitleClicked(x, y))
+        {
+            return;
+        }
+
         var key = KeyAt(x, y, slop);
         if (key is null)
         {

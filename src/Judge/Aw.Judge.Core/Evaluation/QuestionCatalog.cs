@@ -22,7 +22,8 @@ public static class QuestionCatalog
         TurnProgressQuestion.Name,
         UiElementRepairQuestion.Name,
         VisualCritiqueQuestion.Name,
-        ChooseQuestion.Name);
+        ChooseQuestion.Name,
+        ModelPickQuestion.Name);
 
     /// <summary>Evaluates the named question.</summary>
     /// <param name="evaluator">The evaluator.</param>
@@ -46,6 +47,7 @@ public static class QuestionCatalog
             UiElementRepairQuestion.Name => evaluator.Evaluate(UiElementRepairQuestion.Definition, rawInput, context, cancellationToken),
             VisualCritiqueQuestion.Name => evaluator.Evaluate(VisualCritiqueQuestion.Definition, rawInput, context, cancellationToken),
             ChooseQuestion.Name => evaluator.EvaluateChoose(rawInput, context, cancellationToken),
+            ModelPickQuestion.Name => evaluator.EvaluateModelPick(rawInput, context, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(question), question, "not a question in the catalog"),
         };
     }
@@ -75,6 +77,8 @@ public static class QuestionCatalog
             ChooseQuestion.Name => AwJson.Deserialize<ChooseInput>(Encoding.UTF8.GetBytes(inputJson), json) is { IsError: false } chosen
                 ? Prepare(ChooseQuestion.For(chosen.Value), inputJson, json)
                 : null,
+            // why: model-pick's stored input holds no file text, so there is nothing to ask a provider again (adjudicate)
+            ModelPickQuestion.Name => null,
             _ => throw new ArgumentOutOfRangeException(nameof(question), question, "not a question in the catalog"),
         };
     }
@@ -102,7 +106,7 @@ public static class QuestionCatalog
 
     /// <summary>The named question as scoring reads it: a stored input in, the prompt out, with no chain around it.</summary>
     /// <param name="question">A question name.</param>
-    /// <returns>The question, or null when the name isn't in <see cref="Names"/> or the question takes its outputs from each call (choose).</returns>
+    /// <returns>The question, or null when the name isn't in <see cref="Names"/> or the question takes its outputs from each call (choose, model-pick).</returns>
     public static ScoringQuestion? Scoring(string question) => question switch
     {
         WakeGateQuestion.Name => Of(WakeGateQuestion.Definition),

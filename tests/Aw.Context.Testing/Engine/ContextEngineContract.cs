@@ -137,9 +137,16 @@ public abstract class ContextEngineContract<TEngine>
         var graph = await engine.ScopeGraph(new ScopeGraphQuery(["feature:x"], MapRead.Current, new LensRange(2, Hops: null), Brief: null, MaxNodes: 400, MaxBytes: 300_000), scope, CancellationToken.None);
         var reads = await engine.GraphReads("ITM-1/line/3/scoping.1", "run-1", CancellationToken.None);
 
-        Check(graph.IsError && graph.Error.Code == ContextErrors.ScopeGraphUnavailable.Code, "a scoping graph the engine can't build is 153");
-        Check(reads.IsError && reads.Error.Code == ContextErrors.ScopeGraphUnavailable.Code, "a call log the engine doesn't keep is 153");
+        Check(graph.IsError && graph.Error.Code == ScopeGraphCodeWithNoMap, $"a scoping graph with no map to build it from is {ScopeGraphCodeWithNoMap}");
+        Check(UnknownRunReadsAreEmpty ? reads.IsSuccess && reads.Value.Count == 0 : reads.IsError && reads.Error.Code == ContextErrors.ScopeGraphUnavailable.Code,
+            UnknownRunReadsAreEmpty ? "a run that read nothing has an empty log" : "a call log the engine doesn't keep is 153");
     }
+
+    /// <summary>The code the scoping graph answers when there is no map: 153 for an engine that builds none (the fake), 030 for the real one.</summary>
+    protected virtual string ScopeGraphCodeWithNoMap => ContextErrors.ScopeGraphUnavailable.Code;
+
+    /// <summary>True when GraphReads answers an empty list for a run that read nothing (the real engine), false when it answers 153 (the fake).</summary>
+    protected virtual bool UnknownRunReadsAreEmpty => false;
 
     private static (string Code, string Path) Code(TEngine engine, string json)
     {

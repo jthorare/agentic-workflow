@@ -28,4 +28,7 @@ public sealed record QuestionRef
 
     /// <summary>The model to run instead of the provider's own small default (an agent CLI's model name); null keeps the default.</summary>
     public string? Model { get; init; }
+
+    /// <summary>The cap on the state and the instructions Jev is sent, in characters; null keeps the stored input's 16,000 (InputCap.MaxChars).</summary>
+    public int? InputCapChars { get; init; }
 }

@@ -1,4 +1,3 @@
-using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
@@ -55,10 +54,6 @@ internal sealed class ContextGraph(
     public ValueTask<Result<SubgraphView>> Subgraph(SubgraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.Subgraph(query, scope, cancellationToken);
 
-    // Issue 1005: until the context lane builds the scoping graph the facade answers a named error and Sindri's gather falls back to the lenses.
-    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<ScopeGraphView>>(ContextErrors.ScopeGraphUnavailable.With("the engine does not build the scoping graph yet"));
-
     public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.WholeMap(query, scope, cancellationToken);
 
@@ -67,6 +62,18 @@ internal sealed class ContextGraph(
 
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         fileMap.Handle(new GetFileMapRequest(query, scope), cancellationToken);
+
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        codeHistory.ScopeGraph(query, scope, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) =>
+        codeHistory.RememberScopeGraph(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) =>
+        codeHistory.ReadInScopeGraph(instanceAddress, runToken, read, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
+        codeHistory.GraphReads(instanceAddress, runToken, cancellationToken);
 
     public ValueTask<Result<CodeView>> Code(IReadOnlyList<string> anchors, bool draft, string? mapVersion, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.Code(anchors, draft, mapVersion, scope, cancellationToken);

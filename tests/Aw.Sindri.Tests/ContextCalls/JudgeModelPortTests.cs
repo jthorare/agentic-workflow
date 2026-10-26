@@ -93,6 +93,31 @@ public sealed class JudgeModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_request_model_runs_on_every_cli_the_models_map_has_no_entry_for_and_the_map_wins()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, new ProviderUnavailable(ProviderUnavailable.Timeout));
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude, codex)).Ask(_request with { Models = models, Model = "m-any" }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-claude", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-any", Assert.Single(codex.Asked).Model);
+        Assert.Equal("m-any", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_with_only_a_model_asks_the_first_cli_for_it()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, Answered("ok"));
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude)).Ask(_request with { Model = "m-any" }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-any", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-any", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_request_with_no_models_leaves_every_cli_on_its_default()
     {
         var claude = new Provider(ProviderName.ClaudeCli, Answered("ok"));

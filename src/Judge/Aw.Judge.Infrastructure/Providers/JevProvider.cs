@@ -14,7 +14,8 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// call whose options are the question's outputs, each with its criterion (or its own name). The API key comes from
 /// the secret source; without one Jev is unavailable ('no-api-key'), which is not a failure. Everything taken from the
 /// input leaves the machine for a third party, so both the request's state and its instructions (the question's prompt,
-/// which embeds input fields word for word) are redacted, then capped like the stored input (InputCap). A non-success status is
+/// which embeds input fields word for word) are redacted, then capped like the stored input (InputCap), or at the question's
+/// own cap (QuestionRef.InputCapChars). A non-success status is
 /// errored ('http-NNN'); past the budget, the key read included, it is unavailable ('timeout'); unreachable is unavailable ('network-error').
 /// </summary>
 /// <param name="http">Sends the request (owned: disposed with the provider).</param>
@@ -59,7 +60,8 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
                 return new ProviderUnavailable(ProviderReasons.NoApiKey);
             }
 
-            using var request = Request(question, State(input), Instructions(question.Prompt), key);
+            var cap = question.InputCapChars ?? InputCap.MaxChars;
+            using var request = Request(question, CappedState(input, cap), CappedInstructions(question.Prompt, cap), key);
             using var response = await http.SendAsync(request, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -88,12 +90,18 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     /// <inheritdoc />
     public void Dispose() => http.Dispose();
 
-    // Jev is a third party: it gets what decision_details would store, the redacted input capped the same way.
-    private JsonNode? State(JsonNode? input) => JsonNode.Parse(InputCap.Write(redactor.Redact(input), InputCap.MaxChars, WireJson.Options));
+    // Jev is a third party: it gets what decision_details would store, the redacted input capped the same way, unless the
+    // question sets a cap of its own (model-pick sends a whole pack).
+    private JsonNode? State(JsonNode? input) => CappedState(input, InputCap.MaxChars);
+
+    private JsonNode? CappedState(JsonNode? input, int cap) => JsonNode.Parse(InputCap.Write(redactor.Redact(input), cap, WireJson.Options));
 
     // The prompt carries the input's text too (ask-check's transcript tail, a rule-check hunk): redacted, then capped.
-    private string Instructions(string prompt) =>
-        InputCap.Truncate(redactor.Redact(JsonValue.Create(prompt))?.GetValue<string>() ?? "", InputCap.MaxChars);
+    private string Instructions(string prompt) => CappedInstructions(prompt, InputCap.MaxChars);
+
+    // why: not an overload of Instructions, so the batch path's Select(Instructions) can't bind the cap to the element index
+    private string CappedInstructions(string prompt, int cap) =>
+        InputCap.Truncate(redactor.Redact(JsonValue.Create(prompt))?.GetValue<string>() ?? "", cap);
 
     private static HttpRequestMessage Request(QuestionRef question, JsonNode? input, string instructions, string key)
     {
