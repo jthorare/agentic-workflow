@@ -70,9 +70,47 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         var summary = check.Kind == CheckKind.Test
             ? $"the regression test {check.Path}, run as `{string.Join(' ', check.Command ?? [])}`"
             : $"the ui-evidence script {check.Path}";
-        return git.Diff(candidate.Worktree, git.NetBase(candidate.Worktree, baseline.Commit, candidate.Commit), candidate.Commit).Map(diff => new ResolutionCheckInput(
+        return JudgeDiff(state, candidate, baseline.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
             BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full)));
+    }
+
+    // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), except that a cause-site file
+    // of the investigation is shown from the baseline: a fix main already had, through a merged "Part of" PR, is still the fix.
+    private Result<CommitDiff> JudgeDiff(BugFixState state, Candidate candidate, string baseline)
+    {
+        var net = git.NetBase(candidate.Worktree, baseline, candidate.Commit);
+        var sites = CauseSites(state);
+        if (sites.Count == 0)
+        {
+            return git.Diff(candidate.Worktree, net, candidate.Commit);
+        }
+
+        return git.ChangedFiles(candidate.Worktree, baseline, candidate.Commit).Bind(changed =>
+        {
+            var named = sites.Where(site => changed.Contains(site, StringComparer.Ordinal)).ToList();
+            return named.Count == 0
+                ? git.Diff(candidate.Worktree, net, candidate.Commit)
+                : git.DiffExcept(candidate.Worktree, net, candidate.Commit, named)
+                    .Bind(rest => git.Diff(candidate.Worktree, baseline, candidate.Commit, named).Map(site => Joined(rest, site)));
+        });
+    }
+
+    private static CommitDiff Joined(CommitDiff rest, CommitDiff site) =>
+        new($"{rest.Stat}\n{site.Stat}", rest.Full is null || site.Full is null ? null : rest.Full + site.Full);
+
+    // The files the hypotheses not ruled out name ("path" or "path:line"), once each.
+    private static List<string> CauseSites(BugFixState state) =>
+        [.. (state.Investigation?.Hypotheses ?? []).Where(static h => h.Result != HypothesisResult.RuledOut)
+            .SelectMany(static h => h.Files)
+            .Select(static file => WithoutLine(file.Trim()))
+            .Where(static file => file.Length > 0)
+            .Distinct(StringComparer.Ordinal)];
+
+    private static string WithoutLine(string file)
+    {
+        var colon = file.LastIndexOf(':');
+        return colon > 0 && colon < file.Length - 1 && file[(colon + 1)..].All(static c => char.IsAsciiDigit(c) || c == '-') ? file[..colon] : file;
     }
 
     private static string? Capped(string? diff) =>

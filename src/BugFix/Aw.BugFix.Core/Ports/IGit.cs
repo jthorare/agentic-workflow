@@ -87,4 +87,20 @@ public interface IGit
     /// <param name="to">The candidate commit.</param>
     /// <returns>The diff stat and the diff (null when git can't produce the full diff).</returns>
     public Result<CommitDiff> Diff(string directory, string from, string to);
+
+    /// <summary>The change between two commits to <paramref name="paths"/> only, as <see cref="Diff(string, string, string)"/>.</summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="from">The base commit.</param>
+    /// <param name="to">The candidate commit.</param>
+    /// <param name="paths">The repository-relative files, with '/'.</param>
+    /// <returns>The diff stat and the diff of those files.</returns>
+    public Result<CommitDiff> Diff(string directory, string from, string to, IReadOnlyList<string> paths);
+
+    /// <summary>The change between two commits to everything except <paramref name="paths"/>, as <see cref="Diff(string, string, string)"/>.</summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="from">The base commit.</param>
+    /// <param name="to">The candidate commit.</param>
+    /// <param name="paths">The repository-relative files left out, with '/'.</param>
+    /// <returns>The diff stat and the diff without those files.</returns>
+    public Result<CommitDiff> DiffExcept(string directory, string from, string to, IReadOnlyList<string> paths);
 }

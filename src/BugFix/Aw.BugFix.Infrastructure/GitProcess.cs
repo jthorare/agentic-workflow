@@ -84,10 +84,18 @@ internal sealed class GitProcess : IGit
         Paths(directory, "diff", "--name-only", "--no-renames", "--diff-filter=A", "-z", from, to);
 
     // Lock files and build output are noise to judge; without the full diff judge still has the stat.
-    public Result<CommitDiff> Diff(string directory, string from, string to) =>
-        Value(directory, "diff", "--stat", from, to).Map(stat =>
+    public Result<CommitDiff> Diff(string directory, string from, string to) => DiffOf(directory, from, to, ["."]);
+
+    public Result<CommitDiff> Diff(string directory, string from, string to, IReadOnlyList<string> paths) =>
+        DiffOf(directory, from, to, [.. paths.Select(static p => $":(top,literal){p}")]);
+
+    public Result<CommitDiff> DiffExcept(string directory, string from, string to, IReadOnlyList<string> paths) =>
+        DiffOf(directory, from, to, [".", .. paths.Select(static p => $":(top,exclude,literal){p}")]);
+
+    private static Result<CommitDiff> DiffOf(string directory, string from, string to, string[] pathspec) =>
+        Value(directory, ["diff", "--stat", from, to, "--", .. pathspec]).Map(stat =>
         {
-            var full = Run(directory, "diff", from, to, "--", ".", ":(glob,exclude)**/package-lock.json", ":(glob,exclude)**/*.lock", ":(glob,exclude)**/pnpm-lock.yaml", ":(glob,exclude)**/packages.lock.json", ":(glob,exclude)**/dist/**");
+            var full = Run(directory, ["diff", from, to, "--", .. pathspec, ":(glob,exclude)**/package-lock.json", ":(glob,exclude)**/*.lock", ":(glob,exclude)**/pnpm-lock.yaml", ":(glob,exclude)**/packages.lock.json", ":(glob,exclude)**/dist/**"]);
             return new CommitDiff(stat, full.ExitCode == 0 ? full.Output : null);
         });
 

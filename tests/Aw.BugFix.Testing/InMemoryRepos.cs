@@ -183,6 +183,19 @@ public sealed class InMemoryRepos : IGit, IFiles
             string.Create(CultureInfo.InvariantCulture, $" {files.Count} files changed"),
             string.Concat(files.Select(f => $"diff --git a/{f} b/{f}\n+{_commits[to].Files.GetValueOrDefault(f, string.Empty)}\n"))));
 
+    /// <inheritdoc/>
+    public Result<CommitDiff> Diff(string directory, string from, string to, IReadOnlyList<string> paths) =>
+        DiffOfFiles(directory, from, to, path => paths.Contains(path, StringComparer.Ordinal));
+
+    /// <inheritdoc/>
+    public Result<CommitDiff> DiffExcept(string directory, string from, string to, IReadOnlyList<string> paths) =>
+        DiffOfFiles(directory, from, to, path => !paths.Contains(path, StringComparer.Ordinal));
+
+    private Result<CommitDiff> DiffOfFiles(string directory, string from, string to, Func<string, bool> keep) =>
+        ChangedFiles(directory, from, to).Map(changed => changed.Where(keep).ToList()).Map(files => new CommitDiff(
+            string.Create(CultureInfo.InvariantCulture, $" {files.Count} files changed"),
+            string.Concat(files.Select(f => $"diff --git a/{f} b/{f}\n+{_commits[to].Files.GetValueOrDefault(f, string.Empty)}\n"))));
+
     // Like realpath(3): each link resolved before the next component, ".." applied to the resolved directory.
     private string? Resolve(string path, int budget)
     {

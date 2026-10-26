@@ -447,6 +447,8 @@ Aw.BugFix.Core.Ports.IGit.AddedFiles(string! directory, string! from, string! to
 Aw.BugFix.Core.Ports.IGit.Branch(string! directory) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Ports.IGit.ChangedFiles(string! directory, string! from, string! to) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.BugFix.Core.Ports.IGit.Diff(string! directory, string! from, string! to) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.CommitDiff!>!
+Aw.BugFix.Core.Ports.IGit.Diff(string! directory, string! from, string! to, System.Collections.Generic.IReadOnlyList<string!>! paths) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.CommitDiff!>!
+Aw.BugFix.Core.Ports.IGit.DiffExcept(string! directory, string! from, string! to, System.Collections.Generic.IReadOnlyList<string!>! paths) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.CommitDiff!>!
 Aw.BugFix.Core.Ports.IGit.Head(string! directory) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Ports.IGit.IsAncestor(string! directory, string! ancestor, string! commit) -> Aw.Kernel.Result<bool>!
 Aw.BugFix.Core.Ports.IGit.IsClean(string! directory) -> Aw.Kernel.Result<bool>!

@@ -112,6 +112,10 @@ not with another rule.
   baseline plus what main added by a merge, as `record-candidate` and the judge diff use). A shared project file that main
   changes is no weakening of the check; the history step says so (`record-run c1; the check file … changed on main …`). A
   change the fix made, or one that can't be told from the fix's (no main ref, a merge conflict), is still AW-BUGFIX-008.
+- **The judge's diff.** It is the candidate's change from the net base, so what a main merge brought in stays out. A cause-site
+  file of the investigation (a hypothesis not ruled out names it, as `path` or `path:line`) is shown from the baseline instead
+  when the candidate's branch changed it since: a fix that main already had through a merged "Part of" PR is still the fix.
+  No cause-site file named, or none changed, leaves the diff as the net-base diff.
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that
   shadows another could change what the check does while the commit stays the same. Each test run record keeps the
