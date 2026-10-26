@@ -94,7 +94,8 @@ internal static partial class ScopePacketChecks
             var recorded = ScopeJson.Strings(entry, "recordedAs").ToList();
             if (recorded.Count == 0)
             {
-                s.Fail(id, $"answer {id} maps to no acceptance item, open question or map change", "Record the answer in an item, an open question or a map change (recordedAs).");
+                var questions = string.Join(", ", ScopeJson.Strings(entry, "questionIds"));
+                s.Fail(id, questions.Length == 0 ? $"answer {id} maps to no acceptance item, open question or map change" : $"answer {id} (to {questions}) maps to no acceptance item, open question or map change", "Record the answer in an item, an open question or a map change (recordedAs).");
             }
             else if (recorded.FirstOrDefault(r => !known.Contains(r)) is { } unknown)
             {

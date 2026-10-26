@@ -34,6 +34,9 @@ public static class EvaluationReasons
     /// <summary>Failure row: the provider answered outside the question's outputs.</summary>
     public const string OutOfEnum = "out-of-enum";
 
+    /// <summary>Failure row: the provider decided an output that needs reasons without giving any.</summary>
+    public const string NoReasons = "no-reasons";
+
     /// <summary>Failure row: the decision row couldn't be written (the outcome still stands).</summary>
     public const string DecisionWriteFailed = "decision-write-failed";
 

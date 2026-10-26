@@ -64,9 +64,9 @@
           <TextBlock Classes="caption quiet" Text="{Binding UnreadableText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Border x:Name="AgentsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock x:Name="AgentsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="AgentsEmpty" Classes="caption quiet" Margin="0" HorizontalAlignment="Left" TextAlignment="Left" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="AgentsClearFilters" Margin="16,0,16,8" HorizontalAlignment="Left" Click="OnClearFilters" IsVisible="{Binding ShowsClearFilters}" Content="{Binding ClearFiltersText}"
+        <Button x:Name="AgentsClearFilters" Margin="16,0,16,8" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Click="OnClearFilters" IsVisible="{Binding ShowsClearFilters}" Content="{Binding ClearFiltersText}"
                 AutomationProperties.Name="{Binding ClearFiltersText}" />
         <Button x:Name="AgentsOpenWorkflows" Margin="16,0,16,8" HorizontalAlignment="Left" Click="OnOpenWorkflows" IsVisible="{Binding ShowsOpenWorkflows}" Content="{Binding OpenWorkflowsText}"
                 AutomationProperties.Name="{Binding OpenWorkflowsText}" />

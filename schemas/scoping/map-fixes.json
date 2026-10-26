@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/map-fixes.json",
+  "title": "The map fixes the relevance review implies (fact:mapFixes)",
+  "description": "Issue 966 spec 4.3: one fix per entry that left the lenses and has a node key (a history item has none). action is the agent's fix; status starts as proposed and step.scope.propose sets it to recorded (nothing is submitted to the context engine yet) or skipped.",
+  "type": "object",
+  "properties": {
+    "fixes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^L-(code|product|related|history)-[1-9][0-9]*$"
+          },
+          "node": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "enum": [
+              "relabel",
+              "demote",
+              "ignore"
+            ]
+          },
+          "relabelTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "citation": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "recorded",
+              "skipped"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "node",
+          "action",
+          "relabelTo",
+          "reason",
+          "citation",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "fixes"
+  ],
+  "additionalProperties": false
+}

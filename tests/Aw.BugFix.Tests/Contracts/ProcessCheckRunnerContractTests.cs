@@ -18,6 +18,14 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
 
     protected override IReadOnlyList<string> HangingCommand => ["sleep", "5"];
 
+    protected override IReadOnlyList<string> PassingCommand => ["sh", "-c", "echo ok"];
+
+    protected override IReadOnlyList<string> FailingCommand => ["sh", "-c", "echo not ok; exit 1"];
+
+    protected override IReadOnlyList<string> KilledCommand => ["sh", "-c", "echo started; kill -KILL $$"];
+
+    protected override IReadOnlyList<string> SilentCommand => ["sh", "-c", "exit 1"];
+
     public void Dispose() => _temp.Dispose();
 
     [Fact]
@@ -182,6 +190,21 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
     }
 
     [Fact]
+    public void DISPLAY_reaches_the_check_only_when_AW_BUGFIX_CHECK_ENV_names_it()
+    {
+        var path = Environment.GetEnvironmentVariable("PATH") ?? "/usr/bin:/bin";
+        var plain = new ProcessCheckRunner(BugFixSettings.Read(name => name switch { "PATH" => path, "DISPLAY" => ":0", _ => null }), new LocalFiles());
+        var named = new ProcessCheckRunner(BugFixSettings.Read(name => name switch { "PATH" => path, "DISPLAY" => ":0", "AW_BUGFIX_CHECK_ENV" => "DISPLAY", _ => null }), new LocalFiles());
+        string[] probe = ["sh", "-c", "echo \"[${DISPLAY-unset}]\""];
+
+        _ = plain.Run(probe, Directory, Path.Combine(_temp.Path, "plain.log"), Key);
+        _ = named.Run(probe, Directory, Path.Combine(_temp.Path, "named.log"), Key);
+
+        Assert.Equal("[unset]", File.ReadAllText(Path.Combine(_temp.Path, "plain.log")).Trim());
+        Assert.Equal("[:0]", File.ReadAllText(Path.Combine(_temp.Path, "named.log")).Trim());
+    }
+
+    [Fact]
     public void A_relative_program_starts_from_the_runs_directory()
     {
         if (OperatingSystem.IsWindows())
@@ -190,7 +213,7 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
         }
 
         var script = Path.Combine(_temp.Path, "check.sh");
-        _ = ExecutableScript.Write(script, "exit 4\n");
+        _ = ExecutableScript.Write(script, "echo ran; exit 4\n");
 
         var exit = Runner.Run(["./check.sh"], Directory, Path.Combine(_temp.Path, "rel.log"), Key);
 
@@ -207,7 +230,7 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
         }
 
         var target = Path.Combine(_temp.Path, "dispatch.sh");
-        _ = ExecutableScript.Write(target, "[ \"$(basename \"$0\")\" = alias ] && exit 0 || exit 5\n");
+        _ = ExecutableScript.Write(target, "echo ran; [ \"$(basename \"$0\")\" = alias ] && exit 0 || exit 5\n");
         _ = File.CreateSymbolicLink(Path.Combine(_temp.Path, "alias"), target);
 
         var exit = Runner.Run(["./alias"], Directory, Path.Combine(_temp.Path, "alias.log"), Key);

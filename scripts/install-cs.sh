@@ -284,7 +284,7 @@ publish() {
       staged_count="$(find "$tree/recipes/sindri" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
       embedded_count="$(printf '%s' "$evals" | jq -r '.recipes | length' 2> /dev/null || true)"
       [ "$embedded_count" = "$staged_count" ] \
-        || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir)"
+        || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir); eval output: $(printf '%s' "$evals" | head -c 300)"
     fi
   fi
 

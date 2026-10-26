@@ -7,6 +7,7 @@ using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Walks;
 using Aw.Kernel;
 
 namespace Aw.Context.Features.GetHistory;
@@ -15,13 +16,15 @@ namespace Aw.Context.Features.GetHistory;
 /// The history lens over one map (S-H): the anchors' own scopes, the stored intent they reach cut by the window, and the landed changes of the files that implement them.
 /// Text is not cleaned here (<see cref="HistoryTexts"/> does it), so a backtest arm can hand it an as-of map and read the same cut.
 /// </summary>
-internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intents, IFileHistory files, TimeProvider clock)
+internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intents, IFileHistory files, TimeProvider clock, WalkOptions? walk = null)
 {
     private const string Capped = "capped";
 
+    private readonly WalkOptions _walk = walk ?? WalkOptions.Serial;
+
     internal async ValueTask<Result<HistoryView>> Run(HistoryInputs inputs, IReadOnlyList<string> anchors, ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
-        var resolved = HistoryLens.Resolve(inputs.Map.Graph, anchors);
+        var resolved = HistoryLens.Resolve(inputs.Map.Graph, anchors, _walk);
         if (resolved.IsError)
         {
             return resolved.Error;
@@ -56,7 +59,7 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         var records = cut.Records.Select(r => r with { Repo = repoOf.GetValueOrDefault(r.Key.Value) }).ToList();
         var decisions = cut.Decisions.Select(d => d with { Repo = repoOf.GetValueOrDefault(d.Node.Value) }).ToList();
         return new HistoryView(1, found.Anchors, found.MissingAnchors, basis.Map, basis.Draft, basis.AsOf, inputs.Window, records, decisions, changes.Items,
-            HistoryIncidents.NotConfigured, HistoryLens.Edges(found, kept), counts, truncated, git.Repos, HistoryLens.Coverage(found, basis), searched, degraded,
+            HistoryIncidents.NotConfigured, HistoryLens.Edges(found, kept), counts, truncated, git.Repos, HistoryLens.Coverage(found, basis, _walk), searched, degraded,
             new Dictionary<string, Citation>(StringComparer.Ordinal));
     }
 
@@ -93,27 +96,41 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         using var timer = new CancellationTokenSource(settings.Deadline, clock);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timer.Token);
         var version = inputs.Map.Snapshot.Version;
-        foreach (var repo in repos.Where(r => chosen.Exists(f => f.Repo == r.Name)))
+        var asked = repos.Where(r => chosen.Exists(f => f.Repo == r.Name)).ToList();
+
+        // The repos are read over the cores; their answers are taken in repo order up to the first that ran out of time, as a one-by-one run takes them.
+        var answers = await BoundedParallel.Map(asked, (repo, _) => ReadRepo(repo, chosen, version, inputs.Window, (deadline.Token, cancellationToken)), _walk.Degree, cancellationToken).ConfigureAwait(false);
+        foreach (var answer in answers)
         {
-            var mineHere = chosen.Where(f => f.Repo == repo.Name).ToList();
-            var upTo = repo.Name == version.Repo ? Commit(version.Commit) : null;
-            var query = new FileHistoryQuery(upTo, [.. mineHere.Select(f => f.Path)], inputs.Window, HistoryRules.ChangesPerRepo);
-            Result<FileHistory> history;
-            try
-            {
-                history = await files.Changes(repo, query, deadline.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            if (answer.History is not { } history)
             {
                 read.TimedOut = true;
                 break;
             }
 
-            read.Add(repo, mineHere, upTo, history);
+            read.Add(answer.Repo, answer.Searched, answer.UpTo, history);
         }
 
         return read;
     }
+
+    // One repo's git read; null history means the deadline ended it (a caller's cancellation is not that: it propagates).
+    private async ValueTask<RepoRead> ReadRepo(ContextRepo repo, List<HistoryFile> chosen, MapVersion version, HistoryWindow window, (CancellationToken Deadline, CancellationToken Caller) tokens)
+    {
+        var mineHere = chosen.Where(f => f.Repo == repo.Name).ToList();
+        var upTo = repo.Name == version.Repo ? Commit(version.Commit) : null;
+        var query = new FileHistoryQuery(upTo, [.. mineHere.Select(f => f.Path)], window, HistoryRules.ChangesPerRepo);
+        try
+        {
+            return new RepoRead(repo, mineHere, upTo, await files.Changes(repo, query, tokens.Deadline).ConfigureAwait(false));
+        }
+        catch (OperationCanceledException) when (!tokens.Caller.IsCancellationRequested)
+        {
+            return new RepoRead(repo, mineHere, upTo, History: null);
+        }
+    }
+
+    private sealed record RepoRead(ContextRepo Repo, List<HistoryFile> Searched, string? UpTo, Result<FileHistory>? History);
 
     private static string? Commit(string? commit) => commit is { Length: >= 7 } && commit.All(char.IsAsciiHexDigit) ? commit.ToLowerInvariant() : null;
 

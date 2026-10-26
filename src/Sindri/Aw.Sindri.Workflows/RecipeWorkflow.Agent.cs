@@ -113,17 +113,6 @@ internal sealed partial class RecipeWorkflow
         return (filled, false);
     }
 
-    // What the launch activity is given: the run, the item, the workspace the Step launches in, and what the Step's 'bundle' needs of the pack (LN-WF5): its 'subject' and the stored lens queue.
-    private AgentLaunchRun Launch(AgentStepRun run, FactValue? item, StepUse step, WorkflowInstance instance, FactValue? workspace) =>
-        new(run, item, workspace, Literal(step, "bundle"), Literal(step, "subject"), instance.Facts.TryGetValue(FactKey.From("fact:lensQueue"), out var queue) ? queue : null, instance.Facts, Payloads(step));
-
-    // The payload facts this Step writes (the recipe types them), so its brief states their shape.
-    private IReadOnlyList<FactKey> Payloads(StepUse step) =>
-        _recipe!.Catalog.Find(step.Use) is { } descriptor ? PayloadFacts.OutputsOf(_recipe.Recipe, descriptor) : [];   // why: the loop runs only after RunAsync set _recipe
-
-    private static string? Literal(StepUse step, string name) =>
-        step.With.TryGetValue(name, out var value) && value.Literal is { ValueKind: System.Text.Json.JsonValueKind.String } text ? text.GetString() : null;
-
     private static async Task<AgentLaunched> Launching(Task<AgentLaunched> launching)
     {
         try

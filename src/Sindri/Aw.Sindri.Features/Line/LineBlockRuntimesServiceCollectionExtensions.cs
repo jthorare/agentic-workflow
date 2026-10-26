@@ -23,5 +23,6 @@ internal static class LineBlockRuntimesServiceCollectionExtensions
         .AddBlockRuntime<PlanIntakeStep>()
         .AddBlockRuntime<PlanQuestionsStep>()
         .AddBlockRuntime<PlanSettleStep>()
-        .AddSingleton<IAgentStepInstructions, HoldoutAuthorInstructions>();
+        .AddSingleton<IAgentStepInstructions, HoldoutAuthorInstructions>()
+        .AddSingleton<IAgentStepInstructions, HoldoutRunInstructions>();
 }

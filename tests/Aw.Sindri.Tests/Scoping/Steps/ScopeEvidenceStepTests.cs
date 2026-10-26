@@ -1,7 +1,9 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Packets;
+using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.Scoping;
@@ -29,11 +31,26 @@ public sealed class ScopeEvidenceStepTests
         return facts;
     }
 
-    private static Task<BlockStepResult> Run(IRunArea area, ScopingFacts facts, IPackets? packets = null)
+    // The agent runs the gold facts' runs describe, as the ledger would hold them.
+    private static readonly ScopeRunRecord[] _records =
+    [
+        new("step.scope.draft", "draft", 1, "agent", "fixture-writer-model", Requested: null, "fixture", 41200, "LCH-1"),
+        new("step.scope.challenge", "challenge", 1, "agent", "fixture-challenger-model", Requested: null, "fixture", 18800, "LCH-2"),
+    ];
+
+    private static FakeScopeRunRecords Records() => new FakeScopeRunRecords().With(ScopingStepContexts.Address, _records);
+
+    private static ScopingFacts WithRuns(ScopingFacts facts)
+    {
+        facts["runs"] = ScopeRunFacts.Of(_records).ToJsonString();
+        return facts;
+    }
+
+    private static Task<BlockStepResult> Run(IRunArea area, ScopingFacts facts, IPackets? packets = null, IScopeRunRecords? runs = null)
     {
         var diff = new FakeRunDiff();
         diff.Add("/work/web", Head);
-        return new ScopeEvidenceStep(area, packets ?? new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), diff)
+        return new ScopeEvidenceStep(area, packets ?? new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), diff, runs ?? Records())
             .Run(ScopingStepContexts.Of("step.scope.evidence", facts) with { Repo = _web }, Token).AsTask();
     }
 
@@ -45,8 +62,8 @@ public sealed class ScopeEvidenceStepTests
         var result = await Run(area, Gold());
 
         Assert.Equal("complete", result.Result!.Outcome.Value);
-        Assert.Equal(["acceptance", "coverage", "openQuestions", "recommendation", "scopeMap", "scopePacket"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
-        var expected = ScopePacket.Build(new ScopeFacts(WithHead(Gold())));
+        Assert.Equal(["acceptance", "coverage", "openQuestions", "recommendation", "runs", "scopeMap", "scopePacket"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
+        var expected = ScopePacket.Build(new ScopeFacts(WithRuns(WithHead(Gold()))));
         Assert.NotEmpty(expected);
         foreach (var file in expected)
         {
@@ -58,7 +75,7 @@ public sealed class ScopeEvidenceStepTests
     private static ScopingFacts FoundLast() => Gold().Edit("challenge", n => n["rounds"]![1]!["verdict"] = "found");
 
     private static Task<BlockStepResult> RunWithCap(ScopingFacts facts, int? cap) =>
-        new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), new FakeRunDiff())
+        new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), new FakeRunDiff(), Records())
             .Run(ScopingStepContexts.Of("step.scope.evidence", facts, loopCaps: cap is { } n ? new Dictionary<string, int>(StringComparer.Ordinal) { ["challenge"] = n } : null), Token).AsTask();
 
     [Fact]
@@ -168,10 +185,62 @@ public sealed class ScopeEvidenceStepTests
     [Fact]
     public async Task A_checkout_with_no_head_fails_the_Step()
     {
-        var result = await new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), new FakeRunDiff())
+        var result = await new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), new FakeRunDiff(), Records())
             .Run(ScopingStepContexts.Of("step.scope.evidence", Gold()) with { Repo = _web }, Token);
 
         Assert.Null(result.Result);
         Assert.Contains("/work/web", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Complete_fills_fact_runs_from_the_run_records_of_the_instance_and_the_packets_runs_json_holds_them()
+    {
+        var area = new InMemoryRunArea();
+        var records = Records();
+
+        var result = await Run(area, Gold(), runs: records);
+
+        Assert.Equal("complete", result.Result!.Outcome.Value);
+        Assert.Equal([ScopingStepContexts.Address], records.Calls.Select(static c => c.Value), StringComparer.Ordinal);
+        var runs = JsonNode.Parse(result.Result.Outputs[FactKey.From("fact:runs")].GetRawText())!.AsArray();
+        Assert.Equal(["step.scope.draft", "step.scope.challenge"], runs.Select(static r => (string?)r!["step"]), StringComparer.Ordinal);
+        Assert.Equal("fixture-challenger-model", (string?)runs[1]!["model"]);
+        var file = JsonNode.Parse((await area.Read(ScopingStepContexts.Address, "scope-packet/runs.json", Token)).Value)!;
+        Assert.Equal(2, file["runs"]!.AsArray().Count);
+    }
+
+    [Fact]
+    public async Task A_run_record_port_that_fails_fails_the_Step()
+    {
+        var result = await Run(new InMemoryRunArea(), Gold(), runs: new FakeScopeRunRecords(SindriErrors.InvalidInput.With("the ledger can't be read")));
+
+        Assert.Null(result.Result);
+        Assert.Contains("the ledger can't be read", result.Failure, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task With_no_repo_and_no_records_the_Step_still_completes_with_an_empty_fact_runs_and_the_model_checks_warn()
+    {
+        var result = await new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts(), new FakeRunDiff(), new FakeScopeRunRecords())
+            .Run(ScopingStepContexts.Of("step.scope.evidence", Gold()), Token);
+
+        Assert.Equal("complete", result.Result!.Outcome.Value);
+        Assert.Empty(JsonNode.Parse(result.Result.Outputs[FactKey.From("fact:runs")].GetRawText())!.AsArray());
+        var checks = ScopePacketChecks.Run(new ScopeFacts(Gold().Edit("runs", n => n["runs"]!.AsArray().Clear())), ScopeStage.Evidence);
+        Assert.Equal(ScopeRuleStatus.Warn, checks.Rules.Single(r => r.Rule == "SCP-CHAL-002").Status);
+    }
+
+    [Fact]
+    public async Task Two_agent_runs_on_one_requested_model_hold_the_evidence_back_naming_SCP_CHAL_002()
+    {
+        var same = new FakeScopeRunRecords().With(
+            ScopingStepContexts.Address,
+            new ScopeRunRecord("step.scope.draft", "draft", 1, "agent", "m-1", "m-1", "fixture", 1, "LCH-1"),
+            new ScopeRunRecord("step.scope.challenge", "challenge", 1, "agent", "m-1", "m-1", "fixture", 1, "LCH-2"));
+
+        var result = await Run(new InMemoryRunArea(), Gold(), runs: same);
+
+        Assert.Equal("incomplete", result.Result!.Outcome.Value);
+        Assert.Contains("SCP-CHAL-002", result.Result.Outputs[FactKey.From("fact:findings")].GetRawText(), StringComparison.Ordinal);
     }
 }

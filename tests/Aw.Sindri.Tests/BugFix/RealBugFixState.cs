@@ -29,7 +29,7 @@ internal sealed class RealBugFixState : IDisposable
         Directory.CreateDirectory(Path.Combine(Repo, "src"));
         Directory.CreateDirectory(Path.Combine(Repo, "tests"));
         File.WriteAllText(Path.Combine(Repo, "src", "app.txt"), "drop cookie\n");
-        File.WriteAllText(Path.Combine(Repo, Check), "grep -q keep src/app.txt\n");
+        File.WriteAllText(Path.Combine(Repo, Check), "echo checking\ngrep -q keep src/app.txt\n");
         _ = Git(Repo, "init", "-q", "-b", "main");
         _ = Git(Repo, "add", "-A");
         _ = Git(Repo, "commit", "-q", "-m", "base");

@@ -101,8 +101,13 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
         {
             StepArgv = checks.StepArgv(loaded.Profile, changes),
             Unreadable = latest.IsError ? latest.Error.Message : null,
+            UnlistedChange = IsUnlistedChange(previous, changes, loaded),
         };
     }
+
+    /// <summary>The hash moved but the diff lists nothing: a change in a key the diff doesn't cover (#1147).</summary>
+    private static bool IsUnlistedChange(LoadedProfile? previous, IReadOnlyList<string> changes, LoadedProfile loaded) =>
+        previous is not null && changes.Count == 0 && previous.Hash != loaded.Hash;
 
     /// <summary>An approval that is there but whose content this build can't take (SND-PROFILE-005): the preview still shows the live hash and the diff against nothing, and says so.</summary>
     private static bool IsUnreadable(Error error) => string.Equals(error.Code, SindriErrors.ProfileNotApproved.Code, StringComparison.Ordinal);

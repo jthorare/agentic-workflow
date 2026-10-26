@@ -6,6 +6,7 @@ fail  profile           not approved (fix: sindri profile approve)
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:roles     not configured: no approved profile
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no approved profile, so no map to publish
 ok    context:onyx      not configured (no profile is approved)
@@ -209,6 +210,7 @@ ok    profile           approved, hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no map yet, so nothing to publish
 ok    context:onyx      not configured (the approved profile names no context.sources.onyx)

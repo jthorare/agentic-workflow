@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.BugFix.Core.Model;
 using Aw.BugFix.Core.Ports;
 
@@ -6,8 +7,8 @@ namespace Aw.BugFix.Infrastructure;
 /// <summary>
 /// Runs a test command as the program file argv[0] resolves to: started by the path the lookup found (so a venv's
 /// python or an argv[0]-dispatched shim keeps its name) and hashed by that path's real file. It runs with the allowed
-/// environment variables only, its output streamed to the log. A command that can't start or hits the time limit
-/// didn't run to a verdict. At the limit, and after a normal exit, every process it started (a daemonized one too) is stopped:
+/// environment variables only, its output streamed to the log. A command that can't start, hits the time limit, is
+/// killed by a signal or leaves an empty log didn't run to a verdict. At the limit, and after a normal exit, every process it started (a daemonized one too) is stopped:
 /// SIGTERM, a grace period, then SIGKILL.
 /// </summary>
 internal sealed class ProcessCheckRunner(BugFixSettings settings, IFiles files) : ICheckRunner
@@ -24,8 +25,21 @@ internal sealed class ProcessCheckRunner(BugFixSettings settings, IFiles files) 
         var start = Processes.Start(found, command.Skip(1), directory);
         CheckEnvironment.Only(start.Environment, environment);
         var (code, ran) = Processes.ToLog(start, settings.CheckTimeout, settings.CheckGrace, log);
+        if (ran && NoVerdict(code, log) is { } why)
+        {
+            File.AppendAllText(log, $"bugfix-state: {why}; counted as not run\n");
+            ran = false;
+        }
+
         return new CheckExit(code, ran, files.Sha256(real).Match(static s => s, static _ => string.Empty), CheckEnvironment.Digests(settings.FrozenVariables, digestKey));
     }
+
+    // A command that died on a signal (the shell reports it as 128 plus the signal) or wrote nothing (a check stuck behind a lock
+    // and cut off, say) never reached a verdict, whatever code it left.
+    private static string? NoVerdict(int code, string log) =>
+        code is > 128 and <= 128 + 64 ? string.Create(CultureInfo.InvariantCulture, $"the command was killed by signal {code - 128}")
+        : new FileInfo(log).Length == 0 ? "the command left an empty log"
+        : null;
 
     // The path argv[0] names, as the OS would look it up from the run's directory, links not followed: relative to the
     // directory when it contains '/', otherwise the first PATH entry that has it.

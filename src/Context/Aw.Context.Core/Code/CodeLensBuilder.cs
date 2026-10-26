@@ -1,6 +1,7 @@
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Walks;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Code;
@@ -13,12 +14,20 @@ public static class CodeLensBuilder
     /// <param name="graph">The graph a caller may see: overrides applied, a session's scope already cut.</param>
     /// <param name="anchors">The anchors (keys, aliases or labels).</param>
     /// <returns>The view; SND-CONTEXT-003 when none resolves, SND-CONTEXT-037 for an ambiguous name.</returns>
-    public static Result<CodeView> Build(LensBasis basis, GraphSnapshot graph, IReadOnlyList<string> anchors)
+    public static Result<CodeView> Build(LensBasis basis, GraphSnapshot graph, IReadOnlyList<string> anchors) => Build(basis, graph, anchors, WalkOptions.Serial);
+
+    /// <summary>Builds the view without lexical data, running the per-anchor walks over <paramref name="walk"/>'s cores; the answer is the same at any degree.</summary>
+    /// <param name="basis">The map read and when.</param>
+    /// <param name="graph">The graph a caller may see: overrides applied, a session's scope already cut.</param>
+    /// <param name="anchors">The anchors (keys, aliases or labels).</param>
+    /// <param name="walk">How many anchors' walks may run at once.</param>
+    /// <returns>The view; SND-CONTEXT-003 when none resolves, SND-CONTEXT-037 for an ambiguous name.</returns>
+    public static Result<CodeView> Build(LensBasis basis, GraphSnapshot graph, IReadOnlyList<string> anchors, WalkOptions walk)
     {
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(anchors);
-        var resolved = AnchorSet.Resolve(graph, [.. anchors.Distinct(StringComparer.Ordinal)], depth: 0);
+        var resolved = AnchorSet.Resolve(graph, [.. anchors.Distinct(StringComparer.Ordinal)], depth: 0, options: null, walk);
         if (resolved.IsError)
         {
             return resolved.Error;
@@ -26,10 +35,8 @@ public static class CodeLensBuilder
 
         var (scopes, missing) = resolved.Value;
         var reach = new CodeReach(graph, scopes);
-        var files = CodeFiles.Of(reach);
-        var tests = CodeTests.Of(reach);
         var things = CodeThings.Of(reach);
-        var (linkedFiles, linkedTests) = CodeFiles.Link(files, tests);
+        var (linkedFiles, linkedTests) = CodeFiles.Link(CodeFiles.Of(reach), CodeTests.Of(reach));
         var repoOf = NodeRepos.Index(graph, basis.MapRepo);
         var listedFiles = linkedFiles.Select(f => f with { Repo = repoOf.GetValueOrDefault("code:" + f.Path) }).ToList();
         var listedTests = linkedTests.Select(t => t with { Repo = repoOf.GetValueOrDefault("code:" + t.Path) }).ToList();
@@ -50,7 +57,7 @@ public static class CodeLensBuilder
             new CodeLensTruncated(Files: false, Tests: false, Things: false, SchemaFiles: false, SearchedFiles: false),
             [],
             CodeEdges.Of(graph, reach.Union, listedFiles, listedTests, listedThings),
-            AnchorSet.Coverage(basis, graph, scopes, reach.Union),
+            AnchorSet.Coverage(basis, graph, scopes, reach.Union, walk),
             Searched(basis, scopes, listedFiles.Count > 0 || listedTests.Count > 0 || listedThings.Count > 0),
             [],
             new Dictionary<string, Citation>(StringComparer.Ordinal));

@@ -23,18 +23,18 @@ public sealed class ConnectRetryTests
     }
 
     private Task<Result<int>> Run(Func<int, Result<int>> answer) =>
-        _clock.Drive(ConnectRetry.Run(() => Task.FromResult(answer(++_attempts)), _clock, Notice, Token));
+        _clock.Drive(ConnectRetry.Run(() => Task.FromResult(answer(++_attempts)), ConnectRetry.Default, _clock, Notice, Token));
 
     [Fact]
-    public async Task A_control_plane_that_never_comes_back_is_asked_for_two_minutes_and_the_last_not_running_comes_back()
+    public async Task A_control_plane_that_never_comes_back_is_asked_for_the_whole_window_and_the_last_not_running_comes_back()
     {
         var started = _clock.GetUtcNow();
 
         var result = await Run(_ => SindriErrors.NotRunning.With("no control plane is recorded"));
 
         Assert.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
-        Assert.Equal(ConnectRetry.Window, _clock.GetUtcNow() - started);
-        Assert.Equal(12, _attempts);   // at 0, 1, 3, 7, 15, 30, 45, 60, 75, 90, 105 and 120 s
+        Assert.Equal(ConnectRetry.Default, _clock.GetUtcNow() - started);
+        Assert.Equal(64, _attempts);   // at 0, 1, 3, 7, 15 s, then every 15 s up to 900 s
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public sealed class ConnectRetryTests
     {
         _ = await Run(_ => SindriErrors.NotRunning.With("down"));
 
-        Assert.Equal(11, _notices.Count);
-        Assert.Equal([1, 2, 4, 8, 15, 15, 15, 15, 15, 15, 15], _notices.Select(static n => int.Parse(n.Split("retrying in ")[1].Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture)));
+        Assert.Equal(63, _notices.Count);
+        Assert.Equal([1, 2, 4, 8, .. Enumerable.Repeat(15, 59)], _notices.Select(static n => int.Parse(n.Split("retrying in ")[1].Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture)));
         Assert.All(_notices, static n => Assert.StartsWith("SND-API-001 ", n, StringComparison.Ordinal));
     }
 

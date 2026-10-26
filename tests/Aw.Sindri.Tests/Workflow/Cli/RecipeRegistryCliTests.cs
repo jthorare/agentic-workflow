@@ -1,16 +1,12 @@
 using System.Text.Json;
 using Aw.Kernel;
-using Aw.Kernel.Services;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Workflow.Registry;
-using Aw.Sindri.Features.StartProcess;
-using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Ledger;
-using Aw.Sindri.Tests.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -66,7 +62,8 @@ public sealed class RecipeRegistryCliTests : IDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         await using var app = await Started(ct);
-        _ = await Run(app, ct, "register", await Shipped("workflow.step.yaml", ct));
+        var registered = await Run(app, ct, "register", await Shipped("workflow.step.yaml", ct));
+        Assert.True(registered == 0, _error.ToString());
         _ = Take();
 
         var code = await Run(app, ct, "list", "--json");
@@ -82,7 +79,8 @@ public sealed class RecipeRegistryCliTests : IDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         await using var app = await Started(ct);
-        _ = await Run(app, ct, "register", await Shipped("workflow.step.yaml", ct));
+        var registered = await Run(app, ct, "register", await Shipped("workflow.step.yaml", ct));
+        Assert.True(registered == 0, _error.ToString());
         var hash = (await app.Services.GetRequiredService<IRecipeStore>().All(ct)).Value.Single().Hash;
         _ = Take();
         var name = $"workflow.step@{hash.Display}";
@@ -113,7 +111,8 @@ public sealed class RecipeRegistryCliTests : IDisposable
         await using var app = await Started(ct);
         var file = Path.Combine(_home.Path, "triage.yaml");
         await File.WriteAllTextAsync(file, ShippedRecipes.Read("dev/triage-three-state.yaml"), ct);
-        _ = await Run(app, ct, "register", file);
+        var registered = await Run(app, ct, "register", file);
+        Assert.True(registered == 0, _error.ToString());
         var hash = (await app.Services.GetRequiredService<IRecipeStore>().All(ct)).Value.Single().Hash;
         _ = Take();
 
@@ -198,21 +197,5 @@ public sealed class RecipeRegistryCliTests : IDisposable
     }
 
     /// <summary>A control plane in the temp home, as CliEndToEndTests starts it (Temporal faked): the lease held, this start's token minted and held, its endpoint recorded.</summary>
-    private async Task<WebApplication> Started(CancellationToken ct)
-    {
-        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "profile"));
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), "schemaVersion: 1\nuser: thor\n", ct);
-        var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);   // the registry verbs don't use Temporal: a real dev server only slows the start under load
-        _ = Pipeline.Configure(app);
-        Core.Lease.LeaseGrant grant;
-        await using (var scope = app.Services.CreateAsyncScope())
-        {
-            grant = (await scope.ServiceProvider.GetRequiredService<IService<StartProcessRequest, StartProcessResponse>>().Handle(new StartProcessRequest(), ct)).Value.Grant;
-        }
-
-        app.Services.GetRequiredService<HeldHumanToken>().Hold((await app.Services.GetRequiredService<IHumanTokenStore>().Mint(ct)).Value);
-        await app.StartAsync(ct);
-        _ = await app.Services.GetRequiredService<IEndpointFile>().Write(new ControlEndpoint(new Uri(app.Urls.First()), grant.Holder.Pid, grant.Epoch), ct);
-        return app;
-    }
+    private Task<WebApplication> Started(CancellationToken ct) => CliHost.Started(_home, ct);
 }

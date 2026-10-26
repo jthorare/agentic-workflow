@@ -38,12 +38,13 @@ public sealed class InMemoryRepos : IGit, IFiles
 
     /// <summary>Commits every file of the work tree (git add -A; git commit).</summary>
     /// <param name="root">The work tree.</param>
+    /// <param name="message">The commit message.</param>
     /// <returns>The new commit.</returns>
-    public string Commit(string root)
+    public string Commit(string root, string message = "")
     {
         var tree = _worktrees[root];
         var sha = (++_next).ToString("x40", CultureInfo.InvariantCulture);
-        _commits[sha] = new Snapshot(tree.Head, Working(root));
+        _commits[sha] = new Snapshot(tree.Head, Working(root), message);
         _worktrees[root] = tree with { Head = sha };
         return sha;
     }
@@ -183,6 +184,24 @@ public sealed class InMemoryRepos : IGit, IFiles
             string.Create(CultureInfo.InvariantCulture, $" {files.Count} files changed"),
             string.Concat(files.Select(f => $"diff --git a/{f} b/{f}\n+{_commits[to].Files.GetValueOrDefault(f, string.Empty)}\n"))));
 
+    /// <inheritdoc/>
+    /// <remarks>Main is the work tree on branch main: its commits since <paramref name="baseline"/>, oldest first.</remarks>
+    public Result<IReadOnlyList<MainCommit>> MainCommits(string directory, string baseline, string candidate)
+    {
+        var log = new List<MainCommit>();
+        var main = _worktrees.Values.FirstOrDefault(static t => t.Branch == "main");
+        for (var at = main?.Head ?? string.Empty; at.Length > 0 && !IsAncestor(directory, at, baseline).Value; at = _commits[at].Parent)
+        {
+            log.Insert(0, new MainCommit(at, _commits[at].Parent, _commits[at].Message));
+        }
+
+        return Results.Success<IReadOnlyList<MainCommit>>(log);
+    }
+
+    /// <inheritdoc/>
+    public Result<string> FileAt(string directory, string commit, string path) =>
+        _commits[commit].Files.TryGetValue(path, out var text) ? text : BugFixErrors.GitFailed.With($"fatal: path '{path}' does not exist in '{commit}'");
+
     // Like realpath(3): each link resolved before the next component, ".." applied to the resolved directory.
     private string? Resolve(string path, int budget)
     {
@@ -224,7 +243,7 @@ public sealed class InMemoryRepos : IGit, IFiles
         _files.Where(kv => kv.Key.StartsWith(root + "/", StringComparison.Ordinal))
             .ToDictionary(kv => kv.Key[(root.Length + 1)..], kv => kv.Value, StringComparer.Ordinal);
 
-    private sealed record Snapshot(string Parent, IReadOnlyDictionary<string, string> Files);
+    private sealed record Snapshot(string Parent, IReadOnlyDictionary<string, string> Files, string Message);
 
     private sealed record Worktree(string Root, string Branch, string Head);
 }

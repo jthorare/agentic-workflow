@@ -3415,13 +3415,15 @@ Aw.Sindri.Features.GetStatus.SessionStatus
 Aw.Sindri.Features.GetStatus.SessionStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.SessionStatus!
 Aw.Sindri.Features.GetStatus.SessionStatus.Asking.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Asking.init -> void
-Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Asking, out int Problems) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Asking, out int Problems, out int Running) -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Equals(Aw.Sindri.Features.GetStatus.SessionStatus? other) -> bool
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
-Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
+Aw.Sindri.Features.GetStatus.SessionStatus.Running.init -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems, int Running) -> void
 Aw.Sindri.Features.ListSessions.EndedSessionRow
 Aw.Sindri.Features.ListSessions.EndedSessionRow.<Clone>$() -> Aw.Sindri.Features.ListSessions.EndedSessionRow!
 Aw.Sindri.Features.ListSessions.EndedSessionRow.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRow! Session, out System.DateTimeOffset EndedAt, out System.Collections.Generic.IReadOnlyList<string!>? Resume) -> void
@@ -4835,3 +4837,5 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.get -> string?
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.init -> void
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.get -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.init -> void

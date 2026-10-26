@@ -1,6 +1,7 @@
 using Aw.Judge.Core.Evaluation;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Questions;
+using Aw.Judge.Testing;
 using Aw.Kernel.Testing;
 using static Aw.Judge.Tests.Questions.QuestionRun;
 
@@ -54,6 +55,84 @@ public sealed class ResolutionCheckTests
         Assert.Contains("+fix </diff-text>", prompt, StringComparison.Ordinal);
         Assert.Contains("A regression test failed before the fix and passes after it: draft round trip", prompt, StringComparison.Ordinal);
     }
+
+    [Theory]
+    [InlineData("partial")]
+    [InlineData("unresolved")]
+    public async Task A_partial_or_unresolved_answer_without_reasons_is_not_a_decision(string decision)
+    {
+        var cli = Cli(ContentClass.Brief).Decides(decision, 0.8);
+
+        var outcome = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(), cli);
+
+        Assert.IsNotType<DecidedOutcome>(outcome);
+    }
+
+    [Fact]
+    public async Task A_resolved_answer_without_reasons_is_still_a_decision()
+    {
+        var outcome = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(), Cli(ContentClass.Brief).Decides("resolved", 1));
+
+        _ = AssertModel("resolved", outcome);
+    }
+
+    [Fact]
+    public async Task An_answer_without_reasons_falls_through_to_the_next_provider()
+    {
+        var reasons = new System.Text.Json.Nodes.JsonObject { ["reasons"] = new System.Text.Json.Nodes.JsonArray("the list view still drops it") };
+        var jev = new ScriptedProvider(ProviderName.Jev, ContentClass.Brief).Decides("partial", 0.8);
+        var cli = Cli(ContentClass.Brief).Returns(new ProviderDecided("partial", 0.9, "model") { Extra = reasons });
+
+        var outcome = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(), jev, cli);
+
+        Assert.Equal("""{"reasons":["the list view still drops it"]}""", AssertModel("partial", outcome).Extra?.ToJsonString());
+    }
+
+    [Fact]
+    public async Task A_diff_over_the_cap_drops_whole_files_with_src_kept_first_and_names_what_it_dropped()
+    {
+        var tests = FileDiff("tests/AppTests.cs", 'T', UntrustedText.ResolutionDiffCap - 1_000);
+        var source = FileDiff("src/App.cs", 'S', UntrustedText.ResolutionDiffCap - 1_000);
+        var cli = Cli(ContentClass.Brief).Decides("resolved", 1);
+
+        _ = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(diff: tests + source), cli);
+
+        var prompt = Assert.Single(cli.Calls).Question.Prompt;
+        Assert.Contains(new string('S', 500), prompt, StringComparison.Ordinal);
+        Assert.DoesNotContain(new string('T', 500), prompt, StringComparison.Ordinal);
+        Assert.Contains("omitted", prompt, StringComparison.Ordinal);
+        Assert.Contains("tests/AppTests.cs", prompt[prompt.IndexOf("omitted", StringComparison.Ordinal)..], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_fix_of_about_25000_characters_reaches_the_judge_whole()
+    {
+        var diff = FileDiff("src/App.cs", 'S', 15_000) + FileDiff("tests/AppTests.cs", 'T', 10_000);
+        var cli = Cli(ContentClass.Brief).Decides("resolved", 1);
+
+        _ = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(diff: diff), cli);
+
+        var prompt = Assert.Single(cli.Calls).Question.Prompt;
+        Assert.Contains(new string('S', 15_000), prompt, StringComparison.Ordinal);
+        Assert.Contains(new string('T', 10_000), prompt, StringComparison.Ordinal);
+        Assert.DoesNotContain("omitted", prompt, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_diff_under_the_cap_is_sent_whole()
+    {
+        var diff = FileDiff("tests/AppTests.cs", 'T', 2_000) + FileDiff("src/App.cs", 'S', 2_000);
+        var cli = Cli(ContentClass.Brief).Decides("resolved", 1);
+
+        _ = await new QuestionRun().Ask(ResolutionCheckQuestion.Definition, Input(diff: diff), cli);
+
+        var prompt = Assert.Single(cli.Calls).Question.Prompt;
+        Assert.Contains(new string('T', 2_000), prompt, StringComparison.Ordinal);
+        Assert.DoesNotContain("omitted", prompt, StringComparison.Ordinal);
+    }
+
+    private static string FileDiff(string path, char fill, int size) =>
+        $"diff --git a/{path} b/{path}\n--- a/{path}\n+++ b/{path}\n@@ -1 +1 @@\n+{new string(fill, size)}\n";
 
     [Fact]
     public async Task Without_a_diff_the_prompt_has_no_diff_block_and_an_unsure_model_escalates()

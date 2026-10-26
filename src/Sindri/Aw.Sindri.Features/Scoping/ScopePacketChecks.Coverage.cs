@@ -159,7 +159,7 @@ internal static partial class ScopePacketChecks
         }
     }
 
-    /// <summary>SCP-COV-003: every found node at depth 0 or 1 is in the map or listed under excluded.</summary>
+    /// <summary>SCP-COV-003: every found node near an anchor (an anchor's own implementers and the nodes one edge away) is in the map or listed under excluded, by item or by glob.</summary>
     private static void LensItemsMapped(ScopeContext c, RuleSink s)
     {
         if (!s.Need("lenses", "scopeMap"))
@@ -170,7 +170,9 @@ internal static partial class ScopePacketChecks
         var surfaces = ScopeJson.Items(c.Facts["scopeMap"], "surfaces").ToList();
         var keys = surfaces.Select(static x => ScopeJson.Str(x, "key")).OfType<string>().ToHashSet(StringComparer.Ordinal);
         var cited = surfaces.SelectMany(static x => ScopeJson.Strings(x, "citations")).ToHashSet(StringComparer.Ordinal);
-        var excluded = ScopeJson.Items(c.Facts["scopeMap"], "excluded").Select(static x => ScopeJson.Str(x, "item")).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        var entries = ScopeJson.Items(c.Facts["scopeMap"], "excluded").ToList();
+        var excluded = entries.Select(static x => ScopeJson.Str(x, "item")).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        var globs = entries.Select(static x => ScopeJson.Str(x, "glob")).OfType<string>().ToList();
         foreach (var lens in ScopeRules.Lenses)
         {
             var entry = ScopeJson.Obj(c.Facts["lenses"], lens);
@@ -178,23 +180,19 @@ internal static partial class ScopePacketChecks
             {
                 var key = ScopeJson.Str(node, "key") ?? "?";
                 var item = ScopeJson.Str(node, "lensItem") ?? "?";
-                if (!keys.Contains(key) && !cited.Contains(item) && !excluded.Contains(key) && !excluded.Contains(item))
+                if (!Accounted(key, item, keys, cited) && !excluded.Contains(key) && !excluded.Contains(item) && !ScopeGlob.MatchesAny(globs, key))
                 {
-                    s.Fail(key, $"{item} ({key}) is at depth 0 or 1 of the {lens} lens and is neither in the map nor excluded", "Add it to the map, or list it under excluded with a one-line reason.");
+                    s.Fail(key, $"{item} ({key}) is at depth 0 or 1 of the {lens} lens and is neither in the map nor excluded", "Add it to the map, or list it under excluded with a one-line reason (an item, or a glob over its path).");
                 }
             }
         }
     }
 
-    /// <summary>The nodes of a lens at depth 0 or 1: all of them for a lens that followed at most one edge, else those within one edge of an anchor.</summary>
+    private static bool Accounted(string key, string item, HashSet<string> keys, HashSet<string> cited) => keys.Contains(key) || cited.Contains(item);
+
+    /// <summary>The nodes of a lens at depth 0 or 1: the anchors, the nodes with an edge to or from an anchor (their own implementers at depth 0, the nodes one edge away at depth 1), and not a node the context engine demoted.</summary>
     private static IEnumerable<JsonNode> NearNodes(JsonObject? entry)
     {
-        var nodes = ScopeJson.Items(entry, "nodes").ToList();
-        if ((ScopeJson.Int(entry, "depth") ?? 0) <= 1)
-        {
-            return nodes;
-        }
-
         var anchors = ScopeJson.Strings(entry, "anchors").ToHashSet(StringComparer.Ordinal);
         var near = new HashSet<string>(anchors, StringComparer.Ordinal);
         foreach (var edge in ScopeJson.Items(entry, "edges"))
@@ -212,7 +210,8 @@ internal static partial class ScopePacketChecks
             }
         }
 
-        return nodes.Where(n => near.Contains(ScopeJson.Str(n, "key") ?? string.Empty));
+        // seam: once LensFile carries a demoted flag (the context lane), LensGather copies it onto the node and the filter below skips demoted files
+        return ScopeJson.Items(entry, "nodes").Where(n => near.Contains(ScopeJson.Str(n, "key") ?? string.Empty) && ScopeJson.Bool(n, "demoted") != true);
     }
 
     /// <summary>SCP-COV-004: for a change input, every changed file is mapped or listed under unmapped.</summary>

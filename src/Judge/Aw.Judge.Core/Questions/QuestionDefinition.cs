@@ -54,6 +54,20 @@ public sealed record QuestionDefinition<TInput>
     /// <summary>Whether the outcome carries the decision id (escalations) and the providers' probabilities; only choose sets it, so the hook questions' envelopes stay as they are.</summary>
     public bool ReportsTrace { get; init; }
 
+    /// <summary>The outputs that only count with at least one non-blank string under 'reasons' (a bare classification of them explains nothing); a provider's answer without is skipped like a failed one.</summary>
+    public IReadOnlySet<string>? ReasonedOutputs { get; init; }
+
+    /// <summary>Whether <paramref name="decided"/> is one of the <see cref="ReasonedOutputs"/> and carries no reason.</summary>
+    /// <param name="decided">A provider's answer.</param>
+    /// <returns>True when it needs reasons and has none.</returns>
+    public bool LacksReasons(ProviderDecided decided)
+    {
+        ArgumentNullException.ThrowIfNull(decided);
+        return ReasonedOutputs?.Contains(decided.Decision) == true
+            && !(decided.Extra?[ResolutionCheckQuestion.Reasons] is JsonArray reasons
+                && reasons.Any(static r => r is JsonValue value && value.TryGetValue<string>(out var text) && !string.IsNullOrWhiteSpace(text)));
+    }
+
     /// <summary>What a provider sees of this question for one input.</summary>
     /// <param name="input">The validated input.</param>
     /// <returns>The reference.</returns>

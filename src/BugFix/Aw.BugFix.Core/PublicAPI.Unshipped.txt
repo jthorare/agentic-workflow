@@ -318,7 +318,6 @@ Aw.BugFix.Core.Model.ResolutionCheckInput.CheckKind.get -> Aw.BugFix.Core.Model.
 Aw.BugFix.Core.Model.ResolutionCheckInput.CheckKind.init -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSummary.get -> string!
 Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSummary.init -> void
-Aw.BugFix.Core.Model.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.BugFix.Core.Model.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff) -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.Diff.get -> string?
 Aw.BugFix.Core.Model.ResolutionCheckInput.Diff.init -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.DiffStat.get -> string!
@@ -326,7 +325,6 @@ Aw.BugFix.Core.Model.ResolutionCheckInput.DiffStat.init -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.Equals(Aw.BugFix.Core.Model.ResolutionCheckInput? other) -> bool
 Aw.BugFix.Core.Model.ResolutionCheckInput.Expected.get -> string!
 Aw.BugFix.Core.Model.ResolutionCheckInput.Expected.init -> void
-Aw.BugFix.Core.Model.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.BugFix.Core.Model.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff) -> void
 Aw.BugFix.Core.Model.ResolutionCheckInput.RootCause.get -> string!
 Aw.BugFix.Core.Model.ResolutionCheckInput.RootCause.init -> void
 Aw.BugFix.Core.Model.RunOutcome
@@ -479,6 +477,9 @@ Aw.BugFix.Core.Rules.CheckCommandRule
 Aw.BugFix.Core.Rules.CheckLocator
 Aw.BugFix.Core.Rules.CheckLocator.CheckLocator(Aw.BugFix.Core.Ports.IGit! git, Aw.BugFix.Core.Ports.IFiles! files) -> void
 Aw.BugFix.Core.Rules.CheckLocator.Locate(string! directory, string! path) -> Aw.Kernel.Result<Aw.BugFix.Core.Model.CheckFile!>!
+Aw.BugFix.Core.Rules.CheckPin
+Aw.BugFix.Core.Rules.CheckPin.CheckPin(Aw.BugFix.Core.Ports.IGit! git, Aw.BugFix.Core.Ports.IFiles! files, Aw.BugFix.Core.Rules.WorkTree! tree) -> void
+Aw.BugFix.Core.Rules.CheckPin.Verify(Aw.BugFix.Core.Model.FrozenCheck! check, string! baseline, Aw.BugFix.Core.Model.Candidate! candidate, Aw.BugFix.Core.Model.RunRecord! record) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Rules.CommandFilesRule
 Aw.BugFix.Core.Rules.EvidenceRule
 Aw.BugFix.Core.Rules.HandoffParser
@@ -640,7 +641,7 @@ static Aw.BugFix.Core.Model.UiRunRequest.operator !=(Aw.BugFix.Core.Model.UiRunR
 static Aw.BugFix.Core.Model.UiRunRequest.operator ==(Aw.BugFix.Core.Model.UiRunRequest? left, Aw.BugFix.Core.Model.UiRunRequest? right) -> bool
 static Aw.BugFix.Core.Ports.StateStoreExtensions.Locked<T>(this Aw.BugFix.Core.Ports.IStateStore! store, string! directory, System.Func<Aw.Kernel.Result<T>!>! work, bool create = false) -> Aw.Kernel.Result<T>!
 static Aw.BugFix.Core.Rules.AttemptRule.Candidates(Aw.BugFix.Core.Model.FixMode? mode) -> int
-static Aw.BugFix.Core.Rules.AttemptRule.CanStart(Aw.BugFix.Core.Model.BugFixState! state, Aw.BugFix.Core.Model.FixMode mode, bool abandonJudge = false) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+static Aw.BugFix.Core.Rules.AttemptRule.CanStart(Aw.BugFix.Core.Model.BugFixState! state, Aw.BugFix.Core.Model.FixMode mode, bool abandonJudge = false, bool abandonUnrun = false) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 static Aw.BugFix.Core.Rules.CandidateRule.CanRecord(Aw.BugFix.Core.Model.BugFixState! state, string! commit, int? hypothesis) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 static Aw.BugFix.Core.Rules.CheckCommandRule.Refusal(System.Collections.Generic.IReadOnlyList<string!>! command) -> string?
 static Aw.BugFix.Core.Rules.CommandFilesRule.LoaderCandidates(string! path) -> System.Collections.Generic.IEnumerable<string!>!
@@ -676,10 +677,35 @@ static readonly Aw.BugFix.Core.Errors.BugFixErrors.StorageFailed -> Aw.Kernel.Er
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UiEvidenceUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.UnknownCandidate -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.BugFix.Core.Errors.BugFixErrors.WrongPhase -> Aw.Kernel.ErrorDefinition!
-
 Aw.BugFix.Core.Model.BugFixState.Confirmed.get -> bool
 Aw.BugFix.Core.Model.Candidate.JudgeAsks.get -> int
 Aw.BugFix.Core.Model.Candidate.JudgeAsks.init -> void
 Aw.BugFix.Core.Model.Candidate.JudgeEscalations.get -> int
 Aw.BugFix.Core.Model.Candidate.JudgeEscalations.init -> void
 const Aw.BugFix.Core.Model.Candidate.MaxJudgeAsks = 2 -> int
+Aw.BugFix.Core.Model.TicketSource.Github = 3 -> Aw.BugFix.Core.Model.TicketSource
+Aw.BugFix.Core.Ports.IGit.MainCommits(string! directory, string! baseline, string! candidate) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.BugFix.Core.Model.MainCommit!>!>!
+Aw.BugFix.Core.Ports.IGit.FileAt(string! directory, string! commit, string! path) -> Aw.Kernel.Result<string!>!
+Aw.BugFix.Core.Model.GithubIssue
+Aw.BugFix.Core.Model.MainCommit
+Aw.BugFix.Core.Model.MainCommit.<Clone>$() -> Aw.BugFix.Core.Model.MainCommit!
+Aw.BugFix.Core.Model.MainCommit.Deconstruct(out string! Sha, out string! Parent, out string! Message) -> void
+Aw.BugFix.Core.Model.MainCommit.Equals(Aw.BugFix.Core.Model.MainCommit? other) -> bool
+Aw.BugFix.Core.Model.MainCommit.MainCommit(string! Sha, string! Parent, string! Message) -> void
+Aw.BugFix.Core.Model.MainCommit.Message.get -> string!
+Aw.BugFix.Core.Model.MainCommit.Message.init -> void
+Aw.BugFix.Core.Model.MainCommit.Parent.get -> string!
+Aw.BugFix.Core.Model.MainCommit.Parent.init -> void
+Aw.BugFix.Core.Model.MainCommit.Sha.get -> string!
+Aw.BugFix.Core.Model.MainCommit.Sha.init -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSource.get -> string?
+Aw.BugFix.Core.Model.ResolutionCheckInput.CheckSource.init -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.BugFix.Core.Model.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
+Aw.BugFix.Core.Model.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.BugFix.Core.Model.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff, string? CheckSource = null) -> void
+override Aw.BugFix.Core.Model.MainCommit.Equals(object? obj) -> bool
+override Aw.BugFix.Core.Model.MainCommit.GetHashCode() -> int
+override Aw.BugFix.Core.Model.MainCommit.ToString() -> string!
+static Aw.BugFix.Core.Model.GithubIssue.Names(string! message, int number) -> bool
+static Aw.BugFix.Core.Model.GithubIssue.Number(Aw.BugFix.Core.Model.Ticket! ticket) -> int?
+static Aw.BugFix.Core.Model.MainCommit.operator !=(Aw.BugFix.Core.Model.MainCommit? left, Aw.BugFix.Core.Model.MainCommit? right) -> bool
+static Aw.BugFix.Core.Model.MainCommit.operator ==(Aw.BugFix.Core.Model.MainCommit? left, Aw.BugFix.Core.Model.MainCommit? right) -> bool

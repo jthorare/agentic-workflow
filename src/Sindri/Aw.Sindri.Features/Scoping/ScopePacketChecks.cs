@@ -11,10 +11,11 @@ internal static partial class ScopePacketChecks
     /// <param name="facts">The facts.</param>
     /// <param name="stage">Draft runs the draft rules; evidence runs all.</param>
     /// <param name="challengeCap">The running recipe's loops.challenge.cap; <see cref="ScopeRules.DefaultChallengeRounds"/> where no recipe runs the check.</param>
-    internal static ScopingCheckResponse Run(ScopeFacts facts, ScopeStage stage, int challengeCap = ScopeRules.DefaultChallengeRounds)
+    /// <param name="gapCap">The running recipe's loops.gapsearch.cap; <see cref="ScopeRules.DefaultGapRounds"/> where no recipe runs the check.</param>
+    internal static ScopingCheckResponse Run(ScopeFacts facts, ScopeStage stage, int challengeCap = ScopeRules.DefaultChallengeRounds, int gapCap = ScopeRules.DefaultGapRounds)
     {
         ArgumentNullException.ThrowIfNull(facts);
-        var context = new ScopeContext(facts, challengeCap);
+        var context = new ScopeContext(facts, challengeCap, gapCap);
         var rules = new List<ScopeRuleResult>(ScopeRules.All.Count);
         var fails = new List<ScopeFinding>();
         var warns = new List<ScopeFinding>();
@@ -86,6 +87,10 @@ internal static partial class ScopePacketChecks
         ScopeRules.Chal1 => ChallengerDone,
         ScopeRules.Chal2 => ChallengerDiffers,
         ScopeRules.Map1 => Workstreams,
+        ScopeRules.Rel1 => RelevanceKept,
+        ScopeRules.Rel2 => RelevanceJudgeDiffers,
+        ScopeRules.Gap1 => GapSearched,
+        ScopeRules.Gap2 => GapSearcherDiffers,
         _ => throw new InvalidOperationException($"No body for rule {id}."),
     };
 }

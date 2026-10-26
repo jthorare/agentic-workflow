@@ -108,7 +108,7 @@ public sealed class ScopingSlicesTests
         var record = Assert.Single(log.Records).Value;
         Assert.Equal(("scoping", "idea-1", _now, 1), (record.Kind, record.Packet.Value, record.FrozenAt, record.DigestVersion));
         Assert.Null(record.BaseSha);
-        Assert.Equal(12, record.Files.Count);
+        Assert.Equal(14, record.Files.Count);
     }
 
     [Fact, Trait("Lane", "unit")]

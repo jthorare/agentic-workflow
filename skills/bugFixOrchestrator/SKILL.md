@@ -65,7 +65,7 @@ box-wide heavy-job lock (at most two heavy jobs on the box, `AW_HEAVY_SLOTS`).
 
 **Refusals to expect:** a dirty tree or untracked files on `run-test`, `run-ui`, `record-candidate` and
 `record-run`; a check command that is not a plain test runner or that changes the frozen environment
-(`AW_BUGFIX_CHECK_ENV`); a busy state lock (retry after a moment; `AW_BUGFIX_LOCK_WAIT_SECONDS`); and
+(`AW_BUGFIX_CHECK_ENV`, which is frozen at the baseline run: set it before that run, since a name added later is not compared); a busy state lock (retry after a moment; `AW_BUGFIX_LOCK_WAIT_SECONDS`); and
 `DOTNET_SYSTEM_IO_DISABLEFILELOCKING` being set (unset it). A check run times out after 30 minutes
 (`AW_BUGFIX_CHECK_TIMEOUT_SECONDS`); it is stopped with SIGTERM first (its EXIT trap runs), then killed after a 30 s grace
 (`AW_BUGFIX_CHECK_GRACE_SECONDS`), and nothing it started is left running. Report the printed reason and follow it.
@@ -78,7 +78,7 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 1. Linear ID or URL → `mcp: linear/get_issue`. Otherwise use the pasted text.
 2. Write `$STATE/ticket.json`:
    ```json
-   { "source": "linear|text", "id": "ENG-123 or null", "title": "...",
+   { "source": "linear|text|github", "id": "ENG-123, #123 for a GitHub issue, or null", "title": "...",
      "brief": "<title + full description, VERBATIM — do not summarise or edit>",
      "expected": "<the expected behaviour>", "actual": "<the observed behaviour>" }
    ```

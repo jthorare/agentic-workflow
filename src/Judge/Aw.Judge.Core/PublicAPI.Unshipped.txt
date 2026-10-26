@@ -327,6 +327,7 @@ const Aw.Judge.Core.Evaluation.EvaluationReasons.FallbackAfterUndecided = "fallb
 const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidInput = "invalid-input" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProvider = "none" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.NoProviderDecided = "no-provider-decided" -> string!
+const Aw.Judge.Core.Evaluation.EvaluationReasons.NoReasons = "no-reasons" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.OutOfEnum = "out-of-enum" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.PreRule = "pre-rule" -> string!
 const Aw.Judge.Core.Evaluation.EvaluationReasons.QuestionDisabled = "question-disabled" -> string!
@@ -452,6 +453,7 @@ static Aw.Judge.Core.Ids.ToolUseId.TryParse(string? s, System.IFormatProvider? p
 static readonly Aw.Judge.Core.Errors.JudgeErrors.BriefExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Judge.Core.Errors.JudgeErrors.DecisionExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Judge.Core.Errors.JudgeErrors.UnknownDecision -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.UnreadableDecision -> Aw.Kernel.ErrorDefinition!
 Aw.Judge.Core.Health.HealthStatus
 Aw.Judge.Core.Health.HealthStatus.Degraded = 2 -> Aw.Judge.Core.Health.HealthStatus
 Aw.Judge.Core.Health.HealthStatus.Down = 3 -> Aw.Judge.Core.Health.HealthStatus
@@ -663,7 +665,9 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.get -> Aw.Judge.Core.Ques
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.get -> string?
+Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.get -> string?
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.get -> string!
@@ -671,7 +675,7 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Equals(Aw.Judge.Core.Questions.ResolutionCheckInput? other) -> bool
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null) -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckQuestion
@@ -785,6 +789,7 @@ const Aw.Judge.Core.Questions.UiElementRepairQuestion.Repaired = "repaired" -> s
 const Aw.Judge.Core.Questions.UntrustedText.BriefCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.DiffCap = 12000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.FieldCap = 2000 -> int
+const Aw.Judge.Core.Questions.UntrustedText.ResolutionDiffCap = 100000 -> int
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksOff = "looks-off" -> string!
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksRight = "looks-right" -> string!
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.Name = "visual-critique" -> string!
@@ -846,6 +851,7 @@ static Aw.Judge.Core.Questions.UiCandidate.operator ==(Aw.Judge.Core.Questions.U
 static Aw.Judge.Core.Questions.UiElementRepairInput.operator !=(Aw.Judge.Core.Questions.UiElementRepairInput? left, Aw.Judge.Core.Questions.UiElementRepairInput? right) -> bool
 static Aw.Judge.Core.Questions.UiElementRepairInput.operator ==(Aw.Judge.Core.Questions.UiElementRepairInput? left, Aw.Judge.Core.Questions.UiElementRepairInput? right) -> bool
 static Aw.Judge.Core.Questions.UiElementRepairQuestion.Definition.get -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.UiElementRepairInput!>!
+static Aw.Judge.Core.Questions.UntrustedText.CappedDiff(string! diff, int cap) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.Capped(string! text, int cap) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.Neutralized(string! text) -> string!
 static Aw.Judge.Core.Questions.UntrustedText.OneLine(string! text) -> string!
@@ -988,6 +994,9 @@ Aw.Judge.Core.Questions.CheckKind.ApiEvidence = 3 -> Aw.Judge.Core.Questions.Che
 Aw.Judge.Core.Questions.CheckKind.DbEvidence = 4 -> Aw.Judge.Core.Questions.CheckKind
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.AskConfidence.get -> bool
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.AskConfidence.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.LacksReasons(Aw.Judge.Core.Providers.ProviderDecided! decided) -> bool
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReasonedOutputs.get -> System.Collections.Generic.IReadOnlySet<string!>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReasonedOutputs.init -> void
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReportsTrace.get -> bool
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.ReportsTrace.init -> void
 Aw.Judge.Core.Evaluation.QuestionEvaluator.EvaluateChoose(string! rawInput, Aw.Judge.Core.Evaluation.EvaluationContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Evaluation.EvaluationOutcome!>

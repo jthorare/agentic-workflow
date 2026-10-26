@@ -39,6 +39,14 @@ public sealed class ScopingChecksTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_relevance_and_gap_search_files_are_required_files_of_the_fourteen()
+    {
+        var checks = await Run(A.ScopingPacket().Without("relevance.json").Without("gap-search.json").Build());
+
+        Assert.Equal(["file gap-search.json", "file relevance.json"], Failures(checks, ScopingRules.FilesPresent).Select(static c => c.Subject), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task An_entry_the_kind_does_not_list_fails_PKT_SCP_002_with_a_fix()
     {
         var checks = await Run(A.ScopingPacket().With("notes.txt", "x").With("attachments/a.png", "x").Build());
@@ -55,6 +63,8 @@ public sealed class ScopingChecksTests
     [InlineData("size.json", "{\"a\":[null]}")]
     [InlineData("answers.jsonl", "{\"a\":1}\nnot json\n")]
     [InlineData("rounds.jsonl", "[1]\n")]
+    [InlineData("relevance.json", "[]")]
+    [InlineData("gap-search.json", "{")]
     public async Task A_file_that_is_not_the_shape_its_format_names_fails_PKT_SCP_003(string name, string text)
     {
         var checks = await Run(A.ScopingPacket().With(name, text).Build());

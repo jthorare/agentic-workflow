@@ -31,6 +31,20 @@ internal sealed partial class ExpandedStateViewModel
     /// <returns>A task that completes when the answer came.</returns>
     internal Task HandBackAsync() => Send(CommandKind.Handback, Labels.HandBackSent);
 
+    /// <summary>Take over, from the instance's command list: ApplyCommand:takeover, once per press, and the viewer's outcome or the refusal in words. Without a way to send, the line says so.</summary>
+    /// <returns>A task that completes when the answer came.</returns>
+    internal async Task TakeOverAsync()
+    {
+        if (Commander is null || InstanceId is null)
+        {
+            AttachOutcomeLine = Labels.TakeoverNotSent;
+            PendingVoice.Say(Labels.TakeoverNotSent);
+            return;
+        }
+
+        await SendTakeover().ConfigureAwait(true);
+    }
+
     private async Task Send(CommandKind kind, string sent)
     {
         if (Commander is not { } commander || InstanceId is not { } instance)

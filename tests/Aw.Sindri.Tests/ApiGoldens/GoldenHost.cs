@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Features.StartProcess;
@@ -132,6 +133,9 @@ public sealed class GoldenHost : IAsyncDisposable
         {
             // why: an ordinary build embeds the checkout's recipes/sindri (#878), and unapproved shipped recipes would add a setup row to every golden; a test that needs a shipped set replaces this in 'extra'
             _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty));
+            // why: the setup route's Onyx step asks Docker and the loopback ports of the box the test runs on, and a box with a hung Docker would fail every route test (#1121); a test that needs another replaces these in 'extra'
+            _ = services.Replace(ServiceDescriptor.Singleton<IContainerRuntime>(new FakeContainerRuntime(FakeContainerRuntime.Healthy)));
+            _ = services.Replace(ServiceDescriptor.Singleton<IHostProbes>(new FakeHostProbes()));
             _extra?.Invoke(services);
             _ = services.Replace(ServiceDescriptor.Singleton<IIdGenerator>(_ids));
             _ = services.Replace(ServiceDescriptor.Singleton<IProcessProbe>(new FakeProcessProbe(Pid)));

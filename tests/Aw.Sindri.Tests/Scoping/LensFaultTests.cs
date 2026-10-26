@@ -116,7 +116,7 @@ public sealed class LensFaultTests
     {
         var facts = ScopingFacts.Expiry().Without("rounds").Without("scopePacket")
             .Edit("lenses", n => n["code"]!["edges"]!.AsArray().Add(Dangling("surface:route/links-create", "surface:route/nowhere")));
-        var step = new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts(), new FakeRunDiff());
+        var step = new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts(), new FakeRunDiff(), new FakeScopeRunRecords());
 
         var result = await step.Run(ScopingStepContexts.Of("step.scope.evidence", facts), TestContext.Current.CancellationToken);
 

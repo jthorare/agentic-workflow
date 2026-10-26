@@ -32,7 +32,7 @@ public sealed class CompleteRetryTests : IDisposable
     {
         var client = new ControlPlaneClient(_probe, SliceHarness.Json,
             CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), InMemoryHumanTokenStore.WithToken(), _ => ValueTask.FromResult((RepoName?)null)), handler: api);
-        var desk = new RecipeDesk(client, TextReader.Null, _ => Task.FromResult<Kernel.Error?>(++_ensured <= downFor ? SindriErrors.NotRunning.With("the control plane went away") : null),
+        var desk = new RecipeDesk(client, TextReader.Null, _ => Task.FromResult(++_ensured <= downFor ? SindriErrors.NotRunning.With("the control plane went away") : null),
             launched ? static name => name == "AW_SINDRI_LAUNCH_SECRET" ? "a-secret" : null : null);
         await using var services = new ServiceCollection().AddSingleton<TimeProvider>(_clock).BuildServiceProvider();
         return await _clock.Drive(CompleteCommand.Run(_args, desk, services, new Output(_out, _error, SliceHarness.Json), Token));
@@ -56,14 +56,14 @@ public sealed class CompleteRetryTests : IDisposable
     }
 
     [Fact]
-    public async Task A_control_plane_that_stays_down_ends_in_exit_1_after_two_minutes()
+    public async Task A_control_plane_that_stays_down_ends_in_exit_1_after_the_whole_window()
     {
         var started = _clock.GetUtcNow();
 
         var code = await Complete(new RoutedApi(), downFor: int.MaxValue, launched: true);
 
         Assert.Equal(1, code);
-        Assert.Equal(ConnectRetry.Window, _clock.GetUtcNow() - started);
+        Assert.Equal(ConnectRetry.Default, _clock.GetUtcNow() - started);
         Assert.Contains("SND-API-001 the control plane went away", _error.ToString(), StringComparison.Ordinal);
     }
 

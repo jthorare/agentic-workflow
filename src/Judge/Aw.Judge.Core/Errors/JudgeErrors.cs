@@ -26,6 +26,9 @@ public static class JudgeErrors
     /// <summary>AW-JUDGE-010: the --providers flag or AW_JUDGE_PROVIDERS is malformed (a usage error).</summary>
     public static readonly ErrorDefinition ProvidersFlag = new("AW-JUDGE-010", ErrorKind.Invalid, "bad providers allowlist");
 
+    /// <summary>AW-JUDGE-011: a decision row exists but a column can't be read (a timestamp that is not ISO-8601 UTC text, say); 'why' exits 2.</summary>
+    public static readonly ErrorDefinition UnreadableDecision = new("AW-JUDGE-011", ErrorKind.Invalid, "decision row can't be read");
+
     /// <summary>Every Judge error, for ErrorCatalogue.Validate.</summary>
-    public static IReadOnlyList<ErrorDefinition> All { get; } = [Invalid, UnknownDecision, DecisionExists, BriefExists, NoBrief, ConfigMalformed, ProvidersFlag];
+    public static IReadOnlyList<ErrorDefinition> All { get; } = [Invalid, UnknownDecision, DecisionExists, BriefExists, NoBrief, ConfigMalformed, ProvidersFlag, UnreadableDecision];
 }
