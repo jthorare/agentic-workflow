@@ -26,6 +26,11 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>Drops the selection (focus left the list and the sheet is closed): no row keeps its left bar.</summary>
     internal void ClearSelection()
     {
+        if (SelectedKey is null)
+        {
+            return;
+        }
+
         SelectedKey = null;
         Mark();
     }
