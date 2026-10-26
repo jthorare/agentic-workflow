@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Tests.Profile;
@@ -9,6 +10,7 @@ namespace Aw.Sindri.Tests.ApproveProfile;
 /// The bug check for issue 1147: 'profile approve' said "changed since the last approval: nothing" while the hash changed, because the diff lists a fixed set of keys and the hash covers
 /// more (the index keys on a repo and at the top level, context, setup). Every change to a key the canonical JSON carries must show in the diff.
 /// </summary>
+[Lane(TestLane.Unit)]
 public sealed class DiffCoversHashedKeysCheckTests
 {
     private static readonly SindriProfile _approved = new(1, "thor", Repos: [new RepoEntry("web", "/work/web")]);
