@@ -57,6 +57,13 @@ public sealed class ScopingRoundLogTests
         string[] repeat = [again.ToJsonString(), .. lines[(clear + 1)..(first + 1)]];   // check pass .. propose .. evidence incomplete, the same findings again, reported as converged
         var last = JsonNode.Parse(repeat[^1])!;   // why: the eval line is JSON
         last["trigger"]!["outcome"] = "converged";   // why: a trigger line has a trigger object; the evidence Step reports the repeat as its own outcome
+        var carried = JsonNode.Parse("""{"fact:scopeMap":{},"fact:acceptance":{"items":[]},"fact:coverage":{"lenses":[]},"fact:openQuestions":[],"fact:scopePacket":{"hash":"sha256:0"},"fact:runs":[]}""")!.AsObject();   // why: the literal is a JSON object
+        foreach (var (name, value) in carried.ToList())   // a real converged carries the packet the stop reads, beside the findings
+        {
+            _ = carried.Remove(name);
+            last["trigger"]!["outputs"]![name] = value;   // why: the replayed incomplete line has a trigger with outputs
+        }
+
         last["expect"] = JsonNode.Parse("""{"state":"stop"}""");
         repeat[^1] = last.ToJsonString();
         var read = EvalCaseReader.Read("converged", string.Join('\n', [.. lines, .. repeat]), EvalComposition.Options);
