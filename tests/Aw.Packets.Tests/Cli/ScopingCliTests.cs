@@ -56,7 +56,7 @@ public sealed class ScopingCliTests : IDisposable
         using var json = JsonDocument.Parse(jsonOutput);
         Assert.Equal(output.Trim(), json.RootElement.GetProperty("hash").GetString());
         Assert.Equal(("scoping", 1, 1), (json.RootElement.GetProperty("kind").GetString(), json.RootElement.GetProperty("schemaVersion").GetInt32(), json.RootElement.GetProperty("digestVersion").GetInt32()));
-        Assert.Equal(12, json.RootElement.GetProperty("files").GetArrayLength());
+        Assert.Equal(14, json.RootElement.GetProperty("files").GetArrayLength());
         Assert.Empty(_work.StateFiles());
     }
 

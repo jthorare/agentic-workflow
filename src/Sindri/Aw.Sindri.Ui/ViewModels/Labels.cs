@@ -127,6 +127,14 @@ internal static partial class Labels
     /// <summary>The closed sheet's edge tab, before its subject.</summary>
     internal const string Reopen = "Reopen";
 
+    /// <summary>The edge tab's word for a sheet whose title hasn't loaded (or has none): the kind, never its address.</summary>
+    internal const string EdgeTabItem = "Item";
+    internal const string EdgeTabWorkflowRun = "Workflow run";
+    internal const string EdgeTabNeedsYou = "Needs you";
+    internal const string EdgeTabDecision = "Decision";
+    internal const string EdgeTabJob = "Job";
+    internal const string EdgeTabSession = "Session";
+
     /// <summary>The detail sheet's resize grip.</summary>
     internal const string Sheet = "Detail sheet width";
 

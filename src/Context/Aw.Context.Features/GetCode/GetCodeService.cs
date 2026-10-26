@@ -2,6 +2,7 @@ using Aw.Context.Core.Code;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Trust;
+using Aw.Context.Core.Walks;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
@@ -12,7 +13,7 @@ namespace Aw.Context.Features.GetCode;
 /// built by <see cref="CodeLensBuilder"/>, the lexical half by <see cref="CodeLexicalSearch"/> at the map's commit, the callers and callees by <see cref="CodeSymbolSearch"/> from the code index, and every piece of map text is cleaned like every answer's. An anchor the version doesn't hold, a
 /// session can't see or a deny glob hides is listed in 'missingAnchors' with one answer for every reason; none resolving is SND-CONTEXT-003 and an ambiguous name 037.
 /// </summary>
-internal sealed class GetCodeService(MapReader reader, LensBasisReader bases, CodeLexicalSearch lexical, CodeSymbolSearch symbols, IScrubberFactory scrubbers) : IService<GetCodeRequest, CodeView>
+internal sealed class GetCodeService(MapReader reader, LensBasisReader bases, CodeLexicalSearch lexical, CodeSymbolSearch symbols, IScrubberFactory scrubbers, WalkOptions? walk = null) : IService<GetCodeRequest, CodeView>
 {
     public async ValueTask<Result<CodeView>> Handle(GetCodeRequest request, CancellationToken cancellationToken)
     {
@@ -42,7 +43,7 @@ internal sealed class GetCodeService(MapReader reader, LensBasisReader bases, Co
         }
 
         var basis = await bases.For(read.Value, settings.Value, request.Scope, request.Draft, cancellationToken).ConfigureAwait(false);
-        var graphHalf = CodeLensBuilder.Build(basis, read.Value.Graph, anchors);
+        var graphHalf = CodeLensBuilder.Build(basis, read.Value.Graph, anchors, walk ?? WalkOptions.Serial);
         if (graphHalf.IsError)
         {
             return graphHalf.Error;

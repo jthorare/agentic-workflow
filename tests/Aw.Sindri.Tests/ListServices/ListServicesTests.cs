@@ -172,7 +172,7 @@ public sealed class ListServicesTests
             StringComparer.Ordinal);
     }
 
-    private ListServicesService Service() => new(_v.Slice.Profiles, _v.Views, _v.Progress, _jobs, _builtIns);
+    private ListServicesService Service() => new(_v.Slice.Profiles, _v.Views, _v.Progress, _jobs, _builtIns, _v.Slice.Clock);
 
     private async Task Approve(params (string Name, string Every)[] services) =>
         _ = (await _v.Slice.Profiles.Save(SliceHarness.ProfileOf("thor", services), Token)).Value;

@@ -16,4 +16,14 @@ public static class DemotedCode
         ArgumentNullException.ThrowIfNull(repos);
         return key.Kind == NodeKind.Code && repos.Any(r => r.DemotePaths.Count > 0 && r.Demotes(key.Value[CodePrefix.Length..]));
     }
+
+    /// <summary>The role that demotes <paramref name="key"/>, when <see cref="IsDemoted"/> holds.</summary>
+    /// <param name="key">A node key.</param>
+    /// <param name="repos">The repos in scope.</param>
+    /// <returns>The role's name, or null for any other node.</returns>
+    public static string? Role(NodeKey key, IReadOnlyList<ContextRepo> repos)
+    {
+        ArgumentNullException.ThrowIfNull(repos);
+        return key.Kind == NodeKind.Code ? repos.Select(r => r.DemoteRole(key.Value[CodePrefix.Length..])).FirstOrDefault(role => role is not null) : null;
+    }
 }

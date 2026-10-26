@@ -148,7 +148,8 @@ public sealed class AsOfMapTests
     }
 
     // Catastrophic on any text without the tail: every character can be matched two ways, so the one-second match timeout fires.
-    private const string TimeoutSection = "\"extract\":{\"recognizers\":[{\"kind\":\"flag\",\"glob\":\"src/app.ts\",\"pattern\":\"(?<n>(?:[^!]|[^!])+)+!!!QQ\",\"keyFrom\":\"n\"}]}";
+    // A lookahead keeps this pattern on the backtracking engine (LinearRegex's fallback), the only path that can still time out.
+    private const string TimeoutSection = "\"extract\":{\"recognizers\":[{\"kind\":\"flag\",\"glob\":\"src/app.ts\",\"pattern\":\"(?=.)(?<n>(?:[^!]|[^!])+)+!!!QQ\",\"keyFrom\":\"n\"}]}";
 
     [Fact, Trait("Lane", "integration")]
     public async Task Backtest_as_of_map_whose_recognizer_timed_out_is_not_cached_and_the_report_says_so()

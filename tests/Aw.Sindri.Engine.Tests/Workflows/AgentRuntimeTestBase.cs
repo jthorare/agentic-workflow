@@ -33,6 +33,7 @@ public abstract class AgentRuntimeTestBase : IDisposable
     internal readonly FakeLauncher _launcher = new();
     internal readonly FakeAgentSessions _sessions = new();
     internal readonly FakeRunDiff _diff = new();
+    internal readonly FakeStepOutputs _outputs = new();   // the output folders of the run directories (issue #1000)
     internal string _root = RecipeName;   // the recipe a rig starts; a test that wants a parent over a child sets it and _also before Rig
     internal string[] _also = [];
     internal Dictionary<string, string> _more = new(StringComparer.Ordinal);   // more text inputs a root recipe declares, by key
@@ -355,6 +356,7 @@ public abstract class AgentRuntimeTestBase : IDisposable
             _ = services.Replace(ServiceDescriptor.Singleton(test._launcherSeen ?? test._launcher));
             _ = services.Replace(ServiceDescriptor.Singleton<IAgentSessions>(test._sessions));
             _ = services.Replace(ServiceDescriptor.Singleton(test._diffSeen ?? test._diff));
+            _ = services.Replace(ServiceDescriptor.Singleton<IStepOutputs>(test._outputs));
             _ = services.Replace(ServiceDescriptor.Singleton(new AgentRuntimeOptions(PollInterval: TimeSpan.FromMilliseconds(100))));
         }
     }

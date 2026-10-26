@@ -26,7 +26,7 @@ internal sealed class IdleSessions(LaunchLiveness liveness, LaunchSessionEvents 
         var now = clock.GetUtcNow();
         foreach (var launch in liveness.Active())
         {
-            if (files.TurnEndedAt(launch) is { } turn && now - turn >= LaunchRules.IdleAfter && !await TakenOver(launch, cancellationToken).ConfigureAwait(false)
+            if (files.TurnEndedAt(launch) is { } turn && LaunchRules.IdleTurn(turn, now) && !await TakenOver(launch, cancellationToken).ConfigureAwait(false)
                 && (await session.End(launch, SessionEndReason.Idle, exitCode: null, cancellationToken).ConfigureAwait(false)).IsSuccess)
             {
                 hosted.Forget(launch);

@@ -192,7 +192,8 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         where TInput : class
     {
         var result = at.Result;
-        switch (StepVerdicts.Of(result, question.Outputs, run.Threshold))
+        var verdict = Judged(question, run, result);
+        switch (verdict)
         {
             case StepVerdict.Unavailable:
                 run.Skip(at.Name, SkipReason.Unavailable);
@@ -203,8 +204,8 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
                 return null;
             case StepVerdict.Errored:
             case StepVerdict.OutOfEnum:
-                var code = result is ProviderDecided ? EvaluationReasons.OutOfEnum : result.ReasonCode;
-                await Fail(question.Name, at.Name, code, cancellationToken).ConfigureAwait(false);
+            case StepVerdict.NoReasons:
+                await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
                 run.Skip(at.Name, SkipReason.Failed);
                 return null;
             case StepVerdict.BelowThreshold:
@@ -220,6 +221,21 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             default:
                 return Decided(run, at, (ProviderDecided)result, await Fallback(question, input, cancellationToken).ConfigureAwait(false));
         }
+    }
+
+    private static StepVerdict Judged<TInput>(QuestionDefinition<TInput> question, EvaluationRun run, ProviderResult result)
+        where TInput : class =>
+        StepVerdicts.Of(result, question.Outputs, run.Threshold, lacksReasons: result is ProviderDecided decided && question.LacksReasons(decided));
+
+    // The failure row's reason: the provider's own, or the engine's when the provider answered but the answer can't be used.
+    private static string FailureCode(StepVerdict verdict, ProviderResult result)
+    {
+        if (verdict == StepVerdict.NoReasons)
+        {
+            return EvaluationReasons.NoReasons;
+        }
+
+        return result is ProviderDecided ? EvaluationReasons.OutOfEnum : result.ReasonCode;
     }
 
     // opinion: what the fallback rules would have said; telemetry only, never a change to the model's decision.

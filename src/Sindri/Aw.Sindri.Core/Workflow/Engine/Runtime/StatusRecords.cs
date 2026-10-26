@@ -31,6 +31,7 @@ internal static class StatusRecords
     {
         Run = view.AgentRun is { } agent ? new StatusRun("agent", agent.Launch) : null,
         ReasonCode = view.Question?.Code,
+        InputTimings = Timings(view),
         TakenOverAt = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.Since : null,   // a takeover enters the 'taken-over' state, so Since is the takeover's time
         TakenOverBy = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.TakenOverBy : null,
     };
@@ -40,6 +41,9 @@ internal static class StatusRecords
 
     private static StatusBudget? Budget(InstanceView view) =>
         view is { Task: not null, Budget: { } budget } ? new StatusBudget("state", budget.State, budget.StateCap, new BudgetFigures(budget.Instance, budget.InstanceCap)) : null;
+
+    private static List<StatusTiming>? Timings(InstanceView view) =>
+        view.Task?.Timings is { Count: > 0 } timings ? [.. timings.Select(static t => new StatusTiming(t.Input.Value, t.DurationMs))] : null;
 
     private static List<StatusInjection> Injection(InstanceView view) =>
         [.. view.Task?.Injection.Select(static i => new StatusInjection(i.Section, i.Input.Value, i.Bytes, StatusText.Prefixed(i.Sha256), i.Replaced?.Value)) ?? []];

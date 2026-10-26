@@ -12,6 +12,12 @@ public static class LaunchRules
     /// <summary>How long a session may sit with its turn ended and no report before it ends as idle; a new prompt starts the clock over.</summary>
     public static TimeSpan IdleAfter { get; } = TimeSpan.FromSeconds(120);
 
+    /// <summary>Whether a session whose turn ended at <paramref name="turnEnded"/> has sat idle for <see cref="IdleAfter"/> by <paramref name="now"/>: the rule the idle sweep ends it by and health and Needs you show it by.</summary>
+    /// <param name="turnEnded">When the turn ended.</param>
+    /// <param name="now">The time now.</param>
+    /// <returns>True from <see cref="IdleAfter"/> on.</returns>
+    public static bool IdleTurn(DateTimeOffset turnEnded, DateTimeOffset now) => now - turnEnded >= IdleAfter;
+
     /// <summary>The longest gap between two silence sweeps that still counts as running normally (the sweep runs every 10 s); a longer one means the machine slept.</summary>
     public static TimeSpan SweepGap { get; } = TimeSpan.FromSeconds(60);
 

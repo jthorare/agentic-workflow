@@ -150,6 +150,24 @@ public sealed class ShellStateTests : IDisposable
     }
 
     [Fact]
+    public async Task The_edge_tab_goes_when_the_page_it_was_closed_on_is_left()
+    {
+        _records.Write(A.Record());
+        var shell = await Running(ShellState.Normal);
+        Assert.True(DeepLink.TryParse("job/JOB-9", out var link));
+        shell.Navigate(link);
+        shell.CloseSheet();
+        var closedOn = shell.CurrentPage;
+        Assert.True(shell.IsEdgeTabShown);
+
+        shell.GoTo(closedOn == PageId.Work ? PageId.Agents : PageId.Work);
+        Assert.False(shell.IsEdgeTabShown);
+
+        shell.GoTo(closedOn);
+        Assert.True(shell.IsEdgeTabShown);
+    }
+
+    [Fact]
     public async Task The_edge_tab_reopens_the_last_subject()
     {
         _records.Write(A.Record());

@@ -59,6 +59,10 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
 
+    /// <summary>On a 'workflow.injection' row: how long each Step input took to fill, in declared order; null for any other event or when no duration was kept. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<InputTiming>? Inputs { get; init; }
+
     /// <summary>
     /// The detail with its opened run described (actor, attempt, max attempts), for a row whose frame opens a Step run; any other detail comes back unchanged.
     /// </summary>

@@ -29,6 +29,23 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_needs_reasons_is_not_sent_to_jev_which_only_classifies()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with
+        {
+            Name = "resolution-check",
+            ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [ResolutionCheckQuestion.Reasons] = ResolutionCheckQuestion.StringList() },
+        };
+
+        var result = await provider.Decide(question, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new ProviderUnavailable("cannot-explain"), result);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public async Task It_posts_to_the_api_with_the_bearer_key()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);

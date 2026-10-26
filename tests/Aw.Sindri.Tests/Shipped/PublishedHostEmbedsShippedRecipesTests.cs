@@ -1,8 +1,10 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Host.Shipped;
 
 namespace Aw.Sindri.Tests.Shipped;
 
 /// <summary>The Host assembly as an ordinary publish builds it (no <c language="text">AwRecipesDir</c> given) embeds every recipe of recipes/sindri, so approve-all has a plan on a published binary.</summary>
+[Lane(TestLane.Integration)]
 public sealed class PublishedHostEmbedsShippedRecipesTests
 {
     [Fact]

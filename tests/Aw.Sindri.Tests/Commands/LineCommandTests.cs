@@ -237,7 +237,7 @@ public sealed class LineCommandTests : IDisposable
         var argv = Path.Combine(_home.Path, "argv.txt");
         _packets = Script("aw-packets-stub", $"printf '%s\\n' \"$@\" > '{argv}'\necho '{StubHash}'");
         await Put(LineFixture.Design());
-        await File.WriteAllTextAsync(Path.Combine(Facts, "scopePacket.json"), "{\"hash\":\"sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973\"}", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(Facts, "scopePacket.json"), "{\"hash\":\"sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24\"}", TestContext.Current.CancellationToken);
 
         Assert.Equal(0, await Run("line", "desk", "design.evidence", "--facts", Facts, "--out", OutDirectory));
 
@@ -255,13 +255,13 @@ public sealed class LineCommandTests : IDisposable
         _packets = Script("aw-packets-stub", $"echo '{StubHash}'");
         var gold = LineFixture.Plan();
         await Put(gold);
-        await File.WriteAllTextAsync(Path.Combine(Facts, "scopePacket.json"), "{\"hash\":\"sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973\"}", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(Facts, "scopePacket.json"), "{\"hash\":\"sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24\"}", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, await Run("line", "desk", "plan.evidence", "--facts", Facts, "--out", OutDirectory));   // no design hash yet
-        Assert.Equal(0, await Run("line", "desk", "plan.evidence", "--facts", Facts, "--out", OutDirectory, "--design-hash", "sha256:3deb049307bf38e0981ed4ed374f7d84a63f305f0067a247c10f839dfd4f87e4", "--parallel", "1"));
+        Assert.Equal(0, await Run("line", "desk", "plan.evidence", "--facts", Facts, "--out", OutDirectory, "--design-hash", "sha256:a034b1f35f8ca257d23db5b1bef971adaecd161565a7962c0445c271917ef05c", "--parallel", "1"));
 
         var index = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(OutDirectory, "plan-packet", "index.json"), TestContext.Current.CancellationToken))!;
-        Assert.Equal("sha256:3deb049307bf38e0981ed4ed374f7d84a63f305f0067a247c10f839dfd4f87e4", (string?)index["parents"]![0]);
+        Assert.Equal("sha256:a034b1f35f8ca257d23db5b1bef971adaecd161565a7962c0445c271917ef05c", (string?)index["parents"]![0]);
         Assert.Equal("[[\"P1\"],[\"P2\"],[\"P3\"],[\"P4\"]]", JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(OutDirectory, "plan-packet", "graph.json"), TestContext.Current.CancellationToken))!["waves"]!.ToJsonString());
         Assert.True(File.Exists(Path.Combine(OutDirectory, "planPacket.json")));
     }

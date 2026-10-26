@@ -469,7 +469,10 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         $$""","health":{"word":"{{h.Word}}","problems":[{{string.Join(',', h.Problems.Select(p => $$"""{"code":"{{p.Code}}","text":"{{p.Text}}","clause":{{Quoted(p.Clause)}}}"""))}}],"sentence":{{Quoted(h.Sentence)}}}""";
 
     // Absent before CO-3 (the spec-shaped status goldens carry none), so a null count is left out.
-    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}}}");
+    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}}}");
+
+    // Absent on a Sindri that predates the running count, so a null one is left out.
+    private static string Running(int? n) => n is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"running\":{v}") : string.Empty;
 
     private static string Service(ServiceView v) => $$"""{"name":"{{v.Name}}","every":"{{v.Every}}","lastRun":{{Quoted(v.LastRun)}}}""";
 

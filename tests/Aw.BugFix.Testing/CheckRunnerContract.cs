@@ -23,8 +23,8 @@ public abstract class CheckRunnerContract
     [Fact]
     public void The_exit_code_is_the_commands()
     {
-        Expect.That(Runner.Run(["true"], Directory, $"{Directory}/true.log", Key) is { Code: 0, Ran: true }, "Equal(0, Runner.Run(['true'], Directory, $'{Directory}/true.log', Key))");
-        Expect.That(Runner.Run(["false"], Directory, $"{Directory}/false.log", Key) is { Ran: true, Code: not 0 }, "NotEqual(0, Runner.Run(['false'], Directory, $'{Directory}/false.log', Key))");
+        Expect.That(Runner.Run(PassingCommand, Directory, $"{Directory}/true.log", Key) is { Code: 0, Ran: true }, "a passing command exits 0 and ran");
+        Expect.That(Runner.Run(FailingCommand, Directory, $"{Directory}/false.log", Key) is { Ran: true, Code: not 0 }, "a failing command exits non-zero and ran");
     }
 
     /// <summary>The environment digests depend on the key: the same key gives the same digests, another key other ones.</summary>
@@ -61,6 +61,28 @@ public abstract class CheckRunnerContract
     [Fact]
     public void A_command_past_the_time_limit_did_not_run() =>
         Expect.That(HangingRunner.Run(HangingCommand, Directory, $"{Directory}/hang.log", Key) is { Ran: false, Outcome: RunOutcome.Broken }, "a run past the limit is broken");
+
+    /// <summary>A command that dies on a signal (an out-of-memory or stray kill) has no verdict, whatever code the kill leaves.</summary>
+    [Fact]
+    public void A_command_killed_by_a_signal_did_not_run() =>
+        Expect.That(Runner.Run(KilledCommand, Directory, $"{Directory}/killed.log", Key) is { Ran: false, Outcome: RunOutcome.Broken }, "a run killed by a signal is broken");
+
+    /// <summary>A command that left an empty log (it waited on a lock and was cut off, say) has no verdict either.</summary>
+    [Fact]
+    public void A_command_that_leaves_an_empty_log_did_not_run() =>
+        Expect.That(Runner.Run(SilentCommand, Directory, $"{Directory}/silent.log", Key) is { Ran: false, Outcome: RunOutcome.Broken }, "a run with an empty log is broken");
+
+    /// <summary>Gets a command that prints something and exits 0.</summary>
+    protected abstract IReadOnlyList<string> PassingCommand { get; }
+
+    /// <summary>Gets a command that prints something and exits non-zero.</summary>
+    protected abstract IReadOnlyList<string> FailingCommand { get; }
+
+    /// <summary>Gets a command that prints something, then dies on SIGKILL.</summary>
+    protected abstract IReadOnlyList<string> KilledCommand { get; }
+
+    /// <summary>Gets a command that exits without printing anything.</summary>
+    protected abstract IReadOnlyList<string> SilentCommand { get; }
 
     /// <summary>Gets a runner whose time limit <see cref="HangingCommand"/> exceeds.</summary>
     protected abstract ICheckRunner HangingRunner { get; }

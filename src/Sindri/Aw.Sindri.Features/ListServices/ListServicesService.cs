@@ -9,11 +9,11 @@ namespace Aw.Sindri.Features.ListServices;
 
 /// <summary>
 /// The approved profile's services and the build's built-ins (name and cadence, plan G5), each joined with its row in the 'services' view: the
-/// last run, and the next slot (the last slot plus the cadence; null before the first run). Paused and the running job come from P6.
+/// last run, and the next slot (the last slot plus the cadence, moved on by whole cadences past now; null before the first run). Paused and the running job come from P6.
 /// A service the approval dropped leaves the list, though its row stays in the view.
 /// </summary>
 internal sealed class ListServicesService(IApprovedProfile approvals, IViewReader views, IProjectorStatus status, IJobViews jobs,
-    IEnumerable<BuiltInService> builtIns)
+    IEnumerable<BuiltInService> builtIns, TimeProvider clock)
     : IService<ListServicesRequest, ListServicesResponse>
 {
     public async ValueTask<Result<ListServicesResponse>> Handle(ListServicesRequest request, CancellationToken cancellationToken)
@@ -51,11 +51,22 @@ internal sealed class ListServicesService(IApprovedProfile approvals, IViewReade
     /// One service; the approved profile was checked, so its cadence parses (an unparseable one shows no next slot). The next slot is the scheduler's last
     /// slot plus the cadence, so a manual run does not move it, and there is none while the service is paused.
     /// </summary>
-    private static ServiceView View(string name, string every, ServiceRow? row, JobId? job, bool namedByProfile)
+    private ServiceView View(string name, string every, ServiceRow? row, JobId? job, bool namedByProfile)
     {
         var cadence = Cadence.Parse(every);
         var paused = row?.Paused == true;
-        DateTimeOffset? next = !paused && row?.ScheduledSlot is { } slot && cadence.IsSuccess ? slot + cadence.Value.Interval : null;
+        DateTimeOffset? next = !paused && row?.ScheduledSlot is { } slot && cadence.IsSuccess ? Upcoming(slot, cadence.Value.Interval) : null;
         return new ServiceView(ServiceName.From(name), every, paused, row?.LastRun, next, job, ServiceActions.Allowed(namedByProfile, builtIn: !namedByProfile, paused, job is not null));
+    }
+
+    /// <summary>
+    /// The first slot of the series after <paramref name="slot"/> that is still to come. An idle run after an ok one records nothing (C8), so the
+    /// recorded slot ages while the scheduler ticks on; the series it advances (ServiceSchedule.Advance) is slot plus whole cadences.
+    /// </summary>
+    private DateTimeOffset Upcoming(DateTimeOffset slot, TimeSpan interval)
+    {
+        var next = slot + interval;
+        var now = clock.GetUtcNow();
+        return next > now ? next : next + (interval * (long)(Math.Floor((now - next) / interval) + 1));
     }
 }

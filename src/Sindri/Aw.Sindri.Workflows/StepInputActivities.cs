@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Aw.Kernel;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Microsoft.Extensions.Logging;
 using Temporalio.Activities;
 using Temporalio.Exceptions;
 
@@ -12,7 +14,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="runner">Runs the input and shapes what it returned.</param>
 /// <param name="texts">Where the text is kept.</param>
 /// <param name="contexts">Resolves the repo of an instance whose workflow holds none (a child).</param>
-internal sealed class StepInputActivities(IStepInputRunner runner, IInjectionTexts texts, StepContexts contexts)
+/// <param name="logger">Where each fill's duration is logged (serve.log); none logs nothing.</param>
+internal sealed partial class StepInputActivities(IStepInputRunner runner, IInjectionTexts texts, StepContexts contexts, ILogger<StepInputActivities>? logger = null)
 {
     /// <summary>Runs the input and keeps its text.</summary>
     /// <param name="request">Which input, for which run.</param>
@@ -28,6 +31,28 @@ internal sealed class StepInputActivities(IStepInputRunner runner, IInjectionTex
     internal async Task<FilledInput> Fill(FillInputRequest request, CancellationToken cancel)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var watch = Stopwatch.StartNew();
+        var ok = false;
+        try
+        {
+            var filled = await FillOnce(request, cancel).ConfigureAwait(false);
+            ok = true;
+            return filled with { DurationMs = watch.ElapsedMilliseconds };
+        }
+        finally
+        {
+            if (logger is not null)
+            {
+                Timed(logger, request.Input.Value, watch.ElapsedMilliseconds, ok ? "ok" : "failed");
+            }
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "step input {Input} filled in {Ms} ms ({Outcome})")]
+    private static partial void Timed(ILogger logger, string input, long ms, string outcome);
+
+    private async Task<FilledInput> FillOnce(FillInputRequest request, CancellationToken cancel)
+    {
         var resolved = await contexts.WithRepo(request.Address, request.Context(), cancel).ConfigureAwait(false);
         if (resolved.IsError)
         {

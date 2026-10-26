@@ -187,7 +187,7 @@ while IFS=$'\t' read -r mode s idx; do
   if [ "$rc" != 0 ]; then
     failed+=("$s")
     echo
-    echo "FAIL  $mode  $s  (exit $rc, ${secs}s)"
+    grep -E 'FAIL|not ok|^  (expected|actual|missing|in):' "$OUT/$idx.log" 2>/dev/null | sed 's/^/      ! /' | head -40
     # The failing assertions first (a long suite's tail can hide them), then the end of the log.
     grep -E 'FAIL|not ok' "$OUT/$idx.log" 2>/dev/null | sed 's/^/      ! /' | head -20
     sed 's/^/      | /' "$OUT/$idx.log" 2>/dev/null | tail -25
