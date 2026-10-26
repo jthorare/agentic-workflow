@@ -1,4 +1,7 @@
 using System.Text.Json.Nodes;
+using Aw.Context.Core.Eval;
+using Aw.Context.Core.ScopeGraph;
+using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
@@ -228,6 +231,50 @@ public sealed class ScopeEvidenceStepTests
         Assert.Empty(JsonNode.Parse(result.Result.Outputs[FactKey.From("fact:runs")].GetRawText())!.AsArray());
         var checks = ScopePacketChecks.Run(new ScopeFacts(Gold().Edit("runs", n => n["runs"]!.AsArray().Clear())), ScopeStage.Evidence);
         Assert.Equal(ScopeRuleStatus.Warn, checks.Rules.Single(r => r.Rule == "SCP-CHAL-002").Status);
+    }
+
+    private static FakeScopeRunRecords WithRunIds() => new FakeScopeRunRecords().With(
+        ScopingStepContexts.Address,
+        new ScopeRunRecord("step.scope.draft", "draft", 1, "agent", "fixture-writer-model", Requested: null, Vendor: "fixture", Tokens: 41200, Launch: "LCH-1", RunToken: "5.1"),
+        new ScopeRunRecord("step.scope.challenge", "challenge", 1, "agent", "fixture-challenger-model", Requested: null, Vendor: "fixture", Tokens: 18800, Launch: "LCH-2", RunToken: "7.1"));
+
+    private static Task<BlockStepResult> RunWithEngine(FakeContextEngine engine)
+    {
+        var diff = new FakeRunDiff();
+        diff.Add("/work/web", Head);
+        return new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", "/work/web"), diff, WithRunIds(), engine)
+            .Run(ScopingStepContexts.Of("step.scope.evidence", WithHead(Gold())) with { Repo = _web }, Token).AsTask();
+    }
+
+    [Fact]
+    public async Task Each_agent_run_in_fact_runs_carries_the_graph_nodes_its_session_read_and_the_ones_it_stepped_outside_for()
+    {
+        var engine = FakeContextEngine.WithProbes(new ProbeSet([]));
+        engine.GraphReadsAnswer = Kernel.Results.Success<IReadOnlyList<GraphRead>>(
+            [
+                new GraphRead("feature:sharing", "context_node", Outside: false, Reason: null, DateTimeOffset.UnixEpoch),
+                new GraphRead("feature:sharing", "context_neighbors", Outside: false, Reason: null, DateTimeOffset.UnixEpoch),
+                new GraphRead("code:src/other.ts", "context_node", Outside: true, "the draft names a writer the graph lacks", DateTimeOffset.UnixEpoch),
+            ]);
+
+        var result = await RunWithEngine(engine);
+
+        var runs = JsonNode.Parse(result.Result!.Outputs[FactKey.From("fact:runs")].GetRawText())!.AsArray();
+        var reads = runs[0]!["graphReads"]!;
+        Assert.Equal(["feature:sharing"], reads["read"]!.AsArray().Select(static n => n!.GetValue<string>()), StringComparer.Ordinal);
+        var outside = Assert.Single(reads["outside"]!.AsArray());
+        Assert.Equal("code:src/other.ts", outside!["node"]!.GetValue<string>());
+        Assert.Equal("the draft names a writer the graph lacks", outside["reason"]!.GetValue<string>());
+        Assert.NotNull(runs[1]!["graphReads"]);
+    }
+
+    [Fact]
+    public async Task A_run_whose_graph_calls_cannot_be_read_has_no_graphReads_and_the_Step_still_completes()
+    {
+        var result = await RunWithEngine(FakeContextEngine.WithProbes(new ProbeSet([])));
+
+        Assert.Equal("complete", result.Result!.Outcome.Value);
+        Assert.All(JsonNode.Parse(result.Result.Outputs[FactKey.From("fact:runs")].GetRawText())!.AsArray(), run => Assert.Null(run!["graphReads"]));
     }
 
     [Fact]

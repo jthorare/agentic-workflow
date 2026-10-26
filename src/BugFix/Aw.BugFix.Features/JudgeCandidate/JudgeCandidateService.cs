@@ -81,7 +81,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
     {
         if (check.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
         {
-            var classes = FilterClasses(check.Command ?? []).Select(name => ClassSource(candidate, check.Path, name, baseline)).OfType<string>().ToList();
+            var classes = FilteredTypes(check.Command ?? []).Select(name => ClassSource(candidate, check.Path, name, baseline)).OfType<string>().ToList();
             if (classes.Count > 0)
             {
                 return Capped(string.Join("\n\n", classes));
@@ -92,38 +92,46 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         return source.IsSuccess ? Capped(source.Value) : null;
     }
 
-    private static IEnumerable<string> FilterClasses(IReadOnlyList<string> command)
+    // The simple names of the test classes the command filters on: the last dotted part of each --filter-class value ("*.BugTests"
+    // names BugTests), and for --filter-method the class before the method. A name with a wildcard left in it, or anything that
+    // isn't an identifier, is skipped: it names no one class.
+    private static IEnumerable<string> FilteredTypes(IReadOnlyList<string> command)
     {
+        var names = new List<string>();
         for (var i = 0; i < command.Count; i++)
         {
-            if (command[i] == "--filter-class")
+            if (command[i] is not ("--filter-class" or "--filter-method"))
             {
-                for (var j = i + 1; j < command.Count && !command[j].StartsWith('-'); j++)
-                {
-                    yield return command[j];
-                }
+                continue;
+            }
+
+            for (var j = i + 1; j < command.Count && !command[j].StartsWith('-'); j++)
+            {
+                var dotted = command[i] == "--filter-method" ? command[j][..Math.Max(0, command[j].LastIndexOf('.'))] : command[j];
+                names.Add(dotted[(dotted.LastIndexOf('.') + 1)..]);
             }
         }
+
+        return names.Where(static n => n.Length > 0 && n.All(static c => char.IsAsciiLetterOrDigit(c) || c == '_')).Distinct(StringComparer.Ordinal);
     }
 
-    // Foo.Tests.Slices.BugTests in tests/Foo.Tests/Foo.Tests.csproj lives at tests/Foo.Tests/Slices/BugTests.cs by the usual
-    // layout (the project's name is the namespace root); failing that, BugTests.cs at the project's top.
-    private string? ClassSource(Candidate candidate, string project, string className, string baseline)
+    // The files for a test class named BugTests in tests/Foo.Tests/Foo.Tests.csproj, as they were at the baseline: BugTests.cs at
+    // the project's top if there is one, then every file under the project's directory that declares the type (the class is
+    // usually in a subfolder). All are joined, each under a "// path" header.
+    private string? ClassSource(Candidate candidate, string project, string name, string baseline)
     {
         var directory = project.Contains('/', StringComparison.Ordinal) ? project[..project.LastIndexOf('/')] : string.Empty;
-        var projectName = Path.GetFileNameWithoutExtension(project);
-        var relative = className.StartsWith(projectName + ".", StringComparison.Ordinal) ? className[(projectName.Length + 1)..] : className;
-        var leaf = className[(className.LastIndexOf('.') + 1)..];
-        foreach (var path in new[] { $"{directory}/{relative.Replace('.', '/')}.cs", $"{directory}/{leaf}.cs" })
+        var paths = new List<string>();
+        var top = (directory.Length == 0 ? string.Empty : directory + "/") + name + ".cs";
+        if (git.FileAt(candidate.Worktree, baseline, top).IsSuccess)
         {
-            var source = git.FileAt(candidate.Worktree, baseline, path.TrimStart('/'));
-            if (source.IsSuccess)
-            {
-                return $"// {path.TrimStart('/')}\n{source.Value}";
-            }
+            paths.Add(top);
         }
 
-        return null;
+        var declaring = git.FilesDeclaring(candidate.Worktree, baseline, directory, name);
+        paths.AddRange(declaring.IsSuccess ? declaring.Value.Where(p => p != top) : []);
+        var texts = paths.Select(path => git.FileAt(candidate.Worktree, baseline, path).Map(text => $"// {path}\n{text}")).Where(static r => r.IsSuccess).Select(static r => r.Value).ToList();
+        return texts.Count == 0 ? null : string.Join("\n\n", texts);
     }
 
     // What the baseline run printed on the unfixed code: its failure lines, capped. Null when there are none or the log can't be read.

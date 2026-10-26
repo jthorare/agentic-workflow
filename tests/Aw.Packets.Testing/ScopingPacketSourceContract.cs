@@ -32,7 +32,7 @@ public abstract class ScopingPacketSourceContract
 
         var read = await Create(files).Read(Directory, CancellationToken.None);
 
-        Expect.That(read.IsSuccess && !read.Value.Present.ContainsKey("lenses.json") && read.Value.Present.Count == 13, "the other thirteen are read");
+        Expect.That(read.IsSuccess && !read.Value.Present.ContainsKey("lenses.json") && read.Value.Present.Count == 14, "the other fourteen are read");
     }
 
     /// <summary>Other entries are named, sorted, with a sub-directory ending in '/'.</summary>

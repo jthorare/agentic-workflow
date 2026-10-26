@@ -210,7 +210,9 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
-    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.GoHome();
+    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.Navigate(e.Value);
+
+    private void OnBack(object? sender, RoutedEventArgs e) => _map?.GoUp();
 
     private void OnZoomIn(object? sender, RoutedEventArgs e) => WholeCanvas.ZoomIn();
 

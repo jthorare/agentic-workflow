@@ -9,7 +9,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Embeds the code-index chunks that are not embedded yet."
     },
     {
       "name": "code-index-main-move",
@@ -20,7 +21,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
       "name": "context-concept-scan",
@@ -31,7 +33,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Scans each new context map version for the concepts the code names, for the glossary."
     },
     {
       "name": "context-map-refresh",
@@ -42,7 +45,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Builds the context map again so it stays current."
     },
     {
       "name": "context-sync-gaps",
@@ -53,7 +57,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Starts a sync for a context source that has never synced."
     },
     {
       "name": "heartbeat",
@@ -65,7 +70,8 @@
       "actions": [
         "run",
         "pause"
-      ]
+      ],
+      "description": "Records that Sindri is alive."
     },
     {
       "name": "pr-watch",
@@ -76,7 +82,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Watches the pull requests that wait on the forge."
     },
     {
       "name": "router-stub",
@@ -87,7 +94,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Routes each started item to its workflow."
     },
     {
       "name": "setup",
@@ -98,7 +106,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Keeps the setup checklist in step with the profile."
     },
     {
       "name": "workflow-events",
@@ -109,7 +118,8 @@
       "job": null,
       "actions": [
         "run"
-      ]
+      ],
+      "description": "Passes ledger events to the running workflows."
     }
   ],
   "empty": "Rebuilding views (cursor 5 of 5)…",

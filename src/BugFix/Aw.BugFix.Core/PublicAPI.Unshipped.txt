@@ -687,6 +687,7 @@ Aw.BugFix.Core.Model.Candidate.JudgeEscalations.init -> void
 const Aw.BugFix.Core.Model.Candidate.MaxJudgeAsks = 2 -> int
 Aw.BugFix.Core.Model.TicketSource.Github = 3 -> Aw.BugFix.Core.Model.TicketSource
 Aw.BugFix.Core.Ports.IGit.MainCommits(string! directory, string! baseline, string! candidate) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.BugFix.Core.Model.MainCommit!>!>!
+Aw.BugFix.Core.Ports.IGit.FilesDeclaring(string! directory, string! commit, string! under, string! typeName) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.BugFix.Core.Ports.IGit.FileAt(string! directory, string! commit, string! path) -> Aw.Kernel.Result<string!>!
 Aw.BugFix.Core.Model.GithubIssue
 Aw.BugFix.Core.Model.MainCommit

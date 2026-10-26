@@ -7,4 +7,6 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Hints">How many concept hints it stored.</param>
 /// <param name="Searches">How many map searches it ran.</param>
 /// <param name="Reason">Why it stopped without scanning (the budget's reason), or null.</param>
-public sealed record ScanContextConceptsResult(int Version, bool OnDraft, string Outcome, int Hints, int Searches, string? Reason);
+/// <param name="Tier">'cheap' or 'strong': the model tier the scan picked for the map's size, or null when it made no model call.</param>
+/// <param name="Model">The model asked for when it was named (the strong tier), or null when each agent CLI ran its own default.</param>
+public sealed record ScanContextConceptsResult(int Version, bool OnDraft, string Outcome, int Hints, int Searches, string? Reason, string? Tier = null, string? Model = null);

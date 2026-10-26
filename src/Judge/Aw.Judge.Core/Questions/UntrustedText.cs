@@ -22,6 +22,9 @@ public static partial class UntrustedText
     /// <summary>The cap for a ticket brief.</summary>
     public const int BriefCap = 8_000;
 
+    /// <summary>The cap for a check's failure output.</summary>
+    public const int FailureCap = 8_000;
+
     /// <summary>The text cut to <paramref name="cap"/> characters with a visible "[truncated N chars]" line, or unchanged when it fits.</summary>
     /// <param name="text">The text.</param>
     /// <param name="cap">How many characters to keep.</param>
@@ -130,7 +133,7 @@ public static partial class UntrustedText
     [GeneratedRegex("^diff --git ", RegexOptions.Multiline | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex FileStart { get; }
 
-    [GeneratedRegex(@"<(?<slash>/?)(?<tag>brief|diff|problem)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"<(?<slash>/?)(?<tag>brief|diff|problem|check-source|baseline-failure)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex DelimiterTag { get; }
 
     [GeneratedRegex(@"\s*[\r\n\u2028\u2029]\s*", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

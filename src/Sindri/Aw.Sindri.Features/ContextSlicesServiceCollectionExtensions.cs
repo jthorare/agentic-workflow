@@ -49,6 +49,7 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddScoped<IScopingTextShape, ContextTextShape>()
             .AddScoped<IScopeRunProposals, ScopeRunProposals>()
             .AddStepInput<ContextLensesInput>()
+            .AddStepInput<ContextGraphInput>()
             .AddStepInput<ContextHistoryInput>()
             .AddStepInput<ContextRetrieveInput>()
             .AddStepInput<ContextCodeInput>()

@@ -2,8 +2,10 @@ using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Subgraph;
 using Aw.Kernel.Testing;
 using Xunit;
@@ -121,6 +123,22 @@ public abstract class ContextEngineContract<TEngine>
         var run = await CreateDown().EvalProbes(file: null, static (_, _) => throw new ContractViolationException("no probe may run without a probe file"), CancellationToken.None);
 
         Check(run.IsError && run.Error.Code == ContextErrors.NoProbeFile.Code, "an eval with no probe file is 036");
+    }
+
+    /// <summary>An engine that does not build the scoping graph or keep its call log answers SND-CONTEXT-153 for both, never an empty graph (issue 1005).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_engine_without_a_scoping_graph_answers_153()
+    {
+        var engine = CreateDown();
+        var scope = new ContextScope(Settings: null, [new ContextRepo(ContextRepoName.From("split-panes"), "/repos/split-panes")],
+            new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Cli));
+
+        var graph = await engine.ScopeGraph(new ScopeGraphQuery(["feature:x"], MapRead.Current, new LensRange(2, Hops: null), Brief: null, MaxNodes: 400, MaxBytes: 300_000), scope, CancellationToken.None);
+        var reads = await engine.GraphReads("ITM-1/line/3/scoping.1", "run-1", CancellationToken.None);
+
+        Check(graph.IsError && graph.Error.Code == ContextErrors.ScopeGraphUnavailable.Code, "a scoping graph the engine can't build is 153");
+        Check(reads.IsError && reads.Error.Code == ContextErrors.ScopeGraphUnavailable.Code, "a call log the engine doesn't keep is 153");
     }
 
     private static (string Code, string Path) Code(TEngine engine, string json)

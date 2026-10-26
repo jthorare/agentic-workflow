@@ -40,7 +40,7 @@ public sealed class ScanConceptsTests : IDisposable
     // The first pass proposes, the second concludes; the second prompt is the one that names the proposed concepts.
     private static string TwoPasses(ModelRequest request) => request.Prompt.Contains("Proposed concepts:", StringComparison.Ordinal) ? Concluded : Proposed;
 
-    private Task<Kernel.Result<ConceptScanReport>> Scan(int? expected = null) => _world.Map.ScanConcepts(_scope, MapWorld.None, expected).AsTask();
+    private Task<Kernel.Result<ConceptScanReport>> Scan(int? expected = null, ContextScope? scope = null) => _world.Map.ScanConcepts(scope ?? _scope, MapWorld.None, expected).AsTask();
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_scan_stores_the_hints_the_second_pass_returns_for_the_draft()
@@ -50,7 +50,7 @@ public sealed class ScanConceptsTests : IDisposable
 
         var report = (await Scan()).Value;
 
-        Assert.Equal(new ConceptScanReport(draft, OnDraft: true, ConceptScanOutcome.Scanned, Hints: 1, Searches: 2), report);
+        Assert.Equal(new ConceptScanReport(draft, OnDraft: true, ConceptScanOutcome.Scanned, Hints: 1, Searches: 2, ModelTier.Cheap), report);
         var hint = Assert.Single((await _world.Hints.Read(draft, MapWorld.None)).Value);
         Assert.Equal("Self scheduling", hint.Name);
         Assert.Equal(["feature:shifts.swap", "feature:shifts.open"], hint.Members, StringComparer.Ordinal);   // 'feature:made.up' is no feature of the draft
@@ -88,6 +88,62 @@ public sealed class ScanConceptsTests : IDisposable
             Assert.Equal(ConceptScanLimits.CallTimeout, r.Budget);
             Assert.True(r.Prompt.Length <= ConceptScanLimits.MaxInputChars);
         });
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_small_map_asks_both_calls_for_the_cheap_tier()
+    {
+        _ = await Seed(Shifts().Build());
+        _world.Model.Responder = TwoPasses;
+
+        var report = (await Scan()).Value;
+
+        Assert.All(_world.Model.Requests, static r => Assert.Equal(ModelTier.Cheap, r.Tier));
+        Assert.Equal(ModelTier.Cheap, report.Tier);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_map_with_more_features_than_the_threshold_asks_both_calls_for_the_strong_tier()
+    {
+        var graph = Shifts();
+        for (var i = 0; i < ConceptScanTiers.Default.StrongAboveFeatures; i++)
+        {
+            _ = graph.Node(string.Create(CultureInfo.InvariantCulture, $"feature:bulk.f{i}"), string.Create(CultureInfo.InvariantCulture, $"Bulk feature {i}"));
+        }
+
+        _ = await Seed(graph.Build());
+        _world.Model.Responder = TwoPasses;
+
+        var report = (await Scan()).Value;
+
+        Assert.Equal(2, _world.Model.Requests.Count);
+        Assert.All(_world.Model.Requests, static r => Assert.Equal(ModelTier.Strong, r.Tier));
+        Assert.Equal(ModelTier.Strong, report.Tier);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_default_models_are_haiku_for_cheap_and_sonnet_for_strong_on_claude_and_none_for_the_others()
+    {
+        _ = await Seed(Shifts().Build());
+        _world.Model.Responder = TwoPasses;
+
+        var report = (await Scan()).Value;
+
+        Assert.All(_world.Model.Requests, static r => Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "haiku" }, r.Models));
+        Assert.Equal(ModelTier.Cheap, report.Tier);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_profile_moves_the_thresholds_and_names_the_models()
+    {
+        _ = await Seed(Shifts().Build());   // three features
+        _world.Model.Responder = TwoPasses;
+        var scope = MapWorld.HumanWith("""{"repos":["aw-split-panes"],"conceptScan":{"strongAboveFeatures":2,"models":{"codex":{"strong":"codex-big"},"claude":{"strong":"opus"}}}}""");
+
+        var report = (await Scan(scope: scope)).Value;
+
+        Assert.Equal(ModelTier.Strong, report.Tier);
+        Assert.All(_world.Model.Requests, static r => Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "opus", ["codex"] = "codex-big" }, r.Models));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -140,7 +196,7 @@ public sealed class ScanConceptsTests : IDisposable
 
         var report = (await Scan()).Value;
 
-        Assert.Equal(new ConceptScanReport(draft, OnDraft: true, ConceptScanOutcome.ModelUnavailable, Hints: 0, Searches: 0), report);
+        Assert.Equal(new ConceptScanReport(draft, OnDraft: true, ConceptScanOutcome.ModelUnavailable, Hints: 0, Searches: 0, ModelTier.Cheap), report);
         Assert.Equal(0, _world.Hints.Saves);
     }
 
@@ -202,7 +258,7 @@ public sealed class ScanConceptsTests : IDisposable
 
         var report = (await Scan()).Value;
 
-        Assert.Equal(new ConceptScanReport(saved.Value.Number, OnDraft: false, ConceptScanOutcome.Scanned, Hints: 1, Searches: 2), report);
+        Assert.Equal(new ConceptScanReport(saved.Value.Number, OnDraft: false, ConceptScanOutcome.Scanned, Hints: 1, Searches: 2, ModelTier.Cheap), report);
         _ = Assert.Single((await _world.Hints.Read(saved.Value.Number, MapWorld.None)).Value);
         Assert.Contains("feature:shifts.swap | Swap shifts", _world.Model.Requests[1].Prompt, StringComparison.Ordinal);   // the searches read the current map
     }

@@ -65,6 +65,15 @@ internal static partial class Labels
     /// <summary>A service that runs on its schedule.</summary>
     internal const string ServiceScheduled = "Scheduled";
 
+    /// <summary>A service whose scheduled slot passed without the scheduler running it.</summary>
+    internal const string ServiceOverdue = "Overdue";
+
+    /// <summary>"missed its 12:01 run": the detail under an overdue service.</summary>
+    internal static string ServiceMissed(string time) => "missed its " + time + " run";
+
+    /// <summary>The overview's name for overdue services: "heartbeat overdue", "heartbeat, setup overdue".</summary>
+    internal static string ServicesOverdue(IEnumerable<string> names) => string.Join(", ", names) + " overdue";
+
     /// <summary>A service whose manual run is in flight.</summary>
     internal const string ServiceRunning = "Running now";
 
@@ -128,7 +137,7 @@ internal static partial class Labels
     internal static string ServiceWhat(string name) => name switch
     {
         "heartbeat" => "Records that Sindri is alive.",
-        "context-concept-scan" => "Has a cheap model look for product concepts in each new map.",
+        "context-concept-scan" => "Has a model look for product concepts in each new map: a cheap one for a small map, a stronger one for a large map.",
         "context-map-refresh" => "Builds the context map again so it stays current.",
         "context-sync-gaps" => "Starts a sync for a source that has never synced.",
         "pr-watch" => "Watches the pull requests that wait on the forge.",

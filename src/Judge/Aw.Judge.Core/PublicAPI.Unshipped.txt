@@ -667,7 +667,9 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.get -> Aw.Judge.Core.Ques
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource, out string? BaselineFailure) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.BaselineFailure.get -> string?
+Aw.Judge.Core.Questions.ResolutionCheckInput.BaselineFailure.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.get -> string?
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.get -> string?
@@ -677,7 +679,7 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Equals(Aw.Judge.Core.Questions.ResolutionCheckInput? other) -> bool
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null, string? BaselineFailure = null) -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckQuestion
@@ -790,6 +792,7 @@ const Aw.Judge.Core.Questions.UiElementRepairQuestion.NoGoodCandidate = "no-good
 const Aw.Judge.Core.Questions.UiElementRepairQuestion.Repaired = "repaired" -> string!
 const Aw.Judge.Core.Questions.UntrustedText.BriefCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.DiffCap = 12000 -> int
+const Aw.Judge.Core.Questions.UntrustedText.FailureCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.FieldCap = 2000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.ResolutionDiffCap = 100000 -> int
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksOff = "looks-off" -> string!
@@ -1487,6 +1490,8 @@ static Aw.Judge.Core.PromptSort.SortOutcome.operator ==(Aw.Judge.Core.PromptSort
 static Aw.Judge.Core.PromptSort.SortSessionUpdate.Next(Aw.Judge.Core.PromptSort.SortSession! before, Aw.Judge.Core.PromptSort.SortOutcome! outcome, Aw.Judge.Core.PromptSort.ScaffoldPlan! plan, bool namesWorkflow) -> Aw.Judge.Core.PromptSort.SortSession!
 static Aw.Judge.Core.PromptSort.SortValues.operator !=(Aw.Judge.Core.PromptSort.SortValues? left, Aw.Judge.Core.PromptSort.SortValues? right) -> bool
 static Aw.Judge.Core.PromptSort.SortValues.operator ==(Aw.Judge.Core.PromptSort.SortValues? left, Aw.Judge.Core.PromptSort.SortValues? right) -> bool
+Aw.Judge.Core.Providers.QuestionRef.Model.get -> string?
+Aw.Judge.Core.Providers.QuestionRef.Model.init -> void
 Aw.Judge.Core.Ids.EvalItemId
 Aw.Judge.Core.Ids.EvalItemId.EvalItemId() -> void
 Aw.Judge.Core.Ids.EvalItemId.Equals(Aw.Judge.Core.Ids.EvalItemId other) -> bool
@@ -1795,3 +1800,7 @@ Aw.Judge.Core.Evaluation.PreparedQuestion.Reference.get -> Aw.Judge.Core.Provide
 Aw.Judge.Core.Evaluation.PreparedQuestion.Input.get -> System.Text.Json.Nodes.JsonNode?
 Aw.Judge.Core.Evaluation.PreparedQuestion.TimeBudget.get -> System.TimeSpan
 static Aw.Judge.Core.Evaluation.QuestionCatalog.Prepare(string! question, string! inputJson, System.Text.Json.JsonSerializerOptions! json) -> Aw.Judge.Core.Evaluation.PreparedQuestion?
+Aw.Judge.Core.Labels.LabelQuestions
+const Aw.Judge.Core.Labels.LabelQuestions.Skip = "skip" -> string!
+static Aw.Judge.Core.Labels.LabelQuestions.Fits(string! question, string! inputJson, System.Text.Json.JsonSerializerOptions! json) -> bool
+static Aw.Judge.Core.Labels.LabelQuestions.Outputs(string! question) -> System.Collections.Generic.IReadOnlyList<string!>?

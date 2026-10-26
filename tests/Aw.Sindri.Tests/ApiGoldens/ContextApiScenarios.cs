@@ -123,7 +123,7 @@ internal static class ContextApiScenarios
         ("context-whole", "concept-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling"), ct)),
         ("context-whole", "concept-other", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Aother"), ct)),
         ("context-whole", "concept-unknown-200", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Anope"), ct)),
-        ("context-whole", "concept-and-area-006", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Abilling&area=feature%3Ashifts"), ct)),
+        ("context-whole", "concept-area-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling&area=feature%3Ashifts"), ct)),
         ("context-concepts", "concept-map", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts", "filtered-invoices", async (s, ct) => await s.Fetch("/sindri/context/concepts?q=invoices", ct)),
         ("context-concepts", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts?limit=1", ct)),

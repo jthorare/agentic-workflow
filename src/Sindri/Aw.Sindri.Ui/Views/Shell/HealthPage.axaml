@@ -34,6 +34,9 @@
     <Style Selector="Border.headline.warn">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
     </Style>
+    <Style Selector="TextBlock.warn">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+    </Style>
     <Style Selector="Border.headline.bad">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
     </Style>
@@ -352,8 +355,11 @@
                   <Grid ColumnDefinitions="180,90,140,*,130,250" IsVisible="{Binding IsWide}" AutomationProperties.Name="{Binding Name}">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                     <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Every}" />
-                    <TextBlock Grid.Column="2" Classes="body" Classes.error="{Binding HasFailed}" Text="{Binding Status}" VerticalAlignment="Center"
-                               AutomationProperties.Name="{Binding Status}" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                      <TextBlock Classes="body" Classes.error="{Binding HasFailed}" Classes.warn="{Binding IsOverdue}" Text="{Binding Status}"
+                                 AutomationProperties.Name="{Binding Status}" />
+                      <TextBlock Classes="body subtle" IsVisible="{Binding IsOverdue}" Text="{Binding OverdueDetail}" AutomationProperties.Name="{Binding OverdueDetail}" />
+                    </StackPanel>
                     <TextBlock Grid.Column="3" Classes="body muted" Text="{Binding What}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"
                                AutomationProperties.Name="{Binding What}" />
                     <TextBlock Grid.Column="4" Classes="body subtle" Text="{Binding LastRun}" VerticalAlignment="Center" AutomationProperties.Name="{Binding LastRun}" />
@@ -366,7 +372,7 @@
                   </Grid>
                   <Grid ColumnDefinitions="*,140,Auto" IsVisible="{Binding IsCompact}" AutomationProperties.Name="{Binding Name}">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
-                    <TextBlock Grid.Column="1" Classes="body" Classes.error="{Binding HasFailed}" Text="{Binding Status}" VerticalAlignment="Center"
+                    <TextBlock Grid.Column="1" Classes="body" Classes.error="{Binding HasFailed}" Classes.warn="{Binding IsOverdue}" Text="{Binding Status}" VerticalAlignment="Center"
                                AutomationProperties.Name="{Binding Status}" />
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <Panel IsVisible="{Binding RunShown}"><ccontrols:CommandControl DataContext="{Binding Run}" /></Panel>

@@ -5,7 +5,7 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Extract;
 
-/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their source files. Files the repo demotes keep their code node but implement no feature and never key, name or order one.</summary>
+/// <summary>Turns clusters into candidate features (S-4): model-provenance feature nodes with 'implements' edges from their source files. Files the repo demotes, and manifest, lock and build-config files, keep their code node but implement no feature and never key, name or order one.</summary>
 public static class ClusterFeatures
 {
     /// <summary>Proposes a feature per cluster.</summary>
@@ -30,7 +30,8 @@ public static class ClusterFeatures
         var claimed = new HashSet<string>(StringComparer.Ordinal);
         var taken = new HashSet<string>(StringComparer.Ordinal);
         var result = ExtractedMap.Empty;
-        foreach (var (cluster, files, demoted) in clusters.Clusters.Select(c => Split(c, demotes)).Where(c => c.Product.Count > 0).OrderBy(c => c.Product[0], StringComparer.Ordinal).ThenBy(c => c.Cluster.Id.Value, StringComparer.Ordinal))
+        var split = clusters.Clusters.Select(c => Split(c, demotes)).ToList();
+        foreach (var (cluster, files, demoted) in split.Where(c => c.Product.Count > 0).OrderBy(c => c.Product[0], StringComparer.Ordinal).ThenBy(c => c.Cluster.Id.Value, StringComparer.Ordinal))
         {
             var key = Unique(files, taken);
             var label = labels.FirstOrDefault(l => l.Id.Value == cluster.Id.Value)?.Label is { } named && !string.IsNullOrWhiteSpace(named)
@@ -39,7 +40,9 @@ public static class ClusterFeatures
             result = result.Plus(One(new Candidate(repo, key, label, cluster.Confidence, files, demoted), extracted, claimed));
         }
 
-        return result;
+        // A cluster of only set-aside files proposes no feature, but its files keep their code nodes.
+        var orphans = split.Where(c => c.Product.Count == 0).SelectMany(c => c.Demoted).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(CodeNode).ToList();
+        return orphans.Count == 0 ? result : result.Plus(new ExtractedMap(orphans, []));
     }
 
     /// <summary>Proposes a feature per cluster for a repo.</summary>
@@ -68,17 +71,20 @@ public static class ClusterFeatures
             edges.Add(new GraphEdge(code, key, EdgeType.Implements, Provenance.Model, confidence, evidence));
         }
 
-        nodes.AddRange(demoted.Select(file => new GraphNode(NodeKey.From("code:" + file), file[(file.LastIndexOf('/') + 1)..], Provenance.Deterministic)));
+        nodes.AddRange(demoted.Select(CodeNode));
         var surfaces = extracted.Edges.Where(e => e.Type == EdgeType.Implements && e.From.Value.StartsWith("code:", StringComparison.Ordinal) && inCluster.Contains(e.From.Value["code:".Length..]))
             .Select(e => e.To).Where(k => k.Kind == NodeKind.Surface && claimed.Add(k.Value)).OrderBy(k => k.Value, StringComparer.Ordinal);
         edges.AddRange(surfaces.Select(s => new GraphEdge(s, key, EdgeType.PartOf, Provenance.Model, confidence)));
         return new ExtractedMap(nodes, edges);
     }
 
+    private static GraphNode CodeNode(string file) => new(NodeKey.From("code:" + file), file[(file.LastIndexOf('/') + 1)..], Provenance.Deterministic);
+
     private static (FileCluster Cluster, List<string> Product, List<string> Demoted) Split(FileCluster cluster, Func<string, bool> demotes)
     {
         var files = Files(cluster);
-        return (cluster, [.. files.Where(f => !demotes(f))], [.. files.Where(demotes)]);
+        bool SetAside(string f) => demotes(f) || ManifestFiles.Is(f);
+        return (cluster, [.. files.Where(f => !SetAside(f))], [.. files.Where(SetAside)]);
     }
 
     // Distinct files with a usable code key, in path order.

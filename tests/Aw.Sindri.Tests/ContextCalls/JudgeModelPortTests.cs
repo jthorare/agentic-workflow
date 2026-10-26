@@ -67,6 +67,43 @@ public sealed class JudgeModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_request_names_a_model_per_agent_cli_and_each_cli_is_asked_for_its_own()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, new ProviderUnavailable(ProviderUnavailable.Timeout));
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude", ["codex"] = "m-codex" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude, codex)).Ask(_request with { Models = models }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-claude", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-codex", Assert.Single(codex.Asked).Model);
+        Assert.Equal("m-codex", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_cli_the_request_names_no_model_for_runs_its_own_default()
+    {
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(codex)).Ask(_request with { Models = models }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(Assert.Single(codex.Asked).Model);
+        Assert.Null(answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_with_no_models_leaves_every_cli_on_its_default()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, Answered("ok"));
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude)).Ask(_request, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(Assert.Single(claude.Asked).Model);
+        Assert.Null(answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task The_remote_jev_api_is_never_allowed_because_the_prompt_names_files_of_the_owners_repo()
     {
         var catalog = new Catalog(new Provider(ProviderName.ClaudeCli, Answered("x")));

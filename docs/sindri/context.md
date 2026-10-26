@@ -643,7 +643,16 @@ that is not JSON or holds no usable concept (`no-concepts`) and a map with no fe
 build, and only an engine error (the store, the profile) fails the job. A member that is not a feature of the map is dropped, a feature stays in the hint of the highest
 confidence that names it, and at most 15 hints are kept. The hints are stored in `context.db` (`map_concept_hint`, one row per map version) beside the map, not in it:
 the scan itself never touches the graph, the overrides or the pins, and a feature no hint names stays where the area rules put it. The next map build reads the hints of the newest map version and groups with them (see the glossary section). The job summary reads
-`map v<N>: <hints> concept hint(s) from <searches> search(es)`, and the job result carries the version, the outcome and the counts.
+`map v<N>: <hints> concept hint(s) from <searches> search(es) (<tier> model[: <model>])`, and the job result carries the version, the outcome, the counts, the tier and the model.
+
+The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
+(characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
+the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The model port
+asks each agent CLI for the model the profile names for that CLI and tier (`context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>`). Defaults: Claude Code
+`haiku` for cheap and `sonnet` for strong (aliases `claude --model` takes); Codex and Cursor have none, so for them both tiers run the CLI's own default until the profile names a
+model (a wrong name makes that CLI fail, so none is guessed). The port walks the CLIs in the same order as before and the first that answers wins, so a scan that
+falls through to the next CLI asks that CLI for its own model name for the tier. The scan's report, and so the job result, records the tier and the model the answering CLI was
+asked for (empty when that CLI ran its default); nothing else asks for a tier, so every other model call is unchanged.
 
 **Rules changes start a refresh too (issue 1041).** Each map version records a hash of the rules it was built under (`MapRuleset`, table column
 `map_version.ruleset`): a built-in `RulesVersion` that is bumped in every change to the clustering or extraction rules, and per mapped repo the deny

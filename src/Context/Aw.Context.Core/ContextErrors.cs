@@ -194,6 +194,9 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-152: the code lens's lexical search ran out of 'context.code.deadline' and returned what it had (the code of a searched row, never a route failure).</summary>
     public static readonly ErrorDefinition CodeSearchTimedOut = new("SND-CONTEXT-152", ErrorKind.Timeout, "The lexical code search ran out of time");
 
+    /// <summary>SND-CONTEXT-153: the context engine can't build the scoping graph or read its call log yet (issue 1005). The scoping gather falls back to a projection of the lenses and records the limit.</summary>
+    public static readonly ErrorDefinition ScopeGraphUnavailable = new("SND-CONTEXT-153", ErrorKind.Unavailable, "The scoping graph is not available from this engine");
+
     /// <summary>SND-CONTEXT-133: a 'context.extract.graphify' limit (timeoutMinutes, maxSnapshotMB, maxFileMB, maxGraphMB) isn't a whole number from 0 (no limit) up. The message names the key path.</summary>
     public static readonly ErrorDefinition GraphifyLimitInvalid = new("SND-CONTEXT-133", ErrorKind.Invalid, "A graphify limit is invalid");
 

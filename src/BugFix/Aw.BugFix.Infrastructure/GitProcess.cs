@@ -86,6 +86,27 @@ internal sealed class GitProcess : IGit
         return run.ExitCode == 0 ? run.Output : Failed(run, "show");
     }
 
+    public Result<IReadOnlyList<string>> FilesDeclaring(string directory, string commit, string under, string typeName)
+    {
+        if (!typeName.All(static c => char.IsAsciiLetterOrDigit(c) || c == '_'))
+        {
+            return Results.Success<IReadOnlyList<string>>([]);   // not a type name: nothing to look for, and nothing to put in a pattern
+        }
+
+        var pattern = $"(^|[^[:alnum:]_])(class|record|struct|interface)[[:space:]]+{typeName}([^[:alnum:]_]|$)";
+        // --full-name and :(top) keep the pathspec and the printed paths repository-relative when directory is a subdirectory.
+        var run = Run(directory, "grep", "-l", "--full-name", "-E", pattern, commit, "--", $":(top){under}");
+        if (run.ExitCode == 1)
+        {
+            return Results.Success<IReadOnlyList<string>>([]);   // git grep exits 1 when nothing matches
+        }
+
+        var prefix = commit + ":";
+        return run.ExitCode == 0
+            ? Results.Success<IReadOnlyList<string>>([.. run.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r')).Select(l => l.StartsWith(prefix, StringComparison.Ordinal) ? l[prefix.Length..] : l).Order(StringComparer.Ordinal)])
+            : Failed(run, "grep");
+    }
+
     // The commit of main the candidate's branch last met, or null when main can't be found.
     private static string? MainCommitOf(string directory, string candidate)
     {

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Aw.BugFix.Core.Errors;
 using Aw.BugFix.Core.Model;
 using Aw.BugFix.Core.Ports;
@@ -201,6 +202,17 @@ public sealed class InMemoryRepos : IGit, IFiles
     /// <inheritdoc/>
     public Result<string> FileAt(string directory, string commit, string path) =>
         _commits[commit].Files.TryGetValue(path, out var text) ? text : BugFixErrors.GitFailed.With($"fatal: path '{path}' does not exist in '{commit}'");
+
+    /// <inheritdoc/>
+    public Result<IReadOnlyList<string>> FilesDeclaring(string directory, string commit, string under, string typeName)
+    {
+        var prefix = under.Length == 0 ? string.Empty : under.TrimEnd('/') + "/";
+        var declares = new Regex($@"(^|[^A-Za-z0-9_])(class|record|struct|interface)\s+{Regex.Escape(typeName)}([^A-Za-z0-9_]|$)", RegexOptions.Multiline | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+        return Results.Success<IReadOnlyList<string>>([.. _commits[commit].Files
+            .Where(f => f.Key.StartsWith(prefix, StringComparison.Ordinal) && declares.IsMatch(f.Value))
+            .Select(static f => f.Key)
+            .Order(StringComparer.Ordinal)]);
+    }
 
     // Like realpath(3): each link resolved before the next component, ".." applied to the resolved directory.
     private string? Resolve(string path, int budget)

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Views;
@@ -71,6 +72,24 @@ public static class HealthSummary
 
         var clause = unavailable == 1 ? "1 workflow instance waits on a dependency that is down" : string.Create(CultureInfo.InvariantCulture, $"{unavailable} workflow instances wait on a dependency that is down");
         var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-003", $"{clause}: fix it, then run each again with `sindri workflow answer <address> --resume`", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also names a stale build (#1032): the running control plane is not the build 'bin/cs/current' names.</summary>
+    /// <param name="report">The report <see cref="For"/> folded.</param>
+    /// <param name="running">The stamp this process runs from, or null.</param>
+    /// <param name="installed">The stamp 'bin/cs/current' names, or null.</param>
+    /// <returns>The report; the same one when the build is not known to be stale.</returns>
+    public static HealthReport WithStaleBuild(HealthReport report, string? running, string? installed)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (!StaleBuild.Is(running, installed))
+        {
+            return report;
+        }
+
+        var problems = report.Problems.Append(new HealthProblem("SND-BUILD-001", StaleBuild.Sentence(running!, installed!), "the running build is not the installed one")).ToList();   // why: Is is true only when both are known
         var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
         return new HealthReport(word, problems, Sentence(word, problems));
     }

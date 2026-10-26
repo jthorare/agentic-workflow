@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Xunit;
 
 namespace Aw.Sindri.Testing.Scoping;
@@ -90,6 +91,39 @@ public abstract class ScopeRunRecordsContract
         Expect.Equal(new ScopeRunRecord("step.scope.draft", "draft", 1, "agent", Model: null, "claude-sonnet-5-5", Vendor: null, 0, launch.Launch.Value), record);
     }
 
+    /// <summary>A launch names the run id its session passes as --run, so the context call log (keyed by instance and run id) can be read for it (issue 1005).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_launch_carries_the_run_id_its_launch_id_was_made_from()
+    {
+        var records = await Create();
+        var run = RunToken.For(entry: 4, number: 2);
+        var id = AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(_scoping), run);
+        for (var earlier = 1; earlier <= 3; earlier++)
+        {
+            await CompletedAtTheDesk(records, _scoping, "challenge", earlier);   // why: a frame reaches entry 4 only through the transitions before it
+        }
+
+        await Launched(records, new ScopeLaunch(_scoping, "draft", "step.scope.draft", "claude-sonnet-5-5", 2, id));
+
+        var read = await records.Of(_scoping, Token);
+
+        Expect.Equal("4.2", Expect.Only(read.Value.Where(static r => r.Via == "agent").ToList()).RunToken);
+    }
+
+    /// <summary>A completion at the desk carries the run id the ledger row names.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_completion_at_the_desk_carries_its_run_id()
+    {
+        var records = await Create();
+        await CompletedAtTheDesk(records, _scoping, "draft", 3);
+
+        var read = await records.Of(_scoping, Token);
+
+        Expect.Equal("1.3", Expect.Only(read.Value).RunToken);
+    }
+
     /// <summary>The latest sample is the run's model and tokens (samples are cumulative).</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -136,7 +170,7 @@ public abstract class ScopeRunRecordsContract
         var read = await records.Of(_scoping, Token);
 
         var record = Expect.Only(read.Value);
-        Expect.Equal(new ScopeRunRecord("step.scope.draft", "draft", 1, "desk", Model: null, "claude-sonnet-5-5", Vendor: null, 0, Launch: null), record);
+        Expect.Equal(new ScopeRunRecord("step.scope.draft", "draft", 1, "desk", Model: null, "claude-sonnet-5-5", Vendor: null, 0, Launch: null, RunToken: "1.1"), record);
     }
 
     /// <summary>Runs come oldest first, and a run launched is not also counted as completed at the desk.</summary>

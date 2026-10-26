@@ -46,7 +46,11 @@ internal sealed partial class ContextPageViewModel
         Whole.Unzoom();
         ForgetRead();
         OnChanged(nameof(IsZoomedIn));
-        return ShowFiles ? FileMap.Opened(cancellationToken) : ReadWhole(cancellationToken);
+        Whole.LeaveConcept();   // the concepts are another repo's now
+        OpenedConceptId = null;
+        Concepts.Reset();
+        ChangedConcepts();
+        return ShowFiles ? FileMap.Opened(cancellationToken) : OpenFirst(cancellationToken);
     }
 
     // What the whole map says about the repos it covers; an answer that doesn't say leaves the list as it was.

@@ -13,7 +13,7 @@ internal static class RelevanceSteps
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Review { get; } = AgentStep("step.scope.relevance-review", Capability.Tools)
         .Takes(Text("model"))
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:anchors")
+        .Reads("fact:brief", "fact:graph", "fact:coverage", "fact:anchors")
         .Reports("reviewed").Writes(On("fact:relevanceVerdicts", "reviewed"));
 
     /// <summary>'step.scope.relevance-judge': a judge rules on each entry from a projection that holds none of the agent's labels; 'ruled'. A long Step: one call per entry.</summary>
@@ -27,7 +27,7 @@ internal static class RelevanceSteps
 
     /// <summary>'step.scope.relevance-apply': an entry leaves the lenses and the coverage only when the agent and the judge agree it is not in and the agent's citation resolves; 'applied'.</summary>
     public static BlockDescriptor Apply { get; } = BlockStep("step.scope.relevance-apply", Capability.None)
-        .Reads("fact:lenses", "fact:coverage", "fact:brief", "fact:relevanceVerdicts", "fact:relevanceRulings")
+        .Reads("fact:lenses", "fact:graph", "fact:coverage", "fact:brief", "fact:relevanceVerdicts", "fact:relevanceRulings")
         .Reports("applied")
-        .Writes(On("fact:lenses", "applied"), On("fact:coverage", "applied"), On("fact:relevance", "applied"), On("fact:mapFixes", "applied"));
+        .Writes(On("fact:lenses", "applied"), On("fact:graph", "applied"), On("fact:coverage", "applied"), On("fact:relevance", "applied"), On("fact:mapFixes", "applied"));
 }

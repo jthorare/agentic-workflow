@@ -104,4 +104,12 @@ public interface IGit
     /// <param name="path">The repository-relative path, with '/'.</param>
     /// <returns>The file's text, or a git failure when the commit has no such file.</returns>
     public Result<string> FileAt(string directory, string commit, string path);
+
+    /// <summary>The files under <paramref name="under"/> at <paramref name="commit"/> whose text declares the type <paramref name="typeName"/> (class, record, struct or interface).</summary>
+    /// <param name="directory">A directory inside the repository.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="under">The repository-relative directory to look in, with '/'; empty for the whole repository.</param>
+    /// <param name="typeName">The type's simple name.</param>
+    /// <returns>The repository-relative paths, with '/'; empty when none declares it.</returns>
+    public Result<IReadOnlyList<string>> FilesDeclaring(string directory, string commit, string under, string typeName);
 }

@@ -56,7 +56,7 @@ public static class DemotedFiles
     }
 
     private static List<LensFile> Flagged(IReadOnlyList<LensFile> files, IReadOnlyList<ContextRepo> repos) =>
-        [.. files.Select(f => DemotedCode.IsDemoted(NodeKey.From(CodePrefix + f.Path), repos) ? f with { Demoted = true } : f)];
+        [.. files.Select(f => DemotedCode.Role(NodeKey.From(CodePrefix + f.Path), repos) is { } role ? f with { Demoted = true, Role = role } : f)];
 
     /// <summary>The bands with the code band's demoted files moved after the product files.</summary>
     /// <param name="bands">The bands.</param>

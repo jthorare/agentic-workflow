@@ -17,6 +17,7 @@ internal static partial class Labels
         ["ApplyCommand:cancel"] = "Cancel run",
         ["ApplyCommand:command"] = "Send workflow command",
         ["ApplyCommand:handback"] = "Hand back",
+        ["ApplyCommand:rewind"] = "Go back a step",
         ["ApplyCommand:takeover"] = "Take over",
         ["RerunInstance"] = "Run again",
         ["AddRepo"] = "Add repo",

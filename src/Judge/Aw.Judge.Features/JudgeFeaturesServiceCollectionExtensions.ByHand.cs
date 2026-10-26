@@ -18,11 +18,11 @@ namespace Aw.Judge.Features;
 
 /// <summary>
 /// The by-hand verbs of the cutover's last two units: unit 6.3's label, adjudicate and eval verbs, and unit 6.4's prompt-sort
-/// eval side as compiling stubs. Each is a service behind its validator, registered like every other slice.
+/// eval side as compiling stubs (the by-hand part of <see cref="AddJudgeFeatures"/>). Each is a service behind its validator, registered like every other slice.
 /// </summary>
-internal static class ByHandVerbs
+public static partial class JudgeFeaturesServiceCollectionExtensions
 {
-    internal static void Add(IServiceCollection services)
+    private static void AddByHandVerbs(IServiceCollection services)
     {
         AddLabelling(services);
         AddScoring(services);

@@ -152,6 +152,12 @@
           "lines": []
         },
         {
+          "key": "SCP-GRAPH-001",
+          "text": "SCP-GRAPH-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
           "key": "code",
           "text": "code: not searched: index-not-built — Wait for the code index (S-9)",
           "status": "limit",

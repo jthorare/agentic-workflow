@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Models;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Views;
@@ -66,7 +67,15 @@ internal sealed class ScanContextConceptsService(ContextScopes scopes, IContextE
         return Results.Success(ConceptScanBudget.Refusal(ConceptScanLog.Started(scans.Value, clock.GetUtcNow() - ConceptScanLimits.Window)));
     }
 
-    private static ScanContextConceptsResult Of(ConceptScanReport report) => new(report.Version, report.OnDraft, Outcome(report.Outcome), report.Hints, report.Searches, Reason: null);
+    private static ScanContextConceptsResult Of(ConceptScanReport report) => new(report.Version, report.OnDraft, Outcome(report.Outcome), report.Hints, report.Searches, Reason: null, Tier(report.Tier), report.Model);
+
+    private static string? Tier(ModelTier? tier) => tier switch
+    {
+        null => null,
+        ModelTier.Cheap => "cheap",
+        ModelTier.Strong => "strong",
+        _ => throw new ArgumentOutOfRangeException(nameof(tier), tier, "an unknown model tier"),
+    };
 
     private static string Outcome(ConceptScanOutcome outcome) => outcome switch
     {
@@ -77,10 +86,15 @@ internal sealed class ScanContextConceptsService(ContextScopes scopes, IContextE
         _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, "an unknown scan outcome"),
     };
 
+    // " (strong model: sonnet)", " (cheap model)": the tier the scan picked, and the model when it was named.
+    private static string Used(ScanContextConceptsResult result) => result.Tier is null
+        ? string.Empty
+        : result.Model is null ? $" ({result.Tier} model)" : $" ({result.Tier} model: {result.Model})";
+
     /// <summary>The job summary: what the scan did in one line.</summary>
     internal static string Summary(ScanContextConceptsResult result) => result.Outcome switch
     {
-        "scanned" => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Hints} concept hint(s) from {result.Searches} search(es)"),
+        "scanned" => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Hints} concept hint(s) from {result.Searches} search(es){Used(result)}"),
         "no-map" => "no map to scan",
         ConceptScanLog.OverBudget => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Reason}"),
         _ => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Outcome.Replace('-', ' ')}"),

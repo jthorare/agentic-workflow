@@ -20,7 +20,7 @@ public sealed class RelevanceDescriptorTests
 
         Assert.Equal("step.scope.relevance-review", review.Id.Value);
         Assert.Equal(BlockRuntime.Agent, review.Runtime);
-        Assert.Equal(["fact:brief", "fact:lenses", "fact:coverage", "fact:anchors"], Reads(review), StringComparer.Ordinal);
+        Assert.Equal(["fact:brief", "fact:graph", "fact:coverage", "fact:anchors"], Reads(review), StringComparer.Ordinal);
         Assert.Equal(["reviewed"], review.Outcomes.Select(static o => o.Value), StringComparer.Ordinal);
         Assert.Equal(["fact:relevanceVerdicts"], Writes(review, "reviewed"), StringComparer.Ordinal);
         Assert.Equal(Capability.Tools, review.Capabilities);
@@ -50,9 +50,9 @@ public sealed class RelevanceDescriptorTests
 
         Assert.Equal("step.scope.relevance-apply", apply.Id.Value);
         Assert.Equal(BlockRuntime.Block, apply.Runtime);
-        Assert.Equal(["fact:lenses", "fact:coverage", "fact:brief", "fact:relevanceVerdicts", "fact:relevanceRulings"], Reads(apply), StringComparer.Ordinal);
+        Assert.Equal(["fact:lenses", "fact:graph", "fact:coverage", "fact:brief", "fact:relevanceVerdicts", "fact:relevanceRulings"], Reads(apply), StringComparer.Ordinal);
         Assert.Equal(["applied"], apply.Outcomes.Select(static o => o.Value), StringComparer.Ordinal);
-        Assert.Equal(["fact:coverage", "fact:lenses", "fact:mapFixes", "fact:relevance"], Writes(apply, "applied"), StringComparer.Ordinal);
+        Assert.Equal(["fact:coverage", "fact:graph", "fact:lenses", "fact:mapFixes", "fact:relevance"], Writes(apply, "applied"), StringComparer.Ordinal);
         Assert.Equal(Capability.None, apply.Capabilities);
         Assert.Null(apply.MaxDuration);
     }

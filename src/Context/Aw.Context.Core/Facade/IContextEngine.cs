@@ -4,6 +4,7 @@ using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Facade;
@@ -92,4 +93,11 @@ public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IC
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What was removed.</returns>
     public ValueTask<Result<EvalPurgeReport>> EvalPurge(EvalPurgeRequest request, CancellationToken cancellationToken);
+
+    /// <summary>The graph calls a scoping Step's session made (issue 1005), in order: which node, which tool, and whether it stepped outside the graph and why.</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="runToken">The Step run's token.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The reads (none for a run that made none), or SND-CONTEXT-153 while the engine keeps no log.</returns>
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken);
 }

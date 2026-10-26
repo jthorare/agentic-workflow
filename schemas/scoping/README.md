@@ -15,6 +15,10 @@ JSON Schemas for the scoping station's facts (scoping spec `docs/superpowers/spe
 
 `questions.json`, `open-questions.json`, `brief.json`, `scope-input.json` and `challenge-round.json` are facts only (the packet's `questions.json` is `{ schemaVersion, questions: <questions.json items> }`, every question asked over the rounds; open questions are not carried in it yet, as no spec text names a key for them).
 
+## Graph references (issue 1005)
+
+A scope-map surface may carry `nodes` (ids of `fact:graph` nodes it cites) and `origin` (`graph` or `search`). `fact:graph` itself has no schema file yet: its shape is `docs/csharp/sindri-scoping.md` "The graph fact", checked by SCP-GRAPH-001 in Sindri and PKT-SCP-006 in aw-packets.
+
 ## Field names, and where the spec is silent
 
 - **Question** (`questions.json`): spec 7.3, field for field: `id`, `surfaces`, `dimension`, `impact`, `blocks`, `trust`, `question`, `options[]` (`id`, `answer`, `rationale`, `cites`, `recommended`, `yields`), `other`, `skip`. The 7.3 example is `examples/questions.spec-7-3.valid.json`. Ids: `Q<n>` (or the reserved `Q-revise`), option ids `Q3.a`.

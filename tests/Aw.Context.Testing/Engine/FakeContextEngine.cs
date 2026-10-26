@@ -15,6 +15,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
@@ -222,4 +223,24 @@ public sealed class FakeContextEngine : IContextEngine
     private static ValueTask<Result<T>> NoMap<T>() => ValueTask.FromResult<Result<T>>(ContextErrors.NoMap.With("this test engine has no map"));
 
     private static Error Down() => ContextErrors.AllSourcesUnavailable.With("this test engine answers settings checks only");
+
+    /// <summary>What <see cref="ScopeGraph"/> answers; SND-CONTEXT-153 unless a test sets a graph.</summary>
+    public Result<ScopeGraphView> ScopeGraphAnswer { get; set; } = ContextErrors.ScopeGraphUnavailable.With("the fake builds no scoping graph");
+
+    /// <summary>What <see cref="GraphReads"/> answers; SND-CONTEXT-153 unless a test sets the reads.</summary>
+    public Result<IReadOnlyList<GraphRead>> GraphReadsAnswer { get; set; } = ContextErrors.ScopeGraphUnavailable.With("the fake keeps no graph call log");
+
+    /// <summary>The graph queries asked, in order.</summary>
+    public IList<ScopeGraphQuery> ScopeGraphQueries { get; } = [];
+
+    /// <inheritdoc/>
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken)
+    {
+        ScopeGraphQueries.Add(query);
+        return ValueTask.FromResult(ScopeGraphAnswer);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(GraphReadsAnswer);
 }

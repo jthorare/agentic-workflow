@@ -57,6 +57,12 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = ++_generation;   // a read still in flight must not draw over this one
+        if (ShowConcepts)
+        {
+            await SearchConcepts(api, words, generation, cancellationToken).ConfigureAwait(true);   // the concept layer has no nodes to draw: its own filter
+            return;
+        }
+
         if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion))
         {
             return;

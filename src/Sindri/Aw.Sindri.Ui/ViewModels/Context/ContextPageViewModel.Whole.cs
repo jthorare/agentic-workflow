@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
@@ -19,10 +20,10 @@ internal sealed partial class ContextPageViewModel
     public bool ShowWholeStatus => ShowMap && !HasStack && !NoMap && !IsBuilding && (Whole.IsLoading || Whole.IsFailed);
 
     /// <summary>The note by the search box when nothing on the map matches.</summary>
-    public string SearchNote => Whole.NoMatches ? Labels.ContextSearchNoMatches : string.Empty;
+    public string SearchNote => Whole.NoMatches || Concepts.NoMatches ? Labels.ContextSearchNoMatches : string.Empty;
 
     /// <summary>Whether the note shows.</summary>
-    public bool HasSearchNote => Whole.NoMatches;
+    public bool HasSearchNote => Whole.NoMatches || Concepts.NoMatches;
 
     /// <summary>The clear button's words.</summary>
     public string SearchClearText { get; } = Labels.ContextSearchClear;
@@ -35,7 +36,7 @@ internal sealed partial class ContextPageViewModel
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
-        Ports.Follow((_, cancellationToken) => _wholeWanted && !Whole.IsReady && !Whole.IsLoading && !Whole.IsFailed ? ReadWhole(cancellationToken) : Task.CompletedTask);
+        Ports.Follow((_, cancellationToken) => _wholeWanted && !Whole.IsReady && !Whole.IsLoading && !Whole.IsFailed && !Concepts.IsOnStage ? (_conceptsRead ? ReadWhole(cancellationToken) : OpenFirst(cancellationToken)) : Task.CompletedTask);
     }
 
     /// <summary>The page was shown: the whole map is read once, with no starting point.</summary>
@@ -44,7 +45,7 @@ internal sealed partial class ContextPageViewModel
     internal Task Opened(CancellationToken cancellationToken = default)
     {
         _wholeWanted = true;
-        return Whole.IsReady || Whole.IsLoading ? Task.CompletedTask : ReadWhole(cancellationToken);
+        return Whole.IsReady || Whole.IsLoading || Concepts.IsOnStage ? Task.CompletedTask : OpenFirst(cancellationToken);
     }
 
     /// <summary>Reads the whole map again (Retry, and when a build has ended).</summary>
@@ -59,7 +60,25 @@ internal sealed partial class ContextPageViewModel
 
         Whole.Loading();
         ChangedWhole();
-        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
+        try
+        {
+            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+            await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            if (Whole.IsLoading)
+            {
+                Whole.Failed();   // a read or a draw that threw is the failure row (Retry, Back), never "Reading the map" for good; the exception still goes to the caller
+            }
+
+            ChangedWhole();
+        }
+    }
+
+    // The read's answer onto the page: the map, the No map state, or the failure row.
+    private async Task DrawWhole(Uri api, Result<WholeMapView> read, CancellationToken cancellationToken)
+    {
         if (read.IsSuccess)
         {
             Whole.Show(read.Value);
@@ -85,8 +104,6 @@ internal sealed partial class ContextPageViewModel
         {
             Whole.Failed();
         }
-
-        ChangedWhole();
     }
 
     /// <summary>Opens one feature in full (area=): its items replace the overview, with a way back; a feature the map does not have is the existing banner.</summary>
@@ -100,7 +117,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
+        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
         if (read.IsSuccess)
         {
             Whole.ShowArea(read.Value);

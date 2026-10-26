@@ -21,13 +21,14 @@ internal sealed class ClaudeCliProvider(IProcessRunner runner) : AgentCliProvide
     /// <summary>The model, effort and thinking it runs with: <see cref="ClaudeCliOptions.Default"/> (haiku, low) unless set.</summary>
     internal ClaudeCliOptions Options { get; init; } = ClaudeCliOptions.Default;
 
+
     private const string TextInstruction = "You answer one classification question. Answer only with the JSON object the schema describes.";
 
     private string Settings => """{"disableAllHooks":true,"alwaysThinkingEnabled":""" + (Options.Thinking ? "true" : "false") + "}";
 
     /// <inheritdoc />
     protected override AgentCliCall ForText(QuestionRef question, JsonNode? input, string workspace) =>
-        new([.. Common, "--tools", "", "--system-prompt", TextInstruction, "--json-schema", AnswerSchema.Lax(question).ToJsonString(), "--output-format", "json"], workspace)
+        new([.. Common(question), "--tools", "", "--system-prompt", TextInstruction, "--json-schema", AnswerSchema.Lax(question).ToJsonString(), "--output-format", "json"], workspace)
         {
             Environment = Env,
             InheritOnly = Inherit,
@@ -38,7 +39,7 @@ internal sealed class ClaudeCliProvider(IProcessRunner runner) : AgentCliProvide
     protected override AgentCliCall ForImage(QuestionRef question, ImageEvidence evidence, string workspace) =>
         new(
             [
-                .. Common, "--tools", "Read", "--allowedTools", "Read(./**)", "--json-schema", AnswerSchema.Lax(question).ToJsonString(),
+                .. Common(question), "--tools", "Read", "--allowedTools", "Read(./**)", "--json-schema", AnswerSchema.Lax(question).ToJsonString(),
                 "--system-prompt", "You inspect screenshots. Use the Read tool on the given path, then answer.", "--output-format", "json",
             ],
             evidence.EvidenceDir)
@@ -77,9 +78,10 @@ internal sealed class ClaudeCliProvider(IProcessRunner runner) : AgentCliProvide
 
     private IReadOnlyCollection<string>? Inherit => Options.MinimalEnvironment ? ClaudeCliOptions.InheritedVariables : null;
 
-    private IReadOnlyList<string> Common =>
+    // The question's own model when it names one (the context engine's tiers), else the options' model.
+    private string[] Common(QuestionRef question) =>
     [
-        "-p", "--model", Options.Model, "--effort", Options.Effort, "--no-session-persistence",
+        "-p", "--model", question.Model ?? Options.Model, "--effort", Options.Effort, "--no-session-persistence",
         "--strict-mcp-config", "--mcp-config", """{"mcpServers":{}}""",
         "--setting-sources", "", "--settings", Settings, "--disable-slash-commands",
     ];

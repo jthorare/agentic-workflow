@@ -35,8 +35,11 @@ internal sealed partial class ContextConceptScanService(ContextScopes scopes, IC
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-concept-scan");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Scans each new context map version for the concepts the code names, for the glossary.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one state read and one jobs read.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 

@@ -142,4 +142,10 @@ public sealed class ScanContextConceptsServiceTests
     [InlineData("no-map", "no map to scan")]
     public void The_job_summary_says_what_happened_in_one_line(string outcome, string expected) =>
         Assert.Equal(expected, ScanContextConceptsService.Summary(new ScanContextConceptsResult(7, OnDraft: true, outcome, Hints: 1, Searches: 2, Reason: null)));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("cheap", null, "map v7: 1 concept hint(s) from 2 search(es) (cheap model)")]
+    [InlineData("strong", "sonnet", "map v7: 1 concept hint(s) from 2 search(es) (strong model: sonnet)")]
+    public void The_job_summary_names_the_tier_and_the_model_when_the_scan_made_a_call(string tier, string? model, string expected) =>
+        Assert.Equal(expected, ScanContextConceptsService.Summary(new ScanContextConceptsResult(7, OnDraft: true, "scanned", Hints: 1, Searches: 2, Reason: null, tier, model)));
 }

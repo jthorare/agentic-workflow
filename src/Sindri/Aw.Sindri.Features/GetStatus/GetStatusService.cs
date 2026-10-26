@@ -33,6 +33,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var profile = Profile(approvedProfile, recorded.Value, loaded);
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, profile, approvedProfile, cancellationToken).ConfigureAwait(false);
+        health = healthRows.WithStaleBuild(health);
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }

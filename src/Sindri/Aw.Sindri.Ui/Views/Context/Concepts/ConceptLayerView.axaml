@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
+             x:Class="Aw.Sindri.Ui.Views.Context.Concepts.ConceptLayerView"
+             x:DataType="vm:ConceptLayerViewModel">
+  <!-- The concept band: the first layer of the context map. One card per concept with its name, its summary and its size; a click opens the bands scoped to it. -->
+  <Panel>
+    <Border x:Name="ConceptsLoading" IsVisible="{Binding IsLoading}" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0" Padding="14,8"
+            Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}">
+      <TextBlock Classes="body subtle" Text="{Binding LoadingText}" />
+    </Border>
+    <ScrollViewer IsVisible="{Binding !IsLoading}">
+      <StackPanel>
+      <TextBlock x:Name="ConceptsTermsNote" Classes="caption subtle" Text="{Binding TermsNote}" IsVisible="{Binding HasTermsNote}" Margin="0,0,0,8" />
+      <ItemsControl x:Name="ConceptList" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ConceptTileViewModel">
+            <Button Click="OnOpen" Width="300" Margin="0,0,12,12" Padding="14,12" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+                    AutomationProperties.Name="{Binding AccessibleName}">
+              <StackPanel Spacing="6">
+                <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
+                <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
+                <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
+                <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
+                <TextBlock Classes="caption subtle" Text="{Binding SetByPersonText}" IsVisible="{Binding IsSetByPerson}" />
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+  </Panel>
+</UserControl>

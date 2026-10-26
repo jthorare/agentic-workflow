@@ -32,6 +32,7 @@ internal sealed partial class ContextPageViewModel
             OnChanged(nameof(MapVisible));
             OnChanged(nameof(ShowWhole));
             OnChanged(nameof(ShowWholeStatus));
+            OnChanged(nameof(ShowConcepts));
             if (value)
             {
                 _ = FileMap.Opened();   // the folder is read as the view opens, so it is never stale

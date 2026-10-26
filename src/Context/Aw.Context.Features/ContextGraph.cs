@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
@@ -6,6 +7,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
@@ -52,6 +54,10 @@ internal sealed class ContextGraph(
 
     public ValueTask<Result<SubgraphView>> Subgraph(SubgraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.Subgraph(query, scope, cancellationToken);
+
+    // Issue 1005: until the context lane builds the scoping graph the facade answers a named error and Sindri's gather falls back to the lenses.
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ScopeGraphView>>(ContextErrors.ScopeGraphUnavailable.With("the engine does not build the scoping graph yet"));
 
     public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.WholeMap(query, scope, cancellationToken);

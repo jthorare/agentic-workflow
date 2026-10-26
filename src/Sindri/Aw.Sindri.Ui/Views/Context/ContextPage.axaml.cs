@@ -58,9 +58,16 @@ internal sealed partial class ContextPage : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && e.KeyModifiers == KeyModifiers.None && _page is { } page)
+        if (!e.Handled && e.Source is not TextBox && _page is { } page)
         {
-            e.Handled = Handle(page, e.Key);
+            if (e.KeyModifiers == KeyModifiers.None)
+            {
+                e.Handled = Handle(page, e.Key);
+            }
+            else if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
+            {
+                e.Handled = page.Up();   // Alt+Left goes up a layer, as Backspace does
+            }
         }
     }
 
@@ -70,6 +77,11 @@ internal sealed partial class ContextPage : UserControl
         if (key == Key.Escape)
         {
             return page.Back();   // the inspector closes first, then the camera goes back to the whole map
+        }
+
+        if (key == Key.Back)
+        {
+            return page.Up();   // one layer up: the node, the query, the feature, the concept
         }
 
         if (key is Key.F or Key.M)
@@ -120,12 +132,15 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The back button on the failure row of a concept's map: up to the concepts.
+    private void OnUp(object? sender, RoutedEventArgs e) => _page?.Up();
+
     // Retry on the failure row: the whole map is read again.
     private void OnRetryWhole(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ContextPageViewModel page)
         {
-            _ = page.ReadWhole(CancellationToken.None);
+            _ = page.ReadMapTop(CancellationToken.None);
         }
     }
 

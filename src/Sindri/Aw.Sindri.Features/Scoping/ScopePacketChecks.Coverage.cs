@@ -190,7 +190,7 @@ internal static partial class ScopePacketChecks
 
     private static bool Accounted(string key, string item, HashSet<string> keys, HashSet<string> cited) => keys.Contains(key) || cited.Contains(item);
 
-    /// <summary>The nodes of a lens at depth 0 or 1: the anchors, the nodes with an edge to or from an anchor (their own implementers at depth 0, the nodes one edge away at depth 1), and not a node the context engine demoted.</summary>
+    /// <summary>The nodes of a lens at depth 0 or 1: the anchors, the nodes with an edge to or from an anchor (their own implementers at depth 0, the nodes one edge away at depth 1), and not a file the repo demotes (its profile's demoted roles, such as a fixture or a script) or any node tagged with a role, a test included (the node's <c language="text">demoted</c> flag and <c language="text">role</c>, set by <see cref="LensGather"/>).</summary>
     private static IEnumerable<JsonNode> NearNodes(JsonObject? entry)
     {
         var anchors = ScopeJson.Strings(entry, "anchors").ToHashSet(StringComparer.Ordinal);
@@ -210,9 +210,9 @@ internal static partial class ScopePacketChecks
             }
         }
 
-        // seam: once LensFile carries a demoted flag (the context lane), LensGather copies it onto the node and the filter below skips demoted files
-        return ScopeJson.Items(entry, "nodes").Where(n => near.Contains(ScopeJson.Str(n, "key") ?? string.Empty) && ScopeJson.Bool(n, "demoted") != true);
+        return ScopeJson.Items(entry, "nodes").Where(n => near.Contains(ScopeJson.Str(n, "key") ?? string.Empty) && ScopeJson.Bool(n, "demoted") != true && string.IsNullOrEmpty(ScopeJson.Str(n, "role")));
     }
+
 
     /// <summary>SCP-COV-004: for a change input, every changed file is mapped or listed under unmapped.</summary>
     private static void ChangedFilesMapped(ScopeContext c, RuleSink s)

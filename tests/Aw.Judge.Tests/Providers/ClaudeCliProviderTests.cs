@@ -48,6 +48,16 @@ public sealed class ClaudeCliProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_names_a_model_runs_that_model_instead_of_haiku()
+    {
+        Install(Questions.ClaudeStructured("""{"decision":"send"}"""));
+
+        _ = await Decide(Questions.Text with { Model = "sonnet" });
+
+        Assert.Equal("sonnet", After(Assert.Single(_runner.Calls).Request.Arguments, "--model"));
+    }
+
+    [Fact]
     public async Task A_model_and_effort_option_replaces_haiku_and_low_in_the_argv()
     {
         Install(Questions.ClaudeStructured("""{"decision":"send"}"""));

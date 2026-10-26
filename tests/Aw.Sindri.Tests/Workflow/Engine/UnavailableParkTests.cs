@@ -69,6 +69,43 @@ public sealed class UnavailableParkTests
         Assert.Null(ParkCodes.Of(park));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("exit", null, "exit")]
+    [InlineData("lost", "the session vanished", "lost: the session vanished")]
+    public void A_gone_agent_session_is_relaunched_twice_then_parks_as_gone(string reason, string? detail, string lastError)
+    {
+        var first = Assert.IsType<Applied>(Decide(At(Step, "produce"), Step, Failed(1, 1, reason) with { Detail = detail }));
+        var afterFirst = first.Changes[0].After;
+        Assert.Null(afterFirst.Suspension);
+        Assert.Equal((RunToken.For(1, 2), 1), (afterFirst.Frame.Run!.Token, afterFirst.Frame.Run.Retries));
+        Assert.Equal((FollowUpKind.StartRun, RunToken.For(1, 2)), (Assert.Single(first.FollowUps).Kind, first.FollowUps[0].Run!.Value));
+
+        var second = Assert.IsType<Applied>(Decide(afterFirst, Step, Failed(1, 2, reason) with { Detail = detail }));
+        var afterSecond = second.Changes[0].After;
+        Assert.Null(afterSecond.Suspension);
+        Assert.Equal((RunToken.For(1, 3), 2), (afterSecond.Frame.Run!.Token, afterSecond.Frame.Run.Retries));
+        Assert.Equal(FollowUpKind.StartRun, Assert.Single(second.FollowUps).Kind);
+
+        var third = Assert.IsType<Applied>(Decide(afterSecond, Step, Failed(1, 3, reason) with { Detail = detail }));
+        var after = third.Changes[0].After;
+        Assert.Equal((EngineStates.Parked, ParkReason.Unavailable), (after.State, after.Park));
+        Assert.Equal($"{ProduceStep}'s agent session is gone ({reason}), relaunched 2 times; the last error: {lastError}", after.Suspension!.Question);
+        Assert.Empty(third.FollowUps);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("service:agent:" + ProduceStep, "idle")]
+    [InlineData("service:agent:" + ProduceStep, "launch")]
+    [InlineData("service:block:" + ProduceStep, "exit")]
+    public void Any_other_failure_keeps_the_unavailable_text(string actor, string reason)
+    {
+        var third = Retried(At(Step, "produce"), failures: 2);
+
+        var applied = Assert.IsType<Applied>(Decide(third, Step, Failed(1, 3, reason) with { Actor = actor }));
+
+        Assert.Equal($"{ProduceStep} is unavailable after 2 retries; the last error: {reason}", applied.Changes[0].After.Suspension!.Question);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void A_rerun_answer_starts_the_count_again()
     {

@@ -124,7 +124,7 @@ const REAL_APP = ["ui-browser", "api-transcript", "cli-transcript", "ios-sim"];
 const UNMEASURABLE = ["fast", "quick", "clean", "intuitive", "easy", "seamless", "robust", "user-friendly", "smooth"];
 const HOPS = ["state", "dependency", "flow", "component"];
 const SIZE_LIMITS = { XS: { files: 3, items: 2 }, S: { files: 8, items: 4 }, M: { files: 20, items: 8 } };
-const SCOPE_FILES = ["scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "size.json", "questions.json", "answers.jsonl", "challenge.json", "relevance.json", "gap-search.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md"];
+const SCOPE_FILES = ["scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "size.json", "questions.json", "answers.jsonl", "challenge.json", "relevance.json", "gap-search.json", "graph.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md"];
 const DESIGN_FILES = ["packet.json", "spec.md", "sections.json", "coverage.json", "decisions.json", "acceptance.json", "signals.json", "contracts.json", "lens-rounds.jsonl", "style.json", "escapes.json", "runs.json", "index.json"];
 const PLAN_FILES = ["packet.json", "tasks.json", "graph.json", "exec-review.json", "holdout.json", "answers.jsonl", "index.json"];
 

@@ -31,7 +31,7 @@ public sealed class ScopingSlicesTests
         var result = await service.Handle(new ValidateScopingPacketRequest("pkt"), CancellationToken.None);
 
         Assert.True(result.Value.Passed);
-        Assert.Equal((1, "scoping", 5), (result.Value.SchemaVersion, result.Value.Kind, result.Value.Checks.Count));
+        Assert.Equal((1, "scoping", 6), (result.Value.SchemaVersion, result.Value.Kind, result.Value.Checks.Count));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -108,7 +108,7 @@ public sealed class ScopingSlicesTests
         var record = Assert.Single(log.Records).Value;
         Assert.Equal(("scoping", "idea-1", _now, 1), (record.Kind, record.Packet.Value, record.FrozenAt, record.DigestVersion));
         Assert.Null(record.BaseSha);
-        Assert.Equal(14, record.Files.Count);
+        Assert.Equal(15, record.Files.Count);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -63,7 +63,7 @@ internal sealed class CodexCliProvider(IProcessRunner runner) : AgentCliProvider
         File.WriteAllText(schema, AnswerSchema.Strict(question).ToJsonString());
         return new AgentCliCall(
             [
-                "exec", "--model", Model, "-c", "model_reasoning_effort=\"low\"", "--ephemeral", "--skip-git-repo-check",
+                "exec", "--model", question.Model ?? Model, "-c", "model_reasoning_effort=\"low\"", "--ephemeral", "--skip-git-repo-check",
                 "--ignore-user-config", "--ignore-rules", .. _disabledFeatures.SelectMany(feature => new[] { "--disable", feature }),
                 "--sandbox", "read-only", "-C", workspace, "--output-schema", schema, "--json", .. images, "--", "-",
             ],

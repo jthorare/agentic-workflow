@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.SweepLostSessions;
 /// </summary>
 /// <param name="liveness">The launches this process tracks.</param>
 /// <param name="clock">The time.</param>
-/// <param name="files">The per-launch files: the turn-ended file.</param>
+/// <param name="files">The per-launch files: the turn-ended and turn-failed files and the tool-running marker.</param>
 /// <param name="views">The 'launches' view: the instance a launch belongs to.</param>
 /// <param name="instances">Reads the instance, to see whether a person took it over.</param>
 internal sealed class StalledAgentRuns(LaunchLiveness liveness, TimeProvider clock, ILaunchFiles files, ILaunchViews views, IInstanceReader instances) : IStalledAgentRuns
@@ -21,7 +21,7 @@ internal sealed class StalledAgentRuns(LaunchLiveness liveness, TimeProvider clo
         var found = new List<StalledAgentRun>();
         foreach (var launch in liveness.Active())
         {
-            if (files.TurnEndedAt(launch) is not { } turn || !LaunchRules.IdleTurn(turn, now))
+            if (files.ToolRunning(launch) || (files.TurnEndedAt(launch) ?? files.TurnFailedAt(launch)) is not { } turn || !LaunchRules.IdleTurn(turn, now))   // an API-error stop (turn-failed) is idle too
             {
                 continue;
             }

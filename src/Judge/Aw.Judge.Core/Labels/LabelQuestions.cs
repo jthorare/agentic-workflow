@@ -3,21 +3,21 @@ using System.Text.Json;
 using Aw.Judge.Core.Questions;
 using Aw.Kernel.Json;
 
-namespace Aw.Judge.Features;
+namespace Aw.Judge.Core.Labels;
 
 /// <summary>
 /// The questions a label can be given for: what each may answer and whether a stored input still fits its input record. The
 /// 'choose' question is left out, because its outputs come from each call and no fixed set of labels exists.
 /// </summary>
-internal static class LabelQuestions
+public static class LabelQuestions
 {
     /// <summary>The label that leaves an item out of every score.</summary>
-    internal const string Skip = "skip";
+    public const string Skip = "skip";
 
     /// <summary>What a question may answer.</summary>
     /// <param name="question">The question's name.</param>
     /// <returns>The outputs, or null when the question can't be labelled (unknown, or choose).</returns>
-    internal static IReadOnlyList<string>? Outputs(string question) => question switch
+    public static IReadOnlyList<string>? Outputs(string question) => question switch
     {
         WakeGateQuestion.Name => WakeGateQuestion.Definition.Outputs,
         BriefScopeQuestion.Name => BriefScopeQuestion.Definition.Outputs,
@@ -35,7 +35,7 @@ internal static class LabelQuestions
     /// <param name="inputJson">The stored input.</param>
     /// <param name="json">The package's AwJson options.</param>
     /// <returns>True when the question can be asked of the input.</returns>
-    internal static bool Fits(string question, string inputJson, JsonSerializerOptions json) => question switch
+    public static bool Fits(string question, string inputJson, JsonSerializerOptions json) => question switch
     {
         WakeGateQuestion.Name => Fit(WakeGateQuestion.Definition, inputJson, json),
         BriefScopeQuestion.Name => Fit(BriefScopeQuestion.Definition, inputJson, json),

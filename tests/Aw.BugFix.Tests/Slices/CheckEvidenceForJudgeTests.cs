@@ -51,6 +51,49 @@ public sealed class CheckEvidenceForJudgeTests : IDisposable
         Assert.Contains("Keeps_the_cookie", asked.CheckSource, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_wildcard_filter_class_finds_a_test_class_in_a_subfolder()
+    {
+        CommitDeepClass();
+
+        var asked = await JudgedWith(["dotnet", "test", "--project", Project, "--filter-class", "*.BugTests"]);
+
+        Assert.Contains("Keeps_the_cookie", asked.CheckSource, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_filter_method_finds_the_test_class_in_a_subfolder()
+    {
+        CommitDeepClass();
+
+        var asked = await JudgedWith(["dotnet", "test", "--project", Project, "--filter-method", "Foo.Tests.X.BugTests.Keeps_the_cookie"]);
+
+        Assert.Contains("Keeps_the_cookie", asked.CheckSource, StringComparison.Ordinal);
+    }
+
+    private async Task<Core.Model.ResolutionCheckInput> JudgedWith(string[] command)
+    {
+        await _w.Investigated();
+        _ = _w.Runner.Exits("dotnet", 1);
+        var baseline = World.Ok(await _w.Run<RunTestRequest, RunTestResponse>(new RunTestRequest(World.State, Project, World.Repo, command)));
+        _ = World.Ok(await _w.Run<AdvanceReproduceRequest, AdvanceReproduceResponse>(new AdvanceReproduceRequest(World.State, baseline.Evidence, Project, World.Repo)));
+        _ = World.Ok(await _w.Start());
+        _ = _w.Fix();
+        var c1 = World.Ok(await _w.Record()).Candidate;
+        _ = _w.Runner.Exits("dotnet", 0);
+        var after = World.Ok(await _w.Run<RunTestRequest, RunTestResponse>(new RunTestRequest(World.State, Project, World.Worktree, command)));
+        _ = World.Ok(await _w.Run<RecordRunRequest, RecordRunResponse>(new RecordRunRequest(World.State, c1, after.Evidence)));
+        _ = World.Ok(await _w.Run<JudgeCandidateRequest, JudgeCandidateResponse>(new JudgeCandidateRequest(World.State, c1)));
+        return Assert.Single(_w.Judge.Asked);
+    }
+
+    private void CommitDeepClass()
+    {
+        _w.Repos.Write($"{World.Repo}/{Project}", "<Project Sdk=\"Microsoft.NET.Sdk\" />\n");
+        _w.Repos.Write($"{World.Repo}/tests/Foo.Tests/Slices/Deep/BugTests.cs", "namespace Foo.Tests.X;\n\npublic class BugTests\n{\n    [Fact]\n    public void Keeps_the_cookie() { }\n}\n");
+        _ = _w.Repos.Commit(World.Repo);
+    }
+
     private void CommitTestProject()
     {
         _w.Repos.Write($"{World.Repo}/{Project}", "<Project Sdk=\"Microsoft.NET.Sdk\" />\n");

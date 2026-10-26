@@ -24,7 +24,7 @@ public sealed class ScopingChecksTests
         var checks = await Run(A.ScopingPacket().Build());
 
         Assert.Equal(
-            [ScopingRules.FilesPresent, ScopingRules.NoUnlisted, ScopingRules.WellFormed, ScopingRules.LensesSchema, ScopingRules.LensIds],
+            [ScopingRules.FilesPresent, ScopingRules.NoUnlisted, ScopingRules.WellFormed, ScopingRules.LensesSchema, ScopingRules.LensIds, ScopingRules.GraphShape],
             checks.Select(static c => c.Rule), StringComparer.Ordinal);
         Assert.All(checks, static c => Assert.Equal(CheckState.Pass, c.State));
     }
@@ -39,7 +39,7 @@ public sealed class ScopingChecksTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_relevance_and_gap_search_files_are_required_files_of_the_fourteen()
+    public async Task The_relevance_and_gap_search_files_are_required_files_of_the_fifteen()
     {
         var checks = await Run(A.ScopingPacket().Without("relevance.json").Without("gap-search.json").Build());
 

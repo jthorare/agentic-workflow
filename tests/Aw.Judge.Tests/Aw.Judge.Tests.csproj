@@ -27,6 +27,8 @@
   <ItemGroup>
     <!-- Transcript fixtures (tests/fixtures/judge-transcripts) for the Claude transcript reader. -->
     <None Include="../fixtures/judge-transcripts/*.jsonl" Link="Transcripts/Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The resolution-check input bugfix-state writes (tests/fixtures/judge-input), shared with Aw.BugFix.Tests so both digest it alike. -->
+    <None Include="../fixtures/judge-input/*.json" Link="JudgeInput/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

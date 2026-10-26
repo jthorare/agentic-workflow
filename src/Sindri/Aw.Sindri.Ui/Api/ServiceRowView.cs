@@ -8,4 +8,6 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="NextSlot">When it runs next, or null when none is due.</param>
 /// <param name="Job">The job of a manual run in flight, or null.</param>
 /// <param name="Actions">The actions the service allows (run, pause, resume); null when the answer does not say, which shows them all.</param>
-internal sealed record ServiceRowView(string Name, string Every, bool Paused, ServiceRunView? LastRun = null, DateTimeOffset? NextSlot = null, string? Job = null, IReadOnlyList<string>? Actions = null);
+/// <param name="OverdueSince">The slot the scheduler missed, or null when the service is on time (the member is then left out).</param>
+internal sealed record ServiceRowView(string Name, string Every, bool Paused, ServiceRunView? LastRun = null, DateTimeOffset? NextSlot = null, string? Job = null, IReadOnlyList<string>? Actions = null,
+    DateTimeOffset? OverdueSince = null);

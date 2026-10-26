@@ -74,6 +74,12 @@ internal static partial class Labels
     /// <summary>The map's accessible name.</summary>
     internal const string ContextWholeCanvasName = "The whole map";
 
+    /// <summary>The map canvas's accessible name once bands are drawn: the bands top to bottom, each with what it holds.</summary>
+    /// <param name="bands">Each band's title and what it holds ("2 decisions · 3 records"; empty for nothing).</param>
+    /// <returns>"The whole map: Why (2 decisions), Product (2 features), Code (2 code files)".</returns>
+    internal static string ContextWholeCanvasBands(IEnumerable<(string Title, string Meta)> bands) =>
+        $"{ContextWholeCanvasName}: {string.Join(", ", bands.Select(b => b.Meta.Length > 0 ? $"{b.Title} ({b.Meta})" : b.Title))}";
+
     /// <summary>A kind and its count, in people's words.</summary>
     /// <param name="kind">The node kind.</param>
     /// <param name="count">How many.</param>

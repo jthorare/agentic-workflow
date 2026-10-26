@@ -8,7 +8,10 @@ namespace Aw.Sindri.Features.RecordHeartbeat;
 /// <summary>The heartbeat: S1's one background service, proving the scheduler. It records 'service.heartbeat' per slot.</summary>
 internal sealed class HeartbeatService(IService<RecordHeartbeatRequest, RecordHeartbeatResponse> record) : IScheduledService
 {
-    public static readonly ServiceName ServiceId = ServiceName.From("heartbeat");
+    public static readonly ServiceName ServiceId = ServiceName.From(ServiceDescriptions.HeartbeatName);
+
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = ServiceDescriptions.Heartbeat;
 
     public ServiceName Identity() => ServiceId;
 

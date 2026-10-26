@@ -43,11 +43,13 @@
 #                                  context.db through down, so the next draft's number depends on earlier runs); up and down
 #                                  approve whenever the profile is not approved
 #
-#   sindri-ui-fixture.sh context whole over|under
+#   sindri-ui-fixture.sh context whole over|under|concepts
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
 #                                  features with 50 code nodes each (612 nodes, over the 500-node budget: the Context page opens by feature),
 #                                  under imports the tabs map again (10 nodes: the page draws every node). Each switch is a new map version
-#                                  and a repeat with the same map imports nothing
+#                                  and a repeat with the same map imports nothing; concepts imports a small authored map with two concepts
+#                                  (Self scheduling, Billing) over four features and a decision on Swaps, so the Context page opens on
+#                                  its concept band and a concept draws its Why, product and code
 #
 #   sindri-ui-fixture.sh context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume
 #                                  the Health page's Context map card (F1P-c, code index spec 6.4; run after 'context up'): puts the
@@ -439,6 +441,28 @@ context_whole() {
   [ -d "$dir/$CONTEXT_REPO/.git" ] || die "context whole: run 'context up' first"
   case "$1" in
     under) map="$dir/tabs-map.json"; cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context whole: can't copy the tabs map" ;;
+    concepts)
+      map="$dir/concepts-map.json"
+      # A decision's node is implied by its row: its key is 'decision:' and the sha256 of the record, a newline and the quote (DecisionRow.KeyFor).
+      # A concept opens only its own members, so the decision belongs to Self scheduling as well as deciding Swaps (ConceptScope).
+      drec="repo:fixture/docs/decisions.md"; dquote="swaps close a day before the shift"
+      dkey="decision:$(printf '%s\n%s' "$drec" "$dquote" | sha256sum | cut -c1-64)"
+      jq -n --arg repo "$CONTEXT_REPO" --arg drec "$drec" --arg dquote "$dquote" --arg dkey "$dkey" '{schemaVersion: 1, kind: "authored", repo: $repo,
+        decisions: [{record: $drec, quote: $dquote, wording: "Swaps close a day before the shift.", at: "2026-10-01T10:00:00Z"}],
+        nodes: [
+          {key: "concept:scheduling", label: "Self scheduling", attributes: {summary: "People pick and swap shifts.", source: "derived", seed: "feature:shifts", terms: ["shift", "swap", "roster", "rota"]}},
+          {key: "concept:billing", label: "Billing", attributes: {summary: "Invoices and payment.", source: "override", terms: ["invoice"]}},
+          {key: "feature:shifts", label: "Shifts"}, {key: "feature:swaps", label: "Swaps"}, {key: "feature:invoices", label: "Invoices"}, {key: "feature:lone", label: "Loose end"},
+          {key: "surface:screen/shifts", label: "Shifts screen"}, {key: "action:pick", label: "Pick a shift"},
+          {key: "code:src/shifts.ts", label: "shifts.ts", provenance: "deterministic"}, {key: "code:src/invoices.ts", label: "invoices.ts", provenance: "deterministic"}],
+        edges: [
+          {from: "feature:shifts", to: "concept:scheduling", type: "belongs-to"}, {from: "feature:swaps", to: "concept:scheduling", type: "belongs-to"},
+          {from: "feature:invoices", to: "concept:billing", type: "belongs-to"},
+          {from: "code:src/shifts.ts", to: "feature:shifts", type: "implements", provenance: "deterministic"},
+          {from: "code:src/invoices.ts", to: "feature:invoices", type: "implements", provenance: "deterministic"},
+          {from: "feature:invoices", to: "feature:shifts", type: "depends-on"}, {from: "feature:swaps", to: "feature:invoices", type: "depends-on"},
+          {from: "surface:screen/shifts", to: "feature:shifts", type: "part-of"}, {from: "action:pick", to: "surface:screen/shifts", type: "on"},
+          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map" ;;
     over)
       map="$dir/over-map.json"
       jq -n --arg repo "$CONTEXT_REPO" '{schemaVersion: 1, kind: "authored", repo: $repo,
@@ -793,8 +817,8 @@ case "$verb" in
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
-      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ]; }; } || die "usage: context whole over|under" ;;
-      *) die "usage: context up|draft|down|publish <state>|whole over|under" ;;
+      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ]; }; } || die "usage: context whole over|under|concepts" ;;
+      *) die "usage: context up|draft|down|publish <state>|whole over|under|concepts" ;;
     esac ;;
   sessions)
     case "${2:-}" in

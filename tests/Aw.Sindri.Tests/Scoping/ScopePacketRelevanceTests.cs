@@ -4,7 +4,7 @@ using Aw.Sindri.Testing.Scoping;
 
 namespace Aw.Sindri.Tests.Scoping;
 
-/// <summary>The scope packet after the relevance review and the gap search (issue 966 section 5.1): fourteen files, lenses and coverage showing only what stayed in, and the two new files carrying the facts.</summary>
+/// <summary>The scope packet after the relevance review and the gap search (issue 966 section 5.1): fifteen files, lenses and coverage showing only what stayed in, and the two new files carrying the facts.</summary>
 public sealed class ScopePacketRelevanceTests
 {
     private const string Dir = "scope-packet/";
@@ -13,11 +13,11 @@ public sealed class ScopePacketRelevanceTests
         JsonNode.Parse(Assert.Single(files, f => f.Path == Dir + name).Content)!;
 
     [Fact, Trait("Lane", "unit")]
-    public void The_packet_has_the_fourteen_files_the_kind_lists()
+    public void The_packet_has_the_fifteen_files_the_kind_lists()
     {
         var files = ScopePacket.Build(new ScopeFacts(ScopingFacts.Expiry()));
 
-        Assert.Equal(14, files.Count);
+        Assert.Equal(15, files.Count);
         Assert.Equal(ScopePacketFiles.Names.Order(StringComparer.Ordinal), files.Select(static f => f.Path[Dir.Length..]).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Contains("relevance.json", ScopePacketFiles.Names, StringComparer.Ordinal);
         Assert.Contains("gap-search.json", ScopePacketFiles.Names, StringComparer.Ordinal);

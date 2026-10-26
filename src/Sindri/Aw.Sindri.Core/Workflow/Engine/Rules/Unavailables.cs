@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
+using Aw.Sindri.Core.Workflow.Engine.Triggers;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
@@ -20,6 +21,21 @@ internal static class Unavailables
     /// <returns>The sentence, without a full stop.</returns>
     public static string Question(string dependency, int retries, string error) =>
         string.Create(CultureInfo.InvariantCulture, $"{dependency} is unavailable after {retries} retries; the last error: {error}");
+
+    /// <summary>Whether a failure is an agent session that is gone: it ended as 'exit' or 'lost' (a launch failure, an 'idle' stop or a block failure is not).</summary>
+    /// <param name="failed">The failure.</param>
+    /// <returns>True when the agent's session ended without a report (a launch failure names its dependency, the launcher, so it is never one).</returns>
+    public static bool IsGoneSession(StepFailed failed) =>
+        failed.Actor.StartsWith("service:agent:", StringComparison.Ordinal) && failed.Dependency is null && (string.Equals(failed.Reason, "exit", StringComparison.Ordinal) || string.Equals(failed.Reason, "lost", StringComparison.Ordinal));
+
+    /// <summary>What the park says for a gone agent session: the Step, how often its session was relaunched and the last error.</summary>
+    /// <param name="step">The Step whose session is gone.</param>
+    /// <param name="reason">How the session ended ('exit' or 'lost').</param>
+    /// <param name="retries">How many times the session was relaunched.</param>
+    /// <param name="error">The last failure, as the human reads it.</param>
+    /// <returns>The sentence, without a full stop.</returns>
+    public static string Gone(string step, string reason, int retries, string error) =>
+        string.Create(CultureInfo.InvariantCulture, $"{step}'s agent session is gone ({reason}), relaunched {retries} times; the last error: {error}");
 
     /// <summary>The park.</summary>
     /// <param name="question">What it says (<see cref="Question"/>).</param>
