@@ -79,7 +79,7 @@ internal static partial class Labels
     /// <param name="files">How many files.</param>
     /// <returns>"test, demoted: 41 files".</returns>
     internal static string ContextRoleLine(string role, bool demoted, int files) =>
-        string.Create(CultureInfo.InvariantCulture, $"{role}, {(demoted ? "demoted" : "ignored")}: {Count(files, "file", "files")}");
+        $"{role}, {(demoted ? "demoted" : "ignored")}: {Count(files, "file", "files")}";
 
     /// <summary>Files that look like a role but no glob of the profile matches.</summary>
     /// <param name="count">How many.</param>

@@ -99,21 +99,6 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     /// <summary>The note under the table, or empty.</summary>
     public string Note { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>One line per role of the repo ("test, demoted: 41 files"); empty when the map status names no role for it.</summary>
-    public IReadOnlyList<string> RoleLines { get; private set => Set(ref field, value); } = [];
-
-    /// <summary>"2 files look like a role but match no glob", or empty when none do.</summary>
-    public string UnassignedLine { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>The paths of a few of those files, or empty.</summary>
-    public string UnassignedExamples { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>Whether there is a role line or an unassigned line to show.</summary>
-    public bool HasRoles => RoleLines.Count > 0 || HasUnassigned;
-
-    /// <summary>Whether role-like files match no glob.</summary>
-    public bool HasUnassigned => UnassignedLine.Length > 0;
-
     /// <summary>The refusal's own words, or empty.</summary>
     public string Problem { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -165,22 +150,10 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
         var repo = _repo;
         if (repo is null || string.IsNullOrEmpty(path))   // the top of a repo reads the status again, so its role counts are fresh
         {
-            var status = await Ports.Api.MapStatus(api, anchor: null, cancellationToken).ConfigureAwait(true);
+            repo = await ReadStatus(api, repo, generation, cancellationToken).ConfigureAwait(true);
             if (generation != _generation)
             {
                 return;
-            }
-
-            if (status.IsError && repo is null)
-            {
-                Fail(status.Error);
-                return;
-            }
-
-            if (status.IsSuccess)
-            {
-                repo ??= status.Value.Version.Repo;
-                ShowRoles(status.Value.Roles, repo);
             }
         }
 
@@ -204,6 +177,30 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
         {
             Fail(read.Error);
         }
+    }
+
+    // The map status: names the repo when none is chosen yet and carries its role counts. A refusal with no repo to fall back on is shown.
+    private async Task<string?> ReadStatus(Uri api, string? repo, int generation, CancellationToken cancellationToken)
+    {
+        var status = await Ports.Api.MapStatus(api, anchor: null, cancellationToken).ConfigureAwait(true);
+        if (generation != _generation)
+        {
+            return repo;
+        }
+
+        if (status.IsError && repo is null)
+        {
+            Fail(status.Error);
+            return null;
+        }
+
+        if (status.IsSuccess)
+        {
+            repo ??= status.Value.Version.Repo;
+            ShowRoles(status.Value.Roles, repo);
+        }
+
+        return repo;
     }
 
     /// <summary>Reads the folder shown again, or the top when none is (the Files view was just opened).</summary>
@@ -258,18 +255,6 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
         }
 
         return crumbs;
-    }
-
-    // The repo's own entry of the status's role counts; no entry, or one with nothing in it, shows nothing.
-    private void ShowRoles(IReadOnlyList<RepoRolesView>? roles, string repo)
-    {
-        var mine = roles?.FirstOrDefault(r => string.Equals(r.Repo, repo, StringComparison.Ordinal));
-        RoleLines = mine is null ? [] : [.. mine.Roles.Select(r => Labels.ContextRoleLine(r.Role, r.Demoted, r.Files))];
-        var unassigned = mine?.Unassigned is { Count: > 0 } u ? u : null;
-        UnassignedLine = unassigned is null ? string.Empty : Labels.ContextRolesUnassigned(unassigned.Count);
-        UnassignedExamples = unassigned is null ? string.Empty : string.Join(", ", unassigned.Examples);
-        OnChanged(nameof(HasRoles));
-        OnChanged(nameof(HasUnassigned));
     }
 
     private void Show(FileMapView view)
