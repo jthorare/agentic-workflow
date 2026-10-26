@@ -35,6 +35,10 @@ internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, I
             {
                 notes.Add("concepts");
             }
+            else if (named.Value.Unavailable is { } why)
+            {
+                notes.Add($"concepts: {why}");
+            }
         }
 
         var concepts = ConceptDeriver.Derive(joined, pins, names, glossary, hints);

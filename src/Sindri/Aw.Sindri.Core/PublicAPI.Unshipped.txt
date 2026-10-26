@@ -15560,8 +15560,8 @@ static Aw.Sindri.Core.BugFix.ResolutionVerdict.operator !=(Aw.Sindri.Core.BugFix
 static Aw.Sindri.Core.BugFix.ResolutionVerdict.operator ==(Aw.Sindri.Core.BugFix.ResolutionVerdict? left, Aw.Sindri.Core.BugFix.ResolutionVerdict? right) -> bool
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceStart.StartedBy.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceStart.StartedBy.init -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.Deconstruct(out System.DateTimeOffset Now, out bool NotStarted, out string? ItemTitle, out string? RecipeDisplayName, out string? LineStage) -> void
-Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.InstanceSummaryContext(System.DateTimeOffset Now, bool NotStarted = false, string? ItemTitle = null, string? RecipeDisplayName = null, string? LineStage = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.Deconstruct(out System.DateTimeOffset Now, out bool NotStarted, out string? ItemTitle, out string? RecipeDisplayName, out string? LineStage, out bool AgentIdle) -> void
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.InstanceSummaryContext(System.DateTimeOffset Now, bool NotStarted = false, string? ItemTitle = null, string? RecipeDisplayName = null, string? LineStage = null, bool AgentIdle = false) -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.LineStage.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.LineStage.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView.StartedAt.get -> System.DateTimeOffset?
@@ -18866,6 +18866,8 @@ override Aw.Sindri.Core.Profile.ProfileRole.GetHashCode() -> int
 override Aw.Sindri.Core.Profile.ProfileRole.ToString() -> string!
 static Aw.Sindri.Core.Profile.ProfileRole.operator !=(Aw.Sindri.Core.Profile.ProfileRole? left, Aw.Sindri.Core.Profile.ProfileRole? right) -> bool
 static Aw.Sindri.Core.Profile.ProfileRole.operator ==(Aw.Sindri.Core.Profile.ProfileRole? left, Aw.Sindri.Core.Profile.ProfileRole? right) -> bool
+Aw.Sindri.Core.Scoping.QuestionShape
+static Aw.Sindri.Core.Scoping.QuestionShape.Faults(System.Text.Json.Nodes.JsonNode? questions) -> System.Collections.Generic.IReadOnlyList<(string! Id, string! Message, string! Fix)>!
 Aw.Sindri.Core.Launch.ISessionNudges
 Aw.Sindri.Core.Launch.ISessionNudges.Send(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Core.Launches.ILaunchFiles.MarkNudged(Aw.Sindri.Core.Workflow.Engine.LaunchId launch, System.DateTimeOffset at) -> void
@@ -18879,6 +18881,34 @@ static Aw.Sindri.Core.Launch.LaunchFiles.NudgedName(Aw.Sindri.Core.Workflow.Engi
 static Aw.Sindri.Core.Launch.LaunchFiles.ToolRunningName(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
 static Aw.Sindri.Core.Launch.LaunchFiles.TurnFailedName(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
 static Aw.Sindri.Core.Launches.LaunchRules.StalledAfter.get -> System.TimeSpan
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.AgentIdle.get -> bool
+Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceSummaryContext.AgentIdle.init -> void
+static Aw.Sindri.Core.Health.HealthSummary.WithIdleAgents(Aw.Sindri.Core.Health.HealthReport! report, int idle) -> Aw.Sindri.Core.Health.HealthReport!
+Aw.Sindri.Core.Launches.StalledLaunch
+Aw.Sindri.Core.Launches.StalledLaunch.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, out Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, out string? State, out System.DateTimeOffset EndedAt, out Aw.Sindri.Core.Ids.ItemId Item) -> void
+Aw.Sindri.Core.Launches.StalledLaunch.EndedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Launches.StalledLaunch.EndedAt.init -> void
+Aw.Sindri.Core.Launches.StalledLaunch.Instance.get -> Aw.Sindri.Core.Workflow.Engine.InstanceAddress
+Aw.Sindri.Core.Launches.StalledLaunch.Instance.init -> void
+Aw.Sindri.Core.Launches.StalledLaunch.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId
+Aw.Sindri.Core.Launches.StalledLaunch.Launch.init -> void
+Aw.Sindri.Core.Launches.StalledLaunch.State.get -> string?
+Aw.Sindri.Core.Launches.StalledLaunch.State.init -> void
+Aw.Sindri.Core.Launches.StalledLaunch.StalledLaunch(Aw.Sindri.Core.Workflow.Engine.LaunchId Launch, Aw.Sindri.Core.Workflow.Engine.InstanceAddress Instance, string? State, System.DateTimeOffset EndedAt, Aw.Sindri.Core.Ids.ItemId Item) -> void
+Aw.Sindri.Core.Launches.StalledLaunches
+static Aw.Sindri.Core.Launches.StalledLaunches.Find(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.LaunchRow!>! rows, System.DateTimeOffset? now) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>!
+static readonly Aw.Sindri.Core.Launches.StalledLaunches.Window -> System.TimeSpan
+Aw.Sindri.Core.Launches.StalledLaunch.<Clone>$() -> Aw.Sindri.Core.Launches.StalledLaunch!
+Aw.Sindri.Core.Launches.StalledLaunch.Equals(Aw.Sindri.Core.Launches.StalledLaunch? other) -> bool
+override Aw.Sindri.Core.Launches.StalledLaunch.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launches.StalledLaunch.GetHashCode() -> int
+override Aw.Sindri.Core.Launches.StalledLaunch.ToString() -> string!
+static Aw.Sindri.Core.Launches.StalledLaunch.operator !=(Aw.Sindri.Core.Launches.StalledLaunch? left, Aw.Sindri.Core.Launches.StalledLaunch? right) -> bool
+static Aw.Sindri.Core.Launches.StalledLaunch.operator ==(Aw.Sindri.Core.Launches.StalledLaunch? left, Aw.Sindri.Core.Launches.StalledLaunch? right) -> bool
+Aw.Sindri.Core.Launches.StalledLaunch.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Launches.StalledLaunch.Item.init -> void
+static Aw.Sindri.Core.Launches.StalledLaunches.Open(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>! stalled, Aw.Sindri.Core.Views.IViewReader? views, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>!>
+static Aw.Sindri.Core.Launches.StalledLaunches.MovedPast(Aw.Sindri.Core.Launches.StalledLaunch! launch, Aw.Sindri.Core.Views.EngineItemPart? engine) -> bool
 Aw.Sindri.Core.Workflow.Engine.Rules.AnswerRecording
 Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested
 Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested.Equals(Aw.Sindri.Core.Workflow.Engine.Triggers.RewindRequested? other) -> bool

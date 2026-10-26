@@ -131,6 +131,28 @@ internal static partial class Labels
     internal static string ActionCounts(int ready, int copy) =>
         string.Create(CultureInfo.InvariantCulture, $"{ready} {ActionsReady}, {copy} {ActionsCopy}");
 
+    /// <summary>Why a service is paused: "Paused by you, 14:02".</summary>
+    /// <param name="pausedBy">Who paused it (human:..., session:..., service:...), or null.</param>
+    /// <param name="clock">When, as HH:mm, or empty when unknown.</param>
+    /// <returns>The words, with no id in them.</returns>
+    internal static string ServicePausedBy(string? pausedBy, string clock)
+    {
+        var who = pausedBy switch
+        {
+            not null when pausedBy.StartsWith("human:", StringComparison.Ordinal) => " by you",
+            not null when pausedBy.StartsWith("session:", StringComparison.Ordinal) => " by a session",
+            not null when pausedBy.StartsWith("service:", StringComparison.Ordinal) || pausedBy.StartsWith("system", StringComparison.Ordinal) => " by Sindri",
+            _ => string.Empty,
+        };
+        return clock.Length == 0 ? "Paused" + who : "Paused" + who + ", " + clock;
+    }
+
+    /// <summary>Why a service's last run failed: "Last run failed: the forge answered 503", or "Last run failed." with no detail.</summary>
+    /// <param name="detail">The server's message, or null.</param>
+    /// <returns>The words.</returns>
+    internal static string ServiceFailedWhy(string? detail) =>
+        string.IsNullOrWhiteSpace(detail) ? "Last run failed." : "Last run failed: " + detail.Trim();
+
     /// <summary>What a built-in service does, in plain words; empty for a service the app does not know.</summary>
     /// <param name="name">The service's name.</param>
     /// <returns>One short sentence, or empty.</returns>

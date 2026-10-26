@@ -93,6 +93,7 @@ internal static partial class ScopePacketChecks
         ScopeRules.Gap1 => GapSearched,
         ScopeRules.Gap2 => GapSearcherDiffers,
         ScopeRules.Graph1 => GraphCited,
+        ScopeRules.Qst1 => QuestionsRecommended,
         _ => throw new InvalidOperationException($"No body for rule {id}."),
     };
 }

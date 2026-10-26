@@ -5,11 +5,11 @@ namespace Aw.Context.Core.Concepts;
 /// <summary>
 /// Regroups the area groups with the scan's concept hints, most confident first. A hinted group keeps the id of the area group whose seed it holds, else of the one it holds more than half the members of
 /// (an area's id goes to one hint only); else it gets the first of its members that no group uses as an id. What a hint leaves of an area that lost its id or its seed becomes a group of its own, under its
-/// first member no group uses. A member the groups lack is ignored, and a feature stays in the first hint that names it.
+/// first member no group uses. The name of each hinted group is its hint's. A member the groups lack is ignored, and a feature stays in the first hint that names it.
 /// </summary>
 internal static class ConceptHintGroups
 {
-    internal static (Dictionary<string, List<string>> Groups, HashSet<string> Hinted) Apply(Dictionary<string, List<string>> areas, IReadOnlyList<ConceptHint> hints)
+    internal static (Dictionary<string, List<string>> Groups, HashSet<string> Hinted, Dictionary<string, string> Names) Apply(Dictionary<string, List<string>> areas, IReadOnlyList<ConceptHint> hints)
     {
         var known = areas.Values.SelectMany(static m => m).ToHashSet(StringComparer.Ordinal);
         var used = new HashSet<string>(areas.Keys, StringComparer.Ordinal);
@@ -17,6 +17,7 @@ internal static class ConceptHintGroups
         var taken = new HashSet<string>(StringComparer.Ordinal);
         var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var hinted = new HashSet<string>(StringComparer.Ordinal);
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var hint in hints.OrderByDescending(static h => h.Confidence).ThenBy(static h => h.Name, StringComparer.Ordinal))
         {
             var members = hint.Members.Distinct(StringComparer.Ordinal).Where(m => known.Contains(m) && !taken.Contains(m)).Order(StringComparer.Ordinal).ToList();
@@ -27,6 +28,7 @@ internal static class ConceptHintGroups
                 taken.UnionWith(members);
                 result[key] = members;
                 _ = hinted.Add(key);
+                names[key] = hint.Name;
             }
         }
 
@@ -36,7 +38,7 @@ internal static class ConceptHintGroups
         }
 
         hinted.IntersectWith(result.Keys);
-        return (result, hinted);
+        return (result, hinted, names);
     }
 
     // The area whose id a hinted group keeps: the one whose seed it holds, else the one it holds more than half the members of (the most of them first).

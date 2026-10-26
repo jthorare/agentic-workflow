@@ -7315,8 +7315,11 @@ Aw.Context.Core.Concepts.ConceptName.Summary.get -> string?
 Aw.Context.Core.Concepts.ConceptName.Summary.init -> void
 Aw.Context.Core.Concepts.ConceptNames
 Aw.Context.Core.Concepts.ConceptNames.<Clone>$() -> Aw.Context.Core.Concepts.ConceptNames!
-Aw.Context.Core.Concepts.ConceptNames.ConceptNames(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Concepts.ConceptName!>! BySeed) -> void
-Aw.Context.Core.Concepts.ConceptNames.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Concepts.ConceptName!>! BySeed) -> void
+Aw.Context.Core.Concepts.ConceptNames.ConceptNames(System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Concepts.ConceptName!>! BySeed, string? Unavailable = null) -> void
+Aw.Context.Core.Concepts.ConceptNames.Unavailable.get -> string?
+Aw.Context.Core.Concepts.ConceptNames.Unavailable.init -> void
+static Aw.Context.Core.Concepts.ConceptNames.Skipped(string! reason) -> Aw.Context.Core.Concepts.ConceptNames!
+Aw.Context.Core.Concepts.ConceptNames.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Concepts.ConceptName!>! BySeed, out string? Unavailable) -> void
 Aw.Context.Core.Concepts.ConceptNames.Equals(Aw.Context.Core.Concepts.ConceptNames? other) -> bool
 Aw.Context.Core.Concepts.ConceptNames.BySeed.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Concepts.ConceptName!>!
 Aw.Context.Core.Concepts.ConceptNames.BySeed.init -> void

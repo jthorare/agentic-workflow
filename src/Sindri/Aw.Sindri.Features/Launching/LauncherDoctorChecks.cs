@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.Launching;
 
@@ -9,7 +10,8 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="launches">The launches projection.</param>
 /// <param name="targets">The last probe of the viewer, host and agents.</param>
 /// <param name="clock">Now.</param>
-internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock) : IDoctorChecks
+/// <param name="items">The items view, to tell a stalled launch whose instance moved on; none keeps every one.</param>
+internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews launches, LaunchTargetsReader targets, TimeProvider clock, IViewReader? items = null) : IDoctorChecks
 {
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
@@ -24,7 +26,26 @@ internal sealed class LauncherDoctorChecks(ILaunchSetup setup, ILaunchViews laun
         var probed = await targets.Read(cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         var facts = Facts(probed.IsError ? null : probed.Value.ProbedAt, (probed.IsError, rows.IsError), rows.IsError ? [] : rows.Value, now);
-        return [Viewer(report, facts), Agents(report), new DoctorCheck("launcher:adoption", CheckState.Ok, rows.IsError ? "the launches view couldn't be read" : LaunchAdoption.Line(rows.Value), Fix: null)];
+        var checks = new List<DoctorCheck>
+        {
+            Viewer(report, facts),
+            Agents(report),
+            new("launcher:adoption", CheckState.Ok, rows.IsError ? "the launches view couldn't be read" : LaunchAdoption.Line(rows.Value), Fix: null),
+        };
+        if (!rows.IsError && await StalledLaunches.Open(StalledLaunches.Find(rows.Value, now), items, cancellationToken).ConfigureAwait(false) is { Count: > 0 } stalled)
+        {
+            checks.Add(Stalled(stalled));
+        }
+
+        return checks;
+    }
+
+    /// <summary>The warning for agent sessions that sat idle and were ended with no report, and whose Step no retry took over (issue #1265).</summary>
+    private static DoctorCheck Stalled(IReadOnlyList<StalledLaunch> stalled)
+    {
+        var named = stalled.Select(static s => s.Launch.Value + " on " + s.Instance.Value + (s.State is { } state ? " (" + state + ")" : string.Empty));
+        var count = stalled.Count == 1 ? "1 agent session" : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{stalled.Count} agent sessions");
+        return new DoctorCheck("launcher:stalled", CheckState.Warn, count + " went idle with no report and was ended: " + string.Join("; ", named), "sindri workflow status " + stalled[0].Instance.Value);
     }
 
     /// <summary>The three facts "run `sindri doctor`" in the launch copy leads to (UI spec E-1): when the targets were last probed, how many requests ran past their deadline, and the last failure's code.</summary>

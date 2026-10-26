@@ -1494,7 +1494,13 @@ usage, the measured empty diff, and the stop of the session) before it decides.
   a new run in the same entry with no loop round counted (`OpenRun.Retries`, `Unavailables.MaxRetries` = 2 reruns, three tries
   in all, as many as a launch gets); the third failure parks the instance with `ParkReason.unavailable` (kind step, resume
   `rerun`). The park's words name the dependency, the retries and the last error (`step.produce is unavailable after 2
-  retries; the last error: exit`); `StepFailed.Dependency` names the dependency where the runtime knows it (an input's block
+  retries; the last error: exit`); an agent session that exited or was lost says so instead (`Unavailables.Gone`: `step.produce's agent
+  session is gone (exit), relaunched 2 times; the last error: exit`), and one the idle sweep ended says it went idle
+  (`Unavailables.Idle`: `step.produce's agent session went idle with no report (agent-stalled), relaunched 2 times; the last error: idle:
+  agent-stalled: …`, the parenthesis being the first word of the failure's detail). The list row reads `agent stalled: idle, no report`
+  for that park (not `waiting on a dependency that is down`), and `agent stalled in <item>: idle, no report` while the instance's current
+  agent launch is ended as idle in the `launches` view and the engine hasn't yet applied the failure (`InstanceSummaryContext.AgentIdle`,
+  filled by `ListInstancesService`); `StepFailed.Dependency` names the dependency where the runtime knows it (an input's block
   id, `the agent launcher`; the Step itself otherwise), and `StepFailed.Code` (or `BlockStepResult.Unavailable`'s code) becomes the
   park's `Suspension.Code`, served as the status's `reasonCode` (`SND-LAUNCH-007`, `SND-WF-016` …; none when the failure had
   no typed code). `answer --resume` runs the Step again and starts the retries from 0; it is the only answer (served through the

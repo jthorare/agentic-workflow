@@ -112,6 +112,24 @@ public static class HealthSummary
         return new HealthReport(word, problems, Sentence(word, problems));
     }
 
+    /// <summary>A report that also counts the agent sessions that sat idle and were ended with no report, and no newer launch took the Step over (issue #1265): any make a healthy report degraded.</summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="idle">The stalled launches, read from the launches view; they are ended, so none is also counted by <see cref="WithStalledAgents"/>.</param>
+    /// <returns>The report; the same one when none are stalled.</returns>
+    public static HealthReport WithIdleAgents(HealthReport report, int idle)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (idle <= 0)
+        {
+            return report;
+        }
+
+        var clause = idle == 1 ? "1 agent idle, no report" : string.Create(CultureInfo.InvariantCulture, $"{idle} agents idle, no report");
+        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-005", $"{clause}: its session was ended and the Step has not run again (sindri doctor names it)", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
     private static IEnumerable<HealthProblem> Profile(ProfileApproval profile)
     {
         if (profile == ProfileApproval.Changed)

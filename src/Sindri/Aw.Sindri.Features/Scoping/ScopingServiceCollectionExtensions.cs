@@ -17,6 +17,7 @@ internal static class ScopingServiceCollectionExtensions
         .AddScoped<IService<ScopingDeskRequest, ScopingDeskResponse>, ScopingDeskService>()
         .AddScoped<ScopingInstances>()
         .AddSingleton<IAgentStepInstructions, ScopeChallengeInstructions>()
+        .AddSingleton<IAgentStepInstructions, ScopeQuestionsInstructions>()
         .AddSingleton<IAgentStepInstructions, ScopeMapInstructions>()
         .AddSingleton<IAgentStepInstructions, ScopeExcludeInstructions>()
         .AddBlockRuntime<BriefSeedStep>()

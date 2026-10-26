@@ -94,7 +94,6 @@ public sealed class UnavailableParkTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("service:agent:" + ProduceStep, "idle")]
     [InlineData("service:agent:" + ProduceStep, "launch")]
     [InlineData("service:block:" + ProduceStep, "exit")]
     public void Any_other_failure_keeps_the_unavailable_text(string actor, string reason)
@@ -104,6 +103,30 @@ public sealed class UnavailableParkTests
         var applied = Assert.IsType<Applied>(Decide(third, Step, Failed(1, 3, reason) with { Actor = actor }));
 
         Assert.Equal($"{ProduceStep} is unavailable after 2 retries; the last error: {reason}", applied.Changes[0].After.Suspension!.Question);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("agent-stalled: the agent sat idle with no report", "agent-stalled", "idle: agent-stalled: the agent sat idle with no report")]
+    [InlineData(null, "idle", "idle")]
+    public void An_agent_session_that_went_idle_parks_saying_so_after_two_relaunches(string? detail, string cause, string lastError)
+    {
+        var third = Retried(At(Step, "produce"), failures: 2);
+
+        var applied = Assert.IsType<Applied>(Decide(third, Step, Failed(1, 3, "idle") with { Detail = detail }));
+
+        var after = applied.Changes[0].After;
+        Assert.Equal((EngineStates.Parked, ParkReason.Unavailable), (after.State, after.Park));
+        Assert.Equal($"{ProduceStep}'s agent session went idle with no report ({cause}), relaunched 2 times; the last error: {lastError}", after.Suspension!.Question);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_idle_failure_names_its_dependency_when_the_launcher_failed_instead_of_saying_idle()
+    {
+        var third = Retried(At(Step, "produce"), failures: 2);
+
+        var applied = Assert.IsType<Applied>(Decide(third, Step, Failed(1, 3, "idle") with { Dependency = "the agent launcher" }));
+
+        Assert.Equal("the agent launcher is unavailable after 2 retries; the last error: idle", applied.Changes[0].After.Suspension!.Question);
     }
 
     [Fact, Trait("Lane", "unit")]

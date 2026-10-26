@@ -25,13 +25,25 @@ internal static class ConceptNodes
             return new Built(new GraphNode(key, label, Provenance.Human, 1.0, Evidence(plan, view), Attributes(pin.Summary ?? Summary(plan, view), "override", plan.Seed, plan.Terms)), plan);
         }
 
-        if (names?.BySeed.GetValueOrDefault(plan.Seed) is { } named && Clean(named.Name) is { Length: > 0 } good && !LooksLikeIdentifier(good))
+        if (Named(plan, view, names) is { } model)
         {
-            var summary = string.IsNullOrWhiteSpace(named.Summary) ? Summary(plan, view) : named.Summary.Trim();
-            return new Built(new GraphNode(key, good, Provenance.Model, 0.7, Evidence(plan, view), Attributes(summary, "derived", plan.Seed, plan.Terms)), plan);
+            return new Built(new GraphNode(key, model.Label, Provenance.Model, 0.7, Evidence(plan, view), Attributes(model.Summary, "derived", plan.Seed, plan.Terms)), plan);
         }
 
         return new Built(new GraphNode(key, Humanize(view.Label(plan.Seed)), Provenance.Deterministic, 0.5, Evidence(plan, view), Attributes(Summary(plan, view), "derived", plan.Seed, plan.Terms)), plan);
+    }
+
+    // A name from the scan's hint, else from the model namer when it passes LooksLikeIdentifier; the summary is the model's when it gave one.
+    private static (string Label, string Summary)? Named(PlannedConcept plan, ConceptView view, ConceptNames? names)
+    {
+        var named = names?.BySeed.GetValueOrDefault(plan.Seed);
+        var summary = string.IsNullOrWhiteSpace(named?.Summary) ? Summary(plan, view) : named.Summary.Trim();
+        if (plan.Name is { } hinted && Clean(hinted) is { Length: > 0 } hintName)
+        {
+            return (hintName, summary);
+        }
+
+        return named is not null && Clean(named.Name) is { Length: > 0 } good && !LooksLikeIdentifier(good) ? (good, summary) : null;
     }
 
     // Every feature goes to the concept (or concepts) that hold it; a record or decision goes with the features it mentions or decides, else to 'concept:other'.

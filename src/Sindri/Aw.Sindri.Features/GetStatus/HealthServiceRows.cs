@@ -15,8 +15,9 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="stuck">The engine's stuck instances (API P13); none when this build has no engine read side.</param>
 /// <param name="stalled">The agent runs idle past their launch's idle time (issue #1000); none when this build has no launcher.</param>
 /// <param name="builds">The running and installed build stamps; none outside an install.</param>
+/// <param name="clock">Now, for how long a stalled launch still counts; none counts them all.</param>
 internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, StuckInstanceCount? stuck = null, IStalledAgentRuns? stalled = null,
-    IBuildStamps? builds = null)
+    IBuildStamps? builds = null, TimeProvider? clock = null)
 {
     /// <summary>The report with the stale build problem (#1032) when the running build is not the one 'bin/cs/current' names.</summary>
     /// <param name="report">The report so far.</param>
@@ -32,6 +33,15 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The count; 0 when this build has no launcher.</returns>
     public async ValueTask<int> Stalled(CancellationToken cancellationToken) => stalled is null ? 0 : (await stalled.Find(cancellationToken).ConfigureAwait(false)).Count;
+
+    /// <summary>How many agent sessions sat idle and were ended with no report, and were not relaunched (issue #1265), from the launches view.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The count; 0 when the launches view can't be read (status is where that is reported).</returns>
+    public async ValueTask<int> IdleAgents(CancellationToken cancellationToken)
+    {
+        var launches = await views.List<LaunchRow>(ViewNames.Launches, cancellationToken).ConfigureAwait(false);
+        return launches.IsSuccess ? (await StalledLaunches.Open(StalledLaunches.Find(launches.Value, clock?.GetUtcNow()), views, cancellationToken).ConfigureAwait(false)).Count : 0;
+    }
 
     /// <summary>How many live workflow instances are parked as unavailable: a dependency of their Step stayed down through the retries, so they wait for a rerun, not for an answer.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>

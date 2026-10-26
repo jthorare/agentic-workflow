@@ -21,9 +21,9 @@ internal static class ConceptPlan
         var pinned = pins.Select(p => new PlannedConcept(ConceptSlug.Unique(p.Id?.Value ?? p.Name, taken), "", p, Pinned(graph, features, p))).Select(WithSeed).Select(c => WithTerms(c, glossary)).ToList();
         var left = features.Except(pinned.SelectMany(p => p.Features), StringComparer.Ordinal).ToList();
         var areas = Groups(graph, left);
-        var (shaped, hinted) = hints is { Count: > 0 } ? ConceptHintGroups.Apply(areas, hints) : (areas, new HashSet<string>(StringComparer.Ordinal));
+        var (shaped, hinted, hintNames) = hints is { Count: > 0 } ? ConceptHintGroups.Apply(areas, hints) : (areas, new HashSet<string>(StringComparer.Ordinal), new Dictionary<string, string>(StringComparer.Ordinal));
         var groups = ConceptGrouping.Merge(graph, shaped, glossary is null ? null : new GlossaryTermIndex(glossary), hinted);
-        var derived = groups.OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => new PlannedConcept(ConceptSlug.Unique(g.Key["feature:".Length..], taken), g.Key, Pin: null, g.Value)).Select(c => WithTerms(c, glossary)).ToList();
+        var derived = groups.OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => new PlannedConcept(ConceptSlug.Unique(g.Key["feature:".Length..], taken), g.Key, Pin: null, g.Value) { Name = hintNames.GetValueOrDefault(g.Key) }).Select(c => WithTerms(c, glossary)).ToList();
         return (pinned, derived);
     }
 

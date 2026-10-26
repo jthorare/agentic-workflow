@@ -8,6 +8,9 @@ namespace Aw.Context.Core.Concepts;
 /// <param name="Features">The member feature keys, in key order.</param>
 internal sealed record PlannedConcept(string Slug, string Seed, ConceptPin? Pin, IReadOnlyList<string> Features)
 {
+    /// <summary>The name a concept scan's hint gave the group, or null; blank is as good as null.</summary>
+    public string? Name { get; init; }
+
     /// <summary>The glossary terms of the member features, the most telling first; empty without a glossary.</summary>
     public IReadOnlyList<string> Terms { get; init; } = [];
 }

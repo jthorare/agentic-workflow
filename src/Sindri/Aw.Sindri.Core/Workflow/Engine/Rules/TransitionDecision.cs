@@ -163,7 +163,9 @@ public static partial class TransitionDecision
         if (instance.Frame.Run is not { } run || d.Recipe.States[instance.State].Step is not { } use || run.Retries >= Unavailables.MaxRetries)
         {
             var retries = instance.Frame.Run?.Retries ?? 0;
-            var question = Unavailables.IsGoneSession(failed) ? Unavailables.Gone(dependency, failed.Reason, retries, error) : Unavailables.Question(dependency, retries, error);
+            var question = Unavailables.IsGoneSession(failed) ? Unavailables.Gone(dependency, failed.Reason, retries, error)
+                : Unavailables.IsIdleSession(failed) ? Unavailables.Idle(dependency, Unavailables.CauseOf(failed), retries, error)
+                : Unavailables.Question(dependency, retries, error);
             var park = Unavailables.Park(question, failed.Actor, failed.Code);
             return d.Changed(d.Rules.Suspend(instance, park));
         }

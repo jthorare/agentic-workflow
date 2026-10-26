@@ -37,6 +37,35 @@ internal static class Unavailables
     public static string Gone(string step, string reason, int retries, string error) =>
         string.Create(CultureInfo.InvariantCulture, $"{step}'s agent session is gone ({reason}), relaunched {retries} times; the last error: {error}");
 
+    /// <summary>The words an idle-agent park says after the Step's name; <see cref="IsIdleQuestion"/> finds a park by them.</summary>
+    private const string IdleWords = "'s agent session went idle with no report (";
+
+    /// <summary>Whether a failure is an agent session that sat idle and was ended with no report (reason 'idle', the idle sweep's stop).</summary>
+    /// <param name="failed">The failure.</param>
+    /// <returns>True for an agent Step failure with reason 'idle' (a launch failure names its dependency, so it is never one).</returns>
+    public static bool IsIdleSession(StepFailed failed) =>
+        failed.Actor.StartsWith("service:agent:", StringComparison.Ordinal) && failed.Dependency is null && string.Equals(failed.Reason, "idle", StringComparison.Ordinal);
+
+    /// <summary>What the park says for an agent session that went idle: the Step, why the sweep ended it, how often it was relaunched and the last error.</summary>
+    /// <param name="step">The Step whose session went idle.</param>
+    /// <param name="cause">The failure detail's first word ('agent-stalled'), or the reason when it has none.</param>
+    /// <param name="retries">How many times the session was relaunched.</param>
+    /// <param name="error">The last failure, as the human reads it.</param>
+    /// <returns>The sentence, without a full stop.</returns>
+    public static string Idle(string step, string cause, int retries, string error) =>
+        string.Create(CultureInfo.InvariantCulture, $"{step}{IdleWords}{cause}), relaunched {retries} times; the last error: {error}");
+
+    /// <summary>The first word of a failure's detail ('agent-stalled' of 'agent-stalled: the agent sat idle ...'), else its reason.</summary>
+    /// <param name="failed">The failure.</param>
+    /// <returns>The cause word.</returns>
+    public static string CauseOf(StepFailed failed) =>
+        failed.Detail is { Length: > 0 } detail ? detail.Split(':', ' ')[0] : failed.Reason;
+
+    /// <summary>Whether a park's question is <see cref="Idle"/>'s sentence (the view carries the question, not the failure).</summary>
+    /// <param name="question">The park's question.</param>
+    /// <returns>True for an idle-agent park.</returns>
+    public static bool IsIdleQuestion(string question) => question.Contains(IdleWords, StringComparison.Ordinal);
+
     /// <summary>The park.</summary>
     /// <param name="question">What it says (<see cref="Question"/>).</param>
     /// <param name="actor">Who reported the failure.</param>

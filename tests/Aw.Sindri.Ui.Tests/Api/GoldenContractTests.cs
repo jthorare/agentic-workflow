@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
@@ -151,6 +152,17 @@ public sealed class GoldenContractTests
         Assert.Equal(((long)servedFiled["accepted"]!["sequence"]!, (string)servedFiled["requestId"]!), (filed.Accepted.Sequence, filed.RequestId));
         Assert.True(AsRequests(Encoding.UTF8.GetBytes(GoldenFiles.Api("requests", "list-empty"))).Value is RequestList);
         Assert.True(AsRequests(Encoding.UTF8.GetBytes(GoldenFiles.Api("requests", "filed"))).Value is RequestFiledView);
+    }
+
+    [Fact]
+    public void The_services_goldens_carry_why_a_service_is_paused_or_failed_and_what_it_does()
+    {
+        var paused = Read<ServiceList>("services", "paused").Services!.Single(s => string.Equals(s.Name, "heartbeat", StringComparison.Ordinal));
+        var failed = Read<ServiceList>("services", "ran-failed").Services!.Single(s => string.Equals(s.Name, "heartbeat", StringComparison.Ordinal));
+
+        Assert.Equal(("Records that Sindri is alive.", "human:cli", DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture)),
+            (paused.Description, paused.PausedBy, paused.PausedAt));
+        Assert.Equal(("failed", "SND-SCHED-001", null), (failed.LastRun!.Outcome, failed.LastRun.Code, failed.LastRun.Detail));
     }
 
     [Fact]

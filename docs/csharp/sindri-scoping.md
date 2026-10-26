@@ -28,7 +28,7 @@ like `desk --out`, is refused inside a git worktree (`SND-SCOPING-002`); with an
 
 ## Rules
 
-`SCP-CITE-001/002`, `SCP-COV-001..005`, `SCP-LENS-001`, `SCP-ACC-001..005`, `SCP-ANS-001`, `SCP-TRUST-001`, `SCP-CHAL-001/002`, `SCP-MAP-001` as in §8.2, and `SCP-REL-001/002`, `SCP-GAP-001/002` from the relevance review and the gap search (issue 966),
+`SCP-CITE-001/002`, `SCP-COV-001..005`, `SCP-LENS-001`, `SCP-ACC-001..005`, `SCP-ANS-001`, `SCP-TRUST-001`, `SCP-CHAL-001/002`, `SCP-MAP-001` as in §8.2, `SCP-QST-001` (#1204: each question in `fact:questions` has two to four options and exactly one recommended), and `SCP-REL-001/002`, `SCP-GAP-001/002` from the relevance review and the gap search (issue 966),
 plus `SCP-SCHEMA-001` (SC-K's: a model's `scopeMap` and `acceptance` are validated against the schema's `$defs/fact` directly, whatever `schemaVersion` says).
 Choices where the spec is silent: a surface is marked `noBehaviourChange: "<reason>"` (SCP-ACC-002/005); a regression item matches `continue to`;
 SCP-COV-003 (draft and evidence) counts the nodes of a lens that are an anchor, have an edge to or from one (an anchor's own implementers at depth 0, the nodes one edge away at depth 1), and are not flagged `demoted`; an `excluded[]` entry is `{item, reason}` or `{glob, reason}` (`**` crosses directories, `*` and `?` stay in a segment; matched against the node key and its path without `code:`); SCP-COV-004 reads a brief ref with source `change`
