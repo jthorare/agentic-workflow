@@ -46,6 +46,10 @@ public sealed record StatusFields(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? TakenOverBy { get; init; }
 
+    /// <summary>How long each Step input of the open run took to fill, in declared order; null (not written) when none was kept.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<StatusTiming>? InputTimings { get; init; }
+
     /// <summary>The open run's injection sections (metadata only), never null; empty without inputs.</summary>
     public IReadOnlyList<StatusInjection> Injection { get; init; } = Injection ?? [];
 }

@@ -1,6 +1,7 @@
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Instance;
+using Aw.Sindri.Ui.ViewModels.Item;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -123,6 +124,27 @@ internal sealed partial class ShellViewModel
     // Everything the frame needs once it exists (ShellViewModel's constructor calls this one line).
     private void InitInstance()
     {
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(CurrentPage), StringComparison.Ordinal))
+            {
+                Changed(nameof(IsEdgeTabShown));
+            }
+        };
+        Instance.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(InstanceFrameViewModel.Title), StringComparison.Ordinal))
+            {
+                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName));
+            }
+        };
+        Item.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ItemSheetViewModel.Title), StringComparison.Ordinal))
+            {
+                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName));
+            }
+        };
         Health.Follow((url, token) => IsInstanceSheet ? Instance.Refresh(url, token) : Task.CompletedTask);
         Health.FollowInstances((url, change, token) => IsInstanceSheet ? Instance.Catch(url, change, token) : Task.FromResult(true));
         Instance.OpenRequested += (_, e) =>

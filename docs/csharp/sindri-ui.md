@@ -27,7 +27,7 @@ Sindri's handlers (factory addendum §17.27.1). `scripts/install-cs.sh` publishe
 - **Hand composition, no container.** The app has a handful of view models and one client; the head builds its adapters
   and hands them to `SindriApp.Create(platform, clock)`, which builds the shell view model and the API client (a loopback
   `HttpClient` that never uses a proxy). A service locator outside a Host would fail `ARCH-DI-001`.
-- **Packages.** MIT Avalonia packages only, all `[12.1.3]`: `Avalonia`, `Avalonia.Themes.Fluent`, `Avalonia.Fonts.Inter`
+- **Packages.** MIT Avalonia packages only, all `[12.1.4]`: `Avalonia`, `Avalonia.Themes.Fluent`, `Avalonia.Fonts.Inter`
   (the library), `Avalonia.Desktop` (the head), `Avalonia.Headless` and `Avalonia.Skia` (tests).
 
 ## U0: theme, ports and preferences (UI spec §14, §15, §18 U0)

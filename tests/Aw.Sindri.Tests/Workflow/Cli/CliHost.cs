@@ -16,11 +16,12 @@ internal static class CliHost
     /// <param name="home">The temp home the host lives in.</param>
     /// <param name="ct">Cancels the start.</param>
     /// <param name="beforePipeline">Adds middleware ahead of the pipeline (a test that makes the host slow to answer).</param>
-    public static async Task<WebApplication> Started(TempHome home, CancellationToken ct, Action<WebApplication>? beforePipeline = null)
+    /// <param name="services">Replaces services after Temporal is faked (a test that wants no shipped recipes).</param>
+    public static async Task<WebApplication> Started(TempHome home, CancellationToken ct, Action<WebApplication>? beforePipeline = null, Action<IServiceCollection>? services = null)
     {
         _ = Directory.CreateDirectory(Path.Combine(home.Path, "profile"));
         await File.WriteAllTextAsync(Path.Combine(home.Path, "profile", "profile.yaml"), "schemaVersion: 1\nuser: thor\n", ct);
-        var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);   // the CLI verbs here don't use Temporal: a real dev server only slows the start under load
+        var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => home.Path, _ => null }, TimeProvider.System, s => { NoTemporal.Use(s); services?.Invoke(s); });   // the CLI verbs here don't use Temporal: a real dev server only slows the start under load
         beforePipeline?.Invoke(app);
         _ = Pipeline.Configure(app);
         Core.Lease.LeaseGrant grant;
