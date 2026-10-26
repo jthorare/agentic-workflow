@@ -34,6 +34,10 @@
                 AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding InStatusText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Border x:Name="SessionStarted" IsVisible="{Binding StartedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding StartedText}"
+                AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding StartedText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
         <Button x:Name="SessionRefCopy" Classes="copy" Click="OnCopyRef" HorizontalAlignment="Left" IsVisible="{Binding RefCopy, Converter={x:Static ObjectConverters.IsNotNull}}"
                 AutomationProperties.Name="{Binding RefCopy.Announcement}">
           <TextBlock Classes="caption mono" Text="{Binding RefCopy.Label}" AutomationProperties.AccessibilityView="Raw" />
@@ -105,7 +109,8 @@
           </StackPanel>
 
           <!-- Focus is the catalog's pending control (the send is U11a-f): a disabled button, then the phase and the CLI on a line with Copy. -->
-          <StackPanel x:Name="SessionFocusRow" Spacing="6" IsVisible="{Binding HasFocusLine}">
+          <!-- Hidden until the send exists (B-11): a disabled "Coming soon" button and a CLI line are no use in the sheet. -->
+          <StackPanel x:Name="SessionFocusRow" Spacing="6" IsVisible="False">
             <Button x:Name="SessionFocus" Content="{Binding FocusLabel}" IsEnabled="{Binding IsFocusEnabled}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding FocusName}" />
             <Border x:Name="SessionFocusLine" AutomationProperties.Name="{Binding FocusLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <TextBlock Classes="caption mono" Text="{Binding FocusLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

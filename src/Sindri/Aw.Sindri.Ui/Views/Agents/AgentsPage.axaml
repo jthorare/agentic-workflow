@@ -71,7 +71,7 @@
         <Button x:Name="AgentsOpenWorkflows" Margin="16,0,16,8" HorizontalAlignment="Left" Click="OnOpenWorkflows" IsVisible="{Binding ShowsOpenWorkflows}" Content="{Binding OpenWorkflowsText}"
                 AutomationProperties.Name="{Binding OpenWorkflowsText}" />
         <Border x:Name="AgentsColumns" Padding="16,4" IsVisible="{Binding HasColumns}" AutomationProperties.AccessibilityView="Raw">
-          <Grid x:Name="AgentsColumnsGrid" ColumnDefinitions="150,2*,1.2*,100,1.4*,56">
+          <Grid x:Name="AgentsColumnsGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56">
             <TextBlock Classes="caption subtle" Text="{Binding Columns.Status}" />
             <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns.Agent}" />
             <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding IsWide}" />

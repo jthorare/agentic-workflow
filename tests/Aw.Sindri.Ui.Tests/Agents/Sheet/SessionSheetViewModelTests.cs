@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.Instance;
@@ -51,7 +52,7 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened(ClaudeRef);
 
         Assert.Equal("/work/api/.claude/worktrees/ideas", Value(sheet.Fields, "Working directory"));
-        Assert.Equal(("tmux · Warp", "default", "main", "%3", "/tmp/tmux-1000/default", "1"), (Value(sheet.HostFields, "Host"), Value(sheet.HostFields, "Socket kind"), Value(sheet.HostFields, "Tmux session"), Value(sheet.HostFields, "Pane"), Value(sheet.HostFields, "Socket"), Value(sheet.HostFields, "Attached clients")));
+        Assert.Equal(("tmux · Warp", "default", "main", "%3", "/tmp/tmux-1000/default", "1"), (Value(sheet.HostFields, "Shown in"), Value(sheet.HostFields, "Socket kind"), Value(sheet.HostFields, "Tmux session"), Value(sheet.HostFields, "Pane"), Value(sheet.HostFields, "Socket"), Value(sheet.HostFields, "Attached clients")));
         Assert.Equal(("api", ".claude/worktrees/ideas", "sindri / ideas", "111"), (Value(sheet.Fields, "Repo"), Value(sheet.Fields, "Worktree"), Value(sheet.Fields, "Lane"), Value(sheet.Fields, "Process")));
         Assert.Equal("Socket: /tmp/tmux-1000/default", sheet.HostFields.Single(f => f.Label == "Socket").Name);
     }
@@ -62,8 +63,8 @@ public sealed class SessionSheetViewModelTests
         var sheet = await Opened(CodexRef);
 
         Assert.Equal(("Codex web/bbbbbbbb", "◐ Asking you · approval · Bash"), (sheet.Heading, sheet.StateLine));
-        Assert.Equal(["Host", "Terminal"], sheet.HostFields.Select(f => f.Label), StringComparer.Ordinal);
-        Assert.Equal(("Warp", "warp", "/work/web"), (Value(sheet.HostFields, "Host"), Value(sheet.HostFields, "Terminal"), Value(sheet.Fields, "Working directory")));
+        Assert.Equal(["Shown in", "Terminal"], sheet.HostFields.Select(f => f.Label), StringComparer.Ordinal);
+        Assert.Equal(("Warp", "warp", "/work/web"), (Value(sheet.HostFields, "Shown in"), Value(sheet.HostFields, "Terminal"), Value(sheet.Fields, "Working directory")));
         Assert.DoesNotContain(sheet.Fields, f => new[] { "Worktree", "Lane" }.Contains(f.Label, StringComparer.Ordinal));
         Assert.False(sheet.HasHistory);
     }
@@ -75,7 +76,7 @@ public sealed class SessionSheetViewModelTests
 
         Assert.Equal(["○ Idle", "◐ Asking you", "● Working"], sheet.History.Select(h => h.Chip.Text), StringComparer.Ordinal);
         Assert.Equal([false, false, true], sheet.History.Select(h => h.IsNow));
-        Assert.Equal("◐ Asking you · approval · 2026-10-16 11:59:00 UTC · hook", sheet.History[1].Name);
+        Assert.Equal("◐ Asking you · approval · " + Labels.SheetTime(new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero)) + " · hook", sheet.History[1].Name);
         Assert.EndsWith("· now · record", sheet.History[2].Detail, StringComparison.Ordinal);
         Assert.True(sheet.HasHistory);
     }
@@ -196,5 +197,24 @@ public sealed class SessionSheetViewModelTests
         await sheet.CopyFocus(Token);
 
         Assert.Equal(("Copy", null), (sheet.CopyLabel, _clipboard.Text));
+    }
+
+    [Fact]
+    public void Sheet_times_are_local_without_a_zone_suffix()
+    {
+        var at = new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero);
+
+        var words = Labels.SheetTime(at);
+
+        Assert.Equal(at.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture), words);
+        Assert.DoesNotContain("UTC", words, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Started_is_a_key_fact_outside_the_details()
+    {
+        var sheet = await Opened(ClaudeRef);
+
+        Assert.StartsWith("Started ", sheet.StartedText, StringComparison.Ordinal);
     }
 }

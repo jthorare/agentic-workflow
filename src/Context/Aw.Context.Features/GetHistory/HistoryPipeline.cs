@@ -93,8 +93,10 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         var mine = located.Where(f => repos.FirstOrDefault(r => r.Name == f.Repo) is { } repo && !repo.Denies(f.Path)).ToList();
         var chosen = mine;   // every implementing file is searched: no cap
         var read = new GitRead(chosen.Count, unlocated, filesTruncated: false);
-        using var timer = new CancellationTokenSource(settings.Deadline, clock);
-        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timer.Token);
+        // No fixed timer (owner q93): the caller's token bounds the read, and only an opted-in 'context.history.deadline' ends it early.
+        using var timer = settings.HistoryDeadline is { } limit ? new CancellationTokenSource(limit, clock) : null;
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timer?.Token ?? CancellationToken.None);
+        var started = clock.GetTimestamp();
         var version = inputs.Map.Snapshot.Version;
         var asked = repos.Where(r => chosen.Exists(f => f.Repo == r.Name)).ToList();
 
@@ -105,6 +107,8 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
             if (answer.History is not { } history)
             {
                 read.TimedOut = true;
+                read.Limit = settings.HistoryDeadline;
+                read.Elapsed = clock.GetElapsedTime(started);
                 break;
             }
 
@@ -140,8 +144,9 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         var failed = git.Errors.FirstOrDefault(e => e.Code != ContextErrors.CommitUnknown.Code);
         if (git.TimedOut)
         {
-            git.Degraded.Add($"git-history: stopped at the deadline; {git.Changes.Count.ToString(CultureInfo.InvariantCulture)} change(s) found so far are listed (SND-CONTEXT-160; fix: raise context.deadline, or narrow the anchors)");
-            return SearchedSources.GitHistory(SearchedState.Degraded, reason: null, ContextErrors.HistoryDeadline.Code, asOf);
+            // A recorded limit, not a failure: the repos read before it are listed and the row says which deadline applied and how long the read took.
+            var note = $"stopped at context.history.deadline ({git.Limit?.TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture)} ms) after {git.Elapsed.TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture)} ms; {git.Changes.Count.ToString(CultureInfo.InvariantCulture)} change(s) from the repos read before it are listed (fix: raise or remove context.history.deadline, or narrow the anchors)";
+            return SearchedSources.GitHistory(SearchedState.Ok, "deadline", code: null, asOf) with { Note = note };
         }
 
         if (failed is not null)
@@ -169,6 +174,10 @@ internal sealed class HistoryPipeline(LensBasisReader bases, IIntentStore intent
         internal bool FilesTruncated { get; } = filesTruncated;
 
         internal bool TimedOut { get; set; }
+
+        internal TimeSpan? Limit { get; set; }
+
+        internal TimeSpan Elapsed { get; set; }
 
         internal bool Capped { get; private set; }
 

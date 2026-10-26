@@ -2,13 +2,16 @@ using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Workflow.ApproveAll;
 using Aw.Sindri.Core.Workflow.Registry;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Testing.Workflow.ApproveAll;
 using Aw.Sindri.Tests.Ledger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Tests.Workflow.Cli;
 
@@ -196,6 +199,9 @@ public sealed class RecipeRegistryCliTests : IDisposable
         return await RecipeCommandTable.Run(args, scope.ServiceProvider, new Output(_out, _error, SliceHarness.Json), desk, ct);
     }
 
+    /// <summary>No shipped recipes: these tests are about the registry, so 'recipe list' shows only what was registered (the shipped rows that stand unapproved, C-12 / #1049, are ShippedRecipesListedTests').</summary>
+    private static void NoShippedRecipes(IServiceCollection services) => _ = services.Replace(ServiceDescriptor.Singleton<IShippedRecipes>(new FakeShippedRecipes([])));
+
     /// <summary>A control plane in the temp home, as CliEndToEndTests starts it (Temporal faked): the lease held, this start's token minted and held, its endpoint recorded.</summary>
-    private Task<WebApplication> Started(CancellationToken ct) => CliHost.Started(_home, ct);
+    private Task<WebApplication> Started(CancellationToken ct) => CliHost.Started(_home, ct, services: NoShippedRecipes);
 }

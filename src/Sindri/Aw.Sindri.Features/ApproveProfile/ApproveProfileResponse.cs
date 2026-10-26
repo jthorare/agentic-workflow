@@ -19,4 +19,8 @@ public sealed record ApproveProfileResponse(ProfileHash Hash, IReadOnlyList<stri
     /// <summary>True when the hash differs from the latest approval's but no key path does: the preview never says "nothing" then (#1147); left out of the JSON otherwise.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UnlistedChange { get; init; }
+
+    /// <summary>For each changed 'index.roles.&lt;role&gt;' or 'index.demote.&lt;role&gt;' key, how many files on the repo's HEAD it matches ('repos.web.index.roles.test: 412 files on HEAD (was 0)') or that the count is unavailable; null, and left out of the JSON, when none changed (#1148).</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? RoleCounts { get; init; }
 }

@@ -3009,6 +3009,8 @@ override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.GetHashCode()
 override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.init -> void
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ApproveProfile.StepArgvLine!>!
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.init -> void
 Aw.Sindri.Features.ApproveProfile.StepArgvEntry

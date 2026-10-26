@@ -18,6 +18,7 @@ internal sealed record ContextSection(
     LabelingSection? Labeling = null,
     EvalSection? Eval = null,
     CodeSection? Code = null,
+    HistorySection? History = null,
     ExtractSection? Extract = null,
     PublishSection? Publish = null,
     RankerSection? Ranker = null);

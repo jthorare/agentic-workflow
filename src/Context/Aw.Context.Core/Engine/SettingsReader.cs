@@ -91,6 +91,7 @@ public static partial class SettingsReader
                     Recognizers = Recognizers(section.Extract),
                     Publish = Publish(section.Publish),
                     Ranker = RankerRules.Read(section.Ranker),
+                    HistoryDeadline = HistoryDeadline(section.History),
                 },
                 section.Code,
                 codeDeadline.Value),
@@ -117,6 +118,11 @@ public static partial class SettingsReader
         written is null ? defaults : [.. written.OfType<string>()];   // why: CodeProblem refused a null entry
 
     /// <summary>The first refused 'context.code' glob list: more than 50 entries (151) or an entry that isn't a repo-relative glob (150).</summary>
+    private static TimeSpan? HistoryDeadline(HistorySection? history) => history?.Deadline is { } written ? Duration(written, _maxCodeDeadline) : null;
+
+    private static Error? HistoryProblem(HistorySection? history) =>
+        history?.Deadline is { } written && Duration(written, _maxCodeDeadline) is null ? Invalid("context.history.deadline", "is a duration from 100ms to 86400s, such as 600s or 90s (leave it out for no deadline)") : null;
+
     private static Error? CodeProblem(CodeSection? code) =>
         code is null ? null : CodeListProblem("schemaGlobs", code.SchemaGlobs) ?? CodeListProblem("testGlobs", code.TestGlobs);
 
@@ -229,7 +235,7 @@ public static partial class SettingsReader
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 8 steps"),
         { CascadeComponentFanOut: < 1 or > 500 } => Invalid("context.cascadeComponentFanOut", "is 1 to 500 features"),
-        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -242,7 +248,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 
