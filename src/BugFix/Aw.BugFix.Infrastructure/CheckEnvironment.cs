@@ -6,19 +6,19 @@ namespace Aw.BugFix.Infrastructure;
 /// <summary>
 /// The environment a test command runs with, and git's. The check gets only an allowlist of variables, so a caller can't
 /// steer it through BASH_ENV, NODE_OPTIONS, exported shell functions, npm_config_*, …; of those, the ones that decide
-/// which code runs (PATH, HOME, and any the user names in AW_BUGFIX_CHECK_ENV) are frozen with the check. Git runs
+/// which code runs (PATH, HOME, DOTNET_ROOT, and any the user names in AW_BUGFIX_CHECK_ENV) are frozen with the check. Git runs
 /// without GIT_*.
 /// </summary>
 internal static class CheckEnvironment
 {
     /// <summary>The variables that decide which code a test command runs: frozen by value at the baseline.</summary>
-    internal static readonly string[] Frozen = ["PATH", "HOME"];
+    internal static readonly string[] Frozen = ["PATH", "HOME", "DOTNET_ROOT"];
 
     /// <summary>The variables passed through as they are (they don't change which code runs).</summary>
     internal static readonly string[] PassedThrough =
     [
         "USER", "LOGNAME", "SHELL", "TMPDIR", "TERM", "CI", "LANG", "LANGUAGE", "LC_ALL", "LC_CTYPE", "LC_MESSAGES", "LC_COLLATE",
-        "LC_NUMERIC", "LC_TIME", "LC_MONETARY", "TZ",
+        "LC_NUMERIC", "LC_TIME", "LC_MONETARY", "TZ", "XDG_RUNTIME_DIR",
     ];
 
     // Names AW_BUGFIX_CHECK_ENV may never add: each one makes an interpreter, the shell or the dynamic linker load code.

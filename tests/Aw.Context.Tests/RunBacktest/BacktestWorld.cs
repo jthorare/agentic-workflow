@@ -11,6 +11,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Trust;
 using Aw.Context.Features;
 using Aw.Context.Infrastructure.Eval;
@@ -26,6 +27,7 @@ using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Locks;
 using Aw.Context.Testing.Map;
 using Aw.Context.Testing.Review;
+using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
 using Aw.Context.Tests.Map;
 using Aw.Context.Tests.Onyx;
@@ -85,7 +87,7 @@ internal sealed class BacktestWorld : IAsyncDisposable
             .AddSingleton<IFileHistory>(new GitFileHistory(git))
             .AddSingleton<IBriefSource>(Briefs).AddSingleton<IDefaultBranch>(new FakeDefaultBranch())
             .AddSingleton<IAsOfDocs>(new AsOfDocsFactory(git, Clock))
-            .AddSingleton<IEvalStore>(new FileEvalStore(Settings))
+            .AddSingleton<IEvalStore>(new FileEvalStore(Settings)).AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddContextFeatures()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();

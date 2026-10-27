@@ -38,10 +38,10 @@ public sealed class RecipeQueryRoutesTests : IAsyncLifetime
 
         Assert.True(registered.Status == HttpStatusCode.OK, registered.Body);
         Assert.True(listed.Status == HttpStatusCode.OK, listed.Body);
-        var recipe = Assert.Single(JsonDocument.Parse(listed.Body).RootElement.GetProperty("recipes").EnumerateArray());
+        var recipe = Assert.Single(JsonDocument.Parse(listed.Body).RootElement.GetProperty("recipes").EnumerateArray(), r => r.GetProperty("hash").GetString() == hash);   // the shipped recipes nobody registered are listed too (C-12)
         Assert.Equal((hash, "unapproved"), (recipe.GetProperty("hash").GetString(), recipe.GetProperty("standing").GetString()));
         Assert.Equal("fact:spec", Assert.Single(recipe.GetProperty("inputs").EnumerateArray()).GetProperty("key").GetString());
-        Assert.Empty(JsonDocument.Parse(stale.Body).RootElement.GetProperty("recipes").EnumerateArray());
+        Assert.DoesNotContain(JsonDocument.Parse(stale.Body).RootElement.GetProperty("recipes").EnumerateArray(), r => r.GetProperty("hash").GetString() == hash);
         Assert.True(shown.Status == HttpStatusCode.OK, shown.Body);
         var view = JsonDocument.Parse(shown.Body).RootElement;
         Assert.Equal((hash, "fact:spec"), (view.GetProperty("hash").GetString(), Assert.Single(view.GetProperty("inputs").EnumerateArray()).GetProperty("key").GetString()));

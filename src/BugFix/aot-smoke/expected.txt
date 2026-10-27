@@ -24,5 +24,5 @@
 {"phase":"report","status":"unresolved","attempt":1,"next":"done (unresolved); write resolution.md if not written"}
 ## start-attempt --state <tmp>/state --mode Z
 usage: --mode must be A, B or C (got "Z")
-start-attempt --state <dir> --mode <A|B|C> [--abandon-judge]
+start-attempt --state <dir> --mode <A|B|C> [--abandon-judge] [--abandon-unrun]
 exit 2

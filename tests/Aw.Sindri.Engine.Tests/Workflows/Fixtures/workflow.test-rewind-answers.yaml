@@ -1,0 +1,23 @@
+schema: 1
+id: workflow.test-rewind-answers
+version: 1
+description: "The interview of workflow.scoping on its own, with the real interview.answer and interview.record Steps and a desk Step after them: what a rewind back to the interview and a superseding answer batch do on the real workflow (#1270)."
+displayName: "Answer, record and rewind"
+inputs:
+  - { key: fact:questions, label: "Questions", type: payload, kind: payload }
+  - { key: fact:answerLog, label: "Answer log", type: payload, kind: payload }
+initial: interview
+states:
+  interview: { kind: active, step: step.interview.answer, loop: rounds, timeout: { after: 1d, then: park },
+               next: "Answer the questions (round {loop.rounds}/{loop.rounds.cap})." }
+  record:    { kind: active, step: step.interview.record, timeout: { after: 1d, then: park },
+               next: "Append the latest answers to the answer log." }
+  hold:      { kind: active, step: step.produce, timeout: { after: 1d, then: park },
+               next: "Stands in for everything after the interview; complete it to finish." }
+  done:      { kind: terminal, outcome: resolved }
+transitions:
+  - { from: interview, to: record, on: step.completed, when: { outcome: answered },    produces: [fact:answers] }
+  - { from: interview, to: record, on: step.completed, when: { outcome: doneAsking }, produces: [fact:answers, fact:interviewClosed] }
+  - { from: record,    to: hold,   on: step.completed, when: { outcome: recorded },    produces: [fact:answerLog] }
+  - { from: hold,      to: done,   on: step.completed, when: { outcome: done },        produces: [fact:output] }
+loops: { rounds: { cap: 3 } }

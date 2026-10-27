@@ -1,16 +1,12 @@
-using Aw.Kernel.Services;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Features.StartProcess;
-using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
-using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.Workflow.Cli;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -57,23 +53,7 @@ public sealed class CliEndToEndTests : IDisposable
     }
 
     /// <summary>A control plane in the temp home with a profile, the lease held, this start's token minted to its file and held, and its endpoint recorded.</summary>
-    private async Task<WebApplication> Started(CancellationToken ct)
-    {
-        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "profile"));
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), "schemaVersion: 1\nuser: thor\n", ct);
-        var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);   // the Temporal side is faked: these tests are about the API
-        _ = Pipeline.Configure(app);
-        LeaseGrant grant;
-        await using (var scope = app.Services.CreateAsyncScope())
-        {
-            grant = (await scope.ServiceProvider.GetRequiredService<IService<StartProcessRequest, StartProcessResponse>>().Handle(new StartProcessRequest(), ct)).Value.Grant;
-        }
-
-        app.Services.GetRequiredService<HeldHumanToken>().Hold((await app.Services.GetRequiredService<IHumanTokenStore>().Mint(ct)).Value);
-        await app.StartAsync(ct);
-        _ = await app.Services.GetRequiredService<IEndpointFile>().Write(new ControlEndpoint(new Uri(app.Urls.First()), grant.Holder.Pid, grant.Epoch), ct);
-        return app;
-    }
+    private Task<WebApplication> Started(CancellationToken ct) => CliHost.Started(_home, ct);
 
     /// <summary>The CLI's client with the headers CommandTable gives it: the real token store, no repo.</summary>
     private static ControlPlaneClient Client(WebApplication app, bool human) =>

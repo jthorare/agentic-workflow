@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Views;
@@ -71,6 +72,60 @@ public static class HealthSummary
 
         var clause = unavailable == 1 ? "1 workflow instance waits on a dependency that is down" : string.Create(CultureInfo.InvariantCulture, $"{unavailable} workflow instances wait on a dependency that is down");
         var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-003", $"{clause}: fix it, then run each again with `sindri workflow answer <address> --resume`", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also names a stale build (#1032): the running control plane is not the build 'bin/cs/current' names.</summary>
+    /// <param name="report">The report <see cref="For"/> folded.</param>
+    /// <param name="running">The stamp this process runs from, or null.</param>
+    /// <param name="installed">The stamp 'bin/cs/current' names, or null.</param>
+    /// <returns>The report; the same one when the build is not known to be stale.</returns>
+    public static HealthReport WithStaleBuild(HealthReport report, string? running, string? installed)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (!StaleBuild.Is(running, installed))
+        {
+            return report;
+        }
+
+        var problems = report.Problems.Append(new HealthProblem("SND-BUILD-001", StaleBuild.Sentence(running!, installed!), "the running build is not the installed one")).ToList();   // why: Is is true only when both are known
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also counts the agent runs whose session ended its turn without a report and is still not ended (issue #1000): any make a healthy report degraded, and join its problems and sentence.</summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="stalled">The agent runs idle for <see cref="Launches.LaunchRules.IdleAfter"/> or longer whose session is still live.</param>
+    /// <returns>The report; the same one when none are stalled.</returns>
+    public static HealthReport WithStalledAgents(HealthReport report, int stalled)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (stalled <= 0)
+        {
+            return report;
+        }
+
+        var clause = stalled == 1 ? "1 agent run ended its turn and has not reported" : string.Create(CultureInfo.InvariantCulture, $"{stalled} agent runs ended their turn and have not reported");
+        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-004", $"{clause}: open Needs you", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also counts the agent sessions that sat idle and were ended with no report, and no newer launch took the Step over (issue #1265): any make a healthy report degraded.</summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="idle">The stalled launches, read from the launches view; they are ended, so none is also counted by <see cref="WithStalledAgents"/>.</param>
+    /// <returns>The report; the same one when none are stalled.</returns>
+    public static HealthReport WithIdleAgents(HealthReport report, int idle)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (idle <= 0)
+        {
+            return report;
+        }
+
+        var clause = idle == 1 ? "1 agent idle, no report" : string.Create(CultureInfo.InvariantCulture, $"{idle} agents idle, no report");
+        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-005", $"{clause}: its session was ended and the Step has not run again (sindri doctor names it)", clause)).ToList();
         var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
         return new HealthReport(word, problems, Sentence(word, problems));
     }

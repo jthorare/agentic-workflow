@@ -35,6 +35,17 @@ public sealed class ScopingShowTests
             history["nodes"] = new JsonArray();
             history["items"] = new JsonArray();
             history["edges"] = new JsonArray();
+        }).Edit("relevance", n =>
+        {
+            // the emptied history lens has nothing left to review
+            var entries = n["entries"]!.AsArray();
+            foreach (var gone in entries.Where(static e => (string?)e!["lens"] == "history").ToList())
+            {
+                _ = entries.Remove(gone);
+            }
+
+            n["counts"]!["reviewed"] = entries.Count;
+            n["counts"]!["in"] = entries.Count;
         });
 
     private static ScopingSection Section(ScopingView view, string id) => view.Sections.Single(s => s.Name == id);
@@ -53,7 +64,7 @@ public sealed class ScopingShowTests
     {
         var view = await Show(TwoLimitedLenses());
 
-        Assert.Equal("2 of 4 lenses limited", view.CoverageHeader);
+        Assert.Equal("2 of 4 lenses limited; relevance: 26 in, 0 out, 0 noise, 0 disputed; gap search: 1 round, 0 found, 0 confirmed", view.CoverageHeader);
         var coverage = Section(view, "map").Rows.Where(r => r.Key.StartsWith("coverage:", StringComparison.Ordinal)).ToDictionary(r => r.Key, StringComparer.Ordinal);
         Assert.Equal("not searched: history-unlinked — Wait for the ticket linker (S-5B)", coverage["coverage:history"].Text);
         Assert.Equal("found 13", coverage["coverage:code"].Text);

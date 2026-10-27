@@ -28,9 +28,10 @@ internal sealed partial class WholeMapCanvas
             return;
         }
 
-        foreach (var edge in drawn.Where(e => WholeEdgeSelection.ShowsPill(e, drawn.Count, _focus)))
+        var pills = drawn.Where(e => WholeEdgeSelection.ShowsPill(e, drawn.Count, _focus)).Select(e => new WholePill(WholeEdgeStyle.Of(e), (e.X1 + e.X2) / 2, (e.Y1 + e.Y2) / 2)).ToList();
+        foreach (var pill in WholePillPlacer.Place(pills, Scale))
         {
-            DrawPill(context, WholeEdgeStyle.Of(edge), (edge.X1 + edge.X2) / 2, (edge.Y1 + edge.Y2) / 2);
+            DrawPill(context, pill.Style, pill.X, pill.Y);   // no label lies on another
         }
     }
 
@@ -49,9 +50,10 @@ internal sealed partial class WholeMapCanvas
     // Drawn after the tiles, so a tile never covers its line's count.
     private void DrawBundlePills(DrawingContext context, WholeMapGeometry geometry)
     {
-        foreach (var bundle in WholeAreaBundle.Of(geometry.AreaEdges))
+        var pills = WholeAreaBundle.Of(geometry.AreaEdges).Select(b => new WholePill(WholeEdgeStyle.Of(b), (b.X1 + b.X2) / 2, (b.Y1 + b.Y2) / 2)).ToList();
+        foreach (var pill in WholePillPlacer.Place(pills, Scale))
         {
-            DrawPill(context, WholeEdgeStyle.Of(bundle), (bundle.X1 + bundle.X2) / 2, (bundle.Y1 + bundle.Y2) / 2);
+            DrawPill(context, pill.Style, pill.X, pill.Y);
         }
     }
 

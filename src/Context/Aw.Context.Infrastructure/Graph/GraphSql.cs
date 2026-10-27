@@ -4,7 +4,7 @@ namespace Aw.Context.Infrastructure.Graph;
 internal static class GraphSql
 {
     public const string InsertVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status) VALUES ($repo, $commit, $keyVersion, $created, 'building') RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped) RETURNING id";
 
     public const string InsertNode =
         "INSERT INTO node (map_version, key, label, attributes, provenance, confidence, trust, written_at) VALUES ($v, $key, $label, $attributes, $provenance, $confidence, $trust, $at)";
@@ -41,7 +41,19 @@ internal static class GraphSql
     public const string DeleteBuildingVersion = "DELETE FROM map_version WHERE id = $v AND status = 'building'";
 
     public const string SelectVersions =
-        "SELECT id, repo, commit_sha, key_version, created, status FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    // A store not yet upgraded to 0013 (a graph-store read doesn't migrate): the same columns, the dropped counts as NULL.
+    public const string SelectVersionsBefore0013 =
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, NULL FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    // A store not yet upgraded to 0012: the ruleset and the dropped counts as NULL.
+    public const string SelectVersionsBefore0012 =
+        "SELECT id, repo, commit_sha, key_version, created, status, NULL, NULL FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    public const string HasDroppedColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'dropped'";
+
+    public const string HasRulesetColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'ruleset'";
 
     public const string SelectNodes =
         "SELECT key, label, attributes, provenance, confidence, written_at FROM node WHERE map_version = $v ORDER BY key";
@@ -90,10 +102,10 @@ internal static class GraphSql
     public const string MakeCurrentDraft = "UPDATE map_version SET status = 'current' WHERE id = $v AND status = 'draft'";
 
     public const string SelectVersion =
-        "SELECT id, repo, commit_sha, key_version, created, status FROM map_version WHERE id = $v";
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped FROM map_version WHERE id = $v";
 
     public const string CopyVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status) SELECT repo, commit_sha, key_version, $created, 'draft' FROM map_version WHERE id = $from RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped FROM map_version WHERE id = $from RETURNING id";
 
     public const string InsertHead =
         "INSERT INTO map_version_head (version, repo, commit_sha, on_default) VALUES ($v, $repo, $commit, $onDefault)";

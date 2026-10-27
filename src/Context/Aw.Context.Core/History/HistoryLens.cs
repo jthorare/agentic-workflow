@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Walks;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.History;
@@ -15,24 +16,32 @@ public static class HistoryLens
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="anchors">Node keys, aliases or labels.</param>
     /// <returns>The scope; an anchor that names no node goes to 'MissingAnchors'. None resolving is SND-CONTEXT-003, an ambiguous name 037, no anchor at all SND-CONTEXT-006.</returns>
-    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors)
+    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors) => Resolve(graph, anchors, WalkOptions.Serial);
+
+    /// <summary>Resolves the anchors as above, running the per-anchor walks over <paramref name="walk"/>'s cores; the answer is the same at any degree.</summary>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <param name="anchors">Node keys, aliases or labels.</param>
+    /// <param name="walk">How many anchors' walks may run at once.</param>
+    /// <returns>The scope, or the same errors as above.</returns>
+    public static Result<HistoryScope> Resolve(GraphSnapshot graph, IReadOnlyList<string> anchors, WalkOptions walk)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(anchors);
+        ArgumentNullException.ThrowIfNull(walk);
         var distinct = anchors.Distinct(StringComparer.Ordinal).ToList();
         if (QueryRules.CheckAnchors(distinct, "history") is { } refused)
         {
             return refused;
         }
 
-        var resolved = AnchorSet.Resolve(graph, distinct, depth: 0);
+        var resolved = AnchorSet.Resolve(graph, distinct, depth: 0, options: null, walk);
         if (resolved.IsError)
         {
             return resolved.Error;
         }
 
         var (scopes, missing) = resolved.Value;
-        var (records, decisions) = LensSets.IntentUnion(scopes);
+        var (records, decisions) = LensSets.IntentUnion(scopes, walk);
         return new HistoryScope(graph, scopes, missing, records, decisions, Files(scopes));
     }
 
@@ -53,11 +62,20 @@ public static class HistoryLens
     /// <param name="scope">The resolved anchors.</param>
     /// <param name="basis">What the answer rests on.</param>
     /// <returns>The coverage.</returns>
-    public static LensCoverage Coverage(HistoryScope scope, LensBasis basis)
+    public static LensCoverage Coverage(HistoryScope scope, LensBasis basis) => Coverage(scope, basis, WalkOptions.Serial);
+
+    /// <summary>The coverage as above, counting each anchor's own scope over <paramref name="walk"/>'s cores; the answer is the same at any degree.</summary>
+    /// <param name="scope">The resolved anchors.</param>
+    /// <param name="basis">What the answer rests on.</param>
+    /// <param name="walk">How many anchors' counts may run at once.</param>
+    /// <returns>The coverage.</returns>
+    public static LensCoverage Coverage(HistoryScope scope, LensBasis basis, WalkOptions walk)
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(basis);
-        var byAnchor = scope.Scopes.ToDictionary(s => s.Anchor.Key.Value, LensCoverageBuilder.Of, StringComparer.Ordinal);
+        ArgumentNullException.ThrowIfNull(walk);
+        var counted = BoundedParallel.MapSync(scope.Scopes, LensCoverageBuilder.Of, walk.Degree);
+        var byAnchor = scope.Scopes.Select((s, i) => (Key: s.Anchor.Key.Value, Coverage: counted[i])).ToDictionary(c => c.Key, c => c.Coverage, StringComparer.Ordinal);
         return LensCoverageBuilder.Of(scope.Scopes[0].Graph, scope.Scopes[0].Nodes, [.. scope.Own.Select(NodeKey.From)]) with { Map = MapCoverageBuilder.Of(scope.Graph, scope.Own, basis), ByAnchor = byAnchor };
     }
 

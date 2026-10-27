@@ -29,7 +29,7 @@ public static class InstanceSummaries
             SubjectOf(view, context.ItemTitle),
             view.Inputs,
             view.States,
-            Cut(RowSentences.Now(view, chip)),
+            Cut(RowSentences.Now(view, chip, context.AgentIdle)),
             view.AnswerLine,
             [.. StatusRecords.ActionIds(view), .. Reruns.Of(view)],
             view.StartedBy,

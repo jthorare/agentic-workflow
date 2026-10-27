@@ -703,6 +703,21 @@ expect "a cycle exception names the edge it excuses" 1 "DEPS-SCHEMA-001" "/excep
 d="$(over fanout-excuses)"; perl -pi -e "s/^exceptions: \[\]\n/exceptions:\n  - rule: DEPS-FANOUT-002\n    subject: Beta\n    excuses:\n      from: Beta\n      to: Alpha\n      kind: cli\n    reason: test\n    recorded: 2026-10-10\n    expires: 2026-12-01\n/" "$d/deps.yaml"; run "$d"
 expect "only a cycle exception names an excused edge" 1 "DEPS-SCHEMA-001" "/exceptions/0"
 
+# ---- build-order references (ReferenceOutputAssembly="false", not an analyzer) ----
+bo() { printf '<Project><ItemGroup><ProjectReference Include="%s" ReferenceOutputAssembly="false" /></ItemGroup></Project>\n' "$2" > "$1"; }
+d="$(fixture build-order)"; mkdir -p "$d/tests/Aw.Beta.Tests" "$d/src/Beta/Aw.Beta.Core"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/tests/Aw.Beta.Tests/Aw.Beta.Tests.csproj" ../../src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "test code's build-order reference passes when its owner has a cli edge to the target" 0 "deps: ok"
+d="$(fixture build-order-no-edge)"; mkdir -p "$d/tests/Aw.Delta.Tests"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/tests/Aw.Delta.Tests/Aw.Delta.Tests.csproj" ../../src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "a build-order reference without the owner's cli edge fails" 1 "DEPS-PROJ-009" "Aw.Delta.Tests -> Aw.Alpha.Host"
+d="$(fixture build-order-prod)"; mkdir -p "$d/src/Beta/Aw.Beta.Host"
+csproj "$d" src/Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj
+bo "$d/src/Beta/Aw.Beta.Host/Aw.Beta.Host.csproj" ../../Alpha/Aw.Alpha.Host/Aw.Alpha.Host.csproj; run "$d"
+expect "a production project's build-order reference fails even with a cli edge" 1 "DEPS-PROJ-009" "Aw.Beta.Host -> Aw.Alpha.Host"
+
 # ---- parser, validator and schema drift (node unit table) ----
 set +e; UNIT="$(node "$HERE/check-deps.unit.mjs" 2>&1)"; UCODE=$?; set -e
 if [ "$UCODE" = 0 ]; then ok "parser/validator unit table ($(printf '%s' "$UNIT" | tail -1))"; else fail "parser/validator unit table"; printf '%s\n' "$UNIT" | sed 's/^/       | /'; fi

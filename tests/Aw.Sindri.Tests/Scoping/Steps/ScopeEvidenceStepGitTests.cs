@@ -20,7 +20,7 @@ public sealed class ScopeEvidenceStepGitTests
         using var repo = await TempGitRepo.Create();
         var head = await repo.Git("rev-parse", "HEAD");
         var area = new InMemoryRunArea();
-        var step = new Features.Scoping.ScopeEvidenceStep(area, new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", repo.Path), new GitRunDiff());
+        var step = new Features.Scoping.ScopeEvidenceStep(area, new InMemoryPackets(), new InMemoryRepoCheckouts().With("web", repo.Path), new GitRunDiff(), new FakeScopeRunRecords());
 
         var result = await step.Run(ScopingStepContexts.Of("step.scope.evidence", ScopingFacts.Expiry().Without("rounds").Without("scopePacket")) with { Repo = RepoName.From("web") }, Token);
 

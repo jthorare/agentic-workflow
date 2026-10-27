@@ -24,6 +24,7 @@ public static partial class TransitionDecision
             CancelRequested when !instance.Ended => d.Changed(d.Rules.Cancel(instance)),
             TakeoverRequested => d.Rules.TakeOver(instance, d.Trigger.Actor).Match<Decision>(d.Changed, e => new Rejected(d.Key, e)),
             HandbackRequested => Handback(d, instance),
+            RewindRequested rewind => Rewind(d, instance, rewind),
             ChildChanged change => Child(d, instance, change),
             AnswerGiven answer when WaitingForAnswer(instance, d.Recipe) is { } wait => AnswerTheWait(d, instance, answer, wait),
             AnswerGiven answer => Answer(d, instance, answer),

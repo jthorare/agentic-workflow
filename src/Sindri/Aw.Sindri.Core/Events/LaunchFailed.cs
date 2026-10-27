@@ -10,7 +10,7 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Item">The item.</param>
 /// <param name="Code">The catalogue code (SND-LAUNCH-…, or the engine's SND-WF-… when it refused the takeover).</param>
 /// <param name="Message">The error's message, with its fix.</param>
-/// <param name="Detail">Where the launch stopped and the facts the error carried (launcher L-1, L-3), or null.</param>
+/// <param name="Detail">Where the launch stopped and the facts the error carried (launcher L-1, L-3; a sandbox refusal's reason and source), or null.</param>
 /// <param name="Instance">The workflow instance an engine launch belongs to, or null (attended and click launches, and events recorded before this field).</param>
 /// <param name="State">The Step's state id in that instance, or null.</param>
 /// <param name="Attempt">The Step run's number ('{entry}.{n}' → n), or null.</param>

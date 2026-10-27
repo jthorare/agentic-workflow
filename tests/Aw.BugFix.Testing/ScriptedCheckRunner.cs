@@ -3,11 +3,13 @@ using Aw.BugFix.Core.Ports;
 
 namespace Aw.BugFix.Testing;
 
-/// <summary>The fake for <see cref="ICheckRunner"/>: each program exits with the code it was given (true 0, false 1); an unknown program can't start, and a hanging one hits the time limit.</summary>
+/// <summary>The fake for <see cref="ICheckRunner"/>: each program exits with the code it was given (true 0, false 1); an unknown program can't start, and a hanging one hits the time limit, a killed one dies on a signal and a silent one leaves an empty log (neither ran to a verdict).</summary>
 public sealed class ScriptedCheckRunner : ICheckRunner
 {
     private readonly Dictionary<string, int> _programs = new(StringComparer.Ordinal) { ["true"] = 0, ["false"] = 1 };
     private readonly HashSet<string> _hanging = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _killed = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _silent = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _resolves = new(StringComparer.Ordinal);
     private Dictionary<string, string> _environment = new(StringComparer.Ordinal) { ["PATH"] = "/usr/bin:/bin" };
 
@@ -34,6 +36,24 @@ public sealed class ScriptedCheckRunner : ICheckRunner
     public ScriptedCheckRunner Hangs(string program)
     {
         _ = _hanging.Add(program);
+        return this;
+    }
+
+    /// <summary>Makes <paramref name="program"/> die on a signal (SIGKILL), as an out-of-memory kill or a stray kill would.</summary>
+    /// <param name="program">The program (argv[0]).</param>
+    /// <returns>This runner.</returns>
+    public ScriptedCheckRunner Killed(string program)
+    {
+        _ = _killed.Add(program);
+        return this;
+    }
+
+    /// <summary>Makes <paramref name="program"/> leave an empty log (it exits with its code but prints nothing, as a check stuck behind a lock does).</summary>
+    /// <param name="program">The program (argv[0]).</param>
+    /// <returns>This runner.</returns>
+    public ScriptedCheckRunner Silent(string program)
+    {
+        _ = _silent.Add(program);
         return this;
     }
 
@@ -65,6 +85,16 @@ public sealed class ScriptedCheckRunner : ICheckRunner
         if (_hanging.Contains(command[0]))
         {
             return new CheckExit(124, Ran: false, program, Digests(digestKey));
+        }
+
+        if (_killed.Contains(command[0]))
+        {
+            return new CheckExit(137, Ran: false, program, Digests(digestKey));
+        }
+
+        if (_silent.Contains(command[0]))
+        {
+            return new CheckExit(_programs.GetValueOrDefault(command[0], 1), Ran: false, program, Digests(digestKey));
         }
 
         return _programs.TryGetValue(command[0], out var code) ? new CheckExit(code, Ran: true, program, Digests(digestKey)) : new CheckExit(127, Ran: false, string.Empty, Digests(digestKey));

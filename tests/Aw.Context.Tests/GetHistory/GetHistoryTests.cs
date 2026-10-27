@@ -246,7 +246,7 @@ public sealed class GetHistoryTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Deadline_returns_partial_with_160()
+    public async Task An_opted_in_history_deadline_is_a_recorded_limit_naming_the_deadline_and_the_elapsed_ms()
     {
         var history = new ScriptedHistory(new FakeFileHistory(MapWorld.Repos[0], Landed()), async (_, _, ct) =>
         {
@@ -256,11 +256,13 @@ public sealed class GetHistoryTests : IDisposable
         var world = await Start(history);
         await SeedDecision(world);
 
-        var view = (await Engines.Advancing(world.Clock, () => Ask(world, scope: MapWorld.HumanWith("""{"deadline":"100ms"}""")).AsTask())).Value;
+        var view = (await Engines.Advancing(world.Clock, () => Ask(world, scope: MapWorld.HumanWith("""{"history":{"deadline":"100ms"}}""")).AsTask())).Value;
 
         var row = Row(view, "git-history");
-        Assert.Equal((SearchedState.Degraded, "SND-CONTEXT-160"), (row.State, row.Code));
-        Assert.Contains("SND-CONTEXT-160", Assert.Single(view.Degraded), StringComparison.Ordinal);
+        Assert.Equal((SearchedState.Ok, "deadline", null), (row.State, row.Reason, row.Code));
+        Assert.Contains("context.history.deadline (100 ms)", row.Note, StringComparison.Ordinal);
+        Assert.Matches(@"after \d+ ms", row.Note);
+        Assert.Empty(view.Degraded);
         Assert.NotEmpty(view.Decisions);
     }
 

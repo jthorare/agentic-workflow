@@ -24,7 +24,7 @@ public sealed class ScopingChecksTests
         var checks = await Run(A.ScopingPacket().Build());
 
         Assert.Equal(
-            [ScopingRules.FilesPresent, ScopingRules.NoUnlisted, ScopingRules.WellFormed, ScopingRules.LensesSchema, ScopingRules.LensIds],
+            [ScopingRules.FilesPresent, ScopingRules.NoUnlisted, ScopingRules.WellFormed, ScopingRules.LensesSchema, ScopingRules.LensIds, ScopingRules.GraphShape],
             checks.Select(static c => c.Rule), StringComparer.Ordinal);
         Assert.All(checks, static c => Assert.Equal(CheckState.Pass, c.State));
     }
@@ -36,6 +36,14 @@ public sealed class ScopingChecksTests
 
         Assert.Equal(["file brief.md", "file lenses.json"], Failures(checks, ScopingRules.FilesPresent).Select(static c => c.Subject), StringComparer.Ordinal);
         Assert.All(checks.Where(static c => IsLensRule(c)), static c => Assert.Equal(CheckState.Unchecked, c.State));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_relevance_and_gap_search_files_are_required_files_of_the_fifteen()
+    {
+        var checks = await Run(A.ScopingPacket().Without("relevance.json").Without("gap-search.json").Build());
+
+        Assert.Equal(["file gap-search.json", "file relevance.json"], Failures(checks, ScopingRules.FilesPresent).Select(static c => c.Subject), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -55,6 +63,8 @@ public sealed class ScopingChecksTests
     [InlineData("size.json", "{\"a\":[null]}")]
     [InlineData("answers.jsonl", "{\"a\":1}\nnot json\n")]
     [InlineData("rounds.jsonl", "[1]\n")]
+    [InlineData("relevance.json", "[]")]
+    [InlineData("gap-search.json", "{")]
     public async Task A_file_that_is_not_the_shape_its_format_names_fails_PKT_SCP_003(string name, string text)
     {
         var checks = await Run(A.ScopingPacket().With(name, text).Build());

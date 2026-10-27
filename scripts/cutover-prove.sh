@@ -98,8 +98,8 @@ CHECKS=(
   "hook-passes-clean:v3 passes a clean commit"
   "hook-suites:judge-cs-hook-surface and sindri-cs-hook-surface pass against the installed binaries"
   "seeded-hooks:prompt-sort.sh and trait-check.sh run against the installed judge; their registrations are untouched"
-  "judge-stub-label:judge label status prints its not-yet-built line, nothing on stdout, exit 1"
-  "judge-stub-import-turns:judge eval import-turns x prints its not-yet-built line, nothing on stdout, exit 1"
+  "judge-stub-sort-why:judge prompt-sort why x prints its not-yet-built line, nothing on stdout, exit 1"
+  "judge-stub-sort-promote:judge prompt-sort promote prints its not-yet-built line, nothing on stdout, exit 1"
   "setup-dry-run:./setup.sh --providers claude,codex,cursor --dry-run is clean"
   "second-run-no-change:a second sequence changes nothing and prints 'cutover: nothing to remove'"
   "live-judge-state-survives:live C# judge state (decisions.sqlite, config.json) survives a second sequence"
@@ -358,8 +358,8 @@ stub_check() { # stub_check <check> <expected stderr line> <judge args...>
   o="$(judge "$@" 2> "$WORK/stub.err")"; r=$?; e="$(cat "$WORK/stub.err")"
   if [ "$r" = 1 ] && [ -z "$o" ] && [ "$e" = "$want" ]; then pass "$name"; else fail "$name" "rc=$r stdout=[$o] stderr=[$e]"; fi
 }
-stub_check judge-stub-label "judge: label is not in this build yet" label status
-stub_check judge-stub-import-turns "judge: eval import-turns is not in this build yet" eval import-turns x
+stub_check judge-stub-sort-why "judge: prompt-sort why is not in this build yet" prompt-sort why x
+stub_check judge-stub-sort-promote "judge: prompt-sort promote is not in this build yet" prompt-sort promote
 
 # setup.sh --dry-run is clean (no real HOME writes: the dry run writes nothing; the providers read the scratch dirs)
 run setup-dry bash "$ROOT/setup.sh" --providers claude,codex,cursor --dry-run

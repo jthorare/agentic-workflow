@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Core.Concepts;
@@ -9,4 +10,9 @@ namespace Aw.Context.Core.Concepts;
 /// <param name="Source">'derived' or 'override'.</param>
 /// <param name="Size">What it holds.</param>
 /// <param name="Citations">The records it rests on.</param>
-public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string Source, ConceptSize Size, IReadOnlyList<ConceptCitation> Citations);
+public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string Source, ConceptSize Size, IReadOnlyList<ConceptCitation> Citations)
+{
+    /// <summary>The words that characterize the concept, the most telling first; null (left out of the answer) when the map was built without a glossary.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Terms { get; init; }
+}

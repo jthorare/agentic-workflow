@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Symbols;
@@ -15,7 +16,7 @@ namespace Aw.Context.Core.Code;
 /// <param name="checkout">The repo this reading is about: its name and checkout.</param>
 public sealed class TrailingCodeSymbolSource(ICodeSymbolSource inner, IRepoReader repos, ContextRepo checkout) : ICodeSymbolSource
 {
-    private readonly Dictionary<string, CodeIndexHead> _trailed = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, CodeIndexHead> _trailed = new(StringComparer.Ordinal);
 
     /// <inheritdoc/>
     public async ValueTask<Result<CodeIndexHead>> Heads(ContextRepoName repo, string? asOf, CancellationToken cancellationToken)

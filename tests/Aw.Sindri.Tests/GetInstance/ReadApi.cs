@@ -13,6 +13,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.GetInstance;
 using Aw.Sindri.Features.GetInstanceEvents;
+using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.ListInstances;
 using Aw.Sindri.Features.ReadInjection;
 using Aw.Sindri.Host.Commands;
@@ -120,6 +121,8 @@ internal sealed class ReadApi : HttpMessageHandler
             [var id] => Answer(await _services.GetRequiredService<IService<GetInstanceRequest, InstanceDetail>>().Handle(new GetInstanceRequest(id), cancellationToken).ConfigureAwait(false), json),
             [var id, "events"] => Answer(await _services.GetRequiredService<IService<GetInstanceEventsRequest, GetInstanceEventsResponse>>()
                 .Handle(new GetInstanceEventsRequest(id, long.Parse(query["after"] ?? "0", System.Globalization.CultureInfo.InvariantCulture)), cancellationToken).ConfigureAwait(false), json),
+            [var id, "facts", var key] => Answer(await _services.GetRequiredService<IService<GetInstanceFactRequest, FactView>>()
+                .Handle(new GetInstanceFactRequest(WorkflowInstanceId.From(InstanceRoute.Id(id)), Uri.UnescapeDataString(key)), cancellationToken).ConfigureAwait(false), json),
             [var id, "injection"] => Answer(await _services.GetRequiredService<IService<ReadInjectionRequest, InjectionView>>()
                 .Handle(new ReadInjectionRequest(WorkflowInstanceId.From(InstanceRoute.Id(id)), query["section"]), cancellationToken).ConfigureAwait(false), json),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),

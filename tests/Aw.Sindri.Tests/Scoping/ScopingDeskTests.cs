@@ -62,15 +62,15 @@ public sealed class ScopingDeskTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Evidence_on_the_gold_facts_is_complete_and_assembles_the_twelve_packet_files()
+    public async Task Evidence_on_the_gold_facts_is_complete_and_assembles_the_fifteen_packet_files()
     {
         var response = await Run("evidence", ScopingFacts.Expiry());
 
         Assert.Equal("complete", response.Outcome);
         Assert.Equal(
-            ["acceptance.json", "answers.jsonl", "brief.md", "challenge.json", "coverage.json", "lenses.json", "questions.json", "rounds.jsonl", "runs.json", "scope-map.json", "size.json", "sources.json"],
+            ["acceptance.json", "answers.jsonl", "brief.md", "challenge.json", "coverage.json", "gap-search.json", "graph.json", "lenses.json", "questions.json", "relevance.json", "rounds.jsonl", "runs.json", "scope-map.json", "size.json", "sources.json"],
             response.Files.Where(f => f.Path.StartsWith("scope-packet/", StringComparison.Ordinal)).Select(f => f.Path["scope-packet/".Length..]).Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["acceptance", "coverage", "openQuestions", "recommendation", "scopeMap"], response.Outputs.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);   // fact:scopePacket is the hash the CLI adds
+        Assert.Equal(["acceptance", "coverage", "openQuestions", "recommendation", "runs", "scopeMap"], response.Outputs.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);   // fact:scopePacket is the hash the CLI adds
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -204,13 +204,13 @@ public sealed class ScopingDeskTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Intake_sorts_the_input_by_kind_and_carries_the_eight_seeds()
+    public async Task Intake_sorts_the_input_by_kind_and_carries_the_ten_seeds()
     {
         var response = await Run("intake", new ScopingFacts { ["scopeInput"] = """{"kind":"tracker","repo":"fixture-notes","key":"NTS-135"}""" });
 
         Assert.Equal("tracker", response.Outcome);
         Assert.Equal(
-            ["acceptance", "answerLog", "answers", "challenge", "findings", "openQuestions", "questions", "scopeMap"],
+            ["acceptance", "answerLog", "answers", "challenge", "findings", "gapAnchors", "gapSearch", "openQuestions", "questions", "scopeMap"],
             response.Outputs.Keys.Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
     }

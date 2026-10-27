@@ -16,7 +16,7 @@ public sealed class ScopeGatherStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ScopingSteps.Gather;
 
-    protected override string ExpectedHash => "sha256:bca40d30800053d619458116fd0efc806fdbf564f224fec3043806b9b635cfcd";
+    protected override string ExpectedHash => "sha256:22e683bde84acd39cacef907917b65075d739c9d82cbe4a84eec782be7c770ad";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

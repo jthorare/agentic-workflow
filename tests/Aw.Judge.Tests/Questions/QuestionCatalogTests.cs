@@ -9,10 +9,10 @@ namespace Aw.Judge.Tests.Questions;
 public sealed class QuestionCatalogTests
 {
     [Fact]
-    public void The_catalog_holds_the_nine_questions()
+    public void The_catalog_holds_the_ten_questions()
     {
         Assert.Equal(
-            ["ask-check", "brief-scope", "choose", "resolution-check", "rule-check", "turn-progress", "ui-element-repair", "visual-critique", "wake-gate"],
+            ["ask-check", "brief-scope", "choose", "model-pick", "resolution-check", "rule-check", "turn-progress", "ui-element-repair", "visual-critique", "wake-gate"],
             QuestionCatalog.Names.Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
     }
@@ -28,9 +28,9 @@ public sealed class QuestionCatalogTests
 
         var row = Assert.Single(log.Decisions);
         Assert.Equal(name, row.Question);
-        if (name == "choose")
+        if (string.Equals(name, "choose", StringComparison.Ordinal) || string.Equals(name, "model-pick", StringComparison.Ordinal))
         {
-            // why: choose alone reports the decision id, and it is the recorded row's
+            // why: choose and model-pick alone report the decision id, and it is the recorded row's
             Assert.Equal(new EscalatedOutcome("invalid-input") { Id = row.Id }, outcome);
         }
         else

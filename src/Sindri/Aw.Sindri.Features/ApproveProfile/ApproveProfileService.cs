@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Worktrees;
 
 namespace Aw.Sindri.Features.ApproveProfile;
 
@@ -17,7 +18,7 @@ namespace Aw.Sindri.Features.ApproveProfile;
 /// A, B records every step and a retry computes the same key. Approving needs the live hash (a stale one is SND-PROFILE-003)
 /// and a profile that validates; it asks for no typed challenge (owner decision q93).
 /// </summary>
-internal sealed class ApproveProfileService(IProfileSource live, IApprovals approvals, HeldLease held, ILedgerStore ledger, EventFactory events, ProfileChecks checks)
+internal sealed class ApproveProfileService(IProfileSource live, IApprovals approvals, HeldLease held, ILedgerStore ledger, EventFactory events, ProfileChecks checks, ITrackedFiles? tracked = null)
     : IService<ApproveProfileRequest, ApproveProfileResponse>
 {
     public async ValueTask<Result<ApproveProfileResponse>> Handle(ApproveProfileRequest request, CancellationToken cancellationToken)
@@ -89,20 +90,40 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
     private async ValueTask<Result<ApproveProfileResponse>> Show(LoadedProfile loaded, RecordedApproval? recorded, bool approving, CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
-        if (latest.IsError && !approving)
+        if (latest.IsError && !approving && !IsUnreadable(latest.Error))
         {
-            return latest.Error;   // a preview can't judge an approval it can't read; approving overwrites (and so repairs) it
+            return latest.Error;   // a disk that refuses isn't judged here; only an approval whose content can't be read is shown as unreadable (#1143)
         }
 
         var previous = latest.IsSuccess ? latest.Value : null;
         var approved = ProfileRules.IsApproved(previous?.Hash, recorded?.Hash, loaded.Hash);
         var changes = ProfileDiff.Between(previous?.Profile, loaded.Profile);
-        return new ApproveProfileResponse(loaded.Hash, changes, approved, Sequence: null) { StepArgv = checks.StepArgv(loaded.Profile, changes) };
+        return new ApproveProfileResponse(loaded.Hash, changes, approved, Sequence: null)
+        {
+            StepArgv = checks.StepArgv(loaded.Profile, changes),
+            Unreadable = latest.IsError ? latest.Error.Message : null,
+            UnlistedChange = IsUnlistedChange(previous, changes, loaded),
+            RoleCounts = await RoleCounts(previous, loaded, changes, cancellationToken).ConfigureAwait(false),
+        };
     }
+
+    /// <summary>The file counts of the changed role keys (#1148); null, and left out of the JSON, when no role key changed.</summary>
+    private async ValueTask<IReadOnlyList<string>?> RoleCounts(LoadedProfile? previous, LoadedProfile loaded, IReadOnlyList<string> changes, CancellationToken cancellationToken)
+    {
+        var lines = await RoleCountLines.Of(tracked, previous?.Profile, loaded.Profile, changes, cancellationToken).ConfigureAwait(false);
+        return lines.Count == 0 ? null : lines;
+    }
+
+    /// <summary>The hash moved but the diff lists nothing: a change in a key the diff doesn't cover (#1147).</summary>
+    private static bool IsUnlistedChange(LoadedProfile? previous, IReadOnlyList<string> changes, LoadedProfile loaded) =>
+        previous is not null && changes.Count == 0 && previous.Hash != loaded.Hash;
+
+    /// <summary>An approval that is there but whose content this build can't take (SND-PROFILE-005): the preview still shows the live hash and the diff against nothing, and says so.</summary>
+    private static bool IsUnreadable(Error error) => string.Equals(error.Code, SindriErrors.ProfileNotApproved.Code, StringComparison.Ordinal);
 
     private static Error? Refusal(ProfileHash asked, LoadedProfile live) => asked != live.Hash
         ? SindriErrors.ProfileHashMismatch.With(
-            $"{asked.Abbreviated}… isn't the live profile's hash ({live.Hash.Value}); run 'sindri profile approve' to see it and what changed")
+            $"{asked.Abbreviated}… isn't the live profile's hash; the live hash is {live.Hash.Value} (fix: sindri profile approve {live.Hash.Value})")
         : null;
 
     /// <summary>The live profile, refused when its context section doesn't check, its repos included: an invalid section is never approved (SND-CONTEXT-001).</summary>

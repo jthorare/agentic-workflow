@@ -1,8 +1,10 @@
 using System.Text.Json;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
 using Aw.Context.Core.WholeMap;
@@ -21,6 +23,7 @@ using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetProposals;
+using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
@@ -43,6 +46,7 @@ using Aw.Context.Features.ShowNode;
 using Aw.Context.Features.ShowPublishStatus;
 using Aw.Context.Features.SourcesStatus;
 using Aw.Context.Features.SyncSources;
+using Aw.Context.Infrastructure.Search;
 using Aw.Context.Testing.Code;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
@@ -50,6 +54,7 @@ using Aw.Context.Testing.History;
 using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Map;
 using Aw.Context.Testing.Review;
+using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
 using Aw.Kernel.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -78,8 +83,10 @@ internal static class Engines
                     new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, intents, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
                     new GetSubgraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers),
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
-                    new Features.SearchMap.SearchMapService(graphs, scrubbers, new Context.Infrastructure.Search.SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
-                    new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)))),
+                    new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
+                    new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
+                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
+                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
             new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()));
     }
@@ -104,7 +111,15 @@ internal static class Engines
             new ShowMapStatusService(store), new CheckMapService(store), new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new PurgeMapService(store, exports, clock));
         var review = new MapReview(new ReviewQueueService(store, scrubbers), new ReviewMapService(store, new FakeCurrentUser(), clock), new ReviewHistoryService(store), new ExportReviewService(store, scrubbers, new FakeReviewFileStore(), clock),
             new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, clock));
-        return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock));
+        return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),
+            new Features.ScanConcepts.ScanConceptsService(store, scrubbers, new FakeModelPort(), new NoConceptSearch(), new FakeConceptHintStore(), clock));
+    }
+
+    /// <summary>A scan search that finds nothing: the query tests never scan.</summary>
+    private sealed class NoConceptSearch : IConceptScanSearch
+    {
+        public ValueTask<Kernel.Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Kernel.Result<MapSearchView>>(Context.Core.ContextErrors.StoreUnavailable.With("no search in this test"));
     }
 
     private static MapPublishing Publishing(FakeGraphStore store) =>
@@ -112,7 +127,7 @@ internal static class Engines
 
     /// <summary>The build slice over empty fakes (the query tests never build).</summary>
     private static BuildMapService Build(TimeProvider clock, FakeGraphStore store) =>
-        new(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new DisabledConceptNamer()), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
+        new(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new FakeConceptHintStore(), store)), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
 
     internal static IContextEngine Over(params IContextSource[] sources) => Over(new FixedSourceCatalog(sources));
 

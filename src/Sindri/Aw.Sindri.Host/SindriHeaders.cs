@@ -24,6 +24,12 @@ internal static class SindriHeaders
     /// <summary>A launch's proof: authorizes 'session wrap''s heartbeat and exit calls for that launch (API spec §8.1; SND-AUTH-003 when it doesn't match an open launch).</summary>
     internal const string LaunchSecret = "X-Sindri-Launch-Secret";
 
+    /// <summary>On an MCP call of a scoping Step's session: the workflow instance's address, set when the agent is launched (issue 1005). Kept when MCP strips the other X-Sindri-* headers.</summary>
+    internal const string Instance = "X-Sindri-Instance";
+
+    /// <summary>On an MCP call of a scoping Step's session: the Step run's token, set with <see cref="Instance"/>.</summary>
+    internal const string Run = "X-Sindri-Run";
+
     /// <summary>On a query: the ledger sequence its answer must include (read-your-writes, API spec §2.1).</summary>
     internal const string After = "X-Sindri-After";
 

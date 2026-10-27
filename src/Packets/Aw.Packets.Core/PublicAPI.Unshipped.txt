@@ -1355,3 +1355,4 @@ override Aw.Packets.Core.Kinds.Line.LineInspectOptions.GetHashCode() -> int
 override Aw.Packets.Core.Kinds.Line.LineInspectOptions.ToString() -> string!
 static Aw.Packets.Core.Kinds.Line.LineInspectOptions.operator !=(Aw.Packets.Core.Kinds.Line.LineInspectOptions? left, Aw.Packets.Core.Kinds.Line.LineInspectOptions? right) -> bool
 static Aw.Packets.Core.Kinds.Line.LineInspectOptions.operator ==(Aw.Packets.Core.Kinds.Line.LineInspectOptions? left, Aw.Packets.Core.Kinds.Line.LineInspectOptions? right) -> bool
+const Aw.Packets.Core.Kinds.Scoping.ScopingRules.GraphShape = "PKT-SCP-006" -> string!

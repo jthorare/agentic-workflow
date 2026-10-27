@@ -30,8 +30,7 @@ public sealed class EngineNoticesTests
         Assert.Equal((_notify, CommandOrigin.Engine), (command.Effect, command.Origin));
         Assert.Equal(EffectIdentity.ForNotice(Id, 1, 4), command.Identity);
         Assert.Equal($"{Id.Value}:1:n4", command.Identity.Text);
-        Assert.Contains("timeout", Text(command), StringComparison.Ordinal);
-        Assert.Contains("The desk task timed out.", Text(command), StringComparison.Ordinal);
+        Assert.Contains("timed out", Text(command), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -64,7 +63,7 @@ public sealed class EngineNoticesTests
 
         Assert.Equal((NoticeClass.Interrupt, NoticeClass.Info), (startKind, laterKind));
         Assert.Equal($"{Id.Value}:1:n1", start.Identity.Text);
-        Assert.Contains("T-3", Text(start), StringComparison.Ordinal);
+        Assert.Contains("waiting for you", Text(start), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -93,7 +92,7 @@ public sealed class EngineNoticesTests
         var (command, kind) = Assert.Single(EngineNotices.For(taken, taken, version: 7, deskTaskNotified: true, WorkflowEventType.Notified));
 
         Assert.Equal(NoticeClass.Interrupt, kind);
-        Assert.Contains("hand back T-3?", Text(command), StringComparison.Ordinal);
+        Assert.Contains("Hand it back or cancel it", Text(command), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

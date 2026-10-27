@@ -1,0 +1,20 @@
+schema: 1
+id: workflow.dev-agent-hold
+version: 1
+description: "One Step an agent session runs and keeps running: the live agent Step the app's Watch the agent and Take over are proven on (issue #1004; scripts/sindri-ui-fixture.sh agent-run)."
+displayName: "Hold an agent run for watching"
+inputs:
+  - { key: fact:item, label: "Item", type: item, kind: item }
+  - { key: fact:issue, label: "Issue", type: text, kind: text, generate: "dev-agent-hold {start:date} {start:time}" }
+initial: write
+states:
+  write:
+    kind: active
+    step: step.report.write
+    budget: { tokens: 1000000 }
+    timeout: { after: 2d, then: park }
+    next: "Write up the resolution for {item}."
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: write, to: done, on: step.completed, when: { outcome: done }, produces: [fact:resolution] }
+evals: [evals/workflow.dev-agent-hold/happy.jsonl]

@@ -45,6 +45,22 @@ public sealed record QuestionDefinition<TInput>
     /// <summary>Response fields beyond the decision, as JSON Schema fragments (chosenIndex, reasons); only these ride back to the caller.</summary>
     public IReadOnlyDictionary<string, JsonObject>? ExtraProperties { get; init; }
 
+    /// <summary>
+    /// Filters and caps a validated input before any provider sees it (the pack filters of model-pick); the result is what the
+    /// prompt, the providers and the digest see. Null leaves the input as it is. Its second argument is the judge's
+    /// redactor (IInputRedactor.Redact), passed as a function so Questions doesn't depend on Ports.
+    /// </summary>
+    public Func<TInput, Func<JsonNode?, JsonNode?>, TInput>? Sanitize { get; init; }
+
+    /// <summary>
+    /// What the decision row stores in place of the input, for a question whose input holds text that must not be kept (model-pick's
+    /// files). A question that sets it never stores the caller's raw input, not even when the call escalates before it validates.
+    /// </summary>
+    public Func<TInput, JsonNode?>? StoredForm { get; init; }
+
+    /// <summary>The cap on the state and the instructions Jev is sent; null keeps the stored input's cap.</summary>
+    public int? InputCapChars { get; init; }
+
     /// <summary>What each output means.</summary>
     public IReadOnlyDictionary<string, string>? Criteria { get; init; }
 
@@ -53,6 +69,20 @@ public sealed record QuestionDefinition<TInput>
 
     /// <summary>Whether the outcome carries the decision id (escalations) and the providers' probabilities; only choose sets it, so the hook questions' envelopes stay as they are.</summary>
     public bool ReportsTrace { get; init; }
+
+    /// <summary>The outputs that only count with at least one non-blank string under 'reasons' (a bare classification of them explains nothing); a provider's answer without is skipped like a failed one.</summary>
+    public IReadOnlySet<string>? ReasonedOutputs { get; init; }
+
+    /// <summary>Whether <paramref name="decided"/> is one of the <see cref="ReasonedOutputs"/> and carries no reason.</summary>
+    /// <param name="decided">A provider's answer.</param>
+    /// <returns>True when it needs reasons and has none.</returns>
+    public bool LacksReasons(ProviderDecided decided)
+    {
+        ArgumentNullException.ThrowIfNull(decided);
+        return ReasonedOutputs?.Contains(decided.Decision) == true
+            && !(decided.Extra?[ResolutionCheckQuestion.Reasons] is JsonArray reasons
+                && reasons.Any(static r => r is JsonValue value && value.TryGetValue<string>(out var text) && !string.IsNullOrWhiteSpace(text)));
+    }
 
     /// <summary>What a provider sees of this question for one input.</summary>
     /// <param name="input">The validated input.</param>
@@ -66,5 +96,6 @@ public sealed record QuestionDefinition<TInput>
         ExtraProperties = ExtraProperties,
         Criteria = Criteria,
         AskConfidence = AskConfidence,
+        InputCapChars = InputCapChars,
     };
 }

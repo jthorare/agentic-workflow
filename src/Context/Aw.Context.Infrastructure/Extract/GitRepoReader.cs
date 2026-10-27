@@ -24,6 +24,13 @@ internal sealed class GitRepoReader(GitCli git) : IRepoReader
         return tree.IsError ? Unreadable(repo, commit) : Results.Success<IReadOnlyList<string>>([.. tree.Value.Keys.Where(p => !repo.Denies(p)).Order(StringComparer.Ordinal)]);
     }
 
+    public async ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        var tree = await git.Tree(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        return tree.IsError ? Unreadable(repo, commit) : Results.Success<IReadOnlyList<string>>([.. tree.Value.Keys.Order(StringComparer.Ordinal)]);
+    }
+
     public async ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(repo);

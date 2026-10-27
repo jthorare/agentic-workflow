@@ -142,6 +142,7 @@ internal static partial class Labels
         StatusVerb.Takeover => TakeOver,
         StatusVerb.Cancel => CancelStep,
         StatusVerb.Approve => "Approve workflow",
+        StatusVerb.Rewind => "Rewind",
         _ => verb.ToString(),
     };
 

@@ -14,7 +14,7 @@ namespace Aw.Sindri.Host.Commands;
 /// 1 MiB) and sends its content, never its path, to the API's complete route, where the command chain classes the caller
 /// (an agent session is refused SND-AUTH-002). It prints the new status header and what happened ('-> checks', or
 /// 'already applied (-> checks)' for a repeated nonce); '--json' prints the response with the nonce it used. Without
-/// '--nonce' the instance's nonce route issues one first. Exit 0 applied, 1 not running, 2 invalid, refused (SND-WF-005, -008, -009 …) or error.
+/// '--nonce' the instance's nonce route issues one first. A launched session (AW_SINDRI_LAUNCH_SECRET set) waits out a control plane that is down for up to AW_SINDRI_COMPLETE_WAIT seconds (default 15 min), see <see cref="ConnectRetry"/>. Exit 0 applied, 1 not running, 2 invalid, refused (SND-WF-005, -008, -009 …) or error.
 /// </summary>
 internal static class CompleteCommand
 {
@@ -31,10 +31,10 @@ internal static class CompleteCommand
             return await output.Error(problem ?? SindriErrors.InvalidInput.With(Usage)).ConfigureAwait(false);
         }
 
-        var target = await InstanceTarget.Resolve(desk, request.Instance, request.Nonce, ct).ConfigureAwait(false);
-        var done = target.IsError ? target.Error : await Send(desk, target.Value, request, ct).ConfigureAwait(false);
+        var done = await Attempt(desk, request, services.GetRequiredService<TimeProvider>(), output, ct).ConfigureAwait(false);
         if (done.IsError)
         {
+            await Stays(done.Error, args, desk, output).ConfigureAwait(false);
             return await output.Error(done.Error).ConfigureAwait(false);
         }
 
@@ -47,6 +47,42 @@ internal static class CompleteCommand
         var happened = answer.AlreadyApplied ? $"already applied ({answer.Result.Happened})" : answer.Result.Happened;
         var header = InstanceHeader.Line(answer.Result.Instance, services.GetRequiredService<TimeProvider>().GetUtcNow());
         return await output.Text($"{header}\n  {happened}\n", 0).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Resolves the instance and posts the report. A launched session (its proof is set) waits out a control plane that is down, see <see cref="ConnectRetry"/>, and keeps the nonce it was
+    /// issued across the waits, so a report that did land is never sent as a second command. A human's call is tried once.
+    /// </summary>
+    private static Task<Result<ApiAnswer<CompleteStepResponse>>> Attempt(RecipeDesk desk, CompleteStepRequest request, TimeProvider clock, Output output, CancellationToken ct)
+    {
+        var nonce = request.Nonce;
+        async Task<Result<ApiAnswer<CompleteStepResponse>>> Once()
+        {
+            var target = await InstanceTarget.Resolve(desk, request.Instance, nonce, ct).ConfigureAwait(false);
+            if (target.IsError)
+            {
+                return target.Error;
+            }
+
+            nonce = target.Value.Nonce;
+            return await Send(desk, target.Value, request, ct).ConfigureAwait(false);
+        }
+
+        return desk.Environment?.Invoke(SecretVariable) is { Length: > 0 } ? ConnectRetry.Run(Once, ConnectRetry.WindowOf(desk.Environment), clock, output.Notice, ct) : Once();
+    }
+
+    /// <summary>A launched session that could not reach the control plane at the end of the window leaves its output files where they are and says so: Sindri completes the run from the run's output folder when it is back (#1000).</summary>
+    private static async Task Stays(Error error, string[] args, RecipeDesk desk, Output output)
+    {
+        if (error.Code != SindriErrors.NotRunning.Code || desk.Environment?.Invoke(SecretVariable) is not { Length: > 0 })
+        {
+            return;
+        }
+
+        var files = args.Zip(args.Skip(1), static (flag, value) => (flag, value)).Where(static p => p.flag == "--output" && p.value.Contains('=', StringComparison.Ordinal))
+            .Select(static p => p.value[(p.value.IndexOf('=', StringComparison.Ordinal) + 1)..]).ToList();
+        var where = files.Count == 0 ? "the Step's output folder" : string.Join(", ", files);
+        await output.Notice($"SND-API-001 the control plane did not come back in time. Your output stays in {where}; Sindri completes the run from the run's .sindri-out folder when it is back, so do not report this Step again by hand.").ConfigureAwait(false);
     }
 
     /// <summary>Posts the report; a launched session's carries AW_SINDRI_LAUNCH_SECRET as the X-Sindri-Launch-Secret header (never in the body).</summary>

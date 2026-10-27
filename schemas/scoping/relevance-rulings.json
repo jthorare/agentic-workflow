@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/relevance-rulings.json",
+  "title": "The relevance judge's rulings (fact:relevanceRulings)",
+  "description": "Issue 966 spec 4.2: one ruling per entry of fact:lenses. class is in, out or noise, or uncertain when the judge escalated, chose none of the three or failed for that entry. confidence and provider are null unless a provider decided; decisionId names the judge's decision row (null when the call failed before one was written); reasonCode is the judge's reason code or the failure word.",
+  "type": "object",
+  "properties": {
+    "judge": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "providers",
+        "threshold"
+      ],
+      "additionalProperties": false
+    },
+    "rulings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^L-(code|product|related|history)-[1-9][0-9]*$"
+          },
+          "class": {
+            "enum": [
+              "in",
+              "out",
+              "noise",
+              "uncertain"
+            ]
+          },
+          "confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "class",
+          "confidence",
+          "provider",
+          "decisionId",
+          "reasonCode"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "judge",
+    "rulings"
+  ],
+  "additionalProperties": false
+}

@@ -9,7 +9,7 @@ internal static class StartAttemptCommand
 {
     internal const string Name = "start-attempt";
 
-    internal static readonly CommandSpec Spec = new("start-attempt --state <dir> --mode <A|B|C> [--abandon-judge]", ["state", "mode"], [], ["abandon-judge"]);
+    internal static readonly CommandSpec Spec = new("start-attempt --state <dir> --mode <A|B|C> [--abandon-judge] [--abandon-unrun]", ["state", "mode"], [], ["abandon-judge", "abandon-unrun"]);
 
     internal static async Task<int> Run(CommandLine line, IServiceProvider services, JsonSerializerOptions json)
     {
@@ -19,6 +19,6 @@ internal static class StartAttemptCommand
             return CommandOutput.Usage($"--mode must be A, B or C (got \"{line["mode"]}\")", Spec.Usage);
         }
 
-        return await CommandOutput.Call<StartAttemptRequest, StartAttemptResponse>(services, json, new StartAttemptRequest(line.StateDirectory, mode, line.Flags.Contains("abandon-judge"))).ConfigureAwait(false);
+        return await CommandOutput.Call<StartAttemptRequest, StartAttemptResponse>(services, json, new StartAttemptRequest(line.StateDirectory, mode, line.Flags.Contains("abandon-judge"), line.Flags.Contains("abandon-unrun"))).ConfigureAwait(false);
     }
 }

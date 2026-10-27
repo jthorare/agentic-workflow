@@ -29,7 +29,7 @@ internal sealed class TemporalEngineReader(TemporalFrontend frontend, TemporalSe
     private const string Running = "WorkflowType = 'RecipeWorkflow' AND ExecutionStatus = 'Running'";
 
     /// <summary>The deadline of each Temporal RPC an engine read makes: past it the server counts as not answering.</summary>
-    internal static readonly TimeSpan Deadline = TimeSpan.FromSeconds(5);
+    internal static readonly TimeSpan Deadline = TimeSpan.FromSeconds(60);
 
     private const int Concurrency = 8;
 

@@ -57,6 +57,12 @@ internal sealed partial class ContextPageViewModel
         }
 
         var generation = ++_generation;   // a read still in flight must not draw over this one
+        if (ShowConcepts)
+        {
+            await SearchConcepts(api, words, generation, cancellationToken).ConfigureAwait(true);   // the concept layer has no nodes to draw: its own filter
+            return;
+        }
+
         if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion))
         {
             return;
@@ -80,16 +86,17 @@ internal sealed partial class ContextPageViewModel
             NoteRead();
             await ZoomIntoWhole(api, cancellationToken).ConfigureAwait(true);
         }
+        else if (string.Equals(result.Error.Code, NoMapCode, StringComparison.Ordinal))
+        {
+            Show(view: null, choices: []);
+            Problem = result.Error.Message;
+            await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
+        }
         else
         {
-            Show(view: null, choices: Suggestions(result.Error));
-            Problem = result.Error.Message;
-            if (Whole.IsReady)
-            {
-                Whole.ApplySearch([], [], zoomed: false);   // nothing resolved: the map dims and says so
-                ChangedWhole();
-            }
-
+            // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
+            Choices = Suggestions(result.Error);
+            Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }
 

@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.Views.Run;
 /// <summary>
 /// The run canvas's inspector (F3 spec 3 §2, slice 4): a header with the step's name, state and the close, previous and next buttons, then the
 /// timeline, why, what it needs and made, how it ended, what you can do next and two disclosures. Built in code because each state names its
-/// brushes by key. It reads <see cref="RunCanvasInspectorViewModel"/> and sends nothing.
+/// brushes by key. It reads <see cref="RunCanvasInspectorViewModel"/>; only its Take over sends (through the view model).
 /// </summary>
 internal sealed partial class RunInspectorView : UserControl
 {
@@ -125,6 +125,8 @@ internal sealed partial class RunInspectorView : UserControl
         if (inspector.HasTakeOver)
         {
             block.Children.Add(ActionBlock(inspector.TakeOverTitle, inspector.TakeOverHelp, "RunInspectorTakeOver", inspector.TakeOverLabel, inspector.TakeOver));
+            block.Children.Add(Said(inspector, "RunInspectorTakeOverLine", nameof(RunCanvasInspectorViewModel.TakeOverLine), () => inspector.TakeOverLine, "Brush.Ink"));
+            block.Children.Add(Said(inspector, "RunInspectorTakeOverCommand", nameof(RunCanvasInspectorViewModel.TakeOverCommand), () => inspector.TakeOverCommand, "Brush.InkSubtle"));
         }
 
         if (inspector.Protected is { } approve)
@@ -137,6 +139,23 @@ internal sealed partial class RunInspectorView : UserControl
             block.Children.Add(ActionBlock(inspector.SeeContextLabel, inspector.SeeContextHelp, "RunInspectorContext", inspector.SeeContextLabel, inspector.SeeContext));
         }
 
+        return block;
+    }
+
+    // A line the view model fills after a press (the take-over outcome): hidden while empty, drawn again whenever the property changes.
+    private TextBlock Said(RunCanvasInspectorViewModel inspector, string name, string property, Func<string> text, string brush)
+    {
+        var block = Wrapped(text(), brush);
+        block.Name = name;
+        block.IsVisible = text().Length > 0;
+        inspector.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, property, StringComparison.Ordinal))
+            {
+                (block.Text, block.IsVisible) = (text(), text().Length > 0);
+                AutomationProperties.SetName(block, text());
+            }
+        };
         return block;
     }
 

@@ -5,7 +5,8 @@
     "commit": null,
     "keyVersion": 1,
     "created": "2026-01-01T00:00:00.0000000Z",
-    "status": "current"
+    "status": "current",
+    "ruleset": null
   },
   "counts": {
     "nodes": 14,

@@ -12,11 +12,9 @@ Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Amount.get -> int?
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Amount.init -> void
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Answer.get -> Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant?
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Answer.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.ApplyCommandRequest(string! Instance, Aw.Sindri.Features.ApplyCommand.ApplyCommandKind Kind, Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant? Answer = null, string? Text = null, int? Amount = null, Aw.Sindri.Core.Workflow.Engine.CommandVerb? Verb = null, Aw.Sindri.Core.Workflow.Engine.CommandNonce? Nonce = null, Aw.Sindri.Core.Challenges.ChallengeAnswer? Challenge = null) -> void
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.CarriesProtectedFields.get -> bool
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Challenge.get -> Aw.Sindri.Core.Challenges.ChallengeAnswer?
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Challenge.init -> void
-Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Deconstruct(out string! Instance, out Aw.Sindri.Features.ApplyCommand.ApplyCommandKind Kind, out Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant? Answer, out string? Text, out int? Amount, out Aw.Sindri.Core.Workflow.Engine.CommandVerb? Verb, out Aw.Sindri.Core.Workflow.Engine.CommandNonce? Nonce, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Challenge) -> void
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Equals(Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest? other) -> bool
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Instance.get -> string!
 Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Instance.init -> void
@@ -780,8 +778,6 @@ Aw.Sindri.Features.GetJob.JobView.State.get -> Aw.Sindri.Core.Jobs.JobState
 Aw.Sindri.Features.GetJob.JobView.State.init -> void
 Aw.Sindri.Features.GetJob.JobView.Summary.get -> string?
 Aw.Sindri.Features.GetJob.JobView.Summary.init -> void
-Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Launch.LaunchStep! Step, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
-Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetLaunch.LaunchView.Step.get -> Aw.Sindri.Core.Launch.LaunchStep!
 Aw.Sindri.Features.GetLaunch.LaunchView.Step.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest
@@ -2217,12 +2213,20 @@ Aw.Sindri.Features.ListRequests.RequestView.State.get -> Aw.Sindri.Core.Requests
 Aw.Sindri.Features.ListRequests.RequestView.State.init -> void
 Aw.Sindri.Features.ListRequests.RequestView.Text.get -> string!
 Aw.Sindri.Features.ListRequests.RequestView.Text.init -> void
-Aw.Sindri.Features.ListServices.ServiceView.Deconstruct(out Aw.Sindri.Core.Ids.ServiceName Name, out string! Every, out bool Paused, out Aw.Sindri.Core.Views.LastRun? LastRun, out System.DateTimeOffset? NextSlot, out Aw.Sindri.Core.Ids.JobId? Job, out System.Collections.Generic.IReadOnlyList<string!>! Actions) -> void
+Aw.Sindri.Features.ListServices.ServiceView.Deconstruct(out Aw.Sindri.Core.Ids.ServiceName Name, out string! Every, out bool Paused, out Aw.Sindri.Core.Views.LastRun? LastRun, out System.DateTimeOffset? NextSlot, out Aw.Sindri.Core.Ids.JobId? Job, out System.Collections.Generic.IReadOnlyList<string!>! Actions, out string? Description, out string? PausedBy, out System.DateTimeOffset? PausedAt, out System.DateTimeOffset? OverdueSince) -> void
+Aw.Sindri.Features.ListServices.ServiceView.OverdueSince.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ListServices.ServiceView.OverdueSince.init -> void
 Aw.Sindri.Features.ListServices.ServiceView.Job.get -> Aw.Sindri.Core.Ids.JobId?
 Aw.Sindri.Features.ListServices.ServiceView.Job.init -> void
 Aw.Sindri.Features.ListServices.ServiceView.Actions.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Features.ListServices.ServiceView.Actions.init -> void
-Aw.Sindri.Features.ListServices.ServiceView.ServiceView(Aw.Sindri.Core.Ids.ServiceName Name, string! Every, bool Paused, Aw.Sindri.Core.Views.LastRun? LastRun, System.DateTimeOffset? NextSlot, Aw.Sindri.Core.Ids.JobId? Job, System.Collections.Generic.IReadOnlyList<string!>! Actions) -> void
+Aw.Sindri.Features.ListServices.ServiceView.Description.get -> string?
+Aw.Sindri.Features.ListServices.ServiceView.Description.init -> void
+Aw.Sindri.Features.ListServices.ServiceView.PausedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ListServices.ServiceView.PausedAt.init -> void
+Aw.Sindri.Features.ListServices.ServiceView.PausedBy.get -> string?
+Aw.Sindri.Features.ListServices.ServiceView.PausedBy.init -> void
+Aw.Sindri.Features.ListServices.ServiceView.ServiceView(Aw.Sindri.Core.Ids.ServiceName Name, string! Every, bool Paused, Aw.Sindri.Core.Views.LastRun? LastRun, System.DateTimeOffset? NextSlot, Aw.Sindri.Core.Ids.JobId? Job, System.Collections.Generic.IReadOnlyList<string!>! Actions, string? Description = null, string? PausedBy = null, System.DateTimeOffset? PausedAt = null, System.DateTimeOffset? OverdueSince = null) -> void
 Aw.Sindri.Features.PauseService.PauseServiceRequest
 Aw.Sindri.Features.PauseService.PauseServiceRequest.<Clone>$() -> Aw.Sindri.Features.PauseService.PauseServiceRequest!
 Aw.Sindri.Features.PauseService.PauseServiceRequest.Deconstruct(out Aw.Sindri.Core.Ids.ServiceName Name) -> void
@@ -3009,6 +3013,8 @@ override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.GetHashCode()
 override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.init -> void
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ApproveProfile.StepArgvLine!>!
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.init -> void
 Aw.Sindri.Features.ApproveProfile.StepArgvEntry
@@ -3415,13 +3421,15 @@ Aw.Sindri.Features.GetStatus.SessionStatus
 Aw.Sindri.Features.GetStatus.SessionStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.SessionStatus!
 Aw.Sindri.Features.GetStatus.SessionStatus.Asking.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Asking.init -> void
-Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Asking, out int Problems) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Deconstruct(out int Live, out int Asking, out int Problems, out int Running) -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Equals(Aw.Sindri.Features.GetStatus.SessionStatus? other) -> bool
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Live.init -> void
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.get -> int
 Aw.Sindri.Features.GetStatus.SessionStatus.Problems.init -> void
-Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems) -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.Running.get -> int
+Aw.Sindri.Features.GetStatus.SessionStatus.Running.init -> void
+Aw.Sindri.Features.GetStatus.SessionStatus.SessionStatus(int Live, int Asking, int Problems, int Running) -> void
 Aw.Sindri.Features.ListSessions.EndedSessionRow
 Aw.Sindri.Features.ListSessions.EndedSessionRow.<Clone>$() -> Aw.Sindri.Features.ListSessions.EndedSessionRow!
 Aw.Sindri.Features.ListSessions.EndedSessionRow.Deconstruct(out Aw.Sindri.Core.Sessions.SessionRow! Session, out System.DateTimeOffset EndedAt, out System.Collections.Generic.IReadOnlyList<string!>? Resume) -> void
@@ -3509,6 +3517,10 @@ static Aw.Sindri.Features.ListSessions.SessionCounts.operator !=(Aw.Sindri.Featu
 static Aw.Sindri.Features.ListSessions.SessionCounts.operator ==(Aw.Sindri.Features.ListSessions.SessionCounts? left, Aw.Sindri.Features.ListSessions.SessionCounts? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator !=(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator ==(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest!
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.Anchors.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -4507,6 +4519,8 @@ override Aw.Sindri.Features.InitProfile.InitProfileResponse.GetHashCode() -> int
 override Aw.Sindri.Features.InitProfile.InitProfileResponse.ToString() -> string!
 static Aw.Sindri.Features.InitProfile.InitProfileResponse.operator !=(Aw.Sindri.Features.InitProfile.InitProfileResponse? left, Aw.Sindri.Features.InitProfile.InitProfileResponse? right) -> bool
 static Aw.Sindri.Features.InitProfile.InitProfileResponse.operator ==(Aw.Sindri.Features.InitProfile.InitProfileResponse? left, Aw.Sindri.Features.InitProfile.InitProfileResponse? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Launch.LaunchStep! Step, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetEngine.GetEngineRequest
 Aw.Sindri.Features.GetEngine.GetEngineRequest.<Clone>$() -> Aw.Sindri.Features.GetEngine.GetEngineRequest!
 Aw.Sindri.Features.GetEngine.GetEngineRequest.Equals(Aw.Sindri.Features.GetEngine.GetEngineRequest? other) -> bool
@@ -4833,3 +4847,91 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.Equals(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.ScanContextConceptsRequest() -> void
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.operator !=(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.operator ==(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Equals(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Version.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Version.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.OnDraft.get -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.OnDraft.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Outcome.get -> string!
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Outcome.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Hints.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Hints.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Searches.get -> int
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Searches.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Reason.get -> string?
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Reason.init -> void
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.operator !=(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.operator ==(Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? left, Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult? right) -> bool
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Deconstruct(out int Version, out bool OnDraft, out string! Outcome, out int Hints, out int Searches, out string? Reason, out string? Tier, out string? Model) -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Model.get -> string?
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Model.init -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.ScanContextConceptsResult(int Version, bool OnDraft, string! Outcome, int Hints, int Searches, string? Reason, string? Tier = null, string? Model = null) -> void
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Tier.get -> string?
+Aw.Sindri.Features.ContextCalls.ScanContextConceptsResult.Tier.init -> void
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.get -> string?
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Unreadable.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest!
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Repo.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Draft.get -> bool
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Draft.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.MapVersion.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Deconstruct(out string? Repo, out bool Draft, out string? MapVersion) -> void
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.GetContextConceptGlossaryRequest(string? Repo = null, bool Draft = false, string? MapVersion = null) -> void
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextConceptGlossaryRequest? right) -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.get -> bool
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.UnlistedChange.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleAction.End = 2 -> Aw.Sindri.Features.SweepLostSessions.IdleAction
+Aw.Sindri.Features.SweepLostSessions.IdleAction
+Aw.Sindri.Features.SweepLostSessions.IdleAction.None = 0 -> Aw.Sindri.Features.SweepLostSessions.IdleAction
+Aw.Sindri.Features.SweepLostSessions.IdleAction.Nudge = 1 -> Aw.Sindri.Features.SweepLostSessions.IdleAction
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.<Clone>$() -> Aw.Sindri.Features.SweepLostSessions.IdleInputs!
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Deconstruct(out System.DateTimeOffset Now, out System.DateTimeOffset? TurnEnded, out System.DateTimeOffset? TurnFailed, out System.DateTimeOffset? SnapshotIdleSince, out bool ToolRunning, out System.DateTimeOffset? Nudged) -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Equals(Aw.Sindri.Features.SweepLostSessions.IdleInputs? other) -> bool
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.IdleInputs(System.DateTimeOffset Now, System.DateTimeOffset? TurnEnded, System.DateTimeOffset? TurnFailed, System.DateTimeOffset? SnapshotIdleSince, bool ToolRunning, System.DateTimeOffset? Nudged) -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Now.get -> System.DateTimeOffset
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Now.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Nudged.get -> System.DateTimeOffset?
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.Nudged.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.SnapshotIdleSince.get -> System.DateTimeOffset?
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.SnapshotIdleSince.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.ToolRunning.get -> bool
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.ToolRunning.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.TurnEnded.get -> System.DateTimeOffset?
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.TurnEnded.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.TurnFailed.get -> System.DateTimeOffset?
+Aw.Sindri.Features.SweepLostSessions.IdleInputs.TurnFailed.init -> void
+Aw.Sindri.Features.SweepLostSessions.IdleRules
+override Aw.Sindri.Features.SweepLostSessions.IdleInputs.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SweepLostSessions.IdleInputs.GetHashCode() -> int
+override Aw.Sindri.Features.SweepLostSessions.IdleInputs.ToString() -> string!
+static Aw.Sindri.Features.SweepLostSessions.IdleInputs.operator !=(Aw.Sindri.Features.SweepLostSessions.IdleInputs? left, Aw.Sindri.Features.SweepLostSessions.IdleInputs? right) -> bool
+static Aw.Sindri.Features.SweepLostSessions.IdleInputs.operator ==(Aw.Sindri.Features.SweepLostSessions.IdleInputs? left, Aw.Sindri.Features.SweepLostSessions.IdleInputs? right) -> bool
+static Aw.Sindri.Features.SweepLostSessions.IdleRules.Decide(Aw.Sindri.Features.SweepLostSessions.IdleInputs! inputs, System.TimeSpan stalledAfter) -> Aw.Sindri.Features.SweepLostSessions.IdleAction
+Aw.Sindri.Features.ApplyCommand.ApplyCommandKind.Rewind = 6 -> Aw.Sindri.Features.ApplyCommand.ApplyCommandKind
+Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.ApplyCommandRequest(string! Instance, Aw.Sindri.Features.ApplyCommand.ApplyCommandKind Kind, Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant? Answer = null, string? Text = null, int? Amount = null, Aw.Sindri.Core.Workflow.Engine.CommandVerb? Verb = null, Aw.Sindri.Core.Workflow.Engine.CommandNonce? Nonce = null, Aw.Sindri.Core.Challenges.ChallengeAnswer? Challenge = null, string? To = null) -> void
+Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.Deconstruct(out string! Instance, out Aw.Sindri.Features.ApplyCommand.ApplyCommandKind Kind, out Aw.Sindri.Core.Workflow.Engine.Triggers.AnswerVariant? Answer, out string? Text, out int? Amount, out Aw.Sindri.Core.Workflow.Engine.CommandVerb? Verb, out Aw.Sindri.Core.Workflow.Engine.CommandNonce? Nonce, out Aw.Sindri.Core.Challenges.ChallengeAnswer? Challenge, out string? To) -> void
+Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.To.get -> string?
+Aw.Sindri.Features.ApplyCommand.ApplyCommandRequest.To.init -> void

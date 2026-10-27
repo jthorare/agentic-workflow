@@ -118,6 +118,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         services.TryAddSingleton<ReportRefusals>();   // one instance with the CompleteStep check that records into it (Features registers it the same way)
         return services
         .AddSingleton<AgentStepActivities>().AddSingleton<AgentLaunching>().AddSingleton<AgentLaunchInputs>().AddSingleton<AgentClosing>()
+        .AddSingleton<AgentRecovering>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
         .AddSingleton<WorkerActivities>();

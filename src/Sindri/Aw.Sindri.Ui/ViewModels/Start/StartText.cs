@@ -15,6 +15,9 @@ internal sealed class StartText
     /// <summary><see cref="Labels.StartItem"/>.</summary>
     public string Item { get; } = Labels.StartItem;
 
+    /// <summary><see cref="Labels.StartPickCaption"/>.</summary>
+    public string PickCaption { get; } = Labels.StartPickCaption;
+
     /// <summary><see cref="Labels.StartPickItem"/>.</summary>
     public string PickItem { get; } = Labels.StartPickItem;
 

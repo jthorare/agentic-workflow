@@ -187,7 +187,7 @@ internal sealed class StartInstanceService(IItems items, IApprovedRecipes recipe
         }
         catch (JsonException e) // boundary: a fact the human gave is input, and unreadable input is their error
         {
-            return SindriErrors.InvalidInput.With($"fact:item ({fact.Name}) isn't JSON: {e.Message} (fix: give '{{ \"id\": \"{request.Item}\", \"repo\": …, \"spec\": … }}')");
+            return SindriErrors.InvalidInput.With($"fact:item ({fact.Name}) isn't JSON: {e.Message} (fix: give '{{ \"id\": \"{request.Item}\", \"repo\": … }}'; \"spec\" is optional)");
         }
 
         string[] names = [request.Item, item.Id.Value, .. item.Aliases.Select(static a => a.Value)];

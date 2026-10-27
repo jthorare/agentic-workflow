@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence-desktop
-version: 1
+version: 2
 description: "Block recipe: A desktop app run: the real app on seeded data against its mockups, then a review of each screen's frames; one repair at most when the run is broken."
 displayName: "Prove the screens work in the desktop app"
 inputs:
@@ -10,9 +10,9 @@ outputs:
   - { key: fact:evidenceSummary, label: "Evidence summary", type: evidence, from: run }
 initial: run
 states:
-  run:    { kind: active, step: step.evidence.desktop-run, loop: repairs, timeout: { after: 4h, then: park },
+  run:    { kind: active, step: step.evidence.desktop-run, loop: repairs, timeout: { after: 1d, then: park },
             next: "Run the desktop evidence for {item}: run the ui-evidence `desktop-run` verb on the repo's screens manifest (docs/sindri/ui-evidence/screens.json) with a fresh run directory under the workspace, and record its summary.json. Report `passed` when it exits 0, `failed` when it exits 2, and `broken` when it exits 1, 4 or anything else. End your report with `artifacts`: the paths, relative to the workspace, of every file you saved as proof (the summary, the report and each screen's app, mockup, diff and side-by-side images); name no hash." }
-  review: { kind: active, step: step.evidence.desktop-review, timeout: { after: 4h, then: park },
+  review: { kind: active, step: step.evidence.desktop-review, timeout: { after: 1d, then: park },
             next: "Review the desktop evidence for {item}: for each screen, look at its app frame and its mockup frame side by side and list every concrete mismatch (layout, a missing element, the wrong band, colour, a label). Skip the differences the manifest lists as accepted for that screen. Report `match` when none is left, or `mismatch` with the list." }
   passed: { kind: terminal, outcome: resolved }
   failed: { kind: terminal, outcome: unresolved }

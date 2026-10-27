@@ -215,13 +215,9 @@ internal static class JobScenarios
         ["failed"] = static (h, j, ct) => Finished(h, j, JobOutcome.Failed, "it broke", "SND-SCHED-001", result: null, ct),
         ["interrupted"] = static (h, j, ct) => Finished(h, j, JobOutcome.Failed, "interrupted: the process stopped while it ran", "SND-JOB-001", result: null, ct),
         ["cancelled"] = static (h, j, ct) => ViewScenarios.Append(h, EventTypes.JobCancelled, new JobCancelled(Command(2), j, "human:cli"), $"job.cancelled:{j.Value}", ct),
-        ["progress-capped"] = static async (h, j, ct) =>
-        {
-            for (var n = 1; n <= 250; n++)
-            {
-                await Progress(h, j, n, "line " + n.ToString(CultureInfo.InvariantCulture), ct);
-            }
-        },
+        ["progress-capped"] = static (h, j, ct) =>   // why: 250 single appends were 250 write transactions and outran the row's timeout under load (#1252); one batch is one
+            ViewScenarios.AppendMany(h, EventTypes.JobProgress,
+                [.. Enumerable.Range(1, 250).Select(n => (new JobProgress(Command(1), j, n, "line " + n.ToString(CultureInfo.InvariantCulture)), $"job.progress:{j.Value}:{n.ToString(CultureInfo.InvariantCulture)}"))], ct),
         ["context-backtest"] = static async (h, j, ct) =>
         {
             await Progress(h, j, 1, "corpus: 5 samples", ct);

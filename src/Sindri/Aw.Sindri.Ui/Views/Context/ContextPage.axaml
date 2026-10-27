@@ -9,6 +9,7 @@
              xmlns:cv="using:Aw.Sindri.Ui.Views.Context.Code"
              xmlns:mv="using:Aw.Sindri.Ui.Views.Context.Map"
              xmlns:wv="using:Aw.Sindri.Ui.Views.Context.Whole"
+             xmlns:cv2="using:Aw.Sindri.Ui.Views.Context.Concepts"
              xmlns:wvm="using:Aw.Sindri.Ui.ViewModels.Context.Whole"
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
@@ -68,6 +69,10 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="ContextTitle" Classes="page-title" Text="{Binding Title}" />
         <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
+        <TextBlock x:Name="ContextRulesOlder" Classes="caption" Text="{Binding RulesOlderText}" IsVisible="{Binding ShowRulesOlder}" VerticalAlignment="Center" AutomationProperties.Name="{Binding RulesOlderText}" />
+        <Panel IsVisible="{Binding ShowRulesRefresh}">
+          <ctl:CommandControl x:Name="ContextRefresh" DataContext="{Binding RefreshControl}" VerticalAlignment="Center" />
+        </Panel>
       </StackPanel>
       <Border x:Name="ContextDraftTag" Grid.Column="2" IsVisible="{Binding IsDraft}" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.Pill}" Padding="10,2" VerticalAlignment="Center"
               AutomationProperties.Name="{Binding DraftTag}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -118,11 +123,17 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
+        <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding Concepts.Note}" />
         <ItemsControl x:Name="ContextMissing" ItemsSource="{Binding Missing}" ItemTemplate="{StaticResource LineTemplate}" />
       </StackPanel>
 
       <!-- The stage: the page scrolls, so the stage is given the height the window leaves (ContextPage.axaml.cs). -->
-      <Panel x:Name="ContextStageHost" Grid.Row="1" MinHeight="420">
+      <Panel x:Name="ContextStageHost" Grid.Row="1" MinHeight="420" VerticalAlignment="Top">
+        <!-- The concept band: the first layer, over the whole map; a concept opens the bands scoped to it. -->
+        <Panel x:Name="ConceptsHost" IsVisible="{Binding ShowConcepts}">
+          <cv2:ConceptLayerView x:Name="ConceptLayer" DataContext="{Binding Concepts}" />
+        </Panel>
         <!-- The page's first state: the whole map, read when the page opens (whole-map spec §3.1); a query's neighbourhood replaces it for now. -->
         <Panel x:Name="WholeMapHost" IsVisible="{Binding ShowWhole}">
           <wv:WholeMapView x:Name="WholeMap" DataContext="{Binding Whole}" />
@@ -134,6 +145,7 @@
             <TextBlock x:Name="WholeLoadingText" Classes="body subtle" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" />
             <TextBlock x:Name="WholeFailedText" Classes="body" Text="{Binding FailedText}" IsVisible="{Binding IsFailed}" />
             <Button x:Name="WholeRetry" Content="{Binding RetryText}" IsVisible="{Binding IsFailed}" Click="OnRetryWhole" AutomationProperties.Name="{Binding RetryText}" />
+            <Button x:Name="WholeBackToConcepts" Content="{Binding BackText}" IsVisible="{Binding HasConcept}" Click="OnUp" AutomationProperties.Name="{Binding BackText}" />
           </StackPanel>
         </Border>
         <Panel x:Name="LensStackHost" IsVisible="{Binding MapVisible}">

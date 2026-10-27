@@ -1,0 +1,222 @@
+{
+  "note": "Every state of the sandbox surfaces (sandbox spec §8 'States'). Aw.Sindri.Ui.Tests reads this file (SB-6 builds the view models over it). `text` is what is shown, `announce` what the polite live region says; `<n>` style tokens are filled at render.",
+  "checkAgain": [
+    {
+      "id": "idle",
+      "text": "Check again"
+    },
+    {
+      "id": "in-flight",
+      "text": "Check again",
+      "announce": "Sending…",
+      "spinner": true,
+      "announceAfterMs": 300,
+      "secondClickDoes": "nothing"
+    },
+    {
+      "id": "still-failing",
+      "text": "Check again",
+      "announce": "Still blocked: <n> things to fix",
+      "listsEveryBlocker": true,
+      "note": "the card lists every blocker, not the first; the region rests on its label before a repeat outcome so a repeated still-failing is a change"
+    },
+    {
+      "id": "all-clear",
+      "text": "Ready. Resume these <n> Steps?",
+      "announce": "Ready. Resuming <n> Steps",
+      "buttons": [
+        "Resume",
+        "Not now"
+      ],
+      "note": "oldest first, no more than the free session slots, shown before acting"
+    },
+    {
+      "id": "resumed",
+      "text": "Resumed <n> Steps",
+      "announce": "Resumed <n> Steps"
+    },
+    {
+      "id": "resumed-partial",
+      "text": "Resumed <n> of <m>: <item> has moved on",
+      "announce": "Resumed <n> of <m>",
+      "note": "the rest stay parked for the next press"
+    }
+  ],
+  "parkCard": [
+    {
+      "id": "never-checked",
+      "text": "Needs you: Step <x> can't start, <first clause of the golden sentence>"
+    },
+    {
+      "id": "checked-stale",
+      "text": "Checked <age> ago"
+    },
+    {
+      "id": "checked-fresh",
+      "text": "Checked just now"
+    }
+  ],
+  "sandboxLine": [
+    {
+      "id": "sandboxed-step",
+      "text": "Sandbox: on, writes only to <folder>",
+      "headroom": "memory <used> of <max> GiB"
+    },
+    {
+      "id": "sandboxed-attended",
+      "text": "Sandbox: on, attended, writes only to <folder>",
+      "headroom": "memory <used> of <max> GiB"
+    },
+    {
+      "id": "plan-unreadable",
+      "text": "Sandbox: details unavailable"
+    },
+    {
+      "id": "serve-down",
+      "text": "Sandbox: status unavailable",
+      "dimmed": true
+    }
+  ],
+  "blockedList": [
+    {
+      "id": "none",
+      "text": "Nothing was blocked"
+    },
+    {
+      "id": "some",
+      "text": "Blocked: <target> × <n>"
+    },
+    {
+      "id": "many",
+      "text": "Blocked: top 5 of <n>",
+      "link": "See all blocked"
+    },
+    {
+      "id": "row-host",
+      "text": "Blocked host <target> <n> times; allow it for this repo",
+      "button": "Allow"
+    },
+    {
+      "id": "row-path",
+      "text": "Blocked path <target> <n> times; allow it for this repo",
+      "button": "Allow",
+      "note": "a not-bound home path only"
+    },
+    {
+      "id": "row-path-permanent",
+      "text": "Blocked path <target>: never allowed, <reason>",
+      "button": null
+    },
+    {
+      "id": "row-policy",
+      "text": "Blocked tool <name> <n> times; push from your own terminal",
+      "button": null
+    }
+  ],
+  "allow": [
+    {
+      "id": "idle",
+      "text": "Allow"
+    },
+    {
+      "id": "sending",
+      "text": "Allow",
+      "announce": "Sending"
+    },
+    {
+      "id": "needs-approval",
+      "text": "Allow",
+      "announce": "Needs your approval: open the approval to allow <target>"
+    },
+    {
+      "id": "allowed",
+      "text": "Allowed",
+      "announce": "Allowed"
+    },
+    {
+      "id": "refused",
+      "text": "Refused",
+      "announce": "Refused"
+    }
+  ],
+  "waiting": [
+    {
+      "id": "waiting",
+      "text": "Waiting for a free session slot (<n> of <cap> running)",
+      "announce": "Waiting for a free session slot, <n> of <cap> running",
+      "neverRed": true
+    },
+    {
+      "id": "started",
+      "text": "Started",
+      "announce": "Started"
+    }
+  ],
+  "limitEnding": [
+    {
+      "id": "memory-kept-branch",
+      "text": "This Step ran out of memory (<limit>) after <time>. Its work so far is kept on branch <name>."
+    },
+    {
+      "id": "memory-no-branch",
+      "text": "This Step ran out of memory (<limit>) after <time>."
+    },
+    {
+      "id": "wall-kept-branch",
+      "text": "This Step ran out of time after <time>. Its work so far is kept on branch <name>."
+    },
+    {
+      "id": "wall-no-branch",
+      "text": "This Step ran out of time after <time>."
+    }
+  ],
+  "healthRow": [
+    {
+      "id": "ready",
+      "text": "Sandbox: ready"
+    },
+    {
+      "id": "blocked",
+      "text": "Sandbox: <the first blocker's sentence>"
+    },
+    {
+      "id": "learning",
+      "text": "Sandbox: learning, network open for <repo>, ends in <days> days",
+      "severity": "warning"
+    },
+    {
+      "id": "serve-down",
+      "text": "Sandbox: unknown",
+      "dimmed": true
+    },
+    {
+      "id": "never-checked",
+      "text": "Sandbox: not checked yet"
+    }
+  ],
+  "settingsSection": [
+    {
+      "id": "loaded",
+      "text": "Sandbox",
+      "fields": [
+        "mechanism",
+        "groups",
+        "limits",
+        "learn mode"
+      ]
+    },
+    {
+      "id": "learn-on",
+      "text": "Sandbox: learning, ends in <days> days"
+    },
+    {
+      "id": "unreadable-plan",
+      "text": "Sandbox: details unavailable"
+    },
+    {
+      "id": "serve-down",
+      "text": "Sandbox: status unavailable",
+      "dimmed": true
+    }
+  ]
+}

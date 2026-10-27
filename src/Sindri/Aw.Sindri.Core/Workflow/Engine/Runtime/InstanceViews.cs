@@ -54,7 +54,7 @@ public static partial class InstanceViews
         ArgumentNullException.ThrowIfNull(context);
         var children = context.Children ?? [];
         var task = instance is { Ended: false, Suspension: null, Frame.Run: { Runtime: StepRuntime.Desk } open }
-            ? Task(instance.Frame.State, open.Token, recipe, timeoutAt, context.Injection)
+            ? Task(instance.Frame.State, open.Token, recipe, timeoutAt, context)
             : null;
         var words = new InstanceWords(instance, recipe, since, MirroredChild(instance, children));
         var view = new InstanceView(
@@ -132,7 +132,7 @@ public static partial class InstanceViews
             view.StartedBy)
         {
             Again = view.Again,
-            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null)],
+            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null || string.Equals(c.Action, "ApplyCommand:rewind", StringComparison.Ordinal))],
         };
     }
 
@@ -218,7 +218,7 @@ public static partial class InstanceViews
 
         if (instance.Suspension is not { Kind: SuspensionKind.Takeover })
         {
-            commands.AddRange(VerbCommands(instance, recipe));
+            commands.AddRange([.. VerbCommands(instance, recipe), .. RewindCommands.Of(instance, recipe)]);
         }
 
         if (instance.Suspension is { Kind: SuspensionKind.Takeover })
@@ -264,14 +264,14 @@ public static partial class InstanceViews
     private static bool Answerable(Suspension suspension) =>
         suspension.ParkKind is not (ParkKind.Revoked or ParkKind.ChildRevoked or ParkKind.Drift);
 
-    private static DeskTask Task(string state, RunToken run, InterpretedRecipe recipe, DateTimeOffset? timeoutAt, InjectionPlan? injection)
+    private static DeskTask Task(string state, RunToken run, InterpretedRecipe recipe, DateTimeOffset? timeoutAt, InstanceViewContext context)
     {
         var use = recipe.Recipe.States[state].Step
             ?? throw new InvalidOperationException($"state {state} has an open run but no Step");
         var step = use.Use;
         var descriptor = recipe.Catalog.Find(step);
         var outcomes = OutcomesOf(descriptor, use, recipe);
-        return new DeskTask(run, state, step, outcomes, descriptor?.Outputs ?? [], recipe.Inputs, timeoutAt, injection?.Entries);
+        return new DeskTask(run, state, step, outcomes, descriptor?.Outputs ?? [], recipe.Inputs, timeoutAt, context.Injection?.Entries) { Timings = context.Timings };
     }
 
     /// <summary>The outcomes the Step reports, through the one resolver; the descriptor's own for a recipe the validator refuses.</summary>

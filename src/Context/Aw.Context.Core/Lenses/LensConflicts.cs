@@ -19,7 +19,7 @@ internal static class LensConflicts
         return [.. supersedes, .. contradicts, .. FileConflicts(graph, own)];
     }
 
-    private static IEnumerable<GraphEdge> Into(GraphSnapshot graph, HashSet<string> own, EdgeType type) => graph.Edges.Where(e => e.Type == type && own.Contains(e.To.Value));
+    private static List<GraphEdge> Into(GraphSnapshot graph, HashSet<string> own, EdgeType type) => EdgeLookup.For(graph).Into(own, type);
 
     private static List<LensConflict> Contradicts(GraphSnapshot graph, HashSet<string> own, IReadOnlyList<DecisionConflict> checkedPairs)
     {
@@ -33,8 +33,8 @@ internal static class LensConflicts
     // S-CF: a decision that decides an own-scope node and also cites a file (decides → code) which implements other nodes but not that one or anything in its part-of chain (ancestors and descendants count as the same feature).
     private static List<LensConflict> FileConflicts(GraphSnapshot graph, HashSet<string> own)
     {
-        var implemented = graph.Edges.Where(e => e.Type == EdgeType.Implements).ToLookup(e => e.From.Value, e => e.To, StringComparer.Ordinal);
-        var cited = graph.Edges.Where(e => e.Type == EdgeType.Decides && e.To.Kind == NodeKind.Code && implemented.Contains(e.To.Value)).ToLookup(e => e.From.Value, e => e.To, StringComparer.Ordinal);
+        var implemented = EdgeLookup.For(graph).OfType(EdgeType.Implements).ToLookup(e => e.From.Value, e => e.To, StringComparer.Ordinal);
+        var cited = EdgeLookup.For(graph).OfType(EdgeType.Decides).Where(e => e.To.Kind == NodeKind.Code && implemented.Contains(e.To.Value)).ToLookup(e => e.From.Value, e => e.To, StringComparer.Ordinal);
         var chains = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
         IReadOnlySet<string> Chain(NodeKey node) => chains.TryGetValue(node.Value, out var c) ? c : chains[node.Value] = RepoScope.WithHierarchy(graph, new HashSet<string>([node.Value], StringComparer.Ordinal));
         return [.. Into(graph, own, EdgeType.Decides)
@@ -47,7 +47,7 @@ internal static class LensConflicts
 
     private static List<LensConflict> Supersedes(GraphSnapshot graph, HashSet<string> own)
     {
-        var supersedes = graph.Edges.Where(e => e.Type == EdgeType.Supersedes).ToList();
+        var supersedes = EdgeLookup.For(graph).OfType(EdgeType.Supersedes);
         return [.. Into(graph, own, EdgeType.Decides)
             .SelectMany(decides => supersedes.Where(s => s.From.Value == decides.From.Value).Select(s => (Node: decides.To, Decision: s.From, Other: s.To)))
             .Distinct().OrderBy(c => c.Node.Value, StringComparer.Ordinal).ThenBy(c => c.Decision.Value, StringComparer.Ordinal).ThenBy(c => c.Other.Value, StringComparer.Ordinal)

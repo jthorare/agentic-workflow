@@ -25,6 +25,13 @@ internal sealed class ConceptGraph
         return this;
     }
 
+    public ConceptGraph ConceptWithTerms(string key, string name, params string[] terms)
+    {
+        var attributes = JsonSerializer.SerializeToElement(new Dictionary<string, object?>(StringComparer.Ordinal) { ["summary"] = "", ["source"] = "derived", ["seed"] = "feature:seed", ["terms"] = terms });
+        _nodes.Add(new GraphNode(NodeKey.From(key), name, Provenance.Deterministic, 1.0, Evidence: null, attributes));
+        return this;
+    }
+
     public ConceptGraph Node(string key, string? label = null)
     {
         _nodes.Add(new GraphNode(NodeKey.From(key), label ?? key));

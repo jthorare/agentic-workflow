@@ -9,7 +9,7 @@ namespace Aw.CodeIndex.Testing;
 /// <summary>
 /// A scripted <see cref="ICodeIndex"/> for the surfaces that read it (Sindri's CLI and HTTP routes): repos with a status, symbols and call edges set up by the test. Each edge carries its own coverage; the answer's comes from <see cref="CallCoverage.Of"/> with the symbol's language read from its file extension (.cs full, else partial).
 /// It keeps the facade's scope rule: a repo outside the call's <see cref="CodeIndexScope"/>, or one with no index, answers the same SND-CODEIDX-013 (SND-CODEIDX-011 for a
-/// ref that names no symbol), and <see cref="Status"/> lists only the scope's repos. Build, FileSymbols, Similar and Neighbors answer 013 (Embed is scripted by <see cref="WithEmbeddings"/>): no reader scripts them yet.
+/// ref that names no symbol), and <see cref="Status"/> lists only the scope's repos. Build, FileSymbols, Similar and Neighbors answer 013 (Embed is scripted by <see cref="WithEmbeddings"/>, SymbolVectors by <see cref="WithVectors"/>): no reader scripts them yet.
 /// </summary>
 public sealed class FakeCodeIndex : ICodeIndex
 {
@@ -29,6 +29,16 @@ public sealed class FakeCodeIndex : ICodeIndex
     public FakeCodeIndex WithIndex(RepoName repo, CommitSha commit, params SymbolHit[] symbols)
     {
         _repos[repo] = new Repo(repo, commit, [.. symbols]);
+        return this;
+    }
+
+    /// <summary>Scripts the stored vectors a repo answers SymbolVectors with; a repo with none answers SND-CODEIDX-013 (the embeddings layer is not built).</summary>
+    /// <param name="repo">The repo, added by <see cref="WithIndex"/> first.</param>
+    /// <param name="vectors">The embedded symbols.</param>
+    /// <returns>This fake.</returns>
+    public FakeCodeIndex WithVectors(RepoName repo, params SymbolVector[] vectors)
+    {
+        _repos[repo].Vectors.AddRange(vectors);
         return this;
     }
 
@@ -183,6 +193,21 @@ public sealed class FakeCodeIndex : ICodeIndex
     public ValueTask<Result<NeighborsAnswer>> Neighbors(CodeIndexScope scope, RepoName repo, string text, int k, CancellationToken cancellationToken)
         => Fail<NeighborsAnswer>(scope, CodeIndexErrors.IndexNotBuilt);
 
+    public ValueTask<Result<SymbolVectorsView>> SymbolVectors(CodeIndexScope scope, RepoName repo, SymbolVectorsQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(query);
+        _scopes.Add(scope);
+        if (scope.Repos.All(r => r.Name != repo) || Readable(repo) is not { Vectors.Count: > 0 } index)
+        {
+            return Fail<SymbolVectorsView>(CodeIndexErrors.IndexNotBuilt);
+        }
+
+        var found = index.Vectors.Where(v => query.Paths.Contains(v.Path, StringComparer.Ordinal)).ToList();
+        var have = found.Select(v => v.Path).ToHashSet(StringComparer.Ordinal);
+        return Ok(new SymbolVectorsView(Stamp(index), "fake-embed", found, [.. query.Paths.Where(p => !have.Contains(p))]));
+    }
+
     private ValueTask<Result<CallsAnswer>> Calls(CodeIndexScope scope, SymbolRef symbol, CallDirection direction)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -267,5 +292,7 @@ public sealed class FakeCodeIndex : ICodeIndex
         internal LayerState AfterEmbed { get; set; } = LayerState.Ok;
 
         internal Dictionary<(SymbolRef, CallDirection), (int Unresolved, List<CallEdge> Edges)> Edges { get; } = [];
+
+        internal List<SymbolVector> Vectors { get; } = [];
     }
 }
