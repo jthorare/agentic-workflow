@@ -21,8 +21,8 @@ One run turns a project into a status doc (the source of truth), one page per pe
 SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
 S="$HOME/.agentic-workflow/toolkit/skills/system-design"
-SD="$AW_DIR/system-design/<slug>"          # one folder per design: status.md, pages/, diagrams/, mockups/
-mkdir -p "$SD"/{pages,diagrams,mockups,shots}
+SD="$AW_DIR/system-design/<slug>"          # one folder per design = the packet (layout below)
+mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 ```
 
 If the user names another deliverables folder (a notes vault, a docs dir), use it for `$SD` instead. Never write deliverables into the code repo unless asked.
@@ -33,6 +33,24 @@ If the user names another deliverables folder (a notes vault, a docs dir), use i
 - **Code and surfaces:** Sindri context when the `sindri` MCP server is registered for the repo (`mcp: sindri/context_lenses`, `context_query`, `context_neighbors`, line runs) plus the repo's `AGENTS.md`. Sindri output is a lead, not a verdict: reconcile it against a hand map of readers, writers and screens, read from the remote default branch (`git fetch`, then `git show origin/<default>:<path>`), never a stale checkout.
 - **Data:** read-only counts from whatever read access the project documents (`AGENTS.md` or its rules). Writes are out of scope. If none is documented, say so in the status doc and ask the user rather than guessing sizes.
 - **Style:** `design-tokens.json` and `.impeccable.md` from `/design-language` (see `_shared/design-artifact-paths.md`), or the tokens file the repo's `AGENTS.md` points to. If neither exists, run **Invoke skill** `design-language` first.
+
+## The packet
+
+`$SD` is a fixed layout. `/system-design-video` reads it directly, so keep these names:
+
+```
+$SD/
+  packet.json            manifest: slug, title, personas -> page, diagrams -> mmd/svg, sections in TDD order with anchors, prs
+  tdd.html               engineering page; PR cards + deep-dive dialog at its PR-order section
+  product-design.html    product + design page (or <persona>.html, one per extra persona)
+  status.md              the one living doc
+  diagrams/<key>.mmd     mermaid source, one per diagram (+ colors.json, optional)
+  diagrams/<key>.svg     drawn by draw_diagrams.mjs from the .mmd
+  prs/pr-NN.md           one deep dive per PR (shape: templates/pr-cards.md)
+  mockups/ shots/        working files
+```
+
+`packet.json` is written by `scripts/write_packet.py` from what is on disk (step 11); never hand-edit it.
 
 ## Personas
 
@@ -52,23 +70,24 @@ Each step writes to `$SD/status.md`, the one living doc. Sections: surfaces, cou
 2. **Counts.** Read-only queries that size every claim (rows, tenants, cells). Keep the query text next to the doc.
 3. **Decisions with the owner.** **Ask the user** one decision at a time: background, the gap, a concrete example with real numbers, options in words. Record the answer in their words under the next D-number (re-read the file for the max first; sessions add concurrently). Stop asking if they reject the question.
 4. **Scope.** Acceptance criteria in EARS form. Mark "waiting on approval" until approved.
-5. **TDD.** Engineering page from the approved scope; PR cards last.
+5. **TDD.** Engineering page from the approved scope; PR cards last. Write one `prs/pr-NN.md` per PR (summary, `path:line | change` table, Sindri graph context, tests; `templates/pr-cards.md`), put `<!-- PR-CARDS -->` in the PR-order section and run `python3 -I "$S/scripts/build_prs.py" "$SD/tdd.html" "$SD/prs" [--shots shots.json]`. It writes milestone-grouped cards (number, title, one-line change, rollback box, "Open the deep dive") and one shared dialog; click a card in the rendered page to confirm it opens.
 6. **Product + design page.** Mockups first.
 7. **Mockups.** Build only from the project's real components and tokens (**Invoke skill** `design-mockup-web` for the HTML). Render each beside a real screenshot of the same screen and compare before showing anyone. Reuse filters and creation flows that already exist; never re-mock them.
 8. **Diagrams.** Next section.
 9. **Style pass.** **Invoke skill** `design-refine` on each page, then re-apply the style (below).
 10. **Verify.** Every page rendered, 0 broken images, no horizontal scroll at 390px, every screenshot opened and read by you. The script gives metrics; the metrics are not the review.
-11. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
+11. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>"` after the last page and diagram change; open `packet.json` and check every path exists.
+12. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
 
 ## Diagrams
 
 Uses the tldraw offline app (`./setup.sh` installs it; the app's Develop -> Install Agent Skills step adds the `tldraw-offline` skill). The app must be running, so its `server.json` exists. `draw_diagrams.mjs` looks for it at `~/Library/Application Support/tldraw/server.json` on macOS and `${XDG_CONFIG_HOME:-~/.config}/tldraw/server.json` elsewhere; set `TLDRAW_SERVER_JSON` if yours is somewhere else.
 
-1. One mermaid file per diagram in `$SD/diagrams/src/` (`flowchart TB|LR`, `stateDiagram-v2`). Prefer top-to-bottom when a graph is wide. Optional `colors.json`: `{ "<diagram>": [["node text substring", "blue"], ...] }`, first match wins, default grey. Roles: blue = new or primary, violet = flagged or secondary, green = outcome, red = alert, grey = existing context.
+1. One mermaid file per diagram in `$SD/diagrams/` (`flowchart TB|LR`, `stateDiagram-v2`). Prefer top-to-bottom when a graph is wide. Optional `colors.json`: `{ "<diagram>": [["node text substring", "blue"], ...] }`, first match wins, default grey. Roles: blue = new or primary, violet = flagged or secondary, green = outcome, red = alert, grey = existing context.
 2. Draw:
 
 ```bash
-node "$S/scripts/draw_diagrams.mjs" --spec "$SD/diagrams/src" --out "$SD/diagrams" --name "<slug>-diagrams" [--only key]
+node "$S/scripts/draw_diagrams.mjs" --spec "$SD/diagrams" --out "$SD/diagrams" --name "<slug>-diagrams" [--only key]
 ```
 
 It creates your own tldraw doc (`POST /api/docs/create`; never edit another session's doc), one page per diagram, clears and redraws on rerun, forces sans font, solid strokes, semi fill and a transparent background, runs the canvas lints, saves, and writes `<key>.svg`. Fix reported lints (overlapping text) by shortening labels or splitting the diagram, then rerun.
@@ -79,9 +98,9 @@ It creates your own tldraw doc (`POST /api/docs/create`; never edit another sess
 
 ```bash
 python3 -I "$S/scripts/tokens_to_css.py" design-tokens.json "$SD/doc-style.css"   # prints tokens it could not map
-python3 -I "$S/scripts/apply_doc_style.py" "$SD/pages/tdd.html" "$SD/doc-style.css"          # rerunnable
-python3 -I "$S/scripts/build_page.py" "$SD/pages/product-design.src.html" "$SD/pages/product-design.html" "$SD/doc-style.css"
-node "$S/scripts/verify_page.mjs" "$SD/pages/product-design.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
+python3 -I "$S/scripts/apply_doc_style.py" "$SD/tdd.html" "$SD/doc-style.css"          # rerunnable
+python3 -I "$S/scripts/build_page.py" "$SD/product-design.src.html" "$SD/product-design.html" "$SD/doc-style.css"
+node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
 ```
 
 - `tokens_to_css.py` maps `color.*`, `font.*`, `radius.*` tokens onto the semantic variables in `templates/doc-base.css`. For any it lists as unmapped, ask the user for the value or fix `design-tokens.json`; do not invent brand colors.
@@ -102,5 +121,6 @@ node "$S/scripts/verify_page.mjs" "$SD/pages/product-design.html" "$SD/shots" --
 ## Next steps
 
 - `/autoplan` on the approved scope, for the product / architecture / design / devex / security lenses in parallel.
+- `/system-design-video <packet dir>` for the whiteboard film of this packet: its boards are laid out from `diagrams/*.mmd`, its beats cite `packet.json` sections.
 - `/specToProvenPR` to turn the approved TDD's PR order into proven PRs.
 - `/design-verify` once a mockup has become a real screen.

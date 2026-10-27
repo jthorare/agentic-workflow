@@ -1,0 +1,40 @@
+/* PR cards + deep-dive dialog. build_prs.py inlines this between the PR-DETAIL markers; it uses the semantic variables from doc-base.css. */
+.ms { display: grid; grid-template-columns: 180px 1fr; gap: 16px; }
+.ms > * { min-width: 0; }
+.ms-head { display: grid; gap: 6px; align-content: start; }
+.ms-head .tag { justify-self: start; }
+.prs { display: grid; gap: 8px; }
+.milestones { display: grid; gap: 24px; }
+.pr { display: grid; grid-template-columns: 32px 1fr minmax(0, 220px); gap: 12px; align-items: start; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--surface); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.pr > * { min-width: 0; }
+.pr:hover, .pr:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); outline: none; }
+.pr .k { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); font: 600 0.8125rem/1 var(--f-body); font-variant-numeric: tabular-nums; }
+.pr .t b { display: block; }
+.pr .t span { font-size: 0.8125rem; color: var(--muted); }
+.pr .t::after { content: "Open the deep dive \2192"; display: block; font: 500 0.75rem var(--f-body); color: var(--accent); margin-top: 4px; }
+.pr .rb { font-size: 0.8125rem; background: var(--bg); border-radius: 6px; padding: 8px 10px; }
+.pr .rb b { display: block; font: 500 0.6875rem/1.5 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+dialog.prd { width: min(1100px, 100vw - 32px); max-height: calc(100vh - 32px); border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--surface); color: var(--ink); }
+dialog.prd::backdrop { background: rgba(0, 0, 0, .45); }
+.prd-head { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--line); z-index: 1; }
+.prd-head button { font: 500 0.875rem var(--f-body); height: 34px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 0 14px; cursor: pointer; }
+.prd-body { padding: 20px 24px 32px; font-size: 0.9375rem; }
+.prd-body h1 { font-size: 1.375rem; margin: 0 0 10px; }
+.prd-body h2 { font-size: 1.0625rem; margin: 28px 0 8px; padding-top: 20px; border-top: 1px solid var(--line); }
+.prd-body h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.prd-body h3 { font-size: 0.9375rem; margin: 18px 0 6px; }
+.prd-body p, .prd-body li { max-width: 80ch; } .prd-body p { margin: 0 0 10px; }
+.prd-body ul, .prd-body ol { padding-left: 22px; }
+.prd-body table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.8125rem; margin: 8px 0 16px; display: block; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.prd-body th, .prd-body td { border-bottom: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; }
+.prd-body th { background: var(--bg); font-weight: 500; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.prd-body tr:last-child td { border-bottom: 0; }
+.prd-body code { font-family: var(--f-mono); font-size: 0.85em; background: var(--bg); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+.prd-body pre { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; overflow-x: auto; }
+.prd-body pre code { background: none; padding: 0; }
+@media (max-width: 760px) {
+  .ms { grid-template-columns: 1fr; }
+  .pr { grid-template-columns: 32px 1fr; }
+  .pr .rb { grid-column: 2; }
+  .prd-body { padding: 16px; }
+}

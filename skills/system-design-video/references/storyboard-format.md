@@ -35,6 +35,7 @@ Drawn in order; each starts when the previous ends unless `at` (seconds from the
 ## Beat fields added for design walkthroughs
 - `src`: the design-doc section the beat comes from (for example `TDD #schema`). Shown top-left, small, so a viewer can find the source. Every beat in an engineering cut has one.
 - `speed` (storyboard level, default 1): divides every item's default duration; `hold` (storyboard level, default 1.1): rest after a beat's last stroke. A beat is never shorter than its caption's reading time (about 0.32 s per word plus a second), so long sentences set the pace.
+- Text item `halo: true` paints a board-colored outline behind the letters so a label stays legible over an arrow or box edge.
 - Item `alpha` (0 to 1) draws a box or arrow fainter: use it for dependencies the doc does not state (inferred) and say so in a legend.
 - Captions over 58 characters wrap onto two lines; keep a sentence under about 25 words.
 

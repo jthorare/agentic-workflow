@@ -48,12 +48,25 @@ Output goes under `$AW_DIR/videos/` (never into the code repo): `brief.md`, `sto
 
 | Need | Source |
 | --- | --- |
-| The design: model, flows, decisions, a worked example with real numbers | the doc or packet the user names; the sibling system-design packet if one exists; otherwise the plan, spec and TDD files in the repo |
+| The design: model, flows, decisions, a worked example with real numbers | a **packet dir** from `/system-design` (read `packet.json`, see below); otherwise the doc the user names, or the plan, spec and TDD files in the repo |
 | Code and surfaces named on the board | Sindri context: `mcp: sindri/context_lenses`, then `mcp: sindri/context_query` for the symbols and files a beat names; the repo's `AGENTS.md` for the vocabulary. If Sindri is not available, read the code directly and say so in the brief |
 | Look: board color, chalk, the meaning-colors | `design-tokens.json` (W3C DTCG) and `.impeccable.md`, from **Invoke skill `design-language`** if the project has neither. Ask the user which tokens are the board, the neutral ink and each concept's color |
 | Ticket context | whatever tracker the project uses, through its own tool; read-only |
 
 Every number on the board comes from a source line you can cite. Trace the worked example's arithmetic against the source before drawing it.
+
+## The packet (preferred input)
+
+`/system-design <topic>` ends with `/system-design-video <packet dir>`. The dir holds `packet.json` (slug, title, personas -> pages, `diagrams` -> `{mmd, svg}`, `sections` in TDD order with `id`, `title`, `anchor`, and the diagram keys each embeds), `tdd.html`, `diagrams/<key>.mmd` (+ `colors.json`), `status.md` and `prs/`. Read `packet.json` first, then the sections the film walks.
+
+- **Boards come from the `.mmd`, not from prose.** Each scene's board is laid out from its diagram's mermaid source, so the boxes, labels, arrows and subgraphs are the ones in the doc. Redraw from prose only when a scene has no `.mmd` in the manifest, and say so in the brief.
+- **Beats cite the manifest.** A beat's `src` is `TDD <section anchor>` of the section that embeds its diagram (the script fills it); a beat for a diagram no section embeds does not belong.
+- Node colors come from the packet's `diagrams/colors.json` (blue = primary ink, violet = secondary, green = tertiary, red = danger, grey = chalk), the same file the doc's diagrams were styled with.
+
+```bash
+bun $SKILL/scripts/packet-to-storyboard.ts <packet dir> --keys model,paths,rollout,pr-order --out $D/storyboard.json
+```
+It parses flowchart (nested subgraphs) and stateDiagram-v2 sources, lays each out in layers (arrows that would cross a box bend around it), and writes one beat per subgraph (or per layer of loose nodes), each scene in its own region of the world with the camera framed on the beat. Every `say` it writes is a scaffold (the group title): rewrite each into one spoken sentence from the doc's own words and numbers, add the worked-example beats the diagram does not carry, and keep each `src`. Check the stills for an arrow that still crosses a box; move that node or add `via` waypoints by hand.
 
 ## Step 0: Check the machine
 
@@ -72,7 +85,7 @@ One video per audience, each answering one person's question (`references/person
 
 ## Step 3: Storyboard (gate)
 
-`$D/storyboard.json` per `references/storyboard-format.md`: one scene per design-doc section (model, paths, rollout, work), one beat per sentence, each beat's `src` naming its section, items in the order the pen draws them, one new idea per beat, 90 to 150 seconds for the engineering cut and 30 to 60 for a concept cut. `inks` bind each ink name to a token path. **Ask the user** to review.
+`$D/storyboard.json` per `references/storyboard-format.md` (from a packet, start from `packet-to-storyboard.ts` output above): one scene per design-doc section (model, paths, rollout, work), one beat per sentence, each beat's `src` naming its section, items in the order the pen draws them, one new idea per beat, 90 to 150 seconds for the engineering cut and 30 to 60 for a concept cut. `inks` bind each ink name to a token path. **Ask the user** to review.
 
 ## Step 4: Produce
 

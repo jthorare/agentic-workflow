@@ -79,6 +79,7 @@ function text(item, start, dur) {
   const g = add("g", { opacity: 0 });
   const t = add("text", { x: item.x, y: item.y, "font-size": size, fill: color(item.color), "text-anchor": item.anchor || "start", class: "hand", "font-weight": item.bold ? 700 : 400 }, g);
   t.textContent = item.text;
+  if (item.halo) { t.setAttribute("stroke", S.board); t.setAttribute("stroke-width", 12); t.setAttribute("paint-order", "stroke"); t.setAttribute("stroke-linejoin", "round"); }
   const bb = t.getBBox();
   const clipId = "c" + els.length;
   const cp = add("clipPath", { id: clipId }, g);
