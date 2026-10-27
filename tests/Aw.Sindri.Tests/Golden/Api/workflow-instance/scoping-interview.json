@@ -6,7 +6,7 @@
   "title": "Expiry for shared links",
   "recipe": {
     "id": "workflow.scoping",
-    "hash": "sha256:6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba",
+    "hash": "sha256:e4a699458909ed096050b355da537eae55152da737dc705de9567105cc5f6ea0",
     "version": 14,
     "urgency": "work",
     "displayName": "Scoping"
@@ -384,6 +384,20 @@
     },
     {
       "id": "withdraw",
+      "order": null,
+      "branchOf": "gap-log",
+      "glyph": "pending",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "exclude",
       "order": null,
       "branchOf": "gap-log",
       "glyph": "pending",

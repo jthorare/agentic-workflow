@@ -131,6 +131,7 @@ public static class FixtureRecipes
             S("stop", null, "gap-log", desk: true, block: "step.scope.review", timeout: T(7 * Day, TimeoutAction.Park)),
             S("freeze", null, "gap-log", desk: true, block: "step.scope.freeze", timeout: T(Day, TimeoutAction.Park)),
             S("withdraw", null, "gap-log", desk: true, block: "step.scope.withdraw", timeout: T(Day, TimeoutAction.Park)),
+            S("exclude", null, "gap-log", desk: true, block: "step.scope.exclude", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
             S("size-desk", null, "gap-log", desk: true, block: "step.desk.choose", timeout: T(14 * Day, TimeoutAction.Park)),
             S("read-tracker", null, "intake", desk: true, block: "step.scope.read-tracker", timeout: T(Day, TimeoutAction.Park)),
             S("idea", null, "intake", child: true, childRecipe: "workflow.idea-to-brief", onParked: OnParked.Propagate, timeout: T(7 * Day, TimeoutAction.Park)),

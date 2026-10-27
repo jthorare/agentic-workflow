@@ -32,7 +32,7 @@ public sealed class RewindOffersTests
     private static readonly string[] _evidenceReads =
     [
         "fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answers", "fact:answerLog", "fact:challenge", "fact:openQuestions",
-        "fact:decision", "fact:anchors", "fact:questions", "fact:relevance", "fact:gapSearch", "fact:mapFixes",
+        "fact:decision", "fact:anchors", "fact:questions", "fact:relevance", "fact:gapSearch", "fact:mapFixes", "fact:roundLog",
     ];
 
     private static readonly RecipeDocument _document = RecipeComposition.ReadClean(ShippedRecipes.Read("sindri/workflow.scoping.yaml"), "workflow.scoping.yaml");
