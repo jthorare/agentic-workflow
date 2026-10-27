@@ -16,8 +16,8 @@ Aw.Judge.Host ──► Aw.Judge.Features ──► Aw.Judge.Core ◄── Aw.J
 
 | Project | Holds |
 |---|---|
-| `Aw.Judge.Core` | Typed ids (`Ids`: `DecisionId`, `ToolUseId`, `SessionId`, `PromptId`, `AgentId`), the domain records (`Briefs`, `Decisions`, `Health`, `Config`, `Providers`), the prompt sorter's pure side (`PromptSort`: axes, tier-1 skip, keyword heuristics, the decisive-band blend, the scaffold plan) and the trait-check domain (`Traits`), the nine questions with their input records (`Questions`), the evaluation engine with the question catalog, and the rules provider (`Evaluation`), the error catalogue (`Errors.JudgeErrors`, AW-JUDGE-NNN) and the ports (`Ports`) |
-| `Aw.Judge.Features` | One slice per command: `AskQuestion` (every `judge <question>`), `SaveBrief`, `GetBrief`, `MapBriefByName`, `MapBriefByDispatch`, `SetBriefAgentId`, `ExplainDecision` (`why`), `UndoDecision`, `ApproveDecision`, `GetHealth`, `GetConfig`, `SetConfig`, `SortPrompt` (`prompt-sort`), `SetPromptSort` (`prompt-sort scaffold`, `config set prompt-sort`), `CheckTraits` (`trait-check`); `AskQuestion` is decorated with `PruneAfterQuestion` (retention, below) |
+| `Aw.Judge.Core` | Typed ids (`Ids`: `DecisionId`, `ToolUseId`, `SessionId`, `PromptId`, `AgentId`), the domain records (`Briefs`, `Decisions`, `Health`, `Config`, `Providers`), the prompt sorter's pure side (`PromptSort`: axes, tier-1 skip, keyword heuristics, the decisive-band blend, the scaffold plan) and the trait-check domain (`Traits`), the ten questions with their input records (`Questions`), the evaluation engine with the question catalog, and the rules provider (`Evaluation`), the error catalogue (`Errors.JudgeErrors`, AW-JUDGE-NNN) and the ports (`Ports`) |
+| `Aw.Judge.Features` | One slice per command: `AskQuestion` (every `judge <question>`), `SaveBrief`, `GetBrief`, `MapBriefByName`, `MapBriefByDispatch`, `SetBriefAgentId`, `ExplainDecision` (`why`), `UndoDecision`, `ApproveDecision`, `GetHealth`, `GetConfig`, `SetConfig`, `SortPrompt` (`prompt-sort`), `SetPromptSort` (`prompt-sort scaffold`, `config set prompt-sort`), `CheckTraits` (`trait-check`), `ImportLabels`, `LabelOutcomes`, `SetLabel`, `GetLabelStatus` (`label`), `Adjudicate`, `EvaluateQuestion` (`eval`), `ImportTurns` (`eval import-turns`); `AskQuestion` is decorated with `PruneAfterQuestion` (retention, below) |
 | `Aw.Judge.Infrastructure` | The SQLite stores over `decisions.sqlite`, the config file, the redactor adapter over `Aw.Redaction`, the `PATH` executable locator, the process runner, the secret source (environment, then keychain), the model providers and their catalog (`Providers/`), random decision ids, and the settings read from the environment |
 | `Aw.Judge.Host` | `Program.cs`, `Composition.Compose`, one command per slice in `Commands/`, the command table (which takes the providers allowlist out of argv first), `JudgeJsonContext` (the package's one source-generated JSON context) |
 
@@ -40,6 +40,8 @@ the root holds only `AddJudgeCore()`.
 | `ISortSessionStore` | `FileSortSessionStore` (`sessions/<sid>.sort.json`) | `InMemorySortSessionStore`, `SortSessionStoreContract` |
 | `IBatchClassifier` | `JevBatchClassifier` (one batched Jev call; unavailable, never an error, when Jev is excluded or has no key) | `FakeBatchClassifier`, `BatchClassifierContract` |
 | `ITraitStore`, `ITraitFiles`, `ITraitJudge`, `ITraitCheckLog` | `FileTraitStore` (trait files), `FileTraitFiles` (the repo's text files), `JevTraitJudge`, `FileTraitCheckLog` (`trait-check/log.jsonl`) | the fakes in `tests/Aw.Judge.Tests/CheckTraits/` |
+| `IEvalStore`, `IEvalFiles` | `SqliteEvalStore` (`eval_items`, `labels`, migration 0004), `FileEvalFiles` (`evals/` reports, `--record` and `--replay` files, 0600) | the fakes and contract bases in `tests/Aw.Judge.Testing` |
+| `ITranscriptReader` | the Claude transcripts under `AW_JUDGE_PROJECTS_DIR` | `tests/Aw.Judge.Testing` |
 | `IProcessRunner` | `SystemProcessRunner` (`System.Diagnostics.Process`) | `FakeProcessRunner` (runs `FakeProgram`s), `ProcessRunnerContract` |
 | `ISecretSource` | `KeychainSecretSource` (the variable, then the macOS keychain) | `FakeSecretSource`, `SecretSourceContract` |
 
@@ -133,23 +135,62 @@ A change to an output is a reviewed change to its golden file (`AW_GOLDEN_UPDATE
 
 #### Not yet built
 
-These verbs of the TS judge are not in this build yet (cutover spec §5.2, Q9). Each prints `judge: <verb> is not in this build yet`
-on stderr, nothing on stdout, and exits 1; none validates an argument, opens a database, reads stdin, writes a file or calls a
-provider, and no hook calls one. `--providers` is stripped first (a flag with no value exits 64), so `--help` and `-h` are no special
-case. Pinned by `NotBuiltYetCliTests` and by the hook-surface check's stub cases.
+Only `prompt-sort why|import|outcomes|adjudicate|eval|promote` (`prompt-sort <sub>`, unit 6.4, after the switch) is not in this build
+yet (cutover spec §5.2, Q9). Each prints `judge: prompt-sort <sub> is not in this build yet` on stderr, nothing on stdout, and exits 1;
+none validates an argument, opens a database, reads stdin, writes a file or calls a provider, and no hook calls one. `--providers` is
+stripped first (a flag with no value exits 64), so `--help` and `-h` are no special case. An unknown `prompt-sort <sub>` is
+`judge: unknown prompt-sort subcommand: <sub>` on stderr, exit 1. Pinned by `NotBuiltYetCliTests` and by the hook-surface check's stub
+cases; `scripts/tests/judge-stub-invocations.test.sh` fails when a hook, lib, script, recipe or Sindri source calls one. The PR that lands a
+subcommand deletes its row, its stub test line and its skill marker.
 
-| Verbs (`<verb>` in the line) | Lands |
-|---|---|
-| `label` (any subcommand, or none: `label`), `adjudicate`, `eval` (`eval <question>`: `eval`; `eval import-turns`: `eval import-turns`) | unit 6.3, after the switch |
-| `prompt-sort why\|import\|outcomes\|adjudicate\|eval\|promote` (`prompt-sort <sub>`) | unit 6.4, after the switch |
+#### Labels and evals
 
-An unknown `prompt-sort <sub>` is `judge: unknown prompt-sort subcommand: <sub>` on stderr, exit 1. The PR that lands a verb
-deletes its row here, its stub test line and its skill marker.
+`label`, `adjudicate` and `eval` (unit 6.3) turn stored decisions and transcripts into labelled eval items and score a provider against
+them. Items and labels live in `decisions.sqlite` (State files below); nothing here runs in a hook. Every JSON output below is
+printed on one line; a failure is one stderr line and nothing on stdout.
+
+| Command | Does | Output (exit 0) |
+|---|---|---|
+| `label import [--question <q>] [--since <n>d]` | Adds an eval item for every stored decision of the question (default: every question; one whose input doesn't fit its record is left out) from the last `n` days (default 14d, at most 36500) whose stored input still reads as the question's input record. Idempotent: an item's `source` is `decision:<id>`, so a second run adds nothing. A decision's model answer is kept on the item, never shown to the adjudicator | `{"imported": n, "skippedUnparsable": n}` (decisions whose stored input isn't JSON) |
+| `label outcomes` | Labels the `ask-check` items that have no outcome label from the next real prompt of their session's transcript (source `outcome`). No provider call; an item with no session, no transcript, no later prompt or a prompt past six hours stays unlabelled and is tried again next run | `{"labeled": n, "noSignal": n}` |
+| `label set <itemId> <label\|skip>` | Stores a hand label (source `override`) for an item; the label must be one of the question's outputs or `skip`, which leaves the item out of every score | `{"item": "<id>", "label": "<label>"}` |
+| `label status` | Counts per question that has items | `{"questions": [{"question", "items", "labeled", "skipped", "agreement"}]}`; `agreement` compares the outcome and adjudicator labels of items that have both. With no items: `{"questions":[]}` |
+| `adjudicate <question> [--limit <n>]` | A stronger model labels the question's items that have no adjudicator label, at most `n` (default 60, at least 1): each is asked three times and gets a label only on a strict majority that is one of the question's outputs (source `adjudicator`) | `{"labeled": n, "split": n, "failed": n}` (no majority; unparseable input or every run errored) |
+| `eval <question> [--provider P] [--variant V] [--labels outcome\|adjudicator\|override\|any] [--collapse LABEL] [--record FILE] [--replay FILE]` | Calls one provider directly (no chain, no `decisions` rows; default `jev`) on every labelled item of the question and scores it. `--variant` (default `as-is`) rewrites the stored input; `--labels` picks the label source (default any); `--collapse L` folds every label but `L` into `stalled`; `--record` appends each provider result to a file, `--replay` scores a recorded file with no provider call (labels always come from the store). Two reports are written under `judge/evals/` | The report: `question`, `provider`, `variant`, `labelSource`, `n`, `decided`, `accuracy`, `decisiveRate`, `accuracyDecisive`, `p50LatencyMs`, `sweep` (`[{threshold, coverage, accuracyCovered}]`) and, when both outcome and adjudicator labels exist on shared items, `perSource` (`outcome`, `adjudicator`, `agreement`) and `sourceWarning` (they disagree on more than 30%) |
+| `eval import-turns <transcript.jsonl>... [--since 14d]` | Rebuilds `turn-progress` items from the Edit, Write and MultiEdit calls of Claude transcripts and labels each from what happened next in the same transcript (source `outcome`). Only this spelling is the second word: any other word after `eval` is a question name, so `eval import-turn` is an unknown question | `{"imported": n, "skipped": n, "unreadable": n}` (turns with no edits or already imported; files that can't be read). Files older than `--since` are left out |
+
+Exit codes follow the table above: 0 ok, 1 error, 64 usage (a missing, extra or unknown argument, a flag without its value, a bad
+`--limit`, an `adjudicate` or `eval` provider the `--providers` allowlist excludes: AW-JUDGE-012). Errors that exit 1: an unknown
+question or variant, `--labels` or `--collapse` outside the question's values, `--since` that doesn't look like `14d`, no labelled item
+to score (the message names the commands that make some), an unreadable `--replay` file, a provider whose CLI isn't on `PATH` (AW-JUDGE-013;
+for `adjudicate` that is `claude`), `label set` of an unknown item (AW-JUDGE-014), a transcript that can't be read (AW-JUDGE-015), a store
+that can't be used.
+
+**Redaction.** Every writer redacts string values and object keys through the redactor before capping: the input of an eval item, the
+`--record` lines, and both reports. A secret-looking value in a stored decision or a transcript never reaches `eval_items`, `labels` or a file.
+Files under `judge/evals/` (`<question>-<provider>-<variant>-<unix ms>.json` and `.md`) and `--record` files are written owner-only (0600)
+where the OS has file modes.
+
+**The adjudicator's child.** `adjudicate` runs `claude -p` on the user's subscription with `--model opus --effort high`, thinking on and
+`alwaysThinkingEnabled` true, and the isolation the chain's claude-cli provider has: `--no-session-persistence`, no MCP servers, `--setting-sources ""`
+(no user, project or local settings, no CLAUDE.md), `--settings {"disableAllHooks":true,…}`, `--disable-slash-commands`, `--tools ""`
+(no tools). It runs in a fresh empty scratch directory outside any repo. Its environment is minimal: only `PATH`, `HOME`, `USER`,
+`LOGNAME`, `SHELL`, `LANG`, `LC_ALL`, `LC_CTYPE`, `TERM`, `TMPDIR`, `TZ`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`,
+`XDG_STATE_HOME`, `XDG_RUNTIME_DIR` and `CLAUDE_CONFIG_DIR` pass, so `ANTHROPIC_API_KEY`, `GH_TOKEN`, `AW_FORGE_TOKEN` and every other token
+stay behind. It therefore needs a subscription login (the one in `HOME` or `CLAUDE_CONFIG_DIR`); an API key in the caller's environment
+is not used. The stored input goes to the model redacted and inside the question's tagged untrusted block.
+
+**Transcripts.** `label outcomes` finds a session's transcript at `<projects dir>/<project>/<session>.jsonl`; the projects dir is
+`AW_JUDGE_PROJECTS_DIR`, else `~/.claude/projects`.
+
+**An older binary meets a newer database.** The tables come from migration `0005` (State files below). A `judge` binary built before it,
+run against a database that has it, refuses to open the file with AW-DATA-007 and every hook fails open (`judge health` reads down): re-run
+`./setup.sh` to replace the binary. Use a scratch `AW_STATE_DIR` for by-hand runs of a development build.
 
 `DecisionOutput` is the decision row with the `decisions` table's column names: `id`, `ts`, `question`,
 `content_class`, `provider`, `decision`, `confidence`, `reason_code`, `latency_ms`, `input_digest`, `undone_at`,
 `chain_position`, `skipped` (`[{provider, reason}]`, reason `unavailable|failed|timeout|below_threshold`), `outcome`
-(`decided|escalated|failed`), `approved_at`. Timestamps are UTC ISO-8601 (`AwJson`); `undone_at` and `approved_at`
+(`decided|escalated|failed`), `approved_at`, `reasons` (the model's reasons as a list of strings, from `decision_details`; null when not recorded: a row written before migration 0005, an answer that carried none, or details pruned after 30 days). Timestamps are UTC ISO-8601 (`AwJson`); `undone_at`, `approved_at` and `reasons`
 are null until set.
 
 `JudgeConfig` (`config.json`, written indented): `questions` (required: name → `{enabled, threshold?, providers?}`,
@@ -162,7 +203,7 @@ whole file invalid (AW-JUDGE-007): readers use the defaults (wake-gate enabled a
 
 ### Questions
 
-`judge <question> < input.json` is one command for all nine questions (the `AskQuestion` slice). It reads stdin, takes
+`judge <question> < input.json` is one command for all ten questions (the `AskQuestion` slice). It reads stdin, takes
 no arguments, and prints one envelope on stdout:
 
 | Outcome | Exit | Stdout |
@@ -193,15 +234,24 @@ decides or escalates, and before its envelope is written, the judge prunes old d
 | `brief-scope` | `{agentType, goal, acceptanceCriteria, proofCommand, skillInternal?}` | `ready`, `missing`, `needs_design` | brief | 0.6 | 10 s | `agentType` `Explore`, `claude-code-guide` or `lean-researcher`, or `skillInternal: true` → `ready`; a blank goal or acceptance criteria → `missing` | none (escalates) |
 | `ask-check` | `{transcriptTail}` | `continue`, `ask` | transcript | 0.6 | 10 s | the deny list → `ask`: merge, delete, force push (`force-push`, `force pushed`, …), or a push with `-f`, `--force`, `--force-with-lease` or a `+refspec`; a plain push isn't listed | `ask` |
 | `rule-check` | `{rule, hunk}` | `violated`, `fine`, `n/a` | diff | 0.6 | 10 s | a blank hunk → `n/a` | none |
-| `resolution-check` | `{brief, expected, actual, rootCause, checkKind, checkSummary, beforePassed, afterPassed, diffStat, diff?}`, `checkKind` `ui-evidence`, `api-evidence` (an HTTP or CLI contract check), `db-evidence` (a persisted-state check) or `test`; a blank `brief` is invalid input | `resolved`, `partial`, `unresolved` (+ `reasons`) | brief | 0.8 | 15 s | the check fails after the fix, or already passed before it → `unresolved` | none |
+| `resolution-check` | `{brief, expected, actual, rootCause, checkKind, checkSummary, beforePassed, afterPassed, diffStat, diff?, checkSource?, baselineFailure?}` (`checkSource` the check's own file, `baselineFailure` its failure lines on the unfixed code, capped at 8,000 characters; each fenced as untrusted in the prompt; the stored input digest covers every field, so it matches the digest bugfix-state computes from the bytes it sent), `checkKind` `ui-evidence`, `api-evidence` (an HTTP or CLI contract check), `db-evidence` (a persisted-state check) or `test`; a blank `brief` is invalid input | `resolved`, `partial`, `unresolved` (+ `reasons`; a `partial` or `unresolved` answer without a non-blank reason is skipped like a failed one, failure row `no-reasons`, and the chain goes on; Jev, which only classifies, is not asked) | brief | 0.8 | 15 s | the check fails after the fix, or already passed before it → `unresolved`; a diff over 100,000 characters is cut by whole files, `src/` files first, and the prompt ends with a line naming each omitted file and its size (a single file, or a first file that alone is over the cap, is cut at a line and named as cut) | none |
 | `choose` | `{prompt, state: {<fact>: <value>}, choices: [{name, criterion}], threshold?}`; per call: 2 to 32 choices, each `name` matching `[a-z][A-Za-z0-9]{0,31}`, distinct and never `uncertain`, each `criterion` 1 to 400 characters, a non-blank `prompt`, a non-empty `state`, `threshold` above 0 and at most 1; anything else is invalid input | the call's choice names (+ `probabilities` in the envelope) | brief | config.json's `choose` entry, else the call's `threshold`, else 0.6 | 15 s | none | none (escalates) |
+| `model-pick` | `{step, kind, brief, files: [{path, text}], candidates: [{key, model, tier, price?}], denyPaths?, history?, previous?}`; `kind` one of `draft`, `challenge`, `questions`, `apply`, `other`, `concept-scan`; 1 to 32 candidates with distinct keys (a letter, then letters and digits, at most 32) and a model and tier each, a non-blank `step`; anything else is invalid input (AW-JUDGE-016) | the call's candidate keys (`m1`, `m2`, ... cheapest first), + `probabilities` in the envelope | brief | config.json's `model-pick` entry, else 0.6 | 20 s | none | none: the chain's last provider answers the cheapest key |
 | `turn-progress` | `{problem, turnDiff, acceptanceCriteria?, priorDiffStat?, signals?}` (the last three default to empty); a blank `problem` is invalid input | `progressing`, `stalled`, `regressing`, `off-target` | diff | 0.7 | 10 s | a blank `turnDiff` → `stalled` | none |
 | `ui-element-repair` | `{brokenSelector, step, candidates: [{index, role, accessibleName, testId, text}]}` (the four strings may be null) | `repaired` (+ `chosenIndex`), `no-good-candidate` | code | 0.6 | 10 s | no candidates → `no-good-candidate` | none |
 | `visual-critique` | `{afterScreenshot, evidenceDir, baselineScreenshot?}`; `evidenceDir` absolute and each screenshot a relative path that stays inside it (no `..`), none with a control character or a line or paragraph separator (U+2028, U+2029), else `invalid-input`; the prompt carries each path on one line, capped | `looks-right`, `looks-off`, `sloppy` (+ `reasons`) | image | 0.5 | 20 s | none: judging the screenshot is the question | none |
 
 `choose` (contract: owner-approved 2026-10-17, DT spec §8.3) is the one question whose outputs, criteria and threshold come from its input: `ChooseQuestion.For(input)` builds its `QuestionDefinition` per call (`QuestionEvaluator.EvaluateChoose`, which the catalog calls). The prompt is the question, then each fact and the options with their criteria inside untrusted-text blocks. Its definition asks for a confidence (`AskConfidence`): the agent CLIs' answer schema then requires `confidence` (a number, 0 to 1), so their answers can fall below the threshold too, and an answer without a usable one is errored, never taken as certain; every other question's schema and the 1.0 default are unchanged. `uncertain` is not a choice name: the caller maps an escalation to it.
 
-The input names of `wake-gate`, `brief-scope` and `ask-check` are hook contract; the other six (`choose` included) are the C# judge's own
+`model-pick` (the Sindri model-pick spec, `docs/superpowers/specs/2026-10-26-sindri-model-pick-design.md` §4.2 to §4.4, §11) chooses the cheapest of the offered models that will pass a step. Like `choose` its outputs come from the call (`ModelPickQuestion.For(input)`, `QuestionEvaluator.EvaluateModelPick`), and its input is sent on **stdin**, never as an argument: Linux limits one argument to 131,072 bytes, and a pack of 100,000 characters with JSON escaping can pass that (`judge model-pick < tests/fixtures/judge/model-pick-input.json` runs the sample). What differs from the other questions:
+
+- **Fixed chain.** Jev, then a rules provider that answers `m1`, the cheapest key, whenever the chain reaches it (`FallbackRules` would not do: it only runs after a model answered below its threshold, not when Jev has no key or times out). The agent CLIs never see this prompt: `config.json`'s `model-pick` entry and `--providers` can only narrow the chain (to `rules` alone, say), never add to it. The rules answer's reason is why Jev did not decide: the judge's reason codes (`no-api-key`, `network-error`, `below-threshold`, `http-NNN`) plus `unknown-key` (an answer that is not a candidate) and `jev-input-rejected` (a 4xx, or a timeout; the pick is not re-cut and retried), or `rules` when Jev was not in the chain. The envelope reports the decision `id` like `choose`.
+- **Pack filters, before the cap** (`ModelPickPack`): a file or fact whose path matches `denyPaths` is dropped as `denied`; one whose name matches `.env*`, `*.pem`, `*.key`, `*.p12`, `id_rsa*`, `secrets*`, `credentials*` or `*.tfvars`, or whose text the secret scan flags (`IInputRedactor` changes it), is dropped whole as `secret`; a secret in the brief is masked at its span and the rest is sent. The prompt says only how many files were dropped and why ("3 files not shown: 2 secret, 1 denied"): their names stay local, in the stored form.
+- **Cap.** The brief and the files' text together are cut to `ModelPickQuestion.PackCap` = 100,000 characters (phase M-0 replaces it with the measured cap), by whole files with `src/` first (`UntrustedText.CappedFiles`, beside `CappedDiff`, which shares its order and its omitted-files note); a single file over the cap is cut at a line and named as cut. The prompt names the files by path and size and never repeats their text, which rides once, in the request's state.
+- **Jev's input cap is per question** (`QuestionDefinition.InputCapChars`, `QuestionRef.InputCapChars`): `model-pick` sets `JevInputCap` (the pack's cap plus 30,000 for the candidates, history and JSON escaping); every other question keeps the 16,000 of `InputCap.MaxChars`.
+- **Stored form.** The decision row keeps the brief's SHA-256, the candidates, the files with their sizes, and what was dropped, omitted or cut (`StoredForm`), never any file or brief text, not even for a call that escalated as `invalid-input`. `adjudicate` has nothing to re-ask for it.
+
+The input names of `wake-gate`, `brief-scope` and `ask-check` are hook contract; the other seven (`choose` and `model-pick` included) are the C# judge's own
 design (the five that tier-2 packages call are ported to this contract; `choose`'s caller is Sindri, through a cli edge, DT spec §8.3). Prompts carry untrusted text (a ticket, a diff, a problem
 statement) inside tagged blocks with the tags inside it defused, capped (`UntrustedText`). Pinned by the
 `Questions/*Tests` (each question's rules, offline with `ScriptedProvider`), `AskQuestionTests` (config, allowlist,
@@ -219,6 +269,12 @@ invalid input, unknown question).
 | AW-JUDGE-005 | NotFound | `brief get` of a tool use id with no brief |
 | AW-JUDGE-007 | Invalid | `config.json` can't be read as a judge config |
 | AW-JUDGE-010 | Invalid | The `--providers` flag or `AW_JUDGE_PROVIDERS` is malformed (a usage error, 64) |
+| AW-JUDGE-011 | Invalid | `why` found the decision row but a column can't be read (a timestamp that isn't ISO-8601 UTC text): exit 2, one stderr line naming the decision and the column |
+| AW-JUDGE-012 | Invalid | `eval --provider`, or `adjudicate` (which needs `claude-cli`), names a provider the `--providers` allowlist excludes (a usage error, 64) |
+| AW-JUDGE-013 | NotFound | `eval --provider` names a provider that can't be asked (its CLI is not on `PATH`, or it is `rules`), or `adjudicate` can't find `claude` |
+| AW-JUDGE-014 | NotFound | `label set` of an item id no eval item has |
+| AW-JUDGE-015 | NotFound | A transcript that can't be read (`label outcomes`, `eval import-turns`) |
+| AW-JUDGE-016 | Invalid | A `model-pick` input is invalid (no candidates, more than 32, a duplicate or malformed key, a blank step, an unknown kind): the call escalates as `invalid-input` |
 
 ## Providers
 
@@ -280,7 +336,7 @@ undeclared fields dropped.
 `Authorization: Bearer <key>`; text classes only. The key comes from `ISecretSource` (`TYPESAFE_API_KEY`, else the
 keychain), read inside the question's budget: a keychain that sits on its unlock prompt ends as `timeout`, not as
 latency added in front of the call. Jev is the one provider that sends the input to a third party on the judge's own key, so `JevProvider`
-redacts (then caps at `InputCap.MaxChars`) both the state and the prompt, which embeds input fields word for word
+redacts (then caps at `InputCap.MaxChars`, or at the question's own `InputCapChars`: `model-pick` sends a whole pack) both the state and the prompt, which embeds input fields word for word
 (ask-check's transcript tail, a rule-check hunk, a brief's proof command). claude and codex get the prompt as built,
 on standard input: they run on the user's own model logins, the same place the agent's session already sends that
 text. cursor-agent gets it redacted, because its prompt is an argument (The agent CLIs above).
@@ -412,7 +468,7 @@ The sorter's file feeds the done-gate cases: with `requirements.uiEvidence` set 
 done claim with no UI evidence is blocked once (exit 2, the flag deleted, the rest kept), the same claim then passes, a claim that
 shows a screenshot passes, and the next `prompt-sort` still reads the rewritten file. The trait-check cases cover a repo with no
 traits (exit 0, silent) and a repo with a matching trait and no Jev (the CLI exits 3 and the hook fails open logging
-`jev-unavailable`). Every verb of the Not yet built table is checked for its exact line and exit 1. No real-hook case reaches a Jev: offline
+`jev-unavailable`). Every subcommand of the Not yet built table is checked for its exact line and exit 1. No real-hook case reaches a Jev: offline
 (`AW_JUDGE_PROVIDERS=rules`) the sorter runs on its keyword heuristics and trait-check is exit 3; a decisive axis and the findings
 path are the C# unit tests' (`SortPromptTests`, `CheckTraitsTests`, over `FakeBatchClassifier`). The health cases cover
 ok, degraded (a stub `claude` that exits 1 leaves one failure row) and a store that can't be opened. It builds
@@ -436,7 +492,7 @@ files stay RID-free), fails on any IL2xxx/IL3xxx warning or a missing bundled `l
 runs the native binary offline (bare `PATH`, `AW_JUDGE_PROVIDERS=rules`, `AW_LOG_LEVEL` unset) on a temp state
 directory: `health`, `brief save`/`get`/`map-by-name`, a missing brief, the wake-gate and ask-check pre-rules, a
 question nothing decides, `config get`, a usage error, a bad allowlist on a question, a bad `AW_JUDGE_PROVIDERS`
-under `health`, the offline `prompt-sort` hook path (prints nothing, writes `sessions/s1.sort.json`) and two Not yet built verbs. The output, with ids and times normalized,
+under `health`, the offline `prompt-sort` hook path (prints nothing, writes `sessions/s1.sort.json`) `label status` on the empty eval store (`{"questions":[]}`) and one Not yet built subcommand. The output, with ids and times normalized,
 must equal `expected.txt`. CI's .NET job runs it with the other `src/*/aot-smoke/run.sh` scripts. The binary is about
 11 MB.
 
@@ -451,8 +507,9 @@ reads a TS-written file.
 
 | File | Holds |
 |---|---|
-| `decisions.sqlite` | WAL SQLite (`Aw.Kernel.Data`), migrations embedded in `Aw.Judge.Infrastructure/Sqlite/Migrations/` (`0001_judge.sql`, `0002_approved_at.sql`, `0003_prompt_sort.sql`; a migration is never edited once merged): `decisions` (one row per decision, `approved_at` from 0002), `decision_details` (the redacted input and the provider's detail, pruned after 30 days), `failures` (provider failures, for `health`), `briefs` (the dispatch briefs, their texts redacted and capped), `prompt_sort_axes` and `prompt_sort_runs` (from 0003: one row per sorted axis of a `prompt-sort` decision, and one run row), `schema_version` |
+| `decisions.sqlite` | WAL SQLite (`Aw.Kernel.Data`), migrations embedded in `Aw.Judge.Infrastructure/Sqlite/Migrations/` (`0001_judge.sql`, `0002_approved_at.sql`, `0003_prompt_sort.sql`, `0004_eval_labels.sql`, `0005_decision_reasons.sql`; a migration is never edited once merged): `decisions` (one row per decision, `approved_at` from 0002), `decision_details` (the redacted input and the provider's detail, pruned after 30 days; `reasons` from 0005: the model's reasons as a JSON array of strings, redacted and capped like the input, NULL when not recorded, which is different from `[]`), `failures` (provider failures, for `health`), `briefs` (the dispatch briefs, their texts redacted and capped), `prompt_sort_axes` and `prompt_sort_runs` (from 0003: one row per sorted axis of a `prompt-sort` decision, and one run row), `eval_items` (from 0004: one row per scoreable input, `id`, `question`, `input_json` redacted and capped, `source` unique (`decision:<id>` or `transcript:<session>:<turn>`, what keeps an import idempotent), `model_decision`, `created_at`) and `labels` (from 0004: one row per item and label source, `outcome`, `adjudicator` or `override`, with `label` and `labeled_at`), `schema_version` |
 | `sessions/<sid>.sort.json` | The prompt sorter's per-session state (`{prompts, lastFired, requirements}`), read and rewritten by `done-gate.sh`; the hooks sweep `sessions/*.json` after 24 h |
+| `evals/<question>-<provider>-<variant>-<ms>.json\|.md` | The reports of `eval` (redacted, 0600) |
 | `trait-check/log.jsonl` | One line per trait-check run (redacted) |
 | `config.json` | `JudgeConfig`, written by `config set` (a temporary file in the same directory renamed over it, so a question never reads a half-written file); absent means the defaults |
 
@@ -467,6 +524,7 @@ reads a TS-written file.
 | `AW_JUDGE_PROVIDERS` | the command table (`Composition` reads it once) | A comma-separated allowlist of providers when the `--providers` flag is absent; only a question, `prompt-sort` and `trait-check` read it, and there an unreadable list is a usage error (64) |
 | `PATH` | `PathExecutableLocator`, `SystemProcessRunner` | Where the agent CLIs (and `security`) are found |
 | `TYPESAFE_API_KEY` | `KeychainSecretSource` | Jev's API key; when unset or empty, the keychain entry `agentic-workflow-typesafe` / `TYPESAFE_API_KEY`; without either Jev is unavailable |
+| `AW_JUDGE_PROJECTS_DIR` | Infrastructure settings | Where `label outcomes` and `eval import-turns` find Claude session transcripts (`<project>/<session>.jsonl`); default `~/.claude/projects` |
 | `AW_PROMPT_SORT_BUDGET_MS` | `config/hooks/prompt-sort.sh` | The hook's kill budget in milliseconds (default 1500); the judge doesn't read it: Jev's own budget is `promptSort.budgetMs` (200–1050, default 1000) |
 | `AW_LOG_LEVEL` | Aw.Kernel.Telemetry | The stderr log level (default information, at which a normal run logs nothing; the hooks discard stderr) |
 

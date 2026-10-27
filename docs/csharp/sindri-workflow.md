@@ -597,7 +597,7 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 
 | Step | Runtime | Inputs | Outcomes | Outputs |
 |---|---|---|---|---|
-| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the eight seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`) on all four |
+| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the ten seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`, `gapSearch`, `gapAnchors`) on all four |
 | `step.scope.read-brief`, `step.scope.read-change` | block | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.scope.read-tracker` | block (`Network`) | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.brief.seed` | block | - | `seeded` | `answers`, `answerLog` on seeded |
@@ -605,17 +605,23 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 | `step.brief.write` | agent | `idea`, `answers`, `answerLog` | `written`, `empty` | `brief` on written |
 | `step.scope.anchor` | block | `brief` | `anchored` | `anchors` on anchored |
 | `step.scope.gather` | block | `anchors` (+ its Step inputs) | `gathered` | `lenses`, `coverage` on gathered |
+| `step.scope.relevance-review` | agent | `brief`, `lenses`, `coverage`, `anchors` | `reviewed` | `relevanceVerdicts` on reviewed |
+| `step.scope.relevance-judge` | block (judge, long) | `brief`, `lenses`, `relevanceVerdicts` | `ruled` | `relevanceRulings` on ruled |
+| `step.scope.relevance-apply` | block | `lenses`, `coverage`, `brief`, `relevanceVerdicts`, `relevanceRulings` | `applied` | `lenses`, `coverage`, `relevance`, `mapFixes` on applied |
 | `step.scope.draft` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `findings`, `answerLog`, `challenge` | `drafted` | `scopeMap`, `acceptance` on drafted |
+| `step.scope.gap-search` | agent | `brief`, `acceptance`, `answerLog` | `searched` | `gapCandidates` on searched |
+| `step.scope.gap-judge` | block (judge, long) | `brief`, `acceptance`, `scopeMap`, `lenses`, `gapCandidates` | `ruled` | `gapRulings` on ruled |
+| `step.scope.gap-log` | block | `gapSearch`, `gapCandidates`, `gapRulings`, `findings` | `clear`, `confirmed` | `gapSearch`, `gapAnchors` on both; `findings` on confirmed; `gapSearchClosed` on clear |
 | `step.scope.check` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog` | `pass`, `gaps`, `regather` | `findings` on gaps, regather |
 | `step.interview.questions` | agent | `scopeMap`, `acceptance`, `lenses`, `answerLog`, `challenge`, `openQuestions` | `asked`, `none` | `questions` on asked; `openQuestions` on asked, none |
 | `step.interview.answer` | desk, human-only | `questions`, `answerLog` | `answered`, `doneAsking` | `answers` on both; `interviewClosed` on doneAsking |
 | `step.interview.record` | block | `answers`, `answerLog` | `recorded` | `answerLog` on recorded |
 | `step.interview.apply` | agent | ten facts (spec §9) | `updated`, `rescope` | `scopeMap`, `acceptance`, `openQuestions` on both |
-| `step.scope.reanchor` | block | `scopeMap`, `anchors`, `lenses` | `anchored` | `anchors` on anchored |
+| `step.scope.reanchor` | block | `scopeMap`, `anchors`, `lenses`, `gapAnchors` | `anchored` | `anchors` on anchored |
 | `step.scope.challenge` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answerLog`, `challenge` | `nothingNew`, `found` | `challengeRound` (every outcome) |
 | `step.scope.challenge-log` | block | `challenge`, `challengeRound` | `nothingNew`, `found` | `challenge` (every outcome); `findings` on found |
-| `step.scope.propose` | block | `scopeMap` | `proposed`, `skipped` | `scopeMap` (every outcome) |
-| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions` | `complete`, `incomplete`, `regather` | five facts on complete; `findings` on incomplete, regather |
+| `step.scope.propose` | block | `scopeMap`, `mapFixes` | `proposed`, `skipped` | `scopeMap`, `mapFixes` (every outcome) |
+| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions`, `relevance`, `gapSearch`, `mapFixes` | `complete`, `incomplete`, `regather` | six facts on complete (`runs` from the ledger among them); `findings` on incomplete, regather |
 | `step.scope.review` | desk, human-only | `scopePacket` | `approve`, `revise`, `drop` | `answers` on revise |
 | `step.scope.freeze` | block | `scopePacket` and the twelve facts `step.scope.evidence` reads (it re-runs the evidence checks) | `frozen`, `mismatch` | `scopePacket` = `{hash, dir}` on frozen (the run area's `scope-packet/` stays in place); `findings` on mismatch. The engine appends `scoping.approved` under the lease for each `frozen` report (key `scoping.approved:<packetHash>`; `Instance` is the address, the row's item is set, and the hash is aw-packets' hash of that directory) |
 | `step.scope.withdraw` | block | - | `withdrawn` | - |
@@ -883,7 +889,7 @@ tuned; the verification plan is `~/.agentic-workflow/jthorare-agentic-workflow/p
 The measurements were taken while the work was still called Phase 0, so the units (a)–(d), the "P0 scratch dir" and
 the `proof/sindri-wf-p0/` paths below keep that name.
 
-**Pins.** `Temporalio` 1.19.0 (`Directory.Packages.props`), referenced only by `src/Sindri/Aw.Sindri.Workflows`
+**Pins.** `Temporalio` 1.20.0 (`Directory.Packages.props`), referenced only by `src/Sindri/Aw.Sindri.Workflows`
 (`AwAotCompatible=false`, temporalio/sdk-dotnet#286). `binaries.lock` pins the `temporal` CLI (1.9.1, the dev server)
 and the time-skipping `temporal-test-server` (1.39.0) for darwin-arm64, darwin-x64, linux-x64 and linux-arm64.
 `scripts/binaries-lock.sh fetch <name>` installs one for this platform under
@@ -994,7 +1000,7 @@ Engine spec rev 8.1 §5.1–§5.6, "Phase 4". The P4 contract fixes the interfac
 | Workflow input | `InstanceStart`: the recipe `RecipeVersion (id, version, hash)`, the item, the attempt, the input facts (`InputFact`: the file name status shows, and the stored `FactValue`), the tenant and the ring | `Aw.Sindri.Core/Workflow/Engine/Runtime` |
 | Workflow id | The address, `InstanceStart.WorkflowId()` (`{item}/{recipe-name}/{attempt}`) | same |
 | `GetInstance` Query | `InstanceView`: the state, its detail and since, `next`, `allowedCommands` as `AllowedCommand` (`{ actionId, cli }`, UI E-13, and `verb` on a recipe verb: see below), the open `OpenQuestion` or `DeskTask` (the Step's declared outcomes and outputs, the inputs, when the timeout fires), the run token, the children and the outcome. `InstanceViews.Of` builds it, and it is pure | same |
-| Updates (§5.2) | `complete(StepCompleted)`, `answer(AnswerGiven)`, `command(CommandFired)`, `cancel(CancelRequested)`, `takeover(TakeoverRequested)`, `handback(HandbackRequested)`, `open-request(OpenRequested)` (update id `wf:{instance}:open:{launch}`, from the engine). Each has a `[WorkflowUpdateValidator]` and returns `CommandResult` (the view after the command, and what happened). The update id is the nonce | `RecipeWorkflow` |
+| Updates (§5.2) | `complete(StepCompleted)`, `answer(AnswerGiven)`, `command(CommandFired)`, `cancel(CancelRequested)`, `takeover(TakeoverRequested)`, `handback(HandbackRequested)`, `rewind(RewindRequested)`, `open-request(OpenRequested)` (update id `wf:{instance}:open:{launch}`, from the engine). Each has a `[WorkflowUpdateValidator]` and returns `CommandResult` (the view after the command, and what happened). The update id is the nonce | `RecipeWorkflow` |
 | Desk Step (rev 8.1 §5.3) | `RunStep` is a short activity with id `run:{token}:{n}`. The workflow then waits for the `complete` Update, bounded by the state's timer (`TimerScopes`), the state's timeout raised to `workflow.deskTimeout`; the expiry always parks `timeout` | `RecipeWorkflow.RunStep`, `RunStepActivities` |
 | Events (§5.4) | The `event` signal carries a `WaitSatisfied` | `RecipeWorkflow.EventAsync` |
 | Ledger mirror (§5.6) | `RecordEvent`, a local activity keyed `workflow:{workflow id}:{run id}:{activity id}` | `RecordEventActivities` |
@@ -1033,7 +1039,7 @@ refusal follows §5.8's precedence. A wait state's timer wakes the wait like a d
 | `Item`, `Recipe`, `Tenant`, `Ring` | From `InstanceStart`; `StartRequest` carries the tenant and ring into the instance |
 | `State` | The state after each change (`parked`, `escalated`, `taken-over` while suspended) |
 | `NeedsYou` | True while parked or escalated, or while an open desk task waits; false while taken over |
-| `Repo` | `fact:item`'s `repo`, read once on start by the `ReadItemRepo` local activity; unset without one |
+| `Repo` | `fact:item`'s `repo` (`{ id, repo?, spec? }`: `repo` and `spec` are optional), read once on start by the `ReadItemRepo` local activity; unset without one |
 
 The loop's tests run on the time-skipping server: `InterpreterEvalTests` runs every shipped `workflow.step` eval case
 through the interpreter and checks each line against the in-process `recipe eval`, and `InterpreterStateLoopTests`
@@ -1051,7 +1057,7 @@ The `--json` output is the served body as the CLI's serializer prints it: `list`
 
 | Verb | Slice | What it reads | Prints |
 |---|---|---|---|
-| `workflow status <address> [--json]` | `GetInstance` | the `GetInstance` Query (`TemporalInstanceRuntime.Get`) through `GET /workflow/instances/{id}`; an ended instance answers too | the §6.4 layout (the served `current.status.text`), or the `StatusFields` as JSON. Exit 2 with `SND-WF-001` for an address or id no instance has (the `address=` lookup), `SND-ITEM-404` for another repo's instance, `SND-API-002` when no worker answers in 10 s |
+| `workflow status <address> [--json]` | `GetInstance` | the `GetInstance` Query (`TemporalInstanceRuntime.Get`) through `GET /workflow/instances/{id}`; an ended instance answers too | the §6.4 layout (the served `current.status.text`), or the `StatusFields` as JSON. At an interview desk (the open task's Step is `step.interview.answer`) the CLI also reads `fact:questions` through the facts route and adds, after the layout, each question's id, text, options with their ids (the recommended one marked), and the other and skip choices, then the shape `fact:answers` takes for `workflow complete … --output fact:answers=<file>`; `--json` gets a `questions` member (`[{id, question, dimension?, options: [{id, answer, recommended}], other, skip}]`) after the `StatusFields`, absent elsewhere. The question and option text is model-written, so a session reads it inside the pack fence. Exit 2 with `SND-WF-001` for an address or id no instance has (the `address=` lookup), `SND-ITEM-404` for another repo's instance, `SND-API-002` when no worker answers in 10 s |
 | `workflow list [--needs-me \| --item <id> \| --state <s>] [--query <q>] [--json]` | `ListInstances` | a visibility query on the search attributes, then each row's `GetInstance`; ended roots are counted from the listing without a Query | one line per instance in the API order (`<address>  <recipe>@<hash12>  <state>: <now>  since <time> (<age>)`; no version column); `--needs-me` prints **Decisions** (PARKED, ESCALATED and WITH YOU rows: parks and escalations, and a takeover's idle row once P6 lists it; a taken-over instance has `NeedsYou` false, so it is listed only through its `workflow.notified` row, which P6 delivers as `notify.desk`; listing idle takeovers under `--needs-me` isn't built yet, an owner item for the API / P6) then **Tasks** (DECISION rows: open desk tasks), each section by address. Empty: the sentence the server served for the filter: `nothing needs you` (`--needs-me`), `No workflows are open.` (bare `list`) or `No workflows match.`; exit 0 |
 | `workflow events <address> [--follow] [--json]` | `GetInstanceEvents` | the ledger through `ILedgerReader`, never Temporal's history | one line per event: `seq  MM-dd HH:mm:ss  type  from -> to  trigger outcome  run r  actor`; `no events`. `--follow` reads after its cursor every second until interrupted |
 
@@ -1199,7 +1205,7 @@ The scoping recipe's `gather` Step names three real inputs, so `sindri recipe ap
 - **Honest sections.** An empty anchor list, a bad window, an item with no repo, a repo outside the approved profile, no approved profile, and any refusal from the engine (`SND-CONTEXT-*`) become one section ("The context lenses are unavailable for this Step (code: message); it runs without them.") with no typed result. They never throw; a degraded source stays visible in the view's `searched` rows.
 - **A fill is a function of the stored state.** A re-fill after a restart or an eviction must give the same digest (`SND-WF-018` otherwise). So the views are made stable before they are rendered (`ContextInputSections.Stable`): `asOf` is the map's creation instant, the map's age is unstated (`ageDays` is -1, the text omits it), and the searched sources' instants are left out. A real change between fill and re-fill still gives 018, which is the rule: a new map version, and also a change of the repo's HEAD (the coverage and an open history window read live HEAD), counts as a change.
 - **Bounded.** Each section is at most 120 KiB, and each typed result at most 256 KiB, the runner's cap for a part. A typed result is read by a code Step, not put in a prompt, and a large map's lenses view is over 120 KiB as JSON. A plan over 1 MiB fails the Step (SND-WF-019), loudly, never by dropping a result. Text is cut at whole lines with "[N more lines not shown: this section is capped at 120 KiB]"; a typed result over the budget is left out and the text says so. A Step never fails (SND-WF-019) because a map is big.
-- **Arguments.** A fact-valued argument (`anchors: { fact: fact:anchors }`) is read through the fact-content port (`ContextInputFacts`, one helper for the three inputs) and checked against its SHA-256: the content is a JSON list of anchor keys (or `{"anchors": [...]}`), or a single key as text; a fact that is absent or can't be read is an unavailable section naming it, and content that no longer matches its SHA-256 fails the fill with `SND-WF-018` (the Step does not run on other data). `IStepInput.Fill` returns `Result<InjectionSections>`: an expected failure that must fail the fill (changed data, `SND-WF-018`) is a coded `Error`, which the runner returns on the path of its own refill-digest mismatch; everything else is a section. A history `window` of the wrong shape (a list, a number, a boolean, or a `since`/`before` that is not text) is an unavailable section naming the argument (an absent or null window is the open window, with a note; the engine does not pass a `{ profile: … }` window to inputs, so the recipe's `workflow.scoping.historyWindow` is named in a note and the window stays open), and a window key other than `since`/`before` is named in a note; anchors, `depth` or `hops` that cannot be used, and a `hops` list with non-text items, are named in a "note:" line at the head of the section instead of being dropped silently; an empty `hops` list is the default hops.
+- **Arguments.** A fact-valued argument (`anchors: { fact: fact:anchors }`) is read through the fact-content port (`ContextInputFacts`, one helper for the three inputs) and checked against its SHA-256: the content is a JSON list of anchor keys (or `{"anchors": [...]}`), or a single key as text; a fact that is absent or can't be read is an unavailable section naming it, and content that no longer matches its SHA-256 fails the fill with `SND-WF-018` (the Step does not run on other data). `IStepInput.Fill` returns `Result<InjectionSections>`: an expected failure that must fail the fill (changed data, `SND-WF-018`) is a coded `Error`, which the runner returns on the path of its own refill-digest mismatch; everything else is a section. A history `window` of the wrong shape (a list, a number, a boolean, or a `since`/`before` that is not text) is an unavailable section naming the argument (an absent or null window is the open window; a `{ profile: key }` window reaches the input as the reference `{"profile": key}` and `ContextInputFacts` resolves it from the approved profile inside the fill, the way it reads a fact: the recipe's `workflow.scoping.historyWindow` is `{since?, before?}`, a key the profile leaves out is the open window, a key no input can read fails the fill with `SND-WF-021`, and no approved profile is `SND-PROFILE-005` in an unavailable section; effects still get no `{ profile }` argument), and a window key other than `since`/`before` is named in a note; anchors, `depth` or `hops` that cannot be used, and a `hops` list with non-text items, are named in a "note:" line at the head of the section instead of being dropped silently; an empty `hops` list is the default hops.
 - **Text.** The section is the same plain text the `sindri context lenses|history|code` verbs print, with the untrusted labels fenced once (the engine fences them for its in-process caller; the input does not fence again); the typed result is the view in the route's JSON shape. The runner scrubs and caps both (256 KiB per section).
 
 ## Effects as activities (engine P6)
@@ -1344,8 +1350,9 @@ Unit (c), as built:
   entered state's rendered `next` (the interpreter passes it as `EffectRun.Text`) with the instance address beside
   it, and it replies `notify.delivered` with `delivered`; an engine notice replies nothing.
 - **`notifications.jsonl`** (`FileDeskNotices`): one JSON line per identity (`identity`, `instance`, `item`, `class`,
-  `text`, `at`), so a repeat writes nothing. An `interrupt` is then shown as a macOS notification through `osascript`
-  (`IOsNotifier`, internal to Infrastructure; title `Sindri: <address>`); an `info` one isn't, and is collected into
+  `text`, `at`), so a repeat writes nothing. An `interrupt` is then shown as a macOS notification through `terminal-notifier`
+  (`IOsNotifier`, internal to Infrastructure; title the item's title, else `Sindri`; the text names the stage in plain words, never the address;
+  a click opens the app on the needs-you row; without terminal-notifier no banner is shown, since an `osascript` banner's click opens Script Editor); an `info` one isn't, and is collected into
   `$AW_SINDRI_HOME/digest/<yyyy-MM-dd>.jsonl` (UTC). The spec defines no digest delivery. Every test composition
   (`WorkflowsHarness.Sindri`, `Served`) replaces the notifier with `FakeOsNotifier`.
 - **`outbox list [--pending | --dispatched] [--json]`** and **`GET /sindri/outbox?state=`** (`pending`, `dispatched`,
@@ -1439,12 +1446,31 @@ session once (`LaunchAgentStep`, id `agent-launch:{run}:{n}`; a repeated request
 session), watches it (`WatchAgentStep`, heartbeating), and on an accepted report closes the run (`CloseAgentStep`: the
 usage, the measured empty diff, and the stop of the session) before it decides.
 
+- **A restart does not drop the report (#1109, #1000 ask 1).** `workflow complete` from a launched session (`AW_SINDRI_LAUNCH_SECRET`
+  set) waits out a control plane that is down: on `SND-API-001` it tries again for `AW_SINDRI_COMPLETE_WAIT` seconds (default 900,
+  enough for a reinstall; 0 is one try), pausing 1 s and doubling to 15 s, with one line on standard error per wait. It keeps the
+  nonce it was issued across the waits. A refusal, an invalid answer and a timeout are never retried; a human's call is tried
+  once. If the window ends it exits 1 and says the output stays in the files it was given: Sindri completes the run from the
+  run's `.sindri-out` folder when it is back (#1000), so the agent must not report the Step again by hand.
 - **The report is the `complete` Update**, validated like a desk report. The session sends `X-Sindri-Launch-Secret`
   (`AW_SINDRI_LAUNCH_SECRET` for the CLI); another caller gets `SND-AUTH-002`, a wrong secret `SND-AUTH-003` (it consumes no
   nonce). While the instance is taken over the secret is refused and only the human completes it, through the desk.
 - **A park or a takeover leaves the session running;** the watch resumes after the handback and attaches to the same
   launch id. A `cancel` or the end of the run stops the session. A session that ends without a report is
-  `step.failed` (`exit`, or `lost` when it vanished), and the loop rules apply to it as to any failure.
+  `step.failed` (`exit`, `lost` when it vanished, or `idle` when its turn ended and nothing happened for 120 s, or an API error stopped it, it got one re-prompt and stayed idle another 10 min), and the loop
+  rules apply to it as to any failure, after the recovery below.
+- **A restart does not strand a result (issue #1000).** `workflow complete` from a launched session (it carries
+  `AW_SINDRI_LAUNCH_SECRET`) waits out a control plane that is down: on `SND-API-001` (no control plane recorded, or the
+  connection refused or broken) it waits as the item above says (#1109: `AW_SINDRI_COMPLETE_WAIT`, default 15 minutes; a human's
+  call is never held). If the session ends first (its turn over, or the agent gone), the watch reads the
+  run directory's `.sindri-out` folder before it fails the Step (`RecoverAgentStep`, patched `recover-stranded-agent-result`;
+  only files written after the launch count, because a phase workspace is shared by its Steps). `AgentRecovery.Decide` completes the
+  run, as an `agent:recovered` report with the tokens and diff signal the close step read, only when exactly one of the Step's
+  outcomes has outputs the caller writes and every one of them is in the folder (`challengeRound` for `fact:challengeRound`);
+  the outcome is never guessed. A Step that picks its outcome from its parameters, one that needs no output, outputs that fit
+  two outcomes, or some of an outcome's outputs park instead: the Step fails with the session's own reason and the question
+  adds "the agent finished but its result was not recorded: `<run dir>/.sindri-out`". An empty or absent folder fails the Step
+  as before. The pass runs the moment the watch sees the end, so a restart that finds an ended session finishes it in one tick.
 - **Status:** an open agent run adds `run: { runtime: "agent", launch: "LCH-…" }` to the status fields and a `run` line to
   the text (`run       agent LCH-…`). A desk run and a block run have neither; the member is left out of the JSON when
   null, so every other status golden is unchanged. An agent run has no desk task, so `commands` lists `takeover` and
@@ -1467,7 +1493,13 @@ usage, the measured empty diff, and the stop of the session) before it decides.
   a new run in the same entry with no loop round counted (`OpenRun.Retries`, `Unavailables.MaxRetries` = 2 reruns, three tries
   in all, as many as a launch gets); the third failure parks the instance with `ParkReason.unavailable` (kind step, resume
   `rerun`). The park's words name the dependency, the retries and the last error (`step.produce is unavailable after 2
-  retries; the last error: exit`); `StepFailed.Dependency` names the dependency where the runtime knows it (an input's block
+  retries; the last error: exit`); an agent session that exited or was lost says so instead (`Unavailables.Gone`: `step.produce's agent
+  session is gone (exit), relaunched 2 times; the last error: exit`), and one the idle sweep ended says it went idle
+  (`Unavailables.Idle`: `step.produce's agent session went idle with no report (agent-stalled), relaunched 2 times; the last error: idle:
+  agent-stalled: …`, the parenthesis being the first word of the failure's detail). The list row reads `agent stalled: idle, no report`
+  for that park (not `waiting on a dependency that is down`), and `agent stalled in <item>: idle, no report` while the instance's current
+  agent launch is ended as idle in the `launches` view and the engine hasn't yet applied the failure (`InstanceSummaryContext.AgentIdle`,
+  filled by `ListInstancesService`); `StepFailed.Dependency` names the dependency where the runtime knows it (an input's block
   id, `the agent launcher`; the Step itself otherwise), and `StepFailed.Code` (or `BlockStepResult.Unavailable`'s code) becomes the
   park's `Suspension.Code`, served as the status's `reasonCode` (`SND-LAUNCH-007`, `SND-WF-016` …; none when the failure had
   no typed code). `answer --resume` runs the Step again and starts the retries from 0; it is the only answer (served through the
@@ -1516,3 +1548,11 @@ usage, the measured empty diff, and the stop of the session) before it decides.
 - **Linked instances are not roots.** The `Root` search attribute is false for a linked instance as it is for a child, so `list --root true` shows the line and not its phases.
 - **Cancel cascades.** An instance that ends `cancelled` sends `parentCancel` to each live instance linked to it (the `LiveLinked` activity: the live instances of its item whose `LinkedParent()` is it), as it does to its Temporal children, so each records its own `cancelled`. A line that ends any other way has no live phase. All three are behind the patch `ln-wf1-linked-phase-events`.
 - **The owner.** A failed phase sends the line to `step.line.decide`: `retry` (the next attempt), `skip` (the phase and, transitively, its dependents) or `stop` (the line ends `failed`). `ticks` (cap 5000) bounds the dispatch loop.
+
+## Rewind and `answer --record` (#1270)
+
+`sindri workflow rewind <address> --to <state>` re-enters an earlier state of the recipe with every fact kept (`RewindRequested`, the `rewind` Update, `ApplyCommandKind.Rewind`). The ledger row is an ordinary `workflow.transition` whose trigger is `rewind`. The pure rule is `TransitionDecision.Rewind`: the instance has not ended and is not taken over; the target is an active state the instance has been in, whose Step's input facts are all present, that no transition enters with effects, and that is not `step.scope.propose`, `step.scope.freeze`, `step.scope.withdraw` or `step.scope.review` (the stop); no agent is live (the open run has a `Launch` whose session the ledger shows no `session.ended` for, read by the command service through `IAgentSessions.Watch` and passed in as `RewindRequested.EndedLaunch`; the refusal names the launch, "end or wait for LCH-...", and never ends the agent; a park whose agent already failed, went idle or was lost rewinds); no child is waited on; no park holds refused effects. It ends the park, opens a new run (a running desk or block run is replaced by the usual run-token check), is not a loop round, and clears each loop's no-progress marker without raising a cap (`--grant` stays the fix for a spent cap). A launched agent session is refused (`SND-AUTH-002`); the owner's terminal and an agent session the owner started are not. It needs the recipe's approval like an answer.
+
+`sindri workflow answer <address> --record <batch.json>` hands the `interview` desk an answer batch without the form: the CLI reads the instance, finds the open run of `step.interview.answer` (`AnswerRecording.InterviewRun`; any other state is refused with "rewind to interview first") and reports it `answered` with the file as `fact:answers` through the `complete` route, so `step.interview.record` runs as normal. A batch may carry `supersedes` (earlier answer ids) and must carry `recordedAs` naming ids the facts hold, or an item, surface or open question must cite its id, or SCP-ACC-003 fails on it like on any answer. A `supersedes` id the answer log does not hold is refused, naming it. After the batch, `apply` (an agent Step) and everything after it run again.
+
+A parked run says which rewind would unblock it (asks 3 and 4). Re-running a check after the build was fixed needs no new verb: `sindri workflow rewind <address> --to <the check's state>` (for workflow.scoping's evidence check, `--to evidence`) runs the check again on the facts the run already holds, with no redraft and no loop round. For a rounds or no-progress park the status text names it ("Grant more rounds at a terminal, rewind to re-run evidence on the same facts (`sindri workflow rewind <address> --to evidence`), or cancel."): the state is the one the withheld transition leaves when a rewind accepts it, else the text lists the states a rewind would accept. A parked instance's `allowedCommands` (status and the detail JSON) gains one `ApplyCommand:rewind` entry per such state, the withheld transition's state first (`TransitionDecision.RewindTargets`, which applies the rewind's own target rules, input facts included); a running instance lists none, and neither does a park that waits on a child or holds refused effects. `RewindEvidenceUpgradeTests` drives the case: evidence incomplete twice with the same findings parks the run, the check is replaced by one that passes on the same facts, and a rewind to `evidence` reaches the stop without drafting, sizing or proposing again.

@@ -22,7 +22,7 @@ public sealed class PromptSortMigrationTests : IDisposable
             "INSERT INTO briefs (tool_use_id, session_id, prompt_id, subagent_type, goal, acceptance_criteria, proof_command, saved_at) VALUES ('toolu_1', 's1', 'p1', 'general-purpose', 'g', 'a', 'c', '2026-01-01T00:00:00.0000000Z')");
         Assert.Equal(2L, await Scalar(factory, "SELECT MAX(version) FROM schema_version", ct));
 
-        Assert.True((await new MigrationRunner(factory, new FakeTimeProvider()).Migrate(all, ct)).IsSuccess);
+        Assert.True((await new MigrationRunner(factory, new FakeTimeProvider()).Migrate([.. all.Take(3)], ct)).IsSuccess);
 
         Assert.Equal(3L, await Scalar(factory, "SELECT MAX(version) FROM schema_version", ct));
         Assert.Equal(1L, await Scalar(factory, "SELECT COUNT(*) FROM decisions WHERE id = 'd1' AND approved_at IS NOT NULL", ct));
@@ -56,7 +56,7 @@ public sealed class PromptSortMigrationTests : IDisposable
         var factory = new SqliteConnectionFactory(JudgeDatabase.OptionsFor(Path.Combine(_state.Path, "judge")));
         var migrations = EmbeddedMigrations.Load(typeof(JudgeDatabase).Assembly, JudgeDatabase.ResourcePrefix);
         Assert.True(migrations.IsSuccess);
-        Assert.Equal([1, 2, 3], [.. migrations.Value.Select(m => m.Version)]);
+        Assert.Equal([1, 2, 3, 4, 5], [.. migrations.Value.Select(m => m.Version)]);
         return (factory, migrations.Value);
     }
 

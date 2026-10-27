@@ -565,10 +565,10 @@ The adapter (`DirectoryLocks`) is the same lock the shell tools take, so the two
 | Path form | A configured path is made absolute (against the working directory) and loses any trailing separators, so `/x/qa.lock//` is the lock `/x/qa.lock` |
 | Heavy-job slots | `$AW_HEAVY_SLOTS`, default 2: at most that many heavy jobs at once, the same count the `heavy` wrapper uses. A value that isn't a whole number of at least 1 isn't refused: the lock uses 2 and says once on stderr `ui-evidence: AW_HEAVY_SLOTS='<value>' isn't a whole number of at least 1; using 2 slots` |
 | Acquire | an atomic `mkdir` of a slot directory (libc `mkdir`; `EEXIST` means that slot is busy). Each poll tries slot 1, then 2 … N, the wrapper's order, so a holder that knows only `<lock>` (sindri's lock, a plain `acquire_lock` caller) occupies slot 1 and the total never exceeds the slot count. Polled every second until the timeout; `ui-evidence: waiting on lock: <lock>` once. The QA-stack lock has one slot |
-| Owner | `<slot>/owner`: `<pid> <UTC time> ui-evidence`, the file the `heavy` wrapper writes too |
-| Release | delete our `owner`, then `rmdir` the slot we hold; a directory something else wrote into, or whose `owner` line names another process (ours was removed by hand and another holder took the slot), is left alone |
+| Owner | `<slot>/pid`: the holder's pid alone, the file `config/lib/locks.sh` reads; and `<slot>/owner`: `<pid> <UTC time> ui-evidence`, the file the `heavy` wrapper writes too |
+| Release | delete our `pid` and `owner`, then `rmdir` the slot we hold; a directory something else wrote into, or whose `owner` line names another process (ours was removed by hand and another holder took the slot), is left alone |
 | `AW_HEAVY_LOCK_HELD=1` | set by the `heavy` wrapper: the parent already holds a heavy-job slot, so that lease is a no-op (it takes no second slot) |
-| Stale locks | never taken over (the shell primitive doesn't either); remove a dead holder's directory by hand |
+| Stale locks | a waiter that finds a taken slot reads its holder (`pid`, else the first word of `owner`) and frees it when that process is gone, on both sides: the holder file is moved aside first (one waiter wins) and the slot is freed only if it still holds the dead line. A slot with no holder file yet (a holder between its `mkdir` and its pid write), or one naming a live or unreadable pid, is left alone |
 
 The `heavy` wrapper is the owner's machine script (`~/.agentic-workflow/bin-r1b/heavy`, outside this repo); its slot
 layout and owner line are the ones above. `config/lib/locks.sh` (`acquire_lock` / `release_lock`) is the in-repo shell

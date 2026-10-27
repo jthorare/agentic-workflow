@@ -2,12 +2,13 @@ using System.Text;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Workflow.ApproveAll;
 
 /// <summary>
-/// The shipped versions that wait for their own approval, in the recipe list (#983): a shipped version that gains a capability is left out of approve-all and is not registered until someone approves it,
+/// The shipped versions that wait for an approval, in the recipe list (#983, C-12): every shipped recipe the plan names that is not registered at its shipped hash gets a line, standing unapproved. A shipped version that gains a capability is left out of approve-all and is not registered until someone approves it,
 /// so the registry's lines show only the old approved hash. Each such version gets its line here, with its hash and a mark that it gains a capability, read from the same plan the needs-you row is.
 /// A version that is registered already is marked; one that is not is read from the embedded set the way a registration would store it.
 /// </summary>
@@ -31,18 +32,17 @@ public sealed class WaitingShippedLines(IShippedRecipes shipped, ShippedRecipeSe
 
         var lines = registered.ToList();
         var embedded = files.Files();
-        foreach (var own in plan.Value.OwnApproval)
+        foreach (var (id, gains, via) in Waiting(plan.Value))
         {
-            if (embedded.FirstOrDefault(f => f.Id == own.Id) is not { } file)
+            if (embedded.FirstOrDefault(f => f.Id == id) is not { } file)
             {
                 continue;
             }
 
-            var gains = own.Reason == OwnApprovalReason.GainsCapability;
             var at = lines.FindIndex(l => l.Hash == file.Hash);
             if (at >= 0)
             {
-                lines[at] = lines[at] with { GainsCapability = gains ? true : null };
+                lines[at] = lines[at] with { GainsCapability = gains ? true : null, ApproveVia = via };
                 continue;
             }
 
@@ -52,11 +52,34 @@ public sealed class WaitingShippedLines(IShippedRecipes shipped, ShippedRecipeSe
                 return line.Error;
             }
 
-            lines.Add(line.Value with { GainsCapability = gains ? true : null });
+            lines.Add(line.Value with { GainsCapability = gains ? true : null, ApproveVia = via });
         }
 
         return lines;
     }
+
+    /// <summary>The embedded version of <paramref name="id"/> that <paramref name="hash"/> names (whole, or a prefix of 8 or more digits), when the plan says it waits for an approval; nothing is registered.</summary>
+    /// <param name="id">The recipe id.</param>
+    /// <param name="hash">The hash or its prefix.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The shipped file, null when no waiting shipped version matches, or the plan's error.</returns>
+    public async ValueTask<Result<ShippedFile?>> Find(RecipeId id, string hash, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(hash);
+        var plan = await shipped.Plan(cancellationToken).ConfigureAwait(false);
+        if (plan.IsError)
+        {
+            return plan.Error;
+        }
+
+        var file = files.Files().FirstOrDefault(f => f.Id == id && (string.Equals(f.Hash.Value, hash, StringComparison.Ordinal) || f.Hash.MatchesPrefix(hash)));
+        return file is not null && Waiting(plan.Value).Any(w => w.Id == id) ? file : null;
+    }
+
+    // Every waiting shipped recipe the plan names, with how it is approved: the hold's rows by approve-all, the previously approved ones that gain a capability or wait for a child on their own.
+    private static IEnumerable<(RecipeId Id, bool Gains, ShippedApproval Via)> Waiting(ShippedRecipePlan plan) =>
+        plan.OwnApproval.Select(static o => (o.Id, Gains: o.Reason == OwnApprovalReason.GainsCapability, Via: ShippedApproval.Own))
+            .Concat(plan.Recipes.Select(static r => (r.Id, Gains: false, Via: ShippedApproval.ApproveAll)));   // the rest of the plan: shipped recipes nobody registered yet (C-12) stand unapproved too
 
     // The row a registration would keep: the normalized long form by hash. Nothing is written.
     private RegisteredRecipe Registered(ShippedFile file) =>

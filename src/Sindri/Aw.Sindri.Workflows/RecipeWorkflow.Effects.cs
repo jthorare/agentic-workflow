@@ -124,10 +124,14 @@ internal sealed partial class RecipeWorkflow
     /// </summary>
     private IReadOnlyList<EffectCommand> Notices(WorkflowInstance? before, WorkflowInstance after, WorkflowEventType change)
     {
-        var notices = EngineNotices.For(before, after, _mirrored, _deskTaskNotified, change);
+        var notices = EngineNotices.For(before, after, _mirrored, _deskTaskNotified, new NoticeChange(change, StageName));
         _deskTaskNotified |= EngineNotices.NoticedDeskTask(after, notices);
         return [.. notices.Select(static n => n.Command)];
     }
+
+    /// <summary>The display name the recipe gives a state, for a banner to name the stage by; null when there is none (the notice then makes the id readable).</summary>
+    private string? StageName(string state) =>
+        _recipe is { } recipe && recipe.Recipe.States.TryGetValue(state, out var found) ? found.DisplayName : null;
 
     /// <summary>A linked instance's report to its line (LN-WF1): 'parked', 'resumed' or 'ended', an engine-origin 'effect.line.report'.</summary>
     private IReadOnlyList<EffectCommand> LineReports(WorkflowInstance? before, WorkflowInstance after) =>

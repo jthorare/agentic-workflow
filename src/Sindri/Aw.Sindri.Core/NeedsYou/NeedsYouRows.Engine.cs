@@ -96,6 +96,16 @@ public static partial class NeedsYouRows
         Row(item, address, new EngineRow(NeedsYouRowIds.Takeover(address), "taken over", $"a takeover is idle ({address.Value})", Urgency.Calm, AnswerKind: null, _handback, [_handback, _cancel], $"sindri handback {address.Value}",
             new NeedsYouOpen(WorkflowRoute(address), "Hand back or cancel")), since, scrubber);
 
+    /// <summary>The 'park' row of an agent run whose session ended its turn without a report and is still not ended (issue #1000). It takes the park row's id, so it is replaced by the run's own park when the Step fails.</summary>
+    /// <param name="item">The item's row.</param>
+    /// <param name="address">The instance with the open agent run.</param>
+    /// <param name="since">When the agent's turn ended.</param>
+    /// <param name="scrubber">Scrubs the text the row stores.</param>
+    /// <returns>The row.</returns>
+    public static NeedsYouRow ForStalledAgent(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
+        Row(item, address, new EngineRow(NeedsYouRowIds.Park(address), "agent · no progress", $"the agent ended its turn without reporting ({address.Value})", Urgency.Pulse, AnswerKind: null, _cancel, [_cancel], Status(address),
+            new NeedsYouOpen(WorkflowRoute(address), "Open the workflow")), since, scrubber);
+
     private static string WorkflowRoute(InstanceAddress address) => "workflow/" + address.Value;
 
     private static string Status(InstanceAddress address) => $"sindri workflow status {address.Value}";

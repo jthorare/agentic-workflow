@@ -61,7 +61,7 @@ public sealed class RecognizerSet
     {
         try
         {
-            return new Rule(recognizer, new Regex(recognizer.Pattern, RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)));
+            return new Rule(recognizer, LinearRegex.Create(recognizer.Pattern, RegexOptions.CultureInvariant));
         }
         catch (ArgumentException)
         {

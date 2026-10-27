@@ -24,7 +24,7 @@ internal sealed class BoardLaneViewModel(LaneId id) : ObservableObject
     /// <summary>True for the Done lane, which is narrower and drawn on the canvas.</summary>
     public bool IsLast => Id == LaneId.Done;
 
-    /// <summary>The empty box's first line; "Nothing here. No runs match this filter." as one sentence while a filter hides the cards.</summary>
+    /// <summary>The empty box's first line; "No runs here." with "No runs match this filter." under it while a filter hides the cards.</summary>
     public string EmptyTitle { get; private set => Set(ref field, value); } = Labels.WorkflowsLaneEmpty;
 
     /// <summary>The empty box's second line.</summary>

@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.Scoping.Steps;
 [Lane(TestLane.Unit)]
 public sealed class ScopingPureStepTests
 {
-    private static readonly string[] _seeds = ["acceptance", "answerLog", "answers", "challenge", "findings", "openQuestions", "questions", "scopeMap"];
+    private static readonly string[] _seeds = ["acceptance", "answerLog", "answers", "challenge", "findings", "gapAnchors", "gapSearch", "openQuestions", "questions", "scopeMap"];
 
     private static async Task<BlockStepResult> Run(IBlockStep step, string id, ScopingFacts facts, IReadOnlyDictionary<string, JsonElement>? inputs = null) =>
         await step.Run(ScopingStepContexts.Of(id, facts, inputs), TestContext.Current.CancellationToken);
@@ -19,7 +19,7 @@ public sealed class ScopingPureStepTests
     private static JsonNode Out(BlockStepResult result, string key) => JsonNode.Parse(result.Result!.Outputs[Core.Workflow.Ids.FactKey.From("fact:" + key)].GetRawText())!;
 
     [Fact]
-    public async Task Intake_sorts_the_input_and_carries_the_eight_seeds()
+    public async Task Intake_sorts_the_input_and_carries_the_ten_seeds()
     {
         var result = await Run(new ScopeIntakeStep(), "step.scope.intake", new ScopingFacts { ["scopeInput"] = """{"kind":"tracker","repo":"fixture-notes","key":"NTS-135"}""" });
 
@@ -125,7 +125,7 @@ public sealed class ScopingPureStepTests
         var result = await Run(new ScopeGatherStep(), "step.scope.gather", new ScopingFacts { ["anchors"] = ScopingFacts.Expiry()["anchors"] }, Views());
 
         Assert.Equal("gathered", result.Result!.Outcome.Value);
-        Assert.Equal(["coverage", "lenses"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
+        Assert.Equal(["coverage", "graph", "lenses"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
         Assert.Equal(["code", "product", "related", "history"], Out(result, "coverage")["lenses"]!.AsArray().Select(static r => r!["lens"]!.GetValue<string>()), StringComparer.Ordinal);
     }
 

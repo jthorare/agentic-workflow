@@ -18,6 +18,9 @@ internal enum LaneId
     /// <summary>Merge: waits for the API to serve a line stage.</summary>
     Merge,
 
+    /// <summary>Not on a line: the open runs of every other workflow; the lane exists only while it holds a run.</summary>
+    Other,
+
     /// <summary>Done: the finished runs.</summary>
     Done,
 }

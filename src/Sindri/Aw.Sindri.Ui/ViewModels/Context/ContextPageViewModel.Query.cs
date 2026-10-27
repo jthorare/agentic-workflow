@@ -8,7 +8,7 @@ internal sealed partial class ContextPageViewModel
     private static List<string> Words(string text) =>
         [.. text.Split([' ', ',', '\t', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(StringComparer.Ordinal)];
 
-    // The anchors to read: anchor-shaped text as it is; a question is asked first, and when it finds nothing the words are the anchors.
+    // The anchors to read: anchor-shaped text as it is; a question is asked first, and when it finds nothing the whole text is read as one anchor (a label).
     // Null when a newer Submit took over, or when the control plane is down (its problem is drawn here).
     private async Task<(List<string> Anchors, bool FromQuestion)?> Resolve(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
     {
@@ -31,7 +31,8 @@ internal sealed partial class ContextPageViewModel
             return null;
         }
 
-        return asked.IsSuccess && FromQuestion(asked.Value) is { Count: > 0 } found ? (found, true) : (words, false);
+        // why a miss is one anchor: the whole text may be a node's label, and a question is never a list of anchors
+        return asked.IsSuccess && FromQuestion(asked.Value) is { Count: > 0 } found ? (found, true) : ([AnchorText.Trim()], false);
     }
 
     // Anchors are keys like surface:pane/Drop; every word of one has a colon. Anything else is a person's question.

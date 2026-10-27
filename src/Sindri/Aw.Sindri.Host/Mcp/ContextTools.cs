@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Aw.Context.Core;
 using Aw.Context.Core.Results;
-using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Features.ContextCalls;
 using ModelContextProtocol.Protocol;
@@ -55,6 +53,8 @@ internal static partial class ContextTools
             ["mapVersion"] = Property("string", "A retained map version to read as of, such as v3; omit for the current map"),
             ["limit"] = Property("integer", "How many items to keep from each list (default 100)", minimum: 1),
             ["offset"] = Property("integer", "How many items to skip in each list (default 0)", minimum: 0),
+            ["outside"] = ScopedReads.OutsideProperty(),
+            ["reason"] = ScopedReads.ReasonProperty(),
         }),
         Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
     };
@@ -106,14 +106,25 @@ internal static partial class ContextTools
             return McpResults.Failure(services, page.Error);
         }
 
-        var request = Bind(McpArguments.ExceptPage(arguments));
+        var split = ScopedReads.Separate(Query, arguments);
+        if (split.IsError)
+        {
+            return McpResults.Failure(services, split.Error);
+        }
+
+        var request = Bind(McpArguments.ExceptPage(split.Value.Rest));
         if (request.IsError)
         {
             return McpResults.Failure(services, request.Error);
         }
 
         var answer = await services.GetRequiredService<IService<QueryContextRequest, ContextResult>>().Handle(request.Value, ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, McpSummaries.Query, page: page.Value);
+
+        // why: 'node' may be a name or an alias, so the graph check uses the anchor the query resolved it to
+        return answer.IsSuccess && request.Value.Node is { } node
+            && await ScopedReads.Check(services, Query, answer.Value.Anchors is [var first, ..] ? first : node, split.Value, ct).ConfigureAwait(false) is { } refused
+            ? McpResults.Failure(services, refused)
+            : McpResults.From(services, answer, McpSummaries.Query, page: page.Value);
     }
 
     /// <summary>Runs context_sources.</summary>
@@ -140,55 +151,6 @@ internal static partial class ContextTools
             ? McpResults.Failure(services, answer.Error)
             : McpResults.Success(services, McpSourcesAnswer.Of(answer.Value, McpEndpoint.Build, port), McpSummaries.Sources(answer.Value, McpEndpoint.Build, port), page: page.Value);
     }
-
-    /// <summary>The arguments as a request; SND-CONTEXT-022 for an unknown property or a wrong type. Values are left to the engine (006).</summary>
-    private static Result<QueryContextRequest> Bind(IDictionary<string, JsonElement>? arguments)
-    {
-        var texts = new Dictionary<string, string>(StringComparer.Ordinal);
-        var numbers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var (name, value) in arguments ?? new Dictionary<string, JsonElement>(StringComparer.Ordinal))
-        {
-            if (!BindOne(name, value, texts, numbers))
-            {
-                return ContextErrors.McpArgumentsInvalid.With(Invalid(name, value));
-            }
-        }
-
-        return new QueryContextRequest(Get(texts, "q"), Get(texts, "node"), Get(texts, "item"), Get(texts, "symbol"),
-            numbers.TryGetValue("depth", out var depth) ? depth.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, numbers.TryGetValue("budget", out var budget) ? budget.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, Diff: Get(texts, "diff"), Hops: Get(texts, "hops"), MapVersion: Get(texts, "mapVersion"));
-    }
-
-    /// <summary>One argument into its map; false for an unknown name or a wrong type. An optional argument sent as null is absent.</summary>
-    private static bool BindOne(string name, JsonElement value, Dictionary<string, string> texts, Dictionary<string, int> numbers)
-    {
-        var text = _texts.Contains(name, StringComparer.Ordinal);
-        var number = _numbers.Contains(name, StringComparer.Ordinal);
-        if (value.ValueKind == JsonValueKind.Null)
-        {
-            return text || number;
-        }
-
-        if (text && value.ValueKind == JsonValueKind.String)
-        {
-            texts[name] = value.GetString()!;   // why: a String kind always has a string
-            return true;
-        }
-
-        if (number && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var parsed))
-        {
-            numbers[name] = parsed;
-            return true;
-        }
-
-        return false;
-    }
-
-    private static string? Get(Dictionary<string, string> texts, string name) => texts.TryGetValue(name, out var text) ? text : null;
-
-    private static string Invalid(string name, JsonElement value) =>
-        _texts.Contains(name, StringComparer.Ordinal) || _numbers.Contains(name, StringComparer.Ordinal)
-            ? $"'{name}' must be {(_texts.Contains(name, StringComparer.Ordinal) ? "a string" : "an integer")}, got {value.ValueKind.ToString().ToLowerInvariant()} (fix: see the tool's input schema)"
-            : $"context_query has no argument '{name}' (fix: q, node, item, symbol, diff, depth, hops, mapVersion, budget, limit, offset)";
 
     /// <summary>An object schema with these properties and no others.</summary>
     internal static JsonElement Schema(JsonObject properties, string[]? required = null)

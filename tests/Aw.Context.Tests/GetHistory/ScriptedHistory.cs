@@ -9,11 +9,17 @@ namespace Aw.Context.Tests.GetHistory;
 /// <param name="script">Answers instead of <paramref name="inner"/>, or null.</param>
 internal sealed class ScriptedHistory(IFileHistory inner, Func<ContextRepo, FileHistoryQuery, CancellationToken, ValueTask<Result<FileHistory>>>? script = null) : IFileHistory
 {
+    private readonly Lock _gate = new();
+
     public List<(ContextRepo Repo, FileHistoryQuery Query)> Calls { get; } = [];
 
     public ValueTask<Result<FileHistory>> Changes(ContextRepo repo, FileHistoryQuery query, CancellationToken cancellationToken)
     {
-        Calls.Add((repo, query));
+        lock (_gate)
+        {
+            Calls.Add((repo, query));
+        }
+
         return script is null ? inner.Changes(repo, query, cancellationToken) : script(repo, query, cancellationToken);
     }
 }

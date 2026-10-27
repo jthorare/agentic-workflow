@@ -78,7 +78,7 @@ public sealed class AgentRuntimeInterpreterTests : AgentRuntimeTestBase
             var parked = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
 
             Assert.Equal(ParkReason.Unavailable, parked.Question?.Reason);
-            Assert.Contains("unavailable after 2 retries", parked.Question?.Question, StringComparison.Ordinal);
+            Assert.Contains("agent session is gone (exit), relaunched 2 times", parked.Question?.Question, StringComparison.Ordinal);
             Assert.Equal(3, _launcher.Requests.Count);
         });
     }

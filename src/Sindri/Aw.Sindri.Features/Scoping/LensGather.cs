@@ -86,7 +86,8 @@ internal static class LensGather
         var lens = new LensBuilder("code", anchors);
         var band = lenses?["bands"]?["code"];
         var files = ScopeJson.Items(band, "files").Concat(ScopeJson.Items(code, "files"));
-        lens.Files(files.Concat(ScopeJson.Items(code, "tests")).Concat(ScopeJson.Items(code?["data"], "files")));
+        lens.Files(files.Concat(ScopeJson.Items(code?["data"], "files")));
+        lens.Files(ScopeJson.Items(code, "tests"), "test");
         lens.Keyed(ScopeJson.Items(code?["data"], "things"), "key", "product");
         foreach (var side in new[] { "callers", "callees" })
         {

@@ -60,6 +60,7 @@ internal static class GraphRows
             return new MapVersion(number, Core.Engine.ContextRepoName.From(r.GetString(1)), Text(r, 2), r.GetInt32(3), GraphText.Time(r.GetString(4)) ?? default, GraphText.Status(r.GetString(5)))
             {
                 Ruleset = Text(r, 6),
+                Dropped = DroppedText.Read(Text(r, 7)),
             };
         }
     }

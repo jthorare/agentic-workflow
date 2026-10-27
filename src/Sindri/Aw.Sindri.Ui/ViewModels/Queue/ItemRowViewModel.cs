@@ -34,11 +34,14 @@ internal sealed class ItemRowViewModel : ObservableObject
     /// <summary>The engine step, or empty before S2.</summary>
     public string Step { get; private set { Set(ref field, value); OnChanged(nameof(HasStep)); OnChanged(nameof(Stage)); OnChanged(nameof(StageIsRaw)); } }
 
-    /// <summary>The stage in plain words, or "Not started".</summary>
-    public string Stage => Labels.StageName(Step).Name;
+    /// <summary>The stage in plain words, or "Not started"; a closed item the API serves no step for shows its state word (Done, Cancelled).</summary>
+    public string Stage => ClosedWithoutStep ? StateWord : Labels.StageName(Step).Name;
 
     /// <summary>True when the stage shows the served step because the app has no plain name for it.</summary>
-    public bool StageIsRaw => Labels.StageName(Step).Raw;
+    public bool StageIsRaw => !ClosedWithoutStep && Labels.StageName(Step).Raw;
+
+    // The list API serves no step for a done or cancelled item: its stage is how it ended, not "Not started".
+    private bool ClosedWithoutStep => string.Equals(Group, "closed", StringComparison.Ordinal) && Step.Length == 0;
 
     /// <summary>True when the API names a step.</summary>
     public bool HasStep => Step.Length > 0;

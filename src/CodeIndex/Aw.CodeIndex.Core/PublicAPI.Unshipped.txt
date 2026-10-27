@@ -986,6 +986,44 @@ Aw.CodeIndex.Core.Values.SymbolRef.IsInitialized() -> bool
 Aw.CodeIndex.Core.Values.SymbolRef.SymbolRef() -> void
 Aw.CodeIndex.Core.Values.SymbolRef.ToString(System.IFormatProvider? provider) -> string!
 Aw.CodeIndex.Core.Values.SymbolRef.Value.get -> string!
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.<Clone>$() -> Aw.CodeIndex.Core.Facade.SymbolVectorsQuery!
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Paths) -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.Equals(Aw.CodeIndex.Core.Facade.SymbolVectorsQuery? other) -> bool
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.SymbolVectorsQuery(System.Collections.Generic.IReadOnlyList<string!>! Paths) -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.Paths.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVector
+Aw.CodeIndex.Core.Facade.SymbolVector.<Clone>$() -> Aw.CodeIndex.Core.Facade.SymbolVector!
+Aw.CodeIndex.Core.Facade.SymbolVector.Deconstruct(out Aw.CodeIndex.Core.Values.SymbolRef Symbol, out string! Path, out string! Name, out Aw.CodeIndex.Core.Model.SymbolKind Kind, out System.ReadOnlyMemory<float> Vector) -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Equals(Aw.CodeIndex.Core.Facade.SymbolVector? other) -> bool
+Aw.CodeIndex.Core.Facade.SymbolVector.SymbolVector(Aw.CodeIndex.Core.Values.SymbolRef Symbol, string! Path, string! Name, Aw.CodeIndex.Core.Model.SymbolKind Kind, System.ReadOnlyMemory<float> Vector) -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Symbol.get -> Aw.CodeIndex.Core.Values.SymbolRef
+Aw.CodeIndex.Core.Facade.SymbolVector.Symbol.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Path.get -> string!
+Aw.CodeIndex.Core.Facade.SymbolVector.Path.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Name.get -> string!
+Aw.CodeIndex.Core.Facade.SymbolVector.Name.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Kind.get -> Aw.CodeIndex.Core.Model.SymbolKind
+Aw.CodeIndex.Core.Facade.SymbolVector.Kind.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVector.Vector.get -> System.ReadOnlyMemory<float>
+Aw.CodeIndex.Core.Facade.SymbolVector.Vector.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.<Clone>$() -> Aw.CodeIndex.Core.Facade.SymbolVectorsView!
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Deconstruct(out Aw.CodeIndex.Core.Facade.AnswerStamp! Stamp, out string! Model, out System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Facade.SymbolVector!>! Vectors, out System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Equals(Aw.CodeIndex.Core.Facade.SymbolVectorsView? other) -> bool
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.SymbolVectorsView(Aw.CodeIndex.Core.Facade.AnswerStamp! Stamp, string! Model, System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Facade.SymbolVector!>! Vectors, System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Stamp.get -> Aw.CodeIndex.Core.Facade.AnswerStamp!
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Stamp.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Model.get -> string!
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Model.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Vectors.get -> System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Facade.SymbolVector!>!
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Vectors.init -> void
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Missing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.CodeIndex.Core.Facade.SymbolVectorsView.Missing.init -> void
+Aw.CodeIndex.Core.Facade.ICodeIndex.SymbolVectors(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, Aw.CodeIndex.Core.Facade.SymbolVectorsQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.SymbolVectorsView!>!>
+Aw.CodeIndex.Core.Ports.IIndexReader.SymbolVectors(System.Collections.Generic.IReadOnlyList<string!>! paths, string! model, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.CodeIndex.Core.Facade.SymbolVector!>!>!>
+const Aw.CodeIndex.Core.CodeIndexRules.MaxSymbolVectorPaths = 2000 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.EmbedBatchSize = 32 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.EmbedTextMaxCharacters = 6000 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.FileBatchSize = 200 -> int
@@ -1004,6 +1042,15 @@ const Aw.CodeIndex.Core.CodeIndexRules.NearCloneThreshold = 0.8 -> double
 const Aw.CodeIndex.Core.CodeIndexRules.SchemaVersion = 1 -> int
 const Aw.CodeIndex.Core.CodeIndexRules.SignatureMaxCharacters = 2000 -> int
 const Aw.CodeIndex.Core.CodeIndexSettings.DefaultEmbeddingsUrl = "http://127.0.0.1:11434" -> string!
+override Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.Equals(object? obj) -> bool
+override Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.GetHashCode() -> int
+override Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.ToString() -> string!
+override Aw.CodeIndex.Core.Facade.SymbolVector.Equals(object? obj) -> bool
+override Aw.CodeIndex.Core.Facade.SymbolVector.GetHashCode() -> int
+override Aw.CodeIndex.Core.Facade.SymbolVector.ToString() -> string!
+override Aw.CodeIndex.Core.Facade.SymbolVectorsView.Equals(object? obj) -> bool
+override Aw.CodeIndex.Core.Facade.SymbolVectorsView.GetHashCode() -> int
+override Aw.CodeIndex.Core.Facade.SymbolVectorsView.ToString() -> string!
 override Aw.CodeIndex.Core.CodeIndexSettings.Equals(object? obj) -> bool
 override Aw.CodeIndex.Core.CodeIndexSettings.GetHashCode() -> int
 override Aw.CodeIndex.Core.CodeIndexSettings.ToString() -> string!
@@ -1190,6 +1237,12 @@ override Aw.CodeIndex.Core.Values.RepoName.ToString() -> string!
 override Aw.CodeIndex.Core.Values.SymbolRef.Equals(object? obj) -> bool
 override Aw.CodeIndex.Core.Values.SymbolRef.GetHashCode() -> int
 override Aw.CodeIndex.Core.Values.SymbolRef.ToString() -> string!
+static Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.operator !=(Aw.CodeIndex.Core.Facade.SymbolVectorsQuery? left, Aw.CodeIndex.Core.Facade.SymbolVectorsQuery? right) -> bool
+static Aw.CodeIndex.Core.Facade.SymbolVectorsQuery.operator ==(Aw.CodeIndex.Core.Facade.SymbolVectorsQuery? left, Aw.CodeIndex.Core.Facade.SymbolVectorsQuery? right) -> bool
+static Aw.CodeIndex.Core.Facade.SymbolVector.operator !=(Aw.CodeIndex.Core.Facade.SymbolVector? left, Aw.CodeIndex.Core.Facade.SymbolVector? right) -> bool
+static Aw.CodeIndex.Core.Facade.SymbolVector.operator ==(Aw.CodeIndex.Core.Facade.SymbolVector? left, Aw.CodeIndex.Core.Facade.SymbolVector? right) -> bool
+static Aw.CodeIndex.Core.Facade.SymbolVectorsView.operator !=(Aw.CodeIndex.Core.Facade.SymbolVectorsView? left, Aw.CodeIndex.Core.Facade.SymbolVectorsView? right) -> bool
+static Aw.CodeIndex.Core.Facade.SymbolVectorsView.operator ==(Aw.CodeIndex.Core.Facade.SymbolVectorsView? left, Aw.CodeIndex.Core.Facade.SymbolVectorsView? right) -> bool
 static Aw.CodeIndex.Core.CodeIndexCoreServiceCollectionExtensions.AddCodeIndexCore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.CodeIndex.Core.CodeIndexErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
 static Aw.CodeIndex.Core.CodeIndexSettings.Create(Aw.CodeIndex.Core.CodeIndexSettingsInput? input) -> Aw.Kernel.Result<Aw.CodeIndex.Core.CodeIndexSettings!>!

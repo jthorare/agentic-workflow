@@ -195,8 +195,8 @@ public sealed class AgentsPageTests : FrameHost
         Assert.StartsWith(Labels.AllProviders, Heard.Name(Named<ComboBox>(window, "ProviderFilter")), StringComparison.Ordinal);
         Assert.StartsWith(Labels.AllStates, Heard.Name(Named<ComboBox>(window, "StateFilter")), StringComparison.Ordinal);
         Assert.StartsWith(Labels.AllRepos, Heard.Name(Named<ComboBox>(window, "RepoFilter")), StringComparison.Ordinal);
-        shell.Agents.FilterState("running");
+        shell.Agents.FilterState("Working");
         Dispatcher.UIThread.RunJobs();
-        Assert.StartsWith("running", Heard.Name(Named<ComboBox>(window, "StateFilter")), StringComparison.Ordinal);
+        Assert.StartsWith("Working", Heard.Name(Named<ComboBox>(window, "StateFilter")), StringComparison.Ordinal);
     });
 }

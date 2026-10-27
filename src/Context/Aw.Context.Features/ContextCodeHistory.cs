@@ -4,12 +4,11 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.GetCode;
-using Aw.Context.Features.GetConceptMembers;
-using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
@@ -26,9 +25,21 @@ internal sealed class ContextCodeHistory(
     IService<GetSubgraphRequest, SubgraphView> subgraph,
     IService<GetWholeMapRequest, WholeMapView> wholeMap,
     IService<SearchMapRequest, MapSearchView> search,
-    IService<GetConceptsRequest, ConceptsView> concepts,
-    IService<GetConceptMembersRequest, ConceptMembersView> members) : IContextCode, IContextHistory, IContextConcepts
+    ContextConceptReads conceptReads,
+    ContextScopeGraph scopeGraphs) : IContextCode, IContextHistory, IContextConcepts
 {
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        scopeGraphs.Build(query, scope, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) =>
+        scopeGraphs.Remember(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) =>
+        scopeGraphs.Read(instanceAddress, runToken, read, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
+        scopeGraphs.Reads(instanceAddress, runToken, cancellationToken);
+
     public ValueTask<Result<CodeView>> Code(IReadOnlyList<string> anchors, bool draft, string? mapVersion, ContextScope scope, CancellationToken cancellationToken) =>
         code.Handle(new GetCodeRequest(anchors, draft, mapVersion, scope), cancellationToken);
 
@@ -45,8 +56,11 @@ internal sealed class ContextCodeHistory(
         search.Handle(new SearchMapRequest(query, scope), cancellationToken);
 
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
+        conceptReads.Concepts(query, scope, cancellationToken);
 
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        members.Handle(new GetConceptMembersRequest(query, scope), cancellationToken);
+        conceptReads.ConceptMembers(query, scope, cancellationToken);
+
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        conceptReads.ConceptGlossary(query, scope, cancellationToken);
 }

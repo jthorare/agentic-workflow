@@ -22,16 +22,28 @@ internal static class ConceptNodes
         if (plan.Pin is { } pin)
         {
             var label = Clean(pin.Name) is { Length: > 0 } pinned ? pinned : Humanize(plan.Slug);
-            return new Built(new GraphNode(key, label, Provenance.Human, 1.0, Evidence(plan, view), Attributes(pin.Summary ?? Summary(plan, view), "override", plan.Seed)), plan);
+            return new Built(new GraphNode(key, label, Provenance.Human, 1.0, Evidence(plan, view), Attributes(pin.Summary ?? Summary(plan, view), "override", plan.Seed, plan.Terms)), plan);
         }
 
-        if (names?.BySeed.GetValueOrDefault(plan.Seed) is { } named && Clean(named.Name) is { Length: > 0 } good && !LooksLikeIdentifier(good))
+        if (Named(plan, view, names) is { } model)
         {
-            var summary = string.IsNullOrWhiteSpace(named.Summary) ? Summary(plan, view) : named.Summary.Trim();
-            return new Built(new GraphNode(key, good, Provenance.Model, 0.7, Evidence(plan, view), Attributes(summary, "derived", plan.Seed)), plan);
+            return new Built(new GraphNode(key, model.Label, Provenance.Model, 0.7, Evidence(plan, view), Attributes(model.Summary, "derived", plan.Seed, plan.Terms)), plan);
         }
 
-        return new Built(new GraphNode(key, Humanize(view.Label(plan.Seed)), Provenance.Deterministic, 0.5, Evidence(plan, view), Attributes(Summary(plan, view), "derived", plan.Seed)), plan);
+        return new Built(new GraphNode(key, Humanize(view.Label(plan.Seed)), Provenance.Deterministic, 0.5, Evidence(plan, view), Attributes(Summary(plan, view), "derived", plan.Seed, plan.Terms)), plan);
+    }
+
+    // A name from the scan's hint, else from the model namer when it passes LooksLikeIdentifier; the summary is the model's when it gave one.
+    private static (string Label, string Summary)? Named(PlannedConcept plan, ConceptView view, ConceptNames? names)
+    {
+        var named = names?.BySeed.GetValueOrDefault(plan.Seed);
+        var summary = string.IsNullOrWhiteSpace(named?.Summary) ? Summary(plan, view) : named.Summary.Trim();
+        if (plan.Name is { } hinted && Clean(hinted) is { Length: > 0 } hintName)
+        {
+            return (hintName, summary);
+        }
+
+        return named is not null && Clean(named.Name) is { Length: > 0 } good && !LooksLikeIdentifier(good) ? (good, summary) : null;
     }
 
     // Every feature goes to the concept (or concepts) that hold it; a record or decision goes with the features it mentions or decides, else to 'concept:other'.
@@ -81,7 +93,7 @@ internal static class ConceptNodes
     }
 
     private static GraphNode Other() =>
-        new(NodeKey.From(ConceptKeys.Other), "Other", Provenance.Deterministic, 0.5, Evidence: null, Attributes("Everything no other concept takes.", "derived", ""));
+        new(NodeKey.From(ConceptKeys.Other), "Other", Provenance.Deterministic, 0.5, Evidence: null, Attributes("Everything no other concept takes.", "derived", "", []));
 
     private static GraphEdge Belongs(NodeKey member, GraphNode concept) => new(member, concept.Key, EdgeType.BelongsTo, concept.Provenance, concept.Confidence);
 
@@ -99,7 +111,7 @@ internal static class ConceptNodes
         return plan.Features.Count == 1 ? $"1 feature: {shown}" : $"{count} features: {shown}{more}";
     }
 
-    private static JsonElement Attributes(string summary, string source, string seed)
+    private static JsonElement Attributes(string summary, string source, string seed, IReadOnlyList<string> terms)
     {
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
@@ -108,6 +120,17 @@ internal static class ConceptNodes
             writer.WriteString("summary", summary);
             writer.WriteString("source", source);
             writer.WriteString("seed", seed);
+            if (terms.Count > 0)
+            {
+                writer.WriteStartArray("terms");
+                foreach (var term in terms)
+                {
+                    writer.WriteStringValue(term);
+                }
+
+                writer.WriteEndArray();
+            }
+
             writer.WriteEndObject();
         }
 

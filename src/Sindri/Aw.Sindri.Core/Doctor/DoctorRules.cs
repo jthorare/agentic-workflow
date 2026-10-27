@@ -109,6 +109,14 @@ public static class DoctorRules
             : new("api", CheckState.Warn, Text($"{endpoint.Url.Authority} answers at epoch {ping.Epoch}, but the lease is at {row?.Epoch ?? 0}"), "sindri stop, then sindri");
     }
 
+    /// <summary>The build: the running control plane is the one 'bin/cs/current' names (#1032).</summary>
+    /// <param name="running">The stamp this process runs from, or null when it isn't an installed build.</param>
+    /// <param name="installed">The stamp 'bin/cs/current' names, or null.</param>
+    /// <returns>The check.</returns>
+    public static DoctorCheck Build(string? running, string? installed) => StaleBuild.Is(running, installed)
+        ? new("build", CheckState.Warn, StaleBuild.Sentence(running!, installed!), StaleBuild.Fix)   // why: Is is true only when both are known
+        : new("build", CheckState.Ok, running is null ? "not running from an installed build" : $"serving {running}", Fix: null);
+
     /// <summary>
     /// The Temporal dev server (engine spec rev 8 §0 "Operations"): it runs on this home's database, answers on loopback,
     /// is the version binaries.lock pins, and has the 'sindri' namespace.

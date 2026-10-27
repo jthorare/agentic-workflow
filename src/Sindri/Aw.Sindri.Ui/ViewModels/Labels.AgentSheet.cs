@@ -97,10 +97,10 @@ internal static partial class Labels
     /// <summary>The sheet's sentence when the answer can't be read.</summary>
     internal const string SessionUnreadable = "This session's answer can't be read by this build of the app.";
 
-    /// <summary>A time in the sheet: the day and the second, in UTC.</summary>
+    /// <summary>A time in the sheet: the day and the second, in the viewer's local time like the rest of the app.</summary>
     /// <param name="at">The time.</param>
     /// <returns>The words.</returns>
-    internal static string SheetTime(DateTimeOffset at) => at.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC";
+    internal static string SheetTime(DateTimeOffset at) => at.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 
     /// <summary>The stale note: the last read failed and the fields are the last read's.</summary>
     /// <param name="error">The failure.</param>

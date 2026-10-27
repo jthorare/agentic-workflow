@@ -30,6 +30,9 @@ public static class TriggerNames
     /// <summary>'workflow cancel', the tracker, or a cancelled parent.</summary>
     public const string Cancel = "cancel";
 
+    /// <summary>The 'rewind' trigger: re-enter an earlier state, keeping every fact.</summary>
+    public const string Rewind = "rewind";
+
     /// <summary>A state or retry timer fired.</summary>
     public const string Deadline = "deadline";
 

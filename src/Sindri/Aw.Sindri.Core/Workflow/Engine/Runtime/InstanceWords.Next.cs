@@ -39,7 +39,7 @@ internal sealed partial record InstanceWords
         var where = park.Mirrors is null ? string.Empty : $" in {ChildName}";
         return park.Reason switch
         {
-            ParkReason.Rounds or ParkReason.NoProgress => $"Parked ({Name(park.Reason.Value)}){where}: {question}.\nGrant more rounds at a terminal, or cancel.",
+            ParkReason.Rounds or ParkReason.NoProgress => $"Parked ({Name(park.Reason.Value)}){where}: {question}.\n{RoundsAnswer(park)}",
             ParkReason.Budget => $"Parked (budget){where}: {question}.\nGrant tokens at a terminal, or cancel.",
             ParkReason.NeedsAnswer when (park.ParkKind ?? park.MirroredParkKind) == ParkKind.Wait => $"Parked{where}: {question}.\nFix the cause, then resume to check again, or cancel.",
             ParkReason.NeedsAnswer => $"Parked (needs-answer){where}: {question}.\nAnswer with --text; the Step runs again with your answer.",
@@ -49,6 +49,22 @@ internal sealed partial record InstanceWords
             ParkReason.SpecConflict => SpecConflict(park),
             ParkReason.NoRuntime or null or _ => $"No runtime for {Block(question)} in this build.\nCancel, or resume in a build that has it.",
         };
+    }
+
+    /// <summary>The way out of a rounds or no-progress park: a grant, and when the run can go back to a step, the rewind that re-runs it on the facts the run holds (#1270).</summary>
+    private string RoundsAnswer(Suspension park)
+    {
+        var targets = TransitionDecision.RewindTargets(Recipe.Recipe, Recipe.Catalog, Instance);
+        if (targets.Count == 0)
+        {
+            return "Grant more rounds at a terminal, or cancel.";
+        }
+
+        var withheld = park.Resume.Withheld?.Transition is { } index && index >= 0 && index < Recipe.Recipe.Transitions.Count && Recipe.Recipe.Transitions[index].From.Contains(targets[0], StringComparer.Ordinal);
+        var rewind = withheld
+            ? $"rewind to re-run {targets[0]} on the same facts (`sindri workflow rewind {Address} --to {targets[0]}`)"
+            : $"rewind to re-run an earlier step on the same facts (`sindri workflow rewind {Address} --to <state>`, one of: {string.Join(", ", targets)})";
+        return $"Grant more rounds at a terminal, {rewind}, or cancel.";
     }
 
     private string SpecConflict(Suspension park)

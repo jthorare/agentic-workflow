@@ -10,7 +10,8 @@ namespace Aw.Sindri.Core.Scheduling;
 /// </summary>
 /// <param name="Name">The service, as <see cref="IScheduledService.Identity"/> names it.</param>
 /// <param name="Cadence">How often it runs when the profile doesn't say.</param>
-public sealed record BuiltInService(ServiceName Name, Cadence Cadence)
+/// <param name="Description">One sentence on what it does, served on GET /sindri/services; null says nothing.</param>
+public sealed record BuiltInService(ServiceName Name, Cadence Cadence, string? Description = null)
 {
     /// <summary>Whether <paramref name="name"/> is a built-in: the build has it and the approved profile does not name it (a profile entry of the same name wins).</summary>
     /// <param name="name">The service.</param>

@@ -19,6 +19,7 @@ internal static class LauncherServiceCollectionExtensions
         return services
             .AddSingleton(static _ => new TmuxSessionHost(new TmuxHostOptions()))
             .AddSingleton<ISessionHost>(static sp => sp.GetRequiredService<TmuxSessionHost>())   // the launcher service polls it for attached clients (API P10a U9)
+            .AddSingleton<ISessionNudges>(static sp => new TmuxSessionNudges(sp.GetRequiredService<TmuxSessionHost>()))
             .AddSingleton<NoSessionHost>()
             .AddSingleton(sp => T3Options(sp, environment))
             .AddSingleton(static sp => new T3Credentials(sp.GetRequiredService<T3Options>(), sp.GetRequiredService<TimeProvider>()))

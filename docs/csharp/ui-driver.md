@@ -50,6 +50,12 @@ A **selector** names an element; every field given must match: `nodeId` (`0/2/1`
 in tree order). The text an element shows is a `TextBlock`'s or `TextBox`'s text, or a content/header that is a string; a label that is a child `TextBlock`
 is that child's text.
 
+**Popups.** A menu, flyout, context menu or popup that Avalonia draws in its own popup window (the default on X11, Win32 and macOS) is not in the window's visual
+tree. The driver follows `Popup.IsOpen` from the moment it starts (a popup opened before that is not seen) and lists the content of each open one as an extra child
+of the window, node ids `p3`, `p3/0`, ... (`p` plus the popup's open number, then child positions), so `tree`, `search`, `wait-for`, `click`, `props` and `screenshot`
+reach a `MenuItem` like any other element. Popups drawn in the window's overlay layer are in the tree already and are not listed twice. Bounds of a popup's
+elements are in its own popup window, not the main window. A popup leaves the tree when it closes, so wait for `notVisible` or `gone` to see it close.
+
 | Verb | Request | Answer |
 |---|---|---|
 | `tree` | `{from?: selector, depth?: 6}` | the element and its children to the depth: id, type, automationId, name, text, visible, enabled, bounds (window coordinates) |
@@ -60,9 +66,14 @@ is that child's text.
 | `type` | `{text, selector?, replace?}` | sets a text box (appends unless `replace`); the focused element when no selector |
 | `key` | `{chord, selector?}` | raises key down and up on the element (focused when none): `Enter`, `Ctrl+K`, `Ctrl+Shift+P` (Avalonia `Key` names) |
 | `scroll` | `{dx, dy, selector?}` | moves the scroll viewer holding (or held by) the element, clamped to its extent |
-| `wait-for` | `{selector, state?: visible, text?, timeoutMs?: 10000}` | polls (50 ms) until the state holds: `exists`, `visible`, `hidden`, `gone`, `enabled`, `disabled`, `textEquals`, `textContains`; else `AW-UIDRIVER-004` |
+| `wait-for` | `{selector, state?: visible, text?, timeoutMs?: 10000}` | polls (50 ms) until the state holds: `exists`, `visible`, `hidden`, `gone`, `notVisible`, `enabled`, `disabled`, `textEquals`, `textContains`; else `AW-UIDRIVER-004` |
 | `screenshot` | `{selector?}` | PNG of the window or one element at scale 1 (`RenderTargetBitmap`) |
 | `window` | `{width?, height?}` | sets the window size when given; answers `{width, height, title}` |
+
+Which wait state for something that goes away: `gone` holds when no node matches at all (the control was removed from the tree); `hidden` needs a node that
+exists with `IsVisible` false. Many views toggle `IsVisible` and keep the control, so for a spinner or a banner use `notVisible`: it holds when no match is
+visible, whether it was removed or hidden (it looks at every match, not only the one the index picks). Use `gone` or `hidden` only when the check cares
+which of the two happened. A `gone` wait that times out while a hidden match exists says so in its error.
 
 Click goes through automation peers rather than synthetic pointer events: it runs the same commands a person's click does for buttons, toggles, list items
 and expanders. An element that reacts only to raw pointer input needs an `AutomationProperties` peer (or a `Command`) to be clickable; that is the app's one

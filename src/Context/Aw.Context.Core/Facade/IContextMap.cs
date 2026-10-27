@@ -1,3 +1,4 @@
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
@@ -118,6 +119,16 @@ public interface IContextMap : IScopeProposals
     /// <param name="expectedVersion">The draft the caller means (the automatic publish passes the one it decided about), or null for whichever is latest (the human path). The pass checks it on every read, and its rows are appended only while that draft is still the latest.</param>
     /// <returns>What it decided, or SND-CONTEXT-001/004/020/044/047/190 (190: <paramref name="expectedVersion"/> is given and the latest draft is another number, or there is none).</returns>
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null);
+
+    /// <summary>
+    /// The concept scan (owner, q110): a model reads a compact summary of the latest draft, proposes product concepts and the searches that test them, the engine runs the searches over the draft, and a second model call turns the hits
+    /// into concept hints that are stored on that draft. The graph, the overrides and the pins are not touched. A model that does not answer is an outcome of the report, not an error.
+    /// </summary>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the scan.</param>
+    /// <param name="expectedVersion">The draft the caller means, or null for whichever is latest.</param>
+    /// <returns>What the scan did, or SND-CONTEXT-001/004/044/190.</returns>
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null);
 
     /// <summary>Makes the latest draft current (a protected command with the typed challenge: Sindri checks the caller first).</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>

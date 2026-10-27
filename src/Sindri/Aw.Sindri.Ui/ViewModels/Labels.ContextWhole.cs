@@ -74,6 +74,12 @@ internal static partial class Labels
     /// <summary>The map's accessible name.</summary>
     internal const string ContextWholeCanvasName = "The whole map";
 
+    /// <summary>The map canvas's accessible name once bands are drawn: the bands top to bottom, each with what it holds.</summary>
+    /// <param name="bands">Each band's title and what it holds ("2 decisions · 3 records"; empty for nothing).</param>
+    /// <returns>"The whole map: Why (2 decisions), Product (2 features), Code (2 code files)".</returns>
+    internal static string ContextWholeCanvasBands(IEnumerable<(string Title, string Meta)> bands) =>
+        $"{ContextWholeCanvasName}: {string.Join(", ", bands.Select(b => b.Meta.Length > 0 ? $"{b.Title} ({b.Meta})" : b.Title))}";
+
     /// <summary>A kind and its count, in people's words.</summary>
     /// <param name="kind">The node kind.</param>
     /// <param name="count">How many.</param>
@@ -100,4 +106,16 @@ internal static partial class Labels
         ("code", false) => "code files",
         (_, _) => kind,
     };
+
+    /// <summary>The line by the head when the live map was built under older map rules (the CLI's words).</summary>
+    internal const string ContextRulesOlder = "Built under older map rules; a refresh will rebuild it (sindri context map refresh)";
+
+    /// <summary>The name of the list of the map's items.</summary>
+    internal const string ContextMapItems = "Map items";
+
+    /// <summary>One item of that list: what it is called and what it is.</summary>
+    /// <param name="label">The words the map shows.</param>
+    /// <param name="what">The kind, or how many items a feature holds.</param>
+    /// <returns>"Tab groups, feature".</returns>
+    internal static string ContextMapItemName(string label, string what) => $"{label}, {what}";
 }

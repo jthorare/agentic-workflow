@@ -41,12 +41,15 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddSingleton(ContextSyncGapsService.BuiltIn)
             .AddScoped<IScheduledService>(RefreshService)
             .AddSingleton(ContextMapRefreshService.BuiltIn)
+            .AddScoped<IScheduledService, ContextConceptScanService>()
+            .AddSingleton(ContextConceptScanService.BuiltIn)
             .AddScoped<SyncGaps>()
             .AddScoped<ContextInputScopes>()
             .AddScoped<ContextInputFacts>()
             .AddScoped<IScopingTextShape, ContextTextShape>()
             .AddScoped<IScopeRunProposals, ScopeRunProposals>()
             .AddStepInput<ContextLensesInput>()
+            .AddStepInput<ContextGraphInput>()
             .AddStepInput<ContextHistoryInput>()
             .AddStepInput<ContextRetrieveInput>()
             .AddStepInput<ContextCodeInput>()
@@ -80,6 +83,7 @@ internal static class ContextSlicesServiceCollectionExtensions
     {
         _ = services.AddScoped<ConceptsNotReady>().AddScoped<IValidator<GetContextConceptsRequest>, AcceptAllValidator<GetContextConceptsRequest>>().AddQuery<GetContextConceptsRequest, ConceptsView, GetContextConceptsService>();
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
+        _ = services.AddScoped<IValidator<GetContextConceptGlossaryRequest>, AcceptAllValidator<GetContextConceptGlossaryRequest>>().AddQuery<GetContextConceptGlossaryRequest, ConceptGlossaryView, GetContextConceptGlossaryService>();
         return services;
     }
 

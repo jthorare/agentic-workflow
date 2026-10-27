@@ -37,4 +37,36 @@ internal static partial class Labels
 
     /// <summary>The word for an anchor node in a band.</summary>
     internal const string ContextAnchorTag = "topic";
+
+    /// <summary>The line when a question or a name is not on the map.</summary>
+    /// <param name="asked">What was typed.</param>
+    /// <returns>"Nothing on the map matches 'Tab groups'. Try a topic such as feature:name."</returns>
+    internal static string ContextNothingMatches(string asked) =>
+        $"Nothing on the map matches '{asked}'. Try a topic such as feature:name.";
+
+    /// <summary>The line when a name is the name of several items.</summary>
+    /// <param name="asked">What was typed.</param>
+    /// <returns>"'Pane' names several items. Pick one."</returns>
+    internal static string ContextSeveralMatch(string asked) => $"'{asked}' names several items. Pick one.";
+
+    /// <summary>A refusal of a search in the app's own words: the miss and the several-match codes are worded here, any other keeps the server's sentence without its command-line hint.</summary>
+    /// <param name="code">The refusal's code.</param>
+    /// <param name="message">The server's sentence.</param>
+    /// <param name="asked">What was typed.</param>
+    /// <returns>The words for the banner.</returns>
+    internal static string ContextRefusal(string code, string message, string asked)
+    {
+        if (string.Equals(code, "SND-CONTEXT-003", StringComparison.Ordinal))
+        {
+            return ContextNothingMatches(asked);
+        }
+
+        if (string.Equals(code, "SND-CONTEXT-037", StringComparison.Ordinal))
+        {
+            return ContextSeveralMatch(asked);
+        }
+
+        var hint = message.IndexOf(" (fix:", StringComparison.Ordinal);
+        return hint < 0 ? message : message[..hint];
+    }
 }

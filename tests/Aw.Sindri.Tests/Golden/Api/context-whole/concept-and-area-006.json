@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CONTEXT-006",
-  "status": 400,
-  "detail": "'area' and 'concept' each open one part of the map (fix: ask for one of them)",
-  "traceId": "<trace>"
-}

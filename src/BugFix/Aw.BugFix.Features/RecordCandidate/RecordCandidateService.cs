@@ -28,8 +28,9 @@ internal sealed class RecordCandidateService(IStateStore store, IGit git, WorkTr
             .Map(static checkout => checkout.Head)
             .Bind(head => OnBaseline(request.WorkingDirectory, baseline.Commit, head))
             .Bind(head => CandidateRule.CanRecord(state, head, request.Hypothesis).Map(_ => head));
-        var added = commit.Bind(head => git.AddedFiles(request.WorkingDirectory, baseline.Commit, head));
-        var changed = added.Bind(_ => git.ChangedFiles(request.WorkingDirectory, baseline.Commit, commit.Value))
+        var from = commit.Map(head => git.NetBase(request.WorkingDirectory, baseline.Commit, head));
+        var added = from.Bind(net => git.AddedFiles(request.WorkingDirectory, net, commit.Value));
+        var changed = added.Bind(_ => git.ChangedFiles(request.WorkingDirectory, from.Value, commit.Value))
             .Bind(paths => Untouched(paths, added.Value, check, request.AllowTestChanges));
         if (changed.IsError)
         {

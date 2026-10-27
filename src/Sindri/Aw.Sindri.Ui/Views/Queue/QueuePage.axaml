@@ -107,23 +107,23 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <StackPanel x:Name="QueueClosed">
+          <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedArrow}" AutomationProperties.AccessibilityView="Raw" />
+              <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedHeader}" />
+            </StackPanel>
+          </ToggleButton>
+          <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="queue:ItemRowViewModel">
+                <rows:ItemRow />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
       </StackPanel>
     </Border>
-    <StackPanel x:Name="QueueClosed">
-      <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
-        <StackPanel Orientation="Horizontal" Spacing="8">
-          <TextBlock Classes="caption subtle" Text="▸" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedHeader}" />
-        </StackPanel>
-      </ToggleButton>
-      <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="queue:ItemRowViewModel">
-            <rows:ItemRow />
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </StackPanel>
     <TextBlock x:Name="QueueFooter" Classes="caption subtle" Text="{Binding Queue.FooterText}" AutomationProperties.Name="{Binding Queue.FooterText}" />
   </StackPanel>
 </UserControl>

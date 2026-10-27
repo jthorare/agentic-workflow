@@ -92,6 +92,7 @@ internal sealed partial class RecipeWorkflow
         var run = AgentRunOf(instance, open, step);
         var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
         var workspace = (step.Use == _ciFix ? AgentWorkspace : PhaseWorkspaceLaunch) && instance.Facts.TryGetValue(_workspaceKey, out var held) ? held : null;   // LN-WF2: an instance that holds a workspace (the phase's worktree, or docs sync's own) runs its agent Steps there
+        _launchedAt = _launchedAt?.Entry == open.Token.Entry ? _launchedAt : (open.Token.Entry, new DateTimeOffset(Workflow.UtcNow));
         var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(Launch(run, item, step, instance, workspace)), AgentOptions(_launchCall, open, state, cancel.Token));
         var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
         if (end == AgentEnd.Over)
@@ -111,17 +112,6 @@ internal sealed partial class RecipeWorkflow
         _instance = filled;   // why: the run's launch is part of the instance the Query and the validator read; no timer or state changed
         return (filled, false);
     }
-
-    // What the launch activity is given: the run, the item, the workspace the Step launches in, and what the Step's 'bundle' needs of the pack (LN-WF5): its 'subject' and the stored lens queue.
-    private AgentLaunchRun Launch(AgentStepRun run, FactValue? item, StepUse step, WorkflowInstance instance, FactValue? workspace) =>
-        new(run, item, workspace, Literal(step, "bundle"), Literal(step, "subject"), instance.Facts.TryGetValue(FactKey.From("fact:lensQueue"), out var queue) ? queue : null, instance.Facts, Payloads(step));
-
-    // The payload facts this Step writes (the recipe types them), so its brief states their shape.
-    private IReadOnlyList<FactKey> Payloads(StepUse step) =>
-        _recipe!.Catalog.Find(step.Use) is { } descriptor ? PayloadFacts.OutputsOf(_recipe.Recipe, descriptor) : [];   // why: the loop runs only after RunAsync set _recipe
-
-    private static string? Literal(StepUse step, string name) =>
-        step.With.TryGetValue(name, out var value) && value.Literal is { ValueKind: System.Text.Json.JsonValueKind.String } text ? text.GetString() : null;
 
     private static async Task<AgentLaunched> Launching(Task<AgentLaunched> launching)
     {
@@ -155,9 +145,16 @@ internal sealed partial class RecipeWorkflow
         }
 
         var ended = await watching.ConfigureAwait(true);
+        var recovery = await Recover(running).ConfigureAwait(true);
         var closed = await Close(running, measure: true).ConfigureAwait(true);
+        if (recovery?.Outcome is { } outcome)
+        {
+            var recovered = new StepCompleted("agent:recovered", open.Token, OutcomeName.From(outcome), recovery.Outputs, closed.Tokens, StepRuntime.Agent, recovery.Sha!, EmptyDiff: closed.EmptyDiff);   // why: an outcome comes with its digest
+            return await Decided(applied, open, recovered, reportId: null, context).ConfigureAwait(true);
+        }
+
         var reason = AgentEndReasons.Of(ended.EndedAs);
-        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, ended.Detail), reportId: null, context).ConfigureAwait(true);
+        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, recovery?.Reason ?? ended.Detail), reportId: null, context).ConfigureAwait(true);
     }
 
     // The session's own report: closes the run (usage, diff signal, stop), then decides it like a desk report and answers the Update that carried it.

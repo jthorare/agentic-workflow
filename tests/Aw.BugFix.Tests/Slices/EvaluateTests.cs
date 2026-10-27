@@ -160,6 +160,36 @@ public sealed class EvaluateTests : IDisposable
         Assert.Equal(BugFixStatus.Active, _w.Now.Status);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(JudgeDecision.Partial)]
+    [InlineData(JudgeDecision.Unresolved)]
+    public async Task A_decision_without_reasons_is_retried_once_like_an_escalation_and_never_recorded_as_a_verdict(JudgeDecision decision)
+    {
+        var c1 = await _w.Candidate();
+        _ = World.Ok(await _w.RunAgainst(c1));
+        var unreasoned = A.Verdict(decision) with { Reasons = [] };
+        _ = _w.Judge.Answers(unreasoned).Answers(unreasoned);
+
+        var first = World.Ok(await Judge(c1));
+        Assert.Equal(JudgeDecision.Escalated, first.Decision);
+        Assert.Null(_w.Now.Candidates[0].Verdict);
+        Assert.StartsWith("judge c1 again", World.Ok(await Resume()).Next, StringComparison.Ordinal);
+
+        var second = World.Ok(await Judge(c1));
+        Assert.Equal(JudgeDecision.Unresolved, second.Decision);
+        Assert.StartsWith("escalated", second.ReasonCode, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_resolved_decision_without_reasons_is_recorded()
+    {
+        var c1 = await _w.Candidate();
+        _ = World.Ok(await _w.RunAgainst(c1));
+        _ = _w.Judge.Answers(A.Verdict(JudgeDecision.Resolved) with { Reasons = [] });
+
+        Assert.Equal(JudgeDecision.Resolved, World.Ok(await Judge(c1)).Decision);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task The_judge_input_caps_a_runaway_diff()
     {

@@ -151,7 +151,7 @@ internal sealed class TemporalInstanceRuntime(TemporalFrontend frontend, Tempora
     {
         StepCompleted report => deskReports.Complete(address, nonce, report, cancellationToken),   // unit (c)
         AnswerGiven or CommandFired or CancelRequested => commands.Send(address, nonce, command, cancellationToken),   // unit (b)
-        TakeoverRequested or HandbackRequested => commands.Send(address, nonce, command, cancellationToken),   // engine P5
+        TakeoverRequested or HandbackRequested or RewindRequested => commands.Send(address, nonce, command, cancellationToken),   // engine P5
         _ => throw new NotSupportedException($"the '{command.Name}' trigger is no command Update"),
     };
 

@@ -93,7 +93,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
             }
         }
 
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Current) { Ruleset = map.Ruleset };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Current) { Ruleset = map.Ruleset, Dropped = map.Dropped };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? (MapHead.IsCommit(map.Commit) ? [new MapHead(map.Repo, map.Commit!, OnDefault: true)] : []);
         (_hold, _chain) = (null, null);
@@ -125,7 +125,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
         }
 
         _ = DropDrafts(v => true);
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? [];
         _ = Append(map.Overrides);
@@ -152,7 +152,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
             return Results.Failure<MapVersion>(ContextErrors.PromoteRefused.With("the draft is no longer the open draft; nothing was replaced"));
         }
 
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? copied;
         _ = Append(map.Overrides);

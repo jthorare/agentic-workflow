@@ -45,8 +45,11 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-map-refresh");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Builds the context map again so it stays current.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one heads read, one state read and two jobs reads.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 

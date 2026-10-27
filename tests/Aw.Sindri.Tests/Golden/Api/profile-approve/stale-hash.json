@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   "title": "SND-PROFILE-003",
   "status": 409,
-  "detail": "2060cc… isn't the live profile's hash (70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261); run 'sindri profile approve' to see it and what changed",
+  "detail": "2060cc… isn't the live profile's hash; the live hash is 70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261 (fix: sindri profile approve 70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261)",
   "traceId": "<trace>"
 }

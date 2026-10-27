@@ -50,7 +50,7 @@ internal sealed partial class ContextPageViewModel
             return false;
         }
 
-        var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. keys.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
+        var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. keys.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
         if (located.IsError)
         {
             Problem = located.Error.Message;
@@ -83,7 +83,7 @@ internal sealed partial class ContextPageViewModel
         var drawn = 0;
         for (var next = 0; next < touched.Count && drawn < SoftNodeGuard; next += ReadBatch)
         {
-            var batch = await Task.WhenAll(touched.Skip(next).Take(ReadBatch).Select(area => Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo), cancellationToken))).ConfigureAwait(true);
+            var batch = await Task.WhenAll(touched.Skip(next).Take(ReadBatch).Select(area => Ports.Api.WholeMap(api, new WholeMapQuery("nodes", area, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken))).ConfigureAwait(true);
             reads.AddRange(batch);
             drawn += batch.Sum(r => r.IsError ? 0 : r.Value.Nodes?.Count ?? 0);
         }
@@ -123,7 +123,7 @@ internal sealed partial class ContextPageViewModel
             return true;
         }
 
-        if (Whole.SearchActive)
+        if (Whole.SearchActive || Concepts.SearchActive)
         {
             ClearSearch();   // the box empties too
             return true;
@@ -143,9 +143,15 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when the camera was on an answer.</returns>
     internal bool BackToWholeMap()
     {
+        var ended = Concepts.EndSearch();   // the concept layer's own search ends the same way
+        if (ended)
+        {
+            ChangedConcepts();
+        }
+
         if (!Whole.IsZoomed && !Whole.SearchActive)
         {
-            return false;
+            return ended;
         }
 
         CloseInspector();

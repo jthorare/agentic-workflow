@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -14,6 +15,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
@@ -141,6 +143,9 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => NoMap<CleanupReport>();
 
     /// <inheritdoc/>
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => NoMap<ConceptScanReport>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<MapPublishState>> Held(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new MapPublishState(Hold: null, LatestDraft: null, Current: null, CurrentHeads: [])));   // no map, so nothing is held
 
@@ -201,6 +206,9 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptMembersView>();
 
     /// <inheritdoc/>
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptGlossaryView>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new MapHealth("context:map", MapHealthState.Warn, "no map yet", "sindri context map import <file>")));
 
@@ -215,4 +223,41 @@ public sealed class FakeContextEngine : IContextEngine
     private static ValueTask<Result<T>> NoMap<T>() => ValueTask.FromResult<Result<T>>(ContextErrors.NoMap.With("this test engine has no map"));
 
     private static Error Down() => ContextErrors.AllSourcesUnavailable.With("this test engine answers settings checks only");
+
+    /// <summary>What <see cref="ScopeGraph"/> answers; SND-CONTEXT-153 unless a test sets a graph.</summary>
+    public Result<ScopeGraphView> ScopeGraphAnswer { get; set; } = ContextErrors.ScopeGraphUnavailable.With("the fake builds no scoping graph");
+
+    /// <summary>What <see cref="GraphReads"/> answers; SND-CONTEXT-153 unless a test sets the reads.</summary>
+    public Result<IReadOnlyList<GraphRead>> GraphReadsAnswer { get; set; } = ContextErrors.ScopeGraphUnavailable.With("the fake keeps no graph call log");
+
+    /// <summary>The graph queries asked, in order.</summary>
+    public IList<ScopeGraphQuery> ScopeGraphQueries { get; } = [];
+
+    /// <inheritdoc/>
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken)
+    {
+        ScopeGraphQueries.Add(query);
+        return ValueTask.FromResult(ScopeGraphAnswer);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(GraphReadsAnswer);
+
+    /// <summary>What <see cref="RememberScopeGraph"/> answers; success unless a test sets an error.</summary>
+    public Result<bool> RememberAnswer { get; set; } = Results.Success(value: true);
+
+    /// <summary>The graphs remembered, in order, by instance.</summary>
+    public IList<(string Instance, ScopeGraphView Graph)> Remembered { get; } = [];
+
+    /// <inheritdoc/>
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken)
+    {
+        Remembered.Add((instanceAddress, view));
+        return ValueTask.FromResult(RememberAnswer);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("The fake checks no scoped reads");
 }

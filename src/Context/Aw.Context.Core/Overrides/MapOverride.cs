@@ -42,6 +42,12 @@ public sealed record MapOverride(
     /// <summary>The 'who' of an undo row a build writes for an accept of an 'implements' edge from a file its repo demotes (see <see cref="UndoingDemote"/>).</summary>
     public const string DemoteMarker = "service:demote-cut";
 
+    /// <summary>The 'who' of every decision the engine itself writes (an accept of a draft's deterministic items, a scope proposal).</summary>
+    public const string EngineWho = "service:engine";
+
+    /// <summary>The 'who' of an undo row a build writes for an engine accept of an edge the new map rules no longer find (see <see cref="UndoingRedecide"/>).</summary>
+    public const string RedecideMarker = "service:rules-redecide";
+
     /// <summary>Whether this is an undo row a deny cut wrote (never a person's).</summary>
     [JsonIgnore]
     public bool IsCutUndo => Action == OverrideAction.Undo && Who == CutMarker;
@@ -64,6 +70,16 @@ public sealed record MapOverride(
     {
         ArgumentNullException.ThrowIfNull(decision);
         return new MapOverride(OverrideAction.Undo, decision.Target, DemoteMarker, at, Undoes: decision.ToId());
+    }
+
+    /// <summary>The undo row that takes an engine accept out with the edge a rules change no longer finds.</summary>
+    /// <param name="decision">The accept.</param>
+    /// <param name="at">When.</param>
+    /// <returns>The undo row, marked as the rules re-decision's.</returns>
+    public static MapOverride UndoingRedecide(MapOverride decision, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(decision);
+        return new MapOverride(OverrideAction.Undo, decision.Target, RedecideMarker, at, Undoes: decision.ToId());
     }
 
     /// <summary>Whether this reject names a proposal of the given <see cref="RejectionIdentity"/>: any proposal when it has no identity, otherwise by the identity it was written with or the one the deny cut gave it.</summary>

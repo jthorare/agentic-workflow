@@ -155,24 +155,12 @@ public sealed class ContextHistoryInputTests
     }
 
     [Fact]
-    public async Task An_absent_window_reads_all_history_and_says_so_in_a_note()
+    public async Task An_absent_window_reads_all_history()
     {
         var history = new StubHistory(() => ContextHistoryTextTests.View());
 
-        var filled = await Input(history).Fill(Context(ContextInputFixtures.Web, window: null, "feature:a"), TestContext.Current.CancellationToken);
+        _ = await Input(history).Fill(Context(ContextInputFixtures.Web, window: null, "feature:a"), TestContext.Current.CancellationToken);
 
-        Assert.Contains("note: no history window reached this input", filled.Value.Sections["history"], StringComparison.Ordinal);
-        _ = Assert.Single(history.Calls);
-    }
-
-    [Fact]
-    public async Task A_window_naming_a_profile_key_reads_all_history_and_names_the_key_in_a_note()
-    {
-        var history = new StubHistory(() => ContextHistoryTextTests.View());
-
-        var filled = await Input(history).Fill(Context(ContextInputFixtures.Web, JsonDocument.Parse("{\"profile\":\"workflow.scoping.historyWindow\"}").RootElement.Clone(), "feature:a"), TestContext.Current.CancellationToken);
-
-        Assert.Contains("note: window from profile workflow.scoping.historyWindow is not available to this input; reading all history", filled.Value.Sections["history"], StringComparison.Ordinal);
         var (_, window, _) = Assert.Single(history.Calls);
         Assert.Equal(HistoryWindow.Open, window);
     }

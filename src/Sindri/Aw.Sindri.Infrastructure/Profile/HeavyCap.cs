@@ -9,19 +9,25 @@ internal static class HeavyCap
     /// <summary>The slots a box with no cap file and no AW_HEAVY_SLOTS has (the heavy wrapper's default).</summary>
     private const int DefaultSlots = 1;
 
-    /// <summary>The cap now: the cap file when it holds a whole number of 1 or more, else AW_HEAVY_SLOTS read as the lock reads it (unset or empty is one slot, anything but a whole number of 1 or more is one slot).</summary>
+    /// <summary>The cap now: <see cref="Slots"/> as a box limit.</summary>
     /// <param name="environment">Reads an environment variable.</param>
     /// <param name="stateRoot">The state root (AW_STATE_DIR or ~/.agentic-workflow).</param>
-    internal static BoxLimits Read(Func<string, string?> environment, string stateRoot)
+    internal static BoxLimits Read(Func<string, string?> environment, string stateRoot) => new(Slots(environment, stateRoot));
+
+    /// <summary>The one slot-count rule: the cap file when it holds a whole number of 1 or more, else AW_HEAVY_SLOTS read as the lock reads it (unset or empty is one slot, anything but a whole number of 1 or more is one slot). The heavy lock and the profile's box limit both read it here.</summary>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="stateRoot">The state root (AW_STATE_DIR or ~/.agentic-workflow).</param>
+    /// <returns>The slot count, at least 1.</returns>
+    internal static int Slots(Func<string, string?> environment, string stateRoot)
     {
         ArgumentNullException.ThrowIfNull(environment);
         if (FromFile(Path.Combine(stateRoot, "heavy-slots-cap")) is { } cap)
         {
-            return new BoxLimits(cap);
+            return cap;
         }
 
         var text = environment("AW_HEAVY_SLOTS");
-        return new BoxLimits(string.IsNullOrEmpty(text) ? DefaultSlots : Count(text) ?? 1);
+        return string.IsNullOrEmpty(text) ? DefaultSlots : Count(text) ?? 1;
     }
 
     private static int? FromFile(string path)

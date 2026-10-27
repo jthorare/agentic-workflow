@@ -239,6 +239,12 @@ packages:
     src: null
     scan: [config/statusline.sh]
     note: "the statusline reads a cache and refreshes it from the judge CLI in the background"
+  - id: SandboxTools
+    kind: package
+    tier: 1
+    projectPrefix: Aw.SandboxTools
+    src: null
+    note: "the host binaries the Sindri sandbox runs around a Step's agent session (sandbox spec 2026-10-18-sindri-sandbox-design.md, §4, §9): bubblewrap (bwrap), systemd-run for the cgroup scope and socat for the unix-socket forwarders. Not repo code: the node exists so the Sindri -> SandboxTools cli edge is declared. The adapters that start them are SB-2, SB-3a and SB-4a; a test redirects each with AW_SANDBOX_BWRAP, AW_SANDBOX_SYSTEMD_RUN and AW_SANDBOX_SOCAT"
   - id: Meta
     kind: package
     tier: 2
@@ -290,6 +296,11 @@ edges:
     kind: cli
     status: current
     note: "the meta Stop gate runs aw-meta stop-check and the SendMessage outbox hook runs aw-meta outbox-record (docs/csharp/meta.md)"
+  - from: Sindri
+    to: SandboxTools
+    kind: cli
+    status: planned
+    note: "the sandbox runs bwrap, systemd-run and socat around a Step's agent session (SB-2, SB-3a, SB-4a); check-deps does not scan C# for cli edges"
   - from: Sindri
     to: Evidence
     kind: file

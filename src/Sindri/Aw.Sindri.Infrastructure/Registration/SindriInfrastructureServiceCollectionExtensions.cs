@@ -84,7 +84,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
 
     /// <summary>Engine P8: the diff signal of an agent run (git) and an agent session's end and spend (the ledger).</summary>
     private static IServiceCollection AddAgentRuntimeAdapters(this IServiceCollection services, Func<string, string?> environment) =>
-        services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IWorkspaceRebase, GitWorkspaceRebase>().AddSingleton<IDiffContent, GitDiffContent>().AddSingleton<IBranchChanges, GitBranchChanges>().AddSingleton<IAgentSessions, LedgerAgentSessions>()
+        services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IWorkspaceRebase, GitWorkspaceRebase>().AddSingleton<IDiffContent, GitDiffContent>().AddSingleton<IBranchChanges, GitBranchChanges>().AddSingleton<IAgentSessions, LedgerAgentSessions>().AddSingleton<IScopeRunRecords, ScopeRunRecords>()
             .AddSingleton<ICheckCommands>(sp => new ToolCheckCommands(new ProcessToolRunner(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()))
             .AddLensPackAdapters(environment);
 
@@ -150,11 +150,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()
             .AddSingleton<IHumanTokenStore, FileHumanToken>()
             .AddSingleton(static sp => new ProverLabel(sp.GetRequiredService<SindriSettings>().ProverLabelAllowed))
-            .AddScoped<IDoctorChecks, TokenFileDoctorChecks>()
-            .AddScoped<IDoctorChecks, DeployDoctorChecks>()
-            .AddScoped<IDoctorChecks>(_ => new UiEvidenceDoctorChecks(environment, Environment.ProcessPath, new ProcessToolRunner()))   // cutover §3.1: `setup:ui-evidence`
+            .AddDoctorChecks(environment)
             .AddSingleton<IPreCommitGit, GitPreCommit>()   // cutover §6.2: the scrub verb, the onboarding hook slot and the doctor read the hook through it
             .AddSingleton<IRecipeBuild, BuildInfoRecipeBuild>()   // setup-once §5.3: doctor compares the embedded recipe set's tree hash with HEAD's
+            .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
             .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
@@ -167,6 +166,14 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
             .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default));
     }
+
+    /// <summary>The doctor's adapter-backed check sets.</summary>
+    private static IServiceCollection AddDoctorChecks(this IServiceCollection services, Func<string, string?> environment)
+        => services
+            .AddScoped<IDoctorChecks, TokenFileDoctorChecks>()
+            .AddScoped<IDoctorChecks, DeployDoctorChecks>()
+            .AddScoped<IDoctorChecks>(_ => new UiEvidenceDoctorChecks(environment, Environment.ProcessPath, new ProcessToolRunner()))   // cutover §3.1: `setup:ui-evidence`
+            .AddScoped<IDoctorChecks>(static _ => new BannerDoctorChecks(OperatingSystem.IsMacOS(), static () => NotifierCommand.OnPath("terminal-notifier")));   // #1111: `setup:banners`
 
     /// <summary>The claude CLI and the providers' MCP config files, with their settings.</summary>
     private static IServiceCollection AddSindriMcp(this IServiceCollection services, Func<string, string?> environment)

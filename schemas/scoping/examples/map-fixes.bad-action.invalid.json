@@ -1,0 +1,13 @@
+{
+  "fixes": [
+    {
+      "id": "L-code-3",
+      "node": "code:src/admin/Shell.ts",
+      "action": "delete",
+      "relabelTo": null,
+      "reason": "A shared admin shell.",
+      "citation": "L-code-3",
+      "status": "proposed"
+    }
+  ]
+}

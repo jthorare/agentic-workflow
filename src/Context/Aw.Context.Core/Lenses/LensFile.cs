@@ -44,4 +44,8 @@ public sealed record LensFile(
     /// <summary>True when the file's repo demotes it (index.demote): it stays readable and ranks last, but is never a scope surface.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool Demoted { get; init; }
+
+    /// <summary>The name of the role that demotes it (<see cref="DemotedCode.Role"/>: 'test', 'fixture', 'script' or whatever the repo's index.roles call it); left out when it is not demoted.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Role { get; init; }
 }

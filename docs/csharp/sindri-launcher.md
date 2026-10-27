@@ -71,7 +71,7 @@ never hashed, so one approval holds across runs; changing a form name changes th
 Scoping-station spec section 12.5, row L-17. An entry names, like `mcp`, which built-in form passes a per-run model id
 (`model`) and a Step's policy (`policy`: a settings file for `claude-settings-file`, typed `-c` overrides with no file for
 `codex-overrides`) to its CLI. The Step's policy is target-neutral (owner, 2026-10-17, amending L-17(a)):
-`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath)`. The engine writes no policy file; the launcher renders
+`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath, LoginSource?)`; `LoginSource` (`owner-copy` < `separate-login`, sandbox spec SB18) is the stricter model login a Step asks for, null for no ask and left out of the JSON. The engine writes no policy file; the launcher renders
 it per form, writes any file 0600 and deletes it with the launch. A Step only tightens the profile: bypass or full access is never a
 Step mode, and a mode the entry can't express is `SND-LAUNCH-013`. Both are enums, default `none`, and an added entry defaults to
 `none`; an override keeps the built-in's forms unless it names them. A form adds its arguments only on an **unattended Step
@@ -95,6 +95,17 @@ id and `<path>` the 0600 settings file the launcher renders from the Step's poli
 A Step that requests a model or a policy on an entry whose matching form is `none`, or a reserved form (`cursor-flag`,
 `cursor-config`), parks with `SND-LAUNCH-013` and never
 launches unrestricted (the API implements the check).
+
+### The sandboxed launch flow (sandbox spec §6; SB-0 contract, built in SB-1 to SB-5b)
+
+For a Step run `ILauncher.Launch` becomes, with the new steps in bold: resolve the agent, SL8 (`-012`), L-17's form check (`-013`),
+**build the sandbox plan from the `StepPolicy` (pure; `-025`)**, **probe the mechanism (cached per box, refreshed by Check again; `-014`)**,
+**the session cap (`-020`: an atomic count; a wait, not a failure)**, **prepare credentials from the Step's credential source (`-017`, `-018`)**,
+**the host-side prepare of the repo's packages (`-021`)**, budget (E-28), **write the plan file, start the outside half of the network, run the
+self-check (`-016`)**, start in the host, return. The launcher appends nothing: the engine's launch activity writes `launch.outcome`, and the
+sandbox summary rides on `StartedLaunch.Sandbox`. A launch whose confinement can't be built or proven never falls back to unconfined. Until
+SB-5a the product Host registers `UnavailableSandbox`, so every Step launch is `-014`; a `sindri open` session opens as today until SB-5b.
+The codes, kinds and reasons are in `docs/csharp/sindri-sandbox.md`.
 
 ## Worked examples for `exec-template`
 
@@ -227,7 +238,7 @@ The scrub is the pure `LaunchEnvironment.Scrub` in Core. The **pre-push hook** i
 and exits 1 where `AW_SINDRI_WORKTREE` is set, and exits 0 otherwise, so the owner's pushes from the same repo pass. It is installed only when missing or ours (marker line
 `# aw-sindri pre-push guard (LN-LCH1)`); a `pre-push` hook that isn't ours refuses the launch with `SND-LAUNCH-022` and is never changed. An attended open gets none of this.
 
-Fact files (engine run-dir facts): before an unattended Step starts, the launcher writes each fact the Step declares as an input and has set into its run directory (`$AW_SINDRI_RUN_DIR`) as `<key without "fact:">.json`, scrubbed and shaped as an API fact read (an object or array as itself, anything else one JSON string); an attended open gets none. When the directory is a git worktree the names are added to that worktree's local `info/exclude` (never the repo's `.gitignore`), and a name git tracks refuses the launch with `SND-LAUNCH-025` (the file is never overwritten; our own untracked file from an earlier attempt is rewritten). The launcher also makes `$AW_SINDRI_RUN_DIR/.sindri-out/` and adds `/.sindri-out/` to the same exclude file: the agent writes each output it reports (`--output fact:x=$AW_SINDRI_RUN_DIR/.sindri-out/x`) there, so outputs never show up as untracked work in `git status`, the clean-tree checks or the worktree removal check.
+Fact files (engine run-dir facts): before an unattended Step starts, the launcher writes each fact the Step declares as an input and has set into its run directory (`$AW_SINDRI_RUN_DIR`) as `<key without "fact:">.json`, scrubbed and shaped as an API fact read (an object or array as itself, anything else one JSON string); an attended open gets none. When the directory is a git worktree the names are added to that worktree's local `info/exclude` (never the repo's `.gitignore`), and a name git tracks refuses the launch with `SND-LAUNCH-029` (the file is never overwritten; our own untracked file from an earlier attempt is rewritten). The launcher also makes `$AW_SINDRI_RUN_DIR/.sindri-out/` and adds `/.sindri-out/` to the same exclude file: the agent writes each output it reports (`--output fact:x=$AW_SINDRI_RUN_DIR/.sindri-out/x`) there, so outputs never show up as untracked work in `git status`, the clean-tree checks or the worktree removal check.
 
 **Writable and denied paths.** The `claude-settings-file` policy allows `Edit`/`Write` under the policy's writable path (the Step's worktree), and renders
 `StepPolicy.DeniedPaths` as `Read(//path/**)` and `Edit(//path/**)` deny rules. An entry that can't express a denied read (`codex-overrides`, `cursor-config`, `none`)
