@@ -189,6 +189,22 @@ public sealed class StripKeysTests
         Assert.Equal(row.Address, shell.OpenerStrip);
     }, Token);
 
+    // gh-1062: Enter on a Needs-you row whose served route is another page (here Setup) opens the row's sheet and stays on Home.
+    [Fact]
+    public Task Enter_on_a_needs_you_row_with_a_route_to_another_page_stays_on_Home() => UiThread.Run(async () =>
+    {
+        var shell = await Connected();
+        var failure = NeedsYouRows.Failure() with { Open = new NeedsYouOpenView(Route: "setup") };
+        shell.ShowNeedsYou(Feed(failure));
+        _ = shell.Press("J");
+        Assert.Equal(failure.Id, shell.NeedsYou.SelectedId);
+
+        Assert.True(shell.Press("Enter"));
+
+        Assert.Equal(PageId.Home, shell.CurrentPage);
+        Assert.Equal(new DeepLink(DeepLinkKind.NeedsYou, failure.Id), shell.SheetLink);
+    }, Token);
+
     // review run 1, K18: the park row is found by its served kind, never by the words its chip happens to show.
     [Fact]
     public Task The_park_row_is_found_by_its_kind_and_not_by_its_chip_word() => UiThread.Run(async () =>

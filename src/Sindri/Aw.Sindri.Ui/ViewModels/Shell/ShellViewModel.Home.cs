@@ -49,7 +49,7 @@ internal sealed partial class ShellViewModel
     private void InitNeedsYou(IClipboard clipboard)
     {
         Health.Follow(ReadNeedsYou);
-        NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRow(e.RowId);
+        NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRowByKey(e.RowId);
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
         NeedsYou.CopyRequested += (_, e) => _ = clipboard.SetText(e.Text, CancellationToken.None);
@@ -166,6 +166,16 @@ internal sealed partial class ShellViewModel
         if (!OpenTargetOf(rowId))
         {
             Navigate(LinkOf(rowId));
+        }
+    }
+
+    // Enter on a Needs-you row (gh-1062): a nested park still goes to its child, every other row opens its own sheet over Home (Esc returns
+    // to the row). The served open.route is for a click; a key never leaves Home.
+    private void OpenNeedsYouRowByKey(string rowId)
+    {
+        if (!OpenChildOf(rowId))
+        {
+            NavigateToRowSheet(LinkOf(rowId));
         }
     }
 
