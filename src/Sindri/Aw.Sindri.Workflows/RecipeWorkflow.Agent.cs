@@ -103,7 +103,7 @@ internal sealed partial class RecipeWorkflow
         var launched = await Launching(launching).ConfigureAwait(true);
         if (launched.Failure is { } failure)
         {
-            return (await Decided(applied, open, AgentFailed(open, step, StepFailed.LaunchReason, tokens: 0, $"{failure.Code}: {failure.Message}") with { Dependency = "the agent launcher", Code = failure.Code }, reportId: null, context).ConfigureAwait(true), true);
+            return (await Decided(applied, open, AgentFailed(open, step, StepFailed.LaunchReason, tokens: 0, $"{failure.Code}: {failure.Message}") with { Dependency = "the agent launcher", Code = failure.Code, FailureKind = AgentFailureKinds.Crashed }, reportId: null, context).ConfigureAwait(true), true);
         }
 
         _agent = (open.Token.Value, launched);
@@ -154,7 +154,7 @@ internal sealed partial class RecipeWorkflow
         }
 
         var reason = AgentEndReasons.Of(ended.EndedAs);
-        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, recovery?.Reason ?? ended.Detail), reportId: null, context).ConfigureAwait(true);
+        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, recovery?.Reason ?? ended.Detail) with { FailureKind = AgentFailureKinds.Of(ended.Refused, checkFailed: recovery?.Reason is not null) }, reportId: null, context).ConfigureAwait(true);
     }
 
     // The session's own report: closes the run (usage, diff signal, stop), then decides it like a desk report and answers the Update that carried it.
@@ -220,7 +220,7 @@ internal sealed partial class RecipeWorkflow
     {
         var address = _start!.WorkflowId(); // why: the loop runs only after RunAsync set _start
         var writes = _recipe!.Catalog.Find(step.Use) is { } descriptor && descriptor.Capabilities.HasFlag(Capability.WriteScope); // why: as above
-        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes);
+        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes, open.Escalation);
     }
 
     private StepFailed AgentFailed(OpenRun open, StepUse step, string reason, int tokens, string? detail = null)

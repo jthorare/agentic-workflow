@@ -14,5 +14,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Facts">The instance's stored facts; the launch writes those the Step declares as inputs into its run directory.</param>
 /// <param name="Payloads">The payload facts the Step writes under its recipe (<see cref="PayloadFacts.OutputsOf"/>), whose shape its brief states; null for none.</param>
 /// <param name="Model">The Step's 'model' parameter, a model id; null runs the agent's default.</param>
+/// <param name="Previous">For an escalation: the run that failed (spec 5); null for a first run.</param>
+/// <param name="Escalation">0 for the first run, 1 for its one retry on a stronger model (spec 7.1).</param>
 /// <param name="ModelProfile">The profile key when the Step's 'model' is '{ profile: … }'; the launch refuses it (<see cref="AgentModels.Refusal"/>).</param>
-internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null, IReadOnlyDictionary<FactKey, FactValue>? Facts = null, IReadOnlyList<FactKey>? Payloads = null, string? Model = null, string? ModelProfile = null);
+internal sealed record AgentLaunchRun(AgentStepRun Run, FactValue? Item, FactValue? Workspace = null, string? Bundle = null, string? Subject = null, FactValue? LensQueue = null, IReadOnlyDictionary<FactKey, FactValue>? Facts = null, IReadOnlyList<FactKey>? Payloads = null, string? Model = null, string? ModelProfile = null, PreviousRun? Previous = null, int Escalation = 0);

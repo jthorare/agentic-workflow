@@ -61,6 +61,35 @@ public sealed class LaunchVerbsTests : IDisposable
     }
 
     [Fact]
+    public async Task Show_text_prints_each_model_with_its_bands_under_its_agent()
+    {
+        var claude = _shown.Entries[0] with { };
+        var report = _shown with
+        {
+            Entries =
+            [
+                new LaunchShowEntry(claude.Id, claude.Source, claude.Bin, claude.ResolvedBin, claude.ArgvHash, claude.StepOk, claude.ParkLine)
+                {
+                    Models =
+                    [
+                        new RankedModel(new ModelFacts("haiku", "Haiku", ModelSource.Catalog, 0), ModelTier.Cheap, Unordered: false),
+                        new RankedModel(new ModelFacts("sonnet", "Sonnet", ModelSource.Catalog, 1), ModelTier.Standard, Unordered: false),
+                        new RankedModel(new ModelFacts("mystery", "Mystery", ModelSource.Discovered), ModelTier.Strong, Unordered: true),
+                    ],
+                },
+            ],
+        };
+
+        _ = await Verbs(new ScriptedLaunchSetup(new LaunchInitReport("kitty", "x", "/p", "{}"), report)).Run(["show"], CancellationToken.None);
+
+        var lines = _out.ToString().Split('\n');
+        var at = Array.FindIndex(lines, static l => l.StartsWith("claude-code", StringComparison.Ordinal));
+        Expect.Equal("  haiku  cheap", lines[at + 1]);
+        Expect.Equal("  sonnet  standard", lines[at + 2]);
+        Expect.Equal("  mystery  strong  (unordered: add it to workflow.agent.models)", lines[at + 3]);
+    }
+
+    [Fact]
     public async Task Init_says_what_it_chose_and_where()
     {
         var code = await Verbs(Setup()).Run(["init"], CancellationToken.None);

@@ -111,6 +111,23 @@ public sealed class NeedsYouUndoTests : IDisposable
     });
 
     [Fact]
+    public Task The_summary_line_stops_before_the_marked_seen_text_instead_of_drawing_under_it() => OnUi(async () =>
+    {
+        var (window, _) = await WithFeed(() => Parks(3));
+        window.Width = 1100;   // the narrowest width with two columns: the summary's cell is at its smallest
+        Settle(window);
+        Named<Button>(window, "MarkAllSeen").RaiseEvent(_click);
+        Settle(window);
+
+        var summary = Named<TextBlock>(window, "NeedsYouSummary");
+        var seen = Named<TextBlock>(window, "NeedsYouUndoText");
+        var summaryRight = summary.TranslatePoint(new Point(summary.Bounds.Width, 0), window)!.Value.X;   // why: both are in the shown window's tree
+        var seenLeft = seen.TranslatePoint(new Point(0, 0), window)!.Value.X;   // why: both are in the shown window's tree
+
+        Assert.True(summaryRight <= seenLeft, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the summary ends at x={summaryRight} but the marked-seen text starts at x={seenLeft}"));
+    });
+
+    [Fact]
     public Task The_offer_is_announced_once_through_a_polite_region_and_expires_after_the_undo_window() => OnUi(async () =>
     {
         var (window, _) = await WithFeed(() => Parks(2));

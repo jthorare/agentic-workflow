@@ -239,7 +239,13 @@ internal static partial class ScopingViewBuilder
             var text = $"round {n} ({ScopeJson.Str(r, "trigger")}): +{ScopeJson.Items(r, "added").Count().ToString(CultureInfo.InvariantCulture)} -{ScopeJson.Items(r, "removed").Count().ToString(CultureInfo.InvariantCulture)} ~{ScopeJson.Items(r, "changed").Count().ToString(CultureInfo.InvariantCulture)} — {ScopeJson.Str(r, "cause")}";
             return new ScopingRow($"round-{n}", text, Status: null, []);
         }).ToList();
-        return Section(new Heading(8, "rounds", "Draft rounds"), NotYet(facts, "step.scope.check", "rounds"), rows, "No draft rounds yet");
+        rows.AddRange(ScopeJson.Items(facts["roundLog"]).Select(static (e, i) =>
+        {
+            var n = ScopeJson.Int(e, "round")?.ToString(CultureInfo.InvariantCulture) ?? "?";
+            var step = ScopeJson.Str(e, "step") ?? "?";
+            return new ScopingRow($"log-{step}-{n}-{i.ToString(CultureInfo.InvariantCulture)}", $"{step} round {n}, {ScopeJson.Str(e, "kind")}: {ScopeJson.Str(e, "key")} — {ScopeJson.Str(e, "text")}", Status: null, []);
+        }));
+        return Section(new Heading(8, "rounds", "Draft rounds"), facts.Has("roundLog") ? null : NotYet(facts, "step.scope.check", "rounds"), rows, "No draft rounds yet");
     }
 
     private static ScopingSection Map(ScopeFacts facts)

@@ -22,5 +22,6 @@
   "fact:gapSearch": {
     "rounds": []
   },
-  "fact:gapAnchors": []
+  "fact:gapAnchors": [],
+  "fact:roundLog": []
 }

@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Workflows;
+using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
 
@@ -190,5 +191,9 @@ internal sealed partial class WorkflowsPage : UserControl
     // Typing narrows what is loaded as it goes; Enter (above) asks the API.
     private void OnSubjectTyped(object? sender, TextChangedEventArgs e) => List?.SetSearch((sender as TextBox)?.Text);
 
-    private void OnStart(object? sender, RoutedEventArgs e) => List?.RequestStart();
+    private void OnStart(object? sender, RoutedEventArgs e)
+    {
+        OpenerNote.Raise(this, sender);
+        List?.RequestStart();
+    }
 }

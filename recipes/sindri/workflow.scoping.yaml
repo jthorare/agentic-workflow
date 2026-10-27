@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 13
+version: 14
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 why: "Pins down exactly what will change and what done means, then waits for your approval before anything is designed."
@@ -59,6 +59,8 @@ states:
                   next: "Drop what the judge and the AI both call off topic from {item}'s lenses and coverage; keep and flag what they dispute." }
   draft:        { displayName: "Draft what changes and what done means", why: "Gives you something concrete to approve.", kind: active, step: { use: step.scope.draft, with: { model: claude-sonnet-5-5 } }, loop: rounds, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                   next: "Draft {item}'s scope map and acceptance list from the lenses (round {loop.rounds}/{loop.rounds.cap})." }
+  exclude:      { displayName: "Rule out what the scope leaves out", why: "Closes the files the scope map neither covers nor excludes without redrafting the whole scope.", kind: active, step: { use: step.scope.exclude, with: { model: claude-sonnet-5-5 } }, loop: exclusions, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
+                  next: "Rule out, with a reason each, the files {item}'s scope map neither covers nor excludes (round {loop.exclusions}/{loop.exclusions.cap})." }
   check:        { displayName: "Check the draft", why: "Catches missing sources and untestable points before you read it.", kind: active, step: step.scope.check, timeout: { after: 1d, then: park },
                   next: "Run the draft-stage scope checks on {item}: citations, lens coverage and acceptance form." }
   gap-search:
@@ -125,10 +127,10 @@ states:
   dropped:      { displayName: "Dropped", kind: terminal, outcome: unresolved }
 transitions:
   # intake seeds the round-1 values of every fact a later Step reads, so each declared input exists on every path (RCP-WIRE-001)
-  - { from: intake, to: read-brief,   on: step.completed, when: { outcome: brief },   produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
-  - { from: intake, to: read-tracker, on: step.completed, when: { outcome: tracker }, produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
-  - { from: intake, to: idea,         on: step.completed, when: { outcome: idea },    produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
-  - { from: intake, to: read-change,  on: step.completed, when: { outcome: change },  produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors] }
+  - { from: intake, to: read-brief,   on: step.completed, when: { outcome: brief },   produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors, fact:roundLog] }
+  - { from: intake, to: read-tracker, on: step.completed, when: { outcome: tracker }, produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors, fact:roundLog] }
+  - { from: intake, to: idea,         on: step.completed, when: { outcome: idea },    produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors, fact:roundLog] }
+  - { from: intake, to: read-change,  on: step.completed, when: { outcome: change },  produces: [fact:scopeMap, fact:acceptance, fact:findings, fact:answers, fact:answerLog, fact:challenge, fact:questions, fact:openQuestions, fact:gapSearch, fact:gapAnchors, fact:roundLog] }
   - { from: [read-brief, read-tracker, read-change], to: gather,  on: step.completed, when: { outcome: read }, produces: [fact:brief, fact:anchors] }
   - { from: [read-brief, read-tracker, read-change], to: dropped, on: step.completed, when: { outcome: empty } }
   - { from: idea, to: gather,  on: wait.satisfied, when: { outcome: resolved }, produces: [fact:brief, fact:anchors, fact:answerLog] }
@@ -139,8 +141,8 @@ transitions:
   - { from: relevance-judge, to: relevance-apply, on: step.completed, when: { outcome: ruled },    produces: [fact:relevanceRulings] }
   - { from: relevance-apply, to: draft,           on: step.completed, when: { outcome: applied },  produces: [fact:lenses, fact:graph, fact:coverage, fact:relevance, fact:mapFixes] }
   - { from: draft,  to: check, on: step.completed, when: { outcome: drafted },  produces: [fact:scopeMap, fact:acceptance] }
-  - { label: "a source is missing: gather again", from: check,  to: gather,    on: step.completed, when: { outcome: regather }, produces: [fact:findings] }
-  - { label: "gaps found: draft again", from: check,  to: draft,     on: step.completed, when: { outcome: gaps },     produces: [fact:findings] }
+  - { label: "a source is missing: gather again", from: check,  to: gather,    on: step.completed, when: { outcome: regather }, produces: [fact:findings, fact:roundLog] }
+  - { label: "gaps found: draft again", from: check,  to: draft,     on: step.completed, when: { outcome: gaps },     produces: [fact:findings, fact:roundLog] }
   - { label: "the draft passed: another AI searches for what is missing", from: check, to: gap-search, on: step.completed,
       when: { all: [ { outcome: pass }, { loop: gapsearch, below: cap }, { fact: fact:gapSearchClosed, is: absent } ] } }
   - { from: check,  to: questions, on: step.completed,
@@ -184,7 +186,7 @@ transitions:
       when: { all: [ { outcome: found }, { loop: challenge, below: cap }, { loop: rounds, below: cap } ] }, produces: [fact:challenge, fact:findings] }
   - { label: "gaps remain: you answer them", from: challenge-log, to: questions, on: step.completed,
       when: { all: [ { outcome: found }, { loop: interview, below: cap }, { fact: fact:interviewClosed, is: absent } ] }, produces: [fact:challenge, fact:findings] }
-  - { label: "gaps remain, nothing to ask: size it, findings open", from: challenge-log, to: size, on: step.completed, when: { outcome: found }, produces: [fact:challenge, fact:findings] }
+  - { label: "gaps remain, nothing to ask: size it, findings open", from: challenge-log, to: size, on: step.completed, when: { outcome: found }, produces: [fact:challenge, fact:findings, fact:roundLog] }
   - { label: "AI wasn't sure: carry on with the size undecided", from: size, to: propose, on: step.completed,
       when: { any: [ { outcome: xs }, { outcome: s }, { outcome: m }, { outcome: l }, { outcome: xl }, { outcome: uncertain } ] }, produces: [fact:decision] }
   - { from: size-desk, to: propose, on: step.completed,
@@ -193,16 +195,22 @@ transitions:
   - { from: propose, to: evidence, on: step.completed, when: { any: [ { outcome: proposed }, { outcome: skipped } ] }, produces: [fact:scopeMap] }
   - { from: evidence, to: stop, on: step.completed, when: { outcome: complete },
       produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs] }
-  - { label: "a source is missing: gather again", from: evidence, to: gather, on: step.completed, when: { outcome: regather },   produces: [fact:findings] }
-  - { label: "proof is incomplete: draft again", from: evidence, to: draft,  on: step.completed, when: { outcome: incomplete }, produces: [fact:findings] }
+  - { label: "a source is missing: gather again", from: evidence, to: gather, on: step.completed, when: { outcome: regather },   produces: [fact:findings, fact:roundLog] }
+  - { label: "the same findings twice: you decide, findings open", from: evidence, to: stop, on: step.completed, when: { outcome: converged },
+      produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs, fact:findings, fact:roundLog] }
+  - { label: "an answer nothing cites: you decide, findings open", from: evidence, to: stop, on: step.completed, when: { outcome: open },
+      produces: [fact:scopeMap, fact:acceptance, fact:coverage, fact:openQuestions, fact:scopePacket, fact:recommendation, fact:runs, fact:findings, fact:roundLog] }
+  - { label: "only code files left uncovered: rule them out", from: evidence, to: exclude, on: step.completed, when: { outcome: uncovered }, produces: [fact:findings, fact:roundLog] }
+  - { from: exclude, to: check, on: step.completed, when: { outcome: excluded }, produces: [fact:scopeMap] }
+  - { label: "proof is incomplete: draft again", from: evidence, to: draft,  on: step.completed, when: { outcome: incomplete }, produces: [fact:findings, fact:roundLog] }
   - { from: stop, to: freeze,   on: step.completed, when: { outcome: approve } }
   - { label: "you asked for changes: record your notes", from: stop, to: record,   on: step.completed, when: { outcome: revise }, produces: [fact:answers] }
   - { label: "you dropped it", from: stop, to: withdraw, on: step.completed, when: { outcome: drop } }
   - { from: freeze, to: scoped,   on: step.completed, when: { outcome: frozen }, produces: [fact:scopePacket] }
   - { label: "the document changed: check it again", from: freeze, to: evidence, on: step.completed, when: { outcome: mismatch }, produces: [fact:findings] }
   - { from: withdraw, to: dropped, on: step.completed, when: { outcome: withdrawn } }
-loops: { rounds: { cap: 10 }, rescope: { cap: 6 }, interview: { cap: 6 }, challenge: { cap: 3 }, gapsearch: { cap: 3 }, refreeze: { cap: 5 }, revise: { cap: 8 } }
-evals:   # 48 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap or whose model repeats the drafter's that reaches the stop, and a lens fault at evidence that regathers, and the 11 of the relevance review and the gap search (issue 966), where every older case also walks the relevance lines after gather and one clear gap round after its first passing check
+loops: { rounds: { cap: 10 }, rescope: { cap: 6 }, interview: { cap: 6 }, challenge: { cap: 3 }, gapsearch: { cap: 3 }, exclusions: { cap: 4 }, refreeze: { cap: 5 }, revise: { cap: 8 } }
+evals:   # 53 cases: the 22 of Appendix B.1, the two recorded-limit cases of the line amendment (commit-not-held, not-synced), idea-child-unresolved and the challenge cap that routes to the desk or to size, and a spent challenge whose walk has a gap or whose model repeats the drafter's that reaches the stop, and a lens fault at evidence that regathers, and the 11 of the relevance review and the gap search (issue 966), where every older case also walks the relevance lines after gather and one clear gap round after its first passing check
   - evals/workflow.scoping/brief-happy.jsonl
   - evals/workflow.scoping/tracker-happy.jsonl
   - evals/workflow.scoping/idea-child.jsonl
@@ -234,6 +242,11 @@ evals:   # 48 cases: the 22 of Appendix B.1, the two recorded-limit cases of the
   - evals/workflow.scoping/size-failed.jsonl
   - evals/workflow.scoping/propose-skipped.jsonl
   - evals/workflow.scoping/evidence-incomplete.jsonl
+  - evals/workflow.scoping/evidence-converged.jsonl
+  - evals/workflow.scoping/evidence-cov003-exclusions.jsonl
+  - evals/workflow.scoping/evidence-cov003-converged.jsonl
+  - evals/workflow.scoping/evidence-acc003-open.jsonl
+  - evals/workflow.scoping/interview-two-answers.jsonl
   - evals/workflow.scoping/stop-revise.jsonl
   - evals/workflow.scoping/revise-after-caps.jsonl
   - evals/workflow.scoping/freeze-mismatch.jsonl

@@ -1,7 +1,7 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba",
-  "version": 13,
+  "hash": "sha256:e4a699458909ed096050b355da537eae55152da737dc705de9567105cc5f6ea0",
+  "version": 14,
   "name": null,
   "inputs": [
     {
@@ -213,6 +213,13 @@
       "branchOf": "gap-log"
     },
     {
+      "id": "exclude",
+      "order": null,
+      "branchOf": "gap-log",
+      "why": "Closes the files the scope map neither covers nor excludes without redrafting the whole scope.",
+      "displayName": "Rule out what the scope leaves out"
+    },
+    {
       "id": "size-desk",
       "order": null,
       "branchOf": "gap-log"
@@ -276,6 +283,12 @@
       "from": "evidence",
       "to": "gather",
       "cap": 6
+    },
+    {
+      "name": "exclusions",
+      "from": "exclude",
+      "to": "check",
+      "cap": 4
     },
     {
       "name": "rounds",
@@ -409,6 +422,30 @@
       "to": "gather",
       "on": "step.completed",
       "label": "a source is missing: gather again"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "stop",
+      "on": "step.completed",
+      "label": "the same findings twice: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "stop",
+      "on": "step.completed",
+      "label": "an answer nothing cites: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "to": "exclude",
+      "on": "step.completed",
+      "label": "only code files left uncovered: rule them out"
     },
     {
       "from": [
@@ -847,6 +884,41 @@
       "to": "gather",
       "outcome": "regather",
       "label": "a source is missing: gather again"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "stop",
+      "outcome": "converged",
+      "label": "the same findings twice: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "stop",
+      "outcome": "open",
+      "label": "an answer nothing cites: you decide, findings open"
+    },
+    {
+      "from": [
+        "evidence"
+      ],
+      "on": "step.completed",
+      "to": "exclude",
+      "outcome": "uncovered",
+      "label": "only code files left uncovered: rule them out"
+    },
+    {
+      "from": [
+        "exclude"
+      ],
+      "on": "step.completed",
+      "to": "check",
+      "outcome": "excluded"
     },
     {
       "from": [

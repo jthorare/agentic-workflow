@@ -103,6 +103,9 @@ internal static class WiringRecipe
     /// <summary>The findings of the plain-words rules (RCP-DISPLAY-001..003) for <paramref name="recipe"/>.</summary>
     public static IReadOnlyList<RecipeFinding> CheckDisplay(Recipe recipe, Located? located = null) => Run(new DisplayRules(), recipe, located ?? Located.Nowhere);
 
+    /// <summary>The findings of the model-floor rule (SND-MODEL-002) for <paramref name="recipe"/>.</summary>
+    public static IReadOnlyList<RecipeFinding> CheckModel(Recipe recipe, Located? located = null) => Run(new ModelRules(), recipe, located ?? Located.Nowhere);
+
     /// <summary>The findings of the block rules for <paramref name="recipe"/>.</summary>
     public static IReadOnlyList<RecipeFinding> CheckBlocks(Recipe recipe, Located? located = null) => Run(new BlockRules(), recipe, located ?? Located.Nowhere);
 

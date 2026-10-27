@@ -9,6 +9,7 @@ EUID # the effective user id (bash sets it)
 TMPDIR # temp directory (OS)
 COLUMNS # terminal width (shell); the statusline falls back to it
 PROMPT_COMMAND # bash prompt hook; the Claude installer appends to it
+XDG_CONFIG_HOME # per-user config dir (XDG, set by the desktop session); skills/system-design's draw_diagrams.mjs finds tldraw's server.json under it
 XDG_RUNTIME_DIR # per-user runtime dir (OS); sindri doctor reports it and masks it in the graphify sandbox
 DISPLAY # the X11 session sets it; --init-launcher uses it to tell a GUI session from a headless box
 TERM_PROGRAM # the terminal sets it; aw-meta-launch --init-launcher picks the viewer by it

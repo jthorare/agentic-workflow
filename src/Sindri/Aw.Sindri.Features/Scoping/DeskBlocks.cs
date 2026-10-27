@@ -110,10 +110,10 @@ internal static partial class DeskBlocks
             return lens;
         }
 
-        var outputs = report.Outcome is ScopeOutcome.Gaps or ScopeOutcome.Regather
-            ? Outputs(("findings", FindingsFact(report.Findings)))
-            : [];
         var round = Round(facts, report);
+        var outputs = report.Outcome is ScopeOutcome.Gaps or ScopeOutcome.Regather
+            ? Outputs(("findings", FindingsFact(report.Findings)), (RoundLog.Key, RoundLog.Append(facts, "check", "step.scope.check", report.Findings, ScopeJson.Int(round, "round"))))
+            : [];
         return Reply("step.scope.check", report.Outcome == ScopeOutcome.Pass ? "pass" : report.Outcome == ScopeOutcome.Gaps ? "gaps" : "regather", outputs,
             [new ScopingDeskFile("rounds.jsonl", ScopeJson.Write(round) + "\n", Append: true)], report);
     }
@@ -196,7 +196,9 @@ internal static partial class DeskBlocks
         ScopeJson.Append(rounds, round);
         var findings = surfaces.Select(s => new ScopeFinding(ScopeRules.Chal1, ScopeJson.Str(s, "title"), $"the challenger found a surface the map misses: {ScopeJson.Str(s, "title")}", "Add it to the map, or exclude it with a reason, then run the challenger again.", ScopeSeverity.Fail))
             .Concat(behaviours.Select(b => new ScopeFinding(ScopeRules.Chal1, ScopeJson.Str(b, "text"), $"the challenger found a behaviour the map misses: {ScopeJson.Str(b, "text")} (question: {ScopeJson.Str(b, "question")})", "Add an acceptance item or an open question for it, then run the challenger again.", ScopeSeverity.Fail))).ToList();
-        var outputs = found ? Outputs(("challenge", log), ("findings", FindingsFact(findings))) : Outputs(("challenge", log));
+        var outputs = found
+            ? Outputs(("challenge", log), ("findings", FindingsFact(findings)), (RoundLog.Key, RoundLog.Append(facts, "challenge-log", "step.scope.challenge-log", findings)))
+            : Outputs(("challenge", log));
         return Reply("step.scope.challenge-log", verdict ?? string.Empty, outputs, []);
     }
 
@@ -234,53 +236,5 @@ internal static partial class DeskBlocks
         entry["digest"] = digest;
         // why: recordedAs is never defaulted here; SCP-ACC-003 finds the entry through the items, surfaces and open questions that cite its id
         return entry;
-    }
-
-    /// <summary>'fact:recommendation' for the owner's stop: approve when no question is left open, else revise (the stop's form shows it as the recommended outcome).</summary>
-    private static JsonObject Recommendation(JsonNode openQuestions)
-    {
-        var open = ScopeJson.Items(openQuestions).Count();
-        return new JsonObject
-        {
-            ["outcome"] = open == 0 ? "approve" : "revise",
-            ["why"] = open == 0 ? "Every check passed and no question is left open." : string.Create(CultureInfo.InvariantCulture, $"{open} question(s) are still open."),
-        };
-    }
-
-    private static Result<ScopingDeskResponse> Evidence(ScopeFacts facts, int challengeCap, int gapCap)
-    {
-        var assembled = ScopeEvidence.FlagUncited(facts);
-        var report = ScopePacketChecks.Run(assembled, ScopeStage.Evidence, challengeCap, gapCap);
-        if (LensFaultAt("step.scope.evidence", report) is { } lens)
-        {
-            return lens;
-        }
-
-        if (report.Outcome is not ScopeOutcome.Complete)
-        {
-            var outcome = report.Outcome == ScopeOutcome.Regather ? "regather" : "incomplete";
-            var missing = report.Rules.Where(static r => r.Status == ScopeRuleStatus.NotRun).Select(static r => r.Rule).ToList();
-            var findings = report.Findings.Concat(missing.Select(static r => new ScopeFinding(r, Item: null, $"{r} did not run: a fact it needs is missing", "Write the missing facts into the Step directory.", ScopeSeverity.Fail)));
-            return Reply("step.scope.evidence", outcome, Outputs(("findings", FindingsFact(findings))), [], report);
-        }
-
-        if (assembled.Missing("decision", "questions") is { Count: > 0 } lacking)
-        {
-            return SindriErrors.InvalidInput.With($"evidence assembles size.json and questions.json from {string.Join(", ", lacking)} (fix: write them into the facts directory)");
-        }
-
-        var outputs = Outputs(
-            ("scopeMap", assembled.Require("scopeMap")),
-            ("acceptance", assembled.Require("acceptance")),
-            ("coverage", assembled.Require("coverage")),
-            ("openQuestions", assembled.Require("openQuestions")),
-            ("recommendation", Recommendation(assembled.Require("openQuestions"))));
-        if (assembled["runs"] is { } runs)
-        {
-            // why: the runs the model checks compared are the ones the packet's runs.json holds, and the freeze re-checks them from this fact
-            outputs["runs"] = ScopeJson.Write(runs);
-        }
-
-        return Reply("step.scope.evidence", "complete", outputs, ScopePacket.Build(assembled), report);
     }
 }

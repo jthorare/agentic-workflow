@@ -28,6 +28,7 @@ internal static class LauncherServiceCollectionExtensions
             .AddSingleton<IHostedSessions>(static sp => sp.GetRequiredService<T3SessionHost>())
             .AddSingleton<ILaunchStartup>(sp => new LaunchStartup(() => WarpSweep(sp, environment)))
             .AddSingleton<ITerminalViewer>(sp => new T3AwareViewer(Viewer(sp, environment), sp.GetRequiredService<T3SessionHost>()))
+            .AddSingleton<IModelCatalog>(static _ => new ProbedModelCatalog(ProbedModelCatalog.Readers(static (program, arguments, cancellationToken) => ViewerProcess.Output(program, arguments, TimeSpan.FromSeconds(5), cancellationToken))))
             .AddSingleton<IReadOnlyDictionary<string, IUsageReader>>(UsageReaders(environment))
             .AddSingleton(sp => new UsageSpend(sp.GetRequiredService<ReloadingAgentCatalog>(), sp.GetRequiredService<IReadOnlyDictionary<string, IUsageReader>>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ILaunchSpend>(static sp => sp.GetRequiredService<UsageSpend>())
@@ -44,6 +45,7 @@ internal static class LauncherServiceCollectionExtensions
             {
                 BuiltinHash = BuiltinHash,
                 Approved = Approved(sp),
+                Models = sp.GetRequiredService<IModelCatalog>(),
             }));
     }
 
@@ -73,6 +75,7 @@ internal static class LauncherServiceCollectionExtensions
             Approved = Approved(sp),
             McpFor = McpTargetFor(sp),
             Config = () => catalog.Current,
+            Models = sp.GetRequiredService<IModelCatalog>(),
             Trust = sp.GetRequiredService<IAgentTrust>(),
             EndLive = async (launch, cancellationToken) =>
             {

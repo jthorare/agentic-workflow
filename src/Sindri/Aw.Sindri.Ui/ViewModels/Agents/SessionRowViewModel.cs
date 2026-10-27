@@ -190,7 +190,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
             return title;
         }
 
-        var id8 = row.Id.Length > 8 ? row.Id[..8] : row.Id;
+        var id8 = ShortId.Of(row.Id);
         return row.Repo is { Length: > 0 } repo ? repo + "/" + id8 : id8;
     }
 }

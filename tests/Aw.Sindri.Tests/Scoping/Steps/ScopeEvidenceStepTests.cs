@@ -114,7 +114,7 @@ public sealed class ScopeEvidenceStepTests
         var result = await Run(area, Gold().Edit("acceptance", n => n["items"]!.AsArray().Clear()));
 
         Assert.NotEqual("complete", result.Result!.Outcome.Value, StringComparer.Ordinal);
-        Assert.Equal(["findings"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
+        Assert.Equal(["findings", "roundLog"], ScopingStepContexts.Keys(result), StringComparer.Ordinal);
         Assert.Equal(string.Empty, (await area.Read(ScopingStepContexts.Address, ScopePacket.Build(new ScopeFacts(Gold()))[0].Path, Token)).Value);
     }
 

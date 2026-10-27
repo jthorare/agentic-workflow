@@ -29,7 +29,7 @@ public sealed class AgentStepBriefTests
         Assert.Equal(
             string.Join('\n',
                 "Sindri Step brief. Instance T-3/scope/1, run 2.1, state draft.",
-                "You read: fact:brief, fact:graph, fact:coverage, fact:scopeMap, fact:acceptance, fact:findings, fact:answerLog, fact:challenge.",
+                "You read: fact:brief, fact:graph, fact:coverage, fact:scopeMap, fact:acceptance, fact:findings, fact:roundLog, fact:answerLog, fact:challenge.",
                 "Outcome drafted: write fact:scopeMap, fact:acceptance.",
                 "Put each output in its own file under the output folder $AW_SINDRI_RUN_DIR/.sindri-out, named after the fact.",
                 "Report with: sindri workflow complete T-3/scope/1 --run 2.1 --outcome drafted --output fact:scopeMap=$AW_SINDRI_RUN_DIR/.sindri-out/scopeMap --output fact:acceptance=$AW_SINDRI_RUN_DIR/.sindri-out/acceptance",

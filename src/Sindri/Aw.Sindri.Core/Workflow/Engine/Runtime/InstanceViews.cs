@@ -92,7 +92,7 @@ public static partial class InstanceViews
     /// <summary>The open agent run; one still launching names the launch id it will have (the id is pure), so status never shows a run without one.</summary>
     private static OpenRun? AgentRunOf(WorkflowInstance instance) =>
         instance is { Ended: false, Frame.Run: { Runtime: StepRuntime.Agent } agent }
-            ? agent with { Launch = agent.Launch ?? AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(instance.Address), agent.Token).Value }
+            ? agent with { Launch = agent.Launch ?? AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(instance.Address), agent.Token, agent.Escalation).Value }
             : null;
 
     /// <summary>The stored digest of each fact by key; null when the instance holds none.</summary>

@@ -106,7 +106,10 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>True when every step is done or skipped.</summary>
     public bool IsFinished { get; private set => Set(ref field, value); }
 
-    /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup rows of Needs you, which the line stands for.</summary>
+    /// <summary>The id of the step Home's line names (the first one still open); empty with none.</summary>
+    public string HomeStepId { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup row of the step the line names, and no other.</summary>
     public bool IsHomeLineShown { get; private set => Set(ref field, value); }
 
     /// <summary>True until the first answer.</summary>
@@ -279,8 +282,9 @@ internal sealed partial class SetupViewModel : ObservableObject
     // Home's line: shown while a step is open, naming the first step still to do, with Continue.
     private void FoldHomeLine()
     {
-        IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         var next = Steps.FirstOrDefault(s => !s.IsFinished);
+        HomeStepId = next?.Id ?? string.Empty;   // before the flag: whoever hears the flag reads the step it names
+        IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         HomeStepText = next?.Title ?? string.Empty;
         ContinueText = next is null ? string.Empty : Labels.SetupContinue;
         OnChanged(nameof(HomeLineName));

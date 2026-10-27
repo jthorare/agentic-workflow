@@ -45,7 +45,7 @@ internal sealed class AgentStepActivities(AgentLaunching launching, AgentClosing
 
             if (!state.Value.IsLive)
             {
-                return refusals.Take(id) is { } refusal ? state.Value with { Detail = Redactor.Default.Scrub(refusal).Text } : state.Value;   // a blocked scrub yields its placeholder, never the input
+                return refusals.Take(id) is { } refusal ? state.Value with { Detail = Redactor.Default.Scrub(refusal).Text, Refused = true } : state.Value;   // a blocked scrub yields its placeholder, never the input
             }
 
             _ = await timer.WaitForNextTickAsync(context.CancellationToken).ConfigureAwait(false);

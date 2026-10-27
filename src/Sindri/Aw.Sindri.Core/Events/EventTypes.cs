@@ -149,6 +149,12 @@ public static class EventTypes
     /// <summary>A launch failed before any session started (API P10a).</summary>
     public const string LaunchFailed = "launch.failed";
 
+    /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
+    public const string ModelPicked = "model.picked";
+
+    /// <summary>Just before the pick asks Jev: "choosing model…" until model.picked for the same launch ends it (model-pick spec §6).</summary>
+    public const string ModelPicking = "model.picking";
+
     /// <summary>The launcher probed the viewer, the host, the targets and the repos (API P10a, UI E-3).</summary>
     public const string LaunchProbed = "launch.probed";
 

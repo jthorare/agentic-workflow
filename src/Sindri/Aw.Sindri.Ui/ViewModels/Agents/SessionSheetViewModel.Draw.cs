@@ -11,7 +11,7 @@ internal sealed partial class SessionSheetViewModel
     {
         var session = view.Session;
         Ref = session.Ref;
-        Heading = session.ProviderLabel + " " + (session.Title ?? (session.Repo is { } repo ? repo + "/" + Id8(session.Id) : Id8(session.Id)));
+        Heading = session.ProviderLabel + " " + (session.Title ?? (session.Repo is { } repo ? repo + "/" + ShortId.Of(session.Id) : ShortId.Of(session.Id)));
         StateLine = StateWords(session);
         Fields = Listed([
             (Labels.ItemRepo, session.Repo),

@@ -2,7 +2,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
 /// The labelled lines of a failure row's sheet (U3' T6): the service, when it failed, why (the served reason sentence), and each action
-/// the row offers with the command that does it (RunService and PauseService are not in the app yet, so they show their served command
+/// the row offers with the command that does it (an action the app cannot run yet shows its served command
 /// to copy). Built once for a row and its age, not on every read.
 /// </summary>
 internal static class FailureDetails

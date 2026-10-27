@@ -97,7 +97,7 @@ internal sealed class ScopeEvidenceStep(IRunArea area, IPackets packets, IRepoCh
     /// <inheritdoc/>
     protected override async ValueTask<Result<IReadOnlyDictionary<string, string>>> MoreOutputs(StepContext context, ScopingDeskResponse response, CancellationToken cancellationToken)
     {
-        if (response.Outcome != "complete")
+        if (response.Outcome is not ("complete" or "converged"))
         {
             return Facts([]);
         }

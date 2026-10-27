@@ -32,7 +32,7 @@
     <StackPanel Spacing="2">
       <StackPanel Orientation="Horizontal" Spacing="8">
         <Button x:Name="WholeBack" IsVisible="{Binding HasConcept}" Content="{Binding BackText}" Click="OnBack" VerticalAlignment="Center" AutomationProperties.Name="{Binding BackText}" />
-        <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
+        <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" IsVisible="{Binding ShowCrumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
       </StackPanel>
       <ItemsControl x:Name="WholeBandButtons" ItemsSource="{Binding BandButtons}" IsVisible="{Binding ShowBandButtons}">
         <ItemsControl.ItemsPanel>

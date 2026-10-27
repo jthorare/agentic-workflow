@@ -3,8 +3,8 @@ using System.Text.Json;
 namespace Aw.Context.Core.ConceptScan;
 
 /// <summary>
-/// Reads the two model replies. Both are untrusted text: a reply that isn't JSON, a concept without a usable name, a member that isn't a feature of the draft and a concept past
-/// <see cref="ConceptScanLimits.MaxConcepts"/> are dropped, never an error, so a bad answer scans nothing instead of failing the job.
+/// Reads the two model replies. Both are untrusted text: a reply that isn't JSON, a concept without a usable name, and a member that isn't a feature of the draft are dropped, never an error, so a bad answer scans nothing instead of failing the job.
+/// There is no cap on the number of concepts. A reply cut off partway keeps every concept that arrived whole (see <see cref="IsCutOff"/>).
 /// </summary>
 public static class ConceptScanReplies
 {
@@ -17,7 +17,7 @@ public static class ConceptScanReplies
 
     /// <summary>The concepts the first pass proposed.</summary>
     /// <param name="reply">The model's text: a JSON object {"concepts":[{"name":…,"queries":[…]}]} (or the array itself), possibly inside a code fence.</param>
-    /// <returns>At most <see cref="ConceptScanLimits.MaxConcepts"/> candidates with a name and at least one query, in the order given; empty for a reply that doesn't read.</returns>
+    /// <returns>Every candidate with a name and at least one query, in the order given; empty for a reply that doesn't read.</returns>
     public static IReadOnlyList<ConceptCandidate> Candidates(string reply)
     {
         ArgumentNullException.ThrowIfNull(reply);
@@ -26,7 +26,7 @@ public static class ConceptScanReplies
         foreach (var item in Items(reply))
         {
             var queries = Strings(item, "queries", QueryLength).Take(QueriesPerConcept).ToList();
-            if (Line(Text(item, "name"), NameLength) is { } name && queries.Count > 0 && found.Count < ConceptScanLimits.MaxConcepts && seen.Add(name))
+            if (Line(Text(item, "name"), NameLength) is { } name && queries.Count > 0 && seen.Add(name))
             {
                 found.Add(new ConceptCandidate(name, queries));
             }
@@ -35,11 +35,20 @@ public static class ConceptScanReplies
         return found;
     }
 
+    /// <summary>Whether a reply ended partway through its JSON while at least one concept before the break was whole.</summary>
+    /// <param name="reply">The model's text.</param>
+    /// <returns>True for a cut-off answer; false for one that reads whole, and for one that doesn't read at all.</returns>
+    public static bool IsCutOff(string reply)
+    {
+        ArgumentNullException.ThrowIfNull(reply);
+        return Read(reply).CutOff;
+    }
+
     /// <summary>The concept hints the second pass returned.</summary>
     /// <param name="reply">The model's text: {"concepts":[{"name":…,"members":[…],"evidence":[…],"confidence":0.8}]}.</param>
     /// <param name="featureKeys">The keys of the draft's features ('feature:…'): the only members that count.</param>
     /// <returns>
-    /// At most <see cref="ConceptScanLimits.MaxConcepts"/> hints, best confidence first. A member that isn't a feature key is dropped, and so is a hint left with none. A feature stays in the first hint
+    /// Every hint, best confidence first. A member that isn't a feature key is dropped, and so is a hint left with none. A feature stays in the first hint
     /// (by confidence) that names it.
     /// </returns>
     public static IReadOnlyList<ConceptHint> Hints(string reply, IReadOnlySet<string> featureKeys)
@@ -68,7 +77,7 @@ public static class ConceptScanReplies
         foreach (var hint in read.OrderByDescending(static h => h.Confidence).ThenBy(static h => h.Name, StringComparer.Ordinal))
         {
             var free = hint.Members.Where(taken.Add).ToList();
-            if (free.Count > 0 && hints.Count < ConceptScanLimits.MaxConcepts && names.Add(hint.Name))
+            if (free.Count > 0 && names.Add(hint.Name))
             {
                 hints.Add(hint with { Members = free });
             }
@@ -77,21 +86,73 @@ public static class ConceptScanReplies
         return hints;
     }
 
-    // The concept objects of a reply: the root array, or the root object's 'concepts' array; nothing for text that isn't JSON.
-    private static List<JsonElement> Items(string reply)
+    private static List<JsonElement> Items(string reply) => Read(reply).Items;
+
+    // The concept objects of a reply: the root array, or the root object's 'concepts' array; nothing for text that isn't JSON. A reply that breaks off partway
+    // (the model ran out of output tokens) keeps the objects that closed before the break, and says so.
+    private static (List<JsonElement> Items, bool CutOff) Read(string reply)
     {
         try
         {
             using var document = JsonDocument.Parse(Unfenced(reply));
             var root = document.RootElement;
             var array = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("concepts", out var inner) ? inner : root;
-            return array.ValueKind == JsonValueKind.Array
+            return (array.ValueKind == JsonValueKind.Array
                 ? [.. array.EnumerateArray().Where(static i => i.ValueKind == JsonValueKind.Object).Select(static i => i.Clone())]
-                : [];
+                : [], CutOff: false);
         }
         catch (JsonException)
         {
-            return [];   // not JSON: nothing was found
+            var whole = Salvage(reply);
+            return (whole, whole.Count > 0);   // nothing whole before the break: it doesn't read
+        }
+    }
+
+    // The objects of the concepts array that closed before the text broke. Items sit at depth 1 in a root array and at depth 2 in a root object's 'concepts' array.
+    private static List<JsonElement> Salvage(string reply)
+    {
+        var start = reply.IndexOfAny(['{', '[']);
+        var kept = new List<JsonElement>();
+        if (start < 0)
+        {
+            return kept;
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(reply[start..]);
+        var itemDepth = bytes[0] == (byte)'[' ? 1 : 2;
+        var reader = new Utf8JsonReader(bytes);
+        var objectStart = -1;
+        var inConcepts = itemDepth == 1;
+        try
+        {
+            while (reader.Read())
+            {
+                Track(reader, (bytes, itemDepth), ref inConcepts, ref objectStart, kept);
+            }
+        }
+        catch (JsonException)
+        {
+            // the break: what closed before it is kept
+        }
+
+        return kept;
+    }
+
+    private static void Track(Utf8JsonReader reader, (byte[] Bytes, int ItemDepth) text, ref bool inConcepts, ref int objectStart, List<JsonElement> kept)
+    {
+        if (reader.TokenType == JsonTokenType.PropertyName && reader.CurrentDepth == 1)
+        {
+            inConcepts = reader.ValueTextEquals("concepts");
+        }
+        else if (inConcepts && reader.CurrentDepth == text.ItemDepth && reader.TokenType == JsonTokenType.StartObject)
+        {
+            objectStart = (int)reader.TokenStartIndex;
+        }
+        else if (inConcepts && reader.CurrentDepth == text.ItemDepth && reader.TokenType == JsonTokenType.EndObject && objectStart >= 0)
+        {
+            using var item = JsonDocument.Parse(text.Bytes.AsMemory(objectStart, (int)reader.BytesConsumed - objectStart));
+            kept.Add(item.RootElement.Clone());
+            objectStart = -1;
         }
     }
 

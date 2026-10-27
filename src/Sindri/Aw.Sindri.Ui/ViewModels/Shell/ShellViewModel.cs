@@ -72,7 +72,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         ApproveAll = new ApproveAllViewModel(Health.Catalog, () => Health.ApiUrl(), api, clock);
         Decision = new DecisionSheetViewModel(api, () => Health.ApiUrl(), clock, decisions, clipboard);
         InitNeedsYou(clipboard);
-        Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher);
+        Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher, (window ?? WindowPorts.None).Files);
         Strip = new WorkflowsStripViewModel(clipboard, clock);
         InitStrip();
         window ??= WindowPorts.None;
@@ -81,7 +81,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Workflows = new WorkflowsViewModel(api, clipboard, clock);
         InitWorkflows();
         Start = InitStart(api, window);
-        Instance = new InstanceFrameViewModel(api, clipboard, clock, catalog: Health.Catalog, launcher: window.Launcher);
+        Instance = new InstanceFrameViewModel(api, clipboard, clock, catalog: Health.Catalog, launcher: window.Launcher, files: window.Files);
         InitInstance();
         Recipe = new RecipeSheetViewModel(api, clipboard);
         InitRecipe();
@@ -134,7 +134,9 @@ internal sealed partial class ShellViewModel : ObservableObject
         {
             if (value is not null)
             {
+                IsSelectingTab = true;
                 GoTo(value.Page);
+                IsSelectingTab = false;
             }
         }
     }

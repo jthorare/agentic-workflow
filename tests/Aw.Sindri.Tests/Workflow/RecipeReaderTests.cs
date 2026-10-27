@@ -360,7 +360,7 @@ public sealed class RecipeReaderTests
                 "RCP-SCHEMA-002: 'one' isn't a whole number at test.yaml:3:1 (version); write a whole number",
                 "RCP-SCHEMA-002: 'activ' isn't active, wait or terminal at test.yaml:7:5 (states.produce.kind); write active, wait or terminal",
                 "RCP-DUR-001: '4 hours' isn't a duration ('10m', '4h', '2d', at least 1m) at test.yaml:9:16 (states.produce.timeout.after); write a whole number and m, h or d, at least 1m ('10m', '4h', '2d')",
-                "RCP-SCHEMA-001: 'colour' isn't a field of a state at test.yaml:11:5 (states.produce.colour); remove it; a state has kind, step, waitFor, timeout, loop, budget, next, outcome, why, displayName, onOutcome",
+                "RCP-SCHEMA-001: 'colour' isn't a field of a state at test.yaml:11:5 (states.produce.colour); remove it; a state has kind, step, waitFor, timeout, loop, budget, next, outcome, why, displayName, onOutcome, model",
             ],
             findings.Findings.Select(f => f.ToLine()),
             StringComparer.Ordinal);

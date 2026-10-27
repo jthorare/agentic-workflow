@@ -79,6 +79,7 @@
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/TimeSkippingServer.cs" Link="Shared/Workflows/Spike/TimeSkippingServer.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/UpdateProbeWorkflow.cs" Link="Shared/Workflows/Spike/UpdateProbeWorkflow.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/WorkflowsHarness.cs" Link="Shared/Workflows/WorkflowsHarness.cs" />
+    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/RetryOncePlaneProbe.cs" Link="Shared/Workflows/RetryOncePlaneProbe.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -339,7 +339,7 @@
     <!-- The Services tab: each scheduled service, what it does, and its own Run now and Pause or Resume. -->
     <Border x:Name="ServicesPanel" Classes="panel" IsVisible="{Binding ShowServicesTab}">
       <StackPanel>
-        <Grid x:Name="ServiceHeader" Classes="row" ColumnDefinitions="180,90,140,*,130,250" Margin="16,8,16,0" IsVisible="{Binding IsWide}">
+        <Grid x:Name="ServiceHeader" Classes="row" ColumnDefinitions="240,90,140,*,130,250" Margin="16,8,16,0" IsVisible="{Binding IsWide}">
           <TextBlock Classes="eyebrow" Text="{Binding ServiceColumns[0]}" />
           <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ServiceColumns[1]}" />
           <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ServiceColumns[2]}" />
@@ -356,8 +356,9 @@
             <DataTemplate x:DataType="shell:ServiceRowViewModel">
               <Border Classes="section" Padding="16,8">
                 <Panel>
-                  <Grid ColumnDefinitions="180,90,140,*,130,250" IsVisible="{Binding IsWide}" AutomationProperties.Name="{Binding Name}">
-                    <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                  <Grid ColumnDefinitions="240,90,140,*,130,250" IsVisible="{Binding IsWide}" AutomationProperties.Name="{Binding Name}">
+                    <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"
+                               ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
                     <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Every}" />
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                       <TextBlock Classes="body" Classes.error="{Binding HasFailed}" Classes.warn="{Binding IsOverdue}" Text="{Binding Status}"

@@ -34,11 +34,13 @@ internal sealed partial class ShellWindow : Window
 
     // What had focus when the palette or the ? sheet opened: it gets focus back when they close (§8, §11.2).
     private Control? _overlayOpener;
+    private Control? _invoker;   // the button that is opening an overlay, noted just before it opens
 
     public ShellWindow()
     {
         InitializeComponent();
         AddHandler(GotFocusEvent, OnGotFocus, handledEventsToo: true);
+        AddHandler(OpenerNote.NotedEvent, NoteInvoker);
         PagePanel.SizeChanged += (_, e) => PageLayout.SetTier(PagePanel, PageLayout.For(e.NewSize.Width));
         WatchNavigationKeys();
     }
@@ -200,7 +202,12 @@ internal sealed partial class ShellWindow : Window
 
         var arrowing = _navArrowing;
         _navArrowing = false;
-        if (arrowing)
+        if (Shell is { IsSelectingTab: true } && !arrowing)
+        {
+            Dispatcher.UIThread.Post(FocusSelectedTab, DispatcherPriority.Loaded);   // a tab was activated: focus rests on that tab, not on the page region
+            FocusContextAnchor();
+        }
+        else if (arrowing)
         {
             Dispatcher.UIThread.Post(KeepFocus, DispatcherPriority.Loaded);   // arrows keep focus on the tab (Y1)
         }

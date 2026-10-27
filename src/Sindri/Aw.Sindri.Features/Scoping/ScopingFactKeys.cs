@@ -7,6 +7,6 @@ public static class ScopingFactKeys
     public static IReadOnlyList<string> All { get; } =
     [
         "brief", "lenses", "coverage", "scopeMap", "acceptance", "answers", "answerLog", "challenge", "openQuestions", "questions",
-        "decision", "anchors", "runs", "rounds", "scopePacket", "relevance", "gapSearch",
+        "decision", "anchors", "runs", "rounds", "roundLog", "scopePacket", "relevance", "gapSearch",
     ];
 }

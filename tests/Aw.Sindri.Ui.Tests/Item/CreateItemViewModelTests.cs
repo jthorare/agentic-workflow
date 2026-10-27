@@ -37,6 +37,32 @@ public sealed class CreateItemViewModelTests
         Assert.True(form.CanSubmit);
     }
 
+    // C-14 (#1083): Esc closes the form, `C` again brings the typed text back, the way the Decide note keeps its draft.
+    [Fact]
+    public async Task A_draft_typed_before_Esc_is_there_when_Create_item_reopens()
+    {
+        var form = await Form();
+        (form.Title, form.Repo, form.Body) = ("Half a title", "agentic-workflow", "and a body");
+
+        form.Close();
+        form.Open();
+
+        Assert.Equal((true, "Half a title", "agentic-workflow", "and a body"), (form.IsOpen, form.Title, form.Repo, form.Body));
+    }
+
+    // C-14 (#1083): the draft lasts until the item exists; the next `C` starts empty.
+    [Fact]
+    public async Task A_created_item_clears_the_draft_so_Create_item_reopens_empty()
+    {
+        var form = await Form();
+        (form.Title, form.Repo, form.Body) = ("Proof: appears live", "agentic-workflow", "details");
+
+        await form.Submit(Token);
+        form.Open();
+
+        Assert.Equal((string.Empty, string.Empty, string.Empty), (form.Title, form.Repo, form.Body));
+    }
+
     [Fact]
     public async Task Submit_sends_the_form_once_and_closes_as_soon_as_the_item_is_created()
     {

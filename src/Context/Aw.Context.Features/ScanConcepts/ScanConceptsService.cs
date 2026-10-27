@@ -70,11 +70,15 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
         }
 
         var hints = ConceptScanReplies.Hints(second.Text, new HashSet<string>(keys, StringComparer.Ordinal));
+        var cutOff = CutOff(first, second);
         var saved = await hintStore.Save(map.Number, hints, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return saved.IsError
             ? saved.Error
-            : new ConceptScanReport(map.Number, map.OnDraft, hints.Count == 0 ? ConceptScanOutcome.NoConcepts : ConceptScanOutcome.Scanned, hints.Count, found.Count, tier, second.Model);
+            : new ConceptScanReport(map.Number, map.OnDraft, hints.Count == 0 ? ConceptScanOutcome.NoConcepts : ConceptScanOutcome.Scanned, hints.Count, found.Count, tier, second.Model, cutOff);
     }
+
+    // True when either reply broke off mid-JSON: the scan kept what was whole.
+    private static bool CutOff(ModelAnswer? first, ModelAnswer second) => (first is not null && ConceptScanReplies.IsCutOff(first.Text)) || ConceptScanReplies.IsCutOff(second.Text);
 
     // The model's answer, or null when no agent answered.
     private async ValueTask<ModelAnswer?> Ask(string prompt, (ModelTier Tier, IReadOnlyDictionary<string, string> Models) pick, CancellationToken cancellationToken)

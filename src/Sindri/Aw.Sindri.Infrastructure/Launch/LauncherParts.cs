@@ -40,6 +40,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The hosts besides tmux a human open may have used (T3): Stop asks each of them too, since a launch doesn't record its host.</summary>
     public IReadOnlyList<ISessionHost> OtherHosts { get; init; } = [];
 
+    /// <summary>The models an agent offers (the probe's read, model-pick spec §3), or null when no model list is probed: targets then carry none and say nothing about it.</summary>
+    public IModelCatalog? Models { get; init; }
+
     /// <summary>Finds an agent CLI the way the login shell does; null when it doesn't resolve.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
 }

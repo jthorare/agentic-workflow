@@ -204,13 +204,13 @@ public sealed class ScopingDeskTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Intake_sorts_the_input_by_kind_and_carries_the_ten_seeds()
+    public async Task Intake_sorts_the_input_by_kind_and_carries_the_eleven_seeds()
     {
         var response = await Run("intake", new ScopingFacts { ["scopeInput"] = """{"kind":"tracker","repo":"fixture-notes","key":"NTS-135"}""" });
 
         Assert.Equal("tracker", response.Outcome);
         Assert.Equal(
-            ["acceptance", "answerLog", "answers", "challenge", "findings", "gapAnchors", "gapSearch", "openQuestions", "questions", "scopeMap"],
+            ["acceptance", "answerLog", "answers", "challenge", "findings", "gapAnchors", "gapSearch", "openQuestions", "questions", "roundLog", "scopeMap"],
             response.Outputs.Keys.Order(StringComparer.Ordinal),
             StringComparer.Ordinal);
     }

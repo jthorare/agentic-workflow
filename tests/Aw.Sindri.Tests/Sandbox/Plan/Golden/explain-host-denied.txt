@@ -1,0 +1,2 @@
+evil.example is not allowed: no host group lists it.
+The owner can allow it for this repo: add it to sandbox.repos.<repo>.hosts in the profile.

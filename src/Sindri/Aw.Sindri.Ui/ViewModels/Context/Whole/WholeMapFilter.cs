@@ -13,14 +13,16 @@ internal static class WholeMapFilter
         ArgumentNullException.ThrowIfNull(keep);
         var nodes = geometry.Nodes.Where(n => keep.Contains(n.Key)).ToList();
         var areas = nodes.Select(n => n.AreaIndex).ToHashSet();
+        var tiles = geometry.Tiles.Where(t => keep.Contains(t.Key)).ToList();
+        var tileBands = tiles.SelectMany(t => t.BandCells).Select(c => c.Band).ToHashSet();   // a kept tile's cells sit in their bands too
         return geometry with
         {
             Nodes = nodes,
-            Tiles = [.. geometry.Tiles.Where(t => keep.Contains(t.Key))],
+            Tiles = tiles,
             Edges = [.. geometry.Edges.Where(e => keep.Contains(e.From) && keep.Contains(e.To))],
             AreaEdges = [.. geometry.AreaEdges.Where(e => keep.Contains(e.From) && keep.Contains(e.To))],
             Columns = [.. geometry.Columns.Where(c => areas.Contains(c.AreaIndex))],
-            Bands = [.. geometry.Bands.Where(b => nodes.Exists(n => n.Rect.CenterY >= b.Top && n.Rect.CenterY <= b.Top + b.Height))],
+            Bands = [.. geometry.Bands.Where(b => tileBands.Contains(b.Band) || nodes.Exists(n => n.Rect.CenterY >= b.Top && n.Rect.CenterY <= b.Top + b.Height))],
         };
     }
 

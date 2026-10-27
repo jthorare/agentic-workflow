@@ -102,11 +102,11 @@ public static class FixtureRecipes
             Out("fact:lensRounds", "Lens rounds", FactType.Payload, "evidence"), Out("fact:escalation", "Questions for you", FactType.Payload, "lens-log")]);
 
     /// <summary>
-    /// workflow.scoping v13 (recipes/sindri/workflow.scoping.yaml; fixture-only, not in <see cref="All"/>, so the file-equality checks skip it): the states and the full file hash, with the interview's three facts
+    /// workflow.scoping v14 (recipes/sindri/workflow.scoping.yaml; fixture-only, not in <see cref="All"/>, so the file-equality checks skip it): the states and the full file hash, with the interview's three facts
     /// ('fact:questions' from 'questions', 'fact:answers' from the 'interview' desk, 'fact:answerLog' from 'record') declared beside the six outputs the file lists, so the facts list shows them.
     /// The recipe golden is the real recipe's view (WorkflowViewGoldenTests), so the hash here is the file's.
     /// </summary>
-    public static RecipeShape Scoping { get; } = new("workflow.scoping", 13, "6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba", RecipeUrgency.Work,
+    public static RecipeShape Scoping { get; } = new("workflow.scoping", 14, "e4a699458909ed096050b355da537eae55152da737dc705de9567105cc5f6ea0", RecipeUrgency.Work,
         [S("intake", 1, desk: true, block: "step.scope.intake", timeout: T(Day, TimeoutAction.Park)),
             S("read-brief", 2, desk: true, block: "step.scope.read-brief", timeout: T(Day, TimeoutAction.Park)),
             S("gather", 3, desk: true, block: "step.scope.gather", timeout: T(Day, TimeoutAction.Park)),
@@ -131,6 +131,7 @@ public static class FixtureRecipes
             S("stop", null, "gap-log", desk: true, block: "step.scope.review", timeout: T(7 * Day, TimeoutAction.Park)),
             S("freeze", null, "gap-log", desk: true, block: "step.scope.freeze", timeout: T(Day, TimeoutAction.Park)),
             S("withdraw", null, "gap-log", desk: true, block: "step.scope.withdraw", timeout: T(Day, TimeoutAction.Park)),
+            S("exclude", null, "gap-log", desk: true, block: "step.scope.exclude", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
             S("size-desk", null, "gap-log", desk: true, block: "step.desk.choose", timeout: T(14 * Day, TimeoutAction.Park)),
             S("read-tracker", null, "intake", desk: true, block: "step.scope.read-tracker", timeout: T(Day, TimeoutAction.Park)),
             S("idea", null, "intake", child: true, childRecipe: "workflow.idea-to-brief", onParked: OnParked.Propagate, timeout: T(7 * Day, TimeoutAction.Park)),

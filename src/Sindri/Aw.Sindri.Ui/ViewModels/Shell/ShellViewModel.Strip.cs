@@ -120,8 +120,16 @@ internal sealed partial class ShellViewModel
 
     private void Answer(StripRowViewModel row)
     {
+        var park = ParkRowFor(row);
+        if (row.AtDesk && park is not null)
+        {
+            OpenNeedsYouInbox(park.Id);   // the desk card carries the answer form, as the Workflows page does
+            OpenerStrip = row.Address;
+            return;
+        }
+
         Strip.Deselect();
-        NavigateToRowSheet(ParkRowFor(row) is { } park ? LinkOf(park.Id) : row.Link);
+        NavigateToRowSheet(park is not null ? LinkOf(park.Id) : row.Link);
         OpenerStrip = row.Address;
     }
 

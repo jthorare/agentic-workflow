@@ -61,6 +61,9 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     /// <summary>Where the map is, as a breadcrumb: "~" on the whole map, "~ / Billing" in an open feature, "~ / Starting points" on a query's answer. "~" goes back to the whole map.</summary>
     public IReadOnlyList<Crumb> Crumbs => CrumbList();
 
+    /// <summary>Whether the crumb row is shown: only when there is a path to walk back along, not for the root alone.</summary>
+    public bool ShowCrumbs => Crumbs.Count > 1;
+
     /// <summary>The breadcrumb's name.</summary>
     public string CrumbsName { get; } = Labels.ContextMapCrumbsName;
 
@@ -230,7 +233,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled)])
         {
             OnChanged(name);
         }

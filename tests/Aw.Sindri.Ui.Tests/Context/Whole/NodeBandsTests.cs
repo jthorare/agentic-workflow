@@ -48,6 +48,20 @@ public sealed class NodeBandsTests
     }
 
     [Fact]
+    public void A_concept_node_sits_in_the_product_row_with_its_own_mark()
+    {
+        Assert.Equal(WholeBand.Product, NodeBands.Of("concept"));
+
+        var concept = NodeBands.StyleOf("concept");
+        Assert.NotEqual(KindMark.None, concept.Mark);
+        Assert.NotEqual(NodeBands.StyleOf("something-new"), concept);
+        foreach (var other in NodeBands.Kinds.Where(k => k != "concept" && NodeBands.Of(k) == WholeBand.Product))
+        {
+            Assert.NotEqual(NodeBands.StyleOf(other), concept);
+        }
+    }
+
+    [Fact]
     public void An_unknown_kind_still_has_a_style() =>
         Assert.StartsWith("Brush.", NodeBands.StyleOf("something-new").Accent, StringComparison.Ordinal);
 

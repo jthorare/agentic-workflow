@@ -148,6 +148,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["step.scope.challenge-log"] = "Records the second opinion and what it found",
         ["step.scope.check"] = "Checks the scope draft for missing sources and untestable points",
         ["step.scope.draft"] = "Starts an AI agent session that drafts what will change and what done means",
+        ["step.scope.exclude"] = "Starts an AI agent session that rules out the files the scope leaves out, with a reason each",
         ["step.scope.evidence"] = "Collects every scope check into the document you approve",
         ["step.scope.freeze"] = "Locks in the approved scope so later stages cannot change it",
         ["step.scope.gap-judge"] = "Has a judge rule on each missing-part candidate without seeing why the AI thought it mattered",

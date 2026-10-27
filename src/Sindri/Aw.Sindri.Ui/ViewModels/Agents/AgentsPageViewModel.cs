@@ -54,7 +54,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>The recently ended sessions, under the fold.</summary>
     public ObservableCollection<EndedSessionViewModel> Ended { get; } = [];
 
-    /// <summary>One line per source problem, "code text" as served, above the list.</summary>
+    /// <summary>One line per source problem (its text; the code stays out of the line), above the list.</summary>
     public ObservableCollection<string> ProblemLines { get; } = [];
 
     /// <summary>"3 live · 1 asking · 2 outside a workflow", as served and whatever the filters; empty until the first list.</summary>
@@ -181,7 +181,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         OnChanged(nameof(HasHead));
         OnChanged(nameof(HeadName));
         ObserveCounts(list.Counts.Live, list.Counts.Asking);
-        Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Code + " " + p.Text)]);
+        Patch.To(ProblemLines, [.. list.Problems.Select(p => p.Text)]);
         ReplaceChoices(list);
         Apply(before, list);
     }

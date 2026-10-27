@@ -7861,13 +7861,13 @@ Aw.Context.Core.ConceptScan.ConceptScanLimits
 const Aw.Context.Core.ConceptScan.ConceptScanLimits.MaxInputChars = 60000 -> int
 const Aw.Context.Core.ConceptScan.ConceptScanLimits.MaxOutputTokens = 4000 -> int
 const Aw.Context.Core.ConceptScan.ConceptScanLimits.MaxScansPerDay = 6 -> int
-const Aw.Context.Core.ConceptScan.ConceptScanLimits.MaxConcepts = 15 -> int
 const Aw.Context.Core.ConceptScan.ConceptScanLimits.MaxSearches = 24 -> int
 const Aw.Context.Core.ConceptScan.ConceptScanLimits.HitsPerSearch = 6 -> int
 static Aw.Context.Core.ConceptScan.ConceptScanLimits.CallTimeout.get -> System.TimeSpan
 static Aw.Context.Core.ConceptScan.ConceptScanLimits.Window.get -> System.TimeSpan
 Aw.Context.Core.ConceptScan.ConceptScanReplies
 static Aw.Context.Core.ConceptScan.ConceptScanReplies.Candidates(string! reply) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptScan.ConceptCandidate!>!
+static Aw.Context.Core.ConceptScan.ConceptScanReplies.IsCutOff(string! reply) -> bool
 static Aw.Context.Core.ConceptScan.ConceptScanReplies.Hints(string! reply, System.Collections.Generic.IReadOnlySet<string!>! featureKeys) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptScan.ConceptHint!>!
 Aw.Context.Core.ConceptScan.ConceptScanPrompts
 static Aw.Context.Core.ConceptScan.ConceptScanPrompts.Propose(string! summary) -> string!
@@ -7913,8 +7913,10 @@ const Aw.Context.Core.Engine.FillBands.History = "context.fill.history" -> strin
 const Aw.Context.Core.Engine.FillBands.Lenses = "context.fill.lenses" -> string!
 static Aw.Context.Core.Engine.FillBands.Source.get -> System.Diagnostics.ActivitySource!
 static Aw.Context.Core.Engine.FillBands.Start(string! band) -> System.Diagnostics.Activity?
-Aw.Context.Core.ConceptScan.ConceptScanReport.ConceptScanReport(int Version, bool OnDraft, Aw.Context.Core.ConceptScan.ConceptScanOutcome Outcome, int Hints, int Searches, Aw.Context.Core.Models.ModelTier? Tier = null, string? Model = null) -> void
-Aw.Context.Core.ConceptScan.ConceptScanReport.Deconstruct(out int Version, out bool OnDraft, out Aw.Context.Core.ConceptScan.ConceptScanOutcome Outcome, out int Hints, out int Searches, out Aw.Context.Core.Models.ModelTier? Tier, out string? Model) -> void
+Aw.Context.Core.ConceptScan.ConceptScanReport.ConceptScanReport(int Version, bool OnDraft, Aw.Context.Core.ConceptScan.ConceptScanOutcome Outcome, int Hints, int Searches, Aw.Context.Core.Models.ModelTier? Tier = null, string? Model = null, bool CutOff = false) -> void
+Aw.Context.Core.ConceptScan.ConceptScanReport.Deconstruct(out int Version, out bool OnDraft, out Aw.Context.Core.ConceptScan.ConceptScanOutcome Outcome, out int Hints, out int Searches, out Aw.Context.Core.Models.ModelTier? Tier, out string? Model, out bool CutOff) -> void
+Aw.Context.Core.ConceptScan.ConceptScanReport.CutOff.get -> bool
+Aw.Context.Core.ConceptScan.ConceptScanReport.CutOff.init -> void
 Aw.Context.Core.ConceptScan.ConceptScanReport.Model.get -> string?
 Aw.Context.Core.ConceptScan.ConceptScanReport.Model.init -> void
 Aw.Context.Core.ConceptScan.ConceptScanReport.Tier.get -> Aw.Context.Core.Models.ModelTier?

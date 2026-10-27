@@ -54,13 +54,13 @@ public sealed class ConceptScanRepliesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void At_most_three_queries_per_candidate_and_at_most_fifteen_concepts()
+    public void At_most_three_queries_per_candidate_and_every_concept()
     {
-        var concepts = string.Join(',', Enumerable.Range(1, 20).Select(static i => Invariant($"{{\"name\":\"Concept {i}\",\"queries\":[\"a\",\"b\",\"c\",\"d\"]}}")));
+        var concepts = string.Join(',', Enumerable.Range(1, 40).Select(static i => Invariant($"{{\"name\":\"Concept {i}\",\"queries\":[\"a\",\"b\",\"c\",\"d\"]}}")));
 
         var found = ConceptScanReplies.Candidates("{\"concepts\":[" + concepts + "]}");
 
-        Assert.Equal(ConceptScanLimits.MaxConcepts, found.Count);
+        Assert.Equal(40, found.Count);
         Assert.All(found, static c => Assert.Equal(3, c.Queries.Count));
         Assert.Equal("Concept 1", found[0].Name);
     }
@@ -107,15 +107,45 @@ public sealed class ConceptScanRepliesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void More_than_fifteen_concepts_keep_the_fifteen_most_confident()
+    public void Forty_concepts_are_all_kept_most_confident_first()
     {
-        var keys = new HashSet<string>(Enumerable.Range(1, 20).Select(static i => Invariant($"feature:f{i}")), StringComparer.Ordinal);
-        var concepts = string.Join(',', Enumerable.Range(1, 20).Select(static i => Invariant($"{{\"name\":\"Concept {i}\",\"members\":[\"feature:f{i}\"],\"confidence\":{i / 100.0}}}")));
+        var keys = new HashSet<string>(Enumerable.Range(1, 40).Select(static i => Invariant($"feature:f{i}")), StringComparer.Ordinal);
+        var concepts = string.Join(',', Enumerable.Range(1, 40).Select(static i => Invariant($"{{\"name\":\"Concept {i}\",\"members\":[\"feature:f{i}\"],\"confidence\":{i / 100.0}}}")));
 
         var hints = ConceptScanReplies.Hints("{\"concepts\":[" + concepts + "]}", keys);
 
-        Assert.Equal(ConceptScanLimits.MaxConcepts, hints.Count);
-        Assert.Equal("Concept 20", hints[0].Name);
-        Assert.DoesNotContain(hints, static h => h.Name == "Concept 5");
+        Assert.Equal(40, hints.Count);
+        Assert.Equal("Concept 40", hints[0].Name);
+        Assert.Contains(hints, static h => h.Name == "Concept 5");
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_hints_reply_cut_off_after_three_whole_hints_keeps_the_three()
+    {
+        var cut = "{\"concepts\":[{\"name\":\"A\",\"members\":[\"feature:pay.run\"],\"confidence\":0.9},{\"name\":\"B\",\"members\":[\"feature:pay.slip\"],\"confidence\":0.8},{\"name\":\"C\",\"members\":[\"feature:shifts.open\"],\"confidence\":0.7},{\"name\":\"D\",\"members\":[\"feat";
+
+        var hints = ConceptScanReplies.Hints(cut, _features);
+
+        Assert.Equal(["A", "B", "C"], hints.Select(static h => h.Name), StringComparer.Ordinal);
+        Assert.True(ConceptScanReplies.IsCutOff(cut));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_candidates_reply_cut_off_mid_array_keeps_the_whole_candidates()
+    {
+        var cut = "```json\n{\"concepts\":[{\"name\":\"Payroll\",\"queries\":[\"pay run\"]},{\"name\":\"Self sched";
+
+        var found = ConceptScanReplies.Candidates(cut);
+
+        Assert.Equal(["Payroll"], found.Select(static c => c.Name), StringComparer.Ordinal);
+        Assert.True(ConceptScanReplies.IsCutOff(cut));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("")]
+    [InlineData("sure, here are some concepts")]
+    [InlineData("{\"concepts\":[{\"name\":\"Pay")]
+    [InlineData("""{"concepts":[{"name":"Payroll","queries":["pay run"]}]}""")]
+    public void A_reply_that_reads_whole_or_not_at_all_is_not_cut_off(string reply) =>
+        Assert.False(ConceptScanReplies.IsCutOff(reply));
 }

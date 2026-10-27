@@ -57,6 +57,8 @@ public static class EventCatalog
         new(EventTypes.FleetChanged, Public: true, typeof(FleetChanged), "fleet.changed:<provider>:<id>:<change>:<observedAtMs>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ItemOpenRequested, Public: true, typeof(ItemOpenRequested), "item.open-requested:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
         new(EventTypes.LaunchStarted, Public: true, typeof(LaunchStartedPublic), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou] },
+        new(EventTypes.ModelPicked, Public: true, typeof(ModelPicked), "model.pick:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Timeline] },
+        new(EventTypes.ModelPicking, Public: true, typeof(ModelPicking), "model.picking:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Timeline] },
         new(EventTypes.LaunchFailed, Public: true, typeof(LaunchFailed), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.LaunchTargets] },
         new(EventTypes.LaunchProbed, Public: true, typeof(LaunchProbed), "launch.probed:<probe>") { Invalidates = [ApiViews.LaunchTargets, ApiViews.Item] },
         new(EventTypes.SessionEnded, Public: true, typeof(SessionEnded), "session.ended:<launch>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },

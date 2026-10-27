@@ -4847,6 +4847,30 @@ Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.get -> int
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Carried.init -> void
 Aw.Sindri.Features.CodeIndexJobs.EmbedCodeIndexResult.Made.init -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.<Clone>$() -> Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest!
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.Deconstruct(out Aw.Sindri.Core.Sandbox.Plan.SandboxRequest! Launch) -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.Equals(Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest? other) -> bool
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.Launch.get -> Aw.Sindri.Core.Sandbox.Plan.SandboxRequest!
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.Launch.init -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.PlanSandboxRequest(Aw.Sindri.Core.Sandbox.Plan.SandboxRequest! Launch) -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.<Clone>$() -> Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse!
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.Deconstruct(out Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! Plan) -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.Equals(Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse? other) -> bool
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.Plan.get -> Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.Plan.init -> void
+Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.PlanSandboxResponse(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! Plan) -> void
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.GetHashCode() -> int
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.ToString() -> string!
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.GetHashCode() -> int
+override Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.ToString() -> string!
+static Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.operator !=(Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest? left, Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest? right) -> bool
+static Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest.operator ==(Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest? left, Aw.Sindri.Features.PlanSandbox.PlanSandboxRequest? right) -> bool
+static Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.operator !=(Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse? left, Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse? right) -> bool
+static Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse.operator ==(Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse? left, Aw.Sindri.Features.PlanSandbox.PlanSandboxResponse? right) -> bool
 Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest
 Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest!
 Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest.Equals(Aw.Sindri.Features.ContextCalls.ScanContextConceptsRequest? other) -> bool

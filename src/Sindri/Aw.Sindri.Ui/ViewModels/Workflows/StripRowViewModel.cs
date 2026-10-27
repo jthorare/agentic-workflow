@@ -28,7 +28,8 @@ internal sealed class StripRowViewModel : ObservableObject
             Protected = new ProtectedActionViewModel(new ProtectedAction(Labels.AnswerVerb(answer.Kind), answer.Cli, row.Address), clipboard, clock);
         }
 
-        CanAnswer = Protected is null && ChildAnswer is null && (answer is not null || InstanceRules.CompletesAtDesk(row));
+        AtDesk = answer is null && InstanceRules.CompletesAtDesk(row);
+        CanAnswer = Protected is null && ChildAnswer is null && (answer is not null || AtDesk);
     }
 
     /// <summary>The served chip (the word and tone the chip control draws).</summary>
@@ -69,6 +70,9 @@ internal sealed class StripRowViewModel : ObservableObject
 
     /// <summary>True when the row offers the desk answer.</summary>
     public bool CanAnswer { get; }
+
+    /// <summary>True when the row waits on a desk-task step: its answer form is the Needs you inbox's, not the row sheet.</summary>
+    internal bool AtDesk { get; }
 
 #pragma warning disable CA1822, MA0041 // a fixed sentence is a property because the view binds it
     /// <summary>The answer button's words.</summary>

@@ -6,12 +6,14 @@ using Aw.CodeIndex.Testing;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Testing.Glossary;
 using Aw.Kernel;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Host.CodeIndexHost;
 using SymbolVector = Aw.CodeIndex.Core.Facade.SymbolVector;
 
 namespace Aw.Sindri.Tests.CodeIndexHost;
 
 /// <summary>The adapter behind Context's symbol vectors port: the same contract as the fake, over a <see cref="FakeCodeIndex"/>.</summary>
+[Lane(TestLane.Unit)]
 public sealed class CodeIndexSymbolVectorsContractTests : SymbolVectorsContract<ISymbolVectors>
 {
     private const string Indexed = "0123456789abcdef0123456789abcdef01234567";

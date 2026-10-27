@@ -18,6 +18,11 @@ internal sealed record ApplyCommandBody(string Instance, CommandKind Kind, Answe
     /// <returns>The body.</returns>
     internal static ApplyCommandBody ForVerb(string instance, string verb) => new(instance, CommandKind.Command, Verb: verb);
 
+    /// <summary>The resume of a run parked on a timeout (ApplyCommand:answer-resume).</summary>
+    /// <param name="instance">The instance's id.</param>
+    /// <returns>The body.</returns>
+    internal static ApplyCommandBody Resume(string instance) => new(instance, CommandKind.Answer, AnswerVariant.Resume);
+
     /// <summary>The token grant of <paramref name="amount"/> on <paramref name="address"/>.</summary>
     /// <param name="address">The instance's address.</param>
     /// <param name="amount">The tokens.</param>

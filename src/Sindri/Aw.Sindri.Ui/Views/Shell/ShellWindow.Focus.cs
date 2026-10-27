@@ -148,6 +148,12 @@ internal sealed partial class ShellWindow
     // (run 4, a11y-2). Over a covering sheet the page is disabled and cannot take focus: the usual keep-focus rule applies.
     private void KeepFocusOrReannounce()
     {
+        // A pointer click on a top-bar tab stays on the tab (ux-C-10b): the region is for keyboard, chord and palette navigation, which have nowhere else to put focus.
+        if (_lastMethod == NavigationMethod.Pointer && FocusManager?.GetFocusedElement() is Visual clicked && TopBar.Get<ListBox>("Navigation").IsVisualAncestorOf(clicked))
+        {
+            return;
+        }
+
         var page = this.Get<Border>("Page");
         if (!page.IsEffectivelyEnabled)
         {
@@ -224,6 +230,18 @@ internal sealed partial class ShellWindow
         {
             EnterOpenedFrame(opened);   // a link with no row behind it (a deep link, a pointer): nothing on the page to stay on
         }
+    }
+
+    // A tab was selected without the keyboard's arrows: focus rests on the selected tab (a pointer press already put it there; a screen reader's or the driver's activation did not).
+    private void FocusSelectedTab()
+    {
+        var nav = TopBar.Get<ListBox>("Navigation");
+        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused))
+        {
+            return;
+        }
+
+        _ = Usable(nav.ContainerFromIndex(nav.SelectedIndex))?.Focus(Method());
     }
 
     // The page region takes focus (named, so the page is spoken); the Context page then sends it on to its anchor box. One path for a page change and the window opening.

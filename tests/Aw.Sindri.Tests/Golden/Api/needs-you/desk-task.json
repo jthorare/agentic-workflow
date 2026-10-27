@@ -21,7 +21,7 @@
       "actions": [
         "CompleteStep"
       ],
-      "cli": "sindri workflow status ITM-0000000000000000000000000000000f/step/1",
+      "cli": "sindri workflow complete ITM-0000000000000000000000000000000f/step/1 --run <run> --outcome <outcome>",
       "open": {
         "route": "workflow/ITM-0000000000000000000000000000000f/step/1",
         "label": "Answer the question"

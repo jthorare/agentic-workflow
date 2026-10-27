@@ -81,6 +81,7 @@
         "outcome": { "enum": ["resolved", "unresolved", "alreadySatisfied", "failed", null] },
         "why": { "type": ["string", "null"], "maxLength": 200, "description": "One plain sentence on why the state is in the recipe; no id or code name (RCP-DISPLAY-002)." },
         "displayName": { "type": ["string", "null"], "maxLength": 60, "description": "A plain name for the step, in sentence case, instead of the state id (RCP-DISPLAY-003)." },
+        "model": { "oneOf": [{ "$ref": "#/$defs/StateModel" }, { "type": "null" }], "description": "What the state says about the model its agent Step runs on: a floor tier (SND-MODEL-002)." },
         "onOutcome": { "type": ["object", "null"], "additionalProperties": { "type": "string", "maxLength": 200 }, "description": "Plain words for what each outcome of a desk state does, keyed by an outcome of the state's step: { approve: \"Moves on to planning\" } (RCP-DISPLAY-002)." }
       },
       "allOf": [
@@ -176,6 +177,13 @@
       "properties": {
         "after": { "$ref": "#/$defs/RecipeDuration" },
         "then": { "enum": ["park", "escalate", "retry"] }
+      }
+    },
+    "StateModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "floor": { "type": ["string", "null"], "description": "The lowest tier the state accepts: cheap, standard or strong; never a model id (SND-MODEL-002)." }
       }
     },
     "BudgetSpec": {

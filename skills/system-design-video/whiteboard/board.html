@@ -1,0 +1,213 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  svg { display: block; }
+  .hand { font-family: "Marker Felt", "Chalkboard SE", "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive; }
+</style>
+<svg id="s" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="chalk" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/>
+    </filter>
+  </defs>
+  <rect id="bg" width="1920" height="1080" fill="#000"/>
+  <g id="cam"><g id="world" filter="url(#chalk)"></g><circle id="pen" r="7" fill="#fff" opacity="0"/></g>
+  <g id="hud"></g>
+</svg>
+<script>
+// Pure function of time: window.setT(t) draws the board exactly as it looks at t seconds.
+// Layout (beat starts, item times) is computed once from window.STORY; see references/beats.md.
+const NS = "http://www.w3.org/2000/svg";
+const S = window.STORY;
+const C = S.colors; // ink name -> hex, resolved from the project tokens by render.ts; "chalk" is the neutral ink
+const color = (c) => C[c] || c || C.chalk;
+const world = document.getElementById("world");
+const hud = document.getElementById("hud");
+const pen = document.getElementById("pen");
+const cam = document.getElementById("cam");
+document.getElementById("bg").setAttribute("fill", S.board);
+pen.setAttribute("fill", C.chalk);
+if (S.font) document.styleSheets[0].insertRule(`.hand { font-family: ${S.font}; }`, document.styleSheets[0].cssRules.length);
+document.body.style.background = S.board;
+const SW = S.strokeWidth || 6;
+
+const smoother = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * x * (x * (x * 6 - 15) + 10); };
+// cubic-bezier(.45,0,.2,1) draw-on easing, solved numerically.
+const bez = (() => {
+  const [x1, y1, x2, y2] = [0.45, 0, 0.2, 1];
+  const f = (a, b, c, t) => 3 * a * (1 - t) ** 2 * t + 3 * b * (1 - t) * t * t + t ** 3;
+  return (x) => { x = Math.min(1, Math.max(0, x)); let lo = 0, hi = 1;
+    for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; (f(x1, x2, 0, m) < x ? (lo = m) : (hi = m)); }
+    return f(y1, y2, 0, (lo + hi) / 2); };
+})();
+
+// Seeded wobble so every render of a drawing is identical.
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; };
+const wob = (n) => rnd() * n;
+
+function smoothPath(pts) {
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i - 1], [x, y] = pts[i];
+    d += ` Q${((px + x) / 2 + wob(3)).toFixed(1)},${((py + y) / 2 + wob(3)).toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+  }
+  return d;
+}
+function seg(a, b, step = 90) {
+  const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+  return Array.from({ length: n + 1 }, (_, i) => [a[0] + ((b[0] - a[0]) * i) / n + wob(4), a[1] + ((b[1] - a[1]) * i) / n + wob(4)]);
+}
+
+const els = []; // {kind, start, dur, el, len, ...}
+const byId = {};
+function add(tag, attrs, parent = world) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e); return e;
+}
+function stroke(d, col, start, dur, extra = {}) {
+  const el = add("path", { d, fill: "none", stroke: color(col), "stroke-width": extra.w || SW, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0 });
+  const len = el.getTotalLength();
+  el.setAttribute("stroke-dasharray", `${len} ${len}`);
+  const o = { kind: "stroke", start, dur, el, len, ...extra }; els.push(o); return o;
+}
+function text(item, start, dur) {
+  const size = item.size || 56;
+  const g = add("g", { opacity: 0 });
+  const t = add("text", { x: item.x, y: item.y, "font-size": size, fill: color(item.color), "text-anchor": item.anchor || "start", class: "hand", "font-weight": item.bold ? 700 : 400 }, g);
+  t.textContent = item.text;
+  const bb = t.getBBox();
+  const clipId = "c" + els.length;
+  const cp = add("clipPath", { id: clipId }, g);
+  const r = add("rect", { x: bb.x - 8, y: bb.y - 8, width: 0, height: bb.height + 16 }, cp);
+  g.setAttribute("clip-path", `url(#${clipId})`);
+  const o = { kind: "text", start, dur, el: g, rect: r, bb, item }; els.push(o); return o;
+}
+
+// ---- layout: beats in order, items staggered inside each beat -------------------
+const beats = []; let clock = S.lead ?? 0.5; let prevCam = S.beats[0].cam;
+for (const b of S.beats) {
+  const startAt = clock; let cursor = 0.35; let maxEnd = 0; const made = [];
+  const place = (item, o) => { // o = item object(s) the pen draws
+    made.push(o);
+  };
+  for (const it of b.items) {
+    const SPEED = S.speed || 1;
+    const dur = it.dur ?? (({ box: 0.75, arrow: 0.6, ring: 0.6, cross: 0.45, text: Math.max(0.3, Math.min(1.2, (it.text || "").length * 0.055)), table: 1.4 }[it.type] || 0.8) / SPEED);
+    const s = startAt + (it.at ?? cursor);
+    const item = { ...it };
+    const t = s, e = t + dur;
+    if (it.type === "box") {
+      const { x, y, w, h } = it, j = 10;
+      const pts = [[x + wob(j), y + wob(j)], ...seg([x, y], [x + w, y]).slice(1), ...seg([x + w, y], [x + w, y + h]).slice(1), ...seg([x + w, y + h], [x, y + h]).slice(1), ...seg([x, y + h], [x - 6, y - 12]).slice(1)];
+      if (it.fill) { const f = add("rect", { x, y, width: w, height: h, rx: 14, fill: color(it.color), opacity: 0 }); els.push({ kind: "fill", start: e - 0.1, dur: 0.5, el: f, max: 0.13 }); }
+      const o = stroke(smoothPath(pts), it.color, t, dur, { pen: true, alpha: it.alpha }); if (it.id) byId[it.id] = { x, y, w, h, o };
+    } else if (it.type === "arrow") {
+      const pts = it.via ? [it.from, ...it.via, it.to] : [it.from, it.to];
+      let all = []; for (let i = 0; i < pts.length - 1; i++) all.push(...seg(pts[i], pts[i + 1]).slice(i ? 1 : 0));
+      const [ax, ay] = pts[pts.length - 2], [bx, by] = pts[pts.length - 1], a = Math.atan2(by - ay, bx - ax), hl = 34;
+      stroke(smoothPath(all), it.color, t, dur * 0.75, { pen: true, alpha: it.alpha });
+      const hd = `M${bx - hl * Math.cos(a - 0.5)},${by - hl * Math.sin(a - 0.5)} L${bx},${by} L${bx - hl * Math.cos(a + 0.5)},${by - hl * Math.sin(a + 0.5)}`;
+      stroke(hd, it.color, t + dur * 0.75, dur * 0.25, { pen: true, alpha: it.alpha });
+    } else if (it.type === "text") {
+      const o = text(it, t, dur); if (it.id) byId[it.id] = { x: o.bb.x, y: o.bb.y, width: o.bb.width, height: o.bb.height, o };
+    } else if (it.type === "cross" || it.type === "ring") {
+      const tgt = byId[it.over]; if (!tgt) throw new Error(`${it.type}: unknown id ${it.over}`);
+      const { x, y, width, height, w, h } = tgt, bw = width ?? w, bh = height ?? h;
+      if (it.type === "cross") {
+        stroke(smoothPath(seg([x - 8, y + bh * 0.8], [x + bw + 8, y + bh * 0.15], 60)), it.color || "chalk", t, dur, { pen: true });
+        if (tgt.o) els.push({ kind: "dim", start: e, dur: 0.4, el: tgt.o.el, to: 0.4 });
+      } else {
+        const pad = 16, cx = x + bw / 2, cy = y + bh / 2, rx = bw / 2 + pad + 10, ry = bh / 2 + pad;
+        const pts = Array.from({ length: 21 }, (_, i) => { const th = -Math.PI / 2 + (i / 20) * (Math.PI * 2 + 0.25); return [cx + rx * Math.cos(th), cy + ry * Math.sin(th)]; });
+        stroke(smoothPath(pts), it.color, t, dur, { pen: true });
+      }
+    } else if (it.type === "table") {
+      // rows: [["h1","h2"],["a","b"]]; first row is the header. col widths from `cols`.
+      const { x, y, cols, rowH = 90, rows } = it, W = cols.reduce((a, b) => a + b, 0), H = rowH * rows.length;
+      const pts = [[x, y], ...seg([x, y], [x + W, y]).slice(1), ...seg([x + W, y], [x + W, y + H]).slice(1), ...seg([x + W, y + H], [x, y + H]).slice(1), ...seg([x, y + H], [x, y]).slice(1)];
+      stroke(smoothPath(pts), it.color || "chalk", t, dur * 0.4, { pen: true });
+      for (let r = 1; r < rows.length; r++) stroke(smoothPath(seg([x, y + r * rowH], [x + W, y + r * rowH])), it.color || "chalk", t + dur * 0.4 + r * 0.1, 0.3, { pen: true });
+      let cx = x; cols.forEach((cw, ci) => { if (ci) stroke(smoothPath(seg([cx, y], [cx, y + H])), it.color || "chalk", t + dur * 0.5, 0.35, { pen: true });
+        rows.forEach((row, r) => { if (row[ci] != null) text({ text: String(row[ci]), x: cx + 18, y: y + r * rowH + rowH * 0.66, size: it.size || 44, color: (it.colors && it.colors[r] && it.colors[r][ci]) || it.color || "chalk", bold: r === 0 }, t + dur * 0.55 + r * 0.18, 0.5); });
+        cx += cw; });
+    }
+    maxEnd = Math.max(maxEnd, (it.at ?? cursor) + dur); cursor = (it.at ?? cursor) + dur + (it.gap ?? 0.08 / SPEED);
+  }
+  // A caption needs reading time: about 0.32 s per word plus a second, whatever the drawing takes.
+  const readTime = ((b.say || "").split(/\s+/).filter(Boolean).length) * 0.32 + 1;
+  const bdur = b.dur ?? Math.max(maxEnd + (b.hold ?? S.hold ?? 1.1), readTime);
+  beats.push({ id: b.id, src: b.src, settle: startAt + (b.camDur ?? 1.1), start: startAt, land: startAt + maxEnd, end: startAt + bdur, say: b.say, cam: b.cam, prevCam, camDur: b.camDur ?? 1.1 });
+  prevCam = b.cam; clock = startAt + bdur;
+}
+const TOTAL = clock + (S.tail ?? 0.9);
+window.LAYOUT = { total: TOTAL, beats: beats.map(({ id, src, settle, start, land, end, say }) => ({ id, src, settle, start, land, end, say })) };
+
+// ---- captions (screen space) -----------------------------------------------------
+const capEls = beats.map((b) => {
+  const t = add("text", { x: 960, y: 1030, "font-size": 44, fill: C.chalk, "text-anchor": "middle", opacity: 0, class: "hand" }, hud);
+  // One line up to ~58 characters; longer captions break at the middle word into two lines.
+  const words = (b.say || "").split(" ");
+  const lines = [];
+  if ((b.say || "").length <= 58) lines.push(b.say || "");
+  else { let best = 1, at = 0; words.forEach((w, i) => { at += w.length + 1; if (Math.abs(at - b.say.length / 2) < Math.abs(words.slice(0, best).join(" ").length - b.say.length / 2)) best = i + 1; });
+    lines.push(words.slice(0, best).join(" "), words.slice(best).join(" ")); }
+  lines.forEach((l, i) => { const ts = document.createElementNS(NS, "tspan"); ts.setAttribute("x", 960); ts.setAttribute("y", lines.length === 1 ? 1030 : 992 + i * 50); ts.textContent = l; t.appendChild(ts); });
+  return t;
+});
+
+// Design-doc section each beat comes from, top-left (screen space).
+const srcEls = beats.map((b) => {
+  const t = add("text", { x: 48, y: 64, "font-size": 30, fill: C.chalk, "text-anchor": "start", opacity: 0, class: "hand" }, hud);
+  t.textContent = b.src ? `from: ${b.src}` : "";
+  t.setAttribute("stroke", S.board); t.setAttribute("stroke-width", 8); t.setAttribute("paint-order", "stroke"); return t;
+});
+
+function camAt(t) {
+  let b = beats[0];
+  for (const x of beats) if (t >= x.start) b = x;
+  const k = smoother((t - b.start) / b.camDur);
+  const [px, py, pz] = b.prevCam, [cx, cy, cz] = b.cam;
+  const z = pz + (cz - pz) * k, x = px + (cx - px) * k, y = py + (cy - py) * k;
+  return `translate(960,490) scale(${z}) translate(${-x},${-y})`;
+}
+
+window.setT = (t) => {
+  cam.setAttribute("transform", camAt(t));
+  const z = parseFloat(cam.getAttribute("transform").match(/scale\(([^)]+)\)/)[1]);
+  let active = null;
+  for (const o of els) {
+    const p = (t - o.start) / o.dur;
+    if (o.kind === "stroke") {
+      const k = bez(p);
+      o.el.setAttribute("opacity", p <= 0 ? 0 : (o.alpha ?? 1));
+      o.el.setAttribute("stroke-dashoffset", o.len * (1 - k));
+      if (p > 0 && p < 1 && o.pen && (!active || o.start >= active.start)) active = { ...o, k };
+    } else if (o.kind === "text") {
+      const k = Math.min(1, Math.max(0, p));
+      o.el.setAttribute("opacity", p <= 0 ? 0 : 1);
+      const w = (o.bb.width + 16) * bez(k);
+      o.rect.setAttribute("width", w);
+      if (p > 0 && p < 1) active = { start: o.start, el: null, penAt: [o.bb.x - 8 + w, o.bb.y + o.bb.height * 0.7] };
+    } else if (o.kind === "fill") {
+      o.el.setAttribute("opacity", smoother(p) * o.max);
+    } else if (o.kind === "dim") {
+      o.el.style.opacity = 1 - smoother(p) * (1 - o.to);
+    }
+  }
+  if (active) {
+    let pt = active.penAt;
+    if (!pt) { const q = active.el.getPointAtLength(active.len * active.k); pt = [q.x, q.y]; }
+    pen.setAttribute("cx", pt[0]); pen.setAttribute("cy", pt[1]); pen.setAttribute("r", 7 / Math.sqrt(z)); pen.setAttribute("opacity", 0.95);
+  } else pen.setAttribute("opacity", 0);
+  beats.forEach((b, i) => {
+    const a = Math.min(1, Math.max(0, (t - b.start - 0.15) / 0.3)), d = Math.min(1, Math.max(0, (b.end - t) / 0.3));
+    capEls[i].setAttribute("opacity", Math.min(a, d));
+    srcEls[i].setAttribute("opacity", Math.min(a, d) * 0.6);
+  });
+};
+window.setT(0);
+</script>

@@ -219,6 +219,7 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(ScopingSteps.ChallengeLog)
         .AddBlockDescriptor(ScopingSteps.Propose)
         .AddBlockDescriptor(ScopingSteps.Evidence)
+        .AddBlockDescriptor(ScopingSteps.Exclude)
         .AddBlockDescriptor(ScopingSteps.Review)
         .AddBlockDescriptor(ScopingSteps.Freeze)
         .AddBlockDescriptor(ScopingSteps.Withdraw);

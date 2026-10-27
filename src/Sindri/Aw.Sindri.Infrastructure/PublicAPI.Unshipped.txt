@@ -2,6 +2,8 @@
 Aw.Sindri.Infrastructure.Registration.SindriInfrastructureServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Registration.SindriInfrastructureServiceCollectionExtensions.AddSindriInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Sindri.Infrastructure.Registration.SindriInfrastructureServiceCollectionExtensions.CreateSecretPointers(System.Func<string!, string?>! environment) -> Aw.Sindri.Core.Secrets.ISecretPointers!
+Aw.Sindri.Infrastructure.Sandbox.BubblewrapServiceCollectionExtensions
+static Aw.Sindri.Infrastructure.Sandbox.BubblewrapServiceCollectionExtensions.AddSindriBubblewrapSandbox(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions.AddSindriProveInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions.ProveBlocksAllowed(System.Func<string!, string?>! environment) -> bool

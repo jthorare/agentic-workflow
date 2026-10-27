@@ -145,7 +145,7 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
         }
         else
         {
-            ProfileRefusal = Labels.ApproveRefusal(refused is null ? "" : refused.Code, refused is null ? Labels.NeedsYouNotApproved : Words(refused), _cli);
+            ProfileRefusal = RefusalText(refused, _cli);
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
@@ -165,6 +165,13 @@ internal sealed partial class NeedsYouConfirm : ObservableObject
                 ? subject is { Id.Length: > 0 } && string.Equals(subject.Kind, NeedsYouKinds.Profile, StringComparison.Ordinal) ? NeedsYouConfirmKind.Profile : NeedsYouConfirmKind.None
                 : NeedsYouConfirmKind.All;
     }
+
+    /// <summary>The words for a refused approval: the sentence, its code and the row's own command.</summary>
+    /// <param name="refused">The refusal; null when the server answered without approving.</param>
+    /// <param name="cli">The row's served command.</param>
+    /// <returns>The sentence.</returns>
+    internal static string RefusalText(Error? refused, string cli) =>
+        Labels.ApproveRefusal(refused is null ? "" : refused.Code, refused is null ? Labels.NeedsYouNotApproved : Words(refused), cli);
 
     // A refusal's words: Sindri's own steps are told in plain words they can't answer. The code and the row's command go with them (Labels.ApproveRefusal).
     private static string Words(Error error) => string.Equals(error.Code, SessionRefusal, StringComparison.Ordinal) ? Labels.ApproveSessionRefused : error.Message;

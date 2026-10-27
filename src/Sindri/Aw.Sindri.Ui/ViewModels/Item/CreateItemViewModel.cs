@@ -98,7 +98,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
         }
     } = string.Empty;
 
-    /// <summary>`C`: opens the form, empty, with the catalog's control as it is now.</summary>
+    /// <summary>`C`: opens the form, with the draft left by an Esc (empty after a create) and with the catalog's control as it is now.</summary>
     internal void Open()
     {
         if (Control is { } old)
@@ -114,7 +114,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
             control.Precondition = Ready;
         }
 
-        (Title, Repo, Body, CreatedId) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        CreatedId = string.Empty;   // the draft (title, repo, body) is kept across Esc and cleared once the item is created
         Patch.To(RepoChoices, [.. (KnownRepos?.Invoke() ?? []).Where(r => r.Length > 0 && !string.Equals(r, Labels.AllRepos, StringComparison.Ordinal))]);
         ClearTitleError();
         IsOpen = true;
@@ -202,6 +202,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
         if (form == _form)
         {
             // Only the form that sent it: Esc and C made another since.
+            (Title, Repo, Body) = (string.Empty, string.Empty, string.Empty);
             CreatedId = created.Value.ItemId;
             IsOpen = false;
             Created?.Invoke(this, new ItemCreatedEventArgs(CreatedId));

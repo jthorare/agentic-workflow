@@ -1,0 +1,42 @@
+/* Base layout for /system-design pages. Colors, fonts and radius come from the :root block tokens_to_css.py puts above this;
+   the fallbacks here are neutral and only apply to tokens the project does not define. Light theme. */
+:root {
+  --bg: #fafafa; --surface: #ffffff; --ink: #1c1c1e; --muted: #6b6b70; --line: #dcdce0;
+  --accent: #3b5bdb; --secondary: #7048e8; --good: #2b8a3e; --warn: #b7791f; --bad: #c92a2a;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --f-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 40px max(16px, env(safe-area-inset-left, 0px)) 72px; display: grid; gap: 48px; }
+h1, h2, h3 { margin: 0; color: var(--ink); text-wrap: balance; }
+h1 { font-size: 2rem; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; }
+h2 { font-size: 1.375rem; line-height: 1.25; font-weight: 600; }
+h3 { font-size: 1.0625rem; line-height: 1.3; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+b, strong { font-weight: 600; }
+.eyebrow { font: 500 0.75rem/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: 0.85em; }
+section { display: grid; gap: 16px; min-width: 0; }
+.plate { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; min-width: 0; overflow-wrap: anywhere; }
+.plate table { border-collapse: collapse; width: 100%; overflow-wrap: normal; }
+.plate th, .plate td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.scroll { overflow-x: auto; }
+figure { margin: 0; }
+.shot { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.shot img { width: 100%; display: block; }
+.shot figcaption { padding: 8px 16px; font-size: 0.8125rem; color: var(--muted); border-top: 1px solid var(--line); }
+.shot.diagram img { width: auto; max-width: 100%; max-height: 1400px; margin: 0 auto; }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.q { background: color-mix(in srgb, var(--warn) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--surface)); border-radius: var(--radius); padding: 16px; display: grid; gap: 8px; }
+.q .id { font-size: 0.75rem; color: var(--warn); }
+.q .ex { font-size: 0.8125rem; color: var(--muted); }
+.q ol { margin: 0; padding-left: 1.25rem; }
+.dd { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; display: grid; gap: 2px; }
+.dd .id { font-size: 0.75rem; color: var(--muted); }
+.tag { display: inline-block; font-size: 0.75rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.good { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+code { font-family: var(--f-mono); font-size: 0.85em; }
+@media (max-width: 640px) { .wrap { gap: 32px; padding-top: 24px; } h1 { font-size: 1.6rem; } .plate { padding: 16px; } }

@@ -2,7 +2,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
 /// The one table that puts a kind of node in a band and gives it a look (q86; the ui owns the mapping, owner q95): records and decisions are the why;
-/// features, screens, actions, things and flows are the product; code is code; any other kind goes in an Other row, so nothing is dropped.
+/// features, screens, actions, things, flows and concepts are the product; code is code; any other kind goes in an Other row, so nothing is dropped.
 /// </summary>
 internal static class NodeBands
 {
@@ -15,6 +15,7 @@ internal static class NodeBands
         ("action", WholeBand.Product, new(ChipShape.Card, KindMark.Triangle, "Brush.Success")),
         ("thing", WholeBand.Product, new(ChipShape.Card, KindMark.Diamond, "Brush.Success")),
         ("flow", WholeBand.Product, new(ChipShape.Card, KindMark.Chevron, "Brush.Success")),
+        ("concept", WholeBand.Product, new(ChipShape.Card, KindMark.Bar, "Brush.Success")),
         ("code", WholeBand.Code, new(ChipShape.Plate, KindMark.Bar, "Brush.InkMuted")),
     ];
 

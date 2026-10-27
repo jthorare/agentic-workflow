@@ -1,6 +1,6 @@
 # Agentic Workflow
 
-A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 53 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
+A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 55 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
 
 There is one canonical core: skills, hook logic, MCP servers, and judge. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
 
@@ -164,11 +164,11 @@ The setup script:
 
 ### 1. Skills
 
-53 native skills, installed as symlinks into each provider's skills directory. Every skill uses the same text for every provider: steps name a capability, and the running agent uses its host's tool for it (see `skills/_shared/capabilities.md`).
+55 native skills, installed as symlinks into each provider's skills directory. Every skill uses the same text for every provider: steps name a capability, and the running agent uses its host's tool for it (see `skills/_shared/capabilities.md`).
 
 | Stage | Skills |
 |-------|--------|
-| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview` |
+| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview`, `system-design`, `system-design-video` |
 | Design | `design-analyze`, `design-language`, `design-evolve`, `design-shotgun`, `design-mockup`, `design-implement`, `design-refine`, `design-verify` (dispatchers auto-detect web/iOS and route to their `-web` / `-ios` sub-skills) |
 | Build & verify | `specToProvenPR`, `verify-app` (→ `verify-web`, `verify-ios`, `verify-desktop`), `ui-evidence` |
 | C# scaffolds | `new-package`, `new-slice` |
@@ -252,7 +252,7 @@ The full list is under Commands in [`AGENTS.md`](AGENTS.md).
 agentic-workflow/
 ├── AGENTS.md                # Canonical repo instructions (CLAUDE.md is a symlink to it)
 ├── .agents/rules/           # Glob-scoped rules, the only copy (.claude/rules, .cursor/rules/*.mdc are symlinks)
-├── skills/                  # 53 native skills (+ _shared/ fragments, incl. capabilities.md)
+├── skills/                  # 55 native skills (+ _shared/ fragments, incl. capabilities.md)
 ├── bootstrap/               # /bootstrap — repo documentation generator
 ├── providers/<name>/        # Per-provider installers: install.sh, install-hooks.sh (claude, codex, cursor)
 ├── config/                  # Settings, MCP config, statusline, hooks (+ hooks/adapters/ for codex, cursor)

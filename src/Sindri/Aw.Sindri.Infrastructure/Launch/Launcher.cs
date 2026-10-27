@@ -94,7 +94,8 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         foreach (var entry in parts.Catalog.All)
         {
             var found = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false) is not null;
-            targets.Add(new TargetFacts(entry.Id, found, Version: null, Limited(entry), found ? null : "not-installed", entry.Source, entry.Source == CatalogSource.Override));
+            var models = parts.Models is { } catalog && found ? await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false) : null;
+            targets.Add(new TargetFacts(entry.Id, found, Version: null, WithModels(Limited(entry), models, found), found ? null : "not-installed", entry.Source, entry.Source == CatalogSource.Override) { Models = parts.Models is null ? null : models ?? [] });
         }
 
         return new LaunchProbed(terminal, host, targets, []);

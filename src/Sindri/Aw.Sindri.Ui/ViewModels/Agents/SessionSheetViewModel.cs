@@ -291,7 +291,5 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
         OnChanged(nameof(HasStep));
     }
 
-    private static string Id8(string id) => id.Length > 8 ? id[..8] : id;
-
     private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 }

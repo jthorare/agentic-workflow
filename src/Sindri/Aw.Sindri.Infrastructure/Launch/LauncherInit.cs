@@ -59,7 +59,8 @@ internal sealed class LauncherInit(LauncherInitParts parts) : ILaunchSetup
             var resolved = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false);
             var check = StepApproval.Check(entry, parts.BuiltinHash(entry.Id), approved?.StepArgvHashes(entry.Id) ?? []);
             var park = check.IsSuccess ? null : $"Steps on `{entry.Id.Value}` will park: approve `agents.{entry.Id.Value}.stepArgvHash: {entry.ArgvHash}`";
-            entries.Add(new LaunchShowEntry(entry.Id, entry.Source, entry.Bin, resolved, entry.ArgvHash, check.IsSuccess, park));
+            var models = parts.Models is { } catalog && resolved is not null ? ModelBands.Rank(await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false)) : null;
+            entries.Add(new LaunchShowEntry(entry.Id, entry.Source, entry.Bin, resolved, entry.ArgvHash, check.IsSuccess, park) { Models = models });
         }
 
         var (terminal, source) = await Terminal(config, cancellationToken).ConfigureAwait(false);

@@ -1,0 +1,2 @@
+/home/owner/.cache/tool is not bound in the sandbox home, so it does not exist for this session (a tool that writes there loses it with the run).
+The owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.

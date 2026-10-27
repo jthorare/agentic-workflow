@@ -80,11 +80,29 @@
           <TextBlock x:Name="ExpandedRunDetail" Classes="caption mono subtle" Text="{Binding RunDetail}" IsVisible="{Binding HasRun}" TextWrapping="Wrap" />
         </StackPanel>
       </Expander>
+      <!-- A desk task's required outputs (UI spec: file picks, at most 1 MiB, contents sent): a path box and Browse each; Complete waits for them. -->
+      <ItemsControl x:Name="ExpandedOutputs" ItemsSource="{Binding Outputs}" IsVisible="{Binding HasOutputs}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="inst:DeskOutputViewModel">
+            <StackPanel Margin="0,0,0,6" Spacing="4">
+              <TextBlock Name="DeskOutputCaption" Classes="caption" Text="{Binding Caption}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox Name="DeskOutputPath" Text="{Binding Path, Mode=TwoWay}" AutomationProperties.Name="{Binding BoxName}" />
+                <Button Name="DeskOutputBrowse" Grid.Column="1" Margin="8,0,0,0" Content="{Binding BrowseText}" Click="OnBrowseOutput" AutomationProperties.Name="{Binding BrowseName}" />
+              </Grid>
+              <TextBlock Name="DeskOutputError" Classes="caption" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Error}" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock x:Name="ExpandedOutputHint" Classes="caption subtle" Text="{Binding OutputHint}" TextWrapping="Wrap"
+                 IsVisible="{Binding OutputHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
       <ItemsControl x:Name="ExpandedCommands" ItemsSource="{Binding Commands}" IsVisible="{Binding HasCommands}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="inst:ExpandedCommandViewModel">
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
               <Button Name="CommandAsk" IsVisible="{Binding IsCancel}" Content="{Binding Label}" Click="OnAsk" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
+              <Button Name="CommandComplete" IsVisible="{Binding IsComplete}" IsEnabled="{Binding CanSend}" Content="{Binding Label}" Click="OnComplete" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Button Name="CommandHandBack" IsVisible="{Binding IsHandBack}" Content="{Binding Label}" Click="OnHandBack" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Button Name="CommandTakeOver" IsVisible="{Binding IsTakeOver}" Content="{Binding Label}" Click="OnTakeOver" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Border Name="CommandLabelName" IsVisible="{Binding ShowsLabel}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}"

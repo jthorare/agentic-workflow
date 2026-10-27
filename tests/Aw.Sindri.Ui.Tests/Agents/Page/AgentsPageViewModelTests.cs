@@ -147,17 +147,17 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        Assert.Equal("pid-333-", RowOf(page, Cursor).TitleText);
+        Assert.Equal("pid-333", RowOf(page, Cursor).TitleText);
     }
 
     [Fact]
-    public async Task Problems_render_code_and_text_above_the_list()
+    public async Task Problems_render_the_text_without_the_raw_code_above_the_list()
     {
         _f.Serve("problems-source-failed");
         var served = Golden("sessions", "problems-source-failed")["problems"]![0]!;
         var page = await _f.Shown(Token);
 
-        Assert.Equal([(string)served["code"]! + " " + (string)served["text"]!], page.ProblemLines);
+        Assert.Equal([(string)served["text"]!], page.ProblemLines);
         Assert.Equal(3, page.Groups.Sum(g => g.Rows.Count));
     }
 

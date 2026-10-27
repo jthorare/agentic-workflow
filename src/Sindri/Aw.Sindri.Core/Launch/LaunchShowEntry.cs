@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Launch;
 
 /// <summary>One catalog entry in <see cref="LaunchShowReport"/>.</summary>
@@ -8,4 +10,9 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="ArgvHash">The entry's argvHash.</param>
 /// <param name="StepOk">True when an unattended Step may run it (SL8).</param>
 /// <param name="ParkLine">When not <paramref name="StepOk"/>, the line to approve ("Steps on `id` will park: approve `agents.id.stepArgvHash: sha256:…`"), else null.</param>
-public sealed record LaunchShowEntry(AgentId Id, CatalogSource Source, string Bin, string? ResolvedBin, string? ArgvHash, bool StepOk, string? ParkLine);
+public sealed record LaunchShowEntry(AgentId Id, CatalogSource Source, string Bin, string? ResolvedBin, string? ArgvHash, bool StepOk, string? ParkLine)
+{
+    /// <summary>The agent's models cheapest first with their bands (model-pick spec §3); empty when the agent isn't installed or offers no readable list.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<RankedModel>? Models { get; init; }
+}

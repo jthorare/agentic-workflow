@@ -16,6 +16,7 @@ public static class RecipeValidator
         new ChoiceRules(),
         new DeclarationRules(),
         new DisplayRules(),
+        new ModelRules(),
         new BlockRules(),
         new HumanTriggerRules(),
         new CapabilityRules(),

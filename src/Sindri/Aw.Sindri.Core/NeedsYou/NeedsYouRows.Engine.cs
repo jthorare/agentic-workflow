@@ -83,7 +83,7 @@ public static partial class NeedsYouRows
     /// <param name="scrubber">Scrubs the text the row stores.</param>
     /// <returns>The row.</returns>
     public static NeedsYouRow ForDeskTask(ItemRow item, InstanceAddress address, DateTimeOffset since, ITextScrubber scrubber) =>
-        Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Status(address),
+        Row(item, address, new EngineRow(NeedsYouRowIds.Desk(address), "desk task", $"a desk task is open ({address.Value})", Urgency.Colour, AnswerKind: null, _completeStep, [_completeStep], Complete(address),
             new NeedsYouOpen(WorkflowRoute(address), "Answer the question")), since, scrubber);
 
     /// <summary>The 'park' row of a takeover that went idle.</summary>
@@ -107,6 +107,9 @@ public static partial class NeedsYouRows
             new NeedsYouOpen(WorkflowRoute(address), "Open the workflow")), since, scrubber);
 
     private static string WorkflowRoute(InstanceAddress address) => "workflow/" + address.Value;
+
+    // The complete command, with the run and the outcome left for the person (the row does not carry the open run's token; 'workflow status' prints the filled line).
+    private static string Complete(InstanceAddress address) => $"sindri workflow complete {address.Value} --run <run> --outcome <outcome>";
 
     private static string Status(InstanceAddress address) => $"sindri workflow status {address.Value}";
 

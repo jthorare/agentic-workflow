@@ -198,6 +198,22 @@
       ]
     },
     {
+      "type": "model.picked",
+      "keyShape": "model.pick:<launchId>",
+      "invalidates": [
+        "launch",
+        "timeline"
+      ]
+    },
+    {
+      "type": "model.picking",
+      "keyShape": "model.picking:<launchId>",
+      "invalidates": [
+        "launch",
+        "timeline"
+      ]
+    },
+    {
       "type": "onyx.deferred",
       "keyShape": "onyx.deferred:<commandId>",
       "invalidates": [

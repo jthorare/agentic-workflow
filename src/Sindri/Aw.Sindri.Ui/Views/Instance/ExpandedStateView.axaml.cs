@@ -73,6 +73,16 @@ internal sealed partial class ExpandedStateView : UserControl
 
     private void OnAsk(object? sender, RoutedEventArgs e) => _state?.AskCancel();
 
+    private void OnBrowseOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: DeskOutputViewModel output })
+        {
+            _ = output.Browse(CancellationToken.None);
+        }
+    }
+
+    private void OnComplete(object? sender, RoutedEventArgs e) => _ = _state?.CompleteAsync();
+
     private void OnHandBack(object? sender, RoutedEventArgs e) => _ = _state?.HandBackAsync();
 
     private void OnTakeOver(object? sender, RoutedEventArgs e) => _ = _state?.TakeOverAsync();

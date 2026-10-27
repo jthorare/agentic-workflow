@@ -6,7 +6,7 @@ namespace Aw.Sindri.Features.Scoping;
 /// <summary>What the Steps that write the scope map and acceptance list are told about their shape (#1112): both schemas are closed, so a field they do not list is refused when the agent reports.</summary>
 internal sealed class ScopeMapInstructions : IAgentStepInstructions
 {
-    private static readonly BlockId[] _steps = [BlockId.From("step.scope.draft"), BlockId.From("step.interview.apply")];
+    private static readonly BlockId[] _steps = [BlockId.From("step.scope.draft"), BlockId.From("step.scope.exclude"), BlockId.From("step.interview.apply")];
 
     private static readonly string[] _lines =
     [

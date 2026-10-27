@@ -14,9 +14,15 @@ public static class GraphWalk
     public static Neighborhood Neighbors(GraphSnapshot graph, NodeKey center, int depth)
     {
         ArgumentNullException.ThrowIfNull(graph);
+        return Neighbors(GraphIndex.For(graph), center, depth);
+    }
+
+    /// <summary>The nodes within <paramref name="depth"/> edges of <paramref name="center"/> over the edges <paramref name="index"/> holds.</summary>
+    internal static Neighborhood Neighbors(GraphIndex index, NodeKey center, int depth)
+    {
+        ArgumentNullException.ThrowIfNull(index);
         ArgumentOutOfRangeException.ThrowIfNegative(depth);
         depth = Math.Min(depth, MaxDepth);
-        var index = GraphIndex.For(graph);
         var depths = new Dictionary<string, int>(StringComparer.Ordinal) { [center.Value] = 0 };
         var frontier = new List<NodeKey> { center };
         for (var level = 1; level <= depth && frontier.Count > 0; level++)
@@ -27,7 +33,7 @@ public static class GraphWalk
         var nodes = depths.Where(d => index.Nodes.ContainsKey(d.Key))
             .Select(d => new NeighborNode(index.Nodes[d.Key], d.Value))
             .OrderBy(n => n.Depth).ThenBy(n => n.Node.Key.Value, StringComparer.Ordinal).ToList();
-        var edges = graph.Edges.Where(e => depths.ContainsKey(e.From.Value) && depths.ContainsKey(e.To.Value))
+        var edges = index.Graph.Edges.Where(e => depths.ContainsKey(e.From.Value) && depths.ContainsKey(e.To.Value))
             .OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal).ThenBy(e => e.Type).ToList();
         return new Neighborhood(center, nodes, edges);
     }

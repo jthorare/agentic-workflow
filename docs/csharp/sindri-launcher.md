@@ -158,6 +158,15 @@ class and `strict: false` (the schema's `x-aw-keys` block, which the bash reader
 set, is an unknown keyword to 2020-12), and `bash scripts/tests/check-launcher.test.sh` proves each kind of drift
 fails. Ajv is a dev dependency of `scripts/` (`npm ci --prefix scripts`; the test installs it when missing).
 
+## Models in `launch show`
+
+Usage: `sindri launch show [<id>] [--json]`. Under each installed agent it lists the models the agent offers, cheapest
+first, each with the bands it sits in: `haiku  cheap`, `sonnet  standard`, `opus  strong` (an agent's only model is
+`cheap/standard/strong`). Claude Code's list is the catalog entry's aliases (it has no list command); Codex's is
+`codex debug models`, keeping `visibility: list` rows (5 s limit). An agent whose list can't be read prints no models
+and its probed target says `no-model-list` (`SND-MODEL-004`, informational); a model with no place prints
+`(unordered: ...)` and is ranked last. `launch.probed` carries the same lists as each target's `models`.
+
 ## The t3 host
 
 With `"host": { "kind": "t3" }`, a human open starts a [T3 Code](https://github.com/pingdotgg/t3code) thread instead of a tmux

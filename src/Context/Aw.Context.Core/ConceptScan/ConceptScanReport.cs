@@ -10,4 +10,5 @@ namespace Aw.Context.Core.ConceptScan;
 /// <param name="Searches">How many map searches ran between the two model passes.</param>
 /// <param name="Tier">The model tier the scan picked for its size, or null when it never reached a model call.</param>
 /// <param name="Model">The model the port asked for, or null when it left the choice to the agent CLI or no call was made.</param>
-public sealed record ConceptScanReport(int Version, bool OnDraft, ConceptScanOutcome Outcome, int Hints, int Searches, ModelTier? Tier = null, string? Model = null);
+/// <param name="CutOff">True when a model reply ended mid-JSON and the scan kept the concepts that were whole.</param>
+public sealed record ConceptScanReport(int Version, bool OnDraft, ConceptScanOutcome Outcome, int Hints, int Searches, ModelTier? Tier = null, string? Model = null, bool CutOff = false);

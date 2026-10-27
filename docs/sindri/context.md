@@ -641,7 +641,7 @@ with the map search over the same version; the second reads the hits and returns
 `over-budget` and the reason `over budget: 6 concept scans started in the last 24 hours (the limit is 6)`. A model that does not answer (`model-unavailable`), a reply
 that is not JSON or holds no usable concept (`no-concepts`) and a map with no feature (`nothing-to-scan`) also end `succeeded` with that outcome: the scan never fails a
 build, and only an engine error (the store, the profile) fails the job. A member that is not a feature of the map is dropped, a feature stays in the hint of the highest
-confidence that names it, and at most 15 hints are kept. The hints are stored in `context.db` (`map_concept_hint`, one row per map version) beside the map, not in it:
+confidence that names it, and every hint that passes is kept (there is no limit on their number). A model answer cut off partway keeps the hints that arrived whole and the scan report says so (`CutOff`). The hints are stored in `context.db` (`map_concept_hint`, one row per map version) beside the map, not in it:
 the scan itself never touches the graph, the overrides or the pins, and a feature no hint names stays where the area rules put it. The next map build reads the hints of the newest map version and groups with them (see the glossary section). The job summary reads
 `map v<N>: <hints> concept hint(s) from <searches> search(es) (<tier> model[: <model>])`, and the job result carries the version, the outcome, the counts, the tier and the model.
 

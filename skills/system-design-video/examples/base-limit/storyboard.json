@@ -1,0 +1,453 @@
+{
+ "inks": {
+  "board": "color.surface.board",
+  "chalk": "color.ink.chalk",
+  "primary": "color.accent.primary",
+  "secondary": "color.accent.secondary",
+  "tertiary": "color.accent.tertiary"
+ },
+ "strokeWidth": 6,
+ "lead": 0.4,
+ "tail": 0.9,
+ "beats": [
+  {
+   "id": "hook",
+   "cam": [
+    -1000,
+    470,
+    1
+   ],
+   "say": "One base limit. Three plans.",
+   "items": [
+    {
+     "type": "text",
+     "text": "One base limit",
+     "x": -1000,
+     "y": 360,
+     "size": 120,
+     "color": "chalk",
+     "anchor": "middle",
+     "bold": true
+    },
+    {
+     "type": "text",
+     "text": "Standard",
+     "x": -1480,
+     "y": 560,
+     "size": 64,
+     "color": "primary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "Team",
+     "x": -1000,
+     "y": 560,
+     "size": 64,
+     "color": "secondary",
+     "anchor": "middle",
+     "at": 1.9
+    },
+    {
+     "type": "text",
+     "text": "Burst",
+     "x": -520,
+     "y": 560,
+     "size": 64,
+     "color": "tertiary",
+     "anchor": "middle",
+     "at": 2.3
+    }
+   ]
+  },
+  {
+   "id": "today",
+   "cam": [
+    700,
+    450,
+    1
+   ],
+   "camDur": 1.5,
+   "say": "Today, each plan keeps its own limit for the same endpoint.",
+   "items": [
+    {
+     "type": "text",
+     "text": "Today: three separate limits",
+     "x": 700,
+     "y": 170,
+     "size": 64,
+     "color": "chalk",
+     "anchor": "middle"
+    },
+    {
+     "type": "box",
+     "x": -160,
+     "y": 260,
+     "w": 480,
+     "h": 360,
+     "color": "primary"
+    },
+    {
+     "type": "text",
+     "text": "Standard",
+     "x": 80,
+     "y": 350,
+     "size": 50,
+     "color": "primary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "100",
+     "x": 80,
+     "y": 520,
+     "size": 150,
+     "color": "primary",
+     "anchor": "middle"
+    },
+    {
+     "type": "box",
+     "x": 420,
+     "y": 260,
+     "w": 480,
+     "h": 360,
+     "color": "secondary"
+    },
+    {
+     "type": "text",
+     "text": "Team",
+     "x": 660,
+     "y": 350,
+     "size": 50,
+     "color": "secondary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "150",
+     "x": 660,
+     "y": 520,
+     "size": 150,
+     "color": "secondary",
+     "anchor": "middle"
+    },
+    {
+     "type": "box",
+     "x": 1000,
+     "y": 260,
+     "w": 480,
+     "h": 360,
+     "color": "tertiary"
+    },
+    {
+     "type": "text",
+     "text": "Burst",
+     "x": 1240,
+     "y": 350,
+     "size": 50,
+     "color": "tertiary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "from traffic",
+     "x": 1240,
+     "y": 500,
+     "size": 54,
+     "color": "tertiary",
+     "anchor": "middle"
+    }
+   ]
+  },
+  {
+   "id": "base",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "camDur": 1.5,
+   "say": "Now there is one base limit for the API: 100 per minute.",
+   "items": [
+    {
+     "type": "box",
+     "x": 2400,
+     "y": 230,
+     "w": 600,
+     "h": 320,
+     "color": "chalk"
+    },
+    {
+     "type": "text",
+     "text": "API \u00b7 per minute",
+     "x": 2700,
+     "y": 330,
+     "size": 60,
+     "color": "chalk",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "100",
+     "x": 2580,
+     "y": 500,
+     "size": 100,
+     "color": "chalk",
+     "anchor": "middle",
+     "id": "bnum"
+    }
+   ]
+  },
+  {
+   "id": "standard",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "say": "Standard reads it as is: 100.",
+   "items": [
+    {
+     "type": "arrow",
+     "from": [
+      2560,
+      560
+     ],
+     "to": [
+      2160,
+      740
+     ],
+     "color": "primary"
+    },
+    {
+     "type": "box",
+     "x": 1830,
+     "y": 760,
+     "w": 540,
+     "h": 330,
+     "color": "primary",
+     "fill": true
+    },
+    {
+     "type": "text",
+     "text": "Standard",
+     "x": 2100,
+     "y": 830,
+     "size": 48,
+     "color": "primary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "100",
+     "x": 2000,
+     "y": 985,
+     "size": 90,
+     "color": "primary",
+     "anchor": "middle",
+     "id": "snum"
+    }
+   ]
+  },
+  {
+   "id": "team",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "say": "Team adds 50: a limit of 150.",
+   "items": [
+    {
+     "type": "arrow",
+     "from": [
+      2700,
+      560
+     ],
+     "to": [
+      2700,
+      740
+     ],
+     "color": "secondary"
+    },
+    {
+     "type": "box",
+     "x": 2430,
+     "y": 760,
+     "w": 540,
+     "h": 330,
+     "color": "secondary",
+     "fill": true
+    },
+    {
+     "type": "text",
+     "text": "Team",
+     "x": 2700,
+     "y": 830,
+     "size": 48,
+     "color": "secondary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "100 + 50 = 150",
+     "x": 2700,
+     "y": 950,
+     "size": 64,
+     "color": "secondary",
+     "anchor": "middle",
+     "id": "tnum"
+    }
+   ]
+  },
+  {
+   "id": "burst",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "say": "Burst reads the traffic meter: 200 requests to 2 workers, so 100.",
+   "items": [
+    {
+     "type": "arrow",
+     "from": [
+      2840,
+      560
+     ],
+     "to": [
+      3240,
+      740
+     ],
+     "color": "tertiary"
+    },
+    {
+     "type": "box",
+     "x": 3030,
+     "y": 760,
+     "w": 540,
+     "h": 330,
+     "color": "tertiary",
+     "fill": true
+    },
+    {
+     "type": "text",
+     "text": "Burst",
+     "x": 3300,
+     "y": 830,
+     "size": 48,
+     "color": "tertiary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "200 requests to 2 workers",
+     "x": 3300,
+     "y": 930,
+     "size": 36,
+     "color": "tertiary",
+     "anchor": "middle"
+    },
+    {
+     "type": "text",
+     "text": "100",
+     "x": 3300,
+     "y": 1040,
+     "size": 100,
+     "color": "tertiary",
+     "anchor": "middle",
+     "id": "unum"
+    }
+   ]
+  },
+  {
+   "id": "edit",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "say": "Raise the base to 120: standard 120, team 170, burst still 100.",
+   "items": [
+    {
+     "type": "cross",
+     "over": "bnum",
+     "color": "chalk"
+    },
+    {
+     "type": "text",
+     "text": "120",
+     "x": 2820,
+     "y": 500,
+     "size": 100,
+     "color": "chalk",
+     "anchor": "middle",
+     "bold": true,
+     "at": 1.0
+    },
+    {
+     "type": "cross",
+     "over": "snum",
+     "color": "primary",
+     "at": 1.7
+    },
+    {
+     "type": "text",
+     "text": "120",
+     "x": 2250,
+     "y": 985,
+     "size": 90,
+     "color": "primary",
+     "anchor": "middle",
+     "bold": true,
+     "at": 2.1
+    },
+    {
+     "type": "cross",
+     "over": "tnum",
+     "color": "secondary",
+     "at": 2.8
+    },
+    {
+     "type": "text",
+     "text": "120 + 50 = 170",
+     "x": 2700,
+     "y": 1060,
+     "size": 56,
+     "color": "secondary",
+     "anchor": "middle",
+     "bold": true,
+     "at": 3.2
+    },
+    {
+     "type": "ring",
+     "over": "unum",
+     "color": "tertiary",
+     "at": 4.4
+    }
+   ]
+  },
+  {
+   "id": "close",
+   "cam": [
+    2700,
+    640,
+    0.8
+   ],
+   "hold": 1.6,
+   "say": "One base limit, and each plan reads it its own way.",
+   "items": [
+    {
+     "type": "text",
+     "text": "one base \u00b7 a rule per plan",
+     "x": 2700,
+     "y": 1200,
+     "size": 56,
+     "color": "chalk",
+     "anchor": "middle",
+     "bold": true
+    }
+   ]
+  }
+ ]
+}

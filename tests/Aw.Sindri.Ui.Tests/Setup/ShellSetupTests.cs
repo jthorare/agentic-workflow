@@ -127,18 +127,34 @@ public sealed class ShellSetupTests
     }, Token);
 
     [Fact]
-    public Task Home_hides_every_setup_row_while_a_step_is_open_and_shows_them_again_when_setup_is_finished() => UiThread.Run(async () =>
+    public Task Home_hides_only_the_setup_row_the_line_names_and_shows_them_all_again_when_setup_is_finished() => UiThread.Run(async () =>
     {
         _server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-setup-rows");
         var shell = await Connected();
         await ShellWait.Until(shell, () => shell.Setup.IsHomeLineShown, Token);
-        Assert.Empty(shell.NeedsYou.Rows);   // the line stands for them
+        var named = shell.Setup.HomeStepText;
+        Assert.DoesNotContain(shell.NeedsYou.Rows, r => r.Title == named);   // the line stands for this one only
+        Assert.NotEmpty(shell.NeedsYou.Rows);   // the other setup rows stay
 
         _server.SetupAnswer = RouteAnswer.Api("setup", "all-done");
         await shell.Health.RefreshViews(new Uri("http://127.0.0.1:7410/"), Token);
         await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count == 2, Token);
 
         Assert.Equal(["setup:mcp", "setup:recipes"], shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }, Token);
+
+    [Fact]
+    public Task Home_keeps_the_other_setup_rows_while_the_line_names_the_repo_step() => UiThread.Run(async () =>
+    {
+        _server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-setup-rows-with-repo");
+        _server.SetupAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, SetupFixture.With("extra-priority-mix", "repo", "todo").ToJsonString());
+        var shell = await Connected();
+        await ShellWait.Until(shell, () => shell.Setup.IsHomeLineShown, Token);
+
+        var ids = shell.NeedsYou.Rows.Select(r => r.Id).Order(StringComparer.Ordinal).ToArray();
+
+        Assert.Equal(shell.Setup.Steps.Single(s => s.Id == "repo").Title, shell.Setup.HomeStepText);
+        Assert.Equal(["setup:mcp", "setup:recipes"], ids, StringComparer.Ordinal);   // setup:repo is the line's, the rest stay
     }, Token);
 
     [Fact]

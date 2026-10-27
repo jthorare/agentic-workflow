@@ -43,6 +43,20 @@ public sealed class ScanConceptsTests : IDisposable
     private Task<Kernel.Result<ConceptScanReport>> Scan(int? expected = null, ContextScope? scope = null) => _world.Map.ScanConcepts(scope ?? _scope, MapWorld.None, expected).AsTask();
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_second_pass_cut_off_mid_hint_stores_the_whole_hints_and_reports_the_cut_off()
+    {
+        var draft = await Seed(Shifts().Build());
+        _world.Model.Responder = r => string.Equals(TwoPasses(r), Concluded, StringComparison.Ordinal)
+            ? """{"concepts":[{"name":"Self scheduling","members":["feature:shifts.swap"],"confidence":0.8},{"name":"Payroll","members":["feature:pay.ru"""
+            : Proposed;
+
+        var report = (await Scan()).Value;
+
+        Assert.Equal(new ConceptScanReport(draft, OnDraft: true, ConceptScanOutcome.Scanned, Hints: 1, Searches: 2, ModelTier.Cheap, CutOff: true), report);
+        _ = Assert.Single((await _world.Hints.Read(draft, MapWorld.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_scan_stores_the_hints_the_second_pass_returns_for_the_draft()
     {
         var draft = await Seed(Shifts().Build());

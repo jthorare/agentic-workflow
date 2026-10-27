@@ -106,7 +106,7 @@ The multi-agent bridge space is emerging rapidly alongside Claude Code and OpenA
 | **REST API** | None (retired with the bridge) | No | No | No | No | Partial |
 | **Conversation History** | Delegated to prism-mcp | None | Planning history | Session-scoped | None | Limited |
 | **Offline Tolerance** | Yes for handoffs (Prism, judge's outbox); no live messaging | No (real-time only) | Partial | Session-dependent | No | Orchestrator buffers |
-| **Skill System** | 53 skills + bootstrap | None | Workflow templates | None | None | Agent registry |
+| **Skill System** | 55 skills + bootstrap | None | Workflow templates | None | None | Agent registry |
 | **Multi-Model** | Claude Code + Codex + Cursor | Claude + Codex | Claude + Codex | Claude + Codex | Claude only | Claude + Codex + Gemini |
 | **Type Safety** | TypeScript strict + Zod; the C# port runs nullable with warnings as errors | Runtime only | Partial | TypeScript | TypeScript | TypeScript |
 | **Transaction Safety** | Sindri ledger: SQLite WAL, migrations in one transaction | N/A | None | None | N/A | None |

@@ -6,7 +6,7 @@ internal enum WholeBand
     /// <summary>Decisions and records.</summary>
     Intent,
 
-    /// <summary>Features, surfaces, actions, things and flows.</summary>
+    /// <summary>Features, surfaces, actions, things, flows and concepts.</summary>
     Product,
 
     /// <summary>Code files.</summary>

@@ -107,6 +107,26 @@ public sealed class NavTabClickTests : IDisposable
         }
     });
 
+    // ux-C-10b: a pointer click on a tab leaves focus on the tab; the page region is for keyboard and command navigation.
+    [Fact]
+    public Task Clicking_the_Work_tab_leaves_focus_on_the_tab_not_the_page_region() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        var (window, _) = await Show(ShellState.Normal);
+        var tab = window.GetVisualDescendants().OfType<ListBoxItem>().Single(i => string.Equals(AutomationProperties.GetName(i), Labels.Page(PageId.Work), StringComparison.Ordinal));
+        var centre = tab.TranslatePoint(new Point(tab.Bounds.Width / 2, tab.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(centre, MouseButton.Left);
+        window.MouseUp(centre, MouseButton.Left);
+        for (var i = 0; i < 5; i++)
+        {
+            await Task.Delay(10, Token);
+            Dispatcher.UIThread.RunJobs();   // the page region takes focus in a posted job, so let the queue run
+        }
+
+        Assert.NotSame(window.Get<Border>("Page"), window.FocusManager?.GetFocusedElement());
+    });
+
     private static readonly string[] _pages = ["HomePage", "WorkflowsPage", "QueuePage", "RecipesPage", "ContextPage", "AgentsPage", "HealthPage"];
 
     // Re-check N1: the System page's region is named "System", so its heading says the same word.

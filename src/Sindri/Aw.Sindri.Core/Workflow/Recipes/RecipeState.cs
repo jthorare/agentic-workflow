@@ -20,6 +20,7 @@ namespace Aw.Sindri.Core.Workflow.Recipes;
 /// <param name="Outcome">A terminal state's outcome: resolved, unresolved, alreadySatisfied or failed.</param>
 /// <param name="Why">Optional plain words (at most 200 characters, no ids or code names; RCP-DISPLAY-002) on why this state is in the recipe; written into the hashed form only when set.</param>
 /// <param name="DisplayName">Optional plain name (at most 60 characters; RCP-DISPLAY-003) the app shows for this step instead of the state id; written into the hashed form only when set.</param>
+/// <param name="Model">What the state says about the model its agent Step runs on (model-pick spec 8): a floor tier; null for nothing. Written into the hashed form only when set.</param>
 /// <param name="OnOutcome">Optional plain words for each outcome of a desk state, by outcome name ('approve: "Moves on to planning"'); each key is an outcome of the state's Step and each text plain words (RCP-DISPLAY-002); written into the hashed form only when set.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record RecipeState(
@@ -33,4 +34,5 @@ public sealed record RecipeState(
     OutcomeName? Outcome,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Why = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DisplayName = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, string>? OnOutcome = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, string>? OnOutcome = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StateModel? Model = null);

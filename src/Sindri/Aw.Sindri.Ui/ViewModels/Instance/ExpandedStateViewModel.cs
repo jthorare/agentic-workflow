@@ -22,12 +22,21 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     /// <param name="clipboard">Where Copy puts text.</param>
     /// <param name="clock">The clock for every timing rule.</param>
     /// <param name="nameOf">A state id in the recipe's words; null reads the id as served.</param>
-    internal ExpandedStateViewModel(CurrentState current, string address, IClipboard clipboard, TimeProvider clock, Func<string, string>? nameOf = null)
+    /// <param name="files">Where an output's Browse chooses a file; null for none.</param>
+    /// <param name="readPath">Reads the file a typed path names; null reads the file system.</param>
+    internal ExpandedStateViewModel(CurrentState current, string address, IClipboard clipboard, TimeProvider clock, Func<string, string>? nameOf = null, IFilePicker? files = null, Func<string, int, CancellationToken, Task<PickedFile?>>? readPath = null)
     {
         (_current, _address, _nameOf) = (current, address, nameOf);
         var status = current.Status;
         Commands = [.. status.Commands.Select(c => new ExpandedCommandViewModel(c, status.Answer?.Kind, address, clipboard, clock))];
         _cancel = Commands.FirstOrDefault(c => c.Verb == StatusVerb.Cancel);
+        Outputs = [.. (current.Desk?.Outputs ?? []).Where(o => o.Required).Select(o => new DeskOutputViewModel(o.Key, files ?? NullFilePicker.Instance, readPath))];
+        foreach (var output in Outputs)
+        {
+            output.PropertyChanged += (_, e) => OutputChanged(e.PropertyName);
+        }
+
+        Refresh();
         Gates = [.. current.Gates.Select(Labels.GateText)];
         StepLine = Line(current.Step, Labels.StepLine);
         (BudgetLine, TimeoutLine, PausedLine, DriftLine, Next) = Moving(current);
@@ -161,6 +170,35 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     /// <summary>The commands in served order.</summary>
     public IReadOnlyList<ExpandedCommandViewModel> Commands { get; }
 
+    /// <summary>The desk task's required outputs, one input each (a path box and Browse); empty when it needs none.</summary>
+    public IReadOnlyList<DeskOutputViewModel> Outputs { get; }
+
+    /// <summary>True when the task has required outputs.</summary>
+    public bool HasOutputs => Outputs.Count > 0;
+
+    /// <summary>"Pick &lt;key&gt;" for the first output not given yet, so Complete's wait is explained; empty when every one is given.</summary>
+    public string OutputHint => Outputs.FirstOrDefault(o => !o.IsSet) is { } missing ? Labels.PickOutput(missing.Key) : string.Empty;
+
+    // Complete can be pressed once every required output has a path or a chosen file.
+    private void OutputChanged(string? name)
+    {
+        if (string.Equals(name, nameof(DeskOutputViewModel.IsSet), StringComparison.Ordinal))
+        {
+            Refresh();
+        }
+    }
+
+    private void Refresh()
+    {
+        var ready = Outputs.All(o => o.IsSet);
+        foreach (var command in Commands.Where(c => c.IsComplete))
+        {
+            command.CanSend = ready;
+        }
+
+        OnChanged(nameof(OutputHint));
+    }
+
     /// <summary>True when there are commands.</summary>
     public bool HasCommands => Commands.Count > 0;
 
@@ -209,7 +247,7 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     /// What the state draws as controls and structure, so a re-read of the same keeps them (and the focus, the open confirm and a Copied label).
     /// The words that move with time (the status text, the timeout, the budget, the next sentence, the child pointer's state) are not: <see cref="Update"/> changes them in place.
     /// </summary>
-    internal string Signature => string.Join('|', State, StepLine, string.Join(',', Gates), string.Join(',', Commands.Select(c => c.Signature)), _current.Status.Child?.Id, AnswerChild?.Child, AnswersInChild, HasNext, HasBudget, HasTimeout, IsPaused, HasDrift, HasAttach, _current.Status.Run?.Launch, _current.Status.ReasonCode, string.Join(',', (_current.Desk?.Reviews ?? []).Select(r => r.Fact + r.Path + r.Url)));
+    internal string Signature => string.Join('|', State, StepLine, string.Join(',', Gates), string.Join(',', Commands.Select(c => c.Signature)), string.Join(',', Outputs.Select(o => o.Key)), _current.Status.Child?.Id, AnswerChild?.Child, AnswersInChild, HasNext, HasBudget, HasTimeout, IsPaused, HasDrift, HasAttach, _current.Status.Run?.Launch, _current.Status.ReasonCode, string.Join(',', (_current.Desk?.Reviews ?? []).Select(r => r.Fact + r.Path + r.Url)));
 
     /// <summary>Takes a re-read of the same state: the moving words change, the controls stay.</summary>
     /// <param name="current">The state as served now; its <see cref="Signature"/> equals this one's.</param>

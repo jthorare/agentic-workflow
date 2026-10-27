@@ -12,9 +12,6 @@ public static class ConceptScanLimits
     /// <summary>Scans a repo may start in a rolling 24 hours.</summary>
     public const int MaxScansPerDay = 6;
 
-    /// <summary>Concepts one reply may hold; more are dropped, lowest confidence first.</summary>
-    public const int MaxConcepts = 15;
-
     /// <summary>Searches the scan runs in all.</summary>
     public const int MaxSearches = 24;
 

@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Launch;
 
 namespace Aw.Sindri.Tests.Launch;
 
@@ -150,6 +151,30 @@ public sealed class LauncherInitTests : IDisposable
         Expect.Equal(CatalogSource.Override, entry.Source);
         Expect.True(entry.StepOk && entry.ParkLine is null);
         Expect.Equal("/opt/claude/bin/claude", entry.Bin);
+    }
+
+    [Fact]
+    public async Task Show_lists_each_installed_agents_models_cheapest_first_with_their_bands()
+    {
+        var models = new FakeModelCatalog().With(AgentId.From("claude-code"),
+            [new ModelFacts("opus", "Opus", ModelSource.Catalog, 2), new ModelFacts("haiku", "Haiku", ModelSource.Catalog, 0), new ModelFacts("sonnet", "Sonnet", ModelSource.Catalog, 1)]);
+        var setup = new LauncherInit(new LauncherInitParts(Catalog(), Detection(_gui))
+        {
+            Models = models,
+            ResolveBin = (bin, _) => ValueTask.FromResult<string?>("/usr/bin/" + bin),
+        });
+
+        var entry = (await setup.Show(AgentId.From("claude-code"), CancellationToken.None)).Value.Entries.Single();
+
+        Expect.Equal("haiku:Cheap,sonnet:Standard,opus:Strong", string.Join(',', entry.Models!.Select(static m => m.Model.Slug + ":" + m.Tiers)));
+    }
+
+    [Fact]
+    public async Task Show_without_a_model_reader_lists_none()
+    {
+        var entry = (await Setup(Detection(_gui)).Show(AgentId.From("claude-code"), CancellationToken.None)).Value.Entries.Single();
+
+        Expect.True(entry.Models is null);
     }
 
     [Fact]

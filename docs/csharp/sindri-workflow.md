@@ -339,6 +339,8 @@ Any state may also carry two optional plain-words fields the app shows (setup-on
 `displayName` (sentence case, at most 60 characters, no id; `RCP-DISPLAY-003`) names the step instead of the state id, and `why` (one plain sentence, at most 200
 characters, no id or code name; `RCP-DISPLAY-002`) says why the state is in the recipe. Neither is on a block descriptor.
 
+An active state that runs an agent may also say `model: { floor: strong }` (model-pick spec 8): the lowest tier of model the state accepts, `cheap`, `standard` or `strong`, never a model id (`SND-MODEL-002` at `recipe validate`; written into the hashed form only when set, so a recipe that gains one bumps its version).
+
 A state that runs a Step may also carry `onOutcome`, a map from an outcome of its Step to one plain sentence (at most 200 characters, no id or code name) on what choosing that outcome does:
 `onOutcome: { approve: "Locks the scope in and moves on to design.", revise: "Sends your notes back, then asks you again." }`. Each key must be an outcome of the state's Step
 (`StepOutcomes`, so a choice Step's own choices count) and each text plain words, both `RCP-DISPLAY-002`. The app shows the texts on the desk state's outcome buttons, in the Step's outcome
@@ -597,7 +599,7 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 
 | Step | Runtime | Inputs | Outcomes | Outputs |
 |---|---|---|---|---|
-| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the ten seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`, `gapSearch`, `gapAnchors`) on all four |
+| `step.scope.intake` | block | `scopeInput` | `brief`, `tracker`, `idea`, `change` | the eleven seeds (`scopeMap`, `acceptance`, `findings`, `answers`, `answerLog`, `challenge`, `questions`, `openQuestions`, `gapSearch`, `gapAnchors`, `roundLog`) on all four |
 | `step.scope.read-brief`, `step.scope.read-change` | block | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.scope.read-tracker` | block (`Network`) | `scopeInput` | `read`, `empty` | `brief`, `anchors` on read |
 | `step.brief.seed` | block | - | `seeded` | `answers`, `answerLog` on seeded |
@@ -608,11 +610,11 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 | `step.scope.relevance-review` | agent | `brief`, `lenses`, `coverage`, `anchors` | `reviewed` | `relevanceVerdicts` on reviewed |
 | `step.scope.relevance-judge` | block (judge, long) | `brief`, `lenses`, `relevanceVerdicts` | `ruled` | `relevanceRulings` on ruled |
 | `step.scope.relevance-apply` | block | `lenses`, `coverage`, `brief`, `relevanceVerdicts`, `relevanceRulings` | `applied` | `lenses`, `coverage`, `relevance`, `mapFixes` on applied |
-| `step.scope.draft` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `findings`, `answerLog`, `challenge` | `drafted` | `scopeMap`, `acceptance` on drafted |
+| `step.scope.draft` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `findings`, `roundLog`, `answerLog`, `challenge` | `drafted` | `scopeMap`, `acceptance` on drafted |
 | `step.scope.gap-search` | agent | `brief`, `acceptance`, `answerLog` | `searched` | `gapCandidates` on searched |
 | `step.scope.gap-judge` | block (judge, long) | `brief`, `acceptance`, `scopeMap`, `lenses`, `gapCandidates` | `ruled` | `gapRulings` on ruled |
 | `step.scope.gap-log` | block | `gapSearch`, `gapCandidates`, `gapRulings`, `findings` | `clear`, `confirmed` | `gapSearch`, `gapAnchors` on both; `findings` on confirmed; `gapSearchClosed` on clear |
-| `step.scope.check` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog` | `pass`, `gaps`, `regather` | `findings` on gaps, regather |
+| `step.scope.check` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `roundLog` | `pass`, `gaps`, `regather` | `findings` and `roundLog` (the earlier entries plus this round's) on gaps, regather |
 | `step.interview.questions` | agent | `scopeMap`, `acceptance`, `lenses`, `answerLog`, `challenge`, `openQuestions` | `asked`, `none` | `questions` on asked; `openQuestions` on asked, none |
 | `step.interview.answer` | desk, human-only | `questions`, `answerLog` | `answered`, `doneAsking` | `answers` on both; `interviewClosed` on doneAsking |
 | `step.interview.record` | block | `answers`, `answerLog` | `recorded` | `answerLog` on recorded |
@@ -621,7 +623,8 @@ The table also lists the ship and phase Steps. Three of them have block runtimes
 | `step.scope.challenge` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answerLog`, `challenge` | `nothingNew`, `found` | `challengeRound` (every outcome) |
 | `step.scope.challenge-log` | block | `challenge`, `challengeRound` | `nothingNew`, `found` | `challenge` (every outcome); `findings` on found |
 | `step.scope.propose` | block | `scopeMap`, `mapFixes` | `proposed`, `skipped` | `scopeMap`, `mapFixes` (every outcome) |
-| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions`, `relevance`, `gapSearch`, `mapFixes` | `complete`, `incomplete`, `regather` | six facts on complete (`runs` from the ledger among them); `findings` on incomplete, regather |
+| `step.scope.exclude` | agent | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `findings`, `roundLog`, `answerLog` | `excluded` | `scopeMap` on excluded; reached when evidence reports `uncovered` (SCP-COV-003 is the only failing rule), then back to `check` |
+| `step.scope.evidence` | block | `brief`, `lenses`, `coverage`, `scopeMap`, `acceptance`, `answers`, `answerLog`, `challenge`, `openQuestions`, `decision`, `anchors`, `questions`, `relevance`, `gapSearch`, `mapFixes`, `roundLog` | `complete`, `incomplete`, `uncovered`, `open`, `converged`, `regather` | six facts on complete, converged and open (`runs` from the ledger among them); `findings` and `roundLog` on incomplete, uncovered, open, converged, regather. `uncovered`: SCP-COV-003 is among the failing rules and nothing else but SCP-ACC-003 is (goes to `step.scope.exclude` first); `open`: SCP-ACC-003 alone, an answer nothing cites, so the owner's stop gets the packet with the finding open `converged`: the same finding keys as the step's last round in `roundLog`, so the owner's stop gets the packet with the findings open instead of another draft round |
 | `step.scope.review` | desk, human-only | `scopePacket` | `approve`, `revise`, `drop` | `answers` on revise |
 | `step.scope.freeze` | block | `scopePacket` and the twelve facts `step.scope.evidence` reads (it re-runs the evidence checks) | `frozen`, `mismatch` | `scopePacket` = `{hash, dir}` on frozen (the run area's `scope-packet/` stays in place); `findings` on mismatch. The engine appends `scoping.approved` under the lease for each `frozen` report (key `scoping.approved:<packetHash>`; `Instance` is the address, the row's item is set, and the hash is aw-packets' hash of that directory) |
 | `step.scope.withdraw` | block | - | `withdrawn` | - |

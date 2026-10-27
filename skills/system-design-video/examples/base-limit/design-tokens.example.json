@@ -1,0 +1,30 @@
+{
+ "color": {
+  "surface": {
+   "board": {
+    "$value": "#22252B",
+    "$type": "color"
+   }
+  },
+  "ink": {
+   "chalk": {
+    "$value": "#F2EFE6",
+    "$type": "color"
+   }
+  },
+  "accent": {
+   "primary": {
+    "$value": "#4C8DFF",
+    "$type": "color"
+   },
+   "secondary": {
+    "$value": "#8A7BE8",
+    "$type": "color"
+   },
+   "tertiary": {
+    "$value": "#34A27A",
+    "$type": "color"
+   }
+  }
+ }
+}

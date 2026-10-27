@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Approvals;
 using Aw.Sindri.Ui.Views.Item;
+using Aw.Sindri.Ui.Views.Layout;
 using Aw.Sindri.Ui.Views.Palette;
 using Aw.Sindri.Ui.Views.Start;
 
@@ -99,6 +100,9 @@ internal sealed partial class ShellWindow
         return true;
     }
 
+    // A page's button is about to open an overlay: closing it returns focus there even when a click left focus on the page region.
+    private void NoteInvoker(object? sender, OpenerNoteEventArgs e) => _invoker = e.Invoker;
+
     private bool OverlayOpen => Shell is { } shell && (shell.Palette.IsOpen || shell.Shortcuts.IsOpen || shell.Create.IsOpen || shell.Start.IsOpen || shell.ApproveAll.IsOpen);
 
     // `?` is Shift+/ on most layouts; the key symbol says so on the rest.
@@ -116,7 +120,8 @@ internal sealed partial class ShellWindow
 
         if (IsOpen(sender, shell))
         {
-            _overlayOpener ??= FocusManager?.GetFocusedElement() as Control;
+            _overlayOpener ??= OverlayOpener.Choose(FocusManager?.GetFocusedElement() as Control, this.Get<Control>("Page"), _invoker);
+            _invoker = null;
             Dispatcher.UIThread.Post(() => FocusOverlay(sender, shell), DispatcherPriority.Loaded);
             return;
         }
@@ -136,7 +141,7 @@ internal sealed partial class ShellWindow
 
         var back = Usable(_overlayOpener) ?? Usable(FallbackAfter(sender, shell));
         _overlayOpener = null;
-        _ = back?.Focus(NavigationMethod.Tab);
+        _ = back?.Focus(Method());   // a pointer flow draws no ring; a keyboard one does
     }
 
     private static bool IsOpen(object? sender, ShellViewModel shell) =>

@@ -4,7 +4,7 @@
 
 Agentic Workflow (repo: `agentic-workflow`) is a portable, provider-agnostic workflow toolkit for AI coding agents. It supports **Claude Code**, **Codex**, and **Cursor** as equal hosts. The canonical core has these parts:
 
-- 53 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
+- 55 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
 - a documentation bootstrapper skill
 - canonical safety hooks
 - the C# binaries: `judge` and the other tool ports, and Sindri (control plane, workflow engine, context engine), published by `scripts/install-cs.sh`

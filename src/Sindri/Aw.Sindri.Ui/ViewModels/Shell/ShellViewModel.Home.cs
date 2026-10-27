@@ -1,6 +1,5 @@
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
@@ -50,6 +49,13 @@ internal sealed partial class ShellViewModel
     {
         Health.Follow(ReadNeedsYou);
         NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRowByKey(e.RowId);
+        NeedsYou.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(NeedsYouViewModel.SheetRow), StringComparison.Ordinal))
+            {
+                _ = LoadSheetOutputs(NeedsYou.SheetRow);
+            }
+        };
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
         NeedsYou.CopyRequested += (_, e) => _ = clipboard.SetText(e.Text, CancellationToken.None);
@@ -66,19 +72,6 @@ internal sealed partial class ShellViewModel
         else
         {
             _ = Decision.Clear();
-        }
-    }
-
-    // A key or a button asks to run an action: approve-all opens its dialog; a decision option is Decide, sent once with the option, and the sheet shows what came back.
-    private void Decide(NeedsYouActionEventArgs request)
-    {
-        if (string.Equals(request.Action.CatalogId, ApproveAllViewModel.Action, StringComparison.Ordinal))
-        {
-            OpenApproveAll();
-        }
-        else if (request.Action.OptionId.Length > 0)
-        {
-            _ = AnswerDecision(request.RowId, request.Action.OptionId, note: null);
         }
     }
 
