@@ -2,8 +2,10 @@ using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Subgraph;
 using Aw.Kernel.Testing;
 using Xunit;
@@ -122,6 +124,29 @@ public abstract class ContextEngineContract<TEngine>
 
         Check(run.IsError && run.Error.Code == ContextErrors.NoProbeFile.Code, "an eval with no probe file is 036");
     }
+
+    /// <summary>An engine that does not build the scoping graph or keep its call log answers SND-CONTEXT-153 for both, never an empty graph (issue 1005).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_engine_without_a_scoping_graph_answers_153()
+    {
+        var engine = CreateDown();
+        var scope = new ContextScope(Settings: null, [new ContextRepo(ContextRepoName.From("split-panes"), "/repos/split-panes")],
+            new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Cli));
+
+        var graph = await engine.ScopeGraph(new ScopeGraphQuery(["feature:x"], MapRead.Current, new LensRange(2, Hops: null), Brief: null, MaxNodes: 400, MaxBytes: 300_000), scope, CancellationToken.None);
+        var reads = await engine.GraphReads("ITM-1/line/3/scoping.1", "run-1", CancellationToken.None);
+
+        Check(graph.IsError && graph.Error.Code == ScopeGraphCodeWithNoMap, $"a scoping graph with no map to build it from is {ScopeGraphCodeWithNoMap}");
+        Check(UnknownRunReadsAreEmpty ? reads.IsSuccess && reads.Value.Count == 0 : reads.IsError && reads.Error.Code == ContextErrors.ScopeGraphUnavailable.Code,
+            UnknownRunReadsAreEmpty ? "a run that read nothing has an empty log" : "a call log the engine doesn't keep is 153");
+    }
+
+    /// <summary>The code the scoping graph answers when there is no map: 153 for an engine that builds none (the fake), 030 for the real one.</summary>
+    protected virtual string ScopeGraphCodeWithNoMap => ContextErrors.ScopeGraphUnavailable.Code;
+
+    /// <summary>True when GraphReads answers an empty list for a run that read nothing (the real engine), false when it answers 153 (the fake).</summary>
+    protected virtual bool UnknownRunReadsAreEmpty => false;
 
     private static (string Code, string Path) Code(TEngine engine, string json)
     {

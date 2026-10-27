@@ -16,7 +16,7 @@ public sealed class ScopingDigestTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_digest_of_the_gold_scope_packet_is_pinned() =>
         // digestVersion 1: a change to these bytes needs a new PacketDigest.Version, not a new pin.
-        Assert.Equal("sha256:8d253d677c20ead2de54c4f682c2dba474edd3ce4bda36f9058c3ce8ba9f5e4f", await Hash(A.ScopingPacket().Build()), StringComparer.Ordinal);
+        Assert.Equal("sha256:30732ac6edd7a08fdca800620d5dcd7b5a042f988787dad3ec954329797501e9", await Hash(A.ScopingPacket().Build()), StringComparer.Ordinal);
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_json_file_hashes_by_content_not_by_formatting_key_order_or_schema_hint()
@@ -65,7 +65,7 @@ public sealed class ScopingDigestTests
         Assert.Equal(["build", "scoping", "design", "plan", "phase", "proof", "review", "handoff"], PacketKinds.All.Select(static k => k.Name), StringComparer.Ordinal);
         Assert.True(PacketKinds.Build.IsManifestDriven);
         Assert.False(PacketKinds.Scoping.IsManifestDriven);
-        Assert.Equal(12, PacketKinds.Scoping.Files.Count);
+        Assert.Equal(15, PacketKinds.Scoping.Files.Count);
         Assert.Null(PacketKinds.Find("Scoping"));
         Assert.Same(PacketKinds.Scoping, PacketKinds.Find("scoping"));
     }

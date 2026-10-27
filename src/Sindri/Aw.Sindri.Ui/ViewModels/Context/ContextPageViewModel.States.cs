@@ -185,7 +185,7 @@ internal sealed partial class ContextPageViewModel
 
         if (_servedBuilding && _buildJob is null)
         {
-            await ReadWhole(cancellationToken).ConfigureAwait(true);   // the answer, not a job, says when the first build is over
+            await ReadMapTop(cancellationToken).ConfigureAwait(true);   // the answer, not a job, says when the first build is over
             return;
         }
 
@@ -200,7 +200,7 @@ internal sealed partial class ContextPageViewModel
         (IsBuilding, _buildJob, _servedBuilding, _notReady) = (false, null, false, MapNotReadyView.None);
         NoMap = false;
         ChangedStates();
-        await ReadWhole(cancellationToken).ConfigureAwait(true);   // the map that was missing or building is the whole map now
+        await ReadMapTop(cancellationToken).ConfigureAwait(true);   // the map that was missing or building is the whole map now
         if (AnchorText.Length > 0)
         {
             await Submit(cancellationToken).ConfigureAwait(true);

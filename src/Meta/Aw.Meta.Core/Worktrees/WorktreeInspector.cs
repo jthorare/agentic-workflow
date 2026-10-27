@@ -199,6 +199,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
             Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
             ChangedSinceSweep = git.Changed,
+            NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
             GatePr = gatePr,

@@ -1,4 +1,5 @@
 using Aw.BugFix.Tests.Contracts;
+using Aw.Kernel.Testing;
 
 namespace Aw.BugFix.Tests.Cutover;
 
@@ -11,11 +12,11 @@ internal sealed class StubBinary : IDisposable
     {
         Directory = _dir.Path;
         Path = System.IO.Path.Combine(Directory, name);
-        File.WriteAllText(Path, script.Replace("@DIR@", Directory, StringComparison.Ordinal));
-        if (!OperatingSystem.IsWindows())   // the stub binaries are bash scripts
-        {
-            File.SetUnixFileMode(Path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
+        // Written and warmed up by ExecutableScript: a fresh executable can fail to start with ETXTBSY while a parallel test forks (#1250).
+        var text = script.Replace("@DIR@", Directory, StringComparison.Ordinal);
+        var newline = text.IndexOf('\n', StringComparison.Ordinal);
+        var (interpreter, body) = text.StartsWith("#!", StringComparison.Ordinal) && newline > 0 ? (text[2..newline], text[(newline + 1)..]) : ("/bin/sh", text);
+        _ = ExecutableScript.Write(Path, body, interpreter);
     }
 
     public string Directory { get; }

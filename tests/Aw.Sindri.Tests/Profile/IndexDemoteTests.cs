@@ -118,4 +118,32 @@ public sealed class IndexDemoteTests
         Assert.Contains("index.ignore: ignore lists are per repo", ProfileRules.Check(new SindriProfile(1, "thor", Index: new IndexSettings(Ignore: ["x"]))).Error.Message, StringComparison.Ordinal);
         Assert.Contains("index.demote: demote lists are per repo", ProfileRules.Check(new SindriProfile(1, "thor", Index: new IndexSettings(Demote: ["x"]))).Error.Message, StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Role_sets_name_every_role_in_name_order_and_mark_the_demoted_ones()
+    {
+        var profile = With(new IndexSettings(Roles: _roles, Ignore: ["generated"], Demote: ["test", "demo"]));
+
+        // why: the profile names roles, so the sets are not null
+        var sets = RepoRoleSets.For(profile, profile.Repos![0])!;
+
+        Assert.Equal(["cron", "demo", "generated", "test"], sets.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal([false, true, false, true], sets.Select(r => r.Demoted));
+        Assert.Equal(["demo/**"], sets[1].Globs);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Role_sets_are_null_for_a_repo_without_roles() =>
+        Assert.Null(RepoRoleSets.For(With(new IndexSettings()), With(new IndexSettings()).Repos![0]));
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_engine_repo_carries_the_roles()
+    {
+        var profile = With(new IndexSettings(Roles: _roles, Demote: ["test"]));
+
+        var repo = ScopeRules.Usable([.. ContextScopes.Entries(profile)]).Single();
+
+        Assert.Equal(["cron", "demo", "generated", "test"], repo.Roles.Select(r => r.Name), StringComparer.Ordinal);
+    }
 }
+

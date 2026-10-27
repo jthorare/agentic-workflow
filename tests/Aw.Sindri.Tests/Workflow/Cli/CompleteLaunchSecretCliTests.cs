@@ -1,15 +1,9 @@
 using Aw.Kernel.Json;
-using Aw.Kernel.Services;
-using Aw.Sindri.Core.Auth;
-using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
-using Aw.Sindri.Features.StartProcess;
-using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Tests.Layout;
 using Aw.Sindri.Tests.Ledger;
-using Aw.Sindri.Tests.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,14 +54,11 @@ public sealed class CompleteLaunchSecretCliTests : IDisposable
         Assert.Equal([Proof], seen);
     }
 
-    /// <summary>A control plane in the temp home (as RecipeRegistryCliTests starts one) whose list and complete routes are answered and recorded here.</summary>
-    private async Task<WebApplication> Started(List<string?> proofs, InstanceSummary instance, CancellationToken ct)
+    /// <summary>A control plane in the temp home (CliHost) whose list and complete routes are answered and recorded here.</summary>
+    private Task<WebApplication> Started(List<string?> proofs, InstanceSummary instance, CancellationToken ct)
     {
-        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "profile"));
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), "schemaVersion: 1\nuser: thor\n", ct);
-        var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);
         var list = new InstanceList([instance], new ListCounts(1, 0, 0, 0, 0), Empty: null, DevInstances.AsOf);
-        _ = app.Use(async (context, next) =>
+        return CliHost.Started(_home, ct, app => app.Use(async (context, next) =>
         {
             if (context.Request.Path.Value!.EndsWith("/complete", StringComparison.Ordinal))
             {
@@ -83,17 +74,6 @@ public sealed class CompleteLaunchSecretCliTests : IDisposable
             {
                 await next(context);
             }
-        });
-        _ = Pipeline.Configure(app);
-        Core.Lease.LeaseGrant grant;
-        await using (var scope = app.Services.CreateAsyncScope())
-        {
-            grant = (await scope.ServiceProvider.GetRequiredService<IService<StartProcessRequest, StartProcessResponse>>().Handle(new StartProcessRequest(), ct)).Value.Grant;
-        }
-
-        app.Services.GetRequiredService<HeldHumanToken>().Hold((await app.Services.GetRequiredService<IHumanTokenStore>().Mint(ct)).Value);
-        await app.StartAsync(ct);
-        _ = await app.Services.GetRequiredService<IEndpointFile>().Write(new ControlEndpoint(new Uri(app.Urls.First()), grant.Holder.Pid, grant.Epoch), ct);
-        return app;
+        }));
     }
 }

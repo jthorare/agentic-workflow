@@ -32,10 +32,10 @@ public sealed class WorktreeRulesTests
     [Fact, Trait("Lane", "unit")]
     public void An_old_but_unmerged_worktree_with_a_clean_tree_is_kept()
     {
-        // Nothing in the facts says how long ago anything happened: an idle, clean, unmerged branch can still be in progress.
-        var facts = Merged() with { HeadMerged = false, PrNumber = null, PrState = null };
+        // Nothing in the facts says how long ago anything happened: an idle, clean branch with a commit that is on no remote can still be in progress.
+        var facts = Merged() with { HeadMerged = false, PrNumber = null, PrState = null, UnpushedCommits = 1 };
 
-        AssertKept(Judge(facts), "not merged into origin/main");
+        AssertKept(Judge(facts), "1 commit");
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -85,14 +85,55 @@ public sealed class WorktreeRulesTests
         AssertKept(Judge(detached with { HeadMerged = false }), "detached, not a gate tree");
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public void A_branch_with_no_pull_request_is_kept_whatever_its_reachability()
-    {
-        var facts = Merged() with { PrNumber = null, PrState = null };
+    private static WorktreeFacts NoPr() => new() { Path = "/wt/idea", Branch = "docs/idea", HeadMerged = false };
 
-        AssertKept(Judge(facts), "no pull request: work not finished");
-        AssertKept(Judge(facts with { HeadMerged = false }), "no pull request: work not finished");
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_fully_pushed_clean_idle_is_removed()
+    {
+        var verdict = Judge(NoPr() with { UnpushedCommits = 0 });
+
+        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
+        Assert.Empty(verdict.Reasons);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_with_head_in_origin_main_is_removed()
+    {
+        var fresh = new WorktreeFacts { Path = "/wt/fresh", Branch = "docs/fresh", HeadMerged = true };
+
+        Assert.Equal(WorktreeDecision.Removable, Judge(fresh).Decision);
+        Assert.Equal(WorktreeDecision.Removable, Judge(NoPr() with { HeadMerged = true, UnpushedCommits = 1 }).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_with_unpushed_commit_is_kept() => AssertKept(Judge(NoPr() with { UnpushedCommits = 2 }), "2 commit", "no pull request");
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_is_kept_when_there_is_no_previous_sweep()
+    {
+        AssertKept(Judge(NoPr() with { NoPreviousSweep = true }), "no previous sweep to compare with");
+        AssertKept(Judge(new WorktreeFacts { Path = "/wt/fresh", Branch = "docs/fresh", HeadMerged = true, NoPreviousSweep = true }), "no previous sweep to compare with");
+        Assert.Equal(WorktreeDecision.Removable, Judge(Merged() with { NoPreviousSweep = true }).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_dirty_is_kept() => AssertKept(Judge(NoPr() with { DirtyEntries = ["NOTES.md"] }), "NOTES.md");
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_with_process_is_kept() => AssertKept(Judge(NoPr() with { Occupants = [new ProcessLocation(4242, "claude -n t1-api", ["/wt/idea"])] }), "4242");
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_changed_since_last_sweep_is_kept() => AssertKept(Judge(NoPr() with { ChangedSinceSweep = true }), "changed since the last sweep");
+
+    [Fact, Trait("Lane", "unit")]
+    public void No_pr_branch_outside_the_roots_or_locked_is_kept()
+    {
+        AssertKept(Judge(NoPr() with { UnderAllowedRoot = false }), "allowed");
+        AssertKept(Judge(NoPr() with { Locked = true }), "locked");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Open_pr_branch_is_still_kept() => AssertKept(Judge(NoPr() with { PrNumber = 5, PrState = PrState.Open, HeadMerged = true }), "PR #5 is still open");
 
     [Fact, Trait("Lane", "unit")]
     public void The_main_checkout_is_kept_as_the_main_checkout_not_as_a_branch_with_no_pull_request()
@@ -101,15 +142,6 @@ public sealed class WorktreeRulesTests
 
         AssertKept(verdict, "this is the main worktree", "main checkout (never swept)");
         Assert.DoesNotContain(verdict.Reasons, reason => reason.Contains("no pull request", StringComparison.Ordinal));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_fresh_branch_whose_head_is_already_in_main_with_no_ended_pull_request_is_kept()
-    {
-        // The incident: a worktree on a branch just created from origin/main, no commits, no pull request.
-        var fresh = new WorktreeFacts { Path = "/wt/fresh", Branch = "docs/fresh", HeadMerged = true };
-
-        AssertKept(Judge(fresh), "fresh branch, no commits", "no pull request");
     }
 
     [Fact, Trait("Lane", "unit")]

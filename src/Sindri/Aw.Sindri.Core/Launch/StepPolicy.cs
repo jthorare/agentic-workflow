@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using Aw.Sindri.Core.Sandbox;
+
 namespace Aw.Sindri.Core.Launch;
 
 /// <summary>
@@ -11,4 +14,14 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="WritablePath">The one path the Step may write (its worktree or Step directory), or null for none.</param>
 /// <param name="DeniedPaths">Absolute paths the Step may neither read nor edit (other phases' worktrees, the holdout store; LN-LCH1; the evaluator's phase worktree, LN-LCH2), or null for none. A form that can't express a denied read refuses a non-empty list with SND-LAUNCH-013.</param>
 /// <param name="ReadOnlyPaths">Paths the Step may read and never write (the evaluator's hidden set, LN-LCH2); null or empty for none. A form that can't express a read-only path is SND-LAUNCH-013.</param>
-public sealed record StepPolicy(IReadOnlyList<string> AllowedTools, StepPermissionMode Mode, string? WritablePath, IReadOnlyList<string>? DeniedPaths = null, IReadOnlyList<string>? ReadOnlyPaths = null);
+/// <param name="LoginSource">
+/// The model login source the Step asks for (sandbox spec SB18, owner note 4): a stricter one than the profile gives, never a looser.
+/// Null means no ask and is left out of the JSON. The launcher takes the stricter of the ask and the profile, repo and target value (SB-1/SB-5a).
+/// </param>
+public sealed record StepPolicy(
+    IReadOnlyList<string> AllowedTools,
+    StepPermissionMode Mode,
+    string? WritablePath,
+    IReadOnlyList<string>? DeniedPaths = null,
+    IReadOnlyList<string>? ReadOnlyPaths = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModelLoginSource? LoginSource = null);

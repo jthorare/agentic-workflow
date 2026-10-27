@@ -123,11 +123,11 @@ which packet is in force under a phase is Sindri's to say.
 `PacketKinds` (`Aw.Packets.Core.Kinds`) is the registry: a kind is a name and the fixed files its schema lists. Every
 command takes `--kind` (anywhere in its arguments; `build`, the packet above, when it isn't given; an unknown kind is a
 usage error, exit 2). The `build` kind has no fixed list (`packet.json` links its files); the `scoping` kind (scoping
-station spec §8.3, P1) lists twelve; the six **line kinds** (below, LN-PKT1) list their files too, `packet.json` and `index.json` among them.
+station spec §8.3, P1) lists fifteen; the six **line kinds** (below, LN-PKT1) list their files too, `packet.json` and `index.json` among them.
 
 | File | Format | Checked here |
 |---|---|---|
-| `scope-map.json`, `acceptance.json`, `coverage.json`, `size.json`, `questions.json`, `challenge.json`, `runs.json`, `sources.json` | one JSON object | well formed (`PKT-SCP-003`) |
+| `scope-map.json`, `acceptance.json`, `coverage.json`, `size.json`, `questions.json`, `challenge.json`, `relevance.json`, `gap-search.json`, `graph.json`, `runs.json`, `sources.json` | one JSON object | well formed (`PKT-SCP-003`) |
 | `lenses.json` | one JSON object, `LensesFile` (`schemas/packets/lenses.schema.json`) | well formed, and the schema (`PKT-SCP-004`, `-005`) |
 | `answers.jsonl`, `rounds.jsonl` | one JSON object per line (blank lines allowed) | well formed |
 | `brief.md` | UTF-8 text | well formed |
@@ -140,11 +140,12 @@ rules).
 
 | Rule | Holds when |
 |---|---|
-| `PKT-SCP-001` | all twelve files are present |
+| `PKT-SCP-001` | all fifteen files are present |
 | `PKT-SCP-002` | the directory holds no other entry (a sub-directory counts, and is named with a trailing `/`) |
 | `PKT-SCP-003` | each JSON file is one strict JSON object (UTF-8, no byte order mark, no duplicate key, no null in a list), each JSON-lines line is one object, `brief.md` is valid UTF-8 |
 | `PKT-SCP-004` | `lenses.json` has `schemaVersion` 1 and the four lenses (`code`, `product`, `related`, `history`); each has `anchors`, `depth` (0 to 32) and `hops` (the hop kinds walked, each of `state`, `flow`, `dependency`, `component` at most once, in any order, empty at depth 0), `mapVersion` (a non-empty string, as the context engine writes it, for example `v12@a41b07d`), `foundCount` (at least the nodes and items listed, more when a band is `truncated`), `nodes[]`, `edges[]`, `items[]` and `truncated[]` (bands `code`, `product`, `intent`, each once); ids match `^L-(code\|product\|related\|history)-[1-9][0-9]*$`; `band` and `trust` (`untrusted`, `owner`) are from their enums; no unknown field |
 | `PKT-SCP-005` | the lens item ids are unique across the file, and each names the lens it sits in |
+| `PKT-SCP-006` | `graph.json` has `schemaVersion` 1, every node a unique non-empty `id`, and every edge both ends (`unchecked` when the file is missing or not well formed) |
 
 `PKT-SCP-004` and `-005` are `unchecked` when `lenses.json` is missing or not well formed.
 
@@ -162,7 +163,7 @@ not hashed (`validate` fails them).
 hash at `packets/<owner>/<name>/<instance>/frozen/<hex>.json` (`instance` is a `PacketId`; the record's `kind` is
 `scoping` and it has no `baseSha`). A failed check freezes nothing (exit 1); the same hash again says `already frozen`.
 
-**The scoping hash** is the build kind's canonical form over the twelve files, with `"kind":"scoping"` added to the hashed
+**The scoping hash** is the build kind's canonical form over the fifteen files, with `"kind":"scoping"` added to the hashed
 document so no build packet can collide with it: a JSON file's entry is the file without its `$schema` hint, a
 JSON-lines or text file's entry is `sha256:<hex of its bytes>`. `ScopingDigestTests` pins one packet's hash, computed
 independently of the C# code.
@@ -262,7 +263,7 @@ Errors go to stderr as `aw-packets: <code> <message>` (with `--json`, the `Error
 | Port (`Aw.Packets.Core`) | Adapter (`Aw.Packets.App.Infrastructure`) | Fake and contract (`tests/Aw.Packets.Testing`) |
 |---|---|---|
 | `IPacketSource` | `FileSystemPacketSource` | `InMemoryPacketSource`, `PacketSourceContract` |
-| `IScopingPacketSource` | `FileSystemScopingPacketSource` (the twelve listed files, a symbolic link refused; the other top-level names, never their content) | `InMemoryScopingPacketSource`, `ScopingPacketSourceContract` |
+| `IScopingPacketSource` | `FileSystemScopingPacketSource` (the fifteen listed files, a symbolic link refused; the other top-level names, never their content) | `InMemoryScopingPacketSource`, `ScopingPacketSourceContract` |
 | `ILinePacketSource` | `FileSystemLinePacketSource` (a line kind's listed files and every file under its linked directories, at most 20,000 of them; a symbolic link, linked file or directory, is refused; the other top-level names, never their content) | `InMemoryLinePacketSource`, `LinePacketSourceContract` |
 | `ISealSource` | `FileSystemSealSource` (a regular file of at most 16 KiB; `SealReader` parses it) | `InMemorySealSource`, `SealSourceContract` |
 | `IRepoSnapshot` | `GitRepoSnapshot` (`git ls-tree -r -z`, 120 s limit per run) | `InMemoryRepoSnapshot`, `RepoSnapshotContract` |

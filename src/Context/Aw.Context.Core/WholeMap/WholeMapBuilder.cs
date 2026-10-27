@@ -27,18 +27,19 @@ public static class WholeMapBuilder
         ArgumentNullException.ThrowIfNull(areas);
         ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(text);
-        if (ask.Area is not null && ask.Concept is not null)
-        {
-            return ContextErrors.QueryInvalid.With("'area' and 'concept' each open one part of the map (fix: ask for one of them)");
-        }
-
         var known = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var edges = graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value)).ToList();
         var concepts = ConceptIndex.Of(known, edges);
         var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text));
         if (ask.Area is not null)
         {
-            return Opened(ask.Area, overview, (known, edges), (areas, rules, text, ask.RepoOf));
+            if (ask.Concept is not null && !concepts.Has(ask.Concept))
+            {
+                return UnknownConcept();
+            }
+
+            var scope = ask.Concept is null ? null : ConceptScope.Nodes(concepts, edges, ask.Concept);
+            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Concept is not null)
@@ -69,13 +70,15 @@ public static class WholeMapBuilder
         };
     }
 
-    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut.
-    private static Result<WholeMapView> Opened(string key, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut. With a concept's scope, only the area's nodes that scope holds.
+    private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
-        var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key).ToList();
+        var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key && (scope is null || scope.Contains(n.Key.Value))).ToList();
         if (members.Count == 0)
         {
-            return ContextErrors.AreaUnknown.With("that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)");
+            return ContextErrors.AreaUnknown.With(scope is null
+                ? "that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)"
+                : "that area holds nothing of this concept (fix: open the concept, and name one of the areas its nodes are in)");
         }
 
         var shown = members.OrderBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).ToList();
@@ -95,7 +98,7 @@ public static class WholeMapBuilder
     {
         if (!graph.Concepts.Has(key))
         {
-            return ContextErrors.AreaUnknown.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
+            return UnknownConcept();
         }
 
         var scoped = ConceptScope.Nodes(graph.Concepts, graph.Edges, key);
@@ -108,6 +111,8 @@ public static class WholeMapBuilder
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
         };
     }
+
+    private static Result<WholeMapView> UnknownConcept() => ContextErrors.AreaUnknown.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
 
     private static string KindName(NodeKind kind) => kind.ToString().ToLowerInvariant();
 

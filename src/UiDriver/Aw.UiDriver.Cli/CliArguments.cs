@@ -12,7 +12,7 @@ internal sealed class CliArguments
         "aw-ui-driver [--dir D] [--timeout-ms N] <ready|tree|search|props|click|type|key|scroll|wait-for|screenshot|window|action|call> [flags]\n"
         + "  selector flags: --node-id --automation-id --name --type --text --contains --index\n"
         + "  tree --depth N · search --limit N · type --value TEXT [--replace] · key --chord Ctrl+K · scroll --dx N --dy N\n"
-        + "  wait-for --state exists|visible|hidden|gone|enabled|disabled|textEquals|textContains [--expect-text T] [--wait-ms N]\n"
+        + "  wait-for --state exists|visible|hidden|gone|notVisible|enabled|disabled|textEquals|textContains [--expect-text T] [--wait-ms N]\n"
         + "  screenshot [--out file.png] · window [--width N --height N] · action --do invoke|toggle|select|expand|collapse|focus\n"
         + "  ready [--wait-ms N] · call --path <verb> --json '<request json>'";
 

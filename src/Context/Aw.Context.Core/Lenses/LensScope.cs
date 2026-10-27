@@ -39,7 +39,7 @@ internal sealed class LensScope
     internal static Dictionary<string, GraphNode> NodesOf(GraphSnapshot graph) => graph.Nodes.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
 
     /// <summary>The edges of the given types that end in the own scope.</summary>
-    internal IEnumerable<GraphEdge> IntoScope(params EdgeType[] types) => Graph.Edges.Where(e => types.Contains(e.Type) && Own.Contains(e.To.Value));
+    internal IEnumerable<GraphEdge> IntoScope(params EdgeType[] types) => EdgeLookup.For(Graph).Into(Own, types);
 
     /// <summary>Whether a human or the extractor stands behind the node, or an accepted override does (the Confirmation rule).</summary>
     internal static bool Confirmed(Provenance provenance) => Confirmation.Of(provenance);

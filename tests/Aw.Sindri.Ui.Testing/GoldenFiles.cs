@@ -16,6 +16,11 @@ internal static class GoldenFiles
     /// <returns>The body as served.</returns>
     internal static string Api(string slug, string scenario) => File.ReadAllText(Path.Combine(Root, "Api", slug, scenario + ".json"));
 
+    /// <summary>A sandbox golden (sandbox spec §8): the copy, states, accessibility rows and status lines recorded by Sindri's tests.</summary>
+    /// <param name="name">The file name under Golden/Sandbox ('copy.json', 'states.json').</param>
+    /// <returns>The file's text.</returns>
+    internal static string Sandbox(string name) => File.ReadAllText(Path.Combine(Root, "Sandbox", name));
+
     /// <summary>An API golden parsed, so a test reads its expected values from the file instead of repeating them.</summary>
     /// <param name="slug">The route slug.</param>
     /// <param name="scenario">The scenario.</param>

@@ -1,6 +1,6 @@
-T-3/step/1  workflow.step@f511ce1fc529  v4  parked: rounds  since 11:30 (30m)
+T-3/step/1  workflow.step@4ca37bf46333  v4  parked: rounds  since 11:30 (30m)
   next      Parked (rounds): revisions used 3 of 3 rounds.
             Grant more rounds at a terminal, or cancel.
-  drift     step.produce changed since workflow.step@f511ce1fc529 was approved; answer after the re-approval: sindri recipe approve workflow.step@f511ce1fc529
+  drift     step.produce changed since workflow.step@4ca37bf46333 was approved; answer after the re-approval: sindri recipe approve workflow.step@4ca37bf46333
   answer    sindri workflow answer T-3/step/1 --grant 1     (at a terminal)
   commands  answer, takeover, cancel

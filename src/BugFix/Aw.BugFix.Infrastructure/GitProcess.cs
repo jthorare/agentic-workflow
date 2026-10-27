@@ -52,6 +52,78 @@ internal sealed class GitProcess : IGit
     public Result<bool> SameTree(string directory, string first, string second) =>
         Value(directory, "rev-parse", $"{first}^{{tree}}").Bind(a => Value(directory, "rev-parse", $"{second}^{{tree}}").Map(b => a == b));
 
+    // The baseline merged with the main commit the candidate merged: the replay of that merge onto the baseline, so
+    // the diff from it holds only the fix. Any trouble (no main ref, a conflict, an old git) falls back to the baseline.
+    public string NetBase(string directory, string baseline, string candidate)
+    {
+        if (MainCommitOf(directory, candidate) is not { } mainCommit)
+        {
+            return baseline;
+        }
+
+        var merged = Run(directory, "merge-tree", "--write-tree", baseline, mainCommit);
+        return merged.ExitCode == 0 && merged.Output.Split('\n')[0].Trim() is { Length: > 0 } tree ? tree : baseline;
+    }
+
+    // Main's commits the baseline lacks, up to the one the candidate's branch last met: what NetBase adds to the baseline.
+    public Result<IReadOnlyList<MainCommit>> MainCommits(string directory, string baseline, string candidate)
+    {
+        if (MainCommitOf(directory, candidate) is not { } mainCommit)
+        {
+            return Results.Success<IReadOnlyList<MainCommit>>([]);
+        }
+
+        var run = Run(directory, "log", "--no-merges", "--reverse", "--format=%H%x1f%P%x1f%B%x1e", $"{baseline}..{mainCommit}");
+        return run.ExitCode == 0
+            ? Results.Success<IReadOnlyList<MainCommit>>([.. run.Output.Split('\u001e', StringSplitOptions.RemoveEmptyEntries).Select(static r => r.Trim('\n').Split('\u001f')).Where(static f => f.Length == 3 && f[1].Length > 0)
+                .Select(static f => new MainCommit(f[0], f[1], f[2]))])
+            : Failed(run, "log");
+    }
+
+    public Result<string> FileAt(string directory, string commit, string path)
+    {
+        var run = Run(directory, "show", $"{commit}:{path}");
+        return run.ExitCode == 0 ? run.Output : Failed(run, "show");
+    }
+
+    public Result<IReadOnlyList<string>> FilesDeclaring(string directory, string commit, string under, string typeName)
+    {
+        if (!typeName.All(static c => char.IsAsciiLetterOrDigit(c) || c == '_'))
+        {
+            return Results.Success<IReadOnlyList<string>>([]);   // not a type name: nothing to look for, and nothing to put in a pattern
+        }
+
+        var pattern = $"(^|[^[:alnum:]_])(class|record|struct|interface)[[:space:]]+{typeName}([^[:alnum:]_]|$)";
+        // --full-name and :(top) keep the pathspec and the printed paths repository-relative when directory is a subdirectory.
+        var run = Run(directory, "grep", "-l", "--full-name", "-E", pattern, commit, "--", $":(top){under}");
+        if (run.ExitCode == 1)
+        {
+            return Results.Success<IReadOnlyList<string>>([]);   // git grep exits 1 when nothing matches
+        }
+
+        var prefix = commit + ":";
+        return run.ExitCode == 0
+            ? Results.Success<IReadOnlyList<string>>([.. run.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r')).Select(l => l.StartsWith(prefix, StringComparison.Ordinal) ? l[prefix.Length..] : l).Order(StringComparer.Ordinal)])
+            : Failed(run, "grep");
+    }
+
+    // The commit of main the candidate's branch last met, or null when main can't be found.
+    private static string? MainCommitOf(string directory, string candidate)
+    {
+        foreach (var main in new[] { "origin/HEAD", "origin/main", "main" })
+        {
+            if (Run(directory, "rev-parse", "--verify", "--quiet", $"{main}^{{commit}}").ExitCode != 0)
+            {
+                continue;
+            }
+
+            var mergeBase = Run(directory, "merge-base", candidate, main);
+            return mergeBase.ExitCode == 0 && mergeBase.Output.Trim() is { Length: > 0 } mainCommit ? mainCommit : null;
+        }
+
+        return null;
+    }
+
     // -z: raw (unquoted) paths; --no-renames: a moved test reports its old path too.
     public Result<IReadOnlyList<string>> ChangedFiles(string directory, string from, string to) =>
         Paths(directory, "diff", "--name-only", "--no-renames", "-z", from, to);

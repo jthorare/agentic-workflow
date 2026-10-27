@@ -4,6 +4,7 @@ using Aw.Context.Core.Models;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
+using Aw.Kernel;
 using Aw.Sindri.Host.Models;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -35,6 +36,12 @@ public sealed class JudgeModelPortTests
             Allowed = allowed;
             return new ProviderLineup([.. providers, rules], ChainSpec.Build([AgentCliName.ClaudeCli, AgentCliName.CodexCli], jev: false));
         }
+
+        Result<IModelProvider> IProviderCatalog.Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed) =>
+            throw new NotSupportedException("the model port asks for a lineup, never one provider by name");
+
+        Result<IModelProvider> IProviderCatalog.Adjudicator(IReadOnlyCollection<ProviderName>? allowed) =>
+            throw new NotSupportedException("the model port asks for a lineup, never the adjudicator");
     }
 
     private static ProviderDecided Answered(string text) =>
@@ -57,6 +64,68 @@ public sealed class JudgeModelPortTests
         _ = Assert.Single(claude.Asked);
         Assert.Empty(codex.Asked);
         Assert.Contains(claude.Asked[0].Prompt, "c1: src/a.ts, src/b.ts", StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_request_names_a_model_per_agent_cli_and_each_cli_is_asked_for_its_own()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, new ProviderUnavailable(ProviderUnavailable.Timeout));
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude", ["codex"] = "m-codex" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude, codex)).Ask(_request with { Models = models }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-claude", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-codex", Assert.Single(codex.Asked).Model);
+        Assert.Equal("m-codex", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_cli_the_request_names_no_model_for_runs_its_own_default()
+    {
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(codex)).Ask(_request with { Models = models }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(Assert.Single(codex.Asked).Model);
+        Assert.Null(answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_model_runs_on_every_cli_the_models_map_has_no_entry_for_and_the_map_wins()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, new ProviderUnavailable(ProviderUnavailable.Timeout));
+        var codex = new Provider(ProviderName.CodexCli, Answered("ok"));
+        var models = new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "m-claude" };
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude, codex)).Ask(_request with { Models = models, Model = "m-any" }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-claude", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-any", Assert.Single(codex.Asked).Model);
+        Assert.Equal("m-any", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_with_only_a_model_asks_the_first_cli_for_it()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, Answered("ok"));
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude)).Ask(_request with { Model = "m-any" }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal("m-any", Assert.Single(claude.Asked).Model);
+        Assert.Equal("m-any", answer.Model);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_with_no_models_leaves_every_cli_on_its_default()
+    {
+        var claude = new Provider(ProviderName.ClaudeCli, Answered("ok"));
+
+        var answer = (await new JudgeModelPort(() => new Catalog(claude)).Ask(_request, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(Assert.Single(claude.Asked).Model);
+        Assert.Null(answer.Model);
     }
 
     [Fact, Trait("Lane", "unit")]

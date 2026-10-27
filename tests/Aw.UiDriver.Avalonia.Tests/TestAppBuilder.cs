@@ -12,5 +12,5 @@ public static class TestAppBuilder
     /// <summary>Builds the app for the headless session.</summary>
     /// <returns>The builder.</returns>
     public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<Application>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
+        AppBuilder.Configure<Application>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false, OverlayPopups = false });
 }

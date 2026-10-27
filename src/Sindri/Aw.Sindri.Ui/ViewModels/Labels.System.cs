@@ -65,6 +65,15 @@ internal static partial class Labels
     /// <summary>A service that runs on its schedule.</summary>
     internal const string ServiceScheduled = "Scheduled";
 
+    /// <summary>A service whose scheduled slot passed without the scheduler running it.</summary>
+    internal const string ServiceOverdue = "Overdue";
+
+    /// <summary>"missed its 12:01 run": the detail under an overdue service.</summary>
+    internal static string ServiceMissed(string time) => "missed its " + time + " run";
+
+    /// <summary>The overview's name for overdue services: "heartbeat overdue", "heartbeat, setup overdue".</summary>
+    internal static string ServicesOverdue(IEnumerable<string> names) => string.Join(", ", names) + " overdue";
+
     /// <summary>A service whose manual run is in flight.</summary>
     internal const string ServiceRunning = "Running now";
 
@@ -122,12 +131,35 @@ internal static partial class Labels
     internal static string ActionCounts(int ready, int copy) =>
         string.Create(CultureInfo.InvariantCulture, $"{ready} {ActionsReady}, {copy} {ActionsCopy}");
 
+    /// <summary>Why a service is paused: "Paused by you, 14:02".</summary>
+    /// <param name="pausedBy">Who paused it (human:..., session:..., service:...), or null.</param>
+    /// <param name="clock">When, as HH:mm, or empty when unknown.</param>
+    /// <returns>The words, with no id in them.</returns>
+    internal static string ServicePausedBy(string? pausedBy, string clock)
+    {
+        var who = pausedBy switch
+        {
+            not null when pausedBy.StartsWith("human:", StringComparison.Ordinal) => " by you",
+            not null when pausedBy.StartsWith("session:", StringComparison.Ordinal) => " by a session",
+            not null when pausedBy.StartsWith("service:", StringComparison.Ordinal) || pausedBy.StartsWith("system", StringComparison.Ordinal) => " by Sindri",
+            _ => string.Empty,
+        };
+        return clock.Length == 0 ? "Paused" + who : "Paused" + who + ", " + clock;
+    }
+
+    /// <summary>Why a service's last run failed: "Last run failed: the forge answered 503", or "Last run failed." with no detail.</summary>
+    /// <param name="detail">The server's message, or null.</param>
+    /// <returns>The words.</returns>
+    internal static string ServiceFailedWhy(string? detail) =>
+        string.IsNullOrWhiteSpace(detail) ? "Last run failed." : "Last run failed: " + detail.Trim();
+
     /// <summary>What a built-in service does, in plain words; empty for a service the app does not know.</summary>
     /// <param name="name">The service's name.</param>
     /// <returns>One short sentence, or empty.</returns>
     internal static string ServiceWhat(string name) => name switch
     {
         "heartbeat" => "Records that Sindri is alive.",
+        "context-concept-scan" => "Has a model look for product concepts in each new map: a cheap one for a small map, a stronger one for a large map.",
         "context-map-refresh" => "Builds the context map again so it stays current.",
         "context-sync-gaps" => "Starts a sync for a source that has never synced.",
         "pr-watch" => "Watches the pull requests that wait on the forge.",

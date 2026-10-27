@@ -14,10 +14,12 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -37,14 +39,17 @@ internal static class ContextSlicesServiceCollectionExtensions
             .AddScoped<IScheduledService, ContextSyncService>()
             .AddScoped<IScheduledService, ContextSyncGapsService>()
             .AddSingleton(ContextSyncGapsService.BuiltIn)
-            .AddScoped<IScheduledService, ContextMapRefreshService>()
+            .AddScoped<IScheduledService>(RefreshService)
             .AddSingleton(ContextMapRefreshService.BuiltIn)
+            .AddScoped<IScheduledService, ContextConceptScanService>()
+            .AddSingleton(ContextConceptScanService.BuiltIn)
             .AddScoped<SyncGaps>()
             .AddScoped<ContextInputScopes>()
             .AddScoped<ContextInputFacts>()
             .AddScoped<IScopingTextShape, ContextTextShape>()
             .AddScoped<IScopeRunProposals, ScopeRunProposals>()
             .AddStepInput<ContextLensesInput>()
+            .AddStepInput<ContextGraphInput>()
             .AddStepInput<ContextHistoryInput>()
             .AddStepInput<ContextRetrieveInput>()
             .AddStepInput<ContextCodeInput>()
@@ -78,6 +83,21 @@ internal static class ContextSlicesServiceCollectionExtensions
     {
         _ = services.AddScoped<ConceptsNotReady>().AddScoped<IValidator<GetContextConceptsRequest>, AcceptAllValidator<GetContextConceptsRequest>>().AddQuery<GetContextConceptsRequest, ConceptsView, GetContextConceptsService>();
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
+        _ = services.AddScoped<IValidator<GetContextConceptGlossaryRequest>, AcceptAllValidator<GetContextConceptGlossaryRequest>>().AddQuery<GetContextConceptGlossaryRequest, ConceptGlossaryView, GetContextConceptGlossaryService>();
         return services;
     }
+
+    // The refresh service as registered: the rules it compares are computed from the scope each tick.
+    private static ContextMapRefreshService RefreshService(IServiceProvider sp) =>
+        new(
+            sp.GetRequiredService<ContextScopes>(),
+            sp.GetRequiredService<IContextEngine>(),
+            sp.GetRequiredService<IJobViews>(),
+            sp.GetRequiredService<IIndexOutlooks>(),
+            sp.GetRequiredService<MapJobStarts>(),
+            sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<ILogger<ContextMapRefreshService>>())
+        {
+            RulesFromScope = true,
+        };
 }

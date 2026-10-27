@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   "title": "SND-RECIPE-006",
   "status": 409,
-  "detail": "a block workflow.drifted@b9ad6294b40f pins changed since approval; nothing was started (fix: re-approve it, see sindri recipe list --stale)",
+  "detail": "a block workflow.drifted@56e6c58f776e pins changed since approval; nothing was started (fix: re-approve it, see sindri recipe list --stale)",
   "traceId": "<trace>"
 }

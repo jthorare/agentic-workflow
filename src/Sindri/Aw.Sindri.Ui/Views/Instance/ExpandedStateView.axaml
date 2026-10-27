@@ -86,6 +86,7 @@
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
               <Button Name="CommandAsk" IsVisible="{Binding IsCancel}" Content="{Binding Label}" Click="OnAsk" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Button Name="CommandHandBack" IsVisible="{Binding IsHandBack}" Content="{Binding Label}" Click="OnHandBack" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
+              <Button Name="CommandTakeOver" IsVisible="{Binding IsTakeOver}" Content="{Binding Label}" Click="OnTakeOver" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Border Name="CommandLabelName" IsVisible="{Binding ShowsLabel}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}"
                       AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Name="CommandLabel" Classes="body-strong" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
@@ -99,7 +100,7 @@
                       AutomationProperties.Name="{Binding CopyName}" />
               <TextBlock Name="CommandCopyAnnouncement" Classes="caption live-region" Classes.live="{Binding CliCopy.IsAnnouncing}" Width="0" Opacity="0"
                          IsHitTestVisible="False" Text="{Binding CliCopy.Announcement}" />
-              <Border Classes="pending-chip" IsVisible="{Binding ShowsCli}" AutomationProperties.AccessibilityView="Raw">
+              <Border Classes="pending-chip" IsVisible="{Binding ShowsChip}" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Name="CommandPending" Classes="caption subtle" Text="{Binding PendingChip}" AutomationProperties.AccessibilityView="Raw" />
               </Border>
             </WrapPanel>

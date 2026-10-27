@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "design",
   "parents": [
-    "sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973"
+    "sha256:1ddf66bd3318bc230e52c293c51a859fbd9096ab2e99077d203b9d324cb4f444"
   ],
   "acceptance": {
     "self": "sha256:7cc115f6c06afa35470f3f1fffbf81ffafa1b620c206b00a5eba7e6fcda7c7f4",

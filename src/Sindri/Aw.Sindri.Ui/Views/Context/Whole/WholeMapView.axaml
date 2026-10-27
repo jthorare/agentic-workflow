@@ -7,16 +7,59 @@
              x:Class="Aw.Sindri.Ui.Views.Context.Whole.WholeMapView"
              x:DataType="vm:WholeMapViewModel"
              ClipToBounds="True">
+  <UserControl.Styles>
+    <!-- The drill's two modes: a Surface2 track, the chosen segment on Surface3 (as Health's tabs). -->
+    <Style Selector="RadioButton.segment">
+      <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
+      <Setter Property="Height" Value="{StaticResource Size.Control}" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.MD}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter x:Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+    </Style>
+  </UserControl.Styles>
   <!-- The whole map (whole-map spec §3): the size line and, when a feature is cut, a note; the pannable canvas with the mini-map and the zoom pill over it. -->
   <Grid RowDefinitions="Auto,*" RowSpacing="8">
     <StackPanel Spacing="2">
-      <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CrumbsName}" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button x:Name="WholeBack" IsVisible="{Binding HasConcept}" Content="{Binding BackText}" Click="OnBack" VerticalAlignment="Center" AutomationProperties.Name="{Binding BackText}" />
+        <ctl:CrumbTrail x:Name="WholeCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
+      </StackPanel>
+      <ItemsControl x:Name="WholeBandButtons" ItemsSource="{Binding BandButtons}" IsVisible="{Binding ShowBandButtons}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="8" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:BandButton">
+            <Button Content="{Binding Title}" Click="OnBandButton" AutomationProperties.Name="{Binding Name}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Border x:Name="WholeDrillModes" IsVisible="{Binding IsDrilled}" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.MD}" Padding="2" HorizontalAlignment="Left">
+        <StackPanel Orientation="Horizontal">
+          <RadioButton x:Name="WholeDrillCross" GroupName="WholeDrillMode" Classes="segment" IsChecked="{Binding ShowCross, Mode=TwoWay}" Content="{Binding CrossText}" AutomationProperties.Name="{Binding CrossText}" />
+          <RadioButton x:Name="WholeDrillOwn" GroupName="WholeDrillMode" Classes="segment" IsChecked="{Binding ShowOwn, Mode=TwoWay}" Content="{Binding OwnText}" AutomationProperties.Name="{Binding OwnText}" />
+        </StackPanel>
+      </Border>
+      <TextBlock x:Name="WholeDrillEmpty" Classes="body" Text="{Binding DrillEmptyText}" IsVisible="{Binding ShowDrillEmpty}" TextWrapping="Wrap" AutomationProperties.Name="{Binding DrillEmptyText}" />
       <TextBlock x:Name="WholeSize" Classes="caption subtle" Text="{Binding SizeText}" AutomationProperties.Name="{Binding SizeText}" />
       <TextBlock x:Name="WholeNote" Classes="body" Text="{Binding ByAreaNote}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ByAreaNote}" />
       <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
     </StackPanel>
 
-    <Grid Grid.Row="1">
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+    <Grid>
       <ctl:ZoomBorder x:Name="WholeCanvas" AutomationProperties.Name="{Binding CanvasName}">
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
@@ -86,6 +129,20 @@
           <Button x:Name="WholeZoomFit" Click="OnZoomFit" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Fit" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
         </StackPanel>
       </Border>
+    </Grid>
+
+      <!-- The accessible map (UX pass C-3): the canvas is drawn, not made of controls, so the items it draws are listed here for the keyboard and a screen reader. Arrow keys move; Enter does what a click on the map does. -->
+      <Grid Grid.Column="1" Width="200" RowDefinitions="Auto,*" RowSpacing="4">
+        <TextBlock Classes="eyebrow" Text="{Binding ItemsName}" AutomationProperties.AccessibilityView="Raw" />
+        <ListBox x:Name="WholeItems" Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=OneWay}" AutomationProperties.Name="{Binding ItemsName}"
+                 ContainerPrepared="OnItemPrepared" KeyDown="OnItemsKey" Tapped="OnItemsTapped">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:MapItemViewModel">
+              <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

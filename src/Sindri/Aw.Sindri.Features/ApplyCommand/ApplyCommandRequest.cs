@@ -12,13 +12,14 @@ namespace Aw.Sindri.Features.ApplyCommand;
 /// the nonce as its id.
 /// </summary>
 /// <param name="Instance">The instance's address, or a bare item for the root of its latest attempt.</param>
-/// <param name="Kind">Answer, command, cancel, takeover or handback.</param>
+/// <param name="Kind">Answer, command, cancel, takeover, handback or rewind.</param>
 /// <param name="Answer">The answer's variant, for an answer.</param>
 /// <param name="Text">The answer's text ('--text', '--file', '--resume --text'), at most 1 MiB.</param>
 /// <param name="Amount">The rounds of '--grant n' or the tokens of '--grant-tokens n'.</param>
 /// <param name="Verb">The recipe verb, for a command.</param>
 /// <param name="Nonce">The command's nonce; null to have one issued.</param>
 /// <param name="Challenge">Accepted and ignored, so an older client still works (owner decision q93).</param>
+/// <param name="To">The state to re-enter, for a rewind (#1270).</param>
 public sealed record ApplyCommandRequest(
     string Instance,
     ApplyCommandKind Kind,
@@ -27,7 +28,8 @@ public sealed record ApplyCommandRequest(
     int? Amount = null,
     CommandVerb? Verb = null,
     CommandNonce? Nonce = null,
-    ChallengeAnswer? Challenge = null) : ICommand<ApplyCommandResponse>, IClassifiedCommand
+    ChallengeAnswer? Challenge = null,
+    string? To = null) : ICommand<ApplyCommandResponse>, IClassifiedCommand
 {
     /// <summary>True when <see cref="Instance"/> is a route segment (a client never sends an address there); set by the endpoint, never by a client: the validator then requires an instance id, after authorization has run.</summary>
     [JsonIgnore]
@@ -45,6 +47,7 @@ public sealed record ApplyCommandRequest(
         ApplyCommandKind.Command => "command",
         ApplyCommandKind.Takeover => "takeover",
         ApplyCommandKind.Handback => "handback",
+        ApplyCommandKind.Rewind => "rewind",
         ApplyCommandKind.Cancel or _ => "cancel",
     };
 

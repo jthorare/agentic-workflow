@@ -1,0 +1,623 @@
+{
+  "agent": {
+    "reportedModel": "fixture-reviewer-model"
+  },
+  "judge": {
+    "providers": [
+      "fixture-judge"
+    ]
+  },
+  "counts": {
+    "reviewed": 29,
+    "in": 29,
+    "out": 0,
+    "noise": 0,
+    "disputed": 0
+  },
+  "truncated": [],
+  "entries": [
+    {
+      "id": "L-code-1",
+      "lens": "code",
+      "key": "feature:sharing",
+      "kind": "feature",
+      "label": "Public link sharing",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-1"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0001",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-2",
+      "lens": "code",
+      "key": "surface:route/links-create",
+      "kind": "surface",
+      "label": "Create share link (POST /api/links)",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-2"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0002",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-3",
+      "lens": "code",
+      "key": "surface:route/link-resolve",
+      "kind": "surface",
+      "label": "Open shared link (GET /s/:token)",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-3"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0003",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-4",
+      "lens": "code",
+      "key": "surface:screen/share-dialog",
+      "kind": "surface",
+      "label": "Share dialog",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-4"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0004",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-5",
+      "lens": "code",
+      "key": "action:sharing.create-link",
+      "kind": "action",
+      "label": "Create a share link",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-5"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0005",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-6",
+      "lens": "code",
+      "key": "action:sharing.resolve-link",
+      "kind": "action",
+      "label": "Open a shared link",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-6"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0006",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-7",
+      "lens": "code",
+      "key": "thing:shared-link",
+      "kind": "thing",
+      "label": "Shared link",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-7"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0007",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-8",
+      "lens": "code",
+      "key": "code:src/sharing/links.ts",
+      "kind": "code",
+      "label": "links.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-8"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0008",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-9",
+      "lens": "code",
+      "key": "code:src/sharing/routes.ts",
+      "kind": "code",
+      "label": "routes.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-9"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0009",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-10",
+      "lens": "code",
+      "key": "code:web/screens/ShareDialog.ts",
+      "kind": "code",
+      "label": "ShareDialog.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-10"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0010",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-11",
+      "lens": "code",
+      "key": "code:tests/sharing.test.ts",
+      "kind": "code",
+      "label": "sharing.test.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-11"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0011",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-12",
+      "lens": "code",
+      "key": "code:src/digest/digest.ts",
+      "kind": "code",
+      "label": "digest.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-12"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0012",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-code-13",
+      "lens": "code",
+      "key": "code:src/jobs/nightly.ts",
+      "kind": "code",
+      "label": "nightly.ts",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-code-13"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0013",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-1",
+      "lens": "product",
+      "key": "feature:sharing.link-revocation",
+      "kind": "feature",
+      "label": "Link revocation",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-1"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0014",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-2",
+      "lens": "product",
+      "key": "surface:route/links-revoke",
+      "kind": "surface",
+      "label": "Revoke share link (DELETE /api/links/:id)",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-2"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0015",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-3",
+      "lens": "product",
+      "key": "surface:setting/linkRevocation",
+      "kind": "surface",
+      "label": "linkRevocation flag",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-3"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0016",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-4",
+      "lens": "product",
+      "key": "action:sharing.revoke-link",
+      "kind": "action",
+      "label": "Revoke a share link",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-4"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0017",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-5",
+      "lens": "product",
+      "key": "feature:digest",
+      "kind": "feature",
+      "label": "Email digest",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-5"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0018",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-6",
+      "lens": "product",
+      "key": "surface:api/weekly-digest-email",
+      "kind": "surface",
+      "label": "Weekly digest email",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-6"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0019",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-7",
+      "lens": "product",
+      "key": "action:digest.send",
+      "kind": "action",
+      "label": "Send the weekly digest",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-7"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0020",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-product-8",
+      "lens": "product",
+      "key": "surface:job/nightly",
+      "kind": "surface",
+      "label": "Nightly job",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-product-8"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0021",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-related-4",
+      "lens": "related",
+      "key": "feature:audit-report",
+      "kind": "feature",
+      "label": "Audit report",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-related-4"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0022",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-related-5",
+      "lens": "related",
+      "key": "feature:sharing",
+      "kind": "feature",
+      "label": "Public link sharing",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-related-5"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0023",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-related-1",
+      "lens": "related",
+      "kind": "issue",
+      "label": "NTS-135: Shared links should expire after a chosen time",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-related-1"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0024",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-related-2",
+      "lens": "related",
+      "kind": "issue",
+      "label": "NTS-130: Revoke a shared link",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-related-2"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0025",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-related-3",
+      "lens": "related",
+      "kind": "issue",
+      "label": "NTS-128: Incident: a shared link was pasted in a public forum",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-related-3"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0026",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-history-1",
+      "lens": "history",
+      "kind": "issue",
+      "label": "NTS-107: Decision: shared links never expire",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-history-1"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0027",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-history-2",
+      "lens": "history",
+      "kind": "issue",
+      "label": "NTS-140: Link expiry (work in progress)",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-history-2"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0028",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    },
+    {
+      "id": "L-history-3",
+      "lens": "history",
+      "kind": "commit",
+      "label": "PR #5: link revocation",
+      "agent": {
+        "class": "in",
+        "reason": "Part of the change the brief describes.",
+        "citation": "L-history-3"
+      },
+      "judge": {
+        "class": "in",
+        "confidence": 0.9,
+        "provider": "fixture-judge",
+        "decisionId": "JD-0029",
+        "reasonCode": "model"
+      },
+      "result": "in",
+      "disputed": false
+    }
+  ]
+}

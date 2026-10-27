@@ -70,6 +70,14 @@ internal static partial class Labels
     internal static string LaunchViewerFailed(string code, string detail) =>
         detail.Length == 0 ? $"The agent session is running. The viewer failed ({code})." : $"The agent session is running. The viewer failed ({code}): {detail}";
 
+    /// <summary>A launch that started whose viewer was skipped.</summary>
+    /// <param name="reason">The reason as served.</param>
+    /// <returns>The sentence.</returns>
+    internal static string LaunchViewerSkipped(string reason) => $"The agent session is running. No terminal was opened: {reason}";
+
+    /// <summary>A takeover was accepted and nothing says whether a terminal opened.</summary>
+    internal const string TakeoverNoViewer = "You have the run. The server didn't say whether a terminal opened.";
+
     /// <summary>A launch that failed.</summary>
     /// <param name="code">The failure code.</param>
     /// <param name="detail">The sentence with its fix.</param>

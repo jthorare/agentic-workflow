@@ -21,7 +21,7 @@ public sealed class StatusSessionsTests
 
         var status = (await Service().Handle(new GetStatusRequest(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(new SessionStatus(Live: 3, Asking: 1, Problems: 1), status.Sessions);
+        Assert.Equal(new SessionStatus(Live: 3, Asking: 1, Problems: 1, Running: 1), status.Sessions);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -29,6 +29,6 @@ public sealed class StatusSessionsTests
     {
         var status = (await Service().Handle(new GetStatusRequest(), TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(new SessionStatus(0, 0, 0), status.Sessions);
+        Assert.Equal(new SessionStatus(0, 0, 0, 0), status.Sessions);
     }
 }

@@ -4,8 +4,8 @@
   "itemId": "T-3",
   "recipe": {
     "id": "workflow.step",
-    "hash": "sha256:f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784",
-    "version": 4,
+    "hash": "sha256:4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7",
+    "version": 5,
     "urgency": "work"
   },
   "state": "taken-over",

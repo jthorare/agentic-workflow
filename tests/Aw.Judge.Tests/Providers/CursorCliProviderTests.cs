@@ -24,6 +24,16 @@ public sealed class CursorCliProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_names_a_model_runs_that_model_instead_of_the_default()
+    {
+        Install(Questions.ResultText("""{"decision":"send"}"""));
+
+        _ = await Decide(Questions.Text with { Model = "gpt-5.6" });
+
+        Assert.Equal("gpt-5.6", ClaudeCliProviderTests.After(Assert.Single(_runner.Calls).Request.Arguments, "--model"));
+    }
+
+    [Fact]
     public async Task It_runs_in_ask_mode_in_a_trusted_fresh_workspace_with_the_schema_in_the_prompt()
     {
         Install(Questions.ResultText("""{"decision":"send"}"""));

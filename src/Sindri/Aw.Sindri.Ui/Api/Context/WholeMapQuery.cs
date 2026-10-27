@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="MapVersion">A retained map version, or null for the current one.</param>
 /// <param name="Draft">Read the draft map.</param>
 /// <param name="Repo">One repo to read; null for every repo.</param>
-internal sealed record WholeMapQuery(string? Detail, string? Area, IReadOnlyList<string> Locate, string? MapVersion, bool Draft, string? Repo = null);
+/// <param name="Concept">One concept's id to scope the map to ("other" for the unassigned nodes); null for today's whole map.</param>
+internal sealed record WholeMapQuery(string? Detail, string? Area, IReadOnlyList<string> Locate, string? MapVersion, bool Draft, string? Repo = null, string? Concept = null);

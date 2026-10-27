@@ -1,9 +1,11 @@
+using Aw.Kernel.Testing;
 using Aw.Sindri.Features;
 using Aw.Sindri.Features.CodeIndexJobs;
 
 namespace Aw.Sindri.Tests.CodeIndexJobs;
 
 /// <summary>The embed job's detail line names what the run made and what it carried over, so a full re-embed (issue 990) is visible from the job.</summary>
+[Lane(TestLane.Unit)]
 public sealed class EmbedJobSummaryTests
 {
     [Fact]

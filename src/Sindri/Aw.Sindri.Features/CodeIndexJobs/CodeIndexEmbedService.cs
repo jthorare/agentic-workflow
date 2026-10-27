@@ -31,8 +31,11 @@ internal sealed partial class CodeIndexEmbedService(CodeIndexJobScopes scopes, I
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("code-index-embed");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Embeds the code-index chunks that are not embedded yet.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one status read and one jobs read.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 

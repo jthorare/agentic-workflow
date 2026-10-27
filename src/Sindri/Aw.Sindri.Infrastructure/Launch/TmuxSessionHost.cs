@@ -129,6 +129,29 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         }
     }
 
+    /// <summary>Types <paramref name="text"/> and Enter into the session's pane (the idle sweep's one re-prompt).</summary>
+    /// <param name="host">The session.</param>
+    /// <param name="text">One line, typed literally.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when tmux took both keys; false when the session is gone or tmux could not be asked.</returns>
+    internal async ValueTask<bool> SendLine(HostRef host, string text, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        try
+        {
+            var typed = await Run(["send-keys", "-t", Target(host), "-l", "--", text], cancellationToken, _callBudget).ConfigureAwait(false);
+            return typed.ExitCode == 0 && (await Run(["send-keys", "-t", Target(host), "Enter"], cancellationToken, _callBudget).ConfigureAwait(false)).ExitCode == 0;
+        }
+        catch (Win32Exception)
+        {
+            return false;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
     /// <inheritdoc/>
     public IReadOnlyList<string> AttachArgv(HostRef host)
     {
