@@ -67,7 +67,7 @@
 # Environment (all optional; .env.example): AW_STATE_DIR, TMPDIR, EDITOR, AW_SINDRI_UI, AW_SINDRI_POD_RETRIES,
 # AW_SINDRI_POD_RETRY_WAIT, AW_SINDRI_POD_POLL, AW_SINDRI_POD_ONYX_PORT. The retry settings also bound the wait for the
 # sindri container (default 40 attempts 15 s apart, 10 minutes); for reconnecting they default to 30 attempts 10 s apart.
-# Needs kubectl (exec and port-forward rights on the namespace), jq and sindri-ui (`sindri-app --publish-only`) for connect.
+# Needs kubectl (exec and port-forward rights on the namespace), jq and sindri-ui (`scripts/install-cs.sh`) for connect.
 # Each prerequisite failure is one line and exit 2. No colour, no spinner.
 # Bash 3.2 compatible (macOS /bin/bash).
 set -uo pipefail
@@ -276,8 +276,7 @@ alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
 
 find_ui() {
   if [ -n "${AW_SINDRI_UI:-}" ]; then printf '%s\n' "$AW_SINDRI_UI"; return; fi
-  # shellcheck disable=SC2012
-  ls -dt "$state"/bin/sindri-app/*/sindri-ui 2>/dev/null | head -1
+  printf '%s\n' "$state/bin/cs/current/sindri-ui"
 }
 
 if [ "$dry" = 1 ]; then
@@ -285,7 +284,7 @@ if [ "$dry" = 1 ]; then
   echo "mirror home: ${TMPDIR:-/tmp}/aw-sindri-pod.XXXXXX (0700; control.json and auth/human.token 0600; removed on exit)"
   echo "+ kubectl [--context ${ctx:-<current>}] [--namespace ${ns:-<current>}] exec $pod -c sindri -- sh -c '<cat control.json and auth/human.token>'"
   echo "+ kubectl port-forward pod/$pod ${lport:-<pod port>}:<pod port from control.json>"
-  echo "+ AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_HOME=<mirror home> <sindri-ui: \$AW_SINDRI_UI, else the newest $state/bin/sindri-app/*/sindri-ui>"
+  echo "+ AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_HOME=<mirror home> <sindri-ui: \$AW_SINDRI_UI, else $state/bin/cs/current/sindri-ui>"
   echo "  (every ${poll}s: re-read pid, epoch and token; on a change or a dropped forward, retry up to $retries attempts ${retry_wait}s apart and rewrite the mirror home)"
   if [ "$onyx" = 1 ]; then
     echo "+ kubectl exec $pod -c sindri -- sh -c 'printf %s \$AW_SINDRI_ONYX_URL'   (Onyx's port; unset means Onyx is off: refused)"
@@ -307,7 +306,7 @@ else step_fail "kubectl is not on the PATH (it needs exec and port-forward right
 if command -v jq >/dev/null 2>&1; then step_ok "jq is on the PATH"; else step_fail "jq is not on the PATH"; fi
 ui="$(find_ui)"
 if [ -n "$ui" ] && [ -x "$ui" ]; then step_ok "sindri-ui found ($ui)"
-else step_fail "sindri-ui not found; install it with sindri-app (scripts/sindri-app.sh --publish-only) or set AW_SINDRI_UI"; fi
+else step_fail "sindri-ui not found; install it with scripts/install-cs.sh or set AW_SINDRI_UI"; fi
 
 if [ "$have_k" = 1 ]; then
   [ -n "$ctx" ] || ctx="$(kubectl config current-context 2>/dev/null)"

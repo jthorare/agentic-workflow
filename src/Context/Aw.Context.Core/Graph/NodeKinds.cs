@@ -18,6 +18,7 @@ public static class NodeKinds
         "flow" => NodeKind.Flow,
         "decision" => NodeKind.Decision,
         "record" => NodeKind.Record,
+        "concept" => NodeKind.Concept,
         _ => NodeKind.Code,
     };
 

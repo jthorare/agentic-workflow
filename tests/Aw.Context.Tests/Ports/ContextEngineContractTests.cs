@@ -8,6 +8,10 @@ namespace Aw.Context.Tests.Ports;
 [Trait("Lane", "unit")]
 public sealed class ContextEngineContractTests : ContextEngineContract<IContextEngine>
 {
+    protected override string ScopeGraphCodeWithNoMap => ContextErrors.NoMap.Code;
+
+    protected override bool UnknownRunReadsAreEmpty => true;
+
     protected override IContextEngine CreateDown()
     {
         var docs = FakeContextSource.FixtureDocs();

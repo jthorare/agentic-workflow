@@ -15,7 +15,7 @@ public sealed class ContextSearchRefusalTests
 
     private static string Tabs { get; } = (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!;
 
-    private static RouteAnswer Unknown(Aw.Sindri.Ui.Api.Context.LensesQuery query) =>
+    private static RouteAnswer Unknown(Ui.Api.Context.LensesQuery query) =>
         query.Anchors.Contains(Tabs, StringComparer.Ordinal) ? ContextAnswers.Lenses(query)
             : RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-CONTEXT-003", "no node is named 'Tab' (fix: sindri context map status)");
 

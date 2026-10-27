@@ -54,11 +54,16 @@ public static class AgentLaunches
         var worktree = WorktreeFor(run, target, extras?.Workspace);
         // Never plan mode: plan mode runs read-only tools only, so the session couldn't run 'sindri workflow complete'. A Step only tightens the
         // profile: every Step may report, a write Step may write its own worktree and commit it, and nothing else is allowed (no build tools: SC-R).
-        var policy = new StepPolicy(run.WriteScope ? [.. _report, .. _commit] : _report, StepPermissionMode.Default, run.WriteScope ? worktree : null);
+        string[] tools = [.. _report, .. EvidenceGrants.For(run.Step.Block), .. run.WriteScope ? _commit : []];   // an evidence Step also gets its own verbs, one grant each (cutover spec §3.1)
+        var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
-            new StepArgs(Model: null, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null), run.Run);   // Model null: per-Step models are SC-R
+            StepArgsFor(run, descriptor, extras, policy), run.Run);
     }
+
+    // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.
+    private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy) =>
+        new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
 
     /// <summary>The holdout evaluator's request (LN-LCH2): it runs in a scratch checkout at the head sha, reads the holdout set and never writes it, can't touch the phase worktree, and may run the evidence CLIs.</summary>
     /// <param name="run">The run.</param>

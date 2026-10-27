@@ -25,4 +25,8 @@ public enum ModelPurpose
     /// <summary>The map cleanup agent: keep or remove each low-confidence proposal before an automatic promote.</summary>
     [JsonStringEnumMemberName("map-cleanup")]
     Cleanup,
+
+    /// <summary>Naming the derived concepts of a map, one call per build (context.labeling).</summary>
+    [JsonStringEnumMemberName("concepts")]
+    Concepts,
 }

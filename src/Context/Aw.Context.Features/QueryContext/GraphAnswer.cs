@@ -105,7 +105,7 @@ internal static class GraphAnswer
         var facts = graph.Edges.Where(e => e.From.Value == key && e.Type is not EdgeType.Implements and not EdgeType.Tests)
             .Select(e => $"{EdgeRules.Name(e.Type)} {e.To.Value}")
             .Concat(graph.Edges.Where(e => e.To.Value == key && e.Type == EdgeType.Implements).Select(e => $"implemented-by {e.From.Value}"))
-            .Order(StringComparer.Ordinal).Take(12).ToList();
+            .Order(StringComparer.Ordinal).ToList();
         var line = facts.Count == 0 ? null : text.Line(string.Join("; ", facts));
         return new PackCandidate("graph", Item(fact, line, (fact.Provenance, fact.Confirmed, fact.Trust), why), MapMarker);
     }

@@ -7,17 +7,20 @@ namespace Aw.Context.Tests.Core;
 public sealed class QueryRulesTests
 {
     [Fact, Trait("Lane", "unit")]
-    public void Text_becomes_distinct_lower_case_terms_and_the_budget_is_capped()
+    public void Text_becomes_distinct_lower_case_terms()
     {
-        var valid = QueryRules.Check(new ContextQuery("Split pane: ORIENTATION, split-pane!", Budget: 50_000), new ContextSettings { MaxBudget = 6_000 });
+        var valid = QueryRules.Check(new ContextQuery("Split pane: ORIENTATION, split-pane!"), new ContextSettings());
 
         Assert.Equal(["split", "pane", "orientation"], valid.Value.Terms);
-        Assert.Equal(6_000, valid.Value.Budget);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public void No_budget_gets_the_default() =>
-        Assert.Equal(QueryRules.DefaultBudget, QueryRules.Check(new ContextQuery("x"), new ContextSettings()).Value.Budget);
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(null)]
+    [InlineData(0)]
+    [InlineData(-5)]
+    [InlineData(50_000_000)]
+    public void A_budget_is_read_and_ignored(int? budget) =>
+        Assert.True(QueryRules.Check(new ContextQuery("x", Budget: budget), new ContextSettings()).IsSuccess);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("  ,; ")]
@@ -30,11 +33,10 @@ public sealed class QueryRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Two_shapes_a_bad_depth_or_a_bad_budget_are_006()
+    public void Two_shapes_or_a_bad_depth_are_006()
     {
         Assert.Equal(ContextErrors.QueryInvalid.Code, QueryRules.Check(new ContextQuery("x", Node: "feature:a"), new()).Error.Code);
         Assert.Equal(ContextErrors.QueryInvalid.Code, QueryRules.Check(new ContextQuery("x", Depth: -1), new()).Error.Code);
-        Assert.Equal(ContextErrors.QueryInvalid.Code, QueryRules.Check(new ContextQuery("x", Budget: 0), new()).Error.Code);
         Assert.True(QueryRules.Check(new ContextQuery(new string('a', 2_001)), new()).IsSuccess);   // a question has no length limit (owner q93)
         Assert.True(QueryRules.Check(new ContextQuery(string.Join(' ', Enumerable.Repeat("word", 5_000))), new()).IsSuccess);
     }
@@ -75,25 +77,6 @@ public sealed class QueryRulesTests
         Assert.StartsWith("depth must be a whole number of 0 or more (deeper than 8 is read as 8)", error.Message, StringComparison.Ordinal);
     }
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData(null, null)]
-    [InlineData("1", 1)]
-    [InlineData("8000", 8000)]
-    public void A_budget_from_text_is_absent_or_a_positive_whole_number(string? text, int? expected) =>
-        Assert.Equal(expected, QueryRules.ParseBudget(text).Value);
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("abc", "budget must be a whole number of tokens, 1 or more")]
-    [InlineData("0", "out of range")]
-    [InlineData("-5", "out of range")]
-    public void A_bad_budget_is_006(string text, string message)
-    {
-        var error = QueryRules.ParseBudget(text).Error;
-
-        Assert.Equal(ContextErrors.QueryInvalid.Code, error.Code);
-        Assert.Contains(message, error.Message, StringComparison.Ordinal);
-    }
-
     [Fact, Trait("Lane", "unit")]
     public void The_depth_check_for_a_number_gives_the_same_006_as_the_text_parse()
     {
@@ -101,6 +84,18 @@ public sealed class QueryRulesTests
         Assert.Null(QueryRules.CheckDepth(3));
         Assert.Null(QueryRules.CheckDepth(9));   // deeper than 8 is clamped where it is read, not refused
         Assert.Equal(QueryRules.ParseDepth("-1").Error, QueryRules.CheckDepth(-1));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_page_is_an_optional_limit_of_1_or_more_and_an_optional_offset_of_0_or_more()
+    {
+        Assert.Null(QueryRules.CheckPage(limit: null, offset: null));
+        Assert.Null(QueryRules.CheckPage(20, offset: null));
+        Assert.Null(QueryRules.CheckPage(20, 0));
+        Assert.Null(QueryRules.CheckPage(limit: null, offset: 1));
+        Assert.Equal(ContextErrors.QueryInvalid.Code, QueryRules.CheckPage(limit: null, offset: -1)!.Code);
+        Assert.Equal(ContextErrors.QueryInvalid.Code, QueryRules.CheckPage(0, 0)!.Code);
+        Assert.Equal(QueryRules.PageMessage, QueryRules.CheckPage(10, -1)!.Message);
     }
 
     [Fact, Trait("Lane", "unit")]

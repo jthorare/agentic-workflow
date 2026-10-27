@@ -11,12 +11,16 @@ public sealed class LockInteropTests : IDisposable
 {
     private readonly TempDirectory _root = new();
 
+    // The bash that takes the lock exits right after, and a waiter reclaims a lock whose recorded holder is dead (#1056). The
+    // holder recorded is this test process (bash's parent), alive for the whole test, so the lock stays held until released.
+    private const string LiveHolder = "acquire_lock \"$1\" 0 && echo \"$PPID\" > \"$1/pid\"";
+
     private string Lock => LockTestEnvironment.Settings(_root).QaStack;
 
     [Fact]
     public async Task A_lock_bash_holds_is_busy_for_csharp_until_bash_releases_it()
     {
-        Assert.Equal(0, await Bash("acquire_lock \"$1\" 0"));
+        Assert.Equal(0, await Bash(LiveHolder));
 
         var busy = await LockTestEnvironment.Locks(_root).AcquireAsync(LockKind.QaStack, TimeSpan.Zero, TestContext.Current.CancellationToken);
         Assert.Equal(EvidenceErrors.LockBusy.Code, busy.Error.Code);
@@ -43,7 +47,7 @@ public sealed class LockInteropTests : IDisposable
     public async Task With_bash_holding_the_heavy_lock_path_csharp_takes_slot_two()
     {
         var heavy = LockTestEnvironment.HeavySlot(_root, 1);
-        Assert.Equal(0, await Bash("acquire_lock \"$1\" 0", heavy));
+        Assert.Equal(0, await Bash(LiveHolder, heavy));
 
         var lease = (await LockTestEnvironment.Locks(_root).AcquireAsync(LockKind.HeavyJob, TimeSpan.Zero, TestContext.Current.CancellationToken)).Value;
         Assert.True(File.Exists(Path.Combine(LockTestEnvironment.HeavySlot(_root, 2), "owner")), "the C# holder took <lock>.2");

@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
+using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -55,7 +56,16 @@ internal sealed class TemporalLikeRuntime : IInstanceDirectory, IInstanceRuntime
     /// <summary>Every nonce a Send used, in order.</summary>
     public IReadOnlyList<CommandNonce> Sent => _sent;
 
-    public CallerContext? Current { get; } = Testing.A.Caller().AtTerminal().Build();
+    public CallerContext? Current { get; set; } = Testing.A.Caller().AtTerminal().Build();
+
+    /// <summary>The open desk task the views carry; null for none.</summary>
+    public DeskTask? OpenTask { get; set; }
+
+    /// <summary>The open park, escalation or takeover the views carry; null for none.</summary>
+    public OpenQuestion? OpenPark { get; set; }
+
+    /// <summary>The open agent run the views carry; null for none.</summary>
+    public OpenRun? OpenAgentRun { get; set; }
 
     /// <summary>The next new Update applies, but its response is lost: the caller sees a timeout.</summary>
     public void LoseNextResponse() => _loseNextResponse = true;
@@ -158,13 +168,14 @@ internal sealed class TemporalLikeRuntime : IInstanceDirectory, IInstanceRuntime
         DateTimeOffset.FromUnixTimeMilliseconds(1_000),
         string.Empty,
         [],
-        Question: null,
-        Task: null,
+        Question: OpenPark,
+        Task: OpenTask,
         Run: null,
         Children: [],
         Outcome: null)
     {
         Id = WorkflowInstanceId.Of(address),
+        AgentRun = OpenAgentRun,
         Version = version,
         ChildPark = Child is { } child && address == Address ? new StatusChild(WorkflowInstanceId.Of(child), child, "parked", "no-progress") : null,
     };

@@ -294,4 +294,27 @@ public sealed class CreateItemDialogTests : IDisposable
         Settle(window);
         Assert.Equal((false, opener), (shell.Create.IsOpen, Focused(window)));
     });
+
+    // #1129: Enter in the title used to leave the form open for the accepted outcome's 2 s and the new row unmarked. The form
+    // closes as soon as the item is created; the row is selected once the event stream's re-read has it.
+    [Fact]
+    public Task Creating_an_item_closes_the_dialog_and_selects_the_new_row() => OnUi(async () =>
+    {
+        const string created = "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2e703";   // in extra-p11-running, not in the fixture the page starts with
+        var answer = RouteAnswer.SpecShaped("items", "created");
+        _server.Create = answer with { Body = answer.Body.Replace("ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a306", created, StringComparison.Ordinal) };
+        var (window, shell) = await Connected();
+        _ = await OpenFromButton(window, shell);
+        shell.Create.Title = "Proof: selected on create";
+
+        window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, keySymbol: null);
+        await Until(window, () => shell.Create.CreatedId.Length > 0);
+        Settle(window);
+
+        Assert.False(shell.Create.IsOpen);
+        _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p11-running");
+        _server.Push(A.Event(58, "item.created"));
+        await Until(window, () => shell.Queue.Groups.SelectMany(g => g.Rows).Any(r => r.Id == created));
+        await Until(window, () => shell.Queue.SelectedId == created, "the new row was never selected");
+    });
 }

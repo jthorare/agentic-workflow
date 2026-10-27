@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Context.Concepts;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Controls;
@@ -85,5 +86,21 @@ public sealed class ContextPageViewModelTests
 
         Assert.Equal([nameof(ContextPageViewModel.AnchorText)], changed);
         Assert.Equal(0, server.ContextCalls);
+    }
+
+    [Fact]
+    public async Task Up_while_drilled_leaves_the_drill_then_closes_the_concept()
+    {
+        var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Three()));
+        await page.OpenConcept("concept:billing", TestContext.Current.CancellationToken);
+        page.Whole.DrillInto(page.Whole.BandButtons[0].Band);
+        Assert.True(page.Whole.IsDrilled);
+
+        Assert.True(page.Up());
+
+        Assert.False(page.Whole.IsDrilled);
+        Assert.NotNull(page.OpenedConceptId);
+        Assert.True(page.Up());
+        Assert.Null(page.OpenedConceptId);
     }
 }

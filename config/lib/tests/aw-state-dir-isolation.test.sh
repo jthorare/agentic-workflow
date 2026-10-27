@@ -56,16 +56,15 @@ test_installers_write_only_under_aw_state_dir() {
   local env=(HOME="$home" AW_STATE_DIR="$state" CLAUDE_SETTINGS_FILE="$settings" CLAUDE_HOOKS_DIR="$hooks_dir" \
              CLAUDE_LOCAL_BIN="$bin" AW_LAUNCH_AGENTS_DIR="$launch_agents" AW_SKIP_LAUNCHD=1 AW_JUDGE_BIN=/usr/bin/true)
 
-  for installer in install-judge install-context-guard install-wake-gating install-scope-gate install-done-gate install-external-write-guard; do
+  for installer in install-judge-hooks install-context-guard install-wake-gating install-scope-gate install-done-gate install-external-write-guard; do
     env "${env[@]}" bash "$ROOT/scripts/$installer.sh" > /dev/null 2>&1 || true
   done
 
   [ -d "$state" ] || { echo "FAIL: expected state to land under AW_STATE_DIR ($state)"; exit 1; }
-  [ -f "$bin/judge" ] || { echo "FAIL: expected install-judge to write into CLAUDE_LOCAL_BIN ($bin)"; exit 1; }
   local extra
   extra="$(find "$home/.agentic-workflow" -newer "$home/.agentic-workflow/DO_NOT_TOUCH" 2>/dev/null || true)"
   [ -z "$extra" ] || { echo "FAIL: installers wrote into HOME/.agentic-workflow: $extra"; exit 1; }
-  [ ! -e "$home/.local" ] || { echo "FAIL: install-judge wrote into HOME/.local despite CLAUDE_LOCAL_BIN"; exit 1; }
+  [ ! -e "$home/.local" ] || { echo "FAIL: an installer wrote into HOME/.local despite CLAUDE_LOCAL_BIN"; exit 1; }
 
   echo "PASS: test_installers_write_only_under_aw_state_dir"
 }
@@ -111,7 +110,7 @@ test_full_envelope_leaves_both_the_empty_home_and_the_real_home_untouched() {
 
   local env=(HOME="$fake_home" AW_STATE_DIR="$state" CLAUDE_SETTINGS_FILE="$settings" CLAUDE_HOOKS_DIR="$hooks_dir" \
              CLAUDE_LOCAL_BIN="$bin" AW_LAUNCH_AGENTS_DIR="$launch_agents" AW_SKIP_LAUNCHD=1 AW_JUDGE_BIN=/usr/bin/true)
-  for installer in install-judge install-context-guard install-wake-gating install-scope-gate install-done-gate install-external-write-guard; do
+  for installer in install-judge-hooks install-context-guard install-wake-gating install-scope-gate install-done-gate install-external-write-guard; do
     env "${env[@]}" bash "$ROOT/scripts/$installer.sh" > /dev/null 2>&1 || true
   done
 
@@ -123,9 +122,8 @@ test_full_envelope_leaves_both_the_empty_home_and_the_real_home_untouched() {
     || { echo "FAIL: the real HOME's install-target locations changed during a fully-sandboxed installer run:"; diff "$before" "$after"; exit 1; }
 
   # .npm is npm's own cache/log dir, always keyed off $HOME regardless of
-  # anything this fix controls (install-judge.sh runs `npm install`) — not
-  # part of the AW_STATE_DIR contract, so it's excluded here rather than
-  # papered over as untouched.
+  # anything this fix controls — not part of the AW_STATE_DIR contract, so it's
+  # excluded here rather than papered over as untouched.
   local leftover
   leftover="$(ls -A "$fake_home" 2>/dev/null | grep -v '^\.npm$' || true)"
   [ -z "$leftover" ] \

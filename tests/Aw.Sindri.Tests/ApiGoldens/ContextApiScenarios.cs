@@ -32,6 +32,9 @@ internal static class ContextApiScenarios
     /// <summary>The QUERY body: a mixed set of four keys (a surface, a code file, a decision, one absent), not the GET's three feature keys.</summary>
     internal const string SubgraphBody = """{"nodes":["surface:command/switch-tab","code:src/tabs/TabManager.ts","decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b","feature:nope.x"]}""";   // a real mixed set: a surface, a code file, a decision, one absent key
 
+    /// <summary>The QUERY body of the search golden: a word only a decision's quote holds.</summary>
+    internal const string SearchBody = """{"q":"single","limit":5}""";
+
     private static string Subgraph(string query) => "/sindri/context/subgraph?" + query;
 
     private static string WholeRoute(string? query = null) => "/sindri/context/map/whole" + (query is null ? string.Empty : "?" + query);
@@ -64,6 +67,11 @@ internal static class ContextApiScenarios
         ("context-subgraph", "too-many-006", async (s, ct) => await s.Fetch(Subgraph(string.Join('&', Enumerable.Range(0, 21).Select(i => "nodes=feature%3Anope." + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))), ct)),
         ("context-subgraph", "not-retained-120", async (s, ct) => await s.Fetch(Subgraph(ThreeKeys) + "&mapVersion=v99", ct)),
         ("context-subgraph", "query-refused-origin", async (s, ct) => await s.QueryForeignOrigin("/sindri/context/subgraph", SubgraphBody, ct)),
+        ("context-search", "get-tab-manager", async (s, ct) => await s.Fetch("/sindri/context/search?q=tab+manager", ct)),
+        ("context-search", "query-decision-text", async (s, ct) => await s.Query("/sindri/context/search", SearchBody, ct)),
+        ("context-search", "session-own-repo", async (s, ct) => await s.FetchAsSession("/sindri/context/search?q=tab", ct)),
+        ("context-search", "empty-q-006", async (s, ct) => await s.Fetch("/sindri/context/search?q=", ct)),
+        ("context-search", "limit-201-006", async (s, ct) => await s.Fetch("/sindri/context/search?q=tab&limit=201", ct)),
         ("context-code", "edges-and-lexical", async (s, ct) => await s.Fetch(CodeRoute(), ct)),
         ("context-code", "two-anchors", async (s, ct) => await s.Fetch(CodeRoute("feature%3Aaudit"), ct)),
         ("context-code", "schema-off", async (s, ct) => await s.Fetch(CodeRoute(), ct)),
@@ -112,6 +120,26 @@ internal static class ContextApiScenarios
         ("context-whole", "bad-detail-006", async (s, ct) => await s.Fetch(WholeRoute("detail=everything"), ct)),
         ("context-whole", "session-own-repo", async (s, ct) => await s.FetchAsSession(WholeRoute(), ct)),
         ("context-whole", "session-other-repo-045", async (s, ct) => await s.FetchAsSession(WholeRoute("repo=elsewhere"), ct)),
+        ("context-whole", "concept-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling"), ct)),
+        ("context-whole", "concept-other", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Aother"), ct)),
+        ("context-whole", "concept-unknown-200", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Anope"), ct)),
+        ("context-whole", "concept-area-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling&area=feature%3Ashifts"), ct)),
+        ("context-concepts", "concept-map", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
+        ("context-concepts", "filtered-invoices", async (s, ct) => await s.Fetch("/sindri/context/concepts?q=invoices", ct)),
+        ("context-concepts", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts?limit=1", ct)),
+        ("context-concepts", "second-page", async (s, ct) => await s.Fetch("/sindri/context/concepts?limit=1&cursor=v1%3A1", ct)),
+        ("context-concepts", "bad-cursor-006", async (s, ct) => await s.Fetch("/sindri/context/concepts?cursor=v9%3A1", ct)),
+        ("context-concepts", "bad-limit-006", async (s, ct) => await s.Fetch("/sindri/context/concepts?limit=0", ct)),
+        ("context-concepts", "no-concepts-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
+        ("context-concepts", "no-map-unavailable", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
+        ("context-concepts", "session-own-repo", async (s, ct) => await s.FetchAsSession("/sindri/context/concepts", ct)),
+        ("context-concepts-glossary", "terms", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-concepts-glossary", "no-terms-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-concepts-glossary", "no-map-030", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
+        ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
+        ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
+        ("context-concepts-id-members", "unknown-003", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Anope/members", ct)),
         ("context-eval", "map-tabs", async (s, ct) => await s.Fetch("/sindri/context/eval/map", ct)),
         ("context-filemap", "root", async (s, ct) => await s.Fetch($"/sindri/context/filemap?repo={Repo}", ct)),
         ("context-filemap", "src", async (s, ct) => await s.Fetch($"/sindri/context/filemap?repo={Repo}&path=src/", ct)),
@@ -187,8 +215,11 @@ internal static class ContextApiScenarios
 
     // The whole-map answers for "no map yet" run on a host that imported nothing.
     private static bool StartsWithoutMap(string slug, string scenario) =>
-        string.Equals(slug, "context-whole", StringComparison.Ordinal)
-        && new[] { "no-map-030", "no-map-never-run", "no-map-approved", "building-in-progress" }.Contains(scenario, StringComparer.Ordinal);
+        (string.Equals(slug, "context-whole", StringComparison.Ordinal) && new[] { "no-map-030", "no-map-never-run", "no-map-approved", "building-in-progress" }.Contains(scenario, StringComparer.Ordinal))
+        || (string.Equals(slug, "context-concepts", StringComparison.Ordinal) && string.Equals(scenario, "no-map-unavailable", StringComparison.Ordinal))
+        || (string.Equals(slug, "context-concepts-glossary", StringComparison.Ordinal) && string.Equals(scenario, "no-map-030", StringComparison.Ordinal));
+
+    private const string CodeTestGlobs = "[\"**/tests/**\", \"**/*.test.*\"]";
 
     // The code goldens read the CodeLensRepo (a fixed sha); the map names no commit, so the lexical search reads HEAD, except where a scenario says otherwise.
     private static async Task<GoldenHost> StartCode(string scenario, CancellationToken ct)
@@ -196,9 +227,9 @@ internal static class ContextApiScenarios
         var repo = CodeLensRepo.Build(extraTests: scenario == "capped" ? 105 : 0);
         var extra = scenario switch
         {
-            "schema-off" => "  code: { schemaGlobs: [] }\n",
-            "deadline-152" => "  deadline: 100ms\n  code: { deadline: 100ms }\n",   // the lexical search reads context.code.deadline (#553)
-            _ => null,
+            "schema-off" => $"  code: {{ schemaGlobs: [], testGlobs: {CodeTestGlobs} }}\n",
+            "deadline-152" => $"  deadline: 100ms\n  code: {{ deadline: 100ms, testGlobs: {CodeTestGlobs} }}\n",   // the lexical search reads context.code.deadline (#553)
+            _ => $"  code: {{ testGlobs: {CodeTestGlobs} }}\n",   // why: the engine has no built-in test globs
         };
         Action<IServiceCollection>? wire = scenario == "deadline-152" ? HangingCodeSearch.Install : null;   // a search that never answers: the 100ms code deadline decides
         var host = await ContextHosts.Approved(repo.Path, sessions: true, ct, wire, CodeLensRepo.Repo, contextExtra: extra);
@@ -264,6 +295,11 @@ internal static class ContextApiScenarios
         if (scenario.StartsWith("hops-", StringComparison.Ordinal))
         {
             return HopsMap(host.Home);
+        }
+
+        if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal))
+        {
+            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms"));   // the tabs map has no concept: its own scenario reads that answer
         }
 
         if ((slug, scenario) is not ("context-lenses", "ambiguous-037"))

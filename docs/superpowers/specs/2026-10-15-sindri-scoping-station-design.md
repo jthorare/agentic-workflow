@@ -452,7 +452,7 @@ Each question carries two to four options plus "other" and "skip":
 
 - Every option cites at least one lens item, source ref or earlier answer (`A2`). An uncited option fails the grader
   (`option-uncited`).
-- `recommended` is set on at most one option, and only when a cited source favours it; its rationale says which. The
+- `recommended` is set on exactly one option (`SCP-QST-001`): the one a cited source favours, and its rationale says which. A question that can't be decided yet recommends the option that defers and reports it, or goes to `openQuestions`. The
   app shows it as a tag and never preselects it.
 - `yields` is the acceptance item the option would produce, so the owner sees the consequence of a click.
 - Options are mutually exclusive. A question that needs "several of these" is split.
@@ -552,6 +552,7 @@ severity: fail | warn }] }`, written as `fact:findings` and printed by `--json`.
 | `SCP-CHAL-001` | evidence | The last entry of `fact:challenge.rounds[]` reports nothing new in surfaces and in behaviours, and lists every lens and dimension it walked |
 | `SCP-CHAL-002` | evidence | Both runs' runtime records (W8) show the challenger's model differs from the drafter's, and the vendor too when the profile allows more than one. When either run is `via: desk`, it is a warning shown first at the stop ("challenger ran at the desk: model self-reported" or "not recorded"), never a refusal. The packet records both |
 | `SCP-MAP-001` | draft | Workstreams: every surface sits in exactly one; dependencies exist and don't cycle (TS "How it works" step 3) |
+| `SCP-QST-001` | draft | Every question in `fact:questions` has two to four options and exactly one marked `recommended` (the scoping counterpart of DSN-DEC-001; #1204) |
 
 - **Outcomes.** `check`: `pass`, `gaps`, or `regather` when every failing rule is `SCP-COV-002`. `evidence`:
   `complete`, `incomplete`, or `regather` on the same condition. Warnings never change an outcome and are never
@@ -1248,7 +1249,7 @@ after the error analysis (§10.2). No seed writes `trust` or the answer log; cod
 - **Do:** list the gaps from the four sources; drop those a cited source answers and cite the source instead, because
   asking what is already known wastes the owner's time; score them; merge one dimension across surfaces into one
   question; take the top five above impact 1. For each, draft two to four exclusive options with rationale, citations
-  and `yields`, and mark one `recommended` only when a source favours it.
+  and `yields`, and mark exactly one `recommended` (the one a source favours; for a question that can't be decided yet, the defer-and-report option).
 - **Report:** `asked` with `fact:questions` (at most five) and `fact:openQuestions` (all remaining, ranked), or `none`
   when no gap scores above 1; valid against `schemas/scoping/questions.json` and `open-questions.json`.
 - **Never:** ask what a source answers; ask more than five; offer an option with no citation, since it is a guess;

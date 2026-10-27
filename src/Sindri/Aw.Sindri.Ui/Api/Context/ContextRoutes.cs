@@ -49,6 +49,15 @@ internal static class ContextRoutes
         return With(Root + "/concepts", parts);
     }
 
+    internal static string ConceptGlossary(ConceptGlossaryQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "mapVersion", query.MapVersion);
+        return With(Root + "/concepts/glossary", parts);
+    }
+
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>
     internal const string Code = Root + "/code";
 

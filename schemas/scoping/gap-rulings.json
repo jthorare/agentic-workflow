@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/gap-rulings.json",
+  "title": "The judge's rulings on the candidates (fact:gapRulings)",
+  "description": "Issue 966 spec 4.5: one ruling per candidate, in the candidates' order. An escalated or failed call is uncertain, which is not a confirmed gap. The judge is recorded by its providers and the decision ids; reasonCode is the judge's code, never free text.",
+  "type": "object",
+  "properties": {
+    "judge": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "providers",
+        "threshold"
+      ],
+      "additionalProperties": false
+    },
+    "rulings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^C[1-9][0-9]*$",
+            "description": "The searcher's own number for the candidate: C1, C2 and so on, once each in the file."
+          },
+          "ruling": {
+            "enum": [
+              "real-gap",
+              "already-covered",
+              "not-in-scope",
+              "uncertain"
+            ]
+          },
+          "confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The judge's decision row; 'judge why <id>' explains it."
+          },
+          "reasonCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "ruling",
+          "confidence",
+          "provider",
+          "decisionId",
+          "reasonCode"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "judge",
+    "rulings"
+  ],
+  "additionalProperties": false
+}

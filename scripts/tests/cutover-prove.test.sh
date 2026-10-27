@@ -53,7 +53,7 @@ has "dry run shows the budget" "$out" "nudge budget 1234 ms"
 has "dry run shows the flags" "$out" "downloads skipped; keep=1"
 has "dry run shows HOME unchanged" "$out" "HOME stays $HOME"
 for c in failed-publish-changes-nothing step1-refusal-changes-nothing publish pre-link link post-link removed-exactly-8 kept-byte-identical \
-  hook-v3 hook-refuses-secret hook-passes-clean hook-suites seeded-hooks judge-stub-label judge-stub-import-turns setup-dry-run \
+  hook-v3 hook-refuses-secret hook-passes-clean hook-suites seeded-hooks judge-stub-sort-why judge-stub-sort-promote setup-dry-run \
   second-run-no-change live-judge-state-survives nudge-cold-budget; do
   has "dry run lists check $c" "$out" "check $c "
 done

@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONTEXT-006",
+  "status": 400,
+  "detail": "'limit' is at least 1 (fix: ask for one or more, or leave it out)",
+  "traceId": "<trace>"
+}

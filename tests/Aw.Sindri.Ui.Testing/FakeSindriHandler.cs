@@ -239,13 +239,27 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"]);
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
-            case "concepts":
-                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
-                _ = await server.ContextConcepts(uri, concepts, cancellationToken);
-                return Answer(server.ContextConceptsAnswer(concepts));
             case "map/publish":
                 _ = await server.MapPublish(uri, cancellationToken);
                 return Answer(server.MapPublishAnswer);
+            default:
+                return await ConceptsRead(uri, query, cancellationToken);
+        }
+    }
+
+    // The concept reads: the concepts and their glossary.
+    private async Task<HttpResponseMessage> ConceptsRead(Uri uri, System.Collections.Specialized.NameValueCollection query, CancellationToken cancellationToken)
+    {
+        switch (uri.AbsolutePath["/sindri/context/".Length..])
+        {
+            case "concepts":
+                var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
+                _ = await server.ContextConcepts(uri, concepts, cancellationToken);
+                return Answer(server.ContextConceptsAnswer(concepts));
+            case "concepts/glossary":
+                var glossary = new ConceptGlossaryQuery(query["repo"] ?? string.Empty, query["mapVersion"]);
+                _ = await server.ContextConceptGlossary(uri, glossary, cancellationToken);
+                return Answer(server.ContextConceptGlossaryAnswer(glossary));
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }
@@ -469,7 +483,10 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
         $$""","health":{"word":"{{h.Word}}","problems":[{{string.Join(',', h.Problems.Select(p => $$"""{"code":"{{p.Code}}","text":"{{p.Text}}","clause":{{Quoted(p.Clause)}}}"""))}}],"sentence":{{Quoted(h.Sentence)}}}""";
 
     // Absent before CO-3 (the spec-shaped status goldens carry none), so a null count is left out.
-    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}}}");
+    private static string Sessions(SessionCountsView? c) => c is null ? string.Empty : string.Create(CultureInfo.InvariantCulture, $",\"sessions\":{{\"live\":{c.Live},\"asking\":{c.Asking},\"problems\":{c.Problems}{Running(c.Running)}}}");
+
+    // Absent on a Sindri that predates the running count, so a null one is left out.
+    private static string Running(int? n) => n is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"running\":{v}") : string.Empty;
 
     private static string Service(ServiceView v) => $$"""{"name":"{{v.Name}}","every":"{{v.Every}}","lastRun":{{Quoted(v.LastRun)}}}""";
 

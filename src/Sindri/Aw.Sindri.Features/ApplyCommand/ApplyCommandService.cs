@@ -28,8 +28,9 @@ namespace Aw.Sindri.Features.ApplyCommand;
 /// <param name="recipes">The approval check.</param>
 /// <param name="nonces">The nonce table.</param>
 /// <param name="callers">The caller the API chain classed: its actor sends the command.</param>
+/// <param name="sessions">The agent sessions the ledger shows: a rewind passes the launch of an ended session to the engine, which refuses a run whose agent is live; null reads none.</param>
 internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanceRuntime runtime, IApprovedRecipes recipes, ICommandNonces nonces,
-    ICallerContextAccessor callers)
+    ICallerContextAccessor callers, IAgentSessions? sessions = null)
     : IService<ApplyCommandRequest, ApplyCommandResponse>
 {
     public async ValueTask<Result<ApplyCommandResponse>> Handle(ApplyCommandRequest request, CancellationToken cancellationToken)
@@ -53,7 +54,7 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
 
         var nonce = request.Nonce ?? nonces.Issue();
         var stamp = new CommandStamp(nonce, ArgumentsSha(request));
-        var trigger = Trigger(request, caller.Actor, stamp);
+        var trigger = await Ended(Trigger(request, caller.Actor, stamp), address.Value, cancellationToken).ConfigureAwait(false);
         var subject = address.Value.Value + "\n" + stamp.ArgumentsSha256;
         var claim = await nonces.Claim(nonce, subject, cancellationToken).ConfigureAwait(false);
         if (claim.IsError)
@@ -61,16 +62,39 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
             return claim.Error;
         }
 
-        return await Deliver(request, address.Value, new SentCommand(nonce, subject, claim.Value), trigger, cancellationToken).ConfigureAwait(false);
+        return await Deliver(request, address.Value, new SentCommand(nonce, subject, claim.Value), (trigger, caller), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Routes the command (spec §5.8), checks it when this call created the claim, and sends it.</summary>
-    private async ValueTask<Result<ApplyCommandResponse>> Deliver(ApplyCommandRequest request, InstanceAddress address, SentCommand command, Trigger trigger, CancellationToken cancellationToken)
+    // A rewind refuses a run whose agent is live. The engine can't read the ledger, so the launch whose session already ended (failed, idle, lost) is passed in.
+    private async ValueTask<Trigger> Ended(Trigger trigger, InstanceAddress address, CancellationToken cancellationToken)
     {
-        var route = await Route(request, address, new Dispatch(command.Nonce, trigger), cancellationToken).ConfigureAwait(false);
+        if (trigger is not RewindRequested rewind || sessions is null)
+        {
+            return trigger;
+        }
+
+        var view = await runtime.Get(address, cancellationToken).ConfigureAwait(false);
+        if (view.IsError || view.Value.AgentRun?.Launch is not { Length: > 0 } launch || !LaunchId.TryFrom(launch, out var id))
+        {
+            return trigger;
+        }
+
+        var state = await sessions.Watch(id, cancellationToken).ConfigureAwait(false);
+        return !state.IsError && !state.Value.IsLive ? rewind with { EndedLaunch = launch } : trigger;
+    }
+
+    private async ValueTask<Result<ApplyCommandResponse>> Deliver(ApplyCommandRequest request, InstanceAddress address, SentCommand command, (Trigger Trigger, CallerContext Caller) call, CancellationToken cancellationToken)
+    {
+        var route = await Route(request, address, new Dispatch(command.Nonce, call.Trigger), cancellationToken).ConfigureAwait(false);
         if (route.IsError)
         {
             return await Refused(route.Error, command.Nonce, command.Claim, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (await LaunchedRefusal(request, call.Caller, route.Value, cancellationToken).ConfigureAwait(false) is { } launched)
+        {
+            return await Refused(launched, command.Nonce, command.Claim, cancellationToken).ConfigureAwait(false);
         }
 
         // only a claim this call created is checked (a pending or applied one was checked by the call that made it: a protected
@@ -81,6 +105,29 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
         }
 
         return await Send(route.Value.Target, command, route.Value.Dispatch, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A launched session's answer or command on a human step (q100, <see cref="LaunchedCallers"/>); null for any other call.</summary>
+    private async ValueTask<Error?> LaunchedRefusal(ApplyCommandRequest request, CallerContext caller, Routing route, CancellationToken cancellationToken)
+    {
+        if (caller.Launch is not null && request.Kind == ApplyCommandKind.Rewind)
+        {
+            return SindriErrors.AuthRefused.With("workflow rewind is a human step: a session Sindri launched can't rewind an instance. Ask the human, or an agent session the owner started");
+        }
+
+        if (caller.Launch is null || request.Kind is not (ApplyCommandKind.Answer or ApplyCommandKind.Command))
+        {
+            return null;
+        }
+
+        var view = await ViewOf(route, cancellationToken).ConfigureAwait(false);
+        if (view.IsError)
+        {
+            return view.Error;
+        }
+
+        var action = request.Kind == ApplyCommandKind.Answer ? "workflow answer" : "workflow command " + request.Verb?.Value;
+        return LaunchedCallers.RefuseOnHumanStep(caller, view.Value, action);
     }
 
     /// <summary>A refusal before the Update gives back a claim this call created, so a refused command consumes nothing.</summary>
@@ -198,6 +245,10 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
         { Kind: ApplyCommandKind.Cancel or ApplyCommandKind.Takeover or ApplyCommandKind.Handback } when request.Answer is not null || request.Text is not null
             || request.Amount is not null || request.Verb is not null || request.Challenge is not null =>
             SindriErrors.InvalidInput.With("cancel, takeover and handback take only the address and the nonce (fix: drop the answer, text, amount, verb and challenge fields)"),
+        { Kind: ApplyCommandKind.Rewind, To: null or "" } => SindriErrors.InvalidInput.With("a rewind needs its target state: sindri workflow rewind <address> --to <state>"),
+        { Kind: ApplyCommandKind.Rewind } when request.Answer is not null || request.Text is not null || request.Amount is not null || request.Verb is not null || request.Challenge is not null =>
+            SindriErrors.InvalidInput.With("rewind takes only the address, --to and the nonce (fix: drop the answer, text, amount, verb and challenge fields)"),
+        { Kind: not ApplyCommandKind.Rewind, To: not null } => SindriErrors.InvalidInput.With("only a rewind names a target state (fix: drop --to)"),
         { Kind: ApplyCommandKind.Command, Verb: null } => SindriErrors.InvalidInput.With("a command needs its verb: sindri workflow command <address> <verb>"),
         _ => null,
     };
@@ -208,6 +259,7 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
         ApplyCommandKind.Command => new CommandFired(actor, request.Verb!.Value, stamp), // why: Malformed refuses a command with no verb
         ApplyCommandKind.Takeover => new TakeoverRequested(actor, stamp),
         ApplyCommandKind.Handback => new HandbackRequested(actor, stamp),
+        ApplyCommandKind.Rewind => new RewindRequested(actor, stamp, request.To!), // why: Malformed refuses a rewind with no target
         ApplyCommandKind.Cancel or _ => new CancelRequested(actor, CancelOrigin.Command, stamp, Sequence: null, Parent: null),
     };
 
@@ -215,7 +267,7 @@ internal sealed class ApplyCommandService(IInstanceDirectory directory, IInstanc
     internal static string ArgumentsSha(ApplyCommandRequest request)
     {
         var text = string.Create(CultureInfo.InvariantCulture,
-            $"kind {request.Kind}\nanswer {request.Answer}\namount {request.Amount}\nverb {request.Verb?.Value}\ntext {(request.Text is { } t ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(t))) : string.Empty)}\n");
+            $"kind {request.Kind}\nanswer {request.Answer}\namount {request.Amount}\nverb {request.Verb?.Value}\ntext {(request.Text is { } t ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(t))) : string.Empty)}\n{(request.To is { } to ? $"to {to}\n" : string.Empty)}");
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
     }
 }

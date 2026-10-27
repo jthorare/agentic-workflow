@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Setup;
 
@@ -25,8 +26,10 @@ internal sealed partial class SetupStepRow : UserControl
     {
         base.OnDataContextChanged(e);
         _step?.PropertyChanged -= OnStepChanged;
+        _step?.FocusRequested -= OnFocusRequested;
         _step = DataContext as SetupStepViewModel;
         _step?.PropertyChanged += OnStepChanged;
+        _step?.FocusRequested += OnFocusRequested;
         NameToggle();
     }
 
@@ -36,6 +39,9 @@ internal sealed partial class SetupStepRow : UserControl
         _toggle = SetupStepExpander.GetVisualDescendants().OfType<ToggleButton>().FirstOrDefault();
         NameToggle();
     }
+
+    // A form in the body removed its focused control: focus goes to the header's toggle, the row's heading.
+    private void OnFocusRequested(object? sender, SetupFocusEventArgs e) => Dispatcher.UIThread.Post(() => _toggle?.Focus(), DispatcherPriority.Input);
 
     private void OnStepChanged(object? sender, PropertyChangedEventArgs e)
     {

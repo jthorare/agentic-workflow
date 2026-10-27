@@ -10,7 +10,7 @@ namespace Aw.Context.Tests.Onyx;
 /// <summary>What the version probe sends and how it reads a reply it can't use, over an in-memory handler.</summary>
 public sealed class OnyxVersionRequestTests
 {
-    private static readonly OnyxSettings _pinned = OnyxSettings.Create("http://127.0.0.1:3000", "env:ONYX_FIXTURE_KEY", "v4.9.0").Value;
+    private static readonly OnyxSettings _pinned = OnyxSettings.Create("http://127.0.0.1:3189", "env:ONYX_FIXTURE_KEY", "v4.9.0").Value;
 
     [Fact, Trait("Lane", "unit")]
     public async Task It_gets_api_version_under_the_base_url_with_no_authorization_header()
@@ -24,7 +24,7 @@ public sealed class OnyxVersionRequestTests
         var request = Assert.Single(handler.Requests);
         Assert.Equal(SourceState.Ok, health.State);
         Assert.Equal(HttpMethod.Get, request.Method);
-        Assert.Equal(new Uri("http://127.0.0.1:3000/api/version"), request.Uri);
+        Assert.Equal(new Uri("http://127.0.0.1:3189/api/version"), request.Uri);
         Assert.False(request.HadAuthorization);
     }
 
@@ -42,7 +42,7 @@ public sealed class OnyxVersionRequestTests
 
         Assert.Equal(SourceState.Unavailable, health.State);
         Assert.Equal(ContextErrors.SourceUnavailable.Code, health.Code);
-        Assert.Contains("127.0.0.1:3000", health.Detail, StringComparison.Ordinal);
+        Assert.Contains("127.0.0.1:3189", health.Detail, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]

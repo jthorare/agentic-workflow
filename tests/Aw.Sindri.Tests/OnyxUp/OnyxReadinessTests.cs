@@ -8,7 +8,7 @@ public sealed class OnyxReadinessTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static OnyxUpContext Context(OnyxUpRig rig) => new(rig.Pins.Pins, rig.Paths, 3000, "linux/arm64");
+    private static OnyxUpContext Context(OnyxUpRig rig) => new(rig.Pins.Pins, rig.Paths, 3189, "linux/arm64");
 
     private static Task<Kernel.Result<string>> Wait(OnyxUpRig rig)
         => new OnyxReadiness(rig.Health, rig.Runtime, rig.Clock).Wait(Context(rig), rig.Progress, Token).AsTask();

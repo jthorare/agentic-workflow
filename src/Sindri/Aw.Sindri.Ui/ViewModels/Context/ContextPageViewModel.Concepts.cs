@@ -50,6 +50,7 @@ internal sealed partial class ContextPageViewModel
             Head = Labels.ContextConceptsHead;
             ChangedConcepts();
             ChangedWhole();
+            await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
             return;
         }
 
@@ -67,11 +68,9 @@ internal sealed partial class ContextPageViewModel
             return first;
         }
 
-        var joined = first.Value;
-        var concepts = new List<ContextConcept>(joined.Concepts ?? []);
-        var links = new List<ConceptLink>(joined.Links ?? []);
+        var pages = new List<ContextConceptsView> { first.Value };
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        for (var next = joined.Next; next is { Length: > 0 } && seen.Add(next);)
+        for (var next = first.Value.Next; next is { Length: > 0 } && seen.Add(next);)
         {
             var page = await Ports.Api.ContextConcepts(api, new ConceptsQuery(repo, next), cancellationToken).ConfigureAwait(true);
             if (page.IsError)
@@ -79,12 +78,39 @@ internal sealed partial class ContextPageViewModel
                 break;
             }
 
-            concepts.AddRange(page.Value.Concepts ?? []);
-            links.AddRange(page.Value.Links ?? []);
+            pages.Add(page.Value);
             next = page.Value.Next;
         }
 
-        return joined with { Concepts = concepts, Links = links, Next = null };
+        return Joined(pages);
+    }
+
+    // The first page's state and Other, with the concepts and links of every page.
+    private static ContextConceptsView Joined(List<ContextConceptsView> pages) => pages[0] with
+    {
+        Concepts = [.. pages.SelectMany(p => p.Concepts ?? [])],
+        Links = [.. pages.SelectMany(p => p.Links ?? [])],
+        Next = null,
+    };
+
+    // The concept cards' terms. No map (the 030 refusal, or a 200 "unavailable") and a server without the route leave the cards as the concepts read left them;
+    // any other refusal is said in one line with its code and message.
+    private async Task ReadGlossary(Uri api, string? mapVersion, CancellationToken cancellationToken)
+    {
+        var read = await Ports.Api.ContextConceptGlossary(api, new ConceptGlossaryQuery(_repo ?? string.Empty, mapVersion), cancellationToken).ConfigureAwait(true);
+        if (read.IsSuccess)
+        {
+            if (!string.Equals(read.Value.State, "unavailable", StringComparison.Ordinal))
+            {
+                Concepts.ShowTerms(read.Value);
+            }
+        }
+        else if (!string.Equals(read.Error.Code, NoMapCode, StringComparison.Ordinal) && !IsNotServed(read.Error))
+        {
+            Concepts.TermsUnavailable(read.Error.Code, read.Error.Message);
+        }
+
+        ChangedConcepts();
     }
 
     /// <summary>Reads the page's top again (Retry, and when a build has ended): the concepts when none is open, else the open concept's map.</summary>
@@ -170,7 +196,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when it went up.</returns>
     internal bool Up()
     {
-        if (Back())
+        if (Back() || Whole.ExitDrill())
         {
             return true;
         }

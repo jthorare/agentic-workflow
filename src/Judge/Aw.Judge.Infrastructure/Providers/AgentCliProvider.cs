@@ -93,6 +93,7 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
         StandardInput = call.StandardInput,
         WorkingDirectory = call.WorkingDirectory,
         Environment = new Dictionary<string, string>(call.Environment, StringComparer.Ordinal) { ["AW_JUDGE_CHILD"] = "1" },
+        InheritOnly = call.InheritOnly,
         Unset = SecretNames.Variables,
         Timeout = budget,
     };

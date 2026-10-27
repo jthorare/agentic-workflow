@@ -8,7 +8,7 @@ internal sealed record ContextSection(
     IReadOnlyList<string>? Repos = null,
     DocsSection? Docs = null,
     string? Deadline = null,
-    int? MaxBudget = null,
+    int? MaxBudget = null,   // retired (the token budget is gone): read and ignored so an old profile still loads
     int? MinHits = null,
     SessionsSection? Sessions = null,
     SourcesSection? Sources = null,
@@ -18,6 +18,8 @@ internal sealed record ContextSection(
     LabelingSection? Labeling = null,
     EvalSection? Eval = null,
     CodeSection? Code = null,
+    HistorySection? History = null,
     ExtractSection? Extract = null,
     PublishSection? Publish = null,
-    RankerSection? Ranker = null);
+    RankerSection? Ranker = null,
+    ConceptScanSection? ConceptScan = null);

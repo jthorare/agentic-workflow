@@ -11,6 +11,9 @@ public sealed record DecisionDetails
     /// <summary>The redacted, capped input as JSON.</summary>
     public required string InputJson { get; init; }
 
+    /// <summary>The model's reasons (redacted, capped), or null when none were recorded: a row written before they were kept, or an answer that carried none.</summary>
+    public IReadOnlyList<string>? Reasons { get; init; }
+
     /// <summary>The provider's per-option probabilities, when it gave them.</summary>
     public IReadOnlyDictionary<string, double>? Probabilities { get; init; }
 

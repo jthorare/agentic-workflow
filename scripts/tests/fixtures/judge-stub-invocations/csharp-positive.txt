@@ -1,4 +1,4 @@
-var args = new[] { "judge", "label", "status" };
-ArgumentList = { "judge", "eval", "import-turns" }
-Run("judge", "adjudicate", question)
+var args = new[] { "judge", "prompt-sort", "outcomes" };
+ArgumentList = { "judge", "prompt-sort", "eval" }
+Run("judge", "prompt-sort", "adjudicate", question)
 Command("judge", "prompt-sort", "why", id)

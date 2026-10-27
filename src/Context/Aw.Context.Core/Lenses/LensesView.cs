@@ -35,7 +35,15 @@ public sealed record LensesView(
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? MapCommit { get; init; }
 
+    /// <summary>The page this answer is, when the caller sent a limit; left out for the whole answer.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public LensWindow? Page { get; init; }
+
     /// <summary>The code units the component hop skipped for the fan-out cap; left out when none.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SkippedComponent>? SkippedComponents { get; init; }
+
+    /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public FilteredCounts? Filtered { get; init; }
 }

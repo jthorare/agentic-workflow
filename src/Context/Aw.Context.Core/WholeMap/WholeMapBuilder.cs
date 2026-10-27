@@ -5,7 +5,10 @@ using Aw.Kernel;
 
 namespace Aw.Context.Core.WholeMap;
 
-/// <summary>Builds the whole-map answer from a graph and its areas (Part D, §2.1). Pure apart from the text policy it writes labels with.</summary>
+/// <summary>
+/// Builds the whole-map answer from a graph and its areas (Part D, §2.1). Pure apart from the text policy it writes labels with. Concept nodes are a band of their own: no area lists them,
+/// no area edge reaches them and no area counts them, but the counts and the node list hold them.
+/// </summary>
 public static class WholeMapBuilder
 {
     private const string OverBudget = "over-budget";
@@ -26,17 +29,22 @@ public static class WholeMapBuilder
         ArgumentNullException.ThrowIfNull(text);
         var known = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var edges = graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value)).ToList();
-        var (listed, truncated) = ListAreas(known, areas, rules, text);
-        var basis = ask.Basis;
-        var overview = new WholeMapView(1, basis.MapVersion, basis.Draft, basis.AsOf, basis.Repo, WholeMapDetail.Areas, Counts(known.Values, edges.Count), listed, AreaEdges(edges, areas, listed.Select(a => a.Key).ToHashSet(StringComparer.Ordinal)), truncated)
-        {
-            MapCommit = basis.MapCommit,
-            Located = Located(ask.Locate, areas, text),
-            Repos = ask.Repos,
-        };
+        var concepts = ConceptIndex.Of(known, edges);
+        var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text));
         if (ask.Area is not null)
         {
-            return Opened(ask.Area, overview, (known, edges), (areas, rules, text, ask.RepoOf));
+            if (ask.Concept is not null && !concepts.Has(ask.Concept))
+            {
+                return UnknownConcept();
+            }
+
+            var scope = ask.Concept is null ? null : ConceptScope.Nodes(concepts, edges, ask.Concept);
+            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf));
+        }
+
+        if (ask.Concept is not null)
+        {
+            return OpenedConcept(ask.Concept, overview, (concepts, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Detail == WholeMapDetail.Areas)
@@ -49,17 +57,31 @@ public static class WholeMapBuilder
             : overview with { Detail = WholeMapDetail.Nodes, Nodes = Nodes(known.Values, areas, text, ask.RepoOf), Edges = Edges(edges) };
     }
 
-    // One area on its own: its nodes in kind and key order up to the cap, and the edges among those.
-    private static Result<WholeMapView> Opened(string key, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    private static WholeMapView Overview(WholeMapAsk ask, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, ConceptIndex Concepts) map, (WholeMapRules Rules, MapText Text) how)
     {
-        var members = graph.Known.Values.Where(n => how.Areas.ByNode[n.Key.Value].Area == key).ToList();
+        var (listed, truncated) = ListAreas(graph.Known, map.Areas, how.Text);
+        var basis = ask.Basis;
+        var listedKeys = listed.Select(a => a.Key).ToHashSet(StringComparer.Ordinal);
+        return new WholeMapView(1, basis.MapVersion, basis.Draft, basis.AsOf, basis.Repo, WholeMapDetail.Areas, Counts(graph.Known.Values, graph.Edges.Count), listed, AreaEdges(graph.Edges, map.Areas, listedKeys), truncated)
+        {
+            MapCommit = basis.MapCommit,
+            Located = Located(ask.Locate, map, how.Text),
+            Repos = ask.Repos,
+        };
+    }
+
+    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut. With a concept's scope, only the area's nodes that scope holds.
+    private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    {
+        var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key && (scope is null || scope.Contains(n.Key.Value))).ToList();
         if (members.Count == 0)
         {
-            return ContextErrors.AreaUnknown.With("that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)");
+            return ContextErrors.AreaUnknown.With(scope is null
+                ? "that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)"
+                : "that area holds nothing of this concept (fix: open the concept, and name one of the areas its nodes are in)");
         }
 
-        var cut = members.Count > how.Rules.AreaCap;
-        var shown = members.OrderBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).Take(how.Rules.AreaCap).ToList();
+        var shown = members.OrderBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).ToList();
         var shownKeys = shown.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
         var memberKeys = members.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
         return overview with
@@ -67,10 +89,30 @@ public static class WholeMapBuilder
             Detail = WholeMapDetail.Nodes,
             Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
-            Area = new WholeMapAreaInfo(key, cut, Counts(members, graph.Edges.Count(e => memberKeys.Contains(e.From.Value) && memberKeys.Contains(e.To.Value)))),
-            Truncated = overview.Truncated || cut,
+            Area = new WholeMapAreaInfo(key, Truncated: false, Counts(members, graph.Edges.Count(e => memberKeys.Contains(e.From.Value) && memberKeys.Contains(e.To.Value)))),
         };
     }
+
+    // One concept on its own: its members and what lies two levels below them (see ConceptScope), in band, kind and key order, and the edges among them. Nothing is cut.
+    private static Result<WholeMapView> OpenedConcept(string key, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    {
+        if (!graph.Concepts.Has(key))
+        {
+            return UnknownConcept();
+        }
+
+        var scoped = ConceptScope.Nodes(graph.Concepts, graph.Edges, key);
+        var shown = scoped.Select(k => graph.Concepts.Known[k]).OrderBy(n => n.Key.Kind == NodeKind.Concept ? 0 : 1).ThenBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).ToList();
+        var shownKeys = shown.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        return overview with
+        {
+            Detail = WholeMapDetail.Nodes,
+            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
+            Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+        };
+    }
+
+    private static Result<WholeMapView> UnknownConcept() => ContextErrors.AreaUnknown.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
 
     private static string KindName(NodeKind kind) => kind.ToString().ToLowerInvariant();
 
@@ -80,12 +122,10 @@ public static class WholeMapBuilder
         return new WholeMapCounts(list.Count, edges, Enum.GetValues<NodeKind>().ToDictionary(KindName, k => list.Count(n => n.Key.Kind == k), StringComparer.Ordinal));
     }
 
-    private static (IReadOnlyList<WholeMapArea> Areas, bool Truncated) ListAreas(Dictionary<string, GraphNode> known, AreaIndex areas, WholeMapRules rules, MapText text)
+    private static (IReadOnlyList<WholeMapArea> Areas, bool Truncated) ListAreas(Dictionary<string, GraphNode> known, AreaIndex areas, MapText text)
     {
-        List<WholeMapArea> all = [.. known.Values.GroupBy(n => areas.ByNode[n.Key.Value].Area, StringComparer.Ordinal).Select(g => Area(g.Key, [.. g], known, text))];
-        var truncated = all.Count > rules.AreasCap;
-        var chosen = truncated ? all.OrderByDescending(a => a.Members).ThenBy(a => a.Key, StringComparer.Ordinal).Take(rules.AreasCap) : all;
-        return ([.. chosen.OrderBy(a => a.Key, StringComparer.Ordinal)], truncated);
+        List<WholeMapArea> all = [.. known.Values.Where(n => n.Key.Kind != NodeKind.Concept).GroupBy(n => areas.ByNode[n.Key.Value].Area, StringComparer.Ordinal).Select(g => Area(g.Key, [.. g], known, text))];
+        return ([.. all.OrderBy(a => a.Key, StringComparer.Ordinal)], Truncated: false);
     }
 
     private static WholeMapArea Area(string key, List<GraphNode> members, Dictionary<string, GraphNode> known, MapText text)
@@ -102,6 +142,7 @@ public static class WholeMapBuilder
 
     private static List<WholeMapAreaEdge> AreaEdges(List<GraphEdge> edges, AreaIndex areas, HashSet<string> listed) =>
         [.. edges
+            .Where(e => e.From.Kind != NodeKind.Concept && e.To.Kind != NodeKind.Concept)
             .Select(e => (From: areas.ByNode[e.From.Value].Area, To: areas.ByNode[e.To.Value].Area, e.Type, Confirmed: e.Provenance == Provenance.Human))
             .Where(e => e.From != e.To && listed.Contains(e.From) && listed.Contains(e.To))
             .GroupBy(e => (e.From, e.To, e.Type))
@@ -119,9 +160,11 @@ public static class WholeMapBuilder
 
     private static List<WholeMapNode> Nodes(IEnumerable<GraphNode> nodes, AreaIndex areas, MapText text, IReadOnlyDictionary<string, string?>? repoOf) =>
         [.. nodes
-            .Select(n => (Node: n, Area: areas.ByNode[n.Key.Value]))
+            .Select(n => (Node: n, Area: AreaOf(areas, n)))
             .OrderBy(p => p.Area.Area, StringComparer.Ordinal).ThenBy(p => p.Node.Key.Kind).ThenBy(p => p.Node.Key.Value, StringComparer.Ordinal)
             .Select(p => Node(p.Node, p.Area, text, repoOf?.GetValueOrDefault(p.Node.Key.Value)))];
+
+    private static NodeArea AreaOf(AreaIndex areas, GraphNode node) => node.Key.Kind == NodeKind.Concept ? new NodeArea(AreaIndex.ConceptBandKey, []) : areas.ByNode[node.Key.Value];
 
     private static WholeMapNode Node(GraphNode node, NodeArea area, MapText text, string? repo)
     {
@@ -135,6 +178,6 @@ public static class WholeMapBuilder
             .OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal).ThenBy(e => EdgeRules.Name(e.Type), StringComparer.Ordinal)
             .Select(e => new WholeMapEdge(e.From, e.To, e.Type, LinkIds.For(e), e.Provenance, e.Confidence, e.Provenance == Provenance.Human))];
 
-    private static List<WholeMapLocated>? Located(IReadOnlyList<string> keys, AreaIndex areas, MapText text) =>
-        keys.Count == 0 ? null : [.. keys.Select(k => new WholeMapLocated(text.Line(k), areas.ByNode.TryGetValue(k, out var found) ? found.Area : null))];
+    private static List<WholeMapLocated>? Located(IReadOnlyList<string> keys, (AreaIndex Areas, ConceptIndex Concepts) map, MapText text) =>
+        keys.Count == 0 ? null : [.. keys.Select(k => new WholeMapLocated(text.Line(k), map.Areas.ByNode.TryGetValue(k, out var found) ? found.Area : null) { Concept = [.. map.Concepts.ConceptsOf(k).Select(text.Line)] })];
 }

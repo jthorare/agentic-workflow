@@ -17,8 +17,8 @@ internal static class DecisionSql
         "$outcome, $approved_at)";
 
     internal const string InsertDetails =
-        "INSERT INTO decision_details (id, input_json, probabilities, rules_opinion, agreement, session_id) " +
-        "VALUES ($id, $input_json, $probabilities, $rules_opinion, $agreement, $session_id)";
+        "INSERT INTO decision_details (id, input_json, probabilities, rules_opinion, agreement, session_id, reasons) " +
+        "VALUES ($id, $input_json, $probabilities, $rules_opinion, $agreement, $session_id, $reasons)";
 
     internal const string InsertFailure =
         "INSERT INTO failures (ts, question, provider, reason_code) VALUES ($ts, $question, $provider, $reason_code)";
@@ -26,7 +26,7 @@ internal static class DecisionSql
     internal const string Find =
         "SELECT d.id, d.ts, d.question, d.content_class, d.provider, d.decision, d.confidence, d.reason_code, d.latency_ms, " +
         "d.input_digest, d.undone_at, d.chain_position, d.skipped, d.outcome, d.approved_at, " +
-        "x.id, x.input_json, x.probabilities, x.rules_opinion, x.agreement, x.session_id " +
+        "x.id, x.input_json, x.probabilities, x.rules_opinion, x.agreement, x.session_id, x.reasons " +
         "FROM decisions d LEFT JOIN decision_details x ON x.id = d.id WHERE d.id = $id";
 
     internal const string MarkUndone = "UPDATE decisions SET undone_at = $at WHERE id = $id";
@@ -64,7 +64,7 @@ internal static class DecisionSql
     internal static SqlStatement Insert(DecisionId id, DecisionDetails x, DecisionJson json) => new(InsertDetails, c => c
         .Bind("$id", id.Value).Bind("$input_json", x.InputJson).Bind("$probabilities", json.Probabilities(x.Probabilities))
         .Bind("$rules_opinion", x.RulesOpinion).Bind("$agreement", x.Agreement is { } a ? DecisionText.Of(a) : null)
-        .Bind("$session_id", x.SessionId?.Value), "decision details " + id.Value);
+        .Bind("$session_id", x.SessionId?.Value).Bind("$reasons", json.Reasons(x.Reasons)), "decision details " + id.Value);
 
     internal static SqlStatement Insert(FailureRecord f) => new(InsertFailure, c => c
         .Bind("$ts", f.Ts).Bind("$question", f.Question).Bind("$provider", f.Provider).Bind("$reason_code", f.ReasonCode));

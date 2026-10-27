@@ -213,8 +213,7 @@
           "path": null,
           "tokens": 15
         }
-      ],
-      "more": []
+      ]
     },
     {
       "name": "code",
@@ -258,8 +257,7 @@
           "path": null,
           "tokens": 25
         }
-      ],
-      "more": []
+      ]
     },
     {
       "name": "records",
@@ -302,19 +300,12 @@
           "path": null,
           "tokens": 128
         }
-      ],
-      "more": []
+      ]
     }
   ],
   "conflicts": [],
   "suggestedAnchors": [],
   "degraded": [],
-  "truncated": false,
-  "budget": {
-    "asked": 8000,
-    "used": 460,
-    "estimate": true
-  },
   "cites": {
     "C1": {
       "key": "map:aw-split-panes/v1",

@@ -1,0 +1,1 @@
+{"launchId":"LCH-00000000000000000000000000000001","reason":"limit","exitCode":null,"inputTokens":null,"outputTokens":null,"kind":"memory","limit":12884901888,"peak":12884901888,"peaks":{"memoryBytes":12884901888,"cpuPercent":310,"tasks":214,"wallSeconds":1900}}

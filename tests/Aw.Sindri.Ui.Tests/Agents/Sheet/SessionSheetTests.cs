@@ -76,12 +76,11 @@ public sealed class SessionSheetTests : FrameHost
         Assert.False(Visible(window, "SheetBody"), "the placeholder is gone");
         Assert.Equal(sheet.Heading, Heard.Wrapper(Named<Border>(window, "SessionHeading")));
         var heard = Tree(window);
-        var expected = new[] { sheet.Heading, sheet.StateLine, sheet.FocusLine }
+        var expected = new[] { sheet.Heading, sheet.StateLine }
             .Concat(sheet.Fields.Select(f => f.Name)).Concat(sheet.HostFields.Select(f => f.Name)).Concat(sheet.History.Select(h => h.Name));
         Assert.All(expected, name => Assert.Contains((name, AutomationControlType.Text), heard));
         Assert.All(heard.Where(h => h.Type == AutomationControlType.Text), h => Assert.False(string.IsNullOrWhiteSpace(h.Name), "a nameless text node in the sheet"));
-        Assert.Contains(heard, h => h.Type == AutomationControlType.Button && h.Name == "Copy: Watch the agent");
-        Assert.Contains(heard, h => h.Type == AutomationControlType.Button && h.Name.StartsWith("Watch the agent", StringComparison.Ordinal));
+        Assert.DoesNotContain(heard, h => h.Name.StartsWith("Watch the agent", StringComparison.Ordinal));
 
         // the CO-7c host: in the tree, collapsed and empty
         var host = Named<ContentControl>(window, "LivePreviewHost");
@@ -99,19 +98,11 @@ public sealed class SessionSheetTests : FrameHost
     });
 
     [Fact]
-    public Task Focus_is_disabled_and_its_line_and_Copy_are_there() => OnUi(async () =>
+    public Task Focus_is_not_shown_in_the_sheet_until_it_can_send() => OnUi(async () =>
     {
-        var (window, shell) = await Opened(Codex);
+        var (window, _) = await Opened(Codex);
 
-        var focus = InSheet<Button>(window, "SessionFocus");
-        Assert.False(focus.IsEnabled);
-        Assert.Equal("Watch the agent, coming soon", Heard.Name(focus));
-        Assert.Equal(shell.AgentSheet.FocusLine, Heard.Wrapper(InSheet<Border>(window, "SessionFocusLine")));
-        var copy = InSheet<Button>(window, "SessionFocusCopy");
-        Assert.True(copy.Focusable && copy.IsEffectivelyEnabled);
-        copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await Until(window, () => shell.AgentSheet.CopyLabel == "Copied");
-        Assert.Equal("Copied", Heard.Name(copy));
+        Assert.False(Visible(window, "SessionFocusRow"));
         Frame(window, "codex");
     });
 

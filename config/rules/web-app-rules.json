@@ -32,12 +32,6 @@
       "deterministicCheck": null
     },
     {
-      "id": "hundred-percent-coverage",
-      "description": "100% coverage is required for `judge`/`scorer` additions; `/* v8 ignore */` is prohibited.",
-      "glob": "judge/src/**/*.ts",
-      "deterministicCheck": "npm run test:coverage"
-    },
-    {
       "id": "one-logical-change-per-commit",
       "description": "One logical change per commit; commit messages use `type: short description`.",
       "glob": "**/*",

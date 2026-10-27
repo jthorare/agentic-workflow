@@ -170,6 +170,9 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-120: the map version asked for ('mapVersion=' / '--map-version') isn't held: never written, purged, a draft, still building, or its commit part differs. Scoping stage S-LB1 owns 120–129.</summary>
     public static readonly ErrorDefinition MapVersionNotRetained = new("SND-CONTEXT-120", ErrorKind.NotFound, "That map version is not retained");
 
+    /// <summary>SND-CONTEXT-134: a profile pattern ('regex:' role entry or recognizer) that NonBacktracking can't run ran out of its one-second limit while a path was checked. The message names the pattern and the length of the input, never the input.</summary>
+    public static readonly ErrorDefinition PatternTimedOut = new("SND-CONTEXT-134", ErrorKind.Timeout, "A profile pattern ran out of time");
+
     /// <summary>SND-CONTEXT-160: the history lens ran out of 'context.deadline' reading git and returned the changes it had. Never a route failure: it is the code of a 'git-history' row in 'searched' (state degraded). S-H owns 160–169.</summary>
     public static readonly ErrorDefinition HistoryDeadline = new("SND-CONTEXT-160", ErrorKind.Timeout, "The history read ran out of time");
 
@@ -190,6 +193,12 @@ public static class ContextErrors
 
     /// <summary>SND-CONTEXT-152: the code lens's lexical search ran out of 'context.code.deadline' and returned what it had (the code of a searched row, never a route failure).</summary>
     public static readonly ErrorDefinition CodeSearchTimedOut = new("SND-CONTEXT-152", ErrorKind.Timeout, "The lexical code search ran out of time");
+
+    /// <summary>SND-CONTEXT-153: the context engine can't build the scoping graph or read its call log yet (issue 1005). The scoping gather falls back to a projection of the lenses and records the limit.</summary>
+    public static readonly ErrorDefinition ScopeGraphUnavailable = new("SND-CONTEXT-153", ErrorKind.Unavailable, "The scoping graph is not available from this engine");
+
+    /// <summary>SND-CONTEXT-154: a scoping Step's session asked about a node outside its run's graph without saying why (issue 1005). The message names the node and the fix: pass outside: true and a reason.</summary>
+    public static readonly ErrorDefinition NodeNotInScopeGraph = new("SND-CONTEXT-154", ErrorKind.NotFound, "That node is not in this run's scoping graph");
 
     /// <summary>SND-CONTEXT-133: a 'context.extract.graphify' limit (timeoutMinutes, maxSnapshotMB, maxFileMB, maxGraphMB) isn't a whole number from 0 (no limit) up. The message names the key path.</summary>
     public static readonly ErrorDefinition GraphifyLimitInvalid = new("SND-CONTEXT-133", ErrorKind.Invalid, "A graphify limit is invalid");
@@ -228,7 +237,7 @@ public static class ContextErrors
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          OnyxKeyRefused, OnyxUnexpectedReply, OnyxDocumentNotFound, OnyxKeyNotServiceAccount, OnyxNotPinnedOrLoopback, LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, AreaUnknown];
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, AreaUnknown, NodeNotInScopeGraph];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or

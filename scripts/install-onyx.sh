@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 # Stand the pinned Onyx up with Sindri (setup.sh --with-sindri runs this unless --no-onyx): check that Docker is
-# there and answering, then run the C# Sindri's `onyx up` through sindri-app. `onyx up` is the human's verb: it does its
+# there and answering, then run the C# Sindri's `onyx up` through `sindri`. `onyx up` is the human's verb: it does its
 # own preflight (docker, compose, memory, disk, port), fetches and verifies the pinned deployment files, starts the stack,
 # opens Onyx's sign-up page, asks once for your Onyx login to make Sindri's key, and writes and approves the profile
 # section. This script is only the bridge; it holds no state, so a rerun on a set-up box is `onyx up`'s no-op.
 #
 #   install-onyx.sh                      run it (needs a terminal: Onyx's sign-up and the profile approval are yours)
 #   AW_DRY_RUN=1 install-onyx.sh         print what would happen, run nothing
-#   AW_ONYX_SINDRI_APP=PATH              the sindri-app to run (default: scripts/sindri-app.sh in this checkout)
+#   AW_ONYX_SINDRI_APP=PATH              the sindri to run (default: `sindri` on PATH, linked by scripts/install-cs.sh)
 #   AW_ONYX_FORCE_TERMINAL=1             treat this run as being at a terminal (tests)
 #
 # Exit: 0 Onyx is up (or was); 3 skipped with a warning and the command to run later (no Docker, Docker not answering,
-# no terminal); 1 `onyx up` failed (its message names the fix; rerun this script or `scripts/sindri-app.sh onyx up`). `onyx up` runs for any caller
+# no terminal); 1 `onyx up` failed (its message names the fix; rerun this script or `sindri onyx up`). `onyx up` runs for any caller
 # (owner decision q93).
 # Bash 3.2 compatible (macOS /bin/bash).
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP="${AW_ONYX_SINDRI_APP:-$SCRIPT_DIR/scripts/sindri-app.sh}"
-# the command to run later: the checkout's script, because the `sindri-app` link exists only after that script has run once
+APP="${AW_ONYX_SINDRI_APP:-sindri}"
+# the command to run later
 LATER="$APP onyx up"
 
 echo "=== Onyx (Sindri's business-context search) ==="

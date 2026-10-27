@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
@@ -29,6 +30,24 @@ public sealed class WholeMapViewModelTests
         Assert.Equal("14 items · 15 links · built 1 Jan 2026 00:00", map.SizeText);
         Assert.Equal((true, false, false), (map.IsReady, map.IsLoading, map.IsFailed));
     }
+
+    [Fact]
+    public void The_canvas_name_reads_the_bands_top_to_bottom_with_what_each_holds()
+    {
+        var map = new WholeMapViewModel(() => _utc);
+
+        map.Show(WholeMapLayoutTests.Draft("nodes-small"));
+
+        var name = map.CanvasName;
+        var (why, product, code) = (name.IndexOf("Why (", StringComparison.Ordinal), name.IndexOf("Product (", StringComparison.Ordinal), name.IndexOf("Code (", StringComparison.Ordinal));
+        Assert.StartsWith(Labels.ContextWholeCanvasName + ": ", name, StringComparison.Ordinal);
+        Assert.True(why >= 0 && why < product && product < code, name);
+        Assert.Contains(Labels.ContextWholeKindCount("decision", 2), name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Before_an_answer_the_canvas_name_is_the_map_alone() =>
+        Assert.Equal(Labels.ContextWholeCanvasName, new WholeMapViewModel(() => _utc).CanvasName);
 
     [Fact]
     public void An_answer_by_area_has_no_grouping_note()
@@ -98,14 +117,14 @@ public sealed class WholeMapViewModelTests
     }
 
     [Fact]
-    public void A_feature_cut_at_the_cap_says_how_much_is_not_shown()
+    public void A_large_feature_is_served_whole_so_there_is_no_cut_note()
     {
         var map = new WholeMapViewModel(() => _utc);
         map.Show(WholeMapLayoutTests.Draft("areas-over-budget"));
 
         map.ShowArea(WholeMapLayoutTests.Draft("area-truncated"));
 
-        Assert.Equal("Showing 5 of 6 items; the rest are not shown.", map.ByAreaNote);
+        Assert.Equal(string.Empty, map.ByAreaNote);   // why: the engine no longer cuts an opened area, so nothing is left to say is not shown
     }
 
     [Fact]

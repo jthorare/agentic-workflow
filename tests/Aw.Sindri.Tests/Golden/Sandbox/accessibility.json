@@ -1,0 +1,75 @@
+{
+  "note": "Accessibility rows of sandbox spec §8, in docs/csharp/sindri-ui.md's terms. SB-6's done-when includes a test for each row.",
+  "rows": [
+    {
+      "control": "Sandbox line / headroom",
+      "keyboard": "in the sheet's tab order",
+      "screenReader": "name \"Sandbox: on, writes only to <folder>\" (\"Sandbox: on, attended, writes only to <folder>\" for a session you open); headroom as text \"memory 2.1 of 12 GiB\"",
+      "focus": "n/a",
+      "textScaleAndColour": "wraps; state as a word"
+    },
+    {
+      "control": "Park card",
+      "keyboard": "a focus-region group (ControlTypeOverride=Group) with a named peer; its fix text before its buttons",
+      "screenReader": "name \"Needs you: Step <x> can't start, <first clause of the golden sentence>\", never the raw reason code",
+      "focus": "when it appears from a user action, focus goes to its heading; when it is answered and goes, focus moves to its neighbour (the Health row or Park section heading it came from; the KeepFocus case) after the live region has spoken \"Ready. Resuming <n> Steps\"",
+      "textScaleAndColour": "wraps; severity as a word and an icon"
+    },
+    {
+      "control": "Check again",
+      "keyboard": "Enter and Space; the 2 px focus ring",
+      "screenReader": "a zero-width transparent TextBlock with LiveSetting=Polite already in the tree before its state; its Text changes (never set to \"\"); \"Sending…\" after 300 ms, then the result",
+      "focus": "stays on the button (enabled for the keyboard) while checking; a second click does nothing; the region rests on the label before a repeat outcome, so a repeated \"still failing\" is a change",
+      "textScaleAndColour": "the result is text"
+    },
+    {
+      "control": "Resume list",
+      "keyboard": "both buttons reachable, Resume first",
+      "screenReader": "the list read before the buttons",
+      "focus": "on Not now, back to Check again",
+      "textScaleAndColour": "text"
+    },
+    {
+      "control": "Blocked list",
+      "keyboard": "a list; each row's fix button is reachable",
+      "screenReader": "each row reads by kind (host, path, permanent path, tool) as in states.json blockedList",
+      "focus": "the Allow button keeps focus through Sending and \"Needs your approval\"",
+      "textScaleAndColour": "n/a"
+    },
+    {
+      "control": "Waiting for a slot",
+      "keyboard": "in the run's row, not a trap",
+      "screenReader": "a polite zero-width live TextBlock, present before its state: \"Waiting for a free session slot, <n> of <cap> running\" once, then \"Started\" when it starts by itself",
+      "focus": "does not take focus",
+      "textScaleAndColour": "a word, never red"
+    },
+    {
+      "control": "Allow, needs your approval",
+      "keyboard": "the Allow button stays reachable",
+      "screenReader": "the same polite live TextBlock: \"Sending\", then \"Needs your approval: open the approval to allow <target>\", then \"Allowed\" or \"Refused\"",
+      "focus": "stays on the Allow button through every state",
+      "textScaleAndColour": "text"
+    },
+    {
+      "control": "Limit ending",
+      "keyboard": "in the failure row",
+      "screenReader": "the whole sentence",
+      "focus": "n/a",
+      "textScaleAndColour": "n/a"
+    },
+    {
+      "control": "Takeover banner",
+      "keyboard": "not a trap; dismissible once, back after reattach",
+      "screenReader": "a polite zero-width live TextBlock, read once on appearance",
+      "focus": "does not take focus",
+      "textScaleAndColour": "text, not colour"
+    },
+    {
+      "control": "Health row, Settings section",
+      "keyboard": "in the page's tab order",
+      "screenReader": "row name \"Sandbox: <state>\"; learn mode \"learning, ends in <days> days\"",
+      "focus": "n/a",
+      "textScaleAndColour": "wraps; state as a word"
+    }
+  ]
+}

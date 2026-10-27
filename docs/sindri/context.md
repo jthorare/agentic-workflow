@@ -6,16 +6,14 @@ the C# package is described in `docs/csharp/sindri-context.md`. Each stage adds 
 
 ## S-1A: repo docs, `context query`, `context sources`
 
-### Running the C# Sindri before the switch
+### Running Sindri
 
-Until the switch, `~/.local/bin/sindri` is the TypeScript CLI. Every example here uses `$SINDRI`, the C# build:
+Every example here uses `$SINDRI`, the installed `sindri`. From the toolkit repo you can run the source instead:
 
 ```bash
-SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolkit repo; or the published binary:
-SINDRI=artifacts/aot-sindri-smoke/bin/sindri                     # after bash src/Sindri/aot-smoke/run.sh
+SINDRI=sindri                                                     # the installed wrapper (scripts/install-cs.sh)
+SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolkit repo
 ```
-
-Nothing in `setup.sh`, the providers or MCP registration points at it.
 
 ### Profile
 
@@ -30,7 +28,7 @@ context:
   repos: [work-app]                                    # the profile repos the engine maps; default: all of them
   docs: { globs: ["docs/**/*.md", "**/PRD*.md", "**/TDD*.md"] }   # repo-relative; letters, digits and ._-/* only
   deadline: 4s                                         # per query, 100ms to 60s
-  maxBudget: 200000                                    # the largest token budget a request may ask for
+  # maxBudget (retired): token budgets are gone; an old profile that still has the key loads, and the key is ignored
   minHits: 3
   sessions: { enabled: false }                         # whether agent sessions may read context at all (any transport)
 services:
@@ -64,12 +62,12 @@ when named). `context sources status` shows each intent source's last sync, link
 ```bash
 $SINDRI context query "split pane orientation"            # text
 $SINDRI context query "split pane orientation" --json     # the API's JSON, unchanged
-$SINDRI context query "…" --budget 4000                   # tokens; default 8000, capped at context.maxBudget (200000)
+$SINDRI context query "…" --budget 4000                   # retired: read and ignored (the answer holds every ranked item)
 $SINDRI context sources status [--json]                   # each source's state; whether sessions may read
 $SINDRI context query --item SPL-103                      # a tracker key, or a Sindri item id (ITM-...): its record, decisions and conflicts, with citations
 ```
 
-HTTP: `GET /sindri/context/query?q=…&budget=…` and `GET /sindri/context/sources`, behind the loopback guard (a
+HTTP: `GET /sindri/context/query?q=…` (a `budget` parameter is still accepted and ignored) and `GET /sindri/context/sources`, behind the loopback guard (a
 foreign `Host` is 400, a foreign browser `Origin` 403) and the API's caller rules. `--node` and `--symbol` (graph anchors) answer
 `SND-CONTEXT-003` when the anchor is unknown.
 
@@ -94,7 +92,7 @@ context q_01a130fa0e7a… · anchors: none · map: none · as of 2026-10-12T16:3
     `PaneLayout` (`src/layout/PaneLayout.ts`) is the single source of truth for how a tab's panes are arranged: …
     </untrusted>
 
-budget: 202 of 8000 tokens (estimate)
+size: 202 tokens (estimate)
 
 sources:
   [C1] repo:split-panes/docs/architecture.md  repo-docs split-panes/docs/architecture.md#L5-L10  version 2c5fdb91f990  current
@@ -141,8 +139,10 @@ Phase 1 tools (both read-only):
 
 | Tool | Arguments | Answer |
 |---|---|---|
-| `context_query` | `q`, or one anchor `node` / `item` / `symbol`; `depth?`, `hops?`, `budget?` | `structuredContent`: the same result JSON as `context query --json`; text: counts, anchors, conflicts, degraded sources and the citation keys, never the records' text a second time |
+| `context_query` | `q`, or one anchor `node` / `item` / `symbol`; `depth?`, `hops?`, `limit?`, `offset?` (`budget?` is accepted and ignored) | `structuredContent`: the same result JSON as `context query --json`; text: counts, anchors, conflicts, degraded sources and the citation keys, never the records' text a second time |
 | `context_sources` | none | `structuredContent`: the sources view plus `instance` (the Sindri build and port that answered); text: the same, then the `context sources status` table |
+
+**Paging (every MCP tool).** `limit` and `offset` are both optional: `offset` defaults to 0 and `limit` to 100 items. A `limit` under 1 or an `offset` under 0 is `SND-CONTEXT-006`. Only the answer's top-level lists page (a section's or group's own list included); each list keeps its own window by index, and an item is never cut inside (its evidence and sources stay whole). The answer gains `page: {offset, limit, more, lists}`: `more` is true while some list has items past this page, and `lists` gives each list's `total` and its own `more`. `degraded` is a warning, not a list: it is never windowed, so a failed source is always shown. `cites` keeps only the citations the page's items name. `context_lenses` pages the same way (default limit 100 over HTTP, the CLI and MCP); its `page` carries `totals` by list path (`bands.product.own`, `edges`) in place of `lists`. `sindri_item_timeline` has no `after` cursor: it pages by `limit` and `offset` only. A query answer holds every ranked item (there is no token budget and no `truncated`, `budget` or `more` field), so paging with a growing `offset` until `more` is false reaches every item.
 
 Claude Code hands the model `structuredContent` rather than the text block when a result has both, so everything a
 session needs is in `structuredContent`; the text block is for clients that show text only. The draft map is never
@@ -156,7 +156,7 @@ learns why. Refusals are tool errors
 | `SND-CONTEXT-020` | Session reads are off, or a session asked for a human or service job (map import, preview, build, export) |
 | `SND-CONTEXT-003` | An anchor outside the session's repo, or unknown; also every call whose `X-Sindri-Repo` isn't a repo the profile maps (re-run `sindri mcp register` in the work repo). A header that isn't a valid repo name at all is refused before MCP, with HTTP 400 `SND-API-007`. Over HTTP, a graph call's problem also carries `suggestedAnchors`, an array of at most 5 in-scope node keys; over MCP the error is only `{code, message}`, and the keys are in the message's `try …` text |
 | `SND-CONTEXT-037` | A name matches several nodes the caller may see; the message lists them. Only the HTTP problem carries `candidates` (an array of at most 100 keys); over MCP the error is only `{code, message}` |
-| `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth or budget out of range) |
+| `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth out of range) |
 | `SND-CONTEXT-021` | The call has no `X-Sindri-Repo` (use a registration from `sindri mcp register`) |
 | `SND-PROFILE-005` | No profile is approved yet, so no repo is mapped (the human runs `sindri profile approve`) |
 | `SND-CONTEXT-022` | An argument of the wrong type, or one the tool doesn't have |
@@ -173,7 +173,7 @@ $SINDRI mcp register --apply    # writes it: a human at a terminal only (a sessi
 $SINDRI mcp register --apply --providers claude,codex,cursor|all   # more than Claude Code (the default is claude alone)
 ```
 
-`scripts/sindri-app.sh` (a bare run) prints the last line, with `--repo` when it applies, once the control plane's port
+A bare `sindri` run prints the last line, with `--repo` when it applies, once the control plane's port
 is known. It can't run it for you (`--apply` needs a terminal, and the script's watcher has none), so you run it once and
 again when the port moves; it is idempotent (an entry that is already right is not written).
 `AW_SINDRI_MCP_REPO` is passed through as `--repo`. Without it, from a linked worktree the script passes the main
@@ -385,6 +385,7 @@ imports.
 $SINDRI context map status [--anchor <key>] [--json]
 # map v2 current · aw-split-panes · created 2026-10-12T17:02:11.0000000+00:00
 # 20 nodes, 21 edges, 1 aliases, 1 decisions, 2 overrides; 0 orphaned overrides; 1 retained versions
+# built under older map rules; a refresh will rebuild it (sindri context map refresh)   <- only when the map recorded its rules and they differ from the running ones
 $SINDRI context map export [<name-or-path>] [--json]
 # Exported map v2 to $AW_SINDRI_HOME/context/exports/map-v2-20261012T170400Z.json: 20 nodes, …
 ```
@@ -396,6 +397,8 @@ $SINDRI context map export [<name-or-path>] [--json]
 - An export is **not scrubbed**: map text is written as imported (answers clean it on the way out), and the file is owner-readable
   only (0600). Exports older than 14 days are purged by the `context-purge` service, and only when it is enabled under
   `services:` (`doctor` warns on `context:retention` otherwise).
+- `map status` also carries `roles` (issue 1105; left out when no repo in scope configures a role in `index.roles` and no file looks like one): per repo, `roles` is the number of indexed files each configured role's globs match (`{"role": "demo", "demoted": true, "files": 3}`; an ignored role is not indexed, so its `files` is 0 and it carries `"ignored": 312` instead, the tracked files its globs dropped when the map was built (issue 1161: the build counts them from the repo's tracked files and keeps the count with the map version in `map_version.dropped`, migration `0013`; left out for a demoted role and for a map built before the count was recorded, until its next build; a file two ignored roles both match counts for each; answers' `filtered` carry no ignored count), and `unassigned` is `{"count": 8, "examples": [...]}`, the files that look like a role (a `__tests__/`, `fixtures/`, `__mocks__/` or `testdata/` directory, or a `*.test.*` or `*.spec.*` name) but match no `index.ignore`, `index.demote` or `denyPaths` glob, with up to 5 example paths in path order. A session sees its own repo only. The Context page reads this field.
+- `map status` also says when the current map was built under older map rules than the profile runs under now (`rulesOlder: true` in `--json`, left out otherwise). A map that recorded no rules (built before issue 1041, or imported) says nothing there; `doctor`'s `context:map` warns for it and the refresh service rebuilds it.
 - HTTP: `GET /sindri/context/map` and `GET /sindri/context/map/export?path=…`.
 - **Sessions** (with `context.sessions.enabled: true`) see only the nodes their repo implements: the targets of
   `implements` edges whose file evidence is `repo:<their X-Sindri-Repo>/…`, and the edges between those nodes, plus
@@ -415,8 +418,8 @@ $SINDRI context map export [<name-or-path>] [--json]
 
 ### Doctor and the purge
 
-`$SINDRI doctor` adds `context:map` (warns with no map or with orphaned overrides; how far the map is behind HEAD is
-unknown until a build records its commit, S-4) and `context:retention` (warns while exports older than 14 days or
+`$SINDRI doctor` adds `context:map` (warns with no map, with orphaned overrides or when the current map was built under older map rules, or none recorded, with the fix `sindri context map build`; how far the map is behind HEAD is
+unknown until a build records its commit, S-4) `context:roles` (issue 1105: warns when indexed files look like a role but match no glob, naming the repo, the count and up to 5 example paths, with the fix "add a glob to index.demote or index.ignore in the profile"; ok otherwise, with the per-role counts, an ignored role as `<role> 312 dropped`), and `context:retention` (warns while exports older than 14 days or
 retained versions past the newest 100 are still there, except those replaced within the last 90 days, which a backtest can still read). The `context-purge` service removes both: name it under
 `services:` in the profile.
 
@@ -572,15 +575,16 @@ index:
 repos:
   - { name: work-app, path: /path/to/work-app, index: { denyPaths: ["private/**"] } }   # this repo's own, added to the above
 context:
-  labeling: { enabled: true, maxTokens: 400000, maxTokensPerSync: 50000 }  # on by default (owner decision 2026-10-24; `enabled: false` turns it off): names clusters with a model and sends file paths to it, and extracts decisions per sync; with no model to ask (no agent CLI logged in) a build still succeeds and carries one degraded `labels: SND-CONTEXT-042: …` note naming the fix: log in to claude, codex or cursor-agent, or set `enabled: false` (the note shows on every build until then); over the cap is SND-CONTEXT-042; maxTokensPerSync caps decision extraction in one sync (the rest stays queued); a record whose extraction prompt alone is over it can never be extracted, so it is skipped: counted in `refused`, no decisions, not queued (raise the cap to extract it; it is retried when its version changes)
+  labeling: { enabled: true, maxTokens: 400000, maxTokensPerSync: 50000 }  # on by default (owner decision 2026-10-24; `enabled: false` turns it off): names clusters with a model and sends file paths to it, and extracts decisions per sync; with no model to ask (no agent CLI logged in) a build still succeeds and carries one degraded `labels: SND-CONTEXT-042: …` note naming the fix: log in to claude, codex or cursor-agent, or set `enabled: false` (the note shows on every build until then); a concept namer that is over the cap or whose model call fails leaves a `concepts: <code>: <why>` note the same way; over the cap is SND-CONTEXT-042; maxTokensPerSync caps decision extraction in one sync (the rest stays queued); a record whose extraction prompt alone is over it can never be extracted, so it is skipped: counted in `refused`, no decisions, not queued (raise the cap to extract it; it is retried when its version changes)
   extract: { graphify: { timeoutMinutes: 60, maxSnapshotMB: 2048, maxFileMB: 16, maxGraphMB: 256 } }   # the cluster pass's limits (these are the defaults; 0 is no limit); the surface recognizers are context.extract.recognizers
 services:
   context-rebuild: { every: 24h }                  # proposes the map on a cadence; runs only when named here
 ```
 
 - `index.denyPaths` adds to the built-in secret globs (`.env*`, `*.pem`, `**/secrets/**` and the like) and never
-  replaces them. A denied path never reaches the recognizers, graphify, the labeler or the graph. A glob added after a map exists hides that path from every read (lenses, file maps, queries, export, `map status`, the review queue and its counts, the bulk accept, the review history, a scoping run's proposal statuses, the CLI, HTTP and MCP) as soon as the profile with the glob is approved: its code nodes, their links, the features only they implement (even one a person accepted), the surfaces only it produced, the record nodes of denied repo documents and the decisions quoting them, and any evidence that names it. A node a person rejected, deleted, merged away or accepted is cut like any other (the cut judges the stored map and the proposals together, before the overrides are applied), and a reject written before the glob still names its proposal after it. Items it hides are neither listed, decided nor counted by the review, and do not block a promote. The path leaves the stored map when a draft is promoted (a promote writes the cut map, whether the draft came from a build or from a proposal), and a rebuild after the glob writes its draft without it. Both also undo, in the same write as the cut map, the person's accept, rename, move and merge decisions about the nodes the cut removes (and merges and moves into a node it removed), under a marker that hides the undone row and its undo from every view, the review history and export included, so no name a denied file produced is listed after the cut; if the glob is removed later those items come back undecided. Rejects and deletes are not undone: once their node is gone they are satisfied (never an orphan, never blocking a promote), no view lists them while it is gone, and they stay in the log, so the item stays rejected if the node comes back. The retained versions from before the cut and the export files written before the glob keep their copy of the path on disk until the `context-purge` service (when it is named under `services:`) removes retained versions past the newest 20 and exports older than 14 days; without that service they stay, and `doctor` warns on `context:retention`. No read shows either. A glob is relative
+  replaces them. A denied path never reaches the recognizers, graphify, the labeler or the graph. A glob added after a map exists hides that path from every read (lenses, file maps, queries, export, `map status`, the review queue and its counts, the bulk accept, the review history, a scoping run's proposal statuses, the CLI, HTTP and MCP) as soon as the profile with the glob is approved: its code nodes, their links, the features only they implement (even one a person accepted), the surfaces only it produced, the record nodes of denied repo documents and the decisions quoting them, and any evidence that names it. A node a person rejected, deleted, merged away or accepted is cut like any other (the cut judges the stored map and the proposals together, before the overrides are applied), and a reject written before the glob still names its proposal after it. Items it hides are neither listed, decided nor counted by the review, and do not block a promote. The path leaves the stored map when a draft is promoted (a promote writes the cut map, whether the draft came from a build or from a proposal), and a rebuild after the glob writes its draft without it. Both also undo, in the same write as the cut map, the person's accept, rename, move and merge decisions about the nodes the cut removes (and merges and moves into a node it removed), under a marker that hides the undone row and its undo from every view, the review history and export included, so no name a denied file produced is listed after the cut; if the glob is removed later those items come back undecided. Rejects and deletes are not undone: once their node is gone they are satisfied (never an orphan, never blocking a promote), no view lists them while it is gone, and they stay in the log, so the item stays rejected if the node comes back. The retained versions from before the cut and the export files written before the glob keep their copy of the path on disk until the `context-purge` service (when it is named under `services:`) removes retained versions past the newest 20 and exports older than 14 days; without that service they stay, and `doctor` warns on `context:retention`. No read shows either. A demote glob (`index.demote`) works the same way on one kind of edge: a build drops every `implements` edge whose file is demoted, whatever accepted it, and undoes the accepts standing on those edges (a person's or the engine's, one undo row each marked `service:demote-cut`), so no demoted file stays a feature's implementer after a rules change and a rebuild (#1043); the demoted file's node stays and still shows in lenses, last. When the map's recorded rules differ from the rules a build runs under (a map with no recorded rules counts as different), the build also decides again every kept edge that only the engine's accepts (`service:engine`) hold up: if the new build does not find the edge, it is dropped and each of those accepts is undone (marked `service:rules-redecide`); an edge the build finds again, or one a person accepted, stays (#1043). A glob is relative
   to the repo root, uses `/`, and has no `..`; `profile validate` names the bad one (`repos.work-app.index.denyPaths[1]: …`).
+- `index.roles` names file roles a repo does not index: `roles: { cron: ["**/*cron*"], fixture: ["**/fixtures/**"] }`, a role name to repo-relative globs (same rules as `denyPaths`; set under a repo's `index`, never at the profile top: a profile-level `index.roles` is refused). The files of a named role are denied like `denyPaths` globs: never extracted, clustered, cited or searched, and cut from an existing map on approval. A glob that matches a directory denies everything under it, so `**/*cron*` covers `src/crons/run.ts` and `src/nightly-cron.ts`. An entry may be `prefix:`, `suffix:` or `regex:` text matched against one path segment, ignoring case. A role added later removes its files from the next map and code-index build (each index is built from one commit's file list, so an index already built keeps its files until it is rebuilt), and the context engine already filters them on read. Roles apply at build and on every read (a role added after the map exists filters its code nodes and evidence at query time, like a late `denyPaths` glob). There are no built-in roles: roles come only from a repo's own `index.roles`, and a repo that names none excludes nothing.
 - Labeling is off by default. When on, it runs through your own agent CLIs (Claude Code, Codex or Cursor, in that order), which send the scrubbed file paths to their provider, as any session does; it never uses Judge's remote API. It asks the CLI to name each cluster from its file paths, scrubbed (with your `context.scrub.extraPatterns` too), in batches of twenty, inside `maxTokens`. If no CLI
   answers, the build goes on with unnamed clusters and reports `degraded: labels`.
 - Clusters need graphify (pinned) under a working sandbox: `bwrap` on Linux, `sandbox-exec` on macOS. Without either,
@@ -626,6 +630,38 @@ many repos were stale, how long it waited), or drops the hold with `context.map.
 `SND-CONTEXT-190`: the job ends `succeeded` with that code and raises nothing; `SND-CONTEXT-046` fails it, keeps the hold and backs it off 5, 10, 20, 40,
 then 60 minutes. The move check compares the checkouts with the held draft's heads (else the current version's), starts no refresh while a publish runs,
 and three failed refreshes or publishes in a row raise the one service row.
+
+**Concept scan (q110).** The `context-concept-scan` service (every minute, no profile entry) starts a `ScanContextConcepts` job (key `concept-scan`, no route or
+verb of its own; `sindri services run context-concept-scan` runs the service by hand; a session may not start it) for each map version it has not scanned: the
+latest draft, else the current version, because a refresh promotes its draft within moments. It takes no heavy-job slot and waits 10 minutes after a failed scan.
+The job reads a compact summary of the map (one line per feature with its label and top files; the summary takes the glossary's terms too: the words a build stored on the concepts, each with the features of the concepts that carry it), scrubbed,
+and makes two calls through the engine's model port: the first returns candidate product concepts and 1 to 3 search queries each; the engine runs those queries
+with the map search over the same version; the second reads the hits and returns concept hints, each `{ name, members, evidence, confidence }`. Each call is held to
+60,000 input characters and 4,000 output tokens, with 2 minutes to answer, and a repo gets at most 6 scans in 24 hours: the 7th ends `succeeded` with outcome
+`over-budget` and the reason `over budget: 6 concept scans started in the last 24 hours (the limit is 6)`. A model that does not answer (`model-unavailable`), a reply
+that is not JSON or holds no usable concept (`no-concepts`) and a map with no feature (`nothing-to-scan`) also end `succeeded` with that outcome: the scan never fails a
+build, and only an engine error (the store, the profile) fails the job. A member that is not a feature of the map is dropped, a feature stays in the hint of the highest
+confidence that names it, and at most 15 hints are kept. The hints are stored in `context.db` (`map_concept_hint`, one row per map version) beside the map, not in it:
+the scan itself never touches the graph, the overrides or the pins, and a feature no hint names stays where the area rules put it. The next map build reads the hints of the newest map version and groups with them (see the glossary section). The job summary reads
+`map v<N>: <hints> concept hint(s) from <searches> search(es) (<tier> model[: <model>])`, and the job result carries the version, the outcome, the counts, the tier and the model.
+
+The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
+(characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
+the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The model port
+asks each agent CLI for the model the profile names for that CLI and tier (`context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>`). Defaults: Claude Code
+`haiku` for cheap and `sonnet` for strong (aliases `claude --model` takes); Codex and Cursor have none, so for them both tiers run the CLI's own default until the profile names a
+model (a wrong name makes that CLI fail, so none is guessed). The port walks the CLIs in the same order as before and the first that answers wins, so a scan that
+falls through to the next CLI asks that CLI for its own model name for the tier. The scan's report, and so the job result, records the tier and the model the answering CLI was
+asked for (empty when that CLI ran its default); nothing else asks for a tier, so every other model call is unchanged.
+
+**Rules changes start a refresh too (issue 1041).** Each map version records a hash of the rules it was built under (`MapRuleset`, table column
+`map_version.ruleset`): a built-in `RulesVersion` that is bumped in every change to the clustering or extraction rules, and per mapped repo the deny
+globs (the built-in secret globs, `index.denyPaths` and the role globs), the demote globs (`index.demote`) and the concept pins. The `context-map-refresh` tick computes the hash for the
+approved profile and starts a refresh when the current map's differs, with no head move needed, under the same running guard and backoff as a move. A map
+stored before the hash was recorded, and one imported from a file, has none, so it is refreshed once after the upgrade. While a draft is held, the tick
+waits for that publish instead of starting another build. A draft you build by hand (`context map build`) with nothing left to decide (the review queue
+shows 0 undecided) goes through the same hold and publish decision, so the service promotes it on its next tick; a draft with decisions left waits for
+`map review` and `map promote` as before.
 
 A build takes no heavy-job slot: it is mostly git reads and one model call, so a busy box never fails it. One build runs at a time (a second, from the
 refresh, the build job or the `context-rebuild` service, waits for the first), so two builds never write over each other. The backtest still takes a slot
@@ -744,6 +780,8 @@ $ sindri context filemap accept edge:0123456789abcdef      # or reject: one over
   A model-suggested file link shows as `suggested` until you accept it. `coverage` counts only the node's own scope. The symbol
   column reads `index not built` until the code index exists. `--draft` reads the draft (`SND-CONTEXT-044` when there is none);
   an unknown anchor is `SND-CONTEXT-003` with suggestions.
+  A code band file of a demoted role (`index.demote`) ranks last and carries `"demoted": true` (left out otherwise): it stays readable but is never a scope surface.
+  The answer also carries `filtered: {"demoted": {"<role>": n}}`, how many of its code band files each demoted role holds, keyed by the role name from `index.roles` (`test`, `fixture`); left out when nothing is demoted. A query answer (`context_query`) carries the same block for the code items it ranks last. Ignored files (`index.ignore`) are not in the map, so they are not counted. The `input.context.lenses` and `input.context.retrieve` Step inputs hand the block over with the rest of the typed result.
 - Several keys (any number; none is `006`) give one union read from one map snapshot (JSON schema 2): an anchor that doesn't resolve or can't be read is listed as `missing anchor: <key>` and in `missingAnchors`, and `coverage.byAnchor` counts each anchor. With one key the JSON stays schema 1.
 - `--map-version v3` (also `3` or `v3@a41b07d`) reads a retained map version, here and in `context query --map-version`; it can't go with `--draft` (`006`), and a version that isn't held is `SND-CONTEXT-120`. `mapVersion` is always `v<N>`; `mapCommit` is the commit the version was built at, 7 lowercase hex characters, omitted when the version names no commit.
 - Every answer ends with what was searched: one line per source (`map`, `onyx`, `code-index`) with its state as a word (`ok`, `not-configured`, `unavailable` or `degraded`, with its code or reason: `onyx degraded (SND-CONTEXT-010)`), and a `map coverage` line (the repo's files under the anchors' paths, how many are unmapped or suggested, and when the version was created; `coverage.map.created` in JSON, while `asOf` is when the answer was built). Query citations carry `fetchedAt`.
@@ -752,7 +790,7 @@ $ sindri context filemap accept edge:0123456789abcdef      # or reject: one over
   takes the worst of its children). A repo that is not in the profile, or outside a session's repo, is `SND-CONTEXT-045` with
   the same answer for both, so a scope never reveals what is outside it.
 - `context query --symbol <path>` resolves a file to the features it implements, with an `affects` section; an unknown file is `003`.
-- MCP: `context_lenses {anchor, hops?}` (or optional `anchors` for a set, schema 2, and optional `mapVersion`; `context_query` takes `mapVersion` too) returns the lenses as `structuredContent` and a short summary (band sizes, conflicts,
+- MCP: `context_lenses {anchor, hops?}` (or optional `anchors` for a set, schema 2, and optional `mapVersion`; `context_query` takes `mapVersion` too) returns the lenses as `structuredContent` and a short summary (band sizes, conflicts, Over MCP the JSON is capped at 48,000 characters: a larger answer has its band lists (and then its conflicts) halved until it fits, and the summary says `truncated to fit`; the counts stay those of the whole answer. HTTP and the CLI return every item.
   coverage). It never reads the draft. Off while `context.sessions.enabled` is false (`SND-CONTEXT-020`).
 - MCP: `context_node {key}` and `context_neighbors {key, depth?}` (S-3M) call the services behind `GET /sindri/context/node` and
   `/neighbors` under the session caller, so `structuredContent` equals the session's HTTP answer (labels fenced). The text gives
@@ -795,7 +833,7 @@ embeddings, telemetry off, connectors, the service account and its key) is `docs
 ```yaml
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3000", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }   # add managed: true when `sindri onyx up` runs it
+    onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }   # add managed: true when `sindri onyx up` runs it
     linear: { teams: [ENG, APP] }      # the Linear team keys an Onyx identifier alias (ENG-482) may name
 ```
 
@@ -804,7 +842,7 @@ context:
 - `version`: the release tag that runs (`v4.9.0`), never `latest`; missing or `latest` is `SND-CONTEXT-055`.
 - `managed`: optional, default `false`. `sindri onyx up` writes `managed: true` for the Onyx it runs; when true, `url` must be
   exactly `http://127.0.0.1:<port>` (not `localhost`, `[::1]`, https or another host), else `SND-CONTEXT-055`. Example:
-  `onyx: { url: "http://127.0.0.1:3000", token: "keychain:onyx/sindri-onyx", version: "v4.9.0", managed: true }`.
+  `onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0", managed: true }`.
 - `token`: a **secret pointer** to the Onyx admin token Sindri alone uses (a personal access token of the dedicated user `sindri@example.com`, or a service-account key), never the token itself.
   Missing, or text that isn't a pointer, is `SND-CONTEXT-002`; the message doesn't repeat the text (rotate a key that
   was written into the profile).
@@ -899,7 +937,7 @@ user: me
 repos: [{ name: work-app, path: /path/to/work-app }]
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3000", token: "env:SINDRI_ONYX_KEY", version: "v4.9.0" }
+    onyx: { url: "http://127.0.0.1:3189", token: "env:SINDRI_ONYX_KEY", version: "v4.9.0" }
     linear: { teams: [ENG] }
 YAML
 $SINDRI profile validate                        # prints the hash; exit 1 = valid, not approved yet
@@ -953,7 +991,7 @@ For one or more anchors it lists the files that implement them, the tests that c
 
 The output ends with what was searched: `map`, `code-index`, `lexical-tests` and `lexical-schema`, each with a state word. A repo clone that lacks the map's commit shows `unavailable (commit-not-held)`; a search that ran out of `context.code.deadline` shows `degraded (SND-CONTEXT-152)` with whatever it found. Neither stops the answer.
 
-Three profile keys steer the search: two lists of repo-relative globs (at most 50, never overriding `denyPaths`) and a deadline, `deadline` (default `60s`, `100ms` to `600s`), because the search runs one `git grep` per implementing file and data thing, in turn:
+Three profile keys steer the search: two lists of repo-relative globs (at most 50, never overriding `denyPaths`; `schemaGlobs` has a default, `testGlobs` has none: with none written no file is a test) and a deadline, `deadline` (default `60s`, `100ms` to `600s`), because the search runs one `git grep` per implementing file and data thing, in turn:
 
 ```yaml
 context:
@@ -978,6 +1016,20 @@ What lies behind a node, in time: the stored records and decisions that reach it
 - **Changes.** `git log --first-parent` over the implementing files (at most 50, confirmed links first, never a path the repo's deny globs hide): one entry per merge commit, squash commit or direct commit on the checked-out branch. The number and branch come from the subject only (GitHub `Merge pull request #N from owner/branch`, a squash's `(#N)`, Bitbucket `(pull request #N)`, `Merge branch 'x'`); nothing calls a forge, and a commit body is never read. A subject is scrubbed, one line, at most 200 characters and fenced for a session (`trust: untrusted`). `files` are the searched files the commit touched. Newest first, at most 100. Needs git 2.31 or newer. With a `mapVersion` that names a commit, no change newer than that commit is listed.
 - **Window.** `since` and `before` are an RFC 3339 instant (`2026-07-01T00:00:00Z`) or a date (`2026-07-01`, UTC midnight). A relative time (`90d`), an unparseable one, `since` after `before`, or `--draft` with `--map-version` is `SND-CONTEXT-006`. `since` cuts changes and records by their last update; it never drops a decision (a decision does not age out).
 - **`before`: the world as of an instant** (inclusive). A change committed later is gone. A record created later is dropped (`counts.afterCut`); one edited later, or whose times are unknown, is kept with `leaky: true`, meaning it may show edits made after the cut. A decision a person made is cut by its own time; one extracted from a record follows that record. Records synced before this release have no creation time until their version changes, so they read `leaky` under a `before`. A `before` older than the map version adds a line to `degraded`: the map is today's, not the map as it was.
-- **`searched`.** The rows are `map`, each intent source, `git-history` and `incidents` (no `code-index`). `incidents` is `not-configured` (no incident source exists). `git-history`: `ok` (reason `capped`, `shallow-clone` or `no-files` when worth saying), `degraded` with `SND-CONTEXT-160` (out of `context.deadline`; the changes found so far are listed) or `SND-CONTEXT-048` (a checkout git cannot read), or `unavailable` with `commit-not-held` and `SND-CONTEXT-110` (the map version's commit is not in the clone: fetch it into the repo's checkout). An intent source reads `not-configured`, `unavailable` with `history-unlinked` (records synced, none linked to a node), or `unavailable` with `not-synced` and `SND-CONTEXT-161` (the source never synced). Codes 160 and 161 are row codes, never a failed call.
+- **`searched`.** The rows are `map`, each intent source, `git-history` and `incidents` (no `code-index`). `incidents` is `not-configured` (no incident source exists). `git-history`: `ok` (reason `capped`, `shallow-clone` or `no-files` when worth saying), `ok` with reason `deadline` when the opt-in `context.history.deadline` ended the read (the row's `note` names the deadline and the elapsed ms; repos read before it are listed; with no such key there is no timer, #1221), `degraded` with `SND-CONTEXT-048` (a checkout git cannot read), or `unavailable` with `commit-not-held` and `SND-CONTEXT-110` (the map version's commit is not in the clone: fetch it into the repo's checkout). An intent source reads `not-configured`, `unavailable` with `history-unlinked` (records synced, none linked to a node), or `unavailable` with `not-synced` and `SND-CONTEXT-161` (the source never synced). Codes 160 and 161 are row codes, never a failed call.
 - **A gap fills itself.** When a configured intent source has never synced, the `not-synced` row carries `sync: {state, jobId}` while a sync job runs (the id `GET /sindri/jobs/{id}` serves; also on `context lenses`). The built-in `context-sync-gaps` service (listed by `sindri services`) starts that sync as `service:context-sync-gaps` through the `SyncSources` command; a sync that is already running is never doubled, and after a failed sync it waits 5, 10, 20, 40, then 60 minutes at most, counted from the newest failure in a row (a success resets it). It re-checks on the scheduler tick by reading the jobs view; the scheduler has no event trigger. A failure to start shows in needs-you as `failure:service:context-sync-gaps`. The app re-reads the lenses and history when a `job.*` event arrives.
 - **Exit codes.** 0 with an answer; 1 for attention (not running, an unknown anchor, a bad window, a version not held); 2 for a tool error.
+
+## The concept glossary: the words behind the concepts
+
+A map build can name its concepts from the words the code uses, not only from the feature titles. It works from the code index's stored symbol embeddings, so it needs the embeddings layer on for the repo (`sindri code-index status` shows it); the build never embeds anything itself.
+
+1. For each feature, the build reads the vectors of the symbols in the files that implement it (up to 2,000 files per read).
+2. Features whose symbols sit close together in embedding space (cosine 0.80 or above, single link) form a cluster, and each cluster gets its top five words by TF-IDF across clusters. Words that carry no meaning in code (`get`, `handler`, `service`, `public`, ...) are dropped; identifiers split on case, `_` and `-` (`SplitPaneLayout` gives `split`, `pane`, `layout`).
+3. The glossary is used twice. As a grouping signal: when a small group of features is merged into another, the groups whose code shares the most words pull hardest, beside the edges they already share; pinned concepts keep their features, and a feature with no vectors groups as before. As a namer input: each group's top words go to the model beside its feature and record titles.
+4. Each concept node keeps its top six words in its `terms` attribute. `terms` is on the concept rows of `GET /sindri/context/concepts` (left out when the map has none, so a map built without embeddings reads exactly as before), and `GET /sindri/context/concepts/glossary` lists every concept's words and, for each word, the concepts that carry it.
+
+When the code index can't answer (no index for the repo, the embeddings layer off or down), the build still finishes: the concepts are grouped and named as before, and the build report lists `glossary` among its degraded notes. A host with no code index adds no note.
+
+**Concept hints shape the next build.** A build reads the hints stored for the newest map version (a store that can't answer, or a version never scanned, means none) and regroups the area groups with them, most confident hint first. The id rule: a hinted group keeps the id of the area group whose seed feature it holds, else of the area group it holds more than half the members of, and an area's id goes to one hint only; otherwise it gets an id from its shortest member key no group uses (ties by key order). What a hint leaves of an area that lost its id or its seed becomes a group of its own. Pinned features stay in their pin, a member the map lacks is ignored, and a feature stays in the first hint that names it. A hinted group is the hint's own: groups under 3 features still merge as before, but nothing merges into a hinted group or out of it, however small. A hinted group keeps that id but is named by its hint (a pin's name still wins; a blank hint name leaves the label as it is without hints).
+

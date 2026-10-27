@@ -14,8 +14,7 @@ way to tune it without leaving the conversation.
 - `judge health` — status (`ok`/`degraded`) and failures in the last 24h.
 - `judge why <id>` — the full stored decision: question, content class, provider, decision,
   confidence, reason code, latency.
-- `judge undo <id>` — marks a decision undone. Undos feed the error rate in the scorer's Judge
-  section; a rising error rate for one question is a strong signal to raise its threshold or
+- `judge undo <id>` — marks a decision undone. Undos count as errors; a rising error rate for one question is a strong signal to raise its threshold or
   disable it.
 - `judge approve <id>` — clears an escalated decision (prefixes its `reason_code` with
   `approved:`) so it's visibly resolved when reviewed later.
@@ -81,16 +80,19 @@ confirmations.
 
 - `judge prompt-sort why <decision-id>` — the decision, its 11 axes (value, heuristic, source,
   agreed/overrode/undecided) and which scaffolds would have fired.
+  Not in this build yet: it prints `judge: prompt-sort why is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 - `judge prompt-sort scaffold <brief|bugfix|ui-evidence|plan-first> <on|off>` — a scaffold switch.
-  All ship OFF; do not turn one on until `judge prompt-sort promote` says go.
+  All ship OFF; leave scaffolds off; `promote` is not in this build yet.
+- `judge prompt-sort promote` — would say when a scaffold is ready to turn on.
+  Not in this build yet: it prints `judge: prompt-sort promote is not in this build yet` and exits 1. Do not retry it or look for a workaround; tell the user it lands in a later update.
 - `judge config set prompt-sort enabled false` — turns the sorter off entirely (no Jev call).
 - `promptSort` in `config.json`: `enabled`, `budgetMs` (200-1400, default 1000), `cooldownPrompts`
   (default 5), `scaffolds`.
 
 ## What this skill does not cover
 
-- Installing or updating `judge` itself — see `scripts/install-judge.sh` (`--provider
-  claude|codex|cursor` picks which host gets the SessionStart health hook).
+- Installing or updating `judge` itself — run `./setup.sh` from the toolkit checkout (it installs the `judge` binary and, per provider,
+  the hooks through `scripts/install-judge-hooks.sh`).
 - Adding a new question module — that's application code in `judge/src/questions/`, following
   the `QuestionModule` interface in `judge/src/question.ts`.
 - Wiring `judge wake-gate` into a live hook — that's Plan 4 (rollout step 4), gated on the

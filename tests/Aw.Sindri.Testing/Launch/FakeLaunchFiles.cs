@@ -13,6 +13,9 @@ public sealed class FakeLaunchFiles : ILaunchFiles
 
     private readonly Dictionary<LaunchId, string> _open = [];
     private readonly Dictionary<LaunchId, DateTimeOffset> _turns = [];
+    private readonly Dictionary<LaunchId, DateTimeOffset> _failed = [];
+    private readonly Dictionary<LaunchId, DateTimeOffset> _nudged = [];
+    private readonly HashSet<LaunchId> _tools = [];
     private readonly List<LaunchId> _forgotten = [];
     private readonly List<LaunchId> _swept = [];
 
@@ -32,12 +35,38 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     /// <param name="at">When.</param>
     public void EndTurn(LaunchId launch, DateTimeOffset at) => _turns[launch] = at;
 
-    /// <summary>Says a new turn started on <paramref name="launch"/> (the prompt hook deleted the file).</summary>
+    /// <summary>Says an API error ended <paramref name="launch"/>'s turn at <paramref name="at"/> (the StopFailure hook touched its file).</summary>
     /// <param name="launch">The launch.</param>
-    public void StartTurn(LaunchId launch) => _ = _turns.Remove(launch);
+    /// <param name="at">When.</param>
+    public void FailTurn(LaunchId launch, DateTimeOffset at) => _failed[launch] = at;
+
+    /// <summary>Says a tool call started (<paramref name="running"/> true) or returned (false) on <paramref name="launch"/>.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="running">Whether a tool call is in flight.</param>
+    public void SetToolRunning(LaunchId launch, bool running) => _ = running ? _tools.Add(launch) : _tools.Remove(launch);
+
+    /// <summary>Says a new turn started on <paramref name="launch"/> (the prompt hook deleted the files).</summary>
+    /// <param name="launch">The launch.</param>
+    public void StartTurn(LaunchId launch)
+    {
+        _ = _turns.Remove(launch);
+        _ = _failed.Remove(launch);
+    }
 
     /// <inheritdoc/>
     public DateTimeOffset? TurnEndedAt(LaunchId launch) => _turns.TryGetValue(launch, out var at) ? at : null;
+
+    /// <inheritdoc/>
+    public DateTimeOffset? TurnFailedAt(LaunchId launch) => _failed.TryGetValue(launch, out var at) ? at : null;
+
+    /// <inheritdoc/>
+    public bool ToolRunning(LaunchId launch) => _tools.Contains(launch);
+
+    /// <inheritdoc/>
+    public DateTimeOffset? NudgedAt(LaunchId launch) => _nudged.TryGetValue(launch, out var at) ? at : null;
+
+    /// <inheritdoc/>
+    public void MarkNudged(LaunchId launch, DateTimeOffset at) => _nudged[launch] = at;
 
     /// <inheritdoc/>
     public Result<Unit> Verify(LaunchId launch, LaunchSecret secret) =>
@@ -50,6 +79,9 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     {
         _ = _open.Remove(launch);
         _ = _turns.Remove(launch);
+        _ = _failed.Remove(launch);
+        _ = _nudged.Remove(launch);
+        _ = _tools.Remove(launch);
         _forgotten.Add(launch);
     }
 

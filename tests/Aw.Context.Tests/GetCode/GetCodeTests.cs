@@ -57,7 +57,7 @@ public sealed class GetCodeTests : IDisposable
         _ = await _code.ImportSharing();
 
         var defaults = (await _code.Code()).Value;
-        var narrowed = (await _code.Code(MapWorld.HumanWith("""{"code":{"schemaGlobs":["db/**"]}}"""))).Value;
+        var narrowed = (await _code.Code(MapWorld.HumanWith("{\"code\":{\"schemaGlobs\":[\"db/**\"],\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         var file = Assert.Single(defaults.Data.Files);
         Assert.Equal(("migrations/002_sharing.sql", "thing:shared-link"), (file.Path, file.Thing.Value));
@@ -69,7 +69,7 @@ public sealed class GetCodeTests : IDisposable
     {
         _ = await _code.ImportSharing();
 
-        var view = (await _code.Code(MapWorld.HumanWith("""{"code":{"schemaGlobs":[]}}"""))).Value;
+        var view = (await _code.Code(MapWorld.HumanWith("{\"code\":{\"schemaGlobs\":[],\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         var row = Row(view, "lexical-schema");
         Assert.Equal((SearchedState.NotConfigured, "not-configured"), (row.State, row.Reason));
@@ -138,7 +138,7 @@ public sealed class GetCodeTests : IDisposable
         using var slow = new CodeWorld(decorateTimed: (inner, expire) => new StallingSearch(inner, _ => true, expire));
         _ = await slow.ImportSharing();
 
-        var view = (await slow.Code(MapWorld.HumanWith("""{"code":{"deadline":"100ms"}}"""))).Value;
+        var view = (await slow.Code(MapWorld.HumanWith("{\"code\":{\"deadline\":\"100ms\",\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         var row = Row(view, "lexical-tests");
         Assert.Equal((SearchedState.Degraded, ContextErrors.CodeSearchTimedOut.Code), (row.State, row.Code));
@@ -155,7 +155,7 @@ public sealed class GetCodeTests : IDisposable
         world = slow;
         _ = await slow.ImportSharing();
 
-        var view = (await slow.Code(MapWorld.HumanWith("""{"deadline":"4s"}"""))).Value;
+        var view = (await slow.Code(MapWorld.HumanWith("{\"deadline\":\"4s\",\"code\":{\"testGlobs\":" + CodeWorld.TestGlobs + "}}"))).Value;
 
         Assert.All(["lexical-tests", "lexical-schema"], id => Assert.NotEqual(ContextErrors.CodeSearchTimedOut.Code, Row(view, id).Code, StringComparer.Ordinal));
         Assert.Contains(view.Tests, t => t.Path == "tests/routes.test.ts");
@@ -206,7 +206,7 @@ public sealed class GetCodeTests : IDisposable
         _ = await _code.ImportSharing();
 
         var code = (await _code.Code()).Value;
-        var lenses = (await _code.World.Engine.LensesOf([CodeWorld.Anchor], Context.Core.Map.MapRead.Current, depth: 0, MapWorld.Human, MapWorld.None)).Value;
+        var lenses = (await _code.World.Engine.LensesOf([CodeWorld.Anchor], Context.Core.Map.MapRead.Current, depth: 0, CodeWorld.WithTestGlobs, MapWorld.None)).Value;
 
         Assert.Equal(JsonSerializer.Serialize(lenses.Coverage), JsonSerializer.Serialize(code.Coverage));
         Assert.NotNull(code.Coverage.Map);

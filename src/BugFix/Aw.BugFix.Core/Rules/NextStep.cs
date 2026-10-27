@@ -68,14 +68,23 @@ public static class NextStep
         if (current.Count < AttemptRule.Candidates(state.Mode))
         {
             return "record-candidate for the second open hypothesis (mode B runs two competing candidates); if its implementer produced no usable commit, "
-                + Onward(state);
+                + Onward(state, current);
         }
 
-        return Onward(state);
+        return Onward(state, current);
     }
 
-    private static string Onward(BugFixState state) =>
-        AttemptRule.CanStart(state, FixMode.A).IsSuccess ? "start-attempt with the failure reasons" : "advance report --unresolved";
+    // The reasons judge gave for the attempt's candidates go with the instruction, so the next attempt starts from them.
+    private static string Onward(BugFixState state, List<Candidate> current)
+    {
+        if (!AttemptRule.CanStart(state, FixMode.A).IsSuccess)
+        {
+            return "advance report --unresolved";
+        }
+
+        var reasons = current.SelectMany(static c => c.Verdict?.Reasons ?? []).Where(static r => !string.IsNullOrWhiteSpace(r)).ToList();
+        return reasons.Count == 0 ? "start-attempt with the failure reasons" : $"start-attempt with the failure reasons (judge: {string.Join("; ", reasons)})";
+    }
 
     // A question judge was asked whose answer was never recorded: asked once more, then left behind once no judge process is running.
     private static string? Interrupted(List<Candidate> current) =>

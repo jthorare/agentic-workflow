@@ -43,11 +43,13 @@
 #                                  context.db through down, so the next draft's number depends on earlier runs); up and down
 #                                  approve whenever the profile is not approved
 #
-#   sindri-ui-fixture.sh context whole over|under
+#   sindri-ui-fixture.sh context whole over|under|concepts
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
 #                                  features with 50 code nodes each (612 nodes, over the 500-node budget: the Context page opens by feature),
 #                                  under imports the tabs map again (10 nodes: the page draws every node). Each switch is a new map version
-#                                  and a repeat with the same map imports nothing
+#                                  and a repeat with the same map imports nothing; concepts imports a small authored map with two concepts
+#                                  (Self scheduling, Billing) over four features and a decision on Swaps, so the Context page opens on
+#                                  its concept band and a concept draws its Why, product and code
 #
 #   sindri-ui-fixture.sh context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume
 #                                  the Health page's Context map card (F1P-c, code index spec 6.4; run after 'context up'): puts the
@@ -77,7 +79,21 @@
 #                                  removes the copy. Every restart re-exports the four variables while the copy exists, and
 #                                  down never restarts. Needs jq.
 #
+#   sindri-ui-fixture.sh agent-run
+#                                  one workflow instance on a live agent Step (recipes/dev/workflow.dev-agent-hold.yaml; run after
+#                                  'sessions up'), for the Attach control: Watch the agent, and Take over in its chevron menu. It adds
+#                                  a git repo, agent-fixture, under <home>/ui-fixture-agent to the live profile with
+#                                  workflow.agent.target claude-code and approves that, points launcher.json (the sessions copy's)
+#                                  at a stub claude-code (a script that only sleeps, so no model and no network), registers and
+#                                  approves the recipe as the owner, restarts the control plane (CLAUDE_CONFIG_DIR inside the home, so
+#                                  the launcher's trust mark never touches the real ~/.claude.json) and starts the recipe on a new item.
+#                                  The launch is real: a tmux session on Sindri's own socket, a worktree under the repo and a
+#                                  'session wrap' heartbeat; it waits (FIXTURE_AGENT_WAIT s, default 120) for launch.started in the ledger, then prints the item
+#                                  id on stdout (progress goes to stderr). The Step takes a slot of the box's heavy lock first, so a
+#                                  busy lock delays the launch. Exit 1 when no launch started in time; needs jq and git.
+#
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
+# FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
 # Environment: AW_SINDRI_HOME (required: sindri-prove.sh's guard, a temp or proof folder), SINDRI (the built C# CLI,
 # as sindri-prove.sh reads it), STALL_TYPE (the stalled row's type; default service.ran, a type the projector reads),
 # SINDRI_UI_FIXTURE_SQL=python (use python3's sqlite3 module even when the sqlite3 CLI is installed; without the CLI it is
@@ -291,6 +307,10 @@ fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one f
       jq -nc --arg id "$2" '{id: $id}' > "$dir/$2.item.json" || return
       printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
       printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
+    *dev-agent-hold)
+      # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
+      jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
+      printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
     *desk-round-trip)
       printf 'Fixture request for %s\n' "$3" > "$dir/$2.request.txt" || return
       printf '%s\n%s\n' --fact "fact:request=$dir/$2.request.txt" ;;
@@ -303,7 +323,7 @@ start_on_new_item() { # $1 recipe, $2 item title; prints the item
   item="$(new_item "$2")" || return
   while IFS= read -r line; do facts+=("$line"); done < <(fact_args "$1" "$item" "$2")
   # The pty the owner's verbs run under joins stderr into stdout, so the output is kept to show on a refusal.
-  if ! out="$("$PROVE" human workflow start "$1" --item "$item" "${facts[@]}" 2>&1)"; then
+  if ! out="$("$PROVE" human workflow start "$1" --item "$item" ${facts[@]+"${facts[@]}"} 2>&1)"; then
     die "workflow start $1 on $item was refused: $out"
   fi
   printf 'started %s on %s\n' "$1" "$item" >&2
@@ -360,7 +380,7 @@ context_repo() {
   printf 'PRIVATE=1\n' > "$dir/.env"
   local g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_AUTHOR_NAME="Fixture Author" GIT_AUTHOR_EMAIL=fixture@example.invalid
      GIT_COMMITTER_NAME="Fixture Author" GIT_COMMITTER_EMAIL=fixture@example.invalid
-     GIT_AUTHOR_DATE=2026-07-01T09:00:00Z GIT_COMMITTER_DATE=2026-07-01T09:00:00Z git -C "$dir")
+     GIT_AUTHOR_DATE="@1782896400 +0000" GIT_COMMITTER_DATE="@1782896400 +0000" git -C "$dir")
   "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$dir/.no-hooks" && "${g[@]}" add -A \
     && "${g[@]}" commit -q --no-gpg-sign -m "Tabs fixture" || die "context up: can't build the repo in $dir"
 }
@@ -421,6 +441,28 @@ context_whole() {
   [ -d "$dir/$CONTEXT_REPO/.git" ] || die "context whole: run 'context up' first"
   case "$1" in
     under) map="$dir/tabs-map.json"; cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context whole: can't copy the tabs map" ;;
+    concepts)
+      map="$dir/concepts-map.json"
+      # A decision's node is implied by its row: its key is 'decision:' and the sha256 of the record, a newline and the quote (DecisionRow.KeyFor).
+      # A concept opens only its own members, so the decision belongs to Self scheduling as well as deciding Swaps (ConceptScope).
+      drec="repo:fixture/docs/decisions.md"; dquote="swaps close a day before the shift"
+      dkey="decision:$(printf '%s\n%s' "$drec" "$dquote" | sha256sum | cut -c1-64)"
+      jq -n --arg repo "$CONTEXT_REPO" --arg drec "$drec" --arg dquote "$dquote" --arg dkey "$dkey" '{schemaVersion: 1, kind: "authored", repo: $repo,
+        decisions: [{record: $drec, quote: $dquote, wording: "Swaps close a day before the shift.", at: "2026-10-01T10:00:00Z"}],
+        nodes: [
+          {key: "concept:scheduling", label: "Self scheduling", attributes: {summary: "People pick and swap shifts.", source: "derived", seed: "feature:shifts", terms: ["shift", "swap", "roster", "rota"]}},
+          {key: "concept:billing", label: "Billing", attributes: {summary: "Invoices and payment.", source: "override", terms: ["invoice"]}},
+          {key: "feature:shifts", label: "Shifts"}, {key: "feature:swaps", label: "Swaps"}, {key: "feature:invoices", label: "Invoices"}, {key: "feature:lone", label: "Loose end"},
+          {key: "surface:screen/shifts", label: "Shifts screen"}, {key: "action:pick", label: "Pick a shift"},
+          {key: "code:src/shifts.ts", label: "shifts.ts", provenance: "deterministic"}, {key: "code:src/invoices.ts", label: "invoices.ts", provenance: "deterministic"}],
+        edges: [
+          {from: "feature:shifts", to: "concept:scheduling", type: "belongs-to"}, {from: "feature:swaps", to: "concept:scheduling", type: "belongs-to"},
+          {from: "feature:invoices", to: "concept:billing", type: "belongs-to"},
+          {from: "code:src/shifts.ts", to: "feature:shifts", type: "implements", provenance: "deterministic"},
+          {from: "code:src/invoices.ts", to: "feature:invoices", type: "implements", provenance: "deterministic"},
+          {from: "feature:invoices", to: "feature:shifts", type: "depends-on"}, {from: "feature:swaps", to: "feature:invoices", type: "depends-on"},
+          {from: "surface:screen/shifts", to: "feature:shifts", type: "part-of"}, {from: "action:pick", to: "surface:screen/shifts", type: "on"},
+          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map" ;;
     over)
       map="$dir/over-map.json"
       jq -n --arg repo "$CONTEXT_REPO" '{schemaVersion: 1, kind: "authored", repo: $repo,
@@ -577,6 +619,8 @@ sessions_export() {
   local d
   d="$(sessions_dir)"
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
+  # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
+  if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
 }
 
 sessions_restart() {
@@ -679,6 +723,83 @@ sessions() {
   esac
 }
 
+# --- agent-run: an instance on a live agent Step (the Attach control; issue #1004) ---
+AGENT_REPO="agent-fixture"
+AGENT_RECIPE="workflow.dev-agent-hold"
+
+agent_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-agent"; }
+
+# A git repo with one commit, the stub agent (sleeps, ignores the flags the launcher adds) and Claude Code's config folder.
+agent_files() {
+  local dir="$1" repo="$1/repo" g
+  mkdir -p "$dir/claude-config" "$repo" || return
+  if [ ! -d "$repo/.git" ]; then
+    g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_AUTHOR_NAME="Fixture Author" GIT_AUTHOR_EMAIL=fixture@example.invalid
+       GIT_COMMITTER_NAME="Fixture Author" GIT_COMMITTER_EMAIL=fixture@example.invalid git -C "$repo")
+    printf '# Agent fixture\n' > "$repo/README.md"
+    "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$repo/.no-hooks" && "${g[@]}" add -A \
+      && "${g[@]}" commit -q --no-gpg-sign -m "Agent fixture" || die "agent-run: can't build the repo in $repo"
+  fi
+  # Named claude: the argv hash keeps only bin's base name, so a stub with another name is not a bin-only override (#1134).
+  mkdir -p "$dir/stub-bin" || return
+  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude"
+}
+
+# The live profile gets the repo and workflow.agent.target (a workflow: block after user: when there is none).
+agent_profile_add() {
+  local profile="$1" repo="$2"
+  if ! grep -q "name: $AGENT_REPO" "$profile"; then
+    if grep -q '^repos:' "$profile"; then
+      awk -v e="  - { name: $AGENT_REPO, path: $repo }" '{print} /^repos:/ {print e}' "$profile" > "$profile.new"
+    else
+      awk -v e="repos:\n  - { name: $AGENT_REPO, path: $repo }" '{print} /^user:/ {print e}' "$profile" > "$profile.new"
+    fi && mv "$profile.new" "$profile" || return
+  fi
+  if ! grep -q '^  agent:' "$profile"; then
+    if grep -q '^workflow:' "$profile"; then
+      awk '{print} /^workflow:/ {print "  agent: { target: claude-code }"}' "$profile" > "$profile.new"
+    else
+      awk '{print} /^user:/ {print "workflow:\n  agent: { target: claude-code }"}' "$profile" > "$profile.new"
+    fi && mv "$profile.new" "$profile" || return
+  fi
+}
+
+agent_run() {
+  need jq
+  need git
+  sessions_need_copy
+  local dir profile launcher recipe item out
+  dir="$(agent_dir)"
+  profile="$(profile_path)"
+  launcher="$(sessions_dir)/launcher.json"
+  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
+  agent_files "$dir" || return
+  agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
+  if needs_approval; then approve >&2 || return; fi
+  # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
+  jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
+    || die "agent-run: can't update $launcher"
+  unset TMUX   # the control plane starts its own tmux server on its own socket; it must not inherit the caller's
+  sessions_restart >&2 || return
+  recipe="$ROOT/recipes/dev/$AGENT_RECIPE.yaml"
+  out="$(printf 'approve %s %s\n' "$AGENT_RECIPE" "$(sed -n 's/^version: *//p' "$recipe" | head -1)" | "$PROVE" human recipe approve "$recipe" 2>&1)" \
+    || die "agent-run: the recipe was not approved: $out"
+  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$AGENT_RECIPE" "Fixture agent run")" || return
+  local wait="${FIXTURE_AGENT_WAIT:-120}"
+  [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
+  local deadline=$((SECONDS + wait))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q 'launch.started'; then
+      printf '%s\n' "$item"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "sindri-ui-fixture: agent-run: no launch.started for $item in $wait s; the ledger says:" >&2
+  "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
+  return 1
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -696,8 +817,8 @@ case "$verb" in
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
-      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ]; }; } || die "usage: context whole over|under" ;;
-      *) die "usage: context up|draft|down|publish <state>|whole over|under" ;;
+      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ]; }; } || die "usage: context whole over|under|concepts" ;;
+      *) die "usage: context up|draft|down|publish <state>|whole over|under|concepts" ;;
     esac ;;
   sessions)
     case "${2:-}" in
@@ -705,10 +826,11 @@ case "$verb" in
       ask | end | back) [ "$#" -eq 3 ] || die "usage: sessions $2 <pid>" ;;
       *) die "usage: sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down" ;;
     esac ;;
+  agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
   decide) [ "$#" -eq 3 ] || die "usage: decide <DEC-id> <choice>" ;;
   *) usage >&2; die "unknown verb: $verb" ;;
 esac
 
 guard
 shift
-"$verb" "$@"
+"${verb//-/_}" "$@"

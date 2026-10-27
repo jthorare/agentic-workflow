@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, maxBudget, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -79,7 +79,6 @@ public static partial class SettingsReader
                     Repos = section.Repos?.Select(ContextRepoName.From).ToList(),
                     DocGlobs = globs,
                     Deadline = deadline.Value,
-                    MaxBudget = section.MaxBudget ?? settings.MaxBudget,
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
                     SessionsEnabled = section.Sessions?.Enabled ?? true,
@@ -92,6 +91,8 @@ public static partial class SettingsReader
                     Recognizers = Recognizers(section.Extract),
                     Publish = Publish(section.Publish),
                     Ranker = RankerRules.Read(section.Ranker),
+                    ConceptScan = ConceptScanRules.Read(section.ConceptScan),
+                    HistoryDeadline = HistoryDeadline(section.History),
                 },
                 section.Code,
                 codeDeadline.Value),
@@ -118,6 +119,11 @@ public static partial class SettingsReader
         written is null ? defaults : [.. written.OfType<string>()];   // why: CodeProblem refused a null entry
 
     /// <summary>The first refused 'context.code' glob list: more than 50 entries (151) or an entry that isn't a repo-relative glob (150).</summary>
+    private static TimeSpan? HistoryDeadline(HistorySection? history) => history?.Deadline is { } written ? Duration(written, _maxCodeDeadline) : null;
+
+    private static Error? HistoryProblem(HistorySection? history) =>
+        history?.Deadline is { } written && Duration(written, _maxCodeDeadline) is null ? Invalid("context.history.deadline", "is a duration from 100ms to 86400s, such as 600s or 90s (leave it out for no deadline)") : null;
+
     private static Error? CodeProblem(CodeSection? code) =>
         code is null ? null : CodeListProblem("schemaGlobs", code.SchemaGlobs) ?? CodeListProblem("testGlobs", code.TestGlobs);
 
@@ -215,7 +221,6 @@ public static partial class SettingsReader
 
         return section switch
         {
-            { MaxBudget: < 1_000 or > 1_000_000 } => Invalid("context.maxBudget", "is 1000 to 1000000 tokens"),
             { MinHits: < 0 or > 50 } => Invalid("context.minHits", "is 0 to 50"),
             { Labeling.MaxTokens: < 1_000 or > 20_000_000 } => Invalid("context.labeling.maxTokens", "is 1000 to 20000000 tokens"),
             { Labeling.MaxTokensPerSync: < 1 or > 20_000_000 } => Invalid("context.labeling.maxTokensPerSync", "is 1 to 20000000 tokens"),
@@ -231,7 +236,7 @@ public static partial class SettingsReader
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 8 steps"),
         { CascadeComponentFanOut: < 1 or > 500 } => Invalid("context.cascadeComponentFanOut", "is 1 to 500 features"),
-        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? ConceptScanRules.Problem(section.ConceptScan) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -244,7 +249,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

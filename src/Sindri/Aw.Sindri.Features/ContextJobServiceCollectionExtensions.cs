@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'BuildContextMap' and 'RunContextBacktest'.</summary>
+/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'BuildContextMap', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
 internal static class ContextJobServiceCollectionExtensions
 {
     /// <summary>Adds the jobs, each keyed by a constant: one sync at a time, whatever it names, one build at a time (the profile's one map) and one backtest at a time.</summary>
@@ -30,6 +30,8 @@ internal static class ContextJobServiceCollectionExtensions
                 static _ => JobKey.From("refresh"), static r => RefreshSummary(r))
             .AddJob<PublishContextMapRequest, PublishContextMapResult, PublishContextMapService>(
                 static _ => JobKey.From("map-publish"), static r => PublishSummary(r))
+            .AddJob<ScanContextConceptsRequest, ScanContextConceptsResult, ScanContextConceptsService>(
+                static _ => JobKey.From("concept-scan"), static r => ScanContextConceptsService.Summary(r))
             .AddJob<RunContextBacktestRequest, RunContextBacktestResult, RunContextBacktestService>(
                 static _ => JobKey.From("backtest"), static r => BacktestSummary(r), PrecheckBacktest);
     }

@@ -20,6 +20,26 @@ public interface ILaunchFiles
     /// <returns>When the turn ended, or null while a turn runs or the session has no such hook.</returns>
     public DateTimeOffset? TurnEndedAt(LaunchId launch);
 
+    /// <summary>When the launch's session last stopped on an API error: the StopFailure hook's file, gone again once a new prompt starts a turn.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>When the turn failed, or null.</returns>
+    public DateTimeOffset? TurnFailedAt(LaunchId launch);
+
+    /// <summary>Whether a tool call is running in the launch's session: the PreToolUse hook's file, deleted when the call returns or fails and when the turn ends.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>True while the marker exists.</returns>
+    public bool ToolRunning(LaunchId launch);
+
+    /// <summary>When the idle sweep sent the launch's session its one re-prompt.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>When it was sent, or null when it has not been.</returns>
+    public DateTimeOffset? NudgedAt(LaunchId launch);
+
+    /// <summary>Records that the launch's session was sent its re-prompt (a launch with no files directory is left alone).</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="at">When it was sent.</param>
+    public void MarkNudged(LaunchId launch, DateTimeOffset at);
+
     /// <summary>Deletes the launch's hash, capture rule and reported-id files; whatever is already gone is fine.</summary>
     /// <param name="launch">The launch.</param>
     public void Forget(LaunchId launch);

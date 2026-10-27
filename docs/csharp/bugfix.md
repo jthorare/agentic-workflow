@@ -2,8 +2,8 @@
 
 `bugfix-state` is the state helper the `/bugFixOrchestrator` skill drives a bug fix through. It owns the state file and
 refuses every step the rules don't allow, so the skill can't skip a gate or edit evidence. It is the C# port of
-`skills/bugFixOrchestrator/src` (spec §4a step 1): a reimplementation, not a translation. The TypeScript helper stays
-installed until the switch, and nothing in `setup.sh` points at this build.
+the TypeScript helper `skills/bugFixOrchestrator/src` (spec §4a step 1): a reimplementation, not a translation. The
+TypeScript helper is gone; `scripts/install-cs.sh` publishes this binary and links it as `bugfix-state`.
 
 Source: `src/BugFix` (full shape: `Core`, `Features`, `Infrastructure`, `Host`; NativeAOT binary `bugfix-state`).
 Tests: `tests/Aw.BugFix.Tests` (slices, rules, contract bindings, the CLI end to end) and `tests/Aw.BugFix.Testing`
@@ -14,27 +14,28 @@ Tests: `tests/Aw.BugFix.Tests` (slices, rules, contract bindings, the CLI end to
 The skill text is this CLI's only caller. It keeps working through these points; everything else is this package's own
 design.
 
-- Every command takes `--state <dir>`. After the switch the skill passes `bugfix/<repo-slug>/<ticket-slug>` (spec §4c).
+- Every command takes `--state <dir>`. The skill passes `bugfix/<repo-slug>/<ticket-slug>` (spec §4c).
 - The commands and flags below.
 - Exit 0 on success, 3 on a refusal. A refusal prints one stderr line starting with `refused:`, and the skill reports
   the reason.
 - `run-test` and `run-ui` print `evidence`, the run record path the skill passes back to `advance reproduce` and
   `record-run`.
 - `resume` prints `next`; `status` prints the state with `baseline.commit`.
-- `judge` prints `decision`, `reasons` and `status` (an escalation is asked once more, then falls back to `unresolved`; the status stays `active`).
+- `judge` prints `decision`, `reasons` and `status`, and records the reasons with the verdict (`status` shows them; `resume` adds them to "start-attempt with the failure reasons") (an escalation is asked once more, then falls back to `unresolved`; the status stays `active`). A `partial` or `unresolved` answer with no reasons counts as an escalation (code `no-reasons`): it names nothing the implementer can act on.
 
 ## Commands
 
 | Command | Phase | Does |
 |---|---|---|
-| `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear or text, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
+| `init --state <dir> --ticket <ticket.json>` | (none, or finished) | Reads the ticket (`source` linear, text or github, `id`, `title`, `brief`, `expected`, `actual`; brief and expected not blank) and starts at `intake` |
 | `advance investigate --evidence <handoff.md>` | intake → investigate | Snapshots the `/rootCause` handoff: status `diagnosed`, a `## Root Cause` section, and a `confirmed` hypothesis or at least two hypotheses not ruled out (without a confirmed one the first attempt must be mode B) |
 | `run-test --check <file> [--cwd <dir>] -- <command…>` | any | Runs the test command on a clean tree and registers a run record (with the commit and the working directory) |
 | `run-ui --check <script.json> [--cwd <dir>]` | any | Runs the ui-evidence script on a clean tree and registers a run record |
 | `advance reproduce --evidence <run> --check <file> [--cwd <dir>]` | investigate → reproduce | Freezes the check and the failing baseline |
-| `start-attempt --mode <A\|B\|C> [--abandon-judge]` | reproduce, evaluate → fix | Opens the next attempt (at most 5); `--abandon-judge` leaves behind a candidate whose judge question was asked twice without an answer, once no judge process is running |
+| `start-attempt --mode <A\|B\|C> [--abandon-judge] [--abandon-unrun]` | reproduce, evaluate (fix with `--abandon-unrun`) → fix | Opens the next attempt (at most 5); `--abandon-judge` leaves behind a candidate whose judge question was asked twice without an answer, once no judge process is running; `--abandon-unrun` leaves behind a candidate of this attempt that has no recorded run (`record-run` refused it, so the phase never left fix), recorded in the history with the candidate ids |
 | `record-candidate --branch <b> [--cwd <dir>] [--hypothesis <n>] [--allow-test-changes [--reason <why>]]` | fix, evaluate | Records the worktree's commit as the next candidate (`c1`, `c2`, …) |
 | `record-run <candidate> --evidence <run>` | fix, evaluate → evaluate | Records the frozen check's run against the candidate |
+| `record-run <candidate> --build-failed --log <build.log>` | fix, evaluate → evaluate | Marks a candidate that doesn't build as failed (no check to run), with its non-empty build log, so `start-attempt` can follow |
 | `judge <candidate>` | evaluate | Asks judge resolution-check once and records the verdict |
 | `advance report (--candidate <id> \| --unresolved)` | → report | Finishes resolved (only with a passing run and a `resolved` verdict) or unresolved |
 | `status` | any | Prints the whole state |
@@ -91,9 +92,11 @@ not with another rule.
   isn't its runner verb or a script verb (`test`, `run`, `run-script`) is classified as the program it runs, so
   `pnpm grep …` is a non-runner.
 - **The caller's environment can't steer it.** The check runs with only an allowlist of variables from bugfix-state's
-  own environment. `PATH`, `HOME` and the names listed in `AW_BUGFIX_CHECK_ENV` (for a test that needs `DATABASE_URL`,
-  `JAVA_HOME`, …) decide which code runs, so their values are frozen at the baseline and a later run with other values
-  is refused. State and run records keep each one as a keyed digest (`hmac-sha256:` of the name, a NUL and the value, keyed with
+  own environment. `PATH`, `HOME`, `DOTNET_ROOT` (a .NET apphost needs it) and the names listed in `AW_BUGFIX_CHECK_ENV` (for a test that needs
+  `DATABASE_URL`, `JAVA_HOME`, …) decide which code runs, so their values are frozen at the baseline and a later run with other values
+  is refused. Set `AW_BUGFIX_CHECK_ENV` before the baseline run: only the names the baseline recorded are compared, so a name
+  added to `AW_BUGFIX_CHECK_ENV` after the baseline isn't frozen for that bug fix (and a baseline frozen before `DOTNET_ROOT` joined the list still accepts runs that carry it).
+  `XDG_RUNTIME_DIR` passes through unfrozen. State and run records keep each one as a keyed digest (`hmac-sha256:` of the name, a NUL and the value, keyed with
   the bug fix's random `digest.key`, owner-only, beside `state.json` and never in it), never the value, since it may
   hold a credential; `status` shows the digests. A name listed in `AW_BUGFIX_CHECK_ENV` that also
   passes through (`TZ`, `LANG`, …) is frozen; `USER`, `LOGNAME`, `SHELL`, `TMPDIR`, `TERM`, `CI`, `LANG`, `LANGUAGE`, `TZ` and `LC_ALL`, `LC_CTYPE`,
@@ -103,6 +106,18 @@ not with another rule.
   while `DOTNET_SYSTEM_IO_DISABLEFILELOCKING` is set. Residual risk: what lives outside the repository isn't frozen
   beyond that: installed tools other than the check's own program, files under `HOME` (`~/.npmrc`, shell startup
   files), and dependencies in gitignored directories (`node_modules`, `.venv`).
+- **No display.** A check never sees `DISPLAY` (the environment is an allowlist); a check that needs one, such as a desktop evidence run, names it in `AW_BUGFIX_CHECK_ENV=DISPLAY`, which freezes its value with the check.
+- **A check file main changed.** `record-run` takes a check file that differs from its baseline sha when the run executed the
+  file as it is in the candidate and the file is not among the candidate's own changes, measured from the net base (the
+  baseline plus what main added by a merge, as `record-candidate` and the judge diff use). A shared project file that main
+  changes is no weakening of the check; the history step says so (`record-run c1; the check file … changed on main …`). A
+  change the fix made, or one that can't be told from the fix's (no main ref, a merge conflict), is still AW-BUGFIX-008.
+- **The judge's diff.** It is the candidate's change from the net base, so what a main merge brought in stays out. For a
+  `github` ticket (`id` is the issue number: `#1189`, `1189`, `owner/repo#1189` or the issue URL) it also starts with the diffs
+  of main's own commits, from the baseline up to the net base, whose message says `Part of #N` or `Fixes #N` for that number
+  (not `#N0`): a fix that main already had through a merged "Part of" PR is still the fix. Any other ticket gets the net-base
+  diff alone. The input also carries `checkSource`, the frozen check's own file as committed at the candidate's commit, so a
+  candidate whose red commit already holds the test isn't judged "proofs missing". For a `.csproj` check (`dotnet test --project X.csproj`), `checkSource` is the test class files `--filter-class` and `--filter-method` name (the part after the last `.`, so `*.BugTests` names `BugTests`; for a method, its class; a name still holding a wildcard is skipped), found by `git grep` for the file under the project's directory that declares the class, record, struct or interface, and read at the baseline commit, each under a `// path` header, capped like the diff. `baselineFailure` holds the failure lines (`fail`, `error`, `exception`, `assert`, `expected`, `not ok`, `panic`) of the baseline run's log, capped at 8000 characters; absent when there are none.
 - **A clean tree.** `run-test`, `run-ui`, `record-candidate` and `record-run` refuse a work tree with an uncommitted
   change, or with an untracked file (not ignored) that no registered run left behind: a new fixture or a module that
   shadows another could change what the check does while the commit stays the same. Each test run record keeps the
@@ -186,11 +201,11 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 | AW-BUGFIX-005 | conflict | The step isn't allowed in this phase, or an unfinished bug fix exists at `init` |
 | AW-BUGFIX-006 | conflict | The handoff doesn't support a fix |
 | AW-BUGFIX-007 | conflict | The baseline run doesn't reproduce the bug |
-| AW-BUGFIX-008 | conflict | The check isn't committed, is outside the repository or changed since the baseline |
+| AW-BUGFIX-008 | conflict | The check isn't committed, is outside the repository or changed since the baseline by the fix (a change that only main made, and the candidate merged, is accepted and the reason goes into the history) |
 | AW-BUGFIX-009 | conflict | The evidence isn't a registered, unchanged run record |
 | AW-BUGFIX-010 | conflict | No new attempt now |
 | AW-BUGFIX-011 | conflict | The candidate can't be recorded |
-| AW-BUGFIX-012 | conflict | The test command could pass without running the check |
+| AW-BUGFIX-012 | conflict | The test command could pass without running the check. For `dotnet test` the message adds the fix: pass the test project's `.csproj` as `--project` and use the same `.csproj` as `--check` |
 | AW-BUGFIX-013 | notFound | Unknown candidate |
 | AW-BUGFIX-014 | conflict | The run can't be recorded for the candidate |
 | AW-BUGFIX-015 | conflict | The candidate can't be judged (no passing run, already judged) |
@@ -205,7 +220,7 @@ Everything else is one line on stderr ending with the catalogue code, and nothin
 
 ## Files
 
-Everything lives under the `--state` directory; the C# build never reads TS-written state (spec §4c).
+Everything lives under the `--state` directory; nothing reads state a TypeScript helper wrote (spec §4c).
 
 - `digest.key`: the bug fix's random HMAC key for the environment digests (64 hex characters, owner-only), made by `init`
   before the state (written to a temporary file and moved into place; `init` keeps a valid key and replaces a missing or
@@ -215,7 +230,7 @@ Everything lives under the `--state` directory; the C# build never reads TS-writ
 - `state.json`: the state (`schemaVersion` 1), written to a temporary file and renamed, under `state.lock`. Fields: `ticket`, `phase`,
   `status`, `attempt`, `mode`, `investigation` (`handoff`, `rootCause`, `hypotheses`), `check` (`kind` test or ui,
   `path`, `sha256`, `command`, `directory`, `programSha256`, `environment` (digests), `commandFiles`), `baseline` (`evidence`, `commit`), `candidates` (`id`, `attempt`, `mode`, `branch`,
-  `worktree`, `commit`, `hypothesis`, `changedFiles`, `run`, `verdict`, `judgeAsked`), `runs` (`evidence`, `sha256`), `resolvedBy`,
+  `worktree`, `commit`, `hypothesis`, `changedFiles`, `run`, `verdict` (`decision`, `decisionId`, `reasonCode`, `inputSha256`, `reasons`: judge's reasons; absent in a state file written before they were kept, read as not recorded), `judgeAsked`), `runs` (`evidence`, `sha256`), `resolvedBy`,
   `history`.
 - `runs/<stamp>-<test|ui>-<n>.json`: a run record (`kind`, `outcome` passed, failed or broken, `commit`, `directory`,
   `checkSha256`, `command`, `programSha256`, `environment` (keyed digests), `exitCode`, `output`, `leftovers`, `checkout`); a ui run that produced nothing gives its slot back, with its `.log` (and, for ui, the ui-evidence run directory `<stem>/`).
@@ -228,7 +243,7 @@ Everything lives under the `--state` directory; the C# build never reads TS-writ
 | `IStateStore` (load, save, exclusive lock) | `InMemoryStateStore` | `FileStateStore` (`state.lock`, `FileShare.None`) | `StateStoreContract` |
 | `IRunLedger` | `InMemoryRunLedger` | `FileRunLedger` | `RunLedgerContract` |
 | `IGit`, `IFiles` | `InMemoryRepos` (one fake: git answers about the files the file port reads) | `GitProcess` (git on PATH), `LocalFiles` | `ReposContract` |
-| `ICheckRunner` (returns the exit code and whether it ran to a verdict) | `ScriptedCheckRunner` | `ProcessCheckRunner`: output streamed to the log (16 MB cap); killed after `AW_BUGFIX_CHECK_TIMEOUT_SECONDS` (default 1800); a run that exits keeps its exit code even if background children still hold its output (output after the exit is dropped after 5 s, noted in the log; those children aren't killed: they left the process tree); a run killed at the limit or that couldn't start didn't run to a verdict (broken); runs without loader variables | `CheckRunnerContract` |
+| `ICheckRunner` (returns the exit code and whether it ran to a verdict) | `ScriptedCheckRunner` | `ProcessCheckRunner`: output streamed to the log (16 MB cap); every run's environment carries a unique `AW_BUGFIX_RUN=<token>`, which survives `setsid` and daemonizing (Linux reads `/proc/<pid>/environ`, macOS asks `ps -E`; Windows has the tree kill only); at `AW_BUGFIX_CHECK_TIMEOUT_SECONDS` (default 1800) SIGTERM goes to every process carrying the token (the shell and what it waits on, so its EXIT trap runs), then up to `AW_BUGFIX_CHECK_GRACE_SECONDS` (default 30) to exit, then SIGKILL to the tree and to what is left; a run that exits keeps its exit code, and the same stop (TERM, grace, KILL) runs on whatever it left running, noted in the log (output after the exit is dropped after 5 s when something still holds the pipes); a run stopped at the limit or by a signal (exit 129 to 192, the shell's 128 plus the signal), that left an empty log, or that couldn't start didn't run to a verdict (broken: `advance reproduce` and `record-run` refuse it, so a hang is never a reproduction); runs without loader variables | `CheckRunnerContract` |
 | `IJudge` (asks about the written input file; the answer names the judge's 16-hex input digest) | `ScriptedJudge` | `JudgeCli` (`judge resolution-check`, then `judge why`; `AW_JUDGE_BIN` else PATH; 5 minutes each) | `JudgeContract` |
 | `IUiEvidence` | `ScriptedUiEvidence` | `UiEvidenceCli` (`ui-evidence run <script> <run-dir> --app-build <commit>`; `AW_UI_EVIDENCE_BIN` else PATH) | `UiEvidenceContract` |
 

@@ -10,7 +10,7 @@ public sealed class RealComposeConfigTests
     private const string AuthValue = "test-value-not-real";
 
     private static readonly OnyxPins _pins = new EmbeddedOnyxPins().Pins;
-    private static readonly EnvSettings _settings = new(_pins.Version, 3000, AuthValue);
+    private static readonly EnvSettings _settings = new(_pins.Version, 3189, AuthValue);
 
     private static readonly string[] _nonProfileImages = ["onyxdotapp/onyx-backend", "onyxdotapp/onyx-web-server", "onyxdotapp/onyx-model-server", "library/postgres", "opensearchproject/opensearch", "library/nginx", "library/redis"];
     private static readonly string[] _envKeys = ["IMAGE_TAG", "DISABLE_TELEMETRY", "AUTH_TYPE", "USER_AUTH_SECRET", "INDEXING_MODEL_SERVER_HOST", "HOST_PORT"];
@@ -27,7 +27,7 @@ public sealed class RealComposeConfigTests
 
         Assert.True(rendered.IsSuccess, rendered.IsError ? rendered.Error.Message : "");
         Assert.Contains("ports: !override", rendered.Value, StringComparison.Ordinal);
-        Assert.Contains("\"127.0.0.1:3000:80\"", rendered.Value, StringComparison.Ordinal);
+        Assert.Contains("\"127.0.0.1:3189:80\"", rendered.Value, StringComparison.Ordinal);
         Assert.DoesNotContain("0.0.0.0", rendered.Value, StringComparison.Ordinal);
         foreach (var image in _pins.Images.Where(i => i.Platform == platform))
         {

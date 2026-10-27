@@ -154,6 +154,23 @@
       "shortcut": null
     },
     {
+      "action": "ApplyCommand:rewind",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow/instances/{instanceId}/commands",
+      "cli": "sindri workflow rewind <address> --to <state>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null
+    },
+    {
       "action": "ApplyCommand:takeover",
       "class": "pause",
       "allowedCallers": [
@@ -1007,7 +1024,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/recipes/approve-all",
-      "cli": "sindri-app recipe approve-all",
+      "cli": "sindri recipe approve-all",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

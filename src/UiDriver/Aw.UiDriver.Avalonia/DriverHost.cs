@@ -19,12 +19,20 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
 {
     private static readonly TimeSpan _poll = TimeSpan.FromMilliseconds(50);
 
+    // How long one verb may hold the UI thread's turn before the caller is answered AW-UIDRIVER-004.
+    private static readonly TimeSpan _uiBudget = TimeSpan.FromSeconds(20);
+
+    static DriverHost()
+    {
+        OpenPopups.Track();
+    }
+
     internal Task<Result<TreeResponse>> Tree(TreeRequest request) => OnUi<TreeResponse>(tree =>
     {
         var start = request.From is { } origin ? tree.Resolve(origin) : Results.Success(tree.Nodes[0]);
         return start.IsError
             ? start.Error
-            : new TreeResponse(tree.InfoOf(start.Value.Facts.Id, start.Value.Visual, Math.Clamp(request.Depth ?? TreeRequest.DefaultDepth, 0, 64)));
+            : new TreeResponse(tree.InfoOf(start.Value.Facts.Id, start.Value.Visual, Math.Clamp(request.Depth ?? TreeRequest.DefaultDepth, 0, TreeRequest.MaxDepth)));
     });
 
     internal Task<Result<SearchResponse>> Search(SearchRequest request) => OnUi<SearchResponse>(tree =>
@@ -102,7 +110,7 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
             if (waited >= limit)
             {
                 var ms = ((int)limit.TotalMilliseconds).ToString(CultureInfo.InvariantCulture);
-                return UiDriverErrors.TimedOut.With($"{request.Selector.Describe()} was not {state} within {ms} ms");
+                return UiDriverErrors.TimedOut.With($"{request.Selector.Describe()} was not {state} within {ms} ms{seen.Value.Hint}");
             }
 
             await Task.Delay(_poll, clock, cancellationToken).ConfigureAwait(false);
@@ -113,16 +121,17 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
     {
         if (!WaitStates.TryParse(request.State, out var state))
         {
-            return UiDriverErrors.Invalid.With($"'{request.State}' is not a wait state (exists, visible, hidden, gone, enabled, disabled, textEquals, textContains)");
+            return UiDriverErrors.Invalid.With($"'{request.State}' is not a wait state (exists, visible, hidden, gone, notVisible, enabled, disabled, textEquals, textContains)");
         }
 
         return WaitStates.NeedsText(state) && request.Text is null ? UiDriverErrors.Invalid.With($"{state} needs the request's text") : state;
     }
 
-    private Task<Result<(NodeInfo? Node, bool Holds)>> Look(WaitForRequest request, WaitState state) => OnUi<(NodeInfo? Node, bool Holds)>(tree =>
+    private Task<Result<(NodeInfo? Node, bool Holds, string Hint)>> Look(WaitForRequest request, WaitState state) => OnUi<(NodeInfo? Node, bool Holds, string Hint)>(tree =>
     {
         var node = tree.Find(request.Selector);
-        return (node is { } n ? tree.InfoOf(n) : null, WaitStates.Holds(state, node?.Facts, request.Text));
+        var matches = SelectorMatcher.All(request.Selector, tree.Nodes.Select(static n => n.Facts));
+        return (node is { } n ? tree.InfoOf(n) : null, WaitStates.Holds(state, matches, node?.Facts, request.Text), WaitStates.Hint(state, matches));
     });
 
     private Task<Result<ActedResponse>> Act(Selector? selector, Func<UiTree, Visual, Result<Unit>> work) => OnUi<ActedResponse>(tree =>
@@ -152,8 +161,9 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
         return UiDriverErrors.NoMatch.With("nothing has keyboard focus; name an element");
     }
 
-    private async Task<Result<T>> OnUi<T>(Func<UiTree, Result<T>> work) =>
-        await Dispatcher.UIThread.InvokeAsync(() =>
+    private async Task<Result<T>> OnUi<T>(Func<UiTree, Result<T>> work)
+    {
+        var run = Dispatcher.UIThread.InvokeAsync(() =>
         {
             if (window() is not { } root)
             {
@@ -162,5 +172,14 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
 
             root.UpdateLayout();
             return work(new UiTree(root));
-        });
+        }).GetTask();
+        try
+        {
+            return await run.WaitAsync(_uiBudget, clock).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            return UiDriverErrors.TimedOut.With($"the app's UI thread did not finish within {((int)_uiBudget.TotalMilliseconds).ToString(CultureInfo.InvariantCulture)} ms");
+        }
+    }
 }

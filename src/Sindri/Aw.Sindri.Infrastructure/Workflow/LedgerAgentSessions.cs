@@ -18,7 +18,7 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 internal sealed class LedgerAgentSessions(ILaunchViews views, ILedgerReader ledger, EventFactory events) : IAgentSessions
 {
     private const int Page = 500;
-    private const string IdleDetail = "the agent's turn ended without a report and nothing happened for 120 s (fix: take the Step over, or send it again)";
+    private const string IdleDetail = "agent-stalled: the agent sat idle at its prompt with no report (its turn ended, or an API error stopped it and its one re-prompt got no answer; fix: take the Step over, or send it again)";
 
     public async ValueTask<Result<AgentSessionState>> Watch(LaunchId launch, CancellationToken cancellationToken)
     {
@@ -40,6 +40,9 @@ internal sealed class LedgerAgentSessions(ILaunchViews views, ILedgerReader ledg
             SessionEndReason.Exit => new AgentSessionState(AgentSessionEnd.Exit, payload.Value.ExitCode),
             SessionEndReason.Lost => new AgentSessionState(AgentSessionEnd.Lost, payload.Value.ExitCode),
             SessionEndReason.Idle => new AgentSessionState(AgentSessionEnd.Idle, ExitCode: null, IdleDetail),
+
+            // Nothing writes a limit ending before the sandbox launches Steps; SB-5a maps it to step.failed(limit) (sandbox spec §12).
+            SessionEndReason.Limit => throw new InvalidOperationException("the ledger holds session.ended reason Limit, which this build does not map yet"),
             _ => throw new InvalidOperationException($"the ledger holds session.ended reason {payload.Value.Reason}, which this build does not know"),
         };
     }

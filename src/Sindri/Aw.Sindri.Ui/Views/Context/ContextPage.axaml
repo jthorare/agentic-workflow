@@ -69,6 +69,10 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="ContextTitle" Classes="page-title" Text="{Binding Title}" />
         <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
+        <TextBlock x:Name="ContextRulesOlder" Classes="caption" Text="{Binding RulesOlderText}" IsVisible="{Binding ShowRulesOlder}" VerticalAlignment="Center" AutomationProperties.Name="{Binding RulesOlderText}" />
+        <Panel IsVisible="{Binding ShowRulesRefresh}">
+          <ctl:CommandControl x:Name="ContextRefresh" DataContext="{Binding RefreshControl}" VerticalAlignment="Center" />
+        </Panel>
       </StackPanel>
       <Border x:Name="ContextDraftTag" Grid.Column="2" IsVisible="{Binding IsDraft}" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.Pill}" Padding="10,2" VerticalAlignment="Center"
               AutomationProperties.Name="{Binding DraftTag}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">

@@ -60,13 +60,21 @@ internal sealed class FileApprovals(SindriSettings settings, JsonSerializerOptio
             return SindriErrors.ProfileNotApproved.With($"{snapshot} is missing (fix: sindri profile approve)");
         }
 
-        var loaded = ProfileReading.FromJson(await File.ReadAllBytesAsync(snapshot, cancellationToken).ConfigureAwait(false), snapshot, options);
-        if (loaded.IsError || loaded.Value.Hash != hash)
+        // The snapshot stores the canonical bytes of the build that approved it, and its directory is the sha256 of exactly those bytes. Trust that: re-hashing through today's
+        // model gives another hash whenever the model gained a member (#1143), which would make every approval unreadable after an upgrade.
+        var bytes = await File.ReadAllBytesAsync(snapshot, cancellationToken).ConfigureAwait(false);
+        if (ProfileHashing.Of(bytes) != hash)
         {
             return SindriErrors.ProfileNotApproved.With($"{snapshot} doesn't match its approval hash (fix: sindri profile approve)");
         }
 
-        return loaded.Value;
+        var loaded = ProfileReading.FromJson(bytes, snapshot, options);
+        if (loaded.IsError)
+        {
+            return SindriErrors.ProfileNotApproved.With($"{snapshot} can't be read by this build: {loaded.Error.Message} (fix: sindri profile approve <the live hash>)");
+        }
+
+        return loaded.Value with { Hash = hash };   // the hash that was approved, not the one today's model computes
     }
 
     private void Write(LoadedProfile profile)

@@ -1,7 +1,10 @@
 using System.Net;
 using Aw.Sindri.Core.Auth;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Tests.Ledger;
+using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.Callers;
@@ -76,5 +79,51 @@ public sealed class CallerAuthTests(CallerHost host) : IClassFixture<CallerHost>
         Assert.Contains("prover label", prover.Body, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.OK, cli.Status);
         await app.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    private const string Launch = "LCH-00000000000000000000000000000001";
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_session_with_an_unknown_launch_is_403_SND_AUTH_003()
+    {
+        var answer = await host.Http.Ask(Get("/sindri/status", (SindriHeaders.Launch, "LCH-000000000000000000000000000000ff")));
+
+        Assert.Equal((HttpStatusCode.Forbidden, "SND-AUTH-003"), (answer.Status, answer.Code));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_session_with_an_open_launch_answers()
+    {
+        LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
+
+        var answer = await host.Http.Ask(Get("/sindri/status", (SindriHeaders.Launch, Launch)));
+
+        Assert.Equal(HttpStatusCode.OK, answer.Status);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task An_open_launch_lands_on_the_callers_context_as_a_session_even_under_a_human_header()
+    {
+        LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
+
+        var answer = await host.Http.Ask(Get("/test/caller", (SindriHeaders.Caller, "human"), (SindriHeaders.Launch, Launch)));
+
+        Assert.Equal((HttpStatusCode.OK, "Session|" + Launch), (answer.Status, answer.Body));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_launch_secret_makes_the_caller_a_session_even_with_this_starts_human_token()
+    {
+        var answer = await host.Http.Ask(Get("/test/caller", [.. Human(host.Token.Value), (SindriHeaders.LaunchSecret, "proof")]));
+
+        Assert.Equal((HttpStatusCode.OK, "Session|"), (answer.Status, answer.Body));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_malformed_launch_header_is_400_SND_API_007()
+    {
+        var answer = await host.Http.Ask(Get("/sindri/status", (SindriHeaders.Launch, "nope")));
+
+        Assert.Equal((HttpStatusCode.BadRequest, "SND-API-007"), (answer.Status, answer.Code));
     }
 }

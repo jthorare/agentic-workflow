@@ -189,7 +189,7 @@ publish_sindri() {
   git -C "$ROOT" ls-files -z --cached --others --exclude-standard -- "${SINDRI_BUILD_PATHSPECS[@]}" context \
     | while IFS= read -r -d '' f; do if [ -f "$ROOT/$f" ]; then printf '%s\0' "$f"; fi; done \
     | (cd "$ROOT" && tar --null -cf - -T -) | tar -xf - -C "$tree" || die "could not copy the build inputs"
-  # the shipped recipes are HEAD's (as sindri-app.sh embeds them): an edited working-tree recipe is never embedded
+  # the shipped recipes are HEAD's (as scripts/install-cs.sh embeds them): an edited working-tree recipe is never embedded
   find "$tree/recipes/sindri" -delete 2>/dev/null
   git -C "$ROOT" archive HEAD recipes/sindri | tar -xf - -C "$tree" || die "could not stage recipes/sindri from HEAD"
   commit="$(git -C "$ROOT" rev-parse --short HEAD)"
@@ -198,7 +198,7 @@ publish_sindri() {
   (cd "$tree" && $pre dotnet publish src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj -c Release --no-self-contained \
     -p:AwRecipesDir="$tree/recipes/sindri" -o "$out") </dev/null >"$log" 2>&1 || { tail -20 "$log" >&2; die "publishing sindri failed"; }
   [ -x "$out/sindri" ] || die "the publish left no sindri in $out"
-  # The C# judge beside it (NativeAOT, as sindri-app.sh publishes it): step.judge.choose runs `judge choose` through
+  # The C# judge beside it (NativeAOT, as scripts/install-cs.sh publishes it): step.judge.choose runs `judge choose` through
   # AW_SINDRI_JUDGE, and the judge on the PATH is the TypeScript one, which has no choose. Published apart, then the
   # binary and its bundled e_sqlite3 are copied next to sindri.
   local jout="$SCRATCH/judge-bin" rid f
@@ -246,7 +246,8 @@ write_profile() {
     # step.build.red-check needs one to fail on the red commit; checks and ship.green need all to pass
     echo "  build:"
     echo "    commands:"
-    local c; for c in "${BUILD_COMMANDS[@]}"; do printf "      - '%s'\n" "${c//\'/\'\'}"; done
+    # the quote comes from a variable: bash 3.2 (macOS) keeps the backslashes of a \' replacement inside double quotes
+    local c q="'"; for c in "${BUILD_COMMANDS[@]}"; do printf "      - '%s'\n" "${c//$q/$q$q}"; done
     if [ -n "$AGENT" ]; then echo "  agent: { target: $AGENT }"; fi
   } > "$file"
   chmod 600 "$file"

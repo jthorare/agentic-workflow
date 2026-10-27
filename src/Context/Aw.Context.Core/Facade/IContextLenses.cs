@@ -1,6 +1,8 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
+using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
@@ -62,10 +64,24 @@ public interface IContextLenses
     /// <returns>The view, or SND-CONTEXT-001/003/004/006/020/030/044/045/120.</returns>
     public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken);
 
+    /// <summary>Ranked full-text search over everything in the map the caller may read: node labels, file paths, record titles, decision wording and quotes, descriptive attributes (title over path over text).</summary>
+    /// <param name="query">The words, the limit, the area and repo, and which map.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The hits best first and how many matched in all (a session whose repo implements nothing gets none), or SND-CONTEXT-001/004/006/020/030/044/045/120.</returns>
+    public ValueTask<Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken);
+
     /// <summary>The direct children of a repo path with their status.</summary>
     /// <param name="query">The repo, the path and the filters.</param>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The file map, or SND-CONTEXT-001/003/004/020/030/044/045 (045 for a repo outside the profile or a session's scope, answered the same way).</returns>
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>The prefiltered graph the scoping agent Steps work from (issue 1005): nodes within the depth and hops, the role globs and edge limits applied, ranked, capped by nodes and bytes.</summary>
+    /// <param name="query">The anchors, the map, the range, the brief for ranking and the caps.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The graph, or SND-CONTEXT-153 while the engine can't build it, else as <see cref="LensesOf(IReadOnlyList{string}, MapRead, LensRange, ContextScope, CancellationToken)"/>.</returns>
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken);
 }

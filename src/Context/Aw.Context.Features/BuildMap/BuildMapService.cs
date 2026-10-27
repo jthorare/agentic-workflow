@@ -5,6 +5,8 @@ using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Overrides;
+using Aw.Context.Core.Results;
+using Aw.Context.Core.Roles;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
@@ -21,7 +23,7 @@ namespace Aw.Context.Features.BuildMap;
 internal sealed class BuildMapService(
     IRepoReader repos,
     IClusterSource clusterSource,
-    ILabeler labeler,
+    MapNamers namers,
     MapBuildGate gate,
     IDefaultBranch defaults,
     IGraphStore store,
@@ -61,6 +63,7 @@ internal sealed class BuildMapService(
         var degraded = new List<string>();
         (string Commit, ContextRepoName Name)? primary = null;
         var heads = new List<MapHead>(mappedRepos.Count);
+        var dropped = new List<RoleDropped>();
         foreach (var repo in mappedRepos)
         {
             var one = await Extract(progress, settings, repo, cancellationToken).ConfigureAwait(false);
@@ -71,12 +74,13 @@ internal sealed class BuildMapService(
 
             found = found.Plus(one.Value.Map);
             degraded.AddRange(one.Value.Degraded.Except(degraded, StringComparer.Ordinal));
+            dropped.AddRange(one.Value.Dropped);
             primary ??= (one.Value.Commit, repo.Name);
             heads.Add(new MapHead(repo.Name, one.Value.Commit, await OnDefault(repo, one.Value.Commit, cancellationToken).ConfigureAwait(false)));
         }
 
         // why: mappedRepos is not empty, so the loop set the primary
-        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads);
+        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads, settings) { Dropped = dropped };
     }
 
     private async ValueTask<Result<MapBuildReport>> Save(Reading read, IReadOnlyList<ContextRepo> profileRepos, IReadOnlyList<ContextRepo> mappedRepos, CancellationToken cancellationToken)
@@ -95,13 +99,22 @@ internal sealed class BuildMapService(
         }
 
         var at = clock.GetUtcNow();
-        var (kept, undo) = MapAccess.WithoutDenied(basis, current.Value?.Overrides ?? [], profileRepos, mappedRepos, at);
-        undo = UndoAlso(undo, open.Value, profileRepos, mappedRepos, at);
-        var draft = await store.SaveDraft(new MapImport(read.Name, read.Commit, Join(kept, read.Found), undo, read.Heads), at, cancellationToken).ConfigureAwait(false);
-        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found), read.Degraded, read.Heads);
+        var ruleset = MapRuleset.Of(ScopeRules.Mapped(read.Settings, profileRepos));
+        var changed = current.Value is { } map && !string.Equals(map.Version.Ruleset, ruleset, StringComparison.Ordinal);
+        var cuts = new BuildCuts(profileRepos, mappedRepos, read.Found, changed, at);
+        var (kept, undo) = cuts.Apply(basis, current.Value?.Overrides ?? []);
+        undo = UndoAlso(undo, open.Value, cuts);
+        // The concepts ('index.concepts' pins of the mapped repos first) are derived over the whole joined graph (records and decisions included) and saved in the draft, so reads never call a model.
+        // A namer or a code index that can't answer leaves the deterministic names or the plain grouping and says so as a degraded note.
+        var concepts = await namers.Concepts.Run(read.Settings, Join(WithoutDerivedConcepts(kept), read.Found), [.. mappedRepos.SelectMany(r => r.Concepts)], mappedRepos, cancellationToken).ConfigureAwait(false);
+        var draft = await store.SaveDraft(new MapImport(read.Name, read.Commit, concepts.Graph, undo, read.Heads) { Ruleset = ruleset, Dropped = read.Dropped }, at, cancellationToken).ConfigureAwait(false);
+        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found), [.. read.Degraded, .. concepts.Notes], read.Heads);
     }
 
-    private sealed record Reading(ExtractedMap Found, IReadOnlyList<string> Degraded, ContextRepoName Name, string Commit, IReadOnlyList<MapHead> Heads);
+    private sealed record Reading(ExtractedMap Found, IReadOnlyList<string> Degraded, ContextRepoName Name, string Commit, IReadOnlyList<MapHead> Heads, ContextSettings Settings)
+    {
+        public IReadOnlyList<RoleDropped> Dropped { get; init; } = [];
+    }
 
     // Whether the default branch holds the commit the build read; a checkout whose default ref can't be read counts as no (the repo is then not waited on), never a failed build.
     private async ValueTask<bool> OnDefault(ContextRepo repo, string commit, CancellationToken cancellationToken)
@@ -111,10 +124,10 @@ internal sealed class BuildMapService(
     }
 
     // The open draft this build replaces may hold nodes the current map doesn't (a surface found since the last promote): the decisions about those it would lose to the cut are undone too, in the same write.
-    private static IReadOnlyList<MapOverride> UndoAlso(IReadOnlyList<MapOverride> undo, MapSnapshot? openDraft, IReadOnlyList<ContextRepo> profileRepos, IReadOnlyList<ContextRepo> mappedRepos, DateTimeOffset at) =>
+    private static IReadOnlyList<MapOverride> UndoAlso(IReadOnlyList<MapOverride> undo, MapSnapshot? openDraft, BuildCuts cuts) =>
         openDraft is null
             ? undo
-            : [.. undo.Concat(MapAccess.WithoutDenied(openDraft.Graph, openDraft.Overrides, profileRepos, mappedRepos, at).Undo).DistinctBy(o => o.Undoes?.Value, StringComparer.Ordinal)];
+            : [.. undo.Concat(cuts.Apply(openDraft.Graph, openDraft.Overrides).Undo).DistinctBy(o => o.Undoes?.Value, StringComparer.Ordinal)];
 
     private async ValueTask<Result<RepoExtraction>> Extract(IProgress<string>? progress, ContextSettings settings, ContextRepo repo, CancellationToken cancellationToken)
     {
@@ -135,8 +148,20 @@ internal sealed class BuildMapService(
         }
 
         // A model that couldn't answer leaves the clusters their file-derived names.
-        var features = ClusterFeatures.Propose(repo.Name, clusters, labels.IsError ? [] : labels.Value.Labels, extracted);
-        return new RepoExtraction(extracted.Plus(features), commit, Degraded(clusters, labels, timedOut));
+        var features = ClusterFeatures.Propose(repo, clusters, labels.IsError ? [] : labels.Value.Labels, extracted);
+        return new RepoExtraction(extracted.Plus(features), commit, Degraded(clusters, labels, timedOut), await Dropped(repo, commit, cancellationToken).ConfigureAwait(false));
+    }
+
+    // What the repo's ignored roles dropped from the tracked files (issue 1161); an unreadable listing counts nothing, never a failed build.
+    private async ValueTask<IReadOnlyList<RoleDropped>> Dropped(ContextRepo repo, string commit, CancellationToken cancellationToken)
+    {
+        if (repo.Roles.All(static r => r.Demoted))
+        {
+            return [];
+        }
+
+        var tracked = await repos.ListTracked(repo, commit, cancellationToken).ConfigureAwait(false);
+        return tracked.IsError ? [] : RoleCounter.Dropped(repo, tracked.Value);
     }
 
     private static string[] Degraded(ClusterSet clusters, Result<LabelPass> labels, bool timedOut) =>
@@ -203,11 +228,20 @@ internal sealed class BuildMapService(
         }
 
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"labeling {clusters.Clusters.Count} clusters"));
-        return await labeler.Label(clusters.Clusters, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
+        return await namers.Labeler.Label(clusters.Clusters, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
     }
 
     private static void Tell(IProgress<string>? progress, int done, int total) =>
         progress?.Report(string.Create(CultureInfo.InvariantCulture, $"extracting {done}/{total} files"));
+
+    // The concepts the last build derived are rebuilt from scratch with the new features; a person's own concept nodes (human provenance) stay.
+    private static GraphSnapshot WithoutDerivedConcepts(GraphSnapshot kept)
+    {
+        var derived = kept.Nodes.Where(n => n.Key.Kind == NodeKind.Concept && n.Provenance != Provenance.Human).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        return derived.Count == 0
+            ? kept
+            : kept with { Nodes = [.. kept.Nodes.Where(n => !derived.Contains(n.Key.Value))], Edges = [.. kept.Edges.Where(e => !derived.Contains(e.To.Value) && !derived.Contains(e.From.Value))] };
+    }
 
     // The current map first (already without what the built repos' deny globs take out, spec §6.2): what a person put there wins over what the build found, and a promote loses nothing.
     private static GraphSnapshot Join(GraphSnapshot kept, ExtractedMap found) =>
@@ -224,5 +258,5 @@ internal sealed class BuildMapService(
                 [.. found.Edges.Where(e => e.Type == EdgeType.Implements && e.To.Value == n.Key.Value && e.From.Kind == NodeKind.Code).Select(e => e.From).DistinctBy(k => k.Value, StringComparer.Ordinal).OrderBy(k => k.Value, StringComparer.Ordinal)])),
     ];
 
-    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded);
+    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded, IReadOnlyList<RoleDropped> Dropped);
 }

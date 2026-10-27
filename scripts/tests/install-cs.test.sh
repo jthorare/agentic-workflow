@@ -6,7 +6,7 @@
 # current and does not publish; the verify step runs each binary in a scratch AW_STATE_DIR; a failed publish and a build that
 # does not answer leave nothing behind; --link needs a build for this source, switches `current`, writes the six wrappers over
 # an existing TS wrapper, and the sindri wrapper exports the three binary paths (AW_UI_EVIDENCE_BIN among them) as resolved
-# paths; pruning keeps the newest two, `current` and the build a running serve executes; --rebuild of that build is declined.
+# paths; the shipped recipes are staged from HEAD and gated by their evals (a count mismatch, a git archive failure and a non-git tree fail); pruning keeps the newest two, `current` and the build a running serve executes; --rebuild of that build is declined.
 # Run: bash scripts/tests/install-cs.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -28,7 +28,7 @@ export AW_STATE_DIR="$WORK/state" CLAUDE_LOCAL_BIN="$WORK/localbin" TMPDIR="$WOR
 export DOTNET_ROOT="$WORK/dotnet-root" AW_SINDRI_HOME="$WORK/sindri-home"
 unset AW_SINDRI_JUDGE AW_PACKETS_BIN AW_UI_EVIDENCE_BIN AW_JUDGE_PROVIDERS
 mkdir -p "$TMPDIR" "$CLAUDE_LOCAL_BIN" "$WORK/fakebin" "$DOTNET_ROOT"
-export FAKE_SDK="10.0.100" FAKE_LOG="$WORK/publishes.log" FAKE_CALLS="$WORK/calls.log" FAKE_BIN="$WORK/fake-bin.sh"
+export FAKE_SDK="10.0.100" FAKE_LOG="$WORK/publishes.log" FAKE_CALLS="$WORK/calls.log" FAKE_STAGED="$WORK/staged.log" FAKE_BIN="$WORK/fake-bin.sh"
 : > "$FAKE_LOG"; : > "$FAKE_CALLS"
 
 # What every published fake binary does (the generated stubs set FAKE_NAME, FAKE_REV, FAKE_RECIPES and FAKE_SELF, then run this).
@@ -39,7 +39,17 @@ case "$FAKE_NAME" in
   sindri)
     case "${1:-}" in
       help) echo "usage: sindri <verb>" ;;
-      recipe) if [ "$2" = manifest ]; then echo "{\"digest\":\"d1\"}"; else echo "{\"recipes\":[$(seq -s, 1 "$FAKE_RECIPES")]}"; fi ;;
+      recipe)
+        if [ "$2" = manifest ]; then echo "{\"digest\":\"sha256:$(find "$3" -type f | LC_ALL=C sort | xargs cat | cksum | tr -d ' ')\"}"
+        else
+          echo "eval-call" >> "$FAKE_CALLS"
+          if [ "${EVAL_FAIL:-}" = 1 ]; then echo "workflow.a@1: happy fail"; exit 1; fi
+          list="" i=0   # no seq: BSD seq differs from GNU (-s, count-down on an empty range)
+          while [ "$i" -lt $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})) ]; do i=$((i + 1)); list="${list:+$list,}$i"; done
+          echo "{\"recipes\":[$list]}"
+        fi ;;
+      agents) if [ -n "${FAKE_OPEN_RUNS:-}" ]; then echo '{"sessions":[{"ref":"claude/abc","state":"running","launch":{"instance":"ITM-1/line/3/scoping.1","state":"challenge","attempt":1}}]}'; else echo '{"sessions":[]}'; fi ;;
+      profile) echo "${FAKE_PROFILE_OUT:-}"; exit "${FAKE_PROFILE_RC:-0}" ;;
       env) echo "judge=$AW_SINDRI_JUDGE packets=$AW_PACKETS_BIN evidence=$AW_UI_EVIDENCE_BIN dir=$(cd "$(dirname "$FAKE_SELF")" && pwd -P) droot=$DOTNET_ROOT" ;;
     esac ;;
   judge) echo "judge health ok" ;;
@@ -74,6 +84,9 @@ case "$proj" in
   *Aw.Readiness.App*) name=aw-readiness ;; *) exit 3 ;;
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
+if [ "$name" = sindri ]; then   # what the build copy's recipes are, for the staging test
+  { echo "recipes=$(cd "$recipes" && find . -type f | LC_ALL=C sort | tr '\n' ' ')"; echo "recipe_one=$(cat "$recipes/one.yaml")"; } > "$FAKE_STAGED"
+fi
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
 mkdir -p "$out"
 n=0; [ -z "$recipes" ] || n="$(find "$recipes" -name '*.yaml' | wc -l | tr -d ' ')"
@@ -88,7 +101,7 @@ export PATH="$WORK/fakebin:$PATH"
 REPO="$WORK/repo"
 mkdir -p "$REPO/scripts/lib" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
-cp "$DIR/lib/sindri-build-inputs.sh" "$REPO/scripts/lib/"
+cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
 echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
@@ -221,9 +234,84 @@ check "--rebuild of the running build exits 0" "$rc" "0"
 has "tells the owner to stop sindri" "$out" "run sindri stop, then re-run"
 check "and publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
 check "the running build is untouched" "$(cat "$B/$S5/build-info")" "$before"
+# --- open agent runs under a running serve (#1000): no terminal stops the publish, AW_SINDRI_STOP_OK=1 goes on ---
+bump open-runs; : > "$FAKE_LOG"
+out="$(FAKE_OPEN_RUNS=1 bash "$INSTALL" --publish 2>&1 < /dev/null)"; rc=$?
+check "open agent runs with no terminal stop the publish" "$rc" "1"
+has "lists the open run" "$out" "claude/abc  ITM-1/line/3/scoping.1 · challenge  running"
+has "names the override" "$out" "AW_SINDRI_STOP_OK=1"
+check "and publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+out="$(FAKE_OPEN_RUNS=1 AW_SINDRI_STOP_OK=1 bash "$INSTALL" --publish 2>&1 < /dev/null)"; rc=$?
+check "AW_SINDRI_STOP_OK=1 publishes anyway" "$rc" "0"
+has "and says so" "$out" "AW_SINDRI_STOP_OK=1: going on"
+: > "$FAKE_LOG"
 kill "$serve_pid" 2> /dev/null; serve_pid=""
 sleep 0.3
 bash "$INSTALL" --publish --rebuild > /dev/null 2>&1; check "--rebuild with no serve exits 0" "$?" "0"
 check "and publishes the seven binaries again" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "7"
+
+# --- the shipped recipes: staged from HEAD, and the eval gate ---
+ccommit() { g commit -q "$@" > /dev/null 2>&1; }
+echo "name: one-edited" > "$REPO/recipes/sindri/one.yaml"; echo "name: x" > "$REPO/recipes/sindri/x.yaml"
+out="$(bash "$INSTALL" --publish --rebuild 2>&1)"; rc=$?
+check "staging: the rebuild exits 0" "$rc" "0"
+check "staging: the build copy holds HEAD's recipe files only" "$(grep '^recipes=' "$FAKE_STAGED")" "recipes=./one.yaml ./two.yaml "
+check "staging: the edited recipe is HEAD's content" "$(grep '^recipe_one=' "$FAKE_STAGED")" "recipe_one=name: one"
+check "staging: the working tree is untouched" "$(cat "$REPO/recipes/sindri/one.yaml"):$([ -f "$REPO/recipes/sindri/x.yaml" ] && echo kept)" "name: one-edited:kept"
+g checkout -q -- recipes/sindri/one.yaml; rm -f "$REPO/recipes/sindri/x.yaml"
+
+cur_before="$(readlink "$B/current")"; DG="$B/recipes-digest"; D_BEFORE="$(cat "$DG")"
+echo "name: one-v3" > "$REPO/recipes/sindri/one.yaml"; g add -A; ccommit -m "recipe 3"
+: > "$FAKE_CALLS"
+out="$(EVAL_FAIL=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
+check "eval: a failing eval fails the publish" "$rc" "1"
+has "eval: the sentence" "$out" "recipe evals failed"
+has "eval: the eval's own output" "$out" "workflow.a@1: happy fail"
+check "eval: the digest is as it was, no stage or lock left" "$([ "$(cat "$DG")" = "$D_BEFORE" ] && echo same):$(find "$B" -mindepth 1 -maxdepth 1 -name '.*' | wc -l | tr -d ' ')" "same:0"
+check "eval: current unchanged" "$(readlink "$B/current")" "$cur_before"
+
+: > "$FAKE_CALLS"
+bash "$INSTALL" --publish > /dev/null 2>&1; rc=$?
+check "eval: the same source publishes when the evals pass, running them once" "$rc:$(grep -c '^eval-call$' "$FAKE_CALLS")" "0:1"
+check "eval: the new digest is recorded" "$([ "$(cat "$DG")" != "$D_BEFORE" ] && echo recorded)" "recorded"
+
+ccommit --allow-empty -m "empty"
+: > "$FAKE_CALLS"
+EVAL_FAIL=1 bash "$INSTALL" --publish > /dev/null 2>&1; rc=$?
+check "eval: an unchanged digest skips the evals, the build still publishes" "$rc:$(grep -c '^eval-call$' "$FAKE_CALLS")" "0:0"
+
+echo "name: three" > "$REPO/recipes/sindri/three.yaml"; g add -A; ccommit -m "recipe three"
+D_BEFORE="$(cat "$DG")"
+out="$(EVAL_COUNT_DELTA=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
+check "eval: an embedded count that differs from the staged yaml count fails" "$rc" "1"
+has "eval: names both counts" "$out" "embeds 4 recipes but recipes/sindri has 3"
+check "eval: a count failure records no digest" "$([ "$(cat "$DG")" = "$D_BEFORE" ] && echo same)" "same"
+
+# A profile approval this build can't read (#1143) or that isn't there: --link says the one command and still exits 0.
+bash "$INSTALL" --publish > /dev/null 2>&1   # the count failure above left this source unbuilt; --link needs a build to link
+out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-005 x/profile.json doesn't match its approval hash" bash "$INSTALL" --link 2>&1)"; rc=$?
+check "an unreadable approval: --link still exits 0" "$rc" "0"
+has "an unreadable approval: the hint names the command" "$out" "run \`sindri profile approve\` to see the live hash"
+out="$(FAKE_PROFILE_RC=1 FAKE_PROFILE_OUT="valid, not approved" bash "$INSTALL" --link 2>&1)"; rc=$?
+has "an unapproved profile: the hint" "$out" "the profile isn't approved by this build; run \`sindri profile approve\`"
+out="$(bash "$INSTALL" --link 2>&1)"
+check "an approved profile: no hint" "$(printf '%s' "$out" | grep -c 'profile approve')" "0"
+
+# A failed `git archive` fails the publish: nothing is published and no empty recipes set is embedded.
+mkdir -p "$WORK/gitfail"
+printf '#!/usr/bin/env bash\nfor a in "$@"; do [ "$a" = archive ] && { echo "fatal: archive boom" >&2; exit 128; }; done\nexec "%s" "$@"\n' "$(command -v git)" > "$WORK/gitfail/git"
+chmod +x "$WORK/gitfail/git"
+: > "$FAKE_LOG"
+out="$(PATH="$WORK/gitfail:$PATH" bash "$INSTALL" --publish --rebuild 2>&1)"; rc=$?
+check "archive failure: exit 1" "$rc" "1"
+has "archive failure: the sentence" "$out" "could not stage recipes/sindri from HEAD (git archive failed)"
+check "archive failure: nothing is published" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+
+# A tree that is not a git checkout cannot be published.
+NG="$WORK/nogit"; mkdir -p "$NG/scripts/lib" "$NG/src/Sindri/Aw.Sindri.Host"
+cp "$DIR/install-cs.sh" "$NG/scripts/"; cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$NG/scripts/lib/"; cp "$REPO/global.json" "$NG/"
+out="$(cd "$WORK" && GIT_CEILING_DIRECTORIES="$WORK" bash "$NG/scripts/install-cs.sh" --publish 2>&1)"; rc=$?
+check "not a git checkout: exit 1" "$rc" "1"
+has "not a git checkout: the sentence" "$out" "can only be published from a git checkout"
 
 [ "$fail" = 0 ] && echo "all install-cs tests passed" || { echo "install-cs tests FAILED"; exit 1; }

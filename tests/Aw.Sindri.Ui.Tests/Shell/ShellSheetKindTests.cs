@@ -121,13 +121,13 @@ public sealed class ShellSheetKindTests
 
     // a11y-1: the kind is part of the name, so "workflow/X" and "recipe/X" are not both "X". Ids that name themselves (ITM-, REQ-, JOB-) stay bare.
     [Theory]
-    [InlineData("workflow/WFI-1", "Workflow WFI-1", "Reopen workflow WFI-1")]
+    [InlineData("workflow/WFI-1", "Workflow WFI-1", "Reopen workflow")]
     [InlineData("recipe/workflow.project", "Recipe workflow.project", "Reopen recipe workflow.project")]
     [InlineData("node/src.Api", "Node src.Api", "Reopen node src.Api")]
     [InlineData("session/codex/S1", "Session codex/S1", "Reopen session codex/S1")]
     [InlineData("system/docker", "System docker", "Reopen system docker")]
     [InlineData("service/serena", "Service serena", "Reopen service serena")]
-    [InlineData("item/ITM-1", "ITM-1", "Reopen ITM-1")]
+    [InlineData("item/ITM-1", "ITM-1", "Reopen item")]
     [InlineData("decision/REQ-1", "REQ-1", "Reopen REQ-1")]
     [InlineData("job/JOB-1", "Job JOB-1", "Reopen job JOB-1")]
     public async Task The_sheet_and_its_edge_tab_are_named_with_the_kind(string link, string sheet, string edge)

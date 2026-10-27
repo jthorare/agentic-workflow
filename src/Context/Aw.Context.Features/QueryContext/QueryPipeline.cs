@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
+using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -28,8 +29,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 {
     private readonly RankerStage _ranker = new(model, clock);
 
-    /// <summary>The most text kept from one record after cleaning (spec §8.3: 64 KB).</summary>
-    internal const int MaxRecordText = 64 * 1024;
 
     /// <summary>Answers one question over the given map and catalog.</summary>
     /// <param name="request">The question and its scope.</param>
@@ -75,8 +74,16 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        return assembly.Build(request.Query, valid.Value.Valid.Budget, new RecordPart(fetched, versions, degraded), graph);
+        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos) };
     }
+
+    private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>
+        graph.Candidates.Select(c => c.Item.Node).OfType<string>().Select(n => NodeKey.TryFrom(n, out var key) ? key : (NodeKey?)null).OfType<NodeKey>();
+
+    // A demoted file's code item ranks after every other item of the answer (it is still there: a direct read of its node finds it).
+    private static GraphPart DemotedLast(GraphPart graph, IReadOnlyList<ContextRepo> repos) =>
+        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedCode.IsDemoted(key, repos)) };
 
     /// <summary>
     /// The anchors and their graph sections, and the terms the sources are searched with. The node shape needs the map
@@ -93,7 +100,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var map = await graphs.Read(request.Scope, read, cancellationToken).ConfigureAwait(false);
         if (query.Node is { } node)
         {
-            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node));
+            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos));
             if (anchor.IsError)
             {
                 return anchor.Error;
@@ -115,8 +122,10 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty);
-        var anchors = found.Anchors.Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
-        return (GraphAnswer.Build(map.Value, anchors, found.Suggested, reach, new MapText(scrubbers)), valid.Terms);
+        var repos = request.Scope.Repos;
+        var anchors = found.Anchors.Where(k => !DemotedCode.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
+        var suggested = found.Suggested.Where(k => !DemotedCode.IsDemoted(k, repos)).ToList();
+        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)), valid.Terms);
     }
 
     private static async ValueTask<Result<(GraphPart Graph, IReadOnlyList<string> Terms, ItemMiss? Miss)>> AnchorFor(QueryContextRequest request, CheckedQuery checkedQuery,
@@ -184,12 +193,14 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         {
             var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow());
             var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
-            return (source.Describe().Id, hits);
+            var notes = source is ISourceNotes noted ? noted.TakeNotes() : [];
+            return (source.Describe().Id, hits, notes);
         });
         var answers = new List<SourceAnswer>();
         var degraded = new List<DegradedSource>();
-        foreach (var (id, hits) in await Task.WhenAll(calls).ConfigureAwait(false))
+        foreach (var (id, hits, notes) in await Task.WhenAll(calls).ConfigureAwait(false))
         {
+            degraded.AddRange(notes.Select(note => new DegradedSource(id, ContextErrors.SourceUnavailable.Code, note, clock.GetUtcNow())));
             if (hits.IsSuccess)
             {
                 answers.Add(new SourceAnswer(id, hits.Value));
@@ -201,42 +212,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         return new Searched(answers, degraded);
-    }
-
-    private async Task<IReadOnlyList<FetchedRecord>> Fetch(IReadOnlyList<FusedItem> items, (IReadOnlyList<IContextSource> Sources, IIngestFilter Ingest) call,
-        DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
-    {
-        var (sources, ingest) = call;
-        var fetched = new List<FetchedRecord>();
-        foreach (var item in items)
-        {
-            if (deadline - clock.GetUtcNow() <= TimeSpan.Zero)
-            {
-                break;   // no claim without a citation: what wasn't fetched in time isn't shown (search already answered)
-            }
-
-            var hit = item.Hits[0];
-            var source = sources.First(s => s.Describe().Id == hit.Ref.Source);
-            var record = await SourceCalls.Within(source, (deadline - clock.GetUtcNow(), clock), t => source.Fetch(hit.Ref, t), ct).ConfigureAwait(false);
-            if (record.IsError)
-            {
-                if (record.Error.Kind != ErrorKind.NotFound && degraded.TrueForAll(d => d.Source != hit.Ref.Source))
-                {
-                    degraded.Add(SourceCalls.Degraded(hit.Ref.Source, record.Error, clock.GetUtcNow()));
-                }
-
-                continue;   // a record gone since the search, or a source that stopped answering: no claim without a citation
-            }
-
-            var text = record.Value.Blocked   // the adapter's own whole-document clean withheld it: cite it as scrub-blocked
-                ? new ScrubbedField(string.Empty, Redacted: false, Blocked: true)
-                : ingest.Clean(record.Value.Text, singleLine: false);   // cleaned whole, then cut, so a cut never splits a secret
-            var cut = text with { Text = UntrustedFence.Prefix(text.Text, MaxRecordText) };
-            var aliases = item.Aliases.Select(a => ingest.Clean(a, singleLine: true)).ToList();   // record text too: cleaned like the title
-            fetched.Add(new FetchedRecord(item, source, ingest.Clean(record.Value.Title, singleLine: true), cut, aliases));
-        }
-
-        return fetched;
     }
 
     /// <summary>

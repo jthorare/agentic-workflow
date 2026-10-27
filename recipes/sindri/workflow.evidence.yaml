@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.evidence
-version: 3
+version: 4
 description: "Block recipe: pick the evidence that proves the change (UI, API, database, desktop app, all three, none or other) and run it as a child."
 displayName: "Pick and run the proof for a change"
 inputs:
@@ -26,12 +26,12 @@ states:
           - "all: all three of ui, api and db changed"
           - "none: the always-run checks already prove it (the verify pack, or the frozen bug check)"
           - "other: none of these would prove it"
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Pick the evidence for {item}: run `sindri workflow status {instance}` for the choices."
   route-evidence-desk:
     kind: active
     step: { use: step.desk.choose, with: { from: route-evidence } }
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Pick the evidence that proves {item}. Each choice shows the model's lean, if it had one."
   evidence-ui:
     kind: wait
@@ -40,7 +40,7 @@ states:
         recipe: workflow.evidence-ui
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the UI evidence for {item}: run `sindri workflow status {instance}`."
   evidence-api:
     kind: wait
@@ -49,7 +49,7 @@ states:
         recipe: workflow.evidence-api
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the API evidence for {item}: run `sindri workflow status {instance}`."
   evidence-db:
     kind: wait
@@ -58,7 +58,7 @@ states:
         recipe: workflow.evidence-db
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the database evidence for {item}: run `sindri workflow status {instance}`."
   evidence-desktop:
     kind: wait
@@ -67,7 +67,7 @@ states:
         recipe: workflow.evidence-desktop
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the desktop evidence for {item}: run `sindri workflow status {instance}`."
   evidence-all:
     kind: wait
@@ -76,7 +76,7 @@ states:
         recipe: workflow.evidence-all
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the combined evidence for {item}: run `sindri workflow status {instance}`."
   evidence-other:
     kind: wait
@@ -85,9 +85,9 @@ states:
         recipe: workflow.evidence-other
         inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } }
         onParked: propagate
-    timeout: { after: 2d, then: park }
+    timeout: { after: 14d, then: park }
     next: "Waiting for the other evidence for {item}: run `sindri workflow status {instance}`."
-  evidence-none: { kind: active, step: step.evidence.none, timeout: { after: 4h, then: park },
+  evidence-none: { kind: active, step: step.evidence.none, timeout: { after: 1d, then: park },
                    next: "Record that the always-run checks are the evidence for {item}." }
   done:    { kind: terminal, outcome: resolved }
   failed:  { kind: terminal, outcome: unresolved }

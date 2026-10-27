@@ -22,6 +22,12 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     /// <summary>The concepts drawn, the concept of the unassigned nodes last; while a search is on, only the ones it kept.</summary>
     public IReadOnlyList<ConceptTileViewModel> Tiles => _kept is null ? _all : [.. _all.Where(t => _kept.Contains(t.Id))];
 
+    /// <summary>The line over the cards when the glossary has no terms yet; empty otherwise.</summary>
+    public string TermsNote { get; private set; } = string.Empty;
+
+    /// <summary>Whether the terms note has words.</summary>
+    public bool HasTermsNote => TermsNote.Length > 0;
+
     /// <summary>Whether the concepts are being read.</summary>
     public bool IsLoading { get; private set; }
 
@@ -66,10 +72,10 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     internal void Show(ContextConceptsView view)
     {
         ArgumentNullException.ThrowIfNull(view);
-        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), _open)).ToList();
+        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open)).ToList();
         if (view.Other is { } other && other.Size.Total > 0)
         {
-            tiles.Add(new ConceptTileViewModel(other.Id, other.Name.Length > 0 ? other.Name : Labels.ContextWholeBandOther, string.Empty, other.Size, setByPerson: false, _open));
+            tiles.Add(new ConceptTileViewModel(other.Id, other.Name.Length > 0 ? other.Name : Labels.ContextWholeBandOther, string.Empty, other.Size, setByPerson: false, terms: null, _open));
         }
 
         if (tiles.Count == 0)
@@ -80,6 +86,26 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
         (_all, _links, IsLoading, Note) = (tiles, view.Links ?? [], false, string.Empty);
         ResetSearch();
+        Changed();
+    }
+
+    /// <summary>The glossary was read: each card takes its concept's terms (matched by id); an empty glossary says so in one line.</summary>
+    /// <param name="view">The glossary.</param>
+    internal void ShowTerms(ConceptGlossaryView view)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        var termsById = view.Concepts.ToDictionary(c => c.Id, c => c.Terms, StringComparer.Ordinal);
+        _all = [.. _all.Select(t => termsById.TryGetValue(t.Id, out var terms) ? t.WithTerms(terms) : t)];
+        TermsNote = string.Equals(view.State, "ok", StringComparison.Ordinal) ? string.Empty : Labels.ContextConceptsNoTerms;
+        Changed();
+    }
+
+    /// <summary>The glossary was refused: one line with the code and the message; the cards keep what they have.</summary>
+    /// <param name="code">The error code.</param>
+    /// <param name="message">The refusal's message.</param>
+    internal void TermsUnavailable(string code, string message)
+    {
+        TermsNote = Labels.ContextConceptsTermsUnavailable(code, message);
         Changed();
     }
 
@@ -107,7 +133,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(text);
         return text.Length == 0
             ? new HashSet<string>(StringComparer.Ordinal)
-            : _all.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Summary.Contains(text, StringComparison.OrdinalIgnoreCase)).Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
+            : _all.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Summary.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Terms.Any(term => term.Contains(text, StringComparison.OrdinalIgnoreCase))).Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
     }
 
     /// <summary>A search resolved: the concepts that match stay, with the ones they link to; the rest is gone.</summary>
@@ -149,6 +175,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
     private void Say(string note)
     {
+        TermsNote = string.Empty;
         _all = [];
         _links = [];
         (IsLoading, Note) = (false, note);
@@ -160,7 +187,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(HasNote), nameof(SearchActive), nameof(NoMatches)])
+        foreach (var name in (string[])[nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(HasNote), nameof(SearchActive), nameof(NoMatches), nameof(TermsNote), nameof(HasTermsNote)])
         {
             OnChanged(name);
         }

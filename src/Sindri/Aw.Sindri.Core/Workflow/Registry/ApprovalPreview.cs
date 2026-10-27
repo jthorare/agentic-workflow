@@ -27,4 +27,8 @@ public sealed record ApprovalPreview(
 {
     /// <summary>Whether this is a drift approval's preview: the hash is approved and some pinned block changed.</summary>
     public bool IsDrift => Changed.Count > 0;
+
+    /// <summary>Each child the recipe uses, with the version pinned and a warning when a newer shipped one waits (#1042); null, and left out of the JSON, when it uses none.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<PreviewChildNote>? ChildNotes { get; init; }
 }

@@ -31,11 +31,12 @@ internal sealed class CursorCliProvider(IProcessRunner runner, IInputRedactor re
 
     /// <inheritdoc />
     protected override AgentCliCall ForText(QuestionRef question, JsonNode? input, string workspace) =>
-        Call(workspace, $"{UntrustedText.Capped(Redacted(question.Prompt), PromptCap)}\n\n{Instruction(question)}");
+        Call(question, workspace, $"{UntrustedText.Capped(Redacted(question.Prompt), PromptCap)}\n\n{Instruction(question)}");
 
     /// <inheritdoc />
     protected override AgentCliCall ForImage(QuestionRef question, ImageEvidence evidence, string workspace) =>
         Call(
+            question,
             evidence.EvidenceDir,
             $"{UntrustedText.Capped(Redacted(question.Prompt), PromptCap - PathsCap)}\n\nOpen each screenshot directly with your file-read tool (it reads images), at these paths — do not search for them: {UntrustedText.Capped(string.Join(", ", evidence.Files.Select(UntrustedText.OneLine)), PathsCap)}\n\n{Instruction(question)}");
 
@@ -63,6 +64,6 @@ internal sealed class CursorCliProvider(IProcessRunner runner, IInputRedactor re
     private static string Instruction(QuestionRef question) =>
         $"Respond with only a single JSON object matching this JSON Schema, and no other text:\n{AnswerSchema.Lax(question).ToJsonString()}";
 
-    private static AgentCliCall Call(string workspace, string prompt) =>
-        new(["-p", "--output-format", "json", "--model", Model, "--mode", "ask", "--sandbox", "enabled", "--trust", "--workspace", workspace, prompt], workspace);
+    private static AgentCliCall Call(QuestionRef question, string workspace, string prompt) =>
+        new(["-p", "--output-format", "json", "--model", question.Model ?? Model, "--mode", "ask", "--sandbox", "enabled", "--trust", "--workspace", workspace, prompt], workspace);
 }

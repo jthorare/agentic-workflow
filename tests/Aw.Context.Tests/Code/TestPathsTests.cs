@@ -1,5 +1,4 @@
 using Aw.Context.Core.Code;
-using Aw.Context.Core.Engine;
 
 namespace Aw.Context.Tests.Code;
 
@@ -24,11 +23,15 @@ public sealed class TestPathsTests
     [InlineData("src/latest.ts", false)]
     [InlineData("src/contest.js", false)]
     [InlineData("src/attest.py", false)]
-    public void TestPath_default_globs_mark_the_usual_test_files(string path, bool expected) =>
-        Assert.Equal(expected, TestPaths.IsTest(path, ContextSettings.DefaultTestGlobs));
+    public void TestPath_configured_globs_mark_the_usual_test_files(string path, bool expected) =>
+        Assert.Equal(expected, TestPaths.IsTest(path, _usual));
+
+    // why: the engine has no built-in list; these are what a profile would write
+    private static readonly string[] _usual =
+        ["**/test/**", "**/tests/**", "**/Test/**", "**/Tests/**", "**/__tests__/**", "**/spec/**", "**/specs/**", "**/*.test.*", "**/*.spec.*", "**/*_test.*", "**/*Test.*", "**/*Tests.*", "**/test_*.*"];
 
     [Fact, Trait("Lane", "unit")]
-    public void TestPath_a_profile_override_replaces_the_defaults()
+    public void TestPath_only_the_written_globs_count()
     {
         string[] globs = ["checks/**"];
 
@@ -39,8 +42,8 @@ public sealed class TestPathsTests
     [Fact, Trait("Lane", "unit")]
     public void TestPath_globs_match_case_sensitively()
     {
-        Assert.False(TestPaths.IsTest("src/Links.TEST.ts", ContextSettings.DefaultTestGlobs));
-        Assert.False(TestPaths.IsTest("src/TESTS/links.ts", ContextSettings.DefaultTestGlobs));
+        Assert.False(TestPaths.IsTest("src/Links.TEST.ts", _usual));
+        Assert.False(TestPaths.IsTest("src/TESTS/links.ts", _usual));
     }
 
     [Fact, Trait("Lane", "unit")]

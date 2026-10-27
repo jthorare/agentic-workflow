@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
@@ -56,6 +57,8 @@ public sealed class GoldenContractTests
         ["sessions"] = As<SessionList>,   // GET /sessions (collector CO-3); the 503 SND-SESSION-002 bodies are ProblemDetails
         ["sessions-id"] = As<SessionView>,   // GET /sessions/{provider}/{id}; the 404 is ProblemDetails
         ["context-lenses"] = As<LensesView>,
+        ["context-concepts"] = As<ContextConceptsView>,   // GET /sindri/context/concepts: the Context page's concept band (ui #1012); the refusals are ProblemDetails
+        ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -94,7 +97,8 @@ public sealed class GoldenContractTests
         "stop",
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
-        "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
+        "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
+        "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph", "context-search",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume",   // API P6: the services calls are U4's (Services); the job calls are read below
@@ -148,6 +152,17 @@ public sealed class GoldenContractTests
         Assert.Equal(((long)servedFiled["accepted"]!["sequence"]!, (string)servedFiled["requestId"]!), (filed.Accepted.Sequence, filed.RequestId));
         Assert.True(AsRequests(Encoding.UTF8.GetBytes(GoldenFiles.Api("requests", "list-empty"))).Value is RequestList);
         Assert.True(AsRequests(Encoding.UTF8.GetBytes(GoldenFiles.Api("requests", "filed"))).Value is RequestFiledView);
+    }
+
+    [Fact]
+    public void The_services_goldens_carry_why_a_service_is_paused_or_failed_and_what_it_does()
+    {
+        var paused = Read<ServiceList>("services", "paused").Services!.Single(s => string.Equals(s.Name, "heartbeat", StringComparison.Ordinal));
+        var failed = Read<ServiceList>("services", "ran-failed").Services!.Single(s => string.Equals(s.Name, "heartbeat", StringComparison.Ordinal));
+
+        Assert.Equal(("Records that Sindri is alive.", "human:cli", DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture)),
+            (paused.Description, paused.PausedBy, paused.PausedAt));
+        Assert.Equal(("failed", "SND-SCHED-001", null), (failed.LastRun!.Outcome, failed.LastRun.Code, failed.LastRun.Detail));
     }
 
     [Fact]

@@ -175,6 +175,14 @@
       ]
     },
     {
+      "type": "launch.takeover-opened",
+      "keyShape": "launch.takeover-opened:<nonce>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
       "type": "launch.viewer-attached",
       "keyShape": "launch.viewer-attached:<launch>",
       "invalidates": [
@@ -262,6 +270,22 @@
         "items",
         "item",
         "timeline"
+      ]
+    },
+    {
+      "type": "sandbox.denied",
+      "keyShape": "sandbox.denied:<launch>:<kind>:<targetHash>:<count>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
+      "type": "sandbox.limit-hit",
+      "keyShape": "sandbox.limit-hit:<launch>:<kind>:<n>",
+      "invalidates": [
+        "launch",
+        "item"
       ]
     },
     {

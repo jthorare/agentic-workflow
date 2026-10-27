@@ -229,7 +229,13 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     // Draws the last list through the filters: rows are kept by ref, so a read never rebuilds a row (or the control with focus) that did not change.
     private void Apply(IReadOnlyList<string> before, SessionList list)
     {
-        var kept = list.Sessions.Where(Matches).Select(Row).ToList();
+        var shownSessions = list.Sessions.Where(Matches).ToList();
+        var kept = shownSessions.Select(Row).ToList();
+        Head = IsFiltered
+            ? Labels.AgentsFilteredHead(shownSessions.Count, list.Counts.Live, shownSessions.Count(s => string.Equals(s.State, "asking", StringComparison.Ordinal)))
+            : Labels.AgentsHead(list.Counts.Live, list.Counts.Asking);
+        OnChanged(nameof(HasHead));
+        OnChanged(nameof(HeadName));
         var live = new HashSet<string>(list.Sessions.Select(s => s.Ref), StringComparer.Ordinal);
         foreach (var gone in _rows.Keys.Where(k => !live.Contains(k)).ToList())
         {

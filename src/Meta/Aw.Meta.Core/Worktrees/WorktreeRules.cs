@@ -5,7 +5,7 @@ namespace Aw.Meta.Core.Worktrees;
 
 /// <summary>
 /// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
-/// proven finished (an ended pull request), not merely reachable from origin/main: a branch just cut from main is reachable too.
+/// proven finished: an ended pull request, or, with no pull request, everything pushed or in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
 /// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
 /// trigger, "changed since the last sweep".
 /// </summary>
@@ -28,7 +28,7 @@ internal static class WorktreeRules
         else
         {
             Merged(facts, reasons);
-            if (facts.UnpushedCommits > 0)
+            if (facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
             {
                 reasons.Add(string.Create(CultureInfo.InvariantCulture, $"{facts.UnpushedCommits} commit(s) are on no remote branch"));
             }
@@ -70,16 +70,33 @@ internal static class WorktreeRules
     // The main checkout is not a pull request branch; calling it "no pull request" reads like unfinished work.
     private static string NoPullRequest(WorktreeFacts facts) => facts.IsMainWorktree ? "main checkout" : "no pull request";
 
+    // A branch with no pull request is finished when everything of it is safe elsewhere (its head is in origin/main, or no commit is unpushed); idle and unchanged-since-the-last-sweep still guard a live tree.
     private static void NoPullRequestReasons(WorktreeFacts facts, List<string> reasons)
     {
-        reasons.Add(facts.IsMainWorktree ? "main checkout (never swept)" : "no pull request: work not finished");
-        if (facts.HeadMerged)
+        if (facts.IsMainWorktree)
         {
-            reasons.Add("fresh branch, no commits of its own, or already in origin/main without a pull request");
+            reasons.Add("main checkout (never swept)");
+        }
+        else
+        {
+            if (!facts.HeadMerged && facts.UnpushedCommits > 0)
+            {
+                reasons.Add("no pull request: work not finished (not all of it is pushed)");
+            }
+
+            // Rule 7 needs a recorded sweep; without one a live tree on a fresh branch would look unchanged.
+            if (facts.NoPreviousSweep)
+            {
+                reasons.Add("no previous sweep to compare with");
+                if (!facts.HeadMerged)
+                {
+                    reasons.Add("not merged into origin/main (no pull request)");
+                }
+            }
         }
     }
 
-    // Rule 1: a detached worktree that is not a gate tree is never removed; a branch only when its pull request ended (merged, or closed with everything on the remote).
+    // Rule 1: a detached worktree that is not a gate tree is never removed; a branch with a pull request only when it ended (merged, or closed with everything on the remote); a branch with none when everything of it is pushed or in origin/main.
     private static void Merged(WorktreeFacts facts, List<string> reasons)
     {
         if (facts.Branch is null)
@@ -99,7 +116,7 @@ internal static class WorktreeRules
             NoPullRequestReasons(facts, reasons);
         }
 
-        if (facts.HeadMerged)
+        if (facts.HeadMerged || facts.PrState is null)
         {
             return;
         }

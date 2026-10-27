@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Scoping;
 
 namespace Aw.Sindri.Features.Scoping;
 
@@ -41,12 +42,13 @@ internal static partial class DeskBlocks
     /// <param name="block">The Step's id.</param>
     /// <param name="facts">The facts.</param>
     /// <param name="challengeCap">The running recipe's loops.challenge.cap; the shipped default where no recipe runs the helper (the desk).</param>
-    internal static Result<ScopingDeskResponse> Run(string block, ScopeFacts facts, int challengeCap = ScopeRules.DefaultChallengeRounds) => block switch
+    /// <param name="gapCap">The running recipe's loops.gapsearch.cap; the shipped default where no recipe runs the helper (the desk).</param>
+    internal static Result<ScopingDeskResponse> Run(string block, ScopeFacts facts, int challengeCap = ScopeRules.DefaultChallengeRounds, int gapCap = ScopeRules.DefaultGapRounds) => block switch
     {
         "step.scope.intake" => Intake(facts),
         "step.scope.check" => Check(facts),
         "step.scope.challenge-log" => ChallengeLog(facts),
-        "step.scope.evidence" => Evidence(facts, challengeCap),
+        "step.scope.evidence" => Evidence(facts, challengeCap, gapCap),
         "step.interview.record" => Record(facts),
         "step.brief.seed" => Seed(),
         "step.scope.gather" => Gather(facts),
@@ -173,6 +175,11 @@ internal static partial class DeskBlocks
         }
 
         var round = facts.ObjectCopy("challengeRound");
+        if (ChallengeRoundShape.LogShape(round) is { } shape)
+        {
+            return SindriErrors.InvalidInput.With(shape);
+        }
+
         var verdict = ScopeJson.Str(round, "verdict");
         var surfaces = ScopeJson.Items(round, "surfaces").ToList();
         var behaviours = ScopeJson.Items(round, "behaviours").ToList();
@@ -201,23 +208,32 @@ internal static partial class DeskBlocks
         }
 
         var log = (facts.Require("answerLog").DeepClone() as JsonArray) ?? [];
-        if (ScopeJson.Items(facts["answers"]).LastOrDefault() is { } batch)
+        var items = ScopeJson.Items(facts["answers"]).ToList();
+        // why: a batch carries its own answers[] (the latest one is this round's); a flat list is the round's answers, each logged on its own
+        var batches = items.Exists(static i => ScopeJson.Arr(i, "answers") is not null) ? items.TakeLast(1) : items;
+        foreach (var batch in batches)
         {
             var digest = $"sha256:{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(ScopeJson.Write(batch))))}";
             if (!ScopeJson.Items(log).Any(e => string.Equals(ScopeJson.Str(e, "digest"), digest, StringComparison.Ordinal)))
             {
-                var entry = new JsonObject { ["id"] = string.Create(CultureInfo.InvariantCulture, $"A{log.Count + 1}") };
-                foreach (var (name, value) in (batch as JsonObject ?? []).Where(static p => !string.Equals(p.Key, "id", StringComparison.Ordinal) && !string.Equals(p.Key, "digest", StringComparison.Ordinal)))
-                {
-                    entry[name] = value?.DeepClone();
-                }
-
-                entry["digest"] = digest;
-                ScopeJson.Append(log, entry);
+                ScopeJson.Append(log, LogEntry(batch, log.Count + 1, digest));
             }
         }
 
         return Reply("step.interview.record", "recorded", Outputs(("answerLog", log)), []);
+    }
+
+    private static JsonObject LogEntry(JsonNode batch, int number, string digest)
+    {
+        var entry = new JsonObject { ["id"] = string.Create(CultureInfo.InvariantCulture, $"A{number}") };
+        foreach (var (name, value) in (batch as JsonObject ?? []).Where(static p => !string.Equals(p.Key, "id", StringComparison.Ordinal) && !string.Equals(p.Key, "digest", StringComparison.Ordinal)))
+        {
+            entry[name] = value?.DeepClone();
+        }
+
+        entry["digest"] = digest;
+        // why: recordedAs is never defaulted here; SCP-ACC-003 finds the entry through the items, surfaces and open questions that cite its id
+        return entry;
     }
 
     /// <summary>'fact:recommendation' for the owner's stop: approve when no question is left open, else revise (the stop's form shows it as the recommended outcome).</summary>
@@ -231,10 +247,10 @@ internal static partial class DeskBlocks
         };
     }
 
-    private static Result<ScopingDeskResponse> Evidence(ScopeFacts facts, int challengeCap)
+    private static Result<ScopingDeskResponse> Evidence(ScopeFacts facts, int challengeCap, int gapCap)
     {
         var assembled = ScopeEvidence.FlagUncited(facts);
-        var report = ScopePacketChecks.Run(assembled, ScopeStage.Evidence, challengeCap);
+        var report = ScopePacketChecks.Run(assembled, ScopeStage.Evidence, challengeCap, gapCap);
         if (LensFaultAt("step.scope.evidence", report) is { } lens)
         {
             return lens;
@@ -259,6 +275,12 @@ internal static partial class DeskBlocks
             ("coverage", assembled.Require("coverage")),
             ("openQuestions", assembled.Require("openQuestions")),
             ("recommendation", Recommendation(assembled.Require("openQuestions"))));
+        if (assembled["runs"] is { } runs)
+        {
+            // why: the runs the model checks compared are the ones the packet's runs.json holds, and the freeze re-checks them from this fact
+            outputs["runs"] = ScopeJson.Write(runs);
+        }
+
         return Reply("step.scope.evidence", "complete", outputs, ScopePacket.Build(assembled), report);
     }
 }

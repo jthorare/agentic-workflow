@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "rounds": [
+    {
+      "round": 1,
+      "agent": {
+        "reportedModel": "claude-opus-5-5"
+      },
+      "judge": {
+        "providers": [
+          "jev"
+        ]
+      },
+      "searches": [
+        {
+          "tool": "context_query",
+          "query": "invitation expiry reminder email"
+        }
+      ],
+      "candidates": [
+        {
+          "id": "G1.1",
+          "title": "Nightly job that purges expired invitations",
+          "kind": "job",
+          "citation": "code:src/jobs/purgeInvitations.ts",
+          "excerpt": "export async function purgeInvitations() { ... where expiresAt < now ... }",
+          "query": "expiresAt",
+          "anchor": "code:src/jobs/purgeInvitations.ts",
+          "why": "A changed expiry window changes which rows this job deletes.",
+          "ruling": "real-gap",
+          "confidence": 0.84,
+          "provider": "jev",
+          "decisionId": "JD-0012"
+        }
+      ],
+      "counts": {
+        "found": 1,
+        "confirmed": 1,
+        "alreadyCovered": 0,
+        "notInScope": 0,
+        "uncertain": 0
+      }
+    }
+  ],
+  "counts": {
+    "rounds": 1,
+    "found": 1,
+    "confirmed": 1
+  }
+}

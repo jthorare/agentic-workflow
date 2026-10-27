@@ -422,6 +422,10 @@ public sealed class CommandPaletteTests : IDisposable
     public Task The_shortcuts_sheets_last_row_is_reachable_by_keyboard() => OnUi(async () =>
     {
         var (window, shell) = await Connected();
+        // The card has no MaxHeight and fits the window, so a tall window can fit every row and the sheet never scrolls.
+        // Size.WindowMinHeight (600) is the shortest the window gets, so the test asks for that and the rows overflow the card.
+        window.Height = 600;
+        Settle(window);
         Press(window, Key.OemQuestion, PhysicalKey.Slash, RawInputModifiers.Shift, "?");
         var scroll = Named<ScrollViewer>(window, "ShortcutsScroll");
 

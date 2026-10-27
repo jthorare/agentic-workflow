@@ -35,14 +35,14 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-INDEX-008` | graphify is missing, failed or wrote no usable graph. | if graphify or its sandbox is missing: sindri index setup; if graph.json is over the cap: raise index.graphMaxMB (max 512); then sindri index build |
 | `SND-INDEX-404` | No index has been built for this repo. | sindri index build --repo &lt;name&gt; |
 | `SND-ITEM-404` | No such item in the ledger. | Run `sindri observe` to list items. |
-| `SND-LEDGER-001` | The ledger was written by a newer sindri. | Upgrade sindri (`scripts/install-sindri.sh` from the latest main), then rerun. |
+| `SND-LEDGER-001` | The ledger was written by a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`), then rerun. |
 | `SND-LOCK-001` | Another sindri run holds the lock. | wait a moment and rerun; `sindri doctor` shows the holder |
 | `SND-LOCK-003` | This run's fencing epoch is stale; another run took over. | Nothing to do; the newer run continues. Check `sindri doctor` if this repeats. |
 | `SND-PROFILE-001` | The profile is invalid. | Run `sindri profile validate` and fix each listed key. |
 | `SND-PROFILE-002` | No profile was found. | Run `sindri profile init`, pass --profile &lt;dir&gt;, or set AW_PROFILE_DIR. |
 | `SND-PROFILE-003` | No such profile key. | See docs/sindri/profile.md for the keys. |
 | `SND-PROFILE-004` | No such repo in the profile. | Use a name listed under repos in profile.yaml. |
-| `SND-PROFILE-005` | The profile was written for a newer sindri. | Upgrade sindri (`scripts/install-sindri.sh` from the latest main). |
+| `SND-PROFILE-005` | The profile was written for a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`). |
 | `SND-PROFILE-006` | The hash doesn't match the current profile. | Run `sindri profile approve` to see the current hash and diff, then approve that hash. |
 | `SND-PROFILE-007` | A profile already exists there. | Edit it, or pass --force to overwrite it. |
 | `SND-PROFILE-008` | This repo has no plan files for --ring0. | Run --ring0 from a repo with docs/superpowers/plans, or run `sindri profile init` without it. |

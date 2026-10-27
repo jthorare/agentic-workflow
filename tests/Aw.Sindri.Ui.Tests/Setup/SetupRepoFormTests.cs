@@ -31,7 +31,7 @@ public sealed class SetupRepoFormTests
         var (_, closed, closedStep) = await Open(new SetupFixture("extra-approve-all-ready"));   // this catalog has no AddRepo row (the served one is ready since api #528)
 
         Assert.Equal((true, false), (form.IsAvailable, step.HasAction));
-        Assert.Equal((false, "sindri-app repo add <path>"), (closed.IsAvailable, closedStep.Action?.Cli?.Cli));
+        Assert.Equal((false, "sindri repo add <path>"), (closed.IsAvailable, closedStep.Action?.Cli?.Cli));
     }
 
     [Fact]

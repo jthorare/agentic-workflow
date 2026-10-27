@@ -286,7 +286,7 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
     {
         (Heading, StateLine, EndedText, EndedDetail, ProblemText, Note) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         (Fields, HostFields, History, IsEnded, _step) = ([], [], [], false, null);
-        (Sections, IsAsking, InStatusText, RefCopy) = ([], false, string.Empty, null);
+        (Sections, IsAsking, InStatusText, RefCopy, StartedText) = ([], false, string.Empty, null, string.Empty);
         EndedResumeText = string.Empty;
         OnChanged(nameof(HasStep));
     }

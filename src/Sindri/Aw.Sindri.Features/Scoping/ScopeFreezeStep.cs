@@ -34,7 +34,7 @@ internal sealed class ScopeFreezeStep(IRunArea area, IPackets packets) : IBlockS
             return BlockStepResult.Failed($"{Id.Value} needs the instance's address and repo and fact:scopePacket with its hash");
         }
 
-        var checks = DeskBlocks.Run("step.scope.evidence", new ScopeFacts(Texts(context)));
+        var checks = DeskBlocks.Run("step.scope.evidence", new ScopeFacts(Texts(context)), context.LoopCaps.GetValueOrDefault(ScopeRules.ChallengeLoop, ScopeRules.DefaultChallengeRounds), context.LoopCaps.GetValueOrDefault(ScopeRules.GapLoop, ScopeRules.DefaultGapRounds));
         if (checks.IsError)
         {
             return BlockStepResult.Failed($"{Id.Value} can't re-check the packet: {checks.Error.Message}");

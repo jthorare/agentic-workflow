@@ -5,9 +5,11 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.RecordServiceRun;
 using Aw.Sindri.Host.Server;
+using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Server;
@@ -216,6 +218,7 @@ public sealed class SchedulerHostTests
             .AddSingleton<TimeProvider>(_h.Clock)
             .AddSingleton(_h.Callers)
             .AddSingleton<IIdGenerator>(_h.Ids)
+            .AddSingleton<ITextScrubber>(new PassThroughScrubber())
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RecordServiceRunRequest, RecordServiceRunResponse>, RecordServiceRunService>()
             .AddScoped<IScheduledService, HeartbeatService>()
@@ -224,7 +227,7 @@ public sealed class SchedulerHostTests
             .AddScoped<IScheduledService, FailingService>()
             .BuildServiceProvider();
         var clock = new SteppedClock(_h.Clock);
-        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(approvals, builtIns ?? [], new NoPauses()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, _log);
+        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(approvals, builtIns ?? [], new NoPauses(), new LiveSchedule()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, _log);
         await scheduler.StartAsync(Token);
         for (var step = 0; !done(); step++)
         {

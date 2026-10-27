@@ -15,8 +15,8 @@ internal static class WorkflowCommandTable
     internal const string UsageText =
         "usage: sindri workflow start <recipe> --item <id> [--attempt next] [--fact <key>=<file>]... [--json] | status <address> [--json] | "
         + "list [--needs-me | --item <id> | --state <s>] [--query <q>] [--json] | events <address> [--follow] [--json] | injection <address> [--section <name>] [--json] | "
-        + "answer <address> [--text …|--file …] [--grant n | --grant-tokens n | --accept | --reject | --resume] [--nonce <n>] [--json] | "
-        + "command <address> <verb> [--nonce <n>] [--json] | cancel <address> [--nonce <n>] [--json] | takeover <address> [--nonce <n>] [--json] | handback <address> [--nonce <n>] [--json] | complete <address> --run <token> --outcome <o> [--output <fact>=<file>]... [--nonce <n>] [--json]";
+        + "answer <address> [--text …|--file …] [--grant n | --grant-tokens n | --accept | --reject | --resume | --record <batch.json>] [--nonce <n>] [--json] | "
+        + "rewind <address> --to <state> [--nonce <n>] [--json] | command <address> <verb> [--nonce <n>] [--json] | cancel <address> [--nonce <n>] [--json] | takeover <address> [--nonce <n>] [--json] | handback <address> [--nonce <n>] [--json] | complete <address> --run <token> --outcome <o> [--output <fact>=<file>]... [--nonce <n>] [--json]";
 
     /// <summary>
     /// The top-level short forms of 'workflow' verbs (engine spec §6.3): 'sindri takeover &lt;item-or-address&gt;' and
@@ -40,6 +40,7 @@ internal static class WorkflowCommandTable
         ["injection", .. var rest] => InjectionCommand.Run(rest, desk, output, ct),
         ["answer", .. var rest] => new ApplyCommandVerbs(desk, services, output).Answer(rest, ct),
         ["command", .. var rest] => new ApplyCommandVerbs(desk, services, output).Command(rest, ct),
+        ["rewind", .. var rest] => new ApplyCommandVerbs(desk, services, output).Rewind(rest, ct),
         ["cancel", .. var rest] => new ApplyCommandVerbs(desk, services, output).Cancel(rest, ct),
         ["takeover", .. var rest] => new ApplyCommandVerbs(desk, services, output).Takeover(rest, ct),
         ["handback", .. var rest] => new ApplyCommandVerbs(desk, services, output).Handback(rest, ct),

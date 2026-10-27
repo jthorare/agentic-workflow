@@ -98,8 +98,8 @@ CHECKS=(
   "hook-passes-clean:v3 passes a clean commit"
   "hook-suites:judge-cs-hook-surface and sindri-cs-hook-surface pass against the installed binaries"
   "seeded-hooks:prompt-sort.sh and trait-check.sh run against the installed judge; their registrations are untouched"
-  "judge-stub-label:judge label status prints its not-yet-built line, nothing on stdout, exit 1"
-  "judge-stub-import-turns:judge eval import-turns x prints its not-yet-built line, nothing on stdout, exit 1"
+  "judge-stub-sort-why:judge prompt-sort why x prints its not-yet-built line, nothing on stdout, exit 1"
+  "judge-stub-sort-promote:judge prompt-sort promote prints its not-yet-built line, nothing on stdout, exit 1"
   "setup-dry-run:./setup.sh --providers claude,codex,cursor --dry-run is clean"
   "second-run-no-change:a second sequence changes nothing and prints 'cutover: nothing to remove'"
   "live-judge-state-survives:live C# judge state (decisions.sqlite, config.json) survives a second sequence"
@@ -176,7 +176,8 @@ ts_wrapper() { printf '#!/usr/bin/env bash\nexport SINDRI_BIN="%s/%s"\nexec "/us
 seed() {
   local n
   for n in judge sindri scorer sindri-next; do ts_wrapper "$n"; done
-  put "$STATE/bin/sindri-app/stamp1/sindri-app" "ts app"; ln -s "$STATE/bin/sindri-app/stamp1/sindri-app" "$LBIN/sindri-app"
+  # scripts/sindri-app.sh links $LBIN/sindri-app to itself in the checkout; the switch deletes that script, so the link dangles
+  put "$STATE/bin/sindri-app/stamp1/sindri-app" "ts app"; ln -s "$WORK/checkout/scripts/sindri-app.sh" "$LBIN/sindri-app"
   printf '#!/bin/sh\necho foreign view\n' > "$LBIN/sindri-view"; chmod 755 "$LBIN/sindri-view"
   # TS-only state (removed)
   put "$STATE/sindri/ledger.db" "ledger"; put "$STATE/sindri/index/graph.json"; put "$STATE/sindri/channels.json" '{"stable":null,"next":null}'
@@ -287,12 +288,18 @@ if [ "$nrc" = 0 ] && [ "$cold" -lt "$budget" ]; then pass nudge-cold-budget; els
 roots=("$STATE/sindri" "$STATE/profile" "$STATE/scorer" "$STATE/audit" "$STATE/$SLUG/bugfix" "$STATE/judge/config.json"
   "$STATE/judge/decisions.sqlite" "$STATE/judge/decisions.sqlite-shm" "$STATE/judge/decisions.sqlite-wal"
   "$STATE/bin/sindri-app" "$LBIN/sindri-app" "$LBIN/scorer" "$LBIN/sindri-next")
-replaced=("$LBIN/judge" "$LBIN/sindri")
+replaced=("$LBIN/judge" "$LBIN/sindri" "$REPO/.git/hooks/pre-commit")   # the hook: v2 becomes v3 (checked below)
 if [ "$(uname -s)" = Darwin ]; then
   for n in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do roots+=("$LAUNCH/com.agentic-workflow.$n.plist"); done
 fi
 left=""
-for r in "${roots[@]}"; do if [ -e "$r" ] || [ -L "$r" ]; then left="$left $r"; fi; done
+# the post-link `judge health` (spec §8 step 6b) creates the C# database at the TS path: a database the C# judge accepts is not left
+cs_db=0
+if [ -f "$STATE/judge/decisions.sqlite" ] && judge health > /dev/null 2>&1; then cs_db=1; fi
+for r in "${roots[@]}"; do
+  case "$r" in "$STATE/judge/decisions.sqlite"*) [ "$cs_db" = 1 ] && continue ;; esac
+  if [ -e "$r" ] || [ -L "$r" ]; then left="$left $r"; fi
+done
 tpl="$(git config --global --get init.templateDir 2> /dev/null || true)"
 [ -z "$tpl" ] || left="$left init.templateDir=$tpl"
 if [ -z "$left" ]; then pass removed-exactly-8; else fail removed-exactly-8 "still there:$left"; fi
@@ -351,8 +358,8 @@ stub_check() { # stub_check <check> <expected stderr line> <judge args...>
   o="$(judge "$@" 2> "$WORK/stub.err")"; r=$?; e="$(cat "$WORK/stub.err")"
   if [ "$r" = 1 ] && [ -z "$o" ] && [ "$e" = "$want" ]; then pass "$name"; else fail "$name" "rc=$r stdout=[$o] stderr=[$e]"; fi
 }
-stub_check judge-stub-label "judge: label is not in this build yet" label status
-stub_check judge-stub-import-turns "judge: eval import-turns is not in this build yet" eval import-turns x
+stub_check judge-stub-sort-why "judge: prompt-sort why is not in this build yet" prompt-sort why x
+stub_check judge-stub-sort-promote "judge: prompt-sort promote is not in this build yet" prompt-sort promote
 
 # setup.sh --dry-run is clean (no real HOME writes: the dry run writes nothing; the providers read the scratch dirs)
 run setup-dry bash "$ROOT/setup.sh" --providers claude,codex,cursor --dry-run

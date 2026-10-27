@@ -8,13 +8,9 @@ namespace Aw.Context.Core.Lenses;
 /// <summary>The pure step of the diff shape: changed files against a map, to their statuses, nodes and the anchors the cascade starts from.</summary>
 public static class DiffAnchors
 {
-    /// <summary>The most changed files a diff answer keeps.</summary>
-    public const int MaxFiles = 1_000;
-
     /// <summary>
     /// Reads each changed path against the map, through the links of <paramref name="repo"/> only (a path that also exists in another mapped repo never claims that repo's nodes).
-    /// Denied paths are only counted. When more than <see cref="MaxFiles"/> files are visible, the files and unmapped lists hold the first 1000 by path, while
-    /// the counts, the anchor total and the anchors cover every visible file.
+    /// Denied paths are only counted. Every visible file is listed by path (the list is paged by the caller, never cut here).
     /// </summary>
     /// <param name="changes">What the repo changed.</param>
     /// <param name="repo">The repo, with its deny globs.</param>
@@ -30,13 +26,13 @@ public static class DiffAnchors
         var visible = ordered.Where(f => !repo.Denies(f.Path)).Select(f => Read(f, links)).ToList();
         var counts = new DiffCounts(ordered.Count, visible.Count(f => f.Status == DiffStatus.Mapped), visible.Count(f => f.Status == DiffStatus.Suggested),
             visible.Count(f => f.Status == DiffStatus.Unmapped), ordered.Count - visible.Count);
-        var claimed = visible.SelectMany(f => f.Nodes).GroupBy(n => n.Key, StringComparer.Ordinal)
+        var claimed = visible.Where(f => !repo.Demotes(f.Path)).SelectMany(f => f.Nodes).GroupBy(n => n.Key, StringComparer.Ordinal)
             .Select(g => (g.Key, Confirmed: g.Any(n => n.Confirmed)))
             .OrderByDescending(c => c.Confirmed).ThenBy(c => c.Key, StringComparer.Ordinal).ToList();
         var anchors = claimed.Select(c => graph.Resolve(NodeKey.From(c.Key))).OfType<GraphNode>().ToList();
-        var kept = visible.Take(MaxFiles).ToList();
+        var kept = visible;
         var part = new DiffPart(repo.Name, changes.Base, changes.Head, changes.MergeBase, kept,
-            [.. kept.Where(f => f.Status == DiffStatus.Unmapped).Select(f => f.Path)], counts, Truncated: visible.Count > MaxFiles,
+            [.. kept.Where(f => f.Status == DiffStatus.Unmapped).Select(f => f.Path)], counts, Truncated: false,
             claimed.Count);
         return (part, anchors);
     }

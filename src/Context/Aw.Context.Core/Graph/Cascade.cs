@@ -29,7 +29,7 @@ public static class Cascade
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(graph);
-        var index = new GraphIndex(graph);
+        var index = GraphIndex.For(graph);
         var own = OwnScope(index, anchor);
         var ownKeys = own.Select(d => d.Key.Value).ToHashSet(StringComparer.Ordinal);
         var visited = new HashSet<string>(ownKeys, StringComparer.Ordinal);
@@ -70,28 +70,45 @@ public static class Cascade
     private static List<Descent> OwnScope(GraphIndex index, NodeKey anchor)
     {
         var root = new Descent(anchor, [anchor.Value], []);
-        var features = new List<Descent>();
-        if (anchor.Kind == NodeKind.Feature)
-        {
-            var queue = new Queue<Descent>([root]);
-            var seen = new HashSet<string>(StringComparer.Ordinal) { anchor.Value };
-            while (queue.TryDequeue(out var feature))
-            {
-                features.Add(feature);
-                foreach (var edge in index.In(feature.Key, EdgeType.PartOf).Where(e => e.From.Kind == NodeKind.Feature && seen.Add(e.From.Value)))
-                {
-                    queue.Enqueue(feature.Down(edge.From, edge));
-                }
-            }
-        }
+        var features = FeatureScope(index, anchor, root);
 
         var surfaces = anchor.Kind == NodeKind.Surface
             ? [root]
             : features.SelectMany(f => index.In(f.Key, EdgeType.PartOf).Where(e => e.From.Kind == NodeKind.Surface).Select(e => f.Down(e.From, e))).ToList();
         var actions = surfaces.SelectMany(s => index.In(s.Key, EdgeType.On).Select(e => s.Down(e.From, e)));
-        var rest = features.Skip(1).Concat(surfaces).Concat(actions)
+        var rest = features.Concat(surfaces).Concat(actions)
             .Where(d => d.Key.Value != anchor.Value).DistinctBy(d => d.Key.Value, StringComparer.Ordinal).OrderBy(d => d.Key.Value, StringComparer.Ordinal);
         return [root, .. rest];
+    }
+
+    /// <summary>The features an anchor owns: a feature and its descendants, a concept's member features and theirs (the anchor first when it is a feature), none otherwise.</summary>
+    private static List<Descent> FeatureScope(GraphIndex index, NodeKey anchor, Descent root)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal) { anchor.Value };
+        var queue = new Queue<Descent>();
+        if (anchor.Kind == NodeKind.Feature)
+        {
+            queue.Enqueue(root);
+        }
+        else if (anchor.Kind == NodeKind.Concept)
+        {
+            foreach (var edge in index.In(anchor, EdgeType.BelongsTo).Where(e => e.From.Kind == NodeKind.Feature && seen.Add(e.From.Value)))
+            {
+                queue.Enqueue(root.Down(edge.From, edge));
+            }
+        }
+
+        var features = new List<Descent>();
+        while (queue.TryDequeue(out var feature))
+        {
+            features.Add(feature);
+            foreach (var edge in index.In(feature.Key, EdgeType.PartOf).Where(e => e.From.Kind == NodeKind.Feature && seen.Add(e.From.Value)))
+            {
+                queue.Enqueue(feature.Down(edge.From, edge));
+            }
+        }
+
+        return features;
     }
 
     private static IEnumerable<Step> Steps(GraphIndex index, NodeKey node, CascadeOptions options, HashSet<string> visited, Dictionary<string, int> skipped)
@@ -108,7 +125,7 @@ public static class Cascade
         NodeKind.Feature => hops.HasFlag(CascadeHops.Dependency) ? index.In(node, EdgeType.DependsOn).Select(e => new Step(e.From, [$"depended-on-by {e.From.Value}"], [e])) : [],
         NodeKind.Surface or NodeKind.Action => (hops.HasFlag(CascadeHops.State) ? StateHops(index, node) : []).Concat(hops.HasFlag(CascadeHops.Flow) ? FlowHops(index, node) : []),
         NodeKind.Thing => hops.HasFlag(CascadeHops.State) ? Readers(index, node, prefix: null) : [],
-        NodeKind.Flow or NodeKind.Decision or NodeKind.Record or NodeKind.Code => [],
+        NodeKind.Flow or NodeKind.Decision or NodeKind.Record or NodeKind.Code or NodeKind.Concept => [],
         _ => [],
     };
 

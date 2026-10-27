@@ -4,7 +4,7 @@ using Aw.Packets.Core.Kinds;
 namespace Aw.Packets.Testing;
 
 /// <summary>
-/// Builds the files of a scope packet. The default passes every scoping check: the twelve files, a lenses.json with
+/// Builds the files of a scope packet. The default passes every scoping check: the fourteen files, a lenses.json with
 /// one found node, one found item and one edge in the code lens and nothing in the others.
 /// </summary>
 internal sealed class ScopingPacketBuilder

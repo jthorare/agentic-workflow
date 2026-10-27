@@ -3,8 +3,8 @@
 `Aw.Evidence` (`src/Evidence`, tier 2, full shape: `Core`, `Features`, `Infrastructure`, `Host`) drives a web app in a
 headless browser and records what it saw: a scripted run's steps, screenshots, lint findings and visual verdict
 (`summary.json`), and design parity against exported design frames (`parity.json`). The binary is `ui-evidence`
-(`Aw.Evidence.Host`, framework-dependent). Until the switch the installed toolkit keeps running the TypeScript
-`skills/ui-evidence`; nothing installs or calls this binary yet ("At the switch" below).
+(`Aw.Evidence.Host`, framework-dependent), published and linked by `scripts/install-cs.sh` and called by the
+`ui-evidence` skill and by Sindri ("Callers" below).
 
 ```bash
 dotnet run --project src/Evidence/Aw.Evidence.Host -- <command> [arguments]
@@ -315,7 +315,7 @@ label mismatches from the side-by-side image) is the `step.evidence.desktop-revi
 
 **Sindri's own setup**: `sindri-ui` calls `UseAwUiDriver(args)` (Aw.Sindri.Ui.Desktop `Composition.Compose`), so it is drivable when started with `AW_UI_DRIVER=1` or
 `--ui-driver`; a normal launch opens no port. `scripts/sindri-ui-app.sh` is the app command: it runs the `sindri-ui` named by `AW_SINDRI_UI`, else publishes it
-(`scripts/sindri-app.sh --publish-only`) and runs the newest build, against the fixture home in `AW_SINDRI_HOME`. `scripts/aw-ui-driver.sh` is the driver command: the
+(`scripts/install-cs.sh --publish`) and runs the build for this source from `$AW_STATE_DIR/bin/cs/<stamp>/`, against the fixture home in `AW_SINDRI_HOME`. `scripts/aw-ui-driver.sh` is the driver command: the
 `aw-ui-driver` named by `AW_UI_DRIVER_BIN`, else the CLI published into `$AW_STATE_DIR/bin/aw-ui-driver` when its sources changed. The page screens click the top bar's tab
 (`ListBoxItem` named for the page); the screens behind a row click the row by its name, so a screen whose element is not found fails with the driver's `AW-UIDRIVER-002`
 line, which names the step to fix in `docs/sindri/ui-evidence/screens.json` (all eleven mockups of the screens design).
@@ -565,10 +565,10 @@ The adapter (`DirectoryLocks`) is the same lock the shell tools take, so the two
 | Path form | A configured path is made absolute (against the working directory) and loses any trailing separators, so `/x/qa.lock//` is the lock `/x/qa.lock` |
 | Heavy-job slots | `$AW_HEAVY_SLOTS`, default 2: at most that many heavy jobs at once, the same count the `heavy` wrapper uses. A value that isn't a whole number of at least 1 isn't refused: the lock uses 2 and says once on stderr `ui-evidence: AW_HEAVY_SLOTS='<value>' isn't a whole number of at least 1; using 2 slots` |
 | Acquire | an atomic `mkdir` of a slot directory (libc `mkdir`; `EEXIST` means that slot is busy). Each poll tries slot 1, then 2 … N, the wrapper's order, so a holder that knows only `<lock>` (sindri's lock, a plain `acquire_lock` caller) occupies slot 1 and the total never exceeds the slot count. Polled every second until the timeout; `ui-evidence: waiting on lock: <lock>` once. The QA-stack lock has one slot |
-| Owner | `<slot>/owner`: `<pid> <UTC time> ui-evidence`, the file the `heavy` wrapper writes too |
-| Release | delete our `owner`, then `rmdir` the slot we hold; a directory something else wrote into, or whose `owner` line names another process (ours was removed by hand and another holder took the slot), is left alone |
+| Owner | `<slot>/pid`: the holder's pid alone, the file `config/lib/locks.sh` reads; and `<slot>/owner`: `<pid> <UTC time> ui-evidence`, the file the `heavy` wrapper writes too |
+| Release | delete our `pid` and `owner`, then `rmdir` the slot we hold; a directory something else wrote into, or whose `owner` line names another process (ours was removed by hand and another holder took the slot), is left alone |
 | `AW_HEAVY_LOCK_HELD=1` | set by the `heavy` wrapper: the parent already holds a heavy-job slot, so that lease is a no-op (it takes no second slot) |
-| Stale locks | never taken over (the shell primitive doesn't either); remove a dead holder's directory by hand |
+| Stale locks | a waiter that finds a taken slot reads its holder (`pid`, else the first word of `owner`) and frees it when that process is gone, on both sides: the holder file is moved aside first (one waiter wins) and the slot is freed only if it still holds the dead line. A slot with no holder file yet (a holder between its `mkdir` and its pid write), or one naming a live or unreadable pid, is left alone |
 
 The `heavy` wrapper is the owner's machine script (`~/.agentic-workflow/bin-r1b/heavy`, outside this repo); its slot
 layout and owner line are the ones above. `config/lib/locks.sh` (`acquire_lock` / `release_lock`) is the in-repo shell
@@ -639,8 +639,7 @@ configured, and a TCP connect to `localhost:<UI_EVIDENCE_API_PORT>` when a port 
 `docker exec <container> psql` against the seed table with the seed pattern passed as a psql variable, never
 interpolated into the SQL; a failed query (or no container or table configured) is `unknown` with the reason. A row
 with a NULL email reads as an empty email (not on a seed domain), so it makes the data `unknown` rather than being
-skipped. The TypeScript skill also reads these from a committed `deployment.env` next to its SKILL.md; the binary
-reads the environment only until the switch.
+skipped. The binary reads the environment only; the skill's committed `deployment.env` is exported into it by the caller.
 
 ## AOT scope
 
@@ -680,54 +679,38 @@ Playwright: heavy), `RunFilesContract`, `ImageCodecContract`, `VerdictCacheStore
 `ExecutableLocatorContract`, `EvidenceTargetsContract`, `TextScrubberContract` and `ReadOnlyDatabaseContract` (a writing CTE, a side-effecting function, `nextval`, `COPY … TO`, a `PRAGMA` assignment, `VACUUM INTO`, `ATTACH`, `SET transaction_read_only = off` and `COMMIT; INSERT …` each refused with the data and the directory unchanged; the fake and the SQLite adapter run it as unit and integration, Postgres against a throwaway container as heavy). `IEvidenceSettings` has none: its fake is a set of plain values with no behaviour that could
 drift; the adapter's names, defaults, blank-as-unset and env-file fallback are pinned by `EnvironmentEvidenceSettingsTests`.
 
-## At the switch
+## Callers
 
-What changes for the callers when the install moves to the C# build:
+How the callers use the binary since the install moved to the C# build:
 
 - **Run directories.** `run` and `parity` write wherever `<run-dir>` points; Evidence keeps no state directory of its
-  own. Scorer finds runs by enumerating `${AW_STATE_DIR:-~/.agentic-workflow}/ui-evidence/runs/*/summary.json` (the
-  Evidence `files` edge in `deps.yaml`), so a caller that wants a run counted passes
-  `<run-dir>` = `$AW_STATE_DIR/ui-evidence/runs/<id>`, a new `<id>` per run. A caller that wants verdict-cache hits across
-  runs passes a stable `--cache` together with `--app-build <sha>` (the default cache lives in the run directory, so it
-  never hits across runs, and an entry written without an app build is trusted only by the invocation that wrote it).
-- **SKILL.md** (`skills/ui-evidence`): `with_stack_lock_and_heavy_job_lock 120 node dist/bin.js <script> <run-dir> …`
-  becomes `ui-evidence run <script> <run-dir> … [--lock-timeout 120]`. The binary takes both locks itself, so the bash
-  wrapper goes. The parity, plan, comment, stale, put and publish steps call `ui-evidence parity …`,
-  `ui-evidence parity-plan …` and so on; `scripts/doctor.sh` becomes `ui-evidence doctor` (unhealthy is exit 2); the
-  provenance probe becomes `ui-evidence provenance`; `npx playwright install chromium` becomes `ui-evidence
-  install-browser`.
-- **bugfix-state** (`run-ui`): drops the `process.execPath, deps.uiEvidenceBin` argv (`deps.ts` `siblingUiEvidence`)
-  and runs `ui-evidence run <script> <run-dir> --app-build <sha>` with a new `<run-dir>` per run; reads `summary.json`
-  per the field changes below (`steps[].status`, `appBuild`, `scriptSha256`: its `UiSummarySchema` already accepts all
-  three as written); treats exit 75 as "stack busy, try again" rather than a failed check; and its "wrote no summary"
-  refusal now covers exit 4 and 75 as well as a crash. That refusal relies on the fresh directory: `run` deletes an
-  earlier `summary.json` only once both locks are held, so a reused directory can still hold the previous run's file
-  after exit 1, exit 75, or an exit 4 raised before the locks (the script unreadable, a lock directory that can't be made).
-- **Scorer** (`scorer/src/ui-evidence-runs.ts`, `RunSummarySchema`): the C# summary is a new schema, and every changed
-  field must move with the port, or `safeParse` fails and Scorer silently skips every C# run. The table below is the
-  whole difference between what the readers' schemas expect today and what `ui-evidence run` writes.
+  own. A caller that wants verdict-cache hits across runs passes a stable `--cache` together with `--app-build <sha>`
+  (the default cache lives in the run directory, so it never hits across runs, and an entry written without an app
+  build is trusted only by the invocation that wrote it). Use `$AW_STATE_DIR/ui-evidence/runs/<id>` as `<run-dir>`, a
+  new `<id>` per run, so the runs sit together.
+- **SKILL.md** (`skills/ui-evidence`): `ui-evidence run <script> <run-dir> … [--lock-timeout 120]`. The binary takes
+  both locks itself. The parity, plan, comment, stale, put and publish steps call `ui-evidence parity …`,
+  `ui-evidence parity-plan …` and so on; `ui-evidence doctor` checks the stack (unhealthy is exit 2); the provenance probe
+  is `ui-evidence provenance`; the browser is installed by `ui-evidence install-browser`.
+- **bugfix-state** (`run-ui`): runs `ui-evidence run <script> <run-dir> --app-build <sha>` with a new `<run-dir>` per
+  run (the binary comes from `AW_UI_EVIDENCE_BIN`, which the installed wrappers set); reads `summary.json`
+  (`steps[].status`, `appBuild`, `scriptSha256`); treats exit 75 as "stack busy, try again" rather than a failed check;
+  and its "wrote no summary" refusal covers exit 4 and 75 as well as a crash. That refusal relies on the fresh
+  directory: `run` deletes an earlier `summary.json` only once both locks are held, so a reused directory can still hold
+  the previous run's file after exit 1, exit 75, or an exit 4 raised before the locks (the script unreadable, a lock
+  directory that can't be made).
 
 Every key in `summary.json` is always written; a value that is unknown or wasn't given is `null`, never a missing key,
 so a reader that accepts "missing" (`.optional()`) must also accept `null` (`.nullable()`) wherever the type says
 `| null`. Pinned by `RunSummaryShapeTests` (a full and a minimal summary: the keys, their order, and which are null).
 
-| Field | Today's readers expect | C# writes | Reader change |
-|---|---|---|---|
-| `ts` | string, required (Scorer) | gone: `startedAt` and `finishedAt`, UTC `O` with seven fractional digits (`2026-10-10T12:00:00.0000000Z`) | Scorer reads `finishedAt` (parse it, don't compare strings) |
-| `steps[].name` | string, required (Scorer) | gone: a step is `viewport`, `index`, `action`, `target`, `status`, `screenshot` | Scorer drops `name` |
-| `steps[].status`, `steps[].screenshot` | as written | unchanged | none |
-| `visual` | `unchecked` \| `unchanged` \| `looks-right` \| `looks-off` \| `sloppy` (Scorer) | an object: `verdict` (those five), `reasons`, `diffScore` (number \| null), `diffImage` (string \| null) | Scorer reads `visual.verdict` |
-| `visualReasons` | string[], required (Scorer) | gone: `visual.reasons` | Scorer reads `visual.reasons` |
-| `diffScore` (top level) | not read | gone: `visual.diffScore` | none |
-| `pr` | string, optional (Scorer: `z.string().optional()`) | string \| null, always written (`null` when the script has no `planning.pr`) | Scorer: `z.string().nullable()`; without it every run whose script has no `planning.pr` is skipped |
-| `route` | string, optional (Scorer) | string, always written | none |
-| `appBuild` | string \| null, optional (bugfix-state) | string \| null, always written | none |
-| `scriptSha256` | string \| null, optional (bugfix-state) | string, always written (never null) | none; bugfix-state's "no check hash" refusal can no longer fire |
-| `lintFindings[]` | `rule`, `selector`, `detail` (Scorer) | adds `viewport`; `rule` is one of the eight names in the table above | none (a non-strict object ignores `viewport`) |
-| `invocations[]` | optional array; `phase`, `ok`, `elapsedMs`, `inputTokens`, `outputTokens` (number \| null), `cacheHit` optional (Scorer) | always written (`[]` when no model ran); adds `model` (string \| null); `cacheHit` always written | none required; Scorer may drop `.optional()` |
-| `planning` | not read | object \| null; inside, `pr` and `model` are string \| null, `elapsedMs`, `inputTokens`, `outputTokens` number \| null | a reader that adds it must accept `null` |
-| `fixtures` | not read | string \| null | as `planning` |
-| `schema`, `runId`, `runInstance`, `host`, `viewports`, `evidence` | not read | new, always written | none (ignored by a non-strict object) |
+The fields a reader can rely on: `startedAt` and `finishedAt` (UTC `O` with seven fractional digits,
+`2026-10-10T12:00:00.0000000Z`); `steps[]` with `viewport`, `index`, `action`, `target`, `status`, `screenshot`; `visual`
+as an object (`verdict` of `unchecked`, `unchanged`, `looks-right`, `looks-off` or `sloppy`, `reasons`, `diffScore`,
+`diffImage`); `pr` (`null` when the script has no `planning.pr`); `route`; `appBuild`; `scriptSha256` (never null);
+`lintFindings[]` with `viewport`, `rule`, `selector`, `detail`; `invocations[]` (`[]` when no model ran; `model`,
+`cacheHit`, token counts); `planning` and `fixtures` (object or string \| null); and `schema`, `runId`, `runInstance`,
+`host`, `viewports`, `evidence`.
 
 - Exit 4 (the run errored) and 75 (a lock stayed busy) are new; a caller that only knew 0, 1 and 2 must treat both as
   "no evidence", never as a pass.

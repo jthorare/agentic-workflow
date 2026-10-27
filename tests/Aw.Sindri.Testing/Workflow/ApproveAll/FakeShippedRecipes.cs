@@ -86,7 +86,7 @@ public sealed class FakeShippedRecipes : IShippedRecipes
 
     private static ApproveAllRefused? Refusal(ApproveAllRow row, ShippedSeed? seed)
     {
-        var cli = $"sindri-app recipe approve {row.Id.Value}";
+        var cli = $"sindri recipe approve {row.Id.Value}";
         return seed is null ? new ApproveAllRefused(row.Id, row.Hash, WorkflowErrors.RecipeNotShipped.Code, $"{row.DisplayName} is not one this build ships.", cli)
             : seed.Hash != row.Hash ? new ApproveAllRefused(row.Id, row.Hash, WorkflowErrors.RecipeChallengeStale.Code, $"{row.DisplayName} changed while Sindri was approving. Read the new plan.", cli)
             : seed.Refusal is { } r ? new ApproveAllRefused(row.Id, row.Hash, r.Code, r.Sentence, r.Cli)

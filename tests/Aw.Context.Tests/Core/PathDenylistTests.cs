@@ -41,6 +41,42 @@ public sealed class PathDenylistTests
     public void A_custom_glob_matches_without_regard_to_case_and_keeps_to_its_segments(string glob, string path, bool denied) =>
         Assert.Equal(denied, PathDenylist.Matches(path, [glob]));
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("**/*cron*", "src/crons/run.ts", true)]
+    [InlineData("**/*cron*", "src/jobs/nightly-cron.ts", true)]
+    [InlineData("**/*fixture*", "tests/fixtures/data.ts", true)]
+    [InlineData("**/*fixture*", "tests/Fixtures/deep/er/data.ts", true)]
+    [InlineData("**/*router.*", "src/routers/index.ts", false)]
+    [InlineData("**/*router*", "src/routers/index.ts", true)]
+    [InlineData("**/*router.*", "src/app.router.ts", true)]
+    [InlineData("legacy", "legacy/old/a.ts", true)]
+    [InlineData("src/*", "src/a/b.ts", true)]
+    [InlineData("src/a", "src/ab/b.ts", false)]
+    [InlineData("**/*cron*", "src/scheduler/run.ts", false)]
+    public void A_glob_that_matches_a_directory_denies_everything_under_it(string glob, string path, bool denied)
+    {
+        Assert.Equal(denied, PathDenylist.Matches(path, [glob]));
+        Assert.Equal(denied && !path.Any(char.IsUpper), PathDenylist.MatchesExactCase(path, [glob]));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("prefix:test_", "src/test_helpers.py", true)]
+    [InlineData("prefix:test_", "src/TEST_dir/a.py", true)]
+    [InlineData("prefix:test_", "src/my_test_a.py", false)]
+    [InlineData("suffix:.generated.ts", "src/a.generated.ts", true)]
+    [InlineData("suffix:.generated.ts", "src/a.generated.tsx", false)]
+    [InlineData("suffix:_old", "src/a_old/b.ts", true)]
+    [InlineData("regex:^v\\d+$", "src/v2/a.ts", true)]
+    [InlineData("regex:^v\\d+$", "src/v2b/a.ts", false)]
+    [InlineData("regex:\\.(snap|golden)$", "tests/a.golden", true)]
+    [InlineData("regex:\\.(snap|golden)$", "tests/a.txt", false)]
+    public void A_tagged_role_entry_matches_a_path_segment(string entry, string path, bool denied) =>
+        Assert.Equal(denied, PathDenylist.Matches(path, [entry]));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_tagged_entry_compares_case_exactly_in_the_exact_case_matcher() =>
+        Assert.False(PathDenylist.MatchesExactCase("src/TEST_a.py", ["prefix:test_"]));
+
     [Fact, Trait("Lane", "unit")]
     public void A_repo_denies_through_its_own_list_and_the_default_list_is_the_built_ins()
     {
@@ -51,5 +87,17 @@ public sealed class PathDenylistTests
         Assert.False(plain.Denies("private/a.ts"));
         Assert.True(custom.Denies("private/a.ts"));
         Assert.True(custom.Denies("config/secrets/x.json"));
+    }
+
+    // Six stacked '**/' groups over a path of 300 directories named like the glob's literals: a backtracking matcher tries every way
+    // to place the six 'a/' pieces (hundreds of billions) before it can say no; a linear matcher reads the path once.
+    [Fact, Trait("Lane", "unit")]
+    public void A_glob_with_several_double_stars_says_no_to_a_long_path_without_running_out_of_time()
+    {
+        const string glob = "**/a/**/a/**/a/**/a/**/a/**/a/**/b";
+        var path = string.Concat(Enumerable.Repeat("a/", 300)) + "x.ts";
+
+        Assert.False(PathDenylist.Matches(path, [glob]));
+        Assert.False(PathDenylist.MatchesExactCase(path, [glob]));
     }
 }

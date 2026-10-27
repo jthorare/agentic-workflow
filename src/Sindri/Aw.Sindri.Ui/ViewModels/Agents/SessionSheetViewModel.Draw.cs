@@ -26,7 +26,7 @@ internal sealed partial class SessionSheetViewModel
             (Labels.SheetWorkingDirectory, view.Cwd)]);
         var host = session.Host;
         HostFields = Listed(
-            (Labels.SheetHost, host.Label),
+            (Labels.SheetShownIn, host.Label),
             (Labels.SheetTerminal, host.Terminal),
             (Labels.SheetSocketKind, host.SocketKind),
             (Labels.SheetTmuxSession, host.Session),

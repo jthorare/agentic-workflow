@@ -22,15 +22,23 @@ internal static class ScopeRules
     internal const string Chal1 = "SCP-CHAL-001";
     internal const string Chal2 = "SCP-CHAL-002";
     internal const string Map1 = "SCP-MAP-001";
+    internal const string Rel1 = "SCP-REL-001";
+    internal const string Rel2 = "SCP-REL-002";
+    internal const string Gap1 = "SCP-GAP-001";
+    internal const string Gap2 = "SCP-GAP-002";
+    internal const string Graph1 = "SCP-GRAPH-001";
+    internal const string Qst1 = "SCP-QST-001";
 
     /// <summary>Every rule in the order the checklist shows it, with the first stage it runs at (an evidence run runs all).</summary>
     internal static IReadOnlyList<(string Id, ScopeStage From)> All { get; } =
     [
         (Schema, ScopeStage.Draft), (Cite1, ScopeStage.Draft), (Cite2, ScopeStage.Draft),
-        (Cov1, ScopeStage.Draft), (Cov2, ScopeStage.Draft), (Cov3, ScopeStage.Evidence), (Cov4, ScopeStage.Evidence), (Cov5, ScopeStage.Evidence),
+        (Cov1, ScopeStage.Draft), (Cov2, ScopeStage.Draft), (Cov3, ScopeStage.Draft), (Cov4, ScopeStage.Evidence), (Cov5, ScopeStage.Evidence),
         (Lens1, ScopeStage.Evidence),
         (Acc1, ScopeStage.Draft), (Acc2, ScopeStage.Draft), (Acc3, ScopeStage.Evidence), (Acc4, ScopeStage.Evidence), (Acc5, ScopeStage.Draft),
         (Ans1, ScopeStage.Draft), (Trust1, ScopeStage.Draft), (Chal1, ScopeStage.Evidence), (Chal2, ScopeStage.Evidence), (Map1, ScopeStage.Draft),
+        (Rel1, ScopeStage.Evidence), (Rel2, ScopeStage.Evidence), (Gap1, ScopeStage.Evidence), (Gap2, ScopeStage.Evidence),
+        (Graph1, ScopeStage.Draft), (Qst1, ScopeStage.Draft),
     ];
 
     /// <summary>The recipe loop whose cap SCP-CHAL-001 reads (workflow.scoping loops.challenge): the last round found something new only warns once that many rounds ran.</summary>
@@ -38,6 +46,12 @@ internal static class ScopeRules
 
     /// <summary>The shipped cap of <see cref="ChallengeLoop"/> (owner decision q40), used only where no recipe runs the check: the standalone 'scoping check' and 'scoping show --facts', and the stop's read model. A Step on the block runtime reads the running recipe's cap instead.</summary>
     internal const int DefaultChallengeRounds = 3;
+
+    /// <summary>The recipe loop whose cap SCP-GAP-001 reads (workflow.scoping loops.gapsearch): a confirmed last round only warns once that many rounds ran.</summary>
+    internal const string GapLoop = "gapsearch";
+
+    /// <summary>The shipped cap of <see cref="GapLoop"/>, used only where no recipe runs the check. A Step on the block runtime reads the running recipe's cap instead.</summary>
+    internal const int DefaultGapRounds = 3;
 
     /// <summary>The four lenses, in the order the coverage and the lens file list them.</summary>
     internal static IReadOnlyList<string> Lenses { get; } = ["code", "product", "related", "history"];

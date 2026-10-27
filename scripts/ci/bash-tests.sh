@@ -100,11 +100,11 @@ SERIAL=(
   "config/hooks/tests/sindri-nudge.test.sh	asserts the nudge gives up within a 300 ms budget (AW_SINDRI_NUDGE_BUDGET_MS) against a 5 s sleeping sindri"
   "config/lib/tests/prompt-sort.test.sh	asserts the hook gives up within a 600 ms budget (AW_PROMPT_SORT_BUDGET_MS) against a 5 s sleeping sorter"
   "config/lib/tests/aw-state-dir-isolation.test.sh	snapshots the real HOME's install-target locations around a sandboxed installer run and fails on any change, so another suite writing there at the same time is a false failure"
-  "config/lib/tests/installed-hooks-smoke.test.sh	runs scripts/install-judge.sh for real, which npm-installs and tsc-builds judge/dist in the shared checkout while the real-judge suites execute it"
-  "config/lib/tests/install-wake-gating.test.sh	runs scripts/install-judge.sh without --hook-only, which npm-installs and tsc-builds the shared judge/ while the real-judge suites execute judge/dist"
-  "config/lib/tests/judge-brief-real-cli.test.sh	spawns the real judge CLI (node judge/dist/cli.js, sqlite open) for each step; it flaked in the #224 and #273 gates beside heavy jobs and passes alone, so it runs on a quiet machine, after the pool, and never beside the serial suites that rebuild judge/dist"
-  "config/lib/tests/send-gate-real-judge.test.sh	spawns the real judge CLI (node judge/dist/cli.js wake-gate) per sender kind; it flaked in the #224 and #273 gates beside heavy jobs and passes alone, so it runs on a quiet machine"
+  "config/lib/tests/installed-hooks-smoke.test.sh	runs scripts/install-judge-hooks.sh for real and fires the installed hooks against a fake judge under their timeouts; it built judge/dist before the cutover and stays serial until the switch PR rechecks it"
+  "config/lib/tests/install-wake-gating.test.sh	runs scripts/install-judge-hooks.sh and the wake-gating hooks against a fake judge under their timeouts; it built judge/ before the cutover and stays serial until the switch PR rechecks it"
   "scripts/tests/forge-fixture.test.sh	dotnet-builds src/Forge in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
+  "scripts/tests/run-test-guard.test.sh	asserts a 2 s timeout plus 3 s grace returns within 20 s and reaps a daemonized sleep by token; a loaded machine shifts the windows"
+  "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
 )
 
@@ -187,7 +187,7 @@ while IFS=$'\t' read -r mode s idx; do
   if [ "$rc" != 0 ]; then
     failed+=("$s")
     echo
-    echo "FAIL  $mode  $s  (exit $rc, ${secs}s)"
+    grep -E 'FAIL|not ok|^  (expected|actual|missing|in):' "$OUT/$idx.log" 2>/dev/null | sed 's/^/      ! /' | head -40
     # The failing assertions first (a long suite's tail can hide them), then the end of the log.
     grep -E 'FAIL|not ok' "$OUT/$idx.log" 2>/dev/null | sed 's/^/      ! /' | head -20
     sed 's/^/      | /' "$OUT/$idx.log" 2>/dev/null | tail -25

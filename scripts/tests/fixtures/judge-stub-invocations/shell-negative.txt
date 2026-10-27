@@ -10,3 +10,6 @@ label="$1"
   # judge label status (a comment is not an invocation)
 aw-judge label x
 $HOME/.local/bin/judge-eval run
+judge label status
+judge adjudicate ask-check --limit 60
+"$JUDGE_BIN" eval import-turns t.jsonl

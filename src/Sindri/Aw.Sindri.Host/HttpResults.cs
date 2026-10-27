@@ -19,7 +19,7 @@ internal static class HttpResults
             ? new ProblemWithExtensions(error, status)
             : TypedResults.Problem(title: error.Code, detail: error.Message, statusCode: status);
 
-    private static int StatusOf(ErrorKind kind) => kind switch
+    internal static int StatusOf(ErrorKind kind) => kind switch
     {
         ErrorKind.Invalid => StatusCodes.Status400BadRequest,
         ErrorKind.NotFound => StatusCodes.Status404NotFound,

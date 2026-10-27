@@ -1,0 +1,18 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "state": "empty",
+  "concepts": [],
+  "other": {
+    "id": "concept:other",
+    "name": "Other",
+    "size": {
+      "features": 2,
+      "records": 3,
+      "decisions": 2,
+      "code": 2
+    }
+  },
+  "links": []
+}

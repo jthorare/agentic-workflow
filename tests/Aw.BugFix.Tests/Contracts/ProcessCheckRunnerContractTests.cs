@@ -18,6 +18,14 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
 
     protected override IReadOnlyList<string> HangingCommand => ["sleep", "5"];
 
+    protected override IReadOnlyList<string> PassingCommand => ["sh", "-c", "echo ok"];
+
+    protected override IReadOnlyList<string> FailingCommand => ["sh", "-c", "echo not ok; exit 1"];
+
+    protected override IReadOnlyList<string> KilledCommand => ["sh", "-c", "echo started; kill -KILL $$"];
+
+    protected override IReadOnlyList<string> SilentCommand => ["sh", "-c", "exit 1"];
+
     public void Dispose() => _temp.Dispose();
 
     [Fact]
@@ -34,14 +42,116 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
     [Fact]
     public void A_background_child_holding_the_output_keeps_the_exit_code_and_does_not_stretch_the_run()
     {
-        var runner = new ProcessCheckRunner(TestSettings.For(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(1)), new LocalFiles());
+        var runner = new ProcessCheckRunner(TestSettings.For(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)), new LocalFiles());
         var clock = System.Diagnostics.Stopwatch.StartNew();
 
         var exit = runner.Run(["sh", "-c", "sleep 30 & echo started; exit 1"], Directory, Path.Combine(_temp.Path, "bg.log"), Key);
 
         Assert.True(clock.Elapsed < TimeSpan.FromSeconds(15), $"took {clock.Elapsed}");
         Assert.Equal((1, true), (exit.Code, exit.Ran));
-        Assert.Contains("left processes holding its output", File.ReadAllText(Path.Combine(_temp.Path, "bg.log")), StringComparison.Ordinal);
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Contains("left 1 processes running; they were stopped", File.ReadAllText(Path.Combine(_temp.Path, "bg.log")), StringComparison.Ordinal);   // its child is stopped, not left to run on
+        }
+    }
+
+    [Fact]
+    public void At_the_limit_the_check_gets_to_run_its_exit_trap()
+    {
+        SkipUnlessLinux();
+        var marker = Path.Combine(_temp.Path, "trapped");
+        var runner = new ProcessCheckRunner(TestSettings.For(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)), new LocalFiles());
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        // the shell sits in a foreground sleep: it only acts on TERM once that ends, so TERM has to reach the sleep too.
+        var exit = runner.Run(["sh", "-c", "trap 'exit 143' TERM; trap 'echo trapped >\"$1\"' EXIT; sleep 60", "sh", marker], Directory, Path.Combine(_temp.Path, "trap.log"), Key);
+
+        Assert.False(exit.Ran);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(30), $"took {clock.Elapsed}");
+        Assert.True(File.Exists(marker), "the EXIT trap did not run");
+        Assert.DoesNotContain("ignored the stop request", File.ReadAllText(Path.Combine(_temp.Path, "trap.log")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_daemonized_child_is_gone_after_the_limit()
+    {
+        SkipUnlessLinux();
+        var token = "gh1130-" + RealTime.NewGuid().ToString("N");
+        var runner = new ProcessCheckRunner(TestSettings.For(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)), new LocalFiles());
+        try
+        {
+            var exit = runner.Run(["bash", "-c", Daemonize + "sleep 60", "bash", token], Directory, Path.Combine(_temp.Path, "limit.log"), Key);
+
+            Assert.False(exit.Ran);
+            Assert.Empty(WithToken(token));
+        }
+        finally
+        {
+            KillOnly(token);
+        }
+    }
+
+    [Fact]
+    public void A_daemonized_child_is_gone_after_a_normal_exit()
+    {
+        SkipUnlessLinux();
+        var token = "gh1130-" + RealTime.NewGuid().ToString("N");
+        var runner = new ProcessCheckRunner(TestSettings.For(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)), new LocalFiles());
+        try
+        {
+            var exit = runner.Run(["bash", "-c", Daemonize + "exit 3", "bash", token], Directory, Path.Combine(_temp.Path, "exit.log"), Key);
+
+            Assert.Equal((3, true), (exit.Code, exit.Ran));
+            Assert.Empty(WithToken(token));
+            Assert.Contains("left 1 processes running; they were stopped", File.ReadAllText(Path.Combine(_temp.Path, "exit.log")), StringComparison.Ordinal);
+        }
+        finally
+        {
+            KillOnly(token);
+        }
+    }
+
+    // A double fork into its own session (the way a fixture's serve runs), named after the token in $1 so the test can find it.
+    private const string Daemonize = "( setsid bash -c 'exec -a \"$0\" sleep 300' \"$1\" </dev/null >/dev/null 2>&1 & ); sleep 0.5; ";
+
+    private static void SkipUnlessLinux() => Assert.SkipUnless(OperatingSystem.IsLinux(), "reads /proc and needs setsid");
+
+    // Every PID whose command line carries the token: the daemonized sleep (exec -a) and the bash that was given it.
+    private static List<int> WithToken(string token)
+    {
+        var found = new List<int>();
+        foreach (var directory in System.IO.Directory.EnumerateDirectories("/proc"))
+        {
+            try
+            {
+                if (int.TryParse(Path.GetFileName(directory), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var pid) && File.ReadAllText(Path.Combine(directory, "cmdline")).Contains(token, StringComparison.Ordinal))
+                {
+                    found.Add(pid);
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // exited meanwhile, or not ours.
+            }
+        }
+
+        return found;
+    }
+
+    private static void KillOnly(string token)
+    {
+        foreach (var pid in WithToken(token))
+        {
+            try
+            {
+                using var process = System.Diagnostics.Process.GetProcessById(pid);
+                process.Kill();
+            }
+            catch (Exception e) when (e is ArgumentException or InvalidOperationException)
+            {
+                // already gone.
+            }
+        }
     }
 
     [Fact]
@@ -80,6 +190,21 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
     }
 
     [Fact]
+    public void DISPLAY_reaches_the_check_only_when_AW_BUGFIX_CHECK_ENV_names_it()
+    {
+        var path = Environment.GetEnvironmentVariable("PATH") ?? "/usr/bin:/bin";
+        var plain = new ProcessCheckRunner(BugFixSettings.Read(name => name switch { "PATH" => path, "DISPLAY" => ":0", _ => null }), new LocalFiles());
+        var named = new ProcessCheckRunner(BugFixSettings.Read(name => name switch { "PATH" => path, "DISPLAY" => ":0", "AW_BUGFIX_CHECK_ENV" => "DISPLAY", _ => null }), new LocalFiles());
+        string[] probe = ["sh", "-c", "echo \"[${DISPLAY-unset}]\""];
+
+        _ = plain.Run(probe, Directory, Path.Combine(_temp.Path, "plain.log"), Key);
+        _ = named.Run(probe, Directory, Path.Combine(_temp.Path, "named.log"), Key);
+
+        Assert.Equal("[unset]", File.ReadAllText(Path.Combine(_temp.Path, "plain.log")).Trim());
+        Assert.Equal("[:0]", File.ReadAllText(Path.Combine(_temp.Path, "named.log")).Trim());
+    }
+
+    [Fact]
     public void A_relative_program_starts_from_the_runs_directory()
     {
         if (OperatingSystem.IsWindows())
@@ -88,7 +213,7 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
         }
 
         var script = Path.Combine(_temp.Path, "check.sh");
-        _ = ExecutableScript.Write(script, "exit 4\n");
+        _ = ExecutableScript.Write(script, "echo ran; exit 4\n");
 
         var exit = Runner.Run(["./check.sh"], Directory, Path.Combine(_temp.Path, "rel.log"), Key);
 
@@ -105,7 +230,7 @@ public sealed class ProcessCheckRunnerContractTests : CheckRunnerContract, IDisp
         }
 
         var target = Path.Combine(_temp.Path, "dispatch.sh");
-        _ = ExecutableScript.Write(target, "[ \"$(basename \"$0\")\" = alias ] && exit 0 || exit 5\n");
+        _ = ExecutableScript.Write(target, "echo ran; [ \"$(basename \"$0\")\" = alias ] && exit 0 || exit 5\n");
         _ = File.CreateSymbolicLink(Path.Combine(_temp.Path, "alias"), target);
 
         var exit = Runner.Run(["./alias"], Directory, Path.Combine(_temp.Path, "alias.log"), Key);

@@ -23,7 +23,7 @@ public sealed class ContextScopesTests
     [InlineData(CallerClass.Session, ClientLabel.None, ContextCallerKind.Session, ContextClient.Http)]
     public void A_sindri_caller_maps_to_the_engine_s_caller_and_transport(CallerClass caller, ClientLabel client, ContextCallerKind kind, ContextClient transport)
     {
-        var context = CallerContext.Http(caller, terminal: true, client, RepoName.From("split-panes"), new SequentialIdGenerator());
+        var context = CallerContext.Http(new HttpCaller(caller, Terminal: true, client, RepoName.From("split-panes")), new SequentialIdGenerator());
 
         var mapped = ContextScopes.Caller(context);
 

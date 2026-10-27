@@ -4,7 +4,7 @@ The Sindri app is an [Avalonia UI](https://avaloniaui.net/) desktop app (readine
 "The UI package"). Stage S1b ships its shell: one window that shows the control plane's status, the same status
 `sindri status` prints, kept live from the event stream, and that says "Not running" with the fix when the control plane
 is down. It is its own package, `SindriUi` (tier 4 in `deps.yaml`), and it holds no logic: every verdict comes from
-Sindri's handlers (factory addendum §17.27.1). Nothing installs it before the switch.
+Sindri's handlers (factory addendum §17.27.1). `scripts/install-cs.sh` publishes it beside `sindri` and links nothing for it: bare `sindri` finds it.
 
 ## Shape
 
@@ -27,7 +27,7 @@ Sindri's handlers (factory addendum §17.27.1). Nothing installs it before the s
 - **Hand composition, no container.** The app has a handful of view models and one client; the head builds its adapters
   and hands them to `SindriApp.Create(platform, clock)`, which builds the shell view model and the API client (a loopback
   `HttpClient` that never uses a proxy). A service locator outside a Host would fail `ARCH-DI-001`.
-- **Packages.** MIT Avalonia packages only, all `[12.1.3]`: `Avalonia`, `Avalonia.Themes.Fluent`, `Avalonia.Fonts.Inter`
+- **Packages.** MIT Avalonia packages only, all `[12.1.4]`: `Avalonia`, `Avalonia.Themes.Fluent`, `Avalonia.Fonts.Inter`
   (the library), `Avalonia.Desktop` (the head), `Avalonia.Headless` and `Avalonia.Skia` (tests).
 
 ## U0: theme, ports and preferences (UI spec §14, §15, §18 U0)
@@ -657,15 +657,16 @@ Either way `sindri` is the binary in a publish directory (framework-dependent: a
 depends on nothing else about how `sindri` is built: it talks to the control plane only through the HTTP API and two files under its home, `control.json` and
 `auth/human.token`.
 
-**One command before the switch: `sindri-app`** (`scripts/sindri-app.sh`). It builds exactly that layout and runs it:
+**One command: `sindri`** (the wrapper `scripts/install-cs.sh --link` writes). `install-cs.sh` builds exactly that layout:
 when the source changed (a content hash of the files the host build reads, committed or not, with the pinned SDK and
 the platform), it publishes `sindri` framework-dependent and `sindri-ui` NativeAOT (through
-`Aw.Sindri.Ui.AotSmoke/run.sh <dir>`) the C# `judge` NativeAOT (the publish of `src/Judge/aot-smoke/run.sh`) and `aw-packets` NativeAOT (`src/Packets/aot-smoke/run.sh`) into `$AW_STATE_DIR/bin/sindri-app/<stamp>/`, keeping the build before it, then
-`exec`s that `sindri` with its arguments and `AW_SINDRI_JUDGE=<stamp dir>/judge` (unless the caller set it; `step.judge.choose` needs `judge choose`, which the TypeScript `judge` on the PATH lacks) and `AW_PACKETS_BIN=<stamp dir>/aw-packets` (unless the caller set it; `step.scope.evidence` runs `aw-packets hash`), so bare `sindri-app` starts the control plane and opens the app. It also
-installs the pinned SDK into `~/.dotnet` and fetches the pinned `temporal` when either is missing, and links
-`~/.local/bin/sindri-app` to itself (from the canonical checkout; `AW_SINDRI_APP_NO_LINK=1` skips). It is a side name:
-`sindri` stays the TypeScript CLI until the switch. A control plane already running from an earlier build keeps
-running it (bare `sindri` finds it); the script says so and `sindri-app stop` then `sindri-app` moves to the new build.
+`Aw.Sindri.Ui.AotSmoke/run.sh <dir>`) with the other binaries (`judge`, `aw-packets`, `bugfix-state`, `ui-evidence`,
+`aw-readiness`) into `$AW_STATE_DIR/bin/cs/<stamp>/`, keeping the build before it. The `sindri` wrapper `exec`s the real
+`sindri` with its arguments and `AW_SINDRI_JUDGE=<current>/judge` and `AW_PACKETS_BIN=<current>/aw-packets` (unless the
+caller set them), so bare `sindri` starts the control plane and opens the app. `install-cs.sh` also installs the pinned
+SDK into `~/.dotnet` and fetches the pinned `temporal` when either is missing. A control plane already running from an
+earlier build keeps running it (bare `sindri` finds it); the installer says so and `sindri stop` then `sindri` moves to
+the new build.
 
 **`opened` is only "started".** `sindri` starts `sindri-ui` detached with its output to `/dev/null` and reports
 `opened (sindri-ui, pid N)` as soon as the process starts, so the line can still claim success when that `sindri-ui`
@@ -831,12 +832,20 @@ A read-only sheet for `recipe/<id>[@<hash>]` (`RecipeSheetViewModel`, `Views/Rec
 
 **Tests.** `RecipeSheetViewModelTests`, `RecipeStatesViewModelTests`, `RecipeFactsViewModelTests`, `ShellRecipeTests` and the `DeepLink` cases (unit); `RecipeFramesTests` (integration; key frames `u10a-recipe-*`, with the automation tree walked from the sheet down). Every literal is read from `tests/Aw.Sindri.Tests/Golden/Api/workflow-recipe/*`; the fake serves a recipe by a hash prefix as the API does.
 
+## Sandbox surfaces (sandbox spec §8; SB-0 goldens, SB-6 views)
+
+The park card with Check again and its resume list, the Sandbox line, the Blocked list with Allow, the waiting state, the limit ending, the
+takeover banner, and the Health and Settings rows are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/`
+(`copy.json`, `states.json`, `accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as
+`Golden/Sandbox`. The vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string.
+The accessibility rows of `accessibility.json` use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on
+its label before a repeat outcome) and each gets a test in SB-6.
 ## U5': the Start form (screens spec §4.2)
 
 `N` on Workflows, the Workflows head's and Home's "Start workflow" buttons (Home's carries no key hint: `N` is Workflows'), Ctrl+N (⌘N) from any page and the palette's "Start workflow" entry open a modal form (`StartDialog`, `StartFormViewModel`). With an item sheet open it starts for that item.
 
 - **Recipes.** The picker lists `GET /sindri/workflow/recipes` and keeps only `standing == "approved"`, one row for each id at its highest version (unapproved and revoked recipes are hidden: a start of one is refused anyway). The list is used only to pick; the inputs come from `GET /sindri/workflow/recipes/{id}`.
-- **Item.** The subject is the item, typed or picked from the queue's items. A recipe's `item` input has no field of its own: the picked item is sent as the request's `item` and as the `fact:item` JSON, `{"id": …, "repo": …}` when the item the queue lists has a repo (the engine's item fact is `{id, repo, spec}` and `effect.claim.ref` reads the repo from it) and `{"id": …}` alone for a typed id the queue does not list; the API requires the id to agree (SND-WF-014). The API fills a missing repo itself once the item store lands (P3), and an explicit one still wins.
+- **Item.** The subject is the item, typed or picked from the queue's items. A recipe's `item` input has no field of its own: the picked item is sent as the request's `item` and as the `fact:item` JSON, `{"id": …, "repo": …}` when the item the queue lists has a repo (the engine's item fact is `{id, repo, spec}` with `repo` and `spec` optional, and `effect.claim.ref` reads the repo from it) and `{"id": …}` alone for a typed id the queue does not list; the API requires the id to agree (SND-WF-014). The API fills a missing repo itself once the item store lands (P3), and an explicit one still wins.
 - **Fields** by the input's fact type: text box (`text`), link box (`link`), file (`file`, at most 1 MiB, name and size shown, chosen through `IFilePicker`: the form's constructor takes it, and the shell receives it with the launcher as one `WindowPorts` value; `AvaloniaFilePicker` chooses through the window's storage provider and `StreamFilePicker` reads the file and applies the size limit, the one code the `FilePickerContract` tests reach without a window), JSON text (`payload` and any type this build has no field for). An input with `generate` is optional and says "generated if empty". Content travels base64 on the wire.
 - **Send.** Ctrl+Enter or the button, once: the guard is set before the first await, a refusal leaves the form pressable, only an accepted start marks it sent, nothing is retried and no nonce is sent. Readiness comes from the catalog row `StartInstance` and is re-read when the command list arrives while the form is open. Start is off while the chosen recipe's inputs are read, and says why in its help text. Esc, Cancel or the scrim ends the form's reads and sends: an answer still on its way opens no frame. Choosing another item or recipe starts the form clean (the sent state, the outcome line and the new-attempt offer are about the item and recipe they answered).
 - **Refusals** show the served code and detail inline, verbatim, and focus moves to the error line; an input that cannot be sent takes focus itself and carries its sentence as help text, as do the recipe picker and the item box. A field the form can see is wrong (required, not JSON, not a link, over 1 MiB) is refused before anything is sent.

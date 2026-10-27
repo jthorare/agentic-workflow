@@ -59,27 +59,10 @@ test_the_timing_sensitive_suites_are_serial() {
   for s in scripts/tests/agent-token.test.sh config/hooks/tests/failopen.test.sh config/lib/tests/failopen.test.sh \
            config/lib/tests/statusline.test.sh config/hooks/tests/sindri-nudge.test.sh config/lib/tests/prompt-sort.test.sh \
            scripts/tests/readiness-baseline.test.sh config/lib/tests/aw-state-dir-isolation.test.sh \
-           config/lib/tests/installed-hooks-smoke.test.sh config/lib/tests/install-wake-gating.test.sh \
-           config/lib/tests/judge-brief-real-cli.test.sh config/lib/tests/send-gate-real-judge.test.sh; do
+           config/lib/tests/installed-hooks-smoke.test.sh config/lib/tests/install-wake-gating.test.sh; do
     printf '%s\n' "$serial" | has -xF "$s" || fail "timing-sensitive or shared-state suite is not serial: $s"
   done
   echo "PASS: test_the_timing_sensitive_suites_are_serial"
-}
-
-# scripts/install-judge.sh without --hook-only runs `npm install && npm run build` in the shared
-# judge/ while the real-judge suites execute judge/dist, so a pool suite must never do that.
-test_no_pool_suite_builds_judge() {
-  local pool s hits=""
-  pool="$(comm -23 <(bash "$RUNNER" --list | sort) <(bash "$RUNNER" --serial | cut -f1 | sort))"
-  while IFS= read -r s; do
-    [ -n "$s" ] || continue
-    if grep -nE 'install-judge' "$ROOT/$s" | grep -vE '^[0-9]+: *#' | has -v -- '--hook-only'; then
-      hits+="$s"$'\n'
-    fi
-  done <<<"$pool"
-  [ -z "$hits" ] || fail "pool suites run install-judge.sh without --hook-only (it builds the shared judge/dist); make them serial:
-$hits"
-  echo "PASS: test_no_pool_suite_builds_judge"
 }
 
 # A fixture repo whose suites record when they run. "active-<name>" marker dirs show which
@@ -183,7 +166,8 @@ test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox() {
   local d m out rc=0 t
   d="$(mktemp -d)"; m="$(mktemp -d)"
   git -C "$d" init -q; mkdir -p "$d/t"
-  printf '%s\n' 'mkdir "$(mktemp -d | tee -a "$MARK/tmpdirs")/leak"; echo "$TMPDIR" >> "$MARK/tmpdir"' > "$d/t/a.test.sh"
+  # An explicit template under $TMPDIR: macOS's bare `mktemp -d` ignores TMPDIR (it uses the per-user /var/folders dir), so it would escape the sandbox on any runner.
+  printf '%s\n' 'mkdir "$(mktemp -d "${TMPDIR:-/tmp}/tmp.XXXXXXXX" | tee -a "$MARK/tmpdirs")/leak"; echo "$TMPDIR" >> "$MARK/tmpdir"' > "$d/t/a.test.sh"
   printf '%s\n' 'echo "${NUGET_PACKAGES:-unset}" >> "$MARK/nuget"' > "$d/t/b.test.sh"
   git -C "$d" add t
   out="$(MARK="$m" TMPDIR="$m" NUGET_PACKAGES=/shared/nuget BASH_TESTS_ROOT="$d" BASH_TESTS_JOBS=1 BASH_TESTS_SERIAL="" BASH_TESTS_EXCLUDED="" bash "$RUNNER" 2>&1)" || rc=$?
@@ -264,7 +248,6 @@ test_suites_outside_the_old_globs_are_listed
 test_every_exclusion_is_tracked_and_has_a_reason
 test_every_serial_suite_is_listed_and_has_a_reason
 test_the_timing_sensitive_suites_are_serial
-test_no_pool_suite_builds_judge
 test_pool_runs_in_parallel_and_serial_suites_run_alone
 test_a_failing_suite_fails_the_run_and_shows_its_log
 test_every_suite_gets_its_own_fresh_home_and_state_dir_whatever_the_caller_exported

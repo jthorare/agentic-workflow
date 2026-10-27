@@ -26,7 +26,7 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
     }
 
     public ValueTask<Result<IReadOnlyList<MapVersion>>> Versions(CancellationToken cancellationToken) =>
-        Query(new SqlStatement(GraphSql.SelectVersions), GraphRows.Version, cancellationToken);
+        ReadOr([], session => GraphVersionReads.List(session, cancellationToken), cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<MapOverride>>> Overrides(CancellationToken cancellationToken) =>
         ReadOr([], session => ReadOverrides(session, cancellationToken), cancellationToken);
@@ -43,13 +43,7 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
         {
             var key = draft ? "draft" : "current";
             var stamp = await StampedCache<MapSnapshot>.Stamp(session, StampedCache<MapSnapshot>.MapStamp, cancellationToken).ConfigureAwait(false);
-            if (_snapshots.Get(key, stamp) is { } held)
-            {
-                return held;
-            }
-
-            var snapshot = await SnapshotIn(session, v => v.Status == (draft ? MapVersionStatus.Draft : MapVersionStatus.Current), cancellationToken).ConfigureAwait(false);
-            _snapshots.Put(key, stamp, snapshot.IsSuccess ? snapshot.Value : null);
+            var snapshot = await _snapshots.GetOrLoad(key, stamp, () => SnapshotIn(session, v => v.Status == (draft ? MapVersionStatus.Draft : MapVersionStatus.Current), cancellationToken).AsTask(), cancellationToken).ConfigureAwait(false);
             return snapshot.IsError ? ContextDatabase.Translate(snapshot.Error) : snapshot;
         }
     }
@@ -66,13 +60,7 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
         {
             var key = "v" + version.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var stamp = await StampedCache<MapSnapshot>.Stamp(session, StampedCache<MapSnapshot>.MapStamp, cancellationToken).ConfigureAwait(false);
-            if (_snapshots.Get(key, stamp) is { } held)
-            {
-                return held;
-            }
-
-            var snapshot = await SnapshotIn(session, v => v.Number == version && v.Status is MapVersionStatus.Current or MapVersionStatus.Retained, cancellationToken).ConfigureAwait(false);
-            _snapshots.Put(key, stamp, snapshot.IsSuccess ? snapshot.Value : null);
+            var snapshot = await _snapshots.GetOrLoad(key, stamp, () => SnapshotIn(session, v => v.Number == version && v.Status is MapVersionStatus.Current or MapVersionStatus.Retained, cancellationToken).AsTask(), cancellationToken).ConfigureAwait(false);
             return snapshot.IsError ? ContextDatabase.Translate(snapshot.Error) : snapshot;
         }
     }
@@ -126,7 +114,7 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
     /// <summary>The newest version <paramref name="wanted"/> accepts, its graph and the overrides, all read in <paramref name="session"/>.</summary>
     private static async ValueTask<Result<MapSnapshot?>> SnapshotIn(SqliteReadSession session, Func<MapVersion, bool> wanted, CancellationToken cancellationToken)
     {
-        var versions = await SqliteQueries.List(session, new SqlStatement(GraphSql.SelectVersions), GraphRows.Version, cancellationToken).ConfigureAwait(false);
+        var versions = await GraphVersionReads.List(session, cancellationToken).ConfigureAwait(false);
         if (versions.IsError || versions.Value.FirstOrDefault(wanted) is not { } version)
         {
             return versions.IsError ? versions.Error : Results.Success<MapSnapshot?>(value: null);
@@ -271,9 +259,6 @@ internal sealed class SqliteGraphStore(ContextDatabase database, ContextStoreSet
                 : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
         }
     }
-
-    private ValueTask<Result<IReadOnlyList<T>>> Query<T>(SqlStatement statement, IRowMapper<T> mapper, CancellationToken cancellationToken) =>
-        ReadOr([], session => SqliteQueries.List(session, statement, mapper, cancellationToken), cancellationToken);
 
     // One read session over the store, or the answer for a store that has no file or no graph tables yet.
     private async ValueTask<Result<T>> ReadOr<T>(T missing, Func<SqliteReadSession, ValueTask<Result<T>>> read, CancellationToken cancellationToken)

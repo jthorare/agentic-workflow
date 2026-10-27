@@ -29,6 +29,23 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_needs_reasons_is_not_sent_to_jev_which_only_classifies()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with
+        {
+            Name = "resolution-check",
+            ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [ResolutionCheckQuestion.Reasons] = ResolutionCheckQuestion.StringList() },
+        };
+
+        var result = await provider.Decide(question, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new ProviderUnavailable("cannot-explain"), result);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public async Task It_posts_to_the_api_with_the_bearer_key()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
@@ -87,6 +104,21 @@ public sealed class JevProviderTests
         Assert.DoesNotContain(SampleSecrets.GitHubToken, body, StringComparison.Ordinal);
         Assert.Contains("GH_TOKEN=" + FakeInputRedactor.Placeholder, json["state"]?["transcriptTail"]?.GetValue<string>(), StringComparison.Ordinal);
         Assert.Contains("GH_TOKEN=" + FakeInputRedactor.Placeholder, json["questions"]?["decision"]?["instructions"]?.GetValue<string>(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_question_with_its_own_input_cap_sends_that_much_state_and_instructions()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with { Prompt = new string('p', 60_000), InputCapChars = 150_000 };
+        var input = new JsonObject { ["text"] = new string('t', 100_000) };
+
+        _ = await provider.Decide(question, input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        var json = JsonNode.Parse(Assert.Single(handler.Requests).Body)!;   // why: the provider always sends a JSON body
+        Assert.Equal(100_000, json["state"]!["text"]!.GetValue<string>().Length);
+        Assert.Equal(60_000, json["questions"]!["decision"]!["instructions"]!.GetValue<string>().Length);
     }
 
     [Fact]

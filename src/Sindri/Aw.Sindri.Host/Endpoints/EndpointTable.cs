@@ -88,12 +88,16 @@ internal static class EndpointTable
     private static RouteGroupBuilder MapContextQueries(RouteGroupBuilder queries)
     {
         _ = queries.MapExportContextMap();
+        _ = queries.MapGetContextConcepts();
+        _ = queries.MapGetContextConceptMembers();
+        _ = queries.MapGetContextConceptGlossary();
         _ = queries.MapExportContextReview();
         _ = queries.MapFindContextPath();
         _ = queries.MapGetContextFileMap();
         _ = queries.MapGetContextHistory();
         _ = queries.MapGetContextLenses();
         _ = queries.MapGetContextSubgraph();
+        _ = queries.MapSearchContextMap();
         _ = queries.MapGetContextCode();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();

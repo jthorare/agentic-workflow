@@ -167,7 +167,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddSingleton<OpenRequests>().AddScoped<OpenTarget>();
         _ = services.AddScoped<ISessionUsageSampler, SessionUsageSampler>();   // API P10a U11: the 60 s sample of what a live session has used
-        _ = services.AddScoped<IIdleSessions, IdleSessions>();   // a Step session whose agent ended its turn with no report
+        _ = services.AddScoped<IIdleSessions, IdleSessions>().AddScoped<IdleReads>().AddScoped<StepTakeovers>().AddScoped<IStalledAgentRuns, StalledAgentRuns>();   // a Step session whose agent ended its turn with no report
         _ = services.AddScoped<ILostSessions, LostSessions>()   // API P10a U10: 'session wrap' says the session is alive and when it exited (issues, proven by the launch secret)
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>()
             .AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
@@ -228,7 +228,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<RerunInstanceRequest>, AcceptAllValidator<RerunInstanceRequest>>().AddCommand<RerunInstanceRequest, StartInstanceResponse, RerunInstanceService>();
         _ = services.AddScoped<StartFacts>().AddSingleton<IStartFactCheck, ScopeInputStartCheck>().AddScoped<ClaimHolders>().AddScoped<EngineFilledReport>().AddSingleton<ReportOutputTypes>();
         services.TryAddSingleton<ReportRefusals>();   // the Workflows watch takes what the check records; one instance, whichever registers first   // engine P6 unit (d): SND-WF-012 against workflow_claims
-        _ = services.AddScoped<IValidator<ApplyCommandRequest>, AcceptAllValidator<ApplyCommandRequest>>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, ApplyCommandService>();
+        _ = services.AddScoped<IValidator<ApplyCommandRequest>, ApplyCommandValidator>().AddScoped<ApplyCommandService>().AddScoped<TakeoverViewing>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, TakeoverViewingCommand>()
+            .AddScoped(static sp => new TakeoverViewingCommand(sp.GetRequiredService<ApplyCommandService>(), sp.GetRequiredService<TakeoverViewing>()));   // the last registration wins: the inner service is the apply service, not the chain around this one
         _ = services.AddScoped<IValidator<CompleteStepRequest>, AcceptAllValidator<CompleteStepRequest>>().AddCommand<CompleteStepRequest, CompleteStepResponse, CompleteStepService>();
         _ = services.AddScoped<IValidator<IssueNonceRequest>, AcceptAllValidator<IssueNonceRequest>>().AddIssue<IssueNonceRequest, IssueNonceResponse, IssueNonceService>();
         _ = services.AddScoped<IStepRunSource, LedgerStepRunSource>();
@@ -243,7 +244,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     /// <summary>The doctor: its fact readers, the core checks and the extra checks decorator.</summary>
     private static IServiceCollection AddDoctor(this IServiceCollection services) => services
         .AddScoped<ProfileFacts>()
-        .AddScoped<LedgerFacts>()
+        .AddScoped<LedgerFacts>().AddScoped<RuntimeFacts>()
         .AddScoped<OnyxDoctor>().AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()

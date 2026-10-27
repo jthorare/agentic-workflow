@@ -249,6 +249,14 @@ internal sealed partial class WholeMapView : UserControl
 
     private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.Navigate(e.Value);
 
+    private void OnBandButton(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BandButton button })
+        {
+            _map?.DrillInto(button.Band);
+        }
+    }
+
     private void OnBack(object? sender, RoutedEventArgs e) => _map?.GoUp();
 
     private void OnZoomIn(object? sender, RoutedEventArgs e) => WholeCanvas.ZoomIn();

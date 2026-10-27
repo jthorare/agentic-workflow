@@ -32,8 +32,22 @@ internal static class StatusCommand
         }
 
         var status = got.Value.Value.Current.Status;
+        var asked = await DeskQuestions.Read(desk, id.Value, got.Value.Value, ct).ConfigureAwait(false);
+        if (asked.IsError)
+        {
+            return await output.Error(asked.Error).ConfigureAwait(false);
+        }
+
+        if (asked.Value is not { } body)
+        {
+            return json
+                ? await output.Json(status, 0).ConfigureAwait(false)
+                : await output.Text(status.Text, 0).ConfigureAwait(false);
+        }
+
+        var questions = DeskQuestions.Questions(body, fenced: await desk.Client.ResolveSessionReason(ct).ConfigureAwait(false) is not null);
         return json
-            ? await output.Json(status, 0).ConfigureAwait(false)
-            : await output.Text(status.Text, 0).ConfigureAwait(false);
+            ? await output.JsonWith(status, "questions", questions, 0).ConfigureAwait(false)
+            : await output.Text(DeskQuestions.Render(status.Text, questions), 0).ConfigureAwait(false);
     }
 }

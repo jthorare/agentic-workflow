@@ -44,6 +44,6 @@ internal sealed class ArmRunner(IArmQuery planner, TimeProvider clock)
     private static RankerMode? Ranker(Arm arm) => arm == Arm.RankerRrf ? RankerMode.Rrf : arm == Arm.RankerFeatures ? RankerMode.Features : arm == Arm.RankerRerank ? RankerMode.Rerank : null;
 
     private ContextResult Nothing(ContextQuery query) =>
-        new(ContextResult.CurrentSchemaVersion, QueryId.From("q_backtest"), query, [], MapVersion: null, clock.GetUtcNow(), [], [], [], [], Truncated: false,
-            new BudgetUse(0, 0, Estimate: true), new Dictionary<string, Citation>(StringComparer.Ordinal));
+        new(ContextResult.CurrentSchemaVersion, QueryId.From("q_backtest"), query, [], MapVersion: null, clock.GetUtcNow(), [], [], [], [],
+            new Dictionary<string, Citation>(StringComparer.Ordinal));
 }

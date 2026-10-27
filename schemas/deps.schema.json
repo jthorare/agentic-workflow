@@ -88,7 +88,6 @@
       "required": [
         "id",
         "kind",
-        "ts",
         "src",
         "note"
       ],
@@ -99,10 +98,9 @@
         "kind": {
           "enum": [
             "package",
-            "shell",
-            "mod"
+            "shell"
           ],
-          "description": "package = ported to C# under src/; shell = bash that stays; mod = Claude Code mod that stays TS."
+          "description": "package = a C# package under src/; shell = bash that stays and only consumes."
         },
         "tier": {
           "type": "integer",
@@ -123,19 +121,12 @@
           "type": "boolean",
           "description": "A Roslyn analyzer package: referenced only with OutputItemType=\"Analyzer\" (build-time), never at runtime, and needs no declared edge."
         },
-        "ts": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Where the TypeScript lives today, or null."
-        },
         "src": {
           "type": [
             "string",
             "null"
           ],
-          "description": "Where the C# package lives after its port, or null for shell and mod nodes."
+          "description": "Where the C# package lives, or null for shell nodes."
         },
         "projectPrefix": {
           "type": "string",
@@ -230,8 +221,7 @@
             "properties": {
               "kind": {
                 "enum": [
-                  "shell",
-                  "mod"
+                  "shell"
                 ]
               }
             }
