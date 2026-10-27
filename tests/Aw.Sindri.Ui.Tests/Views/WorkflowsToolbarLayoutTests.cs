@@ -25,7 +25,7 @@ public sealed class WorkflowsToolbarLayoutTests : FrameHost
         var toolbar = Named<WrapPanel>(window, "WorkflowsToolbar");
         var list = Named<Control>(window, "WorkflowsList");
         var gap = list.TranslatePoint(default, window)!.Value.Y - (toolbar.TranslatePoint(default, window)!.Value.Y + toolbar.Bounds.Height);
-        Assert.True(gap < PanelGap + 8, $"{gap.ToString(CultureInfo.InvariantCulture)} px sit between the toolbar and the list (one panel gap is {PanelGap})");
+        Assert.True(gap < PanelGap + 8, $"{gap.ToString(CultureInfo.InvariantCulture)} px sit between the toolbar and the list (one panel gap is {PanelGap.ToString(CultureInfo.InvariantCulture)})");
     });
 
     [Fact]
