@@ -20,9 +20,10 @@
 # A holder records its pid in <dir>/pid: $$, the shell that called acquire, which is
 # the one that releases (BASHPID would be the short-lived subshell of
 # slot="$(acquire_any_lock ...)"). A waiter that finds a pid file naming a dead process
-# (SIGKILL, a cleared session) reclaims the lock. A dir with no pid file (an older
-# holder, sindri's TS lock) is never reclaimed, so a waiter that sees the dir between
-# the holder's mkdir and its pid write leaves it alone.
+# (SIGKILL, a cleared session) reclaims the lock. The C# ui-evidence holder writes the same
+# <dir>/pid, and an older one only <dir>/owner, whose first word is its pid; both are read.
+# A dir with neither file (an older holder, sindri's TS lock) is never reclaimed, so a waiter
+# that sees the dir between the holder's mkdir and its pid write leaves it alone.
 
 # _lock_pid_alive <pid>: 0 (alive) unless the pid is a number whose process is gone.
 _lock_pid_alive() {
@@ -41,21 +42,24 @@ _lock_take() {
   return 0
 }
 
-# _lock_reclaim_dead <dir>: free <dir> when its pid file names a dead process. The pid
-# file is moved aside first (only one waiter's mv wins); if what was moved is not the
-# dead pid read, the dir changed hands in between and the file goes back.
+# _lock_reclaim_dead <dir>: free <dir> when its holder file names a dead process. The holder
+# file is <dir>/pid, else the C# ui-evidence holder's <dir>/owner ('<pid> <utc> ui-evidence'; its
+# first word is the pid). The file is moved aside first (only one waiter's mv wins); if what was
+# moved is not the dead line read, the dir changed hands in between and the file goes back.
 _lock_reclaim_dead() {
-  local dir="$1" pid moved
-  [ -f "$dir/pid" ] || return 1
-  pid="$(cat "$dir/pid" 2>/dev/null)" || return 1
+  local dir="$1" file="$1/pid" line pid moved
+  [ -f "$file" ] || file="$dir/owner"
+  [ -f "$file" ] || return 1
+  line="$(cat "$file" 2>/dev/null)" || return 1
+  pid="${line%% *}"
   _lock_pid_alive "$pid" && return 1
-  moved="$dir/pid.reclaim.$$"
-  mv "$dir/pid" "$moved" 2>/dev/null || return 1
-  if [ "$(cat "$moved" 2>/dev/null)" != "$pid" ]; then
-    mv "$moved" "$dir/pid" 2>/dev/null || true
+  moved="$file.reclaim.$$"
+  mv "$file" "$moved" 2>/dev/null || return 1
+  if [ "$(cat "$moved" 2>/dev/null)" != "$line" ]; then
+    mv "$moved" "$file" 2>/dev/null || true
     return 1
   fi
-  rm -f "$moved"
+  rm -f "$moved" "$dir/pid" "$dir/owner"
   rmdir "$dir" 2>/dev/null
 }
 

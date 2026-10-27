@@ -22,6 +22,18 @@
     <SolidColorBrush x:Key="AccentButtonForeground" Color="#ffffff" />
     <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#ffffff" />
     <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#ffffff" />
+    <!-- Combo boxes: Fluent fills a focused one from the palette accent (solid purple); it keeps the Surface1 face and Ink text, and the
+         focus ring is the cue. -->
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="#0f1011" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#141516" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#18191a" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#0f1011" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#34343a" />
+    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundFocusedPressed" Color="#d0d6e0" />
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocused" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocusedPressed" Color="#f7f8f8" />
     <!-- Buttons and inputs: Radius.MD. -->
     <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
     <!-- Tooltips on Surface3. -->

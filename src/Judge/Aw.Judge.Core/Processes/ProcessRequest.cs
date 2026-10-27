@@ -22,6 +22,12 @@ public sealed record ProcessRequest
     public IReadOnlyCollection<string> Unset { get; init; } = [];
 
     /// <summary>
+    /// When set, the program starts with only these variables of the inherited environment (those the caller has), then
+    /// <see cref="Environment"/> is added and <see cref="Unset"/> applied; null inherits everything.
+    /// </summary>
+    public IReadOnlyCollection<string>? InheritOnly { get; init; }
+
+    /// <summary>
     /// How many characters of each output stream are kept; the rest is read and dropped, so a program that floods its
     /// output can't grow the caller's memory without bound.
     /// </summary>

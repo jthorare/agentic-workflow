@@ -45,6 +45,9 @@ internal sealed record WorktreeFacts
     /// <summary>Whether the directory or one of its files (top two levels, build output left out) changed after the last sweep started.</summary>
     public bool ChangedSinceSweep { get; init; }
 
+    /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last sweep" has nothing to compare with.</summary>
+    public bool NoPreviousSweep { get; init; }
+
     /// <summary>The number of the pull request whose head branch this is.</summary>
     public int? PrNumber { get; init; }
 

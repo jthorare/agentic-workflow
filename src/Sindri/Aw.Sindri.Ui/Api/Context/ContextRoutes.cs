@@ -27,6 +27,7 @@ internal static class ContextRoutes
         Add(parts, "detail", query.Detail);
         Add(parts, "area", query.Area);
         Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
         parts.AddRange(query.Locate.Select(k => "locate=" + Uri.EscapeDataString(k)));
         if (query.Draft)
         {
@@ -35,6 +36,26 @@ internal static class ContextRoutes
 
         Add(parts, "mapVersion", query.MapVersion);
         return With(Root + "/map/whole", parts);
+    }
+
+    internal static string Concepts(ConceptsQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "cursor", query.Cursor);
+        parts.AddRange(Limit(query.Limit));
+        Add(parts, "q", query.Q);
+        return With(Root + "/concepts", parts);
+    }
+
+    internal static string ConceptGlossary(ConceptGlossaryQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "mapVersion", query.MapVersion);
+        return With(Root + "/concepts/glossary", parts);
     }
 
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>

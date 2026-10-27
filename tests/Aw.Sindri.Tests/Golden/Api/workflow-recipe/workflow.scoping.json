@@ -1,7 +1,7 @@
 {
   "id": "workflow.scoping",
-  "hash": "sha256:f72ebcc9a47af7022611760a6a13290abf7b4434a622063eb18ebb656b0e7ec1",
-  "version": 10,
+  "hash": "sha256:6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba",
+  "version": 13,
   "name": null,
   "inputs": [
     {
@@ -74,81 +74,115 @@
       "displayName": "Look at product, code, related work and history"
     },
     {
-      "id": "draft",
+      "id": "relevance",
       "order": 4,
+      "branchOf": null,
+      "why": "Takes out shared shells, icons and unrelated clusters so they do not pad the coverage.",
+      "displayName": "Check what was found is on topic"
+    },
+    {
+      "id": "relevance-judge",
+      "order": 5,
+      "branchOf": null
+    },
+    {
+      "id": "relevance-apply",
+      "order": 6,
+      "branchOf": null
+    },
+    {
+      "id": "draft",
+      "order": 7,
       "branchOf": null,
       "why": "Gives you something concrete to approve.",
       "displayName": "Draft what changes and what done means"
     },
     {
       "id": "check",
-      "order": 5,
+      "order": 8,
       "branchOf": null,
       "why": "Catches missing sources and untestable points before you read it.",
       "displayName": "Check the draft"
     },
     {
-      "id": "questions",
-      "order": 6,
+      "id": "gap-search",
+      "order": 9,
       "branchOf": null,
+      "why": "A different AI searches on its own for parts of the product and code the scope never named.",
+      "displayName": "Search for what is missing"
+    },
+    {
+      "id": "gap-judge",
+      "order": 10,
+      "branchOf": null
+    },
+    {
+      "id": "gap-log",
+      "order": 11,
+      "branchOf": null
+    },
+    {
+      "id": "reanchor",
+      "order": 12,
+      "branchOf": null
+    },
+    {
+      "id": "questions",
+      "order": null,
+      "branchOf": "gap-log",
       "why": "Closes gaps in behavior that only you can answer; unanswered, the AI assumes.",
       "displayName": "Write questions for you"
     },
     {
       "id": "interview",
-      "order": 7,
-      "branchOf": null
+      "order": null,
+      "branchOf": "gap-log"
     },
     {
       "id": "record",
-      "order": 8,
-      "branchOf": null
+      "order": null,
+      "branchOf": "gap-log"
     },
     {
       "id": "apply",
-      "order": 9,
-      "branchOf": null
-    },
-    {
-      "id": "reanchor",
-      "order": 10,
-      "branchOf": null
+      "order": null,
+      "branchOf": "gap-log"
     },
     {
       "id": "challenge",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "why": "A different AI hunts for what the first one missed.",
       "displayName": "Second opinion"
     },
     {
       "id": "challenge-log",
       "order": null,
-      "branchOf": "questions"
+      "branchOf": "gap-log"
     },
     {
       "id": "size",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "why": "Sets whether this is one pull request or must be split.",
       "displayName": "Estimate size"
     },
     {
       "id": "propose",
       "order": null,
-      "branchOf": "questions"
+      "branchOf": "gap-log"
     },
     {
       "id": "evidence",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "why": "Packs every check into the document you approve.",
       "displayName": "Assemble the proof"
     },
     {
       "id": "stop",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "why": "Last chance to change the scope before it is locked in.",
       "displayName": "Approve the scope",
       "onOutcome": [
@@ -169,19 +203,19 @@
     {
       "id": "freeze",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "why": "Locks the approved scope so later stages build exactly what you approved.",
       "displayName": "Lock in the scope"
     },
     {
       "id": "withdraw",
       "order": null,
-      "branchOf": "questions"
+      "branchOf": "gap-log"
     },
     {
       "id": "size-desk",
       "order": null,
-      "branchOf": "questions"
+      "branchOf": "gap-log"
     },
     {
       "id": "read-tracker",
@@ -201,13 +235,13 @@
     },
     {
       "id": "scoped",
-      "order": 11,
+      "order": 13,
       "branchOf": null,
       "displayName": "Scope approved"
     },
     {
       "id": "dropped",
-      "order": 12,
+      "order": 14,
       "branchOf": null,
       "displayName": "Dropped"
     }
@@ -284,9 +318,41 @@
       "from": [
         "check"
       ],
+      "to": "gap-search",
+      "on": "step.completed",
+      "label": "the draft passed: another AI searches for what is missing"
+    },
+    {
+      "from": [
+        "check"
+      ],
       "to": "size",
       "on": "step.completed",
       "label": "the second opinion is spent: size it"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "to": "reanchor",
+      "on": "step.completed",
+      "label": "a real gap was found: find starting points again"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "to": "size",
+      "on": "step.completed",
+      "label": "gap search is finished: size it"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "to": "size",
+      "on": "step.completed",
+      "label": "a gap is still open and cannot be rechecked: size it"
     },
     {
       "from": [
@@ -460,8 +526,32 @@
         "gather"
       ],
       "on": "step.completed",
-      "to": "draft",
+      "to": "relevance",
       "outcome": "gathered"
+    },
+    {
+      "from": [
+        "relevance"
+      ],
+      "on": "step.completed",
+      "to": "relevance-judge",
+      "outcome": "reviewed"
+    },
+    {
+      "from": [
+        "relevance-judge"
+      ],
+      "on": "step.completed",
+      "to": "relevance-apply",
+      "outcome": "ruled"
+    },
+    {
+      "from": [
+        "relevance-apply"
+      ],
+      "on": "step.completed",
+      "to": "draft",
+      "outcome": "applied"
     },
     {
       "from": [
@@ -494,6 +584,14 @@
         "check"
       ],
       "on": "step.completed",
+      "to": "gap-search",
+      "label": "the draft passed: another AI searches for what is missing"
+    },
+    {
+      "from": [
+        "check"
+      ],
+      "on": "step.completed",
       "to": "questions"
     },
     {
@@ -511,6 +609,76 @@
       "to": "size",
       "outcome": "pass",
       "label": "the second opinion is spent: size it"
+    },
+    {
+      "from": [
+        "gap-search"
+      ],
+      "on": "step.completed",
+      "to": "gap-judge",
+      "outcome": "searched"
+    },
+    {
+      "from": [
+        "gap-judge"
+      ],
+      "on": "step.completed",
+      "to": "gap-log",
+      "outcome": "ruled"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "reanchor",
+      "label": "a real gap was found: find starting points again"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "questions"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "challenge"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "size",
+      "outcome": "clear",
+      "label": "gap search is finished: size it"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "questions"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "challenge"
+    },
+    {
+      "from": [
+        "gap-log"
+      ],
+      "on": "step.completed",
+      "to": "size",
+      "outcome": "confirmed",
+      "label": "a gap is still open and cannot be rechecked: size it"
     },
     {
       "from": [

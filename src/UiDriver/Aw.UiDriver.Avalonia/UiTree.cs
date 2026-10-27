@@ -13,13 +13,16 @@ namespace Aw.UiDriver.Avalonia;
 
 /// <summary>
 /// The window's visual tree as the driver sees it: every element with a stable id (child positions from the window, '0/2/1'), its facts for selectors and
-/// its info for answers. Built on the UI thread and used there; read through the property system, never reflection.
+/// its info for answers. Built on the UI thread and used there; read through the property system, never reflection. The content of each open popup that
+/// draws in its own popup window hangs under the window as one more child, with ids 'p3', 'p3/0' (the popup's open number, then child positions), so
+/// a menu or flyout is reached like anything else.
 /// </summary>
 internal sealed class UiTree
 {
     internal const string RootId = "0";
 
     private readonly List<(NodeFacts Facts, Visual Visual)> _nodes = [];
+    private readonly IReadOnlyList<(string Id, Visual Visual)> _popups = [.. OpenPopups.Current().Select(static o => (PopupId(o.Sequence), o.Content))];
 
     internal UiTree(Window root)
     {
@@ -62,7 +65,7 @@ internal sealed class UiTree
     internal NodeInfo InfoOf(string id, Visual visual, int depth)
     {
         var facts = FactsOf(id, visual);
-        var origin = visual.TranslatePoint(default, Root) ?? default;
+        var origin = visual.TranslatePoint(default, Root) ?? OriginInOwnRoot(visual);
         List<NodeInfo> children = depth <= 0 ? [] : [.. ChildrenOf(id, visual).Select(c => InfoOf(c.Id, c.Visual, depth - 1))];
         return new NodeInfo(id, facts.Type, facts.AutomationId, facts.Name, facts.Text, facts.Visible, facts.Enabled, origin.X, origin.Y, visual.Bounds.Width, visual.Bounds.Height, children);
     }
@@ -72,8 +75,16 @@ internal sealed class UiTree
     /// <returns>The info.</returns>
     internal NodeInfo InfoOf((NodeFacts Facts, Visual Visual) node) => InfoOf(node.Facts.Id, node.Visual, 0);
 
-    private static IEnumerable<(string Id, Visual Visual)> ChildrenOf(string id, Visual visual) =>
-        visual.GetVisualChildren().Select((child, index) => (id + "/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture), child));
+    private IEnumerable<(string Id, Visual Visual)> ChildrenOf(string id, Visual visual)
+    {
+        var children = visual.GetVisualChildren().Select((child, index) => (id + "/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture), child));
+        return string.Equals(id, RootId, StringComparison.Ordinal) ? children.Concat(_popups) : children;
+    }
+
+    private static string PopupId(int sequence) => "p" + sequence.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    // An element in a popup window is outside the main window, so its position is given in its own popup window.
+    private static Point OriginInOwnRoot(Visual visual) => TopLevel.GetTopLevel(visual) is Visual root ? visual.TranslatePoint(default, root) ?? default : default;
 
     private void Walk(Visual visual, string id)
     {
@@ -100,6 +111,7 @@ internal sealed class UiTree
         TextBox box => NullIfEmpty(box.Text),
         ContentControl { Content: string content } => NullIfEmpty(content),
         HeaderedContentControl { Header: string header } => NullIfEmpty(header),
+        HeaderedSelectingItemsControl { Header: string header } => NullIfEmpty(header),
         _ => null,
     };
 

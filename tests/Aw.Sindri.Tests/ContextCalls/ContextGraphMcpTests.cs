@@ -73,11 +73,11 @@ public sealed class ContextGraphMcpTests : IDisposable
             Assert.False(t.JsonSchema.GetProperty("additionalProperties").GetBoolean());
         });
         Assert.Equal(["key"], node.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
-        Assert.Equal(["key", "limit", "offset"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "limit", "offset", "outside", "reason"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
         Assert.Equal(["key"], neighbors.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
         var depth = neighbors.JsonSchema.GetProperty("properties").GetProperty("depth");
         Assert.Equal(("integer", 0), (depth.GetProperty("type").GetString(), depth.GetProperty("minimum").GetInt32()));
-        Assert.Equal(["key", "depth", "limit", "offset"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "depth", "limit", "offset", "outside", "reason"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]

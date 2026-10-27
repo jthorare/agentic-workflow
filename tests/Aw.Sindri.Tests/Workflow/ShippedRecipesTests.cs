@@ -16,7 +16,7 @@ public sealed partial class ShippedRecipesTests
     public void The_real_and_dev_recipes_are_shipped() =>
         Assert.Equal(
             [
-                "dev/desk-round-trip.yaml", "dev/incident-hold.yaml", "dev/triage-three-state.yaml", "dev/workflow.dev-child-outputs.yaml", "dev/workflow.dev-child-summary.yaml",
+                "dev/desk-round-trip.yaml", "dev/incident-hold.yaml", "dev/triage-three-state.yaml", "dev/workflow.dev-agent-hold.yaml", "dev/workflow.dev-child-outputs.yaml", "dev/workflow.dev-child-summary.yaml",
                 "dev/workflow.dev-evidence-route.yaml",
                 "dev/workflow.dev-notify.yaml", "dev/workflow.dev-timeout.yaml",
                 "sindri/workflow.build.yaml", "sindri/workflow.design.yaml", "sindri/workflow.docs-sync.yaml", "sindri/workflow.evidence-all.yaml",

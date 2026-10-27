@@ -76,6 +76,14 @@ public sealed class RowSentencesTests
     }
 
     [Fact]
+    public void A_running_agent_step_whose_launch_ended_idle_says_stalled_with_no_report() =>
+        Assert.Equal("agent stalled in T-3: idle, no report", Row(Running("step.produce"), new InstanceSummaryContext(StatusCases.Now, AgentIdle: true)).Now);
+
+    [Fact]
+    public void A_waiting_engine_step_ignores_the_idle_flag() =>
+        Assert.Equal("engine waiting in T-3", Row(Running("step.produce") with { Step = new StepDeclaration("wait", "workflow.step", "one child per packet task") }, new InstanceSummaryContext(StatusCases.Now, AgentIdle: true)).Now);
+
+    [Fact]
     public void An_instance_that_waits_is_the_engine_waiting_in_its_item()
     {
         var row = Row(Running("step.produce") with { Step = new StepDeclaration("wait", "workflow.step", "one child per packet task") });

@@ -29,7 +29,7 @@ internal sealed partial class GraphWrites(SqliteUnitOfWorkFactory sessions, int 
         // A replacement sweeps nothing: a 'building' version is another build's, still being written.
         var swept = replacing is null ? await Run([new SqlStatement(GraphSql.DeleteBuilding)], returnsId: false, cancellationToken).ConfigureAwait(false) : Results.Success(0L);
         var begun = swept.IsError ? swept : await Run([new SqlStatement(GraphSql.InsertVersion, c => c.Bind("$repo", map.Repo.Value).Bind("$commit", map.Commit)
-            .Bind("$keyVersion", EntryKey.Version).Bind("$created", created))], returnsId: true, cancellationToken).ConfigureAwait(false);
+            .Bind("$keyVersion", EntryKey.Version).Bind("$created", created).Bind("$ruleset", map.Ruleset).Bind("$dropped", DroppedText.Write(map.Dropped)))], returnsId: true, cancellationToken).ConfigureAwait(false);
         if (begun.IsError)
         {
             return begun.Error;
@@ -41,7 +41,7 @@ internal sealed partial class GraphWrites(SqliteUnitOfWorkFactory sessions, int 
             var written = await Write(map, version, draft, replacing, cancellationToken).ConfigureAwait(false);
             return written.IsError
                 ? await Abandon(version, written.Error).ConfigureAwait(false)
-                : new MapVersion((int)version, map.Repo, map.Commit, EntryKey.Version, created, draft ? MapVersionStatus.Draft : MapVersionStatus.Current);
+                : new MapVersion((int)version, map.Repo, map.Commit, EntryKey.Version, created, draft ? MapVersionStatus.Draft : MapVersionStatus.Current) { Ruleset = map.Ruleset, Dropped = map.Dropped };
         }
         catch (Exception)
         {

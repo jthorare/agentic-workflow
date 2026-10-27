@@ -38,7 +38,8 @@ public sealed class LongBlockStepsTests
         var descriptor = provider.GetRequiredService<BlockCatalog>().Find(BlockId.From(step))!;
 
         Assert.Equal(BlockRuntime.Block, descriptor.Runtime);
-        Assert.InRange(BlockLimits.MaxDuration(descriptor), BlockLimits.Fallback + TimeSpan.FromSeconds(1), _cap);
+        Assert.True(BlockLimits.IsExplicit(descriptor));
+        Assert.InRange(BlockLimits.MaxDuration(descriptor), TimeSpan.FromMinutes(2), _cap);   // a long Step names its own limit; the rest have none (owner q93)
     }
 
     [Theory]

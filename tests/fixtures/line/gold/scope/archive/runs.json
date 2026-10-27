@@ -18,6 +18,28 @@
       "vendor": "fixture",
       "effort": "medium",
       "tokens": 18800
+    },
+    {
+      "step": "step.scope.relevance-review",
+      "state": "relevance",
+      "round": 1,
+      "via": "agent",
+      "seedHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "model": "fixture-reviewer-model",
+      "vendor": "fixture",
+      "effort": "medium",
+      "tokens": 9100
+    },
+    {
+      "step": "step.scope.gap-search",
+      "state": "gap-search",
+      "round": 1,
+      "via": "agent",
+      "seedHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "model": "fixture-searcher-model",
+      "vendor": "fixture",
+      "effort": "medium",
+      "tokens": 22400
     }
   ]
 }

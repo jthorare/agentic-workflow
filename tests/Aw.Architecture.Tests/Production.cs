@@ -104,6 +104,8 @@ internal static class Production
     public static IReadOnlyList<ComposeEdge> Compose { get; } =
         ComposeEdge.Parse(File.ReadAllText(Path.Combine(Solution.RepoRoot, "deps.yaml")));
 
-    /// <summary>Every dependency edge among the registered assemblies' types.</summary>
-    public static IReadOnlyList<Edge> Edges => Edge.All(Architecture.Types, Scope);
+    private static readonly Lazy<IReadOnlyList<Edge>> _edges = new(() => Edge.All(Architecture.Types, Scope));
+
+    /// <summary>Every dependency edge among the registered assemblies' types, built once.</summary>
+    public static IReadOnlyList<Edge> Edges => _edges.Value;
 }

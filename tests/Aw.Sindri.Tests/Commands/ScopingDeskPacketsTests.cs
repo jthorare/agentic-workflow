@@ -73,7 +73,7 @@ public sealed class ScopingDeskPacketsTests : IDisposable
         Assert.Equal(StubHash, packet.RootElement.GetProperty("hash").GetString());
         using var report = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(OutDirectory, "report.json"), TestContext.Current.CancellationToken));
         Assert.Equal("scopePacket.json", report.RootElement.GetProperty("outputs").GetProperty("fact:scopePacket").GetString());
-        Assert.Equal(12, Directory.GetFiles(Path.Combine(OutDirectory, "scope-packet")).Length);
+        Assert.Equal(15, Directory.GetFiles(Path.Combine(OutDirectory, "scope-packet")).Length);   // ScopePacketFiles.Names: v12 adds relevance.json and gap-search.json, the graph fact adds graph.json
     }
 
     [Fact, Trait("Lane", "integration")]

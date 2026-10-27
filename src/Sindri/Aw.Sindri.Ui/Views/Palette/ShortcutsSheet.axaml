@@ -4,7 +4,10 @@
              x:Class="Aw.Sindri.Ui.Views.Palette.ShortcutsSheet"
              x:DataType="palette:ShortcutsViewModel">
   <!-- The `?` sheet (UI spec §8): §8's keys and the catalog's own shortcuts on a Surface3 card over the scrim; it takes
-       focus when it opens (Tab cycles inside it) and Esc closes it (the window). -->
+       focus when it opens (Tab cycles inside it) and Esc closes it (the window). The card is sized to its rows and the window
+       caps it: the sheet is a Panel the size of the window, the card (centered, so it takes the smaller of its content and
+       the room left after its 24 px margins) hands the DockPanel's last child, the list, whatever height is left, and the
+       list scrolls inside it to the card's bottom edge (scrollbar always shown). -->
   <UserControl.Styles>
     <Style Selector="Border.scrim">
       <Setter Property="Background" Value="{DynamicResource Brush.Overlay}" />
@@ -21,7 +24,7 @@
 
   <Panel>
     <Border x:Name="ShortcutsScrim" Classes="scrim" PointerPressed="OnScrim" />
-    <Border x:Name="ShortcutsCard" Classes="shortcuts focus-region" Width="600" HorizontalAlignment="Center" VerticalAlignment="Center"
+    <Border x:Name="ShortcutsCard" Classes="shortcuts focus-region" Width="600" Margin="0,24" HorizontalAlignment="Center" VerticalAlignment="Center"
             Focusable="True" KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Window">
       <DockPanel>
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
@@ -29,13 +32,13 @@
           <TextBlock x:Name="ShortcutsHint" Grid.Column="1" Classes="caption subtle" Text="{Binding Hint}" VerticalAlignment="Center"
                      AutomationProperties.Name="{Binding Hint}" />
         </Grid>
-        <ScrollViewer x:Name="ShortcutsScroll" MaxHeight="520">
+        <ScrollViewer x:Name="ShortcutsScroll" VerticalScrollBarVisibility="Visible">
           <ItemsControl x:Name="ShortcutRows" ItemsSource="{Binding Rows}" AutomationProperties.Name="{Binding Title}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="palette:ShortcutRow">
-                <Grid ColumnDefinitions="180,*" MinHeight="{StaticResource Size.Row}" AutomationProperties.Name="{Binding Name}">
+                <Grid ColumnDefinitions="220,*" MinHeight="{StaticResource Size.Row}" AutomationProperties.Name="{Binding Name}">
                   <Border Classes="kbd" HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <TextBlock Classes="kbd" Text="{Binding Keys}" />
+                    <TextBlock Classes="kbd" Text="{Binding Keys}" TextWrapping="Wrap" />
                   </Border>
                   <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Action}" TextWrapping="Wrap" VerticalAlignment="Center" />
                 </Grid>

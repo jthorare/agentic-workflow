@@ -5,7 +5,7 @@ namespace Aw.Sindri.Core.Setup;
 
 /// <summary>
 /// The profile the first AddRepo creates (setup-once spec §5.1): the schema version, the user, and 'workflow.effects' set to the effect kinds the shipped recipes declare, so the first work item's
-/// effects are not refused (SND-WF-011) once the recipes are approved. Everything else takes its default. The repos are appended after it.
+/// effects are not refused (SND-WF-011) once the recipes are approved, and 'workflow.scoping.historyWindow' empty (the open window), the key the scoping recipe names. Everything else takes its default. The repos are appended after it.
 /// </summary>
 public static class DefaultProfile
 {
@@ -21,16 +21,19 @@ public static class DefaultProfile
         _ = text.Append(CultureInfo.InvariantCulture, $"schemaVersion: 1\nuser: {Quote(user)}\n");
         if (effects.Count == 0)
         {
-            return text.Append("workflow:\n  effects: []\n").ToString();
+            _ = text.Append("workflow:\n  effects: []\n");
         }
-
-        _ = text.Append("workflow:\n  effects:\n");
-        foreach (var effect in effects.Order(StringComparer.Ordinal))
+        else
         {
-            _ = text.Append(CultureInfo.InvariantCulture, $"    - {effect}\n");
+            _ = text.Append("workflow:\n  effects:\n");
+            foreach (var effect in effects.Order(StringComparer.Ordinal))
+            {
+                _ = text.Append(CultureInfo.InvariantCulture, $"    - {effect}\n");
+            }
         }
 
-        return text.ToString();
+        // the scoping recipe names this key (#399): an empty window is all history, the behavior before the key existed
+        return text.Append("  scoping:\n    historyWindow: {}\n").ToString();
     }
 
     /// <summary>A YAML double-quoted scalar for <paramref name="value"/>.</summary>

@@ -37,7 +37,7 @@ git_() { git -C "$1" -c user.name=smoke -c user.email=smoke@example.invalid "${@
 mkdir -p "$repo/src" "$repo/tests"
 printf 'drop cookie\n' >"$repo/src/app.txt"
 printf '{"steps":[]}\n' >"$repo/tests/ui.json"
-printf 'grep -q keep src/app.txt\n' >"$repo/tests/bug.test.sh"
+printf 'echo checking\ngrep -q keep src/app.txt\n' >"$repo/tests/bug.test.sh"
 git_ "$repo" init -q -b main
 git_ "$repo" add -A
 git_ "$repo" commit -q -m base

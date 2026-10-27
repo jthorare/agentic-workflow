@@ -32,6 +32,7 @@ internal static class ContextAnswers
         ArgumentNullException.ThrowIfNull(query);
         return query switch
         {
+            { Concept: UnknownConcept } => RouteAnswer.Problem("context-whole", "concept-unknown-200"),
             { Area: { } area } when !string.Equals(area, OpenArea, StringComparison.Ordinal) => RouteAnswer.Problem("context-whole", "area-unknown-200"),
             { Area: not null } => RouteAnswer.Api("context-whole", "area-open"),
             { MapVersion: { } version } when !string.Equals(version, "v1", StringComparison.Ordinal) => RouteAnswer.Problem("context-whole", "map-version-not-retained-120"),
@@ -41,6 +42,9 @@ internal static class ContextAnswers
             _ => RouteAnswer.Api("context-whole", "nodes-small"),
         };
     }
+
+    /// <summary>The concept id the goldens do not hold: the map read answers 404 SND-CONTEXT-200.</summary>
+    internal const string UnknownConcept = "concept:nope";
 
     /// <summary>The one area the goldens hold in full.</summary>
     internal const string OpenArea = "feature:tabs.tab-groups";

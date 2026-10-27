@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/questions.json",
   "title": "Interview questions (fact:questions)",
-  "description": "Spec 7.3: each question carries two to four options plus \"other\" and \"skip\"; every option cites; at most one option is recommended (checked by SCP, not here); at most five per round (7.2).",
+  "description": "Spec 7.3: each question carries two to four options plus \"other\" and \"skip\"; every option cites; at most one option is recommended here; SCP-QST-001 requires exactly one, and two to four options, on the facts, so it can name the question; at most five per round (7.2).",
   "type": "array",
   "items": {
     "type": "object",

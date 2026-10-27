@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -13,6 +14,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Trust;
@@ -113,6 +115,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => map.CleanDraft(scope, cancellationToken, expectedVersion);
 
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => map.ScanConcepts(scope, cancellationToken, expectedVersion);
+
     public ValueTask<Result<MapPublishState>> Held(ContextScope scope, CancellationToken cancellationToken) => map.Held(scope, cancellationToken);
 
     public ValueTask<Result<MapHold>> Hold(MapHold hold, ContextScope scope, CancellationToken cancellationToken) => map.Hold(hold, scope, cancellationToken);
@@ -156,9 +160,24 @@ internal sealed class ContextEngine(
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.FileMap(query, scope, cancellationToken);
 
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery graphQuery, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.ScopeGraph(graphQuery, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
+        graph.GraphReads(instanceAddress, runToken, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) =>
+        graph.RememberScopeGraph(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) =>
+        graph.ReadInScopeGraph(instanceAddress, runToken, read, cancellationToken);
+
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.Concepts(query, scope, cancellationToken);
 
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.ConceptMembers(query, scope, cancellationToken);
+
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.ConceptGlossary(query, scope, cancellationToken);
 }

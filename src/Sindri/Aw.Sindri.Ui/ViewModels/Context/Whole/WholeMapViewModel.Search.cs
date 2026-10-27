@@ -51,6 +51,7 @@ internal sealed partial class WholeMapViewModel
         Refocus();
         OnChanged(nameof(NoMatches));
         OnChanged(nameof(Shown));
+        OnChanged(nameof(Items));
         if (!zoomed && rects.Count > 0)
         {
             ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(WholeZoomBox.Around(rects)));
@@ -76,5 +77,6 @@ internal sealed partial class WholeMapViewModel
         Refocus();
         OnChanged(nameof(NoMatches));
         OnChanged(nameof(Shown));
+        OnChanged(nameof(Items));
     }
 }

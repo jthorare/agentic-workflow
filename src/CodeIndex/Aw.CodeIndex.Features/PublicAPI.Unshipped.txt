@@ -33,6 +33,7 @@ Aw.CodeIndex.Features.CodeIndexFacade.ProbeLayers(Aw.CodeIndex.Core.Facade.CodeI
 Aw.CodeIndex.Features.CodeIndexFacade.Similar(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.SymbolRef symbol, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.SimilarAnswer!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.Embed(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, System.IProgress<string!>! progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.EmbedReport!>!>
 Aw.CodeIndex.Features.CodeIndexFacade.Status(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.StatusAnswer!>!>
+Aw.CodeIndex.Features.CodeIndexFacade.SymbolVectors(Aw.CodeIndex.Core.Facade.CodeIndexScope! scope, Aw.CodeIndex.Core.Values.RepoName repo, Aw.CodeIndex.Core.Facade.SymbolVectorsQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.CodeIndex.Core.Facade.SymbolVectorsView!>!>
 override Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.Equals(object? obj) -> bool
 override Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.GetHashCode() -> int
 override Aw.CodeIndex.Features.BuildCodeIndex.BuildCodeIndexRequest.ToString() -> string!

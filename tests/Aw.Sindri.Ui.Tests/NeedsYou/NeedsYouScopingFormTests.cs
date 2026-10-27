@@ -65,6 +65,19 @@ public sealed class NeedsYouScopingFormTests
     }
 
     [Fact]
+    public async Task The_recommended_answer_is_the_option_the_agent_marked_with_recommended_true()
+    {
+        var bar = await Bar();
+
+        var served = Served().AsArray();
+        for (var i = 0; i < served.Count; i++)
+        {
+            var marked = served[i]!["options"]!.AsArray().Single(o => o!["recommended"]?.GetValue<bool>() == true)!["id"]!.GetValue<string>();
+            Assert.Equal(marked, bar.Scoping[i].Choices.Single(c => c.IsRecommended).OptionId);   // #1204: a boolean on each option of fact:questions, shown as the tag
+        }
+    }
+
+    [Fact]
     public async Task Send_answers_waits_for_every_question_to_have_a_pick()
     {
         var bar = await Bar();

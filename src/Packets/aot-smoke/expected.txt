@@ -38,7 +38,7 @@ aw-packets freeze: packet aot-smoke — frozen sha256:<hex> (packets/example/rep
 "alreadyFrozen":true
 ## scoping validate
 aw-packets validate: scoping packet — PASS (0 failed, 0 unchecked)
-pass      PKT-SCP-001 packet: all 12 scoping files are present
+pass      PKT-SCP-001 packet: all 14 scoping files are present
 pass      PKT-SCP-002 packet: the directory holds only the scoping files
 pass      PKT-SCP-003 packet: every file is well formed
 pass      PKT-SCP-004 packet: lenses.json matches its schema
@@ -54,7 +54,7 @@ pass      PKT-SCP-005 packet: every lens item id is unique and names its own len
 exit 1
 ## scoping hash
 sha256:<hex>
-{"schemaVersion":1,"kind":"scoping","hash":"sha256:<hex>","digestVersion":1,"files":["acceptance.json","answers.jsonl","brief.md","challenge.json","coverage.json","lenses.json","questions.json","rounds.jsonl","runs.json","scope-map.json","size.json","sources.json"]}
+{"schemaVersion":1,"kind":"scoping","hash":"sha256:<hex>","digestVersion":1,"files":["acceptance.json","answers.jsonl","brief.md","challenge.json","coverage.json","gap-search.json","lenses.json","questions.json","relevance.json","rounds.jsonl","runs.json","scope-map.json","size.json","sources.json"]}
 ## scoping freeze
 aw-packets freeze: scoping packet idea-1 — frozen sha256:<hex> (packets/example/repo/idea-1/frozen/<hex>.json)
 ## scoping freeze again

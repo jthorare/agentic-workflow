@@ -1,5 +1,6 @@
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 
 namespace Aw.Sindri.Ui.ViewModels.Instance;
 
@@ -9,8 +10,6 @@ namespace Aw.Sindri.Ui.ViewModels.Instance;
 /// </summary>
 internal static class RunWords
 {
-    private const string Print = "print";
-
     /// <summary>The launch's state: requested, started (with what its viewer did) or failed (with its code and detail).</summary>
     /// <param name="launch">The launch as served.</param>
     /// <returns>The line.</returns>
@@ -27,20 +26,13 @@ internal static class RunWords
             return Labels.LaunchRequested;
         }
 
-        return launch.Viewer is not { } viewer ? Labels.LaunchRunning : viewer.Outcome switch
-        {
-            "opened" => Labels.LaunchOpenedIn(viewer.Label ?? viewer.Kind),
-            "unconfirmed" => Labels.LaunchUnconfirmed(viewer.Label ?? viewer.Kind),
-            "failed" => Labels.LaunchViewerFailed(viewer.Code ?? "?", viewer.Detail ?? string.Empty),
-            _ => Labels.LaunchRunning,   // skipped: the print viewer opens nothing; the attach command is shown beside it
-        };
+        return launch.Viewer is not { } viewer ? Labels.LaunchRunning : ViewerWords.ViewerLine(viewer);
     }
 
-    /// <summary>True when the launch carries an attach command to show (the print viewer opened nothing).</summary>
+    /// <summary>True when the launch carries an attach command to show (no viewer opened the terminal).</summary>
     /// <param name="launch">The launch as served.</param>
     /// <returns>True when the command is shown.</returns>
-    internal static bool ShowsCommand(LaunchView launch) =>
-        launch.Attach is { Count: > 0 } && string.Equals(launch.Viewer?.Kind, Print, StringComparison.Ordinal);
+    internal static bool ShowsCommand(LaunchView launch) => ViewerWords.ShowsCommand(launch.Viewer, launch.Attach);
 
     /// <summary>The attach command as one line.</summary>
     /// <param name="launch">The launch as served.</param>

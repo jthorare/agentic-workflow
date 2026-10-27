@@ -27,6 +27,7 @@ const SEED_SCHEMAS = {
   "fact:challenge": "challenge.json",
   "fact:questions": "questions.json",
   "fact:openQuestions": "open-questions.json",
+  "fact:gapSearch": "gap-search.json",
 };
 
 const FACT_SCHEMAS = {

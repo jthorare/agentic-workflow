@@ -21,9 +21,9 @@ public static class FixtureRecipes
     private static ShapeOutput Out(string key, string label, FactType type, string from) => new(key, label, type, from);
 
     /// <summary>workflow.step v4 (recipes/sindri/workflow.step.yaml): produce, checks, verify, done; the revisions loop returns to produce.</summary>
-    public static RecipeShape Step { get; } = new("workflow.step", 4, "f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784", RecipeUrgency.Work,
-        [S("produce", 1, desk: true, timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000, block: "step.produce"), S("checks", 2, desk: true, timeout: T(30, TimeoutAction.Retry), block: "step.checks"),
-            S("verify", 3, desk: true, timeout: T(4 * Hour, TimeoutAction.Park), block: "step.verify"), S("done", 4, terminal: true)],
+    public static RecipeShape Step { get; } = new("workflow.step", 5, "4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7", RecipeUrgency.Work,
+        [S("produce", 1, desk: true, timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000, block: "step.produce"), S("checks", 2, desk: true, timeout: T(30, TimeoutAction.Retry), block: "step.checks"),
+            S("verify", 3, desk: true, timeout: T(Day, TimeoutAction.Park), block: "step.verify"), S("done", 4, terminal: true)],
         [new ShapeLoop("revisions", "checks", "produce", 5), new ShapeLoop("revisions", "verify", "produce", 5)],
         [In("fact:spec", "Spec", FactType.Text, "text")], []);
 
@@ -86,7 +86,7 @@ public static class FixtureRecipes
     /// RecipeViewsTests), not in <see cref="All"/> because the fixture's blocks and 'next' texts are not the file's. The lens log's 'needsOwner' leaves every question of the round in
     /// fact:escalation (a list) and the ask desk collects fact:answers, one entry per question; fact:answers is no declared output of the shipped recipe, so the instance fixture lists it as a pending fake.
     /// </summary>
-    public static RecipeShape Design { get; } = new("workflow.design", 7, "e975aac7", RecipeUrgency.Work,
+    public static RecipeShape Design { get; } = new("workflow.design", 8, "e975aac7", RecipeUrgency.Work,
         [S("intake", 1, timeout: T(Hour, TimeoutAction.Park)), S("draft", 2, timeout: T(3 * Hour, TimeoutAction.Park), tokens: 1_000_000), S("check", 3, timeout: T(Hour, TimeoutAction.Park)),
             S("round", 4, timeout: T(Hour, TimeoutAction.Park)), S("lens", 5, timeout: T(2 * Hour, TimeoutAction.Park), tokens: 1_000_000), S("lens-log", 6, timeout: T(Hour, TimeoutAction.Park)),
             S("evidence", 7, timeout: T(Hour, TimeoutAction.Park)),
@@ -102,34 +102,40 @@ public static class FixtureRecipes
             Out("fact:lensRounds", "Lens rounds", FactType.Payload, "evidence"), Out("fact:escalation", "Questions for you", FactType.Payload, "lens-log")]);
 
     /// <summary>
-    /// workflow.scoping v10 (recipes/sindri/workflow.scoping.yaml; fixture-only, not in <see cref="All"/>, so the file-equality checks skip it): the states and the full file hash, with the interview's three facts
+    /// workflow.scoping v13 (recipes/sindri/workflow.scoping.yaml; fixture-only, not in <see cref="All"/>, so the file-equality checks skip it): the states and the full file hash, with the interview's three facts
     /// ('fact:questions' from 'questions', 'fact:answers' from the 'interview' desk, 'fact:answerLog' from 'record') declared beside the six outputs the file lists, so the facts list shows them.
     /// The recipe golden is the real recipe's view (WorkflowViewGoldenTests), so the hash here is the file's.
     /// </summary>
-    public static RecipeShape Scoping { get; } = new("workflow.scoping", 10, "f72ebcc9a47af7022611760a6a13290abf7b4434a622063eb18ebb656b0e7ec1", RecipeUrgency.Work,
-        [S("intake", 1, desk: true, block: "step.scope.intake", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("read-brief", 2, desk: true, block: "step.scope.read-brief", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("gather", 3, desk: true, block: "step.scope.gather", timeout: T(30, TimeoutAction.Park)),
-            S("draft", 4, desk: true, block: "step.scope.draft", timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000),
-            S("check", 5, desk: true, block: "step.scope.check", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("questions", 6, desk: true, block: "step.interview.questions", timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000),
-            S("interview", 7, desk: true, block: "step.interview.answer", timeout: T(2 * Day, TimeoutAction.Park)),
-            S("record", 8, desk: true, block: "step.interview.record", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("apply", 9, desk: true, block: "step.interview.apply", timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000),
-            S("reanchor", 10, desk: true, block: "step.scope.reanchor", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("challenge", null, "questions", desk: true, block: "step.scope.challenge", timeout: T(4 * Hour, TimeoutAction.Park), tokens: 5_000_000),
-            S("challenge-log", null, "questions", desk: true, block: "step.scope.challenge-log", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("size", null, "questions", desk: true, block: "step.judge.choose", timeout: T(2 * Day, TimeoutAction.Park)),
-            S("propose", null, "questions", desk: true, block: "step.scope.propose", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("evidence", null, "questions", desk: true, block: "step.scope.evidence", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("stop", null, "questions", desk: true, block: "step.scope.review", timeout: T(7 * Day, TimeoutAction.Park)),
-            S("freeze", null, "questions", desk: true, block: "step.scope.freeze", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("withdraw", null, "questions", desk: true, block: "step.scope.withdraw", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("size-desk", null, "questions", desk: true, block: "step.desk.choose", timeout: T(2 * Day, TimeoutAction.Park)),
-            S("read-tracker", null, "intake", desk: true, block: "step.scope.read-tracker", timeout: T(4 * Hour, TimeoutAction.Park)),
+    public static RecipeShape Scoping { get; } = new("workflow.scoping", 13, "6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba", RecipeUrgency.Work,
+        [S("intake", 1, desk: true, block: "step.scope.intake", timeout: T(Day, TimeoutAction.Park)),
+            S("read-brief", 2, desk: true, block: "step.scope.read-brief", timeout: T(Day, TimeoutAction.Park)),
+            S("gather", 3, desk: true, block: "step.scope.gather", timeout: T(Day, TimeoutAction.Park)),
+            S("relevance", 4, desk: true, block: "step.scope.relevance-review", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("relevance-judge", 5, desk: true, block: "step.scope.relevance-judge", timeout: T(Day, TimeoutAction.Park)),
+            S("relevance-apply", 6, desk: true, block: "step.scope.relevance-apply", timeout: T(Day, TimeoutAction.Park)),
+            S("draft", 7, desk: true, block: "step.scope.draft", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("check", 8, desk: true, block: "step.scope.check", timeout: T(Day, TimeoutAction.Park)),
+            S("gap-search", 9, desk: true, block: "step.scope.gap-search", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("gap-judge", 10, desk: true, block: "step.scope.gap-judge", timeout: T(Day, TimeoutAction.Park)),
+            S("gap-log", 11, desk: true, block: "step.scope.gap-log", timeout: T(Day, TimeoutAction.Park)),
+            S("reanchor", 12, desk: true, block: "step.scope.reanchor", timeout: T(Day, TimeoutAction.Park)),
+            S("questions", null, "gap-log", desk: true, block: "step.interview.questions", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("interview", null, "gap-log", desk: true, block: "step.interview.answer", timeout: T(14 * Day, TimeoutAction.Park)),
+            S("record", null, "gap-log", desk: true, block: "step.interview.record", timeout: T(Day, TimeoutAction.Park)),
+            S("apply", null, "gap-log", desk: true, block: "step.interview.apply", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("challenge", null, "gap-log", desk: true, block: "step.scope.challenge", timeout: T(Day, TimeoutAction.Park), tokens: 5_000_000),
+            S("challenge-log", null, "gap-log", desk: true, block: "step.scope.challenge-log", timeout: T(Day, TimeoutAction.Park)),
+            S("size", null, "gap-log", desk: true, block: "step.judge.choose", timeout: T(14 * Day, TimeoutAction.Park)),
+            S("propose", null, "gap-log", desk: true, block: "step.scope.propose", timeout: T(Day, TimeoutAction.Park)),
+            S("evidence", null, "gap-log", desk: true, block: "step.scope.evidence", timeout: T(Day, TimeoutAction.Park)),
+            S("stop", null, "gap-log", desk: true, block: "step.scope.review", timeout: T(7 * Day, TimeoutAction.Park)),
+            S("freeze", null, "gap-log", desk: true, block: "step.scope.freeze", timeout: T(Day, TimeoutAction.Park)),
+            S("withdraw", null, "gap-log", desk: true, block: "step.scope.withdraw", timeout: T(Day, TimeoutAction.Park)),
+            S("size-desk", null, "gap-log", desk: true, block: "step.desk.choose", timeout: T(14 * Day, TimeoutAction.Park)),
+            S("read-tracker", null, "intake", desk: true, block: "step.scope.read-tracker", timeout: T(Day, TimeoutAction.Park)),
             S("idea", null, "intake", child: true, childRecipe: "workflow.idea-to-brief", onParked: OnParked.Propagate, timeout: T(7 * Day, TimeoutAction.Park)),
-            S("read-change", null, "intake", desk: true, block: "step.scope.read-change", timeout: T(4 * Hour, TimeoutAction.Park)),
-            S("scoped", 11, terminal: true), S("dropped", 12, terminal: true)],
+            S("read-change", null, "intake", desk: true, block: "step.scope.read-change", timeout: T(Day, TimeoutAction.Park)),
+            S("scoped", 13, terminal: true), S("dropped", 14, terminal: true)],
         [new ShapeLoop("interview", "challenge-log", "questions", 6), new ShapeLoop("rescope", "check", "gather", 6), new ShapeLoop("rounds", "check", "draft", 10)],
         [In("fact:scopeInput", "What to scope", FactType.Payload, "payload")],
         [Out("fact:scopeMap", "Scope map", FactType.ScopeMap, "evidence"), Out("fact:acceptance", "Acceptance list", FactType.Payload, "evidence"), Out("fact:coverage", "Lens coverage", FactType.Payload, "evidence"),

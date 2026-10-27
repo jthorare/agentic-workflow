@@ -16,6 +16,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 [JsonDerivedType(typeof(AnswerGiven), "answer")]
 [JsonDerivedType(typeof(TakeoverRequested), "takeover")]
 [JsonDerivedType(typeof(HandbackRequested), "handback")]
+[JsonDerivedType(typeof(RewindRequested), "rewind")]
 [JsonDerivedType(typeof(CancelRequested), "cancel")]
 [JsonDerivedType(typeof(DeadlineFired), "deadline")]
 [JsonDerivedType(typeof(RecipeWake), "recipe-wake")]

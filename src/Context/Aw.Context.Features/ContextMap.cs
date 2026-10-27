@@ -1,16 +1,18 @@
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
 using Aw.Context.Features.CleanMap;
+using Aw.Context.Features.ScanConcepts;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
 namespace Aw.Context.Features;
 
 /// <summary>The map part of the facade: each method goes to the group of slices that owns it (spec §4); the groups keep each class under the constructor limit.</summary>
-internal sealed class ContextMap(MapAdmin admin, MapReview review, MapProposals proposals, MapPublishing publishing, IService<CleanMapRequest, CleanupReport> clean) : IContextMap
+internal sealed class ContextMap(MapAdmin admin, MapReview review, MapProposals proposals, MapPublishing publishing, IService<CleanMapRequest, CleanupReport> clean, IService<ScanConceptsRequest, ConceptScanReport> scan) : IContextMap
 {
     public ValueTask<Result<MapFilePreview>> PreviewMap(string path, ContextScope scope, CancellationToken cancellationToken) =>
         admin.PreviewMap(path, scope, cancellationToken);
@@ -52,6 +54,9 @@ internal sealed class ContextMap(MapAdmin admin, MapReview review, MapProposals 
 
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) =>
         clean.Handle(new CleanMapRequest(scope, ExpectedVersion: expectedVersion), cancellationToken);
+
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) =>
+        scan.Handle(new ScanConceptsRequest(scope, expectedVersion), cancellationToken);
 
     public ValueTask<Result<MapPublishState>> Held(ContextScope scope, CancellationToken cancellationToken) => publishing.Held(scope, cancellationToken);
 

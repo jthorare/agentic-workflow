@@ -57,6 +57,41 @@ internal static class EffectContexts
         return arguments;
     }
 
+    /// <summary>
+    /// A Step input's 'with:' arguments: those of <see cref="Arguments"/>, plus each '{ profile: key }' as the reference '{"profile": key}'. The input resolves it
+    /// against the approved profile inside its fill (ContextInputFacts), never here: the workflow only carries the key, so a replay reads the same history.
+    /// </summary>
+    /// <param name="with">The arguments as the recipe wrote them.</param>
+    /// <param name="facts">The instance's facts.</param>
+    /// <returns>The values by parameter name.</returns>
+    public static Dictionary<string, JsonElement> InputArguments(IReadOnlyDictionary<string, WithValue> with, IReadOnlyDictionary<FactKey, FactValue> facts)
+    {
+        var arguments = Arguments(with, facts);
+        foreach (var (name, value) in with)
+        {
+            if (value.Profile is { } key)
+            {
+                arguments[name] = ProfileReference(key);
+            }
+        }
+
+        return arguments;
+    }
+
+    private static JsonElement ProfileReference(string key)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("profile", key);
+            writer.WriteEndObject();
+        }
+
+        using var document = JsonDocument.Parse(stream.ToArray());
+        return document.RootElement.Clone();
+    }
+
     private static JsonElement Element(FactValue value)
     {
         using var document = JsonDocument.Parse(AwJson.Serialize(value, _json));

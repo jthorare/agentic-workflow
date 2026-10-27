@@ -6,8 +6,8 @@
   "title": "Expiry for shared links",
   "recipe": {
     "id": "workflow.scoping",
-    "hash": "sha256:f72ebcc9a47af7022611760a6a13290abf7b4434a622063eb18ebb656b0e7ec1",
-    "version": 10,
+    "hash": "sha256:6848cb0c19b21104d38991c4b3a7fa3df06716bed2bfb0a246c6c041dcc832ba",
+    "version": 13,
     "urgency": "work",
     "displayName": "Scoping"
   },
@@ -71,8 +71,50 @@
       "terminal": false
     },
     {
-      "id": "draft",
+      "id": "relevance",
       "order": 4,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "relevance-judge",
+      "order": 5,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "relevance-apply",
+      "order": 6,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "draft",
+      "order": 7,
       "branchOf": null,
       "glyph": "done",
       "badge": null,
@@ -92,7 +134,7 @@
     },
     {
       "id": "check",
-      "order": 5,
+      "order": 8,
       "branchOf": null,
       "glyph": "done",
       "badge": null,
@@ -116,9 +158,65 @@
       "terminal": false
     },
     {
-      "id": "questions",
-      "order": 6,
+      "id": "gap-search",
+      "order": 9,
       "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "gap-judge",
+      "order": 10,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "gap-log",
+      "order": 11,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "reanchor",
+      "order": 12,
+      "branchOf": null,
+      "glyph": "done",
+      "badge": null,
+      "round": null,
+      "loops": [],
+      "desk": true,
+      "child": false,
+      "children": null,
+      "outcome": null,
+      "terminal": false
+    },
+    {
+      "id": "questions",
+      "order": null,
+      "branchOf": "gap-log",
       "glyph": "done",
       "badge": null,
       "round": null,
@@ -137,8 +235,8 @@
     },
     {
       "id": "interview",
-      "order": 7,
-      "branchOf": null,
+      "order": null,
+      "branchOf": "gap-log",
       "glyph": "active",
       "badge": null,
       "round": {
@@ -154,8 +252,8 @@
     },
     {
       "id": "record",
-      "order": 8,
-      "branchOf": null,
+      "order": null,
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -168,22 +266,8 @@
     },
     {
       "id": "apply",
-      "order": 9,
-      "branchOf": null,
-      "glyph": "pending",
-      "badge": null,
-      "round": null,
-      "loops": [],
-      "desk": true,
-      "child": false,
-      "children": null,
-      "outcome": null,
-      "terminal": false
-    },
-    {
-      "id": "reanchor",
-      "order": 10,
-      "branchOf": null,
+      "order": null,
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -197,7 +281,7 @@
     {
       "id": "challenge",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -211,7 +295,7 @@
     {
       "id": "challenge-log",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -231,7 +315,7 @@
     {
       "id": "size",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -245,7 +329,7 @@
     {
       "id": "propose",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -259,7 +343,7 @@
     {
       "id": "evidence",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -273,7 +357,7 @@
     {
       "id": "stop",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -287,7 +371,7 @@
     {
       "id": "freeze",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -301,7 +385,7 @@
     {
       "id": "withdraw",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -315,7 +399,7 @@
     {
       "id": "size-desk",
       "order": null,
-      "branchOf": "questions",
+      "branchOf": "gap-log",
       "glyph": "pending",
       "badge": null,
       "round": null,
@@ -370,7 +454,7 @@
     },
     {
       "id": "scoped",
-      "order": 11,
+      "order": 13,
       "branchOf": null,
       "glyph": "pending",
       "badge": null,
@@ -384,7 +468,7 @@
     },
     {
       "id": "dropped",
-      "order": 12,
+      "order": 14,
       "branchOf": null,
       "glyph": "pending",
       "badge": null,
@@ -423,8 +507,8 @@
       "header": {
         "address": "ITM-01JN3/scoping/1",
         "recipe": "workflow.scoping",
-        "hash12": "f72ebcc9a47a",
-        "version": 10,
+        "hash12": "6848cb0c19b2",
+        "version": 13,
         "state": "interview",
         "detail": "desk task",
         "since": "2026-10-12T12:10:00.0000000Z",
@@ -471,7 +555,7 @@
           "confirm": "Cancel ITM-01JN3/scoping/1? 0 running steps stop; 0 children are cancelled."
         }
       ],
-      "text": "ITM-01JN3/scoping/1  workflow.scoping@f72ebcc9a47a  v10  interview: desk task  since 12:10 (16m)\n  next      Answer the 3 questions on ITM-01JN3, then run:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome answered --output fact:answers=<file>\n            or, to stop asking and close the interview:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome doneAsking --output fact:answers=<file>\n  inputs    fact:questions  questions.json  sha256:7e3a...\n  timeout   parks in 2d (desk)\n  commands  complete, takeover, cancel\n",
+      "text": "ITM-01JN3/scoping/1  workflow.scoping@6848cb0c19b2  v13  interview: desk task  since 12:10 (16m)\n  next      Answer the 3 questions on ITM-01JN3, then run:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome answered --output fact:answers=<file>\n            or, to stop asking and close the interview:\n            sindri workflow complete ITM-01JN3/scoping/1 --run 6.1 --outcome doneAsking --output fact:answers=<file>\n  inputs    fact:questions  questions.json  sha256:7e3a...\n  timeout   parks in 2d (desk)\n  commands  complete, takeover, cancel\n",
       "injection": []
     }
   },

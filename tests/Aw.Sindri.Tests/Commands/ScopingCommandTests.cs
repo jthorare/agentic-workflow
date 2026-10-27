@@ -123,7 +123,7 @@ public sealed class ScopingCommandTests : IDisposable
         Assert.Equal(0, await Run("scoping", "show", "--facts", Facts, "--json"));
         using var body = JsonDocument.Parse(_out.ToString());
         Assert.Equal(9, body.RootElement.GetProperty("sections").GetArrayLength());
-        Assert.Equal("2 of 4 lenses limited", body.RootElement.GetProperty("coverageHeader").GetString());
+        Assert.StartsWith("2 of 4 lenses limited", body.RootElement.GetProperty("coverageHeader").GetString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

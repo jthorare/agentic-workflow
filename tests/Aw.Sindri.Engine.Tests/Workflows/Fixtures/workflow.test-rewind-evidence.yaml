@@ -1,0 +1,28 @@
+schema: 1
+id: workflow.test-rewind-evidence
+version: 1
+description: "The shape of workflow.scoping around its proof: draft, size, propose, then an evidence check whose 'incomplete' goes back to draft, which loops and parks when the same findings come twice. What a rewind to the check does after the check is fixed (#1270)."
+displayName: "Draft, size, propose and prove"
+inputs:
+  - { key: fact:request, label: "Request", type: text, kind: text }
+initial: draft
+states:
+  draft:    { kind: active, step: step.produce, loop: rounds, timeout: { after: 1d, then: park },
+              next: "Draft the scope (round {loop.rounds}/{loop.rounds.cap})." }
+  size:     { kind: active, step: step.produce, timeout: { after: 1d, then: park },
+              next: "Size the scope." }
+  propose:  { kind: active, step: step.produce, timeout: { after: 1d, then: park },
+              next: "Propose the new surfaces." }
+  evidence: { kind: active, step: step.test.evidence, timeout: { after: 1d, then: park },
+              next: "Check the proof." }
+  stop:     { kind: active, step: step.produce, timeout: { after: 7d, then: park },
+              next: "Your stop: approve the scope." }
+  done:     { kind: terminal, outcome: resolved }
+transitions:
+  - { from: draft,    to: size,     on: step.completed, when: { outcome: done },       produces: [fact:output] }
+  - { from: size,     to: propose,  on: step.completed, when: { outcome: done },       produces: [fact:output] }
+  - { from: propose,  to: evidence, on: step.completed, when: { outcome: done },       produces: [fact:output] }
+  - { from: evidence, to: stop,     on: step.completed, when: { outcome: complete } }
+  - { label: "proof is incomplete: draft again", from: evidence, to: draft, on: step.completed, when: { outcome: incomplete }, produces: [fact:findings] }
+  - { from: stop,     to: done,     on: step.completed, when: { outcome: done },       produces: [fact:output] }
+loops: { rounds: { cap: 5 } }

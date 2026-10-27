@@ -16,6 +16,7 @@ public sealed class ListServicesTests
     private readonly ViewsHarness _v = new();
     private readonly InMemoryJobViews _jobs = new();
     private readonly List<BuiltInService> _builtIns = [];
+    private readonly LiveSchedule _live = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -172,7 +173,7 @@ public sealed class ListServicesTests
             StringComparer.Ordinal);
     }
 
-    private ListServicesService Service() => new(_v.Slice.Profiles, _v.Views, _v.Progress, _jobs, _builtIns);
+    private ListServicesService Service() => new(_v.Slice.Profiles, _v.Views, _v.Progress, _jobs, _builtIns, _live, _v.Slice.Clock);
 
     private async Task Approve(params (string Name, string Every)[] services) =>
         _ = (await _v.Slice.Profiles.Save(SliceHarness.ProfileOf("thor", services), Token)).Value;

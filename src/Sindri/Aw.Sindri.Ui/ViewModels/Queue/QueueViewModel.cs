@@ -16,6 +16,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
     private QueueView? _view;
     private QueueScope _scope;   // the rows' page: the one the shell shows (PageShown), else where the selection was last made (Select, J / K)
+    private string? _reveal;   // a just-created item to select as soon as a refresh draws it (Reveal)
     private bool _onPage = true;   // false while the shell shows a page without rows
 
     // The rows and groups as last shown, by id and by name: a refresh updates them in place (§3.3).
@@ -143,6 +144,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         _view = view;
         Show();
         Keep(before, byPill);
+        Revealed();
         if (_spoken is { } text)
         {
             _spoken = null;

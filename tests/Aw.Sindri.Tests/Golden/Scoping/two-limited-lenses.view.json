@@ -1,6 +1,6 @@
 {
   "stage": "draft",
-  "coverageHeader": "2 of 4 lenses limited",
+  "coverageHeader": "2 of 4 lenses limited; relevance: 26 in, 0 out, 0 noise, 0 disputed; gap search: 1 round, 0 found, 0 confirmed",
   "openInContext": {
     "enabled": false,
     "reason": "Available once the evidence step assembles the packet"
@@ -126,6 +126,42 @@
         {
           "key": "SCP-MAP-001",
           "text": "SCP-MAP-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-REL-001",
+          "text": "SCP-REL-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-REL-002",
+          "text": "SCP-REL-002 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-GAP-001",
+          "text": "SCP-GAP-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-GAP-002",
+          "text": "SCP-GAP-002 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-GRAPH-001",
+          "text": "SCP-GRAPH-001 pass",
+          "status": "pass",
+          "lines": []
+        },
+        {
+          "key": "SCP-QST-001",
+          "text": "SCP-QST-001 pass",
           "status": "pass",
           "lines": []
         },

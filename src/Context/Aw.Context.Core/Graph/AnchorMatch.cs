@@ -1,5 +1,4 @@
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Lenses;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Graph;
@@ -109,7 +108,7 @@ public static class AnchorMatch
     }
 
     private static IReadOnlyList<NodeKey> Suggest(GraphSnapshot graph, HashSet<string> words, IReadOnlyCollection<string> except, IReadOnlyList<ContextRepo> repos) =>
-        [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal) && !DemotedFiles.IsDemoted(n.Key, repos))
+        [.. graph.Nodes.Where(n => !except.Contains(n.Key.Value, StringComparer.Ordinal) && !DemotedCode.IsDemoted(n.Key, repos))
             .Select(n => (n.Key, n.Label, Shared: Words(Unbracketed(n.Label)).Count(w => w.Length >= 3 && words.Contains(w))))
             .Where(m => m.Shared > 0)
             .OrderByDescending(m => m.Shared).ThenBy(m => TestLike(m.Key.Value) || TestLike(m.Label)).ThenBy(m => m.Key.Value, StringComparer.Ordinal)

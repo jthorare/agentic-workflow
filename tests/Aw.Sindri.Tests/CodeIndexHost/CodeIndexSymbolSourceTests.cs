@@ -6,6 +6,7 @@ using Aw.CodeIndex.Testing;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Symbols;
 using Aw.Kernel;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Host.CodeIndexHost;
 using IndexHit = Aw.CodeIndex.Core.Facade.SymbolHit;
 using SymbolQuery = Aw.Context.Core.Symbols.SymbolQuery;
@@ -13,6 +14,7 @@ using SymbolQuery = Aw.Context.Core.Symbols.SymbolQuery;
 namespace Aw.Sindri.Tests.CodeIndexHost;
 
 /// <summary>The adapter behind Context's code symbol port (S-9): the block's answers become heads and rows (code-index spec §7.2, §7.3), over a <see cref="FakeCodeIndex"/>.</summary>
+[Lane(TestLane.Unit)]
 public sealed class CodeIndexSymbolSourceTests
 {
     private const string Indexed = "0123456789abcdef0123456789abcdef01234567";

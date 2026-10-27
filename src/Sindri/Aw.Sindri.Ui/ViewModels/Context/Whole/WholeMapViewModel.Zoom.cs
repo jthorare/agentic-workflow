@@ -49,6 +49,7 @@ internal sealed partial class WholeMapViewModel
         _zoomSet = new HashSet<string>(HitKeys.SelectMany(Around), StringComparer.Ordinal);   // the answer and what it links to are drawn; the rest is not
         Changed();
         OnChanged(nameof(Shown));
+        OnChanged(nameof(Items));
         ZoomRequested?.Invoke(this, new ValueEventArgs<WholeRect>(WholeZoomBox.Around([.. hit.Select(n => n.Rect)])));
         return true;
     }
@@ -75,8 +76,7 @@ internal sealed partial class WholeMapViewModel
         _beforeZoom ??= (Answer, Geometry, Areas);
         Geometry = geometry;
         ForgetHighlight();
-        var byKey = overview.Areas.ToDictionary(a => a.Key, StringComparer.Ordinal);
-        Areas = [.. geometry.Order.Select((key, i) => new WholeAreaTileViewModel(byKey[key], i, OpenArea))];
+        Areas = HomedAreas.Tiles(overview.Areas, opened.SelectMany(o => o.Nodes ?? []), geometry.Order, OpenArea);
         MoreTouchedText = notOpened > 0 ? Labels.ContextWholeMoreTouched(notOpened) : string.Empty;
         return Zoom(keys);
     }
@@ -102,4 +102,21 @@ internal sealed partial class WholeMapViewModel
         ResetSearch();
         FitRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>The scales the stage allows for a map whose whole fits at <paramref name="fit"/>: out to the fit or a quarter (whichever is smaller; never below 2 %), in to <see cref="MaxScale"/>.</summary>
+    /// <param name="fit">The scale that shows the whole world.</param>
+    /// <returns>The smallest and the largest scale.</returns>
+    internal static (double Min, double Max) ZoomLimits(double fit) => (Math.Clamp(Math.Min(fit, FirstOpenFloor), 0.02, FirstOpenFloor), MaxScale);
+
+    /// <summary>Whether Zoom in can act.</summary>
+    /// <param name="scale">The zoom now.</param>
+    /// <param name="max">The largest scale.</param>
+    /// <returns>True below the largest scale.</returns>
+    internal static bool CanZoomIn(double scale, double max) => scale < max - 0.001;
+
+    /// <summary>Whether Zoom out can act.</summary>
+    /// <param name="scale">The zoom now.</param>
+    /// <param name="min">The smallest scale.</param>
+    /// <returns>True above the smallest scale.</returns>
+    internal static bool CanZoomOut(double scale, double min) => scale > min + 0.001;
 }

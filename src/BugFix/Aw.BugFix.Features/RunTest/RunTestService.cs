@@ -46,6 +46,15 @@ internal sealed class RunTestService(IStateStore store, IRunLedger ledger, IFile
         }));
     }
 
+    // A dotnet test run names its project, not a test file: say how to pass the check so the command and --check agree.
+    private static string ProjectHint(IReadOnlyList<string> command, CheckFile check)
+    {
+        var project = command.FirstOrDefault(static a => a.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase));
+        return command.Count > 1 && Path.GetFileName(command[0]) == "dotnet" && command[1] == "test" && project is not null
+            ? $". For dotnet test, pass the test project's .csproj as --project and use the same .csproj as --check (--project {project} and --check {project}), not a test file ({check.RepoPath})"
+            : string.Empty;
+    }
+
     // The command must name the check file itself, by a path that resolves to it from the working directory (not inside
     // a shell string, not a same-named file elsewhere), and must execute it.
     private Result<CheckFile> Executes(RunTestRequest request, CheckFile check)
@@ -53,7 +62,7 @@ internal sealed class RunTestService(IStateStore store, IRunLedger ledger, IFile
         var named = request.Command.Any(arg => files.RealPath(files.FullPath(request.WorkingDirectory, arg)) == check.FullPath);
         if (!named)
         {
-            return BugFixErrors.CommandRefused.With($"the command must pass the check file ({check.RepoPath}) as an argument that resolves to it from {request.WorkingDirectory}");
+            return BugFixErrors.CommandRefused.With($"the command must pass the check file ({check.RepoPath}) as an argument that resolves to it from {request.WorkingDirectory}{ProjectHint(request.Command, check)}");
         }
 
         return CheckCommandRule.Refusal(request.Command) is { } reason ? BugFixErrors.CommandRefused.With(reason) : check;

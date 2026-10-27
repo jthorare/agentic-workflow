@@ -182,6 +182,24 @@
       "confirm": null
     },
     {
+      "action": "ApplyCommand:rewind",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow/instances/{instanceId}/commands",
+      "cli": "sindri workflow rewind <address> --to <state>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ApplyCommand:takeover",
       "class": "pause",
       "allowedCallers": [
@@ -1091,6 +1109,25 @@
       "method": "POST",
       "route": "/sindri/services/{name}/run",
       "cli": "sindri services run <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ScanContextConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-concept-scan",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

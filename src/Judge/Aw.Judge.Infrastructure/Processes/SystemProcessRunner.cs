@@ -105,6 +105,16 @@ internal sealed class SystemProcessRunner(Func<string, string?> environment) : I
             info.ArgumentList.Add(argument);
         }
 
+        if (request.InheritOnly is { } inherit)
+        {
+            var kept = inherit.Select(name => (name, value: info.Environment.TryGetValue(name, out var value) ? value : null)).Where(pair => pair.value is not null).ToList();
+            info.Environment.Clear();
+            foreach (var (name, value) in kept)
+            {
+                info.Environment[name] = value;
+            }
+        }
+
         foreach (var (name, value) in request.Environment)
         {
             info.Environment[name] = value;

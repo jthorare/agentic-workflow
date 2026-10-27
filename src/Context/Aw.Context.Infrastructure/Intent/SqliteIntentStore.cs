@@ -37,19 +37,8 @@ internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
         await using (read.Value.ConfigureAwait(false))
         {
             var stamp = await StampedCache<IntentLayer>.Stamp(read.Value, StampedCache<IntentLayer>.IntentStamp, cancellationToken).ConfigureAwait(false);
-            if (_layers.Get("layer", stamp) is { } held)
-            {
-                return held;
-            }
-
-            var layer = await Rows(read.Value, cancellationToken).ConfigureAwait(false);
-            if (layer.IsError)
-            {
-                return ContextDatabase.Translate(layer.Error);
-            }
-
-            _layers.Put("layer", stamp, layer.Value);
-            return layer;
+            var layer = await _layers.GetOrLoad("layer", stamp, async () => (await Rows(read.Value, cancellationToken).ConfigureAwait(false)).Map<IntentLayer?>(l => l), cancellationToken).ConfigureAwait(false);
+            return layer.IsError ? ContextDatabase.Translate(layer.Error) : layer.Value ?? IntentLayer.Empty;
         }
     }
 

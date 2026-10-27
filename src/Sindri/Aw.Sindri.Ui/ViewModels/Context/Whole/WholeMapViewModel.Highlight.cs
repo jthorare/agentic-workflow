@@ -65,6 +65,11 @@ internal sealed partial class WholeMapViewModel
     /// <param name="slop">How far outside a node still counts.</param>
     internal void PointerClicked(double x, double y, double slop = 0)
     {
+        if (LaneTitleClicked(x, y))
+        {
+            return;
+        }
+
         var key = KeyAt(x, y, slop);
         if (key is null)
         {
@@ -129,6 +134,7 @@ internal sealed partial class WholeMapViewModel
     {
         Emphasis = Focus is { } focus ? Within(Around(focus)) : SearchActive ? _searchSet : null;
         EmphasisChanged?.Invoke(this, EventArgs.Empty);
+        OnChanged(nameof(SelectedItem));
     }
 
     // During a search only what is drawn can be lit.

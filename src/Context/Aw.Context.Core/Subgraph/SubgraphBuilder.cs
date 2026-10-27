@@ -40,7 +40,8 @@ public static class SubgraphBuilder
         }
 
         var (given, missing) = resolved.Value;
-        var reached = Widen(graph, nodes, given, depth);
+        var leftOut = new HashSet<string>(StringComparer.Ordinal);
+        var reached = Widen(graph, nodes, given, depth, k => DemotedCode.IsDemoted(nodes[k].Key, basis.Repos) && Note(leftOut, k));
         var order = reached.OrderBy(r => r.Value.Depth).ThenBy(r => r.Value.Origin).ThenBy(r => r.Key, StringComparer.Ordinal).Select(r => r.Key).ToList();
         var all = reached.Keys.ToHashSet(StringComparer.Ordinal);
         var bands = LensRepos.Stamp(new LensBands(Intent(graph, nodes, order, reached, all), Product(graph, nodes, order, reached), Code(graph, nodes, order, reached, all)), graph, basis.MapRepo);
@@ -52,6 +53,7 @@ public static class SubgraphBuilder
             new Dictionary<string, Citation>(StringComparer.Ordinal))
         {
             MapCommit = basis.MapCommit,
+            Demoted = leftOut.Count > 0 ? leftOut.Count : null,
         };
     }
 
@@ -86,12 +88,19 @@ public static class SubgraphBuilder
         return (given, missing);
     }
 
+    // A node depth expansion would reach, left out: the set counts each once, however many edges lead to it.
+    private static bool Note(HashSet<string> leftOut, string key)
+    {
+        _ = leftOut.Add(key);
+        return true;
+    }
+
     private sealed record Hit(int Depth, int Origin, string[] Path);
 
     private static bool IsProduct(NodeKind kind) => kind is not (NodeKind.Record or NodeKind.Decision or NodeKind.Code);
 
     // Breadth first over every edge in either direction, from the given keys in request order; the first to reach a node owns it.
-    private static Dictionary<string, Hit> Widen(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<NodeKey> given, int depth)
+    private static Dictionary<string, Hit> Widen(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<NodeKey> given, int depth, Func<string, bool> leaveOut)
     {
         var reached = new Dictionary<string, Hit>(StringComparer.Ordinal);
         for (var i = 0; i < given.Count; i++)
@@ -108,13 +117,13 @@ public static class SubgraphBuilder
         var frontier = given.Select(k => k.Value).ToList();
         for (var level = 1; level <= depth && frontier.Count > 0; level++)
         {
-            frontier = Expand(frontier, adjacent, reached, level);
+            frontier = Expand(frontier, adjacent, reached, level, leaveOut);
         }
 
         return reached;
     }
 
-    private static List<string> Expand(List<string> frontier, Dictionary<string, List<(string Node, string Hop)>> adjacent, Dictionary<string, Hit> reached, int level)
+    private static List<string> Expand(List<string> frontier, Dictionary<string, List<(string Node, string Hop)>> adjacent, Dictionary<string, Hit> reached, int level, Func<string, bool> leaveOut)
     {
         var next = new List<string>();
         foreach (var from in frontier)
@@ -122,8 +131,9 @@ public static class SubgraphBuilder
             var parent = reached[from];
             foreach (var (node, hop) in adjacent.GetValueOrDefault(from) ?? [])
             {
-                if (reached.TryAdd(node, new Hit(level, parent.Origin, [.. parent.Path, hop])))
+                if (!reached.ContainsKey(node) && !leaveOut(node))
                 {
+                    reached[node] = new Hit(level, parent.Origin, [.. parent.Path, hop]);
                     next.Add(node);
                 }
             }
