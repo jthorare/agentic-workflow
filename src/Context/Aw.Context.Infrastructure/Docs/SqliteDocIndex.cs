@@ -62,6 +62,8 @@ internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeP
             };
     }
 
+    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<DocIndexStatus>> Status(ContextRepo repo, ScrubRuleset ruleset, CancellationToken cancellationToken)
     {
         var readable = await database.Readable(cancellationToken).ConfigureAwait(false);

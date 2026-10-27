@@ -115,6 +115,22 @@ public abstract class DocIndexContract<TIndex> : IDisposable
         Check(kept is { Added: 0, Kept: 2, Recleaned: 0 } && current.Outdated == 0, "a refresh under the same rules keeps them");
     }
 
+    /// <summary>Read answers each indexed document's path, blob and scrubbed text in path order, and nothing before a refresh.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Read_answers_the_indexed_documents_with_their_text()
+    {
+        var index = Create();
+        var before = Expect(await index.Read(Repo, CancellationToken.None));
+        _ = Expect(await index.Refresh(Repo, ["docs/**/*.md"], Plain, CancellationToken.None));
+
+        var docs = Expect(await index.Read(Repo, CancellationToken.None));
+
+        Check(before.Count == 0, "a repo never refreshed has no documents");
+        Check(docs.Select(d => d.Path).SequenceEqual(["docs/architecture.md", "docs/decisions/0001-orientation-toggle.md"], StringComparer.Ordinal), "the two fixture docs, in path order");
+        Check(docs.All(d => d.Blob.Length > 0 && !string.IsNullOrWhiteSpace(d.Text)), "each has a blob and its text");
+    }
+
     /// <summary>Deletes the fixture repo.</summary>
     /// <param name="disposing">True from Dispose.</param>
     protected virtual void Dispose(bool disposing)

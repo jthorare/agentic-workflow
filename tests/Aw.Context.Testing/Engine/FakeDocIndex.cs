@@ -56,6 +56,9 @@ public sealed class FakeDocIndex(TimeProvider clock) : IDocIndex
             : new DocIndexStatus(Head: null, LastSync: null, Code: null, 0, 0));
     }
 
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     private static Dictionary<string, string> Read(string root, IReadOnlyList<string> globs)
     {
         var patterns = globs.Select(g => new Regex(ToRegex(g), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1))).ToList();

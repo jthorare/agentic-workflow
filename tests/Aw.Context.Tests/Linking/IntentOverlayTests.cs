@@ -125,4 +125,19 @@ public sealed class IntentOverlayTests
         Assert.Same(map, result.Graph);
         Assert.Empty(result.Orphaned);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_rule_link_that_repeats_a_stored_mentions_edge_adds_no_second_edge()
+    {
+        const string target = "feature:layout.split-pane.orientation";
+        var stored = new GraphBuilder()
+            .Node(target, "Split orientation")
+            .Node("record:" + _r103.Value, "Toggle split orientation", Provenance.Deterministic)
+            .Edge("record:" + _r103.Value, EdgeType.Mentions, target, provenance: Provenance.Deterministic)
+            .Build();
+
+        var result = IntentOverlay.Apply(stored, new IntentLayer([_record], [Link(target)], [], []));
+
+        Assert.Equal(1, result.Graph.Edges.Count(e => e.Type == EdgeType.Mentions && e.From.Value == "record:" + _r103.Value && e.To.Value == target));
+    }
 }

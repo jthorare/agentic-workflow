@@ -8244,3 +8244,43 @@ static Aw.Context.Core.Roles.RoleDropped.operator !=(Aw.Context.Core.Roles.RoleD
 static Aw.Context.Core.Roles.RoleDropped.operator ==(Aw.Context.Core.Roles.RoleDropped? left, Aw.Context.Core.Roles.RoleDropped? right) -> bool
 Aw.Context.Core.Extract.IRepoReader.ListTracked(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 static Aw.Context.Core.Roles.RoleCounter.Dropped(Aw.Context.Core.Engine.ContextRepo! repo, System.Collections.Generic.IReadOnlyList<string!>! tracked) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Roles.RoleDropped!>!
+Aw.Context.Core.Engine.ContextSettings.DocDirectoryNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ContextSettings.DocDirectoryNames.init -> void
+static Aw.Context.Core.Engine.ContextSettings.DefaultDocDirectoryNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Docs.IDocIndex.Read(Aw.Context.Core.Engine.ContextRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Docs.IndexedDoc!>!>!>
+Aw.Context.Core.Docs.IndexedDoc
+Aw.Context.Core.Docs.IndexedDoc.<Clone>$() -> Aw.Context.Core.Docs.IndexedDoc!
+Aw.Context.Core.Docs.IndexedDoc.Blob.get -> string!
+Aw.Context.Core.Docs.IndexedDoc.Blob.init -> void
+Aw.Context.Core.Docs.IndexedDoc.Deconstruct(out string! Path, out string! Blob, out string? Text) -> void
+Aw.Context.Core.Docs.IndexedDoc.Equals(Aw.Context.Core.Docs.IndexedDoc? other) -> bool
+Aw.Context.Core.Docs.IndexedDoc.IndexedDoc(string! Path, string! Blob, string? Text) -> void
+Aw.Context.Core.Docs.IndexedDoc.Path.get -> string!
+Aw.Context.Core.Docs.IndexedDoc.Path.init -> void
+Aw.Context.Core.Docs.IndexedDoc.Text.get -> string?
+Aw.Context.Core.Docs.IndexedDoc.Text.init -> void
+Aw.Context.Core.Extract.DocMentionScan
+Aw.Context.Core.Extract.DocMentionScan.<Clone>$() -> Aw.Context.Core.Extract.DocMentionScan!
+Aw.Context.Core.Extract.DocMentionScan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphEdge!>! Edges, out int DocsWithMissing, out int MissingPaths) -> void
+Aw.Context.Core.Extract.DocMentionScan.DocMentionScan(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphEdge!>! Edges, int DocsWithMissing, int MissingPaths) -> void
+Aw.Context.Core.Extract.DocMentionScan.DocsWithMissing.get -> int
+Aw.Context.Core.Extract.DocMentionScan.DocsWithMissing.init -> void
+Aw.Context.Core.Extract.DocMentionScan.Edges.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphEdge!>!
+Aw.Context.Core.Extract.DocMentionScan.Edges.init -> void
+Aw.Context.Core.Extract.DocMentionScan.Equals(Aw.Context.Core.Extract.DocMentionScan? other) -> bool
+Aw.Context.Core.Extract.DocMentionScan.MissingPaths.get -> int
+Aw.Context.Core.Extract.DocMentionScan.MissingPaths.init -> void
+Aw.Context.Core.Extract.DocMentions
+static Aw.Context.Core.Extract.DocMentions.Find(Aw.Context.Core.Engine.ContextRepoName repo, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphNode!>! records, System.Collections.Generic.IReadOnlyDictionary<string!, string?>! texts, System.Collections.Generic.IReadOnlyCollection<string!>! files) -> Aw.Context.Core.Extract.DocMentionScan!
+Aw.Context.Core.Extract.DocRecords
+static Aw.Context.Core.Extract.DocRecords.Find(Aw.Context.Core.Engine.ContextRepoName repo, System.Collections.Generic.IReadOnlyList<string!>! paths, System.Collections.Generic.IReadOnlyList<string!>! docGlobs, System.Collections.Generic.IReadOnlyList<string!>! directoryNames, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.GraphNode!>!
+override Aw.Context.Core.Docs.IndexedDoc.Equals(object? obj) -> bool
+override Aw.Context.Core.Docs.IndexedDoc.GetHashCode() -> int
+override Aw.Context.Core.Docs.IndexedDoc.ToString() -> string!
+static Aw.Context.Core.Docs.IndexedDoc.operator !=(Aw.Context.Core.Docs.IndexedDoc? left, Aw.Context.Core.Docs.IndexedDoc? right) -> bool
+static Aw.Context.Core.Docs.IndexedDoc.operator ==(Aw.Context.Core.Docs.IndexedDoc? left, Aw.Context.Core.Docs.IndexedDoc? right) -> bool
+override Aw.Context.Core.Extract.DocMentionScan.Equals(object? obj) -> bool
+override Aw.Context.Core.Extract.DocMentionScan.GetHashCode() -> int
+override Aw.Context.Core.Extract.DocMentionScan.ToString() -> string!
+static Aw.Context.Core.Extract.DocMentionScan.operator !=(Aw.Context.Core.Extract.DocMentionScan? left, Aw.Context.Core.Extract.DocMentionScan? right) -> bool
+static Aw.Context.Core.Extract.DocMentionScan.operator ==(Aw.Context.Core.Extract.DocMentionScan? left, Aw.Context.Core.Extract.DocMentionScan? right) -> bool

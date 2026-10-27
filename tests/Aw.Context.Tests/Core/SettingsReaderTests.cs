@@ -19,6 +19,19 @@ public sealed class SettingsReaderTests
         Assert.Null(settings.Repos);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void The_directory_doc_names_default_to_agents_readme_and_context_and_a_profile_list_replaces_them()
+    {
+        var defaults = SettingsReader.Read(section: null).Value;
+        var written = Read("""{"docs":{"directoryNames":["GUIDE.md"]}}""").Value;
+        var off = Read("""{"docs":{"directoryNames":[]}}""").Value;
+
+        Assert.Equal(["AGENTS.md", "README.md", "CONTEXT.md"], defaults.DocDirectoryNames, StringComparer.Ordinal);
+        Assert.Equal(["GUIDE.md"], written.DocDirectoryNames, StringComparer.Ordinal);
+        Assert.Equal(ContextSettings.DefaultDocGlobs, written.DocGlobs);   // the two lists are independent
+        Assert.Empty(off.DocDirectoryNames);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData(null, 2)]
     [InlineData(0, 0)]
@@ -103,6 +116,9 @@ public sealed class SettingsReaderTests
     [InlineData("""{"repos":[null]}""", "context.repos:")]
     [InlineData("""{"repos":["a/b"]}""", "context.repos:")]
     [InlineData("""{"docs":{"globs":[null]}}""", "context.docs.globs:")]
+    [InlineData("""{"docs":{"directoryNames":["a/AGENTS.md"]}}""", "context.docs.directoryNames:")]
+    [InlineData("""{"docs":{"directoryNames":[null]}}""", "context.docs.directoryNames:")]
+    [InlineData("""{"docs":{"directoryNames":["*.md"]}}""", "context.docs.directoryNames:")]
     [InlineData("""{"rerank":{"enabled":true}}""", "context.rerank:")]
     [InlineData("""{"sessions":{"enabled":true,"x":1}}""", "context:")]
     [InlineData("""[1]""", "context:")]

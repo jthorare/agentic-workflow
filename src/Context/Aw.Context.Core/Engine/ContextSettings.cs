@@ -13,6 +13,9 @@ public sealed record ContextSettings
     /// <summary>The default doc globs.</summary>
     public static IReadOnlyList<string> DefaultDocGlobs { get; } = ["docs/**/*.md", "**/PRD*.md", "**/TDD*.md"];
 
+    /// <summary>The default 'context.docs.directoryNames': the file names that make a doc in any directory.</summary>
+    public static IReadOnlyList<string> DefaultDocDirectoryNames { get; } = ["AGENTS.md", "README.md", "CONTEXT.md"];
+
     /// <summary>The default 'context.code.schemaGlobs': the migration and schema files the code lens's data files may name.</summary>
     public static IReadOnlyList<string> DefaultSchemaGlobs { get; } =
         ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
@@ -22,6 +25,9 @@ public sealed record ContextSettings
 
     /// <summary>The repo-relative globs whose files the repo-docs source indexes.</summary>
     public IReadOnlyList<string> DocGlobs { get; init; } = DefaultDocGlobs;
+
+    /// <summary>'context.docs.directoryNames' (#1373): file names that make a doc in any directory a record of the map, beside <see cref="DocGlobs"/>. One context-wide list, not per repo.</summary>
+    public IReadOnlyList<string> DocDirectoryNames { get; init; } = DefaultDocDirectoryNames;
 
     /// <summary>The per-query deadline.</summary>
     public TimeSpan Deadline { get; init; } = TimeSpan.FromSeconds(10);

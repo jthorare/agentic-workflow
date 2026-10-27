@@ -25,4 +25,10 @@ public interface IDocIndex
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>Its state.</returns>
     public ValueTask<Result<DocIndexStatus>> Status(ContextRepo repo, ScrubRuleset ruleset, CancellationToken cancellationToken);
+
+    /// <summary>The repo's indexed documents with their scrubbed text, for the map build's cited-path edges (#1373).</summary>
+    /// <param name="repo">The repo.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One entry per indexed document, in path order; empty before the first refresh.</returns>
+    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken);
 }
