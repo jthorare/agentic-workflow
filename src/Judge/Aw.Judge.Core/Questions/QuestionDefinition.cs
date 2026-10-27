@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 
 namespace Aw.Judge.Core.Questions;
@@ -48,9 +47,10 @@ public sealed record QuestionDefinition<TInput>
 
     /// <summary>
     /// Filters and caps a validated input before any provider sees it (the pack filters of model-pick); the result is what the
-    /// prompt, the providers and the digest see. Null leaves the input as it is.
+    /// prompt, the providers and the digest see. Null leaves the input as it is. Its second argument is the judge's
+    /// redactor (IInputRedactor.Redact), passed as a function so Questions doesn't depend on Ports.
     /// </summary>
-    public Func<TInput, IInputRedactor, TInput>? Sanitize { get; init; }
+    public Func<TInput, Func<JsonNode?, JsonNode?>, TInput>? Sanitize { get; init; }
 
     /// <summary>
     /// What the decision row stores in place of the input, for a question whose input holds text that must not be kept (model-pick's

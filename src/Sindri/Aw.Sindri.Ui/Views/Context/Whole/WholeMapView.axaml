@@ -58,7 +58,8 @@
       <TextBlock x:Name="WholeMoreTouched" Classes="caption" Text="{Binding MoreTouchedText}" IsVisible="{Binding HasMoreTouched}" AutomationProperties.Name="{Binding MoreTouchedText}" />
     </StackPanel>
 
-    <Grid Grid.Row="1">
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+    <Grid>
       <ctl:ZoomBorder x:Name="WholeCanvas" AutomationProperties.Name="{Binding CanvasName}">
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
@@ -128,6 +129,20 @@
           <Button x:Name="WholeZoomFit" Click="OnZoomFit" Padding="6,4" Background="Transparent" BorderThickness="0"><icons:StateIcon Icon="Kind.Fit" Foreground="{DynamicResource Brush.InkMuted}" /></Button>
         </StackPanel>
       </Border>
+    </Grid>
+
+      <!-- The accessible map (UX pass C-3): the canvas is drawn, not made of controls, so the items it draws are listed here for the keyboard and a screen reader. Arrow keys move; Enter does what a click on the map does. -->
+      <Grid Grid.Column="1" Width="200" RowDefinitions="Auto,*" RowSpacing="4">
+        <TextBlock Classes="eyebrow" Text="{Binding ItemsName}" AutomationProperties.AccessibilityView="Raw" />
+        <ListBox x:Name="WholeItems" Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=OneWay}" AutomationProperties.Name="{Binding ItemsName}"
+                 ContainerPrepared="OnItemPrepared" KeyDown="OnItemsKey" Tapped="OnItemsTapped">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:MapItemViewModel">
+              <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

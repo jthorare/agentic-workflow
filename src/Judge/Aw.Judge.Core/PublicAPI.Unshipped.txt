@@ -1930,7 +1930,7 @@ Aw.Judge.Core.Questions.ModelPickWithheld.Secret.get -> int
 Aw.Judge.Core.Questions.ModelPickWithheld.Secret.init -> void
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.get -> int?
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.init -> void
-Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.get -> System.Func<TInput!, Aw.Judge.Core.Ports.IInputRedactor!, TInput!>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.get -> System.Func<TInput!, System.Func<System.Text.Json.Nodes.JsonNode?, System.Text.Json.Nodes.JsonNode?>!, TInput!>?
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.init -> void
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.get -> System.Func<TInput!, System.Text.Json.Nodes.JsonNode?>?
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.init -> void
@@ -1979,7 +1979,7 @@ static Aw.Judge.Core.Questions.ModelPickInput.operator !=(Aw.Judge.Core.Question
 static Aw.Judge.Core.Questions.ModelPickInput.operator ==(Aw.Judge.Core.Questions.ModelPickInput? left, Aw.Judge.Core.Questions.ModelPickInput? right) -> bool
 static Aw.Judge.Core.Questions.ModelPickOmitted.operator !=(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
 static Aw.Judge.Core.Questions.ModelPickOmitted.operator ==(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
-static Aw.Judge.Core.Questions.ModelPickPack.Apply(Aw.Judge.Core.Questions.ModelPickInput! input, Aw.Judge.Core.Ports.IInputRedactor! redactor) -> Aw.Judge.Core.Questions.ModelPickInput!
+static Aw.Judge.Core.Questions.ModelPickPack.Apply(Aw.Judge.Core.Questions.ModelPickInput! input, System.Func<System.Text.Json.Nodes.JsonNode?, System.Text.Json.Nodes.JsonNode?>! redact) -> Aw.Judge.Core.Questions.ModelPickInput!
 static Aw.Judge.Core.Questions.ModelPickPrevious.operator !=(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
 static Aw.Judge.Core.Questions.ModelPickPrevious.operator ==(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
 static Aw.Judge.Core.Questions.ModelPickQuestion.Budget.get -> System.TimeSpan

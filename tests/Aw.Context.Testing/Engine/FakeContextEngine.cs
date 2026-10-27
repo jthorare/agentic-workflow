@@ -244,6 +244,9 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) =>
         ValueTask.FromResult(GraphReadsAnswer);
 
+    /// <summary>What <see cref="RememberScopeGraph"/> answers; success unless a test sets an error.</summary>
+    public Result<bool> RememberAnswer { get; set; } = Results.Success(value: true);
+
     /// <summary>The graphs remembered, in order, by instance.</summary>
     public IList<(string Instance, ScopeGraphView Graph)> Remembered { get; } = [];
 
@@ -251,7 +254,7 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken)
     {
         Remembered.Add((instanceAddress, view));
-        return ValueTask.FromResult(Results.Success(value: true));
+        return ValueTask.FromResult(RememberAnswer);
     }
 
     /// <inheritdoc/>

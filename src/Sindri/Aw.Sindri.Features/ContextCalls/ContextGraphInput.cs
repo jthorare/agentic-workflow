@@ -11,7 +11,7 @@ using Aw.Sindri.Core.Workflow.Ids;
 namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
-/// 'input.context.graph' (issue 1005): the prefiltered graph the scoping agent Steps work from, read in process from the engine's scoping graph as the service, cut to the instance's repo.
+/// 'input.context.graph' (issue 1005): the prefiltered graph the scoping agent Steps work from, read in process from the engine's scoping graph as the service, cut to the instance's repo, and remembered under the Step's workflow instance so the engine scopes that run's context reads to it.
 /// The section 'graph' is a short readable line; the typed result is the <see cref="ScopeGraphView"/>. A graph the engine can't give (it builds none yet, or is down) is an honest section
 /// saying so and no typed result: the gather then writes the graph as a projection of the lenses with a recorded limit. Unlike the lenses input it does not wait and try again.
 /// </summary>
@@ -81,9 +81,24 @@ internal sealed class ContextGraphInput(IContextEngine graph, ContextInputScopes
             return Unavailable(view.Error.Code + ": " + view.Error.Message, notes);
         }
 
-        // TODO(#1005): call IContextEngine.RememberScopeGraph(instance, view) here once context lands it; on an error still inject the graph and add a note.
+        await Remember(context.Instance, view.Value, notes, cancellationToken).ConfigureAwait(false);
         var text = string.Create(CultureInfo.InvariantCulture, $"The scoping graph has {view.Value.Nodes.Count} nodes and {view.Value.Edges.Count} edges at map {view.Value.MapVersion}; {view.Value.Limits.Count} limits.\n");
         return ContextInputSections.Filled(Section, text, notes, view.Value, json);
+    }
+
+    // The instance's graph, kept so the engine scopes that run's context reads to it; no instance, nothing remembered. A failure is a note, the graph is still injected.
+    private async ValueTask Remember(string? instance, ScopeGraphView view, List<string> notes, CancellationToken cancellationToken)
+    {
+        if (instance is null)
+        {
+            return;
+        }
+
+        var remembered = await graph.RememberScopeGraph(instance, view, cancellationToken).ConfigureAwait(false);
+        if (remembered.IsError)
+        {
+            notes.Add($"the graph was not remembered for this run's context reads, so they are not scoped to it ({remembered.Error.Code}: {remembered.Error.Message})");
+        }
     }
 
     private static InjectionSections Unavailable(string why, List<string> notes) => ContextInputSections.Unavailable(Section, "scoping graph", why, notes);

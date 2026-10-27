@@ -16,7 +16,7 @@ public sealed class ModelPickPackTests
             [.. paths.Select(p => new ModelPickFile(p, "text of " + p))],
             [new ModelPickCandidate("m1", "haiku", "cheap")],
             deny);
-        return ModelPickPack.Apply(input, new FakeInputRedactor(known));
+        return ModelPickPack.Apply(input, new FakeInputRedactor(known).Redact);
     }
 
     [Theory]
@@ -75,7 +75,7 @@ public sealed class ModelPickPackTests
             [new ModelPickFile("src/Ok.cs", "fine"), new ModelPickFile("src/Config.cs", $"var t = \"{found}\";")],
             [new ModelPickCandidate("m1", "haiku", "cheap")]);
 
-        var packed = ModelPickPack.Apply(input, new FakeInputRedactor(found));
+        var packed = ModelPickPack.Apply(input, new FakeInputRedactor(found).Redact);
 
         Assert.Equal(["src/Ok.cs"], packed.Files.Select(f => f.Path), StringComparer.Ordinal);
         Assert.Equal("secret", Assert.Single(packed.Dropped!).Why);
@@ -102,7 +102,7 @@ public sealed class ModelPickPackTests
             Cut: [new ModelPickCut("forged.cs", 1, 2)],
             Withheld: new ModelPickWithheld(9, 9));
 
-        var packed = ModelPickPack.Apply(input, new FakeInputRedactor());
+        var packed = ModelPickPack.Apply(input, new FakeInputRedactor().Redact);
 
         Assert.Null(packed.DenyPaths);
         Assert.Empty(packed.Omitted ?? []);
@@ -118,7 +118,7 @@ public sealed class ModelPickPackTests
             [new ModelPickFile("src/a.cs", ModelPickJson.Lines(30_000)), new ModelPickFile("src/b.cs", ModelPickJson.Lines(30_000))],
             [new ModelPickCandidate("m1", "haiku", "cheap")]);
 
-        var packed = ModelPickPack.Apply(input, new FakeInputRedactor());
+        var packed = ModelPickPack.Apply(input, new FakeInputRedactor().Redact);
 
         Assert.Equal(["src/a.cs"], packed.Files.Select(f => f.Path), StringComparer.Ordinal);
         Assert.Equal([new ModelPickOmitted("src/b.cs", 30_000, "cap")], packed.Omitted);

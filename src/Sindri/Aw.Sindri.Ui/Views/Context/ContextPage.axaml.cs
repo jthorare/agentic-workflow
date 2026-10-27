@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Context;
 
@@ -41,6 +42,7 @@ internal sealed partial class ContextPage : UserControl
         base.OnAttachedToVisualTree(e);
         _scroller = this.FindAncestorOfType<ScrollViewer>();
         _scroller?.PropertyChanged += OnScrollerChanged;
+        LayoutUpdated += OnLayoutUpdated;   // a banner that shows above the stage moves it: the height follows
         ContextStack.DataContext = _page?.Map;
         FitStage();
     }
@@ -50,6 +52,7 @@ internal sealed partial class ContextPage : UserControl
     {
         _scroller?.PropertyChanged -= OnScrollerChanged;
         _scroller = null;
+        LayoutUpdated -= OnLayoutUpdated;
 
         base.OnDetachedFromVisualTree(e);
     }
@@ -123,6 +126,17 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The clear button goes when the box is empty; a person who pressed it keeps focus, in the box they cleared.
+    private void ShowClear(bool shown)
+    {
+        if (!shown)
+        {
+            FocusHandOff.Before(AnchorClear, AnchorBox);
+        }
+
+        AnchorClear.IsVisible = shown;
+    }
+
     // The clear button: the box empties and the map is whole again.
     private void OnClearSearch(object? sender, RoutedEventArgs e)
     {
@@ -169,7 +183,7 @@ internal sealed partial class ContextPage : UserControl
         }
         else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
         {
-            AnchorClear.IsVisible = _page.AnchorText.Length > 0;   // the clear button shows while the box holds something
+            ShowClear(_page.AnchorText.Length > 0);   // the clear button shows while the box holds something
         }
     }
 
@@ -177,7 +191,7 @@ internal sealed partial class ContextPage : UserControl
     private void Sync(ContextPageViewModel page)
     {
         ContextStack.DataContext = page.Map;
-        AnchorClear.IsVisible = page.AnchorText.Length > 0;
+        ShowClear(page.AnchorText.Length > 0);
         if (page.Map is { } map)
         {
             ContextCoverageStrip.Areas = map.CoverageAreas;
@@ -189,6 +203,8 @@ internal sealed partial class ContextPage : UserControl
     }
 
     private static void Dispatch(Action action) => Avalonia.Threading.Dispatcher.UIThread.Post(action);
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => FitStage();
 
     private void OnScrollerChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
@@ -206,7 +222,13 @@ internal sealed partial class ContextPage : UserControl
             return;
         }
 
+        // The stage fills what the window leaves: the viewport less where the page starts in it, where the stage starts in the page, and the edge. It starts at the top of its row, so a row taller than it never centres it.
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
-        ContextStageHost.Height = Math.Max(StageMinimum, scroller.Viewport.Height - top - PageEdge);
+        var start = scroller.Content is Visual content ? this.TranslatePoint(default, content)?.Y ?? 0 : 0;
+        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge);
+        if (Math.Abs(ContextStageHost.Height - height) > 0.5 || double.IsNaN(ContextStageHost.Height))
+        {
+            ContextStageHost.Height = height;
+        }
     }
 }

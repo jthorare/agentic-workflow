@@ -30,7 +30,7 @@ internal sealed record FillInputRequest(
     IReadOnlyDictionary<FactKey, FactValue> Facts,
     string? Repo)
 {
-    /// <summary>What the input fills from: the arguments resolved against the facts (a '{ profile }' one as its reference), and the item's repo.</summary>
+    /// <summary>What the input fills from: the arguments resolved against the facts (a '{ profile }' one as its reference), the item's repo and the instance address.</summary>
     /// <returns>The input's context.</returns>
-    internal StepInputContext Context() => new(Input, Step, EffectContexts.InputArguments(With, Facts), EffectContexts.Elements(Facts), Repo is { } repo && RepoName.TryFrom(repo, out var name) ? name : null);
+    internal StepInputContext Context() => new(Input, Step, EffectContexts.InputArguments(With, Facts), EffectContexts.Elements(Facts), Repo is { } repo && RepoName.TryFrom(repo, out var name) ? name : null, Instance: Address);
 }

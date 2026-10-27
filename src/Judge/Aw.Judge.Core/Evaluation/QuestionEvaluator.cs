@@ -57,7 +57,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         }
 
         // The input the prompt, the providers and the digest see: filtered and capped first when the question says how.
-        var prepared = question.Sanitize is { } sanitize ? sanitize(input, redactor) : input;
+        var prepared = question.Sanitize is { } sanitize ? sanitize(input, redactor.Redact) : input;
         run.StoredInput = question.StoredForm?.Invoke(prepared);
         run.Input = JsonNode.Parse(AwJson.Serialize(prepared, json));
         run.Threshold = settings?.Threshold ?? question.Threshold;

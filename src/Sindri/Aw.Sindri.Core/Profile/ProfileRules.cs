@@ -46,7 +46,7 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup);
+        Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox);
 
     /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>
     private static Error? SetupKeys(SetupSettings? setup) =>

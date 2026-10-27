@@ -778,8 +778,6 @@ Aw.Sindri.Features.GetJob.JobView.State.get -> Aw.Sindri.Core.Jobs.JobState
 Aw.Sindri.Features.GetJob.JobView.State.init -> void
 Aw.Sindri.Features.GetJob.JobView.Summary.get -> string?
 Aw.Sindri.Features.GetJob.JobView.Summary.init -> void
-Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Launch.LaunchStep! Step, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
-Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetLaunch.LaunchView.Step.get -> Aw.Sindri.Core.Launch.LaunchStep!
 Aw.Sindri.Features.GetLaunch.LaunchView.Step.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest
@@ -3519,6 +3517,10 @@ static Aw.Sindri.Features.ListSessions.SessionCounts.operator !=(Aw.Sindri.Featu
 static Aw.Sindri.Features.ListSessions.SessionCounts.operator ==(Aw.Sindri.Features.ListSessions.SessionCounts? left, Aw.Sindri.Features.ListSessions.SessionCounts? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator !=(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
 static Aw.Sindri.Features.ListSessions.SessionList.operator ==(Aw.Sindri.Features.ListSessions.SessionList? left, Aw.Sindri.Features.ListSessions.SessionList? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Reason.init -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.get -> string?
+Aw.Sindri.Features.GetLaunch.LaunchView.Source.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest!
 Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.Anchors.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -4517,6 +4519,8 @@ override Aw.Sindri.Features.InitProfile.InitProfileResponse.GetHashCode() -> int
 override Aw.Sindri.Features.InitProfile.InitProfileResponse.ToString() -> string!
 static Aw.Sindri.Features.InitProfile.InitProfileResponse.operator !=(Aw.Sindri.Features.InitProfile.InitProfileResponse? left, Aw.Sindri.Features.InitProfile.InitProfileResponse? right) -> bool
 static Aw.Sindri.Features.InitProfile.InitProfileResponse.operator ==(Aw.Sindri.Features.InitProfile.InitProfileResponse? left, Aw.Sindri.Features.InitProfile.InitProfileResponse? right) -> bool
+Aw.Sindri.Features.GetLaunch.LaunchView.LaunchView(Aw.Sindri.Core.Workflow.Engine.LaunchId Id, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.LaunchMode Mode, Aw.Sindri.Core.Launches.LaunchState State, Aw.Sindri.Core.Launch.AgentId Target, string! ChosenBy, System.DateTimeOffset RequestedAt, System.DateTimeOffset? OutcomeAt, string? Code, string? Detail, Aw.Sindri.Core.Launch.LaunchStage? Stage, Aw.Sindri.Core.Ids.SessionId? SessionId, string? TabTitle, Aw.Sindri.Core.Events.LaunchViewer? Viewer, bool Late, System.Collections.Generic.IReadOnlyList<string!>? Attach, Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, string? ArgvHash, Aw.Sindri.Core.Launches.LaunchEnd? Ended, Aw.Sindri.Core.Launch.LaunchStep! Step, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetLaunch.LaunchView.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.LaunchId Id, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.LaunchMode Mode, out Aw.Sindri.Core.Launches.LaunchState State, out Aw.Sindri.Core.Launch.AgentId Target, out string! ChosenBy, out System.DateTimeOffset RequestedAt, out System.DateTimeOffset? OutcomeAt, out string? Code, out string? Detail, out Aw.Sindri.Core.Launch.LaunchStage? Stage, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? TabTitle, out Aw.Sindri.Core.Events.LaunchViewer? Viewer, out bool Late, out System.Collections.Generic.IReadOnlyList<string!>? Attach, out Aw.Sindri.Core.Launch.CatalogSource? CatalogSource, out string? ArgvHash, out Aw.Sindri.Core.Launches.LaunchEnd? Ended, out Aw.Sindri.Core.Launch.LaunchStep! Step, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetEngine.GetEngineRequest
 Aw.Sindri.Features.GetEngine.GetEngineRequest.<Clone>$() -> Aw.Sindri.Features.GetEngine.GetEngineRequest!
 Aw.Sindri.Features.GetEngine.GetEngineRequest.Equals(Aw.Sindri.Features.GetEngine.GetEngineRequest? other) -> bool

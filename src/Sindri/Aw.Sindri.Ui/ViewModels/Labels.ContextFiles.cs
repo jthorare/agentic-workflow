@@ -143,4 +143,15 @@ internal static partial class Labels
         < 1440 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours} h ago"),
         _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d ago"),
     };
+
+    /// <summary>The word for a filter that matches no file of the folder.</summary>
+    /// <param name="filter">What was typed.</param>
+    /// <returns>"No files match 'zzzz'."</returns>
+    internal static string ContextFilesNoMatch(string filter) => $"No files match '{filter}'.";
+
+    /// <summary>The totals line while a filter is on: how many of the folder's entries it shows.</summary>
+    /// <param name="shown">The entries shown.</param>
+    /// <param name="all">The entries in the folder.</param>
+    /// <returns>"2 of 5 in this folder".</returns>
+    internal static string ContextFilesFilteredCount(int shown, int all) => string.Create(CultureInfo.InvariantCulture, $"{shown} of {all} in this folder");
 }

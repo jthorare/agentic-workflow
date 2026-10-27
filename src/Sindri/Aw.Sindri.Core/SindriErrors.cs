@@ -155,8 +155,8 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-012: the agent entry isn't approved for unattended Steps (detail 'not-approved' or 'hash-changed'; launcher SL8).</summary>
     public static readonly ErrorDefinition LaunchNotApproved = new("SND-LAUNCH-012", ErrorKind.Forbidden, "This agent entry isn't approved for unattended Steps");
 
-    /// <summary>SND-LAUNCH-015: the agent entry's session id pattern timed out on an id, so the id was refused unjudged (not as a mismatch). -014 is reserved by the sandbox spec.</summary>
-    public static readonly ErrorDefinition LaunchSessionIdTimedOut = new("SND-LAUNCH-015", ErrorKind.Unavailable, "The session id pattern timed out");
+    /// <summary>SND-LAUNCH-030: the agent entry's session id pattern timed out on an id, so the id was refused unjudged (not as a mismatch). -014 to -021 are the sandbox spec's.</summary>
+    public static readonly ErrorDefinition LaunchSessionIdTimedOut = new("SND-LAUNCH-030", ErrorKind.Unavailable, "The session id pattern timed out");
 
     /// <summary>SND-LAUNCH-022: a Step's worktree already has a pre-push hook that isn't Sindri's; the launch is refused rather than overwrite it (line spec LN-LCH1).</summary>
     public static readonly ErrorDefinition LaunchPrePushForeign = new("SND-LAUNCH-022", ErrorKind.Conflict, "The Step's worktree has a pre-push hook of its own");
@@ -265,7 +265,8 @@ public static partial class SindriErrors
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, ServiceNotFound, OnyxDockerUnavailable, OnyxComposeMissing, OnyxNotEnoughResources, OnyxPinsMalformed, OnyxPortTaken, OnyxNotAdmin, OnyxKeyFailed, OnyxSecretNotStored, OnyxNotReady, OnyxRemoteDocker, OnyxComposeFailed, OnyxWorkspaceUnusable, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
-        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
+        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,
+        LaunchSandboxUnavailable, LaunchUnconfinable, LaunchSelfCheckFailed, LaunchLoginUnavailable, LaunchGitHubTokenFailed, LaunchLimitHit, LaunchSessionWait, LaunchPrepareFailed, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
         WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupOnyxCredentialsMissing, SetupOnyxNotWaiting, SetupProfileNotApproved,
         NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,

@@ -134,6 +134,7 @@ internal sealed partial class WholeMapViewModel
     {
         Emphasis = Focus is { } focus ? Within(Around(focus)) : SearchActive ? _searchSet : null;
         EmphasisChanged?.Invoke(this, EventArgs.Empty);
+        OnChanged(nameof(SelectedItem));
     }
 
     // During a search only what is drawn can be lit.

@@ -109,7 +109,16 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     public bool HasRows => Rows.Count > 0;
 
     /// <summary>Whether the folder was read and holds nothing.</summary>
-    public bool IsEmptyFolder => !IsLoading && !HasProblem && Rows.Count == 0 && TotalsText.Length > 0;
+    public bool IsEmptyFolder => !IsLoading && !HasProblem && Rows.Count == 0 && TotalsText.Length > 0 && !IsNoMatch;
+
+    /// <summary>Whether the folder has entries and the filter matches none of them.</summary>
+    public bool IsNoMatch => !IsLoading && !HasProblem && FilterText.Length > 0 && Rows.Count == 0 && _entries.Length > 0;
+
+    /// <summary>The words for a filter that matches nothing, naming the filter.</summary>
+    public string NoMatchWord => Labels.ContextFilesNoMatch(FilterText);
+
+    /// <summary>The line over the table: the folder's totals as served, or while a filter is on how many of the folder's entries it shows.</summary>
+    public string ShownTotalsText => FilterText.Length > 0 && TotalsText.Length > 0 ? Labels.ContextFilesFilteredCount(Rows.Count, _entries.Length) : TotalsText;
 
     /// <summary>Whether there is a note under the table.</summary>
     public bool HasNote => Note.Length > 0;
@@ -270,6 +279,9 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     {
         OnChanged(nameof(HasRows));
         OnChanged(nameof(IsEmptyFolder));
+        OnChanged(nameof(IsNoMatch));
+        OnChanged(nameof(NoMatchWord));
+        OnChanged(nameof(ShownTotalsText));
         OnChanged(nameof(HasNote));
         OnChanged(nameof(HasProblem));
         OnChanged(nameof(SymbolsHeading));

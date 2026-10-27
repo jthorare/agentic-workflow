@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Aw.Judge.Core.Ports;
 
 namespace Aw.Judge.Core.Questions;
 
@@ -23,17 +22,17 @@ public static class ModelPickPack
 
     /// <summary>Filters and caps an input.</summary>
     /// <param name="input">The call's validated input.</param>
-    /// <param name="redactor">The judge's redactor, which is also the secret scan: text it changes holds a secret.</param>
+    /// <param name="redact">The judge's redactor (IInputRedactor.Redact), which is also the secret scan: text it changes holds a secret.</param>
     /// <returns>The input to send: kept files, the brief masked, and the omitted, cut and withheld records set (any the caller sent are replaced).</returns>
-    public static ModelPickInput Apply(ModelPickInput input, IInputRedactor redactor)
+    public static ModelPickInput Apply(ModelPickInput input, Func<JsonNode?, JsonNode?> redact)
     {
         ArgumentNullException.ThrowIfNull(input);
-        ArgumentNullException.ThrowIfNull(redactor);
+        ArgumentNullException.ThrowIfNull(redact);
         List<ModelPickFile> kept = [];
         List<ModelPickOmitted> dropped = [];
         foreach (var file in input.Files)
         {
-            if (Why(file, input.DenyPaths, redactor) is { } why)
+            if (Why(file, input.DenyPaths, redact) is { } why)
             {
                 dropped.Add(new ModelPickOmitted(file.Path, file.Text.Length, why));
             }
@@ -43,7 +42,7 @@ public static class ModelPickPack
             }
         }
 
-        var brief = UntrustedText.Capped(Masked(input.Brief, redactor), ModelPickQuestion.PackCap);
+        var brief = UntrustedText.Capped(Masked(input.Brief, redact), ModelPickQuestion.PackCap);
         var capped = UntrustedText.CappedFiles(kept, ModelPickQuestion.PackCap - brief.Length);
         return input with
         {
@@ -57,17 +56,17 @@ public static class ModelPickPack
         };
     }
 
-    private static string? Why(ModelPickFile file, IReadOnlyList<string>? denyPaths, IInputRedactor redactor)
+    private static string? Why(ModelPickFile file, IReadOnlyList<string>? denyPaths, Func<JsonNode?, JsonNode?> redact)
     {
         if (denyPaths?.Any(glob => ModelPickGlob.IsMatch(glob, file.Path)) == true)
         {
             return Denied;
         }
 
-        return _secretNames.Any(name => ModelPickGlob.IsMatch(name, file.Path)) || !string.Equals(Masked(file.Text, redactor), file.Text, StringComparison.Ordinal) ? Secret : null;
+        return _secretNames.Any(name => ModelPickGlob.IsMatch(name, file.Path)) || !string.Equals(Masked(file.Text, redact), file.Text, StringComparison.Ordinal) ? Secret : null;
     }
 
     // The text with its secrets replaced: equal to the text when it has none.
-    private static string Masked(string text, IInputRedactor redactor) =>
-        redactor.Redact(JsonValue.Create(text)) is JsonValue masked && masked.TryGetValue<string>(out var value) ? value : text;
+    private static string Masked(string text, Func<JsonNode?, JsonNode?> redact) =>
+        redact(JsonValue.Create(text)) is JsonValue masked && masked.TryGetValue<string>(out var value) ? value : text;
 }
