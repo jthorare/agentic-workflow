@@ -42,4 +42,11 @@ internal static class SelectorMatcher
         var index = selector.Index ?? 0;
         return index >= 0 && index < matches.Count ? matches[index] : null;
     }
+
+    /// <summary>The one node an act verb acts on: the match at the selector's index counted among visible matches only.</summary>
+    /// <param name="selector">The selector.</param>
+    /// <param name="nodes">The tree's nodes in tree order.</param>
+    /// <returns>The node, or null when there are fewer visible matches than the index asks for.</returns>
+    internal static NodeFacts? PickVisible(Selector selector, IEnumerable<NodeFacts> nodes) =>
+        throw new NotSupportedException();
 }

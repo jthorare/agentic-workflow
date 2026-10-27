@@ -106,6 +106,33 @@ public sealed class DriverHostTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Click_skips_a_hidden_element_that_shares_the_visible_ones_name()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var (hidden, shown) = (new CountingCommand(), new CountingCommand());
+        _ = await TestScreen.OnUi(() => screen.AddButtons("Complete", (hidden, false), (shown, true)));
+
+        var result = await Host(screen).Click(new ClickRequest(new Selector(Name: "Complete")));
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal((0, 1), (hidden.Runs, shown.Runs));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Click_on_a_selector_matching_only_hidden_elements_is_not_actionable()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var hidden = new CountingCommand();
+        _ = await TestScreen.OnUi(() => screen.AddButtons("Complete", (hidden, false)));
+
+        var result = await Host(screen).Click(new ClickRequest(new Selector(Name: "Complete")));
+
+        Assert.Equal(UiDriverErrors.NotActionable.Code, result.Error.Code);
+        Assert.Contains("hidden", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(0, hidden.Runs);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Typing_appends_to_a_text_box_or_replaces_what_it_holds()
     {
         var screen = await TestScreen.OpenAsync();

@@ -43,6 +43,14 @@ public sealed class SelectorTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_visible_pick_counts_only_visible_matches()
+    {
+        Assert.Equal("0/0", SelectorMatcher.PickVisible(new Selector(TextContains: "Save"), _tree)?.Id);
+        Assert.Null(SelectorMatcher.PickVisible(new Selector(TextContains: "Save", Index: 1), _tree));
+        Assert.Null(SelectorMatcher.PickVisible(new Selector(AutomationId: "save-all"), _tree));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_node_id_names_one_node() =>
         Assert.Equal("0/2", SelectorMatcher.Pick(new Selector(NodeId: "0/2"), _tree)?.Id);
 

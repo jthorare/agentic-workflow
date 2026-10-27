@@ -69,6 +69,24 @@ internal sealed class TestScreen
 
     internal ScrollViewer List { get; }
 
+    /// <summary>Adds buttons that share one automation name, each running its own command and shown or hidden as given.</summary>
+    /// <param name="name">The shared automation name.</param>
+    /// <param name="buttons">Each button's command and whether it is visible.</param>
+    /// <returns>True, so it can run through <see cref="OnUi{T}"/>.</returns>
+    internal bool AddButtons(string name, params (CountingCommand Command, bool Visible)[] buttons)
+    {
+        var form = (StackPanel)Window.Content!;
+        foreach (var (command, visible) in buttons)
+        {
+            var button = new Button { Content = name, Command = command, IsVisible = visible };
+            AutomationProperties.SetName(button, name);
+            form.Children.Add(button);
+        }
+
+        Window.UpdateLayout();
+        return true;
+    }
+
     /// <summary>Builds the screen on the UI thread (kept running by <see cref="UiPump"/>).</summary>
     /// <returns>The screen.</returns>
     internal static Task<TestScreen> OpenAsync() =>
