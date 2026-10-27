@@ -10,6 +10,8 @@ internal static class DocMappers
 {
     internal static IRowMapper<StoredDoc> Stored { get; } = new StoredMapper();
 
+    internal static IRowMapper<DocTextRow> Text { get; } = new TextMapper();
+
     internal static IRowMapper<HitRow> Hit { get; } = new HitMapper();
 
     internal static IRowMapper<DocIndexStatus> Status { get; } = new StatusMapper();
@@ -17,6 +19,12 @@ internal static class DocMappers
     private sealed class StoredMapper : IRowMapper<StoredDoc>
     {
         public StoredDoc Map(SqliteDataReader reader) => new(reader.GetString(0), reader.GetString(1), reader.GetString(2));
+    }
+
+    private sealed class TextMapper : IRowMapper<DocTextRow>
+    {
+        public DocTextRow Map(SqliteDataReader reader) =>
+            new(reader.GetString(0), reader.GetString(1), reader.GetInt32(2) != 0, reader.IsDBNull(3) ? null : reader.GetString(3));
     }
 
     private sealed class HitMapper : IRowMapper<HitRow>

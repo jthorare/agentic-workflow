@@ -62,7 +62,38 @@ internal sealed class SqliteDocIndex(ContextDatabase database, GitCli git, TimeP
             };
     }
 
-    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken)
+    {
+        var readable = await database.Readable(cancellationToken).ConfigureAwait(false);
+        if (readable.IsError)
+        {
+            return readable.Error;
+        }
+
+        if (readable.Value is not { } sessions)
+        {
+            return Results.Success<IReadOnlyList<IndexedDoc>>([]);   // no database yet: nothing was ever indexed
+        }
+
+        var read = await sessions.BeginRead(cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return ContextDatabase.Translate(read.Error);
+        }
+
+        await using (read.Value.ConfigureAwait(false))
+        {
+            var rows = await SqliteQueries.List(read.Value, new SqlStatement(DocSql.Texts, c => c.Bind("@repo", repo.Name.Value)), DocMappers.Text, cancellationToken)
+                .ConfigureAwait(false);
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : Results.Success(Join(rows.Value));
+        }
+    }
+
+    /// <summary>One document per path: its chunks in line order joined by a newline, or null text for a document the scrubber withheld.</summary>
+    private static IReadOnlyList<IndexedDoc> Join(IReadOnlyList<DocTextRow> rows) =>
+        [.. rows.GroupBy(r => (r.Path, r.Blob, r.Blocked))
+            .OrderBy(g => g.Key.Path, StringComparer.Ordinal)
+            .Select(g => new IndexedDoc(g.Key.Path, g.Key.Blob, g.Key.Blocked ? null : string.Join('\n', g.Select(r => r.Text).OfType<string>())))];
 
     public async ValueTask<Result<DocIndexStatus>> Status(ContextRepo repo, ScrubRuleset ruleset, CancellationToken cancellationToken)
     {

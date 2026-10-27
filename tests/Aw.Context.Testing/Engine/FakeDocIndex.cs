@@ -17,7 +17,7 @@ namespace Aw.Context.Testing.Engine;
 /// <param name="clock">The clock it stamps refreshes with.</param>
 public sealed class FakeDocIndex(TimeProvider clock) : IDocIndex
 {
-    private readonly Dictionary<ContextRepoName, (DocIndexStatus Status, Dictionary<string, (string Hash, ScrubRuleset Ruleset)> Docs)> _repos = [];
+    private readonly Dictionary<ContextRepoName, (DocIndexStatus Status, Dictionary<string, (string Hash, ScrubRuleset Ruleset, string Text)> Docs)> _repos = [];
 
     /// <summary>When set, Refresh answers this code for every repo (a repo that can't be read).</summary>
     public string? RefreshCode { get; set; }
@@ -30,20 +30,20 @@ public sealed class FakeDocIndex(TimeProvider clock) : IDocIndex
         ArgumentNullException.ThrowIfNull(scrubbers);
         var known = _repos.TryGetValue(repo.Name, out var entry)
             ? entry
-            : (Status: new DocIndexStatus(Head: null, LastSync: null, Code: null, 0, 0), Docs: new Dictionary<string, (string Hash, ScrubRuleset Ruleset)>(StringComparer.Ordinal));
+            : (Status: new DocIndexStatus(Head: null, LastSync: null, Code: null, 0, 0), Docs: new Dictionary<string, (string Hash, ScrubRuleset Ruleset, string Text)>(StringComparer.Ordinal));
         if (RefreshCode is { } code)
         {
             _repos[repo.Name] = (known.Status with { Code = code }, known.Docs);
             return ValueTask.FromResult<Result<RepoRefresh>>(new RepoRefresh(repo.Name, Head: null, 0, 0, 0, 0, code));
         }
 
-        var docs = Read(repo.Path, globs);
-        var added = docs.Count(d => !known.Docs.TryGetValue(d.Key, out var stored) || !string.Equals(stored.Hash, d.Value, StringComparison.Ordinal) || stored.Ruleset != scrubbers.Ruleset);
-        var recleaned = docs.Count(d => known.Docs.TryGetValue(d.Key, out var stored) && string.Equals(stored.Hash, d.Value, StringComparison.Ordinal) && stored.Ruleset != scrubbers.Ruleset);
+        var docs = ReadTree(repo.Path, globs);
+        var added = docs.Count(d => !known.Docs.TryGetValue(d.Key, out var stored) || !string.Equals(stored.Hash, d.Value.Hash, StringComparison.Ordinal) || stored.Ruleset != scrubbers.Ruleset);
+        var recleaned = docs.Count(d => known.Docs.TryGetValue(d.Key, out var stored) && string.Equals(stored.Hash, d.Value.Hash, StringComparison.Ordinal) && stored.Ruleset != scrubbers.Ruleset);
         var removed = known.Docs.Keys.Count(k => !docs.ContainsKey(k));
-        var head = SourceVersion.From("fake-" + Hash(string.Join('\n', docs.OrderBy(d => d.Key, StringComparer.Ordinal).Select(d => d.Key + d.Value)))[..12]);
+        var head = SourceVersion.From("fake-" + Hash(string.Join('\n', docs.OrderBy(d => d.Key, StringComparer.Ordinal).Select(d => d.Key + d.Value.Hash)))[..12]);
         _repos[repo.Name] = (new DocIndexStatus(head, clock.GetUtcNow(), Code: null, docs.Count, docs.Count),
-            docs.ToDictionary(d => d.Key, d => (d.Value, scrubbers.Ruleset), StringComparer.Ordinal));
+            docs.ToDictionary(d => d.Key, d => (d.Value.Hash, scrubbers.Ruleset, d.Value.Text), StringComparer.Ordinal));
         return ValueTask.FromResult<Result<RepoRefresh>>(new RepoRefresh(repo.Name, head, added, removed, docs.Count - added, Blocked: 0, Code: null) { Recleaned = recleaned });
     }
 
@@ -57,17 +57,30 @@ public sealed class FakeDocIndex(TimeProvider clock) : IDocIndex
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<IReadOnlyList<IndexedDoc>>> Read(ContextRepo repo, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        IReadOnlyList<IndexedDoc> docs = _repos.TryGetValue(repo.Name, out var entry)
+            ? [.. entry.Docs.OrderBy(d => d.Key, StringComparer.Ordinal).Select(d => new IndexedDoc(d.Key, d.Value.Hash, d.Value.Text))]
+            : [];
+        return ValueTask.FromResult(Results.Success(docs));
+    }
 
-    private static Dictionary<string, string> Read(string root, IReadOnlyList<string> globs)
+    private static Dictionary<string, (string Hash, string Text)> ReadTree(string root, IReadOnlyList<string> globs)
     {
         var patterns = globs.Select(g => new Regex(ToRegex(g), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1))).ToList();
         return Directory.Exists(root)
             ? Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
                 .Select(f => (Path: Path.GetRelativePath(root, f).Replace(Path.DirectorySeparatorChar, '/'), File: f))
                 .Where(f => !f.Path.StartsWith(".git/", StringComparison.Ordinal) && patterns.Exists(p => p.IsMatch(f.Path)))
-                .ToDictionary(f => f.Path, f => Hash(File.ReadAllText(f.File)), StringComparer.Ordinal)
-            : new Dictionary<string, string>(StringComparer.Ordinal);
+                .ToDictionary(f => f.Path, f => ContentOf(f.File), StringComparer.Ordinal)
+            : new Dictionary<string, (string Hash, string Text)>(StringComparer.Ordinal);
+    }
+
+    private static (string Hash, string Text) ContentOf(string file)
+    {
+        var text = File.ReadAllText(file);
+        return (Hash(text), text);
     }
 
     private static string ToRegex(string glob) =>

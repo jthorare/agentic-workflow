@@ -7,6 +7,10 @@ internal static class DocSql
 
     internal const string StoredDocs = "SELECT path, blob, ruleset FROM doc WHERE repo = @repo";
 
+    internal const string Texts =
+        "SELECT d.path, d.blob, d.blocked, c.text FROM doc d LEFT JOIN doc_chunk c ON c.repo = d.repo AND c.path = d.path " +
+        "WHERE d.repo = @repo ORDER BY d.path, c.line_start";
+
     internal const string DeleteChunks = "DELETE FROM doc_chunk WHERE repo = @repo AND path = @path";
 
     internal const string DeleteDoc = "DELETE FROM doc WHERE repo = @repo AND path = @path";

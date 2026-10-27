@@ -78,6 +78,7 @@ public static partial class SettingsReader
                 {
                     Repos = section.Repos?.Select(ContextRepoName.From).ToList(),
                     DocGlobs = globs,
+                    DocDirectoryNames = DocNameRules.Names(section.Docs),
                     Deadline = deadline.Value,
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
@@ -176,7 +177,7 @@ public static partial class SettingsReader
     private static IReadOnlyList<ProfileRecognizer> Recognizers(ExtractSection? extract) =>
         [.. (extract?.Recognizers ?? []).OfType<RecognizerEntry>().Select(e => new ProfileRecognizer(e.Kind!, e.Glob!, e.Pattern!, e.KeyFrom!))];   // why: RecognizerRules refused a missing field
 
-    private static Error? Refused(ContextSection section, IReadOnlyList<string> globs) => Problem(section, globs) ?? RecognizerRules.Problem(section.Extract?.Recognizers) ?? GraphifyRules.Problem(section.Extract?.Graphify);
+    private static Error? Refused(ContextSection section, IReadOnlyList<string> globs) => Problem(section, globs) ?? RecognizerRules.Problem(section.Extract?.Recognizers) ?? GraphifyRules.Problem(section.Extract?.Graphify) ?? DocNameRules.Problem(section.Docs);
 
     private static PublishSettings Publish(PublishSection? section) => new() { WaitForIndexMinutes = section?.WaitForIndexMinutes ?? PublishSettings.DefaultWaitMinutes };
 
