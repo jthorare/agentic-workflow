@@ -48,6 +48,28 @@ internal sealed class UiTree
         return Find(selector) is { } found ? found : UiDriverErrors.NoMatch.With($"no element matches {selector.Describe()}");
     }
 
+    /// <summary>The element an act verb means: the match at the selector's index counted among visible matches only.</summary>
+    /// <param name="selector">The selector; it must name something.</param>
+    /// <returns>The element, AW-UIDRIVER-001 for an empty selector, AW-UIDRIVER-002 when nothing matches or AW-UIDRIVER-003 when every match is hidden.</returns>
+    internal Result<(NodeFacts Facts, Visual Visual)> ResolveActable(Selector selector)
+    {
+        if (selector.IsEmpty)
+        {
+            return UiDriverErrors.Invalid.With("a selector must name something (nodeId, automationId, name, type, text or textContains)");
+        }
+
+        var facts = _nodes.Select(static n => n.Facts);
+        if (SelectorMatcher.PickVisible(selector, facts) is { } picked)
+        {
+            return _nodes.First(n => ReferenceEquals(n.Facts, picked));
+        }
+
+        var matches = SelectorMatcher.All(selector, facts);
+        return matches.Count > 0 && matches.All(static m => !m.Visible)
+            ? UiDriverErrors.NotActionable.With($"{selector.Describe()} matches only hidden elements")
+            : UiDriverErrors.NoMatch.With($"no element matches {selector.Describe()}");
+    }
+
     /// <summary>The element a selector means, or null; an empty selector means the first (the window).</summary>
     /// <param name="selector">The selector.</param>
     /// <returns>The element, or null.</returns>

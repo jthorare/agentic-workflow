@@ -47,6 +47,5 @@ internal static class SelectorMatcher
     /// <param name="selector">The selector.</param>
     /// <param name="nodes">The tree's nodes in tree order.</param>
     /// <returns>The node, or null when there are fewer visible matches than the index asks for.</returns>
-    internal static NodeFacts? PickVisible(Selector selector, IEnumerable<NodeFacts> nodes) =>
-        throw new NotSupportedException();
+    internal static NodeFacts? PickVisible(Selector selector, IEnumerable<NodeFacts> nodes) => Pick(selector, nodes.Where(static n => n.Visible));
 }

@@ -136,7 +136,7 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
 
     private Task<Result<ActedResponse>> Act(Selector? selector, Func<UiTree, Visual, Result<Unit>> work) => OnUi<ActedResponse>(tree =>
     {
-        var target = selector is { } given ? tree.Resolve(given) : Focused(tree);
+        var target = selector is { } given ? tree.ResolveActable(given) : Focused(tree);
         if (target.IsError)
         {
             return target.Error;
