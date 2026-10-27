@@ -10,8 +10,8 @@ namespace Aw.Sindri.Tests.Plan;
 /// <summary>The plan packet assembler (line spec §3.2 row 3, §6.2): the gold plan assembles back into the gold packet, with graph.json derived by code from the tasks.</summary>
 public sealed class PlanPacketTests
 {
-    private const string DesignHash = "sha256:a034b1f35f8ca257d23db5b1bef971adaecd161565a7962c0445c271917ef05c";
-    private const string ScopeHash = "sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24";
+    private const string DesignHash = "sha256:7c3c4f08ad1cdc1c4123b599717fb6189330d2364b3a85e42a662d7dc0ddc676";
+    private const string ScopeHash = "sha256:1ddf66bd3318bc230e52c293c51a859fbd9096ab2e99077d203b9d324cb4f444";
     private static readonly PacketIdentity _identity = new("line-expiry-plan", "fixture-labs/fixture-notes", "3288642cd47359fff2642b8bf429976915ca4894");
     private static readonly PlanParents _parents = new(DesignHash, ScopeHash);
 

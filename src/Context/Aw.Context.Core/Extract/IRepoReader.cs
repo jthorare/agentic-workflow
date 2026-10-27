@@ -19,6 +19,13 @@ public interface IRepoReader
     /// <returns>The paths from the repo root, ordinal order.</returns>
     public ValueTask<Result<IReadOnlyList<string>>> ListFiles(ContextRepo repo, string commit, CancellationToken cancellationToken);
 
+    /// <summary>Lists the tracked files at a commit, the repo's deny globs not applied: the map build counts what its ignored roles drop with it (issue 1161), and never reads these paths. A reader that can't see the dropped paths answers like <see cref="ListFiles"/>.</summary>
+    /// <param name="repo">The repo: its name and checkout.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The paths from the repo root, ordinal order.</returns>
+    public ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken) => ListFiles(repo, commit, cancellationToken);
+
     /// <summary>Reads one file at a commit.</summary>
     /// <param name="repo">The repo: its name and checkout.</param>
     /// <param name="commit">The commit.</param>

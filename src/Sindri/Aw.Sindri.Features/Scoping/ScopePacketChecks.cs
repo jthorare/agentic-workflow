@@ -63,7 +63,8 @@ internal static partial class ScopePacketChecks
             return ScopeOutcome.Pass;
         }
 
-        return rules.Exists(static r => r.Status == ScopeRuleStatus.NotRun) ? ScopeOutcome.Incomplete : ScopeOutcome.Complete;
+        // why: SCP-GRAPH-001 is absent only for facts gathered before the graph fact existed; every gather writes one (a lenses projection when context has none)
+        return rules.Exists(static r => r.Status == ScopeRuleStatus.NotRun && !string.Equals(r.Rule, ScopeRules.Graph1, StringComparison.Ordinal)) ? ScopeOutcome.Incomplete : ScopeOutcome.Complete;
     }
 
     private static Action<ScopeContext, RuleSink> Body(string id) => id switch
@@ -91,6 +92,8 @@ internal static partial class ScopePacketChecks
         ScopeRules.Rel2 => RelevanceJudgeDiffers,
         ScopeRules.Gap1 => GapSearched,
         ScopeRules.Gap2 => GapSearcherDiffers,
+        ScopeRules.Graph1 => GraphCited,
+        ScopeRules.Qst1 => QuestionsRecommended,
         _ => throw new InvalidOperationException($"No body for rule {id}."),
     };
 }

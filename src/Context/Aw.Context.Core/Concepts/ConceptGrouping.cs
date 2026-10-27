@@ -1,18 +1,23 @@
+using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Core.Concepts;
 
-/// <summary>Merges the smallest groups into the group they share the most edges with, until there are at most 15 and none holds under 3 features.</summary>
+/// <summary>Merges the smallest groups into the group they share the most edges with, until there are at most 15 and none holds under 3 features. The glossary adds one more pull: the terms the two groups' code shares.</summary>
 internal static class ConceptGrouping
 {
-    internal static Dictionary<string, List<string>> Merge(GraphSnapshot graph, Dictionary<string, List<string>> groups)
+    // A group whose code carries all the terms of another pulls as hard as this many shared edges.
+    private const double GlossaryWeight = 4.0;
+
+    // The groups in 'frozen' (the scan's hinted groups) are the hint's own: nothing merges into them and they merge into nothing, however small.
+    internal static Dictionary<string, List<string>> Merge(GraphSnapshot graph, Dictionary<string, List<string>> groups, GlossaryTermIndex? terms = null, IReadOnlySet<string>? frozen = null)
     {
         var neighbors = Neighbors(graph);
-        while (groups.Count > 1 && (groups.Count > ConceptPlan.MaxConcepts || groups.Values.Any(g => g.Count < ConceptPlan.MinFeatures)) && Total(groups) >= ConceptPlan.WholeBelow)
+        while (Open(groups, frozen) is { Count: > 1 } open && (groups.Count > ConceptPlan.MaxConcepts || open.Exists(k => groups[k].Count < ConceptPlan.MinFeatures)) && Total(groups) >= ConceptPlan.WholeBelow)
         {
-            var smallest = groups.OrderBy(g => g.Value.Count).ThenBy(g => g.Key, StringComparer.Ordinal).First().Key;
-            var target = groups.Keys.Where(k => k != smallest)
-                .OrderByDescending(k => Connection(groups[smallest], groups[k], neighbors))
+            var smallest = open.OrderBy(k => groups[k].Count).ThenBy(k => k, StringComparer.Ordinal).First();
+            var target = open.Where(k => k != smallest)
+                .OrderByDescending(k => Connection(groups[smallest], groups[k], neighbors) + (terms is null ? 0 : GlossaryWeight * terms.Between(groups[smallest], groups[k])))
                 .ThenByDescending(k => groups[k].Count)
                 .ThenBy(k => k, StringComparer.Ordinal).First();
             groups[target] = [.. groups[target].Concat(groups[smallest]).Order(StringComparer.Ordinal)];
@@ -21,6 +26,9 @@ internal static class ConceptGrouping
 
         return groups;
     }
+
+    private static List<string> Open(Dictionary<string, List<string>> groups, IReadOnlySet<string>? frozen) =>
+        [.. groups.Keys.Where(k => frozen is null || !frozen.Contains(k))];
 
     private static int Total(Dictionary<string, List<string>> groups) => groups.Values.Sum(g => g.Count);
 

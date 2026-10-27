@@ -50,13 +50,49 @@ public sealed class WholeMapConceptTests
         Assert.Equal(["feature:lone", "record:orphan"], view.Nodes!.Select(n => n.Key.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
+    // Product() plus a code node three levels below the scheduling members (shifts -> screen -> pick -> Far.cs): in the shifts area, outside the scheduling scope.
+    private static ConceptGraph ProductWithFarCode() => ConceptGraph.Product().Node("code:src/Far.cs").Edge("code:src/Far.cs", EdgeType.Tests, "action:pick");
+
     [Fact, Trait("Lane", "unit")]
-    public void A_concept_the_map_lacks_is_200_and_a_concept_with_an_area_is_006()
+    public void A_concept_the_map_lacks_is_200()
     {
         var unknown = Ask(ConceptGraph.Product(), concept: "concept:nope");
-        var both = Ask(ConceptGraph.Product(), concept: "concept:billing", area: "feature:shifts");
 
-        Assert.Equal((ContextErrors.AreaUnknown.Code, ContextErrors.QueryInvalid.Code), (unknown.Error.Code, both.Error.Code));
+        Assert.Equal(ContextErrors.AreaUnknown.Code, unknown.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_area_inside_a_concept_opens_only_the_areas_nodes_the_concept_holds()
+    {
+        var view = Ask(ProductWithFarCode(), concept: "concept:scheduling", area: "feature:shifts").Value;
+
+        Assert.Equal(WholeMapDetail.Nodes, view.Detail);
+        Assert.Equal(
+            ["action:pick", "code:src/Shared.cs", "code:src/Shifts.cs", "feature:shifts", "surface:screen/shifts"],
+            view.Nodes!.Select(n => n.Key.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(4, view.Edges!.Count);
+        Assert.All(view.Edges!, e => Assert.Contains(view.Nodes!, n => n.Key.Value == e.From.Value));
+        Assert.All(view.Edges!, e => Assert.Contains(view.Nodes!, n => n.Key.Value == e.To.Value));
+        Assert.Equal("feature:shifts", view.Area!.Key);
+        Assert.Equal((5, 4), (view.Area.Counts.Nodes, view.Area.Counts.Edges));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_area_inside_a_concept_never_shows_the_concept_node()
+    {
+        var view = Ask(ConceptGraph.Product(), concept: "concept:scheduling", area: "feature:shifts").Value;
+
+        Assert.DoesNotContain(view.Nodes!, n => n.Key.Kind == NodeKind.Concept);
+        Assert.DoesNotContain(view.Edges!, e => e.Type == EdgeType.BelongsTo);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_area_that_holds_nothing_of_the_concept_is_200()
+    {
+        var other = Ask(ConceptGraph.Product(), concept: "concept:billing", area: "feature:shifts");
+        var unknownArea = Ask(ConceptGraph.Product(), concept: "concept:billing", area: "feature:nope");
+
+        Assert.Equal((ContextErrors.AreaUnknown.Code, ContextErrors.AreaUnknown.Code), (other.Error.Code, unknownArea.Error.Code));
     }
 
     [Fact, Trait("Lane", "unit")]

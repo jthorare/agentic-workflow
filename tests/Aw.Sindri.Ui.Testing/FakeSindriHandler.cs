@@ -239,13 +239,27 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"]);
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
+            case "map/publish":
+                _ = await server.MapPublish(uri, cancellationToken);
+                return Answer(server.MapPublishAnswer);
+            default:
+                return await ConceptsRead(uri, query, cancellationToken);
+        }
+    }
+
+    // The concept reads: the concepts and their glossary.
+    private async Task<HttpResponseMessage> ConceptsRead(Uri uri, System.Collections.Specialized.NameValueCollection query, CancellationToken cancellationToken)
+    {
+        switch (uri.AbsolutePath["/sindri/context/".Length..])
+        {
             case "concepts":
                 var concepts = new ConceptsQuery(query["repo"] ?? string.Empty, query["cursor"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) ? limit : null, query["q"]);
                 _ = await server.ContextConcepts(uri, concepts, cancellationToken);
                 return Answer(server.ContextConceptsAnswer(concepts));
-            case "map/publish":
-                _ = await server.MapPublish(uri, cancellationToken);
-                return Answer(server.MapPublishAnswer);
+            case "concepts/glossary":
+                var glossary = new ConceptGlossaryQuery(query["repo"] ?? string.Empty, query["mapVersion"]);
+                _ = await server.ContextConceptGlossary(uri, glossary, cancellationToken);
+                return Answer(server.ContextConceptGlossaryAnswer(glossary));
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }

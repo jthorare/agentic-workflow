@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// GET /sindri/context/concepts (the concept band): the product's core concepts, the first layer of the context map. Paged by cursor: a page with next has more.
 /// </summary>
 /// <param name="ApiVersion">The answer's version.</param>
-/// <param name="Repo">The repo the concepts are of.</param>
+/// <param name="Repo">The repo the concepts are of; null when the profile has several and none was asked for.</param>
 /// <param name="State">ok, empty (no concepts yet), building or unavailable.</param>
 /// <param name="MapVersion">The map version the concepts were read at.</param>
 /// <param name="Concepts">The concepts of this page; absent unless the state is ok.</param>
@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Code">The error code when the state is unavailable.</param>
 internal sealed record ContextConceptsView(
     int ApiVersion,
-    string Repo,
+    string? Repo,
     string State,
     string? MapVersion = null,
     IReadOnlyList<ContextConcept>? Concepts = null,

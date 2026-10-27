@@ -43,7 +43,7 @@ public static class PacketDigest
     }
 
     /// <summary>
-    /// Computes the hash of a scope packet: the same canonical form, over the scoping kind's fourteen files, with
+    /// Computes the hash of a scope packet: the same canonical form, over the scoping kind's fifteen files, with
     /// '"kind":"scoping"' in the hashed document so no build packet can collide with it. A JSON file's entry is the file
     /// without its '$schema'; a JSON-lines or text file's entry is 'sha256:&lt;hex of its bytes&gt;'.
     /// </summary>

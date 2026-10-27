@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
@@ -27,6 +28,21 @@ internal sealed class Output(TextWriter stdout, TextWriter stderr, JsonSerialize
     public async Task<int> Json<T>(T value, int exitCode)
     {
         await Out.WriteLineAsync(Encoding.UTF8.GetString(AwJson.Serialize(value, options))).ConfigureAwait(false);
+        return exitCode;
+    }
+
+    /// <summary>Prints <paramref name="value"/> as its JSON document with one more member, <paramref name="name"/>, added at the end.</summary>
+    /// <param name="value">The value, a type in the package's JSON context that serializes to an object.</param>
+    /// <param name="name">The member to add.</param>
+    /// <param name="member">The member's value.</param>
+    /// <param name="exitCode">The exit code to return.</param>
+    /// <typeparam name="T">The value's type.</typeparam>
+    /// <returns><paramref name="exitCode"/>.</returns>
+    public async Task<int> JsonWith<T>(T value, string name, JsonNode member, int exitCode)
+    {
+        var document = JsonNode.Parse(AwJson.Serialize(value, options))!.AsObject();   // why: the bytes were just serialized from an object
+        document[name] = member;
+        await Out.WriteLineAsync(document.ToJsonString(options)).ConfigureAwait(false);
         return exitCode;
     }
 

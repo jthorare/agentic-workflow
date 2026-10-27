@@ -16,7 +16,7 @@ public abstract partial class SindriApiContract
         Expect.Equal(("ok", "concept:self-scheduling", "Self scheduling", "People book their own slots."), (view.State, first.Id, first.Name, first.Summary));
         Expect.Equal(new ConceptSize(4, 3, 2, 40), first.Size);
         Expect.Equal(("concept:other", 4), (view.Other!.Id, view.Other.Size.Total));   // why: the answer names Other
-        Expect.Sequence([new ConceptLink("concept:self-scheduling", "concept:billing", 0.8)], view.Links);
+        Expect.Sequence([new ConceptLink("concept:self-scheduling", "concept:billing", 1)], view.Links);
     }
 
     [Fact]
@@ -47,6 +47,30 @@ public abstract partial class SindriApiContract
         var api = Reach(new FakeSindriApi());
 
         var result = await api.ContextConcepts(_api, new ConceptsQuery(string.Empty), Token);
+
+        Expect.True(result.IsError);
+    }
+
+    [Fact]
+    public async Task ContextConceptGlossary_answers_each_concepts_terms_and_sends_the_repo_and_map_version()
+    {
+        var glossary = AConcepts.Glossary("ok", new ConceptTerms("concept:billing", "Billing", ["invoice", "shift"]));
+        var server = new FakeSindriApi { ContextConceptGlossaryAnswer = _ => AConcepts.Served(glossary) };
+        var api = Reach(server);
+
+        var view = (await api.ContextConceptGlossary(_api, new ConceptGlossaryQuery("aw-split-panes", "v1"), Token)).Value;
+
+        Expect.Equal(("ok", "concept:billing"), (view.State, view.Concepts[0].Id));
+        Expect.Sequence(["invoice", "shift"], view.Concepts[0].Terms);
+        Expect.Equal(new ConceptGlossaryQuery("aw-split-panes", "v1"), server.ContextConceptGlossaryAsked[^1]);
+    }
+
+    [Fact]
+    public async Task ContextConceptGlossary_from_a_server_without_the_route_is_an_error_and_not_a_crash()
+    {
+        var api = Reach(new FakeSindriApi());
+
+        var result = await api.ContextConceptGlossary(_api, new ConceptGlossaryQuery(string.Empty), Token);
 
         Expect.True(result.IsError);
     }

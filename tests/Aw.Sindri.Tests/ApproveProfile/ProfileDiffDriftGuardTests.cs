@@ -13,7 +13,7 @@ public sealed class ProfileDiffDriftGuardTests
 {
     private static readonly (Type Type, string[] Properties)[] _pinned =
     [
-        (typeof(SindriProfile), ["SchemaVersion", "User", "Tenant", "Repos", "Services", "Api", "Workflow", "Context", "Index", "Launch", "Agents", "Setup"]),
+        (typeof(SindriProfile), ["SchemaVersion", "User", "Tenant", "Repos", "Services", "Api", "Workflow", "Context", "Index", "Launch", "Agents", "Setup", "Sandbox"]),
         (typeof(RepoEntry), ["Name", "Path", "Index", "Workflow"]),
         (typeof(RepoWorkflowSettings), ["Judge"]),
         (typeof(IndexSettings), ["DenyPaths", "UtilityGlobs", "MaxFileKB", "MaxTotalMB", "Embeddings", "Graph", "Roles", "Concepts", "Ignore", "Demote"]),
@@ -27,7 +27,9 @@ public sealed class ProfileDiffDriftGuardTests
         (typeof(LaunchRepoSettings), ["Default"]),
         (typeof(AgentSettings), ["SoftLimit", "Targets"]),
         (typeof(AgentLimits), ["DailyBudget", "StepArgvHash"]),
-        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr"]),
+        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr", "Scoping"]),
+        (typeof(ScopingSettings), ["HistoryWindow"]),
+        (typeof(HistoryWindowSettings), ["Since", "Before"]),
     ];
 
     [Fact]

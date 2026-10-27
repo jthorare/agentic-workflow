@@ -1,4 +1,5 @@
 using Aw.Judge.Core.Config;
+using Aw.Judge.Core.Errors;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Infrastructure.Providers;
 using Aw.Judge.Testing;
@@ -44,6 +45,21 @@ public sealed class ProviderCatalogTests
     public void A_provider_that_is_not_rules_is_refused_as_rules() =>
         Assert.Throws<ArgumentException>(() => Catalog(_all, hostProvider: null).Lineup(config: null, allowed: null, new ScriptedProvider(ProviderName.Jev)));
 
+    [Fact]
+    public void The_adjudicator_is_the_claude_provider_on_opus_and_high_effort()
+    {
+        var provider = Catalog(_all, hostProvider: null).Adjudicator(allowed: null);
+
+        Assert.Equal(ClaudeCliOptions.Adjudicator, Assert.IsType<ClaudeCliProvider>(Assert.IsType<FailOpenModelProvider>(provider.Value).Inner).Options);
+    }
+
+    [Fact]
+    public void The_adjudicator_needs_claude_on_the_path_and_in_the_allowlist()
+    {
+        Assert.Equal(JudgeErrors.ProviderUnavailable.Code, Catalog([AgentCliName.CodexCli], hostProvider: null).Adjudicator(allowed: null).Error.Code);
+        Assert.Equal(JudgeErrors.ProviderExcluded.Code, Catalog(_all, hostProvider: null).Adjudicator(allowed: [ProviderName.Jev]).Error.Code);
+    }
+
     internal static ProviderCatalog Catalog(IReadOnlyList<AgentCliName> installed, string? hostProvider)
     {
         var runner = new FakeProcessRunner();
@@ -55,6 +71,7 @@ public sealed class ProviderCatalogTests
                 new ClaudeCliProvider(runner),
                 new CodexCliProvider(runner),
                 new CursorCliProvider(runner, new FakeInputRedactor()),
-            ]);
+            ],
+            new ClaudeCliProvider(runner) { Options = ClaudeCliOptions.Adjudicator });
     }
 }

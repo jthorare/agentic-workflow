@@ -123,7 +123,7 @@ internal static class ContextApiScenarios
         ("context-whole", "concept-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling"), ct)),
         ("context-whole", "concept-other", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Aother"), ct)),
         ("context-whole", "concept-unknown-200", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Anope"), ct)),
-        ("context-whole", "concept-and-area-006", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Abilling&area=feature%3Ashifts"), ct)),
+        ("context-whole", "concept-area-open", async (s, ct) => await s.Fetch(WholeRoute("concept=concept%3Ascheduling&area=feature%3Ashifts"), ct)),
         ("context-concepts", "concept-map", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts", "filtered-invoices", async (s, ct) => await s.Fetch("/sindri/context/concepts?q=invoices", ct)),
         ("context-concepts", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts?limit=1", ct)),
@@ -133,6 +133,9 @@ internal static class ContextApiScenarios
         ("context-concepts", "no-concepts-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts", "no-map-unavailable", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts", "session-own-repo", async (s, ct) => await s.FetchAsSession("/sindri/context/concepts", ct)),
+        ("context-concepts-glossary", "terms", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-concepts-glossary", "no-terms-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-concepts-glossary", "no-map-030", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
         ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
         ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
@@ -213,7 +216,8 @@ internal static class ContextApiScenarios
     // The whole-map answers for "no map yet" run on a host that imported nothing.
     private static bool StartsWithoutMap(string slug, string scenario) =>
         (string.Equals(slug, "context-whole", StringComparison.Ordinal) && new[] { "no-map-030", "no-map-never-run", "no-map-approved", "building-in-progress" }.Contains(scenario, StringComparer.Ordinal))
-        || (string.Equals(slug, "context-concepts", StringComparison.Ordinal) && string.Equals(scenario, "no-map-unavailable", StringComparison.Ordinal));
+        || (string.Equals(slug, "context-concepts", StringComparison.Ordinal) && string.Equals(scenario, "no-map-unavailable", StringComparison.Ordinal))
+        || (string.Equals(slug, "context-concepts-glossary", StringComparison.Ordinal) && string.Equals(scenario, "no-map-030", StringComparison.Ordinal));
 
     private const string CodeTestGlobs = "[\"**/tests/**\", \"**/*.test.*\"]";
 
@@ -295,7 +299,7 @@ internal static class ContextApiScenarios
 
         if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal))
         {
-            return ConceptMapFile.Write(host.Home);   // the tabs map has no concept: its own scenario reads that answer
+            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms"));   // the tabs map has no concept: its own scenario reads that answer
         }
 
         if ((slug, scenario) is not ("context-lenses", "ambiguous-037"))

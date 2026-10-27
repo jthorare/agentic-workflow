@@ -37,6 +37,8 @@ Aw.Judge.Core.Decisions.DecisionDetails.InputJson.get -> string!
 Aw.Judge.Core.Decisions.DecisionDetails.InputJson.init -> void
 Aw.Judge.Core.Decisions.DecisionDetails.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>?
 Aw.Judge.Core.Decisions.DecisionDetails.Probabilities.init -> void
+Aw.Judge.Core.Decisions.DecisionDetails.Reasons.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Decisions.DecisionDetails.Reasons.init -> void
 Aw.Judge.Core.Decisions.DecisionDetails.RulesOpinion.get -> string?
 Aw.Judge.Core.Decisions.DecisionDetails.RulesOpinion.init -> void
 Aw.Judge.Core.Decisions.DecisionDetails.SessionId.get -> Aw.Judge.Core.Ids.SessionId?
@@ -665,7 +667,9 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.get -> Aw.Judge.Core.Ques
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckKind.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSummary.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.Deconstruct(out string! Brief, out string! Expected, out string! Actual, out string! RootCause, out Aw.Judge.Core.Questions.CheckKind CheckKind, out string! CheckSummary, out bool BeforePassed, out bool AfterPassed, out string! DiffStat, out string? Diff, out string? CheckSource, out string? BaselineFailure) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.BaselineFailure.get -> string?
+Aw.Judge.Core.Questions.ResolutionCheckInput.BaselineFailure.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.get -> string?
 Aw.Judge.Core.Questions.ResolutionCheckInput.CheckSource.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Diff.get -> string?
@@ -675,7 +679,7 @@ Aw.Judge.Core.Questions.ResolutionCheckInput.DiffStat.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.Equals(Aw.Judge.Core.Questions.ResolutionCheckInput? other) -> bool
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.Expected.init -> void
-Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null) -> void
+Aw.Judge.Core.Questions.ResolutionCheckInput.ResolutionCheckInput(string! Brief, string! Expected, string! Actual, string! RootCause, Aw.Judge.Core.Questions.CheckKind CheckKind, string! CheckSummary, bool BeforePassed, bool AfterPassed, string! DiffStat, string? Diff = null, string? CheckSource = null, string? BaselineFailure = null) -> void
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.get -> string!
 Aw.Judge.Core.Questions.ResolutionCheckInput.RootCause.init -> void
 Aw.Judge.Core.Questions.ResolutionCheckQuestion
@@ -788,6 +792,7 @@ const Aw.Judge.Core.Questions.UiElementRepairQuestion.NoGoodCandidate = "no-good
 const Aw.Judge.Core.Questions.UiElementRepairQuestion.Repaired = "repaired" -> string!
 const Aw.Judge.Core.Questions.UntrustedText.BriefCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.DiffCap = 12000 -> int
+const Aw.Judge.Core.Questions.UntrustedText.FailureCap = 8000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.FieldCap = 2000 -> int
 const Aw.Judge.Core.Questions.UntrustedText.ResolutionDiffCap = 100000 -> int
 const Aw.Judge.Core.Questions.VisualCritiqueQuestion.LooksOff = "looks-off" -> string!
@@ -1485,3 +1490,506 @@ static Aw.Judge.Core.PromptSort.SortOutcome.operator ==(Aw.Judge.Core.PromptSort
 static Aw.Judge.Core.PromptSort.SortSessionUpdate.Next(Aw.Judge.Core.PromptSort.SortSession! before, Aw.Judge.Core.PromptSort.SortOutcome! outcome, Aw.Judge.Core.PromptSort.ScaffoldPlan! plan, bool namesWorkflow) -> Aw.Judge.Core.PromptSort.SortSession!
 static Aw.Judge.Core.PromptSort.SortValues.operator !=(Aw.Judge.Core.PromptSort.SortValues? left, Aw.Judge.Core.PromptSort.SortValues? right) -> bool
 static Aw.Judge.Core.PromptSort.SortValues.operator ==(Aw.Judge.Core.PromptSort.SortValues? left, Aw.Judge.Core.PromptSort.SortValues? right) -> bool
+Aw.Judge.Core.Providers.QuestionRef.Model.get -> string?
+Aw.Judge.Core.Providers.QuestionRef.Model.init -> void
+Aw.Judge.Core.Ids.EvalItemId
+Aw.Judge.Core.Ids.EvalItemId.EvalItemId() -> void
+Aw.Judge.Core.Ids.EvalItemId.Equals(Aw.Judge.Core.Ids.EvalItemId other) -> bool
+Aw.Judge.Core.Ids.EvalItemId.Equals(Aw.Judge.Core.Ids.EvalItemId other, System.Collections.Generic.IEqualityComparer<Aw.Judge.Core.Ids.EvalItemId>! comparer) -> bool
+Aw.Judge.Core.Ids.EvalItemId.GetTypeCode() -> System.TypeCode
+Aw.Judge.Core.Ids.EvalItemId.IsInitialized() -> bool
+Aw.Judge.Core.Ids.EvalItemId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Judge.Core.Ids.EvalItemId.Value.get -> string!
+override Aw.Judge.Core.Ids.EvalItemId.Equals(object? obj) -> bool
+override Aw.Judge.Core.Ids.EvalItemId.GetHashCode() -> int
+override Aw.Judge.Core.Ids.EvalItemId.ToString() -> string!
+static Aw.Judge.Core.Ids.EvalItemId.From(string! value) -> Aw.Judge.Core.Ids.EvalItemId
+static Aw.Judge.Core.Ids.EvalItemId.operator !=(Aw.Judge.Core.Ids.EvalItemId left, Aw.Judge.Core.Ids.EvalItemId right) -> bool
+static Aw.Judge.Core.Ids.EvalItemId.operator ==(Aw.Judge.Core.Ids.EvalItemId left, Aw.Judge.Core.Ids.EvalItemId right) -> bool
+static Aw.Judge.Core.Ids.EvalItemId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Judge.Core.Ids.EvalItemId
+static Aw.Judge.Core.Ids.EvalItemId.TryFrom(string? value, out Aw.Judge.Core.Ids.EvalItemId vo) -> bool
+static Aw.Judge.Core.Ids.EvalItemId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Judge.Core.Ids.EvalItemId result) -> bool
+Aw.Judge.Core.Labels.LabelSource
+Aw.Judge.Core.Labels.LabelSource.Adjudicator = 2 -> Aw.Judge.Core.Labels.LabelSource
+Aw.Judge.Core.Labels.LabelSource.Outcome = 1 -> Aw.Judge.Core.Labels.LabelSource
+Aw.Judge.Core.Labels.LabelSource.Override = 3 -> Aw.Judge.Core.Labels.LabelSource
+Aw.Judge.Core.Labels.LabelSources
+static Aw.Judge.Core.Labels.LabelSources.Name(Aw.Judge.Core.Labels.LabelSource value) -> string!
+static Aw.Judge.Core.Labels.LabelSources.TryParse(string? text, out Aw.Judge.Core.Labels.LabelSource value) -> bool
+Aw.Judge.Core.Labels.EvalItem
+Aw.Judge.Core.Labels.EvalItem.<Clone>$() -> Aw.Judge.Core.Labels.EvalItem!
+Aw.Judge.Core.Labels.EvalItem.Deconstruct(out Aw.Judge.Core.Ids.EvalItemId Id, out string! Question, out string! InputJson, out string! Source, out string? ModelDecision, out System.DateTimeOffset CreatedAt) -> void
+Aw.Judge.Core.Labels.EvalItem.Equals(Aw.Judge.Core.Labels.EvalItem? other) -> bool
+Aw.Judge.Core.Labels.EvalItem.Id.get -> Aw.Judge.Core.Ids.EvalItemId
+Aw.Judge.Core.Labels.EvalItem.Id.init -> void
+Aw.Judge.Core.Labels.EvalItem.Question.get -> string!
+Aw.Judge.Core.Labels.EvalItem.Question.init -> void
+Aw.Judge.Core.Labels.EvalItem.InputJson.get -> string!
+Aw.Judge.Core.Labels.EvalItem.InputJson.init -> void
+Aw.Judge.Core.Labels.EvalItem.Source.get -> string!
+Aw.Judge.Core.Labels.EvalItem.Source.init -> void
+Aw.Judge.Core.Labels.EvalItem.ModelDecision.get -> string?
+Aw.Judge.Core.Labels.EvalItem.ModelDecision.init -> void
+Aw.Judge.Core.Labels.EvalItem.CreatedAt.get -> System.DateTimeOffset
+Aw.Judge.Core.Labels.EvalItem.CreatedAt.init -> void
+Aw.Judge.Core.Labels.EvalItem.EvalItem(Aw.Judge.Core.Ids.EvalItemId Id, string! Question, string! InputJson, string! Source, string? ModelDecision, System.DateTimeOffset CreatedAt) -> void
+override Aw.Judge.Core.Labels.EvalItem.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.EvalItem.GetHashCode() -> int
+override Aw.Judge.Core.Labels.EvalItem.ToString() -> string!
+static Aw.Judge.Core.Labels.EvalItem.operator !=(Aw.Judge.Core.Labels.EvalItem? left, Aw.Judge.Core.Labels.EvalItem? right) -> bool
+static Aw.Judge.Core.Labels.EvalItem.operator ==(Aw.Judge.Core.Labels.EvalItem? left, Aw.Judge.Core.Labels.EvalItem? right) -> bool
+Aw.Judge.Core.Labels.LabeledItem
+Aw.Judge.Core.Labels.LabeledItem.<Clone>$() -> Aw.Judge.Core.Labels.LabeledItem!
+Aw.Judge.Core.Labels.LabeledItem.Deconstruct(out Aw.Judge.Core.Labels.EvalItem! Item, out string! Label, out Aw.Judge.Core.Labels.LabelSource Source) -> void
+Aw.Judge.Core.Labels.LabeledItem.Equals(Aw.Judge.Core.Labels.LabeledItem? other) -> bool
+Aw.Judge.Core.Labels.LabeledItem.Item.get -> Aw.Judge.Core.Labels.EvalItem!
+Aw.Judge.Core.Labels.LabeledItem.Item.init -> void
+Aw.Judge.Core.Labels.LabeledItem.Label.get -> string!
+Aw.Judge.Core.Labels.LabeledItem.Label.init -> void
+Aw.Judge.Core.Labels.LabeledItem.Source.get -> Aw.Judge.Core.Labels.LabelSource
+Aw.Judge.Core.Labels.LabeledItem.Source.init -> void
+Aw.Judge.Core.Labels.LabeledItem.LabeledItem(Aw.Judge.Core.Labels.EvalItem! Item, string! Label, Aw.Judge.Core.Labels.LabelSource Source) -> void
+override Aw.Judge.Core.Labels.LabeledItem.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.LabeledItem.GetHashCode() -> int
+override Aw.Judge.Core.Labels.LabeledItem.ToString() -> string!
+static Aw.Judge.Core.Labels.LabeledItem.operator !=(Aw.Judge.Core.Labels.LabeledItem? left, Aw.Judge.Core.Labels.LabeledItem? right) -> bool
+static Aw.Judge.Core.Labels.LabeledItem.operator ==(Aw.Judge.Core.Labels.LabeledItem? left, Aw.Judge.Core.Labels.LabeledItem? right) -> bool
+Aw.Judge.Core.Labels.LabelCount
+Aw.Judge.Core.Labels.LabelCount.<Clone>$() -> Aw.Judge.Core.Labels.LabelCount!
+Aw.Judge.Core.Labels.LabelCount.Deconstruct(out string! Question, out int Items, out int Labeled, out int Skipped) -> void
+Aw.Judge.Core.Labels.LabelCount.Equals(Aw.Judge.Core.Labels.LabelCount? other) -> bool
+Aw.Judge.Core.Labels.LabelCount.Question.get -> string!
+Aw.Judge.Core.Labels.LabelCount.Question.init -> void
+Aw.Judge.Core.Labels.LabelCount.Items.get -> int
+Aw.Judge.Core.Labels.LabelCount.Items.init -> void
+Aw.Judge.Core.Labels.LabelCount.Labeled.get -> int
+Aw.Judge.Core.Labels.LabelCount.Labeled.init -> void
+Aw.Judge.Core.Labels.LabelCount.Skipped.get -> int
+Aw.Judge.Core.Labels.LabelCount.Skipped.init -> void
+Aw.Judge.Core.Labels.LabelCount.LabelCount(string! Question, int Items, int Labeled, int Skipped) -> void
+override Aw.Judge.Core.Labels.LabelCount.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.LabelCount.GetHashCode() -> int
+override Aw.Judge.Core.Labels.LabelCount.ToString() -> string!
+static Aw.Judge.Core.Labels.LabelCount.operator !=(Aw.Judge.Core.Labels.LabelCount? left, Aw.Judge.Core.Labels.LabelCount? right) -> bool
+static Aw.Judge.Core.Labels.LabelCount.operator ==(Aw.Judge.Core.Labels.LabelCount? left, Aw.Judge.Core.Labels.LabelCount? right) -> bool
+Aw.Judge.Core.Labels.LabelAgreement
+Aw.Judge.Core.Labels.LabelAgreement.<Clone>$() -> Aw.Judge.Core.Labels.LabelAgreement!
+Aw.Judge.Core.Labels.LabelAgreement.Deconstruct(out int Shared, out int Agreed) -> void
+Aw.Judge.Core.Labels.LabelAgreement.Equals(Aw.Judge.Core.Labels.LabelAgreement? other) -> bool
+Aw.Judge.Core.Labels.LabelAgreement.Shared.get -> int
+Aw.Judge.Core.Labels.LabelAgreement.Shared.init -> void
+Aw.Judge.Core.Labels.LabelAgreement.Agreed.get -> int
+Aw.Judge.Core.Labels.LabelAgreement.Agreed.init -> void
+Aw.Judge.Core.Labels.LabelAgreement.LabelAgreement(int Shared, int Agreed) -> void
+override Aw.Judge.Core.Labels.LabelAgreement.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.LabelAgreement.GetHashCode() -> int
+override Aw.Judge.Core.Labels.LabelAgreement.ToString() -> string!
+static Aw.Judge.Core.Labels.LabelAgreement.operator !=(Aw.Judge.Core.Labels.LabelAgreement? left, Aw.Judge.Core.Labels.LabelAgreement? right) -> bool
+static Aw.Judge.Core.Labels.LabelAgreement.operator ==(Aw.Judge.Core.Labels.LabelAgreement? left, Aw.Judge.Core.Labels.LabelAgreement? right) -> bool
+Aw.Judge.Core.Labels.DecidedInput
+Aw.Judge.Core.Labels.DecidedInput.<Clone>$() -> Aw.Judge.Core.Labels.DecidedInput!
+Aw.Judge.Core.Labels.DecidedInput.Deconstruct(out Aw.Judge.Core.Ids.DecisionId Id, out string! Question, out string? Answer, out string! InputJson) -> void
+Aw.Judge.Core.Labels.DecidedInput.Equals(Aw.Judge.Core.Labels.DecidedInput? other) -> bool
+Aw.Judge.Core.Labels.DecidedInput.Id.get -> Aw.Judge.Core.Ids.DecisionId
+Aw.Judge.Core.Labels.DecidedInput.Id.init -> void
+Aw.Judge.Core.Labels.DecidedInput.Question.get -> string!
+Aw.Judge.Core.Labels.DecidedInput.Question.init -> void
+Aw.Judge.Core.Labels.DecidedInput.Answer.get -> string?
+Aw.Judge.Core.Labels.DecidedInput.Answer.init -> void
+Aw.Judge.Core.Labels.DecidedInput.InputJson.get -> string!
+Aw.Judge.Core.Labels.DecidedInput.InputJson.init -> void
+Aw.Judge.Core.Labels.DecidedInput.DecidedInput(Aw.Judge.Core.Ids.DecisionId Id, string! Question, string? Answer, string! InputJson) -> void
+override Aw.Judge.Core.Labels.DecidedInput.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.DecidedInput.GetHashCode() -> int
+override Aw.Judge.Core.Labels.DecidedInput.ToString() -> string!
+static Aw.Judge.Core.Labels.DecidedInput.operator !=(Aw.Judge.Core.Labels.DecidedInput? left, Aw.Judge.Core.Labels.DecidedInput? right) -> bool
+static Aw.Judge.Core.Labels.DecidedInput.operator ==(Aw.Judge.Core.Labels.DecidedInput? left, Aw.Judge.Core.Labels.DecidedInput? right) -> bool
+Aw.Judge.Core.Labels.OutcomeCandidate
+Aw.Judge.Core.Labels.OutcomeCandidate.<Clone>$() -> Aw.Judge.Core.Labels.OutcomeCandidate!
+Aw.Judge.Core.Labels.OutcomeCandidate.Deconstruct(out Aw.Judge.Core.Ids.EvalItemId Item, out System.DateTimeOffset DecidedAt, out string! Decision, out Aw.Judge.Core.Ids.SessionId? Session) -> void
+Aw.Judge.Core.Labels.OutcomeCandidate.Equals(Aw.Judge.Core.Labels.OutcomeCandidate? other) -> bool
+Aw.Judge.Core.Labels.OutcomeCandidate.Item.get -> Aw.Judge.Core.Ids.EvalItemId
+Aw.Judge.Core.Labels.OutcomeCandidate.Item.init -> void
+Aw.Judge.Core.Labels.OutcomeCandidate.DecidedAt.get -> System.DateTimeOffset
+Aw.Judge.Core.Labels.OutcomeCandidate.DecidedAt.init -> void
+Aw.Judge.Core.Labels.OutcomeCandidate.Decision.get -> string!
+Aw.Judge.Core.Labels.OutcomeCandidate.Decision.init -> void
+Aw.Judge.Core.Labels.OutcomeCandidate.Session.get -> Aw.Judge.Core.Ids.SessionId?
+Aw.Judge.Core.Labels.OutcomeCandidate.Session.init -> void
+Aw.Judge.Core.Labels.OutcomeCandidate.OutcomeCandidate(Aw.Judge.Core.Ids.EvalItemId Item, System.DateTimeOffset DecidedAt, string! Decision, Aw.Judge.Core.Ids.SessionId? Session) -> void
+override Aw.Judge.Core.Labels.OutcomeCandidate.Equals(object? obj) -> bool
+override Aw.Judge.Core.Labels.OutcomeCandidate.GetHashCode() -> int
+override Aw.Judge.Core.Labels.OutcomeCandidate.ToString() -> string!
+static Aw.Judge.Core.Labels.OutcomeCandidate.operator !=(Aw.Judge.Core.Labels.OutcomeCandidate? left, Aw.Judge.Core.Labels.OutcomeCandidate? right) -> bool
+static Aw.Judge.Core.Labels.OutcomeCandidate.operator ==(Aw.Judge.Core.Labels.OutcomeCandidate? left, Aw.Judge.Core.Labels.OutcomeCandidate? right) -> bool
+Aw.Judge.Core.Evals.SweepRow
+Aw.Judge.Core.Evals.SweepRow.<Clone>$() -> Aw.Judge.Core.Evals.SweepRow!
+Aw.Judge.Core.Evals.SweepRow.Deconstruct(out double Threshold, out double Coverage, out double AccuracyCovered) -> void
+Aw.Judge.Core.Evals.SweepRow.Equals(Aw.Judge.Core.Evals.SweepRow? other) -> bool
+Aw.Judge.Core.Evals.SweepRow.Threshold.get -> double
+Aw.Judge.Core.Evals.SweepRow.Threshold.init -> void
+Aw.Judge.Core.Evals.SweepRow.Coverage.get -> double
+Aw.Judge.Core.Evals.SweepRow.Coverage.init -> void
+Aw.Judge.Core.Evals.SweepRow.AccuracyCovered.get -> double
+Aw.Judge.Core.Evals.SweepRow.AccuracyCovered.init -> void
+Aw.Judge.Core.Evals.SweepRow.SweepRow(double Threshold, double Coverage, double AccuracyCovered) -> void
+override Aw.Judge.Core.Evals.SweepRow.Equals(object? obj) -> bool
+override Aw.Judge.Core.Evals.SweepRow.GetHashCode() -> int
+override Aw.Judge.Core.Evals.SweepRow.ToString() -> string!
+static Aw.Judge.Core.Evals.SweepRow.operator !=(Aw.Judge.Core.Evals.SweepRow? left, Aw.Judge.Core.Evals.SweepRow? right) -> bool
+static Aw.Judge.Core.Evals.SweepRow.operator ==(Aw.Judge.Core.Evals.SweepRow? left, Aw.Judge.Core.Evals.SweepRow? right) -> bool
+Aw.Judge.Core.Evals.SourcedReports
+Aw.Judge.Core.Evals.SourcedReports.<Clone>$() -> Aw.Judge.Core.Evals.SourcedReports!
+Aw.Judge.Core.Evals.SourcedReports.Deconstruct(out Aw.Judge.Core.Evals.EvalReport! Outcome, out Aw.Judge.Core.Evals.EvalReport! Adjudicator, out Aw.Judge.Core.Labels.LabelAgreement! Agreement) -> void
+Aw.Judge.Core.Evals.SourcedReports.Equals(Aw.Judge.Core.Evals.SourcedReports? other) -> bool
+Aw.Judge.Core.Evals.SourcedReports.Outcome.get -> Aw.Judge.Core.Evals.EvalReport!
+Aw.Judge.Core.Evals.SourcedReports.Outcome.init -> void
+Aw.Judge.Core.Evals.SourcedReports.Adjudicator.get -> Aw.Judge.Core.Evals.EvalReport!
+Aw.Judge.Core.Evals.SourcedReports.Adjudicator.init -> void
+Aw.Judge.Core.Evals.SourcedReports.Agreement.get -> Aw.Judge.Core.Labels.LabelAgreement!
+Aw.Judge.Core.Evals.SourcedReports.Agreement.init -> void
+Aw.Judge.Core.Evals.SourcedReports.SourcedReports(Aw.Judge.Core.Evals.EvalReport! Outcome, Aw.Judge.Core.Evals.EvalReport! Adjudicator, Aw.Judge.Core.Labels.LabelAgreement! Agreement) -> void
+override Aw.Judge.Core.Evals.SourcedReports.Equals(object? obj) -> bool
+override Aw.Judge.Core.Evals.SourcedReports.GetHashCode() -> int
+override Aw.Judge.Core.Evals.SourcedReports.ToString() -> string!
+static Aw.Judge.Core.Evals.SourcedReports.operator !=(Aw.Judge.Core.Evals.SourcedReports? left, Aw.Judge.Core.Evals.SourcedReports? right) -> bool
+static Aw.Judge.Core.Evals.SourcedReports.operator ==(Aw.Judge.Core.Evals.SourcedReports? left, Aw.Judge.Core.Evals.SourcedReports? right) -> bool
+Aw.Judge.Core.Evals.EvalReport
+Aw.Judge.Core.Evals.EvalReport.<Clone>$() -> Aw.Judge.Core.Evals.EvalReport!
+Aw.Judge.Core.Evals.EvalReport.Deconstruct(out string! Question, out string! Provider, out string! Variant, out Aw.Judge.Core.Labels.LabelSource? Labels, out int N, out int Decided, out double Accuracy, out double DecisiveRate, out double AccuracyDecisive, out long P50LatencyMs, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Evals.SweepRow!>! Sweep, out Aw.Judge.Core.Evals.SourcedReports? PerSource, out string? SourceWarning) -> void
+Aw.Judge.Core.Evals.EvalReport.Equals(Aw.Judge.Core.Evals.EvalReport? other) -> bool
+Aw.Judge.Core.Evals.EvalReport.Question.get -> string!
+Aw.Judge.Core.Evals.EvalReport.Question.init -> void
+Aw.Judge.Core.Evals.EvalReport.Provider.get -> string!
+Aw.Judge.Core.Evals.EvalReport.Provider.init -> void
+Aw.Judge.Core.Evals.EvalReport.Variant.get -> string!
+Aw.Judge.Core.Evals.EvalReport.Variant.init -> void
+Aw.Judge.Core.Evals.EvalReport.Labels.get -> Aw.Judge.Core.Labels.LabelSource?
+Aw.Judge.Core.Evals.EvalReport.Labels.init -> void
+Aw.Judge.Core.Evals.EvalReport.N.get -> int
+Aw.Judge.Core.Evals.EvalReport.N.init -> void
+Aw.Judge.Core.Evals.EvalReport.Decided.get -> int
+Aw.Judge.Core.Evals.EvalReport.Decided.init -> void
+Aw.Judge.Core.Evals.EvalReport.Accuracy.get -> double
+Aw.Judge.Core.Evals.EvalReport.Accuracy.init -> void
+Aw.Judge.Core.Evals.EvalReport.DecisiveRate.get -> double
+Aw.Judge.Core.Evals.EvalReport.DecisiveRate.init -> void
+Aw.Judge.Core.Evals.EvalReport.AccuracyDecisive.get -> double
+Aw.Judge.Core.Evals.EvalReport.AccuracyDecisive.init -> void
+Aw.Judge.Core.Evals.EvalReport.P50LatencyMs.get -> long
+Aw.Judge.Core.Evals.EvalReport.P50LatencyMs.init -> void
+Aw.Judge.Core.Evals.EvalReport.Sweep.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Evals.SweepRow!>!
+Aw.Judge.Core.Evals.EvalReport.Sweep.init -> void
+Aw.Judge.Core.Evals.EvalReport.PerSource.get -> Aw.Judge.Core.Evals.SourcedReports?
+Aw.Judge.Core.Evals.EvalReport.PerSource.init -> void
+Aw.Judge.Core.Evals.EvalReport.SourceWarning.get -> string?
+Aw.Judge.Core.Evals.EvalReport.SourceWarning.init -> void
+Aw.Judge.Core.Evals.EvalReport.EvalReport(string! Question, string! Provider, string! Variant, Aw.Judge.Core.Labels.LabelSource? Labels, int N, int Decided, double Accuracy, double DecisiveRate, double AccuracyDecisive, long P50LatencyMs, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Evals.SweepRow!>! Sweep, Aw.Judge.Core.Evals.SourcedReports? PerSource = null, string? SourceWarning = null) -> void
+override Aw.Judge.Core.Evals.EvalReport.Equals(object? obj) -> bool
+override Aw.Judge.Core.Evals.EvalReport.GetHashCode() -> int
+override Aw.Judge.Core.Evals.EvalReport.ToString() -> string!
+static Aw.Judge.Core.Evals.EvalReport.operator !=(Aw.Judge.Core.Evals.EvalReport? left, Aw.Judge.Core.Evals.EvalReport? right) -> bool
+static Aw.Judge.Core.Evals.EvalReport.operator ==(Aw.Judge.Core.Evals.EvalReport? left, Aw.Judge.Core.Evals.EvalReport? right) -> bool
+Aw.Judge.Core.Transcripts.TranscriptPrompt
+Aw.Judge.Core.Transcripts.TranscriptPrompt.<Clone>$() -> Aw.Judge.Core.Transcripts.TranscriptPrompt!
+Aw.Judge.Core.Transcripts.TranscriptPrompt.Deconstruct(out System.DateTimeOffset At, out string! Text) -> void
+Aw.Judge.Core.Transcripts.TranscriptPrompt.Equals(Aw.Judge.Core.Transcripts.TranscriptPrompt? other) -> bool
+Aw.Judge.Core.Transcripts.TranscriptPrompt.At.get -> System.DateTimeOffset
+Aw.Judge.Core.Transcripts.TranscriptPrompt.At.init -> void
+Aw.Judge.Core.Transcripts.TranscriptPrompt.Text.get -> string!
+Aw.Judge.Core.Transcripts.TranscriptPrompt.Text.init -> void
+Aw.Judge.Core.Transcripts.TranscriptPrompt.TranscriptPrompt(System.DateTimeOffset At, string! Text) -> void
+override Aw.Judge.Core.Transcripts.TranscriptPrompt.Equals(object? obj) -> bool
+override Aw.Judge.Core.Transcripts.TranscriptPrompt.GetHashCode() -> int
+override Aw.Judge.Core.Transcripts.TranscriptPrompt.ToString() -> string!
+static Aw.Judge.Core.Transcripts.TranscriptPrompt.operator !=(Aw.Judge.Core.Transcripts.TranscriptPrompt? left, Aw.Judge.Core.Transcripts.TranscriptPrompt? right) -> bool
+static Aw.Judge.Core.Transcripts.TranscriptPrompt.operator ==(Aw.Judge.Core.Transcripts.TranscriptPrompt? left, Aw.Judge.Core.Transcripts.TranscriptPrompt? right) -> bool
+Aw.Judge.Core.Transcripts.TranscriptEdit
+Aw.Judge.Core.Transcripts.TranscriptEdit.<Clone>$() -> Aw.Judge.Core.Transcripts.TranscriptEdit!
+Aw.Judge.Core.Transcripts.TranscriptEdit.Deconstruct(out string! File, out string! Before, out string! After) -> void
+Aw.Judge.Core.Transcripts.TranscriptEdit.Equals(Aw.Judge.Core.Transcripts.TranscriptEdit? other) -> bool
+Aw.Judge.Core.Transcripts.TranscriptEdit.File.get -> string!
+Aw.Judge.Core.Transcripts.TranscriptEdit.File.init -> void
+Aw.Judge.Core.Transcripts.TranscriptEdit.Before.get -> string!
+Aw.Judge.Core.Transcripts.TranscriptEdit.Before.init -> void
+Aw.Judge.Core.Transcripts.TranscriptEdit.After.get -> string!
+Aw.Judge.Core.Transcripts.TranscriptEdit.After.init -> void
+Aw.Judge.Core.Transcripts.TranscriptEdit.TranscriptEdit(string! File, string! Before, string! After) -> void
+override Aw.Judge.Core.Transcripts.TranscriptEdit.Equals(object? obj) -> bool
+override Aw.Judge.Core.Transcripts.TranscriptEdit.GetHashCode() -> int
+override Aw.Judge.Core.Transcripts.TranscriptEdit.ToString() -> string!
+static Aw.Judge.Core.Transcripts.TranscriptEdit.operator !=(Aw.Judge.Core.Transcripts.TranscriptEdit? left, Aw.Judge.Core.Transcripts.TranscriptEdit? right) -> bool
+static Aw.Judge.Core.Transcripts.TranscriptEdit.operator ==(Aw.Judge.Core.Transcripts.TranscriptEdit? left, Aw.Judge.Core.Transcripts.TranscriptEdit? right) -> bool
+Aw.Judge.Core.Transcripts.TranscriptTurn
+Aw.Judge.Core.Transcripts.TranscriptTurn.<Clone>$() -> Aw.Judge.Core.Transcripts.TranscriptTurn!
+Aw.Judge.Core.Transcripts.TranscriptTurn.Deconstruct(out Aw.Judge.Core.Ids.SessionId Session, out int Index, out string! Prompt, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptEdit!>! Edits) -> void
+Aw.Judge.Core.Transcripts.TranscriptTurn.Equals(Aw.Judge.Core.Transcripts.TranscriptTurn? other) -> bool
+Aw.Judge.Core.Transcripts.TranscriptTurn.Session.get -> Aw.Judge.Core.Ids.SessionId
+Aw.Judge.Core.Transcripts.TranscriptTurn.Session.init -> void
+Aw.Judge.Core.Transcripts.TranscriptTurn.Index.get -> int
+Aw.Judge.Core.Transcripts.TranscriptTurn.Index.init -> void
+Aw.Judge.Core.Transcripts.TranscriptTurn.Prompt.get -> string!
+Aw.Judge.Core.Transcripts.TranscriptTurn.Prompt.init -> void
+Aw.Judge.Core.Transcripts.TranscriptTurn.Edits.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptEdit!>!
+Aw.Judge.Core.Transcripts.TranscriptTurn.Edits.init -> void
+Aw.Judge.Core.Transcripts.TranscriptTurn.TranscriptTurn(Aw.Judge.Core.Ids.SessionId Session, int Index, string! Prompt, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptEdit!>! Edits) -> void
+override Aw.Judge.Core.Transcripts.TranscriptTurn.Equals(object? obj) -> bool
+override Aw.Judge.Core.Transcripts.TranscriptTurn.GetHashCode() -> int
+override Aw.Judge.Core.Transcripts.TranscriptTurn.ToString() -> string!
+static Aw.Judge.Core.Transcripts.TranscriptTurn.operator !=(Aw.Judge.Core.Transcripts.TranscriptTurn? left, Aw.Judge.Core.Transcripts.TranscriptTurn? right) -> bool
+static Aw.Judge.Core.Transcripts.TranscriptTurn.operator ==(Aw.Judge.Core.Transcripts.TranscriptTurn? left, Aw.Judge.Core.Transcripts.TranscriptTurn? right) -> bool
+Aw.Judge.Core.Transcripts.Transcript
+Aw.Judge.Core.Transcripts.Transcript.<Clone>$() -> Aw.Judge.Core.Transcripts.Transcript!
+Aw.Judge.Core.Transcripts.Transcript.Deconstruct(out System.DateTimeOffset ModifiedAt, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptPrompt!>! Prompts, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptTurn!>! Turns, out System.Collections.Generic.IReadOnlyDictionary<Aw.Judge.Core.Ids.SessionId, System.DateTimeOffset>! SessionEnds) -> void
+Aw.Judge.Core.Transcripts.Transcript.Equals(Aw.Judge.Core.Transcripts.Transcript? other) -> bool
+Aw.Judge.Core.Transcripts.Transcript.ModifiedAt.get -> System.DateTimeOffset
+Aw.Judge.Core.Transcripts.Transcript.ModifiedAt.init -> void
+Aw.Judge.Core.Transcripts.Transcript.Prompts.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptPrompt!>!
+Aw.Judge.Core.Transcripts.Transcript.Prompts.init -> void
+Aw.Judge.Core.Transcripts.Transcript.Turns.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptTurn!>!
+Aw.Judge.Core.Transcripts.Transcript.Turns.init -> void
+Aw.Judge.Core.Transcripts.Transcript.SessionEnds.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Judge.Core.Ids.SessionId, System.DateTimeOffset>!
+Aw.Judge.Core.Transcripts.Transcript.SessionEnds.init -> void
+Aw.Judge.Core.Transcripts.Transcript.Transcript(System.DateTimeOffset ModifiedAt, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptPrompt!>! Prompts, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptTurn!>! Turns, System.Collections.Generic.IReadOnlyDictionary<Aw.Judge.Core.Ids.SessionId, System.DateTimeOffset>! SessionEnds) -> void
+override Aw.Judge.Core.Transcripts.Transcript.Equals(object? obj) -> bool
+override Aw.Judge.Core.Transcripts.Transcript.GetHashCode() -> int
+override Aw.Judge.Core.Transcripts.Transcript.ToString() -> string!
+static Aw.Judge.Core.Transcripts.Transcript.operator !=(Aw.Judge.Core.Transcripts.Transcript? left, Aw.Judge.Core.Transcripts.Transcript? right) -> bool
+static Aw.Judge.Core.Transcripts.Transcript.operator ==(Aw.Judge.Core.Transcripts.Transcript? left, Aw.Judge.Core.Transcripts.Transcript? right) -> bool
+Aw.Judge.Core.Ports.IEvalStore
+Aw.Judge.Core.Ports.IEvalStore.AddItem(Aw.Judge.Core.Labels.EvalItem! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Judge.Core.Ports.IEvalStore.FindItem(Aw.Judge.Core.Ids.EvalItemId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Labels.EvalItem!>!>
+Aw.Judge.Core.Ports.IEvalStore.RecordLabel(Aw.Judge.Core.Ids.EvalItemId item, Aw.Judge.Core.Labels.LabelSource source, string! label, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Judge.Core.Ports.IEvalStore.NextUnlabeled(string? question, Aw.Judge.Core.Labels.LabelSource? source, System.Collections.Generic.IReadOnlySet<Aw.Judge.Core.Ids.EvalItemId>! exclude, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Labels.EvalItem?>!>
+Aw.Judge.Core.Ports.IEvalStore.Labeled(string! question, Aw.Judge.Core.Labels.LabelSource? source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Labels.LabeledItem!>!>!>
+Aw.Judge.Core.Ports.IEvalStore.Counts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Labels.LabelCount!>!>!>
+Aw.Judge.Core.Ports.IEvalStore.Agreement(string! question, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Labels.LabelAgreement!>!>
+Aw.Judge.Core.Ports.IEvalStore.DecidedSince(string? question, System.DateTimeOffset since, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Labels.DecidedInput!>!>!>
+Aw.Judge.Core.Ports.IEvalStore.OutcomeCandidates(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Labels.OutcomeCandidate!>!>!>
+Aw.Judge.Core.Ports.ITranscriptReader
+Aw.Judge.Core.Ports.ITranscriptReader.FindSession(Aw.Judge.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Transcripts.Transcript!>!>
+Aw.Judge.Core.Ports.ITranscriptReader.Read(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Judge.Core.Transcripts.Transcript!>!>
+Aw.Judge.Core.Ports.IProviderCatalog.Provider(Aw.Judge.Core.Providers.ProviderName name, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.ProviderExcluded -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.ProviderUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.UnknownItem -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.NoTranscript -> Aw.Kernel.ErrorDefinition!
+Aw.Judge.Core.Evaluation.ScoringQuestion
+Aw.Judge.Core.Evaluation.ScoringQuestion.Ask(System.Text.Json.Nodes.JsonNode? input, System.Text.Json.JsonSerializerOptions! json) -> Aw.Judge.Core.Providers.QuestionRef?
+Aw.Judge.Core.Evaluation.ScoringQuestion.Outputs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Evaluation.ScoringQuestion.Threshold.get -> double
+Aw.Judge.Core.Evaluation.ScoringQuestion.TimeBudget.get -> System.TimeSpan
+static Aw.Judge.Core.Evaluation.QuestionCatalog.Scoring(string! question) -> Aw.Judge.Core.Evaluation.ScoringQuestion?
+Aw.Judge.Core.Ports.IEvalFiles
+Aw.Judge.Core.Ports.IEvalFiles.AppendLine(string! path, string! line, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Judge.Core.Ports.IEvalFiles.ReadLines(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Judge.Core.Ports.IEvalFiles.WriteReport(string! name, string! content, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Judge.Core.Transcripts.TurnOutcomes
+const Aw.Judge.Core.Transcripts.TurnOutcomes.Progressing = "progressing" -> string!
+const Aw.Judge.Core.Transcripts.TurnOutcomes.Stalled = "stalled" -> string!
+static Aw.Judge.Core.Transcripts.TurnOutcomes.AskCheckLabel(string! action, System.DateTimeOffset decidedAt, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptPrompt!>! prompts) -> string?
+static Aw.Judge.Core.Transcripts.TurnOutcomes.IsRealPromptText(string! text) -> bool
+static Aw.Judge.Core.Transcripts.TurnOutcomes.TurnDiff(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptEdit!>! edits) -> string!
+static Aw.Judge.Core.Transcripts.TurnOutcomes.TurnLabel(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Transcripts.TranscriptTurn!>! session, int index, bool sessionClosed) -> string?
+Aw.Judge.Core.Processes.ProcessRequest.InheritOnly.get -> System.Collections.Generic.IReadOnlyCollection<string!>?
+Aw.Judge.Core.Processes.ProcessRequest.InheritOnly.init -> void
+Aw.Judge.Core.Ports.IProviderCatalog.Adjudicator(System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
+Aw.Judge.Core.Evaluation.PreparedQuestion
+Aw.Judge.Core.Evaluation.PreparedQuestion.PreparedQuestion(Aw.Judge.Core.Providers.QuestionRef! reference, System.Text.Json.Nodes.JsonNode? input, System.TimeSpan timeBudget) -> void
+Aw.Judge.Core.Evaluation.PreparedQuestion.Reference.get -> Aw.Judge.Core.Providers.QuestionRef!
+Aw.Judge.Core.Evaluation.PreparedQuestion.Input.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Judge.Core.Evaluation.PreparedQuestion.TimeBudget.get -> System.TimeSpan
+static Aw.Judge.Core.Evaluation.QuestionCatalog.Prepare(string! question, string! inputJson, System.Text.Json.JsonSerializerOptions! json) -> Aw.Judge.Core.Evaluation.PreparedQuestion?
+Aw.Judge.Core.Labels.LabelQuestions
+const Aw.Judge.Core.Labels.LabelQuestions.Skip = "skip" -> string!
+static Aw.Judge.Core.Labels.LabelQuestions.Fits(string! question, string! inputJson, System.Text.Json.JsonSerializerOptions! json) -> bool
+static Aw.Judge.Core.Labels.LabelQuestions.Outputs(string! question) -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Evaluation.QuestionEvaluator.EvaluateModelPick(string! rawInput, Aw.Judge.Core.Evaluation.EvaluationContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Evaluation.EvaluationOutcome!>
+Aw.Judge.Core.Providers.QuestionRef.InputCapChars.get -> int?
+Aw.Judge.Core.Providers.QuestionRef.InputCapChars.init -> void
+Aw.Judge.Core.Questions.CappedFileSet
+Aw.Judge.Core.Questions.CappedFileSet.CappedFileSet(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Kept, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>! Omitted, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>! Cut) -> void
+Aw.Judge.Core.Questions.CappedFileSet.<Clone>$() -> Aw.Judge.Core.Questions.CappedFileSet!
+Aw.Judge.Core.Questions.CappedFileSet.Cut.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>!
+Aw.Judge.Core.Questions.CappedFileSet.Cut.init -> void
+Aw.Judge.Core.Questions.CappedFileSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Kept, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>! Omitted, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>! Cut) -> void
+Aw.Judge.Core.Questions.CappedFileSet.Equals(Aw.Judge.Core.Questions.CappedFileSet? other) -> bool
+Aw.Judge.Core.Questions.CappedFileSet.Kept.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>!
+Aw.Judge.Core.Questions.CappedFileSet.Kept.init -> void
+Aw.Judge.Core.Questions.CappedFileSet.Omitted.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>!
+Aw.Judge.Core.Questions.CappedFileSet.Omitted.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate
+Aw.Judge.Core.Questions.ModelPickCandidate.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickCandidate!
+Aw.Judge.Core.Questions.ModelPickCandidate.Deconstruct(out string! Key, out string! Model, out string! Tier, out double? Price) -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Equals(Aw.Judge.Core.Questions.ModelPickCandidate? other) -> bool
+Aw.Judge.Core.Questions.ModelPickCandidate.Key.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Key.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Model.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Model.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.ModelPickCandidate(string! Key, string! Model, string! Tier, double? Price = null) -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Price.get -> double?
+Aw.Judge.Core.Questions.ModelPickCandidate.Price.init -> void
+Aw.Judge.Core.Questions.ModelPickCandidate.Tier.get -> string!
+Aw.Judge.Core.Questions.ModelPickCandidate.Tier.init -> void
+Aw.Judge.Core.Questions.ModelPickCut
+Aw.Judge.Core.Questions.ModelPickCut.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickCut!
+Aw.Judge.Core.Questions.ModelPickCut.Deconstruct(out string! Path, out int Kept, out int Of) -> void
+Aw.Judge.Core.Questions.ModelPickCut.Equals(Aw.Judge.Core.Questions.ModelPickCut? other) -> bool
+Aw.Judge.Core.Questions.ModelPickCut.Kept.get -> int
+Aw.Judge.Core.Questions.ModelPickCut.Kept.init -> void
+Aw.Judge.Core.Questions.ModelPickCut.ModelPickCut(string! Path, int Kept, int Of) -> void
+Aw.Judge.Core.Questions.ModelPickCut.Of.get -> int
+Aw.Judge.Core.Questions.ModelPickCut.Of.init -> void
+Aw.Judge.Core.Questions.ModelPickCut.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickCut.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickFile
+Aw.Judge.Core.Questions.ModelPickFile.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickFile!
+Aw.Judge.Core.Questions.ModelPickFile.Deconstruct(out string! Path, out string! Text) -> void
+Aw.Judge.Core.Questions.ModelPickFile.Equals(Aw.Judge.Core.Questions.ModelPickFile? other) -> bool
+Aw.Judge.Core.Questions.ModelPickFile.ModelPickFile(string! Path, string! Text) -> void
+Aw.Judge.Core.Questions.ModelPickFile.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickFile.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickFile.Text.get -> string!
+Aw.Judge.Core.Questions.ModelPickFile.Text.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory
+Aw.Judge.Core.Questions.ModelPickHistory.CheckFailed.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.CheckFailed.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickHistory!
+Aw.Judge.Core.Questions.ModelPickHistory.Deconstruct(out string! Key, out int Runs, out int Refused, out int CheckFailed, out int Redraft) -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Equals(Aw.Judge.Core.Questions.ModelPickHistory? other) -> bool
+Aw.Judge.Core.Questions.ModelPickHistory.Key.get -> string!
+Aw.Judge.Core.Questions.ModelPickHistory.Key.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.ModelPickHistory(string! Key, int Runs, int Refused, int CheckFailed, int Redraft) -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Redraft.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Redraft.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Refused.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Refused.init -> void
+Aw.Judge.Core.Questions.ModelPickHistory.Runs.get -> int
+Aw.Judge.Core.Questions.ModelPickHistory.Runs.init -> void
+Aw.Judge.Core.Questions.ModelPickInput
+Aw.Judge.Core.Questions.ModelPickInput.Brief.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Brief.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Candidates.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>!
+Aw.Judge.Core.Questions.ModelPickInput.Candidates.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickInput!
+Aw.Judge.Core.Questions.ModelPickInput.Cut.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>?
+Aw.Judge.Core.Questions.ModelPickInput.Cut.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Deconstruct(out string! Step, out string! Kind, out string! Brief, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Files, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>! Candidates, out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>? History, out Aw.Judge.Core.Questions.ModelPickPrevious? Previous, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>? Omitted, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>? Cut, out Aw.Judge.Core.Questions.ModelPickWithheld? Withheld) -> void
+Aw.Judge.Core.Questions.ModelPickInput.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Questions.ModelPickInput.DenyPaths.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Dropped.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>?
+Aw.Judge.Core.Questions.ModelPickInput.Dropped.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Equals(Aw.Judge.Core.Questions.ModelPickInput? other) -> bool
+Aw.Judge.Core.Questions.ModelPickInput.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>!
+Aw.Judge.Core.Questions.ModelPickInput.Files.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.History.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>?
+Aw.Judge.Core.Questions.ModelPickInput.History.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Kind.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Kind.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.ModelPickInput(string! Step, string! Kind, string! Brief, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! Files, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCandidate!>! Candidates, System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickHistory!>? History = null, Aw.Judge.Core.Questions.ModelPickPrevious? Previous = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>? Omitted = null, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickCut!>? Cut = null, Aw.Judge.Core.Questions.ModelPickWithheld? Withheld = null) -> void
+Aw.Judge.Core.Questions.ModelPickInput.Omitted.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickOmitted!>?
+Aw.Judge.Core.Questions.ModelPickInput.Omitted.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Previous.get -> Aw.Judge.Core.Questions.ModelPickPrevious?
+Aw.Judge.Core.Questions.ModelPickInput.Previous.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Step.get -> string!
+Aw.Judge.Core.Questions.ModelPickInput.Step.init -> void
+Aw.Judge.Core.Questions.ModelPickInput.Withheld.get -> Aw.Judge.Core.Questions.ModelPickWithheld?
+Aw.Judge.Core.Questions.ModelPickInput.Withheld.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted
+Aw.Judge.Core.Questions.ModelPickOmitted.Chars.get -> int
+Aw.Judge.Core.Questions.ModelPickOmitted.Chars.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickOmitted!
+Aw.Judge.Core.Questions.ModelPickOmitted.Deconstruct(out string! Path, out int Chars, out string! Why) -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Equals(Aw.Judge.Core.Questions.ModelPickOmitted? other) -> bool
+Aw.Judge.Core.Questions.ModelPickOmitted.ModelPickOmitted(string! Path, int Chars, string! Why) -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Path.get -> string!
+Aw.Judge.Core.Questions.ModelPickOmitted.Path.init -> void
+Aw.Judge.Core.Questions.ModelPickOmitted.Why.get -> string!
+Aw.Judge.Core.Questions.ModelPickOmitted.Why.init -> void
+Aw.Judge.Core.Questions.ModelPickPack
+Aw.Judge.Core.Questions.ModelPickPrevious
+Aw.Judge.Core.Questions.ModelPickPrevious.Check.get -> string?
+Aw.Judge.Core.Questions.ModelPickPrevious.Check.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickPrevious!
+Aw.Judge.Core.Questions.ModelPickPrevious.Deconstruct(out string! Model, out string! How, out string? Check) -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.Equals(Aw.Judge.Core.Questions.ModelPickPrevious? other) -> bool
+Aw.Judge.Core.Questions.ModelPickPrevious.How.get -> string!
+Aw.Judge.Core.Questions.ModelPickPrevious.How.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.Model.get -> string!
+Aw.Judge.Core.Questions.ModelPickPrevious.Model.init -> void
+Aw.Judge.Core.Questions.ModelPickPrevious.ModelPickPrevious(string! Model, string! How, string? Check = null) -> void
+Aw.Judge.Core.Questions.ModelPickQuestion
+Aw.Judge.Core.Questions.ModelPickWithheld
+Aw.Judge.Core.Questions.ModelPickWithheld.<Clone>$() -> Aw.Judge.Core.Questions.ModelPickWithheld!
+Aw.Judge.Core.Questions.ModelPickWithheld.Deconstruct(out int Secret, out int Denied) -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Denied.get -> int
+Aw.Judge.Core.Questions.ModelPickWithheld.Denied.init -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Equals(Aw.Judge.Core.Questions.ModelPickWithheld? other) -> bool
+Aw.Judge.Core.Questions.ModelPickWithheld.ModelPickWithheld(int Secret, int Denied) -> void
+Aw.Judge.Core.Questions.ModelPickWithheld.Secret.get -> int
+Aw.Judge.Core.Questions.ModelPickWithheld.Secret.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.get -> int?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.InputCapChars.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.get -> System.Func<TInput!, System.Func<System.Text.Json.Nodes.JsonNode?, System.Text.Json.Nodes.JsonNode?>!, TInput!>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Sanitize.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.get -> System.Func<TInput!, System.Text.Json.Nodes.JsonNode?>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.StoredForm.init -> void
+const Aw.Judge.Core.Questions.ModelPickQuestion.DefaultThreshold = 0.6 -> double
+const Aw.Judge.Core.Questions.ModelPickQuestion.MaxCandidates = 32 -> int
+const Aw.Judge.Core.Questions.ModelPickQuestion.Name = "model-pick" -> string!
+const Aw.Judge.Core.Questions.ModelPickQuestion.PackCap = 100000 -> int
+override Aw.Judge.Core.Questions.CappedFileSet.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.CappedFileSet.GetHashCode() -> int
+override Aw.Judge.Core.Questions.CappedFileSet.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickCandidate.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickCandidate.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickCandidate.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickCut.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickCut.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickCut.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickFile.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickFile.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickFile.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickHistory.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickHistory.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickHistory.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickInput.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickInput.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickInput.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickOmitted.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickOmitted.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickOmitted.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickPrevious.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickPrevious.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickPrevious.ToString() -> string!
+override Aw.Judge.Core.Questions.ModelPickWithheld.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ModelPickWithheld.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ModelPickWithheld.ToString() -> string!
+static Aw.Judge.Core.Questions.CappedFileSet.operator !=(Aw.Judge.Core.Questions.CappedFileSet? left, Aw.Judge.Core.Questions.CappedFileSet? right) -> bool
+static Aw.Judge.Core.Questions.CappedFileSet.operator ==(Aw.Judge.Core.Questions.CappedFileSet? left, Aw.Judge.Core.Questions.CappedFileSet? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCandidate.operator !=(Aw.Judge.Core.Questions.ModelPickCandidate? left, Aw.Judge.Core.Questions.ModelPickCandidate? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCandidate.operator ==(Aw.Judge.Core.Questions.ModelPickCandidate? left, Aw.Judge.Core.Questions.ModelPickCandidate? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCut.operator !=(Aw.Judge.Core.Questions.ModelPickCut? left, Aw.Judge.Core.Questions.ModelPickCut? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickCut.operator ==(Aw.Judge.Core.Questions.ModelPickCut? left, Aw.Judge.Core.Questions.ModelPickCut? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickFile.operator !=(Aw.Judge.Core.Questions.ModelPickFile? left, Aw.Judge.Core.Questions.ModelPickFile? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickFile.operator ==(Aw.Judge.Core.Questions.ModelPickFile? left, Aw.Judge.Core.Questions.ModelPickFile? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickHistory.operator !=(Aw.Judge.Core.Questions.ModelPickHistory? left, Aw.Judge.Core.Questions.ModelPickHistory? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickHistory.operator ==(Aw.Judge.Core.Questions.ModelPickHistory? left, Aw.Judge.Core.Questions.ModelPickHistory? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickInput.operator !=(Aw.Judge.Core.Questions.ModelPickInput? left, Aw.Judge.Core.Questions.ModelPickInput? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickInput.operator ==(Aw.Judge.Core.Questions.ModelPickInput? left, Aw.Judge.Core.Questions.ModelPickInput? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickOmitted.operator !=(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickOmitted.operator ==(Aw.Judge.Core.Questions.ModelPickOmitted? left, Aw.Judge.Core.Questions.ModelPickOmitted? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickPack.Apply(Aw.Judge.Core.Questions.ModelPickInput! input, System.Func<System.Text.Json.Nodes.JsonNode?, System.Text.Json.Nodes.JsonNode?>! redact) -> Aw.Judge.Core.Questions.ModelPickInput!
+static Aw.Judge.Core.Questions.ModelPickPrevious.operator !=(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickPrevious.operator ==(Aw.Judge.Core.Questions.ModelPickPrevious? left, Aw.Judge.Core.Questions.ModelPickPrevious? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickQuestion.Budget.get -> System.TimeSpan
+static Aw.Judge.Core.Questions.ModelPickQuestion.For(Aw.Judge.Core.Questions.ModelPickInput! input) -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.ModelPickInput!>!
+static Aw.Judge.Core.Questions.ModelPickQuestion.Unreadable.get -> Aw.Judge.Core.Questions.QuestionDefinition<Aw.Judge.Core.Questions.ModelPickInput!>!
+static Aw.Judge.Core.Questions.ModelPickWithheld.operator !=(Aw.Judge.Core.Questions.ModelPickWithheld? left, Aw.Judge.Core.Questions.ModelPickWithheld? right) -> bool
+static Aw.Judge.Core.Questions.ModelPickWithheld.operator ==(Aw.Judge.Core.Questions.ModelPickWithheld? left, Aw.Judge.Core.Questions.ModelPickWithheld? right) -> bool
+static Aw.Judge.Core.Questions.UntrustedText.CappedFiles(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ModelPickFile!>! files, int cap) -> Aw.Judge.Core.Questions.CappedFileSet!
+const Aw.Judge.Core.Questions.ModelPickPack.Denied = "denied" -> string!
+const Aw.Judge.Core.Questions.ModelPickPack.Secret = "secret" -> string!
+const Aw.Judge.Core.Questions.ModelPickQuestion.JevInputCap = 130000 -> int
+static Aw.Judge.Core.Questions.ModelPickQuestion.Kinds.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly Aw.Judge.Core.Errors.JudgeErrors.ModelPickInput -> Aw.Kernel.ErrorDefinition!

@@ -832,6 +832,14 @@ A read-only sheet for `recipe/<id>[@<hash>]` (`RecipeSheetViewModel`, `Views/Rec
 
 **Tests.** `RecipeSheetViewModelTests`, `RecipeStatesViewModelTests`, `RecipeFactsViewModelTests`, `ShellRecipeTests` and the `DeepLink` cases (unit); `RecipeFramesTests` (integration; key frames `u10a-recipe-*`, with the automation tree walked from the sheet down). Every literal is read from `tests/Aw.Sindri.Tests/Golden/Api/workflow-recipe/*`; the fake serves a recipe by a hash prefix as the API does.
 
+## Sandbox surfaces (sandbox spec §8; SB-0 goldens, SB-6 views)
+
+The park card with Check again and its resume list, the Sandbox line, the Blocked list with Allow, the waiting state, the limit ending, the
+takeover banner, and the Health and Settings rows are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/`
+(`copy.json`, `states.json`, `accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as
+`Golden/Sandbox`. The vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string.
+The accessibility rows of `accessibility.json` use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on
+its label before a repeat outcome) and each gets a test in SB-6.
 ## U5': the Start form (screens spec §4.2)
 
 `N` on Workflows, the Workflows head's and Home's "Start workflow" buttons (Home's carries no key hint: `N` is Workflows'), Ctrl+N (⌘N) from any page and the palette's "Start workflow" entry open a modal form (`StartDialog`, `StartFormViewModel`). With an item sheet open it starts for that item.

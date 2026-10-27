@@ -33,6 +33,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var profile = Profile(approvedProfile, recorded.Value, loaded);
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, profile, approvedProfile, cancellationToken).ConfigureAwait(false);
+        health = healthRows.WithStaleBuild(health);
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
     }
@@ -56,7 +57,8 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var health = HealthSummary.For(running, views, rows, standing, problems);
         var stuck = HealthSummary.WithStuck(health, await healthRows.Stuck(cancellationToken).ConfigureAwait(false));   // API P13: stuck workflow instances make it degraded
         var parked = HealthSummary.WithUnavailable(stuck, await healthRows.Unavailable(cancellationToken).ConfigureAwait(false));   // a Step whose dependency is down parks asking no one: health shows it
-        return HealthSummary.WithStalledAgents(parked, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
+        var stalled = HealthSummary.WithStalledAgents(parked, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
+        return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }
 
     private static ProfileStatus Profile(LoadedProfile? approved, RecordedApproval? recorded, Result<LoadedProfile> loaded)

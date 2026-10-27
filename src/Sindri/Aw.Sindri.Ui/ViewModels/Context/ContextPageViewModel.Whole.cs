@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
@@ -101,7 +102,25 @@ internal sealed partial class ContextPageViewModel
 
         Whole.Loading();
         ChangedWhole();
-        var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+        try
+        {
+            var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+            await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            if (Whole.IsLoading)
+            {
+                Whole.Failed();   // a read or a draw that threw is the failure row (Retry, Back), never "Reading the map" for good; the exception still goes to the caller
+            }
+
+            ChangedWhole();
+        }
+    }
+
+    // The read's answer onto the page: the map, the No map state, or the failure row.
+    private async Task DrawWhole(Uri api, Result<WholeMapView> read, CancellationToken cancellationToken)
+    {
         if (read.IsSuccess)
         {
             Whole.Show(read.Value);
@@ -127,8 +146,6 @@ internal sealed partial class ContextPageViewModel
         {
             Whole.Failed();
         }
-
-        ChangedWhole();
     }
 
     /// <summary>Opens one feature in full (area=): its items replace the overview, with a way back; a feature the map does not have is the existing banner.</summary>
@@ -174,6 +191,8 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(ShowWhole));
         OnChanged(nameof(ShowWholeStatus));
+        OnChanged(nameof(ShowRulesOlder));
+        OnChanged(nameof(ShowRulesRefresh));
         OnChanged(nameof(SearchNote));
         OnChanged(nameof(HasSearchNote));
     }

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
@@ -11,7 +10,6 @@ namespace Aw.Context.Core.Concepts;
 public static class ConceptBuilder
 {
     private const string OtherName = "Other";
-    private const int SummaryMax = 300;
 
     /// <summary>One page of the concepts of a graph.</summary>
     /// <param name="basis">The map version and repo the answer is for.</param>
@@ -87,22 +85,20 @@ public static class ConceptBuilder
         }
 
         var needle = q.Trim();
-        return Has(concept.Label, needle) || Has(Attribute(concept, "summary"), needle)
+        return Has(concept.Label, needle) || Has(NodeAttributes.String(concept, "summary"), needle)
             || index.MembersOf(concept.Key.Value).Any(m => Has(index.Known[m].Label, needle));
     }
 
     private static bool Has(string? haystack, string needle) => haystack?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true;
 
-    private static string? Attribute(GraphNode node, string name) =>
-        node.Attributes is { ValueKind: JsonValueKind.Object } attributes && attributes.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
-
     private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text)
     {
         var trust = TrustPolicy.ForNode(node, node.Provenance == Provenance.Human);
-        var summary = Attribute(node, "summary") is { Length: > 0 } written ? text.Excerpt(written, trust, SummaryMax) : string.Empty;
-        var source = string.Equals(Attribute(node, "source"), "override", StringComparison.Ordinal) ? "override" : "derived";
+        var summary = NodeAttributes.String(node, "summary") is { Length: > 0 } written ? text.Excerpt(written, trust, NodeAttributes.SummaryMax) : string.Empty;
+        var source = string.Equals(NodeAttributes.String(node, "source"), "override", StringComparison.Ordinal) ? "override" : "derived";
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations);
+        var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms };
     }
 
     private static ConceptSize Size(ConceptIndex index, IReadOnlyList<string> members) =>

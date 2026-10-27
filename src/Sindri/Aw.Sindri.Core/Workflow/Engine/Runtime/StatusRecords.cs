@@ -89,7 +89,7 @@ internal static class StatusRecords
             StatusVerb.Answer => new StatusCommand(verb, ActionId.From(command.Action), AnswerRow.ForAction(command.Action).Class, command.Cli, Confirm: null),
             StatusVerb.Takeover => new StatusCommand(verb, ActionId.From(command.Action), ActionClass.Pause, command.Cli, Confirm: null),
             StatusVerb.Cancel => new StatusCommand(verb, ActionId.From(command.Action), ActionClass.Desk, command.Cli, ConfirmText.Cancel(view.Address, view.RunningSteps, view.Children.Count)),
-            StatusVerb.Complete or StatusVerb.Handback or StatusVerb.Approve or _ => new StatusCommand(verb, ActionId.From(command.Action), ActionClass.Desk, command.Cli, Confirm: null),
+            StatusVerb.Complete or StatusVerb.Handback or StatusVerb.Approve or StatusVerb.Rewind or _ => new StatusCommand(verb, ActionId.From(command.Action), ActionClass.Desk, command.Cli, Confirm: null),
         };
     }
 
@@ -102,6 +102,7 @@ internal static class StatusRecords
         "takeover" => StatusVerb.Takeover,
         "cancel" => StatusVerb.Cancel,
         "approve" => StatusVerb.Approve,
+        "rewind" => StatusVerb.Rewind,
         _ => throw new InvalidOperationException($"no status verb '{name}'"),
     };
 }

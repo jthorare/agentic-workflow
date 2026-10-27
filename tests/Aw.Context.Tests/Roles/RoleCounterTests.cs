@@ -36,6 +36,36 @@ public sealed class RoleCounterTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_ignored_role_carries_the_count_the_build_recorded_and_a_demoted_one_does_not()
+    {
+        var web = Repo("web-app", new RepoRole("generated", Demoted: false, ["**/*.generated.ts"]), new RepoRole("demo", Demoted: true, ["demo/**"]));
+
+        var counted = RoleCounter.Of([web], Paths("web-app", "src/a.ts", "demo/a.ts"), [new RoleDropped("web-app", "generated", 312)]).Single();
+
+        Assert.Equal([new RoleCount("demo", Demoted: true, 1), new RoleCount("generated", Demoted: false, 0) { Ignored = 312 }], counted.Roles);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_ignored_role_has_no_count_when_the_map_recorded_none()
+    {
+        var web = Repo("web-app", new RepoRole("generated", Demoted: false, ["**/*.generated.ts"]));
+
+        var counted = RoleCounter.Of([web], Paths("web-app", "src/a.ts"), dropped: null).Single();
+
+        Assert.Null(Assert.Single(counted.Roles).Ignored);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_dropped_count_of_another_repo_or_role_is_not_borrowed()
+    {
+        var web = Repo("web-app", new RepoRole("generated", Demoted: false, ["**/*.generated.ts"]));
+
+        var counted = RoleCounter.Of([web], Paths("web-app", "src/a.ts"), [new RoleDropped("api", "generated", 9), new RoleDropped("web-app", "mocks", 4), new RoleDropped("web-app", "generated", 0)]).Single();
+
+        Assert.Equal(0, Assert.Single(counted.Roles).Ignored);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_role_like_file_outside_every_glob_is_unassigned_with_examples_in_path_order()
     {
         var web = Repo("web-app", new RepoRole("demo", Demoted: true, ["demo/**"]));

@@ -109,8 +109,10 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     /// <summary>Whether the map is drawn by feature (tiles) rather than node by node.</summary>
     public bool ByArea => Geometry?.ByArea == true;
 
-    /// <summary>The accessible name of the map and of the list of features.</summary>
-    public string CanvasName { get; } = Labels.ContextWholeCanvasName;
+    /// <summary>The accessible name of the map: the bands top to bottom with what each holds, once they are drawn (#1281: what a screen reader and the UI checks read off the canvas).</summary>
+    public string CanvasName => (IsDrilled ? Shown : Geometry) is { Bands.Count: > 0 } geometry
+        ? Labels.ContextWholeCanvasBands(geometry.Bands.OrderBy(b => b.Top).Select(b => (NodeBands.Title(b.Band), b.Meta)))
+        : Labels.ContextWholeCanvasName;
 
     /// <summary>The features, in the order the map shows them.</summary>
     public IReadOnlyList<WholeAreaTileViewModel> Areas { get; private set; } = [];
@@ -159,8 +161,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         ForgetHighlight();
         Head = Labels.ContextWholeHead(answer.MapVersion);
         SizeText = Labels.ContextWholeSize(answer.Counts.Nodes, answer.Counts.Edges, TimeZoneInfo.ConvertTime(answer.AsOf, _zone()));
-        var byKey = answer.Areas.ToDictionary(a => a.Key, StringComparer.Ordinal);
-        Areas = [.. Geometry.Order.Select((key, i) => new WholeAreaTileViewModel(byKey[key], i, OpenArea))];
+        Areas = HomedAreas.Tiles(answer.Areas, answer.Nodes ?? [], Geometry.Order, OpenArea);
         (IsReady, IsLoading, IsFailed) = (true, false, false);
         Changed();
     }
@@ -229,7 +230,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled)])
         {
             OnChanged(name);
         }

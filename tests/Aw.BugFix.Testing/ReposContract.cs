@@ -132,6 +132,21 @@ public abstract class ReposContract
         Expect.Equal($"{root}/src/a.txt", Files.RealPath(Files.FullPath(root, "y/../src/a.txt")) ?? $"{root}/src/a.txt", "an unknown component has no real path or resolves plainly");
     }
 
+    /// <summary>A file is found by the type it declares, under a directory, at a commit: not by a mention of the name.</summary>
+    [Fact]
+    public void Files_declaring_a_type_are_found_under_a_directory_at_the_commit()
+    {
+        var (root, _) = NewRepo();
+        Write(root, "tests/Foo.Tests/Slices/Deep/BugTests.cs", "namespace Foo;\n\npublic sealed class BugTests\n{\n}\n");
+        Write(root, "tests/Foo.Tests/Other.cs", "// mentions BugTests only\nvar x = new BugTestsHelper();\n");
+        Write(root, "elsewhere/BugTests.cs", "public record BugTests;\n");
+        var commit = Commit(root);
+
+        Expect.That(Ok(Git.FilesDeclaring(root, commit, "tests/Foo.Tests", "BugTests")).SequenceEqual(["tests/Foo.Tests/Slices/Deep/BugTests.cs"], StringComparer.Ordinal), "a class in a subfolder is found, a file that only mentions the name isn't");
+        Expect.That(Ok(Git.FilesDeclaring(root, commit, "tests/Foo.Tests", "NoSuchTests")).Count == 0, "an unknown name gives an empty list");
+        Expect.That(Ok(Git.FilesDeclaring($"{root}/tests/Foo.Tests", commit, "tests/Foo.Tests", "BugTests")).SequenceEqual(["tests/Foo.Tests/Slices/Deep/BugTests.cs"], StringComparer.Ordinal), "from a subdirectory, the paths are still repository-relative");
+    }
+
     /// <summary>Makes <paramref name="link"/> (repository-relative) a symlink to <paramref name="target"/> (relative to the link's directory).</summary>
     /// <param name="root">The work tree.</param>
     /// <param name="link">The link's repository-relative path.</param>

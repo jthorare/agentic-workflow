@@ -167,7 +167,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddSingleton<OpenRequests>().AddScoped<OpenTarget>();
         _ = services.AddScoped<ISessionUsageSampler, SessionUsageSampler>();   // API P10a U11: the 60 s sample of what a live session has used
-        _ = services.AddScoped<IIdleSessions, IdleSessions>().AddScoped<IStalledAgentRuns, StalledAgentRuns>();   // a Step session whose agent ended its turn with no report
+        _ = services.AddScoped<IIdleSessions, IdleSessions>().AddScoped<IdleReads>().AddScoped<StepTakeovers>().AddScoped<IStalledAgentRuns, StalledAgentRuns>();   // a Step session whose agent ended its turn with no report
         _ = services.AddScoped<ILostSessions, LostSessions>()   // API P10a U10: 'session wrap' says the session is alive and when it exited (issues, proven by the launch secret)
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>()
             .AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
@@ -244,7 +244,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     /// <summary>The doctor: its fact readers, the core checks and the extra checks decorator.</summary>
     private static IServiceCollection AddDoctor(this IServiceCollection services) => services
         .AddScoped<ProfileFacts>()
-        .AddScoped<LedgerFacts>()
+        .AddScoped<LedgerFacts>().AddScoped<RuntimeFacts>()
         .AddScoped<OnyxDoctor>().AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()

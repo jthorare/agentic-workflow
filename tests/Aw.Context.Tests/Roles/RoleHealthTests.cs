@@ -16,6 +16,24 @@ public sealed class RoleHealthTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_ok_line_shows_how_many_files_an_ignored_role_dropped_and_how_many_a_demoted_one_holds()
+    {
+        var check = RoleHealth.Check([new RepoRoles("web-app", [new RoleCount("demo", Demoted: true, 3), new RoleCount("generated", Demoted: false, 0) { Ignored = 312 }], Unassigned: null)]);
+
+        Assert.Equal(MapHealthState.Ok, check.State);
+        Assert.Contains("web-app: demo 3, generated 312 dropped", check.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_ignored_role_with_no_recorded_count_keeps_the_plain_line()
+    {
+        var check = RoleHealth.Check([new RepoRoles("web-app", [new RoleCount("generated", Demoted: false, 0)], Unassigned: null)]);
+
+        Assert.Contains("web-app: generated 0", check.Detail, StringComparison.Ordinal);
+        Assert.DoesNotContain("dropped", check.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void It_is_ok_with_nothing_to_count()
         => Assert.Equal(MapHealthState.Ok, RoleHealth.Check([]).State);
 

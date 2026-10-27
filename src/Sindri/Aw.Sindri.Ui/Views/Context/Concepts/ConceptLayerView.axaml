@@ -10,6 +10,8 @@
       <TextBlock Classes="body subtle" Text="{Binding LoadingText}" />
     </Border>
     <ScrollViewer IsVisible="{Binding !IsLoading}">
+      <StackPanel>
+      <TextBlock x:Name="ConceptsTermsNote" Classes="caption subtle" Text="{Binding TermsNote}" IsVisible="{Binding HasTermsNote}" Margin="0,0,0,8" />
       <ItemsControl x:Name="ConceptList" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -25,12 +27,14 @@
                 <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
                 <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
                 <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
+                <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
                 <TextBlock Classes="caption subtle" Text="{Binding SetByPersonText}" IsVisible="{Binding IsSetByPerson}" />
               </StackPanel>
             </Button>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+      </StackPanel>
     </ScrollViewer>
   </Panel>
 </UserControl>

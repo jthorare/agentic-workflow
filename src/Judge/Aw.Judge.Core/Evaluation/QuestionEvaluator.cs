@@ -56,9 +56,12 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
                 : await Escalate(question, run, EvaluationReasons.InvalidInput, DecisionOutcome.Escalated, cancellationToken).ConfigureAwait(false);
         }
 
-        run.Input = JsonNode.Parse(AwJson.Serialize(input, json));
+        // The input the prompt, the providers and the digest see: filtered and capped first when the question says how.
+        var prepared = question.Sanitize is { } sanitize ? sanitize(input, redactor.Redact) : input;
+        run.StoredInput = question.StoredForm?.Invoke(prepared);
+        run.Input = JsonNode.Parse(AwJson.Serialize(prepared, json));
         run.Threshold = settings?.Threshold ?? question.Threshold;
-        return await PreRuleOrWalk(question, input, context, run, cancellationToken).ConfigureAwait(false);
+        return await PreRuleOrWalk(question, prepared, context, run, cancellationToken).ConfigureAwait(false);
     }
 
     // The input record, or why the call escalates: it doesn't deserialize or fails the question's check ('invalid-input'),

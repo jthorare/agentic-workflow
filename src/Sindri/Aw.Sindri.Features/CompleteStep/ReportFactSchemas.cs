@@ -36,8 +36,9 @@ internal static partial class ReportFactSchemas
     /// <summary>Why <paramref name="content"/> breaks the fact's schema, one entry per place, naming the fact, the JSON path and the schema file; never the fact's text. Empty when it holds or is not JSON (check reports that).</summary>
     /// <param name="fact">A covered fact.</param>
     /// <param name="content">What the agent wrote.</param>
+    /// <param name="scopingQuestions">Whether the reporting Step is step.interview.questions, the only Step held to SCP-QST-001 (idea-to-brief's step.brief.questions writes fact:questions too and was never told about <c language="text">recommended</c>).</param>
     /// <returns>The refusals.</returns>
-    internal static IReadOnlyList<string> Violations(FactKey fact, ReadOnlySpan<byte> content)
+    internal static IReadOnlyList<string> Violations(FactKey fact, ReadOnlySpan<byte> content, bool scopingQuestions)
     {
         JsonNode? tree;
         try
@@ -50,9 +51,14 @@ internal static partial class ReportFactSchemas
         }
 
         var path = SchemaPath(fact.Value);
-        return [.. Errors(_schemas[fact.Value], tree)
+        var broken = Errors(_schemas[fact.Value], tree)
             .Where(static e => !e.Path.EndsWith("/trust", StringComparison.Ordinal))   // same filter as SCP-SCHEMA-001: code stamps trust
-            .Select(e => $"{fact.Value}{e.Path}: {Unquoted(e.Message)} (fix: make {fact.Value} match {path})")];
+            .Select(e => $"{fact.Value}{e.Path}: {Unquoted(e.Message)} (fix: make {fact.Value} match {path})");
+        // #1204: SCP-QST-001's own logic, so a question with no or two recommended options is named by its id
+        var questions = scopingQuestions && string.Equals(fact.Value, "fact:questions", StringComparison.Ordinal)
+            ? QuestionShape.Faults(tree).Select(static f => $"fact:questions {f.Message} (fix: {f.Fix})")
+            : [];
+        return [.. broken, .. questions];
     }
 
     private static IReadOnlyList<(string Path, string Message)> Errors(string schema, JsonNode? tree)

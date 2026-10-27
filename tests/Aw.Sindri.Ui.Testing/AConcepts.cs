@@ -11,7 +11,7 @@ internal static class AConcepts
 {
     /// <summary>One concept.</summary>
     internal static ContextConcept Concept(string id, string name, string summary = "", int features = 1, int records = 0, int decisions = 0, int code = 0, string source = "derived") =>
-        new(id, name, summary, new ConceptSize(features, records, decisions, code), source);
+        new(id, name, summary, new ConceptSize(features, records, decisions, code), source, []);
 
     /// <summary>The synthetic concept of the unassigned nodes.</summary>
     internal static ConceptOther Other(int features = 0, int records = 0, int decisions = 0, int code = 0) => new("concept:other", "Other", new ConceptSize(features, records, decisions, code));
@@ -28,11 +28,17 @@ internal static class AConcepts
             Concept("concept:sync", "Sync", "Calendars stay in step.", features: 1, records: 0, decisions: 0, code: 7),
         ],
         Other(features: 1, code: 3),
-        [new ConceptLink("concept:self-scheduling", "concept:billing", 0.8)]);
+        [new ConceptLink("concept:self-scheduling", "concept:billing", 1)]);
 
     /// <summary>A state with no concepts to list: empty, building or unavailable.</summary>
     internal static ContextConceptsView Without(string state, string? code = null) => new(1, "aw-split-panes", state, Code: code);
 
+    /// <summary>A glossary answer: the state and each concept's terms.</summary>
+    internal static ConceptGlossaryView Glossary(string state, params ConceptTerms[] concepts) => new(1, "aw-split-panes", "v1", state, concepts, []);
+
     /// <summary>The answer as the route serves it.</summary>
     internal static RouteAnswer Served(ContextConceptsView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
+
+    /// <summary>The glossary answer as the route serves it.</summary>
+    internal static RouteAnswer Served(ConceptGlossaryView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 }

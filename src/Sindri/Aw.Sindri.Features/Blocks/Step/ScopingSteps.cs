@@ -48,15 +48,15 @@ internal static class ScopingSteps
     public static BlockDescriptor Anchor { get; } = BlockStep("step.scope.anchor", Capability.Tools)
         .Reads("fact:brief").Reports("anchored").Writes(On("fact:anchors", "anchored"));
 
-    /// <summary>'step.scope.gather': the four lenses over the anchors, assembled from its Step inputs; 'gathered'.</summary>
+    /// <summary>'step.scope.gather': the four lenses over the anchors and the prefiltered graph, assembled from its Step inputs; 'gathered'.</summary>
     public static BlockDescriptor Gather { get; } = BlockStep("step.scope.gather", Capability.None)
-        .Reads("fact:anchors").Reports("gathered").Writes(On("fact:lenses", "gathered"), On("fact:coverage", "gathered"));
+        .Reads("fact:anchors").Reports("gathered").Writes(On("fact:lenses", "gathered"), On("fact:coverage", "gathered"), On("fact:graph", "gathered"));
 
     /// <summary>'step.scope.draft': the scope map and the acceptance list from the lenses; 'drafted'.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Draft { get; } = AgentStep("step.scope.draft", Capability.Tools)
         .Takes(Text("model"))
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:findings", "fact:answerLog", "fact:challenge")
+        .Reads("fact:brief", "fact:graph", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:findings", "fact:answerLog", "fact:challenge")
         .Reports("drafted").Writes(On("fact:scopeMap", "drafted"), On("fact:acceptance", "drafted"));
 
     /// <summary>'step.scope.check': the draft-stage checks; 'pass', or findings on 'gaps' (the drafter can fix) and 'regather' (a lens must run again).</summary>
@@ -67,7 +67,7 @@ internal static class ScopingSteps
     /// <summary>'step.interview.questions': the behaviour gaps as up to five questions; 'asked' or 'none'.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor InterviewQuestions { get; } = AgentStep("step.interview.questions", Capability.Tools)
-        .Reads("fact:scopeMap", "fact:acceptance", "fact:lenses", "fact:answerLog", "fact:challenge", "fact:openQuestions")
+        .Reads("fact:scopeMap", "fact:acceptance", "fact:graph", "fact:answerLog", "fact:challenge", "fact:openQuestions")
         .Reports("asked", "none").Writes(On("fact:questions", "asked"), On("fact:openQuestions", "asked", "none"));
 
     /// <summary>'step.interview.answer': the owner's answers to the questions (the form is built from 'fact:questions'); human-only. 'doneAsking' also closes the interview.</summary>
@@ -82,7 +82,7 @@ internal static class ScopingSteps
     /// <summary>'step.interview.apply': folds the answers into the map, list and open questions; 'updated', or 'rescope' when an answer changes the surfaces.</summary>
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor InterviewApply { get; } = AgentStep("step.interview.apply", Capability.Tools)
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:questions", "fact:answers", "fact:answerLog", "fact:scopeMap", "fact:acceptance", "fact:openQuestions", "fact:anchors")
+        .Reads("fact:brief", "fact:graph", "fact:coverage", "fact:questions", "fact:answers", "fact:answerLog", "fact:scopeMap", "fact:acceptance", "fact:openQuestions", "fact:anchors")
         .Reports("updated", "rescope")
         .Writes(On("fact:scopeMap", "updated", "rescope"), On("fact:acceptance", "updated", "rescope"), On("fact:openQuestions", "updated", "rescope"));
 
@@ -94,7 +94,7 @@ internal static class ScopingSteps
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Challenge { get; } = AgentStep("step.scope.challenge", Capability.Tools)
         .Takes(Text("model"))
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answerLog", "fact:challenge")
+        .Reads("fact:brief", "fact:graph", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:answerLog", "fact:challenge")
         .Reports("nothingNew", "found").Writes(Every("fact:challengeRound"));
 
     /// <summary>'step.scope.challenge-log': appends the round to the challenge record and re-reports its verdict; a verdict that disagrees with its items is a failed Step.</summary>

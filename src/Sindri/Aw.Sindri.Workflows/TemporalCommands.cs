@@ -33,6 +33,7 @@ internal sealed class TemporalCommands(TemporalFrontend frontend)
         CancelRequested cancel => Cancel(address, nonce, cancel, cancellationToken),
         TakeoverRequested takeover => Execute(address, nonce, wf => wf.TakeoverAsync(takeover), cancellationToken),
         HandbackRequested handback => Execute(address, nonce, wf => wf.HandbackAsync(handback), cancellationToken),
+        RewindRequested rewind => Execute(address, nonce, wf => wf.RewindAsync(rewind), cancellationToken),
         _ => throw new NotSupportedException($"the '{command.Name}' trigger is no command Update"),
     };
 

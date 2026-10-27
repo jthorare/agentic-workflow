@@ -107,6 +107,21 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_with_its_own_input_cap_sends_that_much_state_and_instructions()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with { Prompt = new string('p', 60_000), InputCapChars = 150_000 };
+        var input = new JsonObject { ["text"] = new string('t', 100_000) };
+
+        _ = await provider.Decide(question, input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        var json = JsonNode.Parse(Assert.Single(handler.Requests).Body)!;   // why: the provider always sends a JSON body
+        Assert.Equal(100_000, json["state"]!["text"]!.GetValue<string>().Length);
+        Assert.Equal(60_000, json["questions"]!["decision"]!["instructions"]!.GetValue<string>().Length);
+    }
+
+    [Fact]
     public async Task The_instructions_are_capped_like_the_state()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);

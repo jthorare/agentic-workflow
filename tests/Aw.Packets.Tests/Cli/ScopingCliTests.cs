@@ -8,7 +8,7 @@ namespace Aw.Packets.Tests.Cli;
 [Lane(TestLane.Integration)]
 public sealed class ScopingCliTests : IDisposable
 {
-    private static readonly string[] _rules = ["PKT-SCP-001", "PKT-SCP-002", "PKT-SCP-003", "PKT-SCP-004", "PKT-SCP-005"];
+    private static readonly string[] _rules = ["PKT-SCP-001", "PKT-SCP-002", "PKT-SCP-003", "PKT-SCP-004", "PKT-SCP-005", "PKT-SCP-006"];
 
     private readonly CliWorkspace _work = new();
 
@@ -56,7 +56,7 @@ public sealed class ScopingCliTests : IDisposable
         using var json = JsonDocument.Parse(jsonOutput);
         Assert.Equal(output.Trim(), json.RootElement.GetProperty("hash").GetString());
         Assert.Equal(("scoping", 1, 1), (json.RootElement.GetProperty("kind").GetString(), json.RootElement.GetProperty("schemaVersion").GetInt32(), json.RootElement.GetProperty("digestVersion").GetInt32()));
-        Assert.Equal(14, json.RootElement.GetProperty("files").GetArrayLength());
+        Assert.Equal(15, json.RootElement.GetProperty("files").GetArrayLength());
         Assert.Empty(_work.StateFiles());
     }
 

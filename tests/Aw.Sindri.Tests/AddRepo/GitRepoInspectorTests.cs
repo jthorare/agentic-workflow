@@ -103,11 +103,7 @@ public sealed class GitRepoInspectorTests : IDisposable
         var repo = await Repo();
         var marker = Path.Combine(_home.Path, "ran");
         var script = Path.Combine(_home.Path, "monitor.sh");
-        await File.WriteAllTextAsync(script, $"#!/bin/sh\ntouch {marker}\n", Token);
-        if (!OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(script, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
+        _ = ExecutableScript.Write(script, $"touch {marker}\n");
         _ = await repo.Git("config", "core.fsmonitor", script);
         _ = await repo.Git("config", "core.hooksPath", Path.Combine(_home.Path, "hooks"));
 

@@ -62,13 +62,13 @@ public sealed class ScopingDeskTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Evidence_on_the_gold_facts_is_complete_and_assembles_the_fourteen_packet_files()
+    public async Task Evidence_on_the_gold_facts_is_complete_and_assembles_the_fifteen_packet_files()
     {
         var response = await Run("evidence", ScopingFacts.Expiry());
 
         Assert.Equal("complete", response.Outcome);
         Assert.Equal(
-            ["acceptance.json", "answers.jsonl", "brief.md", "challenge.json", "coverage.json", "gap-search.json", "lenses.json", "questions.json", "relevance.json", "rounds.jsonl", "runs.json", "scope-map.json", "size.json", "sources.json"],
+            ["acceptance.json", "answers.jsonl", "brief.md", "challenge.json", "coverage.json", "gap-search.json", "graph.json", "lenses.json", "questions.json", "relevance.json", "rounds.jsonl", "runs.json", "scope-map.json", "size.json", "sources.json"],
             response.Files.Where(f => f.Path.StartsWith("scope-packet/", StringComparison.Ordinal)).Select(f => f.Path["scope-packet/".Length..]).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["acceptance", "coverage", "openQuestions", "recommendation", "runs", "scopeMap"], response.Outputs.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);   // fact:scopePacket is the hash the CLI adds
     }

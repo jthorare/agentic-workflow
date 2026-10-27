@@ -5,6 +5,7 @@ warn  views             no views yet (fix: sindri)
 fail  profile           not approved (fix: sindri profile approve)
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
+ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
 ok    context:roles     not configured: no approved profile
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
@@ -153,7 +154,7 @@ true
 "http=404"
 post http=405
 ## sindri services --json | jq (name, every, paused, job)
-[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"pr-watch","every":"5s","paused":false,"job":null},{"name":"router-stub","every":"5s","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-events","every":"5s","paused":false,"job":null}]
+[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"pr-watch","every":"5s","paused":false,"job":null},{"name":"router-stub","every":"5s","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"workflow-events","every":"5s","paused":false,"job":null}]
 ## sindri services run heartbeat (human, terminal)
 job JOB-ID started
 run heartbeat (manual)
@@ -178,6 +179,7 @@ heartbeat paused (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
 heartbeat  every 5s  paused  last: ok  next: paused
@@ -190,6 +192,7 @@ heartbeat resumed (sequence SEQ)
 ## sindri services
 code-index-embed  every 1m  last: ok  next: TIME
 code-index-main-move  every 1m  last: ok  next: TIME
+context-concept-scan  every 1m  last: ok  next: TIME
 context-map-refresh  every 1m  last: ok  next: TIME
 context-sync-gaps  every 1m  last: ok  next: TIME
 heartbeat  every 5s  last: ok  next: TIME
@@ -209,6 +212,7 @@ ok    views             cursor N of head M
 ok    profile           approved, hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
+ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
 ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window

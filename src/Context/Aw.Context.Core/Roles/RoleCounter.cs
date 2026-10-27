@@ -23,12 +23,13 @@ public static class RoleCounter
     /// <summary>The role counts of every repo that configures a role or has an unassigned role-like file.</summary>
     /// <param name="repos">The repos in scope.</param>
     /// <param name="pathsByRepo">The indexed paths per repo name.</param>
+    /// <param name="dropped">What the map build recorded each ignored role dropped, or null when it recorded nothing.</param>
     /// <returns>One entry per such repo, in the order of <paramref name="repos"/>.</returns>
-    public static IReadOnlyList<RepoRoles> Of(IReadOnlyList<ContextRepo> repos, IReadOnlyDictionary<string, IReadOnlyList<string>> pathsByRepo)
+    public static IReadOnlyList<RepoRoles> Of(IReadOnlyList<ContextRepo> repos, IReadOnlyDictionary<string, IReadOnlyList<string>> pathsByRepo, IReadOnlyList<RoleDropped>? dropped = null)
     {
         ArgumentNullException.ThrowIfNull(repos);
         ArgumentNullException.ThrowIfNull(pathsByRepo);
-        return [.. repos.Select(r => One(r, pathsByRepo.TryGetValue(r.Name.Value, out var paths) ? paths : [])).Where(static r => r.Roles.Count > 0 || r.Unassigned is not null)];
+        return [.. repos.Select(r => One(r, pathsByRepo.TryGetValue(r.Name.Value, out var paths) ? paths : [], dropped)).Where(static r => r.Roles.Count > 0 || r.Unassigned is not null)];
     }
 
     /// <summary>How many of <paramref name="paths"/> a role's globs match.</summary>
@@ -42,10 +43,21 @@ public static class RoleCounter
         return paths.Count(p => PathDenylist.Matches(p, globs));
     }
 
-    private static RepoRoles One(ContextRepo repo, IReadOnlyList<string> paths)
+    /// <summary>The tracked files each ignored role of <paramref name="repo"/> drops: a build can't index them, so it counts them from the tracked list and keeps the count with the map version (issue 1161).</summary>
+    /// <param name="repo">The repo with its roles.</param>
+    /// <param name="tracked">Its tracked files at the build's commit, deny globs not applied.</param>
+    /// <returns>One entry per ignored role (0 when no tracked file matches), in role-name order; empty when the repo ignores no role.</returns>
+    public static IReadOnlyList<RoleDropped> Dropped(ContextRepo repo, IReadOnlyList<string> tracked)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        ArgumentNullException.ThrowIfNull(tracked);
+        return [.. repo.Roles.Where(static r => !r.Demoted).OrderBy(static r => r.Name, StringComparer.Ordinal).Select(r => new RoleDropped(repo.Name.Value, r.Name, Matching(r.Globs, tracked)))];
+    }
+
+    private static RepoRoles One(ContextRepo repo, IReadOnlyList<string> paths, IReadOnlyList<RoleDropped>? dropped)
     {
         var counts = repo.Roles.OrderBy(static r => r.Name, StringComparer.Ordinal)
-            .Select(r => new RoleCount(r.Name, r.Demoted, Matching(r.Globs, paths)))
+            .Select(r => new RoleCount(r.Name, r.Demoted, Matching(r.Globs, paths)) { Ignored = r.Demoted ? null : dropped?.FirstOrDefault(d => d.Repo == repo.Name.Value && d.Role == r.Name)?.Files })
             .ToList();
         var loose = paths.Where(p => RoleLikePaths.Matches(p) && !Covered(repo, p)).Order(StringComparer.Ordinal).ToList();
         return new RepoRoles(repo.Name.Value, counts, loose.Count == 0 ? null : new UnassignedRoleFiles(loose.Count, [.. loose.Take(RoleLikePaths.ExampleLimit)]));

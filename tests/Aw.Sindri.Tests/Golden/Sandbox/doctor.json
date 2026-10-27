@@ -1,0 +1,69 @@
+{
+  "note": "The `sindri doctor` sandbox section: one sentence for the card and the line (sandbox spec §8). A failing line is a -014/-016/-017 reason and uses its copy.json text.",
+  "lines": [
+    {
+      "id": "ready",
+      "level": "ok",
+      "text": "sandbox ready: bubblewrap <version>, limits available, <n> checks passed in <ms> ms"
+    },
+    {
+      "id": "login-owner-copy",
+      "level": "ok",
+      "text": "login: Claude Code signed in for Steps (source: owner-copy)"
+    },
+    {
+      "id": "login-separate-login",
+      "level": "ok",
+      "text": "login: Claude Code signed in for Steps (source: separate-login)"
+    },
+    {
+      "id": "login-missing-separate-login",
+      "level": "fail",
+      "text": "login: Steps have their own Claude Code sign-in, and it's missing. Run sindri sandbox login claude-code"
+    },
+    {
+      "id": "limits",
+      "level": "ok",
+      "text": "limits: 3 sessions × 12 GiB = 36 GiB of 62 GiB"
+    },
+    {
+      "id": "limits-over",
+      "level": "warn",
+      "text": "limits: 3 × 12 GiB is more than this machine's memory (the heavy wrapper still gates slot 3)"
+    },
+    {
+      "id": "blocked",
+      "level": "fail",
+      "copy": {
+        "code": "SND-LAUNCH-014",
+        "reason": "no-user-manager"
+      }
+    },
+    {
+      "id": "hooks",
+      "level": "ok",
+      "text": "hooks: 3 kinds verified inside a Step (plain, judge-backed, meta skipped)"
+    },
+    {
+      "id": "inner",
+      "level": "info",
+      "text": "agents' own sandboxes: off (not needed; Sindri's covers it)"
+    },
+    {
+      "id": "macos",
+      "level": "info",
+      "text": "macOS: Steps not yet supported",
+      "gray": true
+    },
+    {
+      "id": "attended",
+      "level": "info",
+      "text": "sessions you open: sandboxed too, no time limit while you're attached"
+    },
+    {
+      "id": "defaults",
+      "level": "info",
+      "text": "using the built-in sandbox defaults"
+    }
+  ]
+}

@@ -132,7 +132,7 @@ public static partial class InstanceViews
             view.StartedBy)
         {
             Again = view.Again,
-            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null)],
+            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null || string.Equals(c.Action, "ApplyCommand:rewind", StringComparison.Ordinal))],
         };
     }
 
@@ -218,7 +218,7 @@ public static partial class InstanceViews
 
         if (instance.Suspension is not { Kind: SuspensionKind.Takeover })
         {
-            commands.AddRange(VerbCommands(instance, recipe));
+            commands.AddRange([.. VerbCommands(instance, recipe), .. RewindCommands.Of(instance, recipe)]);
         }
 
         if (instance.Suspension is { Kind: SuspensionKind.Takeover })

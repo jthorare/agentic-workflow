@@ -45,6 +45,11 @@ public static partial class ProfileDiff
             values[key] = value;
         }
 
+        foreach (var (key, value) in SandboxDiff.Keys(p.Sandbox))
+        {
+            values[key] = value;
+        }
+
         return values;
     }
 
@@ -191,6 +196,7 @@ public static partial class ProfileDiff
     [
         ("workflow.steps.longMax", workflow?.Steps?.LongMax),
         ("workflow.docs.globs", Joined(workflow?.Docs?.Globs)),
+        ("workflow.scoping.historyWindow", workflow?.Scoping?.HistoryWindow is { } window ? $"since={window.Since}, before={window.Before}" : null),
     ];
 
     private static string? Number(long? value) => value?.ToString(System.Globalization.CultureInfo.InvariantCulture);

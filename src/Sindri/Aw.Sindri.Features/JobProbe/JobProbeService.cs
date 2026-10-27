@@ -21,7 +21,10 @@ internal sealed class JobProbeService(IJobContextAccessor jobs, TimeProvider clo
 
     public static readonly TimeSpan Pause = TimeSpan.FromMilliseconds(250);
 
-    public static readonly ServiceName ServiceId = ServiceName.From("job-probe");
+    public static readonly ServiceName ServiceId = ServiceName.From(ServiceDescriptions.JobProbeName);
+
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = ServiceDescriptions.JobProbe;
 
     public ServiceName Identity() => ServiceId;
 

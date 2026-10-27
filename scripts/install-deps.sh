@@ -61,6 +61,7 @@ check_system() {
     need git git
   elif [ "$OS" = "Darwin" ]; then
     need tmux tmux "Sindri sessions"
+    need terminal-notifier terminal-notifier "clickable Sindri banners; without it Sindri shows none, since an osascript banner opens Script Editor"
   fi
 }
 # bwrap present is not enough: Ubuntu 24.04 (kernel.apparmor_restrict_unprivileged_userns=1, no profile for bwrap) refuses

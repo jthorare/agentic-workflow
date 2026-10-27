@@ -1,4 +1,5 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -11,6 +12,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
@@ -27,6 +29,7 @@ using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Locks;
 using Aw.Context.Testing.Map;
 using Aw.Context.Testing.Review;
+using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
@@ -75,6 +78,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
+            .AddSingleton<IConceptHintStore>(Hints)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
             .AddSingleton<IScrubberFactory>(new FakeScrubberFactory())
@@ -96,6 +100,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IReviewFileStore>(ReviewFiles)
             .AddSingleton<ICurrentUser>(new FakeCurrentUser())
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
+            .AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
             .AddContextFeatures();
         if (walk is not null)
@@ -110,6 +115,8 @@ internal sealed class MapWorld : IDisposable
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
+
+    public FakeConceptHintStore Hints { get; } = new();
 
     public FakeDefaultBranch DefaultBranch { get; } = new();
 

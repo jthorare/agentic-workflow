@@ -79,6 +79,26 @@ public sealed class StalledAgentRunsTests
     }
 
     [Fact]
+    public async Task A_run_an_API_error_stopped_is_stalled_like_one_whose_turn_ended()
+    {
+        await _s.Started(instance: _step);
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _s.Files.FailTurn(A.FirstLaunchId, _s.Now);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromSeconds(120));
+
+        Expect.Equal(A.FirstLaunchId, Assert.Single(await Runs().Find(Token)).Launch);
+    }
+
+    [Fact]
+    public async Task A_run_with_a_tool_call_in_flight_is_not_stalled()
+    {
+        await Idle(TimeSpan.FromMinutes(5));
+        _s.Files.SetToolRunning(A.FirstLaunchId, running: true);
+
+        Assert.Empty(await Runs().Find(Token));
+    }
+
+    [Fact]
     public async Task A_Step_a_person_took_over_is_not_stalled()
     {
         await Idle(TimeSpan.FromMinutes(5));

@@ -29,13 +29,19 @@ internal sealed partial class HealthViewModel
         return card;
     }
 
-    // What the cards say needs a look that the server's one health word does not: the Code index; empty when it is fine.
+    // What the cards say needs a look that the server's one health word does not: the Code index and the services the scheduler missed; empty when it is fine.
     private string NeedsLook()
     {
         List<string> parts = [];
         if (string.Equals(CodeIndex.Word, Labels.CodeIndexNeedsLook, StringComparison.Ordinal))
         {
             parts.Add(Labels.CodeIndexLookName);
+        }
+
+        var overdue = _serviceRows.Values.Where(r => r.IsOverdue).Select(r => r.Name).Order(StringComparer.Ordinal).ToList();
+        if (overdue.Count > 0)
+        {
+            parts.Add(Labels.ServicesOverdue(overdue));
         }
 
         return string.Join(", ", parts);

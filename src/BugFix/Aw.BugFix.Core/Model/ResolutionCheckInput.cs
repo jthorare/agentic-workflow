@@ -11,7 +11,8 @@ namespace Aw.BugFix.Core.Model;
 /// <param name="AfterPassed">Whether the check passed on the candidate (true: judge requires it).</param>
 /// <param name="DiffStat">git diff --stat from the baseline to the candidate.</param>
 /// <param name="Diff">The diff (lock files and build output excluded), capped; null when git couldn't produce it.</param>
-/// <param name="CheckSource">The frozen check's own file as it is at the candidate's commit, capped; null when git couldn't read it.</param>
+/// <param name="CheckSource">The frozen check's own file as it is at the candidate's commit, capped; null when git couldn't read it. For a .csproj check: the test class files its --filter-class names, as they are at the baseline commit.</param>
+/// <param name="BaselineFailure">The failure lines of the baseline run's log (capped), so the judge sees what the check printed on the unfixed code; null when the log has none or couldn't be read.</param>
 public sealed record ResolutionCheckInput(
     string Brief,
     string Expected,
@@ -23,8 +24,12 @@ public sealed record ResolutionCheckInput(
     bool AfterPassed,
     string DiffStat,
     string? Diff,
-    string? CheckSource = null)
+    string? CheckSource = null,
+    string? BaselineFailure = null)
 {
     /// <summary>The most diff characters the input carries; longer diffs are cut and marked.</summary>
     public const int DiffCap = 1_000_000;
+
+    /// <summary>The most failure-line characters the input carries.</summary>
+    public const int FailureCap = 8_000;
 }

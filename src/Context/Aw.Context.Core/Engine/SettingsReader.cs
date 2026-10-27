@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -91,6 +91,7 @@ public static partial class SettingsReader
                     Recognizers = Recognizers(section.Extract),
                     Publish = Publish(section.Publish),
                     Ranker = RankerRules.Read(section.Ranker),
+                    ConceptScan = ConceptScanRules.Read(section.ConceptScan),
                     HistoryDeadline = HistoryDeadline(section.History),
                 },
                 section.Code,
@@ -235,7 +236,7 @@ public static partial class SettingsReader
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 8 steps"),
         { CascadeComponentFanOut: < 1 or > 500 } => Invalid("context.cascadeComponentFanOut", "is 1 to 500 features"),
-        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? ConceptScanRules.Problem(section.ConceptScan) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -248,7 +249,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

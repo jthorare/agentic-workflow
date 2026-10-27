@@ -3,7 +3,7 @@ using Aw.Sindri.Infrastructure.Notifications;
 
 namespace Aw.Sindri.Tests.Notifications;
 
-/// <summary>What shows a banner, and what a click on it does: terminal-notifier runs 'sindri-ui &lt;link&gt;'; without it, or without a link, the banner is osascript's with no click.</summary>
+/// <summary>What shows a banner, and what a click on it does: terminal-notifier runs 'sindri-ui &lt;link&gt;'; without it, or without a safe link, no banner is shown (osascript's click opens Script Editor).</summary>
 [Lane(TestLane.Unit)]
 public sealed class NotifierCommandTests
 {
@@ -20,28 +20,6 @@ public sealed class NotifierCommandTests
     }
 
     [Fact]
-    public void Without_terminal_notifier_the_banner_is_osascripts_and_has_no_click()
-    {
-        var command = NotifierCommand.For("t", "x", "workflow/ITM-01JN2/design/1", terminalNotifier: null, Ui);
-
-        Assert.Equal("osascript", command.File);
-        Assert.DoesNotContain(command.Arguments, a => a.Contains("workflow/", StringComparison.Ordinal));
-        Assert.Equal(["t", "x"], command.Arguments.TakeLast(2), StringComparer.Ordinal);   // title and text travel as script arguments
-    }
-
-    [Fact]
-    public void A_notice_without_a_link_is_osascripts_even_when_terminal_notifier_is_there() =>
-        Assert.Equal("osascript", NotifierCommand.For("t", "x", deepLink: null, Notifier, Ui).File);
-
-    [Theory]
-    [InlineData("workflow/x; echo hi")]
-    [InlineData("workflow/x y")]
-    [InlineData("workflow/$(id)")]
-    [InlineData("")]
-    public void A_link_that_is_not_made_of_deep_link_characters_is_never_put_in_the_command(string link) =>
-        Assert.Equal("osascript", NotifierCommand.For("t", "x", link, Notifier, Ui).File);
-
-    [Fact]
     public void A_path_with_a_quote_is_quoted_for_the_shell()
     {
         var command = NotifierCommand.For("t", "x", "workflow/a", Notifier, "/Users/o'neil/sindri-ui");
@@ -54,5 +32,14 @@ public sealed class NotifierCommandTests
     {
         Assert.Equal("/custom/ui", NotifierCommand.UiBinary(_ => "/custom/ui", "/opt/sindri"));
         Assert.Equal(Path.Combine("/opt/sindri", "sindri-ui"), NotifierCommand.UiBinary(_ => null, "/opt/sindri"));
+    }
+
+    [Fact]
+    public void A_banner_is_shown_only_when_its_click_opens_the_app()
+    {
+        Assert.True(NotifierCommand.Shows("needs-you/desk:WFI-a", Notifier));
+        Assert.False(NotifierCommand.Shows("needs-you/desk:WFI-a", terminalNotifier: null));   // osascript's click opens Script Editor, so no banner
+        Assert.False(NotifierCommand.Shows(deepLink: null, Notifier));
+        Assert.False(NotifierCommand.Shows("needs-you/x; echo hi", Notifier));
     }
 }

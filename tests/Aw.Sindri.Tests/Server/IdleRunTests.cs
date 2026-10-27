@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.RecordServiceRun;
 using Aw.Sindri.Host.Server;
@@ -133,11 +134,12 @@ public sealed class IdleRunTests
             .AddSingleton<TimeProvider>(_h.Clock)
             .AddSingleton(_h.Callers)
             .AddSingleton<IIdGenerator>(_h.Ids)
+            .AddSingleton<ITextScrubber>(new PassThroughScrubber())
             .AddScoped<IService<RecordServiceRunRequest, RecordServiceRunResponse>, RecordServiceRunService>()
             .AddSingleton<IScheduledService>(tidy)
             .BuildServiceProvider();
         var clock = new SteppedClock(_h.Clock);
-        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(new CountingApprovals(_h.Profiles), [], new NoPauses()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, new ListLogger<SchedulerHost>());
+        using var scheduler = new SchedulerHost(provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(new CountingApprovals(_h.Profiles), [], new NoPauses(), new LiveSchedule()), new ServiceRunGuard(), _h.Held, _h.Callers, clock, new ListLogger<SchedulerHost>());
         await scheduler.StartAsync(Token);
         for (var step = 0; tidy.Runs < runs; step++)
         {

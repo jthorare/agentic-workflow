@@ -7,10 +7,10 @@ namespace Aw.Sindri.Testing.Packets;
 public abstract class FrozenPacketsContract
 {
     /// <summary>The hash of a design packet the owner froze.</summary>
-    protected const string DesignHash = "sha256:a034b1f35f8ca257d23db5b1bef971adaecd161565a7962c0445c271917ef05c";
+    protected const string DesignHash = "sha256:7c3c4f08ad1cdc1c4123b599717fb6189330d2364b3a85e42a662d7dc0ddc676";
 
     /// <summary>The hash of a scope packet a Step froze.</summary>
-    protected const string ScopeHash = "sha256:9304bedd0b22e5874e786950f80e8c7660f749f4a328d422bf2b446c742fed24";
+    protected const string ScopeHash = "sha256:1ddf66bd3318bc230e52c293c51a859fbd9096ab2e99077d203b9d324cb4f444";
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 

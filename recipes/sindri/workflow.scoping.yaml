@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.scoping
-version: 12
+version: 13
 description: "Station 1 of the line: scope a change from a brief, a tracker item, a rough idea or a PR, close the behaviour gaps by interview, and park at the owner's after-scoping stop with a cited, covered and challenged scope packet."
 displayName: "Decide what will change"
 why: "Pins down exactly what will change and what done means, then waits for your approval before anything is designed."
@@ -37,6 +37,7 @@ states:
       use: step.scope.gather
       inputs:
         - { use: input.context.lenses,  with: { anchors: { fact: fact:anchors }, depth: 2, hops: [state, flow, dependency, component] } }
+        - { use: input.context.graph,   with: { anchors: { fact: fact:anchors }, depth: 2, hops: [state, flow, dependency, component], max-nodes: 400, max-bytes: 300000, brief: { fact: fact:brief } } }
         - { use: input.context.code,    with: { anchors: { fact: fact:anchors } } }
         - { use: input.context.history, with: { anchors: { fact: fact:anchors }, window: { profile: workflow.scoping.historyWindow } } }
     timeout: { after: 1d, then: park }
@@ -133,10 +134,10 @@ transitions:
   - { from: idea, to: gather,  on: wait.satisfied, when: { outcome: resolved }, produces: [fact:brief, fact:anchors, fact:answerLog] }
   - { from: idea, to: dropped, on: wait.satisfied, when: { outcome: unresolved } }
   - { from: idea, to: dropped, on: wait.satisfied, when: { outcome: cancelled } }
-  - { from: gather, to: relevance, on: step.completed, when: { outcome: gathered }, produces: [fact:lenses, fact:coverage] }
+  - { from: gather, to: relevance, on: step.completed, when: { outcome: gathered }, produces: [fact:lenses, fact:coverage, fact:graph] }
   - { from: relevance,       to: relevance-judge, on: step.completed, when: { outcome: reviewed }, produces: [fact:relevanceVerdicts] }
   - { from: relevance-judge, to: relevance-apply, on: step.completed, when: { outcome: ruled },    produces: [fact:relevanceRulings] }
-  - { from: relevance-apply, to: draft,           on: step.completed, when: { outcome: applied },  produces: [fact:lenses, fact:coverage, fact:relevance, fact:mapFixes] }
+  - { from: relevance-apply, to: draft,           on: step.completed, when: { outcome: applied },  produces: [fact:lenses, fact:graph, fact:coverage, fact:relevance, fact:mapFixes] }
   - { from: draft,  to: check, on: step.completed, when: { outcome: drafted },  produces: [fact:scopeMap, fact:acceptance] }
   - { label: "a source is missing: gather again", from: check,  to: gather,    on: step.completed, when: { outcome: regather }, produces: [fact:findings] }
   - { label: "gaps found: draft again", from: check,  to: draft,     on: step.completed, when: { outcome: gaps },     produces: [fact:findings] }

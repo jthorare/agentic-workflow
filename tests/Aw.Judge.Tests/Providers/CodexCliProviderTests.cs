@@ -23,6 +23,16 @@ public sealed class CodexCliProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_names_a_model_runs_that_model_instead_of_the_default()
+    {
+        Install(Message("""{"decision":"no-good-candidate","chosenIndex":null}"""));
+
+        _ = await Decide(Questions.WithIndex with { Model = "gpt-6" });
+
+        Assert.Equal("gpt-6", ClaudeCliProviderTests.After(Assert.Single(_runner.Calls).Request.Arguments, "--model"));
+    }
+
+    [Fact]
     public async Task It_passes_a_strict_schema_file_in_the_workspace_and_the_prompt_after_the_separator()
     {
         string? schemaText = null;

@@ -80,11 +80,7 @@ public sealed class ReviewPackRealBinaryTests : IDisposable
     private AwPacketsTool Tool()
     {
         var wrapper = Path.Combine(_home.Path, "aw-packets");
-        File.WriteAllText(wrapper, $"#!/bin/sh\nAW_STATE_DIR='{Path.Combine(_home.Path, "state")}'\nexport AW_STATE_DIR\nexec dotnet '{BuiltDll()}' \"$@\"\n");
-        if (!OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(wrapper, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
+        _ = ExecutableScript.Write(wrapper, $"AW_STATE_DIR='{Path.Combine(_home.Path, "state")}'\nexport AW_STATE_DIR\nexec dotnet '{BuiltDll()}' \"$@\"\n");
 
         return new AwPacketsTool(new ProcessToolRunner(), name => string.Equals(name, "AW_PACKETS_BIN", StringComparison.Ordinal) ? wrapper : null);
     }

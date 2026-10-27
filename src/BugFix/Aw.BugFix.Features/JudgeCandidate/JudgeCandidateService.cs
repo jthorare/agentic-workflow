@@ -12,7 +12,7 @@ namespace Aw.BugFix.Features.JudgeCandidate;
 /// snapshotted root cause, a description of the frozen check, the diff), and records that verdict. The orchestrator never
 /// picks among verdicts, so one can't be re-rolled.
 /// </summary>
-internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger, IGit git, IJudge judge, TimeProvider clock)
+internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger, IFiles files, IGit git, IJudge judge, TimeProvider clock)
     : IService<JudgeCandidateRequest, JudgeCandidateResponse>
 {
     private const string NoReasons = "no-reasons";
@@ -72,15 +72,83 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
             : $"the ui-evidence script {check.Path}";
         return JudgeDiff(state.Ticket, candidate, baseline.Commit).Map(diff => new ResolutionCheckInput(
             state.Ticket.Brief, state.Ticket.Expected, state.Ticket.Actual, state.Investigation?.RootCause ?? string.Empty, check.Kind, summary,
-            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full), CheckSource(candidate, check)));
+            BeforePassed: false, AfterPassed: true, diff.Stat, Capped(diff.Full), CheckSource(candidate, check, baseline.Commit), BaselineFailure(baseline.Evidence)));
     }
 
-    // The frozen check's own file at the candidate's commit: a red commit that already holds the test is not "no proof".
-    private string? CheckSource(Candidate candidate, FrozenCheck check)
+    // The frozen check's own file at the candidate's commit: a red commit that already holds the test is not "no proof". A
+    // .csproj check is only the project: the judge needs the test classes its --filter-class names, as they were at the baseline.
+    private string? CheckSource(Candidate candidate, FrozenCheck check, string baseline)
     {
+        if (check.Path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+        {
+            var classes = FilteredTypes(check.Command ?? []).Select(name => ClassSource(candidate, check.Path, name, baseline)).OfType<string>().ToList();
+            if (classes.Count > 0)
+            {
+                return Capped(string.Join("\n\n", classes));
+            }
+        }
+
         var source = git.FileAt(candidate.Worktree, candidate.Commit, check.Path);
         return source.IsSuccess ? Capped(source.Value) : null;
     }
+
+    // The simple names of the test classes the command filters on: the last dotted part of each --filter-class value ("*.BugTests"
+    // names BugTests), and for --filter-method the class before the method. A name with a wildcard left in it, or anything that
+    // isn't an identifier, is skipped: it names no one class.
+    private static IEnumerable<string> FilteredTypes(IReadOnlyList<string> command)
+    {
+        var names = new List<string>();
+        for (var i = 0; i < command.Count; i++)
+        {
+            if (command[i] is not ("--filter-class" or "--filter-method"))
+            {
+                continue;
+            }
+
+            for (var j = i + 1; j < command.Count && !command[j].StartsWith('-'); j++)
+            {
+                var dotted = command[i] == "--filter-method" ? command[j][..Math.Max(0, command[j].LastIndexOf('.'))] : command[j];
+                names.Add(dotted[(dotted.LastIndexOf('.') + 1)..]);
+            }
+        }
+
+        return names.Where(static n => n.Length > 0 && n.All(static c => char.IsAsciiLetterOrDigit(c) || c == '_')).Distinct(StringComparer.Ordinal);
+    }
+
+    // The files for a test class named BugTests in tests/Foo.Tests/Foo.Tests.csproj, as they were at the baseline: BugTests.cs at
+    // the project's top if there is one, then every file under the project's directory that declares the type (the class is
+    // usually in a subfolder). All are joined, each under a "// path" header.
+    private string? ClassSource(Candidate candidate, string project, string name, string baseline)
+    {
+        var directory = project.Contains('/', StringComparison.Ordinal) ? project[..project.LastIndexOf('/')] : string.Empty;
+        var paths = new List<string>();
+        var top = (directory.Length == 0 ? string.Empty : directory + "/") + name + ".cs";
+        if (git.FileAt(candidate.Worktree, baseline, top).IsSuccess)
+        {
+            paths.Add(top);
+        }
+
+        var declaring = git.FilesDeclaring(candidate.Worktree, baseline, directory, name);
+        paths.AddRange(declaring.IsSuccess ? declaring.Value.Where(p => p != top) : []);
+        var texts = paths.Select(path => git.FileAt(candidate.Worktree, baseline, path).Map(text => $"// {path}\n{text}")).Where(static r => r.IsSuccess).Select(static r => r.Value).ToList();
+        return texts.Count == 0 ? null : string.Join("\n\n", texts);
+    }
+
+    // What the baseline run printed on the unfixed code: its failure lines, capped. Null when there are none or the log can't be read.
+    private string? BaselineFailure(string evidence)
+    {
+        var log = ledger.Read(evidence).Bind(run => files.ReadText(run.Record.Output));
+        if (log.IsError)
+        {
+            return null;
+        }
+
+        var lines = log.Value.Split('\n').Where(static l => _failureWords.Any(w => l.Contains(w, StringComparison.OrdinalIgnoreCase))).Select(static l => l.TrimEnd('\r'));
+        var text = string.Join('\n', lines);
+        return text.Length == 0 ? null : text.Length <= ResolutionCheckInput.FailureCap ? text : text[..ResolutionCheckInput.FailureCap] + "\n[truncated]";
+    }
+
+    private static readonly string[] _failureWords = ["fail", "error", "exception", "assert", "expected", "not ok", "panic"];
 
     // The candidate's own change (from the net base, so a main merge's unrelated changes stay out), after the changes of the
     // commits main already had for this GitHub issue ("Part of #N" / "Fixes #N" in the message): a fix a merged "Part of" PR
@@ -157,7 +225,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         }
 
         var status = answer.Decision == JudgeDecision.Resolved ? BugFixStatus.Active : fresh.Value.Status;   // a resolving candidate supersedes an earlier escalation in the attempt
-        var verdict = new JudgeVerdict(answer.Decision, answer.DecisionId, answer.ReasonCode, answer.InputSha256);
+        var verdict = new JudgeVerdict(answer.Decision, answer.DecisionId, answer.ReasonCode, answer.InputSha256, answer.Reasons);
         var state = fresh.Value.With(candidate.Value with { Verdict = verdict, JudgeAsked = null }) with { Status = status };
         store.Save(request.StateDirectory, state.Step(Phase.Evaluate, $"judge {request.Candidate.Value}", clock.GetUtcNow()));
         return new JudgeCandidateResponse(request.Candidate, answer.Decision, answer.DecisionId, answer.ReasonCode, answer.Reasons, status);
@@ -177,7 +245,7 @@ internal sealed class JudgeCandidateService(IStateStore store, IRunLedger ledger
         }
 
         var code = $"escalated:{answer.ReasonCode}";
-        var verdict = new JudgeVerdict(JudgeDecision.Unresolved, DecisionId: null, code, answer.InputSha256);
+        var verdict = new JudgeVerdict(JudgeDecision.Unresolved, DecisionId: null, code, answer.InputSha256, answer.Reasons);
         var fallen = state.With(candidate with { Verdict = verdict, JudgeAsked = null, JudgeEscalations = escalations });
         store.Save(request.StateDirectory, fallen.Step(Phase.Evaluate, $"judge {request.Candidate.Value} escalated twice, unresolved", clock.GetUtcNow()));
         return new JudgeCandidateResponse(request.Candidate, JudgeDecision.Unresolved, DecisionId: null, code, answer.Reasons, state.Status);

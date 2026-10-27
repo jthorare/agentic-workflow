@@ -1,11 +1,13 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
@@ -14,6 +16,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Symbols;
@@ -32,12 +35,14 @@ using Aw.Context.Features.ExportMap;
 using Aw.Context.Features.ExportReview;
 using Aw.Context.Features.FindPath;
 using Aw.Context.Features.GetCode;
+using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
 using Aw.Context.Features.GetProposals;
+using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
@@ -57,6 +62,7 @@ using Aw.Context.Features.ReviewHistory;
 using Aw.Context.Features.ReviewMap;
 using Aw.Context.Features.ReviewQueue;
 using Aw.Context.Features.RunBacktest;
+using Aw.Context.Features.ScanConcepts;
 using Aw.Context.Features.SearchMap;
 using Aw.Context.Features.ShowMapStatus;
 using Aw.Context.Features.ShowNode;
@@ -80,12 +86,15 @@ public static class ContextFeaturesServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<IMapSearchIndexFactory, UnconfiguredMapSearchIndexFactory>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite FTS5 adapter
+        services.TryAddSingleton<IConceptHintStore, UnconfiguredConceptHintStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
         services.TryAddSingleton(WalkOptions.Of(Math.Max(1, Environment.ProcessorCount - 1)));   // every core but one, so the box keeps a core; a host or a test may register another degree
         services.TryAddSingleton(WholeMapRules.Default);   // a host or a test may register other limits
         services.TryAddSingleton<ICodeSymbolSource, NoCodeSymbolSource>();   // the host that wires the code index (Sindri's Host adapter) replaces it
         services.TryAddSingleton<ILabeler, DisabledLabeler>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<IConceptNamer, DisabledConceptNamer>();   // a host that sets up labeling (AddContextLabeling) replaces it
-        services.TryAddSingleton<MapNamers>();
+        services.TryAddSingleton<ISymbolVectors, DisabledSymbolVectors>();   // the host that wires the code index (Sindri's Host adapter) replaces it
+        services.TryAddScoped<ConceptPass>();
+        services.TryAddScoped<MapNamers>();   // scoped: the concept step reads the code index, which is read in the call's scope
         services.TryAddSingleton<IHeavyJobLock, UnconfiguredHeavyJobLock>();   // a host that wires the box-wide lock replaces it
         services.TryAddSingleton<UnconfiguredBacktest>();   // hosts that wire the backtest ports (Infrastructure) replace these
         services.TryAddSingleton<IBriefSource>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
@@ -161,14 +170,18 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetLensesRequest, LensesView>, GetLensesService>()
         .AddScoped<IService<GetLensesSetRequest, LensesSetView>, GetLensesSetService>()
         .AddScoped<IService<GetSubgraphRequest, SubgraphView>, GetSubgraphService>()
+        .AddScoped<IService<GetScopeGraphRequest, ScopeGraphView>, GetScopeGraphService>()
+        .AddScoped<ContextScopeGraph>()
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
+        .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<ConceptReader>()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()
         .AddSingleton<MapSearchCache>()
         .AddScoped<LensBasisReader>()
+        .AddScoped<ContextConceptReads>()
         .AddScoped<ContextCodeHistory>()
         .AddScoped<IService<GetCodeRequest, CodeView>, GetCodeService>()
         .AddScoped<CodeLexicalSearch>()
@@ -180,7 +193,9 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddPromoteSlices(this IServiceCollection services) => services
         .AddScoped<IService<PromoteMapRequest, MapPromoted>, PromoteMapService>()
-        .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>();
+        .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>()
+        .AddScoped<IService<ScanConceptsRequest, ConceptScanReport>, ScanConceptsService>()
+        .AddScoped<IConceptScanSearch, ConceptScanSearch>();
 
     private static IServiceCollection AddHistory(this IServiceCollection services) => services
         .AddScoped<IService<GetHistoryRequest, HistoryView>, GetHistoryService>()

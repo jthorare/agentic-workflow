@@ -17,7 +17,8 @@ internal sealed class InstanceRows(TimeProvider clock, IRecipeDisplayNames? name
     /// <param name="titles">The titles of the items the views are on.</param>
     /// <param name="now">The time the list is read at.</param>
     /// <param name="lineStage">The current state of the line instance the row belongs to; null when it belongs to none.</param>
+    /// <param name="agentIdle">True when the instance's current agent launch ended as idle with no report.</param>
     /// <returns>The row.</returns>
-    public InstanceSummary Row(InstanceView view, ItemTitles titles, DateTimeOffset now, string? lineStage = null) =>
-        InstanceSummaries.Of(view, new InstanceSummaryContext(now, ItemTitle: titles.For(view), RecipeDisplayName: names?.Of(view.Recipe.Id), LineStage: lineStage));
+    public InstanceSummary Row(InstanceView view, ItemTitles titles, DateTimeOffset now, string? lineStage = null, bool agentIdle = false) =>
+        InstanceSummaries.Of(view, new InstanceSummaryContext(now, ItemTitle: titles.For(view), RecipeDisplayName: names?.Of(view.Recipe.Id), LineStage: lineStage, AgentIdle: agentIdle));
 }
