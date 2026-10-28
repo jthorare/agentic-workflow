@@ -10,6 +10,9 @@ internal static partial class Labels
     /// <summary>The heading of the Health card and the Settings section.</summary>
     internal const string SandboxHeading = "Sandbox";
 
+    /// <summary>The accessible name of the Settings section's list of sandbox settings.</summary>
+    internal const string SandboxFieldsName = "Sandbox settings";
+
     /// <summary>The Health row before the first check.</summary>
     internal const string SandboxRowNeverChecked = "Sandbox: not checked yet";
 

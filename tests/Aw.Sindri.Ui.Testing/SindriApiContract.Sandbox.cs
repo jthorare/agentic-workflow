@@ -74,7 +74,7 @@ public abstract partial class SindriApiContract
 
         var denials = (await Reach(server).SandboxDenials(_api, "ITM-0000000000000000000000000000000f", Token)).Value;
 
-        Expect.Equal(["ITM-0000000000000000000000000000000f"], server.SandboxDenialItems);
+        Expect.Sequence(["ITM-0000000000000000000000000000000f"], server.SandboxDenialItems);
         Expect.Equal(1, denials.Launches.Count);
         var launch = denials.Launches[0];
         Expect.Equal("api", launch.Repo);
@@ -109,10 +109,11 @@ public abstract partial class SindriApiContract
     {
         var server = new FakeSindriApi { SandboxAllowAnswer = RouteAnswer.Problem("sandbox-allow", "refused") };
 
-        var result = await Reach(server).SandboxAllow(_api, new AllowRequest("LCH-00000000000000000000000000000001", "path", "/home/thor/.ssh"), Token);
+        var request = new AllowRequest("LCH-00000000000000000000000000000001", "path", "/home/thor/.ssh");
+        var result = await Reach(server).SandboxAllow(_api, request, Token);
 
         Expect.Equal(("SND-SANDBOX-001", ErrorKind.Conflict), (result.Error.Code, result.Error.Kind));
-        Expect.Equal(0, server.Allowed.Count);
+        Expect.Sequence([request], server.Allowed);   // asked once, and the refusal is the answer
     }
 
     [Fact]
