@@ -21,7 +21,7 @@
         <controls:StateChipView x:Name="SetupStepChip" Grid.Column="2" Chip="{Binding Chip}" Margin="0,0,8,0" />
       </Grid>
     </Expander.Header>
-    <StackPanel x:Name="SetupStepBody" Margin="36,0,0,16" Spacing="8">
+    <StackPanel x:Name="SetupStepBody" Margin="36,0,16,16" Spacing="8">
       <Border IsVisible="{Binding HasDetail}" AutomationProperties.Name="{Binding DetailText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding DetailText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
