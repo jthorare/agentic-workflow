@@ -245,6 +245,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         _list.Select(id);
         _lastRow = Selected ?? _lastRow;
         Report(_cardProperties);
+        PickedPark();
     }
 
     // The list moved the selection on its own because the row under the card left: the card keeps that row, cleared, until the user moves.

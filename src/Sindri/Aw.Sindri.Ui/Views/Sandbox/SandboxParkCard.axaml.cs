@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 
@@ -13,7 +14,7 @@ internal sealed partial class SandboxParkCard : UserControl
     }
 
     /// <summary>Puts focus on the card's heading.</summary>
-    internal void FocusHeading() => throw new NotSupportedException();
+    internal void FocusHeading() => _ = SandboxParkHeading.Focus(NavigationMethod.Directional);
 
     private void OnCopy(object? sender, RoutedEventArgs e)
     {

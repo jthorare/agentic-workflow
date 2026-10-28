@@ -9,10 +9,13 @@
        text and its copyable command come before the buttons; the severity is a word and a mark, and a gray or waiting card is never red. -->
   <Border x:Name="SandboxParkRegion" Classes="card-section focus-region" Focusable="True" AutomationProperties.Name="{Binding Name}">
     <StackPanel Spacing="{StaticResource Space.XS}">
-      <StackPanel Orientation="Horizontal" Spacing="6">
-        <icons:StateIcon x:Name="SandboxParkGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Center" />
-        <TextBlock x:Name="SandboxParkSeverity" Classes="eyebrow" Text="{Binding Severity}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Severity}" />
-      </StackPanel>
+      <!-- The heading takes focus when the card comes up from a user action (a picked row), so the screen reader starts at the card's name. -->
+      <Border x:Name="SandboxParkHeading" Classes="focus-region" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.HeadingLevel="2">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <icons:StateIcon x:Name="SandboxParkGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Center" />
+          <TextBlock x:Name="SandboxParkSeverity" Classes="eyebrow" Text="{Binding Severity}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
+      </Border>
       <TextBlock x:Name="SandboxParkSentence" Classes="body" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Sentence}" />
       <StackPanel x:Name="SandboxParkCommand" Orientation="Horizontal" Spacing="6" IsVisible="{Binding Row.HasCommand}">
         <TextBlock Classes="mono subtle" Text="{Binding Row.Command}" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" AutomationProperties.Name="{Binding Row.Command}" />
