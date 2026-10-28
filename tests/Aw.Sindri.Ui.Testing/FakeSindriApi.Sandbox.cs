@@ -23,6 +23,12 @@ internal sealed partial class FakeSindriApi
     /// <summary>POST /sindri/sandbox/allow's answer: needs your approval by default.</summary>
     public RouteAnswer SandboxAllowAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-allow", "needs-approval");
 
+    /// <summary>Held open until set: a Check again received while it was set waits for it.</summary>
+    public TaskCompletionSource? SandboxCheckGate { get; set; }
+
+    /// <summary>Instances whose answer-resume command is refused as no longer parked (a Step that moved on).</summary>
+    public ISet<string> MovedOnInstances { get; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>How many times the status was read.</summary>
     public int SandboxStatusCalls => Volatile.Read(ref _sandboxStatusCalls);
 
@@ -41,10 +47,11 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<SandboxStatusView>(api, "/sindri/sandbox/status", SandboxStatusAnswer));
     }
 
-    public Task<Result<SandboxCheckView>> SandboxCheck(Uri api, CancellationToken cancellationToken)
+    public async Task<Result<SandboxCheckView>> SandboxCheck(Uri api, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _sandboxCheckCalls);
-        return Task.FromResult(Answer<SandboxCheckView>(api, "/sindri/sandbox/check", SandboxCheckAnswer));
+        await WaitFor(SandboxCheckGate, cancellationToken).ConfigureAwait(false);
+        return Answer<SandboxCheckView>(api, "/sindri/sandbox/check", SandboxCheckAnswer);
     }
 
     public Task<Result<DenialsView>> SandboxDenials(Uri api, string item, CancellationToken cancellationToken)
