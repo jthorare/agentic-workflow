@@ -15,7 +15,7 @@ internal sealed class SandboxTestBed
 
     internal SandboxTestBed()
     {
-        Card = new SandboxCardViewModel(Server, Clock, () => Api, new InstanceCommander(Server, () => Api), Clipboard);
+        Card = new SandboxCardViewModel(Server, Clock, () => Api, new InstanceCommander(Server, () => Api).Send, Clipboard);
     }
 
     internal FakeSindriApi Server { get; } = new();

@@ -1,8 +1,8 @@
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sandbox;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 namespace Aw.Sindri.Ui.ViewModels.Sandbox;
 
@@ -17,7 +17,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
     private readonly Func<Uri?> _apiUrl;
-    private readonly InstanceCommander _commands;
+    private readonly Func<ApplyCommandBody, Task<Result<ApplyCommandAccepted>?>> _commands;
     private readonly IClipboard _clipboard;
     private int _checks;
     private bool _resuming;
@@ -28,7 +28,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
     /// <param name="apiUrl">The API's base URL while connected, else null.</param>
     /// <param name="commands">Sends the answer-resume of one instance.</param>
     /// <param name="clipboard">Where a blocker's command is copied.</param>
-    internal SandboxCheckViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, InstanceCommander commands, IClipboard clipboard)
+    internal SandboxCheckViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, Func<ApplyCommandBody, Task<Result<ApplyCommandAccepted>?>> commands, IClipboard clipboard)
     {
         (_api, _clock, _apiUrl, _commands, _clipboard) = (api, clock, apiUrl, commands, clipboard);
         Live = new LiveLine(Labels.SandboxCheckAgain);
@@ -172,7 +172,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
             foreach (var row in rows)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var sent = await _commands.Send(ApplyCommandBody.Resume(row.Instance)).ConfigureAwait(true);
+                var sent = await _commands(ApplyCommandBody.Resume(row.Instance)).ConfigureAwait(true);
                 if (sent is not { IsSuccess: true })
                 {
                     movedOn.Add(row.Title);

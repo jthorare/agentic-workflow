@@ -28,20 +28,14 @@ internal static partial class Labels
     /// <summary>The Settings section and the sheet's Sandbox line while Sindri doesn't answer.</summary>
     internal const string SandboxStatusUnavailable = "Sandbox: status unavailable";
 
-    /// <summary>The state in a word at the card's right.</summary>
-    /// <param name="state">The state.</param>
-    /// <param name="waiting">True when the first blocker is a wait or not yet supported (never red).</param>
-    /// <returns>"ready", "blocked", "waiting", "learning", "unknown" or "not checked".</returns>
-    internal static string SandboxStateWord(ViewModels.Sandbox.SandboxHealthState state, bool waiting) => state switch
-    {
-        ViewModels.Sandbox.SandboxHealthState.Ready => "ready",
-        ViewModels.Sandbox.SandboxHealthState.Blocked => waiting ? "waiting" : "blocked",
-        ViewModels.Sandbox.SandboxHealthState.Learning => "learning",
-        ViewModels.Sandbox.SandboxHealthState.Unreadable => "details unavailable",
-        ViewModels.Sandbox.SandboxHealthState.ServeDown => "unknown",
-        ViewModels.Sandbox.SandboxHealthState.NeverChecked => "not checked",
-        _ => throw new ArgumentOutOfRangeException(nameof(state)),
-    };
+    /// <summary>The Health and Settings state words (SandboxCardViewModel picks one).</summary>
+    internal const string SandboxWordReady = "ready";
+    internal const string SandboxWordBlocked = "blocked";
+    internal const string SandboxWordWaiting = "waiting";
+    internal const string SandboxWordLearning = "learning";
+    internal const string SandboxWordUnreadable = "details unavailable";
+    internal const string SandboxWordUnknown = "unknown";
+    internal const string SandboxWordNeverChecked = "not checked";
 
     /// <summary>The Health row while a blocker stands.</summary>
     /// <param name="sentence">The first blocker's sentence.</param>

@@ -72,7 +72,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 
     /// <summary>The Sandbox row and Check again (sandbox spec §8); the shell has it followed with the other views, and Settings and the park card share it.</summary>
-    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, new NeedsYou.InstanceCommander(api, ApiUrl), clipboard);
+    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, new NeedsYou.InstanceCommander(api, ApiUrl).Send, clipboard);
 
     /// <summary>The stalled and rebuilding banners (§4.1), from the services view's asOf.</summary>
     public ViewsBanner Banner { get; } = new();

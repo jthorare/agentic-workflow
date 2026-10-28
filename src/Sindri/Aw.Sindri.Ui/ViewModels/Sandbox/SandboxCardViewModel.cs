@@ -1,7 +1,8 @@
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Sandbox;
+using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 namespace Aw.Sindri.Ui.ViewModels.Sandbox;
 
@@ -21,12 +22,12 @@ internal sealed class SandboxCardViewModel : ObservableObject
     /// <param name="apiUrl">The API's base URL while connected, else null.</param>
     /// <param name="commands">Sends the answer-resume of one instance.</param>
     /// <param name="clipboard">Where a blocker's command is copied.</param>
-    internal SandboxCardViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, InstanceCommander commands, IClipboard clipboard)
+    internal SandboxCardViewModel(ISindriApi api, TimeProvider clock, Func<Uri?> apiUrl, Func<ApplyCommandBody, Task<Result<ApplyCommandAccepted>?>> commands, IClipboard clipboard)
     {
         (_api, _clock) = (api, clock);
         Check = new SandboxCheckViewModel(api, clock, apiUrl, commands, clipboard);
         RowText = Labels.SandboxRowNeverChecked;
-        StateWord = Labels.SandboxStateWord(SandboxHealthState.NeverChecked, waiting: false);
+        StateWord = StateWordOf(SandboxHealthState.NeverChecked, waiting: false);
     }
 
     /// <summary>The card's heading.</summary>
@@ -119,7 +120,7 @@ internal sealed class SandboxCardViewModel : ObservableObject
         State = state;
         RowText = row;
         Glyph = glyph;
-        StateWord = Labels.SandboxStateWord(state, waiting: Blockers.Count > 0 && Blockers[0].IsWait);
+        StateWord = StateWordOf(state, waiting: Blockers.Count > 0 && Blockers[0].IsWait);
         OnChanged(nameof(State));
         OnChanged(nameof(RowText));
         OnChanged(nameof(StateWord));
@@ -129,4 +130,19 @@ internal sealed class SandboxCardViewModel : ObservableObject
         OnChanged(nameof(IsWarning));
         OnChanged(nameof(ShowsCheck));
     }
+
+    /// <summary>The state in a word at the card's right.</summary>
+    /// <param name="state">The state.</param>
+    /// <param name="waiting">True when the first blocker is a wait or not yet supported (never red).</param>
+    /// <returns>"ready", "blocked", "waiting", "learning", "unknown" or "not checked".</returns>
+    private static string StateWordOf(SandboxHealthState state, bool waiting) => state switch
+    {
+        SandboxHealthState.Ready => Labels.SandboxWordReady,
+        SandboxHealthState.Blocked => waiting ? Labels.SandboxWordWaiting : Labels.SandboxWordBlocked,
+        SandboxHealthState.Learning => Labels.SandboxWordLearning,
+        SandboxHealthState.Unreadable => Labels.SandboxWordUnreadable,
+        SandboxHealthState.ServeDown => Labels.SandboxWordUnknown,
+        SandboxHealthState.NeverChecked => Labels.SandboxWordNeverChecked,
+        _ => throw new ArgumentOutOfRangeException(nameof(state)),
+    };
 }
