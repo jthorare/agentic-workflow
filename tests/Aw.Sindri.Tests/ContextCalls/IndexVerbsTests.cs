@@ -51,8 +51,8 @@ public sealed class IndexVerbsTests : IDisposable
         Assert.Equal(1, exit);
         Assert.Equal(
             "linear  complete · last sync 2026-10-27 12:00:00Z\n" +
-            "github  syncing recent window · no sync yet · SND-CONTEXT-010\n" +
-            "slack   not started · no sync yet\n",
+            "github  last sync failed: SND-CONTEXT-010 · not synced yet\n" +
+            "slack   not started · not synced yet\n",
             Printed);
     }
 

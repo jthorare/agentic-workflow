@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Context.Core;
 using Aw.Sindri.Features.ContextCalls;
 
 namespace Aw.Sindri.Host.Text;
@@ -19,9 +20,9 @@ internal static class IndexText
         var text = new StringBuilder();
         foreach (var row in view.Sources)
         {
-            var sync = row.LastSync is { } at ? "last sync " + at.ToString("u", CultureInfo.InvariantCulture) : "no sync yet";
+            var sync = row.LastSync is { } at ? "last sync " + at.ToString("u", CultureInfo.InvariantCulture) : "not synced yet";
             _ = text.Append(row.Source.PadRight(width)).Append("  ").Append(State(row)).Append(" · ").Append(sync);
-            _ = row.LastCode is { } code ? text.Append(" · ").Append(code) : text;
+            _ = row.LastCode is { } code && code == ContextErrors.SyncCapped.Code ? text.Append(" · ").Append(code) : text;   // a failed code is already in the state word
             _ = text.Append('\n');
         }
 
@@ -29,7 +30,8 @@ internal static class IndexText
     }
 
     private static string State(IndexSourceRow row) =>
-        row.Complete ? "complete"
+        row.LastCode is { } code && code != ContextErrors.SyncCapped.Code ? "last sync failed: " + code
+        : row.Complete ? "complete"
         : row.Usable ? "usable, filling older history"
         : row.Phase is null ? "not started"
         : "syncing recent window";
