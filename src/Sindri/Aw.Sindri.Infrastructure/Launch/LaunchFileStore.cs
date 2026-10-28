@@ -102,6 +102,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         AddNamed(found, options.SecretsDirectory, "*.hash");
         AddNamed(found, options.SecretsDirectory, "*.secret");
         AddNamed(found, options.PolicyDirectory, "LCH-*.settings.json");
+        AddNamed(found, options.PolicyDirectory, "LCH-*.cursor-path");
         return [.. found];
     }
 
@@ -148,7 +149,8 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
     private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
         SweepOwned(options.SecretsDirectory, "*.secret", now, olderThan, live)
         + SweepOwned(options.SecretsDirectory, "*.hash", now, olderThan, live)
-        + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", now, olderThan, live);
+        + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", now, olderThan, live)
+        + SweepOwned(options.PolicyDirectory, "LCH-*.cursor-path", now, olderThan, live);   // the sidecar of a cursor-config launch whose host died; the worktree's own cli.json goes with the worktree
 
     private static int SweepOwned(string directory, string pattern, DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {

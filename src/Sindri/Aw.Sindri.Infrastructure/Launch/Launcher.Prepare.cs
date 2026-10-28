@@ -115,7 +115,7 @@ internal sealed partial class Launcher
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session, string Seed)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
     {
         var step = Denying(request.Attended ? null : request.Step, request, entry, workDir);
-        var policyFile = step?.Policy is { } policy ? PolicyFile(entry, request.Launch, workDir, policy) : Results.Success<string?>(value: null);
+        var policyFile = step?.Policy is { } policy ? await PolicyFile(entry, request.Launch, workDir, policy, cancellationToken).ConfigureAwait(false) : Results.Success<string?>(value: null);
         if (policyFile.IsError)
         {
             return policyFile.Error;
@@ -136,15 +136,26 @@ internal sealed partial class Launcher
     }
 
     /// <summary>The policy file the entry's form needs, written for this launch; null when the form has none. A cursor-config Step is refused when the worktree already has the repo's own .cursor/cli.json.</summary>
-    private Result<string?> PolicyFile(AgentEntry entry, LaunchId launch, string workDir, StepPolicy policy) => entry.PolicyForm switch
+    private async ValueTask<Result<string?>> PolicyFile(AgentEntry entry, LaunchId launch, string workDir, StepPolicy policy, CancellationToken cancellationToken) => entry.PolicyForm switch
     {
         PolicyForm.ClaudeSettingsFile => Results.Success<string?>(StepPolicyFile.Write(parts.Options.PolicyDirectory, launch, policy)),
-        PolicyForm.CursorConfig => CursorPolicyFile.Write(parts.Options.PolicyDirectory, launch, workDir, policy) is { } written
-            ? Results.Success<string?>(written)
-            : SindriErrors.RequestInvalid.With($"the Step's worktree already has a {CursorPolicyFile.PathIn(workDir)}, which a launch never overwrites (fix: remove it or move its rules to the user config)"),
+        PolicyForm.CursorConfig => await CursorFile(launch, workDir, policy, cancellationToken).ConfigureAwait(false),
         PolicyForm.None or PolicyForm.CodexOverrides => Results.Success<string?>(value: null),
         _ => Results.Success<string?>(value: null),
     };
+
+    // The config goes into the checkout, so it is git-excluded first (the same local 'info/exclude' mechanism as the Step's fact files) and the Step's 'git add' never commits it.
+    private async ValueTask<Result<string?>> CursorFile(LaunchId launch, string workDir, StepPolicy policy, CancellationToken cancellationToken)
+    {
+        if (await StepFactWriter.Excluded(workDir, [".cursor/cli.json"], cancellationToken).ConfigureAwait(false) is { } excluded)
+        {
+            return excluded;
+        }
+
+        return CursorPolicyFile.Write(parts.Options.PolicyDirectory, launch, workDir, policy) is { } written
+            ? Results.Success<string?>(written)
+            : SindriErrors.RequestInvalid.With($"the Step's worktree already has a {CursorPolicyFile.PathIn(workDir)}, which a launch never overwrites (fix: remove it or move its rules to the user config)");
+    }
 
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
     private StepArgs? Denying(StepArgs? step, LaunchRequest request, AgentEntry entry, string workDir)

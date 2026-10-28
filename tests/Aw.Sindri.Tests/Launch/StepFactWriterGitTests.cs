@@ -34,6 +34,18 @@ public sealed class StepFactWriterGitTests : IDisposable
     }
 
     [Fact]
+    public async Task A_launcher_file_put_in_the_checkout_is_excluded_so_git_add_leaves_it_out()
+    {
+        var problem = await StepFactWriter.Excluded(_repo, [".cursor/cli.json"], TestContext.Current.CancellationToken);
+        _ = Directory.CreateDirectory(Path.Combine(_repo, ".cursor"));
+        await File.WriteAllTextAsync(Path.Combine(_repo, ".cursor", "cli.json"), "{}", TestContext.Current.CancellationToken);
+
+        Assert.Null(problem);
+        _ = await Git("add", "-A");
+        Assert.Equal(string.Empty, await Git("status", "--porcelain"));
+    }
+
+    [Fact]
     public async Task A_second_launch_rewrites_its_own_untracked_file_and_adds_no_second_exclude_line()
     {
         _ = await StepFactWriter.Write(_repo, Files("brief.json"), TestContext.Current.CancellationToken);
