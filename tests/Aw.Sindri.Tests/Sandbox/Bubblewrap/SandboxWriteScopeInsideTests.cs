@@ -91,12 +91,18 @@ public sealed class SandboxWriteScopeInsideTests
         using var box = NewBox();
         Assert.SkipUnless(box.HasDotnet, "no .NET SDK on this box");
 
-        // why: no shim is asserted. The heavy shims are written into the run area and put first on PATH by the launch; once they are wired, PATH resolves the shim first and it
-        // runs the same SDK through heavy, so this passes with the real dotnet resolved from PATH either way. A restore needs the network and the repo's build props, so the proof is that the SDK and MSBuild start.
-        var ran = await RunInside(box, $"cd {Quote(box.Worktree)} && dotnet --version && dotnet msbuild -version -nologo");
+        // why: the launch puts <run area>/shims first on PATH, and RunAreaPreparer writes the dotnet shim only when a heavy wrapper exists under the state dir's bin-r1b. With one,
+        // PATH must resolve the shim; without, the real dotnet. A restore needs the network and the repo's build props, so the proof is that the SDK and MSBuild start through either.
+        var ran = await RunInside(box, $"cd {Quote(box.Worktree)} && command -v dotnet && dotnet --version && dotnet msbuild -version -nologo");
 
         Assert.True(ran.Exit == 0, "dotnet inside the sandbox failed: " + ran.Output);
-        Assert.Matches(@"^\d+\.\d+\.\d+", ran.Output.TrimStart());
+        var resolved = ran.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+        if (File.Exists(Path.Combine(box.State, "bin-r1b", "heavy")))
+        {
+            Assert.Equal(Path.Combine(box.RunArea, "shims", "dotnet"), resolved, StringComparer.Ordinal);
+        }
+
+        Assert.Matches(@"(?m)^\d+\.\d+\.\d+", ran.Output);
         Assert.Empty(ProcessListing.Under(box.Root));
     }
 
