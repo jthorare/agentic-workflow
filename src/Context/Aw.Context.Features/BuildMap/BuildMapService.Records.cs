@@ -15,7 +15,7 @@ internal sealed partial class BuildMapService
         foreach (var (repo, read) in extractions)
         {
             var paths = read.Paths.Where(p => !repo.Denies(p)).ToList();
-            var docs = DocRecords.Find(repo.Name, paths, settings.DocGlobs, MapRecordSources.DirectoryNames, at).Select(n => n.Label).ToList();
+            var docs = DocRecords.Find(repo.Name, paths, settings.DocGlobs, settings.DocDirectoryNames, at).Select(n => n.Label).ToList();
             var blobs = await inputs.Repos.BlobIds(repo, read.Commit, docs, cancellationToken).ConfigureAwait(false);
             if (blobs.IsError)
             {
@@ -25,7 +25,7 @@ internal sealed partial class BuildMapService
             files.Add(new MapRepoFiles(repo.Name, paths, blobs.Value));
         }
 
-        var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, MapRecordSources.DirectoryNames, at), cancellationToken).ConfigureAwait(false);
+        var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, settings.DocDirectoryNames, at), cancellationToken).ConfigureAwait(false);
         return reading.IsError
             ? (ExtractedMap.Empty, [Unavailable(reading.Error)], [])
             : (reading.Value.Map.Plus(RecordRollup.Edges(reading.Value.Overflow, found)), reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);

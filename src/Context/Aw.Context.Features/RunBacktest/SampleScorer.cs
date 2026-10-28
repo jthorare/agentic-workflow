@@ -117,7 +117,7 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
             return built.Error;
         }
 
-        var source = await docs.Open(new AsOfDocsRequest(repo, sample.Cut, world.Settings.DocGlobs, world.Scrubbers), cancellationToken).ConfigureAwait(false);
+        var source = await docs.Open(new AsOfDocsRequest(repo, sample.Cut, world.Settings.IndexedDocGlobs, world.Scrubbers), cancellationToken).ConfigureAwait(false);
         return source.IsError ? source.Error : new Opened(built.Value, source.Value, world.Scrubbers.Egress);
     }
 

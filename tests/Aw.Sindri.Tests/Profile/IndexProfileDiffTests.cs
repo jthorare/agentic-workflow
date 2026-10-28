@@ -50,4 +50,14 @@ public sealed class IndexProfileDiffTests
         Lists(paths, "context.sources.github.token");
         Assert.DoesNotContain(paths, static p => p.Contains("GH_POINTER_NAME", StringComparison.Ordinal));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Changing_the_doc_directory_names_is_a_change_shown_by_key_path()
+    {
+        var approved = With("""{"docs":{"directoryNames":["AGENTS.md"]}}""");
+        var changed = With("""{"docs":{"directoryNames":["AGENTS.md","NOTES.md"]}}""");
+
+        Lists(ProfileDiff.Between(approved: null, approved), "context.docs.directoryNames[0]");
+        Assert.Equal(["context.docs.directoryNames[1]"], ProfileDiff.Between(approved, changed));
+    }
 }

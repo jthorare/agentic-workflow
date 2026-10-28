@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Core.Workflow.Engine.Triggers;
 
 namespace Aw.Sindri.Features.GetLaunchPicks;
 
@@ -16,8 +17,7 @@ namespace Aw.Sindri.Features.GetLaunchPicks;
 /// Reads the model picks from the ledger (model-pick spec §6, §6.1): the 'model.picking' and 'model.picked' rows of the item or
 /// instance, oldest first, each with its run's last 'session.usage' sample (priced with <see cref="Budgets.PriceOf"/>) and how the
 /// run ended. A run ends in the instance's own rows: the row that opens it names the launch as the frame's actor and the run's
-/// token, and the 'step.completed' or 'step.failed' row of that token closes it, in order, so a retry on the same token pairs
-/// its own launch. A run with no closing row is running; 'launch.failed' alone makes it failed.
+/// token, and the 'step.completed' or 'step.failed' row of that token closes it; a retry on the same token is settled from the picks. A run with no closing row is running; 'launch.failed' alone makes it failed.
 /// </summary>
 /// <param name="ledger">The ledger, read-only.</param>
 /// <param name="events">Reads each event's payload.</param>
@@ -98,10 +98,9 @@ internal sealed class GetLaunchPicksService(ILedgerReader ledger, EventFactory e
     private async ValueTask<Result<Dictionary<LaunchId, string>>> Ended(IReadOnlyList<PickEntry> picks, CancellationToken cancellationToken)
     {
         var pairing = new RunPairing(events);
-        var from = picks.Count == 0 ? 0 : Math.Max(picks[0].Sequence - 1, 0);
         foreach (var instance in picks.Select(static p => p.Instance).Distinct())
         {
-            var rows = await ScanAll(new LedgerFilter(Types: null, Item: null, Instance: instance), from, cancellationToken).ConfigureAwait(false);
+            var rows = await ScanAll(new LedgerFilter(Types: null, Item: null, Instance: instance), from: 0, cancellationToken).ConfigureAwait(false);
             if (rows.IsError)
             {
                 return rows.Error;
@@ -113,7 +112,31 @@ internal sealed class GetLaunchPicksService(ILedgerReader ledger, EventFactory e
             }
         }
 
-        return pairing.Ended;
+        return Settled(picks, pairing.Ended);
+    }
+
+    /// <summary>
+    /// A retry on a stronger model keeps the run token and mirrors no row of its own, so a chain of launches (the same instance, state and attempt) is settled from the picks: every launch but the last
+    /// ended the way the next pick says it escalated from (refused or failed), and the last one ends the way the token's closing row did, which the pairing gave to the first launch holding the token.
+    /// </summary>
+    private static Dictionary<LaunchId, string> Settled(IReadOnlyList<PickEntry> picks, Dictionary<LaunchId, string> paired)
+    {
+        var ended = new Dictionary<LaunchId, string>(paired);
+        foreach (var chain in picks.GroupBy(static p => (p.Instance.Value, p.State, p.Attempt)).Select(static g => g.OrderBy(static p => p.Sequence).ToList()).Where(static c => c.Count > 1))
+        {
+            var closing = chain.Select(c => paired.GetValueOrDefault(c.Launch)).LastOrDefault(static w => w is not null);
+            for (var i = 0; i < chain.Count - 1; i++)
+            {
+                ended[chain[i].Launch] = string.Equals(chain[i + 1].Picked?.EscalatedFromKind, AgentFailureKinds.Refused, StringComparison.Ordinal) ? LaunchPickOutcomes.Refused : LaunchPickOutcomes.Failed;
+            }
+
+            if (closing is not null)
+            {
+                ended[chain[^1].Launch] = closing;
+            }
+        }
+
+        return ended;
     }
 
     private static List<LaunchPickView> View(IReadOnlyList<PickEntry> picks, PickRows read, Dictionary<LaunchId, string> ended)

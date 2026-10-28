@@ -36,8 +36,8 @@ public sealed class SourcesStatusTests
         _ = await engine.Refresh(scope, CancellationToken.None);
         var failed = await engine.Sources(scope, CancellationToken.None);
 
-        Assert.Equal(2, report.Value.Repos.Single().Added);
-        Assert.Equal((SourceState.Ok, 2), (view.Value.Sources.Single().State, view.Value.Sources.Single().Records));
+        Assert.Equal(3, report.Value.Repos.Single().Added);
+        Assert.Equal((SourceState.Ok, 3), (view.Value.Sources.Single().State, view.Value.Sources.Single().Records));
         Assert.Equal((SourceState.Unavailable, "SND-CONTEXT-004"), (failed.Value.Sources.Single().State, failed.Value.Sources.Single().Code));
     }
 
@@ -55,8 +55,8 @@ public sealed class SourcesStatusTests
         var cleaned = await engine.Sources(Engines.Human(acme) with { Repos = repos }, CancellationToken.None);
 
         Assert.Equal(SourceState.Degraded, changed.Value.Sources.Single().State);
-        Assert.StartsWith("2 of 2 documents wait for the next refresh", changed.Value.Sources.Single().Detail, StringComparison.Ordinal);
-        Assert.Equal(2, report.Value.Repos.Single().Recleaned);
+        Assert.StartsWith("3 of 3 documents wait for the next refresh", changed.Value.Sources.Single().Detail, StringComparison.Ordinal);
+        Assert.Equal(3, report.Value.Repos.Single().Recleaned);
         Assert.Equal(SourceState.Ok, cleaned.Value.Sources.Single().State);
     }
 

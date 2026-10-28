@@ -9036,6 +9036,10 @@ static Aw.Context.Core.Concepts.PinRollupResult.operator ==(Aw.Context.Core.Conc
 Aw.Context.Core.Extract.IRepoReader.BlobIds(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Collections.Generic.IReadOnlyList<string!>! paths, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
 Aw.Context.Core.Sync.RecordBatches
 static Aw.Context.Core.Sync.RecordBatches.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Sync.RecordPage! page, Aw.Context.Core.Records.SyncPhase phase, Aw.Context.Core.Trust.Scrubbers! scrubbers, System.DateTimeOffset at) -> Aw.Context.Core.Records.RecordBatch!
+Aw.Context.Core.Engine.ContextSettings.DocDirectoryNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ContextSettings.DocDirectoryNames.init -> void
+Aw.Context.Core.Engine.ContextSettings.IndexedDocGlobs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.Engine.ContextSettings.DefaultDocDirectoryNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Sync.IIndexSync
 Aw.Context.Core.Sync.IIndexSync.Tick(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Results.SyncReport!>!>
 Aw.Context.Core.Sync.SourceProgress

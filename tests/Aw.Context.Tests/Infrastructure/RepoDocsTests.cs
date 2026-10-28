@@ -218,6 +218,25 @@ public sealed class RepoDocsTests
         Assert.DoesNotContain(hits.Value, h => h.Ref.Id.Value.Contains("notes", StringComparison.Ordinal));
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_doc_named_in_directoryNames_is_indexed_in_any_directory_through_the_settings_globs()
+    {
+        using var home = new TempHome();
+        using var fixture = FixtureRepo.Build();
+        var repo = new ContextRepo(ContextRepoName.From("split-panes"), fixture.Path);
+        Directory.CreateDirectory(Path.Combine(fixture.Path, "pkg"));
+        await File.WriteAllTextAsync(Path.Combine(fixture.Path, "pkg", "NOTES.md"), "# Notes\n\nThe zebra lives here.\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(fixture.Path, "README.md"), "# Readme\n\nA giraffe.\n", TestContext.Current.CancellationToken);
+        _ = Git(fixture.Path, "add", "-A");
+        _ = Git(fixture.Path, "commit", "-q", "-m", "notes");
+        var settings = new ContextSettings { DocDirectoryNames = ["NOTES.md"] };
+
+        _ = (await home.Index.Refresh(repo, settings.IndexedDocGlobs, home.Scrubbers, CancellationToken.None)).Value;
+
+        Assert.Equal(1L, Count(home, "SELECT count(DISTINCT path) FROM doc_chunk WHERE path = 'pkg/NOTES.md'"));
+        Assert.Equal(0L, Count(home, "SELECT count(DISTINCT path) FROM doc_chunk WHERE path = 'README.md'"));
+    }
+
     private static long Count(TempHome home, string sql)
     {
         using var connection = new SqliteConnection("Data Source=" + home.Settings.DatabasePath + ";Mode=ReadOnly");
