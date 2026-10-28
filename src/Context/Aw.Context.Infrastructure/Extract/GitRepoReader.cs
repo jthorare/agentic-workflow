@@ -44,6 +44,19 @@ internal sealed class GitRepoReader(GitCli git) : IRepoReader
         return text.IsError ? Unreadable(repo, commit, path) : text;
     }
 
+    public async ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        ArgumentNullException.ThrowIfNull(paths);
+        var asked = paths.Where(p => IsReadable(repo, p)).ToList();
+        var ids = await git.BlobIds(repo.Path, commit, asked, cancellationToken).ConfigureAwait(false);
+        return ids.IsError ? Unreadable(repo, commit) : ids;
+    }
+
+    // The paths Read would refuse (and ls-tree would take for pathspec magic) are no file of the commit.
+    private static bool IsReadable(ContextRepo repo, string path) =>
+        path.Length > 0 && !Path.IsPathRooted(path) && path[0] != ':' && !path.Any(char.IsControl) && !path.Split('/').Contains("..") && !repo.Denies(path);
+
     public async ValueTask<Result<RepoChanges>> Changes(ContextRepo repo, DiffRange range, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(repo);

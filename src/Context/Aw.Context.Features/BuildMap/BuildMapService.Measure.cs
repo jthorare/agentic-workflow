@@ -29,7 +29,7 @@ internal sealed partial class BuildMapService
 
         var (settings, mappedRepos) = mapped.Value;
         // why: no graphify and no labeling here, however the profile is set: the same reading with a cluster source that has none
-        var reading = new BuildMapService(repos, new NoClusters(), namers, gate, defaults, store, clock);
+        var reading = new BuildMapService(inputs, new NoClusters(), namers, gate, defaults, store, clock);
         var read = await reading.ReadRepos(request.Progress, settings with { Labeling = new LabelingSettings { Enabled = false } }, mappedRepos, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {

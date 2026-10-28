@@ -36,8 +36,7 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
         await Run(fake, maxDuration: null, async (handle, sindri) =>
         {
             var view = await WorkflowsHarness.Until(handle, static v => v.State == "evidence-ui");
-            var row = (await sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 100, ct)).Value
-                .Last(static e => e.Envelope.Type == "workflow.transition");
+            var row = await TransitionRow(sindri, ct);   // the Query answers from the workflow's memory; the ledger row is mirrored by an activity after it
             using var payload = JsonDocument.Parse(row.Envelope.Payload);
 
             Assert.Equal(("evidence-ui", 1), (view.State, fake.Runs));
@@ -206,6 +205,18 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
     }
 
     // The state is visible a moment before its event is mirrored into the ledger, so the row is waited for.
+    private static async Task<LedgerEvent> TransitionRow(IServiceProvider sindri, CancellationToken ct)
+    {
+        LedgerEvent? row = null;
+        await WaitFor(() =>
+        {
+            row = sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 100, ct).AsTask().GetAwaiter().GetResult().Value
+                .LastOrDefault(static e => string.Equals(e.Envelope.Type, "workflow.transition", StringComparison.Ordinal));
+            return row is not null;
+        }, ct);
+        return row!;   // why: WaitFor asserted the condition, which sets it
+    }
+
     private static async Task<(string Reason, string? Via)> FailedRow(IServiceProvider sindri, CancellationToken ct)
     {
         (string?, string?)? row = null;

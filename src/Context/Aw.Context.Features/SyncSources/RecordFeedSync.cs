@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
@@ -19,14 +20,26 @@ namespace Aw.Context.Features.SyncSources;
 internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore store, TimeProvider clock)
 {
     private readonly SyncLocks _locks = new();
+    private readonly ConcurrentDictionary<string, (DateTimeOffset At, string? Code)> _outcomes = new(StringComparer.Ordinal);
 
     /// <summary>The feeds for the repos in scope, in source order.</summary>
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers) =>
         [.. feeds.For(settings, repos, scrubbers).OrderBy(f => f.Source.Value, StringComparer.Ordinal)];
 
-    /// <summary>One tick of a feed; the row carries a feed failure as its code.</summary>
-    public ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, CancellationToken cancellationToken) =>
-        Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken));
+    /// <summary>One tick of a feed; the row carries a feed failure as its code. The tick's end and code are kept for <see cref="LastOutcome"/>.</summary>
+    public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, CancellationToken cancellationToken)
+    {
+        var row = await Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken)).ConfigureAwait(false);
+        if (!row.IsError)
+        {
+            _outcomes[feed.Source.Value] = (clock.GetUtcNow(), row.Value.Code);
+        }
+
+        return row;
+    }
+
+    /// <summary>When this process last finished a tick of the source's feed and the code it ended with; null when it has not.</summary>
+    public (DateTimeOffset At, string? Code)? LastOutcome(SourceId source) => _outcomes.TryGetValue(source.Value, out var outcome) ? outcome : null;
 
     /// <summary>Runs <paramref name="run"/> while holding the source's lock.</summary>
     public async ValueTask<Result<SourceSync>> Locked(SourceId id, Func<ValueTask<SourceSync>> run)

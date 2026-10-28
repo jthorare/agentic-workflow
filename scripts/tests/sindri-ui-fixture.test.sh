@@ -114,7 +114,7 @@ case "$*" in
     echo "approve-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"
     [ -n "${STUB_FAIL_APPROVE:-}" ] && { echo "approve refused" >&2; exit 1; }
     cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
-  "--headless") echo "headless proc=${AW_SESSIONS_PROC_ROOT:-} claude=${AW_SESSIONS_CLAUDE_DIR:-} fleet=${AW_FLEET_DIR:-} launcher=${AW_LAUNCHER_CONFIG:-}" >> "$STUB_LOG.env" ;;
+  "--headless") echo "headless proc=${AW_SESSIONS_PROC_ROOT:-} claude=${AW_SESSIONS_CLAUDE_DIR:-} fleet=${AW_FLEET_DIR:-} launcher=${AW_LAUNCHER_CONFIG:-}" >> "$STUB_LOG.env"; echo "judge=${AW_SINDRI_JUDGE:-}" >> "$STUB_LOG.judge" ;;
   "context map status --json") [ -z "${STUB_NO_MAP:-}" ] || exit 1; echo '{"version":{"number":1}}' ;;
   "context map build") echo "build-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env" ;;
   "context map import "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "import-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"; [ -z "${STUB_FAIL_IMPORT:-}" ] || { echo "SND-AUTH-002 refused" >&2; exit 1; } ;;
@@ -613,5 +613,63 @@ took=$((SECONDS - start))
 check "agent-run's wait is bounded in seconds: exits 1 when launch.started never comes" "$rc" "1"
 contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
 check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
+
+# model-picks-run (issue #1452): the Model picks table's four states through a real agent run with the pick on. The control
+# plane is the stub, so this checks what the verb sets up: the usage, the refusals, the profile, the launcher stub, the judge
+# stub and the environment the control plane restarts with; the states themselves are the lead's proof under a real serve.
+contains "the usage lists model-picks-run" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-picks-run picked|escalated|unpriced|picking"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run >/dev/null 2>&1; check "model-picks-run needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run nope >/dev/null 2>&1; check "model-picks-run refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks-run picked extra >/dev/null 2>&1; check "model-picks-run takes one argument (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks-run picked >/dev/null 2>&1; check "model-picks-run refuses an unguarded home" "$?" "2"
+out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" model-picks-run picked 2>&1)"; check "model-picks-run before sessions up exits 2" "$?" "2"
+contains "model-picks-run names the missing sessions copy" "$out" "run 'sessions up' first"
+
+P="$TMPDIR/picksrun"
+mkdir -p "$P"
+AW_SINDRI_HOME="$P" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
+mkdir -p "$P/ui-fixture-sessions/proc"
+echo '{"schema":1}' > "$P/ui-fixture-sessions/launcher.json"
+PD="$P/ui-fixture-agent"
+: > "$STUB_LOG"; : > "$STUB_LOG.env"; : > "$STUB_LOG.judge"
+out="$(FIXTURE_AGENT_WAIT=2 AW_SINDRI_HOME="$P" SINDRI="$STUB" bash "$FIXTURE" model-picks-run escalated 2>&1 >/dev/null)"; rc=$?
+check "model-picks-run exits 1 when the picks never show in the ledger" "$rc" "1"
+contains "model-picks-run names what it waited for" "$out" "no model.picked"
+contains "model-picks-run turns the pick on in the profile (quoted, so it stays a word)" "$(cat "$P/profile/profile.yaml")" 'pick: "on"'
+contains "model-picks-run lists a priced cheap model and a stronger one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, claude-sonnet-4-5]"
+contains "model-picks-run approves the profile as the owner (the Jev notice is part of that approval)" "$(cat "$STUB_LOG")" "profile approve abcdef0123456789"
+contains "model-picks-run approves its own recipe" "$(cat "$STUB_LOG")" "recipe approve"
+contains "model-picks-run starts that recipe" "$(cat "$STUB_LOG")" "workflow start workflow.dev-agent-pick"
+contains "model-picks-run points the launcher at its own claude stub" "$(jq -r '.agents["claude-code"].bin' "$P/ui-fixture-sessions/launcher.json")" "$PD/stub-bin-pick/claude"
+contains "model-picks-run restarts the control plane with a judge stub" "$(cat "$STUB_LOG.judge")" "judge=$PD/stub-judge/judge"
+check "the judge stub is executable" "$([ -x "$PD/stub-judge/judge" ] && echo yes || echo no)" "yes"
+check "the judge stub answers m1 as Jev" "$(echo '{}' | "$PD/stub-judge/judge" model-pick | jq -r '[.decision, .model] | join(",")')" "m1,jev"
+AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run unpriced >/dev/null 2>&1
+contains "unpriced lists a model the price table lacks after the cheap one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, fixture-unpriced-model]"
+AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picking >/dev/null 2>&1
+check "picking holds the judge stub (its call outlasts the wait)" "$(echo '{}' | timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "124"
+AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picked >/dev/null 2>&1
+check "the next state lets the judge stub answer again" "$(echo '{}' | timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "0"
+
+# The launcher stub: what it writes and what it reports, run by hand with the environment a launch gives it. Each run has its own folders.
+AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run escalated >/dev/null 2>&1   # the stub refuses Haiku in this state only
+R="$TMPDIR/picksstub"
+mkdir -p "$R/home/launches" "$R/run1" "$R/claude1" "$R/run2" "$R/claude2"
+seed='Sindri Step brief. Report with: sindri workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=$AW_SINDRI_RUN_DIR/.sindri-out/resolution'
+: > "$STUB_LOG"
+env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-1 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run1" CLAUDE_CONFIG_DIR="$R/claude1" \
+  timeout 5 "$PD/stub-bin-pick/claude" --model claude-haiku-4-5 --session-id 11111111-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
+check "the stub on the model it refuses reports twice (the second bad report ends its session)" "$(grep -c '^workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=' "$STUB_LOG")" "2"
+check "the stub's refused report is not JSON" "$(jq -e . "$R/run1/bad-report" >/dev/null 2>&1 && echo json || echo not-json)" "not-json"
+check "the refused stub leaves no file in .sindri-out (recovery would prove the outcome from one)" "$(ls -A "$R/run1/.sindri-out" | wc -l | tr -d ' ')" "0"
+contains "the stub logs each workflow complete call in stub.log" "$(cat "$R/run1/stub.log")" "--- workflow complete $R/run1/bad-report"
+check "stub.log has one entry per call" "$(grep -c '^exit ' "$R/run1/stub.log")" "2"
+check "the stub writes the session's transcript under the session id, naming the model it ran on" "$(jq -r '[.type, .message.model] | join(",")' "$R/claude1/projects/fixture/11111111-2222-4333-8444-555555555555.jsonl")" "assistant,claude-haiku-4-5"
+: > "$STUB_LOG"
+env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-2 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run2" CLAUDE_CONFIG_DIR="$R/claude2" \
+  timeout 5 "$PD/stub-bin-pick/claude" --model claude-sonnet-4-5 --session-id 66666666-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
+check "the stub on any other model reports once" "$(grep -c '^workflow complete ' "$STUB_LOG")" "1"
+check "the stub's good report is a JSON object" "$(jq -r type "$R/run2/.sindri-out/resolution")" "object"
+check "the stub's usage is read from its transcript as tokens on that model" "$(jq -r '[.message.model, .message.usage.input_tokens > 0, .message.usage.output_tokens > 0] | join(",")' "$R/claude2/projects/fixture/66666666-2222-4333-8444-555555555555.jsonl")" "claude-sonnet-4-5,true,true"
 
 exit "$fail"

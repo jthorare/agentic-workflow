@@ -47,6 +47,77 @@ public sealed class GitHubClientTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_repo_wide_comment_read_asks_for_updated_ascending_from_since_and_stops_after_the_page_past_until()
+    {
+        for (var i = 1; i <= 5; i++)
+        {
+            _ = _server.AddComment(Repo, A.GitHubComment(i).On(7).UpdatedAt(T.AddHours(i)));
+        }
+
+        _server.MaxPageSize = 2;
+
+        var page = (await Client().Comments(Repo, T, T.AddHours(3), Ct)).Value;
+
+        Assert.Equal([1, 2, 3], page.Items.Select(static c => c.Id));
+        Assert.Equal(2, _server.Requests.Count);
+        Assert.Equal(
+            "https://api.github.com/repos/acme/widgets/issues/comments?sort=updated&direction=asc&since=2026-10-01T12:00:00Z&per_page=100",
+            Uri.UnescapeDataString(_server.Requests[0].Uri.AbsoluteUri.Replace("&page=1", string.Empty, StringComparison.Ordinal)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rate_limit_in_the_comment_read_comes_back_as_a_value_with_what_was_read()
+    {
+        var reset = new DateTimeOffset(2026, 10, 27, 10, 0, 0, TimeSpan.Zero);
+        for (var i = 1; i <= 3; i++)
+        {
+            _ = _server.AddComment(Repo, A.GitHubComment(i).UpdatedAt(T.AddHours(i)));
+        }
+
+        _server.MaxPageSize = 2;
+        _ = _server.ScriptThrough().ScriptRateLimit(reset);
+
+        var page = (await Client().Comments(Repo, T, T.AddDays(1), Ct)).Value;
+
+        Assert.Equal(reset, page.RateLimitedUntil);
+        Assert.Equal([1, 2], page.Items.Select(static c => c.Id));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pull_request_is_read_from_its_own_route_and_its_files_route()
+    {
+        _ = _server.AddPull(Repo, 12, new GitHubPullDetail(Merged: true, Draft: false, T, ["a.cs"]));
+
+        var read = (await Client().PullRequest(Repo, 12, Ct)).Value;
+
+        Assert.True(read.Detail!.Merged);
+        Assert.Equal(
+            ["/repos/acme/widgets/pulls/12", "/repos/acme/widgets/pulls/12/files"],
+            _server.Requests.Select(static r => r.Uri.AbsolutePath),
+            StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rate_limit_on_the_files_route_means_no_detail()
+    {
+        var reset = new DateTimeOffset(2026, 10, 27, 10, 0, 0, TimeSpan.Zero);
+        _ = _server.AddPull(Repo, 12, new GitHubPullDetail(Merged: true, Draft: false, T, ["a.cs"])).ScriptThrough().ScriptRateLimit(reset);
+
+        var read = (await Client().PullRequest(Repo, 12, Ct)).Value;
+
+        Assert.Null(read.Detail);
+        Assert.Equal(reset, read.RateLimitedUntil);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pull_request_the_server_does_not_have_is_not_found()
+    {
+        var result = await Client().PullRequest(Repo, 99, Ct);
+
+        Assert.Equal(ConnectorsErrors.NotFound.Code, result.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Without_a_token_no_authorization_is_sent()
     {
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T));
@@ -68,7 +139,7 @@ public sealed class GitHubClientTests : IDisposable
 
         var page = (await Client().Issues(Repo, Start, 1000, Ct)).Value;
 
-        Assert.Equal<long>([1, 2, 3, 4, 5], page.Items.Select(i => i.Id));
+        Assert.Equal([1, 2, 3, 4, 5], page.Items.Select(i => i.Id));
         Assert.Equal([false, false, true, false, false], page.Items.Select(i => i.IsPullRequest));
         Assert.Equal(3, _server.Requests.Count);
         Assert.Null(page.RateLimitedUntil);
@@ -91,7 +162,7 @@ public sealed class GitHubClientTests : IDisposable
         Assert.Equal(T.AddHours(1), issue.UpdatedAt);
         Assert.Equal(T.AddHours(1), issue.ClosedAt);
         Assert.Equal(["bug"], issue.Labels);
-        Assert.Equal(3, issue.Comments);
+        Assert.Equal(0, issue.Comments);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -103,7 +174,7 @@ public sealed class GitHubClientTests : IDisposable
 
         var page = (await Client().Issues(Repo, new GitHubCursor(T, [1]), 100, Ct)).Value;
 
-        Assert.Equal<long>([2, 3], page.Items.Select(i => i.Id));
+        Assert.Equal([2, 3], page.Items.Select(i => i.Id));
         Assert.Equal(T.AddSeconds(1), page.Next.UpdatedAt);
         Assert.Equal<long>([3], page.Next.SeenIds);
     }
@@ -120,8 +191,8 @@ public sealed class GitHubClientTests : IDisposable
         var second = (await Client().Issues(Repo, first.Next, 2, Ct)).Value;
         var third = (await Client().Issues(Repo, second.Next, 2, Ct)).Value;
 
-        Assert.Equal<long>([1, 2], first.Items.Select(i => i.Id));
-        Assert.Equal<long>([3], second.Items.Select(i => i.Id));
+        Assert.Equal([1, 2], first.Items.Select(i => i.Id));
+        Assert.Equal([3], second.Items.Select(i => i.Id));
         Assert.Empty(third.Items);
         Assert.Equal<long>([1, 2, 3], third.Next.SeenIds);
     }
@@ -154,7 +225,7 @@ public sealed class GitHubClientTests : IDisposable
         var result = await Client().Issues(Repo, Start, 1000, Ct);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal<long>([1, 2], result.Value.Items.Select(i => i.Id));
+        Assert.Equal([1, 2], result.Value.Items.Select(i => i.Id));
         Assert.Equal(reset, result.Value.RateLimitedUntil);
         Assert.Equal(T.AddMinutes(2), result.Value.Next.UpdatedAt);
         Assert.Equal<long>([2], result.Value.Next.SeenIds);

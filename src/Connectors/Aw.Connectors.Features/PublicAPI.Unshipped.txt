@@ -2,12 +2,26 @@
 Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.<Clone>$() -> Aw.Connectors.Features.PullGitHub.PullGitHubRequest!
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.After.get -> Aw.Connectors.Core.GitHub.GitHubCursor!
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.After.init -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Deconstruct(out string! Repo, out Aw.Connectors.Core.GitHub.GitHubCursor! After, out int Limit) -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Equals(Aw.Connectors.Features.PullGitHub.PullGitHubRequest? other) -> bool
-Aw.Connectors.Features.PullGitHub.PullGitHubRequest.PullGitHubRequest() -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Limit.get -> int
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Limit.init -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.PullGitHubRequest(string! Repo, Aw.Connectors.Core.GitHub.GitHubCursor! After, int Limit) -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Repo.get -> string!
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Repo.init -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubResponse
 Aw.Connectors.Features.PullGitHub.PullGitHubResponse.<Clone>$() -> Aw.Connectors.Features.PullGitHub.PullGitHubResponse!
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorItem!>! Items, out Aw.Connectors.Core.GitHub.GitHubCursor! Next, out System.DateTimeOffset? RateLimitedUntil) -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Equals(Aw.Connectors.Features.PullGitHub.PullGitHubResponse? other) -> bool
-Aw.Connectors.Features.PullGitHub.PullGitHubResponse.PullGitHubResponse() -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorItem!>!
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Items.init -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Next.get -> Aw.Connectors.Core.GitHub.GitHubCursor!
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Next.init -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.PullGitHubResponse(System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.ConnectorItem!>! Items, Aw.Connectors.Core.GitHub.GitHubCursor! Next, System.DateTimeOffset? RateLimitedUntil) -> void
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.RateLimitedUntil.get -> System.DateTimeOffset?
+Aw.Connectors.Features.PullGitHub.PullGitHubResponse.RateLimitedUntil.init -> void
 override Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Equals(object? obj) -> bool
 override Aw.Connectors.Features.PullGitHub.PullGitHubRequest.GetHashCode() -> int
 override Aw.Connectors.Features.PullGitHub.PullGitHubRequest.ToString() -> string!
@@ -19,3 +33,5 @@ static Aw.Connectors.Features.PullGitHub.PullGitHubRequest.operator !=(Aw.Connec
 static Aw.Connectors.Features.PullGitHub.PullGitHubRequest.operator ==(Aw.Connectors.Features.PullGitHub.PullGitHubRequest? left, Aw.Connectors.Features.PullGitHub.PullGitHubRequest? right) -> bool
 static Aw.Connectors.Features.PullGitHub.PullGitHubResponse.operator !=(Aw.Connectors.Features.PullGitHub.PullGitHubResponse? left, Aw.Connectors.Features.PullGitHub.PullGitHubResponse? right) -> bool
 static Aw.Connectors.Features.PullGitHub.PullGitHubResponse.operator ==(Aw.Connectors.Features.PullGitHub.PullGitHubResponse? left, Aw.Connectors.Features.PullGitHub.PullGitHubResponse? right) -> bool
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.CommentCap.get -> int
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.CommentCap.init -> void

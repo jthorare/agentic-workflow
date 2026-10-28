@@ -1,0 +1,22 @@
+schema: 1
+id: workflow.dev-agent-pick
+version: 1
+description: "One agent Step whose report is a payload: a malformed report refuses the run, so the model pick's escalation retries it (issue #1452; scripts/sindri-ui-fixture.sh model-picks-run)."
+displayName: "Agent run for the model picks table"
+inputs:
+  - { key: fact:item, label: "Item", type: item, kind: item }
+  - { key: fact:issue, label: "Issue", type: text, kind: text, generate: "dev-agent-pick {start:date} {start:time}" }
+outputs:
+  - { key: fact:resolution, label: "Resolution", type: payload, from: write }
+initial: write
+states:
+  write:
+    kind: active
+    step: step.report.write
+    budget: { tokens: 1000000 }
+    timeout: { after: 2d, then: park }
+    next: "Write up the resolution for {item}."
+  done: { kind: terminal, outcome: resolved }
+transitions:
+  - { from: write, to: done, on: step.completed, when: { outcome: done }, produces: [fact:resolution] }
+evals: [evals/workflow.dev-agent-pick/happy.jsonl]

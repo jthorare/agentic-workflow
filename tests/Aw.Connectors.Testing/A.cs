@@ -13,4 +13,9 @@ public static class A
     /// <param name="id">GitHub's global id; the number defaults to it.</param>
     /// <returns>A new builder.</returns>
     public static GitHubIssueBuilder GitHubIssue(long id) => new(id);
+
+    /// <summary>A GitHub comment builder with deterministic defaults.</summary>
+    /// <param name="id">GitHub's global id of the comment.</param>
+    /// <returns>A new builder.</returns>
+    public static GitHubCommentBuilder GitHubComment(long id) => new(id);
 }

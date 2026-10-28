@@ -18,6 +18,7 @@ using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Sync;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 
@@ -71,6 +72,14 @@ public sealed class FakeContextEngine : IContextEngine
     /// <summary>No map: every map call answers SND-CONTEXT-030.</summary>
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake runs no feeds.</summary>
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake keeps no record store.</summary>
+    public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Down());
 
     public ValueTask<Result<MapFilePreview>> PreviewMap(string path, ContextScope scope, CancellationToken cancellationToken) => NoMap<MapFilePreview>();
 

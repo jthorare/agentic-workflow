@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -11,14 +10,17 @@ using Aw.Kernel;
 namespace Aw.Connectors.Infrastructure.GitHub;
 
 /// <summary>
-/// Reads a repo's issue list (pull requests included) from the GitHub REST API (owned index spec §5.3): GET /repos/{o}/{r}/issues oldest change first, from the
-/// cursor's instant (inclusive), a page at a time by the Link header. A rate limit stops the run and comes back as a value with the reset time (never a sleep). The host rules
+/// Reads a repo's issue list (pull requests included), its comments and a pull request's detail from the GitHub REST API (owned index spec §5.3): GET /repos/{o}/{r}/issues oldest change first, from the
+/// cursor's instant (inclusive), a page at a time by the Link header; GET .../issues/comments repo-wide; GET .../pulls/{n} and .../pulls/{n}/files. A rate limit stops the run and comes back as a value with the reset time (never a sleep). The host rules
 /// are checked before the first request; a redirect is refused; the token goes only in the Authorization header and in no error.
 /// </summary>
 internal sealed partial class GitHubClient : IGitHubReader
 {
     private const string DefaultRoot = "https://api.github.com";
     private const int DefaultWaitSeconds = 60;
+    private const int MaxFilePages = 3;
+    private const int MaxIssueCommentPages = 10;
+    private const string TimeFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private readonly HttpClient _http;
     private readonly GitHubClientSettings _settings;
     private readonly IHostResolver _resolver;
@@ -45,6 +47,102 @@ internal sealed partial class GitHubClient : IGitHubReader
     public async ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(after);
+        var root = await Prepare(repo, cancellationToken).ConfigureAwait(false);
+        return root.IsError ? root.Error : await ReadIssues(root.Value, repo, after, limit, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<GitHubCommentPage>> Comments(string repo, DateTimeOffset since, DateTimeOffset until, CancellationToken cancellationToken)
+    {
+        var root = await Prepare(repo, cancellationToken).ConfigureAwait(false);
+        if (root.IsError)
+        {
+            return root.Error;
+        }
+
+        var from = Uri.EscapeDataString(since.UtcDateTime.ToString(TimeFormat, CultureInfo.InvariantCulture));
+        var url = new Uri($"{Base(root.Value)}/repos/{repo}/issues/comments?sort=updated&direction=asc&since={from}&per_page=100");
+        return await ReadComments(url, until, maxPages: int.MaxValue, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<GitHubCommentPage>> IssueComments(string repo, int number, CancellationToken cancellationToken)
+    {
+        var root = await Prepare(repo, cancellationToken).ConfigureAwait(false);
+        if (root.IsError)
+        {
+            return root.Error;
+        }
+
+        var url = new Uri(string.Create(CultureInfo.InvariantCulture, $"{Base(root.Value)}/repos/{repo}/issues/{number}/comments?per_page=100"));
+        return await ReadComments(url, DateTimeOffset.MaxValue, MaxIssueCommentPages, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<GitHubPullDetailRead>> PullRequest(string repo, int number, CancellationToken cancellationToken)
+    {
+        var root = await Prepare(repo, cancellationToken).ConfigureAwait(false);
+        if (root.IsError)
+        {
+            return root.Error;
+        }
+
+        var pull = new Uri(string.Create(CultureInfo.InvariantCulture, $"{Base(root.Value)}/repos/{repo}/pulls/{number}"));
+        var head = await Fetch(pull, cancellationToken).ConfigureAwait(false);
+        if (head.IsError)
+        {
+            return head.Error;
+        }
+
+        if (head.Value.RateLimitedUntil is { } limited)
+        {
+            return new GitHubPullDetailRead(Detail: null, limited);
+        }
+
+        if (head.Value.Body is not { ValueKind: JsonValueKind.Object } detail)
+        {
+            return ConnectorsErrors.BadReply.With("GitHub's pull request was not a JSON object.");
+        }
+
+        var paths = await ReadPaths(pull, cancellationToken).ConfigureAwait(false);
+        return paths.IsError
+            ? paths.Error
+            : paths.Value.RateLimitedUntil is { } until
+                ? new GitHubPullDetailRead(Detail: null, until)
+                : new GitHubPullDetailRead(GitHubWire.ReadPull(detail, paths.Value.Paths), RateLimitedUntil: null);
+    }
+
+    private async ValueTask<Result<(List<string> Paths, DateTimeOffset? RateLimitedUntil)>> ReadPaths(Uri pull, CancellationToken cancellationToken)
+    {
+        List<string> paths = [];
+        Uri? files = new(pull.AbsoluteUri + "/files?per_page=100");
+        for (var page = 0; files is not null && page < MaxFilePages; page++)
+        {
+            var step = await Fetch(files, cancellationToken).ConfigureAwait(false);
+            if (step.IsError)
+            {
+                return step.Error;
+            }
+
+            if (step.Value.RateLimitedUntil is { } until)
+            {
+                return (paths, until);
+            }
+
+            if (step.Value.Body is not { ValueKind: JsonValueKind.Array } array)
+            {
+                return ConnectorsErrors.BadReply.With("GitHub's file list was not a JSON array.");
+            }
+
+            paths.AddRange(array.EnumerateArray().Select(GitHubWire.ReadPath).OfType<string>());
+            files = step.Value.Next;
+        }
+
+        return (paths, null);
+    }
+
+    private async ValueTask<Result<Uri>> Prepare(string repo, CancellationToken cancellationToken)
+    {
         if (repo is null || !RepoName.IsMatch(repo))
         {
             return ConnectorsErrors.Invalid.With("The repo must be 'owner/name'.");
@@ -61,13 +159,10 @@ internal sealed partial class GitHubClient : IGitHubReader
             return root.Error;
         }
 
-        if (await CheckHost(root.Value, cancellationToken).ConfigureAwait(false) is { } refused)
-        {
-            return refused;
-        }
-
-        return await Read(root.Value, repo, after, limit, cancellationToken).ConfigureAwait(false);
+        return await CheckHost(root.Value, cancellationToken).ConfigureAwait(false) is { } refused ? refused : root.Value;
     }
+
+    private static string Base(Uri root) => root.AbsoluteUri.TrimEnd('/');
 
     private Result<Uri> Root()
     {
@@ -118,10 +213,10 @@ internal sealed partial class GitHubClient : IGitHubReader
             : ConnectorsErrors.HostRefused.With($"{root.DnsSafeHost} resolves to a private, loopback or link-local address; set context.sources.github.allowPrivateHost if that is intended.");
     }
 
-    private async ValueTask<Result<GitHubPullPage>> Read(Uri root, string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
+    private async ValueTask<Result<GitHubPullPage>> ReadIssues(Uri root, string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
     {
-        var since = Uri.EscapeDataString(after.UpdatedAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture));
-        Uri? url = new($"{root.AbsoluteUri.TrimEnd('/')}/repos/{repo}/issues?state=all&sort=updated&direction=asc&since={since}&per_page=100");
+        var since = Uri.EscapeDataString(after.UpdatedAt.UtcDateTime.ToString(TimeFormat, CultureInfo.InvariantCulture));
+        Uri? url = new($"{Base(root)}/repos/{repo}/issues?state=all&sort=updated&direction=asc&since={since}&per_page=100");
         List<GitHubIssue> items = [];
         while (url is not null)
         {
@@ -136,113 +231,60 @@ internal sealed partial class GitHubClient : IGitHubReader
                 return new GitHubPullPage(items, after.Advance(items), RateLimitedUntil: until);
             }
 
-            items.AddRange(step.Value.Items.Where(after.Admits));
+            if (step.Value.Body is not { ValueKind: JsonValueKind.Array } array)
+            {
+                return ConnectorsErrors.BadReply.With("GitHub's issue list was not a JSON array.");
+            }
+
+            var read = array.EnumerateArray().Select(GitHubWire.ReadIssue).ToList();
+            if (read.Contains(null))
+            {
+                return ConnectorsErrors.BadReply.With("An entry of GitHub's issue list lacked a field the connector reads.");
+            }
+
+            items.AddRange(read.OfType<GitHubIssue>().Where(after.Admits));
             url = items.Count >= limit ? null : step.Value.Next;
         }
 
         return new GitHubPullPage(items, after.Advance(items), RateLimitedUntil: null);
     }
 
-    private async ValueTask<Result<Step>> Fetch(Uri url, CancellationToken cancellationToken)
+    private async ValueTask<Result<GitHubCommentPage>> ReadComments(Uri first, DateTimeOffset until, int maxPages, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Accept.ParseAdd("application/vnd.github+json");
-        request.Headers.UserAgent.ParseAdd("agentic-workflow-sindri");
-        _ = request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
-        if (_settings.Token is { Length: > 0 } token)
+        List<GitHubComment> items = [];
+        var url = first;
+        for (var page = 0; url is not null && page < maxPages; page++)
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
-
-        try
-        {
-            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            return await Interpret(response, url, cancellationToken).ConfigureAwait(false);
-        }
-        catch (HttpRequestException e)
-        {
-            return ConnectorsErrors.Unreachable.With($"GitHub at {url.Host} could not be reached ({e.HttpRequestError}).");
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return ConnectorsErrors.Unreachable.With($"GitHub at {url.Host} did not answer in time.");
-        }
-    }
-
-    private async ValueTask<Result<Step>> Interpret(HttpResponseMessage response, Uri url, CancellationToken cancellationToken)
-    {
-        var status = (int)response.StatusCode;
-        if (status is >= 300 and < 400)
-        {
-            return ConnectorsErrors.RedirectRefused.With(string.Create(CultureInfo.InvariantCulture, $"GitHub at {url.Host} answered {status}; redirects are never followed."));
-        }
-
-        if (status == 200)
-        {
-            return await Parse(response, url, cancellationToken).ConfigureAwait(false);
-        }
-
-        if (IsRateLimit(response))
-        {
-            return new Step(Items: [], Next: null, RateLimitedUntil: RateLimitReset(response));
-        }
-
-        return status switch
-        {
-            401 => ConnectorsErrors.Unauthorized.With("GitHub rejected the token; check context.sources.github.token (a read-only token with Issues, Pull requests and Metadata read)."),
-            403 => ConnectorsErrors.AccessDenied.With("GitHub refused the request; the token may lack read access to the repo."),
-            404 => ConnectorsErrors.NotFound.With("GitHub has no such repo, or the token cannot see it."),
-            _ => ConnectorsErrors.BadReply.With(string.Create(CultureInfo.InvariantCulture, $"GitHub answered {status}.")),
-        };
-    }
-
-    private static async ValueTask<Result<Step>> Parse(HttpResponseMessage response, Uri url, CancellationToken cancellationToken)
-    {
-        var next = GitHubWire.NextLink(response);
-        if (next is not null && !GitHubWire.SameOrigin(next, url))
-        {
-            return ConnectorsErrors.BadReply.With("GitHub's next page is on another host; it is not followed.");
-        }
-
-        var body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            var step = await Fetch(url, cancellationToken).ConfigureAwait(false);
+            if (step.IsError)
             {
-                return ConnectorsErrors.BadReply.With("GitHub's issue list was not a JSON array.");
+                return step.Error;
             }
 
-            var issues = document.RootElement.EnumerateArray().Select(GitHubWire.ReadIssue).ToList();
-            return issues.Contains(null)
-                ? ConnectorsErrors.BadReply.With("An entry of GitHub's issue list lacked a field the connector reads.")
-                : new Step([.. issues.OfType<GitHubIssue>()], next, RateLimitedUntil: null);
-        }
-        catch (JsonException)
-        {
-            return ConnectorsErrors.BadReply.With("GitHub's issue list was not valid JSON.");
-        }
-    }
+            if (step.Value.RateLimitedUntil is { } limited)
+            {
+                return new GitHubCommentPage(items, limited);
+            }
 
-    private static bool IsRateLimit(HttpResponseMessage response)
-        => response.StatusCode == HttpStatusCode.TooManyRequests
-            || (response.StatusCode == HttpStatusCode.Forbidden && (GitHubWire.Header(response, "x-ratelimit-remaining") == "0" || GitHubWire.Header(response, "retry-after") is not null));
+            if (step.Value.Body is not { ValueKind: JsonValueKind.Array } array)
+            {
+                return ConnectorsErrors.BadReply.With("GitHub's comment list was not a JSON array.");
+            }
 
-    private DateTimeOffset RateLimitReset(HttpResponseMessage response)
-    {
-        var now = _clock.GetUtcNow();
-        if (int.TryParse(GitHubWire.Header(response, "retry-after"), NumberStyles.None, CultureInfo.InvariantCulture, out var seconds))
-        {
-            return now.AddSeconds(seconds);
+            var read = array.EnumerateArray().Select(GitHubWire.ReadComment).ToList();
+            if (read.Contains(null))
+            {
+                return ConnectorsErrors.BadReply.With("An entry of GitHub's comment list lacked a field the connector reads.");
+            }
+
+            var comments = read.OfType<GitHubComment>().ToList();
+            items.AddRange(comments.Where(c => c.UpdatedAt <= until));
+            url = comments.Exists(c => c.UpdatedAt > until) ? null : step.Value.Next;
         }
 
-        return long.TryParse(GitHubWire.Header(response, "x-ratelimit-reset"), NumberStyles.None, CultureInfo.InvariantCulture, out var unix)
-            ? DateTimeOffset.FromUnixTimeSeconds(unix)
-            : now.AddSeconds(DefaultWaitSeconds);
+        return new GitHubCommentPage(items, RateLimitedUntil: null);
     }
 
     [GeneratedRegex("^(?!\\.{1,2}/)(?!.*/\\.{1,2}$)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
     private static partial Regex RepoName { get; }
-
-    private sealed record Step(IReadOnlyList<GitHubIssue> Items, Uri? Next, DateTimeOffset? RateLimitedUntil);
 }

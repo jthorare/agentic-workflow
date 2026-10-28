@@ -79,6 +79,18 @@
       "description": "Records that Sindri is alive."
     },
     {
+      "name": "index-sync",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Pulls new records from each source into the index."
+    },
+    {
       "name": "phantom",
       "every": "5s",
       "paused": false,

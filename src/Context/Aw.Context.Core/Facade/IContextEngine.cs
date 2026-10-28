@@ -5,6 +5,7 @@ using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.ScopeGraph;
+using Aw.Context.Core.Sync;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Facade;
@@ -14,7 +15,7 @@ namespace Aw.Context.Core.Facade;
 /// Core records only. Sindri passes the approved profile's 'context:' section, its repos and the caller on every call;
 /// the engine keeps no profile of its own.
 /// </summary>
-public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts
+public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts, IIndexSync
 {
     /// <summary>Validates a profile's 'context:' section against the profile's repos and applies its defaults.</summary>
     /// <param name="section">The section, or null when the profile has none.</param>

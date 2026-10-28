@@ -1,4 +1,3 @@
-#pragma warning disable MA0182 // BuildMapService takes it once the store adapter is registered (no host builds an IRecordStore yet)
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
@@ -13,6 +12,9 @@ internal sealed record MapRecordSources(IRecordStore Records, ICodeSymbolSource 
 {
     /// <summary>Most resolved paths a pull request keeps as edges; a pull request with more has none.</summary>
     internal const int TouchCap = 50;
+
+    /// <summary>The names of directory docs until 'context.docs.directoryNames' is a profile key (map structure spec §11.2).</summary>
+    internal static IReadOnlyList<string> DirectoryNames { get; } = ["AGENTS.md", "README.md", "CONTEXT.md"];
 
     private const int ListPage = 1000;
 

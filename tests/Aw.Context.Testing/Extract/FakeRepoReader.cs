@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
@@ -28,6 +31,31 @@ public sealed class FakeRepoReader(ContextRepo known, string head, IReadOnlyDict
     {
         ArgumentNullException.ThrowIfNull(path);
         return ValueTask.FromResult<Result<string>>(Knows(repo) && commit == head && !repo.Denies(path) && files.TryGetValue(path, out var text) ? text : Unreadable);
+    }
+
+    /// <summary>The blob id git gives a file of this text: the SHA-1 of "blob &lt;length&gt;\0" and the UTF-8 bytes, lower-case hex.</summary>
+    /// <param name="text">The file's text.</param>
+    /// <returns>The blob id.</returns>
+    public static string BlobId(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var body = Encoding.UTF8.GetBytes(text);
+#pragma warning disable CA5350 // why: git names a blob by the SHA-1 of its header and bytes; this is that name, not a security use
+        return Convert.ToHexStringLower(SHA1.HashData([.. Encoding.ASCII.GetBytes(string.Create(CultureInfo.InvariantCulture, $"blob {body.Length}\0")), .. body]));
+#pragma warning restore CA5350
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        if (!Knows(repo) || commit != head)
+        {
+            return ValueTask.FromResult<Result<IReadOnlyDictionary<string, string>>>(Unreadable);
+        }
+
+        var ids = paths.Distinct(StringComparer.Ordinal).Where(p => !repo.Denies(p) && files.ContainsKey(p)).ToDictionary(p => p, p => BlobId(files[p]), StringComparer.Ordinal);
+        return ValueTask.FromResult(Results.Success<IReadOnlyDictionary<string, string>>(ids));
     }
 
     /// <summary>Tells the fake which commits exist and the answers its <see cref="Changes"/> gives (any other pair of known commits has no merge base).</summary>

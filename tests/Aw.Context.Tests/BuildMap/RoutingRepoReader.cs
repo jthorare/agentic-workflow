@@ -16,6 +16,9 @@ internal sealed class RoutingRepoReader(IReadOnlyDictionary<string, IRepoReader>
     public ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken) =>
         For(repo)?.Read(repo, commit, path, cancellationToken) ?? Missing<string>();
 
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken) =>
+        For(repo)?.BlobIds(repo, commit, paths, cancellationToken) ?? Missing<IReadOnlyDictionary<string, string>>();
+
     private IRepoReader? For(ContextRepo repo) => readers.GetValueOrDefault(repo.Name.Value);
 
     private static ValueTask<Result<T>> Missing<T>() => ValueTask.FromResult<Result<T>>(ContextErrors.ExtractionUnreadable.With("no such repo"));

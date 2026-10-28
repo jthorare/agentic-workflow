@@ -29,6 +29,7 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
     private int _removedTouches;
     private int _overCap;
     private int _overCapPaths;
+    private readonly List<RolledRecord> _overflow = [];
 
     /// <summary>Reads the docs, then the tracker records.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -62,7 +63,8 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
         var map = new ExtractedMap(
             [.. _nodes.Values.OrderBy(n => n.Key.Value, StringComparer.Ordinal)],
             [.. _edges.Values.OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal)]);
-        return new MapRecordReading(map, stamp, Notes(stamp));
+        var (notes, degraded) = Notes(stamp);
+        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
     }
 
     private async ValueTask<Error?> Docs(MapRepoFiles repo, CancellationToken cancellationToken)
@@ -86,7 +88,7 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
                     return failed;
                 }
 
-                _ = Emit(doc.Key, node.Key, targets);
+                _ = Emit(doc.Key, node, targets);
             }
         }
 
@@ -107,9 +109,10 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
             return failed;
         }
 
-        if (Links(record, from) + Emit(record.Key, from, targets) > 0)
+        var node = Node(record, from);
+        if (Links(record, from) + Emit(record.Key, node, targets) > 0)
         {
-            _ = _nodes.TryAdd(from.Value, Node(record, from));
+            _ = _nodes.TryAdd(from.Value, node);
         }
 
         return null;
@@ -226,17 +229,18 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
         }
     }
 
-    // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none (the per-feature roll-up is the next PR) and is counted.
-    private int Emit(RecordKey evidence, NodeKey from, HashSet<(string Repo, string Path)> targets)
+    // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known.
+    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets)
     {
         if (targets.Count > MapRecordSources.TouchCap)
         {
             _overCap++;
             _overCapPaths += targets.Count;
+            _overflow.Add(new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]));
             return 0;
         }
 
-        return targets.OrderBy(t => t.Path, StringComparer.Ordinal).ThenBy(t => t.Repo, StringComparer.Ordinal).Count(t => AddCode(from, t.Path, evidence));
+        return targets.OrderBy(t => t.Path, StringComparer.Ordinal).ThenBy(t => t.Repo, StringComparer.Ordinal).Count(t => AddCode(node.Key, t.Path, evidence));
     }
 
     private bool AddCode(NodeKey from, string path, RecordKey evidence) =>
@@ -263,25 +267,31 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
 
     private static GraphNode Node(StoredRecord record, NodeKey key) => new(key, record.Title, Provenance.Deterministic, At: record.UpdatedAt);
 
-    private List<string> Notes(long stamp)
+    // Every line of the build report's record section; only the docs older than HEAD, unresolved citations and records over the file cap also go in the second list, which is what the report calls degraded. Docs not yet synced, removed files and zero counts are notes.
+    private (List<string> All, List<string> Degraded) Notes(long stamp)
     {
-        var notes = new List<string> { Line($"records: as of stamp {stamp}") };
-        AddIf(notes, _notSynced, n => Line($"records: {n} docs not yet synced"));
-        AddIf(notes, _older, n => Line($"records: {n} docs older than HEAD"));
+        var all = new List<string> { Line($"records: as of stamp {stamp}") };
+        var degraded = new List<string>();
+        AddIf(all, degraded, _notSynced, n => Line($"records: {n} docs not yet synced"), stale: false);
+        AddIf(all, degraded, _older, n => Line($"records: {n} docs older than HEAD"), stale: true);
         var resolved = _cited.GetValueOrDefault(CitationOutcome.Resolved);
         var missing = _cited.GetValueOrDefault(CitationOutcome.Missing);
         var ambiguous = _cited.GetValueOrDefault(CitationOutcome.Ambiguous);
-        AddIf(notes, resolved + missing + ambiguous, _ => Line($"citations: {resolved} resolved, {missing + ambiguous} unresolved ({missing} missing, {ambiguous} ambiguous)"));
-        AddIf(notes, _removedTouches, n => Line($"touched files since removed: {n}"));
-        AddIf(notes, _overCap, n => Line($"records over the file cap: {n} ({_overCapPaths} paths)"));
-        return notes;
+        AddIf(all, degraded, resolved + missing + ambiguous, _ => Line($"citations: {resolved} resolved, {missing + ambiguous} unresolved ({missing} missing, {ambiguous} ambiguous)"), stale: missing + ambiguous > 0);
+        AddIf(all, degraded, _removedTouches, n => Line($"touched files since removed: {n}"), stale: false);
+        AddIf(all, degraded, _overCap, n => Line($"records over the file cap: {n} ({_overCapPaths} paths)"), stale: true);
+        return (all, degraded);
     }
 
-    private static void AddIf(List<string> notes, int count, Func<int, string> line)
+    private static void AddIf(List<string> all, List<string> degraded, int count, Func<int, string> line, bool stale)
     {
         if (count > 0)
         {
-            notes.Add(line(count));
+            all.Add(line(count));
+            if (stale)
+            {
+                degraded.Add(all[^1]);
+            }
         }
     }
 

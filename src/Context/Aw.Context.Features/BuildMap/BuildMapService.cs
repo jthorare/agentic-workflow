@@ -21,7 +21,7 @@ namespace Aw.Context.Features.BuildMap;
 /// 'degraded: clusters', not an error.
 /// </summary>
 internal sealed partial class BuildMapService(
-    IRepoReader repos,
+    MapInputs inputs,
     IClusterSource clusterSource,
     MapNamers namers,
     MapBuildGate gate,
@@ -60,6 +60,7 @@ internal sealed partial class BuildMapService(
         (string Commit, ContextRepoName Name)? primary = null;
         var heads = new List<MapHead>(mappedRepos.Count);
         var dropped = new List<RoleDropped>();
+        var extractions = new List<(ContextRepo Repo, RepoExtraction Read)>(mappedRepos.Count);
         foreach (var repo in mappedRepos)
         {
             var one = await Extract(progress, settings, repo, pins, cancellationToken).ConfigureAwait(false);
@@ -71,13 +72,18 @@ internal sealed partial class BuildMapService(
             found = found.Plus(one.Value.Map);
             degraded.AddRange(one.Value.Degraded.Except(degraded, StringComparer.Ordinal));
             dropped.AddRange(one.Value.Dropped);
+            extractions.Add((repo, one.Value));
             primary ??= (one.Value.Commit, repo.Name);
             heads.Add(new MapHead(repo.Name, one.Value.Commit, await OnDefault(repo, one.Value.Commit, cancellationToken).ConfigureAwait(false)));
         }
 
         found = WithStructure(found);
+        // The records come after the homes are assigned: a record over the file cap rolls up to the features its files are homed in.
+        var (records, recordDegraded, recordNotes) = await Records(settings, extractions, found, cancellationToken).ConfigureAwait(false);
+        found = found.Plus(records);
+        degraded.AddRange(recordDegraded);
         // why: mappedRepos is not empty, so the loop set the primary
-        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads, settings) { Dropped = dropped };
+        return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads, settings) { Dropped = dropped, RecordNotes = recordNotes };
     }
 
     // THE SEAM for the structure steps that need every repo's files at once (map structure spec §3): S4's FeatureRollup.Apply goes here, over the merged extraction (S3's
@@ -108,12 +114,14 @@ internal sealed partial class BuildMapService(
 
         var concepts = await namers.Concepts.Run(read.Settings, joined, [.. mappedRepos.SelectMany(r => r.Concepts)], mappedRepos, cancellationToken).ConfigureAwait(false);
         var draft = await store.SaveDraft(new MapImport(read.Name, read.Commit, concepts.Graph, undo, read.Heads) { Ruleset = ruleset, Dropped = read.Dropped, Checks = checks.Stored }, at, cancellationToken).ConfigureAwait(false);
-        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found, mappedRepos.Select(r => r.Name.Value).ToList()), [.. read.Degraded, .. checks.Notes, .. concepts.Notes], read.Heads) { Structure = replaced, Checks = measured, Notes = concepts.ReportNotes };
+        return draft.IsError ? draft.Error : new MapBuildReport(draft.Value, Proposed(kept, read.Found, mappedRepos.Select(r => r.Name.Value).ToList()), [.. read.Degraded, .. checks.Notes, .. concepts.Notes], read.Heads) { Structure = replaced, Checks = measured, Notes = [.. concepts.ReportNotes, .. read.RecordNotes] };
     }
 
     private sealed record Reading(ExtractedMap Found, IReadOnlyList<string> Degraded, ContextRepoName Name, string Commit, IReadOnlyList<MapHead> Heads, ContextSettings Settings)
     {
         public IReadOnlyList<RoleDropped> Dropped { get; init; } = [];
+
+        public IReadOnlyList<string> RecordNotes { get; init; } = [];
     }
 
     // Whether the default branch holds the commit the build read; a checkout whose default ref can't be read counts as no (the repo is then not waited on), never a failed build.
@@ -151,7 +159,7 @@ internal sealed partial class BuildMapService(
         // The model names the home features (by path, never picking members); one that couldn't answer leaves them their path names. The clusters are tags, named from their files.
         var named = home.WithLabels(labels.IsError ? [] : labels.Value.Labels);
         var tags = ClusterFeatures.Propose(repo, clusters, [], extracted);
-        return new RepoExtraction(extracted.Plus(named.Map).Plus(tags), commit, Degraded(clusters, labels, timedOut), await Dropped(repo, commit, cancellationToken).ConfigureAwait(false));
+        return new RepoExtraction(extracted.Plus(named.Map).Plus(tags), commit, Degraded(clusters, labels, timedOut), await Dropped(repo, commit, cancellationToken).ConfigureAwait(false), paths);
     }
 
     // What the repo's ignored roles dropped from the tracked files (issue 1161); an unreadable listing counts nothing, never a failed build.
@@ -162,7 +170,7 @@ internal sealed partial class BuildMapService(
             return [];
         }
 
-        var tracked = await repos.ListTracked(repo, commit, cancellationToken).ConfigureAwait(false);
+        var tracked = await inputs.Repos.ListTracked(repo, commit, cancellationToken).ConfigureAwait(false);
         return tracked.IsError ? [] : RoleCounter.Dropped(repo, tracked.Value);
     }
 
@@ -180,8 +188,8 @@ internal sealed partial class BuildMapService(
     // HEAD's tree minus the denied paths, and the text of each file the extractor may read.
     private async ValueTask<Result<(string Commit, List<RepoFile> Files, IReadOnlyList<string> Paths)>> ReadFiles(IProgress<string>? progress, ContextRepo repo, (RecognizerSet Recognizers, IReadOnlyList<string> SchemaGlobs) wants, CancellationToken cancellationToken)
     {
-        var head = await repos.Head(repo, cancellationToken).ConfigureAwait(false);
-        var listed = head.IsError ? head.Error : await repos.ListFiles(repo, head.Value, cancellationToken).ConfigureAwait(false);
+        var head = await inputs.Repos.Head(repo, cancellationToken).ConfigureAwait(false);
+        var listed = head.IsError ? head.Error : await inputs.Repos.ListFiles(repo, head.Value, cancellationToken).ConfigureAwait(false);
         if (head.IsError || listed.IsError)
         {
             return head.IsError ? head.Error : listed.Error;
@@ -191,7 +199,7 @@ internal sealed partial class BuildMapService(
         var files = new List<RepoFile>(wanted.Count);
         foreach (var path in wanted)
         {
-            var text = await repos.Read(repo, head.Value, path, cancellationToken).ConfigureAwait(false);
+            var text = await inputs.Repos.Read(repo, head.Value, path, cancellationToken).ConfigureAwait(false);
             if (text.IsError)
             {
                 return text.Error;
@@ -256,7 +264,7 @@ internal sealed partial class BuildMapService(
 
     private static List<ProposedNode> Proposed(GraphSnapshot current, ExtractedMap found, List<string> repoNames) =>
     [
-        .. found.Nodes.Where(n => n.Key.Kind != NodeKind.Code && n is not { Provenance: Provenance.Deterministic, Key.Kind: NodeKind.Feature } && current.Resolve(n.Key) is null).OrderBy(n => n.Key.Value, StringComparer.Ordinal)
+        .. found.Nodes.Where(n => n.Key.Kind is not (NodeKind.Code or NodeKind.Record) && n is not { Provenance: Provenance.Deterministic, Key.Kind: NodeKind.Feature } && current.Resolve(n.Key) is null).OrderBy(n => n.Key.Value, StringComparer.Ordinal)
             .Select(n => new ProposedNode(n.Key, n.Provenance, n.Confidence,
                 Files(found, n, repoNames))),
     ];
@@ -275,5 +283,5 @@ internal sealed partial class BuildMapService(
         return prefix is not null && NodeKey.TryFrom("code:" + record[prefix.Length..], out var key) ? key : null;
     }
 
-    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded, IReadOnlyList<RoleDropped> Dropped);
+    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded, IReadOnlyList<RoleDropped> Dropped, IReadOnlyList<string> Paths);
 }

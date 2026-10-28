@@ -17,6 +17,7 @@ using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.MapHeads;
@@ -55,6 +56,10 @@ internal sealed class ContextEngine(
         sources.Refresh(scope, cancellationToken);
 
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) => sources.Sync(source, scope, cancellationToken);
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => sources.Tick(scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => sources.Progress(scope, cancellationToken);
 
     public ValueTask<Result<ProbeRun>> EvalProbes(string? file, Func<ProbeCase, CancellationToken, ValueTask<Result<ContextResult>>> ask, CancellationToken cancellationToken) =>
         eval.Probes(file, ask, cancellationToken);

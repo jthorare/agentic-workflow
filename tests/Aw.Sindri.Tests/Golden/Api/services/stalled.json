@@ -61,6 +61,18 @@
       "description": "Starts a sync for a context source that has never synced."
     },
     {
+      "name": "index-sync",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Pulls new records from each source into the index."
+    },
+    {
       "name": "pr-watch",
       "every": "5s",
       "paused": false,

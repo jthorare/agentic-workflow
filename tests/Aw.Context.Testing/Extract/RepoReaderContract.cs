@@ -192,6 +192,77 @@ public abstract class RepoReaderContract
         Expect.That(result.IsError && result.Error.Code == "SND-CONTEXT-048", test, result.IsError ? result.Error.Code : "an answer");
     }
 
+    /// <summary>Each present path answers its git blob id, the same id git gives the committed text.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task BlobIds_answers_the_git_blob_id_of_each_present_path()
+    {
+        const string test = nameof(BlobIds_answers_the_git_blob_id_of_each_present_path);
+        var reader = CreateReader(out var repo, out var commit);
+
+        var ids = Expect.Ok(await reader.BlobIds(repo, commit, ["README.md", "src/commands/registry.ts"], None), test);
+
+        Expect.That(ids.Count == 2, test, $"answered {ids.Count} paths");
+        Expect.That(ids["README.md"] == FakeRepoReader.BlobId(Files["README.md"]), test, "README.md's id is not the blob id of its text");
+        Expect.That(ids["src/commands/registry.ts"] == FakeRepoReader.BlobId(Files["src/commands/registry.ts"]), test, "registry.ts's id is not the blob id of its text");
+    }
+
+    /// <summary>A missing path, a directory and a path the repo denies are left out; the others are still answered.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task BlobIds_leaves_out_a_missing_path_a_directory_and_a_denied_path()
+    {
+        const string test = nameof(BlobIds_leaves_out_a_missing_path_a_directory_and_a_denied_path);
+        var reader = CreateReader(out var repo, out var commit);
+        var custom = repo with { DenyPaths = [.. repo.DenyPaths, "docs/**"] };
+
+        var ids = Expect.Ok(await reader.BlobIds(custom, commit, ["README.md", "src/missing.ts", "src/commands", "docs/guide.md", ".env"], None), test);
+
+        Expect.That(ids.Keys.SequenceEqual(["README.md"], StringComparer.Ordinal), test, $"answered {string.Join(", ", ids.Keys)}");
+    }
+
+    /// <summary>A path inside a directory is found in the same read as a top-level one.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task BlobIds_finds_a_path_under_a_directory()
+    {
+        const string test = nameof(BlobIds_finds_a_path_under_a_directory);
+        var reader = CreateReader(out var repo, out var commit);
+
+        var ids = Expect.Ok(await reader.BlobIds(repo, commit, ["docs/guide.md"], None), test);
+
+        Expect.That(ids.Count == 1 && ids["docs/guide.md"] == FakeRepoReader.BlobId(Files["docs/guide.md"]), test, $"answered {string.Join(", ", ids.Keys)}");
+    }
+
+    /// <summary>No paths is an empty answer, even for a commit the repo lacks.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task BlobIds_of_no_paths_is_empty()
+    {
+        const string test = nameof(BlobIds_of_no_paths_is_empty);
+        var reader = CreateReader(out var repo, out var commit);
+
+        var ids = Expect.Ok(await reader.BlobIds(repo, commit, [], None), test);
+
+        Expect.That(ids.Count == 0, test, $"answered {ids.Count} paths");
+    }
+
+    /// <summary>A missing repo or a commit it lacks is SND-CONTEXT-048.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task BlobIds_on_a_missing_repo_or_commit_is_unreadable()
+    {
+        const string test = nameof(BlobIds_on_a_missing_repo_or_commit_is_unreadable);
+        var reader = CreateReader(out var repo, out _);
+        var missing = new ContextRepo(ContextRepoName.From("nowhere"), Path.Combine(Path.GetTempPath(), "aw-no-such-checkout"));
+
+        var noRepo = await reader.BlobIds(missing, "0123456789abcdef0123456789abcdef01234567", ["README.md"], None);
+        var noCommit = await reader.BlobIds(repo, "0123456789abcdef0123456789abcdef01234567", ["README.md"], None);
+
+        Expect.That(noRepo.IsError && noCommit.IsError, test, "an unreadable repo or commit was answered");
+        Expect.That(noRepo.Error.Code == "SND-CONTEXT-048" && noCommit.Error.Code == "SND-CONTEXT-048", test, $"codes were {noRepo.Error.Code}, {noCommit.Error.Code}");
+    }
+
     /// <summary>A reader with a repo that holds the history of <see cref="ChangeWorld"/>.</summary>
     /// <param name="repo">The repo.</param>
     /// <param name="world">The commits and what they changed.</param>

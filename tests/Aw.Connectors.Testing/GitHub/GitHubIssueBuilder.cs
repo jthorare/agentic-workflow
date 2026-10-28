@@ -11,6 +11,7 @@ public sealed class GitHubIssueBuilder
     private bool _pull;
     private string _body = "Steps to reproduce.";
     private string _state = "open";
+    private int _comments;
 
     internal GitHubIssueBuilder(long id)
     {
@@ -43,6 +44,15 @@ public sealed class GitHubIssueBuilder
         return this;
     }
 
+    /// <summary>Sets the comment count the list reports (the comments themselves are added to the fake).</summary>
+    /// <param name="comments">The count.</param>
+    /// <returns>This builder.</returns>
+    public GitHubIssueBuilder WithComments(int comments)
+    {
+        _comments = comments;
+        return this;
+    }
+
     /// <summary>Marks it closed.</summary>
     /// <returns>This builder.</returns>
     public GitHubIssueBuilder Closed()
@@ -66,7 +76,7 @@ public sealed class GitHubIssueBuilder
         _updatedAt,
         _state == "closed" ? _updatedAt : null,
         ["bug"],
-        3);
+        _comments);
 
     /// <summary>Builds the entry.</summary>
     /// <param name="builder">The builder.</param>

@@ -114,6 +114,26 @@
 #                                  writes the same rows (INSERT OR IGNORE). The item and the instance must exist (see 'workflows'): the
 #                                  frame opens the instance and reads its picks by address. Needs jq and sqlite3 or python3.
 #
+#   sindri-ui-fixture.sh model-picks-run picked|escalated|unpriced|picking
+#                                  one workflow instance whose Model picks table (the instance frame; model-pick spec section 6.1,
+#                                  issue #1452) shows that state, made by a real agent run with the pick on (run after 'sessions up'; each
+#                                  call is its own item, so run it once per state). It does what agent-run does (the agent-fixture repo, a
+#                                  stub claude-code, the recipe recipes/dev/workflow.dev-agent-pick.yaml, a restart) and also writes
+#                                  workflow.agent.pick "on" and a models list into the profile, approves it as the owner (the approval
+#                                  that shows the Jev notice is the pick's consent), and restarts the control plane with AW_SINDRI_JUDGE
+#                                  on a stub judge that answers m1 as Jev. The stub claude writes a transcript under CLAUDE_CONFIG_DIR
+#                                  (the usage reader reads it, so the run has tokens on the model it ran on) and reports the recipe's
+#                                  payload fact. picked: models [claude-haiku-4-5, claude-sonnet-4-5], one good run on Haiku, chosen by Jev.
+#                                  escalated: the same models, but the stub sends a report that is not JSON twice on Haiku (the second bad
+#                                  report ends its session, SND-WF-008), so the engine retries once on Sonnet under the -e1 launch id
+#                                  (M-6) and that run reports well. unpriced: as escalated with [claude-haiku-4-5, fixture-unpriced-model],
+#                                  so the retry runs on a model the price table lacks ("cost unknown" on its row, "cost partial" on the
+#                                  total). picking: the judge stub holds its answer, so the instance sits at "choosing model..." for the
+#                                  length of the judge call, 40 s (the engine's timeout), and then the rules pick. Prints the item id on
+#                                  stdout; waits (FIXTURE_AGENT_WAIT s, default 120) for the rows the state needs in the ledger
+#                                  (model.picking for picking; model.picked and session.usage, twice for the retry, for the others).
+#                                  Exit 1 when they do not come in time; needs jq and git.
+#
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
 # FIXTURE_DESK_TIMEOUT (up only): writes workflow.deskTimeout into the fixture profile, the floor of every desk Step timeout (park-timeout).
 # FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
@@ -334,7 +354,7 @@ fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one f
       jq -nc --arg id "$2" '{id: $id}' > "$dir/$2.item.json" || return
       printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
       printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
-    *dev-agent-hold)
+    *dev-agent-hold | *dev-agent-pick)
       # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
       jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
       printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
@@ -719,6 +739,8 @@ sessions_export() {
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
   # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
   if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
+  # model-picks-run's judge stub stays the judge of every later restart (the real judge would call a model provider).
+  if [ -x "$(agent_dir)/stub-judge/judge" ]; then export AW_SINDRI_JUDGE="$(agent_dir)/stub-judge/judge"; fi
 }
 
 sessions_restart() {
@@ -951,6 +973,116 @@ model_picks() { # $1 state, $2 item, $3 instance
   printf '%s\n' "$instance"
 }
 
+# --- model-picks-run: the Model picks table's states from a real agent run with the pick on (issue #1452) ---
+PICK_RECIPE="workflow.dev-agent-pick"
+PICK_CHEAP="claude-haiku-4-5"
+PICK_STRONG="claude-sonnet-4-5"
+PICK_UNPRICED="fixture-unpriced-model"   # no prefix of Budgets' price table covers it
+
+# workflow.agent gets pick "on" (quoted, so YAML keeps a word) and the models the state needs; $2 is the list, cheapest first.
+pick_profile_set() {
+  local profile="$1" list="$2" first="${2%%,*}"
+  awk -v e="  agent: { target: claude-code, pick: \"on\", models: { claude-code: { list: [$list], default: $first } } }" \
+    '/^  agent:/ { print e; next } { print }' "$profile" > "$profile.new" && mv "$profile.new" "$profile"
+}
+
+# $1 dir, $2 the model the claude stub refuses (empty: none), $3 state. The stubs: the claude one reports and writes its transcript, the judge one answers m1 or holds.
+pick_stubs() {
+  local dir="$1" refuse="$2" state="$3"
+  mkdir -p "$dir/stub-bin-pick" "$dir/stub-judge" || return
+  {
+    printf '#!/bin/sh\nSINDRI_BIN=%q\nREFUSE=%q\nCHEAP=%q\n' "${SINDRI:-sindri}" "$refuse" "$PICK_CHEAP"
+    cat <<'EOF'
+# The fixture's claude-code: finds its model and session id in its argv, writes a transcript the usage reader counts, and reports the
+# recipe's payload fact. On the model it is told to refuse it sends a report that is not JSON twice; the second one ends the session.
+model="" sid="" seed="" prev=""
+for a in "$@"; do
+  case "$prev" in --model) model=$a ;; --session-id) sid=$a ;; esac
+  case "$a" in *"workflow complete"*) seed=$a ;; esac
+  prev=$a
+done
+if [ -z "$sid" ]; then
+  sid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)
+  mkdir -p "$AW_SINDRI_HOME/launches" && printf '%s\n' "$sid" > "$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.session-id"
+fi
+if [ -n "$REFUSE" ] && [ "$model" = "$REFUSE" ]; then in=6000; out=2000
+elif [ "$model" = "$CHEAP" ]; then in=30000; out=11000
+else in=24000; out=7000; fi
+projects="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/fixture"
+mkdir -p "$projects" && printf '{"type":"assistant","timestamp":"%s","message":{"id":"msg_%s","model":"%s","usage":{"input_tokens":%s,"output_tokens":%s,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}\n' \
+  "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" "${AW_SINDRI_LAUNCH:-launch}" "$model" "$in" "$out" > "$projects/$sid.jsonl"
+run=$(printf '%s' "$seed" | sed -n 's/.*workflow complete [^ ]* --run \([^ ]*\) .*/\1/p')
+folder="$AW_SINDRI_RUN_DIR/.sindri-out"
+mkdir -p "$folder"
+# Every call's output goes to stub.log in the run folder, so a proof can show what serve answered.
+report() { echo "--- workflow complete $1" >> "$AW_SINDRI_RUN_DIR/stub.log"; $SINDRI_BIN workflow complete "$AW_SINDRI_INSTANCE" --run "$run" --outcome done --output "fact:resolution=$1" >> "$AW_SINDRI_RUN_DIR/stub.log" 2>&1; echo "exit $?" >> "$AW_SINDRI_RUN_DIR/stub.log"; }
+if [ -n "$REFUSE" ] && [ "$model" = "$REFUSE" ]; then
+  # The bad report lives outside .sindri-out: a file there would let the engine's recovery prove the outcome when the session ends, and the refusal would never count.
+  printf 'not json\n' > "$AW_SINDRI_RUN_DIR/bad-report"; report "$AW_SINDRI_RUN_DIR/bad-report"; report "$AW_SINDRI_RUN_DIR/bad-report"
+else
+  printf '{"summary":"Fixture report"}\n' > "$folder/resolution"; report "$folder/resolution"
+fi
+exec sleep 86400
+EOF
+  } > "$dir/stub-bin-pick/claude" && chmod 755 "$dir/stub-bin-pick/claude" || return
+  # The judge: Jev picks the first candidate. While judge-hold says hold it does not answer in time (the picking state).
+  {
+    printf '#!/bin/sh\nHOLD=%q\n' "$dir/stub-judge/judge-hold"
+    cat <<'EOF'
+cat > /dev/null
+[ "$(cat "$HOLD" 2>/dev/null)" != hold ] || exec sleep 60
+printf '{"decision":"m1","model":"jev","confidence":0.9,"id":"JD-fixture-pick","reasonCode":"decided"}\n'
+EOF
+  } > "$dir/stub-judge/judge" && chmod 755 "$dir/stub-judge/judge" || return
+  if [ "$state" = picking ]; then echo hold; else echo off; fi > "$dir/stub-judge/judge-hold"
+}
+
+# How many lines of the item's ledger name the event type $2.
+ledger_count() { "$PROVE" human ledger --item "$1" --max 1000 2>&1 | tr -d '\r' | grep -c -- "$2"; }
+
+model_picks_run() { # $1 state
+  need jq
+  need git
+  sessions_need_copy
+  local state="$1" dir profile launcher list refuse="" item wait picks=1 usages=1 want
+  dir="$(agent_dir)"
+  profile="$(profile_path)"
+  launcher="$(sessions_dir)/launcher.json"
+  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
+  case "$state" in
+    picked | picking) list="$PICK_CHEAP, $PICK_STRONG" ;;
+    escalated) list="$PICK_CHEAP, $PICK_STRONG"; refuse="$PICK_CHEAP"; picks=2; usages=2 ;;
+    unpriced) list="$PICK_CHEAP, $PICK_UNPRICED"; refuse="$PICK_CHEAP"; picks=2; usages=2 ;;
+  esac
+  agent_files "$dir" || return
+  agent_profile_add "$profile" "$dir/repo" || die "model-picks-run: can't edit $profile"
+  pick_profile_set "$profile" "$list" || die "model-picks-run: can't edit $profile"
+  pick_stubs "$dir" "$refuse" "$state" || die "model-picks-run: can't write the stubs in $dir"
+  if needs_approval; then approve >&2 || return; fi
+  jq --arg bin "$dir/stub-bin-pick/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
+    || die "model-picks-run: can't update $launcher"
+  unset TMUX
+  sessions_restart >&2 || return
+  approve_dev_recipe "$PICK_RECIPE" || return
+  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$PICK_RECIPE" "Fixture model picks ($state)")" || return
+  wait="${FIXTURE_AGENT_WAIT:-120}"
+  [[ "$wait" =~ ^[0-9]+$ ]] || die "model-picks-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
+  local deadline=$((SECONDS + wait))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if [ "$state" = picking ]; then
+      [ "$(ledger_count "$item" 'model.picking')" -ge 1 ] && { echo "sindri-ui-fixture: the judge call holds for 40 s; open the instance now" >&2; printf '%s\n' "$item"; return 0; }
+    elif [ "$(ledger_count "$item" 'model.picked')" -ge "$picks" ] && [ "$(ledger_count "$item" 'session.usage')" -ge "$usages" ]; then
+      printf '%s\n' "$item"
+      return 0
+    fi
+    sleep 1
+  done
+  want="model.picked"; [ "$state" != picking ] || want="model.picking"
+  echo "sindri-ui-fixture: model-picks-run: no $want for $item in $wait s; the ledger says:" >&2
+  "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
+  return 1
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -981,6 +1113,9 @@ case "$verb" in
     esac ;;
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
   agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
+  model-picks-run)
+    [ "$#" -eq 2 ] || die "usage: model-picks-run picked|escalated|unpriced|picking"
+    case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks-run: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac ;;
   model-picks)
     [ "$#" -eq 4 ] || die "usage: model-picks picked|escalated|unpriced|picking <ITM-id> <instance-address>"
     case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac

@@ -26,6 +26,14 @@ public interface IRepoReader
     /// <returns>The paths from the repo root, ordinal order.</returns>
     public ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken) => ListFiles(repo, commit, cancellationToken);
 
+    /// <summary>Gives the git blob id of each path at a commit, in one read. A path that is not a file there (missing, a directory, denied by the repo) is left out of the answer; an empty list asks git nothing.</summary>
+    /// <param name="repo">The repo: its name and checkout.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="paths">The paths from the repo root, '/'-separated.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The blob id of every path that is a file at the commit, by path.</returns>
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken);
+
     /// <summary>Reads one file at a commit.</summary>
     /// <param name="repo">The repo: its name and checkout.</param>
     /// <param name="commit">The commit.</param>

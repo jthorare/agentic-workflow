@@ -5,7 +5,7 @@ using Aw.Connectors.Core.GitHub;
 
 namespace Aw.Connectors.Infrastructure.GitHub;
 
-/// <summary>Reads GitHub's replies: headers, the Link header, and the entries of the issue list.</summary>
+/// <summary>Reads GitHub's replies: headers, the Link header, and the entries of the issue, comment and pull request replies.</summary>
 internal static partial class GitHubWire
 {
     public static string? Header(HttpResponseMessage response, string name)
@@ -37,6 +37,38 @@ internal static partial class GitHubWire
         return new GitHubIssue(
             id.Value, (int)number.Value, e.TryGetProperty("pull_request", out _), Str(e, "title"), Str(e, "body"), Str(e, "state"), Author(e), Str(e, "html_url"),
             created.Value, updated.Value, Date(e, "closed_at"), Labels(e), (int)Math.Clamp(Long(e, "comments").GetValueOrDefault(), 0, int.MaxValue));
+    }
+
+    /// <summary>Reads one comment; null when it lacks the id, the issue it is on or a date.</summary>
+    public static GitHubComment? ReadComment(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var (id, created, updated) = (Long(e, "id"), Date(e, "created_at"), Date(e, "updated_at"));
+        var number = IssueNumber(Text(e, "issue_url"));
+        return id is null || number is null || created is null || updated is null
+            ? null
+            : new GitHubComment(id.Value, number.Value, Author(e), Str(e, "body"), created.Value, updated.Value);
+    }
+
+    /// <summary>Reads the path of one entry of a pull request's file list; null when it has none.</summary>
+    public static string? ReadPath(JsonElement e)
+        => e.ValueKind == JsonValueKind.Object && Text(e, "filename") is { Length: > 0 } name ? name : null;
+
+    /// <summary>Reads the merge state of a single pull request.</summary>
+    public static GitHubPullDetail ReadPull(JsonElement e, IReadOnlyList<string> paths)
+        => new(Flag(e, "merged"), Flag(e, "draft"), Date(e, "merged_at"), paths);
+
+    private static bool Flag(JsonElement e, string name)
+        => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.True;
+
+    private static int? IssueNumber(string? issueUrl)
+    {
+        var last = issueUrl?[(issueUrl.LastIndexOf('/') + 1)..];
+        return int.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : null;
     }
 
     private static long? Long(JsonElement e, string name)

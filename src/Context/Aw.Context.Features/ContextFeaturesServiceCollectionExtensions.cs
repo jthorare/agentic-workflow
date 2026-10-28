@@ -19,6 +19,7 @@ using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Sync;
 using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
@@ -94,6 +95,8 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IConceptNamer, DisabledConceptNamer>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<ISymbolVectors, DisabledSymbolVectors>();   // the host that wires the code index (Sindri's Host adapter) replaces it
         services.TryAddScoped<ConceptPass>();
+        services.TryAddScoped<MapRecordSources>();   // scoped: it reads the code index, which is read in the call's scope
+        services.TryAddScoped<MapInputs>();
         services.TryAddScoped<MapNamers>();   // scoped: the concept step reads the code index, which is read in the call's scope
         services.TryAddSingleton<IHeavyJobLock, UnconfiguredHeavyJobLock>();   // a host that wires the box-wide lock replaces it
         services.TryAddSingleton<UnconfiguredBacktest>();   // hosts that wire the backtest ports (Infrastructure) replace these
@@ -101,8 +104,10 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddContextSlices();
+        return services.AddMapHeads().AddIndexSync().AddContextSlices();
     }
+
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<IIndexSync, IndexSync>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()

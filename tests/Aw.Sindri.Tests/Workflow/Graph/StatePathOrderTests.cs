@@ -239,6 +239,7 @@ public sealed class StatePathOrderTests
         ["dev/incident-hold.yaml"] = "sha256:fae531ac58b3c3990c51a125548aa83e832f4d0dd77231d272e860b067b7cda1",
         ["dev/triage-three-state.yaml"] = "sha256:b77152c8613ea86d8a64fdf9e9a140c23b1c9352fc06fcebe5c1254ca5e2ad93",
         ["dev/workflow.dev-agent-hold.yaml"] = "sha256:41c85c4666f946ca5489eb53dfc9c754508866044a28a5ba39e39c884b35dc19",
+        ["dev/workflow.dev-agent-pick.yaml"] = "sha256:1294c0858faabb85a959004a3933966143d0352f06f3b7147d86805f4afda4ce",
         ["dev/workflow.dev-child-outputs.yaml"] = "sha256:6f9b501303c24b0b52aff07ad626d2307bff3f1d53beb2064fb664cb1bd6b1a6",
         ["dev/workflow.dev-child-summary.yaml"] = "sha256:38927532c385acbeba52f99071a1db63b3c6a3321e326ad146fc3a884ced2ef5",
         ["dev/workflow.dev-evidence-route.yaml"] = "sha256:0c01b4db81f68c72fa87b9a5b42678085c733a3af454934065e6d3fa38e84faf",

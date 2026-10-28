@@ -162,6 +162,7 @@ internal static partial class Labels
         "context-concept-scan" => "Has a model look for product concepts in each new map: a cheap one for a small map, a stronger one for a large map.",
         "context-map-refresh" => "Builds the context map again so it stays current.",
         "context-sync-gaps" => "Starts a sync for a source that has never synced.",
+        "index-sync" => "Pulls new records from each source into the index.",
         "pr-watch" => "Watches the pull requests that wait on the forge.",
         "router-stub" => "Routes each started item to its workflow.",
         "setup" => "Keeps the setup checklist in step with the profile.",
