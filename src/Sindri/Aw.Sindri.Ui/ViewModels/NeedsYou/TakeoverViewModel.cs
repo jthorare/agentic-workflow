@@ -39,6 +39,9 @@ internal sealed class TakeoverViewModel : ObservableObject
         (_api, _apiUrl, _commands, _clock) = (api, apiUrl, commands, clock);
     }
 
+    /// <summary>The sandbox banner of a taken-over sandboxed run.</summary>
+    public Takeover.TakeoverBannerViewModel Banner { get; } = new();
+
     /// <summary>The inspector's hand-back button.</summary>
     public string HandBackWord { get; } = Labels.NeedsYouHandBack;
 
