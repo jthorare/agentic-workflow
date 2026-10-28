@@ -1,0 +1,46 @@
+{
+  "header": {
+    "address": "ITM-01JM3/step/1",
+    "recipe": "workflow.step",
+    "hash12": "4ca37bf46333",
+    "version": 5,
+    "state": "produce",
+    "detail": "agent running",
+    "since": "2026-10-12T12:10:00.0000000Z",
+    "ageSeconds": 960
+  },
+  "next": "Waiting for a free session slot, 3 of 3 running.",
+  "answer": null,
+  "child": null,
+  "drift": null,
+  "inputs": [],
+  "timeout": null,
+  "budget": null,
+  "paused": null,
+  "commands": [
+    {
+      "verb": "takeover",
+      "actionId": "ApplyCommand:takeover",
+      "class": "pause",
+      "cli": "sindri workflow takeover ITM-01JM3/step/1",
+      "confirm": null
+    },
+    {
+      "verb": "cancel",
+      "actionId": "ApplyCommand:cancel",
+      "class": "desk",
+      "cli": "sindri workflow cancel ITM-01JM3/step/1",
+      "confirm": "Cancel ITM-01JM3/step/1? 1 running step stops; 0 children are cancelled."
+    }
+  ],
+  "text": "ITM-01JM3/step/1  workflow.step@4ca37bf46333  v5  produce: agent running  since 12:10 (16m)\n  next      An agent session is working on produce. It reports when it is done; take it over to work on it yourself.\n  run       agent LCH-01JM3A4B5C6D7E8F\n  commands  takeover, cancel\n",
+  "run": {
+    "runtime": "agent",
+    "launch": "LCH-01JM3A4B5C6D7E8F"
+  },
+  "injection": [],
+  "waitingForSlot": {
+    "running": 3,
+    "cap": 3
+  }
+}

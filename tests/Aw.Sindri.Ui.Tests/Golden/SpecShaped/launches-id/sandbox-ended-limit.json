@@ -1,0 +1,75 @@
+{
+  "id": "LCH-00000000000000000000000000000001",
+  "item": "ITM-0000000000000000000000000000000f",
+  "mode": "open",
+  "state": "started",
+  "target": "claude-code",
+  "chosenBy": "engine",
+  "requestedAt": "2026-01-01T00:00:00.0000000Z",
+  "outcomeAt": "2026-01-01T00:00:00.0000000Z",
+  "code": null,
+  "detail": null,
+  "stage": null,
+  "sessionId": "0a1b2c3d-0000-4000-8000-000000000001",
+  "tabTitle": "sindri ITM-0000000000000000000000000000000f",
+  "viewer": {
+    "kind": "none",
+    "label": "none",
+    "outcome": "skipped",
+    "code": null,
+    "detail": null
+  },
+  "late": false,
+  "attach": [
+    "tmux",
+    "-L",
+    "sindri-launch",
+    "attach",
+    "-t",
+    "=snd-LCH-00000000000000000000000000000001"
+  ],
+  "catalogSource": "builtin",
+  "argvHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "ended": {
+    "reason": "limit",
+    "at": "2026-10-28T09:00:00.0000000Z",
+    "kind": "memory",
+    "limit": 12884901888,
+    "peak": 12884901888
+  },
+  "step": {
+    "instance": "ITM-0000000000000000000000000000000f/step/1",
+    "state": "build",
+    "attempt": 2
+  },
+  "asOf": {
+    "cursor": 8,
+    "ledgerHead": 8,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "sandbox": {
+    "mechanism": "bubblewrap",
+    "planHash": "sha256:ab12cd34",
+    "writable": [
+      "/home/thor/repos/aw-wt/api-sb6"
+    ],
+    "network": [
+      "github",
+      "npm"
+    ],
+    "networkMode": "enforce",
+    "inner": "on",
+    "limits": {
+      "memoryMax": "12GiB",
+      "cpuQuota": "400%",
+      "tasksMax": 512,
+      "wall": "40m"
+    },
+    "credentials": {
+      "github": "none"
+    },
+    "login": "owner-login"
+  }
+}

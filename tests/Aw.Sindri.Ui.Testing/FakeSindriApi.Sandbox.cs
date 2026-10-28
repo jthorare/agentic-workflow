@@ -1,0 +1,43 @@
+using Aw.Kernel;
+using Aw.Sindri.Ui.Api.Sandbox;
+
+namespace Aw.Sindri.Ui.Testing;
+
+/// <summary>The sandbox's reads and write of the fake (SB-6): each answers a golden (spec-shaped until the server's are recorded), the same text the handler serves.</summary>
+internal sealed partial class FakeSindriApi
+{
+    private readonly List<AllowRequest> _allowed = [];
+    private readonly List<string> _denialItems = [];
+
+    /// <summary>GET /sindri/sandbox/status' answer: ready by default.</summary>
+    public RouteAnswer SandboxStatusAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-status", "ready");
+
+    /// <summary>GET /sindri/sandbox/check's answer: still failing by default.</summary>
+    public RouteAnswer SandboxCheckAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-check", "still-failing");
+
+    /// <summary>GET /sindri/sandbox/denials' answer: a few denials by default.</summary>
+    public RouteAnswer SandboxDenialsAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-denials", "some");
+
+    /// <summary>POST /sindri/sandbox/allow's answer: needs your approval by default.</summary>
+    public RouteAnswer SandboxAllowAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-allow", "needs-approval");
+
+    /// <summary>How many times the status was read.</summary>
+    public int SandboxStatusCalls { get; }
+
+    /// <summary>How many times Check again was read.</summary>
+    public int SandboxCheckCalls { get; }
+
+    /// <summary>The items the denials were read for, in order.</summary>
+    public IReadOnlyList<string> SandboxDenialItems { get { lock (_gate) { return [.. _denialItems]; } } }
+
+    /// <summary>The Allow requests sent, in order.</summary>
+    public IReadOnlyList<AllowRequest> Allowed { get { lock (_gate) { return [.. _allowed]; } } }
+
+    public Task<Result<SandboxStatusView>> SandboxStatus(Uri api, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<Result<SandboxCheckView>> SandboxCheck(Uri api, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<Result<DenialsView>> SandboxDenials(Uri api, string item, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<Result<AllowView>> SandboxAllow(Uri api, AllowRequest request, CancellationToken cancellationToken) => throw new NotSupportedException();
+}

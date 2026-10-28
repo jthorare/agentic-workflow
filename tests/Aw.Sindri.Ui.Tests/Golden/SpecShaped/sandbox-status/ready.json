@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-28T09:00:00.0000000Z",
+  "ready": true,
+  "blockers": [],
+  "mechanism": "bubblewrap",
+  "groups": [
+    "github",
+    "npm",
+    "nuget"
+  ],
+  "limits": {
+    "memoryMax": "12GiB",
+    "cpuQuota": "400%",
+    "tasksMax": 512,
+    "wall": "40m"
+  },
+  "login": "owner-login",
+  "learn": []
+}
