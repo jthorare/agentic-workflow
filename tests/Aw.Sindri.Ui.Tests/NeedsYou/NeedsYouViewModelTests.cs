@@ -191,14 +191,15 @@ public sealed class NeedsYouViewModelTests
     }
 
     [Fact]
-    public async Task Stalled_keeps_rows_marked_stale_with_the_banner()
+    public async Task Stalled_keeps_rows_marked_stale_with_a_note_not_the_sentence()
     {
         var list = await List();
         const string Sentence = "Views are stalled at 40: run `sindri views rebuild`";
 
         list.Update(new NeedsYouFeed([NeedsYouRows.Park()], Sentence) { Stalled = true });
 
-        Assert.Equal((true, Sentence, false), (list.HasBanner, list.Banner, list.IsEmpty));
+        // B-20: the shell's banner says the sentence once; the panel only notes that its rows are the last read.
+        Assert.Equal((true, Labels.RowsStaleNote, false), (list.HasBanner, list.Banner, list.IsEmpty));
         Assert.True(list.Rows[0].IsStale);
     }
 

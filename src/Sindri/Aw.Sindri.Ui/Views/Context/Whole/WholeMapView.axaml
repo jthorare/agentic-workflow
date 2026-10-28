@@ -135,7 +135,7 @@
       <Grid Grid.Column="1" Width="200" RowDefinitions="Auto,*" RowSpacing="4">
         <TextBlock Classes="eyebrow" Text="{Binding ItemsName}" AutomationProperties.AccessibilityView="Raw" />
         <ListBox x:Name="WholeItems" Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=OneWay}" AutomationProperties.Name="{Binding ItemsName}"
-                 ContainerPrepared="OnItemPrepared" KeyDown="OnItemsKey" Tapped="OnItemsTapped">
+                 ContainerPrepared="OnItemPrepared" Tapped="OnItemsTapped">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:MapItemViewModel">
               <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />

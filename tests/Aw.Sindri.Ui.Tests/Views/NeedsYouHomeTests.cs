@@ -110,6 +110,23 @@ public sealed class NeedsYouHomeTests : IDisposable
         Assert.Equal(shell.Attention.SummaryLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
     });
 
+    // B-1: after a row leaves, the card is shorter and still ends below its last row (its border and "all N" link are not cut off).
+    [Fact]
+    public Task The_card_is_measured_again_when_a_row_leaves() => OnUi(async () =>
+    {
+        var (window, shell) = await WithRows(5);
+        var before = Named<Control>(window, "NeedsYouPanel").Bounds.Height;
+
+        shell.ShowNeedsYou(new ViewModels.NeedsYou.NeedsYouFeed([.. Enumerable.Range(0, 3).Select(i => NeedsYouRows.Park("park:ITM-" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)))], ""));
+        Settle(window);
+
+        var panel = Named<Control>(window, "NeedsYouPanel");
+        var rows = Rows(window);
+        Assert.Equal(3, rows.Count);
+        Assert.True(panel.Bounds.Height < before);
+        Assert.True(panel.Bounds.Height >= rows.Max(r => r.TranslatePoint(new Point(0, r.Bounds.Height), panel)!.Value.Y) + 1);   // why: the card's 1 px border lies below the last row
+    });
+
     [Fact]
     public Task A_row_draws_its_chip_with_the_one_chip_control() => OnUi(async () =>
     {

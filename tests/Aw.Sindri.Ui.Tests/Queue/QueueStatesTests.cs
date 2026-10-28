@@ -75,6 +75,24 @@ public sealed class QueueStatesTests
     }
 
     [Fact]
+    public async Task A_stalled_rebuild_never_says_the_views_are_rebuilding()
+    {
+        // B-6: a rebuild that stalls again at the same event arrives with both flags; Stalled wins, as the banner's does.
+        var queue = await Queue([], new AsOfView(588, 601, A.Noon, Rebuilding: true, Stalled: true));
+
+        Assert.All(queue.Groups, g => Assert.DoesNotContain("Rebuilding views", g.Empty, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Stalled_views_mark_the_panels_stale_instead_of_repeating_the_banners_sentence()
+    {
+        var queue = await Queue([], new AsOfView(588, 601, A.Noon, Rebuilding: false, Stalled: true));
+
+        Assert.True(queue.IsStale);
+        Assert.Equal(string.Empty, queue.RunningEmpty);
+    }
+
+    [Fact]
     public async Task The_footer_says_up_to_date_or_how_far_behind()
     {
         Assert.Equal(Labels.QueueUpToDate(214), (await Queue([])).FooterText);

@@ -8,6 +8,9 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// </summary>
 internal sealed class HealthPill : ObservableObject
 {
+    // The views' own problems (stalled, replaying): the shell's banner says them once, and the pill's word is the state.
+    private static readonly HashSet<string> _viewsCodes = new(["SND-VIEW-001", "SND-API-010"], StringComparer.Ordinal);
+
     /// <summary>The state's glyph (§11.3): ✓ running, ⌛ stale, ✕ not running or unreadable; none while connecting.</summary>
     public StateGlyph Glyph
     {
@@ -92,7 +95,7 @@ internal sealed class HealthPill : ObservableObject
             ShellState.Connecting => (StateGlyph.None, Labels.Connecting, string.Empty),
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
         };
-        Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Select(p => p.Text)) : string.Empty;
+        Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
         IsHealthy = state == ShellState.Normal && (health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal));
         var stale = state == ShellState.Stale;
@@ -107,11 +110,12 @@ internal sealed class HealthPill : ObservableObject
         IsDown = state is ShellState.NotRunning or ShellState.Unreadable or ShellState.VersionMismatch;
     }
 
-    // §11.3: healthy ✓, rebuilding ⌛ (the views are catching up), degraded and stalled ✕; always beside the word.
+    // §11.3: healthy ✓, rebuilding ⌛ (the views are catching up), degraded △, stalled ✕; always beside the word.
     private static StateGlyph Glyphs(string word) => word switch
     {
         "healthy" => StateGlyph.Ok,
         "rebuilding" => StateGlyph.Stale,
+        "degraded" => StateGlyph.Warning,
         _ => StateGlyph.Down,
     };
 }

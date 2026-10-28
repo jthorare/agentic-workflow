@@ -21107,3 +21107,38 @@ Aw.Sindri.Core.Sandbox.Credentials.AgentHomes
 static Aw.Sindri.Core.Sandbox.Credentials.AgentHomes.For(string! sindriHome, Aw.Sindri.Core.Launch.AgentId target) -> string!
 Aw.Sindri.Core.Sandbox.Credentials.ISandboxLogin
 Aw.Sindri.Core.Sandbox.Credentials.ISandboxLogin.Run(Aw.Sindri.Core.Launch.AgentId target, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Aw.Kernel.Result<int>!>!
+Aw.Sindri.Core.Profile.DetectedToolchain
+Aw.Sindri.Core.Profile.DetectedToolchain.<Clone>$() -> Aw.Sindri.Core.Profile.DetectedToolchain!
+Aw.Sindri.Core.Profile.DetectedToolchain.Deconstruct(out string! Name, out string! Evidence, out Aw.Sindri.Core.Profile.SandboxRepoSettings! Entries) -> void
+Aw.Sindri.Core.Profile.DetectedToolchain.DetectedToolchain(string! Name, string! Evidence, Aw.Sindri.Core.Profile.SandboxRepoSettings! Entries) -> void
+Aw.Sindri.Core.Profile.DetectedToolchain.Entries.get -> Aw.Sindri.Core.Profile.SandboxRepoSettings!
+Aw.Sindri.Core.Profile.DetectedToolchain.Entries.init -> void
+Aw.Sindri.Core.Profile.DetectedToolchain.Equals(Aw.Sindri.Core.Profile.DetectedToolchain? other) -> bool
+Aw.Sindri.Core.Profile.DetectedToolchain.Evidence.get -> string!
+Aw.Sindri.Core.Profile.DetectedToolchain.Evidence.init -> void
+Aw.Sindri.Core.Profile.DetectedToolchain.Line() -> string!
+Aw.Sindri.Core.Profile.DetectedToolchain.Name.get -> string!
+Aw.Sindri.Core.Profile.DetectedToolchain.Name.init -> void
+Aw.Sindri.Core.Profile.SandboxOfferYaml
+Aw.Sindri.Core.Profile.SandboxToolchainDetector
+Aw.Sindri.Core.Profile.ToolchainOffer
+Aw.Sindri.Core.Profile.ToolchainOffer.<Clone>$() -> Aw.Sindri.Core.Profile.ToolchainOffer!
+Aw.Sindri.Core.Profile.ToolchainOffer.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.DetectedToolchain!>! Toolchains, out Aw.Sindri.Core.Profile.SandboxRepoSettings? Settings) -> void
+Aw.Sindri.Core.Profile.ToolchainOffer.Equals(Aw.Sindri.Core.Profile.ToolchainOffer? other) -> bool
+Aw.Sindri.Core.Profile.ToolchainOffer.Settings.get -> Aw.Sindri.Core.Profile.SandboxRepoSettings?
+Aw.Sindri.Core.Profile.ToolchainOffer.Settings.init -> void
+Aw.Sindri.Core.Profile.ToolchainOffer.ToolchainOffer(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.DetectedToolchain!>! Toolchains, Aw.Sindri.Core.Profile.SandboxRepoSettings? Settings) -> void
+Aw.Sindri.Core.Profile.ToolchainOffer.Toolchains.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.DetectedToolchain!>!
+Aw.Sindri.Core.Profile.ToolchainOffer.Toolchains.init -> void
+override Aw.Sindri.Core.Profile.DetectedToolchain.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.DetectedToolchain.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.DetectedToolchain.ToString() -> string!
+override Aw.Sindri.Core.Profile.ToolchainOffer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ToolchainOffer.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ToolchainOffer.ToString() -> string!
+static Aw.Sindri.Core.Profile.DetectedToolchain.operator !=(Aw.Sindri.Core.Profile.DetectedToolchain? left, Aw.Sindri.Core.Profile.DetectedToolchain? right) -> bool
+static Aw.Sindri.Core.Profile.DetectedToolchain.operator ==(Aw.Sindri.Core.Profile.DetectedToolchain? left, Aw.Sindri.Core.Profile.DetectedToolchain? right) -> bool
+static Aw.Sindri.Core.Profile.SandboxOfferYaml.Render(string! repo, Aw.Sindri.Core.Profile.SandboxRepoSettings! settings) -> string!
+static Aw.Sindri.Core.Profile.SandboxToolchainDetector.Detect(System.Collections.Generic.IReadOnlyList<string!>! paths) -> Aw.Sindri.Core.Profile.ToolchainOffer!
+static Aw.Sindri.Core.Profile.ToolchainOffer.operator !=(Aw.Sindri.Core.Profile.ToolchainOffer? left, Aw.Sindri.Core.Profile.ToolchainOffer? right) -> bool
+static Aw.Sindri.Core.Profile.ToolchainOffer.operator ==(Aw.Sindri.Core.Profile.ToolchainOffer? left, Aw.Sindri.Core.Profile.ToolchainOffer? right) -> bool

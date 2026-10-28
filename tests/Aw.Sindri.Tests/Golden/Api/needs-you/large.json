@@ -333,7 +333,7 @@
         "id": "heartbeat"
       },
       "item": null,
-      "title": "heartbeat failed",
+      "title": "Service heartbeat failed",
       "reason": "SND-SCHED-001: A background service failed",
       "repo": null,
       "urgency": "colour",

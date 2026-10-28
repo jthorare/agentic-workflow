@@ -54,6 +54,30 @@ public sealed partial class FreshnessTests : IDisposable
 
     private static StatusView Status(AsOfView views, HealthView health) => A.Status() with { ApiVersion = 1, Views = views, Health = health };
 
+    // B-20: the banner carries the views' sentence; the pill keeps the word and drops the same sentence as a problem.
+    [Fact]
+    public async Task The_pill_leaves_the_views_sentence_to_the_banner()
+    {
+        _server.Current = Status(new AsOfView(588, 601, A.Noon.AddSeconds(-12), Rebuilding: false, Stalled: true),
+            new HealthView("stalled", [new HealthProblemView("SND-VIEW-001", "Views are stalled at 589: run `sindri views rebuild`", "the views stopped at event 589")]));
+
+        await Connected(() => _vm.Pill.Word == "Stalled");
+
+        Assert.Equal(string.Empty, _vm.Pill.Problems);
+    }
+
+    // B-19: the pill names a failed service by its clause (no raw ISO time), and Degraded is a warning, not the red X.
+    [Fact]
+    public async Task A_degraded_pill_warns_and_names_the_problem_by_its_clause()
+    {
+        _server.Current = Status(new AsOfView(41, 41, A.Noon.AddSeconds(-12), Rebuilding: false, Stalled: false),
+            new HealthView("degraded", [new HealthProblemView("SND-SCHED-001", "Service broken failed at 2026-10-25T07:06:29Z", "service broken failed")]));
+
+        await Connected(() => _vm.Pill.Word == "Degraded");
+
+        Assert.Equal(("service broken failed", StateGlyph.Warning), (_vm.Pill.Problems, _vm.Pill.Glyph));
+    }
+
     // E-14: the pill renders health.word and names each problem as served; "updated Ns ago" counts from projectedAt.
     [Fact]
     public async Task The_pill_says_the_health_word_its_problems_and_how_long_since_the_views_moved()
@@ -65,7 +89,7 @@ public sealed partial class FreshnessTests : IDisposable
 
         Assert.Equal(("Degraded", "updated 12s ago", "index failed"), (_vm.Pill.Word, _vm.Pill.Age, _vm.Pill.Problems));
         Assert.Equal("Degraded · updated 12s ago · index failed", _vm.Pill.Text);
-        Assert.Equal((StateGlyph.Down, false), (_vm.Pill.Glyph, _vm.Pill.IsHealthy));
+        Assert.Equal((StateGlyph.Warning, false), (_vm.Pill.Glyph, _vm.Pill.IsHealthy));
     }
 
     [Fact]
@@ -310,7 +334,7 @@ public sealed partial class FreshnessTests : IDisposable
     [InlineData("running-healthy", "Healthy · updated 2s ago")]
     [InlineData("running-degraded", "Degraded · updated 2s ago · index failed")]
     [InlineData("running-rebuilding", "Rebuilding · updated 2s ago")]
-    [InlineData("running-stalled", "Stalled · updated 30s ago · views stalled at 42")]
+    [InlineData("running-stalled", "Stalled · updated 30s ago")]   // B-20: the banner says the views' sentence; the pill keeps the word
     public async Task The_pill_reads_each_spec_shaped_status_golden(string scenario, string text)
     {
         var golden = AwJson.Deserialize<StatusView>(Encoding.UTF8.GetBytes(GoldenFiles.SpecShaped("status", scenario)), SindriApiClient.Json).Value;

@@ -27,22 +27,34 @@ public static class ExecutableScript
         return path;
     }
 
-    private static void WarmUp(string path)
+    /// <summary>
+    /// Starts <paramref name="info"/>, trying again while the exec fails with ETXTBSY ('text file busy'), for at most 100 tries 20 ms apart. For a script the code under test
+    /// wrote and the test starts at once (a shim in a run area): a parallel test that forks while the write descriptor is still open makes the exec fail, and that is the same
+    /// race <see cref="Write"/> closes for the files tests write. A failed exec never ran the script, so starting it again cannot run it twice. Any other start failure surfaces.
+    /// </summary>
+    /// <param name="info">What to start.</param>
+    /// <returns>The started process.</returns>
+    public static Process StartWhenNotBusy(ProcessStartInfo info)
     {
+        ArgumentNullException.ThrowIfNull(info);
         for (var attempt = 0; ; attempt++)
         {
-            var info = new ProcessStartInfo(path) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-            info.Environment[WarmupVariable] = "1";
             try
             {
-                using var process = Process.Start(info)!;
-                process.WaitForExit();
-                return;
+                return Process.Start(info)!;
             }
             catch (Win32Exception e) when (e.NativeErrorCode == TextFileBusy && attempt < 100)
             {
                 RealTime.Sleep(TimeSpan.FromMilliseconds(20));   // only the exec-busy case is retried; any other start failure surfaces
             }
         }
+    }
+
+    private static void WarmUp(string path)
+    {
+        var info = new ProcessStartInfo(path) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        info.Environment[WarmupVariable] = "1";
+        using var process = StartWhenNotBusy(info);
+        process.WaitForExit();
     }
 }

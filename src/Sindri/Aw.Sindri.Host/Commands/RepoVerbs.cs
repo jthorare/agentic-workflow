@@ -58,7 +58,7 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
         return read.IsSuccess ? $"added {read.Value.Repo.Value}; your profile waits for your approval: sindri profile approve\n" : null;
     }
 
-    /// <summary>The final onboard job's one line: the repo is onboarded, and what the hook step said (never a silent green); nothing when the result isn't there or doesn't read.</summary>
+    /// <summary>The final onboard job's lines: the repo is onboarded, and what the hook step said (never a silent green), then the sandbox blockers, the offered toolchain entries and the YAML snippet; nothing when the result isn't there or doesn't read.</summary>
     private string? DescribeOnboarded(JobView job)
     {
         if (job.Result is not { } result)
@@ -67,7 +67,26 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
         }
 
         var read = output.Read<OnboardedRepo>(System.Text.Encoding.UTF8.GetBytes(result.GetRawText()));
-        return read.IsSuccess ? $"onboarded {read.Value.Repo.Value}; {read.Value.Hooks}\n" : null;
+        return read.IsSuccess ? $"onboarded {read.Value.Repo.Value}; {read.Value.Hooks}\n" + SandboxLines(read.Value) : null;
+    }
+
+    // The sandbox part of the answer (sandbox spec §3.7): each blocker with its fix, one line per toolchain offered, and the YAML to paste; the profile is never edited here.
+    private static string SandboxLines(OnboardedRepo onboarded)
+    {
+        var text = new System.Text.StringBuilder();
+        foreach (var blocker in onboarded.Blockers ?? [])
+        {
+            _ = text.Append(blocker.Quiet ? "note      " : "sandbox   ").Append(blocker.Text).Append('\n');
+            _ = blocker.Command is { } command ? text.Append("          ").Append(command).Append('\n') : text;
+        }
+
+        foreach (var line in onboarded.Offered ?? [])
+        {
+            _ = text.Append("offered   ").Append(line).Append('\n');
+        }
+
+        _ = onboarded.Snippet is { } snippet ? text.Append("Paste this into your profile and approve it (onboarding never edits the profile):\n").Append(snippet) : text;
+        return text.ToString();
     }
 
     // add <path> or onboard [<path>] and the flags, in any order; null for anything else.

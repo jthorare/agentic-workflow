@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -36,6 +37,36 @@ public sealed class ShellAttentionTests
 
         return shell;
     }
+
+    [Fact]
+    public Task Homes_header_counts_the_rows_Home_lists_while_the_title_and_badge_count_every_row() => UiThread.Run(async () =>
+    {
+        var shell = await Shell(running: true);
+
+        shell.ShowNeedsYou(Feed(NeedsYouRows.Park(), NeedsYouRows.Decision(), NeedsYouRows.Failure()));
+        shell.GoTo(PageId.Home, HomeFilter.Decisions);   // Home lists the decision only
+
+        _ = Assert.Single(shell.NeedsYou.Rows);
+        Assert.Equal("1 need you · 2 running · 0 with you · 1 queued", shell.Attention.SummaryLine);
+        Assert.Equal(3, shell.Attention.Badge);
+        Assert.Equal("(3) Needs you · Sindri", shell.WindowTitle);
+
+        shell.GoTo(PageId.Home);
+
+        Assert.Equal("3 need you · 2 running · 0 with you · 1 queued", shell.Attention.SummaryLine);
+    }, Token);
+
+    [Fact]
+    public Task When_the_card_caps_its_rows_the_header_and_the_all_N_link_name_the_same_N() => UiThread.Run(async () =>
+    {
+        var shell = await Shell(running: true);
+
+        shell.ShowNeedsYou(Feed([.. Enumerable.Range(1, 7).Select(NeedsYouRows.Many)]));
+
+        Assert.Equal(NeedsYouViewModel.Cap, shell.NeedsYou.Rows.Count);
+        Assert.StartsWith("7 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal(Labels.AllRows(7), shell.NeedsYou.OverflowText);
+    }, Token);
 
     [Fact]
     public Task The_window_title_follows_the_needs_you_count() => UiThread.Run(async () =>

@@ -103,6 +103,7 @@ internal sealed partial class ShellViewModel
         HomeFilter = filter;
         OnChanged(nameof(HomeFilter));
         UpdateNeedsYou();
+        Reattend();   // Home's summary counts the rows the filter lets through
     }
 
     private static (PageId Page, HomeFilter Filter)? SecondKey(string key) => key.ToUpperInvariant() switch

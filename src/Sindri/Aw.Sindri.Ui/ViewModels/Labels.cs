@@ -226,6 +226,9 @@ internal static partial class Labels
     /// <summary>The freshness word after 30 s with no event or ping.</summary>
     internal const string Stale = "stale";
 
+    /// <summary>The Needs-you panel's note while the views are stalled: its rows are the last read (the banner says why, once).</summary>
+    internal const string RowsStaleNote = "Showing the last rows read.";
+
     /// <summary>The health pill's word for SND-UI-003, an answer this build can't read, or Sindri's 403 after the token retry (§4.1 Unreadable).</summary>
     internal const string Unreadable = "Unreadable";
 

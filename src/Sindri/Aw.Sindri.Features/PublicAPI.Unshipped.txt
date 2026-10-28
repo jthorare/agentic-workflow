@@ -4492,8 +4492,6 @@ static Aw.Sindri.Features.OnboardRepo.OnboardRepoRequest.operator !=(Aw.Sindri.F
 static Aw.Sindri.Features.OnboardRepo.OnboardRepoRequest.operator ==(Aw.Sindri.Features.OnboardRepo.OnboardRepoRequest? left, Aw.Sindri.Features.OnboardRepo.OnboardRepoRequest? right) -> bool
 Aw.Sindri.Features.OnboardRepo.OnboardedRepo
 Aw.Sindri.Features.OnboardRepo.OnboardedRepo.<Clone>$() -> Aw.Sindri.Features.OnboardRepo.OnboardedRepo!
-Aw.Sindri.Features.OnboardRepo.OnboardedRepo.OnboardedRepo(Aw.Sindri.Core.Ids.RepoName Repo, string! Hooks) -> void
-Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Deconstruct(out Aw.Sindri.Core.Ids.RepoName Repo, out string! Hooks) -> void
 Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Repo.get -> Aw.Sindri.Core.Ids.RepoName
 Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Repo.init -> void
 Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Hooks.get -> string!
@@ -5330,3 +5328,11 @@ static Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.operator !=(Aw.Sindr
 static Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.operator ==(Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse? left, Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse? right) -> bool
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Blockers.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>!
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Blockers.init -> void
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Blockers.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>?
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Blockers.init -> void
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Deconstruct(out Aw.Sindri.Core.Ids.RepoName Repo, out string! Hooks, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>? Blockers, out System.Collections.Generic.IReadOnlyList<string!>? Offered, out string? Snippet) -> void
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Offered.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Offered.init -> void
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.OnboardedRepo(Aw.Sindri.Core.Ids.RepoName Repo, string! Hooks, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.SandboxBlockerLine!>? Blockers = null, System.Collections.Generic.IReadOnlyList<string!>? Offered = null, string? Snippet = null) -> void
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Snippet.get -> string?
+Aw.Sindri.Features.OnboardRepo.OnboardedRepo.Snippet.init -> void

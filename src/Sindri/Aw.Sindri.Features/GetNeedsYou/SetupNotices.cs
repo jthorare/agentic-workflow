@@ -19,7 +19,8 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="scrubber">Scrubs the text.</param>
 /// <param name="clock">Stamps the recipe rows.</param>
 /// <param name="mcp">Says whether the owner is to be asked once to turn the automatic registration on.</param>
-internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
+/// <param name="approved">The approved profile, which the live one is compared with for the profile drift row.</param>
+internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp, IApprovedProfile approved)
 {
     private static readonly JobKind _addRepo = JobKind.From("AddRepo");
     private static readonly JobKind _registerMcp = JobKind.From("RegisterMcp");
@@ -33,6 +34,22 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
 
         var row = NeedsYouRows.ForSetupRepo(failed.Summary ?? "The last folder you picked could not be added. Pick the repo's top folder.", failed.EndedAt ?? failed.StartedAt, scrubber);
         return row.IsSuccess ? row.Value : null;
+    }
+
+    // The 'profile:drift' row from the live profile against the approved one, as the status compares them, so it shows when the pill does and not when the next
+    // profile.checked is recorded (up to 30 s later). The stored row has the same id; the service keeps that one when both exist.
+    internal async ValueTask<NeedsYouRow?> Drift(CancellationToken cancellationToken)
+    {
+        var before = await approved.Latest(cancellationToken).ConfigureAwait(false);
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        if (before is not { IsSuccess: true, Value: { } approvedProfile } || loaded.IsError || loaded.Value.Hash == approvedProfile.Hash)
+        {
+            return null;
+        }
+
+        var drifted = new ProfileRow(approvedProfile.Hash, ApprovedAt: null, loaded.Value.Hash, CheckedAt: null, Changed: true, ProfileDiff.Between(approvedProfile.Profile, loaded.Value.Profile), ApprovedServices: [], Sequence: 0);
+        var row = NeedsYouRows.ForProfile(drifted, clock.GetUtcNow(), scrubber);
+        return row is { IsSuccess: true, Value: { } found } ? found : null;
     }
 
     // 'setup:mcp' stands while the newest RegisterMcp job failed and none is running: the job's own sentence, the provider's fix in it. A new run clears it; a success replaces the failed job as the newest.

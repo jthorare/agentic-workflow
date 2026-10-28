@@ -222,9 +222,16 @@ public sealed class SandboxGithubShimsTests : IDisposable
         }
 
         _ = start.Environment.Remove("GH_TOKEN");
-        using var process = Process.Start(start)!;
-        process.StandardInput.Write(stdin);
-        process.StandardInput.Close();
+        using var process = ExecutableScript.StartWhenNotBusy(start);   // the shim was written by the run-area preparer a moment ago
+        try
+        {
+            process.StandardInput.Write(stdin);
+            process.StandardInput.Close();
+        }
+        catch (IOException)
+        {
+            // a shim that exits without reading its input (the credential helper on store and erase) closes the pipe first: that is its answer, not a failure of the runner
+        }
         var output = process.StandardOutput.ReadToEnd();
         var error = process.StandardError.ReadToEnd();
         process.WaitForExit();

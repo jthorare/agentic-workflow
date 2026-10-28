@@ -37,6 +37,7 @@ internal sealed partial class ShellViewModel
             if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsHomeLineShown), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HomeStepId), StringComparison.Ordinal))
             {
                 UpdateNeedsYou();
+                Reattend();   // the line's step decides which setup row the card drops, and the summary counts the same rows (ShownOnHome)
             }
         };
         Health.Catalog.PropertyChanged += (_, e) =>

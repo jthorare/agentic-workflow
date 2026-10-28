@@ -20,4 +20,7 @@ internal enum StateGlyph
 
     /// <summary>◇ a profile to look at.</summary>
     Profile,
+
+    /// <summary>△ a warning: degraded health (something needs a look, nothing is down).</summary>
+    Warning,
 }

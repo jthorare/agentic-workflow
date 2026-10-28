@@ -15,11 +15,15 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="views">The items view, for the title of a stalled run's item.</param>
 internal sealed class NeedsYouLiveRows(IOnyxNotices onyx, SetupNotices setup, ITextScrubber scrubber, TimeProvider clock, IStalledAgentRuns? stalled = null, IViewReader? views = null)
 {
-    /// <summary>The Onyx row, the setup rows and the stalled agent runs, in that order.</summary>
+    /// <summary>The Onyx row, the profile drift row, the setup rows and the stalled agent runs, in that order.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The rows; empty when a source can't be read.</returns>
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CancellationToken cancellationToken) =>
-        [.. await OnyxRows(cancellationToken).ConfigureAwait(false), .. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false)];
+        [.. await OnyxRows(cancellationToken).ConfigureAwait(false), .. await DriftRows(cancellationToken).ConfigureAwait(false), .. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false)];
+
+    // The profile drift row, computed from the live profile against the approved one (SetupNotices reads both).
+    private async ValueTask<IReadOnlyList<NeedsYouRow>> DriftRows(CancellationToken cancellationToken) =>
+        await setup.Drift(cancellationToken).ConfigureAwait(false) is { } row ? [row] : [];
 
     // An agent run idle past its launch's idle time that is still not ended (issue #1000): a 'park:' row the run's own park replaces. A run whose item can't be read is left out.
     private async ValueTask<IReadOnlyList<NeedsYouRow>> StalledRows(CancellationToken cancellationToken)

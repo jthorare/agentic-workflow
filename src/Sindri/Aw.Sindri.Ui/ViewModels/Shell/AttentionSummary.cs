@@ -20,8 +20,9 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
     /// <param name="state">The shell's state.</param>
     /// <param name="now">The time the ages are read at.</param>
     /// <param name="sessions">The status' session counts, or null when it serves none; they add a tooltip line only, never the badge or the title.</param>
+    /// <param name="listed">How many rows Home's card counts (the rows Home lists, before its cap), or null for every row. Only the summary line takes it: the card's "all N" link says the same N, so the header and the card agree (B-1); the title, badge and tray still count every row.</param>
     /// <returns>The summary.</returns>
-    internal static AttentionSummary For(NeedsYouFeed? feed, ShellState state, DateTimeOffset now, SessionCountsView? sessions = null)
+    internal static AttentionSummary For(NeedsYouFeed? feed, ShellState state, DateTimeOffset now, SessionCountsView? sessions = null, int? listed = null)
     {
         var rows = feed?.Rows ?? [];
         var counts = feed?.Counts ?? new HomeCounts(Running: 0, WithYou: 0, Queued: 0);
@@ -32,7 +33,7 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
             badge > 0 ? Labels.TitleNeedsYou(badge) : Labels.Sindri,
             badge,
             TrayFor(feed, state, now, sessions),
-            feed is null ? "" : Labels.Summary(rows.Count, counts.Running, counts.WithYou, counts.Queued));
+            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
     }
 
     /// <summary>True when the state shows the list's rows (a running Sindri, fresh or not); else the count is 0 because there is no list to count.</summary>
