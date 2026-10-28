@@ -1,4 +1,5 @@
 {
   "state": "needs-approval",
-  "approval": "APR-00000000000000000000000000000001"
+  "repo": "api",
+  "entry": "registry.example.org"
 }

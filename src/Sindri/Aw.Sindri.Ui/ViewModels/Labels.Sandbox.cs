@@ -19,10 +19,10 @@ internal static partial class Labels
     /// <summary>The Health row when the last check found nothing.</summary>
     internal const string SandboxRowReady = "Sandbox: ready";
 
-    /// <summary>The Settings section while the details can't be read.</summary>
+    /// <summary>The Settings section and the sheet's Sandbox line while the details can't be read.</summary>
     internal const string SandboxDetailsUnavailable = "Sandbox: details unavailable";
 
-    /// <summary>The Settings section while Sindri doesn't answer.</summary>
+    /// <summary>The Settings section and the sheet's Sandbox line while Sindri doesn't answer.</summary>
     internal const string SandboxStatusUnavailable = "Sandbox: status unavailable";
 
     /// <summary>The state in a word at the card's right.</summary>

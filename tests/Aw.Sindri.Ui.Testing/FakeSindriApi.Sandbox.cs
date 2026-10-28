@@ -29,6 +29,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>Instances whose answer-resume command is refused as no longer parked (a Step that moved on).</summary>
     public ISet<string> MovedOnInstances { get; } = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>When set, Allow waits on it before answering (the row stays in Sending meanwhile).</summary>
+    public TaskCompletionSource? SandboxAllowGate { get; set; }
+
     /// <summary>How many times the status was read.</summary>
     public int SandboxStatusCalls => Volatile.Read(ref _sandboxStatusCalls);
 
@@ -64,11 +67,11 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<DenialsView>(api, "/sindri/sandbox/denials", SandboxDenialsAnswer));
     }
 
-    public Task<Result<AllowView>> SandboxAllow(Uri api, AllowRequest request, CancellationToken cancellationToken)
+    public async Task<Result<AllowView>> SandboxAllow(Uri api, AllowRequest request, CancellationToken cancellationToken)
     {
         if (NotReceived<AllowView>(api) is { } unanswered)
         {
-            return Task.FromResult(unanswered);
+            return unanswered;
         }
 
         lock (_gate)
@@ -76,6 +79,7 @@ internal sealed partial class FakeSindriApi
             _allowed.Add(request);
         }
 
-        return Task.FromResult(Answer<AllowView>(api, "/sindri/sandbox/allow", SandboxAllowAnswer));
+        await WaitFor(SandboxAllowGate, cancellationToken).ConfigureAwait(false);
+        return Answer<AllowView>(api, "/sindri/sandbox/allow", SandboxAllowAnswer);
     }
 }
