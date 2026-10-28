@@ -33,6 +33,7 @@ internal sealed class TakeoverViewModel : ObservableObject
     private bool Nudge { get; set; }
     private DateTimeOffset _since;
     private DateTimeOffset? _dismissed;
+    private bool _sandboxed;
 
     internal TakeoverViewModel(ISindriApi api, Func<Uri?> apiUrl, InstanceCommander commands, TimeProvider clock)
     {
@@ -134,8 +135,13 @@ internal sealed class TakeoverViewModel : ObservableObject
         _takenAt = status.TakenOverAt;
         IsTakenOver = status.Paused is not null || string.Equals(status.Header.State, TakenOverState, StringComparison.Ordinal);
         Left = status.Paused?.TimeoutLeftSeconds ?? Left;   // handed back, the instance serves none: the footer keeps the time that was left
+        _sandboxed = await LaunchIsSandboxed(url, status).ConfigureAwait(true);
+        Banner.Update(_sandboxed, IsTakenOver);
         Refresh();
     }
+
+    private async Task<bool> LaunchIsSandboxed(Uri url, StatusFields status) =>
+        IsTakenOver && status.Run?.Launch is { } launch && await _api.Launch(url, launch, CancellationToken.None).ConfigureAwait(true) is { IsSuccess: true, Value.Sandbox: not null };
 
     /// <summary>Takes the served rows: the "takeover:" row of this instance shows the nudge, unless "Not yet" dismissed that very row.</summary>
     /// <param name="rows">The rows as served.</param>
@@ -174,6 +180,7 @@ internal sealed class TakeoverViewModel : ObservableObject
         if (answer is { IsError: false })
         {
             (IsTakenOver, Nudge, ToastVisible) = (false, false, true);
+            Banner.Update(_sandboxed, takenOver: false);
             ToastExpiry = DropToast();
             Refresh();
         }
