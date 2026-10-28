@@ -68,6 +68,12 @@ internal static partial class Labels
     /// <returns>The sentence.</returns>
     internal static string BlockedPathPermanent(string target, string reason) => $"Blocked path {target}: never allowed, {reason}";
 
+    /// <summary>A host that is never allowed (a private address, or one over the hit cap).</summary>
+    /// <param name="target">The host.</param>
+    /// <param name="reason">Why, as served.</param>
+    /// <returns>The sentence.</returns>
+    internal static string BlockedHostPermanent(string target, string reason) => $"Blocked host {target}: never allowed, {reason}";
+
     /// <summary>A tool the owner must run themselves.</summary>
     /// <param name="name">The tool.</param>
     /// <param name="count">How many times.</param>

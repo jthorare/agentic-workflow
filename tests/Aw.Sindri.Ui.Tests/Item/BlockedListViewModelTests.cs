@@ -79,7 +79,20 @@ public sealed class BlockedListViewModelTests
         Assert.Equal([new AllowRequest(Launch, "network", "registry.example.org")], _server.Allowed);
         Assert.Equal((AllowState.NeedsApproval, "Allow", "Needs your approval: open the approval to allow registry.example.org"), (row.State, row.AllowText, list.Voice.Announcement));
         Assert.True(list.Voice.IsAnnouncing);
-        Assert.Equal(("APR-00000000000000000000000000000001", "registry.example.org"), (requested?.Approval, requested?.Target));
+        Assert.Equal("registry.example.org", requested?.Target);
+    }
+
+    [Fact]
+    public async Task An_entry_the_approved_profile_already_has_says_Allowed_without_asking_for_an_approval()
+    {
+        var list = await Read("some");
+        _server.SandboxAllowAnswer = RouteAnswer.SpecShaped("sandbox-allow", "allowed");
+        var opened = 0;
+        list.ApprovalRequested += (_, _) => opened++;
+
+        await list.Rows[0].Allow(Token);
+
+        Assert.Equal((AllowState.Allowed, "Allowed", "Allowed", 0), (list.Rows[0].State, list.Rows[0].AllowText, list.Voice.Announcement, opened));
     }
 
     [Fact]

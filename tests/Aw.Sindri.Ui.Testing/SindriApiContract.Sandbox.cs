@@ -100,7 +100,7 @@ public abstract partial class SindriApiContract
 
         var allowed = (await Reach(server).SandboxAllow(_api, request, Token)).Value;
 
-        Expect.Equal(("needs-approval", "APR-00000000000000000000000000000001"), (allowed.State, allowed.Approval));
+        Expect.Equal(("needs-approval", "api", "registry.example.org"), (allowed.State, allowed.Repo, allowed.Entry));
         Expect.Sequence([request], server.Allowed);
     }
 

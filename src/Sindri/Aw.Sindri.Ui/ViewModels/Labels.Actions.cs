@@ -53,7 +53,7 @@ internal static partial class Labels
         ["SessionExit"] = "Report session exit",
         ["RecordLimitHit"] = "Record a sandbox limit hit",
         ["EndLearnMode"] = "End sandbox learn mode",
-        ["sandbox.allow"] = "Allow for this repo",
+        ["AllowDenial"] = "Allow for this repo",
         ["SessionHeartbeat"] = "Report session heartbeat",
         ["OpenItem:open"] = "Open",
         ["OpenItem:resume"] = "Resume session",

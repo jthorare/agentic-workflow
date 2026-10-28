@@ -16,7 +16,6 @@ internal sealed class BlockedRowViewModel : ObservableObject
     private readonly LiveAnnouncer _voice;
     private readonly Action<ApprovalRequestedEventArgs> _approval;
     private BlockedTarget _target;
-    private string _approvalId = string.Empty;
 
     internal BlockedRowViewModel(BlockedTarget target, Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> send, LiveAnnouncer voice, Action<ApprovalRequestedEventArgs> approval)
     {
@@ -97,7 +96,7 @@ internal sealed class BlockedRowViewModel : ObservableObject
         if (State == AllowState.NeedsApproval)
         {
             _voice.Say(Labels.AllowNeedsApproval(_target.Target));
-            _approval(new ApprovalRequestedEventArgs(_approvalId, _target.Target));
+            _approval(new ApprovalRequestedEventArgs(_target.Target));
             return;
         }
 
@@ -111,9 +110,16 @@ internal sealed class BlockedRowViewModel : ObservableObject
             return;
         }
 
-        (_approvalId, State) = (answer.Value.Approval, AllowState.NeedsApproval);
+        if (string.Equals(answer.Value.State, "allowed", StringComparison.Ordinal))
+        {
+            State = AllowState.Allowed;   // the approved profile already has it
+            _voice.Say(Labels.AllowDone);
+            return;
+        }
+
+        State = AllowState.NeedsApproval;
         _voice.Say(Labels.AllowNeedsApproval(_target.Target));
-        _approval(new ApprovalRequestedEventArgs(_approvalId, _target.Target));
+        _approval(new ApprovalRequestedEventArgs(_target.Target));
     }
 
     private void Draw()
@@ -123,6 +129,7 @@ internal sealed class BlockedRowViewModel : ObservableObject
         {
             "allow" when string.Equals(_target.Kind, Network, StringComparison.Ordinal) => Labels.BlockedHost(_target.Target, _target.Count),
             "allow" => Labels.BlockedPath(_target.Target, _target.Count),
+            "never" when string.Equals(_target.Kind, Network, StringComparison.Ordinal) => Labels.BlockedHostPermanent(_target.Target, _target.Reason),
             "never" => Labels.BlockedPathPermanent(_target.Target, _target.Reason),
             _ => Labels.BlockedPolicy(_target.Target, _target.Count),
         };
