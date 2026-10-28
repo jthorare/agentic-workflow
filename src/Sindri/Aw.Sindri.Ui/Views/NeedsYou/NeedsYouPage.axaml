@@ -4,6 +4,7 @@
              xmlns:comps="using:Aw.Sindri.Ui.ViewModels.Components"
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
+             xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.NeedsYou.NeedsYouPage"
              x:DataType="ny:NeedsYouPageViewModel">
@@ -118,6 +119,8 @@
                   <TextBlock x:Name="NeedsYouWhyText" Classes="body" Text="{Binding Why}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Why}" />
                 </StackPanel>
               </Border>
+              <!-- A park whose Step can't start because of the sandbox (sandbox spec 8): its fix, Check again and the resume list. -->
+              <sandbox:SandboxParkCard x:Name="NeedsYouSandboxPark" DataContext="{Binding Park}" IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="20,8" />
               <UniformGrid x:Name="NeedsYouOutcomes" Columns="2" IsVisible="{Binding Bar.HasIfApprove}" Margin="20,8">
                 <Border x:Name="NeedsYouIfApprove" Classes="card-section" IsVisible="{Binding Bar.HasIfApprove}">
                   <StackPanel Spacing="4">

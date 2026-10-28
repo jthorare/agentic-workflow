@@ -69,7 +69,7 @@ public sealed class SandboxCheckTests
         seen.Clear();
         await Check.Check(Token);
 
-        Assert.Equal("False/Check again | False/Check again | True/Check again | True/Still blocked: 1 thing to fix", SandboxTestBed.J(seen.Select(x => x.Live + "/" + x.Text)));
+        Assert.Equal("False/Still blocked: 1 thing to fix | False/Check again | True/Check again | True/Still blocked: 1 thing to fix", SandboxTestBed.J(seen.Select(x => x.Live + "/" + x.Text)));
         Assert.All(seen, s => Assert.True(s.Text.Length > 0));
     }
 

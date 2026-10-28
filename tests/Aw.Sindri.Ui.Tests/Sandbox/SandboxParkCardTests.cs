@@ -38,8 +38,8 @@ public sealed class SandboxParkCardTests
             var clause = SandboxParkCardViewModel.FirstClause(text);
 
             Assert.True(clause.Length > 0, text);
-            Assert.StartsWith(clause, text, StringComparison.Ordinal);
-            Assert.True(clause.Length < text.Length, text);
+            Assert.StartsWith(clause, text.Replace("`", string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
+            Assert.True(clause.Length < text.Replace("`", string.Empty, StringComparison.Ordinal).Length, text);
             Assert.DoesNotContain("`", clause, StringComparison.Ordinal);
         }
     }

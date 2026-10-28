@@ -211,7 +211,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static readonly string[] _cardProperties =
     [
-        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons),
+        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons), nameof(Park),
     ];
 
     private static readonly string[] _listProperties =
