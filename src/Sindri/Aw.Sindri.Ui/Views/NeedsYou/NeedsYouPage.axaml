@@ -3,6 +3,7 @@
              xmlns:ny="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
              xmlns:comps="using:Aw.Sindri.Ui.ViewModels.Components"
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
+             xmlns:cv="using:Aw.Sindri.Ui.Views.Components"
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.NeedsYou.NeedsYouPage"
@@ -237,6 +238,7 @@
               <!-- A taken-over run (F3 needs-you spec §3, slice 4): the badge, the clock, the hand-back box, the 2-hour nudge and Cancel run. -->
               <Border x:Name="NeedsYouTakeover" Classes="card-section" IsVisible="{Binding ShowsTakeover}">
                 <StackPanel Spacing="8" DataContext="{Binding Takeover}" x:DataType="ny:TakeoverViewModel">
+                  <cv:TakeoverBannerView x:Name="NeedsYouTakeoverBanner" DataContext="{Binding Banner}" />
                   <TextBlock x:Name="NeedsYouTakeoverBadge" Classes="eyebrow attention" Text="{Binding Badge}" />
                   <TextBlock x:Name="NeedsYouTakeoverAt" Classes="caption muted" Text="{Binding TookOverLine}" IsVisible="{Binding HasTookOverLine}" />
                   <TextBlock x:Name="NeedsYouTakeoverClock" Classes="caption mono" Text="{Binding ClockText}" AutomationProperties.LiveSetting="Polite" />

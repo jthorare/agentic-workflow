@@ -6,6 +6,12 @@
              xmlns:comp="using:Aw.Sindri.Ui.Views.Components"
              x:Class="Aw.Sindri.Ui.Views.Instance.ExpandedStateView"
              x:DataType="inst:ExpandedStateViewModel">
+  <UserControl.Styles>
+    <!-- The live regions of this view are live only while they speak, so their resting text is never read. -->
+    <Style Selector="TextBlock.live-region.live">
+      <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+  </UserControl.Styles>
   <!-- The state the instance is in, expanded (screens spec §4.2): the step, the gates, the engine's next sentence whole, the budget and
        timeout lines, the commands the engine lists (a protected one is the lock button; the rest show their CLI with a Copy and a chip
        that says the app does not send them yet), and Cancel, which asks first with Keep focused. Reading comes before acting in the tab
@@ -19,6 +25,7 @@
         <TextBlock x:Name="ExpandedCopyAnnouncement" Grid.Column="1" Classes="caption live-region" Classes.live="{Binding StatusCopy.IsAnnouncing}" Width="0" Opacity="0"
                    IsHitTestVisible="False" Text="{Binding StatusCopy.Announcement}" />
       </Grid>
+      <comp:TakeoverBannerView x:Name="ExpandedTakeoverBanner" DataContext="{Binding TakeoverBanner}" />
       <TextBlock x:Name="ExpandedNext" Classes="body" Text="{Binding Next}" IsVisible="{Binding HasNext}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedPaused" Classes="caption mono" Text="{Binding PausedLine}" IsVisible="{Binding IsPaused}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedDrift" Classes="caption mono" Text="{Binding DriftLine}" IsVisible="{Binding HasDrift}" TextWrapping="Wrap" />
@@ -29,6 +36,12 @@
       <Border x:Name="ExpandedRun" IsVisible="{Binding HasRun}" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{Binding RunName}"
               AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock x:Name="ExpandedRunLine" Classes="body" Text="{Binding RunLine}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <TextBlock x:Name="ExpandedWaitingAnnouncement" Classes="caption live-region" Classes.live="{Binding WaitingVoice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
+                 Text="{Binding WaitingVoice.Announcement}" />
+      <Border x:Name="ExpandedWaiting" IsVisible="{Binding HasWaiting}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding WaitingLine}"
+              AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock x:Name="ExpandedWaitingLine" Classes="body" Text="{Binding WaitingLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <TextBlock x:Name="ExpandedReason" Classes="body" Text="{Binding ReasonLine}" IsVisible="{Binding HasReasonLine}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ReasonLine}" />
       <ItemsControl x:Name="ExpandedReviews" ItemsSource="{Binding Reviews}" IsVisible="{Binding HasReviews}">

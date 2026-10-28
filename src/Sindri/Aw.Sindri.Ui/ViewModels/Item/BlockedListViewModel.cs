@@ -15,6 +15,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
     private readonly Dictionary<string, BlockedRowViewModel> _known = new(StringComparer.Ordinal);
     private List<BlockedTarget> _targets = [];
     private bool _showAll;
+    private bool _read;
     private string _item = string.Empty;
     private Uri? _url;
 
@@ -29,6 +30,9 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
 
     /// <summary>True when a long list shows only its top five.</summary>
     public bool HasSeeAll { get; private set => Set(ref field, value); }
+
+    /// <summary>True once the item's denials were read: the section shows, with its nothing-blocked sentence when there is none.</summary>
+    public bool IsShown { get; private set => Set(ref field, value); }
 
     /// <summary>"See all blocked".</summary>
     public string SeeAllText { get; } = Labels.SeeAllBlocked;
@@ -49,7 +53,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
     /// <summary>Forgets the item (the sheet moved to another).</summary>
     internal void Reset()
     {
-        (_item, _showAll) = (string.Empty, false);
+        (_item, _showAll, _read) = (string.Empty, false, false);
         _targets = [];
         _known.Clear();
         Draw();
@@ -76,7 +80,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
             return;
         }
 
-        _targets = Targets(answer.Value);
+        (_targets, _read) = (Targets(answer.Value), true);
         Draw();
     }
 
@@ -140,6 +144,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         }
 
         HasSeeAll = _targets.Count > Top && !_showAll;
+        IsShown = _item.Length > 0 && _read;
         Summary = _item.Length == 0 ? string.Empty
             : _targets.Count == 0 ? Labels.BlockedNothing
             : HasSeeAll ? Labels.BlockedMany(_targets.Count) : string.Empty;
