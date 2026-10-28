@@ -266,11 +266,12 @@ public sealed class LauncherTests : IDisposable
     [Fact]
     public async Task A_Step_policy_an_entry_cannot_express_is_Failed_013_and_starts_nothing()
     {
-        var request = A.LaunchRequest().InDirectory(_home).WithAgent(AgentEntries.Aider.Id).Unattended(Step(new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null))).Build();
+        var noPolicy = AgentEntries.Aider with { Source = CatalogSource.Builtin };   // a built-in needs no approved argv hash, so the launch reaches the form check
+        var request = A.LaunchRequest().InDirectory(_home).WithAgent(noPolicy.Id).Unattended(Step(new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null))).Build();
 
-        var result = await Make(hostFor: null, viewer: null, AgentEntries.ClaudeCode, AgentEntries.Aider).Launch(request, CancellationToken.None);
+        var result = await Make(hostFor: null, viewer: null, AgentEntries.ClaudeCode, noPolicy).Launch(request, CancellationToken.None);
 
-        Expect.True(result is FailedLaunch failed && failed.Error.Code == SindriErrors.LaunchFormUnsupported.Code);
+        Expect.Equal(SindriErrors.LaunchFormUnsupported.Code, Assert.IsType<FailedLaunch>(result).Error.Code);
         Expect.Equal(0, _host.LiveCount);
     }
 
