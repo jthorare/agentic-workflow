@@ -115,9 +115,13 @@ internal sealed partial class Launcher
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session, string Seed)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
     {
         var step = Denying(request.Attended ? null : request.Step, request, entry, workDir);
-        var policyPath = step?.Policy is { } policy && entry.PolicyForm == PolicyForm.ClaudeSettingsFile
-            ? StepPolicyFile.Write(parts.Options.PolicyDirectory, request.Launch, policy)
-            : null;
+        var policyFile = step?.Policy is { } policy ? PolicyFile(entry, request.Launch, workDir, policy) : Results.Success<string?>(value: null);
+        if (policyFile.IsError)
+        {
+            return policyFile.Error;
+        }
+
+        var policyPath = policyFile.Value;
         var session = request.Mode == LaunchMode.Resume && request.Resume is { } resumed ? resumed : PreChosen(entry);
         var seed = ArgvBuilder.Seed(request.Item) + StepSeed(step);
         var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
@@ -130,6 +134,17 @@ internal sealed partial class Launcher
         IReadOnlyList<string> argv = [.. built.Value, .. mcpArguments];
         return (argv, session, seed);
     }
+
+    /// <summary>The policy file the entry's form needs, written for this launch; null when the form has none. A cursor-config Step is refused when the worktree already has the repo's own .cursor/cli.json.</summary>
+    private Result<string?> PolicyFile(AgentEntry entry, LaunchId launch, string workDir, StepPolicy policy) => entry.PolicyForm switch
+    {
+        PolicyForm.ClaudeSettingsFile => Results.Success<string?>(StepPolicyFile.Write(parts.Options.PolicyDirectory, launch, policy)),
+        PolicyForm.CursorConfig => CursorPolicyFile.Write(parts.Options.PolicyDirectory, launch, workDir, policy) is { } written
+            ? Results.Success<string?>(written)
+            : SindriErrors.RequestInvalid.With($"the Step's worktree already has a {CursorPolicyFile.PathIn(workDir)}, which a launch never overwrites (fix: remove it or move its rules to the user config)"),
+        PolicyForm.None or PolicyForm.CodexOverrides => Results.Success<string?>(value: null),
+        _ => Results.Success<string?>(value: null),
+    };
 
     /// <summary>The Step with its denied paths added: the other worktrees and the holdout store. Only a form that can express a denied read gets them, since a codex entry would refuse the whole Step with SND-LAUNCH-013.</summary>
     private StepArgs? Denying(StepArgs? step, LaunchRequest request, AgentEntry entry, string workDir)
@@ -233,6 +248,7 @@ internal sealed partial class Launcher
         LaunchSecrets.Delete(parts.Options.SecretsDirectory, launch);
         LaunchFileStore.DeleteFlat(parts.Options, launch);
         LaunchFileStore.DeleteIn(parts.Options.PolicyDirectory, StepPolicyFile.PathFor(parts.Options.PolicyDirectory, launch));
+        CursorPolicyFile.Delete(parts.Options.PolicyDirectory, launch);
         LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
         _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
     }
