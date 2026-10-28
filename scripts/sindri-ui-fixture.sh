@@ -871,6 +871,9 @@ echo "stub claude: mode=\$mode model=\$model session=\$sid" >> "\$DIR/stub.log"
 addr="\$(printf '%s' "\$seed" | grep -o 'workflow complete [^ ]* --run' | head -1 | cut -d' ' -f3)"
 run="\$(printf '%s' "\$seed" | grep -o -- '--run [^ ]*' | head -1 | cut -d' ' -f2)"
 folder="\$(printf '%s' "\$seed" | grep -o 'output folder [^ ]*' | head -1 | cut -d' ' -f3 | sed 's/[.,;]*\$//')"
+folder="\$(printf '%s' "\$folder" | sed "s|^[\$]AW_SINDRI_RUN_DIR|\$AW_SINDRI_RUN_DIR|")"   # the brief names the folder with the variable unexpanded
+case "\$folder" in /*) ;; *) folder="\$PWD/\$folder" ;; esac
+echo "stub env: AW_SINDRI_RUN_DIR=[\$AW_SINDRI_RUN_DIR] pwd=[\$PWD]" >> "\$DIR/stub.log"
 echo "stub parsed: addr=[\$addr] run=[\$run] folder=[\$folder]" >> "\$DIR/stub.log"
 spend() { # \$1 input tokens, \$2 output tokens
   [ -n "\$sid" ] || return 0
