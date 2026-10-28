@@ -27,7 +27,10 @@ public sealed class SandboxLaunchStagesTests : IDisposable
     private readonly FakeModelCredentialSource _login = new FakeModelCredentialSource(ModelLoginSource.OwnerCopy).With(AgentId.From("claude-code"), LoginState.Ready);
 
     private SandboxLaunchStages Make(params IModelCredentialSource[] logins) =>
-        new(new NoProfile(), new EmptyLearn(), logins.Length == 0 ? [_login] : logins, _inputs, Registry(), _clock);
+        new(new NoProfile(), new EmptyLearn(), logins.Length == 0 ? [_login] : logins, _inputs, Registry(), _clock, new UnmintedAgentTokenSource());
+
+    private SandboxLaunchStages MakeWith(GithubCredentials github) =>
+        new(new GithubProfile(github), new EmptyLearn(), [_login], _inputs, Registry(), _clock, new UnmintedAgentTokenSource());
 
     public SandboxLaunchStagesTests()
     {
@@ -62,6 +65,23 @@ public sealed class SandboxLaunchStagesTests : IDisposable
         Expect.Equal("sindri/" + WorkflowInstanceId.Of(InstanceAddress.From("ITM-1/spec/1")).Value + "/1", r.RunNamespace);   // the instance id, never the address with its slashes
         Expect.True(r.Learn is { } learn && learn.Now == _clock.GetUtcNow());
         Expect.Equal("web", r.Repo.Value);   // no profile repo: the directory's name
+    }
+
+    [Fact]
+    public async Task Request_refuses_an_agent_app_Step_with_the_token_code_and_no_key_until_the_mint_ships()
+    {
+        var built = await MakeWith(GithubCredentials.AgentApp).Request(Step(), chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsError && string.Equals(built.Error.Code, SindriErrors.LaunchGitHubTokenFailed.Code, StringComparison.Ordinal));
+        Expect.Equal(SandboxReasons.NoKey, built.Error.Extensions!.Single(e => e.Key == "reason").Value.GetString());
+    }
+
+    [Fact]
+    public async Task Request_leaves_a_Step_with_no_GitHub_credential_alone()
+    {
+        var built = await MakeWith(GithubCredentials.None).Request(Step(), chosenSession: null, CancellationToken.None);
+
+        Expect.True(built.IsSuccess);
     }
 
     [Fact]
@@ -134,6 +154,13 @@ public sealed class SandboxLaunchStagesTests : IDisposable
     private sealed class NoProfile : IApprovedProfile
     {
         public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<LoadedProfile?>(value: null));
+    }
+
+    private sealed class GithubProfile(GithubCredentials github) : IApprovedProfile
+    {
+        public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Success<LoadedProfile?>(new LoadedProfile(
+                new SindriProfile(1, "thor", Sandbox: new SandboxSettings(Credentials: new SandboxCredentials(github))), ProfileHashing.Of("{}"u8), "/home/profile.yaml")));
     }
 
     private sealed class EmptyLearn : ILearnHistory

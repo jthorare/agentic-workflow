@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>
 /// Makes the host side of a plan exist before bubblewrap starts (a bind needs its source): the per-launch and scratch directories, the empty global git config,
-/// the refusing pre-push hook and the plan file ('sandbox explain' reads it; SB-5a). The shims are filled later (SB-3b).
+/// the refusing pre-push hook and the plan file ('sandbox explain' reads it; SB-5a) and the dotnet, npm and npx shims.
 /// </summary>
 internal static class RunAreaPreparer
 {
@@ -56,12 +56,46 @@ internal static class RunAreaPreparer
         }
 
         _ = Directory.CreateDirectory(area + "/shims");
+        WriteShims(plan, area + "/shims");
         _ = Directory.CreateDirectory(area + "/githooks");
         WriteIfAbsent(area + "/githooks/pre-push", RefusingPrePush, executable: true);
         WriteIfAbsent(area + "/gitconfig.empty", string.Empty, executable: false);
         OwnerOnly.WriteAtomically(area + "/sandbox-plan.json", AwJson.Serialize(plan, SandboxFilesJson.Options));   // value-free: launcher-supplied variables carry no value; 'sandbox explain' reads this file
         return null;
     }
+
+    // why: the shims exec absolute paths, resolved here from the PATH the plan gives the box (its host part is bound, so a path found now is visible inside); heavy is the
+    // `bin-r1b` entry the planner puts second. No heavy means no shim at all (an exec of a missing wrapper would break every build), and a tool not on the host gets none:
+    // the box then has no such tool, as before.
+    private static void WriteShims(SandboxPlan plan, string shimsDirectory)
+    {
+        var entries = (plan.Environment.FirstOrDefault(e => string.Equals(e.Name, "PATH", StringComparison.Ordinal))?.Value ?? string.Empty).Split(':', StringSplitOptions.RemoveEmptyEntries);
+        var heavy = entries.Where(e => e.EndsWith("/bin-r1b", StringComparison.Ordinal)).Select(e => e + "/heavy").FirstOrDefault(IsExecutable);
+        if (heavy is null)
+        {
+            return;
+        }
+
+        var hostDirectories = entries.Where(e => !string.Equals(e, shimsDirectory, StringComparison.Ordinal) && !e.EndsWith("/bin-r1b", StringComparison.Ordinal)).ToList();
+        if (plan.Environment.FirstOrDefault(e => string.Equals(e.Name, "DOTNET_ROOT", StringComparison.Ordinal))?.Value is { Length: > 0 } dotnetRoot)
+        {
+            hostDirectories.Add(dotnetRoot);
+        }
+
+        var real = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var tool in SandboxShims.Tools)
+        {
+            if (hostDirectories.Select(d => Path.Combine(d, tool)).FirstOrDefault(IsExecutable) is { } found)
+            {
+                real[tool] = found;
+            }
+        }
+
+        SandboxShims.Write(shimsDirectory, real, heavy);
+    }
+
+    private static bool IsExecutable(string path) =>
+        File.Exists(path) && (OperatingSystem.IsWindows() || File.GetUnixFileMode(path).HasFlag(UnixFileMode.UserExecute));
 
     // The plan file sits in the run area, and AW_SANDBOX_PLAN names it.
     private static string? RunArea(SandboxPlan plan) =>

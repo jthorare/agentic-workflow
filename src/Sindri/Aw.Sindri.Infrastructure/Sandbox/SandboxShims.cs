@@ -7,7 +7,6 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// call `heavy --expensive|--light /abs/tool` explicitly, because heavy classifies by the literal command text and an explicit `--light` would otherwise
 /// bypass the box-wide cap. The table is checked against Golden/Sandbox/shims.json and against the case list in `bin-r1b/heavy`.
 /// </summary>
-#pragma warning disable MA0182 // used by the session wrap, which writes the shim directory (SB-3b follow-up)
 internal static class SandboxShims
 {
     /// <summary>The shims, in the order they are written.</summary>
@@ -44,14 +43,19 @@ internal static class SandboxShims
     /// <summary>The first-argument flags a shim runs directly, with no heavy.</summary>
     internal static IReadOnlyList<string> DirectFlags(string tool) => _direct[tool];
 
-    /// <summary>Writes one executable script per shim into <paramref name="directory"/>; <paramref name="realTools"/> maps a shim name to the absolute path of the real tool.</summary>
+    /// <summary>Writes one executable script per shim whose real tool is in <paramref name="realTools"/> (a shim name to the absolute path of the real tool) into <paramref name="directory"/>; a tool missing from the map gets none.</summary>
     internal static void Write(string directory, IReadOnlyDictionary<string, string> realTools, string heavyPath)
     {
         Directory.CreateDirectory(directory);
         foreach (var tool in Tools)
         {
+            if (!realTools.TryGetValue(tool, out var realPath))
+            {
+                continue;
+            }
+
             var path = Path.Combine(directory, tool);
-            File.WriteAllText(path, Script(tool, realTools[tool], heavyPath));
+            File.WriteAllText(path, Script(tool, realPath, heavyPath));
             if (OperatingSystem.IsWindows())
             {
                 continue;

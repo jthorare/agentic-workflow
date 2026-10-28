@@ -17,7 +17,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 /// The sandbox step's launch-specific parts (<see cref="ISandboxLaunchStages"/>): the plan request from the approved profile, the login and the learn history, the egress, and what
 /// the end of a launch releases. The session home itself is made and removed by <see cref="SandboxLaunch"/>.
 /// </summary>
-internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistory learn, IReadOnlyList<IModelCredentialSource> logins, ISandboxLaunchInputs inputs, LaunchSandboxRegistry egress, TimeProvider clock) : ISandboxLaunchStages
+internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistory learn, IReadOnlyList<IModelCredentialSource> logins, ISandboxLaunchInputs inputs, LaunchSandboxRegistry egress, TimeProvider clock, IAgentTokenSource agentTokens) : ISandboxLaunchStages
 {
     private readonly ConcurrentDictionary<LaunchId, (SandboxPlan Plan, AgentId Target)> _plans = new();
     private readonly ConcurrentDictionary<LaunchId, SessionId?> _sessions = new();
@@ -40,6 +40,12 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         if (prepared.IsError)
         {
             return prepared.Error;
+        }
+
+        var minted = await MintAgentToken(request, settings, cancellationToken).ConfigureAwait(false);
+        if (minted.IsError)
+        {
+            return minted.Error;
         }
 
         var history = await learn.Read(repo.Value, cancellationToken).ConfigureAwait(false);
@@ -111,6 +117,13 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
 
     private static RepoName RepoNameOf(SindriProfile? loaded, string repoPath) =>
         RepoName.From(loaded?.Repos?.FirstOrDefault(r => string.Equals(r.Path.TrimEnd('/'), repoPath.TrimEnd('/'), StringComparison.Ordinal))?.Name ?? Path.GetFileName(repoPath.TrimEnd('/')));
+
+    // why: the same resolution PlanContext makes (an attended session never gets one); minting here makes a failure a Step failure, not an unconfined launch with no token
+    private async ValueTask<Result<Unit>> MintAgentToken(LaunchRequest request, SandboxSettings? settings, CancellationToken cancellationToken)
+    {
+        var github = request.Attended ? GithubCredentials.None : settings?.Credentials?.Github ?? SandboxDefaults.Github;
+        return github == GithubCredentials.AgentApp ? await agentTokens.Mint(request.Launch, cancellationToken).ConfigureAwait(false) : Unit.Value;
+    }
 
     private async ValueTask<Result<PreparedLogin>> Login(LaunchRequest request, SandboxSettings? settings, RepoName repo, CancellationToken cancellationToken)
     {

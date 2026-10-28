@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Sandbox;
@@ -11,6 +12,7 @@ namespace Aw.Sindri.Tests.Sandbox.Bubblewrap;
 
 /// <summary>What the preparer makes before bubblewrap starts, and what it leaves to the engine.</summary>
 [Lane(TestLane.Integration)]
+[UnsupportedOSPlatform("windows")]
 public sealed class RunAreaPreparerTests
 {
     [Fact]
@@ -98,4 +100,73 @@ public sealed class RunAreaPreparerTests
     [Fact]
     public void A_plan_built_for_the_fixture_box_names_the_run_area_through_the_plan_file_variable() =>
         Assert.Equal(Req.RunArea, RunAreaPreparer.RunAreaOf(SandboxPlannerTests.Build(Req.WriteScope)));
+
+    [Fact]
+    public async Task The_shims_are_written_executable_and_exec_the_real_tool_through_heavy_found_on_the_plans_path()
+    {
+        using var area = new TempRunArea();
+        var plan = WithToolPath(area, "dotnet", "npm", "npx");
+
+        Assert.Null(RunAreaPreparer.Prepare(plan));
+
+        var shim = area.Root + "/area/shims/dotnet";
+        var script = await File.ReadAllTextAsync(shim, TestContext.Current.CancellationToken);
+        Assert.Contains($"real='{area.Root}/tools/dotnet'", script, StringComparison.Ordinal);
+        Assert.Contains($"heavy='{area.Root}/state/bin-r1b/heavy'", script, StringComparison.Ordinal);
+        Assert.Contains("exec \"$heavy\" --light \"$real\" \"$@\"", script, StringComparison.Ordinal);
+        Assert.True(OperatingSystem.IsWindows() || File.GetUnixFileMode(shim).HasFlag(UnixFileMode.UserExecute));
+        Assert.True(File.Exists(area.Root + "/area/shims/npm") && File.Exists(area.Root + "/area/shims/npx"));
+    }
+
+    [Fact]
+    public void A_tool_that_is_not_on_the_host_gets_no_shim()
+    {
+        using var area = new TempRunArea();
+        var plan = WithToolPath(area, "dotnet", "npm");
+
+        Assert.Null(RunAreaPreparer.Prepare(plan));
+
+        Assert.True(File.Exists(area.Root + "/area/shims/dotnet") && File.Exists(area.Root + "/area/shims/npm"));
+        Assert.False(File.Exists(area.Root + "/area/shims/npx"));
+    }
+
+    [Fact]
+    public void Without_a_heavy_wrapper_no_shim_is_written()
+    {
+        using var area = new TempRunArea();
+        var plan = WithToolPath(area, "dotnet");
+        File.Delete(area.Root + "/state/bin-r1b/heavy");
+
+        Assert.Null(RunAreaPreparer.Prepare(plan));
+
+        Assert.Empty(Directory.GetFiles(area.Root + "/area/shims"));
+    }
+
+    [Fact]
+    public void A_second_prepare_rewrites_the_shims_in_place()
+    {
+        using var area = new TempRunArea();
+        var plan = WithToolPath(area, "dotnet");
+
+        Assert.Null(RunAreaPreparer.Prepare(plan));
+        Assert.Null(RunAreaPreparer.Prepare(plan));
+
+        Assert.True(File.Exists(area.Root + "/area/shims/dotnet"));
+    }
+
+    // A plan whose PATH is what the planner builds: <run area>/shims, <state>/bin-r1b, then the host's toolchain directories.
+    private static SandboxPlan WithToolPath(TempRunArea area, params string[] tools)
+    {
+        Directory.CreateDirectory(area.Root + "/tools");
+        Directory.CreateDirectory(area.Root + "/state/bin-r1b");
+        foreach (var tool in tools.Append("heavy"))
+        {
+            var path = tool == "heavy" ? area.Root + "/state/bin-r1b/heavy" : area.Root + "/tools/" + tool;
+            File.WriteAllText(path, "#!/bin/sh\n");
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
+        var hostPath = $"{area.Root}/area/shims:{area.Root}/state/bin-r1b:{area.Root}/tools";
+        return area.Plan with { Environment = [.. area.Plan.Environment, new PlanEnvVar("PATH", hostPath, "test")] };
+    }
 }
