@@ -132,6 +132,20 @@ public sealed class NeedsYouHomeActionNoteTests : IDisposable
         Assert.StartsWith("Can't complete this step from the app. Run: sindri workflow", shell.NeedsYou.Row("desk:" + NeedsYouRows.DeskInstance)!.Notice, StringComparison.Ordinal);
     });
 
+    // #1170: the golden's desk requires fact:output (a file). Home's button has none to send, so it sends nothing, says so on the row and opens the row's sheet, which has the file input.
+    [Fact]
+    public Task Complete_on_a_step_that_needs_an_output_file_sends_nothing_says_so_and_opens_the_sheet() => OnUi(async () =>
+    {
+        var (window, shell) = await DeskWindow();
+        var id = "desk:" + NeedsYouRows.DeskInstance;
+
+        Complete(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitFor(window, () => shell.NeedsYou.Row(id)!.HasNotice);
+
+        Assert.Empty(_server.CompleteCalls);
+        Assert.Equal((Labels.CompleteNeedsOutputInSheet, id), (shell.NeedsYou.Row(id)!.Notice, shell.NeedsYou.SheetRowId));
+    });
+
     [Fact]
     public Task Complete_on_an_instance_that_cannot_be_read_sends_nothing_and_says_so_on_the_row() => OnUi(async () =>
     {

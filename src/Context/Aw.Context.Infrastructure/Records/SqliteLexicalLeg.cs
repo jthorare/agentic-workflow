@@ -58,14 +58,15 @@ internal sealed class SqliteLexicalLeg(ContextDatabase database) : ILexicalLeg
 
     private static async ValueTask<Result<LexicalAnswer>> Match(SqliteReadSession session, string? match, AudienceScope scope, int limit, CancellationToken cancellationToken)
     {
-        if (match is null || scope.Allowed.Count == 0)
+        if (match is null || (scope.Allowed.Count == 0 && scope.Records.Count == 0))
         {
             return _none;
         }
 
         var rows = await SqliteQueries.List(session, new SqlStatement(RecordSql.LexicalSearch, c => c
                 .Bind("@match", match)
-                .Bind("@audiences", Audiences(scope))
+                .Bind("@audiences", Array(scope.Allowed.Select(k => k.Value)))
+                .Bind("@records", Array(scope.Records.Select(k => k.Value)))
                 .Bind("@limit", limit)), LexicalRow.Mapper, cancellationToken).ConfigureAwait(false);
         return rows.IsError ? ContextDatabase.Translate(rows.Error) : new LexicalAnswer(BestPerRecord(rows.Value), Degraded: null);
     }
@@ -88,13 +89,13 @@ internal sealed class SqliteLexicalLeg(ContextDatabase database) : ILexicalLeg
         return hits;
     }
 
-    private static string Audiences(AudienceScope scope)
+    private static string Array(IEnumerable<string> values)
     {
         using var buffer = new MemoryStream();
         using (var json = new Utf8JsonWriter(buffer))
         {
             json.WriteStartArray();
-            foreach (var key in scope.Allowed.Select(k => k.Value).Order(StringComparer.Ordinal))
+            foreach (var key in values.Order(StringComparer.Ordinal))
             {
                 json.WriteStringValue(key);
             }

@@ -43,7 +43,7 @@ public sealed class FakeLexicalLeg : ILexicalLeg
 
         var hits = Degraded is not null
             ? []
-            : _chunks.Where(c => scope.Allows(c.Audience)).GroupBy(c => c.Chunk.Record.Value, StringComparer.Ordinal)
+            : _chunks.Where(c => scope.Allows(c.Audience, c.Chunk.Record)).GroupBy(c => c.Chunk.Record.Value, StringComparer.Ordinal)
                 .Select(g => new RecordHit(g.First().Chunk, "fake", LineStart: null, LineEnd: null, Score: 1)).Take(limit).ToList();
         return ValueTask.FromResult<Result<LexicalAnswer>>(new LexicalAnswer(hits, Degraded));
     }

@@ -113,7 +113,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
                 return page.Error;
             }
 
-            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience)))
+            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience, r.Key)))
             {
                 _ = allowed.Add(record.Key);
             }

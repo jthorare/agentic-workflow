@@ -163,6 +163,10 @@ internal sealed partial class ShellViewModel
         }
     }
 
+    /// <summary>Opens the row's own sheet over the page, never the inbox or a nested park's child: where a row goes when the sheet is the only place that can finish it (a step that needs a file, #1170).</summary>
+    /// <param name="rowId">The row's id.</param>
+    internal void OpenNeedsYouRowSheet(string rowId) => NavigateToRowSheet(LinkOf(rowId));
+
     // The served open.route of a row (api q65) is where its click goes. A route that is the row's own sheet changes nothing here, and a row with none keeps the older rule.
     private bool OpenTargetOf(string? rowId) => OpenChildOf(rowId) || OpenRouteOf(rowId);
 

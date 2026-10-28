@@ -131,7 +131,9 @@ jobs:
     name: .NET build and test
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # Run 40687528917 (0976cbfbe), the first to reach the last step: format 8.5 min, build 6.5, test 13, AOT smokes 7.5,
+    # hook contracts 2, so 39 min before "Install end to end", which the old 45 cut off after 6 (#1485).
+    timeout-minutes: 70
     env:
       CHANGED: ${{ needs.changes.outputs.dotnet }}
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"

@@ -46,7 +46,7 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
             return record.Error;
         }
 
-        if (record.Value is not { RemovedAt: null } stored || !scope.Allows(stored.Audience))
+        if (record.Value is not { RemovedAt: null } stored || !scope.Allows(stored.Audience, stored.Key))
         {
             return ContextErrors.UnknownAnchor.With("not a record of this store");   // gone, or never the caller's to read
         }
@@ -74,7 +74,7 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
                 return record.Error;
             }
 
-            versions.Add(record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience) ? stored.Version : null);
+            versions.Add(record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience, stored.Key) ? stored.Version : null);
         }
 
         return versions;

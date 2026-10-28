@@ -15,6 +15,13 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, the answer of an instance read, or null for the golden's own (the list route keeps the goldens).</summary>
     public Func<string, RouteAnswer?>? InstanceBody { get; set; }
 
+    /// <summary>Serves <see cref="GoldenFiles.DeskWithoutRequiredOutput"/> for every instance read: a desk step that asks for no file, so its Complete is sent.</summary>
+    public void ServeDeskWithoutRequiredOutput()
+    {
+        var body = GoldenFiles.DeskWithoutRequiredOutput().ToJsonString();
+        InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+    }
+
     private int _instancesCalls;
     private readonly List<InstanceQuery> _instanceQueries = [];
 

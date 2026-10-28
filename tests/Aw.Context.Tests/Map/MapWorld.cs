@@ -72,7 +72,7 @@ internal sealed class MapWorld : IDisposable
         ["README.md"] = "# Split panes",
     };
 
-    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null)
+    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
         Exports = new FakeExportStore(Clock);
@@ -94,7 +94,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IDefaultBranch>(DefaultBranch)
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
-            .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records)
+            .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)

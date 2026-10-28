@@ -1,6 +1,7 @@
 using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Search;
+using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Records;
 using Aw.Context.Testing.Records;
 
@@ -59,6 +60,18 @@ public sealed class SqliteLexicalLegTests : IDisposable
         Assert.Equal(new ChunkKey(a.Key, 1), answer.Hits[0].Chunk);
         Assert.Equal(b.Key, answer.Hits[1].Chunk.Record);
         Assert.True(answer.Hits[0].Score >= answer.Hits[1].Score);
+    }
+
+    [Fact]
+    public async Task A_listed_record_of_another_audience_is_found_and_an_unlisted_one_is_not()
+    {
+        var listed = RecordSamples.Record("linear:issue/listed") with { Audience = _otherTeam };
+        var unlisted = RecordSamples.Record("linear:issue/unlisted") with { Audience = _otherTeam };
+        await Put(1, RecordSamples.Write(listed, "orientation resets"), RecordSamples.Write(unlisted, "orientation resets"));
+        var onlyRecords = new AudienceScope(new HashSet<AudienceKey>()) { Records = new HashSet<RecordKey> { listed.Key } };   // rule (c): no audience at all, one record listed
+
+        Assert.Equal(listed.Key, Assert.Single((await Search(onlyRecords, "orientation")).Hits).Chunk.Record);
+        Assert.Equal(2, (await Search(new AudienceScope(new HashSet<AudienceKey> { _otherTeam }), "orientation")).Hits.Count);
     }
 
     [Fact]

@@ -265,7 +265,7 @@ public sealed class NeedsYouFramesTests : FrameHost
     private void ServeDesk()
     {
         Server.NeedsYouView = RouteAnswer.Api("needs-you", "desk-task");
-        Server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"));
+        Server.ServeDeskWithoutRequiredOutput();
     }
 
     private async Task<(ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> DeskInbox(double width = 1440)

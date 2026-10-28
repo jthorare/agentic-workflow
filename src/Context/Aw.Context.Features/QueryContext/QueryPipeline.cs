@@ -57,7 +57,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var (graph, terms, miss) = anchored.Value;
         var deadline = clock.GetUtcNow() + settings.Value.Deadline;
         var catalogSources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
-        var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), request.Scope.Caller, cancellationToken).ConfigureAwait(false);
+        var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), (request, inputs.Map, valid.Value.Read), cancellationToken).ConfigureAwait(false);
         var searched = await Search(sources, terms, (deadline, inputs.AsOf), cancellationToken).ConfigureAwait(false);
         if (catalogSources.Count > 0 && NothingAnswered(searched) && graph.Anchors.Count == 0)
         {

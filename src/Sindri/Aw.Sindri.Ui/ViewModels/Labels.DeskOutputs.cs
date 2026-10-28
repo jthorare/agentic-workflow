@@ -12,6 +12,9 @@ internal static partial class Labels
     /// <summary>Said on a Home row when Complete needs a file first: the instance sheet has the box for it.</summary>
     internal const string CompleteNeedsOutput = "This task needs a file first: open it with Answer, pick the file there and complete it.";
 
+    /// <summary>Said where Complete was pressed on a task that needs a file: the sheet opens, and its box takes the file.</summary>
+    internal const string CompleteNeedsOutputInSheet = "This task needs a file first: pick it in the sheet and complete it there.";
+
     /// <summary>The words above one output's box.</summary>
     /// <param name="key">The output's key.</param>
     /// <returns>The words.</returns>

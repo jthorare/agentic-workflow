@@ -91,6 +91,7 @@ internal sealed partial class ShellViewModel
                 _ = launcher.OpenUri(uri, CancellationToken.None);
             }
         };
+        inbox.Bar.SheetRequested += (_, e) => OpenNeedsYouRowSheet(e.RowId);
         inbox.Bar.SessionRequested += (_, e) => Navigate(new DeepLink(DeepLinkKind.Session, e.SessionRef));
         inbox.Bar.FactRequested += (_, e) =>
         {

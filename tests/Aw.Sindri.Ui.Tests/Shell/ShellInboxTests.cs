@@ -168,7 +168,7 @@ public sealed class ShellInboxTests
     }, Token);
 
     private void ServeDeskInstance() =>
-        _server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"));
+        _server.ServeDeskWithoutRequiredOutput();
 
     [Fact]
     public Task A_asks_first_on_an_unread_desk_request_and_a_second_A_reports_it() => UiThread.Run(async () =>

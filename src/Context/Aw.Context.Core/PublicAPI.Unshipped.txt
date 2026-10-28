@@ -8535,6 +8535,9 @@ Aw.Context.Core.Audience.AudienceScope.<Clone>$() -> Aw.Context.Core.Audience.Au
 Aw.Context.Core.Audience.AudienceScope.Allowed.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>!
 Aw.Context.Core.Audience.AudienceScope.Allowed.init -> void
 Aw.Context.Core.Audience.AudienceScope.Allows(Aw.Context.Core.Records.AudienceKey? audience) -> bool
+Aw.Context.Core.Audience.AudienceScope.Allows(Aw.Context.Core.Records.AudienceKey? audience, Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Audience.AudienceScope.Records.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Audience.AudienceScope.Records.init -> void
 Aw.Context.Core.Audience.AudienceScope.AudienceScope(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed) -> void
 Aw.Context.Core.Audience.AudienceScope.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed) -> void
 Aw.Context.Core.Audience.AudienceScope.Equals(Aw.Context.Core.Audience.AudienceScope? other) -> bool

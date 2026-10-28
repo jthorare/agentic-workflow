@@ -121,6 +121,7 @@ public sealed class NeedsYouHomeActionsSendTests : IDisposable
     [Fact]
     public Task Complete_on_a_desk_row_sends_one_CompleteStep_for_its_instance() => OnUi(async () =>
     {
+        _server.ServeDeskWithoutRequiredOutput();   // the golden's desk requires a file, which Home's Complete opens the sheet for (#1170): this row's step asks for none
         var (window, _) = await WithFeed(new NeedsYouFeed([NeedsYouRows.Desk()], ""));
 
         ActionButton(Rows(window).Single(), "CompleteStep").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

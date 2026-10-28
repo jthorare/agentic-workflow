@@ -22,7 +22,7 @@ internal static class RecordHits
                 return record.Error;
             }
 
-            if (record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience) && Ref(stored) is { } reference)
+            if (record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience, stored.Key) && Ref(stored) is { } reference)
             {
                 hits.Add(new SourceHit(reference, stored.Title, hits.Count + 1, clock.GetUtcNow(), Leaky: false));
             }

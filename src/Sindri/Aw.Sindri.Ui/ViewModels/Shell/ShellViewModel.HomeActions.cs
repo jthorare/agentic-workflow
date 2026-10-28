@@ -84,12 +84,17 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    private static async Task CompleteFromHome(NeedsYouRowViewModel row, DeskReporter desk, string instance)
+    private async Task CompleteFromHome(NeedsYouRowViewModel row, DeskReporter desk, string instance)
     {
         var target = await desk.Load(instance).ConfigureAwait(true);
         if (target is null || target.IsTerminalOnly)
         {
             row.ActionNote = Labels.CompleteInTerminal(target?.Complete?.Cli ?? "");
+        }
+        else if (target.RequiredOutputs.Count > 0)
+        {
+            row.ActionNote = Labels.CompleteNeedsOutputInSheet;   // the engine refuses a 'done' without its files: the row's sheet has the inputs
+            OpenNeedsYouRowSheet(row.Id);
         }
         else if (await desk.Complete(target, "approve", answers: null).ConfigureAwait(true) is { } answer)
         {
