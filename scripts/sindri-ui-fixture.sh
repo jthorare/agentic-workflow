@@ -857,19 +857,21 @@ SINDRI='${SINDRI:-}'
 mode="\$(cat "\$DIR/stub-mode" 2>/dev/null)"
 [ -n "\$mode" ] || exec sleep 86400
 model=""; sid=""; seed=""
+seed="\$(printf '%s ' "\$@" | tr '\\n' ' ')"
+{ echo "stub argv (\$# args):"; for a in "\$@"; do printf '  [%s]\\n' "\$(printf '%s' "\$a" | head -c 300)"; done; } >> "\$DIR/stub.log"
 while [ \$# -gt 0 ]; do
   case "\$1" in
     --model) model="\$2"; shift ;;
     --session-id) sid="\$2"; shift ;;
-    -*) ;;
-    *) seed="\$1" ;;
+    *) ;;
   esac
   shift
 done
 echo "stub claude: mode=\$mode model=\$model session=\$sid" >> "\$DIR/stub.log"
-addr="\$(printf '%s' "\$seed" | grep -o 'complete [^ ]* --run' | head -1 | cut -d' ' -f2)"
+addr="\$(printf '%s' "\$seed" | grep -o 'workflow complete [^ ]* --run' | head -1 | cut -d' ' -f3)"
 run="\$(printf '%s' "\$seed" | grep -o -- '--run [^ ]*' | head -1 | cut -d' ' -f2)"
 folder="\$(printf '%s' "\$seed" | grep -o 'output folder [^ ]*' | head -1 | cut -d' ' -f3 | sed 's/[.,;]*\$//')"
+echo "stub parsed: addr=[\$addr] run=[\$run] folder=[\$folder]" >> "\$DIR/stub.log"
 spend() { # \$1 input tokens, \$2 output tokens
   [ -n "\$sid" ] || return 0
   d="\$DIR/claude-config/projects/-fixture"; mkdir -p "\$d"
