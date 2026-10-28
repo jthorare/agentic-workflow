@@ -6,8 +6,7 @@
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
-  <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480"
-              MaxWidth="760" HorizontalAlignment="Left">
+  <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480">
     <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
@@ -69,9 +68,18 @@
                        Text="{Binding TextScaleText}" AutomationProperties.Name="{Binding TextScaleText}" />
           </Grid>
           <Slider x:Name="TextScaleSlider" Minimum="{Binding MinTextScale}" Maximum="{Binding MaxTextScale}"
-                  Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                  Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" TickPlacement="BottomRight" IsSnapToTickEnabled="True"
                   SmallChange="0.1" LargeChange="0.1"
                   AutomationProperties.Name="{Binding TextSizeLabel}" />
+          <!-- 90%, 100% and 130% under their marks: on the 0.9–1.3 track 1.0 sits a quarter of the way along. -->
+          <Grid ColumnDefinitions="*,*,*,*" Margin="0,-4,0,0">
+            <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Left"
+                       Text="{Binding MinTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Grid.ColumnSpan="2" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Center"
+                       Text="{Binding NormalTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Grid.Column="3" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right"
+                       Text="{Binding MaxTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+          </Grid>
         </StackPanel>
       </StackPanel>
     </Border>

@@ -209,7 +209,7 @@ ok    context:map       map v2 current (my-app, 412 nodes, 655 edges)
 ok    context:retention no expired exports; retained map versions are within the newest 20 and the 90-day eval window
 ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
 ok    context:sources   2 of 2 sources ok; session reads on
-ok    context:sync      live search: 1 intent source(s) synced
+ok    context:sync      sources sync: 1 intent source(s) synced
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
 ok    launcher          no launcher.json at …; this box's viewer is Warp (warp) (sindri launch init writes it); …
 ok    launcher:agents   claude-code (builtin): …/claude; codex (builtin): …/codex; cursor (builtin): …/agent
@@ -229,7 +229,7 @@ warn  codex:read-only   pending: owner probe (fix: …)
 | `context:map` | A current product map exists | none yet: [OPERATIONS.md](OPERATIONS.md) |
 | `context:onyx` | Onyx answers and the key is Sindri's dedicated user | `warn` `SND-CONTEXT-053` "not a dedicated service account": rerun `onyx up` on a current build (step 5) |
 | `context:sources` | Every context source answered; whether sessions may read | `warn` some degraded (`SND-CONTEXT-010`), `fail` all down (`011`) |
-| `context:sync` | Each intent source synced at least once | `warn` `live search: …` never synced or last run failed: [OPERATIONS.md](OPERATIONS.md). This row is the live search (Linear, GitHub, docs read live); the record index has its own `context:index-*` rows, whose sync row reads `record index: …` |
+| `context:sync` | Each intent source synced at least once | `warn` `sources sync: …` never synced or last run failed: [OPERATIONS.md](OPERATIONS.md). This row is the older sources sync (queries no longer search Linear live); the record index has its own `context:index-*` rows, whose sync row reads `record index: …` |
 | `context:mcp-scope` | No user-wide `sindri` MCP entry | `warn` `SND-CONTEXT-026`: remove the user-wide entry it names |
 | `onyx:stack` | Every Onyx container runs healthy, on loopback, at the pinned digests | `warn` Docker not answering or stack stopped; `fail` a container down or a port not on 127.0.0.1 |
 | harness probes (`claude-code`, `codex:*`, `cursor-*`) | The installed agent CLI matches the probe pinned in the build | `warn` "differs" or "pending: owner probe" is normal on a dev box and doesn't block a run |

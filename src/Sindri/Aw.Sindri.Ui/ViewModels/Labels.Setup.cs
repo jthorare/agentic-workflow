@@ -159,6 +159,10 @@ internal static partial class Labels
         _ => served,
     };
 
+    /// <summary>The link button under a step whose words named a web address.</summary>
+    /// <param name="host">The address's host (docs.docker.com).</param>
+    internal static string SetupLinkText(string host) => "Open " + host;
+
     /// <summary>What the live region says when a step changes: "Approve the workflows: done".</summary>
     internal static string SetupChanged(string title, string word) => title + ": " + word.ToLowerInvariant();
 

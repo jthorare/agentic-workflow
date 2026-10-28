@@ -10,6 +10,7 @@ namespace Aw.Sindri.Testing.Launch;
 /// </summary>
 public sealed class FakeLauncher : ILauncher
 {
+    private readonly Lock _gate = new();   // the launch activity appends on the worker's thread while a test reads Requests and Stops
     private readonly Dictionary<LaunchId, StartedLaunch> _live = [];
     private readonly List<LaunchRequest> _requests = [];
     private readonly List<LaunchId> _stops = [];
@@ -24,11 +25,11 @@ public sealed class FakeLauncher : ILauncher
     /// <summary>The distinct launches started and not stopped.</summary>
     public int SessionCount => _live.Count;
 
-    /// <summary>Every request Launch received, repeats included, in order.</summary>
-    public IReadOnlyList<LaunchRequest> Requests => _requests;
+    /// <summary>Every request Launch received, repeats included, in order (a snapshot).</summary>
+    public IReadOnlyList<LaunchRequest> Requests { get { lock (_gate) { return [.. _requests]; } } }
 
-    /// <summary>Every launch id Stop received, repeats included, in order.</summary>
-    public IReadOnlyList<LaunchId> Stops => _stops;
+    /// <summary>Every launch id Stop received, repeats included, in order (a snapshot).</summary>
+    public IReadOnlyList<LaunchId> Stops { get { lock (_gate) { return [.. _stops]; } } }
 
     /// <summary>Makes the next new launch fail; a repeat of a live launch still returns its Started.</summary>
     /// <param name="error">The catalogue error.</param>
@@ -56,7 +57,11 @@ public sealed class FakeLauncher : ILauncher
     public async ValueTask<LaunchResult> Launch(LaunchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _requests.Add(request);
+        lock (_gate)
+        {
+            _requests.Add(request);
+        }
+
         if (Hold is { } hold)
         {
             await hold.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -97,7 +102,11 @@ public sealed class FakeLauncher : ILauncher
     /// <inheritdoc/>
     public ValueTask<Result<Unit>> Stop(LaunchId launch, CancellationToken cancellationToken)
     {
-        _stops.Add(launch);
+        lock (_gate)
+        {
+            _stops.Add(launch);
+        }
+
         _ = _live.Remove(launch);
         return ValueTask.FromResult<Result<Unit>>(Unit.Value);
     }

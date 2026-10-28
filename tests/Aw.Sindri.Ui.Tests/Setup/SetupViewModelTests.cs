@@ -46,6 +46,27 @@ public sealed class SetupViewModelTests
     }
 
     [Fact]
+    public async Task A_web_address_in_a_steps_words_becomes_a_link_and_leaves_the_shown_text()
+    {
+        var onyx = Step(await ReadWith("onyx-no-docker"), "onyx");
+        var map = Step(await ReadWith("failed"), "map");
+
+        Assert.Equal(("Install Docker to set up Onyx", true, "https://docs.docker.com/get-docker/", "Open docs.docker.com"), (onyx.Sub, onyx.HasLink, onyx.LinkUri?.AbsoluteUri, onyx.LinkText));
+        Assert.DoesNotContain("https://", onyx.Name, StringComparison.Ordinal);
+        Assert.Equal((false, null), (map.HasLink, map.LinkUri));
+    }
+
+    [Fact]
+    public async Task A_skipped_step_shows_a_dash_not_the_done_tick()
+    {
+        var skipped = Step(await ReadWith("onyx-no-docker"), "onyx");
+        var done = Step(await ReadWith("all-done"), "onyx");
+
+        Assert.Equal(("Skipped", "–"), (skipped.ChipWord, skipped.NumberText));
+        Assert.Equal("✓", done.NumberText);
+    }
+
+    [Fact]
     public async Task First_run_opens_the_first_step_and_shows_to_do_for_the_rest()
     {
         _f.Serve("first-run");

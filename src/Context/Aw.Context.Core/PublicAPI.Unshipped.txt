@@ -6625,6 +6625,8 @@ static Aw.Context.Core.Linear.LinearSettings.Create(string? url, string? token, 
 static Aw.Context.Core.Linear.LinearRecordKeys.KindOf(Aw.Context.Core.Sources.RecordKey canonical) -> Aw.Context.Core.Sources.RecordKind
 Aw.Context.Core.Engine.ContextSettings.Linear.init -> void
 Aw.Context.Core.Engine.ContextSettings.Linear.get -> Aw.Context.Core.Linear.LinearSettings?
+static Aw.Context.Core.Linear.LinearRecordKeys.IsLinear(Aw.Context.Core.Sources.RecordKey canonical) -> bool
+static Aw.Context.Core.Linear.LinearRecordKeys.BareId(Aw.Context.Core.Sources.RecordKey canonical) -> Aw.Context.Core.Sources.ExternalId?
 static Aw.Context.Core.Linear.LinearRecordKeys.Issue(Aw.Context.Core.Sources.ExternalId id) -> Aw.Context.Core.Sources.RecordKey?
 static Aw.Context.Core.Linear.LinearRecordKeys.Document(Aw.Context.Core.Sources.ExternalId id) -> Aw.Context.Core.Sources.RecordKey?
 static Aw.Context.Core.Linear.LinearRecordKeys.Project(Aw.Context.Core.Sources.ExternalId id) -> Aw.Context.Core.Sources.RecordKey?

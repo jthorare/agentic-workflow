@@ -65,8 +65,8 @@ internal static class ContextChecks
         var problems = intent.Select(r => (r.Source.Value, r.Sync)).Where(p => p.Sync is null or { LastSync: null } or { State: SourceState.Unavailable })
             .Select(p => p.Sync?.Code is { } code ? $"{p.Value} last sync failed ({code})" : $"{p.Value} never synced").ToList();
         return problems.Count > 0
-            ? new DoctorCheck(SyncName, CheckState.Warn, "live search: " + string.Join("; ", problems), SyncFix(serviceNamed, failed: problems.Exists(p => p.Contains("last sync failed", StringComparison.Ordinal))))
-            : new DoctorCheck(SyncName, CheckState.Ok, $"live search: {intent.Count} intent source(s) synced", Fix: null);
+            ? new DoctorCheck(SyncName, CheckState.Warn, "sources sync: " + string.Join("; ", problems), SyncFix(serviceNamed, failed: problems.Exists(p => p.Contains("last sync failed", StringComparison.Ordinal))))
+            : new DoctorCheck(SyncName, CheckState.Ok, $"sources sync: {intent.Count} intent source(s) synced", Fix: null);
     }
 
     private static string SyncFix(bool serviceNamed, bool failed) => !serviceNamed

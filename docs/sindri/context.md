@@ -55,7 +55,7 @@ session can't start it (`SND-AUTH-002`).
 The repo docs refresh through the service above, and the intent sources (Onyx records linked to the map, decisions
 extracted from them) sync through the `context-sync` service (`services: { context-sync: { every: 15m } }`; it runs only
 when named). `context sources status` shows each intent source's last sync, links, decisions and queued records, and
-`sindri doctor` warns (`context:sync`, detail `live search: <source> …`) when one never synced or its last run failed. The record index has its own `context:index-*` rows (its sync row reads `record index: …`).
+`sindri doctor` warns (`context:sync`, detail `sources sync: <source> …`) when one never synced or its last run failed. This row is the older sources sync, not a query-time search: queries no longer search Linear live. The record index has its own `context:index-*` rows (its sync row reads `record index: …`).
 
 ### Asking
 
@@ -105,6 +105,7 @@ sources:
   `<untrusted …>` fence, whose attributes and body are escaped so no text can close it.
 - A source that doesn't answer is listed as `DEGRADED <source>: SND-CONTEXT-010 …` and the query goes on without it;
   all of them down is `SND-CONTEXT-011`.
+- Linear answers come only from the owned index (sources `records`, `records-dense`); there is no live Linear search at query time. A query makes one batched Linear call that checks `updatedAt` of each cited Linear issue (owner, 2026-10-28, #1531). If that call fails, the query is degraded with source `linear`. A box without a Linear token keeps the local-store check.
 - States are words; there is never colour, so `NO_COLOR` holds.
 
 ### Who may read

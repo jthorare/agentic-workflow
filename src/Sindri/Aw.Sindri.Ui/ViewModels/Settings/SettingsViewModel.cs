@@ -77,6 +77,15 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
     /// <summary>The largest text size.</summary>
     public double MaxTextScale { get; } = UiPreferences.MaxTextScale;
 
+    /// <summary>The smallest text size in words (90%), under the slider's left end.</summary>
+    public string MinTextScaleText { get; } = Labels.Percent(UiPreferences.MinTextScale);
+
+    /// <summary>The normal text size in words (100%), under the slider's mark for 1.0.</summary>
+    public string NormalTextScaleText { get; } = Labels.Percent(UiPreferences.Defaults.TextScale);
+
+    /// <summary>The largest text size in words (130%), under the slider's right end.</summary>
+    public string MaxTextScaleText { get; } = Labels.Percent(UiPreferences.MaxTextScale);
+
     /// <summary>The in-app Reduce motion switch.</summary>
     public bool ReduceMotion
     {

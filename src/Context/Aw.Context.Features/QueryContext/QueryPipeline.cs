@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -28,6 +29,8 @@ namespace Aw.Context.Features.QueryContext;
 internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents, IModelPort model,
     RecordSearch lexical)
 {
+    private static readonly SourceId _linearLive = SourceId.From("linear");
+
     private readonly RankerStage _ranker = new(model, clock);
 
 
@@ -73,7 +76,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
-        var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
+        var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
         var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
         return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos) };
@@ -190,7 +193,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
     private async Task<Searched> Search(IReadOnlyList<IContextSource> sources, IReadOnlyList<string> terms, (DateTimeOffset Deadline, DateTimeOffset? AsOf) when, CancellationToken ct)
     {
         var deadline = when.Deadline;
-        var calls = sources.Select(async source =>
+        var calls = sources.Where(s => s.Describe().Id != _linearLive).Select(async source =>   // Linear answers come from the owned index only (#1531)
         {
             var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow());
             var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
@@ -242,23 +245,56 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
     /// <summary>One batched version check per source, under what is left of the deadline (spec §8.2 step 8).</summary>
     private async Task<IReadOnlyDictionary<SourceRef, (bool Ran, SourceVersion? Current)>> Versions(IReadOnlyList<FetchedRecord> fetched,
-        IReadOnlyList<IContextSource> sources, DateTimeOffset deadline, CancellationToken ct)
+        IReadOnlyList<IContextSource> sources, DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
     {
         var checkedRefs = new Dictionary<SourceRef, (bool, SourceVersion?)>();
-        foreach (var group in fetched.SelectMany(f => f.Item.Hits).Select(h => h.Ref).Distinct().GroupBy(r => r.Source))
+        var refsOfHits = fetched.SelectMany(f => f.Item.Hits).Select(h => h.Ref).Distinct().ToList();
+        var linear = sources.FirstOrDefault(s => s.Describe().Id == _linearLive);
+        var linearRefs = linear is null ? [] : refsOfHits.Where(r => r.Source == RecordStoreSource.Id && LinearRecordKeys.IsLinear(r.Canonical)).ToList();
+        if (linear is not null && linearRefs.Count > 0 && await CheckLinear(linear, linearRefs, (deadline, checkedRefs), ct).ConfigureAwait(false) is { } failed)   // one batched freshness call for every cited owned Linear record
+        {
+            degraded.Add(SourceCalls.Degraded(_linearLive, failed, clock.GetUtcNow()));   // a failed check is told, not left as unchecked in silence
+        }
+
+        foreach (var group in refsOfHits.Except(linearRefs).GroupBy(r => r.Source))
         {
             var source = sources.First(s => s.Describe().Id == group.Key);   // each ref is checked by its own source
-            var refs = group.ToList();
-            var left = deadline - clock.GetUtcNow();
-            var versions = left <= TimeSpan.Zero
-                ? ContextErrors.SourceUnavailable.With("no time left for the version check")
-                : await SourceCalls.Within(source, (left, clock), t => source.Versions(refs, t), ct).ConfigureAwait(false);
-            for (var i = 0; i < refs.Count; i++)
-            {
-                checkedRefs[refs[i]] = versions.IsSuccess && versions.Value.Count == refs.Count ? (true, versions.Value[i]) : (false, null);
-            }
+            _ = await CheckBatch(source, [.. group], (deadline, checkedRefs), ct).ConfigureAwait(false);
         }
 
         return checkedRefs;
+    }
+
+    /// <summary>The owned refs name the whole key as their id; the Linear source wants the bare UUID, so it is asked with Linear-shaped refs and the answers are kept under the owned ones.</summary>
+    private async Task<Error?> CheckLinear(IContextSource linear, List<SourceRef> owned, (DateTimeOffset Deadline, Dictionary<SourceRef, (bool, SourceVersion?)> Checked) into, CancellationToken ct)
+    {
+        var asked = new Dictionary<SourceRef, SourceRef>();
+        foreach (var reference in owned)
+        {
+            asked[reference] = LinearRecordKeys.BareId(reference.Canonical) is { } bare ? reference with { Id = bare } : reference;
+        }
+
+        var answers = new Dictionary<SourceRef, (bool, SourceVersion?)>();
+        var failure = await CheckBatch(linear, [.. asked.Values.Distinct()], (into.Deadline, answers), ct).ConfigureAwait(false);
+        foreach (var (reference, shaped) in asked)
+        {
+            into.Checked[reference] = answers[shaped];
+        }
+
+        return failure;
+    }
+
+    private async Task<Error?> CheckBatch(IContextSource source, List<SourceRef> refs, (DateTimeOffset Deadline, Dictionary<SourceRef, (bool, SourceVersion?)> Checked) into, CancellationToken ct)
+    {
+        var left = into.Deadline - clock.GetUtcNow();
+        var versions = left <= TimeSpan.Zero
+            ? ContextErrors.SourceUnavailable.With("no time left for the version check")
+            : await SourceCalls.Within(source, (left, clock), t => source.Versions(refs, t), ct).ConfigureAwait(false);
+        for (var i = 0; i < refs.Count; i++)
+        {
+            into.Checked[refs[i]] = versions.IsSuccess && versions.Value.Count == refs.Count ? (true, versions.Value[i]) : (false, null);
+        }
+
+        return versions.IsError ? versions.Error : null;
     }
 }

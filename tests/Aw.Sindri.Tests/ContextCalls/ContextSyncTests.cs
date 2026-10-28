@@ -112,7 +112,7 @@ public sealed class ContextSyncTests : IDisposable
 
         Assert.Equal(CheckState.Warn, never.State);
         Assert.Contains("never synced", never.Detail, StringComparison.Ordinal);
-        Assert.StartsWith("live search: ", never.Detail, StringComparison.Ordinal);
+        Assert.StartsWith("sources sync: ", never.Detail, StringComparison.Ordinal);
         Assert.Equal(CheckState.Ok, synced.State);
         Assert.Equal(CheckState.Warn, failed.State);
         Assert.Contains("SND-CONTEXT-010", failed.Detail, StringComparison.Ordinal);

@@ -8,13 +8,13 @@ namespace Aw.Sindri.Ui.ViewModels.Setup;
 /// the ids and codes it holds are for the closed Details, never the words up front. A step opens by itself when it needs the person or failed; the person's own choice to open or
 /// close a row is kept across reads.
 /// </summary>
-internal sealed class SetupStepViewModel : ObservableObject
+internal sealed partial class SetupStepViewModel : ObservableObject
 {
     private static readonly string[] _all =
     [
         nameof(Title), nameof(NumberText), nameof(Chip), nameof(ChipWord), nameof(Sub), nameof(DetailText), nameof(ProgressText), nameof(ProgressFraction), nameof(ErrorText), nameof(Items), nameof(Preview), nameof(HasPreview), nameof(Action), nameof(Fields),
         nameof(IsMeterFailed), nameof(HintText), nameof(HasHint), nameof(Agents), nameof(HasAgents), nameof(TrustOnceText), nameof(AgentsNoteText),
-        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction),
+        nameof(Name), nameof(Note), nameof(HasNote), nameof(HasDetail), nameof(HasProgress), nameof(HasError), nameof(HasItems), nameof(HasAction), nameof(LinkUri), nameof(LinkText), nameof(HasLink),
     ];
 
     private readonly Func<SetupStepView, SetupActionViewModel?, SetupActionViewModel?> _action;
@@ -36,8 +36,8 @@ internal sealed class SetupStepViewModel : ObservableObject
     /// <summary>The step's place in the checklist, from 1.</summary>
     public int Number { get; }
 
-    /// <summary>What the number circle shows: the number, or a tick once the step is done or skipped.</summary>
-    public string NumberText => IsFinished ? "✓" : Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    /// <summary>What the number circle shows: the number, a tick once the step is done, or a dash once it is skipped.</summary>
+    public string NumberText => IsDone ? "✓" : IsFinished ? "–" : Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>What the step is, in a few words (the app's own title).</summary>
     public string Title { get; private set; } = string.Empty;
@@ -90,6 +90,7 @@ internal sealed class SetupStepViewModel : ObservableObject
             field = value;
             value?.Summary.PropertyChanged += (_, _) => OnChanged(nameof(HasPreview));
             value?.FocusRequested += (_, e) => FocusRequested?.Invoke(this, e);
+            value?.PropertyChanged += (_, _) => OnChanged(nameof(ShowsProfile));
         }
     }
 
@@ -243,9 +244,9 @@ internal sealed class SetupStepViewModel : ObservableObject
         var state = running ? "running" : Step.State;
         var (word, said, tone) = Labels.SetupChip(state);
         (Title, Chip, ChipWord) = (Labels.SetupTitle(Step.Id, Step.Title), new StateChip(word, tone), said);
-        Sub = SubFor(state);
+        Sub = TakeLink(SubFor(state), reset: true);
         Note = _overrideNote ?? string.Empty;
-        DetailText = IsFinished || running ? string.Empty : Step.Detail ?? string.Empty;
+        DetailText = IsFinished || running ? string.Empty : TakeLink(Step.Detail ?? string.Empty, reset: false);
         ErrorText = running ? string.Empty : Step.Error?.Sentence ?? string.Empty;
         Name = Labels.SetupStepName(Title, said, Sub);
         Preview = PreviewLines();

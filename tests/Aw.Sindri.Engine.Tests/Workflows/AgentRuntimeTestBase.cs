@@ -240,17 +240,24 @@ public abstract class AgentRuntimeTestBase : IDisposable
             await worker.ExecuteAsync(async () =>
             {
                 var handle = await Start();
-                await body(handle);
-                await Replayed(handle);
-                if ((await handle.DescribeAsync()).Status == Temporalio.Api.Enums.V1.WorkflowExecutionStatus.Running)
+                try
                 {
-                    try
+                    await body(handle);
+                    await Replayed(handle);
+                }
+                finally
+                {
+                    // a test that threw must not leave the instance running: the next test in the class starts the same address
+                    if ((await handle.DescribeAsync()).Status == Temporalio.Api.Enums.V1.WorkflowExecutionStatus.Running)
                     {
-                        await handle.TerminateAsync("test over");
-                    }
-                    catch (Temporalio.Exceptions.RpcException)
-                    {
-                        // the instance ended between the describe and the terminate: nothing is left to stop
+                        try
+                        {
+                            await handle.TerminateAsync("test over");
+                        }
+                        catch (Temporalio.Exceptions.RpcException)
+                        {
+                            // the instance ended between the describe and the terminate: nothing is left to stop
+                        }
                     }
                 }
             }, ct);
