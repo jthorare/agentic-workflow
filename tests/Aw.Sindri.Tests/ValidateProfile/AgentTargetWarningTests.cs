@@ -3,7 +3,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Launch.Argv;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.ValidateProfile;
@@ -14,17 +13,15 @@ namespace Aw.Sindri.Tests.ValidateProfile;
 public sealed class AgentTargetWarningTests
 {
     private static readonly AgentEntry _cursor = Entry("cursor", PolicyForm.None);
-    private static readonly AgentEntry _reserved = Entry("reserved", PolicyForm.CursorConfig);
     private static readonly AgentEntry _claude = Entry("claude-code", PolicyForm.ClaudeSettingsFile);
-    private static readonly Catalog _catalog = new(_cursor, _reserved, _claude);
+    private static readonly Catalog _catalog = new(_cursor, _claude);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("cursor")]
-    [InlineData("reserved")]
-    public void A_target_whose_policy_form_cant_be_used_is_warned_with_SND_LAUNCH_013(string target)
+    [Fact, Trait("Lane", "unit")]
+    public void A_target_whose_policy_form_is_none_is_warned_with_SND_LAUNCH_013()
     {
+        const string target = "cursor";
         var line = AgentTargetWarning.For(AgentId.From(target), _catalog);
 
         Assert.NotNull(line);
@@ -86,17 +83,6 @@ public sealed class AgentTargetWarningTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_doctor_adds_no_row_when_nothing_is_approved() =>
         Assert.Empty(await new AgentTargetDoctor(new Approved(profile: null), _catalog).Run(Token));
-
-    /// <summary>Pins that the policy refusal stays until a verified Cursor form exists (the repo can't confirm the CLI's permission format).</summary>
-    [Fact, Trait("Lane", "unit")]
-    public void A_Step_policy_on_the_cursor_builtin_shape_still_parks_SND_LAUNCH_013()
-    {
-        var step = new StepArgs(Model: null, Policy: new StepPolicy([], StepPermissionMode.ReadOnly, "/tmp/step"), new StepRef("draft", "agent"));
-
-        var result = StepForms.Arguments(_cursor, step, policyFilePath: null);
-
-        Assert.Equal("SND-LAUNCH-013", result.Error.Code);
-    }
 
     private static AgentEntry Entry(string id, PolicyForm policy) => new(AgentId.From(id), id, id, ProcessName: null, Transcripts: null, Resume: null) { PolicyForm = policy };
 

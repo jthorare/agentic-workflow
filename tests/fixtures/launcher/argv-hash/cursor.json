@@ -1,6 +1,6 @@
 {
   "note": "built-in cursor",
   "builtin": "cursor",
-  "canonical": "{\"bin\":\"agent\",\"mcp\":\"none\",\"model\":\"none\",\"open\":[\"{bin}\",\"{seed}\"],\"policy\":\"none\",\"resume\":[\"{bin}\",\"--resume={sessionId}\"],\"sessionId\":\"reported\"}",
-  "argvHash": "sha256:1e0acb4ce9b6a66f69114a9c0b500fa54b1da50a1e9be3ce7352af099dbb9495"
+  "canonical": "{\"bin\":\"agent\",\"mcp\":\"none\",\"model\":\"cursor-flag\",\"open\":[\"{bin}\",\"{seed}\"],\"policy\":\"cursor-config\",\"resume\":[\"{bin}\",\"--resume={sessionId}\"],\"sessionId\":\"reported\"}",
+  "argvHash": "sha256:9c5fa317de236841cc648b2c5f37e4095c6b0da0d5c6ca968b9f7bf04861df23"
 }

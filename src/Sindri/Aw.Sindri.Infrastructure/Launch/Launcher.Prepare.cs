@@ -161,7 +161,7 @@ internal sealed partial class Launcher
             return step with { Policy = stated with { WritablePath = workDir } };
         }
 
-        if (entry.PolicyForm != PolicyForm.ClaudeSettingsFile)
+        if (entry.PolicyForm is not (PolicyForm.ClaudeSettingsFile or PolicyForm.CursorConfig))
         {
             return step;
         }

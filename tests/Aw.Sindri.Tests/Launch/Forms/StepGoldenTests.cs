@@ -20,7 +20,7 @@ public sealed class StepGoldenTests
     {
         { "claude-code", "step-open" },
         { "codex", "step-open" },
-        { "cursor", "step-open-013" },
+        { "cursor", "step-open" },
     };
 
     [Theory, Trait("Lane", "unit")]

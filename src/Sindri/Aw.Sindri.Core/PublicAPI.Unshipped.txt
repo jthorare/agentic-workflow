@@ -9265,7 +9265,7 @@ Aw.Sindri.Core.Launch.StepEnvironment
 const Aw.Sindri.Core.Launch.StepEnvironment.Instance = "AW_SINDRI_INSTANCE" -> string!
 Aw.Sindri.Core.Launch.Argv.ArgvInputs.ArgvInputs(Aw.Sindri.Core.Ids.ItemId Item, string! RepoPath, string! SessionName, string! Seed, Aw.Sindri.Core.Ids.SessionId? SessionId = null, string? McpConfigPath = null, Aw.Sindri.Core.Launch.StepArgs? Step = null, string? PolicyFilePath = null) -> void
 Aw.Sindri.Core.Launch.Argv.ArgvInputs.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Item, out string! RepoPath, out string! SessionName, out string! Seed, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? McpConfigPath, out Aw.Sindri.Core.Launch.StepArgs? Step, out string? PolicyFilePath) -> void
-static Aw.Sindri.Core.Launch.Argv.StepForms.Arguments(Aw.Sindri.Core.Launch.AgentEntry! entry, Aw.Sindri.Core.Launch.StepArgs! step, string? policyFilePath) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Sindri.Core.Launch.Argv.StepForms.Arguments(Aw.Sindri.Core.Launch.AgentEntry! entry, Aw.Sindri.Core.Launch.StepArgs! step, string? policyFilePath, string? workDir = null) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.Sindri.Core.Jobs.IJobKinds
 Aw.Sindri.Core.Jobs.IJobKinds.Known.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.JobKind>!
 Aw.Sindri.Core.Events.JobFinished.JobFinished(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.JobId Job, Aw.Sindri.Core.Jobs.JobOutcome Outcome, string! Summary, string? Code, System.Text.Json.JsonElement? Result, Aw.Sindri.Core.Ids.ItemId? Item = null, Aw.Sindri.Core.Ids.RepoName? Repo = null) -> void

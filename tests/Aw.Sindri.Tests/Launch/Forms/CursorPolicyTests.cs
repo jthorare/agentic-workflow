@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Sessions;
@@ -9,8 +10,12 @@ using Aw.Sindri.Tests.Sessions;
 namespace Aw.Sindri.Tests.Launch.Forms;
 
 /// <summary>Issue #1428: the built-in cursor entry takes an unattended Step's policy and model, so a Cursor-target agent Step launches instead of parking with SND-LAUNCH-013.</summary>
-public sealed class CursorPolicyTests
+public sealed class CursorPolicyTests : IDisposable
 {
+    private readonly string _root = Directory.CreateTempSubdirectory("aw-cursor").FullName;
+
+    public void Dispose() => Directory.Delete(_root, recursive: true);
+
     private const string Uuid = "0b1f6c3e-52d4-4c7a-9a58-3d1e7f9a2b10";
     private const string Work = "/work/repo/.claude/worktrees/sindri-1";
 
@@ -80,5 +85,32 @@ public sealed class CursorPolicyTests
         Assert.Contains("Write(/work/other/**)", deny, StringComparer.Ordinal);
         Assert.Contains("Write(/work/docs/**)", deny, StringComparer.Ordinal);
         Assert.DoesNotContain("Read(/work/docs/**)", deny, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_config_is_written_into_the_worktree_and_deleted_with_the_launch()
+    {
+        var launch = LaunchId.For(Guid.Empty);
+        var policyDirectory = Path.Combine(_root, "policy");
+        var worktree = Path.Combine(_root, "wt");
+
+        var path = CursorPolicyFile.Write(policyDirectory, launch, worktree, new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null));
+
+        Assert.Equal(Path.Combine(worktree, ".cursor", "cli.json"), path);
+        Assert.True(File.Exists(path));
+        CursorPolicyFile.Delete(policyDirectory, launch);
+        Assert.False(File.Exists(path));
+        Assert.False(File.Exists(CursorPolicyFile.SidecarFor(policyDirectory, launch)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_cli_json_the_repo_already_has_is_never_overwritten()
+    {
+        var worktree = Path.Combine(_root, "wt");
+        _ = Directory.CreateDirectory(Path.Combine(worktree, ".cursor"));
+        File.WriteAllText(Path.Combine(worktree, ".cursor", "cli.json"), "{}");
+
+        Assert.Null(CursorPolicyFile.Write(Path.Combine(_root, "policy"), LaunchId.For(Guid.Empty), worktree, new StepPolicy([], StepPermissionMode.Plan, WritablePath: null)));
+        Assert.Equal("{}", File.ReadAllText(Path.Combine(worktree, ".cursor", "cli.json")));
     }
 }

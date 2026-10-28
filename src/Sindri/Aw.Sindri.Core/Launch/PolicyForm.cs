@@ -18,7 +18,7 @@ public enum PolicyForm
     [JsonStringEnumMemberName("codex-overrides")]
     CodexOverrides,
 
-    /// <summary>A cursor config file (unverified; treated as unable to express it until it is).</summary>
+    /// <summary>A per-launch .cursor/cli.json with 'permissions' rules plus the headless flags ('-p --trust --sandbox enabled --workspace &lt;worktree&gt;', '--mode plan' for ReadOnly and Plan). DRAFT: issue #1428 lists what is unverified.</summary>
     [JsonStringEnumMemberName("cursor-config")]
     CursorConfig,
 }
