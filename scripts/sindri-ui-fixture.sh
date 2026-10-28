@@ -104,15 +104,15 @@
 #                                  id on stdout (progress goes to stderr). The Step takes a slot of the box's heavy lock first, so a
 #                                  busy lock delays the launch. Exit 1 when no launch started in time; needs jq and git.
 #
-#   sindri-ui-fixture.sh model-picks picked|escalated|unpriced|picking <ITM-id> <instance-address>
-#                                  the model pick rows of one run (model-pick spec section 6.1) for the instance frame's Model picks
-#                                  table, written as ledger rows the picks route reads (model.picking, model.picked, session.usage and,
-#                                  for a retry, launch.failed): picked is one run on Haiku chosen by Jev with tokens and a price;
-#                                  unpriced is one run on a model the price table lacks ("cost unknown"); picking is a model.picking
-#                                  with no model.picked ("choosing model..."); escalated is a Haiku run that failed to start and a Sonnet
-#                                  retry on the same state and attempt, chosen by rules. The ids are fixed per state, so a rerun
-#                                  writes the same rows (INSERT OR IGNORE). The item and the instance must exist (see 'workflows'): the
-#                                  frame opens the instance and reads its picks by address. Needs jq and sqlite3 or python3.
+#   sindri-ui-fixture.sh model-picks picked|escalated|unpriced|picking
+#                                  one agent-run on the pick-on path (model-pick spec section 6.1, issue #1452), for the instance frame's Model picks table:
+#                                  the profile gets workflow.agent.pick on and the claude-code model list, AW_SINDRI_JUDGE is a stub judge that answers the first
+#                                  candidate as Jev, and the stub claude writes a usage transcript and reports through the real 'sindri workflow complete' on
+#                                  workflow.dev-agent-picks (run after 'sessions up'; it prints the item id like agent-run). picked: Haiku 4.5, priced. unpriced:
+#                                  models the price table lacks ("cost unknown"). picking: the judge waits (<home>/ui-fixture-agent/judge-hold) up to 35 s, so the
+#                                  run shows "choosing model..." meanwhile. escalated: Haiku is refused twice (the second bad report ends its session), then the
+#                                  engine retries on Sonnet under the -e1 launch id: two model.picked rows, the second with escalatedFrom. Read the result with
+#                                  'sindri launch picks --item <id>'. The stub's own log is <home>/ui-fixture-agent/stub.log. Needs jq and git.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
 # FIXTURE_DESK_TIMEOUT (up only): writes workflow.deskTimeout into the fixture profile, the floor of every desk Step timeout (park-timeout).
@@ -334,7 +334,7 @@ fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one f
       jq -nc --arg id "$2" '{id: $id}' > "$dir/$2.item.json" || return
       printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
       printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
-    *dev-agent-hold)
+    *dev-agent-hold | *dev-agent-picks)
       # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
       jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
       printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
@@ -840,7 +840,62 @@ agent_files() {
   fi
   # Named claude: the argv hash keeps only bin's base name, so a stub with another name is not a bin-only override (#1134).
   mkdir -p "$dir/stub-bin" || return
-  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude"
+  agent_stub "$dir" > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude" || return
+  agent_judge_stub "$dir" > "$dir/stub-bin/judge" && chmod 755 "$dir/stub-bin/judge"
+}
+
+# The stub claude. With no <dir>/stub-mode it only sleeps (agent-run). With a mode (model-picks) it reads its --model and --session-id, writes a transcript with usage the
+# sampler reads (CLAUDE_CONFIG_DIR/projects/*/<session>.jsonl), and reports through the real 'sindri workflow complete' from its seed: good, or (escalated, on the cheap model) twice
+# with a non-JSON payload, which ends the session and fails the run as refused.
+agent_stub() { # $1 dir
+  cat <<STUB
+#!/bin/sh
+DIR='$1'
+PROVE='$PROVE'
+SINDRI='${SINDRI:-}'
+[ -z "\$SINDRI" ] || export SINDRI
+mode="\$(cat "\$DIR/stub-mode" 2>/dev/null)"
+[ -n "\$mode" ] || exec sleep 86400
+model=""; sid=""; seed=""
+while [ \$# -gt 0 ]; do
+  case "\$1" in
+    --model) model="\$2"; shift ;;
+    --session-id) sid="\$2"; shift ;;
+    -*) ;;
+    *) seed="\$1" ;;
+  esac
+  shift
+done
+echo "stub claude: mode=\$mode model=\$model session=\$sid" >> "\$DIR/stub.log"
+addr="\$(printf '%s' "\$seed" | grep -o 'complete [^ ]* --run' | head -1 | cut -d' ' -f2)"
+run="\$(printf '%s' "\$seed" | grep -o -- '--run [^ ]*' | head -1 | cut -d' ' -f2)"
+folder="\$(printf '%s' "\$seed" | grep -o 'output folder [^ ]*' | head -1 | cut -d' ' -f3 | sed 's/[.,;]*\$//')"
+spend() { # \$1 input tokens, \$2 output tokens
+  [ -n "\$sid" ] || return 0
+  d="\$DIR/claude-config/projects/-fixture"; mkdir -p "\$d"
+  printf '{"type":"assistant","timestamp":"%s","message":{"id":"msg_%s","model":"%s","usage":{"input_tokens":%s,"output_tokens":%s}}}\n' "\$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" "\$sid" "\$model" "\$1" "\$2" >> "\$d/\$sid.jsonl"
+}
+report() { # \$1 file content
+  mkdir -p "\$folder"; printf '%s' "\$1" > "\$folder/resolution"
+  "\$PROVE" workflow complete "\$addr" --run "\$run" --outcome done --output "fact:resolution=\$folder/resolution" >> "\$DIR/stub.log" 2>&1
+}
+case "\$mode:\$model" in
+  escalated:*haiku*) spend 30000 2000; report 'not json'; report 'still not json' ;;
+  *) spend 30000 2000; report '{"note":"written up"}' ;;
+esac
+exec sleep 86400
+STUB
+}
+
+# The stub judge (AW_SINDRI_JUDGE): always answers the first candidate as Jev; while <dir>/judge-hold exists it waits (up to 35 s, under the pick's 40 s timeout) first.
+agent_judge_stub() { # $1 dir
+  cat <<STUB
+#!/bin/sh
+cat >/dev/null
+n=0
+while [ -e '$1/judge-hold' ] && [ \$n -lt 35 ]; do sleep 1; n=\$((n + 1)); done
+printf '%s\n' '{"decision":"m1","model":"jev","confidence":0.9,"reasonCode":"model","id":"fixture-judge"}'
+STUB
 }
 
 # The live profile gets the repo and workflow.agent.target (a workflow: block after user: when there is none).
@@ -853,16 +908,22 @@ agent_profile_add() {
       awk -v e="repos:\n  - { name: $AGENT_REPO, path: $repo }" '{print} /^user:/ {print e}' "$profile" > "$profile.new"
     fi && mv "$profile.new" "$profile" || return
   fi
-  if ! grep -q '^  agent:' "$profile"; then
-    if grep -q '^workflow:' "$profile"; then
-      awk '{print} /^workflow:/ {print "  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    else
-      awk '{print} /^user:/ {print "workflow:\n  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    fi && mv "$profile.new" "$profile" || return
-  fi
+  agent_profile_line "$profile" "  agent: { target: claude-code }"
 }
 
-agent_run() {
+# The workflow.agent line of the live profile: added when there is none (a workflow: block after user: when needed), else replaced as a whole.
+agent_profile_line() { # $1 profile, $2 the line
+  local profile="$1" line="$2"
+  if grep -q '^  agent:' "$profile"; then
+    awk -v e="$line" '/^  agent:/ {print e; next} {print}' "$profile" > "$profile.new"
+  elif grep -q '^workflow:' "$profile"; then
+    awk -v e="$line" '{print} /^workflow:/ {print e}' "$profile" > "$profile.new"
+  else
+    awk -v e="$line" '{print} /^user:/ {print "workflow:\n" e}' "$profile" > "$profile.new"
+  fi && mv "$profile.new" "$profile"
+}
+
+agent_start() { # $1 recipe, $2 stub mode (empty: the stub sleeps), $3 the workflow.agent line of the profile
   need jq
   need git
   sessions_need_copy
@@ -873,14 +934,16 @@ agent_run() {
   [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
   agent_files "$dir" || return
   agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
+  agent_profile_line "$profile" "$3" || die "agent-run: can't edit $profile"
+  if [ -n "$2" ]; then printf '%s\n' "$2" > "$dir/stub-mode"; else rm -f "$dir/stub-mode"; fi
   if needs_approval; then approve >&2 || return; fi
   # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
   jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
     || die "agent-run: can't update $launcher"
   unset TMUX   # the control plane starts its own tmux server on its own socket; it must not inherit the caller's
   sessions_restart >&2 || return
-  approve_dev_recipe "$AGENT_RECIPE" || return
-  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$AGENT_RECIPE" "Fixture agent run")" || return
+  approve_dev_recipe "$1" || return
+  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$1" "Fixture agent run")" || return
   local wait="${FIXTURE_AGENT_WAIT:-120}"
   [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
   local deadline=$((SECONDS + wait))
@@ -896,60 +959,29 @@ agent_run() {
   return 1
 }
 
-# --- model-picks: the Model picks table's states (model-pick spec 6.1, issue #1206 M-8) ---
+agent_run() { agent_start "$AGENT_RECIPE" "" "  agent: { target: claude-code }"; }
 
-# $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see publish_event).
-pick_event() {
-  local key="sindri-ui-fixture:model-picks:$1" id corr
-  id="$(printf '%s' "$key" | cksum | awk '{printf "5c0f1e01-%04x-4d1e-9a55-3c2f6d8e1b05", $1 % 65536}')"
-  corr="${id%?}6"
-  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
-          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
-                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$3');" >/dev/null
-}
+# --- model-picks: the Model picks table's four states through a REAL agent run with the pick on (model-pick spec 6.1, issues #1206 M-8, #1452) ---
+#
+# The profile turns workflow.agent.pick on and lists the claude-code models; a stub judge (AW_SINDRI_JUDGE) answers the first candidate as Jev; the stub claude writes a
+# usage transcript and reports through the real 'sindri workflow complete'. The recipe is workflow.dev-agent-picks (a payload output, so a bad report can be refused).
+# picked: Haiku 4.5 chosen by the judge, priced. unpriced: models the price table lacks ("cost unknown"). picking: the judge waits (judge-hold) so the run sits in
+# "choosing model..." for up to 35 s. escalated: Haiku is refused twice (the second ends the session), then M-6 retries on Sonnet under the -e1 launch id.
+PICKS_RECIPE="workflow.dev-agent-picks"
 
-# $1 launch number (1 or 2), $2 item, $3 instance; prints the launch id (LCH- and 32 hex digits).
-pick_launch() { printf 'LCH-%032x\n' "$((0x5c0f1e00 + $1))"; }
-
-# $1 launch, $2 item, $3 instance, $4 model (or null), $5 by, $6 reason (or null), $7 escalatedFrom (or null), $8 escalatedFromKind (or null)
-pick_payload() {
-  jq -cn --arg l "$1" --arg i "$2" --arg a "$3" --arg m "$4" --arg by "$5" --arg r "$6" --arg f "$7" --arg k "$8" '
-    def nul: if . == "null" then null else . end;
-    {launchId: $l, item: $i, instance: $a, state: "questions", attempt: 1, target: "claude-code", model: ($m | nul), by: $by, reason: ($r | nul),
-     decision: (if $by == "jev" then "JD-fixture" else null end), candidates: ["haiku", "sonnet"], briefHash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-     files: [{path: "src/App.cs", chars: 1200}], omitted: [{path: "big.log", chars: 500000, why: "cap"}], jevMs: 2100,
-     jevCalls: (if $by == "jev" then 1 else 0 end), contentSent: ($by == "jev"), unusual: false, escalatedFrom: ($f | nul), escalatedFromKind: ($k | nul)}'
-}
-
-# $1 launch, $2 model, $3 input tokens, $4 output tokens
-pick_usage() {
-  jq -cn --arg l "$1" --arg m "$2" --argjson i "$3" --argjson o "$4" '{launchId: $l, sample: 1, inputTokens: $i, outputTokens: $o, target: "claude-code", model: $m}'
-}
-
-model_picks() { # $1 state, $2 item, $3 instance
-  need jq
-  need_sql
-  local state="$1" item="$2" instance="$3" l1 l2
-  l1="$(pick_launch 1)"
-  l2="$(pick_launch 2)"
-  case "$state" in
-    picking)
-      pick_event "picking:$l1" model.picking "$(jq -cn --arg l "$l1" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, instance: $a, state: "questions", attempt: 1, startedAt: "2026-01-01T00:00:00.0000000Z"}')" ;;
-    picked)
-      pick_event "picked:$l1" model.picked "$(pick_payload "$l1" "$item" "$instance" claude-haiku-4-5 jev null null null)"
-      pick_event "usage:$l1" session.usage "$(pick_usage "$l1" claude-haiku-4-5 30000 11000)" ;;
-    unpriced)
-      pick_event "unpriced:$l1" model.picked "$(pick_payload "$l1" "$item" "$instance" some-new-model rules timeout null null)"
-      pick_event "unpriced-usage:$l1" session.usage "$(pick_usage "$l1" some-new-model 12000 3000)" ;;
-    escalated)
-      pick_event "escalated:$l1" model.picked "$(pick_payload "$l1" "$item" "$instance" claude-haiku-4-5 jev null null null)"
-      pick_event "escalated-usage:$l1" session.usage "$(pick_usage "$l1" claude-haiku-4-5 6000 2000)"
-      pick_event "escalated-failed:$l1" launch.failed "$(jq -cn --arg l "$l1" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, code: "SND-LAUNCH-001", message: "the model refused", instance: $a, state: "questions", attempt: 1}')"
-      pick_event "escalated:$l2" model.picked "$(pick_payload "$l2" "$item" "$instance" claude-sonnet-4-5 rules timeout claude-haiku-4-5 refused)"
-      pick_event "escalated-usage:$l2" session.usage "$(pick_usage "$l2" claude-sonnet-4-5 24000 7000)" ;;
+model_picks() { # $1 state
+  local dir list default hold
+  dir="$(agent_dir)"
+  case "$1" in
+    unpriced) list="fixture-model-a, fixture-model-b"; default="fixture-model-b" ;;
+    *) list="claude-haiku-4-5, claude-sonnet-4, claude-opus-4-5"; default="claude-sonnet-4" ;;
   esac
-  printf '%s\n' "$instance"
+  hold="$dir/judge-hold"
+  mkdir -p "$dir" || return
+  if [ "$1" = picking ]; then : > "$hold"; else rm -f "$hold"; fi
+  AW_SINDRI_JUDGE="$dir/stub-bin/judge" agent_start "$PICKS_RECIPE" "$1" "  agent: { target: claude-code, pick: \"on\", models: { claude-code: { list: [$list], default: $default } } }"
 }
+
 
 verb="${1:-}"
 case "$verb" in
@@ -982,10 +1014,8 @@ case "$verb" in
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
   agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
   model-picks)
-    [ "$#" -eq 4 ] || die "usage: model-picks picked|escalated|unpriced|picking <ITM-id> <instance-address>"
-    case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac
-    case "$3" in ITM-*[!0-9a-f]* | ITM-) die "model-picks: '$3' is not an item id" ;; ITM-*) ;; *) die "model-picks: '$3' is not an item id" ;; esac
-    [ -n "$4" ] || die "model-picks: the instance address is empty" ;;
+    [ "$#" -eq 2 ] || die "usage: model-picks picked|escalated|unpriced|picking"
+    case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac ;;
   decide) [ "$#" -eq 3 ] || die "usage: decide <DEC-id> <choice>" ;;
   *) usage >&2; die "unknown verb: $verb" ;;
 esac

@@ -594,10 +594,12 @@ check "the decision belongs to Self scheduling, so the concept opens it (Concept
 
 # model-picks (issue #1206 M-8): the usage and the refusals that need no control plane.
 contains "the usage lists model-picks" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-picks picked|escalated|unpriced|picking"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked >/dev/null 2>&1; check "model-picks needs an item and an instance (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks nope ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unknown state (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses a bad item id (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks picked ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unguarded home" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks >/dev/null 2>&1; check "model-picks needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks nope >/dev/null 2>&1; check "model-picks refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked extra >/dev/null 2>&1; check "model-picks takes one state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks picked >/dev/null 2>&1; check "model-picks refuses an unguarded home" "$?" "2"
+out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" model-picks picked 2>&1)"; check "model-picks before sessions up exits 2" "$?" "2"
+contains "model-picks names the missing sessions copy" "$out" "run 'sessions up' first"
 
 # agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
 # launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
