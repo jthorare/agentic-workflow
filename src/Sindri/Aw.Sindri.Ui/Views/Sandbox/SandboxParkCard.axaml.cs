@@ -12,6 +12,9 @@ internal sealed partial class SandboxParkCard : UserControl
         InitializeComponent();
     }
 
+    /// <summary>Puts focus on the card's heading.</summary>
+    internal void FocusHeading() => throw new NotSupportedException();
+
     private void OnCopy(object? sender, RoutedEventArgs e)
     {
         if (DataContext is SandboxParkCardViewModel card)

@@ -18,6 +18,11 @@ internal sealed partial class NeedsYouPageViewModel
         }
     }
 
+    /// <summary>Raised when a pick by the user brings the park card up: focus goes to its heading. A list refresh raises nothing.</summary>
+#pragma warning disable CS0067 // why: red stub, raised by the implementation in the next commit
+    internal event EventHandler? ParkFocusRequested;
+#pragma warning restore CS0067
+
     /// <summary>The park card for the row under the card, or null when it is not a sandbox park.</summary>
     public SandboxParkCardViewModel? Park
     {
