@@ -36,7 +36,7 @@ internal sealed partial class ExpandedStateViewModel
 
     private void InitSandbox(CurrentState current)
     {
-        _waiting = current.Status.WaitingForSlot;
+        _waiting = current.Status.Run?.WaitingForSlot;
         WaitingLine = _waiting is { } waiting ? Labels.WaitingForSlot(waiting.Running, waiting.Cap) : string.Empty;
         OnChanged(nameof(HasWaiting));
     }
@@ -44,7 +44,7 @@ internal sealed partial class ExpandedStateViewModel
     // A re-read: the count moves in place (said once, not again), and the wait ending says "Started" once.
     private void UpdateSandbox(CurrentState current)
     {
-        var now = current.Status.WaitingForSlot;
+        var now = current.Status.Run?.WaitingForSlot;
         if (now is { } waiting)
         {
             WaitingLine = Labels.WaitingForSlot(waiting.Running, waiting.Cap);

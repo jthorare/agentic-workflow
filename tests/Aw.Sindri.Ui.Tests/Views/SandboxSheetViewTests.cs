@@ -141,7 +141,7 @@ public sealed class SandboxSheetViewTests : FrameHost
         Assert.Equal(("Waiting for a free session slot, 3 of 3 running", 0d, true), (live.Text, live.Width, Polite(live)));
         Assert.Null(window.FocusManager!.GetFocusedElement());
 
-        expanded.Update(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status with { WaitingForSlot = null }));
+        expanded.Update(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status with { Run = status.Run! with { WaitingForSlot = null } }));
         Settle(window);
 
         Assert.Equal(("Started", "Started"), (live.Text, Named<TextBlock>(window, "ExpandedWaitingLine").Text));

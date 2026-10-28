@@ -16,10 +16,17 @@ public sealed class ExpandedStateSandboxTests
     private static StatusFields Waiting(int running = 3) =>
         FixtureInstances.Parse<StatusFields>(WithRunning(JsonNode.Parse(GoldenFiles.SpecShaped("workflow-status", "sandbox-waiting-for-slot"))!.AsObject(), running));
 
+    // The same run once its session started: no wait on the run.
+    private static StatusFields Started()
+    {
+        var status = Waiting();
+        return status with { Run = status.Run! with { WaitingForSlot = null } };
+    }
+
     // The golden with the running count the test wants.
     private static JsonObject WithRunning(JsonObject status, int running)
     {
-        status["waitingForSlot"]!["running"] = running;
+        status["run"]!["waitingForSlot"]!["running"] = running;
         return status;
     }
 
@@ -64,7 +71,7 @@ public sealed class ExpandedStateSandboxTests
         var expanded = Expanded(Waiting());
         expanded.AnnounceWaiting();
 
-        expanded.Update(new CurrentState("produce", Step: null, Gates: [], Desk: null, Waiting() with { WaitingForSlot = null }));
+        expanded.Update(new CurrentState("produce", Step: null, Gates: [], Desk: null, Started()));
 
         Assert.Equal(("Started", "Started", true), (expanded.WaitingLine, expanded.WaitingVoice.Announcement, expanded.HasWaiting));
     }
@@ -72,7 +79,7 @@ public sealed class ExpandedStateSandboxTests
     [Fact]
     public void A_run_that_never_waited_says_nothing()
     {
-        var expanded = Expanded(Waiting() with { WaitingForSlot = null });
+        var expanded = Expanded(Started());
 
         expanded.AnnounceWaiting();
 

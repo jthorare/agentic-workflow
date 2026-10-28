@@ -61,7 +61,7 @@ public sealed class SandboxGoldenReadTests
     {
         var status = Read<StatusFields>("workflow-status", "sandbox-waiting-for-slot");
 
-        Assert.Equal((3, 3), (status.WaitingForSlot!.Running, status.WaitingForSlot.Cap));
+        Assert.Equal((3, 3), (status.Run!.WaitingForSlot!.Running, status.Run.WaitingForSlot.Cap));
     }
 
     [Fact]

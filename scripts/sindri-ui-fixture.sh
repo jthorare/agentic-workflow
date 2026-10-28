@@ -152,10 +152,10 @@
 #                                  list shows "has moved on"). Run after 'sessions up'; needs jq and git.
 #                                  The other states are ledger rows on a launch of an existing item (see 'workflows'), the same way
 #                                  model-picks writes them (fixed ids, INSERT OR IGNORE, a rerun adds nothing): every one starts with the
-#                                  launch.started row of events/launch-started-sandbox.json. denials: sandbox.denied x10 for github.com
+#                                  launch.started row of events/launch-started-sandbox.json (all but waiting). denials: sandbox.denied x10 for github.com
 #                                  (some) and one blocked path; denials-many: the overflow row too (top 5 of n, with a fix of every kind);
-#                                  waiting: launch.waiting for a full session cap (SND-LAUNCH-020; placeholder until the server names the
-#                                  event, then it is only the launch.started row); limit-memory and limit-wall: sandbox.limit-hit and
+#                                  waiting: launch.waiting for a full session cap (3 of 3, SND-LAUNCH-020) and no launch.started, which
+#                                  would end the wait; limit-memory and limit-wall: sandbox.limit-hit and
 #                                  session.ended with reason limit (12GiB, 40m); learning: launch.started with networkMode learn;
 #                                  takeover: launch.takeover-opened on the sandboxed run; attended: a launch.started in open mode with
 #                                  no instance. The Agents sheet line needs the session row to carry the sandbox summary, which the
@@ -1196,20 +1196,20 @@ sandbox() { # $1 state, $2 item, $3 instance
     *)
       need_sql
       l="$(sandbox_launch "$state")"
-      sandbox_started "$state" "$item" "$instance"
+      [ "$state" = waiting ] || sandbox_started "$state" "$item" "$instance"
       case "$state" in
         denials)
           sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
-          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "home" | .count = 3')" ;;
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')" ;;
         denials-many)
           sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
-          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "home" | .count = 3')"
-          sandbox_event "denied-never:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.ssh" | .rule = "never" | .count = 2')"
-          sandbox_event "denied-tool:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "tool" | .target = "git push" | .rule = "policy" | .count = 4')"
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')"
+          sandbox_event "denied-never:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.ssh" | .rule = "deny-list" | .count = 2')"
+          sandbox_event "denied-tool:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "policy" | .target = "git push" | .rule = "inner-policy" | .count = 4')"
           sandbox_event "denied-overflow:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied-overflow.json)" ;;
         waiting)
-          # placeholder: SND-LAUNCH-020's wait is not a public event yet (SB-6a names it); until then only the launch.started row is seeded.
-          : ;;
+          # the engine launch found the session cap full (SND-LAUNCH-020): no launch.started, since it ends the wait.
+          sandbox_event "waiting:$state" launch.waiting "$(jq -cn --arg l "$l" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, running: 3, cap: 3, instance: $a, state: "build", attempt: 1}')" ;;
         limit-memory)
           sandbox_event "limit-hit:$state" sandbox.limit-hit "$(sandbox_golden "$state" sandbox-limit-hit.json | jq -c '.kind = "memory"')"
           sandbox_event "ended:$state" session.ended "$(sandbox_golden "$state" session-ended-limit.json)" ;;
