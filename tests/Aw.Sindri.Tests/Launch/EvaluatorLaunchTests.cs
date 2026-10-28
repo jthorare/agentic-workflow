@@ -130,14 +130,23 @@ public sealed class EvaluatorLaunchTests : IDisposable
     }
 
     [Fact]
-    public void A_policy_with_a_denied_or_read_only_path_is_refused_by_every_form_but_the_settings_file()
+    public void A_policy_with_a_denied_or_read_only_path_is_refused_by_every_form_that_cannot_express_it()
     {
         var step = new StepArgs(Model: null, new StepPolicy([], StepPermissionMode.Default, WritablePath: null, ReadOnlyPaths: ["/h"]), new StepRef("s", "b"));
 
-        foreach (var entry in new[] { AgentEntries.Codex, AgentEntries.Cursor, AgentEntries.Aider })
+        foreach (var entry in new[] { AgentEntries.Codex, AgentEntries.Aider })
         {
             Expect.Equal("SND-LAUNCH-013", StepForms.Arguments(entry, step, policyFilePath: null).Error.Code);
         }
+    }
+
+    [Fact]
+    public void The_settings_file_and_cursor_config_forms_express_a_read_only_path()
+    {
+        var step = new StepArgs(Model: null, new StepPolicy([], StepPermissionMode.Default, WritablePath: null, ReadOnlyPaths: ["/h"]), new StepRef("s", "b"));
+
+        Assert.False(StepForms.Arguments(AgentEntries.ClaudeCode, step, "/state/LCH-1.settings.json").IsError);
+        Assert.False(StepForms.Arguments(AgentEntries.Cursor, step, policyFilePath: null, workDir: "/work/wt").IsError);
     }
 
     [Fact]

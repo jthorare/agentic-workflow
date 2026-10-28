@@ -55,7 +55,7 @@ public sealed class CatalogMergeTests
         var config = LauncherText.Strict("""{ "schema": 1 }""");
 
         Assert.Equal(
-            [("claude-code", ModelForm.ClaudeFlag, PolicyForm.ClaudeSettingsFile), ("codex", ModelForm.CodexFlag, PolicyForm.CodexOverrides), ("cursor", ModelForm.None, PolicyForm.None)],
+            [("claude-code", ModelForm.ClaudeFlag, PolicyForm.ClaudeSettingsFile), ("codex", ModelForm.CodexFlag, PolicyForm.CodexOverrides), ("cursor", ModelForm.CursorFlag, PolicyForm.CursorConfig)],
             config.Agents.Select(static a => (a.Id.Value, a.ModelForm, a.PolicyForm)));
         Assert.All(config.Agents, static a => Assert.Matches("^sha256:[0-9a-f]{64}$", a.ArgvHash));
     }

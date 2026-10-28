@@ -266,9 +266,9 @@ public sealed class LauncherTests : IDisposable
     [Fact]
     public async Task A_Step_policy_an_entry_cannot_express_is_Failed_013_and_starts_nothing()
     {
-        var request = A.LaunchRequest().InDirectory(_home).WithAgent(AgentId.From("cursor")).Unattended(Step(new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null))).Build();
+        var request = A.LaunchRequest().InDirectory(_home).WithAgent(AgentEntries.Aider.Id).Unattended(Step(new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null))).Build();
 
-        var result = await Make().Launch(request, CancellationToken.None);
+        var result = await Make(hostFor: null, viewer: null, AgentEntries.ClaudeCode, AgentEntries.Aider).Launch(request, CancellationToken.None);
 
         Expect.True(result is FailedLaunch failed && failed.Error.Code == SindriErrors.LaunchFormUnsupported.Code);
         Expect.Equal(0, _host.LiveCount);
