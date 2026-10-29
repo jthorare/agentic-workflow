@@ -28,7 +28,15 @@ internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers,
         var promptBudget = (budget is null ? null : await budget.For(ModelPurpose.Labeling, cancellationToken).ConfigureAwait(false)) ?? PromptBudget.Wide;
         var candidates = choice is not null && options is { Pick: true } ? options.Candidates : 1;
         var generated = await new LabelGenerator(model, built.Value.Egress, promptBudget, candidates, scrubLabels: candidates > 1).Generate(clusters, maxTokens, cancellationToken).ConfigureAwait(false);
-        return generated.IsError ? generated.Error : Named(generated.Value);
+        if (generated.IsError)
+        {
+            return generated.Error;
+        }
+
+        // A pass that stopped early (a failed call, no model) has nothing to pick from; the pick step runs only on a whole generate step.
+        return candidates > 1 && choice is not null && generated.Value is { Complete: true, Unavailable: null }
+            ? await new LabelPicker(choice, built.Value.Egress).Pick(clusters, generated.Value.Named, (generated.Value.Spent, maxTokens), cancellationToken).ConfigureAwait(false)
+            : Named(generated.Value);
     }
 
     private static LabelPass Named(Generated generated) =>

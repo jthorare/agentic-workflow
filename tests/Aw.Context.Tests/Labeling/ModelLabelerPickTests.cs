@@ -197,7 +197,7 @@ public sealed class ModelLabelerPickTests
     {
         var files = Enumerable.Range(0, 12).Select(f => string.Create(CultureInfo.InvariantCulture, $"src/module/feature/component{f}/{new string('x', 40)}.ts")).ToArray();
         var probe = Model(Labels(0, "Tab groups", "Tabs"));
-        _ = await Labeler(probe, choice: null).Label([Cluster(0, files: files)], [], 1_000_000, _on, Ct);
+        _ = await Labeler(probe, Picking("Tabs")).Label([Cluster(0, files: files)], [], 1_000_000, _on, Ct);
         var request = Assert.Single(probe.Requests);
         var generateAlone = ((request.Prompt.Length + 3) / 4) + request.MaxTokens;   // what the generate call may cost; the question's characters / 4 come on top
         var tight = Picking("Tabs");
