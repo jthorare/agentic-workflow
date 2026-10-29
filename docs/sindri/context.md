@@ -19,7 +19,7 @@ SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolk
 
 The engine reads the approved profile's `context:` section and its `repos:`. Every key is optional; the defaults are
 shown. A key this build doesn't know is refused (`SND-CONTEXT-001` with its key path), so a section written for a later
-stage (`labeling`, …, or a key under `sources` beyond `onyx` and `linear`) needs that stage's build.
+stage (`labeling`, …, or a key under `sources` beyond `github`, `slack` and `linear`) needs that stage's build.
 
 ```yaml
 repos:
@@ -52,7 +52,7 @@ the job to its end (Ctrl-C cancels it, a second Ctrl-C leaves) and exits 0 when 
 start was refused. One sync job runs at a time, whatever it names: a second start while one runs answers `SND-JOB-409` naming the running job. A sync of every source goes source by source and records each source's event as it finishes; a source that is running already (`SND-CONTEXT-056`) is its own row with that code and the others go on. POST with no body syncs every source. The job's result is the counts per source
 and the code each ended with, never record text; the same `context.sources.synced` events are recorded as for the service below. A
 session can't start it (`SND-AUTH-002`).
-The repo docs refresh through the service above, and the intent sources (Onyx records linked to the map, decisions
+The repo docs refresh through the service above, and the intent sources (the index's records linked to the map, decisions
 extracted from them) sync through the `context-sync` service (`services: { context-sync: { every: 15m } }`; it runs only
 when named). `context sources status` shows each intent source's last sync, links, decisions and queued records, and
 `sindri doctor` warns (`context:sync`, detail `sources sync: <source> …`) when one never synced or its last run failed. This row is the older sources sync, not a query-time search: queries no longer search Linear live. The record index has its own `context:index-*` rows (its sync row reads `record index: …`).
@@ -75,7 +75,7 @@ foreign `Host` is 400, a foreign browser `Origin` 403) and the API's caller rule
 and the conflicts that concern it, each cited. A tracker key needs a `context-sync` run that linked the record; before that, or for a key no
 synced record carries, it answers `003` and says which (with `context-sync` named in the profile: run `sindri context sources sync` or wait for its next slot, and watch
 `sindri context sources status`; without it: name the service). A Sindri item id resolves to the tracker record linked to that item; one with
-no record yet answers `003` ("has no tracker record linked yet"). A session never falls back to Onyx for an item: only a human's query may.
+no record yet answers `003` ("has no tracker record linked yet"). A session never falls back to a search for an item: only a human's query may.
 
 The CLI sends the question and `--node` on the query string, so each must be at most 6000 characters once percent-encoded (about 660 CJK characters reach that cap; Kestrel's request line is 8 KB). A longer one is refused before sending with `SND-CONTEXT-006` ("shorten it"); the 2000-character text cap still applies on every transport.
 
@@ -227,7 +227,7 @@ only. Answer: *pending the S-1M owner check*.
 - `context:sources`: the context engine read in-process from the same home and approved profile serve uses, so it
   works with the process stopped. It reports each source as of its last refresh (the `context-docs-refresh`
   service); repo-docs is not probed live (a repo moved away shows only after the next refresh), while a live source
-  such as Onyx is probed on each doctor run (its keyless `GET /api/version`, then `GET /api/me` with the key). `ok` when every source is ok (it says whether session reads are on; off means MCP
+  is probed on each doctor run. `ok` when every source is ok (it says whether session reads are on; off means MCP
   calls answer `020`), `warn` when some are degraded (`SND-CONTEXT-010`), `fail` when every source is down (`011`) or
   the store can't open; `warn` with no approved profile, `ok` with no `context:` section.
 - `context:mcp-scope`: warns (`SND-CONTEXT-026`) on a user-wide `sindri` entry in Claude Code's `~/.claude.json`
@@ -620,7 +620,7 @@ job (the engine's step lines are the job's progress), and exits 0, 1 or 2 as `so
 time): it builds a draft, runs the cleanup agent over the review queue (strong and agent-approved proposals are kept, weak ones removed), promotes the
 draft through the engine and records `context.map.built`, `context.map.promoted` and `context.map.refreshed` (repo, version, the heads it mapped, and the
 cleanup's counts). It does not go through `map promote` or its typed confirmation: the owner decided on 2026-10-19 that this job promotes as its caller. A
-terminal, the app or the `context-map-refresh` service may start it; a session may not. A transient error (a store, git, model or Onyx that is unavailable, a timeout, a rate limit) does not fail it yet: the job runs again after 30 seconds, 2 minutes and 10 minutes
+terminal, the app or the `context-map-refresh` service may start it; a session may not. A transient error (a store, git or model that is unavailable, a timeout, a rate limit) does not fail it yet: the job runs again after 30 seconds, 2 minutes and 10 minutes
 (four attempts), its progress says `retrying (attempt N of 4) in …`, and only the last attempt's error fails it. Any other step error fails the job at once (nothing is promoted; a built draft
 stays). The summary reads `map v<N>: <kept> kept, <removed> removed`, plus `, cleanup unavailable` when no model answered.
 
@@ -788,7 +788,7 @@ $ sindri context filemap accept edge:0123456789abcdef      # or reject: one over
   The answer also carries `filtered: {"demoted": {"<role>": n}}`, how many of its code band files each demoted role holds, keyed by the role name from `index.roles` (`test`, `fixture`); left out when nothing is demoted. A query answer (`context_query`) carries the same block for the code items it ranks last. Ignored files (`index.ignore`) are not in the map, so they are not counted. The `input.context.lenses` and `input.context.retrieve` Step inputs hand the block over with the rest of the typed result.
 - Several keys (any number; none is `006`) give one union read from one map snapshot (JSON schema 2): an anchor that doesn't resolve or can't be read is listed as `missing anchor: <key>` and in `missingAnchors`, and `coverage.byAnchor` counts each anchor. With one key the JSON stays schema 1.
 - `--map-version v3` (also `3` or `v3@a41b07d`) reads a retained map version, here and in `context query --map-version`; it can't go with `--draft` (`006`), and a version that isn't held is `SND-CONTEXT-120`. `mapVersion` is always `v<N>`; `mapCommit` is the commit the version was built at, 7 lowercase hex characters, omitted when the version names no commit.
-- Every answer ends with what was searched: one line per source (`map`, `onyx`, `code-index`) with its state as a word (`ok`, `not-configured`, `unavailable` or `degraded`, with its code or reason: `onyx degraded (SND-CONTEXT-010)`), and a `map coverage` line (the repo's files under the anchors' paths, how many are unmapped or suggested, and when the version was created; `coverage.map.created` in JSON, while `asOf` is when the answer was built). Query citations carry `fetchedAt`.
+- Every answer ends with what was searched: one line per source (`map`, `records`, `code-index`) with its state as a word (`ok`, `not-configured`, `unavailable` or `degraded`, with its code or reason: `records degraded (SND-CONTEXT-010)`), and a `map coverage` line (the repo's files under the anchors' paths, how many are unmapped or suggested, and when the version was created; `coverage.map.created` in JSON, while `asOf` is when the answer was built). Query citations carry `fetchedAt`.
 - The top-level `edges` (mentions, decides, quotes, supersedes, implements, tests) and `bands.product.edges` (structure edges) never overlap: draw both.
 - `filemap` lists the direct children of a path with a status word each: `mapped`, `suggested` or `unmapped` (a directory
   takes the worst of its children). A repo that is not in the profile, or outside a session's repo, is `SND-CONTEXT-045` with
@@ -826,35 +826,33 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
 | `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
 
-## S-5A: the onyx source, secret pointers
+## S-5A: the index sources, secret pointers
 
-Onyx CE (pinned **v4.9.0**) indexes the work product's Linear records, Slack and docs; Sindri searches it as the
-`onyx` source beside repo-docs. Setting Onyx itself up (the pinned image, ports bound to `127.0.0.1`, local
-embeddings, telemetry off, connectors, the service account and its key) is `docs/sindri/onyx.md`.
+Sindri keeps its own record index (one SQLite store under `$AW_SINDRI_HOME`) and fills it from its own connectors: GitHub (issues and
+pull requests), Slack (threads) and Linear (issues and projects). Sindri used to read these through Onyx; it now reads them itself.
+Setting the sources up (tokens, `sindri index connect`, the first sync) is `docs/sindri/sources.md`.
 
 ### Profile
 
 ```yaml
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0" }   # add managed: true when `sindri onyx up` runs it
-    linear: { teams: [ENG, APP] }      # the Linear team keys an Onyx identifier alias (ENG-482) may name
+    github: { repos: [acme/app, acme/api], token: "keychain:sindri-index/github" }   # host: only for GitHub Enterprise
+    slack: { channels: [{ id: C0123ABCD, name: eng }], workspace: acme, token: "keychain:sindri-index/slack" }
+    linear: { teams: [ENG, APP] }      # the Linear team keys; its key setup is linear.md
+  index: { windowDays: 183 }           # only records updated inside this window are synced and embedded
 ```
 
-- `url`: http or https on a loopback host (`127.0.0.0/8`, `[::1]`, `localhost`), no user, password, query or
-  fragment. Anything else is `SND-CONTEXT-055`.
-- `version`: the release tag that runs (`v4.9.0`), never `latest`; missing or `latest` is `SND-CONTEXT-055`.
-- `managed`: optional, default `false`. `sindri onyx up` writes `managed: true` for the Onyx it runs; when true, `url` must be
-  exactly `http://127.0.0.1:<port>` (not `localhost`, `[::1]`, https or another host), else `SND-CONTEXT-055`. Example:
-  `onyx: { url: "http://127.0.0.1:3189", token: "keychain:onyx/sindri-onyx", version: "v4.9.0", managed: true }`.
-- `token`: a **secret pointer** to the Onyx admin token Sindri alone uses (a personal access token of the dedicated user `sindri@example.com`, or a service-account key), never the token itself.
-  Missing, or text that isn't a pointer, is `SND-CONTEXT-002`; the message doesn't repeat the text (rotate a key that
-  was written into the profile).
-- `linear.teams`, `linear.token`, `linear.url`: the native Linear source (S-6); see [linear.md](linear.md). `teams` are team keys (a capital
-  letter, then one or more capitals or digits, e.g. `ENG`) and also name the Onyx identifier aliases. Any other key under `sources`,
-  `onyx` or `linear` is refused (`SND-CONTEXT-001`).
+- `github.repos`: the `owner/name` repos to read (issues and PRs); `github.host` is optional (GitHub Enterprise).
+- `slack.channels`: each channel as `{ id, name }`; `slack.workspace` names the workspace.
+- `github.token` and `slack.token`: a **secret pointer** to a read-only token, never the token itself. `sindri index connect github|slack`
+  asks for the token once at a terminal and writes the pointer here (an agent session is refused, `SND-AUTH-002`); changing a source or a
+  token changes the profile, so approve it again (`sindri profile approve`). Missing, or text that isn't a pointer, is `SND-CONTEXT-002`;
+  the message doesn't repeat the text (rotate a key that was written into the profile).
+- `linear.teams`, `linear.token`, `linear.url`: the Linear source (S-6); see [linear.md](linear.md). `teams` are team keys (a capital
+  letter, then one or more capitals or digits, e.g. `ENG`). Any other key under `sources` is refused (`SND-CONTEXT-001`).
 
-`sindri profile validate` reports each of these with its key path (`context.sources.onyx.url: …`).
+`sindri profile validate` reports each of these with its key path (`context.sources.github.repos: …`).
 
 ### Links follow the current map
 
@@ -868,65 +866,56 @@ Besides the exact rules (issue keys and URLs, repo paths, quoted titles, identif
 |---|---|
 | `env:NAME` | the environment variable `NAME`: for queries and `sources status`, of the control plane (`sindri serve`) as it was when it started; for `sindri doctor`, of the calling shell (fixtures and tests; beyond them use `keychain:` or `file:`, which read the same in both, except that on Linux `serve` must run in the login session to reach the keyring) |
 | `file:/absolute/path` | the file's contents without a trailing newline; the file must be a regular file (not a symbolic link) with mode `0600` or stricter |
-| `keychain:service/account` | macOS: `security find-generic-password -s service -a account -w` (store it with `security add-generic-password -s onyx -a sindri-onyx -w`); Linux (libsecret): `secret-tool lookup service <service> account <account>` (store it with `secret-tool store --label 'onyx/sindri-onyx' service 'onyx' account 'sindri-onyx'`; needs `libsecret-tools` on Debian/Ubuntu, and `sindri serve` must run in the login session to reach the keyring); any other OS: `SND-SECRET-002` |
+| `keychain:service/account` | macOS: `security find-generic-password -s service -a account -w` (store it with `security add-generic-password -s sindri-index -a github -w`); Linux (libsecret): `secret-tool lookup service <service> account <account>` (store it with `secret-tool store --label 'sindri-index/github' service 'sindri-index' account 'github'`; needs `libsecret-tools` on Debian/Ubuntu, and `sindri serve` must run in the login session to reach the keyring); any other OS: `SND-SECRET-002` |
 | `op:vault/item/field` | `op read op://vault/item/field` (1Password CLI) |
 
-Sindri resolves the pointer in its host (`Composition`), once per query (not per Onyx request); the context engine never reads the
+Sindri resolves the pointer in its host (`Composition`), once per query; the context engine never reads the
 keychain or a file. The resolution runs under the query's deadline: a keychain that is locked or an `op` waiting for a
-sign-in degrades onyx with `SND-CONTEXT-010` on time instead of holding the answer, and the next query tries again.
+sign-in degrades the records source with `SND-CONTEXT-010` on time instead of holding the answer, and the next query tries again.
 `sindri profile validate` checks only the pointer's scheme and that a target follows; it neither parses the target nor
-resolves it (resolving can prompt the keychain or run `op`), so `env:NO_SUCH_VAR` and `keychain:onyx` (no account)
+resolves it (resolving can prompt the keychain or run `op`), so `env:NO_SUCH_VAR` and `keychain:sindri-index` (no account)
 pass validate. A target's grammar: an `env:` name is letters, digits and `_`, not starting with a digit; `file:` is an
 absolute path; `keychain:` has exactly two `/`-separated segments and `op:` exactly three; no segment is empty or
 starts with `-`. At run time a pointer that doesn't resolve shows as
-`SND-CONTEXT-002` in the onyx row and a query's `degraded` entry, naming the pointer's scheme only; `sindri doctor`
+`SND-CONTEXT-002` in the records row and a query's `degraded` entry, naming the pointer's scheme only; `sindri doctor`
 resolves it first and shows the reason: `SND-SECRET-001` (malformed), `002` (doesn't resolve: names the variable, file
 or entry) or `003` (an unsafe `file:`: names the file and the `chmod 600` fix), never a value
 (`docs/csharp/sindri.md`).
 
 ### Asking, status and degraded answers
 
-`sindri context query` fuses Onyx's hits with repo-docs (reciprocal rank fusion). Onyx's Linear issues key on Linear's UUID
+`sindri context query` fuses the index's hits with repo-docs (reciprocal rank fusion). Linear issues key on Linear's UUID
 (`linear:issue/<uuid>`, with its identifier alias, `ENG-482`, when its team is listed). The aliases are in the
 citation: `cites.<n>.aliases` in `--json` and HTTP (every alias of the record, merged across its refs, each scrubbed
-like a title), and the first one beside the key in the text form (`linear:issue/<uuid> (ENG-482)`). Documents Onyx marks `hidden` are dropped
-(the admin search returns them), so Sindri sees what a standard Onyx search would, and hiding a document in Onyx's admin
-UI removes it from Sindri's answers. Onyx v4.9.0 has no route that returns a
-document's `updated_at` by id, so **onyx citations stay `unchecked`** (version unchecked) instead of `current` or
-`stale`. A citation's `permalink` is scrubbed like every other field: a link the scrub changes at all (redacted or
-blocked) is left out, and the citation keeps its key and aliases. Onyx's titles, text, aliases and permalinks are
-scrubbed with the same rules as repo-docs, the profile's `context.scrub.extraPatterns` included (S-2W): a customer id
-in an Onyx record answers as `[REDACTED:<id>]`, and a permalink that holds one is left out.
+like a title), and the first one beside the key in the text form (`linear:issue/<uuid> (ENG-482)`). A citation's `permalink` is
+scrubbed like every other field: a link the scrub changes at all (redacted or blocked) is left out, and the citation keeps its key and
+aliases. Titles, text, aliases and permalinks are scrubbed with the same rules as repo-docs, the profile's
+`context.scrub.extraPatterns` included (S-2W): a customer id in a record answers as `[REDACTED:<id>]`, and a permalink that holds one is
+left out.
 
-When Onyx doesn't answer, refuses the key, answers with an error status or replies in a shape the pinned release
-doesn't have, the answer still returns with repo-docs' results and a `degraded` entry `{ "source": "onyx", "code":
-"SND-CONTEXT-010", … }` (the cause leads its message, such as `SND-CONTEXT-051: …`). Only when every source is down is the
-answer `SND-CONTEXT-011`. A query doesn't check Onyx's version: version drift is doctor's and `sources status`'s check
-(`055`, naming both versions), and a query keeps using an Onyx that reports another version as long as its replies
-read; a reply that doesn't degrades onyx (`010`, cause `051`).
+When the index can't answer (its store won't open, a source's token is refused or doesn't resolve), the answer still returns with
+repo-docs' results and a `degraded` entry `{ "source": "records", "code": "SND-CONTEXT-010", … }` (the cause leads its message). Only
+when every source is down is the answer `SND-CONTEXT-011`.
 
-Agent sessions search the onyx source like a human (owner decision 2026-10-24; no per-repo team mapping): the hits'
-untrusted text arrives inside the fence for a session. A session also sees the map's records and decisions linked to its
-repo's nodes (owner decision 2026-10-15: B). A caller whose scope maps no repo gets no source at all, onyx included.
+Agent sessions search the index like a human (owner decision 2026-10-24): the hits' untrusted text arrives inside the fence for a
+session. A session also sees the map's records and decisions linked to its repo's nodes (owner decision 2026-10-15: B). A caller whose
+scope maps no repo gets no source at all, the index included.
 
-`sindri context sources status` shows an `onyx` row: `ok`, `degraded` (the token is an admin token of a person's account,
-`SND-CONTEXT-053`) or `unavailable` (no answer, `SND-CONTEXT-010`; another version, `055`; key refused, `050`; pointer
-unresolved, `002`), with the version and the key's role and account type in its detail. A session sees the row too, the same
-row a human sees, sync counts included.
+`sindri index status` shows one line per source (usable, complete, waiting, needs token, needs access, error); `sindri context sources
+status` shows each intent source's last sync, links, decisions and queued records. A session sees the same rows a human sees.
 
-### Doctor `context:onyx` (removed)
+### Doctor rows for the index
 
-The `context:onyx` row was removed in #1598 (owned index spec §8.1); `sindri context sources status` shows the onyx source's own probe. A leftover Onyx is reported by `index:onyx-leftover` (`docs/csharp/sindri.md`).
-
-The adapter never reads Onyx's provider and telemetry settings (no settings route is on its allowlist); `docs/sindri/onyx.md` lists them as a manual check
-on each Onyx version change.
+`sindri doctor` has the index rows `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-slack`, `context:index-ollama` and `context:index-sync`. On a box that
+once ran the old `onyx up`, `index:onyx-leftover` fails while its containers and volumes exist (fix: `sindri onyx down --purge`; it warns
+once `context.index.acknowledgeOnyxLeftover: true`) and is gone when nothing is left (`docs/csharp/sindri.md`).
 
 ### Trying it in a throwaway profile
 
 ```bash
 $SINDRI stop                                    # first, with the old home: a running control plane keeps its port
 export AW_SINDRI_HOME="$(mktemp -d)"            # throwaway state
-read -rs SINDRI_ONYX_KEY && export SINDRI_ONYX_KEY   # paste the dedicated user's admin token (not echoed, not in history); or keychain:onyx/sindri-onyx
+read -rs SINDRI_GITHUB_TOKEN && export SINDRI_GITHUB_TOKEN   # paste a read-only GitHub token (not echoed, not in history); or keychain:sindri-index/github
 mkdir -p "$AW_SINDRI_HOME/profile"
 cat >"$AW_SINDRI_HOME/profile/profile.yaml" <<'YAML'
 schemaVersion: 1
@@ -934,12 +923,12 @@ user: me
 repos: [{ name: work-app, path: /path/to/work-app }]
 context:
   sources:
-    onyx: { url: "http://127.0.0.1:3189", token: "env:SINDRI_ONYX_KEY", version: "v4.9.0" }
+    github: { repos: [acme/work-app], token: "env:SINDRI_GITHUB_TOKEN" }
     linear: { teams: [ENG] }
 YAML
 $SINDRI profile validate                        # prints the hash; exit 1 = valid, not approved yet
 $SINDRI profile approve <hash>                  # type the challenge it shows: 'approve profile <first 6>'; starts the control plane
-$SINDRI context sources status                  # the onyx row
+$SINDRI index sync github                       # fill the index from the listed repos
 $SINDRI context sources status
 $SINDRI context query "split pane orientation"
 $SINDRI stop                                    # free the port before going back to your real home
@@ -951,7 +940,7 @@ $SINDRI stop                                    # free the port before going bac
 
 ### What it prints
 
-The CLI prints the finished job's small result, in this order. The first line is the count: `5 samples · 1 left out · small sample` (the `small sample` words only below 30 samples; the left-out count adds the issues with no merged PR, outside the profile's teams, with no brief, whose cut git can't read, and dropped because the brief source was unavailable). Then one row per arm, in this order: `brief` (the brief-only baseline), `docs`, `graph` (the floor), `graph+reviewed` (the ceiling, labeled `(leaky)`), `all`; `linear`, `onyx` and `code` print `not available (S-6 / S-7B / S-9)`, and an arm that did not run prints `did not run`. A row reads `node recall 0.50 · node precision 0.40 · file recall@20 0.30 · leaky 1.00 · tokens 0` (`not measured` for a metric with nothing to average, never 0). Then `pass line: <verdict>`, one `degraded: <note>` line for each limit on the run (`clusters unavailable: N of M sample maps were built without clusters`; `issue listing capped: <team>`, when a team's Onyx search used up the 50 hits Onyx gives and the admin search has no next page, so issues past it are not in the corpus; samples dropped because the brief source was down; adjudication stopped at its cap or by a model error, the note leading with the error's code), and `report <path>`. The pass line is the arm `all`'s when it ran, else the best verdict among the arms that ran other than the brief-only baseline and the leaky ceiling (`no comparable arm ran` when only those did). The samples (issue keys, refs, cut and merge shas, truth files) and the per-bar verdicts (node recall above brief-only and at least 0.60; node precision at least 0.60; file recall@20 at least 0.50; at most 1.5M tokens; each `met`, `not met` or `not measured`) are in the report file, not on the terminal. Below 30 samples the overall line is `owner decision needed (small sample)` and nothing is enabled. A brief edited after its cut is `leaky`; every Onyx brief edited after its creation is, because Onyx keeps no content history. A merge at or before the moment its issue was created is no sample (its cut would already hold the answer). A run in which no sample could be scored is `SND-CONTEXT-080` with the counts of why, not an empty report.
+The CLI prints the finished job's small result, in this order. The first line is the count: `5 samples · 1 left out · small sample` (the `small sample` words only below 30 samples; the left-out count adds the issues with no merged PR, outside the profile's teams, with no brief, whose cut git can't read, and dropped because the brief source was unavailable). Then one row per arm, in this order: `brief` (the brief-only baseline), `docs`, `graph` (the floor), `graph+reviewed` (the ceiling, labeled `(leaky)`), `all`; `linear` and `code` print `not available (S-6 / S-9)`, and an arm that did not run prints `did not run`. A row reads `node recall 0.50 · node precision 0.40 · file recall@20 0.30 · leaky 1.00 · tokens 0` (`not measured` for a metric with nothing to average, never 0). Then `pass line: <verdict>`, one `degraded: <note>` line for each limit on the run (`clusters unavailable: N of M sample maps were built without clusters`; `issue listing capped: <team>`, when a team's issue listing reached the source's per-search limit and the source has no next page, so issues past it are not in the corpus; samples dropped because the brief source was down; adjudication stopped at its cap or by a model error, the note leading with the error's code), and `report <path>`. The pass line is the arm `all`'s when it ran, else the best verdict among the arms that ran other than the brief-only baseline and the leaky ceiling (`no comparable arm ran` when only those did). The samples (issue keys, refs, cut and merge shas, truth files) and the per-bar verdicts (node recall above brief-only and at least 0.60; node precision at least 0.60; file recall@20 at least 0.50; at most 1.5M tokens; each `met`, `not met` or `not measured`) are in the report file, not on the terminal. Below 30 samples the overall line is `owner decision needed (small sample)` and nothing is enabled. A brief edited after its cut is `leaky`; every brief edited after its creation is, because the source keeps no content history. A merge at or before the moment its issue was created is no sample (its cut would already hold the answer). A run in which no sample could be scored is `SND-CONTEXT-080` with the counts of why, not an empty report.
 
 `--since` and `--until` take a date (`2026-09-30`, read as UTC; an `--until` date covers that whole day) or a full timestamp (taken as given). `--limit` is at least 1, and a window that ends before it starts is refused (`SND-CLI-003`) before the job exists.
 

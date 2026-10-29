@@ -1,6 +1,6 @@
 # Setting up Sindri (C#)
 
-This guide takes a new box from nothing to a running Sindri: the control plane up, Onyx connected, agent sessions able
+This guide takes a new box from nothing to a running Sindri: the control plane up, your sources connected, agent sessions able
 to reach it, and the app open. It follows the setup the team did by hand on a real work repo (a 20k-file TypeScript
 monorepo), with that repo's names left out. The same steps, one per screen and with pictures, are in the guided page
 [`docs/sindri-setup.html`](../sindri-setup.html); open it from disk in any browser.
@@ -26,12 +26,12 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
   ┌──────────────────── control plane: `sindri serve`, 127.0.0.1:7410 ─────────────────────┐
   │  host lease · ledger.db (every event) · views.db · the API and event stream · scheduler │
   │  workflow engine ──► Temporal dev server (pinned, loopback, temporal.db)                 │
-  │  context engine  ──► context.db: repo docs, product map, intent records                  │
+  │  context engine  ──► context.db: repo docs, product map; index.db: GitHub, Slack, Linear │
   │  MCP endpoint /sindri/mcp ◄── agent sessions in your work repo                           │
   └──────────────────────────────────────────────────────────────────────────────────────────┘
         ▲ reads only the approved profile             │ searches
         │                                             ▼
-   profile.yaml ── `profile approve` ──►     Onyx (Docker, 127.0.0.1:3189): Linear, Slack
+   profile.yaml ── `profile approve` ──►     sources: GitHub, Slack, Linear (read-only tokens)
    recipes/*.yaml ── `recipe approve` ──►    the registry (workflow.line and its children)
 ```
 
@@ -41,7 +41,7 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
 | Ledger | Append-only SQLite log of every event; the views are rebuilt from it | `ledger.db`, `views.db` |
 | Temporal | The pinned `temporal server start-dev` that runs workflow instances. `serve` starts it and adopts it after a restart | `temporal.db`, `logs/temporal.log` |
 | Profile | Your config: repos, services, the context section. Sindri runs only an approved snapshot of it | `profile/profile.yaml`, `approved/` |
-| Onyx | Onyx Community Edition in Docker, pinned (`context/onyx.lock`). It indexes Linear and Slack; Sindri searches it with its own dedicated user | `$AW_SINDRI_HOME/onyx/` |
+| Record index | Sindri's own store of GitHub issues and PRs, Slack threads and Linear issues, fed by its own connectors with read-only tokens | `$AW_SINDRI_HOME` (one SQLite store), tokens in the OS keychain |
 | Product map | The graph of features, surfaces and code that Sindri proposes from the repo and you review | `context/context.db` |
 | Recipes | Declarative YAML workflows. `workflow.line` runs scoping, design, plan and a phase (build, prove, review, ship) as children | `recipes/sindri/` in this repo |
 | The app | `sindri-ui`, an Avalonia desktop app. A window onto the control plane with no logic of its own | next to the `sindri` binary |
@@ -54,21 +54,12 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
 |---|---|---|
 | .NET SDK | `10.0.401` exactly (`global.json`) | `scripts/install-cs.sh` (run by `setup.sh`) installs it into `~/.dotnet` when missing |
 | Temporal CLI | the pin in `binaries.lock` | `scripts/binaries-lock.sh fetch temporal` (`install-cs.sh` runs it too) |
-| Docker | Docker Desktop, OrbStack or Docker Engine, with Compose v2 at 2.24.0 or later | install it yourself |
-| Docker memory | about 5.5 GiB free for Onyx | Docker Desktop: Settings → Resources |
-| Disk | about 10.5 GiB free under `$AW_SINDRI_HOME` for Onyx, plus room for the map build | |
+| Disk | room under `$AW_SINDRI_HOME` for the map build and the record index | |
 | graphify and a sandbox | graphify at Sindri's pin; `sandbox-exec` (macOS, built in) or `bwrap` (Linux) | `scripts/install-deps.sh` (`AW_DRY_RUN=1` prints only) |
 | `jq`, `git` | any recent | your package manager |
 
 `scripts/install-deps.sh` installs host packages (Homebrew, or `sudo` with your Linux package manager), so run it
 yourself (**Human-only**); `AW_DRY_RUN=1 scripts/install-deps.sh` only prints what it would do (**Agent OK**).
-
-Check what this box can run for Onyx (**Agent OK**; it needs no control plane). `sindri` exists after step 2, so
-before that run it from the checkout:
-
-```bash
-dotnet run --project src/Sindri/Aw.Sindri.Host -- onyx status   # docker, compose, memory, disk and port, each ok / warn / fail with the fix
-```
 
 ## 2. Install and publish
 
@@ -139,11 +130,11 @@ Notes:
 - `denyPaths` are repo-relative globs that extraction never reads, added to the built-in secret globs (`.env*`,
   `*.pem`, `**/secrets/**`). Deny generated data and binaries so the map build stays small. The profile-wide
   `index.denyPaths` applies to every repo.
-- `context-sync` (`services: { context-sync: { every: 15m } }`) syncs Onyx's records on a cadence. Without it you
-  sync by hand ([OPERATIONS.md](OPERATIONS.md)).
+- `context-sync` (`services: { context-sync: { every: 15m } }`) syncs the older intent sources on a cadence. Without it you
+  sync by hand ([OPERATIONS.md](OPERATIONS.md)). The record index syncs itself every 5 minutes while `serve` runs (step 5).
 - `context.labeling`, `context.extract.graphify` and the rest are in `docs/csharp/sindri-profile.md` and
   `docs/sindri/context.md`. Unknown keys are errors.
-- `onyx up` (step 5) adds `context.sources.onyx` for you. Don't write it by hand.
+- The sources (GitHub, Slack, Linear) go under `context.sources`; step 5 has the keys. `sindri index connect` writes each source's `token` pointer for you.
 
 Check it (**Agent OK**):
 
@@ -179,10 +170,7 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 | `sindri --headless` | Human-only | The same without the app: for a box you reach over SSH or one that stays on |
 | `sindri status` | Agent OK | The running control plane's summary; never starts it |
 | `sindri doctor` | Agent OK | One line per check, each `ok`, `warn` or `fail` with a fix; works while the control plane is down |
-| `sindri stop` | Human-only | Stops it: a managed Onyx's containers and Temporal, then releases the lease |
-
-A first start on a box without Onyx asks "Set up Onyx (Sindri's business-context search) now? [Y/n]". Answer `n` if
-you want to finish this step first; the needs-you list keeps a "Set up Onyx" row until you run step 5.
+| `sindri stop` | Human-only | Stops it: Temporal, then releases the lease |
 
 `status` when all is well:
 
@@ -243,50 +231,61 @@ sindri            # or: sindri --headless
 sindri status     # a new lease pid and epoch
 ```
 
-## 5. Onyx
+## 5. Sources
 
-Onyx gives Sindri business context: Linear issues with their comments, and Slack. Sindri runs a pinned Onyx v4.9.0
-for you in Docker, bound to `127.0.0.1` only. Connecting Linear and Slack uses your company's OAuth: get sign-off
-first. Sindri never connects a source itself. Full reference: [onyx.md](onyx.md).
+Sindri keeps its own index of your GitHub issues and PRs, Slack threads and Linear issues, and reads them with
+read-only tokens you make. Sindri used to read these through Onyx; it now reads them itself, and Onyx's Confluence
+and Drive connectors have no replacement. Full reference: [sources.md](sources.md).
+
+**1. Name the sources in the profile**, then validate (step 3):
+
+```yaml
+context:
+  sources:
+    github: { repos: [your-org/my-app] }          # optional: host
+    slack:  { workspace: your-workspace, channels: [{ id: C0123456789, name: eng-product }] }
+    linear: { teams: [APP] }                      # key setup: linear.md
+```
+
+`context.index.windowDays` (default 183) is how many days back a first sync reads.
+
+**2. Connect** (**Human-only**: an agent session is refused, `SND-AUTH-002`):
 
 ```bash
-sindri onyx status     # Agent OK: where Onyx stands, and whether this box can run it
-sindri onyx up         # Human-only: everything below, idempotent and resumable
+sindri index connect github
+sindri index connect slack
 ```
 
-`onyx up` does, in order (`state.json` records each step, so a rerun repeats nothing that is already right):
+Each asks for the token once, checks the token and every repo or channel you listed *before* saving anything, stores
+it in the OS keychain (service `sindri-index`; an owner-only file under `$AW_SINDRI_HOME/secrets/` where there's no
+keychain) and writes the secret pointer into the profile's `token` key. Make the tokens yourself, read-only:
 
-1. **Preflight**: Docker, Compose, memory, disk, port (3189, or the first free of 3190-3199).
-2. **Fetch**: the pinned deployment files from GitHub, each checked against its sha256.
-3. **Config**: `.env` and a compose override (nginx on `127.0.0.1` only, every image by digest, telemetry off).
-4. **Pull** by digest, then **start**, waiting up to 15 minutes for Onyx to answer.
-5. **Your account**: it opens Onyx's sign-up page. Create your own account (the first one is Onyx's admin) and press
-   Enter.
-6. **Sindri's user**: it asks once for *your own* Onyx admin login and password (not shown, never stored). With it,
-   Sindri sets up its own dedicated Onyx user, `sindri@example.com` (an address nobody can receive mail at), makes it
-   an admin, and makes a personal access token named `sindri-onyx`. You never type that address or its password.
-7. **The key** goes in the macOS keychain (`keychain:onyx/sindri-onyx`), or a 0600 file under
-   `$AW_SINDRI_HOME/secrets/` where there's no keychain.
-8. **The profile**: it writes `context.sources.onyx` (`url`, `token`, `version`, `managed: true`) and shows the
-   profile approval inline. Type the challenge.
-9. It opens Onyx's connectors page and prints the checklist.
+- **GitHub**: a fine-grained personal access token with Contents, Issues, Pull requests and Metadata read, on the
+  listed repos only.
+- **Slack**: a bot token with `channels:read` and `channels:history` (add `groups:read` and `groups:history` only for
+  listed private channels), in an app you install.
+- **Linear**: see [linear.md](linear.md).
 
-Then, in Onyx's web UI (connectors page), connect:
+**3. Approve** (**Human-only**). Adding a token pointer or a source changes the profile, so approve again (step 3).
 
-- **Linear**: the product's teams, with a start date far enough back to cover the history you want Sindri to learn
-  from.
-- **Slack**: the product's channels.
+**4. Sync.** The built-in `index-sync` service runs it every 5 minutes while `serve` runs. By hand:
 
-Indexing runs inside Onyx and can take a while on a large workspace.
-
-You should see, in `doctor`:
-
-```text
-ok    context:sources   2 of 2 sources ok; session reads on
+```bash
+sindri index sync [<source>] [--detach] [--json] [--no-start]
+sindri index status [--json]      # Agent OK: one line per source
 ```
 
-With a managed Onyx, `sindri` starts its containers and `sindri stop` stops them. `onyx down` (**Human-only**)
-stops them by hand. Neither deletes Onyx's data.
+A source's line reads `not started`, `syncing recent window`, `usable, filling older history`, `complete` or `last sync failed: <code>`. Embedding is a separate
+resumable job (Ollama, local only): `sindri index embed pause|resume`. `sindri index purge <source>` (**Human-only**)
+deletes one source's records after you type yes.
+
+You should see, in `doctor`, `context:index-store`, `context:index-ollama`, `context:index-github`, `context:index-slack`, `context:index-linear` and `context:index-sync` rows
+all `ok`.
+
+**An old box that once ran `onyx up`.** Run `sindri onyx down --purge` once (**Human-only**). It lists the leftover
+Onyx containers and volumes, `$AW_SINDRI_HOME/onyx/` and the keychain entries it recorded, asks for a yes, then
+removes them. Those volumes hold a raw, unscrubbed copy of your Slack and Linear text, so don't leave them. `doctor`'s
+`index:onyx-leftover` row fails while they exist. A box that never ran `onyx up` sees none of this.
 
 ## 6. Agent Steps
 
@@ -365,7 +364,7 @@ SND-AUTH-002 … (this CLI ran as a session: CLAUDE_CODE_ENTRYPOINT is set | par
 
 Sindri splits its commands into classes. Approving config and recipes, starting, answering and completing workflows
 (`workflow start`, `answer`, `complete`, `command`, `cancel`, `handback`), building, reviewing and promoting the map,
-syncing sources, registering MCP, managing Onyx, deciding, and starting or stopping the control plane are a person's
+syncing sources, connecting and purging them, registering MCP, deciding, and starting or stopping the control plane are a person's
 decisions. An agent that could run them could approve its own recipes, widen its own config, sign off its own desk
 tasks and merge its own work. That is also why desk tasks are human-only by design: an agent may prepare a desk task's
 output files, but only you submit them with `workflow complete`. (An agent Step's own launched session reports its
@@ -387,11 +386,9 @@ Fix: run Sindri first (`sindri`), then run the command.
 | `SND-PROFILE-003` | The hash you approved isn't the live profile's | Run `profile approve` without a hash and copy the new one |
 | `SND-PROFILE-006` | The approved snapshots can't be read or written | Check the permissions and free disk under `~/.agentic-workflow/sindri-app/approved/` |
 | `SND-VIEW-001` | The views stalled | `sindri views rebuild` |
-| `SND-ONYX-001` | Docker isn't usable (not installed, not running, still starting) | Start Docker, then rerun |
-| `SND-ONYX-003` | Not enough disk or Docker memory for Onyx | The message says how much; raise Docker's memory in its settings |
-| `SND-ONYX-007` | The login you gave `onyx up` isn't an Onyx admin | Use the first account you signed up with |
-| `SND-ONYX-008` | Login, registration or the token failed | Read the message: invite-only Onyx needs `sindri@example.com` invited once |
-| `SND-CONTEXT-053` | Onyx's key isn't Sindri's dedicated user | Update the checkout, rebuild, restart, rerun `onyx up` |
+| `SND-INDEX-009` | A source's token pointer doesn't resolve, or the source refused the token | `sindri index connect <source>` again |
+| `SND-INDEX-010` | A listed repo can't be read with that token | Give the token access to it, or take it out of the profile |
+| `SND-INDEX-014` | `onyx down --purge` couldn't remove something | The message names it; remove it by hand and rerun |
 
 The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/context.md`.
 
@@ -399,8 +396,6 @@ The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/con
 
 - **An old build after a merge.** A fix merged upstream isn't in your build until the main checkout has it and you
   rebuild and restart: `git pull`, `scripts/install-cs.sh --rebuild`, `sindri stop`, `sindri`.
-- **A first Onyx key from an older build** was an admin person's token, so `doctor` warned `SND-CONTEXT-053`. Rerunning
-  `onyx up` on a current build moves Sindri to its dedicated user and revokes the old token.
 
 ## Where to go next
 
@@ -409,4 +404,4 @@ The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/con
 - How the pieces fit: [`docs/sindri-architecture.html`](../sindri-architecture.html).
 - Every feature, with status: [`docs/sindri.html`](../sindri.html).
 - References: `docs/csharp/sindri.md` (the CLI and control plane), `docs/csharp/sindri-profile.md`,
-  `docs/sindri/context.md`, `docs/sindri/onyx.md`, `docs/csharp/sindri-workflow.md`, `docs/csharp/sindri-ui.md`.
+  `docs/sindri/context.md`, `docs/sindri/sources.md`, `docs/csharp/sindri-workflow.md`, `docs/csharp/sindri-ui.md`.
