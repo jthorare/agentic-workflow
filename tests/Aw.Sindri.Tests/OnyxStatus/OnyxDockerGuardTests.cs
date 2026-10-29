@@ -12,10 +12,9 @@ public sealed class OnyxDockerGuardTests
 
     private static OnyxFacts Facts(OnyxUpRig rig) => new(rig.Runtime, rig.Probes, new FakeSindriHome(OnyxUpRig.Home));
 
-    private static async Task<OnyxUpRig> RigPointedAtAnotherMachine()
+    private static OnyxUpRig RigPointedAtAnotherMachine()
     {
         var rig = new OnyxUpRig();
-        _ = (await rig.Up(Token)).Value;
         rig.Runtime.Facts = FakeContainerRuntime.Healthy with { Endpoint = Remote };
         rig.Runtime.Calls.Clear();
         return rig;
@@ -36,9 +35,9 @@ public sealed class OnyxDockerGuardTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Containers_and_platform_are_the_docker_problem_and_never_reach_a_remote_runtime()
+    public void Containers_and_platform_are_the_docker_problem_and_never_reach_a_remote_runtime()
     {
-        var rig = await RigPointedAtAnotherMachine();
+        var rig = RigPointedAtAnotherMachine();
         var facts = Facts(rig);
 
         var containers = facts.Containers(Token);

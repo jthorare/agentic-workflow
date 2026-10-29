@@ -66,10 +66,7 @@ using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
-using Aw.Sindri.Features.OnyxAccount;
-using Aw.Sindri.Features.OnyxDown;
 using Aw.Sindri.Features.OnyxEnsure;
-using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PingProcess;
@@ -251,17 +248,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IDoctorChecks, PrWatchDoctorChecks>()                                   // PB spec API15: the PR watcher's last run
         .AddScoped<IDoctorChecks, SetupDoctor>()                                           // SO-A6: `setup`, ok when every step is done or skipped
         .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>()                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
-        .AddSingleton<OnyxReadiness>()
-        .AddScoped<OnyxDockerWait>()                                                       // `onyx up` waits for a Docker that is starting (scoped: it re-inspects through the scope's OnyxFacts)
-        .AddSingleton<IOnyxUpStep, OnyxFetchStep>()                                         // Onyx P2: the steps of `onyx up`, in this order
-        .AddSingleton<IOnyxUpStep, OnyxConfigStep>()
-        .AddSingleton<IOnyxUpStep, OnyxPullStep>()
-        .AddSingleton<IOnyxUpStep, OnyxStartStep>()
-        .AddScoped<IService<OnyxUpRequest, OnyxUpResponse>, OnyxUpService>()
-        .AddScoped<IManagedOnyx, ManagedOnyx>()                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
-        .AddScoped<OnyxKeyMinter>()
-        .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
-        .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();
+        .AddScoped<IManagedOnyx, ManagedOnyx>();                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
 
 
     /// <summary>The registry's slices (engine P2): register, approve and revoke (commands), the challenge (an issue), list and show (queries).</summary>
