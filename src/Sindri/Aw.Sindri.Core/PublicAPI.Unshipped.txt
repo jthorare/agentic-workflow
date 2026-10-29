@@ -20632,7 +20632,6 @@ Aw.Sindri.Core.Events.ProjectAttached
 Aw.Sindri.Core.Events.ProjectAttached.<Clone>$() -> Aw.Sindri.Core.Events.ProjectAttached!
 Aw.Sindri.Core.Events.ProjectAttached.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
 Aw.Sindri.Core.Events.ProjectAttached.CommandId.init -> void
-Aw.Sindri.Core.Events.ProjectAttached.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ProjectId Id, out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>! Links, out string? Note, out System.DateOnly? Target) -> void
 Aw.Sindri.Core.Events.ProjectAttached.Equals(Aw.Sindri.Core.Events.ProjectAttached? other) -> bool
 Aw.Sindri.Core.Events.ProjectAttached.Id.get -> Aw.Sindri.Core.Ids.ProjectId
 Aw.Sindri.Core.Events.ProjectAttached.Id.init -> void
@@ -20644,7 +20643,6 @@ Aw.Sindri.Core.Events.ProjectAttached.Name.get -> string?
 Aw.Sindri.Core.Events.ProjectAttached.Name.init -> void
 Aw.Sindri.Core.Events.ProjectAttached.Note.get -> string?
 Aw.Sindri.Core.Events.ProjectAttached.Note.init -> void
-Aw.Sindri.Core.Events.ProjectAttached.ProjectAttached(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ProjectId Id, string? Linear, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, System.Collections.Generic.IReadOnlyList<string!>! Links, string? Note, System.DateOnly? Target) -> void
 Aw.Sindri.Core.Events.ProjectAttached.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Core.Events.ProjectAttached.State.init -> void
 Aw.Sindri.Core.Events.ProjectAttached.Target.get -> System.DateOnly?
@@ -20659,7 +20657,6 @@ Aw.Sindri.Core.Events.ProjectChanged.ClearTarget.init -> void
 Aw.Sindri.Core.Events.ProjectChanged.<Clone>$() -> Aw.Sindri.Core.Events.ProjectChanged!
 Aw.Sindri.Core.Events.ProjectChanged.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
 Aw.Sindri.Core.Events.ProjectChanged.CommandId.init -> void
-Aw.Sindri.Core.Events.ProjectChanged.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ProjectId Id, out long Version, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool ClearState, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out bool ClearNote, out System.DateOnly? Target, out bool ClearTarget) -> void
 Aw.Sindri.Core.Events.ProjectChanged.Equals(Aw.Sindri.Core.Events.ProjectChanged? other) -> bool
 Aw.Sindri.Core.Events.ProjectChanged.Id.get -> Aw.Sindri.Core.Ids.ProjectId
 Aw.Sindri.Core.Events.ProjectChanged.Id.init -> void
@@ -20669,7 +20666,6 @@ Aw.Sindri.Core.Events.ProjectChanged.Name.get -> string?
 Aw.Sindri.Core.Events.ProjectChanged.Name.init -> void
 Aw.Sindri.Core.Events.ProjectChanged.Note.get -> string?
 Aw.Sindri.Core.Events.ProjectChanged.Note.init -> void
-Aw.Sindri.Core.Events.ProjectChanged.ProjectChanged(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ProjectId Id, long Version, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, bool ClearState, System.Collections.Generic.IReadOnlyList<string!>? Links, string? Note, bool ClearNote, System.DateOnly? Target, bool ClearTarget) -> void
 Aw.Sindri.Core.Events.ProjectChanged.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Core.Events.ProjectChanged.State.init -> void
 Aw.Sindri.Core.Events.ProjectChanged.Target.get -> System.DateOnly?
@@ -20712,7 +20708,6 @@ Aw.Sindri.Core.Projects.ProjectAttachedRow
 Aw.Sindri.Core.Projects.ProjectAttachedRow.AttachedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Projects.ProjectAttachedRow.AttachedAt.init -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectAttachedRow!
-Aw.Sindri.Core.Projects.ProjectAttachedRow.Deconstruct(out Aw.Sindri.Core.Ids.ProjectId Id, out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>! Links, out string? Note, out System.DateOnly? Target, out long Version, out System.DateTimeOffset AttachedAt, out System.DateTimeOffset? FinishedAt, out System.DateTimeOffset EditedAt, out long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.EditedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Projects.ProjectAttachedRow.EditedAt.init -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Equals(Aw.Sindri.Core.Projects.ProjectAttachedRow? other) -> bool
@@ -20726,9 +20721,6 @@ Aw.Sindri.Core.Projects.ProjectAttachedRow.Links.get -> System.Collections.Gener
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Links.init -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Name.get -> string?
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Name.init -> void
-Aw.Sindri.Core.Projects.ProjectAttachedRow.Note.get -> string?
-Aw.Sindri.Core.Projects.ProjectAttachedRow.Note.init -> void
-Aw.Sindri.Core.Projects.ProjectAttachedRow.ProjectAttachedRow(Aw.Sindri.Core.Ids.ProjectId Id, string? Linear, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, System.Collections.Generic.IReadOnlyList<string!>! Links, string? Note, System.DateOnly? Target, long Version, System.DateTimeOffset AttachedAt, System.DateTimeOffset? FinishedAt, System.DateTimeOffset EditedAt, long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Sequence.get -> long
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Sequence.init -> void
 Aw.Sindri.Core.Projects.ProjectAttachedRow.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
@@ -20739,35 +20731,27 @@ Aw.Sindri.Core.Projects.ProjectAttachedRow.Version.get -> long
 Aw.Sindri.Core.Projects.ProjectAttachedRow.Version.init -> void
 Aw.Sindri.Core.Projects.ProjectDecisions
 Aw.Sindri.Core.Projects.ProjectEdit
-Aw.Sindri.Core.Projects.ProjectEdit.ClearNote.get -> bool
-Aw.Sindri.Core.Projects.ProjectEdit.ClearNote.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.ClearState.get -> bool
 Aw.Sindri.Core.Projects.ProjectEdit.ClearState.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.ClearTarget.get -> bool
 Aw.Sindri.Core.Projects.ProjectEdit.ClearTarget.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectEdit!
-Aw.Sindri.Core.Projects.ProjectEdit.Deconstruct(out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool ClearState, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out bool ClearNote, out System.DateOnly? Target, out bool ClearTarget) -> void
 Aw.Sindri.Core.Projects.ProjectEdit.Equals(Aw.Sindri.Core.Projects.ProjectEdit? other) -> bool
 Aw.Sindri.Core.Projects.ProjectEdit.Links.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Projects.ProjectEdit.Links.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.Name.get -> string?
 Aw.Sindri.Core.Projects.ProjectEdit.Name.init -> void
-Aw.Sindri.Core.Projects.ProjectEdit.Note.get -> string?
-Aw.Sindri.Core.Projects.ProjectEdit.Note.init -> void
-Aw.Sindri.Core.Projects.ProjectEdit.ProjectEdit(string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, bool ClearState = false, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Note = null, bool ClearNote = false, System.DateOnly? Target = null, bool ClearTarget = false) -> void
 Aw.Sindri.Core.Projects.ProjectEdit.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Core.Projects.ProjectEdit.State.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.Target.get -> System.DateOnly?
 Aw.Sindri.Core.Projects.ProjectEdit.Target.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow
 Aw.Sindri.Core.Projects.ProjectHiddenRow.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectHiddenRow!
-Aw.Sindri.Core.Projects.ProjectHiddenRow.Deconstruct(out string! Linear, out bool Hidden, out long Version, out long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Equals(Aw.Sindri.Core.Projects.ProjectHiddenRow? other) -> bool
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Hidden.get -> bool
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Hidden.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Linear.get -> string!
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Linear.init -> void
-Aw.Sindri.Core.Projects.ProjectHiddenRow.ProjectHiddenRow(string! Linear, bool Hidden, long Version, long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Sequence.get -> long
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Sequence.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Version.get -> long
@@ -20842,7 +20826,6 @@ static readonly Aw.Sindri.Core.SindriErrors.ProjectNotFound -> Aw.Kernel.ErrorDe
 static readonly Aw.Sindri.Core.SindriErrors.ProjectNotSynced -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Projects.ProjectDraft
 Aw.Sindri.Core.Projects.ProjectDraft.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectDraft!
-Aw.Sindri.Core.Projects.ProjectDraft.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out System.DateOnly? Target) -> void
 Aw.Sindri.Core.Projects.ProjectDraft.Equals(Aw.Sindri.Core.Projects.ProjectDraft? other) -> bool
 Aw.Sindri.Core.Projects.ProjectDraft.Linear.get -> string?
 Aw.Sindri.Core.Projects.ProjectDraft.Linear.init -> void
@@ -20850,9 +20833,6 @@ Aw.Sindri.Core.Projects.ProjectDraft.Links.get -> System.Collections.Generic.IRe
 Aw.Sindri.Core.Projects.ProjectDraft.Links.init -> void
 Aw.Sindri.Core.Projects.ProjectDraft.Name.get -> string?
 Aw.Sindri.Core.Projects.ProjectDraft.Name.init -> void
-Aw.Sindri.Core.Projects.ProjectDraft.Note.get -> string?
-Aw.Sindri.Core.Projects.ProjectDraft.Note.init -> void
-Aw.Sindri.Core.Projects.ProjectDraft.ProjectDraft(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Note = null, System.DateOnly? Target = null) -> void
 Aw.Sindri.Core.Projects.ProjectDraft.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Core.Projects.ProjectDraft.State.init -> void
 Aw.Sindri.Core.Projects.ProjectDraft.Target.get -> System.DateOnly?
@@ -20900,7 +20880,6 @@ static Aw.Sindri.Core.Projects.ProjectAccepted.operator ==(Aw.Sindri.Core.Projec
 Aw.Sindri.Core.Projects.ProjectText
 Aw.Sindri.Core.Projects.ProjectWrite
 static Aw.Sindri.Core.Projects.ProjectText.Links(System.Collections.Generic.IReadOnlyList<string!>? links, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> System.Collections.Generic.IReadOnlyList<string!>?
-static Aw.Sindri.Core.Projects.ProjectText.Note(string? note, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> string?
 static Aw.Sindri.Core.Projects.ProjectWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.LeaseGrant! grant, Aw.Sindri.Core.Ledger.LedgerEntry! entry, Aw.Sindri.Core.Ids.CommandId command, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
 static Aw.Sindri.Core.Projects.ProjectWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!
 Aw.Sindri.Core.Leftovers.IPurgeDocker
@@ -21060,7 +21039,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 22 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 23 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -21104,7 +21083,6 @@ Aw.Sindri.Core.Projects.Cards.ProjectCard
 Aw.Sindri.Core.Projects.Cards.ProjectCard.<Clone>$() -> Aw.Sindri.Core.Projects.Cards.ProjectCard!
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Counting.get -> bool
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Counting.init -> void
-Aw.Sindri.Core.Projects.Cards.ProjectCard.Deconstruct(out string! Key, out Aw.Sindri.Core.Projects.Cards.ProjectOrigin Origin, out string! Name, out string? Description, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool StateSetByOwner, out Aw.Sindri.Core.Projects.Cards.ProjectHealth? Health, out Aw.Sindri.Core.Projects.Cards.ProjectLead? Lead, out System.DateOnly? Target, out int? OpenIssues, out bool Counting, out int? OpenPrs, out string? PrScope, out System.DateTimeOffset? LastActivity, out System.DateTimeOffset? FinishedAt, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! Links, out string? Note, out bool Synced, out long Version) -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Description.get -> string?
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Description.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Equals(Aw.Sindri.Core.Projects.Cards.ProjectCard? other) -> bool
@@ -21122,15 +21100,12 @@ Aw.Sindri.Core.Projects.Cards.ProjectCard.Links.get -> System.Collections.Generi
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Links.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Name.get -> string!
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Name.init -> void
-Aw.Sindri.Core.Projects.Cards.ProjectCard.Note.get -> string?
-Aw.Sindri.Core.Projects.Cards.ProjectCard.Note.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.OpenIssues.get -> int?
 Aw.Sindri.Core.Projects.Cards.ProjectCard.OpenIssues.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.OpenPrs.get -> int?
 Aw.Sindri.Core.Projects.Cards.ProjectCard.OpenPrs.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Origin.get -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Origin.init -> void
-Aw.Sindri.Core.Projects.Cards.ProjectCard.ProjectCard(string! Key, Aw.Sindri.Core.Projects.Cards.ProjectOrigin Origin, string! Name, string? Description, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, bool StateSetByOwner, Aw.Sindri.Core.Projects.Cards.ProjectHealth? Health, Aw.Sindri.Core.Projects.Cards.ProjectLead? Lead, System.DateOnly? Target, int? OpenIssues, bool Counting, int? OpenPrs, string? PrScope, System.DateTimeOffset? LastActivity, System.DateTimeOffset? FinishedAt, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! Links, string? Note, bool Synced, long Version) -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.PrScope.get -> string?
 Aw.Sindri.Core.Projects.Cards.ProjectCard.PrScope.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectCard.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -21349,3 +21324,58 @@ static Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.operator !=(Aw.Sindri.Cor
 static Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.operator ==(Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? left, Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? right) -> bool
 Aw.Sindri.Core.Projects.Cards.IProjectPages
 Aw.Sindri.Core.Projects.Cards.IProjectPages.Read(bool all, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Projects.Cards.ProjectsPage!>!>
+Aw.Sindri.Core.Events.ProjectAttached.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ProjectId Id, out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>! Links, out System.DateOnly? Target, out string? Notes, out string? Note) -> void
+Aw.Sindri.Core.Events.ProjectAttached.Notes.get -> string?
+Aw.Sindri.Core.Events.ProjectAttached.Notes.init -> void
+Aw.Sindri.Core.Events.ProjectAttached.ProjectAttached(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ProjectId Id, string? Linear, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, System.Collections.Generic.IReadOnlyList<string!>! Links, System.DateOnly? Target, string? Notes = null, string? Note = null) -> void
+Aw.Sindri.Core.Events.ProjectChanged.ClearNotes.get -> bool
+Aw.Sindri.Core.Events.ProjectChanged.ClearNotes.init -> void
+Aw.Sindri.Core.Events.ProjectChanged.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ProjectId Id, out long Version, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool ClearState, out System.Collections.Generic.IReadOnlyList<string!>? Links, out System.DateOnly? Target, out bool ClearTarget, out string? Notes, out bool ClearNotes, out string? Note, out bool ClearNote) -> void
+Aw.Sindri.Core.Events.ProjectChanged.Notes.get -> string?
+Aw.Sindri.Core.Events.ProjectChanged.Notes.init -> void
+Aw.Sindri.Core.Events.ProjectChanged.ProjectChanged(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ProjectId Id, long Version, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, bool ClearState, System.Collections.Generic.IReadOnlyList<string!>? Links, System.DateOnly? Target, bool ClearTarget, string? Notes = null, bool ClearNotes = false, string? Note = null, bool ClearNote = false) -> void
+Aw.Sindri.Core.Projects.Cards.ProjectCard.Deconstruct(out string! Key, out Aw.Sindri.Core.Projects.Cards.ProjectOrigin Origin, out string! Name, out string? Description, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool StateSetByOwner, out Aw.Sindri.Core.Projects.Cards.ProjectHealth? Health, out Aw.Sindri.Core.Projects.Cards.ProjectLead? Lead, out System.DateOnly? Target, out int? OpenIssues, out bool Counting, out int? OpenPrs, out string? PrScope, out System.DateTimeOffset? LastActivity, out System.DateTimeOffset? FinishedAt, out System.Collections.Generic.IReadOnlyList<string!>! Repos, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! Links, out string? Notes, out bool Synced, out long Version) -> void
+Aw.Sindri.Core.Projects.Cards.ProjectCard.Notes.get -> string?
+Aw.Sindri.Core.Projects.Cards.ProjectCard.Notes.init -> void
+Aw.Sindri.Core.Projects.Cards.ProjectCard.ProjectCard(string! Key, Aw.Sindri.Core.Projects.Cards.ProjectOrigin Origin, string! Name, string? Description, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, bool StateSetByOwner, Aw.Sindri.Core.Projects.Cards.ProjectHealth? Health, Aw.Sindri.Core.Projects.Cards.ProjectLead? Lead, System.DateOnly? Target, int? OpenIssues, bool Counting, int? OpenPrs, string? PrScope, System.DateTimeOffset? LastActivity, System.DateTimeOffset? FinishedAt, System.Collections.Generic.IReadOnlyList<string!>! Repos, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectLink!>! Links, string? Notes, bool Synced, long Version) -> void
+Aw.Sindri.Core.Projects.ProjectAttachedRow.Deconstruct(out Aw.Sindri.Core.Ids.ProjectId Id, out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>! Links, out string? Notes, out System.DateOnly? Target, out long Version, out System.DateTimeOffset AttachedAt, out System.DateTimeOffset? FinishedAt, out System.DateTimeOffset EditedAt, out long Sequence) -> void
+Aw.Sindri.Core.Projects.ProjectAttachedRow.Notes.get -> string?
+Aw.Sindri.Core.Projects.ProjectAttachedRow.Notes.init -> void
+Aw.Sindri.Core.Projects.ProjectAttachedRow.ProjectAttachedRow(Aw.Sindri.Core.Ids.ProjectId Id, string? Linear, string? Name, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, System.Collections.Generic.IReadOnlyList<string!>! Links, string? Notes, System.DateOnly? Target, long Version, System.DateTimeOffset AttachedAt, System.DateTimeOffset? FinishedAt, System.DateTimeOffset EditedAt, long Sequence) -> void
+Aw.Sindri.Core.Projects.ProjectDraft.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Notes, out System.DateOnly? Target) -> void
+Aw.Sindri.Core.Projects.ProjectDraft.Notes.get -> string?
+Aw.Sindri.Core.Projects.ProjectDraft.Notes.init -> void
+Aw.Sindri.Core.Projects.ProjectDraft.ProjectDraft(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, System.DateOnly? Target = null) -> void
+Aw.Sindri.Core.Projects.ProjectEdit.ClearNotes.get -> bool
+Aw.Sindri.Core.Projects.ProjectEdit.ClearNotes.init -> void
+Aw.Sindri.Core.Projects.ProjectEdit.Deconstruct(out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out bool ClearState, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Notes, out bool ClearNotes, out System.DateOnly? Target, out bool ClearTarget) -> void
+Aw.Sindri.Core.Projects.ProjectEdit.Notes.get -> string?
+Aw.Sindri.Core.Projects.ProjectEdit.Notes.init -> void
+Aw.Sindri.Core.Projects.ProjectEdit.ProjectEdit(string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, bool ClearState = false, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, bool ClearNotes = false, System.DateOnly? Target = null, bool ClearTarget = false) -> void
+static Aw.Sindri.Core.Projects.ProjectDecisions.NotesAliasConflict(string? notes, string? note) -> Aw.Kernel.Error?
+static Aw.Sindri.Core.Projects.ProjectText.Notes(string? notes, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> string?
+Aw.Sindri.Core.Events.ProjectLedNoted
+Aw.Sindri.Core.Events.ProjectLedNoted.<Clone>$() -> Aw.Sindri.Core.Events.ProjectLedNoted!
+Aw.Sindri.Core.Events.ProjectLedNoted.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ProjectLedNoted.CommandId.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Linear, out string? Notes, out long Version) -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Equals(Aw.Sindri.Core.Events.ProjectLedNoted? other) -> bool
+Aw.Sindri.Core.Events.ProjectLedNoted.Linear.get -> string!
+Aw.Sindri.Core.Events.ProjectLedNoted.Linear.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Notes.get -> string?
+Aw.Sindri.Core.Events.ProjectLedNoted.Notes.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.ProjectLedNoted(Aw.Sindri.Core.Ids.CommandId CommandId, string! Linear, string? Notes, long Version) -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Version.get -> long
+Aw.Sindri.Core.Events.ProjectLedNoted.Version.init -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Deconstruct(out string! Linear, out bool Hidden, out long Version, out long Sequence, out string? Notes) -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Notes.get -> string?
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Notes.init -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.ProjectHiddenRow(string! Linear, bool Hidden, long Version, long Sequence, string? Notes = null) -> void
+const Aw.Sindri.Core.Events.EventTypes.ProjectLedNoted = "project.led.noted" -> string!
+override Aw.Sindri.Core.Events.ProjectLedNoted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ProjectLedNoted.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ProjectLedNoted.ToString() -> string!
+static Aw.Sindri.Core.Events.ProjectLedNoted.operator !=(Aw.Sindri.Core.Events.ProjectLedNoted? left, Aw.Sindri.Core.Events.ProjectLedNoted? right) -> bool
+static Aw.Sindri.Core.Events.ProjectLedNoted.operator ==(Aw.Sindri.Core.Events.ProjectLedNoted? left, Aw.Sindri.Core.Events.ProjectLedNoted? right) -> bool
+static Aw.Sindri.Core.Projects.ProjectDecisions.LedNotes(Aw.Sindri.Core.Ids.CommandId command, string! linear, Aw.Sindri.Core.Projects.ProjectHiddenRow? current, Aw.Sindri.Core.Projects.ProjectEdit! edit, long seenVersion) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.ProjectLedNoted!>!
+static Aw.Sindri.Core.Projects.ProjectDecisions.NamesLinearProject(string! project) -> bool
