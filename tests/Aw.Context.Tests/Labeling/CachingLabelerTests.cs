@@ -1,9 +1,9 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Extract;
 using Aw.Context.Infrastructure.Labeling;
+using Aw.Context.Infrastructure.Scrubbing;
 using Aw.Context.Testing.Extract;
 using Microsoft.Extensions.Time.Testing;
-using Aw.Context.Infrastructure.Scrubbing;
 
 namespace Aw.Context.Tests.Labeling;
 

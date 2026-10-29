@@ -8,7 +8,7 @@ using Microsoft.Data.Sqlite;
 namespace Aw.Context.Infrastructure.Labeling;
 
 /// <summary>
-/// The labeler's cache in context.db (migration 0024_label_cache). A read opens the file read-only and never migrates it: no file, or a file from before the table, is all misses.
+/// The labeler's cache in context.db (migration 0024_s5i_label_cache). A read opens the file read-only and never migrates it: no file, or a file from before the table, is all misses.
 /// A write migrates first and upserts every label in one transaction.
 /// </summary>
 internal sealed class SqliteLabelCache(ContextDatabase database, TimeProvider clock) : ILabelCache
