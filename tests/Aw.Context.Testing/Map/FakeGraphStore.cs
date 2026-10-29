@@ -30,6 +30,12 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
     /// <summary>When set, <see cref="SaveDraft"/> fails with it and changes nothing.</summary>
     public Error? SaveDraftFailure { get; set; }
 
+    /// <summary>When set, <see cref="SaveDraft"/> waits for it before writing (a build held after it stamped its time, as while it names concepts).</summary>
+    public Task? SaveDraftHold { get; set; }
+
+    /// <summary>How many <see cref="SaveDraft"/> calls are waiting on <see cref="SaveDraftHold"/> right now.</summary>
+    public int SaveDraftsWaiting { get; private set; }
+
     /// <summary>When set, <see cref="Promote"/> fails with it and changes nothing.</summary>
     public Error? PromoteFailure { get; set; }
 
@@ -111,7 +117,25 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
         });
 
     /// <inheritdoc/>
-    public ValueTask<Result<MapVersion>> SaveDraft(MapImport map, DateTimeOffset created, CancellationToken cancellationToken) => Done(() =>
+    public async ValueTask<Result<MapVersion>> SaveDraft(MapImport map, DateTimeOffset created, CancellationToken cancellationToken)
+    {
+        if (SaveDraftHold is { } hold)
+        {
+            SaveDraftsWaiting++;
+            try
+            {
+                await hold.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                SaveDraftsWaiting--;
+            }
+        }
+
+        return await SaveDraftNow(map, created).ConfigureAwait(false);
+    }
+
+    private ValueTask<Result<MapVersion>> SaveDraftNow(MapImport map, DateTimeOffset created) => Done(() =>
     {
         ArgumentNullException.ThrowIfNull(map);
         if (SaveDraftFailure is { } failed)
