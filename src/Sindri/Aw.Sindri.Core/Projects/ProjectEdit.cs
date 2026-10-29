@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Projects.Vocabulary;
+
 namespace Aw.Sindri.Core.Projects;
 
 /// <summary>What the owner asked to change on a project (projects page spec §5.3): a null field is left as it was, a 'Clear' flag drops the field.</summary>

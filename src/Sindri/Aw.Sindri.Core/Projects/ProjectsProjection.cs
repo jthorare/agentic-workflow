@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Projects;

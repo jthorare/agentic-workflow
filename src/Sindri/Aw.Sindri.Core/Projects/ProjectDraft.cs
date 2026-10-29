@@ -1,3 +1,5 @@
+using Aw.Sindri.Core.Projects.Vocabulary;
+
 namespace Aw.Sindri.Core.Projects;
 
 /// <summary>What the owner typed to attach a Linear project or add one by hand (projects page spec §5.3).</summary>

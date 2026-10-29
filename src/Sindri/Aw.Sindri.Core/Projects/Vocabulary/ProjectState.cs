@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Core.Projects;
+namespace Aw.Sindri.Core.Projects.Vocabulary;
 
 /// <summary>A project's state (projects page spec §3): the six words a Linear status type and an owner's choice share; written in camel case ('inProgress').</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ProjectState>))]

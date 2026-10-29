@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Core.Projects;
 
