@@ -35,6 +35,7 @@ internal sealed partial class WholeMapCanvas
 
     private static string BandAccent(WholeBand band) => band switch
     {
+        WholeBand.Concept => NodeBands.StyleOf("concept").Accent,
         WholeBand.Intent => NodeBands.StyleOf("decision").Accent,
         WholeBand.Product => NodeBands.StyleOf("feature").Accent,
         WholeBand.Code => NodeBands.StyleOf("code").Accent,
