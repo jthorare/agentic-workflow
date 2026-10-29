@@ -68,7 +68,6 @@ public sealed class AttachProjectTests
     [InlineData(null, "  ", "name")]
     [InlineData("banana", null, "linear")]
     [InlineData("https://example.com/acme/project/x-abc123def456", null, "linear")]
-    [InlineData("https://linear.app/acme/project/checkout-rewrite-a1b2c3d4e5f6", null, "linear")]   // Ph4: resolved against the stored projects
     public async Task A_bad_field_is_SND_PROJECT_004_naming_it_and_records_nothing(string? linear, string? name, string field)
     {
         await _h.Lease();
@@ -118,5 +117,69 @@ public sealed class AttachProjectTests
         var result = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen"), Token);
 
         Expect.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_project_url_resolves_to_the_key_of_the_stored_project_with_that_slug()
+    {
+        await _h.Lease();
+        using var human = _h.Human();
+
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearUrl), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Expect.Equal(ProjectRows.LinearKey, _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events)).Linear);
+    }
+
+    [Theory]
+    [InlineData("https://linear.app/acme/project/other-zzzzzz999999")]
+    [InlineData("linear:project/not-in-the-catalog")]
+    public async Task A_project_the_store_does_not_hold_is_SND_PROJECT_003_naming_the_synced_teams(string typed)
+    {
+        await _h.Lease();
+        using var human = _h.Human();
+
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Linear: typed), Token);
+
+        Expect.Equal(SindriErrors.ProjectNotSynced.Code, result.Error.Code);
+        Assert.Contains("ENG, OPS", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("context.sources.linear.teams", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_h.Slice.Store.Events);
+    }
+
+    [Fact]
+    public async Task A_project_the_owner_leads_is_SND_PROJECT_001()
+    {
+        await _h.Lease();
+        _ = _h.Facts.With(ProjectRows.Snapshot(ProjectRows.Fact(leadIsOwner: true)));
+        using var human = _h.Human();
+
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey), Token);
+
+        Expect.Equal(SindriErrors.ProjectAlreadyOnPage.Code, result.Error.Code);
+        Assert.Empty(_h.Slice.Store.Events);
+    }
+
+    [Fact]
+    public async Task A_failing_facts_read_is_its_error()
+    {
+        await _h.Lease();
+        _ = _h.Facts.Failing(SindriErrors.NotRunning.With("context is down"));
+        using var human = _h.Human();
+
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey), Token);
+
+        Expect.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_hand_made_project_reads_no_facts()
+    {
+        await _h.Lease();
+        using var human = _h.Human();
+
+        _ = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen"), Token);
+
+        Assert.Empty(_h.Facts.Asked);
     }
 }

@@ -17,7 +17,7 @@ namespace Aw.Context.Tests.SyncSources;
 [Trait("Lane", "unit")]
 public sealed class DecisionPassTests
 {
-    private static readonly SourceId _onyx = SourceId.From("onyx");
+    private static readonly SourceId _linear = SourceId.From("linear");
     private static readonly RecordKey _big = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000201");
     private static readonly RecordKey _small = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000202");
     private static readonly DateTimeOffset _at = DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
@@ -25,7 +25,7 @@ public sealed class DecisionPassTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static PendingRecord Pending(RecordKey key, string text) =>
-        new(new IntentRecord(key, _onyx, "v1", "Title", []), text, [new IntentLink(key, NodeKey.From("feature:a"), LinkRule.IssueKey, 1.0, "ab12")]);
+        new(new IntentRecord(key, _linear, "v1", "Title", []), text, [new IntentLink(key, NodeKey.From("feature:a"), LinkRule.IssueKey, 1.0, "ab12")]);
 
     [Fact]
     public async Task A_record_whose_prompt_alone_exceeds_the_cap_is_refused_and_not_queued_and_the_rest_is_still_extracted()
@@ -33,12 +33,12 @@ public sealed class DecisionPassTests
         var store = new FakeIntentStore();
         var model = new FakeModelPort { Answer = """{"decisions":[]}""" };
         var records = new[] { Pending(_big, new string('x', 12_000)), Pending(_small, "short") };
-        _ = await store.CommitPage(new IntentPage(_onyx, [.. records.Select(r => r.Record)], [.. records.SelectMany(r => r.Links)], Cursor: null, _at), Ct);
+        _ = await store.CommitPage(new IntentPage(_linear, [.. records.Select(r => r.Record)], [.. records.SelectMany(r => r.Links)], Cursor: null, _at), Ct);
         var pass = new DecisionPass(store, model, new LabelingSettings { Enabled = true, MaxTokensPerSync = 2_000 }, (new FakeScrubber(), new FakeTimeProvider(_at)));
 
         await pass.Run(records, Ct);
 
-        var queued = (await store.Queued(_onyx, Ct)).Value;
+        var queued = (await store.Queued(_linear, Ct)).Value;
         Assert.Equal(1, pass.Refused);   // the oversized record, counted
         Assert.False(pass.HeldBack);   // it can never fit, so it neither waits nor stops the pass
         Assert.Empty(queued);
@@ -49,7 +49,7 @@ public sealed class DecisionPassTests
     private static readonly NodeKey _node = NodeKey.From("feature:a");
 
     private static async Task Commit(FakeIntentStore store, params PendingRecord[] records) =>
-        _ = await store.CommitPage(new IntentPage(_onyx, [.. records.Select(r => r.Record)], [.. records.SelectMany(r => r.Links)], Cursor: null, _at), Ct);
+        _ = await store.CommitPage(new IntentPage(_linear, [.. records.Select(r => r.Record)], [.. records.SelectMany(r => r.Links)], Cursor: null, _at), Ct);
 
     /// <summary>A model that answers like the fake but reports <paramref name="spent"/> input tokens for every call.</summary>
     private sealed class CostlyModel(FakeModelPort inner, int spent) : IModelPort
@@ -79,7 +79,7 @@ public sealed class DecisionPassTests
 
         await pass.Run([first, later], Ct);
 
-        var queued = (await store.Queued(_onyx, Ct)).Value.Select(k => k.Value);
+        var queued = (await store.Queued(_linear, Ct)).Value.Select(k => k.Value);
         var layer = (await store.Layer(Ct)).Value;
         Assert.DoesNotContain(_big.Value, queued, StringComparer.Ordinal);   // done: its checks can never fit, so they are given up, not retried forever ahead of the records after it
         Assert.Contains(later.Record.Key.Value, queued, StringComparer.Ordinal);   // held back this run, and now first in line
@@ -149,14 +149,14 @@ public sealed class DecisionPassTests
         await pass.Run([record], Ct);
 
         var layer = (await store.Layer(Ct)).Value;
-        Assert.Contains(_big.Value, (await store.Queued(_onyx, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);   // one pair is answered, so the rest is only waiting for room, not impossible
+        Assert.Contains(_big.Value, (await store.Queued(_linear, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);   // one pair is answered, so the rest is only waiting for room, not impossible
         Assert.Equal(ConflictVerdict.Agrees, Assert.Single(layer.Conflicts).Verdict);
         Assert.Equal((0, true), (pass.Refused, pass.HeldBack));
 
         var next = new DecisionPass(store, model, new LabelingSettings { Enabled = true, MaxTokensPerSync = 100_000 }, (new FakeScrubber(), new FakeTimeProvider(_at)));
         await next.Run([record], Ct);
 
-        Assert.Empty((await store.Queued(_onyx, Ct)).Value);
+        Assert.Empty((await store.Queued(_linear, Ct)).Value);
         var answered = (await store.Layer(Ct)).Value.Conflicts;
         Assert.Equal(2, answered.Count);   // the pair answered before stays, the other is answered now
         Assert.All(answered, c => Assert.Equal(ConflictVerdict.Agrees, c.Verdict));
@@ -175,7 +175,7 @@ public sealed class DecisionPassTests
 
         await pass.Run([earlier, later], Ct);
 
-        Assert.Equal(_big, Assert.Single((await store.Queued(_onyx, Ct)).Value));   // the cap was spent by the record before it, so a later run may well fit its checks
+        Assert.Equal(_big, Assert.Single((await store.Queued(_linear, Ct)).Value));   // the cap was spent by the record before it, so a later run may well fit its checks
         Assert.Empty((await store.Layer(Ct)).Value.Conflicts);
         Assert.Equal((0, true), (pass.Refused, pass.HeldBack));
     }
@@ -201,7 +201,7 @@ public sealed class DecisionPassTests
         await pass.Run([first], Ct);
 
         Assert.Equal(ContextErrors.StoreUnavailable.Code, pass.Failure);
-        Assert.Contains(_big.Value, (await store.Queued(_onyx, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);
+        Assert.Contains(_big.Value, (await store.Queued(_linear, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);
     }
 
     [Theory]
@@ -216,6 +216,6 @@ public sealed class DecisionPassTests
         await pass.Run([first], Ct);
 
         Assert.Equal(ContextErrors.StoreUnavailable.Code, pass.Failure);   // not read as "no pairs" (042) or as the cap (059)
-        Assert.Contains(_big.Value, (await store.Queued(_onyx, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);
+        Assert.Contains(_big.Value, (await store.Queued(_linear, Ct)).Value.Select(k => k.Value), StringComparer.Ordinal);
     }
 }

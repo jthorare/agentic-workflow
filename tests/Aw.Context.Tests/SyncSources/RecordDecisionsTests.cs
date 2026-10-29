@@ -9,7 +9,7 @@ namespace Aw.Context.Tests.SyncSources;
 
 /// <summary>
 /// A tracker record synced through the owned record store (a <see cref="RecordFeed"/> run by <see cref="SyncSourcesService"/>) is read for decisions
-/// like an Onyx record is: one that quotes a decision about a map feature it names becomes a decision node citing the record (#1373).
+/// like a Linear record is: one that quotes a decision about a map feature it names becomes a decision node citing the record (#1373).
 /// </summary>
 [Trait("Lane", "unit")]
 public sealed class RecordDecisionsTests
