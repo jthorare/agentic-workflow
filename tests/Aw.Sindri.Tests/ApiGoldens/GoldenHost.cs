@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Onyx;
@@ -41,6 +42,7 @@ public sealed class GoldenHost : IAsyncDisposable
     private readonly List<IAsyncDisposable> _running = [];
     private readonly TempHome? _elsewhere;
     private WebApplication? _app;
+    private bool _stopped;
 
     private readonly string _profileYaml;
     private readonly IReadOnlyDictionary<string, string>? _environment;
@@ -119,8 +121,12 @@ public sealed class GoldenHost : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Http.Dispose();
-        if (_app is not null)
+        if (_app is not null && !_stopped)
         {
+            _stopped = true;   // a second dispose (a test's finally) must not reach the disposed container
+
+            // why: an open event stream ends only on the shutdown signal (serve's stop path trips it); without it StopAsync waits out the 30 s host shutdown timeout (#1546)
+            _app.Services.GetService<IShutdown>()?.Request();
             await _app.StopAsync(CancellationToken.None);
             await _app.DisposeAsync();
         }
