@@ -6,8 +6,8 @@ using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
-using Aw.Context.Core.Results;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Results;
 using Aw.Context.Core.Trust;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Testing.ConceptSynthesis;
@@ -84,7 +84,7 @@ public sealed class ConceptPassTests
     public async Task A_synthesis_store_that_fails_leaves_the_graph_alone_and_adds_a_note()
     {
         var baseline = await Run(new DisabledSymbolVectors());
-        var failing = new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), _hints, _store, new Aw.Context.Features.ScanConcepts.UnconfiguredConceptSynthesisStore());
+        var failing = new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), _hints, _store, new Features.ScanConcepts.UnconfiguredConceptSynthesisStore());
         var outcome = await failing.Run(new ContextSettings(), Product(), [], _repos, Ct);
 
         Assert.Contains("synthesized concepts", outcome.Notes, StringComparer.Ordinal);

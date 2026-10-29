@@ -134,7 +134,7 @@ internal static class Engines
 
     /// <summary>The build slice over empty fakes (the query tests never build).</summary>
     private static BuildMapService Build(TimeProvider clock, FakeGraphStore store) =>
-        new(new MapInputs(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new MapRecordSources(new FakeRecordStore(), new NoCodeSymbolSource())), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new FakeConceptHintStore(), store, new Aw.Context.Testing.ConceptSynthesis.FakeConceptSynthesisStore())), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
+        new(new MapInputs(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new MapRecordSources(new FakeRecordStore(), new NoCodeSymbolSource())), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new FakeConceptHintStore(), store, new Testing.ConceptSynthesis.FakeConceptSynthesisStore())), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
 
     internal static IContextEngine Over(params IContextSource[] sources) => Over(new FixedSourceCatalog(sources));
 

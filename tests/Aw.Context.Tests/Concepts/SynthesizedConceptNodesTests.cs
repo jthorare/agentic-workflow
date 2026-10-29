@@ -16,7 +16,7 @@ public sealed class SynthesizedConceptNodesTests
     private static readonly DateTimeOffset _at = new(2026, 10, 29, 0, 0, 0, TimeSpan.Zero);
 
     private static SynthesizedConcept Concept(string key, string name, SynthesisState state, params string[] records) =>
-        new(key, name, "Retries a failed checkout.", [.. records.Select(r => new Aw.Context.Core.ConceptSynthesis.ConceptMember(r, "1", r.Split(':')[0]))], "hash", state, 1, _at, _at);
+        new(key, name, "Retries a failed checkout.", [.. records.Select(r => new Context.Core.ConceptSynthesis.ConceptMember(r, "1", r.Split(':')[0]))], "hash", state, 1, _at, _at);
 
     private static GraphNode Node(GraphSnapshot graph, string key) => Assert.Single(graph.Nodes, n => n.Key.Value == key);
 
@@ -32,7 +32,7 @@ public sealed class SynthesizedConceptNodesTests
         Assert.Equal(NodeKind.Concept, node.Key.Kind);
         Assert.Equal("Checkout retry", node.Label);
         Assert.Equal(Provenance.Model, node.Provenance);
-        Assert.Equal([Issue, Pr, Thread], node.EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
+        Assert.Equal([Pr, Issue, Thread], node.EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
         using var attributes = JsonDocument.Parse(node.Attributes!.Value.GetRawText());
         Assert.Equal("Retries a failed checkout.", attributes.RootElement.GetProperty("summary").GetString());
         Assert.Equal("synthesized", attributes.RootElement.GetProperty("source").GetString());

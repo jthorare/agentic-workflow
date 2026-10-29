@@ -38,7 +38,7 @@ public sealed class ConceptNamerNoteTests
             new DisabledSymbolVectors(),
             new FakeConceptHintStore(),
             new FakeGraphStore(),
-            new Aw.Context.Testing.ConceptSynthesis.FakeConceptSynthesisStore()).Run(
+            new Testing.ConceptSynthesis.FakeConceptSynthesisStore()).Run(
             new ContextSettings { Labeling = new LabelingSettings { Enabled = true, MaxTokens = maxTokens } }, Product(), [], _repos, Ct);
 
     [Fact]
