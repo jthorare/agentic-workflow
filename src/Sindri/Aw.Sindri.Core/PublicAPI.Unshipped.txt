@@ -11775,6 +11775,14 @@ Aw.Sindri.Core.Secrets.ISecretPrompts.AskSecret(string! question, System.Threadi
 Aw.Sindri.Core.Secrets.ISecretPrompts.Interactive.get -> bool
 Aw.Sindri.Core.Secrets.ISecretWriter
 Aw.Sindri.Core.Secrets.ISecretWriter.Store(string! service, string! account, string! secret) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
+Aw.Sindri.Core.Secrets.ISecretWriter.StoreInFile(string! service, string! account, string! secret) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
+Aw.Sindri.Core.Onyx.OnyxSetupState.Deconstruct(out int Port, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Steps, out string? Project, out int SchemaVersion, out string? KeyPointer) -> void
+Aw.Sindri.Core.Onyx.OnyxSetupState.KeyPointer.get -> string?
+Aw.Sindri.Core.Onyx.OnyxSetupState.KeyPointer.init -> void
+Aw.Sindri.Core.Onyx.OnyxSetupState.OnyxSetupState(int Port, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Steps, string? Project = null, int SchemaVersion = 1, string? KeyPointer = null) -> void
+const Aw.Sindri.Core.Onyx.OnyxSteps.Key = "key" -> string!
+const Aw.Sindri.Core.Onyx.OnyxSteps.Profile = "profile" -> string!
+const Aw.Sindri.Core.Onyx.OnyxSteps.Signup = "signup" -> string!
 static readonly Aw.Sindri.Core.SindriErrors.OnyxKeyFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.OnyxNotAdmin -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.OnyxSecretNotStored -> Aw.Kernel.ErrorDefinition!

@@ -283,7 +283,7 @@ public sealed class SetupFactsTests
     private const string BothSources = """{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}""";
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Sources_name_none_without_an_approved_profile_and_none_for_a_profile_that_names_only_linear()
+    public async Task Sources_name_none_without_an_approved_profile_and_linear_once_the_profile_names_it()
     {
         await using var rig = new SetupFactsRig();
         var missing = (await rig.Facts.Sources(Token)).Value;
@@ -292,7 +292,19 @@ public sealed class SetupFactsTests
 
         var linearOnly = (await rig.Facts.Sources(Token)).Value;
 
-        Assert.Equal([(0, 0), (0, 0)], [(missing.Count, missing.Items.Lines.Count), (linearOnly.Count, linearOnly.Items.Lines.Count)]);
+        Assert.Equal((0, 0), (missing.Count, missing.Items.Lines.Count));
+        Assert.Equal([("linear", SetupState.Done, "connected")], linearOnly.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Linear_teams_without_a_token_need_a_token()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"linear":{"teams":["ENG"]}}}"""));
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal([("linear", SetupState.Todo, "needs token")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 
     [Fact, Trait("Lane", "unit")]

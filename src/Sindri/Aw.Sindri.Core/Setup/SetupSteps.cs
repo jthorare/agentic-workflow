@@ -125,7 +125,7 @@ public static class SetupSteps
         return step with { Items = fact.Items.Lines };
     }
 
-    /// <summary>The sources step: done when every github or slack source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
+    /// <summary>The sources step: done when every github, slack or linear source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
     /// <param name="fact">Where the sources stand.</param>
     /// <returns>The step.</returns>
     public static SetupStep Sources(SourcesFact fact)
@@ -134,7 +134,7 @@ public static class SetupSteps
         var missing = fact.Items.Lines.Where(static i => i.State != SetupState.Done).Select(static i => SourceName(i.Repo)).ToList();
         if (fact.Items.Lines.Count == 0)
         {
-            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub or Slack so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectIndexSource, Progress: null);
+            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectIndexSource, Progress: null);
         }
 
         return missing.Count == 0
@@ -177,6 +177,7 @@ public static class SetupSteps
     {
         "github" => "GitHub",
         "slack" => "Slack",
+        "linear" => "Linear",
         _ => source,
     };
 

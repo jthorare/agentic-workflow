@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// What the sources step reads: the github and slack sources the approved profile names (linear is not connected through `sindri index connect` yet), and whether each token pointer resolves, decided by
+/// What the sources step reads: the github, slack and linear sources the approved profile names (linear once it names a token, a url or a team), and whether each token pointer resolves, decided by
 /// <see cref="SourceTokens"/> as doctor does. A read; no source is called and no token value is kept.
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
@@ -45,6 +45,15 @@ internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEng
         if (settings.Value.Slack is { } slack)
         {
             lines.Add(Line("slack", slack.Token));
+        }
+
+        if (settings.Value.Linear is { } linear)
+        {
+            lines.Add(Line("linear", linear.Token));
+        }
+        else if (settings.Value.LinearTeams.Count > 0)
+        {
+            lines.Add(Line("linear", pointer: null));
         }
 
         return new SourcesFact(lines.Count) { Items = new SetupItems(lines) };
