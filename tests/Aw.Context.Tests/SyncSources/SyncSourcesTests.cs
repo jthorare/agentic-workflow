@@ -32,6 +32,7 @@ public sealed class SyncSourcesTests
         var link = Assert.Single(layer.Links, l => l.Record.Value == Spl103 && l.Target.Value == Toggle);
         Assert.Equal(LinkRule.Identifier, link.Rule);
         Assert.Equal(layer.Links.Count, row.Linked);
+        // see #1637: RecordDecisionRun doesn't carry aliases yet (the intent walk asserted ["SPL-103"] here)
     }
 
     [Fact]
@@ -95,6 +96,7 @@ public sealed class SyncSourcesTests
         Assert.Equal(["repo-docs", "linear"], report.Value.Sources.Select(s => s.Source.Value), StringComparer.Ordinal);
     }
 
+    // see #1637: no map now skips the decision pass silently (the 030 NoMap case is gone)
     [Fact]
     public async Task SyncSources_unknown_source_answers_058()
     {
