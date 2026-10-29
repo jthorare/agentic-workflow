@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text;
-using Aw.Kernel.Processes;
+using Aw.Kernel.Data.Processes;
 
 namespace Aw.CodeIndex.Infrastructure.Graph;
 

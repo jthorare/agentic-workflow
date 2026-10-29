@@ -1,9 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
-// Justification: this is the one process-spawning helper; Kernel's no-Process ban (BannedSymbols.txt) is for domain code, and the thread-pinning has to live next to Process.Start.
-#pragma warning disable RS0030
-namespace Aw.Kernel.Processes;
+namespace Aw.Kernel.Data.Processes;
 
 /// <summary>
 /// A started child process whose forking thread stays alive until this is disposed. A child that asked for PR_SET_PDEATHSIG (bwrap --die-with-parent) is killed

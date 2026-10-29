@@ -5,7 +5,7 @@ namespace Aw.Architecture.Tests.Rules;
 /// <summary>
 /// bwrap --die-with-parent sets PR_SET_PDEATHSIG, which Linux ties to the thread that forked the child; a pool thread retires after about 20 s idle and takes the
 /// sandboxed run with it (exit 137, #1680). So in every namespace that builds a --die-with-parent argv, a type that starts a process starts it through
-/// Aw.Kernel.Processes.PinnedProcess. Read from the IL, so an async method (its state machine is a nested type) counts for its top-level type.
+/// Aw.Kernel.Data.Processes.PinnedProcess. Read from the IL, so an async method (its state machine is a nested type) counts for its top-level type.
 /// </summary>
 public static class PinnedProcessRules
 {
@@ -27,7 +27,7 @@ public static class PinnedProcessRules
             .Select(static t => t.Namespace ?? string.Empty).ToHashSet(StringComparer.Ordinal);
         return topLevel.Where(t => guarded.Contains(t.Namespace ?? string.Empty) && t.Name != "PinnedProcess" && !exemptions.ContainsKey(t.FullName ?? t.Name) && CallsProcessStart(t))
             .Select(static t => new Violation(Id, $"{t.FullName} calls Process.Start in a namespace that builds a {Marker} argv",
-                $"start it with Aw.Kernel.Processes.PinnedProcess: bwrap {Marker} dies with the thread that forked it"));
+                $"start it with Aw.Kernel.Data.Processes.PinnedProcess: bwrap {Marker} dies with the thread that forked it"));
     }
 
     private static bool CallsProcessStart(Type type) =>

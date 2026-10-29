@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using Aw.Kernel.Processes;
+using Aw.Kernel.Data.Processes;
 
-namespace Aw.Kernel.Tests;
+namespace Aw.Kernel.Data.Tests;
 
 [Trait("Lane", "unit")]
 public sealed class PinnedProcessTests
