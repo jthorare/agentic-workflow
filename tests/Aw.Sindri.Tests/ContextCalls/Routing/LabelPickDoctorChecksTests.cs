@@ -9,7 +9,7 @@ public sealed class LabelPickDoctorChecksTests
 {
     private static async Task<DoctorCheck> Row(LabelPick pick, string? key)
     {
-        var checks = new LabelPickDoctorChecks(new ChoiceRig.SwitchableModels(pick), name => name == "TYPESAFE_API_KEY" ? key : null);
+        var checks = new LabelPickDoctorChecks(new ChoiceRig.SwitchableModels(pick), new JevKey(name => name == "TYPESAFE_API_KEY" ? key : null, () => throw new InvalidOperationException("no keychain on this path"), isMacOS: false));
         return Assert.Single(await checks.Run(TestContext.Current.CancellationToken));
     }
 
@@ -33,8 +33,6 @@ public sealed class LabelPickDoctorChecksTests
     [Fact, Trait("Lane", "unit")]
     public async Task On_without_a_key_warns_and_names_the_fix()
     {
-        Assert.SkipWhen(OperatingSystem.IsMacOS(), "macOS keeps the key in the keychain, which the doctor does not read");
-
         var row = await Row(LabelPick.Jev, key: null);
 
         Assert.Equal(CheckState.Warn, row.State);

@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Features.GetStatus;
 
 namespace Aw.Sindri.Host.Models;
 
@@ -8,8 +9,8 @@ namespace Aw.Sindri.Host.Models;
 /// a choice; on without a Jev key is a warning, because every label then takes the model's first candidate.
 /// </summary>
 /// <param name="models">'context.models' of the approved profile.</param>
-/// <param name="environment">Reads an environment variable.</param>
-internal sealed class LabelPickDoctorChecks(IApprovedModels models, Func<string, string?> environment) : IDoctorChecks
+/// <param name="key">Says whether Jev has a key.</param>
+internal sealed class LabelPickDoctorChecks(IApprovedModels models, IJevKeyProbe key) : IDoctorChecks
 {
     private const string Name = "context:labelpick";
 
@@ -20,7 +21,7 @@ internal sealed class LabelPickDoctorChecks(IApprovedModels models, Func<string,
             return [new DoctorCheck(Name, CheckState.Ok, "label choice is off", Fix: null)];
         }
 
-        return !new JevKey(environment).Present()
+        return !await key.Present(cancellationToken).ConfigureAwait(false)
             ? [new DoctorCheck(Name, CheckState.Warn, "label choice is on, Jev unavailable: labels take the model's first candidate", $"set {JevKey.Variable} where sindri runs")]
             : [new DoctorCheck(Name, CheckState.Ok, "label choice is on", Fix: null)];
     }

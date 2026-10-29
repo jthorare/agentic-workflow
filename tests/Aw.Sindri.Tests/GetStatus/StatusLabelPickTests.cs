@@ -75,6 +75,6 @@ public sealed class StatusLabelPickTests
 
     private sealed class Key(bool present) : IJevKeyProbe
     {
-        public bool Present() => present;
+        public ValueTask<bool> Present(CancellationToken cancellationToken) => ValueTask.FromResult(present);
     }
 }

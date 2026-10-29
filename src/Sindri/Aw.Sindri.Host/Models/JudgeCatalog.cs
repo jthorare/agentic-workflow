@@ -24,6 +24,10 @@ internal sealed class JudgeCatalog(Func<string, string?> environment, TimeProvid
     /// <returns>The provider catalog.</returns>
     internal IProviderCatalog Get() => _provider.Value.GetRequiredService<IProviderCatalog>();
 
+    /// <summary>The judge's process runner, which the key probe asks the keychain through.</summary>
+    /// <returns>The runner.</returns>
+    internal IProcessRunner ProcessRunner() => _provider.Value.GetRequiredService<IProcessRunner>();
+
     /// <summary>Jev's batch classifier, the one the prompt sorter and trait-check ask through.</summary>
     /// <returns>The classifier.</returns>
     internal IBatchClassifier Classifier() => _provider.Value.GetRequiredService<IBatchClassifier>();

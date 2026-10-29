@@ -11,8 +11,9 @@ internal sealed class ProfileReads(IApprovedProfile approvals, IProfileSource so
 {
     /// <summary>The label-pick verdict of the approved profile: 'off', 'on' or 'needs-key'.</summary>
     /// <param name="approved">The approved profile, or null.</param>
+    /// <param name="cancellationToken">Cancels the key check.</param>
     /// <returns>The verdict.</returns>
-    internal string LabelPick(LoadedProfile? approved) => LabelPickSetting.Of(approved, jevKey);
+    internal ValueTask<string> LabelPick(LoadedProfile? approved, CancellationToken cancellationToken) => LabelPickSetting.Of(approved, jevKey, cancellationToken);
 
     internal ValueTask<Result<LoadedProfile?>> Approved(CancellationToken cancellationToken) => approvals.Latest(cancellationToken);
 

@@ -30,7 +30,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         }
 
         var grant = held.Current;
-        var profile = Profile(approvedProfile, recorded.Value, loaded, profiles.LabelPick(approvedProfile));
+        var profile = Profile(approvedProfile, recorded.Value, loaded, await profiles.LabelPick(approvedProfile, cancellationToken).ConfigureAwait(false));
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, profile, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);

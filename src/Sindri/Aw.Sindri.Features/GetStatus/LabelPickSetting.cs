@@ -13,9 +13,10 @@ internal static class LabelPickSetting
     /// <summary>The verdict for the approved profile.</summary>
     /// <param name="approved">The approved profile, or null when none is approved (the pick is off).</param>
     /// <param name="keys">Says whether Jev has a key; null counts it present.</param>
+    /// <param name="cancellationToken">Cancels the key check.</param>
     /// <returns>'off', 'on' or 'needs-key'.</returns>
-    internal static string Of(LoadedProfile? approved, IJevKeyProbe? keys) =>
-        !IsJev(approved?.Profile.Context) ? Off : keys is { } probe && !probe.Present() ? NeedsKey : On;
+    internal static async ValueTask<string> Of(LoadedProfile? approved, IJevKeyProbe? keys, CancellationToken cancellationToken) =>
+        !IsJev(approved?.Profile.Context) ? Off : keys is { } probe && !await probe.Present(cancellationToken).ConfigureAwait(false) ? NeedsKey : On;
 
     // The Context section is checked by the context engine at validate and approve; here only the one key is read, so a section that doesn't say 'jev' is off.
     private static bool IsJev(JsonElement? context) =>

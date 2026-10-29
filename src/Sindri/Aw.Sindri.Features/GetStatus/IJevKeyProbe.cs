@@ -4,6 +4,7 @@ namespace Aw.Sindri.Features.GetStatus;
 public interface IJevKeyProbe
 {
     /// <summary>Whether a Jev key is available.</summary>
+    /// <param name="cancellationToken">Cancels the check.</param>
     /// <returns>True when it is.</returns>
-    public bool Present();
+    public ValueTask<bool> Present(CancellationToken cancellationToken);
 }

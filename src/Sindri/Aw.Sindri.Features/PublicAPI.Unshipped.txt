@@ -888,7 +888,7 @@ Aw.Sindri.Features.GetStatus.GetStatusResponse.Services.get -> System.Collection
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Services.init -> void
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Views.get -> Aw.Sindri.Core.Views.ViewsStatus?
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Views.init -> void
-Aw.Sindri.Features.GetStatus.IJevKeyProbe.Present() -> bool
+Aw.Sindri.Features.GetStatus.IJevKeyProbe.Present(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Features.GetStatus.ProfileStatus
 Aw.Sindri.Features.GetStatus.ProfileStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.ProfileStatus!
 Aw.Sindri.Features.GetStatus.ProfileStatus.Approved.get -> Aw.Sindri.Core.Ids.ProfileHash?
