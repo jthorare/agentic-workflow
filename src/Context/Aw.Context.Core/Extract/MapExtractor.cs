@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Extract;
 public static class MapExtractor
 {
     /// <summary>The recognizers' version. A backtest's as-of map cache is keyed by it, so a change to what the recognizers find bumps it.</summary>
-    public const int Version = 6;
+    public const int Version = 7;
 
     /// <summary>Extracts the map from the files.</summary>
     /// <param name="repo">The repo (its name joins the evidence keys).</param>
