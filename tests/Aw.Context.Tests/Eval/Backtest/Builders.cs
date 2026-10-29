@@ -16,10 +16,10 @@ internal static class Builders
 
     public static HistoryCommit MergeFrom(string sha, int day, string subject, string branch, params string[] files) => new(sha, Day(day), subject, branch, IsMerge: true, files);
 
-    public static BriefIssue Issue(string key, int createdDay, int updatedDay) => new(key, "onyx/" + key, "v1", Day(createdDay), Day(updatedDay));
+    public static BriefIssue Issue(string key, int createdDay, int updatedDay) => new(key, "linear/" + key, "v1", Day(createdDay), Day(updatedDay));
 
     public static RepoHistory History(params HistoryCommit[] commits) => new(Repo, commits);
 
     public static CorpusSample Sample(string key = "SPL-101", params string[] truthFiles) =>
-        new(key, "onyx/" + key, "v1", Day(2), Leaky: true, Repo, "m1", "c1", truthFiles.Length == 0 ? ["src/a.ts"] : truthFiles);
+        new(key, "linear/" + key, "v1", Day(2), Leaky: true, Repo, "m1", "c1", truthFiles.Length == 0 ? ["src/a.ts"] : truthFiles);
 }

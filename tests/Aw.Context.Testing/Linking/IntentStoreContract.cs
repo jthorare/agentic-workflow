@@ -11,7 +11,7 @@ namespace Aw.Context.Testing.Linking;
 /// <summary>The intent store's contract (spec §6.2, S-5B): the fake and the SQLite store pass the same tests.</summary>
 public abstract class IntentStoreContract
 {
-    private static readonly SourceId _onyx = SourceId.From("onyx");
+    private static readonly SourceId _linear = SourceId.From("linear");
     private static readonly RecordKey _r103 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000103");
     private static readonly RecordKey _r104 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000104");
     private static readonly DateTimeOffset _at = new(2026, 10, 12, 9, 0, 0, TimeSpan.Zero);
@@ -22,11 +22,11 @@ public abstract class IntentStoreContract
     /// <returns>The store under test.</returns>
     protected abstract IIntentStore CreateStore();
 
-    private static IntentRecord Record(RecordKey key, string version, string alias) => new(key, _onyx, version, "Title of " + alias, [alias]);
+    private static IntentRecord Record(RecordKey key, string version, string alias) => new(key, _linear, version, "Title of " + alias, [alias]);
 
     private static IntentLink Link(RecordKey record, string target, LinkRule rule = LinkRule.IssueKey) => new(record, NodeKey.From(target), rule, 1.0, "ab12");
 
-    private static IntentPage Page(string? cursor, IReadOnlyList<IntentRecord> records, IReadOnlyList<IntentLink> links) => new(_onyx, records, links, cursor, _at);
+    private static IntentPage Page(string? cursor, IReadOnlyList<IntentRecord> records, IReadOnlyList<IntentLink> links) => new(_linear, records, links, cursor, _at);
 
     /// <summary>An empty store has an empty layer and a zero state.</summary>
     /// <returns>The test.</returns>
@@ -37,7 +37,7 @@ public abstract class IntentStoreContract
         var store = CreateStore();
 
         var layer = Expect.Ok(await store.Layer(None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(layer.Records.Count == 0 && layer.Links.Count == 0 && layer.Decisions.Count == 0, test, "rows in an empty store");
         Expect.That(state == new IntentSourceState(Cursor: null, LastSync: null, LastError: null, Records: 0, Links: 0, Decisions: 0, Queued: 0), test, $"state {state}");
@@ -55,7 +55,7 @@ public abstract class IntentStoreContract
 
         var commit = Expect.Ok(await store.CommitPage(Page("{\"nodeOffset\":4}", [record], [link]), None), test);
         var layer = Expect.Ok(await store.Layer(None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(commit == new IntentCommit(1, 1, 1), test, $"commit {commit}");
         Expect.That(layer.Records.Count == 1 && layer.Records[0] is var got && got.Key == record.Key && got.Version == record.Version && got.Title == record.Title && got.Aliases.SequenceEqual(record.Aliases, StringComparer.Ordinal) && layer.Links.SequenceEqual([link]), test, "records or links read back differently");
@@ -171,7 +171,7 @@ public abstract class IntentStoreContract
 
         var broken = await store.CommitPage(Page("c2", [Record(_r104, "v1", "SPL-104")], [Link(_r103, "feature:z"), Link(RecordKey.From("linear:issue/unknown"), "feature:y")]), None);
         var layer = Expect.Ok(await store.Layer(None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(broken.IsError && broken.Error.Code == ContextErrors.StoreUnavailable.Code, test, "a link to an unknown record was accepted");
         Expect.That(state.Cursor == "c1" && layer.Records.Count == 1 && layer.Links.Count == 1, test, $"state {state}, {layer.Records.Count} records");
@@ -186,8 +186,8 @@ public abstract class IntentStoreContract
         var store = CreateStore();
         _ = Expect.Ok(await store.CommitPage(Page("c1", [Record(_r103, "v1", "SPL-103")], []), None), test);
 
-        _ = Expect.Ok(await store.RecordFailure(_onyx, "SND-CONTEXT-010", None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        _ = Expect.Ok(await store.RecordFailure(_linear, "SND-CONTEXT-010", None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(state.Cursor == "c1" && state.LastSync == _at && state.LastError == "SND-CONTEXT-010", test, $"state {state}");
     }
@@ -206,13 +206,13 @@ public abstract class IntentStoreContract
         const string test = nameof(A_new_record_is_queued_until_its_decisions_are_saved);
         var store = CreateStore();
         _ = Expect.Ok(await store.CommitPage(Page("c1", [Record(_r103, "v1", "SPL-103")], [Link(_r103, "feature:a")]), None), test);
-        var queued = Expect.Ok(await store.Queued(_onyx, None), test);
+        var queued = Expect.Ok(await store.Queued(_linear, None), test);
         var (decision, decides) = Decided(_r103, "keeps the focused pane first", "feature:a");
 
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
-        var after = Expect.Ok(await store.Queued(_onyx, None), test);
+        var after = Expect.Ok(await store.Queued(_linear, None), test);
         var layer = Expect.Ok(await store.Layer(None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(queued.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal) && after.Count == 0, test, $"queued {queued.Count} then {after.Count}");
         Expect.That(layer.Decisions.Count == 1 && layer.Decisions[0].Quote == decision.Quote && layer.Decisions[0].Provenance == Provenance.Model, test, "the decision didn't read back");
@@ -234,7 +234,7 @@ public abstract class IntentStoreContract
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
 
         var layer = Expect.Ok(await store.Layer(None), test);
-        var queued = Expect.Ok(await store.Queued(_onyx, None), test);
+        var queued = Expect.Ok(await store.Queued(_linear, None), test);
         Expect.That(layer.Decisions.Count == 0 && layer.DecisionEdges.Count == 0 && queued.Count == 1, test, $"{layer.Decisions.Count} decisions, {queued.Count} queued");
     }
 
@@ -250,7 +250,7 @@ public abstract class IntentStoreContract
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [first], [firstEdge]), None), test);
 
         _ = Expect.Ok(await store.CommitPage(Page("c2", [Record(_r103, "v2", "SPL-103")], [Link(_r103, "feature:a")]), None), test);
-        var requeued = Expect.Ok(await store.Queued(_onyx, None), test);
+        var requeued = Expect.Ok(await store.Queued(_linear, None), test);
         var (second, secondEdge) = Decided(_r103, "second", "feature:a");
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v2", [second], [secondEdge]), None), test);
 
@@ -289,10 +289,10 @@ public abstract class IntentStoreContract
         var (decision, decides) = Decided(_r103, "first", "feature:a");
 
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]) { Pending = true }, None), test);
-        var pending = Expect.Ok(await store.Queued(_onyx, None), test);
+        var pending = Expect.Ok(await store.Queued(_linear, None), test);
         var layer = Expect.Ok(await store.Layer(None), test);
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
-        var done = Expect.Ok(await store.Queued(_onyx, None), test);
+        var done = Expect.Ok(await store.Queued(_linear, None), test);
 
         Expect.That(pending.Count == 1 && layer.Decisions.Count == 1, test, $"{pending.Count} queued, {layer.Decisions.Count} decisions after a pending save");
         Expect.That(done.Count == 0, test, "the final save didn't mark the record extracted");
@@ -332,11 +332,11 @@ public abstract class IntentStoreContract
         _ = Expect.Ok(await store.CommitPage(Page("c1", [Record(_r103, "v1", "SPL-103")], [Link(_r103, "feature:a")]), None), test);
         var (decision, decides) = Decided(_r103, "first", "feature:a");
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
-        var done = Expect.Ok(await store.Queued(_onyx, None), test);
+        var done = Expect.Ok(await store.Queued(_linear, None), test);
 
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]) { Pending = true }, None), test);
-        var again = Expect.Ok(await store.Queued(_onyx, None), test);
-        var state = Expect.Ok(await store.State(_onyx, None), test);
+        var again = Expect.Ok(await store.Queued(_linear, None), test);
+        var state = Expect.Ok(await store.State(_linear, None), test);
 
         Expect.That(done.Count == 0 && again.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal) && state.Queued == 1, test, $"{done.Count} queued when done, {again.Count} after a pending save, state {state}");
     }
@@ -349,12 +349,12 @@ public abstract class IntentStoreContract
         const string test = nameof(LinkedUnder_lists_the_records_whose_page_carried_that_map_version);
         var store = CreateStore();
         _ = Expect.Ok(await store.CommitPage(Page("c1", [Record(_r103, "v1", "SPL-103")], [Link(_r103, "feature:a")]) with { MapVersion = 1 }, None), test);
-        var underOne = Expect.Ok(await store.LinkedUnder(_onyx, 1, None), test);
-        var underTwoBefore = Expect.Ok(await store.LinkedUnder(_onyx, 2, None), test);
+        var underOne = Expect.Ok(await store.LinkedUnder(_linear, 1, None), test);
+        var underTwoBefore = Expect.Ok(await store.LinkedUnder(_linear, 2, None), test);
 
         _ = Expect.Ok(await store.CommitPage(Page("c2", [Record(_r103, "v1", "SPL-103")], [Link(_r103, "feature:a")]) with { MapVersion = 2 }, None), test);
-        var underOneAfter = Expect.Ok(await store.LinkedUnder(_onyx, 1, None), test);
-        var underTwo = Expect.Ok(await store.LinkedUnder(_onyx, 2, None), test);
+        var underOneAfter = Expect.Ok(await store.LinkedUnder(_linear, 1, None), test);
+        var underTwo = Expect.Ok(await store.LinkedUnder(_linear, 2, None), test);
 
         Expect.That(underOne.Count == 1 && underTwoBefore.Count == 0 && underOneAfter.Count == 0 && underTwo.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal), test,
             $"{underOne.Count}/{underTwoBefore.Count} before, {underOneAfter.Count}/{underTwo.Count} after the second page");
@@ -372,9 +372,9 @@ public abstract class IntentStoreContract
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
 
         _ = Expect.Ok(await store.Requeue(_r103, "v0", None), test);
-        var stale = Expect.Ok(await store.Queued(_onyx, None), test);
+        var stale = Expect.Ok(await store.Queued(_linear, None), test);
         _ = Expect.Ok(await store.Requeue(_r103, "v1", None), test);
-        var again = Expect.Ok(await store.Queued(_onyx, None), test);
+        var again = Expect.Ok(await store.Queued(_linear, None), test);
         var layer = Expect.Ok(await store.Layer(None), test);
 
         Expect.That(stale.Count == 0 && again.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal) && layer.Decisions.Count == 1 && layer.DecisionEdges.Count == 1, test,
@@ -392,15 +392,15 @@ public abstract class IntentStoreContract
         _ = Expect.Ok(await store.CommitPage(Page("c1", [record], [Link(_r103, "feature:a")]) with { MapVersion = 1 }, None), test);
         var (decision, decides) = Decided(_r103, "first", "feature:a");
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
-        var done = Expect.Ok(await store.Queued(_onyx, None), test);
+        var done = Expect.Ok(await store.Queued(_linear, None), test);
 
         _ = Expect.Ok(await store.CommitPage(Page("c2", [record], [Link(_r103, "feature:a")]) with { MapVersion = 1 }, None), test);
-        var sameMap = Expect.Ok(await store.Queued(_onyx, None), test);
+        var sameMap = Expect.Ok(await store.Queued(_linear, None), test);
         _ = Expect.Ok(await store.CommitPage(Page("c3", [record], [Link(_r103, "feature:a")]) with { MapVersion = 2 }, None), test);
-        var newMap = Expect.Ok(await store.Queued(_onyx, None), test);
+        var newMap = Expect.Ok(await store.Queued(_linear, None), test);
         var layer = Expect.Ok(await store.Layer(None), test);
         _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
-        var extracted = Expect.Ok(await store.Queued(_onyx, None), test);
+        var extracted = Expect.Ok(await store.Queued(_linear, None), test);
 
         Expect.That(done.Count == 0 && sameMap.Count == 0, test, $"{done.Count} queued when done, {sameMap.Count} after the same map version again");
         Expect.That(newMap.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal) && layer.Decisions.Count == 1 && extracted.Count == 0, test,

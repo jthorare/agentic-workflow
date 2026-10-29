@@ -37,12 +37,12 @@ public static class LinearIssueSeed
             return [.. issues.Select(i => Issue(i.Id, i.Key, i.Title, i.CreatedAt, i.UpdatedAt, [.. i.Chunks]))];
         }
 
-        return [.. OnyxIndex.Documents.Where(d => d.SourceType == "linear").Select(Recorded)];
+        return [.. RecordedIndex.Documents.Where(d => d.SourceType == "linear").Select(Recorded)];
     }
 
     private static string Slug(string title) => string.Join('-', new string([.. title.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : ' ')]).Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
-    private static RecordWrite Recorded(OnyxDocument document)
+    private static RecordWrite Recorded(RecordedDocument document)
     {
         var end = document.Title.IndexOf(']', StringComparison.Ordinal);
         var key = document.Title[1..end];

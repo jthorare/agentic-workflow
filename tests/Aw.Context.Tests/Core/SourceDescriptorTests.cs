@@ -4,21 +4,21 @@ namespace Aw.Context.Tests.Core;
 
 public sealed class SourceDescriptorTests
 {
-    private static readonly SourceDescriptor _onyx = new(SourceId.From("onyx"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false);
+    private static readonly SourceDescriptor _linear = new(SourceId.From("linear"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false);
 
     [Fact, Trait("Lane", "unit")]
     public void A_source_is_local_with_no_limits_unless_it_says_otherwise()
     {
-        Assert.Equal(SourcePlacement.Local, _onyx.Placement);
-        Assert.Null(_onyx.Limits);
+        Assert.Equal(SourcePlacement.Local, _linear.Placement);
+        Assert.Null(_linear.Limits);
     }
 
     [Fact, Trait("Lane", "unit")]
     public void A_shared_source_with_limits_keeps_what_it_is()
     {
-        var shared = _onyx with { Placement = SourcePlacement.Shared, Limits = new SourceLimits(Requests: 60, Window: TimeSpan.FromMinutes(1), MaxConcurrency: 4) };
+        var shared = _linear with { Placement = SourcePlacement.Shared, Limits = new SourceLimits(Requests: 60, Window: TimeSpan.FromMinutes(1), MaxConcurrency: 4) };
 
-        Assert.Equal((_onyx.Id, _onyx.Kind, _onyx.Freshness), (shared.Id, shared.Kind, shared.Freshness));
+        Assert.Equal((_linear.Id, _linear.Kind, _linear.Freshness), (shared.Id, shared.Kind, shared.Freshness));
         Assert.Equal(SourcePlacement.Shared, shared.Placement);
         Assert.True(shared.Limits.IsWellFormed);
     }
