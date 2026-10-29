@@ -42,7 +42,7 @@ public sealed class StoreBriefSourceTests
         Assert.Equal(_t0, listing.Issues[0].CreatedAt);
         Assert.Equal(_t0.AddDays(1), listing.Issues[0].UpdatedAt);
         Assert.Equal("linear:issue/0e5a1b00-0000-4000-8000-000000000101", listing.Issues[0].RecordRef);
-        Assert.Equal("[SPL-101] Title 101", listing.Issues[0].Title);
+        Assert.Equal("Title 101", listing.Issues[0].Title);
     }
 
     [Fact, Trait("Lane", "unit")]
