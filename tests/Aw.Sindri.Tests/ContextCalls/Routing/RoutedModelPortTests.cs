@@ -420,6 +420,25 @@ public sealed class RoutedModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task One_harness_limited_and_one_failing_parks_the_job_once_instead_of_looping()
+    {
+        var claude = Claude(RouterRig.Limit(), Said("back"));
+        var codex = Codex(new ProviderErrored("exit-1"));
+        var rig = new RouterRig(settings: null, claude, codex);
+        using var job = rig.EnterJob();
+
+        var asking = rig.Ask(RouterRig.Request(ModelPurpose.Adjudication)).AsTask();
+        await rig.Waiting.Until(1, Token);
+
+        _ = Assert.Single(codex.Asked);
+        _ = Assert.Single(rig.Waiting.Waits);
+        Assert.Contains("codex failed", Assert.Single(rig.Progress.Lines), StringComparison.Ordinal);
+        _ = rig.Waiting.Resume();
+        Assert.Equal("claude-code", (await asking).Value.Harness);
+        Assert.Equal(2, claude.Asked.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Still_limited_after_a_resume_pauses_again()
     {
         var rig = new RouterRig(settings: null, Claude(RouterRig.Limit()));

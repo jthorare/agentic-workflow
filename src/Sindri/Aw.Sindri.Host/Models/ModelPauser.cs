@@ -23,6 +23,7 @@ internal sealed class ModelPauser(JobModelLimits limits, ModelCallRecorder recor
     internal async ValueTask<bool> Park(ModelCall call, JobContext job, IJobWaiting waiting, CancellationToken cancellationToken)
     {
         var entry = limits.EntryFor(job);
+        var seen = entry.Resumes;
         try
         {
             await entry.Pause.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -34,7 +35,7 @@ internal sealed class ModelPauser(JobModelLimits limits, ModelCallRecorder recor
 
         try
         {
-            return call.Route.Any(r => !entry.Harnesses.ContainsKey(r.Harness)) || await ParkHeld(call, job, waiting, cancellationToken).ConfigureAwait(false);   // a set a resume cleared while this call waited for its turn needs no park
+            return entry.Resumes != seen || await ParkHeld(call, job, waiting, cancellationToken).ConfigureAwait(false);   // a resume that came while this call waited for its turn needs no park
         }
         catch (OperationCanceledException)
         {
@@ -55,7 +56,9 @@ internal sealed class ModelPauser(JobModelLimits limits, ModelCallRecorder recor
             return false;
         }
 
-        limits.EntryFor(job).Harnesses.Clear();
+        var entry = limits.EntryFor(job);
+        entry.Harnesses.Clear();
+        entry.Resumed();
         return true;
     }
 }

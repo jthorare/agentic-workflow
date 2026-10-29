@@ -13,4 +13,12 @@ internal sealed class JobLimitEntry(JobContext owner)
     public ConcurrentDictionary<ModelHarness, byte> Harnesses { get; } = new();
 
     public SemaphoreSlim Pause { get; } = new(1, 1);
+
+    private int _resumes;
+
+    /// <summary>How many times a resume has cleared this job's set; a call that waited for the pause lock compares it with what it read before waiting.</summary>
+    public int Resumes => Volatile.Read(ref _resumes);
+
+    /// <summary>Notes that a resume cleared the set.</summary>
+    public void Resumed() => Interlocked.Increment(ref _resumes);
 }
