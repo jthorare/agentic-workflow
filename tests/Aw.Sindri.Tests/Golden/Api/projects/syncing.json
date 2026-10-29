@@ -1,0 +1,22 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "empty": "Linear is still syncing. Projects you lead show up when it's done.",
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "syncing",
+      "text": "still syncing",
+      "at": null
+    }
+  ],
+  "projects": [],
+  "finished": [],
+  "hidden": []
+}

@@ -36,12 +36,13 @@ internal static class RecordMappers
         SqliteRead.GetTimestamp(r, 18),
         [],
         Text(r, 19),
-        Text(r, 20) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null));
+        Text(r, 20) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
+        Text(r, 21)));
 
     internal static IRowMapper<ProjectRow> Project { get; } = new Mapper<ProjectRow>(r => new ProjectRow(
         RecordKey.From(r.GetString(0)), r.GetString(1), Text(r, 2), Text(r, 3), Text(r, 4),
         Text(r, 5) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
-        SqliteRead.GetTimestamp(r, 6), At(r, 7), Text(r, 8), Text(r, 9), r.GetInt32(10), At(r, 11)));
+        SqliteRead.GetTimestamp(r, 6), At(r, 7), Text(r, 8), Text(r, 9), r.GetInt32(10), At(r, 11), Text(r, 12)));
 
     internal static IRowMapper<SourceIdentity> Identity { get; } = new Mapper<SourceIdentity>(r =>
         new SourceIdentity(SourceId.From(r.GetString(0)), r.GetString(1), r.GetString(2), SqliteRead.GetTimestamp(r, 3)));

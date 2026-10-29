@@ -15,6 +15,7 @@ namespace Aw.Context.Core.Records;
 /// <param name="LeadName">The lead's name as the link states it.</param>
 /// <param name="OpenIssues">Issues linked to it ('in-project') that are open, not removed and visible to the caller.</param>
 /// <param name="NewestIssueAt">The newest 'UpdatedAt' among its visible, not removed linked issues, or null when it has none.</param>
+/// <param name="Description">Its scrubbed description, or null.</param>
 public sealed record ProjectRow(
     RecordKey Key,
     string Title,
@@ -27,4 +28,5 @@ public sealed record ProjectRow(
     string? LeadRef,
     string? LeadName,
     int OpenIssues,
-    DateTimeOffset? NewestIssueAt);
+    DateTimeOffset? NewestIssueAt,
+    string? Description = null);

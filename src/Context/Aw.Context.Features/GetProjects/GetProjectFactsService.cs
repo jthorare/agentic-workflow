@@ -51,7 +51,7 @@ internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentity
         var lead = row.LeadRef is { } reference ? new UserRef(Id(reference), row.LeadName) : (UserRef?)null;
         var activity = row.NewestIssueAt is { } issue && issue > row.UpdatedAt ? issue : row.UpdatedAt;
         return new ProjectFact(
-            row.Key, row.Title, Description: null, row.Url, row.StateRaw, row.Health, row.DueAt is { } due ? new DateTimeOffset(due.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null,
+            row.Key, row.Title, row.Description, row.Url, row.StateRaw, row.Health, row.DueAt is { } due ? new DateTimeOffset(due.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null,
             lead, LeadIsOwner: lead is { } l && owner is { } o && l.Id.Equals(o.Id), row.UpdatedAt, row.ClosedAt, row.OpenIssues, OpenPrs: null, activity, Repos: null, counting);
     }
 
