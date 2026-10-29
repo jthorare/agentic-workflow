@@ -103,10 +103,10 @@ public sealed class ContextConceptNodeClickTests
     {
         var api = Serving();
         var page = await Queried(api);
-        var feature = page.Whole.Geometry!.Nodes.First(n => string.Equals(n.Kind, "feature", StringComparison.Ordinal) && !page.Whole.HitKeys.Contains(n.Key)).Key;
+        var other = page.Whole.Geometry!.Nodes.First(n => !string.Equals(n.Kind, "concept", StringComparison.Ordinal) && !page.Whole.HitKeys.Contains(n.Key)).Key;
 
-        await page.ChooseWholeNode(feature, Token);
+        await page.ChooseWholeNode(other, Token);
 
-        Expect.Equal((null, feature), (page.OpenedConceptId, page.AnchorText));
+        Expect.Equal((null, other), (page.OpenedConceptId, page.AnchorText));
     }
 }
