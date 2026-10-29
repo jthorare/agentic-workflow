@@ -93,14 +93,15 @@ internal static class ProjectVerbArguments
 
     private static Result<int> Valued(Parsed parsed, string flag, string value)
     {
-        var read = flag switch { "--state" or "--target" or "--version" => Typed(parsed, flag, value), _ => null };
-        if (read is not null)
-        {
-            return read;
-        }
-
         switch (flag)
         {
+            case "--state" or "--target" or "--version":
+                if (Typed(parsed, flag, value) is { } error)
+                {
+                    return error;
+                }
+
+                break;
             case "--linear":
                 parsed.Linear = value;
                 break;

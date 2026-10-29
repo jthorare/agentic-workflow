@@ -30,7 +30,7 @@ public sealed class AttachProjectTests
         Expect.Equal(EventTypes.ProjectAttached, recorded.Envelope.Type);
         Expect.Equal($"project.attached:{payload.Id.Value}", recorded.IdempotencyKey);
         Expect.Equal(("Kitchen", ProjectState.Planned, "ordering tile", new DateOnly(2026, 12, 1)), (payload.Name, payload.State, payload.Note, payload.Target));
-        Expect.Equal(["https://example.com/plan"], payload.Links);
+        Expect.Sequence(["https://example.com/plan"], payload.Links);
         Expect.Equal((recorded.Sequence, payload.Id.Value, 1L, "Kitchen"), (result.Value.Accepted.Sequence, result.Value.Project, result.Value.Version, result.Value.Name));
         Expect.Equal(payload.CommandId, result.Value.Accepted.CommandId);
     }
@@ -60,7 +60,7 @@ public sealed class AttachProjectTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var payload = _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events));
         Expect.Equal("key [redacted]", payload.Note);
-        Expect.Equal(["https://example.com/[redacted]"], payload.Links);
+        Expect.Sequence(["https://example.com/[redacted]"], payload.Links);
     }
 
     [Theory]

@@ -50,7 +50,7 @@ public sealed class ChangeProjectTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var payload = _h.Payload<ProjectChanged>(Assert.Single(_h.Slice.Store.Events));
         Expect.Equal("key [redacted]", payload.Note);
-        Expect.Equal(["https://example.com/[redacted]"], payload.Links);
+        Expect.Sequence(["https://example.com/[redacted]"], payload.Links ?? []);
     }
 
     [Fact]
