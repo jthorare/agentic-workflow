@@ -12801,7 +12801,6 @@ override Aw.Sindri.Core.Onyx.OnyxNotice.GetHashCode() -> int
 override Aw.Sindri.Core.Onyx.OnyxNotice.ToString() -> string!
 static Aw.Sindri.Core.Control.OnyxEndpoint.operator !=(Aw.Sindri.Core.Control.OnyxEndpoint? left, Aw.Sindri.Core.Control.OnyxEndpoint? right) -> bool
 static Aw.Sindri.Core.Control.OnyxEndpoint.operator ==(Aw.Sindri.Core.Control.OnyxEndpoint? left, Aw.Sindri.Core.Control.OnyxEndpoint? right) -> bool
-static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForOnyx(Aw.Sindri.Core.Onyx.OnyxNotice! notice, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForRecipes(Aw.Sindri.Core.Workflow.ApproveAll.ShippedRecipePlan! plan, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!>!
 static Aw.Sindri.Core.Onyx.OnyxNotice.operator !=(Aw.Sindri.Core.Onyx.OnyxNotice? left, Aw.Sindri.Core.Onyx.OnyxNotice? right) -> bool
 static Aw.Sindri.Core.Onyx.OnyxNotice.operator ==(Aw.Sindri.Core.Onyx.OnyxNotice? left, Aw.Sindri.Core.Onyx.OnyxNotice? right) -> bool

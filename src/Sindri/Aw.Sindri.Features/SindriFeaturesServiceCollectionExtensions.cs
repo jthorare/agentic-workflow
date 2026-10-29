@@ -261,7 +261,6 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddSingleton<IOnyxUpStep, OnyxStartStep>()
         .AddScoped<IService<OnyxUpRequest, OnyxUpResponse>, OnyxUpService>()
         .AddScoped<IManagedOnyx, ManagedOnyx>()                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
-        .AddScoped<IOnyxNotices, OnyxNotices>()
         .AddScoped<OnyxKeyMinter>()
         .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
         .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();
