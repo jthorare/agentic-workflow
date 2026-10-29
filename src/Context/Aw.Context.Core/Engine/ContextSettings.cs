@@ -64,7 +64,7 @@ public sealed record ContextSettings
     /// <summary>The checked 'context.sources.slack' entry, or null when the profile names none.</summary>
     public SlackSource? Slack { get; init; }
 
-    /// <summary>The Linear team keys ('context.sources.linear.teams') an Onyx identifier alias may name; empty for none.</summary>
+    /// <summary>The Linear team keys ('context.sources.linear.teams') an issue identifier alias may name; empty for none.</summary>
     public IReadOnlyList<string> LinearTeams { get; init; } = [];
 
     /// <summary>

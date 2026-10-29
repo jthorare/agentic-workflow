@@ -6,7 +6,7 @@ using Vogen;
 
 namespace Aw.Context.Core.Sources;
 
-/// <summary>A record's id inside its source (a repo doc chunk 'repo/path#L3-L20', an Onyx document id): 1 to 1024 printable characters.</summary>
+/// <summary>A record's id inside its source (a repo doc chunk 'repo/path#L3-L20', a Linear issue id): 1 to 1024 printable characters.</summary>
 [ValueObject<string>(comparison: ComparisonGeneration.Omit)]
 [JsonConverter(typeof(StringIdJsonConverter<ExternalId>))]
 public readonly partial struct ExternalId : ITypedId<ExternalId, string>

@@ -12,14 +12,14 @@ public static class SecretPointerSamples
     /// <summary>Pointers both checks accept.</summary>
     public static IReadOnlyList<string> Accepted { get; } =
     [
-        "env:ONYX_TOKEN",
+        "env:SLACK_TOKEN",
         "env:_x1",
-        "file:/home/me/.onyx-token",
-        "file:/Users/me/Library/Application Support/sindri/onyx",
+        "file:/home/me/.slack-token",
+        "file:/Users/me/Library/Application Support/sindri/slack",
         "file:/tmp/odd\tname",
-        "keychain:onyx/sindri-onyx",
-        "keychain:Onyx Keys/sindri read",
-        "op:Work/Onyx/credential",
-        "op:Private Vault/Onyx/credential",
+        "keychain:slack/sindri-slack",
+        "keychain:Slack Keys/sindri read",
+        "op:Work/Slack/credential",
+        "op:Private Vault/Slack/credential",
     ];
 }

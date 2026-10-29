@@ -8,7 +8,7 @@ namespace Aw.Context.Tests.Linear;
 
 /// <summary>
 /// The linear source against the fake Linear GraphQL API (spec §5.1, §5.2, §10, D18): the ContextSourceContract every source passes, and what is the
-/// linear source's own (keys, aliases, the team and updatedAt filters, the records' text, versions, the key checks of its probe, dedup with Onyx's records).
+/// linear source's own (keys, aliases, the team and updatedAt filters, the records' text, versions, the key checks of its probe).
 /// </summary>
 [Trait("Lane", "integration")]
 public sealed class LinearSourceContractTests : ContextSourceContract<IContextSource>, IAsyncDisposable
@@ -50,7 +50,7 @@ public sealed class LinearSourceContractTests : ContextSourceContract<IContextSo
     }
 
     [Fact]
-    public async Task An_issue_hit_has_the_key_onyx_gives_it_the_identifier_as_an_alias_and_its_updated_at_as_the_version()
+    public async Task An_issue_hit_has_the_canonical_key_the_identifier_as_an_alias_and_its_updated_at_as_the_version()
     {
         var (_, harness) = await Start();
 
