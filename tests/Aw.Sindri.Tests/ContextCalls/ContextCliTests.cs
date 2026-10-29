@@ -124,11 +124,11 @@ public sealed class ContextCliTests
             [new CitationRef(SourceId.From("repo-docs"), ExternalId.From("split-panes/docs/architecture.md#L1-L9"), SourceVersion.From("3b18e512dba7"))
                 { Current = SourceVersion.From("9c0ffee") }], Permalink: null, Trust.Untrusted, CitationState.Stale);
         var result = new ContextResult(1, QueryId.From("q_1"), new ContextQuery("x"), [], MapVersion: null, at, [new ResultSection("records", [item])], [], [],
-            [new DegradedSource(SourceId.From("onyx"), "SND-CONTEXT-010", "Onyx did not answer", at)], new Dictionary<string, Citation>(StringComparer.Ordinal) { ["C1"] = cite });
+            [new DegradedSource(SourceId.From("slack"), "SND-CONTEXT-010", "Slack did not answer", at)], new Dictionary<string, Citation>(StringComparer.Ordinal) { ["C1"] = cite });
 
         var text = ContextText.Render(result);
 
-        Assert.Contains("DEGRADED onyx: SND-CONTEXT-010 Onyx did not answer", text, StringComparison.Ordinal);
+        Assert.Contains("DEGRADED slack: SND-CONTEXT-010 Slack did not answer", text, StringComparison.Ordinal);
         Assert.Contains("[C1] Architecture", text, StringComparison.Ordinal);
         Assert.Contains("<untrusted source=\"repo-docs\">body</untrusted>", text, StringComparison.Ordinal);
         Assert.DoesNotContain("references only", text, StringComparison.Ordinal);
@@ -262,13 +262,13 @@ public sealed class ContextCliTests
     public void Text_output_shows_the_first_alias_beside_the_key_and_a_timestamp_version_in_full()
     {
         var cite = new Citation(RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000103"),
-            [new CitationRef(SourceId.From("onyx"), ExternalId.From("0e5a1b00-0000-4000-8000-000000000103"), SourceVersion.From("2026-07-23T09:00:00.0000000Z"))],
+            [new CitationRef(SourceId.From("linear"), ExternalId.From("0e5a1b00-0000-4000-8000-000000000103"), SourceVersion.From("2026-07-23T09:00:00.0000000Z"))],
             Permalink: null, Trust.Untrusted, CitationState.Unchecked)
         { Aliases = ["SPL-103", "SPL-3"] };
 
         var text = ContextText.Render(Only(cite));
 
-        Assert.Contains("[C1] linear:issue/0e5a1b00-0000-4000-8000-000000000103 (SPL-103)  onyx", text, StringComparison.Ordinal);
+        Assert.Contains("[C1] linear:issue/0e5a1b00-0000-4000-8000-000000000103 (SPL-103)  linear", text, StringComparison.Ordinal);
         Assert.DoesNotContain("SPL-3)", text, StringComparison.Ordinal);
         Assert.Contains("version 2026-07-23T09:00:00.0000000Z  unchecked", text, StringComparison.Ordinal);
     }
