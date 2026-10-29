@@ -13,7 +13,6 @@ namespace Aw.Context.Infrastructure.Labeling;
 /// <param name="egress">Scrubs the paths and the file-derived names that go in a question.</param>
 internal sealed class LabelPicker(IChoicePort port, IEgressScrubber egress)
 {
-    private const int TokensPerAnswer = 16;
     private readonly Dictionary<string, ChoiceAnswer> _answers = new(StringComparer.Ordinal);
     private int _spent;
     private string? _stopped;
@@ -136,7 +135,7 @@ internal sealed class LabelPicker(IChoicePort port, IEgressScrubber egress)
             ? LabelPrompt.Clean(picked)
             : null;
 
-    private static int Estimate(IReadOnlyList<ChoiceQuestion> pack) => LabelGenerator.Tokens(new string('x', pack.Sum(LabelPacks.ChoiceChars))) + (pack.Count * TokensPerAnswer);
+    private static int Estimate(IReadOnlyList<ChoiceQuestion> pack) => LabelGenerator.Tokens(new string('x', pack.Sum(LabelPacks.ChoiceChars))) + (pack.Count * LabelPickLimits.AnswerTokens);
 
     private sealed record Case(FileCluster Cluster, List<string> Options, int ModelCount);
 }

@@ -23,6 +23,9 @@ public static class LabelPickLimits
     /// <summary>How many times a rejected pack is split in halves (a pack of 100 makes at most 1 + 2 + 4 calls).</summary>
     public const int MaxSplitDepth = 2;
 
+    /// <summary>The tokens one answer of a pick is counted as when the provider reports none (the choice and its confidence).</summary>
+    public const int AnswerTokens = 16;
+
     /// <summary>The time budget of one pick call.</summary>
     public static TimeSpan Budget { get; } = TimeSpan.FromSeconds(45);
 

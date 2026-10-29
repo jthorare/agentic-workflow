@@ -4871,6 +4871,7 @@ const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
 const Aw.Context.Core.Models.ChoiceReasons.NoKey = "no-key" -> string!
 const Aw.Context.Core.Models.ChoiceReasons.Off = "off" -> string!
 const Aw.Context.Core.Models.ChoiceReasons.OverCap = "over-cap" -> string!
+const Aw.Context.Core.Models.LabelPickLimits.AnswerTokens = 16 -> int
 const Aw.Context.Core.Models.LabelPickLimits.CapShare = 0.8 -> double
 const Aw.Context.Core.Models.LabelPickLimits.MaxOptions = 5 -> int
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!

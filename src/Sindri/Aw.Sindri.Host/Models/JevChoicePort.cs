@@ -1,4 +1,3 @@
-#pragma warning disable CS9113 // the event is written by the next commit
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Models;
@@ -35,7 +34,10 @@ internal sealed class JevChoicePort(
     // The input the judge refused as such: the labeler may split the pack. Everything else that is an error or an unavailable provider would fail the same way for the rest of the pass.
     private static readonly string[] _refused = ["http-400", "http-413", "http-422", "unparseable-answer"];
 
-    public ChoiceModel Identity { get; } = new(JevModel.Id);
+    private static readonly ChoiceModel _identity = new(JevModel.Id);
+    private readonly ChoiceCallRecorder _recorder = new(_identity, jobs, log, ids, clock);
+
+    public ChoiceModel Identity => _identity;
 
     public async ValueTask<int> InputCapChars(CancellationToken cancellationToken) =>
         (await providers(cancellationToken).ConfigureAwait(false))?.InputCapChars ?? ProvidersConfig.DefaultInputCapChars;
@@ -44,19 +46,26 @@ internal sealed class JevChoicePort(
     {
         ArgumentNullException.ThrowIfNull(questions);
         cancellationToken.ThrowIfCancellationRequested();
+        var call = _recorder.Start(kind, questions);
         if (!await IsOn(kind, cancellationToken).ConfigureAwait(false))
         {
-            return ContextErrors.ChoiceUnavailable.With(ChoiceReasons.Off);
+            return await End(call, ContextErrors.ChoiceUnavailable.With(ChoiceReasons.Off), result: null).ConfigureAwait(false);
         }
 
         if (questions.Sum(LabelChars) > LabelPickLimits.CallChars(capChars))
         {
-            return ContextErrors.ChoiceRejected.With(ChoiceReasons.OverCap);
+            return await End(call, ContextErrors.ChoiceRejected.With(ChoiceReasons.OverCap), result: null).ConfigureAwait(false);
         }
 
         var batch = new BatchRequest(State: null, [.. questions.Select(Wire)], LabelPickLimits.Budget);
         var result = await classifier().Classify(batch, await providers(cancellationToken).ConfigureAwait(false), allowed: null, cancellationToken).ConfigureAwait(false);
-        return Map(result, questions);
+        return await End(call, Map(result, questions), result).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> End(ChoiceCall call, Result<IReadOnlyList<ChoiceAnswer>> mapped, ProviderResult? result)
+    {
+        await _recorder.Write(call, mapped, result).ConfigureAwait(false);
+        return mapped;
     }
 
     // The approved profile, read at every call: an edited live file that says 'jev' makes no Jev call until it is approved. The product-surface pick has no setting until R-8 adds it.
