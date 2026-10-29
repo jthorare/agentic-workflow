@@ -16,7 +16,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
 /// <param name="decisions">The decision pass after each feed's tick; null: none.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null) : IIndexSync
+/// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run after the decision pass, in that order.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null) : IIndexSync
 {
     public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken)
     {
@@ -31,7 +32,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         var rows = new List<SourceSync>();
         foreach (var feed in resolved.Value.Feeds)
         {
-            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), after?.Invoke(feed), cancellationToken).ConfigureAwait(false);
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), AfterSteps.Compose(after?.Invoke(feed), steps?.For(feed, context.Settings, cancellationToken)), cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
