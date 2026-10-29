@@ -1,4 +1,3 @@
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Store;
@@ -168,8 +167,6 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database) : IRec
             return rows.IsError ? ContextDatabase.Translate(rows.Error) : rows.Value[0];
         }
     }
-
-    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, AudienceScope audience, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     public async ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken)
     {
