@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Core.Workflow.Validation;
@@ -124,15 +125,21 @@ public sealed partial class ShippedRecipesTests
             pairs);
     }
 
+    private static readonly ConcurrentDictionary<string, ChildRecipe?> _read = new(StringComparer.Ordinal);   // each shipped recipe parsed once per run; ChildRecipe is an immutable record
+
     private static InMemoryChildRecipes Siblings(string path)
     {
         var children = InMemoryChildRecipes.None;
         foreach (var sibling in ShippedRecipes.Recipes.Where(r => Path.GetDirectoryName(r) == Path.GetDirectoryName(path)))
         {
-            var reading = RecipeComposition.Read(ShippedRecipes.Read(sibling), Path.GetFileName(sibling));
-            if (reading.Document is { } document)
+            var child = _read.GetOrAdd(sibling, static s =>
             {
-                _ = children.With(new ChildRecipe(document.Recipe, document.Hash));
+                var reading = RecipeComposition.Read(ShippedRecipes.Read(s), Path.GetFileName(s));
+                return reading.Document is { } document ? new ChildRecipe(document.Recipe, document.Hash) : null;
+            });
+            if (child is not null)
+            {
+                _ = children.With(child);
             }
         }
 

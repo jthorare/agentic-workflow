@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using Aw.Sindri.Core.Workflow.Engine.Evals;
 using Aw.Sindri.Core.Workflow.Validation;
@@ -11,6 +12,8 @@ public sealed class ShippedRecipeScaffoldTests
 {
     public static TheoryData<string> Recipes => [.. ShippedRecipes.Recipes.Where(r => r.StartsWith("sindri/", StringComparison.Ordinal))];
 
+    private static readonly ConcurrentDictionary<string, Core.Workflow.Recipes.Recipe> _recipes = new(StringComparer.Ordinal);   // each shipped recipe parsed once per run; Recipe is an immutable record
+
     private static readonly Dictionary<string, string[]> _routes = new(StringComparer.Ordinal)
     {
         ["sindri/workflow.evidence.yaml"] = ["scaffold-ui", "scaffold-api", "scaffold-db", "scaffold-desktop", "scaffold-all", "scaffold-none", "scaffold-other", "scaffold-uncertain", "scaffold-step_failed"],
@@ -21,11 +24,11 @@ public sealed class ShippedRecipeScaffoldTests
     [MemberData(nameof(Recipes))]
     public void Every_scaffolded_case_of_a_shipped_recipe_passes(string path)
     {
-        var recipe = EvalComposition.Recipe(path);
+        var recipe = _recipes.GetOrAdd(path, static p => EvalComposition.Recipe(p));
         var children = InMemoryChildRecipes.None;
         foreach (var sibling in ShippedRecipes.Recipes.Where(r => r.StartsWith("sindri/", StringComparison.Ordinal)))
         {
-            var child = EvalComposition.Recipe(sibling);
+            var child = _recipes.GetOrAdd(sibling, static p => EvalComposition.Recipe(p));
             _ = children.With(new ChildRecipe(child, child.Hash!.Value));
         }
 
