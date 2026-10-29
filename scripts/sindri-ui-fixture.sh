@@ -910,7 +910,11 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
     : > "$marker-add"
   fi
   if [ ! -f "$marker-hide" ]; then
-    "$PROVE" human project hide "linear:project/fx-search" >&2 || return
+    if ! "$PROVE" human project hide "linear:project/fx-search" >&2; then
+      echo "projects: hide was refused; this is what the page sees (sindri projects --json):" >&2
+      "$PROVE" human projects --json >&2 || true
+      die "projects: can't hide linear:project/fx-search"
+    fi
     : > "$marker-hide"
   fi
 }
