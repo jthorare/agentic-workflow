@@ -64,5 +64,5 @@ public sealed class RunPageLimitEndingTests
     [InlineData(3900, "1 h 5 min")]
     [InlineData(7200, "2 h")]
     public void The_time_reads_in_words(long seconds, string expected) =>
-        Assert.Equal("This Step ran out of time after " + expected + ".", Aw.Sindri.Ui.ViewModels.Labels.LimitEnding("wall", "40m", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), branch: null));
+        Assert.Equal("This Step ran out of time after " + expected + ".", ViewModels.Labels.LimitEnding("wall", "40m", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), branch: null));
 }

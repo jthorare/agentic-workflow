@@ -32,7 +32,7 @@ public sealed class SessionSheetSandboxTests
     {
         _server.SessionOneBody = (_, id) => One(id);
         var sheet = new SessionSheetViewModel(_server);
-        sheet.Wire(new Aw.Sindri.Ui.ViewModels.Controls.CatalogViewModel(new FakeClipboard(), new FakeTimeProvider(A.Noon)), new FakeTimeProvider(A.Noon));
+        sheet.Wire(new ViewModels.Controls.CatalogViewModel(new FakeClipboard(), new FakeTimeProvider(A.Noon)), new FakeTimeProvider(A.Noon));
         await sheet.Open(_api, reference, Token);
         return sheet;
     }
