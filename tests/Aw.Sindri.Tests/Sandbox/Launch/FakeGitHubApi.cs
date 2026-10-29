@@ -7,18 +7,43 @@ namespace Aw.Sindri.Tests.Sandbox.Launch;
 /// <summary>A loopback stand-in for GitHub's installation-token route.</summary>
 internal sealed class FakeGitHubApi : IDisposable
 {
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly Lock _gate = new();
     private readonly List<ApiRequest> _requests = [];
     private readonly SemaphoreSlim _arrived = new(0);
     private (int Status, string Body) _reply = (201, "{}");
 
     internal FakeGitHubApi()
+        : this(FreePort)
     {
-        var port = FreePort();
-        Url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
-        _listener.Prefixes.Add(Url + "/");
-        _listener.Start();
+    }
+
+    /// <summary>Starts the fake on the port <paramref name="pickPort"/> names.</summary>
+    /// <param name="pickPort">Picks the port to listen on.</param>
+    internal FakeGitHubApi(Func<int> pickPort)
+    {
+        // the port is free when it is picked, not when the listener starts: a parallel test can take it in between, and a failed listener can't be started again
+        const int Tries = 5;
+        for (var attempt = 1; ; attempt++)
+        {
+            var port = pickPort();
+            var url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
+            var listener = new HttpListener();
+            listener.Prefixes.Add(url + "/");
+            try
+            {
+                listener.Start();
+            }
+            catch (HttpListenerException) when (attempt < Tries)
+            {
+                listener.Close();
+                continue;
+            }
+
+            (Url, _listener) = (url, listener);
+            break;
+        }
+
         _ = Serve();
     }
 
