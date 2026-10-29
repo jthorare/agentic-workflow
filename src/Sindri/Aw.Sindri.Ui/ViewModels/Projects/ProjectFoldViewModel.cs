@@ -25,8 +25,8 @@ internal sealed class ProjectFoldViewModel : ObservableObject
     /// <summary>True when there are cards: a fold with none is not drawn.</summary>
     public bool IsVisible => Count > 0;
 
-    /// <summary>True while the fold is open.</summary>
-    public bool IsOpen { get; private set => Set(ref field, value); }
+    /// <summary>True while the fold is open. Public set: the Expander's IsExpanded writes it back (TwoWay), so a click, Enter or Space on the fold moves it.</summary>
+    public bool IsOpen { get; set => Set(ref field, value); }
 
     /// <summary>How many cards sit across, as the page last set it.</summary>
     public int Columns { get; internal set => Set(ref field, value); } = 1;
