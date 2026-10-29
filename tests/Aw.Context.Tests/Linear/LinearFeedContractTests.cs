@@ -3,7 +3,6 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sync;
 using Aw.Context.Infrastructure.Linear;
 using Aw.Context.Testing.Records;
-using Aw.Context.Tests.Onyx;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;

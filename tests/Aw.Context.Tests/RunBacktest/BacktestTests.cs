@@ -21,8 +21,8 @@ public sealed class BacktestTests
         Assert.Equal((5, true, 1), (report.SampleCount, report.SmallSample, report.LeftOut.NoMerge));
         Assert.Equal(["SPL-106"], report.LeftOut.Keys);   // no merged PR
         Assert.Equal(1.0, report.LeakyShare);   // every fixture issue was edited after its cut
-        Assert.Equal(["brief", "docs", "graph", "graph+reviewed", "all", "linear", "onyx", "code"], report.Arms.Select(a => a.Arm), StringComparer.Ordinal);
-        Assert.Equal(["S-6", "S-7B", "S-9"], report.Arms.Select(a => a.NotAvailable).OfType<string>(), StringComparer.Ordinal);
+        Assert.Equal(["brief", "docs", "graph", "graph+reviewed", "all", "linear", "code"], report.Arms.Select(a => a.Arm), StringComparer.Ordinal);
+        Assert.Equal(["S-6", "S-9"], report.Arms.Select(a => a.NotAvailable).OfType<string>(), StringComparer.Ordinal);
         Assert.All(report.Arms.Where(a => a.NotAvailable is null), a => Assert.Equal(Verdicts.OwnerDecision, a.PassLine!.Overall));
         Assert.Equal(Verdicts.OwnerDecision, report.Overall);
         Assert.StartsWith(world.Settings.BacktestDirectory, run.Path, StringComparison.Ordinal);
@@ -149,7 +149,6 @@ public sealed class BacktestTests
         Assert.DoesNotContain("named command in one registry", text, StringComparison.Ordinal);   // SPL-101's brief
         Assert.DoesNotContain("Command registry for pane commands", text, StringComparison.Ordinal);   // and its title
         Assert.Contains("linear:issue/0e5a1b00-0000-4000-8000-000000000101", text, StringComparison.Ordinal);   // the ref is there
-        Assert.DoesNotContain(world.Onyx.Token, text, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

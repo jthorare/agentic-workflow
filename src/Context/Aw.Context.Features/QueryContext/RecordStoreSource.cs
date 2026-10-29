@@ -37,6 +37,9 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
         return await RecordHits.Read(store, scope, clock, found.Value.Hits.Select(h => h.Chunk.Record), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>One record of the store as a hit, the way the lexical leg's hits are read (live and allowed only); none when it is gone or not the caller's.</summary>
+    public ValueTask<Result<IReadOnlyList<SourceHit>>> Anchor(RecordKey key, CancellationToken cancellationToken) => RecordHits.Read(store, scope, clock, [key], cancellationToken);
+
     public async ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reference);
