@@ -53,7 +53,7 @@
       </StackPanel>
     </Panel>
 
-    <ItemsControl x:Name="ProjectsGroups" ItemsSource="{Binding Groups}">
+    <ItemsControl x:Name="ProjectsGroups" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Groups}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,8">
@@ -77,7 +77,7 @@
           <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
       </ItemsControl>
     </Expander>
@@ -90,7 +90,7 @@
           <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
       </ItemsControl>
     </Expander>
