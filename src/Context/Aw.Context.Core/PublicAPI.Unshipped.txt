@@ -9673,5 +9673,6 @@ Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.init -> void
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.get -> System.DateTimeOffset?
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.init -> void
 Aw.Context.Core.Linear.LinearIdentifiers
+static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Records.StoredRecord! stored, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
 static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?
 Aw.Context.Core.Linking.IIntentStore.SetAliases(Aw.Context.Core.Sources.RecordKey record, string! version, System.Collections.Generic.IReadOnlyList<string!>! aliases, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

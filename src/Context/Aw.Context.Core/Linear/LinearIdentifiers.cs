@@ -1,3 +1,6 @@
+using Aw.Context.Core.Records;
+using Aw.Context.Core.Sources;
+
 namespace Aw.Context.Core.Linear;
 
 /// <summary>The tracker identifier of a Linear issue ('SPL-103'), read from its stored permalink (https://linear.app/&lt;workspace&gt;/issue/&lt;TEAM-N&gt;[/slug]).</summary>
@@ -15,6 +18,18 @@ public static class LinearIdentifiers
         var segment = IssueSegment(url);
         var dash = segment?.LastIndexOf('-') ?? -1;
         return segment is not null && dash > 0 && teams.Contains(segment[..dash]) && segment.Length > dash + 1 && segment[(dash + 1)..].All(char.IsAsciiDigit) ? segment : null;
+    }
+
+    /// <summary>A stored record's aliases: a Linear issue's tracker identifier, read from its permalink; nothing for any other record.</summary>
+    /// <param name="stored">The stored record.</param>
+    /// <param name="teams">The profile's Linear team keys.</param>
+    /// <returns>One identifier, or none.</returns>
+    public static string[] AliasesOf(StoredRecord stored, IReadOnlySet<string> teams)
+    {
+        ArgumentNullException.ThrowIfNull(stored);
+        return LinearRecordKeys.IsLinear(stored.Key) && LinearRecordKeys.KindOf(stored.Key) == RecordKind.Issue && FromPermalink(stored.Url, teams) is { } identifier
+            ? [identifier]
+            : [];
     }
 
     /// <summary>The path segment after '/issue/' of an https linear.app link, or null.</summary>

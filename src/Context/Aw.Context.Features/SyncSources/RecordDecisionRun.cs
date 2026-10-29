@@ -188,9 +188,5 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
     }
 
     /// <summary>A Linear issue's tracker identifier, read from its stored permalink (the feed stores the plain title); nothing for any other record.</summary>
-    private string[] Aliases(StoredRecord stored) =>
-        LinearRecordKeys.IsLinear(stored.Key) && LinearRecordKeys.KindOf(stored.Key) == RecordKind.Issue
-        && LinearIdentifiers.FromPermalink(stored.Url, new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)) is { } identifier
-            ? [identifier]
-            : [];
+    private string[] Aliases(StoredRecord stored) => LinearIdentifiers.AliasesOf(stored, new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
 }
