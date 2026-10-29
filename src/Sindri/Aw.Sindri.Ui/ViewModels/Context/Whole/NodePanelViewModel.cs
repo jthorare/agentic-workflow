@@ -53,6 +53,15 @@ internal sealed class NodePanelViewModel : ObservableObject
     /// <summary>Gets a value indicating whether the source has a link to open.</summary>
     public bool HasLink => _link is not null;
 
+    /// <summary>Gets a value indicating whether the node has a source but nothing to open (said out loud, never hidden).</summary>
+    public bool HasNoLink => HasSource && !HasLink;
+
+    /// <summary>Gets the line shown when the source has no link.</summary>
+    public string NoLinkText { get; } = Labels.ContextNodePanelNoLink;
+
+    /// <summary>Gets the open-source button's accessible name, by the source's kind.</summary>
+    public string OpenSourceName { get; private set; } = Labels.ContextNodePanelOpenSourceName(string.Empty);
+
     /// <summary>Gets the short description; empty when none is served.</summary>
     public string Description { get; private set; } = string.Empty;
 
@@ -173,6 +182,7 @@ internal sealed class NodePanelViewModel : ObservableObject
             var text = string.IsNullOrWhiteSpace(source.Title) ? source.Ref : source.Title;
             SourceText = Labels.ContextNodePanelSource(source.Kind, text);
             _link = LinkOf(source.Url);
+            OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
         }
 
         var rows = view.Out.Select(e => Row(e.To, e, outgoing: true)).Concat(view.In.Select(e => Row(e.From, e, outgoing: false)));
@@ -198,7 +208,7 @@ internal sealed class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
         {
             OnChanged(name);
         }

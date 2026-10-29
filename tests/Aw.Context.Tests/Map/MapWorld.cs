@@ -96,6 +96,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IProbeReportStore>(new NoProbes())
             .AddSingleton(repoReader ?? new FakeRepoReader(Repos[0], Head, BuildFiles))
             .AddSingleton<IDefaultBranch>(DefaultBranch)
+            .AddSingleton<IRepoRemote>(Remotes)
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
             .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
@@ -147,6 +148,9 @@ internal sealed class MapWorld : IDisposable
     public FakeConceptSynthesisStore ConceptSynthesis { get; } = new();
 
     public FakeDefaultBranch DefaultBranch { get; } = new();
+
+    /// <summary>The origin remote of each repo's checkout.</summary>
+    public FakeRepoRemote Remotes { get; } = new();
 
     /// <summary>The record store the build reads, unless the world was given another.</summary>
     public FakeRecordStore Records { get; } = new();
