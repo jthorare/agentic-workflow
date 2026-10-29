@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Tests.ApiGoldens;
+using Aw.Sindri.Tests.Jobs;
 using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
@@ -38,7 +39,7 @@ public sealed class ContextSyncGapsHostTests : IDisposable
 
         var before = await host.Http.Ask(Get(History, Human(host.Token.Value)));
         var first = await RunGaps(host, ct);
-        await WaitForSyncToEnd(host, ct);
+        await JobHost.Settle(host, ct);
         var after = await host.Http.Ask(Get(History, Human(host.Token.Value)));
         var second = await RunGaps(host, ct);
         var started = await host.App.Services.GetRequiredService<ILedgerStore>().Latest(EventTypes.JobStarted, ct);
@@ -72,23 +73,6 @@ public sealed class ContextSyncGapsHostTests : IDisposable
         var grant = host.App.Services.GetRequiredService<HeldLease>().Current!;   // why: the started host holds the lease
         using var caller = host.App.Services.GetRequiredService<ICallerContextAccessor>().EnterService("context-sync-gaps");   // as the scheduler enters it
         return await gaps.Run(new ScheduledRun(grant, DateTimeOffset.UnixEpoch), ct);
-    }
-
-    // The test host does not project views on its own, so wait on the ledger: the sync job is over when 'job.finished' is recorded.
-    private static async Task WaitForSyncToEnd(GoldenHost host, CancellationToken ct)
-    {
-        var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
-        for (var i = 0; i < 160; i++)
-        {
-            if ((await ledger.Latest(EventTypes.JobFinished, ct)).Value is not null)
-            {
-                return;
-            }
-
-            await Task.Delay(250, ct);
-        }
-
-        Assert.Fail("the sync job didn't end");
     }
 
     private async Task<GoldenHost> Approved(FakeLinearServer linear, CancellationToken ct)
