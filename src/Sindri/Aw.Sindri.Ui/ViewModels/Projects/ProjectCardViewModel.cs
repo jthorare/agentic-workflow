@@ -54,6 +54,9 @@ internal sealed class ProjectCardViewModel : ObservableObject
     /// <summary>The footer's parts, in order.</summary>
     public IReadOnlyList<string> Footer { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>The footer's parts joined with " · ".</summary>
+    public string FooterText => string.Join(" · ", Footer);
+
     /// <summary>True when the project is no longer synced.</summary>
     public bool IsGone { get; private set => Set(ref field, value); }
 
@@ -96,6 +99,7 @@ internal sealed class ProjectCardViewModel : ObservableObject
         NotesFace = Face(Card.Note);
         IsGone = !Card.Synced;
         Footer = Parts();
+        OnChanged(nameof(FooterText));
         AccessibleName = Spoken();
     }
 

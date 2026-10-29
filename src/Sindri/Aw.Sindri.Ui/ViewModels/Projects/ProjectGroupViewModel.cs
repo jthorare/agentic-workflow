@@ -13,6 +13,9 @@ internal sealed class ProjectGroupViewModel : ObservableObject
     /// <summary>The state's word.</summary>
     public string Heading { get; }
 
+    /// <summary>The heading as the page draws it, in capitals (Avalonia has no text-transform).</summary>
+    public string HeadingCaps => Heading.ToUpperInvariant();
+
     /// <summary>How many cards.</summary>
     public int Count => Cards.Count;
 

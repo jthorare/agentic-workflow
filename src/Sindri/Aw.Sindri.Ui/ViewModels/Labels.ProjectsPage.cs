@@ -21,6 +21,12 @@ internal static partial class Labels
     /// <summary>The hidden fold's title.</summary>
     internal const string ProjectsHiddenTitle = "Hidden";
 
+    /// <summary>The "+ Add project" button's words.</summary>
+    internal const string ProjectsAddButton = "+ Add project";
+
+    /// <summary>A fold's words: "Finished (3)".</summary>
+    internal static string ProjectFoldHeading(string title, int count) => string.Create(CultureInfo.InvariantCulture, $"{title} ({count})");
+
     /// <summary>A card of a project the store no longer holds.</summary>
     internal const string ProjectGone = "no longer synced from Linear";
 

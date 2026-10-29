@@ -13,6 +13,9 @@ internal sealed class ProjectFoldViewModel : ObservableObject
     /// <summary>The fold's title.</summary>
     public string Title { get; }
 
+    /// <summary>"Finished (3)": the disclosure's words.</summary>
+    public string Heading => Labels.ProjectFoldHeading(Title, Count);
+
     /// <summary>Why these cards are here; empty for none.</summary>
     public string Why { get; }
 
@@ -37,6 +40,7 @@ internal sealed class ProjectFoldViewModel : ObservableObject
     {
         Patch.To(Cards, cards);
         OnChanged(nameof(Count));
+        OnChanged(nameof(Heading));
         OnChanged(nameof(IsVisible));
     }
 }

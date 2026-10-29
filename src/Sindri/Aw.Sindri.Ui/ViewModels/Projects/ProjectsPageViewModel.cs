@@ -1,4 +1,3 @@
-#pragma warning disable MA0182 // the shell wires the page in a later step
 using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
@@ -33,6 +32,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>"Reading projects…" until the first answer.</summary>
     public string ReadingText => Labels.ReadingProjects;
+
+    /// <summary>The button that adds a project (disabled until Add arrives).</summary>
+    public string AddText => Labels.ProjectsAddButton;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
