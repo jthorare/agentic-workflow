@@ -157,7 +157,7 @@ internal sealed class SingleLaunch(TimeSpan holderWait)
         }
 
         var link = only.StartsWith(Scheme, StringComparison.OrdinalIgnoreCase) ? only[Scheme.Length..] : only;
-        return link.Contains('/', StringComparison.Ordinal) && link.Length <= InstanceMessages.MaxLength ? link : InstanceMessages.Focus;
+        return InstanceMessages.IsLink(link) && link.Length <= InstanceMessages.MaxLength ? link : InstanceMessages.Focus;
     }
 
 #pragma warning disable RS0030 // the launcher is synchronous on the main thread before the UI starts

@@ -81,6 +81,7 @@ override Aw.Sindri.Ui.Platform.TrayView.GetHashCode() -> int
 override Aw.Sindri.Ui.Platform.TrayView.ToString() -> string!
 override Aw.Sindri.Ui.Views.SindriApp.Initialize() -> void
 override Aw.Sindri.Ui.Views.SindriApp.OnFrameworkInitializationCompleted() -> void
+static Aw.Sindri.Ui.Platform.InstanceMessages.IsLink(string! text) -> bool
 static Aw.Sindri.Ui.Platform.SindriPlatform.operator !=(Aw.Sindri.Ui.Platform.SindriPlatform? left, Aw.Sindri.Ui.Platform.SindriPlatform? right) -> bool
 static Aw.Sindri.Ui.Platform.SindriPlatform.operator ==(Aw.Sindri.Ui.Platform.SindriPlatform? left, Aw.Sindri.Ui.Platform.SindriPlatform? right) -> bool
 static Aw.Sindri.Ui.Platform.TrayView.operator !=(Aw.Sindri.Ui.Platform.TrayView? left, Aw.Sindri.Ui.Platform.TrayView? right) -> bool

@@ -38,6 +38,7 @@ public static class EventCatalog
         new(EventTypes.ProjectChanged, Public: true, typeof(ProjectChanged), "project.changed:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectDetached, Public: true, typeof(ProjectDetached), "project.detached:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectHidden, Public: true, typeof(ProjectHidden), "project.hidden:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.ProjectLedNoted, Public: true, typeof(ProjectLedNoted), "project.led.noted:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.RequestFiled, Public: true, typeof(RequestFiledPublic), "request.filed:<requestId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.DecisionRecorded, Public: true, typeof(DecisionRecordedPublic), "decision.recorded:<decisionId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.WorkflowStarted, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),

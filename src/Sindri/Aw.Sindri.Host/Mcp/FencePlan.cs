@@ -24,15 +24,15 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>sindri_job: the summary, each progress line and every string inside the result (a service's result can carry text an agent wrote).</summary>
     internal static FencePlan Job { get; } = new("sindri:job", [new("summary", "startedBy"), new("progress[].line"), new("result", "startedBy", EveryString: true)]);
 
-    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's own note and links stay plain.</summary>
+    /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads); the owner's links stay plain.</summary>
     internal static FencePlan Projects { get; } = new("sindri:project",
     [
         new("viewer"),
-        new("projects[].name"), new("projects[].description"), new("projects[].lead.name"),
-        new("finished[].name"), new("finished[].description"), new("finished[].lead.name"),
-        new("hidden[].name"), new("hidden[].description"), new("hidden[].lead.name"),
+        new("projects[].name"), new("projects[].description"), new("projects[].lead.name"), new("projects[].notes"),
+        new("finished[].name"), new("finished[].description"), new("finished[].lead.name"), new("finished[].notes"),
+        new("hidden[].name"), new("hidden[].description"), new("hidden[].lead.name"), new("hidden[].notes"),
     ]);
 
-    /// <summary>sindri_projects for one project: the card's Linear-sourced text and the viewer's name.</summary>
-    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name")]);
+    /// <summary>sindri_projects for one project: the card's Linear-sourced text, the owner's notes and the viewer's name.</summary>
+    internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes")]);
 }

@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="Name">The owner's name for a hand-made project, or null.</param>
 /// <param name="State">The owner's state, or null.</param>
 /// <param name="Links">The owner's links.</param>
-/// <param name="Note">The owner's one line, or null.</param>
+/// <param name="Notes">The owner's free-form notes, or null.</param>
 /// <param name="Target">The target date, or null.</param>
 /// <param name="Version">1 when attached, one more per change.</param>
 /// <param name="AttachedAt">When it was attached.</param>
@@ -22,7 +22,7 @@ public sealed record ProjectAttachedRow(
     string? Name,
     ProjectState? State,
     IReadOnlyList<string> Links,
-    string? Note,
+    string? Notes,
     DateOnly? Target,
     long Version,
     DateTimeOffset AttachedAt,
