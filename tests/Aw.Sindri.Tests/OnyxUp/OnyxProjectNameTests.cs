@@ -1,6 +1,5 @@
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.OnyxDown;
-using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.OnyxUp;
@@ -103,16 +102,5 @@ public sealed class OnyxProjectNameTests
         Assert.NotEmpty(rig.Runtime.Projects);
         Assert.All(rig.Runtime.Projects, name => Assert.Equal(rig.Paths.Project.Name, name));
         Assert.Contains(Foreign, response.Warnings, StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Doctor_reads_this_homes_project_not_a_name_recorded_by_another_home()
-    {
-        var rig = await Running();
-
-        _ = await new OnyxStackDoctor(rig.Workspace, new OnyxFacts(rig.Runtime, rig.Probes, new FakeSindriHome(OnyxUpRig.Home)), rig.Pins).Check(Token);
-
-        Assert.NotEmpty(rig.Runtime.Projects);
-        Assert.All(rig.Runtime.Projects, name => Assert.Equal(rig.Paths.Project.Name, name));
     }
 }

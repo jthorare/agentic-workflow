@@ -826,7 +826,7 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
 | `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
 
-## S-5A: the onyx source, secret pointers, doctor `context:onyx`
+## S-5A: the onyx source, secret pointers
 
 Onyx CE (pinned **v4.9.0**) indexes the work product's Linear records, Slack and docs; Sindri searches it as the
 `onyx` source beside repo-docs. Setting Onyx itself up (the pinned image, ports bound to `127.0.0.1`, local
@@ -914,16 +914,9 @@ repo's nodes (owner decision 2026-10-15: B). A caller whose scope maps no repo g
 unresolved, `002`), with the version and the key's role and account type in its detail. A session sees the row too, the same
 row a human sees, sync counts included.
 
-### Doctor `context:onyx`
+### Doctor `context:onyx` (removed)
 
-`sindri doctor` runs the onyx source's probe for the approved profile: `GET /api/version` (no key) against the pinned
-version, then `GET /api/me` with the key for its role and account type.
-
-| Result | When | Fix |
-|---|---|---|
-| `ok` | Onyx answers the pinned version and the token is an admin token of Sindri's dedicated user (`sindri@example.com`) or a service account; or the profile names no onyx (`not configured`) | — |
-| `warn` | the token is an admin token of a person's account (`053`); or onyx is named but no repo is mapped, so no source runs | use the dedicated user's token (`sindri onyx up`); map a repo |
-| `fail` | the key's pointer doesn't resolve (`SND-SECRET-001`..`003`, checked before Onyx is called), Onyx is down (`010`), another version (`055`, naming both), the key lacks admin (`050`), the section is invalid | per the line; see `docs/sindri/onyx.md` |
+The `context:onyx` row was removed in #1598 (owned index spec §8.1); `sindri context sources status` shows the onyx source's own probe. A leftover Onyx is reported by `index:onyx-leftover` (`docs/csharp/sindri.md`).
 
 The adapter never reads Onyx's provider and telemetry settings (no settings route is on its allowlist); `docs/sindri/onyx.md` lists them as a manual check
 on each Onyx version change.
@@ -946,7 +939,7 @@ context:
 YAML
 $SINDRI profile validate                        # prints the hash; exit 1 = valid, not approved yet
 $SINDRI profile approve <hash>                  # type the challenge it shows: 'approve profile <first 6>'; starts the control plane
-$SINDRI doctor                                  # context:onyx
+$SINDRI context sources status                  # the onyx row
 $SINDRI context sources status
 $SINDRI context query "split pane orientation"
 $SINDRI stop                                    # free the port before going back to your real home

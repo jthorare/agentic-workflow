@@ -3516,29 +3516,6 @@ Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Steps.get -> System.Collectio
 Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Deconstruct(out int Port, out string! Url, out string! Version, out System.Collections.Generic.IReadOnlyList<string!>! Warnings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
 Aw.Sindri.Features.OnyxUp.OnyxUpResponse.OnyxUpResponse(int Port, string! Url, string! Version, System.Collections.Generic.IReadOnlyList<string!>! Warnings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
 Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>!
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.<Clone>$() -> Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest!
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.Equals(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest? other) -> bool
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.OnyxEnsureRequest() -> void
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.<Clone>$() -> Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse!
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Deconstruct(out Aw.Sindri.Core.Control.OnyxEndpoint? Endpoint, out string? Detail) -> void
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Detail.get -> string?
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Detail.init -> void
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Endpoint.get -> Aw.Sindri.Core.Control.OnyxEndpoint?
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Endpoint.init -> void
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Equals(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse? other) -> bool
-Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.OnyxEnsureResponse(Aw.Sindri.Core.Control.OnyxEndpoint? Endpoint, string? Detail) -> void
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.ToString() -> string!
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.ToString() -> string!
-static Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.operator !=(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest? left, Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest? right) -> bool
-static Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest.operator ==(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest? left, Aw.Sindri.Features.OnyxEnsure.OnyxEnsureRequest? right) -> bool
-static Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.operator !=(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse? left, Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse? right) -> bool
-static Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse.operator ==(Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse? left, Aw.Sindri.Features.OnyxEnsure.OnyxEnsureResponse? right) -> bool
 Aw.Sindri.Features.RecordEval.RecordEvalRequest
 Aw.Sindri.Features.RecordEval.RecordEvalRequest.<Clone>$() -> Aw.Sindri.Features.RecordEval.RecordEvalRequest!
 Aw.Sindri.Features.RecordEval.RecordEvalRequest.Address.get -> string!
@@ -4270,72 +4247,7 @@ Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.<Clone>$() -> Aw.Sindri.Fe
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.Deconstruct(out string! Directory) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusResponse.GetRepoStatusResponse(Aw.Sindri.Core.Profile.RepoStatus! Status) -> void
 Aw.Sindri.Features.GetRepoStatus.GetRepoStatusRequest.GetRepoStatusRequest(string! Directory) -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.ToString() -> string!
-static Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.operator !=(Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest? left, Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest? right) -> bool
-static Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.operator ==(Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest? left, Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest? right) -> bool
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.GetHashCode() -> int
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.Equals(object? obj) -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.Equals(Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest? other) -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.<Clone>$() -> Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest!
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.Deconstruct(out bool Deferred) -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.Deferred.get -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.Deferred.init -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.ToString() -> string!
-static Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.operator !=(Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse? left, Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse? right) -> bool
-static Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.operator ==(Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse? left, Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse? right) -> bool
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.GetHashCode() -> int
-override Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Equals(object? obj) -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Equals(Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse? other) -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.<Clone>$() -> Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse!
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Deconstruct(out bool Deferred, out long Sequence) -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Deferred.get -> bool
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Deferred.init -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Sequence.get -> long
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.Sequence.init -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxResponse.DeferOnyxResponse(bool Deferred, long Sequence) -> void
-Aw.Sindri.Features.DeferOnyx.DeferOnyxRequest.DeferOnyxRequest(bool Deferred) -> void
 Aw.Sindri.Features.Jobs.JobWaits
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Version.get -> string!
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Version.init -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Url.get -> string!
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Url.init -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.KeyPointer.get -> string?
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.KeyPointer.init -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.ToString() -> string!
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.ToString() -> string!
-static Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.operator !=(Aw.Sindri.Features.SetupOnyx.SetupOnyxResult? left, Aw.Sindri.Features.SetupOnyx.SetupOnyxResult? right) -> bool
-static Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.operator !=(Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest? left, Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest? right) -> bool
-static Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.operator ==(Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest? left, Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest? right) -> bool
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.GetHashCode() -> int
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.Equals(object? obj) -> bool
-Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.Equals(Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest? other) -> bool
-static Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.operator ==(Aw.Sindri.Features.SetupOnyx.SetupOnyxResult? left, Aw.Sindri.Features.SetupOnyx.SetupOnyxResult? right) -> bool
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.GetHashCode() -> int
-override Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Equals(object? obj) -> bool
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Equals(Aw.Sindri.Features.SetupOnyx.SetupOnyxResult? other) -> bool
-Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.<Clone>$() -> Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest!
-Aw.Sindri.Features.SetupOnyx.SetupOnyxRequest.SetupOnyxRequest() -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.<Clone>$() -> Aw.Sindri.Features.SetupOnyx.SetupOnyxResult!
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.Deconstruct(out string! Url, out string! Version, out string? KeyPointer, out bool ProfileChanged) -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.ProfileChanged.get -> bool
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.ProfileChanged.init -> void
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest
-override Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.ToString() -> string!
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.Job.get -> Aw.Sindri.Core.Ids.JobId
-static Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.operator !=(Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest? left, Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest? right) -> bool
-static Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.operator ==(Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest? left, Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest? right) -> bool
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.Job.init -> void
-override Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.GetHashCode() -> int
-override Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.Equals(object? obj) -> bool
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.Equals(Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest? other) -> bool
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.<Clone>$() -> Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest!
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.Deconstruct(out Aw.Sindri.Core.Ids.JobId Job) -> void
-Aw.Sindri.Features.ConnectOnyx.ConnectOnyxRequest.ConnectOnyxRequest(Aw.Sindri.Core.Ids.JobId Job) -> void
-Aw.Sindri.Features.SetupOnyx.SetupOnyxResult.SetupOnyxResult(string! Url, string! Version, string? KeyPointer, bool ProfileChanged) -> void
 Aw.Sindri.Features.Jobs.JobWaits.JobWaits(System.TimeProvider! clock) -> void
 Aw.Sindri.Features.Jobs.JobWaits.Count() -> int
 Aw.Sindri.Features.Jobs.JobWaits.Signal(Aw.Sindri.Core.Ids.JobId job, string! signal) -> bool

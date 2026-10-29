@@ -9342,6 +9342,59 @@ static Aw.Context.Core.Extract.Journeys.IsJourney(string! path) -> bool
 static Aw.Context.Core.Extract.JourneySkips.None.get -> Aw.Context.Core.Extract.JourneySkips!
 static Aw.Context.Core.Extract.JourneySkips.operator !=(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool
 static Aw.Context.Core.Extract.JourneySkips.operator ==(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptMember
+Aw.Context.Core.ConceptSynthesis.ConceptMember.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptMember!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Deconstruct(out string! Record, out string! Version, out string! Source) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Equals(Aw.Context.Core.ConceptSynthesis.ConceptMember? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptMember.ConceptMember(string! Record, string! Version, string! Source) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Record.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Record.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Version.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Version.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Source.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Source.init -> void
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptMember.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptMember? left, Aw.Context.Core.ConceptSynthesis.ConceptMember? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptMember.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptMember? left, Aw.Context.Core.ConceptSynthesis.ConceptMember? right) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Deconstruct(out string! Key, out string! Name, out string! Summary, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>! Members, out string! MembershipHash, out Aw.Context.Core.ConceptSynthesis.SynthesisState State, out long Watermark, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Equals(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? other) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.SynthesizedConcept(string! Key, string! Name, string! Summary, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>! Members, string! MembershipHash, Aw.Context.Core.ConceptSynthesis.SynthesisState State, long Watermark, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Key.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Key.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Name.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Name.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Summary.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Summary.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Members.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Members.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.MembershipHash.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.MembershipHash.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.State.get -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.State.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Watermark.get -> long
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Watermark.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.CreatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.CreatedAt.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.UpdatedAt.init -> void
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.operator !=(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? left, Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.operator ==(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? left, Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? right) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesisState.Done = 1 -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesisState.Queued = 0 -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.All(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>!>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Remove(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Save(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept! concept, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.SaveWatermark(long watermark, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Watermark(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Context.Core.ConceptSynthesis.RecordVector
 Aw.Context.Core.ConceptSynthesis.RecordVector.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.RecordVector!
 Aw.Context.Core.ConceptSynthesis.RecordVector.Deconstruct(out string! Record, out string! Version, out string! Source, out System.ReadOnlyMemory<float> Vector) -> void

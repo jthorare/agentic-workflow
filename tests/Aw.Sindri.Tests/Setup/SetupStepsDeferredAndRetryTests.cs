@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Tests.Setup;
 
-/// <summary>The two states the spec's goldens add to the derived steps (setup-once spec §6, §8): a map build waiting to retry, and Onyx deferred by the owner.</summary>
+/// <summary>A map build waiting to retry (setup-once spec §6, §8), and how the Onyx setup job reads back from the jobs view.</summary>
 public sealed class SetupStepsDeferredAndRetryTests
 {
     [Fact, Trait("Lane", "unit")]
@@ -22,56 +22,6 @@ public sealed class SetupStepsDeferredAndRetryTests
         var step = SetupSteps.Map(new MapFact(MapPhase.Building) { Retry = new MapRetry(TimeSpan.FromMinutes(1), "the code index was busy") });
 
         Assert.Equal("Retrying in 1 minute: the code index was busy.", step.Detail);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_the_owner_chose_not_to_set_up_is_skipped_and_keeps_its_action()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null) { Deferred = true });
-
-        Assert.Equal((SetupState.Skipped, "You chose to set up Onyx later.", "SetupOnyx"), (step.State, step.Why, step.Action));
-        Assert.Equal("Onyx isn't set up. Use Set up Onyx in the card's menu when you want search.", step.Detail);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_that_runs_is_done_whatever_the_owner_chose_before()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null) { Deferred = true });
-
-        Assert.Equal(SetupState.Done, step.State);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_missing_docker_is_said_before_the_owners_choice_and_has_no_action()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-001") { Deferred = true });
-
-        Assert.Equal((SetupState.Skipped, "Docker isn't installed.", null), (step.State, step.Why, step.Action));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_whose_setup_waits_for_the_login_needs_you_with_the_sign_up_address_even_while_the_stack_runs()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null) { Job = OnyxJobPhase.WaitingForLogin, Port = 3190 });
-
-        Assert.Equal((SetupState.NeedsYou, "ConnectOnyx", "Create your Onyx account in the browser, then enter your login here."), (step.State, step.Action, step.Why));
-        Assert.Equal("Sign up at http://127.0.0.1:3190/auth/signup", step.Detail);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_whose_setup_job_works_is_running_and_says_its_last_line()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null) { Job = OnyxJobPhase.Working, JobLine = "pull: 3 of 9 images" });
-
-        Assert.Equal((SetupState.Running, "pull: 3 of 9 images", null), (step.State, step.Detail, step.Action));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_whose_setup_job_failed_is_failed_with_its_code_and_offers_the_setup_again()
-    {
-        var step = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null) { Job = OnyxJobPhase.Failed, JobFailure = ("SND-ONYX-008", "Onyx refused that login.") });
-
-        Assert.Equal((SetupState.Failed, "SetupOnyx", "SND-ONYX-008", "Onyx refused that login."), (step.State, step.Action, step.Error!.Code, step.Why));
     }
 
     [Fact, Trait("Lane", "unit")]
