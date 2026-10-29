@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
+using Aw.Sindri.Ui.Navigation;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
@@ -75,6 +76,24 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
     public string Error { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>A card asked for its sheet (a click, Enter).</summary>
+    internal event EventHandler<ProjectOpenRequestedEventArgs>? OpenRequested;
+
+#pragma warning disable CS0067 // the stub raises it in the next commit
+    /// <summary>A write closed a sheet: the view moves focus.</summary>
+    internal event EventHandler<ProjectFocusEventArgs>? FocusRequested;
+#pragma warning restore CS0067
+
+    /// <summary>Asks the shell to open a card's sheet.</summary>
+    /// <param name="link">The card's link.</param>
+    internal void RequestOpen(DeepLink link) => OpenRequested?.Invoke(this, new ProjectOpenRequestedEventArgs(link));
+
+    /// <summary>Re-reads the list after a write took a card off the page (or back), then asks the view to move focus: to the next card, else the previous, else Add project; an unhidden project's fold.</summary>
+    /// <param name="done">What the write did.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that completes when the list is shown and focus is asked for.</returns>
+    internal Task Settled(ProjectDoneEventArgs done, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     /// <summary>The catch-up read started by the last show.</summary>
     internal Task CatchUp { get; private set; } = Task.CompletedTask;

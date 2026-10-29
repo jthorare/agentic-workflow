@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Navigation;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
@@ -20,6 +21,9 @@ internal sealed class ProjectCardViewModel : ObservableObject
 
     /// <summary>The project's id.</summary>
     public string Id => Card.Id;
+
+    /// <summary>The link that opens this card's sheet: the id escaped as one segment, since a led project's key holds a slash.</summary>
+    internal DeepLink Link => new(DeepLinkKind.Project, Uri.EscapeDataString(Card.Id));
 
     /// <summary>The version a write sends.</summary>
     public long Version => Card.Version;
