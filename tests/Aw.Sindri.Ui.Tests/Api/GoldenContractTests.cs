@@ -76,6 +76,9 @@ public sealed class GoldenContractTests
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
+        ["projects-id-change"] = As<ProjectAcceptedView>,   // POST /projects/{id}/change's accepted answers (a prj_ id, or a led project's key for its notes); the stale 409 is ProblemDetails
+        ["projects-id-detach"] = As<ProjectAcceptedView>,   // POST /projects/{id}/detach's accepted answer
+        ["projects-hide"] = As<ProjectAcceptedView>,   // POST /projects/hide's accepted answer
         ["setup"] = As<SetupView>,   // GET /setup (setup-once spec §7, api #458): the Setup card and page; the "extra-" scenarios are the app's own (SpecShaped)
         ["index-status"] = As<IndexStatusView>,   // GET /index/status (#1597, spec-shaped until the context lane's PR lands): the Health Context index card
         ["context-map-refresh"] = As<JobStarted>,   // POST /context/map/refresh's 202 (the setup map row's Retry); the 409 is ProblemDetails
