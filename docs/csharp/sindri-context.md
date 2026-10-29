@@ -480,9 +480,9 @@ The goldens under `tests/Aw.Sindri.Tests/Golden/Api/context-*/` pin every body b
 
 - **Repoint** (`verb: repoint`, `override` = the orphan, `node` = the new target) writes `[undo of the orphan, the same decision on the new node]`; undoing both rows restores the orphan. A target not in the draft is 047.
 - **Undo list** (`overrides`, 1–1000 ids, only with `undo`, not beside `override`): all or none in one transaction; 047 names the first stale id; one `context.map.reviewed` event with `rows` = n. CLI `--undo <id>[,<id>…]`. *Provisional owner default (2026-10-14 night).*
-- **Lenses** details. Since S-LB1a schema 1's `mapVersion` is exactly `v<N>` (it was `v<N>@<sha>`), with the commit in the sibling `mapCommit` (7 lower-case hex, omitted when none); decisions gained `label` and `kind`, intent records `kind`, and code files `kind`, `label` and `trust`. `bands.product.counts` also carries `neighbors` and `edges` (the list lengths, null when not counted; every list holds every item); `own[]` is the anchor's own scope; `neighbors[]` and `affects[]` carry `depth` and `path`. A neighbor's hops read `<edge type> <key>` going with the edge and `<edge type>-by <key>` going against it, over structure edges where they reach (else any edge); an affects path is the cascade's own words. `product.edges` are the structure edges among product items. Intent: `records[]` (`source` from the key: `linear`, `linear:doc`, `slack`, `onyx`, `repo-doc`; `state` `unchecked`, `cites` empty until S-5A/S-6) and `decisions[]` (with `at` and `quote{record,text,trust:untrusted}`); `counts.orphaned` is `null` (follow-up F2). Code: `files[]`, one per file (`suggested` = every link of it unconfirmed, `linkId` = its best link then); `counts.featuresWithNoCode` counts scope features with no confirmed `implements`. Coverage counts a confirmed `implements` only as implemented (not `tests`, not a model suggestion); `code.suggested` counts scope nodes whose only `implements` are unconfirmed. Conflicts: one per decided node, `supersedes` only until S-CF. Provisional: all of the product `edges`, the `-by` paths, `featuresWithNoCode` and the gap notes.
+- **Lenses** details. Since S-LB1a schema 1's `mapVersion` is exactly `v<N>` (it was `v<N>@<sha>`), with the commit in the sibling `mapCommit` (7 lower-case hex, omitted when none); decisions gained `label` and `kind`, intent records `kind`, and code files `kind`, `label` and `trust`. `bands.product.counts` also carries `neighbors` and `edges` (the list lengths, null when not counted; every list holds every item); `own[]` is the anchor's own scope; `neighbors[]` and `affects[]` carry `depth` and `path`. A neighbor's hops read `<edge type> <key>` going with the edge and `<edge type>-by <key>` going against it, over structure edges where they reach (else any edge); an affects path is the cascade's own words. `product.edges` are the structure edges among product items. Intent: `records[]` (`source` from the key: `linear`, `linear:doc`, `slack`, `github`, `repo-doc`; `state` `unchecked`, `cites` empty until S-5A/S-6) and `decisions[]` (with `at` and `quote{record,text,trust:untrusted}`); `counts.orphaned` is `null` (follow-up F2). Code: `files[]`, one per file (`suggested` = every link of it unconfirmed, `linkId` = its best link then); `counts.featuresWithNoCode` counts scope features with no confirmed `implements`. Coverage counts a confirmed `implements` only as implemented (not `tests`, not a model suggestion); `code.suggested` counts scope nodes whose only `implements` are unconfirmed. Conflicts: one per decided node, `supersedes` only until S-CF. Provisional: all of the product `edges`, the `-by` paths, `featuresWithNoCode` and the gap notes.
 - **File map** details. A file's `features` include its suggested link (with `linkId`) and `tests` links (`edge: tests`; they never make a file mapped); a directory's hold the confirmed ones only. `intent` counts the distinct records and decisions on the entry's features, `null` with none. `unmapped[]` lists the unmapped entries even when `unmapped=true` filters `entries`. `sha` is the seven-character HEAD the tree was listed at.
-- **Session scope (owner decision 2026-10-15: B).** `MapAccess.View`'s session step cuts the graph with `GraphSnapshot.ScopedTo`, which keeps `RepoScope.NodesFor` (the nodes the repo implements and their code files) and, through `RepoScope.WithLinkedIntent`, the decision nodes with a `decides` edge to one, the record nodes with a `mentions` edge to one and the records those decisions quote. Edges, aliases and `Decisions` rows follow the kept nodes, so a record's `mentions` list shows only its in-scope ends. The deny cut runs first and judges every profile repo's globs for a session as for a human (`MapAccess.View` gives `DenyCut` two sets: every profile repo, whatever `context.repos` narrows to, judges record keys and evidence refs, which name their repo, and the repos the map is built from (`ScopeRules.Mapped`) judge `code:` keys, which name none; the session's repo is used only for the gate and this scope step; `BuildMap` cuts its draft with the same two sets). A record node's label is untrusted wherever a node is rendered (`TrustPolicy.ForNode`: `MapText.Fact`, `LensScope.Item` for own scope and reach, `LensesBuilder` for the anchor, and `GraphAnswer` through the kind overload for the cascade) (fenced for a session, `trust: untrusted` beside the clean label for a human); a person's decision wording stays trusted and unfenced, and the quote is fenced. A record or decision linked only outside the scope is `003` on a direct key with no title, and a `supersedes` conflict whose superseded decision is linked only outside the scope is not shown to the session. A session's map export is `SND-CONTEXT-020` (spec §3): the file is not scrubbed. A session searches Onyx and Linear like a human (owner q93 2026-10-23, confirmed 2026-10-24; there is no `context.repoTeams`), its untrusted text fenced.
+- **Session scope (owner decision 2026-10-15: B).** `MapAccess.View`'s session step cuts the graph with `GraphSnapshot.ScopedTo`, which keeps `RepoScope.NodesFor` (the nodes the repo implements and their code files) and, through `RepoScope.WithLinkedIntent`, the decision nodes with a `decides` edge to one, the record nodes with a `mentions` edge to one and the records those decisions quote. Edges, aliases and `Decisions` rows follow the kept nodes, so a record's `mentions` list shows only its in-scope ends. The deny cut runs first and judges every profile repo's globs for a session as for a human (`MapAccess.View` gives `DenyCut` two sets: every profile repo, whatever `context.repos` narrows to, judges record keys and evidence refs, which name their repo, and the repos the map is built from (`ScopeRules.Mapped`) judge `code:` keys, which name none; the session's repo is used only for the gate and this scope step; `BuildMap` cuts its draft with the same two sets). A record node's label is untrusted wherever a node is rendered (`TrustPolicy.ForNode`: `MapText.Fact`, `LensScope.Item` for own scope and reach, `LensesBuilder` for the anchor, and `GraphAnswer` through the kind overload for the cascade) (fenced for a session, `trust: untrusted` beside the clean label for a human); a person's decision wording stays trusted and unfenced, and the quote is fenced. A record or decision linked only outside the scope is `003` on a direct key with no title, and a `supersedes` conflict whose superseded decision is linked only outside the scope is not shown to the session. A session's map export is `SND-CONTEXT-020` (spec §3): the file is not scrubbed. A session searches the record index (GitHub, Slack, Linear) like a human (owner q93 2026-10-23, confirmed 2026-10-24; there is no `context.repoTeams`), its untrusted text fenced.
 - **Trust and the fence (provisional owner default, 2026-10-14 night; CTX §7).** Every lens item, record, decision, queue entry and node fact carries `trust`. A human at the CLI or in the app (`FencePolicies.For`: human and client `cli` or `http`) gets the label clean beside `trust`; a session, MCP and in-process callers get untrusted text inside `<untrusted source="map">…</untrusted>` as before. The CLI's text output fences an untrusted label itself when it called as a human (a session's answer is already fenced), `--json` prints the body unchanged. Query `ResultItem`s stay fenced for everyone. The file map carries only repo paths and node keys, so it has no `trust`. If the owner refuses the policy, drop `FencePolicies` to always-fenced and document the fence grammar for the app.
 - **Anchor errors** carry their candidates in text: 003 ends `(fix: try <key>, <key>)` (up to five), 037 lists the keys (goldens `unknown-anchor-003`, `ambiguous-037`). Over HTTP, 003 also carries `suggestedAnchors` (only when there are suggestions, at most 5) and 037 `candidates` (at most 100) as problem members; MCP errors stay `{code, message}`.
 - **HTTP status per code.** 003 404, 037 409, 030 404, 044 404, 045 404, 046 409, 047 409, 043 409, 005 and 006 400, 042 400, 040 503 (CLI 75), 048 503 (CLI 2), 020 403, `SND-AUTH-002` 403, `SND-CLI-003` 400.
@@ -497,92 +497,23 @@ The goldens under `tests/Aw.Sindri.Tests/Golden/Api/context-*/` pin every body b
 - **Integration.** `ContextReviewApiTests` (the rebuild service, desk and protected review, promote and its challenge, apply-file, 005, 043, 048, 040 with the bash helper holding both slots),
   `ContextLensesApiTests` (lenses, filemap, 003/044/045, MCP `context_lenses`, proposals), and the lock directory shared with `config/lib/locks.sh`.
 
-## S-5A: the onyx adapter
+## S-5A: the record index
+
+Sindri used to read Slack and Linear text through Onyx; it now keeps its own record index and reads those sources itself. Onyx's Confluence and Drive connectors have no replacement. The full design is `docs/superpowers/specs/2026-10-27-sindri-owned-index-design.md`; how the owner connects the sources is `docs/sindri/sources.md`.
 
 ### Shape
 
-- `Aw.Context.Core.Onyx`: `OnyxSettings` (only `Create` makes one: loopback url, a secret-pointer token, a pinned
-  release tag; `CheckVersion` compares a reported version), `OnyxRecordKeys` and `OnyxRecordIdentity` (canonical key
-  and alias). `SourceHit.Aliases` carries the aliases a hit adds; `RankFusion` merges every hit's aliases into
-  `FusedItem.Aliases` (source by source, best first, each once); the query cleans each at ingest and `ResultAssembly`
-  egress-scrubs each on its own into `Citation.Aliases` (a blocked or empty one is dropped). JSON `cites.<n>.aliases`;
-  the text form shows the first beside the key.
-- `Aw.Context.Core.Engine`: `SourcesReader` reads `context.sources` (`onyx`, `linear.teams`) for `SettingsReader`;
-  `ContextSettings.Onyx` and `ContextSettings.LinearTeams` hold the result. `ScopeRules.MayRead`, which kept intent sources
-  from session callers, was removed per owner q93 (2026-10-23): a session searches Onyx and Linear like a human, for the repos of the approved profile.
-- `Aw.Context.Infrastructure.Onyx` (all internal): `OnyxSource` (`IContextSource`), `OnyxClient`, `OnyxRequests` and
-  `OnyxRoute` (the allowlist), `OnyxVersionProbe`, the wire records and their own `OnyxWireJsonContext`, and
-  `OnyxSources.Create(OnyxSettings, IReadOnlySet<string> teams)`, the per-call factory registered by
-  `AddContextInfrastructure`.
-- `Aw.Context.Infrastructure.Sources.ContextSourceCatalog` replaces S-1A's repo-docs catalog: repo-docs, then onyx when
-  the profile names it; no repo in scope gives no source (`SourceCatalogContract`).
-- Sindri: `Composition` passes `ContextEnvironment(environment)` to `AddContextInfrastructure`, which resolves a name
-  that is a secret pointer through `ISecretPointers` (`SecretPointerEnvironment`); every other name reads the real
-  environment. Doctor's `context:onyx` is `OnyxDoctor` in the `RunDoctor` slice, the third row of `ContextEngineChecks` (after
-  S-3a's `context:map` and `context:retention`): it resolves the key's pointer first, then asks the facade's `Sources`
-  for the approved profile as a service caller and judges the `onyx` row.
+- `Aw.Context.Core.Sync.IIndexSync`: the record feeds as one port for the `index-sync` service. `Tick` runs one pass of every feed of the profile, `Decide` runs the decision pass over records already stored, `Progress` reads each feed's phase, last tick and milestones, and `Counts` counts what one source holds (the purge preview).
+- `Aw.Context.Infrastructure.Sources.ContextRecordFeedCatalog`: the feeds in a stable order: repo docs over the repos in scope, then Linear issues and projects when the profile names `context.sources.linear`, then the feeds the Host adds (GitHub issues and PRs, Slack threads). No repo in scope gives none.
+- `Aw.Context.Core.Engine.SourcesReader` reads `context.sources` (`linear.teams`, `github.repos` and `host`, `slack.channels` and `workspace`) for `SettingsReader`. A `token` key is a secret pointer; `sindri index connect github|slack` writes it. `context.index.windowDays` (default 183) bounds what a first sync reads.
+- Records land in the one SQLite store under `$AW_SINDRI_HOME`, keyed `github:...`, `slack:<channel>/<thread_ts>` and `linear:issue/<uuid>`; fusion deduplicates on the canonical key, and an issue key such as `ENG-482` is an alias of its record. A session searches the index like a human, for the repos of the approved profile, and its untrusted text is fenced.
+- Sindri: `Composition` passes `ContextEnvironment(environment)` to `AddContextInfrastructure`, which resolves a name that is a secret pointer through `ISecretPointers` (`SecretPointerEnvironment`); every other name reads the real environment.
 
-### Routes and allowlist
+### Operating it
 
-The adapter can send only these requests to Onyx v4.9.0; `OnyxRequests` refuses anything else before it reaches the
-network (tested), and the client has no proxy and follows no redirects. `Search` drops every document Onyx marks
-`hidden` (`OnyxSearchDoc.Hidden`; the admin search returns them), so Sindri sees what a standard Onyx search would.
+`sindri index sync [<source>]` and the built-in `index-sync` service (every 5 minutes while serve runs) run the feeds; `sindri index status` shows one line per source; embedding is a separate resumable job (`sindri index embed pause|resume`); `sindri index purge <source>` deletes one source's records. Doctor rows: `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-slack`, `context:index-ollama`, `context:index-sync`. Errors are `SND-INDEX-*` (`docs/sindri/errors.md`). The `SND-CONTEXT-050` to `055` codes are retired.
 
-| Route | Use | Key |
-|---|---|---|
-| `POST /api/admin/search` | `Search`: document ids, `updated_at`, `semantic_identifier`, links; no model | admin |
-| `GET /api/document/document-size-info` | `Fetch`: how many chunks a document has | admin |
-| `GET /api/document/chunk-info` | `Fetch`: the chunks' text | admin |
-| `GET /api/version` | `Probe` and doctor: `backend_version` against the pin | none |
-| `GET /api/me` | `Probe` and doctor: the key's role and account type | the key |
-
-### Keys and aliases
-
-Onyx's Linear connector uses the issue's UUID as its document id, so those hits key directly on
-`linear:issue/<uuid>` (lower case). The identifier (`ENG-482`) becomes an alias only when the connector-built title
-prefix (`[ENG-482] `) and the `linear.app` link name the same identifier and its team is in
-`context.sources.linear.teams`. Slack threads (`<channel>__<thread_ts>`) key as `slack:<channel>/<thread_ts>`; anything
-else as `onyx:<source_type>/<document id>`. Body text never contributes. Fusion deduplicates on the canonical key, so
-the same issue from Onyx and the native Linear adapter (S-6) is one item.
-
-### Versions
-
-`Versions` is always `SND-CONTEXT-010`: no v4.9.0 route gives `updated_at` by id, so onyx citations are `unchecked`.
-`SupportsAsOf` is false.
-
-### Errors
-
-| Code | Kind (HTTP) | Exit | Meaning |
-|---|---|---|---|
-| `SND-CONTEXT-002` | Invalid (400) | 2 | `context.sources.onyx.token` is missing or isn't a secret pointer (`profile validate`; the text isn't repeated); at run time, a pointer that doesn't resolve (a row and doctor code) |
-| `SND-CONTEXT-050` | Forbidden | — | Onyx refused the key (403), or the key lacks the admin role `POST /api/admin/search` needs: a row, doctor or `degraded` code |
-| `SND-CONTEXT-051` | Unavailable | — | Onyx answered with an unexpected status or shape (not the pinned version's): a `degraded` code |
-| `SND-CONTEXT-052` | NotFound | — | Onyx has no such document: the item is dropped, not degraded |
-| `SND-CONTEXT-053` | Forbidden | — | The admin token belongs to a person's account, not Sindri's dedicated user (`STANDARD`, email `OnyxSettings.DedicatedAccountEmail`, `sindri@example.com`, compared case-insensitively) or a service account: a `degraded` row and a doctor `warn`; the address of another account is never echoed |
-| `SND-CONTEXT-055` | Invalid (400) | 2 | The url isn't loopback or the version isn't a pinned release tag (`profile validate`); at run time, Onyx reports another version (a row and doctor `fail`) |
-
-An onyx failure during a query is always the `degraded` entry `SND-CONTEXT-010` with the cause in its message; the
-answer's own error is `011` only when repo-docs is down too. The pointer errors are Sindri's: `SND-SECRET-001`
-(malformed), `002` (doesn't resolve) and `003` (unsafe `file:`), in `docs/csharp/sindri.md`; through the context
-environment a pointer that fails resolves to nothing, which the onyx client reports as `SND-CONTEXT-002` naming only
-the pointer's scheme and pointing to `sindri doctor`. `OnyxClient` resolves the pointer once per client (one source,
-one query) as a task started off the calling thread and awaited under the call's linked deadline and cancellation, so
-a locked keychain or an `op` sign-in degrades onyx with `SND-CONTEXT-010` within the deadline; a resolution that
-failed or timed out lives only as long as that source, and the next query tries again. Doctor's `OnyxDoctor` resolves the pointer through
-`ISecretPointers` before the probe and fails with that `SND-SECRET-00x` code and message. A query never checks the
-version (§8.8 makes it a doctor check; §5.1's errors are Unavailable, NotFound and Fatal): `055` shows in doctor and
-the row, and a reply the pinned shape can't read degrades onyx (`010` with cause `051`).
-
-### Tests
-
-- `tests/Aw.Context.Testing/Fakes/FakeOnyxServer`: a loopback fake that answers like v4.9.0 (auth by key kind, admin
-  search, document size and chunk info, version, `/api/me`).
-- `tests/Aw.Context.Tests/Onyx`: `ContextSourceContract` against `FakeOnyxServer`, the client's allowlist, failures,
-  settings and record keys; `Core/SourcesSettingsTests` (profile keys, pointer forms, session rule);
-  `Infrastructure/ContextSourceCatalogContractTests`.
-- `tests/Aw.Sindri.Tests/ContextCalls/OnyxContextTests` (integration, the real host with `env:` fixture pointers):
-  fused query with `unchecked` onyx citations, the status row, doctor ok / warn / fail, Onyx down degrading only
-  itself; `OnyxProfileTests` (validate and doctor without Onyx); `Secrets/*` for the pointers.
+A source that is down during a query is the `degraded` entry `SND-CONTEXT-010` with the cause in its message; the answer's own error is `011` only when every source is down. The pointer errors are Sindri's: `SND-SECRET-001` (malformed), `002` (doesn't resolve) and `003` (unsafe `file:`), in `docs/csharp/sindri.md`.
 
 ## S-5B: the intent layer
 
@@ -654,10 +585,10 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 ### Shape
 
 - **Core** (`Aw.Context.Core/Eval/Backtest`, pure): `Arm`/`Arms` (names, order, `--arms` parsing, 082), `CorpusBuilder` (a sample is a merge keyed by its issue: the cut is the last first-parent commit before the merge at or before the issue's `createdAt`, and a merge at or before `createdAt` is no sample; truth is `git diff --name-only <merge>^1 <merge>` minus the deny globs), `BacktestScoring` (node recall, strict node precision, file recall@20, macro means; a metric with nothing to average is `null`, "not measured", never 0), `PassLine`/`PassBars` (the §9.4 bars; below 30 samples the overall line is the owner decision and enables nothing), `AdjudicatedScoring`, `MapQuality/*`. Ports: `IMergeHistory`, `IBriefSource`, `IAsOfDocs`, `IEvalStore`, `IArmQuery`, `IAdjudicator`. `MapExtractor.Version` keys the as-of cache.
-- **Infrastructure** (`Eval/`): `GitMergeHistory` (first-parent log over `GitCli`, caller `GIT_*` removed), `OnyxBriefSource` (searches each profile team key, keeps hits whose S-5A alias is `TEAM-n`, reads description chunks through the adapter's own allowlist; the brief is cleaned at ingest; a record edited after its creation is `leaky`, because Onyx keeps no content history), `AsOfRepoDocs` (the repo docs at the cut commit, same globs, size cap, chunker and ingest scrub, held in memory; the live `RepoDocsSource` is unchanged and keeps `SupportsAsOf: false`), `FileEvalStore` (0700/0600 files, refuses a worktree with 005, 90-day TTL).
+- **Infrastructure** (`Eval/`): `GitMergeHistory` (first-parent log over `GitCli`, caller `GIT_*` removed), the brief source (reads each profile team's issue records from the index store; the brief is cleaned at ingest; a record edited after its creation is `leaky`, because the store keeps no content history), `AsOfRepoDocs` (the repo docs at the cut commit, same globs, size cap, chunker and ingest scrub, held in memory; the live `RepoDocsSource` is unchanged and keeps `SupportsAsOf: false`), `FileEvalStore` (0700/0600 files, refuses a worktree with 005, 90-day TTL).
 - **Features**: `QueryPipeline` is the old `QueryContextService` body behind one seam (`IMapProvider` plus a source catalog plus an as-of time); `QueryContextService` calls it with the live map, `ArmQuery` calls it with a sample's as-of map and an arm-filtered catalog. **No `asOf`, arm or graph parameter was added to `GET /sindri/context/query` or MCP**, so a session can never see an as-of or arm view. `RunBacktest/*` (`CorpusLoader`, `SampleScorer`, `AsOfMapBuilder`, `ArmRunner`, `ReportAssembly`, `RunBacktestService`), `Adjudicate/Adjudicator`, `EvalMap/*`, `EvalPurge/*`. The eval slices sit behind one `ContextEval` group in the facade.
 - **As-of map** (`AsOfMapBuilder`): `MapExtractor.Extract` over the cut commit's tree, plus `ClusterFeatures.Propose` over that commit's clusters with no labels (no labeling pass, no model call), joined under the newest map version created at or before the issue's creation (authored nodes whose code the cut lacks are dropped, `AsOfPruning`), with the `map_override` rows dated before the issue applied, all through `MapAccess.View` (the deny cut every reader makes; no pending proposal). A cache that can't be written costs time, never the map. Cached by repo, sha12, extractor version and whether clusters answered (`eval/cache/maps/<repo>-<sha12>-x<v>-c<0|1>.json`). Nothing is written to `context.db`.
-- **Arms**: `brief` (text anchors only, depth 0, no source), `docs` (as-of docs, empty graph), `graph` (the floor), `graph+reviewed` (today's map with every decision; labeled leaky), `all` (as-of graph and as-of docs). `linear`, `onyx`, `code` print `not available (S-6 / S-7B / S-9)`. `ranker` is 082 naming S-8.
+- **Arms**: `brief` (text anchors only, depth 0, no source), `docs` (as-of docs, empty graph), `graph` (the floor), `graph+reviewed` (today's map with every decision; labeled leaky), `all` (as-of graph and as-of docs). `linear`, `code` print `not available (S-6 / S-7B / S-9)`. `ranker` is 082 naming S-8.
 - **Heavy lock**: one slot for the whole run (`IHeavyJobLock`); busy is 040. A session caller is 020 ("a human or service job"). Cancellation writes no report.
 - **Adjudicator** (`context.eval.adjudicator`, default off): asks twice (second time the surfaces reversed), keeps agreeing answers, a disagreement is `unstable` and counts as not relevant, a model error stops adjudication (`Adjudication.Error`, `adjudication incomplete` in the report, no further call); sends the scrubbed brief inside the untrusted fence and node labels only; truth nodes are never judged; stops at 1.5M tokens (083, degraded, the rest `unjudged`, adjudicated precision "not measured"). The cap is the §9.4 bar kept as a constant, not a profile key.
 - **State is files**: `context/eval/{backtest,map,cache}`; no `context.db` migration, no new ledger event type.
@@ -678,11 +609,11 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 
-The Onyx issue listing is one admin search per profile team. Onyx v4.9.0's admin search takes no offset and returns at most 50 hits, so it can't be paged: a team whose search returns 50 is reported as `issue listing capped: <team>` (a degraded note, and in the 080 message when nothing was eligible), and `--since` goes into the search as Onyx's update-time filter (`time_cutoff`; an issue is never updated before it was created, so none created in the window is lost) so the cap is spent inside the window. `--until` has no source filter and applies after the listing.
+The issue listing reads the index store, so it is as complete as the last `sindri index sync`.
 
 ### Tests
 
-`tests/Aw.Context.Tests/{Eval/Backtest,RunBacktest,Adjudicate,EvalMap}` (pure scoring, merge history on the fixture repo, the briefs against the fake Onyx, the whole backtest on the split-panes fixture, as-of honesty, adjudicator with `FakeModelPort`); `tests/Aw.Sindri.Tests/ContextCalls/{BacktestJobTextTests,ContextBacktestJobApiTests,ContextEvalNotRunningTests,ContextEvalStoreHostTests,ContextEvalVerbsTests,ContextJobVerbsTests,ContextLensesApiTests,ContextReviewRowsTests}` (the job text, the job route and its prechecks, the CLI parse and exit codes, the eval verbs).
+`tests/Aw.Context.Tests/{Eval/Backtest,RunBacktest,Adjudicate,EvalMap}` (pure scoring, merge history on the fixture repo, the briefs against a seeded index store, the whole backtest on the split-panes fixture, as-of honesty, adjudicator with `FakeModelPort`); `tests/Aw.Sindri.Tests/ContextCalls/{BacktestJobTextTests,ContextBacktestJobApiTests,ContextEvalNotRunningTests,ContextEvalStoreHostTests,ContextEvalVerbsTests,ContextJobVerbsTests,ContextLensesApiTests,ContextReviewRowsTests}` (the job text, the job route and its prechecks, the CLI parse and exit codes, the eval verbs).
 ## S-D: the diff shape
 
 The fifth query shape (`ContextQuery.Diff = new DiffRange(base, head)`, optional `Repo`): the files changed from the merge base of two commits to the second, mapped to nodes, then the same cascade, packing, sources and citations as the other shapes.
@@ -701,11 +632,11 @@ The fifth query shape (`ContextQuery.Diff = new DiffRange(base, head)`, optional
 - **Anchor sets.** `GET /sindri/context/lenses?anchor=A&anchor=B` (any number; none is `SND-CONTEXT-006`) answers schema 2 (`LensesSetView`): `anchors[]`, `missingAnchors[]` (an anchor this caller can't read or that doesn't resolve; none resolving is 003), one union of the bands read from one map snapshot, and `coverage.byAnchor`. Each band item names the anchors that reached it (`anchors`) and its `depth`. Repeats of one value, or one `anchor`, keep schema 1 with its old shape plus the additions below. The request types are `GetContextLensesRequest` (one) and `GetContextLensesSetRequest` (several); the endpoint picks by the distinct count. Top-level `edges` (mentions, decides, quotes, supersedes, implements, tests) and `bands.product.edges` (structure types) are disjoint by type: draw both.
 - **`mapVersion=`.** `lenses` and `query` read the graph as of a retained version: `v3`, `3` or `v3@a41b07d`. `draft` with `mapVersion` is 006. A version that isn't held (decided by asking the store, never by the retention count) is `SND-CONTEXT-120` (NotFound, 404, exit 1). The answer's `mapVersion` is exactly `v<N>`; the commit the version was built at is the separate `mapCommit`: 7 lowercase hex characters, omitted when the version names no commit (`LensBasisReader.ShortCommit`, pinned by `MapCommitTextTests`).
 - **Schema 1 fields.** `mapVersion` changed from `v<N>@<sha>` to exactly `v<N>`, the commit now in the sibling `mapCommit` (7 lower-case hex, omitted when none); decisions gained `label` and `kind`, intent records `kind`, code files `kind`/`label`/`trust`.
-- **`searched`.** Every lenses answer says what was looked at: `anchors`, `mapVersion`, `depth`, `hops`, `sources[{id, state, reason, code, asOf}]` (`map`, `onyx`, `code-index`; `state` is `ok`, `not-configured`, `unavailable` or `degraded`, never `error`) and `bands{intent,product,code}.empty`.
+- **`searched`.** Every lenses answer says what was looked at: `anchors`, `mapVersion`, `depth`, `hops`, `sources[{id, state, reason, code, asOf}]` (`map`, one id per record source, `code-index`; `state` is `ok`, `not-configured`, `unavailable` or `degraded`, never `error`) and `bands{intent,product,code}.empty`.
 - **`coverage.map`.** `{paths, truncated, files, unmapped, suggested, created, ageDays}`: the repo's tracked files at HEAD (never a denied path) under the anchors' paths. `created` is the version's moment for a version read; `asOf` is when the answer was built.
 - **`cites[*].fetchedAt`.** A query citation carries `fetchedAt`: map-authored: the version's `created`; live source hits: when this answer fetched them (the answer's `asOf`). Lens results carry no cites yet.
 - **Errors.** `SND-CONTEXT-120` is the first of the range 120 to 129.
-- **CLI.** `context lenses <key>... [--depth N] [--draft | --map-version V] [--json]` (no key is a usage error, exit 2, nothing sent; `--draft` with `--map-version` is SND-CONTEXT-006, exit 1, nothing sent) and `context query ... --map-version V`. Text names missing anchors and prints each source state as a word (`onyx degraded (SND-CONTEXT-010)`).
+- **CLI.** `context lenses <key>... [--depth N] [--draft | --map-version V] [--json]` (no key is a usage error, exit 2, nothing sent; `--draft` with `--map-version` is SND-CONTEXT-006, exit 1, nothing sent) and `context query ... --map-version V`. Text names missing anchors and prints each source state as a word (`linear degraded (SND-CONTEXT-010)`).
 - **Tests.** `LensesSetTests`, `LensesAtVersionTests`, `MapCommitTextTests`, `ContextLensesApiTests`, `ContextReviewVerbsTests`, the `context-lenses` goldens (`set-two-anchors`, `set-missing-anchor`, `bad-depth-006`, `map-version-v1`, `map-version-not-retained-120`, `session-set-other-repo`).
 
 ## S-CL: the code lens (`GET /sindri/context/code`)
