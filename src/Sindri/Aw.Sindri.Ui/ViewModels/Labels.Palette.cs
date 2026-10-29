@@ -45,7 +45,7 @@ internal static partial class Labels
     internal static IReadOnlyList<(string Keys, string Action)> FixedKeys { get; } =
     [
         ("⌘K / Ctrl+K", Palette),
-        ("G then H N D W Q R C A . S J U", "Go to a page: H or N Home, D Decisions on Home, W Workflows, Q Work, R Workflow types, C Context, A Agents, . or S System, J Jobs, U Settings"),
+        ("G then H N D P W Q R C A . S J U", "Go to a page: H or N Home, D Decisions on Home, P Projects, W Workflows, Q Work, R Workflow types, C Context, A Agents, . or S System, J Jobs, U Settings"),
         ("J / K", "Next / previous row"),
         ("Enter / Esc", "Open the details panel / close the top layer"),
         ("O", "Open the linked page"),

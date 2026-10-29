@@ -12,6 +12,7 @@
         xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
+        xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
@@ -68,10 +69,10 @@
       <views:TopBar x:Name="TopBar" DockPanel.Dock="Top" ZIndex="1" />
 
       <!-- Stale after three failed refreshes (§4.1): "Sindri not responding: run sindri doctor" in full under the top bar,
-           since the pill keeps ⌛ stale and its Refresh at the 900 px minimum. -->
+           since the pill keeps ⌛ stale and its Refresh at the 1,000 px minimum. -->
       <Border x:Name="NotRespondingBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsNotRespondingBanner}"
               AutomationProperties.Name="{Binding Text.NotResponding}">
-        <!-- A WrapPanel, like Unreadable's below: at the 900 px minimum or a large text scale the command moves to its
+        <!-- A WrapPanel, like Unreadable's below: at the 1,000 px minimum or a large text scale the command moves to its
              own line instead of running past the window's edge. -->
         <WrapPanel ItemSpacing="10" LineSpacing="6">
           <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -89,7 +90,7 @@
       <!-- Unreadable (§4.1): a banner with the code and sindri doctor; the page below keeps its last data. Three units
            in a WrapPanel: the icon with the heading, the reason, and "Check it:" with the command. They share a line
            while they fit; a longer reason takes the full width and wraps, and the command moves to the next line whole,
-           so nothing runs past the window's edge at the 900 px minimum. -->
+           so nothing runs past the window's edge at the 1,000 px minimum. -->
       <Border x:Name="UnreadableBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsUnreadable}">
         <WrapPanel ItemSpacing="12" LineSpacing="6">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
@@ -199,6 +200,8 @@
             <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
+                <!-- Projects (Projects page spec §7): the heading only, until the page's content lands. -->
+                <pv:ProjectsPage x:Name="ProjectsPage" IsVisible="{Binding IsProjects}" />
                 <Panel IsVisible="{Binding IsWorkflows}">
                   <controls:Deferred DataContext="{Binding Workflows}">
                     <controls:Deferred.Template>

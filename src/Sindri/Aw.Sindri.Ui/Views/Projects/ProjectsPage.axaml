@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="using:Aw.Sindri.Ui.ViewModels.Shell"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectsPage"
+             x:DataType="shell:ShellViewModel">
+  <!-- The Projects page (Projects page spec §7): the heading only, until its content lands. -->
+  <TextBlock Classes="page-title" Text="{Binding Text.Projects}" AutomationProperties.Name="{Binding Text.Projects}" />
+</UserControl>
