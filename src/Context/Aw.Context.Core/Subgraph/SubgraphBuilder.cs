@@ -198,7 +198,7 @@ public static class SubgraphBuilder
 
     private static CodeBand Code(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<string> order, Dictionary<string, Hit> reached, HashSet<string> all)
     {
-        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code).ToList();
+        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k])).ToList();
         var linked = LensCode.Files(graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tests && all.Contains(e.To.Value) && nodes.ContainsKey(e.From.Value) && nodes[e.From.Value].Key.Kind == NodeKind.Code && reached.ContainsKey(e.From.Value)))
             .ToDictionary(f => "code:" + f.Path, StringComparer.Ordinal);
         var files = codes.Select(k => (linked.TryGetValue(k, out var f) ? f : Bare(nodes[k])) with { Depth = reached[k].Depth }).ToList();
