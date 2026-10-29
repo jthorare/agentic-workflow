@@ -63,9 +63,12 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
         }
 
         return await output.Text(
-            $"linear connected: the key reads all {connected.Value.Teams.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked teams and is stored at {connected.Value.Pointer}; the profile points to it.\n"
+            $"linear connected: the key reads all {connected.Value.Teams.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked teams and is stored at {connected.Value.Pointer}; the profile points to it{Listed(connected.Value.Added)}.\n"
             + "Run `sindri profile approve` to start using it.\n", 0).ConfigureAwait(false);
     }
+
+    private static string Listed(IReadOnlyList<string> added) =>
+        added.Count == 0 ? string.Empty : $" and lists its {added.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} teams: {string.Join(", ", added)}";
 
     private async Task<int> Github(CancellationToken ct)
     {
