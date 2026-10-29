@@ -13,7 +13,7 @@ internal static partial class Labels
     internal const string EdgeTabProject = "Project";
 
     /// <summary>The note under a sheet whose refresh failed: the reason follows.</summary>
-    internal static string ProjectSheetStale(Aw.Kernel.Error error) => "Couldn't refresh this project just now. " + InstanceRefused(error);
+    internal static string ProjectSheetStale(Kernel.Error error) => "Couldn't refresh this project just now. " + InstanceRefused(error);
 
     /// <summary>The sheet when the answer can't be read.</summary>
     internal const string ProjectsUnreadable = "This project can't be read from this Sindri.";
@@ -106,5 +106,5 @@ internal static partial class Labels
     internal static string ProjectUnhidden(string name) => $"{name} is back on your page";
 
     /// <summary>The line under the save button when the write was refused.</summary>
-    internal static string ProjectWriteFailed(Aw.Kernel.Error error) => "Couldn't save. " + InstanceRefused(error);
+    internal static string ProjectWriteFailed(Kernel.Error error) => "Couldn't save. " + InstanceRefused(error);
 }

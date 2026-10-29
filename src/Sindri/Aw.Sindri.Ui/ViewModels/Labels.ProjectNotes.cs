@@ -46,5 +46,5 @@ internal static partial class Labels
     /// <summary>The line under Save when the write was refused.</summary>
     /// <param name="error">The API's refusal.</param>
     /// <returns>The words.</returns>
-    internal static string ProjectNotesRefused(Aw.Kernel.Error error) => InstanceRefused(error);
+    internal static string ProjectNotesRefused(Kernel.Error error) => InstanceRefused(error);
 }
