@@ -30,7 +30,7 @@ public sealed record ConceptSynthesisSettings
     public int MaxCharsPerCall { get; init; } = 30_000;
 
     /// <summary>The share of a derived concept's features one synthesized concept must hold for the derived one to fold into it (#1281).</summary>
-    public double CoverShare { get; init; }
+    public double CoverShare { get; init; } = 2.0 / 3.0;
 
     /// <summary>The grouper's knobs.</summary>
     public GroupingSettings Grouping => new(Neighbours, MinCosine, MaxGroup, MinRecords, MinSources);
