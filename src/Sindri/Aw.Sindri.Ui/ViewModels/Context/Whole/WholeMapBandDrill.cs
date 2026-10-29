@@ -25,6 +25,11 @@ internal static class WholeMapBandDrill
         }
 
         edges.AddRange(ProductClosure(geometry, keep));
+        if (!geometry.Nodes.Any(n => keep.Contains(n.Key) && NodeBands.Of(n.Kind) == WholeBand.Product))
+        {
+            // Nothing in Product is reached: the Why band's own records and decisions stay drawn beside the empty Product band, not an empty Why band.
+            keep.UnionWith(Inside(geometry, band));
+        }
         var cut = Cut(geometry, band, edges, keep, alsoKeep: WholeBand.Product);
         return cut.Nodes.Any(n => NodeBands.Of(n.Kind) == WholeBand.Product)
             ? cut

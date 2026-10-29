@@ -128,8 +128,10 @@ public sealed class WhyDrillFramesTests : FrameHost
         var (window, shell) = await DrilledIntoWhy(concept);
 
         Assert.True(Visible(window, "WholeDrillEmpty"));
-        Assert.Equal(Labels.ContextDrillWhyNoProduct, Named<Avalonia.Controls.TextBlock>(window, "WholeDrillEmpty").Text);
+        Assert.Equal(Labels.ContextDrillWhyNoProductLine, Named<Avalonia.Controls.TextBlock>(window, "WholeDrillEmpty").Text);
         Assert.DoesNotContain(shell.Context.Whole.Shown!.Nodes, n => NodeBands.Of(n.Kind) == WholeBand.Product);
+        AssertDrawn(window, shell, "A lonely decision");
+        AssertDrawn(window, shell, "A record");
         Frame(window, "why-drill-no-product", "w6-");
     });
 }

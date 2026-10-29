@@ -52,6 +52,27 @@ public sealed class WholeMapBandDrillTests
     }
 
     [Fact]
+    public void Why_across_with_no_product_reached_keeps_the_why_nodes_and_draws_no_edge()
+    {
+        var map = WholeMapLayoutTests.Draft("nodes-small");
+        var area = map.Areas[0].Key;
+        WholeNode Node(string key, string kind) => new(key, key, kind, area, [], "trusted", "human", 1, Confirmed: true);
+        var geometry = WholeMapLayout.Place(map with
+        {
+            Areas = [map.Areas[0]],
+            AreaEdges = [],
+            Nodes = [Node("decision:lonely", "decision"), Node("record:r", "record")],
+            Edges = [new WholeEdge("decision:lonely", "record:r", "quotes", "edge:a", "human", 1, Confirmed: true)],
+        });
+
+        var shown = WholeMapBandDrill.Cross(geometry, WholeBand.Intent);
+
+        Expect.Sequence(["decision:lonely", "record:r"], Keys(shown));
+        Expect.Equal(0, shown.Edges.Count);
+        Expect.Equal(Labels.ContextDrillWhyNoProduct, Meta(shown, WholeBand.Product));
+    }
+
+    [Fact]
     public void Why_across_adds_at_most_the_cap_of_chained_product_nodes()
     {
         var map = WholeMapLayoutTests.Draft("nodes-small");
