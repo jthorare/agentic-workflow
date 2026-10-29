@@ -29,7 +29,8 @@ internal static class RecordRollup
         var edges = new Dictionary<(string From, string To), GraphEdge>();
         foreach (var record in records)
         {
-            var perFeature = record.Paths.Select(p => homes.GetValueOrDefault("code:" + p)).OfType<NodeKey>()
+            // why: a path with no home feature (a script no recognizer reads) has no node to roll up from.
+            var perFeature = record.Paths.Where(p => homes.ContainsKey("code:" + p)).Select(p => homes["code:" + p])
                 .GroupBy(f => f.Value, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
             if (perFeature.Count > 0)
             {
