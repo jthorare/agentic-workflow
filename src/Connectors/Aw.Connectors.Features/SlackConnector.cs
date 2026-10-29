@@ -25,7 +25,8 @@ internal sealed partial class SlackConnector(
     {
         var parsed = SlackCursor.Parse(after?.Value);
         var cursor = parsed ?? SlackCursor.Empty;
-        var result = await pull.Handle(new PullSlackRequest(settings.Channels, settings.Workspace, cursor, limit) { WindowStart = window is { } back ? (clock ?? TimeProvider.System).GetUtcNow() - back : null, Before = before }, cancellationToken).ConfigureAwait(false);
+        var now = (clock ?? TimeProvider.System).GetUtcNow();
+        var result = await pull.Handle(new PullSlackRequest(settings.Channels, settings.Workspace, cursor, limit) { WindowStart = window is { } back ? now - back : null, Before = before, Now = now }, cancellationToken).ConfigureAwait(false);
         if (result.IsError)
         {
             return result.Error;

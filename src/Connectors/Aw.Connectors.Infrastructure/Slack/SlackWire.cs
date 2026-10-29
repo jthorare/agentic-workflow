@@ -34,7 +34,7 @@ internal static partial class SlackWire
         }
 
         var replies = e.TryGetProperty("reply_count", out var count) && count.ValueKind == JsonValueKind.Number && count.TryGetInt32(out var n) ? Math.Max(0, n) : 0;
-        return new SlackMessage(ts, Str(e, "thread_ts"), Author(e), Str(e, "text") ?? string.Empty, replies, Str(e, "subtype"));
+        return new SlackMessage(ts, Str(e, "thread_ts"), Author(e), Str(e, "text") ?? string.Empty, replies, Str(e, "subtype"), Str(e, "latest_reply") is { } latest && SlackTs.TryParse(latest, out _) ? latest : null);
     }
 
     /// <summary>The display name of the author: the profile's display name, then its real name, then a bot's username or profile name. The user id is never used.</summary>
