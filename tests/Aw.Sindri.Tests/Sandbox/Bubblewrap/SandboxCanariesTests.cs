@@ -73,6 +73,25 @@ public sealed class SandboxCanariesTests
     }
 
     [Fact]
+    public void A_plan_with_an_agent_home_bound_has_the_hooks_run_canary() =>
+        Assert.Contains(SandboxReasons.HooksRun, Reasons(SandboxPlannerTests.Build(Req.WriteScope)), StringComparer.Ordinal);
+
+    [Fact]
+    public void A_plan_with_no_agent_home_bound_has_no_hooks_run_canary_and_keeps_the_others()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope);
+        var bare = plan with { Environment = [.. plan.Environment.Where(static e => e.Name is not ("CLAUDE_CONFIG_DIR" or "CODEX_HOME"))] };
+
+        var reasons = Reasons(bare);
+
+        Assert.DoesNotContain(SandboxReasons.HooksRun, reasons, StringComparer.Ordinal);
+        foreach (var kept in new[] { "fs-deny", "fs-write", "env", "login", "net-deny" })
+        {
+            Assert.Contains(kept, reasons, StringComparer.Ordinal);
+        }
+    }
+
+    [Fact]
     public void The_hook_canary_never_exercises_a_dropped_or_rewriting_hook()
     {
         var script = SandboxCanaries.For(SandboxPlannerTests.Build(Req.WriteScope)).Single(c => c.Reason == "hooks-run").Script;
