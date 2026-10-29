@@ -51,7 +51,7 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
         foreach (var request in new[] { fixture.Request(), fixture.WriteScopeRequest() })
         {
             Assert.NotNull(request);
-            var session = Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.For(_dir + "/sindri", request.Launch);
+            var session = SessionHomePaths.For(_dir + "/sindri", request.Launch);
             Assert.True(File.Exists(session + "/control.json"));
             Assert.True(Directory.Exists(session + "/gh-config"));
             Assert.True(Directory.Exists(_dir + "/sindri/launches"));
