@@ -22,6 +22,25 @@ public static class ModelKinds
         _ => throw new ArgumentOutOfRangeException(nameof(purpose)),
     };
 
+    /// <summary>The kind a profile key names.</summary>
+    /// <param name="key">The key as written.</param>
+    /// <param name="kind">The kind, when the key is one.</param>
+    /// <returns>Whether it is one.</returns>
+    public static bool TryParse(string key, out ModelKind kind)
+    {
+        foreach (var candidate in All)
+        {
+            if (string.Equals(Key(candidate), key, StringComparison.Ordinal))
+            {
+                kind = candidate;
+                return true;
+            }
+        }
+
+        kind = default;
+        return false;
+    }
+
     /// <summary>The key the profile and the ledger use.</summary>
     /// <param name="kind">The kind.</param>
     /// <returns>'labeling', 'conceptNaming', 'decisionExtraction', 'adjudication', 'mapCleanup' or 'rerank'.</returns>

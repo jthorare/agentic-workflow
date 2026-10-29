@@ -37,9 +37,5 @@ public sealed record ModelsSettings
     /// <returns>The settings, or SND-CONTEXT-001 naming the key path.</returns>
     public static Result<ModelsSettings> Read(JsonElement? section) => Read(section, legacy: null);
 
-    internal static Result<ModelsSettings> Read(JsonElement? section, ConceptScanModelsSection? legacy)
-    {
-        _ = legacy;
-        return section is not { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } ? new ModelsSettings() : throw new NotSupportedException();
-    }
+    internal static Result<ModelsSettings> Read(JsonElement? section, ConceptScanModelsSection? legacy) => ModelsRules.Read(section, legacy);
 }

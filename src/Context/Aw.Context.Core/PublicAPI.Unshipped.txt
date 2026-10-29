@@ -9936,3 +9936,5 @@ Aw.Context.Core.Models.ModelAnswer.TokenBasis.get -> Aw.Context.Core.Models.Toke
 Aw.Context.Core.Models.ModelAnswer.TokenBasis.init -> void
 Aw.Context.Core.Engine.ContextSettings.Models.get -> Aw.Context.Core.Engine.ModelsSettings!
 Aw.Context.Core.Engine.ContextSettings.Models.init -> void
+static Aw.Context.Core.Engine.ModelKinds.TryParse(string! key, out Aw.Context.Core.Engine.ModelKind kind) -> bool
+static Aw.Context.Core.Engine.ModelNames.BuiltInName(Aw.Context.Core.Engine.ModelHarness harness, Aw.Context.Core.Models.ModelTier tier) -> string!

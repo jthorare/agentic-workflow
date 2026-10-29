@@ -606,6 +606,8 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 | `SND-CONTEXT-082` | Invalid (400) | 1 | `--arms` names an unknown arm (the message lists the arms and which are not available yet) |
 | `SND-CONTEXT-083` | degraded | 0 | Adjudication stopped at the 1.5M-token cap |
 | `SND-CONTEXT-090` | degraded | 0 | The rerank (`context.ranker.rerank`, or the `ranker-rerank` backtest arm) could not order the items: the answer lists `rerank` as degraded and keeps the feature or fusion order |
+| `SND-CONTEXT-240` | Unavailable (503) | 2 | Every model harness a call may try is at its usage limit or failing (model routing, `context.models`; raised by the router, not by the settings) |
+| `SND-CONTEXT-241` | Unavailable (503) | 2 | No model harness a call may try is installed |
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 

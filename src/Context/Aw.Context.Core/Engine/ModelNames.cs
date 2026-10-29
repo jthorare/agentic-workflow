@@ -16,7 +16,25 @@ public sealed partial record ModelNames(CliModels ClaudeCode, CliModels Codex, C
     public static ModelNames None { get; } = new(new CliModels(Cheap: null, Strong: null), new CliModels(Cheap: null, Strong: null), new CliModels(Cheap: null, Strong: null));
 
     /// <summary>The names a profile that says nothing gets: haiku and sonnet, gpt-6-luna and gpt-5.5, gpt-5.6-luna-none-fast and gpt-5 (spec 3.3).</summary>
-    public static ModelNames BuiltIn { get; } = new(new CliModels("haiku", "sonnet"), new CliModels("gpt-6-luna", "gpt-5.5"), new CliModels("gpt-5.6-luna-none-fast", "gpt-5"));
+    public static ModelNames BuiltIn { get; } = new(
+        new CliModels(BuiltInName(ModelHarness.ClaudeCode, ModelTier.Cheap), BuiltInName(ModelHarness.ClaudeCode, ModelTier.Strong)),
+        new CliModels(BuiltInName(ModelHarness.Codex, ModelTier.Cheap), BuiltInName(ModelHarness.Codex, ModelTier.Strong)),
+        new CliModels(BuiltInName(ModelHarness.Cursor, ModelTier.Cheap), BuiltInName(ModelHarness.Cursor, ModelTier.Strong)));
+
+    /// <summary>The name the built-in table gives a harness at a tier.</summary>
+    /// <param name="harness">The harness.</param>
+    /// <param name="tier">The tier.</param>
+    /// <returns>The model name.</returns>
+    public static string BuiltInName(ModelHarness harness, ModelTier tier) => (harness, tier) switch
+    {
+        (ModelHarness.ClaudeCode, ModelTier.Strong) => "sonnet",
+        (ModelHarness.ClaudeCode, _) => "haiku",
+        (ModelHarness.Codex, ModelTier.Strong) => "gpt-5.5",
+        (ModelHarness.Codex, _) => "gpt-6-luna",
+        (ModelHarness.Cursor, ModelTier.Strong) => "gpt-5",
+        (ModelHarness.Cursor, _) => "gpt-5.6-luna-none-fast",
+        _ => throw new ArgumentOutOfRangeException(nameof(harness)),
+    };
 
     /// <summary>The name the profile wrote for a harness at a tier.</summary>
     /// <param name="harness">The harness.</param>
