@@ -23,5 +23,6 @@ internal sealed record ContextSection(
     PublishSection? Publish = null,
     RankerSection? Ranker = null,
     ConceptScanSection? ConceptScan = null,
+    ConceptSynthesisSection? ConceptSynthesis = null,
     ChecksSection? Checks = null,
     IndexSection? Index = null);

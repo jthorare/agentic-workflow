@@ -2908,97 +2908,6 @@ Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Tokens.get -> int?
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Tokens.init -> void
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Reason.get -> string?
 Aw.Sindri.Features.GetInstanceEvents.InstanceEventFields.Reason.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest
-Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.<Clone>$() -> Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest!
-Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.Equals(Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest? other) -> bool
-Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.OnyxStatusRequest() -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.<Clone>$() -> Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse!
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.PreflightCheck!>!
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Checks.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Equals(Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse? other) -> bool
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.ExitCode.get -> int
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.ExitCode.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.PinnedCommit.get -> string!
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.PinnedCommit.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.PinnedVersion.get -> string!
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.PinnedVersion.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Port.get -> int
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Port.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.State.get -> Aw.Sindri.Core.Onyx.OnyxState
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.State.init -> void
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.ToString() -> string!
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.ToString() -> string!
-static Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.operator !=(Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest? left, Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest? right) -> bool
-static Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest.operator ==(Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest? left, Aw.Sindri.Features.OnyxStatus.OnyxStatusRequest? right) -> bool
-static Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.operator !=(Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse? left, Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse? right) -> bool
-static Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.operator ==(Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse? left, Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse? right) -> bool
-Aw.Sindri.Features.OnyxUp.OnyxUpRequest
-Aw.Sindri.Features.OnyxUp.OnyxUpRequest.<Clone>$() -> Aw.Sindri.Features.OnyxUp.OnyxUpRequest!
-Aw.Sindri.Features.OnyxUp.OnyxUpRequest.Equals(Aw.Sindri.Features.OnyxUp.OnyxUpRequest? other) -> bool
-Aw.Sindri.Features.OnyxUp.OnyxUpRequest.OnyxUpRequest() -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.<Clone>$() -> Aw.Sindri.Features.OnyxUp.OnyxUpResponse!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Equals(Aw.Sindri.Features.OnyxUp.OnyxUpResponse? other) -> bool
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Port.get -> int
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Port.init -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Ran.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Skipped.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Steps.init -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Url.get -> string!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Url.init -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Version.get -> string!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Version.init -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Warnings.init -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.NeedsHuman.get -> System.Collections.Generic.IReadOnlyList<string!>!
-override Aw.Sindri.Features.OnyxUp.OnyxUpRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxUp.OnyxUpRequest.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxUp.OnyxUpRequest.ToString() -> string!
-override Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxUp.OnyxUpResponse.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxUp.OnyxUpResponse.ToString() -> string!
-static Aw.Sindri.Features.OnyxUp.OnyxUpRequest.operator !=(Aw.Sindri.Features.OnyxUp.OnyxUpRequest? left, Aw.Sindri.Features.OnyxUp.OnyxUpRequest? right) -> bool
-static Aw.Sindri.Features.OnyxUp.OnyxUpRequest.operator ==(Aw.Sindri.Features.OnyxUp.OnyxUpRequest? left, Aw.Sindri.Features.OnyxUp.OnyxUpRequest? right) -> bool
-static Aw.Sindri.Features.OnyxUp.OnyxUpResponse.operator !=(Aw.Sindri.Features.OnyxUp.OnyxUpResponse? left, Aw.Sindri.Features.OnyxUp.OnyxUpResponse? right) -> bool
-static Aw.Sindri.Features.OnyxUp.OnyxUpResponse.operator ==(Aw.Sindri.Features.OnyxUp.OnyxUpResponse? left, Aw.Sindri.Features.OnyxUp.OnyxUpResponse? right) -> bool
-Aw.Sindri.Features.OnyxDown.OnyxDownRequest
-Aw.Sindri.Features.OnyxDown.OnyxDownRequest.<Clone>$() -> Aw.Sindri.Features.OnyxDown.OnyxDownRequest!
-Aw.Sindri.Features.OnyxDown.OnyxDownRequest.Equals(Aw.Sindri.Features.OnyxDown.OnyxDownRequest? other) -> bool
-Aw.Sindri.Features.OnyxDown.OnyxDownRequest.OnyxDownRequest() -> void
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.<Clone>$() -> Aw.Sindri.Features.OnyxDown.OnyxDownResponse!
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Equals(Aw.Sindri.Features.OnyxDown.OnyxDownResponse? other) -> bool
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.WasRunning.get -> bool
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.WasRunning.init -> void
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Stopped.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Stopped.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Deconstruct(out Aw.Sindri.Core.Onyx.OnyxState State, out string! PinnedVersion, out string! PinnedCommit, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.PreflightCheck!>! Checks, out int Port, out int ExitCode, out string? Url, out string? RunningVersion, out string? Detail) -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Detail.get -> string?
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Detail.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.OnyxStatusResponse(Aw.Sindri.Core.Onyx.OnyxState State, string! PinnedVersion, string! PinnedCommit, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.PreflightCheck!>! Checks, int Port, int ExitCode, string? Url, string? RunningVersion, string? Detail) -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.RunningVersion.get -> string?
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.RunningVersion.init -> void
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Url.get -> string?
-Aw.Sindri.Features.OnyxStatus.OnyxStatusResponse.Url.init -> void
-override Aw.Sindri.Features.OnyxDown.OnyxDownRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxDown.OnyxDownRequest.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxDown.OnyxDownRequest.ToString() -> string!
-override Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxDown.OnyxDownResponse.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxDown.OnyxDownResponse.ToString() -> string!
-static Aw.Sindri.Features.OnyxDown.OnyxDownRequest.operator !=(Aw.Sindri.Features.OnyxDown.OnyxDownRequest? left, Aw.Sindri.Features.OnyxDown.OnyxDownRequest? right) -> bool
-static Aw.Sindri.Features.OnyxDown.OnyxDownRequest.operator ==(Aw.Sindri.Features.OnyxDown.OnyxDownRequest? left, Aw.Sindri.Features.OnyxDown.OnyxDownRequest? right) -> bool
-static Aw.Sindri.Features.OnyxDown.OnyxDownResponse.operator !=(Aw.Sindri.Features.OnyxDown.OnyxDownResponse? left, Aw.Sindri.Features.OnyxDown.OnyxDownResponse? right) -> bool
-static Aw.Sindri.Features.OnyxDown.OnyxDownResponse.operator ==(Aw.Sindri.Features.OnyxDown.OnyxDownResponse? left, Aw.Sindri.Features.OnyxDown.OnyxDownResponse? right) -> bool
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Deconstruct(out bool WasRunning, out System.Collections.Generic.IReadOnlyList<string!>! Stopped, out System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.OnyxDownResponse(bool WasRunning, System.Collections.Generic.IReadOnlyList<string!>! Stopped, System.Collections.Generic.IReadOnlyList<string!>! Warnings) -> void
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Sindri.Features.OnyxDown.OnyxDownResponse.Warnings.init -> void
 Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest
 Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest!
 Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Nodes, out int? Depth, out string? MapVersion, out bool FromUrl) -> void
@@ -3355,36 +3264,6 @@ static Aw.Sindri.Features.Scoping.ScopingShowRequest.operator !=(Aw.Sindri.Featu
 static Aw.Sindri.Features.Scoping.ScopingShowRequest.operator ==(Aw.Sindri.Features.Scoping.ScopingShowRequest? left, Aw.Sindri.Features.Scoping.ScopingShowRequest? right) -> bool
 static Aw.Sindri.Features.Scoping.ScopingView.operator !=(Aw.Sindri.Features.Scoping.ScopingView? left, Aw.Sindri.Features.Scoping.ScopingView? right) -> bool
 static Aw.Sindri.Features.Scoping.ScopingView.operator ==(Aw.Sindri.Features.Scoping.ScopingView? left, Aw.Sindri.Features.Scoping.ScopingView? right) -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.<Clone>$() -> Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest!
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Deconstruct(out int Port, out string! Version) -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Equals(Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? other) -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.OnyxAccountRequest(int Port, string! Version) -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Port.get -> int
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Port.init -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Version.get -> string!
-Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Version.init -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.<Clone>$() -> Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse!
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Equals(Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? other) -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.KeyPointer.get -> string?
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.KeyPointer.init -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.NeedsHuman.get -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.ProfileChanged.get -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.ProfileChanged.init -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Steps.init -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Url.get -> string!
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Url.init -> void
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.ToString() -> string!
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Equals(object? obj) -> bool
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.GetHashCode() -> int
-override Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.ToString() -> string!
-static Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.operator !=(Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? right) -> bool
-static Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest.operator ==(Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountRequest? right) -> bool
-static Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.operator !=(Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? right) -> bool
-static Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.operator ==(Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? left, Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse? right) -> bool
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Anchors, out bool Draft, out int? Depth, out string? MapVersion, out string? Hops, out int? Limit, out int? Offset) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.GetContextLensesAnswerRequest(System.Collections.Generic.IReadOnlyList<string!>! Anchors, bool Draft = false, int? Depth = null, string? MapVersion = null, string? Hops = null, int? Limit = null, int? Offset = null) -> void
 Aw.Sindri.Features.ContextCalls.GetContextLensesAnswerRequest.Hops.get -> string?
@@ -3547,12 +3426,6 @@ override Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.GetHashCode() 
 override Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest? left, Aw.Sindri.Features.ContextCalls.GetContextHistoryRequest? right) -> bool
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Deconstruct(out string! Url, out string? KeyPointer, out bool ProfileChanged, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.OnyxAccountResponse(string! Url, string? KeyPointer, bool ProfileChanged, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
-Aw.Sindri.Features.OnyxAccount.OnyxAccountResponse.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>!
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Deconstruct(out int Port, out string! Url, out string! Version, out System.Collections.Generic.IReadOnlyList<string!>! Warnings, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.OnyxUpResponse(int Port, string! Url, string! Version, System.Collections.Generic.IReadOnlyList<string!>! Warnings, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>! Steps) -> void
-Aw.Sindri.Features.OnyxUp.OnyxUpResponse.Steps.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Onyx.OnyxStepResult!>!
 Aw.Sindri.Features.RecordEval.RecordEvalRequest
 Aw.Sindri.Features.RecordEval.RecordEvalRequest.<Clone>$() -> Aw.Sindri.Features.RecordEval.RecordEvalRequest!
 Aw.Sindri.Features.RecordEval.RecordEvalRequest.Address.get -> string!
