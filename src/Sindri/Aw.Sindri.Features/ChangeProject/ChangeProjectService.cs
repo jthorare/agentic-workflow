@@ -1,6 +1,6 @@
 using System.Globalization;
-using Aw.Kernel.Services;
 using Aw.Kernel;
+using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
