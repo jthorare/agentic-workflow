@@ -30,12 +30,22 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, ISourceCatalog catalog
     /// <summary>The step a feed's tick is followed by, or null for none.</summary>
     internal delegate Func<SourceSync, ValueTask<SourceSync>>? AfterTick(RecordFeed feed);
 
-    /// <summary>The steps for each feed of one call; <paramref name="walked"/> are the sources whose decisions an intent walk owns.</summary>
-    internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, IReadOnlyList<IContextSource> walked, CancellationToken cancellationToken)
+    /// <summary>The steps for each feed of one call, a missing map being no step (<see cref="For(ContextScope, ValueTuple{ContextSettings, Scrubbers}, IReadOnlyList{IContextSource}, bool, CancellationToken)"/>).</summary>
+    internal ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, IReadOnlyList<IContextSource> walked, CancellationToken cancellationToken) =>
+        For(scope, context, walked, reportNoMap: false, cancellationToken);
+
+    /// <summary>The steps for each feed of one call; with <paramref name="reportNoMap"/>, a missing map is the step's code instead of no step; <paramref name="walked"/> are the sources whose decisions an intent walk owns.</summary>
+    internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, IReadOnlyList<IContextSource> walked, bool reportNoMap, CancellationToken cancellationToken)
     {
         var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
         return feed =>
         {
+            if (map.IsError && reportNoMap && feed.Source != _projects && !walked.Any(w => w.Describe().Id == feed.Source))
+            {
+                // why: the decision run says it skipped and why; the feed's own sync is not at fault, so its tick row stays as it is
+                return tick => ValueTask.FromResult(tick with { Code = map.Error.Code });
+            }
+
             if (map.IsError || feed.Source == _projects || walked.Any(w => w.Describe().Id == feed.Source))
             {
                 return null;
@@ -49,9 +59,9 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, ISourceCatalog catalog
     /// <summary>
     /// The steps for the index tick, which walks no intent sources itself: the live intent sources of the profile (Linear) keep the decisions of the manual sync's walk.
     /// </summary>
-    internal ValueTask<AfterTick> ForTick(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, IReadOnlyList<ContextRepo> repos, CancellationToken cancellationToken)
+    internal ValueTask<AfterTick> ForTick(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, IReadOnlyList<ContextRepo> repos, bool reportNoMap, CancellationToken cancellationToken)
     {
         IReadOnlyList<IContextSource> live = [.. catalog.For(context.Settings, repos, context.Scrubbers).Where(s => s.Describe() is { Kind: SourceKind.Intent, Freshness: SourceFreshness.Live })];
-        return For(scope, context, live, cancellationToken);
+        return For(scope, context, live, reportNoMap, cancellationToken);
     }
 }
