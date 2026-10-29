@@ -50,7 +50,7 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
     private async Task<int> Linear(CancellationToken ct)
     {
         var connect = new LinearConnect(
-            services.GetRequiredService<IOnyxPrompts>(),
+            services.GetRequiredService<ISecretPrompts>(),
             services.GetRequiredService<IProfileSource>(),
             services.GetRequiredService<ISecretWriter>(),
             services.GetRequiredService<ISecretPointers>(),

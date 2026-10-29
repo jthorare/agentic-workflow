@@ -18,7 +18,7 @@ public sealed class LinearConnectTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private readonly FakeOnyxPrompts _prompts = new();
+    private readonly FakeSecretPrompts _prompts = new();
     private readonly FakeSecretWriter _secrets = new();
     private readonly InMemoryProfiles _profiles = new();
     private readonly RecordingProfileWriter _written = new();
@@ -31,7 +31,7 @@ public sealed class LinearConnectTests
         _prompts.Answer(Planted);
     }
 
-    private LinearConnect Connect(FakeOnyxPrompts? prompts = null) => new(prompts ?? _prompts, _profiles, _secrets, _secrets, _written, (url, key) =>
+    private LinearConnect Connect(FakeSecretPrompts? prompts = null) => new(prompts ?? _prompts, _profiles, _secrets, _secrets, _written, (url, key) =>
     {
         _built.Add((url, key));
         return _reader;
@@ -155,7 +155,7 @@ public sealed class LinearConnectTests
     [Fact, Trait("Lane", "unit")]
     public async Task An_empty_answer_saves_nothing()
     {
-        var prompts = new FakeOnyxPrompts();
+        var prompts = new FakeSecretPrompts();
         prompts.Answer("   ");
 
         var result = await Connect(prompts).Run(human: true, Ct);
