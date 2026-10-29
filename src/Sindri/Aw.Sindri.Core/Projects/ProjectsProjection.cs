@@ -20,7 +20,8 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         string.Equals(eventType, EventTypes.ProjectAttached, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProjectChanged, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProjectDetached, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProjectHidden, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.ProjectHidden, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.ProjectLedNoted, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -31,6 +32,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             EventTypes.ProjectAttached => await Attached(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProjectChanged => await Changed(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProjectDetached => await Detached(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ProjectLedNoted => Unit.Value,
             _ => await Hidden(recorded, rows, cancellationToken).ConfigureAwait(false),
         };
     }

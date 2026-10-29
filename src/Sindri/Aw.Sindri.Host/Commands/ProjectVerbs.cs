@@ -221,16 +221,21 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
             return await client.Post<HideProjectRequest, ProjectAccepted>(Root + "/hide", new HideProjectRequest(command.Project, command.Verb == ProjectVerbArguments.Verb.Hide, version.Value), ct).ConfigureAwait(false);
         }
 
-        if (!ProjectId.TryFrom(command.Project, out var id))
+        // a led project's notes are edited under its Linear key; the server refuses every other field
+        var led = command.Verb == ProjectVerbArguments.Verb.Edit && ProjectDecisions.NamesLinearProject(command.Project);
+        if (!led && !ProjectId.TryFrom(command.Project, out _))
         {
             return SindriErrors.InvalidInput.With($"'{command.Project}' isn't a project id (prj_…); `sindri projects` will list them");
         }
 
-        var route = Root + "/" + Uri.EscapeDataString(id.Value);
+        var route = Root + "/" + Uri.EscapeDataString(command.Project);
         return command.Verb == ProjectVerbArguments.Verb.Remove
             ? await client.Post<DetachProjectBody, ProjectAccepted>(route + "/detach", new DetachProjectBody(version.Value), ct).ConfigureAwait(false)
-            : await client.Post<ChangeProjectBody, ProjectAccepted>(route + "/change", new ChangeProjectBody(version.Value, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Target, command.ClearTarget, command.Notes, command.ClearNotes), ct).ConfigureAwait(false);
+            : await client.Post<ChangeProjectBody, ProjectAccepted>(route + "/change", ChangeBody(command, version.Value), ct).ConfigureAwait(false);
     }
+
+    private static ChangeProjectBody ChangeBody(ProjectVerbArguments.Parsed command, long version) =>
+        new(version, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Target, command.ClearTarget, command.Notes, command.ClearNotes);
 
     /// <summary>The version a write sends: the one typed, or the card's own, read now (as 'item close' does).</summary>
     private async Task<Result<long>> Version(ProjectVerbArguments.Parsed command, CancellationToken ct)

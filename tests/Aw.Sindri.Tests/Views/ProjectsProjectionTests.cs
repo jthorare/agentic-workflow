@@ -1,6 +1,7 @@
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Views;
@@ -216,12 +217,76 @@ public sealed class ProjectsProjectionTests
         Assert.Equal((false, 2L, 2L), (unhidden.Hidden, unhidden.Version, unhidden.Sequence));
     }
 
+    private LedgerEvent Hide(long sequence, bool hidden, long version) =>
+        Recorded.Of(H.Events, EventTypes.ProjectHidden, new ProjectHidden(Command(), ProjectRows.LinearKey, hidden, version), sequence);
+
+    private LedgerEvent Noted(long sequence, string? notes, long version) =>
+        Recorded.Of(H.Events, EventTypes.ProjectLedNoted, new ProjectLedNoted(Command(), ProjectRows.LinearKey, notes, version), sequence);
+
+    private static async Task<ProjectHiddenRow?> LedRow(ViewsHarness views) =>
+        (await views.Views.Get<ProjectHiddenRow>(ViewNames.ProjectHidden, ProjectRows.LinearKey, Token)).Value;
+
+    // folds the events one page each here, then all in one page into a fresh set of views (a rebuild from the ledger): the row must come out the same
+    private async Task<ProjectHiddenRow> FoldAndRebuild(params LedgerEvent[] ledger)
+    {
+        foreach (var recorded in ledger)
+        {
+            await _v.Apply([recorded]);
+        }
+
+        var rebuilt = new ViewsHarness();
+        await rebuilt.Apply(ledger);
+        var row = (await LedRow(_v))!;
+        Assert.Equal(row, await LedRow(rebuilt));
+        return row;
+    }
+
     [Fact, Trait("Lane", "unit")]
-    public void The_projection_folds_exactly_the_four_project_events_into_its_two_views()
+    public async Task Led_noted_makes_a_row_that_is_not_hidden_with_the_notes_and_the_version()
+    {
+        var row = await FoldAndRebuild(Noted(1, "first line\nsecond", version: 1));
+
+        Assert.Equal((ProjectRows.LinearKey, false, 1L, 1L, "first line\nsecond"), (row.Linear, row.Hidden, row.Version, row.Sequence, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Hide_keeps_a_led_cards_notes()
+    {
+        var row = await FoldAndRebuild(Noted(1, "keep me", version: 1), Hide(2, hidden: true, version: 2));
+
+        Assert.Equal((true, 2L, "keep me"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unhide_keeps_a_led_cards_notes()
+    {
+        var row = await FoldAndRebuild(Noted(1, "keep me", version: 1), Hide(2, hidden: true, version: 2), Hide(3, hidden: false, version: 3));
+
+        Assert.Equal((false, 3L, "keep me"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_notes_save_keeps_a_hidden_card_hidden()
+    {
+        var row = await FoldAndRebuild(Hide(1, hidden: true, version: 1), Noted(2, "while hidden", version: 2));
+
+        Assert.Equal((true, 2L, "while hidden"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Null_notes_clear_them()
+    {
+        var row = await FoldAndRebuild(Noted(1, "gone soon", version: 1), Noted(2, notes: null, version: 2));
+
+        Assert.Equal((false, 2L, null), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projection_folds_exactly_the_five_project_events_into_its_two_views()
     {
         var projection = new ProjectsProjection(H.Events);
 
-        Assert.All([EventTypes.ProjectAttached, EventTypes.ProjectChanged, EventTypes.ProjectDetached, EventTypes.ProjectHidden], type => Assert.True(projection.Handles(type)));
+        Assert.All([EventTypes.ProjectAttached, EventTypes.ProjectChanged, EventTypes.ProjectDetached, EventTypes.ProjectHidden, EventTypes.ProjectLedNoted], type => Assert.True(projection.Handles(type)));
         Assert.False(projection.Handles(EventTypes.ItemCreated));
         Assert.Equal([ViewNames.ProjectAttached, ViewNames.ProjectHidden], projection.Views);
     }

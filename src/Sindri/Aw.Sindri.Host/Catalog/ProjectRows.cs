@@ -15,7 +15,7 @@ internal static class ProjectRows
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
         Row("AttachProject", typeof(AttachProjectRequest), "/sindri/projects", "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]", destructive: false),
-        Row("ChangeProject", typeof(ChangeProjectRequest), "/sindri/projects/{projectId}/change", "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]", destructive: false),
+        Row("ChangeProject", typeof(ChangeProjectRequest), "/sindri/projects/{projectId}/change", "sindri project edit <project|linear:project/id> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]", destructive: false),
         Row("DetachProject", typeof(DetachProjectRequest), "/sindri/projects/{projectId}/detach", "sindri project remove <project> --version <n>", destructive: true),
         Row("HideProject", typeof(HideProjectRequest), "/sindri/projects/hide", "sindri project hide <project> --version <n>", destructive: false),
     ];

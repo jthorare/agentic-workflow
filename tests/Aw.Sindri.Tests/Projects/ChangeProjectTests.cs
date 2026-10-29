@@ -18,7 +18,7 @@ public sealed class ChangeProjectTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static ChangeProjectRequest Change(ProjectEdit edit, long version = 1) => new(ProjectRows.HandMadeId, version, edit);
+    private static ChangeProjectRequest Change(ProjectEdit edit, long version = 1) => new(ProjectRows.HandMadeId.Value, version, edit);
 
     [Fact]
     public async Task The_changed_fields_are_recorded_and_the_version_moves()

@@ -36,6 +36,32 @@ public sealed class AttachProjectTests
     }
 
     [Fact]
+    public async Task Attaching_a_project_that_stopped_being_led_takes_its_led_notes_when_none_are_typed()
+    {
+        await _h.Lease();
+        await _h.SeedLedNotes(version: 1, notes: "from when I led it");
+        using var human = _h.Human();   // the stored project is led by someone else now
+
+        var kept = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey), Token);
+
+        Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.ToString() : null);
+        Expect.Equal("from when I led it", _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events)).Notes);
+    }
+
+    [Fact]
+    public async Task Notes_typed_on_attach_win_over_the_led_notes()
+    {
+        await _h.Lease();
+        await _h.SeedLedNotes(version: 1, notes: "from when I led it");
+        using var human = _h.Human();
+
+        var typed = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey, Notes: "fresh start"), Token);
+
+        Assert.True(typed.IsSuccess, typed.IsError ? typed.Error.ToString() : null);
+        Expect.Equal("fresh start", _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events)).Notes);
+    }
+
+    [Fact]
     public async Task A_linear_key_is_recorded_without_a_name()
     {
         await _h.Lease();

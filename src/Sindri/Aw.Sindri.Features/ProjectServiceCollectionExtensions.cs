@@ -17,7 +17,7 @@ namespace Aw.Sindri.Features;
 /// <summary>Registers the four project writes and the two reads (projects page spec §5.3, §6.2).</summary>
 internal static class ProjectServiceCollectionExtensions
 {
-    /// <summary>Adds AttachProject, ChangeProject, DetachProject and HideProject behind the command chain, ListProjects and GetProject behind the query chain, and the facts port.</summary>
+    /// <summary>Adds AttachProject, ChangeProject (with the led-notes writer behind it), DetachProject and HideProject behind the command chain, ListProjects and GetProject behind the query chain, and the facts port.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddProjectCommands(this IServiceCollection services)
@@ -26,6 +26,7 @@ internal static class ProjectServiceCollectionExtensions
         return services
             .AddScoped<IValidator<AttachProjectRequest>, AcceptAllValidator<AttachProjectRequest>>().AddCommand<AttachProjectRequest, ProjectAccepted, AttachProjectService>().AddScoped<AttachProjectLookup>()
             .AddScoped<IValidator<ChangeProjectRequest>, AcceptAllValidator<ChangeProjectRequest>>().AddCommand<ChangeProjectRequest, ProjectAccepted, ChangeProjectService>()
+            .AddScoped<LedProjectNotes>()
             .AddScoped<IValidator<DetachProjectRequest>, AcceptAllValidator<DetachProjectRequest>>().AddCommand<DetachProjectRequest, ProjectAccepted, DetachProjectService>()
             .AddScoped<IValidator<HideProjectRequest>, AcceptAllValidator<HideProjectRequest>>().AddCommand<HideProjectRequest, ProjectAccepted, HideProjectService>()
             .AddScoped<IValidator<ListProjectsRequest>, AcceptAllValidator<ListProjectsRequest>>().AddQuery<ListProjectsRequest, ListProjectsResponse, ListProjectsService>()

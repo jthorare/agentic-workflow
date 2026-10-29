@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Aw.Kernel;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Features.ChangeProject;
@@ -33,10 +32,12 @@ internal sealed record ChangeProjectBody(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ClearNote = false)
 {
     /// <summary>The request for <paramref name="project"/>.</summary>
-    /// <param name="project">The route's project.</param>
+    /// <param name="project">The route's project: a prj_ id, or a led project's Linear key.</param>
     /// <returns>The request, or SND-PROJECT-004 when 'notes' and 'note' disagree.</returns>
-    internal Result<ChangeProjectRequest> ToRequest(ProjectId project) =>
+    internal Result<ChangeProjectRequest> ToRequest(string project) =>
         ProjectDecisions.NotesAliasConflict(Notes, Note) is { } conflict
             ? conflict
-            : new ChangeProjectRequest(project, Version, new ProjectEdit(Name, State, ClearState, Links, Notes ?? Note, ClearNotes || ClearNote, Target, ClearTarget));
+            : new ChangeProjectRequest(project, Version, Edit());
+
+    private ProjectEdit Edit() => new(Name, State, ClearState, Links, Notes ?? Note, ClearNotes || ClearNote, Target, ClearTarget);
 }

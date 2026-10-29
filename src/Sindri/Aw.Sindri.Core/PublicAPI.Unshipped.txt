@@ -20746,13 +20746,11 @@ Aw.Sindri.Core.Projects.ProjectEdit.Target.get -> System.DateOnly?
 Aw.Sindri.Core.Projects.ProjectEdit.Target.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow
 Aw.Sindri.Core.Projects.ProjectHiddenRow.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectHiddenRow!
-Aw.Sindri.Core.Projects.ProjectHiddenRow.Deconstruct(out string! Linear, out bool Hidden, out long Version, out long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Equals(Aw.Sindri.Core.Projects.ProjectHiddenRow? other) -> bool
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Hidden.get -> bool
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Hidden.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Linear.get -> string!
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Linear.init -> void
-Aw.Sindri.Core.Projects.ProjectHiddenRow.ProjectHiddenRow(string! Linear, bool Hidden, long Version, long Sequence) -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Sequence.get -> long
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Sequence.init -> void
 Aw.Sindri.Core.Projects.ProjectHiddenRow.Version.get -> long
@@ -21355,3 +21353,28 @@ Aw.Sindri.Core.Projects.ProjectEdit.Notes.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.ProjectEdit(string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, bool ClearState = false, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, bool ClearNotes = false, System.DateOnly? Target = null, bool ClearTarget = false) -> void
 static Aw.Sindri.Core.Projects.ProjectDecisions.NotesAliasConflict(string? notes, string? note) -> Aw.Kernel.Error?
 static Aw.Sindri.Core.Projects.ProjectText.Notes(string? notes, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> string?
+Aw.Sindri.Core.Events.ProjectLedNoted
+Aw.Sindri.Core.Events.ProjectLedNoted.<Clone>$() -> Aw.Sindri.Core.Events.ProjectLedNoted!
+Aw.Sindri.Core.Events.ProjectLedNoted.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ProjectLedNoted.CommandId.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Linear, out string? Notes, out long Version) -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Equals(Aw.Sindri.Core.Events.ProjectLedNoted? other) -> bool
+Aw.Sindri.Core.Events.ProjectLedNoted.Linear.get -> string!
+Aw.Sindri.Core.Events.ProjectLedNoted.Linear.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Notes.get -> string?
+Aw.Sindri.Core.Events.ProjectLedNoted.Notes.init -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.ProjectLedNoted(Aw.Sindri.Core.Ids.CommandId CommandId, string! Linear, string? Notes, long Version) -> void
+Aw.Sindri.Core.Events.ProjectLedNoted.Version.get -> long
+Aw.Sindri.Core.Events.ProjectLedNoted.Version.init -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Deconstruct(out string! Linear, out bool Hidden, out long Version, out long Sequence, out string? Notes) -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Notes.get -> string?
+Aw.Sindri.Core.Projects.ProjectHiddenRow.Notes.init -> void
+Aw.Sindri.Core.Projects.ProjectHiddenRow.ProjectHiddenRow(string! Linear, bool Hidden, long Version, long Sequence, string? Notes = null) -> void
+const Aw.Sindri.Core.Events.EventTypes.ProjectLedNoted = "project.led.noted" -> string!
+override Aw.Sindri.Core.Events.ProjectLedNoted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ProjectLedNoted.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ProjectLedNoted.ToString() -> string!
+static Aw.Sindri.Core.Events.ProjectLedNoted.operator !=(Aw.Sindri.Core.Events.ProjectLedNoted? left, Aw.Sindri.Core.Events.ProjectLedNoted? right) -> bool
+static Aw.Sindri.Core.Events.ProjectLedNoted.operator ==(Aw.Sindri.Core.Events.ProjectLedNoted? left, Aw.Sindri.Core.Events.ProjectLedNoted? right) -> bool
+static Aw.Sindri.Core.Projects.ProjectDecisions.LedNotes(Aw.Sindri.Core.Ids.CommandId command, string! linear, Aw.Sindri.Core.Projects.ProjectHiddenRow? current, Aw.Sindri.Core.Projects.ProjectEdit! edit, long seenVersion) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.ProjectLedNoted!>!
+static Aw.Sindri.Core.Projects.ProjectDecisions.NamesLinearProject(string! project) -> bool

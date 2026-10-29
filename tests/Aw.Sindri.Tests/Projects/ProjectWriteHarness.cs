@@ -28,7 +28,10 @@ internal sealed partial class ProjectWriteHarness
 
     internal AttachProjectService Attach() => new(new AttachProjectLookup(Views.Views, Facts), Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, Slice.Ids);
 
-    internal ChangeProjectService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers);
+    internal ChangeProjectService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, new LedProjectNotes(Views.Views, Facts, Slice.Store, Slice.Events, new MaskingScrubber()));
+
+    /// <summary>Makes <see cref="ProjectRows.LinearKey"/> a project the owner leads, as far as the stored facts go.</summary>
+    internal void OwnerLeads() => _ = Facts.With(ProjectRows.Snapshot(ProjectRows.Fact(leadIsOwner: true)));
 
     internal DetachProjectService Detach() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, Slice.Callers);
 
@@ -48,6 +51,9 @@ internal sealed partial class ProjectWriteHarness
 
     internal Task SeedHidden(long version, bool hidden) =>
         Views.Fold(EventTypes.ProjectHidden, new ProjectHidden(Slice.Ids.New<CommandId>(), ProjectRows.LinearKey, hidden, version));
+
+    internal Task SeedLedNotes(long version, string? notes) =>
+        Views.Fold(EventTypes.ProjectLedNoted, new ProjectLedNoted(Slice.Ids.New<CommandId>(), ProjectRows.LinearKey, notes, version));
 
     internal T Payload<T>(LedgerEvent recorded) => Slice.Events.Payload<T>(recorded).Value;
 

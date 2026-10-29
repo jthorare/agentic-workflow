@@ -7,7 +7,7 @@ using Aw.Sindri.Features.HideProject;
 
 namespace Aw.Sindri.Host.Endpoints;
 
-/// <summary>The four project writes (projects page spec §5.3): POST /sindri/projects, /{projectId}/change, /{projectId}/detach and /hide. Each binds, calls one service and maps the result.</summary>
+/// <summary>The project writes (projects page spec §5.3): POST /sindri/projects, /{projectId}/change (a prj_ id, or a led project's Linear key for its notes), /{projectId}/detach and /hide. Each binds, calls one service and maps the result.</summary>
 internal static class ProjectEndpoints
 {
     internal static RouteGroupBuilder MapProjectWrites(this RouteGroupBuilder group)
@@ -21,13 +21,7 @@ internal static class ProjectEndpoints
             => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/projects/{projectId}/change", static async (string projectId, ChangeProjectBody body, IService<ChangeProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
         {
-            var project = ProjectRoute.Project(projectId);
-            if (project.IsError)
-            {
-                return project.ToHttpResult();
-            }
-
-            var request = body.ToRequest(project.Value);
+            var request = body.ToRequest(projectId);
             return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapPost("/projects/{projectId}/detach", static async (string projectId, DetachProjectBody body, IService<DetachProjectRequest, ProjectAccepted> service, CancellationToken ct) =>

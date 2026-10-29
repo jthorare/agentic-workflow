@@ -267,4 +267,71 @@ public sealed class ProjectDecisionsTests
         Expect.Sequence(["SND-PROJECT-001", "SND-PROJECT-003", "SND-PROJECT-004", "SND-PROJECT-404", "SND-PROJECT-409"], codes.Select(static e => e.Code));
         Expect.True(codes.All(static e => SindriErrors.All.Contains(e)));
     }
+
+    private static ProjectHiddenRow Led(long version = 1, bool hidden = false, string? notes = null) => new(ProjectRows.LinearKey, hidden, version, Sequence: 1, notes);
+
+    [Fact]
+    public void A_led_project_without_a_row_takes_notes_at_version_zero_and_moves_to_one()
+    {
+        var noted = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(Notes: "line one\nline two"), seenVersion: 0).Value;
+
+        Expect.Equal((_command, ProjectRows.LinearKey, "line one\nline two", 1L), (noted.CommandId, noted.Linear, noted.Notes, noted.Version));
+    }
+
+    [Fact]
+    public void A_led_projects_notes_move_the_same_counter_the_hide_row_holds()
+    {
+        var noted = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, Led(version: 3, hidden: true), new ProjectEdit(Notes: "x"), seenVersion: 3).Value;
+
+        Expect.Equal(4L, noted.Version);
+    }
+
+    [Fact]
+    public void Clearing_a_led_projects_notes_records_null_notes()
+    {
+        var noted = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, Led(notes: "old"), new ProjectEdit(ClearNotes: true), seenVersion: 1).Value;
+
+        Expect.Equal((null, 2L), (noted.Notes, noted.Version));
+    }
+
+    [Fact]
+    public void A_led_project_takes_notes_only_so_any_other_field_is_SND_PROJECT_004()
+    {
+        ProjectEdit[] others =
+        [
+            new(Notes: "x", Name: "Mine"), new(Notes: "x", State: ProjectState.Done), new(ClearState: true), new(Links: ["https://example.com/a"]), new(Target: new DateOnly(2027, 1, 1)), new(ClearTarget: true),
+        ];
+
+        Assert.All(others, edit =>
+        {
+            var refused = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, edit, seenVersion: 0).Error;
+            Expect.Equal(SindriErrors.ProjectInvalid.Code, refused.Code);
+            Assert.Contains("a project you lead only takes notes here; edit it in Linear", refused.Message, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public void A_stale_led_version_is_SND_PROJECT_409()
+    {
+        var stale = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, Led(version: 2), new ProjectEdit(Notes: "x"), seenVersion: 1).Error;
+        var neverNoted = ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(Notes: "x"), seenVersion: 1).Error;
+
+        Expect.Equal((SindriErrors.ProjectConflict.Code, SindriErrors.ProjectConflict.Code), (stale.Code, neverNoted.Code));
+    }
+
+    [Fact]
+    public void Led_notes_follow_the_notes_rules()
+    {
+        RefusedOn("notes", ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(Notes: new string('x', 16385)), 0).Error);
+        RefusedOn("notes", ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(Notes: "x", ClearNotes: true), 0).Error);
+        RefusedOn("change", ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(), 0).Error);
+        RefusedOn("linear", ProjectDecisions.LedNotes(_command, "linear:project/", current: null, new ProjectEdit(Notes: "x"), 0).Error);
+        Expect.Equal(16384, ProjectDecisions.LedNotes(_command, ProjectRows.LinearKey, current: null, new ProjectEdit(Notes: new string('x', 16384)), 0).Value.Notes!.Length);
+    }
+
+    [Theory]
+    [InlineData("linear:project/abc", true)]
+    [InlineData("prj_01J9Z3K5M7Q2R4T6V8WXYZ0123", false)]
+    [InlineData("nope", false)]
+    public void A_change_names_a_led_project_by_its_Linear_key(string project, bool led) => Assert.Equal(led, ProjectDecisions.NamesLinearProject(project));
 }

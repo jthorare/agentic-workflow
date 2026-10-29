@@ -118,6 +118,24 @@ public static partial class ProjectDecisions
         return SindriErrors.ProjectNotSynced.With($"Sindri doesn't sync that project. It syncs these Linear teams: {string.Join(", ", teams)}. Add the team to `context.sources.linear.teams`.");
     }
 
+    /// <summary>Writes the notes of a led Linear project that is still at the card version the owner saw (0 when it has no row yet).</summary>
+    /// <param name="command">The command's id.</param>
+    /// <param name="linear">The led project ('linear:project/&lt;id&gt;').</param>
+    /// <param name="current">The project's row, or null when it was never hidden or noted.</param>
+    /// <param name="edit">What to change: only notes or clearNotes.</param>
+    /// <param name="seenVersion">The version the owner saw.</param>
+    /// <returns>The event to append, SND-PROJECT-004 naming a bad field or any other field, or SND-PROJECT-409.</returns>
+    public static Result<ProjectLedNoted> LedNotes(CommandId command, string linear, ProjectHiddenRow? current, ProjectEdit edit, long seenVersion) => throw new NotSupportedException();
+
+    /// <summary>Whether a change names a Linear project the owner leads ('linear:project/&lt;id&gt;') rather than a prj_ id.</summary>
+    /// <param name="project">What the request named.</param>
+    /// <returns>True for a Linear key.</returns>
+    public static bool NamesLinearProject(string project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        return project.StartsWith("linear:project/", StringComparison.Ordinal);
+    }
+
     /// <summary>Whether a request sent both 'notes' and its alias 'note' with different values (SND-PROJECT-004).</summary>
     /// <param name="notes">The 'notes' field, or null.</param>
     /// <param name="note">The 'note' alias, or null. The alias is removed one release after the notes field ships (owner q158).</param>

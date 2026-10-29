@@ -120,6 +120,19 @@ public sealed class CliProjectVerbsTests : IDisposable
         Assert.Contains("\"notes\":\"tile\\nsink\"", api.Calls[^1].Body, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_edit_of_a_led_project_posts_notes_to_its_escaped_Linear_key()
+    {
+        const string Key = "linear:project/6f2a9c1e-7b34-4d58-9e0a-3c5d8b1f2a47";
+        var api = new RoutedApi().On($"/sindri/projects/{Uri.EscapeDataString(Key)}/change", HttpStatusCode.OK, Accepted(Key, 1, Key, 12));
+
+        var code = await Verbs(api).Run(["project", "edit", Key, "--version", "0", "--notes", "call them"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"notes\":\"call them\"", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains("\"version\":0", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("--clear-notes")]
     [InlineData("--clear-note")]

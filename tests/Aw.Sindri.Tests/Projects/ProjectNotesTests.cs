@@ -45,7 +45,7 @@ public sealed class ProjectNotesTests
     [InlineData("""{"version":1,"state":"paused"}""", null, false)]
     public void A_change_body_takes_notes_and_clearNotes_or_their_aliases(string json, string? notes, bool clear)
     {
-        var request = Read<ChangeProjectBody>(json).ToRequest(ProjectRows.HandMadeId);
+        var request = Read<ChangeProjectBody>(json).ToRequest(ProjectRows.HandMadeId.Value);
 
         Assert.True(request.IsSuccess, request.IsError ? request.Error.ToString() : null);
         Assert.Equal((notes, clear), (request.Value.Edit.Notes, request.Value.Edit.ClearNotes));
@@ -54,7 +54,7 @@ public sealed class ProjectNotesTests
     [Fact]
     public void A_change_body_with_notes_and_a_different_note_is_SND_PROJECT_004_on_notes()
     {
-        var request = Read<ChangeProjectBody>("""{"version":1,"notes":"a","note":"b"}""").ToRequest(ProjectRows.HandMadeId);
+        var request = Read<ChangeProjectBody>("""{"version":1,"notes":"a","note":"b"}""").ToRequest(ProjectRows.HandMadeId.Value);
 
         Assert.Equal(SindriErrors.ProjectInvalid.Code, request.Error.Code);
         Assert.StartsWith("notes:", request.Error.Message, StringComparison.Ordinal);

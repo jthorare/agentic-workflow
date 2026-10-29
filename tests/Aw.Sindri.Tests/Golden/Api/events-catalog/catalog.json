@@ -294,6 +294,13 @@
       ]
     },
     {
+      "type": "project.led.noted",
+      "keyShape": "project.led.noted:<linear>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
       "type": "recipe.registration.completed",
       "keyShape": "recipe.registration.completed:<epoch>",
       "invalidates": [
