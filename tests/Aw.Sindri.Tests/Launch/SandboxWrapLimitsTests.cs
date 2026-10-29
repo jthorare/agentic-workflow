@@ -29,11 +29,13 @@ public sealed class SandboxWrapLimitsTests : IDisposable
     [Fact]
     public async Task A_Step_launch_writes_its_scope_limits_beside_the_plan_for_session_wrap()
     {
-        var runArea = Directory.CreateDirectory(Path.Combine(_dir, "area")).FullName;
-        var runDirectory = Directory.CreateDirectory(Path.Combine(_dir, "run")).FullName;
+        var sindriHome = Path.Combine(_dir, "sindri-home");
+        var runArea = Directory.CreateDirectory(Path.Combine(sindriHome, "workflow", "areas", "run-1")).FullName;   // the plan refuses a run area outside the Sindri home
+        var runDirectory = Directory.CreateDirectory(Path.Combine(sindriHome, "workflow", "runs", "1")).FullName;
         var secrets = Directory.CreateDirectory(Path.Combine(_dir, "secrets")).FullName;
         var request = SandboxRequests.WriteScope with
         {
+            Host = SandboxRequests.WriteScope.Host with { SindriHome = sindriHome },
             Paths = SandboxRequests.WriteScope.Paths with { RunDirectory = runDirectory, RunArea = runArea },
             Settings = new SandboxSettings(Limits: new SandboxLimits(Memory: "512MiB")),
         };
@@ -41,7 +43,7 @@ public sealed class SandboxWrapLimitsTests : IDisposable
         var control = new ControlEndpoint(new Uri("http://127.0.0.1:7480"), Environment.ProcessId, Epoch: 0);
         var launch = new SandboxLaunch(
             new PassThroughSandbox(), new FileSessionCap(Path.Combine(_dir, "sessions.lock"), new FakeSliceScopes()), new FixedStages(request),
-            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), Path.Combine(_dir, "sindri-home"), secrets, () => control));
+            new SandboxLaunchOptions("systemd-run", new BoxFacts(32L * 1024 * 1024 * 1024, 8), sindriHome, secrets, () => control));
 
         var prepared = await launch.Prepare(A.LaunchRequest().Unattended(new StepArgs(Model: null, Policy: null, new StepRef("build", "agent"))).Build(), ["claude"], chosenSession: null, TestContext.Current.CancellationToken);
 
