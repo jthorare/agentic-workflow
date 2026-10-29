@@ -14,6 +14,9 @@ namespace Aw.Context.Core.Sync;
 /// </summary>
 public static class RecordBatches
 {
+    /// <summary>The most characters of a project's description a record keeps (the text's chunks hold the rest for search).</summary>
+    public const int MaxDescription = 4000;
+
     /// <summary>Builds the batch for one page.</summary>
     /// <param name="source">The source the page came from.</param>
     /// <param name="page">The page; its cursor becomes the position.</param>
