@@ -768,10 +768,10 @@ each actor may do is the retrieval spec §8.7a. This section is the as-built rec
 
 ### Shape
 
-- **Tables (migration `0010_s4p_map_publish`).** `map_version_head(version, repo, commit_sha, on_default)` (cascade-deleted with the version; the commit is 7 to 40 lowercase
+- **Tables (migration `0010_s4p_map_publish`).** `map_version_head(version, repo, commit_sha, on_default, index_commit)` (`index_commit` is migration `0025_s4_map_head_index_commit`, #1704: the code index commit the build's symbol citations were resolved against, NULL when no index held the build's commit; a store before 0025 reads NULL; cascade-deleted with the version; the commit is 7 to 40 lowercase
   hex, checked by the table too), `map_hold(version)` (one draft; cascade-deleted with it) and `map_publish_chain(id = 1, since)` (the start of the wait: tied to no draft, so a
   rebuild keeps it). Reads never migrate: a store from before 0010 holds nothing and has no heads.
-- **Types (Core/Map).** `MapHead(Repo, Commit, OnDefault)` (`IsCommit`, `Check`: 191), `MapHold(Version, Since, Heads)` (`NextSince(chain, now)`: the chain's start, never later than now),
+- **Types (Core/Map).** `MapHead(Repo, Commit, OnDefault)` with `IndexCommit` (`IsCommit`, `Check`: 191), `MapHold(Version, Since, Heads)` (`NextSince(chain, now)`: the chain's start, never later than now),
   `MapPublishState(Hold, LatestDraft, Current, CurrentHeads)`, `MapPublishView(Repos, Hold, LatestDraft, Current, CurrentHeads)` and `MapBuildReport.Heads`.
   `MapImport.Heads` is what a build names; null keeps a replaced draft's heads, or for an import the one commit its file names (as `OnDefault`).
 - **Store (`IGraphStore`).** `Heads(version)`, `Held()`, `Hold(MapHold)` (one transaction: the draft must be the latest, else 190; `since` is `MapHold.NextSince(stored chain, hold.Since)` and the clamped value is stored;
@@ -781,7 +781,8 @@ each actor may do is the retrieval spec §8.7a. This section is the as-built rec
 - **Facade (`IContextMap`).** `Held`, `Hold`, `Release` refuse a session (020); `PublishStatus` is the read for everyone else and is cut to the caller's repos (`context.repos` for a human, the one repo for a session, the
   usual 020/003 session rules): no other repo's name, commit or count. `Promote` and `CleanDraft` take `int? expectedVersion = null` (null: the latest draft, the human path). With a value, a latest draft of another number, or none,
   is `SND-CONTEXT-190` and nothing is promoted or written; the cleanup checks it on every pass read and on its append. Without one, no draft is still 046.
-- **Build.** `BuildMapService` records, for each mapped repo, the commit its extraction read and whether the default branch holds it (a default ref that can't be read counts as not on it) into `MapBuildReport.Heads` and the draft.
+- **Build.** `BuildMapService` records, for each mapped repo, the commit its extraction read and whether the default branch holds it (a default ref that can't be read counts as not on it) into `MapBuildReport.Heads` and the draft, with `IndexCommit`: the commit of the code index its symbol citations were resolved against (the first answer `RecordPass` got from `ICodeSymbolSource`, or `Heads` for a repo no citation asked about), set only when that index held the commit the build read, null when it was missing, still building or at another commit. A build that waited at `MapBuildGate` reuses the draft saved meanwhile only when every repo's saved `IndexCommit` equals the commit the index holds now (#1704); otherwise it builds again.
+- **Publish gate and a draft built before its index (#1704).** `MapPublishDecision` answers `MapRebuild` (not `MapPublish`) when every gated repo's outlook is Built but a held head's `IndexCommit` is null or not its commit. The refresh job's `RefreshGate` keeps such a draft held; the `context-map-refresh` tick (`PublishStep`) starts a `RefreshContextMap` job for it (never while a refresh or publish runs, and under the refresh backoff) instead of a publish; `PublishContextMap` answers `Rebuild` and publishes nothing.
 - **Profile.** `context.publish.waitForIndexMinutes` (`ContextSettings.Publish`, 0 to 240, default 15), `SND-CONTEXT-001` with the key path outside the range. A map file whose `commit` is not 7 to 40 lowercase hex is `SND-CONTEXT-031` at `commit`.
 
 ### Errors

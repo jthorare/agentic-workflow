@@ -23,6 +23,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
     private readonly Dictionary<(string From, string To), GraphEdge> _edges = [];
     private readonly Dictionary<CitationOutcome, int> _cited = [];
     private readonly Dictionary<(string Repo, string Name), IReadOnlyList<(string Repo, string Path)>> _symbolFiles = [];
+    private readonly Dictionary<string, CodeIndexHead> _indexHeads = new(StringComparer.Ordinal);
     private int _notSynced;
     private int _older;
     private int _removedTouches, _removedCited, _overCap, _overCapPaths;
@@ -50,6 +51,16 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
             }
         }
 
+        // why: a repo no citation asked about still has a code index head; it is read now, with the rest of the pass, never at save time (#1704).
+        foreach (var repo in input.Repos.Where(r => !_indexHeads.ContainsKey(r.Name.Value)))
+        {
+            var head = await symbols.Heads(repo.Name, asOf: null, cancellationToken).ConfigureAwait(false);
+            if (!head.IsError)
+            {
+                _indexHeads[repo.Name.Value] = head.Value;
+            }
+        }
+
         return null;
     }
 
@@ -62,7 +73,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
             [.. _nodes.Values.OrderBy(n => n.Key.Value, StringComparer.Ordinal)],
             [.. _edges.Values.OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal)]);
         var (notes, degraded) = Notes(stamp);
-        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
+        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, IndexHeads = _indexHeads, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
     }
 
     private async ValueTask<Error?> Docs(MapRepoFiles repo, CancellationToken cancellationToken)
