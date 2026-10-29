@@ -5474,3 +5474,15 @@ static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator !=(Aw.Sindri
 static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsRequest? left, Aw.Sindri.Features.ListProjects.ListProjectsRequest? right) -> bool
 static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator !=(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool
 static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.<Clone>$() -> Aw.Sindri.Features.ResumeJob.ResumeJobRequest!
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.ResumeJobRequest(Aw.Sindri.Core.Ids.JobId Job) -> void
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.Deconstruct(out Aw.Sindri.Core.Ids.JobId Job) -> void
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.Equals(Aw.Sindri.Features.ResumeJob.ResumeJobRequest? other) -> bool
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.Job.get -> Aw.Sindri.Core.Ids.JobId
+Aw.Sindri.Features.ResumeJob.ResumeJobRequest.Job.init -> void
+override Aw.Sindri.Features.ResumeJob.ResumeJobRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ResumeJob.ResumeJobRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ResumeJob.ResumeJobRequest.ToString() -> string!
+static Aw.Sindri.Features.ResumeJob.ResumeJobRequest.operator !=(Aw.Sindri.Features.ResumeJob.ResumeJobRequest? left, Aw.Sindri.Features.ResumeJob.ResumeJobRequest? right) -> bool
+static Aw.Sindri.Features.ResumeJob.ResumeJobRequest.operator ==(Aw.Sindri.Features.ResumeJob.ResumeJobRequest? left, Aw.Sindri.Features.ResumeJob.ResumeJobRequest? right) -> bool
