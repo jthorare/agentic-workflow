@@ -57,13 +57,13 @@ public sealed class JobFoldTests
 
     private JobRow Waiting(JobRow row)
     {
-        var recorded = Event(EventTypes.JobWaiting, new JobWaiting(Command, A.FirstJobId, "onyx-account"));
+        var recorded = Event(EventTypes.JobWaiting, new JobWaiting(Command, A.FirstJobId, "index-login"));
         return JobsProjection.Fold(row, _h.Events.Payload<JobWaiting>(recorded).Value, recorded);
     }
 
     private JobRow Resumed(JobRow row)
     {
-        var recorded = Event(EventTypes.JobResumed, new JobResumed(Command, A.FirstJobId, "onyx-account"));
+        var recorded = Event(EventTypes.JobResumed, new JobResumed(Command, A.FirstJobId, "index-login"));
         return JobsProjection.Fold(row, _h.Events.Payload<JobResumed>(recorded).Value, recorded);
     }
 

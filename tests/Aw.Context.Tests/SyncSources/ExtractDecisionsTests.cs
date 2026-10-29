@@ -4,10 +4,10 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Models;
-using Aw.Context.Core.Results;
 using Aw.Context.Core.Records;
-using Aw.Context.Core.Sync;
+using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
+using Aw.Context.Core.Sync;
 using Aw.Context.Features.SyncSources;
 using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
@@ -62,7 +62,7 @@ public sealed class ExtractDecisionsTests
     private static RecordItem Item(RecordWrite write)
     {
         var r = write.Record;
-        return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: null, r.State, r.StateRaw,
+        return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: r.Url, r.State, r.StateRaw,
             r.CreatedAt, r.UpdatedAt, r.ClosedAt, r.Version, Links: [], Repo: null, AudienceKey.From("linear:SPL"));   // the audience the profile's team gives its issues
     }
 

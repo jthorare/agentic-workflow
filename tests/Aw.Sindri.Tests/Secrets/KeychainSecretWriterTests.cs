@@ -4,7 +4,7 @@ using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
 
-namespace Aw.Sindri.Tests.OnyxAccount;
+namespace Aw.Sindri.Tests.Secrets;
 
 // Spec §5.3: the secret reaches the store on the tool's standard input, never as an argument; without a store it goes to an owner-only file.
 [Lane(TestLane.Integration)]
@@ -34,14 +34,14 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = Takes();
 
-        var pointer = Writer(runner, KeychainPlatform.MacOS).Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = Writer(runner, KeychainPlatform.MacOS).Store("sindri", "example-api-key", Key).Value;
 
-        Assert.Equal("keychain:onyx/sindri-onyx", pointer.ToString());
+        Assert.Equal("keychain:sindri/example-api-key", pointer.ToString());
         var call = runner.Calls[0];
         Assert.Equal("security", call.FileName);
         Assert.Equal(["-i"], call.Arguments);
-        Assert.Equal($"add-generic-password -U -s onyx -a sindri-onyx -w {Key}\n", runner.Inputs[0]);
-        Assert.Equal(["find-generic-password", "-s", "onyx", "-a", "sindri-onyx", "-w"], runner.Calls[1].Arguments);   // read back
+        Assert.Equal($"add-generic-password -U -s sindri -a example-api-key -w {Key}\n", runner.Inputs[0]);
+        Assert.Equal(["find-generic-password", "-s", "sindri", "-a", "example-api-key", "-w"], runner.Calls[1].Arguments);   // read back
         Assert.DoesNotContain(call.Arguments, static a => a.Contains(Key, StringComparison.Ordinal));
     }
 
@@ -50,12 +50,12 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = Takes();
 
-        var pointer = Writer(runner, KeychainPlatform.Linux).Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = Writer(runner, KeychainPlatform.Linux).Store("sindri", "example-api-key", Key).Value;
 
-        Assert.Equal("keychain:onyx/sindri-onyx", pointer.ToString());
+        Assert.Equal("keychain:sindri/example-api-key", pointer.ToString());
         var call = runner.Calls[0];
         Assert.Equal("secret-tool", call.FileName);
-        Assert.Equal(["store", "--label", "onyx/sindri-onyx", "service", "onyx", "account", "sindri-onyx"], call.Arguments);
+        Assert.Equal(["store", "--label", "sindri/example-api-key", "service", "sindri", "account", "example-api-key"], call.Arguments);
         Assert.Equal(Key, runner.Inputs[0]);
         Assert.DoesNotContain(call.Arguments, static a => a.Contains(Key, StringComparison.Ordinal));
     }
@@ -67,9 +67,9 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = new FakeToolRunner(ToolRun.Missing);
 
-        var pointer = Writer(runner, macos ? KeychainPlatform.MacOS : KeychainPlatform.Linux).Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = Writer(runner, macos ? KeychainPlatform.MacOS : KeychainPlatform.Linux).Store("sindri", "example-api-key", Key).Value;
 
-        var path = Path.Combine(_home, "secrets", "onyx-sindri-onyx");
+        var path = Path.Combine(_home, "secrets", "sindri-example-api-key");
         Assert.Equal($"file:{path}", pointer.ToString());
         Assert.Equal(Key, File.ReadAllText(path));
         if (!OperatingSystem.IsWindows())
@@ -84,7 +84,7 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 1, string.Empty));
 
-        var pointer = Writer(runner, KeychainPlatform.Linux).Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = Writer(runner, KeychainPlatform.Linux).Store("sindri", "example-api-key", Key).Value;
 
         Assert.StartsWith("file:", pointer.ToString(), StringComparison.Ordinal);
     }
@@ -96,7 +96,7 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = new FakeToolRunner(Ok());   // exits 0 for the write, and prints nothing for the lookup: the keychain refused the command
 
-        var pointer = Writer(runner, macos ? KeychainPlatform.MacOS : KeychainPlatform.Linux).Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = Writer(runner, macos ? KeychainPlatform.MacOS : KeychainPlatform.Linux).Store("sindri", "example-api-key", Key).Value;
 
         Assert.StartsWith("file:", pointer.ToString(), StringComparison.Ordinal);
     }
@@ -106,21 +106,21 @@ public sealed class KeychainSecretWriterTests : IDisposable
     {
         var runner = new FakeToolRunner(Ok());
 
-        var pointer = Writer(runner, KeychainPlatform.MacOS).Store("onyx", "sindri-onyx", "has space; and \"quotes\"").Value;
+        var pointer = Writer(runner, KeychainPlatform.MacOS).Store("sindri", "example-api-key", "has space; and \"quotes\"").Value;
 
         Assert.StartsWith("file:", pointer.ToString(), StringComparison.Ordinal);
         Assert.Empty(runner.Calls);
     }
 
     [Fact]
-    public void No_store_and_an_unwritable_home_is_sindri_onyx_009_without_the_key()
+    public void No_store_and_an_unwritable_home_is_secret_not_stored_without_the_key()
     {
         var blocker = Path.Combine(_home, "blocker");
         _ = Directory.CreateDirectory(_home);
         File.WriteAllText(blocker, "a file where the home should be");
         var writer = new KeychainSecretWriter(new FakeToolRunner(ToolRun.Missing), new FakeSindriHome(blocker), KeychainPlatform.Linux);
 
-        var result = writer.Store("onyx", "sindri-onyx", Key);
+        var result = writer.Store("sindri", "example-api-key", Key);
 
         Assert.Equal(SindriErrors.SecretNotStored.Code, result.Error.Code);
         Assert.DoesNotContain(Key, result.Error.Message, StringComparison.Ordinal);

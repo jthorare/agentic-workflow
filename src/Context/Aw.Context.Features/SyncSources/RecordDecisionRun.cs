@@ -1,5 +1,6 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -105,6 +106,12 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         {
             if (seen.Done.TryGetValue(stored.Key.Value, out var version) && string.Equals(version, stored.Version.Value, StringComparison.Ordinal))
             {
+                var aliased = await Realias(stored, seen.Known, cancellationToken).ConfigureAwait(false);   // aliases only: no requeue, no model call
+                if (aliased is not null)
+                {
+                    return aliased;
+                }
+
                 continue;
             }
 
@@ -133,7 +140,8 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         }
 
         var text = string.Join('\n', chunks.Value.OrderBy(c => c.Seq).Select(c => c.Text));   // scrubbed at ingest
-        var record = new IntentRecord(stored.Key, source, stored.Version.Value, stored.Title, []) { CreatedAt = stored.CreatedAt };
+        var record = new IntentRecord(stored.Key, source, stored.Version.Value, stored.Title, Aliases(stored)) { CreatedAt = stored.CreatedAt };
+        var before = known.GetValueOrDefault(record.Key.Value);
         known[record.Key.Value] = record;
         var found = RulesLinker.Link(record.Key, text, map.Graph, [.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
         _fetched++;
@@ -147,7 +155,38 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
             return committed.Error.Code;
         }
 
+        if (before is not null && string.Equals(before.Version, record.Version, StringComparison.Ordinal) && !before.Aliases.SequenceEqual(record.Aliases, StringComparer.Ordinal))
+        {
+            var aliased = await ports.Intents.SetAliases(record.Key, record.Version, record.Aliases, cancellationToken).ConfigureAwait(false);   // CommitPage's upsert skips a same-version row
+            if (aliased.IsError)
+            {
+                return aliased.Error.Code;
+            }
+        }
+
         await Decisions.Run([new PendingRecord(record, text, found)], cancellationToken).ConfigureAwait(false);
         return null;
     }
+
+    /// <summary>Writes only the aliases of a done record whose stored ones differ from the permalink's identifier; a code when the run must stop.</summary>
+    private async ValueTask<string?> Realias(StoredRecord stored, Dictionary<string, IntentRecord> known, CancellationToken cancellationToken)
+    {
+        var aliases = Aliases(stored);
+        if (!known.TryGetValue(stored.Key.Value, out var current) || current.Aliases.SequenceEqual(aliases, StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        var written = await ports.Intents.SetAliases(stored.Key, stored.Version.Value, aliases, cancellationToken).ConfigureAwait(false);
+        if (written.IsError)
+        {
+            return written.Error.Code;
+        }
+
+        known[stored.Key.Value] = current with { Aliases = aliases };
+        return null;
+    }
+
+    /// <summary>A Linear issue's tracker identifier, read from its stored permalink (the feed stores the plain title); nothing for any other record.</summary>
+    private string[] Aliases(StoredRecord stored) => LinearIdentifiers.AliasesOf(stored.Key, stored.Url, new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
 }

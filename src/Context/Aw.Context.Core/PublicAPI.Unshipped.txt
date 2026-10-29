@@ -9812,3 +9812,7 @@ static Aw.Context.Core.Records.RecordAudience.operator !=(Aw.Context.Core.Record
 static Aw.Context.Core.Records.RecordAudience.operator ==(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
 Aw.Context.Core.Records.RecordAudience.Allowed.init -> void
 Aw.Context.Core.Records.RecordAudience.Records.init -> void
+Aw.Context.Core.Linear.LinearIdentifiers
+static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Sources.RecordKey key, string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
+static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?
+Aw.Context.Core.Linking.IIntentStore.SetAliases(Aw.Context.Core.Sources.RecordKey record, string! version, System.Collections.Generic.IReadOnlyList<string!>! aliases, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

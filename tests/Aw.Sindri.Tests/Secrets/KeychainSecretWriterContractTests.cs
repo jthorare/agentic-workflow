@@ -4,7 +4,7 @@ using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
 
-namespace Aw.Sindri.Tests.OnyxAccount;
+namespace Aw.Sindri.Tests.Secrets;
 
 // The adapter on a machine with no OS store (the owner-only file fallback), read back by the real pointer resolver.
 [Lane(TestLane.Integration)]

@@ -32,7 +32,21 @@ public sealed class SyncSourcesTests
         var link = Assert.Single(layer.Links, l => l.Record.Value == Spl103 && l.Target.Value == Toggle);
         Assert.Equal(LinkRule.Identifier, link.Rule);
         Assert.Equal(layer.Links.Count, row.Linked);
-        // see #1637: RecordDecisionRun doesn't carry aliases yet (the intent walk asserted ["SPL-103"] here)
+        Assert.Equal(["SPL-103"], layer.Records.Single(r => r.Key.Value == Spl103).Aliases);
+    }
+
+    [Fact]
+    public async Task A_record_synced_before_aliases_gains_its_identifier_on_the_next_sync()
+    {
+        await using var rig = await Rig.Start();
+        var stored = LinearIssueSeed.From(issues: null).Single(w => w.Record.Key.Value == Spl103).Record;
+        var before = new IntentRecord(stored.Key, SourceId.From("linear"), stored.Version.Value, stored.Title, []);
+        _ = (await rig.World.Intents.CommitPage(new IntentPage(SourceId.From("linear"), [before], [], Cursor: null, DateTimeOffset.UnixEpoch), Ct)).Value;
+        Assert.Empty((await rig.Layer()).Records.Single(r => r.Key.Value == Spl103).Aliases);
+
+        _ = await rig.Sync(Scope());
+
+        Assert.Equal(["SPL-103"], (await rig.Layer()).Records.Single(r => r.Key.Value == Spl103).Aliases);
     }
 
     [Fact]

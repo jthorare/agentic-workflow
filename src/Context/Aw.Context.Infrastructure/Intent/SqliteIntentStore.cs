@@ -207,6 +207,17 @@ internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
         }, cancellationToken);
     }
 
+    public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(version);
+        ArgumentNullException.ThrowIfNull(aliases);
+        return Write(async (session, token) =>
+        {
+            var done = await SqliteQueries.Execute(session, new SqlStatement(IntentSql.SetAliases, c => c.Bind("@record", record.Value).Bind("@version", version).Bind("@aliases", IntentMappers.Joined(aliases))), token).ConfigureAwait(false);
+            return done.IsError ? done.Error : Unit.Value;
+        }, cancellationToken);
+    }
+
     public ValueTask<Result<Unit>> SaveConflict(DecisionConflict conflict, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(conflict);

@@ -235,7 +235,7 @@ public sealed class ContextSyncGapsServiceTests
     {
         Job(JobState.Running, TimeSpan.Zero);
         var gaps = new SyncGaps(_jobs);
-        var notSynced = new SearchedSource(SourceId.From("onyx"), SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161", AsOf: null);
+        var notSynced = new SearchedSource(SourceId.From("slack"), SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161", AsOf: null);
         var ok = new SearchedSource(SourceId.From("git-history"), SearchedState.Ok, Reason: null, Code: null, _now);
 
         var marked = await gaps.Mark(new LensSearched(["a"], "v1", 0, [], [notSynced, ok], new SearchedBands(new BandSearched(Empty: true), new BandSearched(Empty: true), new BandSearched(Empty: true))), Ct);
@@ -249,7 +249,7 @@ public sealed class ContextSyncGapsServiceTests
     public async Task A_gap_with_no_job_running_carries_no_sync()
     {
         Job(JobState.Succeeded, TimeSpan.FromMinutes(1));
-        var notSynced = new SearchedSource(SourceId.From("onyx"), SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161", AsOf: null);
+        var notSynced = new SearchedSource(SourceId.From("slack"), SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161", AsOf: null);
 
         var marked = await new SyncGaps(_jobs).Mark(new LensSearched(["a"], "v1", 0, [], [notSynced], new SearchedBands(new BandSearched(Empty: true), new BandSearched(Empty: true), new BandSearched(Empty: true))), Ct);
 
