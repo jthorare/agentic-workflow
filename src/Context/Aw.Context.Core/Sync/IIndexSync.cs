@@ -18,6 +18,15 @@ public interface IIndexSync
     /// <returns>One row per feed, in source order (none without a feed), or the error the scope or settings give.</returns>
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Runs the decision pass over the records already stored for each feed's source, one source after the other and without the source's lock (it reads the store only, so a tick of the
+    /// same source goes on). A source an intent walk owns, or no map yet, gives no row.
+    /// </summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>One row per source that was read, in source order, or the error the scope or settings give.</returns>
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken);
+
     /// <summary>Reads each feed's phase, last tick and milestones from the record store and the ticks this process ran.</summary>
     /// <param name="scope">The profile's settings and repos, and the caller.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
