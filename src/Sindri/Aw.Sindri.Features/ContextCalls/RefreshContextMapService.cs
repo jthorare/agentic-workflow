@@ -57,20 +57,21 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
         }
 
         var progress = jobs.Current?.Progress;
-        var heads = await engine.MapHeads(scope.Value, cancellationToken).ConfigureAwait(false);
+        var jobScope = scope.Value with { Job = jobs.Current?.Job.Value };   // why: a build waiting behind another names this job
+        var heads = await engine.MapHeads(jobScope, cancellationToken).ConfigureAwait(false);
         if (heads.IsError)
         {
             return heads.Error;
         }
 
         var recorder = opened.Value;
-        var built = await Build(recorder, progress, scope.Value, cancellationToken).ConfigureAwait(false);
+        var built = await Build(recorder, progress, jobScope, cancellationToken).ConfigureAwait(false);
         if (built.IsError)
         {
             return built.Error;
         }
 
-        var settled = await CleanAndGate(recorder, progress, scope.Value, built.Value, cancellationToken).ConfigureAwait(false);
+        var settled = await CleanAndGate(recorder, progress, jobScope, built.Value, cancellationToken).ConfigureAwait(false);
         if (settled.IsError)
         {
             return settled.Error;

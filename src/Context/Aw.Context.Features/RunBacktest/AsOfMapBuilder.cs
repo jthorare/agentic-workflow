@@ -14,7 +14,7 @@ namespace Aw.Context.Features.RunBacktest;
 /// nodes whose code the cut doesn't have are dropped), and the override rows dated before it. The extraction is cached by repo, commit, extractor
 /// version and whether clusters answered. Nothing is written to context.db.
 /// </summary>
-internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters, IGraphStore store, IEvalStore cache)
+internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters, MapBuildGate gate, IGraphStore store, IEvalStore cache)
 {
     public async ValueTask<Result<AsOfGraph>> Build(AsOfRequest request, CancellationToken cancellationToken)
     {
@@ -91,7 +91,7 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
             return first.IsError ? first.Error : new Probe(first.Value, clustered, new ClusterSet([], Available: true));
         }
 
-        var set = await Clusters(repo, sample.Cut, rules.Limits, cancellationToken).ConfigureAwait(false);
+        var set = await Clusters(request, rules.Limits, cancellationToken).ConfigureAwait(false);
         var plain = AsOfMapCache.Key(repo.Name, sample.Cut, MapExtractor.Version, clustered: false, recognizers);
         var second = set.Available ? Results.Success<Found?>(value: null) : await Cached(plain, clustered: false, cancellationToken).ConfigureAwait(false);
         return second.IsError ? second.Error : new Probe(second.Value, set.Available ? clustered : plain, set);
@@ -126,9 +126,16 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
     }
 
     // A cluster source that fails reads like one that is absent; a denied path never reaches the graph.
-    private async ValueTask<ClusterSet> Clusters(ContextRepo repo, string commit, ClusterLimits limits, CancellationToken cancellationToken)
+    // The gate is held for this one call only: a backtest is many samples, and holding it throughout would block every map build for the whole run.
+    private async ValueTask<ClusterSet> Clusters(AsOfRequest request, ClusterLimits limits, CancellationToken cancellationToken)
     {
-        var set = await clusters.Clusters(repo, commit, limits, cancellationToken).ConfigureAwait(false);
+        var repo = request.Repo;
+        Result<ClusterSet> set;
+        using (await gate.Enter(request.Scope.Job, request.Progress, cancellationToken).ConfigureAwait(false))
+        {
+            set = await clusters.Clusters(repo, request.Sample.Cut, limits, cancellationToken).ConfigureAwait(false);
+        }
+
         return set.IsError || !set.Value.Available
             ? new ClusterSet([], Available: false)
             : new ClusterSet([.. set.Value.Clusters.Select(c => c with { Files = [.. c.Files.Where(f => !repo.Denies(f))] }).Where(c => c.Files.Count > 0)], Available: true, set.Value.Reason);
